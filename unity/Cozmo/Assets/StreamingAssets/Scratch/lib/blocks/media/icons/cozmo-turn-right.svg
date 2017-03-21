@@ -1,20 +1,37 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-<svg
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   version="1.0"
-   width="466.44986"
-   height="554.03888"
-   id="svg2">
-  <defs
-     id="defs4" />
-  <g
-     transform="translate(-337.2615,-28.44366)"
-     id="layer1">
-    <path
-       d="M 803.71138,582.48256 L 531.61564,582.48256 C 531.61564,582.48256 411.5734,576.76626 411.5734,468.15661 C 411.5734,359.54697 411.5734,252.08058 411.5734,252.08058 L 337.26153,252.08058 L 466.37837,28.443661 L 595.49521,252.08058 L 520.18304,252.08058 L 520.18304,443.0049 C 520.18304,443.0049 519.03978,471.58639 554.48082,471.58639 C 589.92187,471.58639 802.56812,471.58639 802.56812,471.58639 L 803.71138,582.48256 z "
-       style="opacity:1;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
-       id="path1937" />
-  </g>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 40.254 40.367" style="enable-background:new 0 0 40.254 40.367;" xml:space="preserve">
+<g id="TURN_-_Right">
+	<g>
+		
+			<image style="overflow:visible;opacity:0.4;" width="31" height="39" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAoCAYAAACfKfiZAAAACXBIWXMAAAsSAAALEgHS3X78AAAA
+GXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA0xJREFUeNq8WE1vEkEYntkFS/mK
+xpaEkyYeGj0YIK1e9D/ggcSk4cKRH8WtJ2LkP9RjBTUNaY8mJhqqMUWgTWC7Pi++g8u6sDPL1kme
+7CxZ9nnm/XhmslIED7nid1fEPJaIGo2GPZ1Os5hmpJT2ErPrOriMb25uxkdHR05cYqSXHC8vABXc
+PiERvmfHwDkBYn7RfTKZHLVaLWcTAQk1oZVj1UT+GjhYJwDPXeDadxynV6vVBu12e7apAMmEtPJ9
+4JFXHA9aaZHFDYEuIpFPpVIn9Xp9EDUaKs+yVCrdxfUZ8By4F/CsBWwBOYCeLQC7iMYOQGKHlUrl
+qtfruZFS4ImE1PwfCXgJ7FHEEA2BlLzD/NJEgLVB/VD08sBDihoEHAAF1ETifwnwR4NqZz+dTheo
+o6KmIOog76AOGiIKQ3SUdiqsAKdzI6Zjl0UoD5FGAtjpJtzvs4ipyHNn5A4PD22TFLhM3AdOPL6g
+VpdhhL00w12xZ1nWN500LGqAjAQ23AXo9pNHAF0fc3gLISIWAnghw7CULl5GBkJGgl4m5WcI4wf6
+Gak5xfUn7u+zE26FpPQKOMXzHzGGRl3AVnrJyuejWq3auRyZn3jKUchrbHByUx9Q3eB2Oh2H6yNq
+ccZiRErEhOehg6w5NgGz2ewaL/yCKeFawxPmXQNbtk0FSD+oBjDohKTThouuwfPl7e1ttTfIAPw9
+ETWbTXs0GmWwyqz/KMYvLAOvgBcarUgpGgDHQIc6idO3dLwDzyibzY7nXUDkVOGkmqvcW8Vptlcd
+H1ApUFu1Ej/x8oOHuqw3mUy68/Dwyst8HCv6BJg4YZCIiq9wqTq/ciTOEwFeXoxpl1TnBb9vzDgl
+CVWE3n2A8nWh22oRhsPvJ54+IvCnBtQ+gB+oEG0OXcEg5Lrk8+JEujtAFxvW2PbuA5j+4GhQvne4
+AK2Yyd8AxyAfkPX/sxndgoiV5MIf4lsQsZZcBOU4RhGh5GJVkcUgQotcrKvyDURok4uwNosgwohc
+6PS5gQhjcqFrNBoiIpELE6dbI+IO8D0KuTC12gARKV79exC/NSUXJqdX/7ck+pyDfYO22gfAZ/b2
+gelHChnVX9UHLQhJgfg6ju9FsXxpMx2/BRgACK/Cf7CJmLIAAAAASUVORK5CYII=" transform="matrix(1 0 0 1 5.3794 0.3714)">
+		</image>
+		<g>
+			<path style="fill:#FFFFFF;" d="M8.298,24.276c-1.059-1.059-0.309-2.868,1.188-2.868h5.378c0.85,0,1.539-0.689,1.539-1.539v-0.736
+				c0-4.652-0.475-6.724-5.7-6.724h-0.542c-0.784,0-1.42-0.636-1.42-1.42V4.167c0-0.784,0.636-1.42,1.42-1.42h0.542
+				c6.388,0,10.857,2.281,13.283,6.78c1.774,3.289,2.069,4.863,2.105,8.601c0.004,0.057,0.007,0.112,0.007,0.162v0.824
+				c0,0.006,0,0.012,0,0.018h0v0.736c0,0.85,0.689,1.539,1.539,1.539h5.378c1.497,0,2.247,1.81,1.188,2.868L21.251,37.229
+				L8.298,24.276z"/>
+		</g>
+	</g>
+</g>
+<g id="Layer_1">
+</g>
 </svg>

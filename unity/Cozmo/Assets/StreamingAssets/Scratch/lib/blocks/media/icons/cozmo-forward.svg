@@ -1,4 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
-    <path d="M0 0h48v48h-48z" fill="none"/>
-    <path d="M24 8l-2.83 2.83 11.17 11.17h-24.34v4h24.34l-11.17 11.17 2.83 2.83 16-16z"/>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 40.254 40.367" style="enable-background:new 0 0 40.254 40.367;" xml:space="preserve">
+<g id="MOVE_FORWARD">
+	<g>
+		
+			<image style="overflow:visible;opacity:0.4;" width="39" height="29" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAeCAYAAABe3VzdAAAACXBIWXMAAAsSAAALEgHS3X78AAAA
+GXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAe9JREFUeNrUmDFPwkAUx++uZbGG
+SUlI2HQyRGKjUQcS4+zmwsKC34tvYOLuyOBiaHTQ+BUwLkTEhEr9P/NqaqXItRytL/lTernSX9+9
+978GKQxEp9OxfN93giBw6FxKObJte9Ttdj90f8syATedTiuAOwLYKbSL4TVo6Lru2PO8IFfAer1e
+xuEQakFnkAttQmPoRRdSLZlPQrSsO9A+tM06QUbPoSZll7KcFyDVm8VLSqA2qwI100AqYSYkK1pK
+qSBNASbVuzakmvP0aSRw46VCyqg9TCaTdaodriPtYLgqrm9xF1cTppIfDqAe5l5CPaXUYJZPyqh3
+QS53oJNhKclm9theynPmLQRJHSYoc5jg8lMfZAS0+HpHoya/BpCgHpL1A9Ke4V1bIfiKG2cmpErw
+LlGU7qYP2Wg0ylwzf9WNqVCcoA1O0ijcFm1RnAgzeYwsDqmB6KhEwaNIgKHt3KAnrqEn6D0KGLDy
+hPvliYp3AJrwxsXpFwUu9MGAwR6g24gvLsOorSxw3ztJqVR6hff0ITq9L9JW9z9eFhYYWzja7XYN
+N7zAV1ItC5xI2NaydDLuJ0XWZc3LB7XhTALGPTUVnDDx5kKeCoC4pz6ngTMBGPfUMDyAXenCGclg
+zFPvePgRcH1duMyWsoo/jz4FGACQelQ0xX0d/gAAAABJRU5ErkJggg==" transform="matrix(1 0 0 1 0.3794 5.3714)">
+		</image>
+		<g>
+			<path style="fill:#FFFFFF;" d="M37.548,19.88L25.068,7.399c-1.02-1.02-2.764-0.298-2.764,1.145v5.182
+				c0,0.819-0.664,1.482-1.482,1.482H4.295c-0.894,0-1.619,0.725-1.619,1.619v6.105c0,0.894,0.725,1.619,1.619,1.619h16.527
+				c0.819,0,1.482,0.664,1.482,1.482v5.182c0,1.442,1.744,2.165,2.764,1.145L37.548,19.88z"/>
+		</g>
+	</g>
+</g>
+<g id="Layer_1">
+</g>
 </svg>

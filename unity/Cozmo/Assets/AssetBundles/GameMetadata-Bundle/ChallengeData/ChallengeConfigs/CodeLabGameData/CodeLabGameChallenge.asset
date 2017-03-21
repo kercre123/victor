@@ -19,7 +19,7 @@ MonoBehaviour:
   _ChallengeID: CodeLabGame
   _ChallengeTitleLocKey: codeLab.title
   _ChallengeDescriptionLocKey: codeLab.description
-  _ChallengeIcon: {fileID: 21300000, guid: 4cceba5079b4c49b292ed2b19de823c8, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 089df9d0bc450436d83f7367e00b6eca, type: 3}
   _UnlockId:
     _EnumValueAsString: CodeLabGame
     _EnumValue: 36
@@ -31,7 +31,7 @@ MonoBehaviour:
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 345
+    _EnumValue: 354
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 345
+    _EnumValue: 354

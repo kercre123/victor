@@ -1,72 +1,36 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
-"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
-<!-- Created with Inkscape (http://www.inkscape.org/) --><svg height="120.00000pt" id="svg1" inkscape:version="0.38.1" sodipodi:docbase="/home/nicu/Desktop/new_smileys" sodipodi:docname="smiley111.svg" sodipodi:version="0.32" width="120.00000pt" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <metadata>
-    <rdf:RDF xmlns:cc="http://web.resource.org/cc/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-      <cc:Work rdf:about="">
-        <dc:title>Clipart by Nicu Buculei - smiley111</dc:title>
-        <dc:description></dc:description>
-        <dc:subject>
-          <rdf:Bag>
-            <rdf:li></rdf:li>
-            <rdf:li>people</rdf:li>
-            <rdf:li>smiley</rdf:li>
-          </rdf:Bag>
-        </dc:subject>
-        <dc:publisher>
-          <cc:Agent rdf:about="http://www.openclipart.org">
-            <dc:title>Nicu Buculei</dc:title>
-          </cc:Agent>
-        </dc:publisher>
-        <dc:creator>
-          <cc:Agent>
-            <dc:title>Nicu Buculei</dc:title>
-          </cc:Agent>
-        </dc:creator>
-        <dc:rights>
-          <cc:Agent>
-            <dc:title>Nicu Buculei</dc:title>
-          </cc:Agent>
-        </dc:rights>
-        <dc:date></dc:date>
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-        <cc:license rdf:resource="http://web.resource.org/cc/PublicDomain"/>
-        <dc:language>en</dc:language>
-      </cc:Work>
-      <cc:License rdf:about="http://web.resource.org/cc/PublicDomain">
-        <cc:permits rdf:resource="http://web.resource.org/cc/Reproduction"/>
-        <cc:permits rdf:resource="http://web.resource.org/cc/Distribution"/>
-        <cc:permits rdf:resource="http://web.resource.org/cc/DerivativeWorks"/>
-      </cc:License>
-    </rdf:RDF>
-  </metadata>
-  <defs id="defs3">
-    <linearGradient id="linearGradient838">
-      <stop id="stop839" offset="0.0000000" style="stop-color:#ffffff;stop-opacity:0.50000000;"/>
-      <stop id="stop840" offset="1.0000000" style="stop-color:#ffffff;stop-opacity:0.0000000;"/>
-    </linearGradient>
-    <linearGradient id="linearGradient827">
-      <stop id="stop828" offset="0.0000000" style="stop-color:#ffffff;stop-opacity:1.0000000;"/>
-      <stop id="stop829" offset="1.0000000" style="stop-color:#cc8ed3;stop-opacity:1.0000000;"/>
-    </linearGradient>
-    <radialGradient cx="0.43843809" cy="0.24228731" fx="0.44613335" fy="0.25009677" id="radialGradient830" r="0.39870128" xlink:href="#linearGradient827"/>
-    <linearGradient id="linearGradient837" x1="0.13281250" x2="0.93750000" xlink:href="#linearGradient838" y1="0.11718750" y2="0.94531250"/>
-  </defs>
-  <sodipodi:namedview bordercolor="#666666" borderopacity="1.0" id="base" inkscape:cx="66.155128" inkscape:cy="61.088751" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:window-height="663" inkscape:window-width="684" inkscape:window-x="345" inkscape:window-y="48" inkscape:zoom="3.4822023" pagecolor="#ffffff"/>
-  <path d="M 130.95732,72.296425 C 130.95732,98.179753 109.27534,119.18651 82.560051,119.18651 C 55.844758,119.18651 34.162781,98.179753 34.162781,72.296425 C 34.162781,46.413097 55.844758,25.406338 82.560051,25.406338 C 109.27534,25.406338 130.95732,46.413097 130.95732,72.296425 z " id="path826" style="fill:url(#radialGradient830);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2.4132968;stroke-dasharray:none;stroke-linejoin:round;" transform="matrix(1.019945,0.000000,0.000000,1.052160,-6.697623,-9.933914)"/>
-  <g id="g841" transform="translate(-74.48908,36.10290)">
-    <path d="M 143.01477,21.387184 C 143.01477,27.488255 137.68806,32.439848 131.12479,32.439848 C 124.56151,32.439848 118.51600,26.146887 118.51600,20.045816 C 118.51600,13.944746 120.60812,12.011230 127.17140,12.011230 C 133.73467,12.011230 143.01477,15.286114 143.01477,21.387184 z " id="path832" sodipodi:nodetypes="ccccc" style="fill:#ffffff;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:2.4177773;stroke-dasharray:none;stroke-linejoin:round;" transform="matrix(0.998802,0.000000,0.000000,1.070454,0.142038,-2.329516)"/>
-    <path d="M 140.33534,24.903942 C 140.33534,29.618406 136.13399,33.444637 130.95732,33.444637 C 125.78066,33.444637 121.57930,29.618406 121.57930,24.903942 C 121.57930,20.189478 125.78066,16.363247 130.95732,16.363247 C 136.13399,16.363247 140.33534,20.189478 140.33534,24.903942 z " id="path834" style="fill:#0000ff;fill-rule:evenodd;stroke-width:1.0000000pt;" transform="matrix(0.666452,0.000000,0.000000,0.731790,43.86252,2.256431)"/>
-    <path d="M 134.88675,20.537890 C 134.88675,22.607890 133.20675,24.287890 131.13675,24.287890 C 129.06675,24.287890 127.38675,22.607890 127.38675,20.537890 C 127.38675,18.467890 129.06675,16.787890 131.13675,16.787890 C 133.20675,16.787890 134.88675,18.467890 134.88675,20.537890 z " id="path835" style="fill:#000000;fill-rule:evenodd;stroke-width:1.0000000pt;fill-opacity:1.0000000;"/>
-    <path d="M 135.37718,19.287889 C 135.37718,22.047889 133.13718,24.287889 130.37718,24.287889 C 127.61718,24.287889 125.37718,22.047889 125.37718,19.287889 C 125.37718,16.527888 127.61718,14.287889 130.37718,14.287889 C 133.13718,14.287889 135.37718,16.527888 135.37718,19.287889 z " id="path836" style="fill:url(#linearGradient837);fill-rule:evenodd;stroke-width:1.0000000pt;"/>
-  </g>
-  <g id="g846" transform="translate(-34.44999,34.91603)">
-    <path d="M 143.73357,21.051842 C 143.73357,27.152913 137.68806,32.439848 131.12479,32.439848 C 124.56151,32.439848 119.23480,27.488255 119.23480,21.387184 C 119.23480,15.286114 129.95249,11.675888 136.51577,11.675888 C 143.07904,11.675888 143.73357,14.950772 143.73357,21.051842 z " id="path847" sodipodi:nodetypes="ccccc" style="fill:#ffffff;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:2.4177773;stroke-dasharray:none;stroke-linejoin:round;" transform="matrix(0.998802,0.000000,0.000000,1.070454,0.142038,-2.329516)"/>
-    <path d="M 140.33534,24.903942 C 140.33534,29.618406 136.13399,33.444637 130.95732,33.444637 C 125.78066,33.444637 121.57930,29.618406 121.57930,24.903942 C 121.57930,20.189478 125.78066,16.363247 130.95732,16.363247 C 136.13399,16.363247 140.33534,20.189478 140.33534,24.903942 z " id="path848" style="fill:#0000ff;fill-rule:evenodd;stroke-width:1.0000000pt;" transform="matrix(0.666452,0.000000,0.000000,0.731790,43.86252,2.256431)"/>
-    <path d="M 134.88675,20.537890 C 134.88675,22.607890 133.20675,24.287890 131.13675,24.287890 C 129.06675,24.287890 127.38675,22.607890 127.38675,20.537890 C 127.38675,18.467890 129.06675,16.787890 131.13675,16.787890 C 133.20675,16.787890 134.88675,18.467890 134.88675,20.537890 z " id="path849" style="fill:#000000;fill-rule:evenodd;stroke-width:1.0000000pt;fill-opacity:1.0000000;"/>
-    <path d="M 135.37718,19.287889 C 135.37718,22.047889 133.13718,24.287889 130.37718,24.287889 C 127.61718,24.287889 125.37718,22.047889 125.37718,19.287889 C 125.37718,16.527888 127.61718,14.287889 130.37718,14.287889 C 133.13718,14.287889 135.37718,16.527888 135.37718,19.287889 z " id="path850" style="fill:url(#linearGradient837);fill-rule:evenodd;stroke-width:1.0000000pt;"/>
-  </g>
-  <path d="M 63.109459,87.544193 C 67.224077,84.093182 85.760831,83.771125 93.986358,86.651974" id="path851" sodipodi:nodetypes="cc" style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:2.5000000;stroke-linejoin:round;stroke-dasharray:none;"/>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 40.254 40.367" style="enable-background:new 0 0 40.254 40.367;" xml:space="preserve">
+<g id="COZMO_-_Angry">
+	<g>
+		
+			<image style="overflow:visible;opacity:0.4;" width="35" height="21" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAWCAYAAACosj4+AAAACXBIWXMAAAsSAAALEgHS3X78AAAA
+GXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAtRJREFUeNrMVk1rGlEUnTczijom
+0EWkpaFQKBVCNxW7y7Y/QboQXbj0B7l0576QTek/KKG6ECxKVqUladIPiDoxmnF6zvSOPKcWTcnY
+Xrhz75uP88677869TxmQUqlkpSC2bRvT6fS61Wp5xi/xjbsVVS6XLUgGfgp2kk6nx41GI5zPsHlJ
+JpOOaZr5+Xzu4KXTarXq+r7Pl8a4NxaCf0NO8UISwHfgOkqpHWge+PeBPRiNRm3cv9QJKZBw8MJz
++AW8fAnfhR1j3MezfqVSGd6GHAjYGgELlhHJi+4Bn3YH9gg6gD8MMW2NWA56CL0HnZMACVEBeqGT
+w3iUzWaXQk2p1+sWVszF5fDOgRBwIoR2ZfyDvhA2lrZMhA92AfZAQs3J6L+QkIbkTmE70VBTSEai
+fCjfhYQssaHvR79dIsR8AYgL15XoWCFB0ZyQ47aecEuxfR/0UHMRnuelmYvAeonxM/nWXjGvJzsQ
+5upCTAFcbA8XugIgzAPaM0z4CRNPIrnk8x6fwf8MnfwhxW6g54wytCdz+0sRYrLil++B7TGGj6CP
+oVkhEK6GIMeY8DW0jcl/I55IJEbAagOHeWTItuVkq4xNcIKE6na782KxeAOQmXw0k+hxlV+g76Fv
+oW8A8A563mw2vSihTqfjFwqFK7jfgPWVFnotWN83wVEb/CHBduI+w3vBKKwio0utVrNmsxkjvCdY
+T+XRYB2OWldDIgXy5jZVMcTCt5kgYU3TXYej1lXZO2ohKqZWFL+o/2hu/18QUpFGa2mFOWhH9jZY
+aH9d0O21vhYkOxs6q4brum17G2TwZ+UQlQKGB9Ltn8A+1NoIi+UQracXOyFGBhEgmVdsvCzGPNqA
+1EdY9sWxNNoTHtjiJqQQnRSis4/J97XiyJNCB7YfNljmUCaTiT2HfKz6Spr2kbSqRbXWDnxG9IAW
+m/DP4dkJ+dHftFpvs+6sLTM/BRgATWqUMBZi2mgAAAAASUVORK5CYII=" transform="matrix(1 0 0 1 2.3794 10.3714)">
+		</image>
+		<g>
+			<path style="fill:#FFFFFF;" d="M8.595,18.527c-2.799-0.597-4.584-3.351-3.987-6.15c0.015-0.071,0.047-0.134,0.065-0.204
+				c3.172,1.037,6.481,2,9.909,2.872C13.776,17.543,11.217,19.087,8.595,18.527z M23.077,14.76c3.45-0.796,6.782-1.684,9.968-2.651
+				c0.033,0.127,0.084,0.244,0.107,0.375c0.507,2.817-1.366,5.512-4.183,6.018C26.306,18.982,23.776,17.322,23.077,14.76z
+				 M35.319,26.877c-0.044,0.001-4.124-0.179-6.812,2.309c-0.099,0.092-0.226,0.137-0.35,0.137c-0.139,0-0.276-0.055-0.379-0.165
+				c-0.193-0.209-0.181-0.536,0.028-0.729c3.012-2.791,7.386-2.596,7.567-2.58c0.284,0.015,0.501,0.258,0.487,0.542
+				C35.845,26.674,35.544,26.909,35.319,26.877z"/>
+		</g>
+	</g>
+</g>
+<g id="Layer_1">
+</g>
 </svg>

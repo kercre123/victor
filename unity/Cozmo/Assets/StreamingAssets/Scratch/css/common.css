@@ -90,12 +90,16 @@ button:focus {
     border: 1px solid #2a3a5b;
     margin-left: -1px;
     background-color: #2a3a5b;
-    background-image: url('../images/ui/ui_icon_close.svg');
+    background-image: url('../images/ui/ui_icon_close_up.svg');
     background-repeat: no-repeat;
     background-position: 50% 50%;
     background-size: 75%;
     transition: background-color 100ms;
     pointer-events: auto;
+}
+
+#close .primary button:active {
+    background-image: url('../images/ui/ui_icon_close_down.svg');
 }
 
 /**
@@ -112,29 +116,56 @@ button:focus {
     pointer-events: none;
 }
 
-#navigation .primary {
+#navigation .greenflag {
     display: block;
     position: absolute;
     left: calc(100% - 110px);
 }
 
-#navigation .primary button {
+#navigation .greenflag button {
     display: block;
     position: relative;
     width: 72px;
     height: 72px;
-    border-radius: 50%;
-    margin-bottom: 20px;
-    background-color: #BECDE5;
-    border: 1px solid #334B68;
+    background-color: #2a3a5b;
+    background-image: url('../images/ui/greenflag-up.svg');
+    border: 1px solid #2a3a5b;
     pointer-events: auto;
 }
 
-#navigation .primary button:active {
-    background-color: #768CA5;
+#navigation .greenflag button:active {
+    background-image: url('../images/ui/greenflag-down.svg');
 }
 
-#navigation .primary button img {
+#navigation .greenflag button img {
+    width: 100%;
+    height: 100%;
+    margin: 0px 0 0 1px;
+}
+
+#navigation .stop {
+    display: block;
+    position: absolute;
+    left: calc(100% - 110px);
+    top: 75px;
+}
+
+#navigation .stop button {
+    display: block;
+    position: relative;
+    width: 72px;
+    height: 72px;
+    background-color: #2a3a5b;
+    background-image: url('../images/ui/stop-up.svg');
+    border: 1px solid #2a3a5b;
+    pointer-events: auto;
+}
+
+#navigation .stop button:active {
+    background-image: url('../images/ui/stop-down.svg');
+}
+
+#navigation .stop button img {
     width: 100%;
     height: 100%;
     margin: 0px 0 0 1px;

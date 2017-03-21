@@ -1,19 +1,38 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="レイヤー_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
-	 y="0px" width="128px" height="128px" viewBox="0 0 128 128" enable-background="new 0 0 128 128" xml:space="preserve">
-<g>
-	<path fill="#FCC21B" d="M123.93,76.16c10.52-28.3-2.65-59.13-33.49-65.6C21.13-4.02-3.53,55.18,1.02,95.4
-		c0,13.42,27.72,24.31,61.92,24.31c34.2,0,61.92-10.88,61.92-24.31C124.86,89.04,119.65,87.71,123.93,76.16z"/>
-	<path fill="#2F2F2F" d="M62.28,69.69c-8.64-0.77-12.02-7.18-12.16-7.45c-0.68-1.32-0.16-2.93,1.16-3.6
-		c1.31-0.69,2.91-0.17,3.6,1.13c0.12,0.21,2.31,4.09,7.86,4.58c5.67,0.46,8.56-3.08,8.59-3.11c0.9-1.17,2.58-1.39,3.75-0.48
-		c1.17,0.9,1.4,2.59,0.49,3.76c-0.17,0.23-4.13,5.25-11.73,5.25C63.34,69.76,62.82,69.74,62.28,69.69z"/>
-	<path fill="#2F2F2F" d="M100.63,90.19c-0.98,1.32-2.84,1.61-4.17,0.63c-18.09-13.37-34.79,1.02-35.49,1.65
-		c-0.57,0.5-1.28,0.74-1.98,0.74c-0.83,0-1.66-0.34-2.23-1c-1.1-1.25-0.99-3.14,0.25-4.23c0.21-0.18,21.07-18.18,43-1.97
-		C101.34,86.99,101.62,88.86,100.63,90.19z"/>
-	<path fill="#2F2F2F" d="M115.3,68.23c-0.16,0.23-3.84,5.13-10.92,5.13c-0.47,0-0.96-0.02-1.46-0.07
-		c-8.03-0.73-11.18-6.99-11.32-7.25c-0.64-1.32-0.16-2.94,1.11-3.62c1.24-0.69,2.77-0.17,3.43,1.12c0.1,0.2,2.12,3.93,7.23,4.4
-		c5.16,0.47,7.83-2.94,7.88-2.98c0.85-1.17,2.47-1.39,3.58-0.5C115.96,65.38,116.16,67.06,115.3,68.23z"/>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 40.254 40.367" style="enable-background:new 0 0 40.254 40.367;" xml:space="preserve">
+<g id="COZMO_-_Heartbreak">
+	<g>
+		
+			<image style="overflow:visible;opacity:0.4;" width="38" height="34" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAjCAYAAAAXMhMjAAAACXBIWXMAAAsSAAALEgHS3X78AAAA
+GXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA9JJREFUeNq8WEtrE1EUnldqmsQW
+wQQXuqiPlBbUGtpd+x8EKYhZFPrDuusqFrtUBF20iMHSCIGUChWslkqkFG0epslk/E49U2+m87gz
+k3rgy0wmM+d+93znnnsyquJvasDvlhJskX24Pri8vKx3u90MTtOqququHi3LxKGZSCQaKysr5mX4
+UN2c9vv9HFDA12ly7jGxJlDTNG0bqIvOh+HjAjnbKWa0ADzGpUKA421EZR3YEJ0vLS2N4zAPH09x
+nIviY4Ccg9gTXFoAsoDh4bgH/AA24HjNdt7pdFRd1ydwvQg8AybC+rAJGj7EcoDuk8gG30PPmEAT
+2DQMg3JpCtcf8e+GrA+KpGmamzj+pB81+qDEpfxgKWWI2aZzdInINGZOyU8STjIyIXzMYvw5IFcs
+Fg2bnMo5Mc2DZCWJibOn51O8KnX7ewg/dgRp/ClImz6PHDtNsVNDCW80QRWzpvRIR/STESJOz6uG
+cwAlmllct8jpXSDvs0L95E0JCvyNXEyjRG5xWUgysckI5C4EaBjkiNQusEeycu6MhcxbVxsWuU/A
+N+BmREnF9LCGSc5kgmR3Ykhqp0eLa94AOUuyy1A8NvEoJcQtPXb53NKE7qDFMCM41rn4Ri1FA+RQ
+jpp25CwH60YMSfMcOSuCpL9on0WgTlZXV//Jykx3gApQ5w05zGLYh9NxXqXHwAFwyAPKKNFwSmoX
+PqVarfZnZmZMSEOSXOdykJJYMLRBb4HYR5ojnu8CNMA28BVIANeAER8fPZ7Ma+ANAlUnPoqYH2hz
+GugIKjx7wjwwHkDurOiC0G+OUA9EK8Aezh/iel5CTmqZtnDvB1INkvbELePMKpWKlc/n22iZ2xy9
+20xOC9iw6d57tGHTOYjtY6BD4D5PMOvj4wQoA89x/3sE6Jh4XCBHVqvVwspL168AVxkkrS3nPHc6
+owFyviK02+0DeyGIMx+sCZAXulPOpLl2yfZ3qtD6jDGxjKycpVKp59YJDBiFtVAokLRHvHLSHEWZ
+BWIxwRvALY+omVwRqDV/AZSdcnqSi0nQ4Dz1ulcktub2pyaQXAyCGpeNkbjElKA8iilxLGKKRJIP
+g6Dv379Y5GIQNHlbonLxjpNfmpg0uQCCoz75VeY69hKkymGIhSLnQTAptEkGkzyXESihVhK5HfzZ
+Pg5DTOb1lOL1Fkp4UUPvQmaBB0z0iIvrOo6brVbLtcAOPXLOCKJR+I6vn4kQyNDWtY/ztyQlyYji
+WnduSZceOdEWFxeNZDKZ4w5Eh4xfSFavd27/lZwtM0hR/imnp6cdse2JY38EGABVmywbOgtDRwAA
+AABJRU5ErkJggg==" transform="matrix(1 0 0 1 1.4273 3.4194)">
+		</image>
+		<g>
+			<path style="fill:#FFFFFF;" d="M20.206,35.48c0,0-16.741-10.858-16.741-21.653c0-4.623,3.748-8.371,8.371-8.371
+				c3.115,0,5.828,1.706,7.269,4.231l-2.206,13.444h4.258l-0.951,8.091l5.209-10.754h-5.209l3.988-13.763
+				c1.276-0.787,2.773-1.249,4.382-1.249c4.623,0,8.371,3.748,8.371,8.371C36.947,24.621,20.206,35.48,20.206,35.48z"/>
+		</g>
+	</g>
+</g>
+<g id="Layer_1">
 </g>
 </svg>

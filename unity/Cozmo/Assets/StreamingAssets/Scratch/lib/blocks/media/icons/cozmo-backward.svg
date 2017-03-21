@@ -1,42 +1,30 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-<svg
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   version="1.0"
-   width="434"
-   height="364"
-   id="svg2">
-  <defs
-     id="defs4" />
-  <g
-     id="layer1">
-    <g
-       id="g4142">
-      <rect
-         width="100"
-         height="257.741"
-         x="181.50136"
-         y="-0.70613718"
-         transform="matrix(1,0,-0.7061362,0.7080761,0,0)"
-         style="fill:#000000;fill-opacity:1;stroke-width:80;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         id="rect4116" />
-      <use
-         transform="matrix(1,0,-2.660624e-8,-1,-4.5291225e-8,363.5)"
-         id="use4120"
-         x="0"
-         y="0"
-         width="434"
-         height="364"
-         xlink:href="#rect4116" />
-      <rect
-         width="367.69553"
-         height="100"
-         x="66.729935"
-         y="132"
-         style="fill:#000000;fill-opacity:1;stroke-width:80;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         id="rect4122" />
-    </g>
-  </g>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 40.254 40.367" style="enable-background:new 0 0 40.254 40.367;" xml:space="preserve">
+<g id="MOVE_BACK">
+	<g>
+		
+			<image style="overflow:visible;opacity:0.4;" width="39" height="29" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAeCAYAAABe3VzdAAAACXBIWXMAAAsSAAALEgHS3X78AAAA
+GXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAjFJREFUeNrUl8tKw0AYhZNJC5Ko
+K+tDdGf2vkPBN+hDdWd3LiwIfQI33SjFxlZRETeKUKwXrE0UadJ4ThkllqJ2Oib6w2Gmk9F8zH+b
+mIaClctlKwxDxzRNyorjOMIY2LYdVCqVyNBoORW40Wi0iqkLsCJkY/6E0fN9v8V5ZoDvcIBZx88S
+ISECdvkc6+cYBpymDpiEgzawRMgCZMkty3S3odlyc8CtJuBMKe0mNMD9qgmdcNiTHuCMcFxzqFKp
+ZCVcrqJPZmpyK0tLA3u3MTZZE1VOi/UUQ5DP5/1qtRpNBVSMOf6zHsQ6eMqXKHqUf3cihGhBPUKa
+GhMiki8I5FwVsAUP1KEGIXMas5X7lqVULYSWmGxQAJ6G+AulZKIu871rUJG9fnyCw+FwET9c2b6y
+gktCsiLY7ExCJgoXipK8kCGcMdmZhPHHTcibxzi9IQ+6nSMLdVn8fiMaxyALI5KkhQRxICvjOAzl
+gT2zcI8BPM+LXdd9wfRePmRMrsi7nkgZjgV/D9qFLj5OSAMkw8KHHqC+bH+z6oZwLNQo0vuWZT3+
+r1b3Ly4LipD8JtnCvs3BYHBRr9ejOTP4U/+cajPGJGNun6rVan2dH01fBj+PmbHAmwW0QzfKWJt6
+QtiT/jfJrJCpA34DGSaqfvwbgD/uFFNickHqRSbJAZLkqNPp+JkATkIC5g7jNXRMOD7G6V622+3X
+zACTkChBXQCdwfWHWD7CeOU4TtBsNrW6+k2AAQDZDbscZCGHigAAAABJRU5ErkJggg==" transform="matrix(1 0 0 1 0.3794 5.3714)">
+		</image>
+		<g>
+			<path style="fill:#FFFFFF;" d="M2.676,19.88L15.156,32.36c1.02,1.02,2.764,0.298,2.764-1.145v-5.182
+				c0-0.819,0.664-1.482,1.482-1.482h16.527c0.894,0,1.619-0.725,1.619-1.619v-6.105c0-0.894-0.725-1.619-1.619-1.619H19.402
+				c-0.819,0-1.482-0.664-1.482-1.482V8.544c0-1.442-1.744-2.165-2.764-1.145L2.676,19.88z"/>
+		</g>
+	</g>
+</g>
+<g id="Layer_1">
+</g>
 </svg>
