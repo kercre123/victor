@@ -88,7 +88,6 @@ int main(void)
   // Run forever, because we are awesome.
   for (;;) {
     __asm { WFI }
-    Watchdog::kick(WDOG_ROOT_LOOP);
     Battery::updateOperatingMode();
   }
 }

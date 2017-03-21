@@ -14,12 +14,94 @@ namespace Anki
   namespace Cozmo
   {
     namespace HAL
-    {    
+    {
       // This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
       namespace Power
-      {  
+      {
+        static void oldPowerSequencing(void)
+        {
+          // Pull-up MISO during ESP8266 boot
+          GPIO_IN(MISO);
+          SOURCE_SETUP(MISO, SourceGPIO | SourcePullUp);
+
+          // Pull-down SCK during ESP8266 boot
+          GPIO_RESET(SCK);
+          GPIO_OUT(SCK);    // XXX: Driving SCK low here is bad for the ESP, why not pulldown?
+          SOURCE_SETUP(SCK, SourceGPIO);
+
+          // Weakly pull MOSI high to put ESP8266 into flash boot mode
+          // We rely on the fixture to pull this strongly low and enter bootloader mode
+          GPIO_IN(MOSI);
+          SOURCE_SETUP(MOSI, SourceGPIO | SourcePullUp);
+
+          // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
+          GPIO_IN(WS);
+          SOURCE_SETUP(WS, SourceGPIO | SourcePullUp);
+
+          Anki::Cozmo::HAL::MicroWait(10000);
+
+          // Turn on 2v8 and 3v3 rails
+          GPIO_SET(POWEREN);
+          GPIO_OUT(POWEREN);
+          SOURCE_SETUP(POWEREN, SourceGPIO);
+
+          #ifndef ENABLE_FCC_TEST
+          // Wait for Espressif to toggle out 4 words of I2SPI
+          for (int i = 0; i < 32 * 512; i++)
+          {
+            while (GPIO_READ(WS))     ;
+            while (!GPIO_READ(WS))     ;
+          }
+
+          // Switch to 10MHz Espressif/external reference and 100MHz clock
+          MCG_C1 &= ~MCG_C1_IREFS_MASK;
+          // Wait for IREF to turn off
+          while((MCG->S & MCG_S_IREFST_MASK))   ;
+          // Wait for FLL to lock
+          while((MCG->S & MCG_S_CLKST_MASK))    ;
+
+          MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
+
+          GPIO_IN(SCK);   // XXX: Shouldn't we turn around SCK sooner? Are we driving against each other?
+          #endif
+
+          SOURCE_SETUP(MISO, SourceGPIO);
+
+          MicroWait(10000);
+
+          // Power enable the OLED
+          GPIO_OUT(OLED_RESET_N);
+          PORTA_PCR19  = PORT_PCR_MUX(1);
+
+          MicroWait(80);
+          GPIO_RESET(OLED_RESET_N);
+          MicroWait(80);
+          GPIO_SET(OLED_RESET_N);
+
+          MicroWait(10000);
+
+          // Camera sequencing
+          GPIO_SET(CAM_PWDN);
+          GPIO_OUT(CAM_PWDN);
+          SOURCE_SETUP(CAM_PWDN, SourceGPIO);
+
+          GPIO_RESET(CAM_RESET_N);
+          GPIO_OUT(CAM_RESET_N);
+          SOURCE_SETUP(CAM_RESET_N, SourceGPIO);
+
+          MicroWait(50);
+          GPIO_RESET(CAM_PWDN);
+          MicroWait(50);
+          GPIO_SET(CAM_RESET_N);
+        }
+
         void enableExternal(void)
         {
+          if (*HW_VERSION != 0x01050000) {
+            oldPowerSequencing();
+            return ;
+          }
+
           // Setup initial state for power on sequencing
           // Initial state of the machine (Powered down, disabled)
           GPIO_RESET(POWEREN);
@@ -46,15 +128,15 @@ namespace Anki
           GPIO_RESET(SCK);
           GPIO_OUT(SCK);    // XXX: Driving SCK low here is bad for the ESP, why not pulldown?
           SOURCE_SETUP(SCK, SourceGPIO);
-          
+
           // Weakly pull MOSI high to put ESP8266 into flash boot mode
           // We rely on the fixture to pull this strongly low and enter bootloader mode
           GPIO_IN(MOSI);
-          SOURCE_SETUP(MOSI, SourceGPIO | SourcePullUp); 
+          SOURCE_SETUP(MOSI, SourceGPIO | SourcePullUp);
 
           // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
           GPIO_IN(WS);
-          SOURCE_SETUP(WS, SourceGPIO | SourcePullUp); 
+          SOURCE_SETUP(WS, SourceGPIO | SourcePullUp);
 
           Anki::Cozmo::HAL::MicroWait(10000);
 
@@ -87,7 +169,7 @@ namespace Anki
           while((MCG->S & MCG_S_CLKST_MASK))    ;
 
           MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
-          
+
           GPIO_IN(SCK);   // XXX: Shouldn't we turn around SCK sooner? Are we driving against each other?
           #endif
 
@@ -129,7 +211,7 @@ namespace Anki
 
           // Wait to see the line pulled low
           while (!GPIO_READ(BODY_UART_RX)) ;
-          
+
           NVIC_SystemReset();
         }
       }
