@@ -113,7 +113,7 @@ void SdkStatus::ExitMode()
   const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
   Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
   
-  OnDisconnect();
+  OnDisconnect(true);
   _isInExternalSdkMode = false;
   _isInInternalSdkMode = false;
 }
@@ -145,13 +145,13 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
 void SdkStatus::OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message)
 {
   Util::sEventF("robot.sdk_wrong_version", {{DDATA, message.buildVersion.c_str()}}, "");
-  OnDisconnect();
+  OnDisconnect(false);
   _isWrongSdkVersion = true;
   _connectedSdkBuildVersion = message.buildVersion;
 }
 
   
-void SdkStatus::OnDisconnect()
+void SdkStatus::OnDisconnect(bool isExitingSDKMode)
 {
   if (_isConnected)
   {
@@ -160,7 +160,7 @@ void SdkStatus::OnDisconnect()
     
     if (_stopRobotOnDisconnect)
     {
-      ResetRobot(true);
+      ResetRobot(isExitingSDKMode);
     }
     
     _isConnected = false;
@@ -206,7 +206,7 @@ void SdkStatus::UpdateConnectionStatus(const ISocketComms* sdkSocketComms)
   {
     if (sdkSocketComms->GetNumConnectedDevices() == 0)
     {
-      OnDisconnect();
+      OnDisconnect(false);
     }
   }
 }

@@ -55,7 +55,7 @@ public:
   
   void OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionSuccess& message);
   void OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message);
-  void OnDisconnect();
+  void OnDisconnect(bool isExitingSDKMode);
   void SetStopRobotOnDisconnect(bool newVal);
   
   void OnRecvMessage(const ExternalInterface::MessageGameToEngine& message, size_t messageSize);
