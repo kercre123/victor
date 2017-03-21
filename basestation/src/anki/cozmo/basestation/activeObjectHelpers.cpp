@@ -62,6 +62,7 @@ bool IsValid(ActiveObjectType activeObjectType)
     case ActiveObjectType::OBJECT_CHARGER:
       return true;
   }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,6 +80,7 @@ bool IsLightCube(ActiveObjectType activeObjectType)
     case ActiveObjectType::OBJECT_CUBE3:
       return true;
   }
+  return false;
 }
 
 } // namespace Cozmo
