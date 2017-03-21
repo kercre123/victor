@@ -130,8 +130,8 @@ PROTO WebotsKeyboardController [
 
   field SFFloat liftKp 3
   field SFFloat liftKi 0.1
-  field SFFloat liftKd 1250
-  field SFFloat liftMaxErrorSum 4
+  field SFFloat liftKd 3000
+  field SFFloat liftMaxErrorSum 5
 
   field SFFloat pointTurnKp 150
   field SFFloat pointTurnKi 0.3

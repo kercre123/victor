@@ -22,7 +22,17 @@ namespace Anki {
   namespace Cozmo {
     namespace LiftController {
 
-
+      
+      // Returns the angle between the shoulder joint and the wrist joint.
+      f32 Height2Rad(f32 height_mm) {
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
+      }
+      
+      f32 Rad2Height(f32 angle) {
+        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+      }
+      
       namespace {
 
         // How long the lift needs to stop moving for before it is considered to be limited.
@@ -44,8 +54,15 @@ namespace Anki {
         // TODO: Find out what this actually is
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
         
-        // Initialized in Init()
-        f32 LIFT_ANGLE_LOW_LIMIT;
+        // Physical limits in radians
+        const f32 LIFT_ANGLE_LOW_LIMIT_RAD = Height2Rad(LIFT_HEIGHT_LOWDOCK);
+        const f32 LIFT_ANGLE_HIGH_LIMIT_RAD = Height2Rad(LIFT_HEIGHT_CARRY);
+        
+        // If the lift angle falls outside of the range defined by these thresholds, do not use D control.
+        // This is to prevent vibrating that tends to occur at the physical limits.
+        const f32 NO_D_ANGULAR_RANGE_RAD = DEG_TO_RAD(5.f);
+        const f32 USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD = LIFT_ANGLE_LOW_LIMIT_RAD + NO_D_ANGULAR_RANGE_RAD;
+        const f32 USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD = LIFT_ANGLE_HIGH_LIMIT_RAD - NO_D_ANGULAR_RANGE_RAD;
 
 #ifdef SIMULATOR
         // For disengaging gripper once the lift has reached its final position
@@ -65,7 +82,7 @@ namespace Anki {
         const f32 LIFT_FINGER_HEIGHT = 3.8f;
 #else
         f32 Kp_ = 3.f;     // proportional control constant
-        f32 Kd_ = 2000.f;  // derivative gain
+        f32 Kd_ = 3000.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 5.f;
@@ -154,21 +171,10 @@ namespace Anki {
         
       } // "private" members
 
-      // Returns the angle between the shoulder joint and the wrist joint.
-      f32 Height2Rad(f32 height_mm) {
-        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
-        return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
-      }
-
-      f32 Rad2Height(f32 angle) {
-        return (sinf(angle) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
-      }
 
 
       Result Init()
       {
-        // Init consts
-        LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK);
         return RESULT_OK;
       }
 
@@ -292,7 +298,7 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
-                ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
+                ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT_RAD);
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MOTOR_LIFT, false);
               }
@@ -629,10 +635,20 @@ namespace Anki {
           angleError = 0;
         }
 
-
         // Compute power
-        power_ = ANTI_GRAVITY_POWER_BIAS + (Kp_ * angleError) + (Kd_ * (angleError - prevAngleError_) * CONTROL_DT) + (Ki_ * angleErrorSum_);
+        const f32 powerP = Kp_ * angleError;
+        const f32 powerD = Kd_ * (angleError - prevAngleError_) * CONTROL_DT;
+        const f32 powerI = Ki_ * angleErrorSum_;
+        power_ = ANTI_GRAVITY_POWER_BIAS + powerP + powerD + powerI;
 
+        // Remove D term if lift is near limits
+        if ((currentAngle_.ToFloat() < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD &&
+             currDesiredAngle_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD) ||
+            (currentAngle_.ToFloat() > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD &&
+             currDesiredAngle_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD)) {
+          power_ -= powerD;
+        }
+        
         // Update error terms
         prevAngleError_ = angleError;
         angleErrorSum_ += angleError;
