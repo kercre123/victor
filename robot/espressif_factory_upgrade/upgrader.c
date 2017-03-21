@@ -11,6 +11,15 @@ extern void SelectSpiFunction();
 extern uint32 SPILock();
 extern uint32 SPIUnlock();
 
+
+#define READ_PERI_REG(addr) (*((volatile uint32_t *)(addr)))
+#define WRITE_PERI_REG(addr, val) (*((volatile uint32_t *)(addr))) = (uint32_t)(val)
+#define REG_SPI_BASE(i) (0x60000200 - i * 0x100)
+#define SPI_CMD_REG(i) (REG_SPI_BASE(i) + 0x0)
+#define SPI_FLASH_RDID (1<<28)
+#define SPI_W0_REG(i) (REG_SPI_BASE(i) + 0x40)
+
+
 static uint32_t magic = 42; // To keep the toolchain from falling apart
 
 uint32_t wordcmp(const uint32_t* a, const uint32_t* b, const uint32_t size)
@@ -34,13 +43,21 @@ void call_user_start() {
   uint32_t payloadSize = 0xFFFFffff;
   uint32_t payloadSectors = 0;
   uint32_t sector;
+  uint32_t chip_id;
 
   uart_div_modify(0, (50*1000000)/230400);
   SelectSpiFunction();
   // Debugging delay
   ets_delay_us(1000);
   
-  ets_printf("\r\nYou will be upgraded\r\n");
+  ets_printf("\r\nYou will be upgraded, Adam\r\n");
+
+  WRITE_PERI_REG(SPI_CMD_REG(0), SPI_FLASH_RDID);
+  while (READ_PERI_REG(SPI_CMD_REG(0)) & SPI_FLASH_RDID) {
+  }
+  chip_id = READ_PERI_REG(SPI_W0_REG(0)) & 0xFFFFFF;
+  
+  ets_printf("ChipID %x\r\n", chip_id);
   
   if (SPIUnlock() != 0)
   {
