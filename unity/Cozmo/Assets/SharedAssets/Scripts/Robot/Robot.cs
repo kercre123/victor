@@ -824,7 +824,7 @@ public class Robot : IRobot {
 
       ActiveObject objectPoseUnknown = GetActiveObjectById((int)message.objectID);
       if (objectPoseUnknown != null) {
-      	objectPoseUnknown.MarkPoseUnknown();
+        objectPoseUnknown.MarkPoseUnknown();
       }
     }
   }
@@ -1782,22 +1782,22 @@ public class Robot : IRobot {
     SetHeadAngle();
   }
 
-// rsam: meaning has changed. Probably no need to support now
-//  public void ClearAllBlocks() {
-//    DAS.Debug(this, "Clear All Blocks");
-//    RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
-//    RobotEngineManager.Instance.SendMessage();
-//    Reset(null);
-//
-//    SetLiftHeight(0f);
-//    SetHeadAngle();
-//  }
-//
-//  public void ClearAllObjects() {
-//    RobotEngineManager.Instance.Message.ClearAllObjects = Singleton<ClearAllObjects>.Instance.Initialize(ID);
-//    RobotEngineManager.Instance.SendMessage();
-//    Reset(null);
-//  }
+  // rsam: meaning has changed. Probably no need to support now
+  //  public void ClearAllBlocks() {
+  //    DAS.Debug(this, "Clear All Blocks");
+  //    RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
+  //    RobotEngineManager.Instance.SendMessage();
+  //    Reset(null);
+  //
+  //    SetLiftHeight(0f);
+  //    SetHeadAngle();
+  //  }
+  //
+  //  public void ClearAllObjects() {
+  //    RobotEngineManager.Instance.Message.ClearAllObjects = Singleton<ClearAllObjects>.Instance.Initialize(ID);
+  //    RobotEngineManager.Instance.SendMessage();
+  //    Reset(null);
+  //  }
 
   public void VisionWhileMoving(bool enable) {
     RobotEngineManager.Instance.Message.VisionWhileMoving = Singleton<VisionWhileMoving>.Instance.Initialize(System.Convert.ToByte(enable));
@@ -2191,8 +2191,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExitSDKMode() {
-    RobotEngineManager.Instance.Message.ExitSdkMode = Singleton<ExitSdkMode>.Instance;
+  public void ExitSDKMode(bool isExternalSdkMode) {
+    RobotEngineManager.Instance.Message.ExitSdkMode = Singleton<ExitSdkMode>.Instance.Initialize(isExternalSdkMode);
     RobotEngineManager.Instance.SendMessage();
   }
 

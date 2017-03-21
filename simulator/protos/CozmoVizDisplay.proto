@@ -5,7 +5,7 @@ PROTO CozmoVizDisplay
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
   field SFString streamResolution "QVGA"
-
+  field SFInt32 blankImageFrequency_ms 0  # How often to auto-blank Cozmo's camera display, 0 to disable
   field SFBool filterLogs FALSE
 ]
 {

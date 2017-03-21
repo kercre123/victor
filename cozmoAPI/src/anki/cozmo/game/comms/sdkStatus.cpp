@@ -52,16 +52,25 @@ inline double GetTimeBetween_s(double startTime_s, double endTime_s)
 }
 
 
-void SdkStatus::StopRobotDoingAnything()
+void SdkStatus::ResetRobot(bool isExitingSDKMode)
 {
   using GToE = ExternalInterface::MessageGameToEngine;
   
-  // Disable reactionary behaviors
-  _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", false)) );
-  
-  // Clear Behaviors
-  _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
-  _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
+  if (isExitingSDKMode) {
+    // Enable reactionary behaviors
+    _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", true)) );
+
+    // Return to freeplay
+    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Freeplay)) );
+  }
+  else {
+    // Disable reactionary behaviors
+    _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", false)) );
+
+    // Clear Behaviors
+    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
+    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
+  }
   
   // Turn off all Cube Lights
   _externalInterface->Broadcast( GToE(ExternalInterface::EnableCubeSleep(true, true)) );
@@ -85,7 +94,7 @@ void SdkStatus::EnterMode(bool isExternalSdkMode)
   DEV_ASSERT(!IsInAnySdkMode(), "SdkStatus.EnterMode.AlreadyInMode");
   Util::sEventF("robot.sdk_mode_on", {}, "");
   
-  StopRobotDoingAnything();
+  ResetRobot(false);
   
   if (isExternalSdkMode) {
     _isInExternalSdkMode = true;
@@ -104,7 +113,7 @@ void SdkStatus::ExitMode()
   const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
   Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
   
-  OnDisconnect();
+  OnDisconnect(true);
   _isInExternalSdkMode = false;
   _isInInternalSdkMode = false;
 }
@@ -136,13 +145,13 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
 void SdkStatus::OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message)
 {
   Util::sEventF("robot.sdk_wrong_version", {{DDATA, message.buildVersion.c_str()}}, "");
-  OnDisconnect();
+  OnDisconnect(false);
   _isWrongSdkVersion = true;
   _connectedSdkBuildVersion = message.buildVersion;
 }
 
   
-void SdkStatus::OnDisconnect()
+void SdkStatus::OnDisconnect(bool isExitingSDKMode)
 {
   if (_isConnected)
   {
@@ -151,7 +160,7 @@ void SdkStatus::OnDisconnect()
     
     if (_stopRobotOnDisconnect)
     {
-      StopRobotDoingAnything();
+      ResetRobot(isExitingSDKMode);
     }
     
     _isConnected = false;
@@ -197,7 +206,7 @@ void SdkStatus::UpdateConnectionStatus(const ISocketComms* sdkSocketComms)
   {
     if (sdkSocketComms->GetNumConnectedDevices() == 0)
     {
-      OnDisconnect();
+      OnDisconnect(false);
     }
   }
 }

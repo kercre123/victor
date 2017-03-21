@@ -127,12 +127,11 @@ private:
   int _uprightAnimIndex;
   int _onSideAnimIndex;
   bool _forceLightMusicUpdate;
-  bool _lightsShouldMessageCubeOnSide;
   float _timeRespondedRollStartedPreviously_s;
   
   
   void UpdateActiveBehaviorGroup(Robot& robot, bool settingUpPyramid);
-  bool IsPyramidSoftSpark(Robot& robot);
+  bool IsPyramidHardSpark(Robot& robot);
 
   ////////
   /// General Chooser functions

@@ -78,7 +78,7 @@ namespace Cozmo.Settings {
       base.CleanUp();
       // Send ExitSDKMode to engine as we clean up this view
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ExitSDKMode();
+        RobotEngineManager.Instance.CurrentRobot.ExitSDKMode(true);
       }
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SdkStatus>(HandleSDKMessageReceived);
@@ -185,7 +185,7 @@ namespace Cozmo.Settings {
           robot.EnableCubeSleep(true);
           // Immediately send Exit SDK Mode here since we want SDK disabled before we unpause the app.
           // The IdleTimeout will handle the rest
-          robot.ExitSDKMode();
+          robot.ExitSDKMode(true);
         }
 
         RobotEngineManager.Instance.StartIdleTimeout(0.0f, 0.0f);

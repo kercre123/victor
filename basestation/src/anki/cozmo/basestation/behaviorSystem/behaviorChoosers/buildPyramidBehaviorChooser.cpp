@@ -40,8 +40,6 @@ namespace Cozmo {
 namespace{
 using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   
-static const char* kLightsShouldMessageCubeOnSideKey = "shouldCubeMessageOnSide";
-
 static const int kMinUprightBlocksForPyramid      = 3;
 static const float kDelayAccountForPlacing_s      = 3.0f;
 static const float kDelayAccountForBaseCreation_s = 5.0f;
@@ -124,14 +122,9 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _uprightAnimIndex(0)
 , _onSideAnimIndex(0)
 , _forceLightMusicUpdate(false)
-, _lightsShouldMessageCubeOnSide(false)
 , _timeRespondedRollStartedPreviously_s(-1.0f)
 {
   UpdateActiveBehaviorGroup(_robot, true);
-  
-  JsonTools::GetValueOptional(config,
-                              kLightsShouldMessageCubeOnSideKey,
-                              _lightsShouldMessageCubeOnSide);
   
   /////////
   // Get pointers to all behaviors that must be manually called
@@ -316,16 +309,14 @@ void BuildPyramidBehaviorChooser::UpdateActiveBehaviorGroup(Robot& robot, bool s
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BuildPyramidBehaviorChooser::IsPyramidSoftSpark(Robot& robot)
+bool BuildPyramidBehaviorChooser::IsPyramidHardSpark(Robot& robot)
 {
-  const bool isRequestSoft = robot.GetBehaviorManager().IsRequestedSparkSoft() &&
-              (robot.GetBehaviorManager().GetRequestedSpark() == UnlockId::BuildPyramid);
-  const bool isActiveSparkSoft = robot.GetBehaviorManager().IsActiveSparkSoft() &&
-              (robot.GetBehaviorManager().GetActiveSpark() == UnlockId::BuildPyramid);
   const bool isRequestedSparkHard = robot.GetBehaviorManager().IsRequestedSparkHard() &&
               (robot.GetBehaviorManager().GetRequestedSpark() == UnlockId::BuildPyramid);
+  const bool isActiveSparkHard = robot.GetBehaviorManager().IsActiveSparkHard() &&
+              (robot.GetBehaviorManager().GetActiveSpark() == UnlockId::BuildPyramid);
   
-  return !isRequestedSparkHard && (isActiveSparkSoft || isRequestSoft);
+  return isRequestedSparkHard || isActiveSparkHard;
 }
 
   
@@ -682,10 +673,7 @@ IBehavior* BuildPyramidBehaviorChooser::CheckForResponsePossiblyRoll(Robot& robo
       }
       
       if(bestBehavior == nullptr && !entry.second.GetHasAcknowledgedPositively()){
-        const bool isSoftSpark = IsPyramidSoftSpark(robot);
-
-        const int onSideIdx = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ?
-                                                 _onSideAnimIndex : -1;
+        const int onSideIdx = IsPyramidHardSpark(robot) ? _onSideAnimIndex : -1;
         
         BehaviorPreReqRespondPossiblyRoll preReqData(entry.second.GetObjectID(),
                                                      _uprightAnimIndex,
@@ -853,7 +841,7 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
   const bool uprightCountChanged = _lastUprightBlockCount != countOfBlocksUpright;
   if(uprightCountChanged && _robot.HasExternalInterface()){
     // Collect information about state of world/game
-    const bool isSoftSpark = IsPyramidSoftSpark(robot);
+    const bool isHardSpark = IsPyramidHardSpark(robot);
     const bool didUserRequestSparkEnd =
                   robot.GetBehaviorManager().DidGameRequestSparkEnd();
     
@@ -866,11 +854,11 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
     
     // Combining all of the above conditions into should send determination
     const bool shouldSendPreReqsMet = minimumUprightCountReached &&
-                                      !isSoftSpark &&
+                                      isHardSpark &&
                                       !didUserRequestSparkEnd;
     
     const bool shouldSendPreReqsNoLongerMet = fellBelowMinimumUprightCount &&
-                                              !isSoftSpark &&
+                                              isHardSpark &&
                                               !didUserRequestSparkEnd &&
                                               !_pyramidObjectiveAchieved;
     
@@ -1102,8 +1090,7 @@ void BuildPyramidBehaviorChooser::SetCubeLights(Robot& robot)
     if(entry.second.GetCurrentLightTrigger() != entry.second.GetDesiredLightTrigger() ||
        entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
     {
-      const bool isSoftSpark = IsPyramidSoftSpark(robot);
-      const bool shouldSetForOnSide = (_lightsShouldMessageCubeOnSide && !isSoftSpark) ||
+      const bool shouldSetForOnSide = IsPyramidHardSpark(robot) ||
                 !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
       
       if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count &&

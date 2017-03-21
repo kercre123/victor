@@ -21,15 +21,12 @@ namespace CodeLab {
       UIManager.Instance.ShowTouchCatcher();
 
       LoadWebView();
-
-      // TODO: call RaiseMiniGameQuit() when it's time to quit this game...
     }
 
     protected override void CleanUpOnDestroy() {
-      // required function
+      RobotEngineManager.Instance.CurrentRobot.ExitSDKMode(false);
 
       if (_WebViewObject != null) {
-
         GameObject.Destroy(_WebViewObject);
         _WebViewObject = null;
       }
@@ -37,8 +34,6 @@ namespace CodeLab {
     }
 
     private void LoadWebView() {
-      // Turn off music
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Silent);
       // Send EnterSDKMode to engine as we enter this view
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(false);
@@ -55,17 +50,9 @@ namespace CodeLab {
         string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
 #endif
 
-        Debug.Log("Index file = " + indexFile);
         webViewObjectComponent.LoadURL(indexFile);
       }
-
-      /*
-      // TODO Consider using when close webview
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
-      RobotEngineManager.Instance.CurrentRobot.ExitSDKMode();
-      */
     }
-
 
     private void WebViewCallback(string text) {
       string jsonStringFromJS = string.Format("{0}", text);
@@ -75,7 +62,10 @@ namespace CodeLab {
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObject.GetComponent<WebViewObject>());
 
-      if (scratchRequest.command == "cozmoDriveForward") {
+      if (scratchRequest.command == "cozmoCloseCodeLab") {
+        RaiseMiniGameQuit();
+      }
+      else if (scratchRequest.command == "cozmoDriveForward") {
         // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(GetDriveSpeed(scratchRequest), dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);

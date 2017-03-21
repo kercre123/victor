@@ -36,7 +36,6 @@ goog.require('goog.dom');
 goog.require('goog.dom.TagName');
 goog.require('goog.userAgent');
 
-
 /**
  * Class for an editable text field.
  * @param {string} text The initial content of the field.

@@ -421,6 +421,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::NVStorageWriteEntry:              return true;
         case GameToEngineTag::NVStorageClearPartialPendingWriteEntry:  return true;
         case GameToEngineTag::NVStorageReadEntry:               return true;
+        case GameToEngineTag::EnterSdkMode:                     return true;
+        case GameToEngineTag::ExitSdkMode:                      return true;
         default:
           return false;
       }

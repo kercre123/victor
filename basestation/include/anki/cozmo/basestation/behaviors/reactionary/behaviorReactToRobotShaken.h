@@ -49,30 +49,18 @@ private:
   
   EState _state = EState::Shaking;
   
-  // Keeps track of how 'dizzy' Cozmo is
-  float _dizzynessFactor = 0.f;
-  
   float _maxShakingAccelMag = 0.f;
   float _shakingStartedTime_s = 0.f;
-  float _shakingEndedTime_s = 0.f;
-  
-  // Used to cancel behavior when head is no longer facing up for specified amount of time:
-  float _lastHeadFacingUpwardTime_s = 0.f;
+  float _shakenDuration_s = 0.f;
   
   // Member constants:
 
   // Accelerometer magnitude threshold corresponding to "no longer shaking"
   static const float _kAccelMagnitudeShakingStoppedThreshold;
-
-  // The highest expected accelerometer magnitude during a shaking event
-  static const float _kMaxDizzynessAccelMagnitude;
-
-  // The max expected duration of a shaking event. Anything longer than this will result in 'hard' reaction being played
-  static const float _kMaxDizzynessDuration_s;
   
   // Dizzy factor thresholds for playing the soft, medium, or hard reactions
-  static const float _kDizzynessThresholdHard;
-  static const float _kDizzynessThresholdMedium;
+  static const float _kShakenDurationThresholdHard;
+  static const float _kShakenDurationThresholdMedium;
   
 };
 

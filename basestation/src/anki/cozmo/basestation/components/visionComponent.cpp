@@ -59,11 +59,7 @@ namespace Cozmo {
 
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Head_deg/s",   10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
-  CONSOLE_VAR(f32, kHeadTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Head_deg/s",    10.f);
-  CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
-  CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs,   "WasRotatingTooFast.Pet.Head_deg/s",     10.f);
-  CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs,   "WasRotatingTooFast.Pet.Body_deg/s",     30.f);
   
   
   // Whether or not to do rolling shutter correction for physical robots
@@ -1024,8 +1020,6 @@ namespace Cozmo {
       _robot.GetFaceWorld().ChangeFaceID(updatedID);
     }
     
-    std::list<Vision::TrackedFace> facesToUpdate;
-    
     for(auto & faceDetection : procResult.faces)
     {
       /*
@@ -1050,24 +1044,9 @@ namespace Cozmo {
         
         _robot.GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
-      
-      // If we were moving too fast at the timestamp the face was detected then don't update it
-      // If the detected face is being tracked than we should look farther back in imu data history
-      // else we will just look at the previous and next imu data
-      if((kBodyTurnSpeedThreshFace_degs > 0.f || kHeadTurnSpeedThreshFace_degs > 0.f) &&
-         WasRotatingTooFast(faceDetection.GetTimeStamp(),
-                          DEG_TO_RAD(kBodyTurnSpeedThreshFace_degs),
-                          DEG_TO_RAD(kHeadTurnSpeedThreshFace_degs),
-                          (faceDetection.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
-      {
-        // Skip this face
-        continue;
-      }
-      
-      facesToUpdate.emplace_back(faceDetection);
     }
     
-    lastResult = _robot.GetFaceWorld().Update(facesToUpdate);
+    lastResult = _robot.GetFaceWorld().Update(procResult.faces);
     if(RESULT_OK != lastResult)
     {
       PRINT_NAMED_WARNING("VisionComponent.UpdateFaces.FaceWorldUpdateFailed", "");
@@ -1078,24 +1057,7 @@ namespace Cozmo {
   
   Result VisionComponent::UpdatePets(const VisionProcessingResult& procResult)
   {
-    std::list<Vision::TrackedPet> petsToUpdate;
-    for(auto & pet : procResult.pets)
-    {
-      if((FLT_GT(kBodyTurnSpeedThreshPet_degs, 0.f) || FLT_GT(kHeadTurnSpeedThreshPet_degs, 0.f)) &&
-         WasRotatingTooFast(pet.GetTimeStamp(),
-                          DEG_TO_RAD(kBodyTurnSpeedThreshPet_degs),
-                          DEG_TO_RAD(kHeadTurnSpeedThreshPet_degs),
-                          (pet.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
-      {
-        // Skip this pet
-        continue;
-      }
-      
-      petsToUpdate.emplace_back(pet);
-    }
-    
-    Result lastResult = _robot.GetPetWorld().Update(petsToUpdate);
-    
+    Result lastResult = _robot.GetPetWorld().Update(procResult.pets);
     return lastResult;
   }
   

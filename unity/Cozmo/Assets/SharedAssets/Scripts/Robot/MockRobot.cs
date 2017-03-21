@@ -539,13 +539,13 @@ public class MockRobot : IRobot {
     // this one is called by a message, so ignore it
   }
 
-//  public void ClearAllBlocks() {
-//    // Do nothing
-//  }
-//
-//  public void ClearAllObjects() {
-//    // Do nothing
-//  }
+  //  public void ClearAllBlocks() {
+  //    // Do nothing
+  //  }
+  //
+  //  public void ClearAllObjects() {
+  //    // Do nothing
+  //  }
 
   public void VisionWhileMoving(bool enable) {
     // Do nothing
@@ -1030,7 +1030,7 @@ public class MockRobot : IRobot {
   public void EnterSDKMode(bool isExternalSdkMode) {
   }
 
-  public void ExitSDKMode() {
+  public void ExitSDKMode(bool isExternalSdkMode) {
   }
 
   public event LightCubeStateEventHandler OnLightCubeAdded;

@@ -44,7 +44,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 2
+  RequestTrickCostAmountNeededMin: 1
   RequestTrickCostAmountNeededMaxTimes: 10
   RequestTrickCostAmountNeededMax: 4
   CoreUpgradeTintColorName: upgradePurple
