@@ -10,6 +10,8 @@
 extern void SelectSpiFunction();
 extern uint32 SPILock();
 extern uint32 SPIUnlock();
+extern uint32_t SPIParamCfg(uint32_t deviceId, uint32_t chip_size, uint32_t block_size, uint32_t sector_size, uint32_t page_size, uint32_t status_mask);
+
 
 
 #define READ_PERI_REG(addr) (*((volatile uint32_t *)(addr)))
@@ -18,6 +20,11 @@ extern uint32 SPIUnlock();
 #define SPI_CMD_REG(i) (REG_SPI_BASE(i) + 0x0)
 #define SPI_FLASH_RDID (1<<28)
 #define SPI_W0_REG(i) (REG_SPI_BASE(i) + 0x40)
+
+#define FLASH_BLOCK_SIZE 65536
+#define FLASH_SECTOR_SIZE 4096
+#define FLASH_PAGE_SIZE 256
+#define FLASH_STATUS_MASK 0xFFFF
 
 
 static uint32_t magic = 42; // To keep the toolchain from falling apart
@@ -50,7 +57,7 @@ void call_user_start() {
   // Debugging delay
   ets_delay_us(1000);
   
-  ets_printf("\r\nYou will be upgraded, Adam\r\n");
+  ets_printf("\r\nYou will be upgraded\r\n");
 
   WRITE_PERI_REG(SPI_CMD_REG(0), SPI_FLASH_RDID);
   while (READ_PERI_REG(SPI_CMD_REG(0)) & SPI_FLASH_RDID) {
@@ -58,6 +65,17 @@ void call_user_start() {
   chip_id = READ_PERI_REG(SPI_W0_REG(0)) & 0xFFFFFF;
   
   ets_printf("ChipID %x\r\n", chip_id);
+  if (((chip_id >> 16)%0xFF) == 0x16) {
+     ets_printf("32Mbit\r\n");
+     SPIParamCfg(0, 32*1024*1024, FLASH_BLOCK_SIZE, FLASH_SECTOR_SIZE,
+                 FLASH_PAGE_SIZE, FLASH_STATUS_MASK);     
+  }
+  else {
+     ets_printf("16Mbit\r\n");
+     SPIParamCfg(0, 16*1024*1024, FLASH_BLOCK_SIZE, FLASH_SECTOR_SIZE,
+                 FLASH_PAGE_SIZE, FLASH_STATUS_MASK);
+  }
+     
   
   if (SPIUnlock() != 0)
   {

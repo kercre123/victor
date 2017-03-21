@@ -165,7 +165,7 @@ esp_factory: python dev esp
 
 factory_upgrade: esp_factory $(RELEASE_DIR)
 	cd espressif_factory_upgrade; python3 build.py
-	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi espressif_factory_upgrade/firmware/upgrader-image.bin --rtip ./build/robot_boot_update/robot_boot_update.axf --body ./build/syscon.axf ./release/factory_upgrade.safe
+	python3 ./tools/sign.py $(SIGN_FLAGS) --wifi espressif_factory_upgrade/firmware/upgrader-image.bin --rtip ./build/robot.axf --body ./build/syscon.axf ./release/factory_upgrade.safe
 
 $(OTA_FILE): Makefile $(RELEASE_DIR) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) -t $(BUILD_TYPE_HEADER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
