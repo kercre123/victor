@@ -1,4 +1,4 @@
-// Available audio busses in project
+// Available audio buses in project
 
 namespace Anki {
 namespace AudioMetaData {

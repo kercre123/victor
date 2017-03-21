@@ -21,7 +21,7 @@
 #include "audioEngine/musicConductor.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"
 #include "clad/types/animationKeyFrames.h"
-#include "clad/audio/audioBusses.h"
+#include "clad/audio/audioBusTypes.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
