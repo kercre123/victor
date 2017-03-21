@@ -191,14 +191,6 @@ namespace Cozmo {
   
   Result FaceWorld::AddOrUpdateFace(const Vision::TrackedFace& face)
   {
-    // The incoming TrackedFace should be w.r.t. the arbitrary historical world origin.
-    if(face.GetHeadPose().GetParent() == nullptr || !face.GetHeadPose().GetParent()->IsOrigin())
-    {
-      PRINT_NAMED_ERROR("FaceWorld.AddOrUpdateFace.BadPoseParent",
-                        "TrackedFace's head pose parent should be an origin.");
-      return RESULT_FAIL;
-    }
-
     // Head pose is stored w.r.t. historical world origin, but needs its parent
     // set up to be the robot's world origin here:
     Pose3d headPoseWrtWorldOrigin;
