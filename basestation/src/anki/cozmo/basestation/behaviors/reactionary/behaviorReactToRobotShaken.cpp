@@ -22,10 +22,8 @@ namespace Cozmo {
 
 // define member constants:
 const float BehaviorReactToRobotShaken::_kAccelMagnitudeShakingStoppedThreshold = 13000.f;
-const float BehaviorReactToRobotShaken::_kMaxDizzynessAccelMagnitude = 30000.f;
-const float BehaviorReactToRobotShaken::_kMaxDizzynessDuration_s = 4.f;
-const float BehaviorReactToRobotShaken::_kDizzynessThresholdHard = 0.85f;
-const float BehaviorReactToRobotShaken::_kDizzynessThresholdMedium = 0.65f;
+const float BehaviorReactToRobotShaken::_kShakenDurationThresholdHard   = 3.4f;
+const float BehaviorReactToRobotShaken::_kShakenDurationThresholdMedium = 2.6f;
 
   
 static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::CliffDetected,
@@ -48,9 +46,10 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
   SmartDisableReactionTrigger(kBehaviorsToDisable);
   
   // Reset variables:
-  _dizzynessFactor = 0.f;
   _maxShakingAccelMag = 0.f;
   _shakingStartedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _shakenDuration_s = 0.f;
+  
   
   // Start the animations:
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyShakeLoop, 0));
@@ -70,12 +69,13 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
     case EState::Shaking:
     {
       const float accMag = robot.GetHeadAccelMagnitudeFiltered();
-      
       _maxShakingAccelMag = std::max(_maxShakingAccelMag, accMag);
       
       // Done shaking? Then transition to the next state.
       if (accMag < _kAccelMagnitudeShakingStoppedThreshold) {
-        _shakingEndedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        // Now that shaking has ended, determine how long it lasted:
+        const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        _shakenDuration_s = now_s - _shakingStartedTime_s;
         _state = EState::DoneShaking;
       }
       
@@ -83,25 +83,12 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
     }
     case EState::DoneShaking:
     {
-      StopActing();
+      StopActing(false);
       CompoundActionSequential* action = new CompoundActionSequential(robot,
                                                                       {new TriggerAnimationAction(robot, AnimationTrigger::DizzyShakeStop),
                                                                        new TriggerAnimationAction(robot, AnimationTrigger::DizzyStillPickedUp)});
       StartActing(action);
       
-      // Now that shaking has ended, compute Cozmo's "dizzyness factor" based on how
-      //  long and how hard he was shaken.
-      const float shakenDuration_s = _shakingEndedTime_s - _shakingStartedTime_s;
-      
-      float timeDizzynessFactor = shakenDuration_s / _kMaxDizzynessDuration_s;
-      timeDizzynessFactor = std::min(1.f, timeDizzynessFactor);
-      
-      float magnitudeDizzynessFactor = (_maxShakingAccelMag - _kAccelMagnitudeShakingStoppedThreshold) /
-                                       (_kMaxDizzynessAccelMagnitude - _kAccelMagnitudeShakingStoppedThreshold);
-      magnitudeDizzynessFactor = std::min(1.f, magnitudeDizzynessFactor);
-      
-      _dizzynessFactor = std::max(timeDizzynessFactor, magnitudeDizzynessFactor);
-
       _state = EState::WaitTilOnTreads;
       
       break;
@@ -119,11 +106,11 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
     }
     case EState::ActDizzy:
     {
-      StopActing();
-      // Play appropriate reaction based on dizzyness level:
-      if (_dizzynessFactor > _kDizzynessThresholdHard) {
+      StopActing(false);
+      // Play appropriate reaction based on duration of shaking:
+      if (_shakenDuration_s > _kShakenDurationThresholdHard) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionHard));
-      } else if (_dizzynessFactor > _kDizzynessThresholdMedium) {
+      } else if (_shakenDuration_s > _kShakenDurationThresholdMedium) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionMedium));
       } else {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionSoft));
