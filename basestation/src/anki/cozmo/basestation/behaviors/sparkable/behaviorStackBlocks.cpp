@@ -76,6 +76,8 @@ bool BehaviorStackBlocks::IsRunnableInternal(const BehaviorPreReqRobot& preReqDa
 
 Result BehaviorStackBlocks::InitInternal(Robot& robot)
 {
+  _topBlockSetFromTapIntent = false;
+  
   if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
     UpdateTargetBlocks(robot);

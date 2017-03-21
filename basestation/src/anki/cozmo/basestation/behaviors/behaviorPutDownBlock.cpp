@@ -42,6 +42,10 @@ bool BehaviorPutDownBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
 
 Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
+  // Disable double tap so we don't try to turn to a tapped object while in the middle of putting the block
+  // down
+  SmartDisableReactionTrigger(ReactionTrigger::DoubleTapDetected);
+
   // Choose where to put the block down
   // TODO: Make this smarter and find a place away from other known objects
   // For now, just back up blindly and play animation.
