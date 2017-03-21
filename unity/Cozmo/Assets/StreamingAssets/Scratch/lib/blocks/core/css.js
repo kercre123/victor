@@ -431,6 +431,7 @@ Blockly.Css.CONTENT = [
   '.blocklyFlyout {',
     'position: absolute;',
     'z-index: 20;',
+    'box-shadow: 0px 0px 32px 0px rgba(0,0,0,.498039);',
   '}',
   '.blocklyFlyoutButton {',
     'fill: #888;',
@@ -534,8 +535,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutBackground {',
-    'fill: $colour_flyout;',
-    'fill-opacity: .8;',
+    'fill: #3c558d;',
   '}',
 
   '.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {',

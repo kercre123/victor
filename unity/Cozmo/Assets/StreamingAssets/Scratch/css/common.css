@@ -87,9 +87,9 @@ button:focus {
 #close .primary button {
     width: 100px;
     height: 100px;
-    border: 1px solid #334B68;
+    border: 1px solid #2a3a5b;
     margin-left: -1px;
-    background-color: #334771;
+    background-color: #2a3a5b;
     background-image: url('../images/ui/ui_icon_close.svg');
     background-repeat: no-repeat;
     background-position: 50% 50%;
