@@ -51,7 +51,7 @@ BehaviorPyramidThankYou::~BehaviorPyramidThankYou()
 bool BehaviorPyramidThankYou::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData) const
 {
   // Check to see if there's a person we can turn to look at
-  if(_robot.GetFaceWorld().HasKnownFaces(kTimeSinceFaceSeenForTurn)){
+  if(_robot.GetFaceWorld().HasAnyFaces(kTimeSinceFaceSeenForTurn)){
     return true;
   }
   

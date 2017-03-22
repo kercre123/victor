@@ -77,7 +77,7 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
   const TimeStamp_t kObsFaceTimeWindow_ms = 500;
   const TimeStamp_t obsTimeCutoff = (lastImageTimeStamp > kObsFaceTimeWindow_ms ? lastImageTimeStamp - kObsFaceTimeWindow_ms : 0);
 
-  auto faceIDsObserved = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(obsTimeCutoff);
+  auto faceIDsObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(obsTimeCutoff);
   
   auto const kTracksToLock = Util::EnumToUnderlying(AnimTrackFlag::BODY_TRACK);
   if(!faceIDsObserved.empty() && !isHardSpark)

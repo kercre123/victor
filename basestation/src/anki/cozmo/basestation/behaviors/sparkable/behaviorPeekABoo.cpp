@@ -180,7 +180,9 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(Robot& robot)
 
 bool BehaviorPeekABoo::IsFaceHiddenNow(Robot& robot)
 {
-  std::set< Vision::FaceID_t > faceIDs = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(_timeSinceSeen_ms,false);
+  const bool kRecognizableFacesOnly = true;
+  std::set< Vision::FaceID_t > faceIDs = robot.GetFaceWorld().GetFaceIDsObservedSince(_timeSinceSeen_ms,
+                                                                                      kRecognizableFacesOnly);
   // We originally kept a "Target face' to know where to initially turn, however
   // when they're constantly covering up their eyes it's likely our face ID is changing a lot. So just allow multiple faces
   // if multiple people are looking at cozmo this means it'll be easier for him to be happy.
@@ -263,7 +265,8 @@ void BehaviorPeekABoo::TransitionExit(Robot& robot, bool facesFound)
   
 void BehaviorPeekABoo::SelectFaceToTrack(const Robot& robot) const
 {
-  std::set< Vision::FaceID_t > faces = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(robot.GetLastImageTimeStamp() - _oldestFaceToConsider_MS,true);
+  const bool kUseRecognizableOnly = false;
+  std::set< Vision::FaceID_t > faces = robot.GetFaceWorld().GetFaceIDsObservedSince(robot.GetLastImageTimeStamp() - _oldestFaceToConsider_MS, kUseRecognizableOnly);
   
   const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   _targetFace = whiteboard.GetBestFaceToTrack(faces, false);

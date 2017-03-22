@@ -615,11 +615,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
 {
   Pose3d facePose;
   
-  if (HasFace(robot)) {
-    TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
-    DEV_ASSERT(lastObservedFaceTime > 0, "BehaviorRequestGameSimple.HasFaceWithoutPose");
-  }
-  else {
+  const bool hasFace = GetFacePose(robot, facePose);
+  if(!hasFace) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFace",
                         "Face pose is invalid!");
     return false;

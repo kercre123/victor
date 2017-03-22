@@ -887,7 +887,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Robot& robot, Vis
     
     if(faceToTurnTowards == nullptr)
     {
-      auto allFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
+      auto allFaceIDs = robot.GetFaceWorld().GetFaceIDs();
       for(auto & ID : allFaceIDs)
       {
         const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(ID);
@@ -1001,7 +1001,7 @@ bool BehaviorEnrollFace::IsSeeingTooManyFaces(FaceWorld& faceWorld, const TimeSt
                                   lastImgTime - multipleFaceTimeWindow_ms :
                                   0); // Avoid unsigned math rollover
   
-  auto recentlySeenFaceIDs = faceWorld.GetKnownFaceIDsObservedSince(recentTime);
+  auto recentlySeenFaceIDs = faceWorld.GetFaceIDsObservedSince(recentTime);
   
   const bool hasRecentlySeenTooManyFaces = recentlySeenFaceIDs.size() > _maxFacesVisible;
   if(hasRecentlySeenTooManyFaces)
@@ -1060,7 +1060,7 @@ void BehaviorEnrollFace::UpdateFaceToEnroll(Robot& robot)
   }
   
   // Get faces observed just in the last image
-  auto observedFaceIDs = faceWorld.GetKnownFaceIDsObservedSince(lastImgTime);
+  auto observedFaceIDs = faceWorld.GetFaceIDsObservedSince(lastImgTime);
   
   const bool enrollmentIDisSet    = (_faceID != Vision::UnknownFaceID);
   const bool sawCurrentEnrollFace = (enrollmentIDisSet && observedFaceIDs.count(_faceID));

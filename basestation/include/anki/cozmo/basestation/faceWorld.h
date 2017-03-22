@@ -43,27 +43,37 @@ namespace Cozmo {
   
     Result ChangeFaceID(const Vision::UpdatedFaceID& update);
     
+    // Called when robot delocalizes
+    void OnRobotDelocalized(const Pose3d* worldOrigin);
+    
+    // Called when Robot rejiggers its pose. Returns number of faces updated
+    int UpdateFaceOrigins(const Pose3d* oldOrigin, const Pose3d* newOrigin);
+    
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::FaceID_t faceID) const;
     
-    // Returns number of known faces
-    std::set<Vision::FaceID_t> GetKnownFaceIDs(bool includeTrackingOnlyFaces = true) const;
+    // Returns set of face IDs present in the world.
+    // Set includeRecognizableOnly=true to only return faces that have been (or can be) recognized.
+    // NOTE: This does not necessarily mean they have been recognized as a _named_ person introduced via
+    //       MeetCozmo. They could simply be recognized as a session-only person already seen in this session.
+    std::set<Vision::FaceID_t> GetFaceIDs(bool includeRecognizableOnly = false) const;
     
-    // Returns known face IDs observed since seenSinceTime_ms (inclusive)
-    std::set<Vision::FaceID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
-                                                            bool includeTrackingOnlyFaces = true) const;
+    // Returns face IDs observed since seenSinceTime_ms (inclusive)
+    std::set<Vision::FaceID_t> GetFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
+                                                       bool includeRecognizableOnly = false) const;
 
-    // Returns true if any faces are known
-    bool HasKnownFaces(TimeStamp_t seenSinceTime_ms = 0, bool includeTrackingOnlyFaces = true) const;
+    // Returns true if any faces are in the world
+    bool HasAnyFaces(TimeStamp_t seenSinceTime_ms = 0, bool includeRecognizableOnly = false) const;
 
-    // If the robot has observed a face, sets p to the pose of the last observed face and returns the
-    // timestamp when that face was last seen. Otherwise, returns 0    
-    TimeStamp_t GetLastObservedFace(Pose3d& p) const;
-
-    // like GetLastObservedFace, but returns a pose with respect to the current robot pose. If they have
-    // different origins (e.g. the robot was picked up and hasn't seen a face since), this code will assume
-    // that the origins are the same (even though they aren't).
-    TimeStamp_t GetLastObservedFaceWithRespectToRobot(Pose3d& p) const;
+    // If the robot has observed a face, sets poseWrtRobotOrigin to the pose of the last observed face
+    // and returns the timestamp when that face was last seen. Otherwise, returns 0. Normally,
+    // inRobotOrigin=true, so that the last observed pose is required to be w.r.t. the current origin.
+    //
+    // If inRobotOriginOnly=false, the returned pose is allowed to be that of a face observed w.r.t. a
+    // different coordinate frame, modified such that its parent is the robot's current origin. This
+    // could be a completely inaccurate guess for the last observed face pose, but may be "good enough"
+    // for some uses.
+    TimeStamp_t GetLastObservedFace(Pose3d& poseWrtRobotOrigin, bool inRobotOriginOnly = true) const;
 
     // Returns true if any action has turned towards this face
     bool HasTurnedTowardsFace(Vision::FaceID_t faceID) const;
@@ -71,7 +81,7 @@ namespace Cozmo {
     // Tell FaceWorld that the robot has turned towards this face (or not, if val=false)
     void SetTurnedTowardsFace(Vision::FaceID_t faceID, bool val = true);
     
-    // Removes all known faces and resets the last observed face timer to 0, so
+    // Removes all faces and resets the last observed face timer to 0, so
     // GetLastObservedFace() will return 0.
     void ClearAllFaces();
     
@@ -91,21 +101,24 @@ namespace Cozmo {
     
     Robot& _robot;
     
-    struct KnownFace {
+    // FaceEntry is the internal storage for faces in FaceWorld, which include
+    // the public-facing TrackedFace plus additional bookkeeping
+    struct FaceEntry {
       Vision::TrackedFace      face;
       VizManager::Handle_t     vizHandle;
       s32                      numTimesObserved = 0;
       s32                      numTimesObservedFacingCamera = 0;
       bool                     hasTurnedTowards = false;
 
-      KnownFace(const Vision::TrackedFace& faceIn);
+      FaceEntry(const Vision::TrackedFace& faceIn);
       bool IsNamed() const { return !face.GetName().empty(); }
       bool HasStableID() const;
     };
     
-    using FaceContainer = std::map<Vision::FaceID_t, KnownFace>;
-    using KnownFaceIter = FaceContainer::iterator;
-    FaceContainer _knownFaces;
+    using FaceContainer = std::map<Vision::FaceID_t, FaceEntry>;
+    using FaceEntryIter = FaceContainer::iterator;
+    
+    FaceContainer _faceEntries;
     
     Vision::FaceID_t _idCtr = 0;
     
@@ -114,15 +127,19 @@ namespace Cozmo {
     
     bool _lastEnrollmentCompleted = false;
     
+    // Helper used by public Get() methods to determine if an entry should be returned
+    bool ShouldReturnFace(const FaceEntry& faceEntry, TimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly) const;
+    
     // Removes the face and advances the iterator. Notifies any listeners that
     // the face was removed if broadcast==true.
-    void RemoveFace(KnownFaceIter& faceIter, bool broadcast = true);
+    void RemoveFace(FaceEntryIter& faceIter, bool broadcast = true);
     
     void RemoveFaceByID(Vision::FaceID_t faceID);
 
     void SetupEventHandlers(IExternalInterface& externalInterface);
     
-    void DrawFace(KnownFace& knownFace);
+    void DrawFace(FaceEntry& knownFace, bool drawInImage = true);
+    void EraseFaceViz(FaceEntry& faceEntry);
     
     std::vector<Signal::SmartHandle> _eventHandles;
     

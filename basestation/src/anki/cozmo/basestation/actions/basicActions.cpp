@@ -1755,7 +1755,7 @@ namespace Anki {
       // so fail if we require a face, skip ahead if we don't
       Pose3d pose;
       bool gotPose = false;
-
+      const bool kLastObservedFaceMustBeInRobotOrigin = false;
       
       if(_faceID != Vision::UnknownFaceID)
       {
@@ -1764,9 +1764,16 @@ namespace Anki {
           gotPose = true;
         }
       }
-      else if(_robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
+      else if(_robot.GetFaceWorld().GetLastObservedFace(pose, kLastObservedFaceMustBeInRobotOrigin) != 0)
       {
-        gotPose = true;
+        // Make w.r.t. robot pose, not robot _origin_
+        const bool success = pose.GetWithRespectTo(_robot.GetPose(), pose);
+        if(success) {
+          gotPose = true;
+        } else {
+          PRINT_NAMED_WARNING("TurnTowardsFaceAction.Init.BadLastObservedFacePose",
+                              "Could not get last observed face pose w.r.t. robot pose");
+        }
       }
       
       if(gotPose)

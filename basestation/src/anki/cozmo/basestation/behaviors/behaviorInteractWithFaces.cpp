@@ -344,7 +344,7 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent(Robot& robot)
 void BehaviorInteractWithFaces::SelectFaceToTrack(const Robot& robot) const
 {  
   const bool considerTrackingOnlyFaces = false;
-  std::set< FaceID_t > faces = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(_lastImageTimestampWhileRunning,
+  std::set< FaceID_t > faces = robot.GetFaceWorld().GetFaceIDsObservedSince(_lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
 
   const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();

@@ -835,6 +835,9 @@ void Robot::Delocalize(bool isCarryingObject)
   // notify blockworld
   _blockWorld->OnRobotDelocalized(_worldOrigin);
   
+  // notify faceworld
+  _faceWorld->OnRobotDelocalized(_worldOrigin);
+  
   // notify behavior whiteboard
   _aiComponent->OnRobotDelocalized();
   
@@ -2528,9 +2531,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     // now the old one's parent), point the worldOrigin at the new one.
     _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
         
-    // Now we need to go through all objects whose poses have been adjusted
+    // Now we need to go through all objects and faces whose poses have been adjusted
     // by this origin switch and notify the outside world of the change.
     _blockWorld->UpdateObjectOrigins(oldOrigin, _worldOrigin);
+    _faceWorld->UpdateFaceOrigins(oldOrigin, _worldOrigin);
 
     // after updating all block world objects, flatten out origins to remove grandparents
     _poseOriginList->Flatten(_worldOrigin);

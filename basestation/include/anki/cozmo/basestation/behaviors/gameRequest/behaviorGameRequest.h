@@ -82,7 +82,10 @@ protected:
   bool GetLastBlockPose(Pose3d& pose) const;
 
   bool HasFace(const Robot& robot) const;
-
+  
+  // Returns true if HasFace() and returns the pose as argument. Returns false and leaves argument alone otherwise.
+  bool GetFacePose(const Robot& robot, Pose3d& facePoseWrtRobotOrigin) const;
+  
   virtual void HandleCliffEvent(Robot& robot, const EngineToGameEvent& event) {};
 
   // --------------------------------------------------------------------------------

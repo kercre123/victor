@@ -84,7 +84,7 @@ void ReactionTriggerStrategyVoiceCommand::AlwaysHandleInternal(const EngineToGam
   }
   
   // All recently seen face IDs
-  const auto& knownFaceIDs = robot.GetFaceWorld().GetKnownFaceIDs();
+  const auto& knownFaceIDs = robot.GetFaceWorld().GetFaceIDs();
   Vision::FaceID_t desiredFace = Vision::UnknownFaceID;
   auto oldestTimeLookedAt_s = std::numeric_limits<float>::max();
   

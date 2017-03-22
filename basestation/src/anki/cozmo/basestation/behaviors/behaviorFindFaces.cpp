@@ -74,10 +74,10 @@ void BehaviorFindFaces::TransitionToLookUp(Robot& robot)
 
   StartActing(moveHeadAction, [this](Robot& robot) {
       const TimeStamp_t latestTimestamp = robot.GetLastImageTimeStamp();
-      // check if we should turn towards the last face (WRT robot, so that if the robot is picked up or moved,
-      // it won't look at an old face)
+      // check if we should turn towards the last face, even if it's not in the current origin
+      const bool kMustBeInCurrentOrigin = false;
       Pose3d waste;
-      TimeStamp_t lastFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(waste);
+      TimeStamp_t lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(waste, kMustBeInCurrentOrigin);
       const bool useAnyFace = _maxFaceAgeToLook_ms == 0;
       if( lastFaceTime > 0 &&
           ( useAnyFace || latestTimestamp <= lastFaceTime + _maxFaceAgeToLook_ms ) ) {

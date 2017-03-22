@@ -245,11 +245,17 @@ IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot)
 
 bool IBehaviorRequestGame::HasFace(const Robot& robot) const
 {
+  Pose3d waste;
+  return GetFacePose(robot, waste);
+}
+  
+bool IBehaviorRequestGame::GetFacePose(const Robot& robot, Pose3d& facePoseWrtRobotOrigin) const
+{
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001f ) );
-
-  Pose3d waste;
-  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFace(waste);
+  const bool kMustBeInRobotOrigin = true;
+  
+  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePoseWrtRobotOrigin, kMustBeInRobotOrigin);
   
   const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
 

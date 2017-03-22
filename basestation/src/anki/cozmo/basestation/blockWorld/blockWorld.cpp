@@ -3168,7 +3168,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   }
   
-  
   void BlockWorld::OnRobotDelocalized(const Pose3d* newWorldOrigin)
   {
     // delete objects that have become useless since we delocalized last time
@@ -3183,6 +3182,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // notify about updated object states
     BroadcastLocatedObjectStates();
   }
+  
   Result BlockWorld::AddCliff(const Pose3d& p)
   {
     // at the moment we treat them as markerless objects

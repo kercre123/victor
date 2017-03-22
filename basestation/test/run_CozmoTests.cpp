@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -349,6 +350,7 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
     }
     
     lastResult = robot.GetVisionComponent().UpdateVisionMarkers(procResult);
+    
     if(RESULT_OK != lastResult)
     {
       PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateVisionMarkersFailed", "i=%d fakeTime=%u", i, fakeTime);
@@ -837,22 +839,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   }
   
   // Fake a state message update for robot
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
@@ -914,6 +901,26 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
 //  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
 //  ASSERT_EQ(RESULT_OK, lastResult);
   
+  // Observe a face
+  const Vision::FaceID_t faceID = 123;
+  {
+    Vision::TrackedFace face;
+    Pose3d headPose(0, Z_AXIS_3D(), {300.f, 300.f, 300.f}, robot.GetWorldOrigin());
+    face.SetID(faceID);
+    face.SetTimeStamp(fakeTime);
+    face.SetHeadPose(headPose);
+    
+    std::list<Vision::TrackedFace> faces{std::move(face)};
+    
+    lastResult = robot.GetFaceWorld().Update(faces);
+    ASSERT_EQ(RESULT_OK, lastResult);
+    ASSERT_TRUE(robot.GetFaceWorld().HasAnyFaces());
+    ASSERT_NE(nullptr, robot.GetFaceWorld().GetFace(faceID));
+    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDs().size());
+    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDsObservedSince(fakeTime).size());
+    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDsObservedSince(fakeTime + 10).empty());
+  }
+  
   fakeTime += 10;
 
   // - - - Delocalize
@@ -921,6 +928,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   const bool isCarryingObject = false;
   robot.Delocalize(isCarryingObject);
   ++fakeTime;
+  
+  // FaceWorld should no longer return anything because we have a new origin
+  {
+    ASSERT_FALSE(robot.GetFaceWorld().HasAnyFaces());
+    ASSERT_EQ(nullptr, robot.GetFaceWorld().GetFace(faceID));
+    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDs().empty());
+  }
   
   // See all objects from close so they all have unconfirmed observations
   lastResult = ObserveMarkerHelper(1,
@@ -934,6 +948,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   lastResult = ObserveMarkerHelper(1,{{obj1Code, closeCorners}},
     fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have face again because we are back in its coordinate frame
+  {
+    ASSERT_TRUE(robot.GetFaceWorld().HasAnyFaces());
+    ASSERT_NE(nullptr, robot.GetFaceWorld().GetFace(faceID));
+    ASSERT_FALSE(robot.GetFaceWorld().GetFaceIDs().empty());
+  }
   
   // we should have objects 1 and 2, but not 3, since 3 was not in the world before delocalizing
   const ObservableObject* obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
