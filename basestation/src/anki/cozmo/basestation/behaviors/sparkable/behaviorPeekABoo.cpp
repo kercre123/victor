@@ -35,7 +35,10 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
   , _targetFace(Vision::UnknownFaceID)
   , _numPeeksRemaining(0)
   , _numPeeksTotal(1)
-  , _numTimesHumanHidAndShow(0)
+  , _numShortPeeksRemaining(0)
+  , _wantsShortReaction(false)
+  , _nextRunningTime(0)
+  , _stillSawFaceAfterRequest(false)
   , _minPeeks(1)
   , _maxPeeks(3)
   , _percentCompleteSmallReaction(0.3f)
@@ -44,7 +47,10 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
   , _waitIncrementTime_Sec(0.1f)
   , _oldestFaceToConsider_MS(60000)
   , _waitTimeFirst_Sec(0.4f)
-  , _wantsShortReaction(false)
+  , _requireFaceConfirmBeforeRequest(true)
+  , _playGetIn(true)
+  , _minCoolDown_Sec(0)
+  , _maxShortPeeks(4)
 {
   JsonTools::GetValueOptional(config, "minTimesPeekBeforeQuit", _minPeeks);
   JsonTools::GetValueOptional(config, "maxTimesPeekBeforeQuit", _maxPeeks);
@@ -54,6 +60,11 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
     _oldestFaceToConsider_MS *= 1000;
   }
   JsonTools::GetValueOptional(config, "waitTimeFirstSec",_waitTimeFirst_Sec);
+  JsonTools::GetValueOptional(config, "requireFaceConfirmBeforeRequest", _requireFaceConfirmBeforeRequest);
+  JsonTools::GetValueOptional(config, "playGetIn", _playGetIn);
+  JsonTools::GetValueOptional(config, "minCooldown_Sec", _minCoolDown_Sec);
+  JsonTools::GetValueOptional(config, "maxTimesReShortPeek", _maxShortPeeks);
+  _numShortPeeksRemaining = _maxShortPeeks;
 }
 
 bool BehaviorPeekABoo::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
@@ -62,8 +73,9 @@ bool BehaviorPeekABoo::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
   _targetFace = Vision::UnknownFaceID;
   SelectFaceToTrack(preReqData.GetRobot());
   
-  return _targetFace != Vision::UnknownFaceID &&
-  preReqData.GetRobot().GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
+  return _nextRunningTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() &&
+        _targetFace != Vision::UnknownFaceID &&
+        preReqData.GetRobot().GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::PeekABoo);
 }
 
 Result BehaviorPeekABoo::InitInternal(Robot& robot)
@@ -72,18 +84,24 @@ Result BehaviorPeekABoo::InitInternal(Robot& robot)
   
   _endTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeoutNoFacesTimeStamp_Sec;
   _numPeeksTotal = _numPeeksRemaining = robot.GetRNG().RandIntInRange(_minPeeks,_maxPeeks);
-  _numTimesHumanHidAndShow = 0;
   // Needs to be unique since sparked idle makes him look down
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PeekABooIdle);
   
-  TransitionToIntroAnim(robot);
-  
+  if( _playGetIn )
+  {
+    TransitionToIntroAnim(robot);
+  }
+  else
+  {
+    TransitionTurnToFace(robot);
+  }
   return RESULT_OK;
 }
 
 void BehaviorPeekABoo::StopInternal(Robot& robot)
 {
   robot.GetAnimationStreamer().PopIdleAnimation();
+  _nextRunningTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _minCoolDown_Sec;
 }
 
 void BehaviorPeekABoo::TransitionToIntroAnim(Robot& robot)
@@ -96,7 +114,7 @@ void BehaviorPeekABoo::TransitionTurnToFace(Robot& robot)
 {
   DEBUG_SET_STATE(TurningToFace);
   TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, _targetFace, M_PI_F, false);
-  action->SetRequireFaceConfirmation(true);
+  action->SetRequireFaceConfirmation(_requireFaceConfirmBeforeRequest);
   StartActing(action, [this, &robot](ActionResult ret )
   {
     if( ret == ActionResult::SUCCESS )
@@ -126,7 +144,8 @@ void BehaviorPeekABoo::TransitionReactToFace(Robot& robot)
 {
   DEBUG_SET_STATE(RequestPeekaBooAnim);
   
-  _endTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeoutNoFacesTimeStamp_Sec;
+  _requestTimeStamp_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _endTimeStamp = _requestTimeStamp_Sec + _timeoutNoFacesTimeStamp_Sec;
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   float percentComplete = 1.f - (Util::numeric_cast<float>(_numPeeksRemaining) / Util::numeric_cast<float>(_numPeeksTotal));
   
@@ -147,9 +166,11 @@ void BehaviorPeekABoo::TransitionReactToFace(Robot& robot)
     // If they just stared at the robot the whole time, wait for them to hide their face, eventually prompting again.
     // if no face is hidden, we assume they accepted the call to action to peek a boo back and just need to wait to show again.
     if( IsFaceHiddenNow(robot) ) {
+      _stillSawFaceAfterRequest = false;
       TransitionWaitToSeeFace(robot);
     }
     else {
+      _stillSawFaceAfterRequest = true;
       TransitionWaitToHideFace(robot);
     }
   });
@@ -168,7 +189,16 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(Robot& robot)
     if( _endTimeStamp < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() )
     {
       _wantsShortReaction = true;
-      TransitionTurnToFace(robot);
+      _numShortPeeksRemaining--;
+      if( _numShortPeeksRemaining > 0 )
+      {
+        TransitionTurnToFace(robot);
+      }
+      else
+      {
+        BehaviorObjectiveAchieved(BehaviorObjective::PeekABooNoResponse);
+        TransitionExit(robot, true);
+      }
     }
     else
     {
@@ -188,7 +218,7 @@ bool BehaviorPeekABoo::IsFaceHiddenNow(Robot& robot)
   // if multiple people are looking at cozmo this means it'll be easier for him to be happy.
   bool seeingFace = !faceIDs.empty();
   bool seeingEyes = false;
-  if( seeingFace  )
+  if( seeingFace )
   {
     for(const auto& faceID : faceIDs)
     {
@@ -220,11 +250,11 @@ void BehaviorPeekABoo::TransitionWaitToSeeFace(Robot& robot)
   // just run out of time in the behavior, or been too long since we've seen a face and have been looking for one...
   if( _endTimeStamp < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() )
   {
+    BehaviorObjectiveAchieved(BehaviorObjective::PeekABooLostFace);
     TransitionExit(robot,false);
   }
   else if( seeingEyes )
   {
-    _numTimesHumanHidAndShow++;
     TransitionSeeFaceAfterHiding(robot);
   }
   else
@@ -238,12 +268,23 @@ void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(Robot& robot)
   DEBUG_SET_STATE(ReactingToPeekABooReturned);
   SelectFaceToTrack(robot);
   _numPeeksRemaining--;
+  
+  TimeStamp_t timeSinceStart = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _requestTimeStamp_Sec;
+  if( _stillSawFaceAfterRequest )
+  {
+    LOG_EVENT("robot.single_peekaboo_success.face_noface_face","%u",timeSinceStart);
+  }
+  else
+  {
+    LOG_EVENT("robot.single_peekaboo_success.noface_timepass_face","%u",timeSinceStart);
+  }
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PeekABooSurprised),
               [this, &robot](ActionResult ret ) {
                 if( _numPeeksRemaining > 0 ) {
                   TransitionTurnToFace(robot);
                 }
                 else {
+                  BehaviorObjectiveAchieved(BehaviorObjective::PeekABooSuccess);
                   TransitionExit(robot,true);
                 }
   });
@@ -252,15 +293,13 @@ void BehaviorPeekABoo::TransitionSeeFaceAfterHiding(Robot& robot)
 void BehaviorPeekABoo::TransitionExit(Robot& robot, bool facesFound)
 {
   DEBUG_SET_STATE(DoingFinalReaction);
-  // This is so spark is killed after the exit animation is played
-  // Also the number of times the behavior is achieved is randomized so can't just use behavior_config value.
-  // also time out differ based on if he is seeing a face, or just never saw anything...
-  BehaviorObjectiveAchieved(BehaviorObjective::PeekedABoo);
   
-  LOG_EVENT("peekaboo.ending","%s %d/%d",GetName().c_str(),_numTimesHumanHidAndShow, ( _numPeeksTotal - _numPeeksRemaining));
   // last state, just existing after this...
   StartActing(new TriggerLiftSafeAnimationAction(robot,
                                                 facesFound ? AnimationTrigger::PeekABooGetOutHappy : AnimationTrigger::PeekABooGetOutSad));
+  
+  // Must be done after the animation so this plays
+  BehaviorObjectiveAchieved(BehaviorObjective::PeekABooComplete);
 }
   
 void BehaviorPeekABoo::SelectFaceToTrack(const Robot& robot) const

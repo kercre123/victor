@@ -66,8 +66,12 @@ protected:
   TimeStamp_t  _timeSinceSeen_ms;
   unsigned int _numPeeksRemaining;
   unsigned int _numPeeksTotal;
-  unsigned int _numTimesHumanHidAndShow;
+  unsigned int _numShortPeeksRemaining;
   TimeStamp_t  _endTimeStamp;
+  bool         _wantsShortReaction;
+  float        _nextRunningTime;
+  TimeStamp_t  _requestTimeStamp_Sec;
+  bool         _stillSawFaceAfterRequest; // only a DAS tracking helper.
   
   // Config numbers
   unsigned int _minPeeks;
@@ -78,8 +82,10 @@ protected:
   float        _waitIncrementTime_Sec;
   float        _oldestFaceToConsider_MS;
   float        _waitTimeFirst_Sec;
-  bool         _wantsShortReaction;
-  
+  bool         _requireFaceConfirmBeforeRequest;
+  bool         _playGetIn;
+  float        _minCoolDown_Sec;
+  unsigned int _maxShortPeeks;
 
 };
 

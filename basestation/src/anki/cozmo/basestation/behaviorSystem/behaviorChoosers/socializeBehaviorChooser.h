@@ -28,10 +28,11 @@ namespace Cozmo {
 class BehaviorExploreLookAroundInPlace;
 
 // A helper class to handle objective requirements
-struct ObjectiveRequirements {
-  ObjectiveRequirements(const Json::Value& config);
+struct PotentialObjectives {
+  PotentialObjectives(const Json::Value& config);
   
   BehaviorObjective objective = BehaviorObjective::Count;
+  std::string behaviorName = "pounceOnMotion_socialize";
   UnlockId requiredUnlock = UnlockId::Count;
   float probabilityToRequire = 1.0f;
   unsigned int randCompletionsMin = 1;
@@ -64,7 +65,7 @@ private:
 
   // use the objective requirements to populate _objectivesLeft, taking into account unlocks and random
   // probabilities.
-  void PopulateRequiredObjectives();
+  void PopulatePotentialObjectives();
   
   void PrintDebugObjectivesLeft(const std::string& eventName) const;
 
@@ -73,8 +74,8 @@ private:
     FindingFaces,
     Interacting,
     FinishedInteraction,
-    Pouncing,
-    FinishedPouncing,
+    Playing, // Either peekaboo or pouncing
+    FinishedPlaying,
     None
   };
 
@@ -84,16 +85,17 @@ private:
   
   BehaviorExploreLookAroundInPlace* _findFacesBehavior = nullptr;
   IBehavior* _interactWithFacesBehavior = nullptr;
-  IBehavior* _pounceOnMotionBehavior = nullptr;
+  
+  IBehavior* _playingBehavior = nullptr;
 
   unsigned int _maxNumIterationsToAllowForSearch = 0; // 0 means infinite
 
   // requirements defined from json
-  using ObjectiveRequirementsList = std::vector< std::unique_ptr<ObjectiveRequirements> >;
-  const ObjectiveRequirementsList _objectiveRequirements;
+  using PotentialObjectivesList = std::vector< std::unique_ptr<PotentialObjectives> >;
+  const PotentialObjectivesList _potentialObjectives;
 
   // function to read requirements from json
-  static ObjectiveRequirementsList ReadObjectiveRequirements(const Json::Value& config);  
+  static PotentialObjectivesList ReadPotentialObjectives(const Json::Value& config);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Variables
@@ -106,7 +108,7 @@ private:
 
   // keep track of the number of times pounce has started, so we can advance states as needed (to detect when
   // the pounce behavior has started and stopped)
-  unsigned int _lastNumTimesPounceStarted = 0;
+  unsigned int _lastNumTimesPlayStarted = 0;
 
   // contains an entry for each objective we need to complete, mapping to the number of times we need to complete it
   std::map< BehaviorObjective, unsigned int > _objectivesLeft;

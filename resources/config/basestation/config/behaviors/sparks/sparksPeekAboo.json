@@ -8,9 +8,13 @@
   ],
   "flatScore" : 5.0,
   "minTimesPeekBeforeQuit" : 3,
-  "maxTimesPeekBeforeQuit" : 6,
+  "maxTimesPeekBeforeQuit" : 3,
   "maxTimeWithoutSeeingFace_Sec": 15,
   "waitIncrementTime_Sec" : 0.05,
   "waitTimeFirstSec" : 0.35,
-  "maxTimeOldestFaceToConsider_Sec" : 30
+  "maxTimeOldestFaceToConsider_Sec" : 10,
+  "requireFaceConfirmBeforeRequest" : false,
+  "minCooldown_Sec": 0,
+  "maxTimesReShortPeek": 5,
+  "playGetIn": false
 }

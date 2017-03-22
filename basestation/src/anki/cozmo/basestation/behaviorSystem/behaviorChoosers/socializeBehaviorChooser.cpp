@@ -27,7 +27,7 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectiveRequirements::ObjectiveRequirements(const Json::Value& config)
+PotentialObjectives::PotentialObjectives(const Json::Value& config)
 {
   const std::string& objectiveStr = JsonTools::ParseString(config, "objective",
                                                            "FPSocialize.ObjectiveRequirement.InvalidConfig.NoObjective");
@@ -41,6 +41,8 @@ ObjectiveRequirements::ObjectiveRequirements(const Json::Value& config)
   probabilityToRequire = config.get("probabilityToRequireObjective", 1.0f).asFloat();
   randCompletionsMin = config.get("randomCompletionsNeededMin", 1).asUInt();
   randCompletionsMax = config.get("randomCompletionsNeededMax", 1).asUInt();
+  behaviorName = JsonTools::ParseString(config, "behaviorName",
+                           "FPSocialize.ObjectiveRequirement.InvalidConfig.NoBehaviorName");
 
   DEV_ASSERT(randCompletionsMax >= randCompletionsMin, "FPSocialize.ObjectiveRequirement.InvalidConfig.MaxLTMin");
   DEV_ASSERT(FLT_GE_ZERO( probabilityToRequire ), "FPSocialize.ObjectiveRequirement.InvalidConfig.NegativeProb");
@@ -50,7 +52,7 @@ ObjectiveRequirements::ObjectiveRequirements(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 FPSocializeBehaviorChooser::FPSocializeBehaviorChooser(Robot& robot, const Json::Value& config)
   : BaseClass(robot, config)
-  , _objectiveRequirements( ReadObjectiveRequirements( config ) )
+  , _potentialObjectives( ReadPotentialObjectives( config ) )
 {
   // choosers and goals are created after the behaviors are added to the factory, so grab those now
 
@@ -61,9 +63,6 @@ FPSocializeBehaviorChooser::FPSocializeBehaviorChooser(Robot& robot, const Json:
 
   _interactWithFacesBehavior = robot.GetBehaviorFactory().FindBehaviorByName("interactWithFaces");
   DEV_ASSERT(nullptr != _interactWithFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.InteractWithFaces");
-  
-  _pounceOnMotionBehavior = robot.GetBehaviorFactory().FindBehaviorByName("pounceOnMotion_socialize");
-  DEV_ASSERT(nullptr != _pounceOnMotionBehavior, "FPSocializeBehaviorChooser.MissingBehavior.PounceOnMotion");
 
   // defaults to 0 to mean allow infinite iterations
   _maxNumIterationsToAllowForSearch = config.get("maxNumFindFacesSearchIterations", 0).asUInt();
@@ -76,15 +75,15 @@ FPSocializeBehaviorChooser::FPSocializeBehaviorChooser(Robot& robot, const Json:
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -`
-FPSocializeBehaviorChooser::ObjectiveRequirementsList
-FPSocializeBehaviorChooser::ReadObjectiveRequirements(const Json::Value& config)
+FPSocializeBehaviorChooser::PotentialObjectivesList
+FPSocializeBehaviorChooser::ReadPotentialObjectives(const Json::Value& config)
 {
-  ObjectiveRequirementsList requirementList;
+  PotentialObjectivesList requirementList;
 
   const Json::Value& requirements = config["requiredObjectives"];
   if( !requirements.isNull() ) {
     for( const auto& objectiveConfig : requirements ) {
-      requirementList.emplace_back( new ObjectiveRequirements(objectiveConfig) );
+      requirementList.emplace_back( new PotentialObjectives(objectiveConfig) );
     }
   }
 
@@ -97,7 +96,7 @@ void FPSocializeBehaviorChooser::OnSelected()
 {
   // we always want to do the search first, if possible
   _state = State::Initial;
-  PopulateRequiredObjectives();
+  PopulatePotentialObjectives();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -169,14 +168,49 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
     }
 
     case State::FinishedInteraction: {
-
-      const auto it = _objectivesLeft.find( BehaviorObjective::PouncedAndCaught );
-      const bool needsToPounce = it != _objectivesLeft.end();
+      bool needsToPlay = false;
+      // Has objectives we might want to do
+      if( !_objectivesLeft.empty() )
+      {
+        std::vector<IBehavior*> wantsRunnableBehaviors;
+        // fill in _playingBehavior with one of the valid objectives
+        for( const auto& reqPtr : _potentialObjectives )
+        {
+          // Check if behavior objective found
+          if( _objectivesLeft.find(reqPtr->objective) != _objectivesLeft.end() )
+          {
+            IBehavior* beh = robot.GetBehaviorFactory().FindBehaviorByName(reqPtr->behaviorName);
+            BehaviorPreReqRobot preReqData(robot);
+            if( beh != nullptr )
+            {
+              // Check if runnable and valid.
+              if( beh->IsRunnable(preReqData) )
+              {
+                wantsRunnableBehaviors.push_back(beh);
+                PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedInteraction",
+                              "%s is runnable", beh->GetName().c_str());
+              }
+              else
+              {
+                PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedInteraction",
+                              "%s is NOT runnable", beh->GetName().c_str());
+              }
+            }
+          }
+        }
+        
+        if(!wantsRunnableBehaviors.empty())
+        {
+          int index = GetRNG().RandIntInRange( 0, Util::numeric_cast<int>(wantsRunnableBehaviors.size()) - 1);
+          _playingBehavior = wantsRunnableBehaviors[index];
+          needsToPlay = true;
+        }
+      }
       
-      if( nullptr != _pounceOnMotionBehavior && needsToPounce ) {
-        bestBehavior = _pounceOnMotionBehavior;
-        _lastNumTimesPounceStarted = _pounceOnMotionBehavior->GetNumTimesBehaviorStarted();
-        _state = State::Pouncing;
+      if( nullptr != _playingBehavior && needsToPlay ) {
+        bestBehavior = _playingBehavior;
+        _lastNumTimesPlayStarted = _playingBehavior->GetNumTimesBehaviorStarted();
+        _state = State::Playing;
       }
       else {
         _state = State::None;
@@ -184,35 +218,35 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
       break;
     }
       
-    case State::Pouncing: {
+    case State::Playing: {
 
       if( currentRunningBehavior == nullptr ) {
 
-        // current being null means the pouncing behavior may have stopped, or maybe a reactionary behavior
-        // ran, so check how many times pounce started. If it has actually started since we entered this
-        // state, the assume we are done pouncing once it stops
+        // current being null means the playing behavior may have stopped, or maybe a reactionary behavior
+        // ran, so check how many times play started. If it has actually started since we entered this
+        // state, the assume we are done playing once it stops
         
-        const bool hasPounceBehaviorStarted =
-          _pounceOnMotionBehavior->GetNumTimesBehaviorStarted() > _lastNumTimesPounceStarted;
-        if( hasPounceBehaviorStarted ) {
-          // pounce behavior stopped for some reason.. finished
+        const bool hasPlayBehaviorStarted =
+          _playingBehavior->GetNumTimesBehaviorStarted() > _lastNumTimesPlayStarted;
+        if( hasPlayBehaviorStarted ) {
+          // play behavior stopped for some reason.. finished
           _state = State::None;
           break;
         }
       }
       
-      if( _pounceOnMotionBehavior->IsRunning() || _pounceOnMotionBehavior->IsRunnable(preReqData) ) {
-        bestBehavior = _pounceOnMotionBehavior;
+      if( _playingBehavior->IsRunning() || _playingBehavior->IsRunnable(preReqData) ) {
+        bestBehavior = _playingBehavior;
       }
       break;
     }
 
-    case State::FinishedPouncing: {
+    case State::FinishedPlaying: {
       // At this point, we've told the pouncing behavior to stop after it's current action, so let it run
       // until that happens to avoid a harsh cut
-      if( currentRunningBehavior == _pounceOnMotionBehavior && _pounceOnMotionBehavior->IsRunning() ) {
+      if( currentRunningBehavior == _playingBehavior && _playingBehavior->IsRunning() ) {
         // keep it going while it's running, let it stop itself
-        bestBehavior = _pounceOnMotionBehavior;
+        bestBehavior = _playingBehavior;
       }
       break;
     }        
@@ -240,42 +274,43 @@ void FPSocializeBehaviorChooser::HandleMessage(const ExternalInterface::Behavior
     PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.GotInteraction",
                   "Got interacted objective, advancing to next behavior");
     _state = State::FinishedInteraction;
+    return;
   }
 
-  {
-    // update objective counts needed
-    auto objectiveIt = _objectivesLeft.find(msg.behaviorObjective);
-    if( objectiveIt != _objectivesLeft.end() ) {
-      DEV_ASSERT(objectiveIt->second > 0, "FPSocializeStrategy.HandleMessage.CorruptObjectiveData");
-    
-      objectiveIt->second--;
-      if( objectiveIt->second == 0 ) {
-        _objectivesLeft.erase( objectiveIt );
-      }
+  // update objective counts needed
+  int numObjectivesRemaining = Util::numeric_cast<int>(_objectivesLeft.size());
+  auto objectiveIt = _objectivesLeft.find(msg.behaviorObjective);
+  if( objectiveIt != _objectivesLeft.end() ) {
+    DEV_ASSERT(objectiveIt->second > 0, "FPSocializeStrategy.HandleMessage.CorruptObjectiveData");
+  
+    objectiveIt->second--;
+    numObjectivesRemaining = objectiveIt->second;
+    if( objectiveIt->second == 0 ) {
+      _objectivesLeft.erase( objectiveIt );
     }
   }
   
   PrintDebugObjectivesLeft("FPSocialize.HandleObjectiveAchieved.StillLeft");
-
-  if( _objectivesLeft.empty() && _state == State::Pouncing ) {
-    PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedPouncing",
+  // _objectivesLeft might contain other objectives we decided not to do.
+  if( numObjectivesRemaining == 0 && _state == State::Playing ) {
+    PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.FinishedPlaying",
                   "Got enough objectives to be done with pouncing, will transition out");
-
-    if( _pounceOnMotionBehavior->IsRunning() ) {
+    if( _playingBehavior != nullptr && _playingBehavior->IsRunning() )
+    {
       // tell the behavior to end nicely (when it's not acting)
-      _pounceOnMotionBehavior->StopOnNextActionComplete();
+      _playingBehavior->StopOnNextActionComplete();
     }
     
-    _state = State::FinishedPouncing;
+    _state = State::FinishedPlaying;
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FPSocializeBehaviorChooser::PopulateRequiredObjectives()
+void FPSocializeBehaviorChooser::PopulatePotentialObjectives()
 {
   _objectivesLeft.clear();
   
-  for( const auto& reqPtr : _objectiveRequirements ) {
+  for( const auto& reqPtr : _potentialObjectives ) {
     // first, check if the requirement is valid (based on unlock)
     if( reqPtr->requiredUnlock != UnlockId::Count &&
         ! _robot.GetProgressionUnlockComponent().IsUnlocked( reqPtr->requiredUnlock, true ) ) {

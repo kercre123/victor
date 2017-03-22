@@ -822,7 +822,7 @@
     },
     {
       "CladEvent": "PeekABooGetIn",
-      "AnimName": "ag_sparking_getin"
+      "AnimName": "ag_peekaboo_getin"
     },
     {
       "CladEvent": "PeekABooIdle",
@@ -850,11 +850,11 @@
     },
     {
       "CladEvent": "PeekABooGetOutSad",
-      "AnimName": "ag_memorymatch_failgame_cozmo"
+      "AnimName": "ag_peekaboo_failuregetout"
     },
     {
       "CladEvent": "PeekABooGetOutHappy",
-      "AnimName": "ag_sparking_getout"
+      "AnimName": "ag_peekaboo_successfulgetout"
     },
     {
       "CladEvent": "PetDetectionCat",

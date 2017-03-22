@@ -86,8 +86,10 @@
          "minTimeSecs": 0,
          "maxTimeSecs": 60,
          "numberOfRepetitions": 1,
-         "behaviorObjective": "PeekedABoo",
+         "behaviorObjective": "PeekABooComplete",
          "softSparkTrigger": "SoftSparkUpgradeLift",
+         "sparksSuccessTrigger": "", // don't play any animation
+         "sparksFailTrigger": "", // don't play any animation
          // these groups are the behaviors that are allowed in this behavior chooser
          "behaviorGroups" : [ "SparksPeekABoo" ]
        },
@@ -393,16 +395,21 @@
           "maxNumFindFacesSearchIterations": 2,
           "requiredObjectives": [
             {
-              "objective": "InteractedWithFace"
-            },
-            {
               "objective": "PouncedAndCaught",
+              "behaviorName": "pounceOnMotion_socialize",
               "ignoreIfLocked": "PounceOnMotionAction",
               "probabilityToRequireObjective": 0.5,
               "randomCompletionsNeededMin": 1,
               "randomCompletionsNeededMax": 3
-              // NOTE: this behavior will quite on it's own if it gets "bored" due to lack of movement, so
+              // NOTE: this behavior will quit on it's own if it gets "bored" due to lack of movement, so
               // these don't need to be met every time (but if they are met, socialize will end sooner)
+            },
+            {
+              "objective": "PeekABooComplete",
+              "behaviorName": "FPPeekABoo",
+              "probabilityToRequireObjective": 0.8,
+              // peek a boo has an aggressive cooldown on it, so rules itself out more often.
+              "ignoreIfLocked": "PeekABoo"
             }
           ]
         },
