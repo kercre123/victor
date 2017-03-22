@@ -156,11 +156,15 @@ namespace SpeedTap {
       else {
         GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_St_Win);
         for (int i = 0; i < losingBlocks.Count; ++i) {
-          losingBlocks[i].SetLEDsOff();
+          if (losingBlocks[i] != null) {
+            losingBlocks[i].SetLEDsOff();
+          }
         }
         for (int i = 0; i < _WinningCubes.Count; ++i) {
-          _CurrentRobot.PlayCubeAnimationTrigger(_WinningCubes[i], CubeAnimationTrigger.SpeedTapWin,
-                                          (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+          if (_WinningCubes[i] != null) {
+            _CurrentRobot.PlayCubeAnimationTrigger(_WinningCubes[i], CubeAnimationTrigger.SpeedTapWin,
+                                            (success) => { _EndCubeAnimFinished = true; HandleHandEndAnimDone(success); });
+          }
         }
       }
     }
