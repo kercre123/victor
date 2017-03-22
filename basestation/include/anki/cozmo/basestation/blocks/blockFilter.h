@@ -92,6 +92,8 @@ private:
   
   void SendBlockPoolData() const;
   
+  void Enable(bool enable, float discoveryTime_s);
+  
   using ObjectInfoArray = std::array<ObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS>;
   using ObjectInfoMap = std::map<ObjectType, ObjectInfo>;
   

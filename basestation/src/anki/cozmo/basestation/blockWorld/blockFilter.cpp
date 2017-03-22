@@ -358,20 +358,7 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     {
       const Anki::Cozmo::ExternalInterface::BlockPoolEnabledMessage& msg = event.GetData().Get_BlockPoolEnabledMessage();
       
-      if (msg.enabled)
-      {
-        PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Enabling automatic block pool with a discovery time of %f seconds", msg.discoveryTimeSecs);
-      }
-      else
-      {
-        PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Disabling automatic block pool");
-      }
-
-      _maxDiscoveryTime = msg.discoveryTimeSecs;
-      _enabled = msg.enabled;
-      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      _enabledTime = currTime;
-      _discoveredCompletedTime = currTime;
+      Enable(msg.enabled, msg.discoveryTimeSecs);
       
       break;
     }
@@ -405,14 +392,29 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     {
       PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Reseting the blockpool");
       
+      const Anki::Cozmo::ExternalInterface::BlockPoolResetMessage& msg = event.GetData().Get_BlockPoolResetMessage();
+      
+      Enable(msg.enable, _maxDiscoveryTime);
+      
       // Reset the runtime and persistent pools, disconnect from all the objects, and then save to disk
       std::for_each(_runtimePool.begin(), _runtimePool.end(), [](ObjectInfo& objectInfo) {
         objectInfo.Reset();
       });
 
-      std::for_each(_persistentPool.begin(), _persistentPool.end(), [](ObjectInfo& objectInfo) {
-        objectInfo.Reset();
-      });
+      // If we don't want to maintain the persistentPool then reset it
+      if(!msg.maintainPersistentPool)
+      {
+        std::for_each(_persistentPool.begin(), _persistentPool.end(), [](ObjectInfo& objectInfo) {
+          objectInfo.Reset();
+        });
+      }
+      
+      // If we are enabling automatic blockpooling and the persistentPool has been maintained then
+      // immediately connect to the persistentPool
+      if(msg.enable && msg.maintainPersistentPool)
+      {
+        CopyPersistentPoolToRuntimePool();
+      }
       
       ConnectToObjects();
       
@@ -455,6 +457,27 @@ void BlockFilter::SendBlockPoolData() const
 
   msg.blockData = persistentPool;
   _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+}
+
+void BlockFilter::Enable(bool enable, float discoveryTime_s)
+{
+  if (enable)
+  {
+    PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents",
+                  "Enabling automatic block pool with a discovery time of %f seconds",
+                  discoveryTime_s);
+  }
+  else
+  {
+    PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents",
+                  "Disabling automatic block pool");
+  }
+  
+  _maxDiscoveryTime = discoveryTime_s;
+  _enabled = enable;
+  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _enabledTime = currTime;
+  _discoveredCompletedTime = currTime;
 }
 
 } // namespace Cozmo

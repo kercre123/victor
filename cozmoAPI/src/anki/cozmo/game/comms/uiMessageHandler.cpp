@@ -190,6 +190,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetShouldAutoConnectToCubesAtStart, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetShouldAutoDisconnectFromCubesAtEnd, commonCallback));
       
       // We'll use this callback for game to game events we care about (SDK to Unity or vice versa)
       auto gameToGameCallback = std::bind(&UiMessageHandler::HandleGameToGameEvents, this, std::placeholders::_1);
@@ -916,6 +918,18 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         {
           const ExternalInterface::SetStopRobotOnSdkDisconnect& msg = event.GetData().Get_SetStopRobotOnSdkDisconnect();
           _sdkStatus.SetStopRobotOnDisconnect(msg.doStop);
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::SetShouldAutoConnectToCubesAtStart:
+        {
+          const ExternalInterface::SetShouldAutoConnectToCubesAtStart& msg = event.GetData().Get_SetShouldAutoConnectToCubesAtStart();
+          _sdkStatus.SetShouldAutoConnectToCubes(msg.doAutoConnect);
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::SetShouldAutoDisconnectFromCubesAtEnd:
+        {
+          const ExternalInterface::SetShouldAutoDisconnectFromCubesAtEnd& msg = event.GetData().Get_SetShouldAutoDisconnectFromCubesAtEnd();
+          _sdkStatus.SetShouldAutoDisconnectFromCubes(msg.doAutoDisconnect);
           break;
         }
         default:

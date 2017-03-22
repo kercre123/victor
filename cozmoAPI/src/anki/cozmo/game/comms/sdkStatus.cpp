@@ -134,6 +134,13 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
     _isWrongSdkVersion = false;
     _connectedSdkBuildVersion = message.buildVersion;
     _stopRobotOnDisconnect = true; // Always stop unless explictely requested by this program run
+    
+    if(_shouldAutoConnectToCubes)
+    {
+      // Reset BlockPool on connection, enabling it if it was disabled. The persistentPool is maintained so
+      // we can quickly reconnect to previously connected objects without having to go through the discovery phase
+      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolResetMessage(true, true)));
+    }
   }
   else
   {
@@ -161,6 +168,15 @@ void SdkStatus::OnDisconnect(bool isExitingSDKMode)
     if (_stopRobotOnDisconnect)
     {
       ResetRobot(isExitingSDKMode);
+    }
+    
+    if(_shouldAutoDisconnectFromCubes)
+    {
+      // Reset BlockPool on disconnection, disabling it to prevent connection to other objects
+      // The persistentPool is maintained so we can quickly reconnect to previously connected objects
+      // without having to go through the discovery phase
+      // This will cause us to disconnect from all connected objects
+      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolResetMessage(false, true)));
     }
     
     _isConnected = false;

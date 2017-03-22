@@ -57,6 +57,8 @@ public:
   void OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message);
   void OnDisconnect(bool isExitingSDKMode);
   void SetStopRobotOnDisconnect(bool newVal);
+  void SetShouldAutoConnectToCubes(bool newVal) { _shouldAutoConnectToCubes = newVal; }
+  void SetShouldAutoDisconnectFromCubes(bool newVal) { _shouldAutoDisconnectFromCubes = newVal; }
   
   void OnRecvMessage(const ExternalInterface::MessageGameToEngine& message, size_t messageSize);
   
@@ -125,6 +127,9 @@ private:
     
   bool      _isWrongSdkVersion = false;
   bool      _stopRobotOnDisconnect = true;
+  
+  bool      _shouldAutoConnectToCubes = false;
+  bool      _shouldAutoDisconnectFromCubes = false;
 };
   
   
