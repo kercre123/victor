@@ -7,7 +7,7 @@ SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || e
 TOPLEVEL=`pushd ${SCRIPT_PATH}/.. >> /dev/null; pwd; popd >> /dev/null`
 
 HOST_PLATFORM=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
-BREAKPAD_ANDROID_NDK_VERSION="r13b"
+BREAKPAD_ANDROID_NDK_VERSION="r14"
 
 : ${BREAKPAD_REVISION_TO_BUILD:="master"}
 : ${BREAKPAD_BUILD_PLATFORM:=$HOST_PLATFORM}
@@ -116,6 +116,7 @@ if [ $BREAKPAD_BUILD_PLATFORM = "android" ]; then
     patch \
       linux_syscall_support.h \
       -i $DISTDIR/../../../build-scripts/patch-linux_syscall_support.h.txt
+    rm linux_syscall_support.h.orig
     popd # $DISTDIR/include/breakpad/third_party/lss
 
     # Remove un-needed directories from the distribution

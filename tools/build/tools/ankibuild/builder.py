@@ -58,13 +58,13 @@ class Builder(object):
     def argument_parser(self):
         parser = DefaultHelpParser(add_help=False)
 
-        parser.add_argument('--verbose', action="store_true", default=False)
-        parser.add_argument('--debug', action="store_true", default=False)
-        parser.add_argument('--build-dir', action="store")
-        parser.add_argument('--output-dir', action="store")
+        parser.add_argument('-v', '--verbose', action="store_true", default=False)
+        parser.add_argument('-d', '--debug', action="store_true", default=False)
+        parser.add_argument('-b', '--build-dir', action="store")
+        parser.add_argument('-o', '--output-dir', action="store")
         parser.add_argument('--log-file', action="store")
-        parser.add_argument('--platform', action="store", choices=('ios', 'android', 'mac'))
-        parser.add_argument('--config', action="store", choices=('debug', 'release', 'shipping'))
+        parser.add_argument('-p', '--platform', action="store", choices=('ios', 'android', 'mac','linux'))
+        parser.add_argument('-c', '--config', action="store", choices=('debug', 'release', 'shipping'))
         parser.add_argument('--with-basestation', action="store",
                             help="path to basestation source repo")
         parser.add_argument('--with-assets', action="store",
