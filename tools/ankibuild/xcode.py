@@ -4,7 +4,6 @@ import shutil
 import subprocess
 import os
 import plistlib
-
 import util
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -111,6 +110,7 @@ def build(
     configuration = None,
     platform = None,
     simulator = False,
+    scriptengine = 'il2cpp',
     other_code_sign_flags = None,
     code_sign_identity = None,
     provision_profile = None,
@@ -151,11 +151,11 @@ def build(
     if platform == 'ios':
         if simulator:
             arguments += ['-sdk', 'iphonesimulator']
-        else:
-            arguments += ['-sdk', 'iphoneos', 'ARCHS=armv7', 'ONLY_ACTIVE_ARCH=NO']
     
     arguments += ['-parallelizeTargets']
-    
+
+    arguments += ['SCRIPT_ENGINE=' + scriptengine]
+
     arguments += [buildaction]
     
     if use_xcpretty:

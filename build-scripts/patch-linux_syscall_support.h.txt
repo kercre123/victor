@@ -1,0 +1,11 @@
+--- linux_syscall_support.h	2016-12-08 23:04:50.583118188 -0800
++++ linux_syscall_support.h.no-implicit-cast	2016-12-08 23:37:24.051118188 -0800
+@@ -4023,7 +4023,7 @@
+         LSS_ERRNO = EINVAL;
+         return (void *) -1;
+       }
+-      return LSS_NAME(_mmap2)(s, l, p, f, d, (o / 4096));
++      return LSS_NAME(_mmap2)(s, l, p, f, d, (off_t) (o / 4096));
+     }
+   #elif defined(__s390x__)
+     /* On s390x, mmap() arguments are passed in memory. */

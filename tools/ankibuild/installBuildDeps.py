@@ -1,25 +1,26 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys
-import os.path
 import subprocess
 import argparse
 import platform
+import signal
+from os import getenv, path, killpg, setsid, environ
 
 class DependencyInstaller(object):
 
+  OPT = path.join("/usr", "local", "opt")
 
   def __init__(self, options):
     if options.verbose:
-      print('Initializing paths for platform {0}...'.format(platform))
+      print('Initializing DependencyInstaller')
     self.options = options
-
 
   def isInstalled(self, dep):
     """Check whether a package @dep is installed"""
     # TODO: This check will work for executables, but checking whether something exists
     # is not enough. We need to ensure that the installed version has the required capabilities.
-    if not os.path.exists(os.path.join("/usr/local/opt", dep)):
+    if not path.exists(path.join("/usr/local/opt", dep)):
       notFound = subprocess.call(['which', dep], stdout=subprocess.PIPE)
       if notFound:
         return False
@@ -61,14 +62,18 @@ class DependencyInstaller(object):
                    'android-18',
                    'extra-android-m2repository',
                    'extra-android-support',
+                   'build-tools-21.1.2',
                    'build-tools-21.1.1',
                    'build-tools-20.0.0',
                    'build-tools-19.0.3',
                    'extra-google-m2repository',
                    'extra-google-google_play_services']
-    shellCommand = "(sleep 5 && while [ 1 ]; do sleep 1; echo y ; done) | android --silent update sdk --all --no-ui --filter %s" % ','.join(ANDROID_PKGS)
-    print shellCommand
-    result = subprocess.call([shellCommand], shell=True)
+    click_yes = "(sleep 5 && while [ 1 ]; do sleep 1; echo y ; done)"
+    shellCommand = "android --silent update sdk --all --no-ui --filter %s" % ','.join(ANDROID_PKGS)
+    p = subprocess.Popen([click_yes], stdout=subprocess.PIPE, shell=True, preexec_fn=setsid, close_fds=True)
+    result = subprocess.call(shellCommand, executable="/bin/bash", stdin=p.stdout, stderr=subprocess.STDOUT, shell=True)
+    # This is critical otherwise click_yes will happen forever.
+    killpg(p.pid, signal.SIGUSR1)
     return result == 0
 
   def installTool(self, tool):
@@ -77,10 +82,10 @@ class DependencyInstaller(object):
       print "Installing %s" % tool
       result = subprocess.call(['brew', 'install', tool])
       if result:
-        print "Failed to install %s!" % tool
+        print "Error: Failed to install %s!" % tool
         return False
       if not self.isInstalled(tool):
-        print "%s still not installed!" % tool
+        print "Error: %s still not installed!" % tool
         return False
     return True
 
@@ -95,6 +100,10 @@ class DependencyInstaller(object):
 
     if not self.getHomebrew():
       return False
+
+    if 'buck' in homebrew_deps:
+      subprocess.call(['brew', 'tap', 'facebook/fb'])
+
     for tool in homebrew_deps:
       if not self.installTool(tool):
         return False
@@ -119,7 +128,7 @@ if __name__ == '__main__':
     # and figure out a way to only install the required versions.
     #deps = ['ninja', 'valgrind', 'android-ndk', 'android-sdk']
   options = parseArgs(sys.argv)
-  installer = DependencyInstaller(options);
+  installer = DependencyInstaller(options)
   if installer.install():
     sys.exit(0)
   else:

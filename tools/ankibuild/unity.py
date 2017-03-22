@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -14,6 +14,7 @@ import socket
 import subprocess
 import sys
 import time
+import yaml
 
 # ankibuild
 import builder
@@ -120,6 +121,8 @@ class UnityBuildConfig(object):
         self.script_engine = 'mono2x'
         self.script_debugging = False
         self.script_profiling = False
+        self.asset_destination_path = None
+        self.build_type = 'PlayerAndAssets'
         self.verbose = False
         self.unity_exe = UnityBuildConfig.default_unity_exe()
         self.destination_file = None
@@ -142,6 +145,11 @@ class UnityBuildConfig(object):
 
         parser.add_argument('--sdk', action="store", choices=('iphoneos', 'iphonesimulator'), default="iphoneos")
         parser.add_argument('--script-engine', action="store", choices=('mono2x', 'il2cpp'), default="mono2x")
+        parser.add_argument('--build-type', action="store", choices=('PlayerAndAssets', 'OnlyAssets', 'OnlyPlayer'),
+                            default="PlayerAndAssets", dest='build_type')
+        parser.add_argument('--asset-destination-path', action="store",
+                            default="Assets/StreamingAssets/cozmo_resources", dest='asset_destination_path',
+                            help="where to copy assets to")
         parser.add_argument('--script-debugging', action="store_true", default=False,
                         help="Enable Mono script debugging in UnityEngine")
         parser.add_argument('--script-profiling', action="store_true", default=False,
@@ -200,7 +208,8 @@ class UnityBuild(object):
         # We need to skip the ProjectSettings.asset file, since it can be
         # modified during the build.
         excludes = set(['ProjectSettings.asset',
-                        'EditorUserBuildSettings.asset'])
+                        'EditorUserBuildSettings.asset',
+                        '.DS_Store'])
 
         src_files = []
         for startFolder in ['Assets', 'ProjectSettings']:
@@ -288,6 +297,8 @@ class UnityBuild(object):
         message += " --sdk " + self.build_config.sdk
         message += " --build-path " + self.build_config.build_dir
         message += " --script-engine " + self.build_config.script_engine
+        message += " --asset-path " + self.build_config.asset_destination_path
+        message += " --build-type " + self.build_config.build_type
 
         logFilePath = os.path.expanduser('~/Library/Logs/Unity/Editor.log')
         handleUnityLog = open(logFilePath, 'r')
@@ -345,6 +356,9 @@ class UnityBuild(object):
         procArgs.extend(["--sdk", self.build_config.sdk])
         procArgs.extend(["--build-path", self.build_config.build_dir])
         procArgs.extend(["--script-engine", self.build_config.script_engine])
+        procArgs.extend(["--asset-path ", self.build_config.asset_destination_path])
+        procArgs.extend(["--build-type ", self.build_config.build_type])
+
         if self.build_config.script_debugging:
             procArgs.extend(["--debug"])
         # script profiling is believed to work only when script debugging is enabled (pauley)
@@ -364,6 +378,7 @@ class UnityBuild(object):
         # not being found.
         # If this occurs, run the build one more time as a workaround
         if ret != 0 and self.check_log_file_for_autobuild_not_found(self.build_config.log_file):
+            print('WARNING:  TRIGGERING A BUILD AGAIN IN run_unity_command_line')
             ret = subprocess.call(procArgs, cwd=projectPath)
 
         return (ret, self.build_config.log_file)
@@ -389,6 +404,10 @@ class UnityBuild(object):
         if result != 0:
             return result
 
+        # if we are only copying assets do not do other checks. just return result.
+        if self.build_config.build_type == "OnlyAssets":
+            return result
+
         # Make sure a Build directory was created, otherwise fail the build
         if result == 0:
             result = 0 if os.path.isdir(self.build_config.build_dir) else 2
@@ -405,6 +424,20 @@ class UnityBuild(object):
         return result
 
 class UnityUtil(object):
+
+    @staticmethod
+    def get_created_time_from_meta_file(path, default=int(time.time())):
+        if not os.path.isfile(path):
+            return default
+        ydata = {}
+        try:
+            with open(path, 'r') as yf:
+                ydata = yaml.safe_load(yf)
+        except:
+            pass
+        if "timeCreated" in ydata:
+            return ydata["timeCreated"]
+        return default
 
     @staticmethod
     def generate_meta_files(path, verbose=False, overwrite_existing=False):
@@ -425,32 +458,43 @@ DefaultImporter:
             if not (overwrite_existing or os.path.exists(dir_meta_filename)):
                 if(verbose):
                     print(dir_rel_path)
-                with open(os.path.join(dir_name + '.meta'), 'w+') as dir_meta_file:
+                meta_file_path=os.path.join(dir_name + '.meta')
+                meta_file_path_tmp=os.path.join(dir_name + '.meta.tmp')
+                create_time_secs = UnityUtil.get_created_time_from_meta_file(meta_file_path)
+                with open(meta_file_path_tmp, 'w+') as dir_meta_file:
                     dir_meta_file.write(meta_file_template % { 
                         'path_md5': md5.new(dir_rel_path).hexdigest(),
                         'is_folder_asset': 'yes',
-                        'creation_time_secs': int(time.time())
+                        'creation_time_secs': create_time_secs
                     })
+                util.File.update_if_changed(meta_file_path, meta_file_path_tmp)
             for file_name in [i for i in file_list if not re.match(r'.*\.meta$', i)]:
                 file_path = os.path.join(dir_name, file_name)
                 file_rel_path = os.path.join(dir_rel_path, file_name)
                 meta_filename = file_path + '.meta'
                 if(verbose):
                     print(file_rel_path)
+                meta_file_path = file_path + '.meta'
+                meta_file_path_tmp = file_path + '.meta.tmp'
+                create_time_secs = UnityUtil.get_created_time_from_meta_file(meta_file_path)
                 if not (overwrite_existing or os.path.exists(meta_filename)):
-                    with open(file_path + '.meta', 'w+') as meta_file:
+                    with open(meta_file_path_tmp, 'w+') as meta_file:
                         meta_file.write(meta_file_template % {
                             'path_md5': md5.new(file_rel_path).hexdigest(),
                             'is_folder_asset': 'no',
-                            'creation_time_secs': int(time.time())
+                            'creation_time_secs': create_time_secs
                         })
+                    util.File.update_if_changed(meta_file_path, meta_file_path_tmp)
 
 
 # def main():
 if __name__ == '__main__':
 
+    util.Profile.begin(__file__, sys.argv[1:])
+
     argv = sys.argv[1:]
 
+    util.Profile.begin(__file__+"/UnityBuildConfig", sys.argv[1:])
     config = UnityBuildConfig()
     config.parse_arguments(argv)
 
@@ -481,9 +525,15 @@ if __name__ == '__main__':
     if (config.platform == 'mac'):
         config.build_dir = os.path.join(config.build_dir, 'UnityPlayerOSX.app')
 
+    util.Profile.end(__file__+"/UnityBuildConfig", sys.argv[1:])
+
+    util.Profile.begin(__file__+"/UnityBuild", sys.argv[1:])
     builder = UnityBuild(config)
 
     ret = builder.run()
+    util.Profile.end(__file__+"/UnityBuild", sys.argv[1:])
+
+    util.Profile.end(__file__, sys.argv[1:])
 
     if ret == 0:
         print("Unity compile completed correctly.")

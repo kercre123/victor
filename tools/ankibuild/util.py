@@ -1,10 +1,12 @@
 import collections
 import errno
+import hashlib
 import json
 import os
 import re
 import shutil
 import sys
+import time
 try:
     import subprocess32 as subprocess
 except ImportError:
@@ -111,12 +113,27 @@ class File(object):
         for dep in deps:
             up_to_date = cls._is_file_up_to_date(target, dep)
             if not up_to_date:
-                print('Not up to date; "{0}" is newer than "{1}".'.format(target, dep))
+                print('Not up to date; "{0}" is older than "{1}".'.format(target, dep))
                 break
 
         return up_to_date
-        
-    
+
+    @classmethod
+    def md5sum(cls, filename):
+        md5 = hashlib.md5()
+        if os.path.isfile(filename):
+            with open(filename, 'rb') as f:
+                for chunk in iter(lambda: f.read(128*md5.block_size), b''):
+                    md5.update(chunk)
+        return md5.hexdigest()
+
+    @classmethod
+    def update_if_changed(cls, target, tmp):
+        if cls.md5sum(target) != cls.md5sum(tmp):
+            os.rename(tmp, target)
+        else:
+            os.remove(tmp)
+
     @classmethod
     def pwd(cls):
         "Returns the absolute path of the current working directory."
@@ -216,8 +233,8 @@ class File(object):
                 for file in os.listdir(dir):
                     if file != '.DS_Store':
                         fullpath = os.path.join(dir, file)
-                        if os.path.isdir(path):
-                            dirs.append(path)
+                        if os.path.isdir(fullpath):
+                            dirs.append(fullpath)
                         else:
                             # normal file, so don't remove
                             print('"{0}" still exists, so not removing "{1}"'.format(fullpath, path))
@@ -236,6 +253,19 @@ class File(object):
         if os.path.isdir(destination):
             destination = os.path.join(destination, os.path.basename(source))
         cls.write(destination, cls.read(source))
+        return True
+
+    @classmethod
+    def cptree(cls, source, destination):
+        if not os.path.isdir(source):
+            print (source + " is not a folder")
+            return False
+        try:
+            shutil.copytree(source, destination)
+        except OSError as exc:
+            print ("error: " + str(exc))
+            return False
+        return True
 
     @classmethod
     def read(cls, path):
@@ -346,3 +376,52 @@ class File(object):
         """
         ignore_result = kwargs.get('ignore_result')
         return cls._raw_execute(subprocess.check_output, arglists, ignore_result)
+
+
+class Profile(object):
+
+    @staticmethod
+    def begin(file, args):
+        ANKI_PROFILE = os.environ.get('ANKI_PROFILE')
+        if ANKI_PROFILE:
+            basename = os.path.basename(file)
+            if not os.path.exists(ANKI_PROFILE):
+                os.makedirs(ANKI_PROFILE)
+            with open(os.path.join(ANKI_PROFILE, basename+".log"), "w") \
+              as profile_file:
+                profile_file.write("B:%d P:%d F:%s A:%s\n" % \
+                                   (int(time.time()), os.getpid(), basename, str(args)))
+
+
+    @staticmethod
+    def end(file, args):
+        ANKI_PROFILE = os.environ.get('ANKI_PROFILE')
+        if ANKI_PROFILE:
+            basename = os.path.basename(file)
+            with open(os.path.join(ANKI_PROFILE, basename+".log"), "a") \
+              as profile_file:
+                profile_file.write("E:%d P:%d F:%s\n" % \
+                                   (int(time.time()), os.getpid(), basename))
+
+class Gyp(object):
+
+    @staticmethod
+    def getArgFunction(defaultArgs):
+        def argFunc(format, outputFolder, gypFile = None):
+            returnArgs = defaultArgs + ['-f', format, '--generator-output', outputFolder]
+            if gypFile is not None:
+                returnArgs += [gypFile]
+            return returnArgs
+        return argFunc
+
+    @staticmethod
+    def getDefineString(defines, overrideDefines = None):
+        if overrideDefines is not None:
+            for entry in overrideDefines:
+                (k,v) = entry.split('=')
+                key = k.strip()
+                value = v.strip()
+                defines[key] = value
+
+        define_args = ["%s=%s" % (k, v) for k,v in defines.iteritems()]
+        return "\n".join(define_args)

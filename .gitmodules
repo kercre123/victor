@@ -1,4 +1,0 @@
-[submodule "gyp"]
-	path = gyp
-	url = ../anki-gyp.git
-	branch = master
