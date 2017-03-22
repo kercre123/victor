@@ -71,7 +71,7 @@ int RunTests(void) {
   TestPause(1);
   
   // Measure cliff sensor now, but don't report trouble until motors are okay
-  uint32_t cliffLevel = g_dataToHead.cliffLevel;
+  uint16_t cliffLevel = g_dataToHead.cliffLevel;
 
   // Wind the lift and head motor back enough to allow some travel in the tests ahead
   for (int i = 2; i < 4; i++) {

@@ -461,7 +461,14 @@ namespace Anki
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
 
+      // Cliff reading
+      // The lower the value the more likely it is to be cliff
       u16 GetRawCliffData();
+
+      /// Value of light sensor when IR light is off
+      /// Used to do additional logic on whether or not the ambient light
+      /// is too bright to trust the cliff reading
+      u16 GetCliffOffLevel();
       
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////

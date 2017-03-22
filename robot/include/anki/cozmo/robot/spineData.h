@@ -40,8 +40,9 @@ struct GlobalDataToHead
   uint32_t source;
   Fixed speeds[4];
   Fixed positions[4];
-  int32_t cliffLevel;
   uint32_t timestamp;
+  uint16_t cliffLevel;
+  uint16_t cliffOffLevel;
   uint8_t  cladData[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
 

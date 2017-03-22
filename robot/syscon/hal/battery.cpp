@@ -638,6 +638,7 @@ void Battery::manage()
         
         int result = resultLedOn - resultLedOff - CLIFF_SENSOR_BLEED;
         g_dataToHead.cliffLevel = (result < 0) ? 0 : result;
+        g_dataToHead.cliffOffLevel = resultLedOff;
         
         nrf_gpio_pin_toggle(PIN_IR_DROP);
         

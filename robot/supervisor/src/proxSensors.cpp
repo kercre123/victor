@@ -41,6 +41,10 @@ namespace Anki {
         #ifdef COZMO_V2
         u16 _cliffVals[HAL::CLIFF_COUNT];
         HAL::CliffID _minCliffSensor;
+        #else
+        // The upper bound on the cliff detection threshold is computed by subtracting
+        // cliff off value from this.
+        const u16 MAX_CLIFF_SENSOR_DETECT_THRESH_UPPER_BOUND = 2*CLIFF_SENSOR_DROP_LEVEL;
         #endif
         
         bool _stopOnCliff = true;
@@ -104,12 +108,43 @@ namespace Anki {
           }
         }
         #endif  // COZMO_V2
+
+
+        
+        // Compute bounds on cliff detect/undetect thresholds which may be adjusted according to the
+        // intensity of ambient light as measured by the LED-off level.
+        #ifdef COZMO_V2
+        
+        // TODO: Not doing it yet, but should do this for Cozmo 2 as well
+        const u16 cliffDetectThresh = _cliffDetectThresh;
+        const u16 cliffUndetectThresh = CLIFF_SENSOR_UNDROP_LEVEL;
+        
+        #else
+        
+        const u16 offLevel = HAL::GetCliffOffLevel();
+        
+        // Compute cliff detect threshold
+        const u16 maxCliffDetectThresh = (offLevel > MAX_CLIFF_SENSOR_DETECT_THRESH_UPPER_BOUND) ? 0
+                                         : (MAX_CLIFF_SENSOR_DETECT_THRESH_UPPER_BOUND - offLevel);
+        const u16 cliffDetectThresh = MIN(_cliffDetectThresh, maxCliffDetectThresh);
+        
+        // Lower the undetect threshold at a proportional rate as the detect threshold.
+        // i.e. As the detect threshold falls from CLIFF_SENSOR_DROP_LEVEL to 0,
+        //      the undetect threshold falls from CLIFF_SENSOR_UNDROP_LEVEL to CLIFF_SENSOR_UNDROP_LEVEL_MIN
+        const u16 cliffUndetectThresh = CLIFF_SENSOR_UNDROP_LEVEL_MIN +
+                                        (CLIFF_SENSOR_UNDROP_LEVEL - CLIFF_SENSOR_UNDROP_LEVEL_MIN) *
+                                        ((f32)(cliffDetectThresh) / CLIFF_SENSOR_DROP_LEVEL);
+        
+        //AnkiDebugPeriodic(100, 1208, "ProxSensors.UpdateCliff.CliffData", 635, "raw: %d, off: %d, thresh: %d / %d", 4, GetMinRawCliffValue(), offLevel, cliffDetectThresh, cliffUndetectThresh);
+        
+        #endif  // ifdef COZMO_V2
+        
         
         // Update cliff status with hysteresis
         u16 rawCliff = GetMinRawCliffValue();
-        if (!_cliffDetected && rawCliff < _cliffDetectThresh) {
+        if (!_cliffDetected && rawCliff < cliffDetectThresh) {
           _cliffDetected = true;
-        } else if (_cliffDetected && rawCliff > CLIFF_SENSOR_UNDROP_LEVEL) {
+        } else if (_cliffDetected && rawCliff > cliffUndetectThresh) {
           _cliffDetected = false;
         }
         

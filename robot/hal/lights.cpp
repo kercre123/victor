@@ -24,7 +24,12 @@ namespace Anki
       
       u16 GetRawCliffData() 
       {
-        return static_cast<u16>(g_dataToHead.cliffLevel);
+        return g_dataToHead.cliffLevel;
+      }
+
+      u16 GetCliffOffLevel()
+      {
+        return g_dataToHead.cliffOffLevel;
       }
     }
   }

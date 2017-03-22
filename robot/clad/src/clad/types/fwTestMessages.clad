@@ -51,7 +51,7 @@ namespace RobotInterface {
   {
     int_32  speedsFixed[4],
     int_32  positionsFixed[4],
-    uint_32 cliffLevel,
+    uint_16 cliffLevel,
     int_16  gyro[3],
     int_16  acc[3],
     uint_8  battVolt10x,

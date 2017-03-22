@@ -832,6 +832,11 @@ namespace Anki {
       return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
     }
     
+    u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
+    {
+      return 0;
+    }
+    
     f32 HAL::BatteryGetVoltage()
     {
       return 5;

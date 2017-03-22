@@ -165,6 +165,7 @@ namespace Cozmo {
   
   // Cliff un-detection threshold (hysteresis)
   const u32 CLIFF_SENSOR_UNDROP_LEVEL = 600;
+  const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 50;
   
   
   /***************************************************************************
