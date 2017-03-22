@@ -146,7 +146,15 @@ void RadioConnectionStateMachineUpdate()
       }
       case 7:
       {
-        AnkiWarn( 1208, "hardware.model", 635, "Model 1.%d", 1, getModelNumber()&0xFF);
+        AnkiWarn( 1203, "hardware.model", 632, "Model 1.%d", 1, getModelNumber()&0xFF);
+        doRTConnectPhase++;
+        break;
+      }
+      case 8:
+      {
+        RobotInterface::WiFiFlashID fidMsg;
+        fidMsg.chip_id = spi_flash_get_id();
+        RobotInterface::SendMessage(fidMsg);
         doRTConnectPhase = 0; // Done
         break;
       }

@@ -38,6 +38,10 @@ namespace Anki {
       // @TODO this should be moved to a different module
       void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
       
+      /// Handle wifi flash ID reports
+      // @TODO this should be moved to a different module
+      void HandleWiFiFlashID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+      
       template<typename T>
       void HandleMessage(const T& msg);
       
