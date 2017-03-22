@@ -276,6 +276,12 @@ def parse_engine_arguments():
     parser.add_argument('--mex', '-m', dest='mex', action='store_true',
                     help='builds mathlab\'s mex project')
     parser.add_argument(
+        '--script-engine',
+        action="store",
+        choices=('mono2x', 'il2cpp', 'auto'),
+        default="auto",
+        help='Set the Unity scripting back end') 
+    parser.add_argument(
         '--do-not-check-dependencies',
         required=False,
         action='store_true',
@@ -488,6 +494,12 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     
     for platform in options.platforms:
         print_header('PLATFORM {0}:'.format(platform.upper()))
+        if options.script_engine == 'auto':
+            # if script_engine not defined, pick one that works for the platform
+            if platform == 'android':
+                options.script_engine = 'mono2x'
+            else:
+                options.script_engine = 'il2cpp'
         config = platform_configuration_type(platform, options)
         config.process()
     
@@ -496,6 +508,7 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     
     print_header('DONE COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
 
+# Note that main is also currently the entry point for android builds coming from configure.py --PTerry 03/15/2017
 def main():
     options = parse_engine_arguments()
     clad_folders = [os.path.join(options.output_dir, 'clad')]

@@ -553,13 +553,8 @@ class GamePlatformConfiguration(object):
             buildaction = 'clean'
         else:
             buildaction = 'build'
-            script_engine = self.options.script_engine
-            if script_engine == 'auto' or not self.options.script_engine:
-                # if script-engine not defined, set a sensible default
-                if self.platform == 'android':
-                    script_engine = 'mono2x'
-                else:
-                    script_engine = 'il2cpp'
+
+        script_engine = self.options.script_engine
 
         if buildaction == 'build':
             if self.options.nobuild:
@@ -631,6 +626,7 @@ class GamePlatformConfiguration(object):
         args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]
         args += ['--platform', '+'.join(self.options.platforms)]
         args += ['--config', self.options.configuration]
+        args += ['--script-engine', self.options.script_engine]
         if self.options.verbose:
             args += ['--verbose']
         if self.options.do_not_check_dependencies:
