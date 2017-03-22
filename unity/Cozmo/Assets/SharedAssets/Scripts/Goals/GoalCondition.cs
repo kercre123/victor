@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -62,6 +63,7 @@ namespace Anki {
 #if UNITY_EDITOR
       private GUIContent _Label;
 
+      [JsonIgnore]
       public GUIContent Label {
         get {
           if (_Label == null) {
