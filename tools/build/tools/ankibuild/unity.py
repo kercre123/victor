@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -14,6 +14,7 @@ import socket
 import subprocess
 import sys
 import time
+import yaml
 
 # ankibuild
 import builder
@@ -425,6 +426,20 @@ class UnityBuild(object):
 class UnityUtil(object):
 
     @staticmethod
+    def get_created_time_from_meta_file(path, default=int(time.time())):
+        if not os.path.isfile(path):
+            return default
+        ydata = {}
+        try:
+            with open(path, 'r') as yf:
+                ydata = yaml.safe_load(yf)
+        except:
+            pass
+        if "timeCreated" in ydata:
+            return ydata["timeCreated"]
+        return default
+
+    @staticmethod
     def generate_meta_files(path, verbose=False, overwrite_existing=False):
         meta_file_template = """fileFormatVersion: 2
 guid: %(path_md5)s
@@ -443,32 +458,43 @@ DefaultImporter:
             if not (overwrite_existing or os.path.exists(dir_meta_filename)):
                 if(verbose):
                     print(dir_rel_path)
-                with open(os.path.join(dir_name + '.meta'), 'w+') as dir_meta_file:
+                meta_file_path=os.path.join(dir_name + '.meta')
+                meta_file_path_tmp=os.path.join(dir_name + '.meta.tmp')
+                create_time_secs = UnityUtil.get_created_time_from_meta_file(meta_file_path)
+                with open(meta_file_path_tmp, 'w+') as dir_meta_file:
                     dir_meta_file.write(meta_file_template % { 
                         'path_md5': md5.new(dir_rel_path).hexdigest(),
                         'is_folder_asset': 'yes',
-                        'creation_time_secs': int(time.time())
+                        'creation_time_secs': create_time_secs
                     })
+                util.File.update_if_changed(meta_file_path, meta_file_path_tmp)
             for file_name in [i for i in file_list if not re.match(r'.*\.meta$', i)]:
                 file_path = os.path.join(dir_name, file_name)
                 file_rel_path = os.path.join(dir_rel_path, file_name)
                 meta_filename = file_path + '.meta'
                 if(verbose):
                     print(file_rel_path)
+                meta_file_path = file_path + '.meta'
+                meta_file_path_tmp = file_path + '.meta.tmp'
+                create_time_secs = UnityUtil.get_created_time_from_meta_file(meta_file_path)
                 if not (overwrite_existing or os.path.exists(meta_filename)):
-                    with open(file_path + '.meta', 'w+') as meta_file:
+                    with open(meta_file_path_tmp, 'w+') as meta_file:
                         meta_file.write(meta_file_template % {
                             'path_md5': md5.new(file_rel_path).hexdigest(),
                             'is_folder_asset': 'no',
-                            'creation_time_secs': int(time.time())
+                            'creation_time_secs': create_time_secs
                         })
+                    util.File.update_if_changed(meta_file_path, meta_file_path_tmp)
 
 
 # def main():
 if __name__ == '__main__':
 
+    util.Profile.begin(__file__, sys.argv[1:])
+
     argv = sys.argv[1:]
 
+    util.Profile.begin(__file__+"/UnityBuildConfig", sys.argv[1:])
     config = UnityBuildConfig()
     config.parse_arguments(argv)
 
@@ -499,9 +525,15 @@ if __name__ == '__main__':
     if (config.platform == 'mac'):
         config.build_dir = os.path.join(config.build_dir, 'UnityPlayerOSX.app')
 
+    util.Profile.end(__file__+"/UnityBuildConfig", sys.argv[1:])
+
+    util.Profile.begin(__file__+"/UnityBuild", sys.argv[1:])
     builder = UnityBuild(config)
 
     ret = builder.run()
+    util.Profile.end(__file__+"/UnityBuild", sys.argv[1:])
+
+    util.Profile.end(__file__, sys.argv[1:])
 
     if ret == 0:
         print("Unity compile completed correctly.")

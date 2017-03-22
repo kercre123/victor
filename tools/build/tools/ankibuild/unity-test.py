@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -38,13 +38,9 @@ class UnityBuildConfig(object):
 
     def __init__(self):
         self.project_dir = None
-        self.platform = 'mac'
         self.build_dir = os.path.join(util.Git.repo_root(), 'build', 'Unity')
         self.log_file = os.path.join(self.build_dir, 'UnityTest.log')
         self.unity_exe = UnityBuildConfig.default_unity_exe()
-        self.smoketest = False
-        self.testscenes = None
-        self.test_result_dir = self.build_dir
 
     def set_options(self, options):
         options_dict = vars(options)
@@ -61,15 +57,11 @@ class UnityBuildConfig(object):
         parser = argparse.ArgumentParser(parents=[anki_builder.argument_parser()],
                                      description='Run Unity Integration Tests')
 
-        parser.add_argument('--smoketest', action="store_true", help="Run Unity smoke tests"),
-        parser.add_argument('--testscenes', action="store"),
-        parser.add_argument('--test-result-dir', action="store", default=self.build_dir),
+        parser.add_argument('--unity-exe', action="store", help="path to Unity")
         parser.add_argument('project_dir', action="store", help="path to Unity project")
 
         parser.set_defaults(build_dir=os.path.join(util.Git.repo_root(), 'build', 'Unity'),
-                            log_file=os.path.join(util.Git.repo_root(), 'build', 'Unity', 'UnityTest.log'),
-                            platform='mac',
-                            config='release')
+                            log_file=os.path.join(util.Git.repo_root(), 'build', 'Unity', 'UnityTest.log'))
         options = parser.parse_args(argv)
         self.set_options(options)
 
@@ -135,9 +127,7 @@ class UnityBuild(object):
         exe = self.build_config.unity_exe
         procArgs = [exe, "-batchmode"]
         procArgs.extend(["-projectPath", self.build_config.project_dir])
-        procArgs.extend(["-executeMethod", 'UnityTest.Batch.RunIntegrationTests'])
-        procArgs.extend(["-testscenes=" + self.build_config.testscenes])
-        procArgs.extend(["-resultsFileDirectory=" + self.build_config.test_result_dir])
+        procArgs.extend(["-executeMethod", 'Anki.TestScenario.RunTest'])
         procArgs.extend(["-logFile", self.build_config.log_file])
 
         projectPath = self.build_config.project_dir
@@ -156,11 +146,7 @@ class UnityBuild(object):
         self.make_build_dir()
         util.File.mkdir_p(os.path.dirname(self.build_config.log_file))
 
-        if self.build_config.smoketest:
-            (result, logFilePath) = self.run_smoketest_command_line()
-        else:
-            print("Error: Test suite type required. (e.g. --smoketest, --regression)")
-            return result
+        (result, logFilePath) = self.run_smoketest_command_line()
 
         self.parse_log_file(logFilePath)
 
