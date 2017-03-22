@@ -192,7 +192,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     case TEST_ADC:
     {
-      u16 data[2] = {vBat, vExt};
+      s32 data[2] = {vBat, vExt};
       SendDown(sizeof(data), (u8*)data);
       return;   // Already replied
     }
