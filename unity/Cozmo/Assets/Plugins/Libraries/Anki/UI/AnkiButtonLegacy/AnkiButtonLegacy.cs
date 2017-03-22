@@ -302,7 +302,7 @@ namespace Anki {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic != null) {
-              if (graphic.targetImage != null && graphic.enabledSprite != null) {
+              if (IsInitialized(graphic)) {
                 SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor, graphic.ignoreSprite);
               }
               else {
@@ -324,13 +324,13 @@ namespace Anki {
       protected virtual void ShowPressedState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.pressedSprite != null) {
+            if (IsInitialized(graphic)) {
               SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
             }
             else {
               DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
                         + " targetImage=" + graphic.targetImage + " sprite="
-                        + graphic.pressedSprite + ". Have you initialized this button?");
+                        + graphic.enabledSprite + ". Have you initialized this button?");
             }
           }
 
@@ -341,18 +341,23 @@ namespace Anki {
       protected virtual void ShowDisabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.disabledSprite != null) {
+            if (IsInitialized(graphic)) {
               SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
             }
             else {
               DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
                         + " targetImage=" + graphic.targetImage + " sprite="
-                        + graphic.disabledSprite + ". Have you initialized this button?");
+                        + graphic.enabledSprite + ". Have you initialized this button?");
             }
           }
 
           ResetTextPosition(TextDisabledColor);
         }
+      }
+
+      private bool IsInitialized(AnkiButtonImage graphic) {
+        // check to see if enabledSprite is set properly by the Initialize function
+        return graphic.targetImage != null && graphic.enabledSprite != null;
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {

@@ -556,7 +556,10 @@ namespace TMPro
                 // HACK: this is a hack to get around the Unity bug of not showing custom shaders properly when
                 // asset bundles are built in ios but we are trying to simulate them in the Unity Editor.
                 #if UNITY_EDITOR
-                    materialReferences[index].material.shader = Shader.Find(materialReferences[index].material.shader.name);
+                    if (Application.isPlaying)
+                    {
+                        materialReferences[index].material.shader = Shader.Find(materialReferences[index].material.shader.name);
+                    }
                 #endif
                 materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID() ? true : false;
                 //materialReferences[index].padding = 0;
@@ -598,7 +601,10 @@ namespace TMPro
                 // HACK: this is a hack to get around the Unity bug of not showing custom shaders properly when
                 // asset bundles are built in ios but we are trying to simulate them in the Unity Editor.
                 #if UNITY_EDITOR
-                    materialReferences[index].material.shader = Shader.Find(materialReferences[index].material.shader.name);
+                    if (Application.isPlaying)
+                    {
+                        materialReferences[index].material.shader = Shader.Find(materialReferences[index].material.shader.name);
+                    }                    
                 #endif
                 materialReferences[index].isDefaultMaterial = true;
                 //materialReferences[index].padding = 0;
