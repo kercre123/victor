@@ -60,50 +60,48 @@ public static class Localization {
     return GetWithArgs(LocalizationKeys.kLabelSimpleCount, GetNumber(amount), GetAmountName(localizationKey, amount));
   }
 
-  public static bool IsSupportedLocale(string locale) {
-    return _SupportedLocales.Contains(locale);
-  }
-
-  private static List<string> _SupportedLocales =
-    new List<string>() { "en-US", "en-GB", "de-DE" };
-
   private static string _CurrentLocale = null;
+  private static string _CurrentFontBundleVariant = null;
   private static System.Globalization.CultureInfo _CurrentCulture = null;
 
-  public static string LoadLocaleAndCultureInfo(string languageOverride = null) {
-    string deviceLocale;
+  public static string LoadLocaleAndCultureInfo(bool overrideLanguage = false, SystemLanguage languageOverride = SystemLanguage.English) {
+
 #if SHIPPING
-        deviceLocale = "en-US";
+     _CurrentLocale = "en-US";
+     _CurrentFontBundleVariant = "latin";
 #else
     // Only show localization logic in non-shipping builds
-    if (string.IsNullOrEmpty(languageOverride)) {
-      SystemLanguage language = Application.systemLanguage;
-      switch (language) {
-      case SystemLanguage.English:
-        deviceLocale = "en-US";
-        break;
-      case SystemLanguage.French:
-        deviceLocale = "fr-FR";
-        break;
-      case SystemLanguage.German:
-        deviceLocale = "de-DE";
-        break;
-      case SystemLanguage.Japanese:
-        deviceLocale = "ja-JP";
-        break;
-      default:
-        deviceLocale = "en-US";
-        break;
-      }
+    SystemLanguage language = Application.systemLanguage;
+    if (overrideLanguage) {
+      language = languageOverride;
     }
-    else {
-      deviceLocale = languageOverride;
+
+    switch (language) {
+    case SystemLanguage.English:
+      _CurrentLocale = "en-US";
+      _CurrentFontBundleVariant = "latin";
+      break;
+    case SystemLanguage.French:
+      _CurrentLocale = "fr-FR";
+      _CurrentFontBundleVariant = "latin";
+      break;
+    case SystemLanguage.German:
+      _CurrentLocale = "de-DE";
+      _CurrentFontBundleVariant = "latin";
+      break;
+    case SystemLanguage.Japanese:
+      _CurrentLocale = "ja-JP";
+      _CurrentFontBundleVariant = "ja-JP";
+      break;
+    default:
+      _CurrentLocale = "en-US";
+      _CurrentFontBundleVariant = "latin";
+      break;
     }
+
 #endif
 
-    _CurrentLocale = deviceLocale;
     _CurrentCulture = new System.Globalization.CultureInfo(_CurrentLocale);
-
     return _CurrentLocale;
   }
 
@@ -114,6 +112,13 @@ public static class Localization {
     }
 
     return _CurrentLocale;
+  }
+
+  public static string GetCurrentFontBundleVariant() {
+    if (string.IsNullOrEmpty(_CurrentFontBundleVariant)) {
+      LoadLocaleAndCultureInfo();
+    }
+    return _CurrentFontBundleVariant;
   }
 
   private const string kLocalizationStreamingAssetsFolderPath = "/LocalizedStrings/";

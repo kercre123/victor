@@ -14,7 +14,7 @@ namespace DataPersistence {
     public bool ShowDroneModeDebugInfo;
     public bool UseFastConnectivityFlow;
     public bool OverrideLanguage;
-    public string LanguageSetting;
+    public UnityEngine.SystemLanguage LanguageSettingOverride;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -28,27 +28,27 @@ namespace DataPersistence {
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;
-        LanguageSetting = null;
+        LanguageSettingOverride = UnityEngine.SystemLanguage.English;
         DataPersistence.DataPersistenceManager.Instance.Save();
       });
       DebugConsoleData.Instance.AddConsoleFunction("UseEnglish", "Language", (str) => {
         OverrideLanguage = true;
-        LanguageSetting = "en-US";
+        LanguageSettingOverride = UnityEngine.SystemLanguage.English;
         DataPersistence.DataPersistenceManager.Instance.Save();
       });
       DebugConsoleData.Instance.AddConsoleFunction("UseFrench", "Language", (str) => {
         OverrideLanguage = true;
-        LanguageSetting = "fr-FR";
+        LanguageSettingOverride = UnityEngine.SystemLanguage.French;
         DataPersistence.DataPersistenceManager.Instance.Save();
       });
       DebugConsoleData.Instance.AddConsoleFunction("UseGerman", "Language", (str) => {
         OverrideLanguage = true;
-        LanguageSetting = "de-DE";
+        LanguageSettingOverride = UnityEngine.SystemLanguage.German;
         DataPersistence.DataPersistenceManager.Instance.Save();
       });
       DebugConsoleData.Instance.AddConsoleFunction("UseJapanese", "Language", (str) => {
         OverrideLanguage = true;
-        LanguageSetting = "ja-JP";
+        LanguageSettingOverride = UnityEngine.SystemLanguage.Japanese;
         DataPersistence.DataPersistenceManager.Instance.Save();
       });
 

@@ -47,7 +47,7 @@ public class CozmoThemeSystemUtils : Anki.Core.UI.Components.ThemeSystemUtils {
   }
 
   private string GetFontBundleName() {
-    return "fonts." + Localization.GetStringsLocale().ToLower();
+    return "fonts." + Localization.GetCurrentFontBundleVariant().ToLower();
   }
 
   // generic asset loader that uses direct asset loading when in editor and asset bundle loading

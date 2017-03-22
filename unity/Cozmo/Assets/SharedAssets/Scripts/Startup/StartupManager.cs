@@ -113,12 +113,8 @@ public class StartupManager : MonoBehaviour {
 #endif
 
     Screen.orientation = ScreenOrientation.LandscapeLeft;
-
-    string languageOverride = null;
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage) {
-      languageOverride = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSetting;
-    }
-    Localization.LoadLocaleAndCultureInfo(languageOverride);
+    Localization.LoadLocaleAndCultureInfo(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage,
+                                          DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSettingOverride);
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;
@@ -202,6 +198,7 @@ public class StartupManager : MonoBehaviour {
 
     string localeVariant = Localization.GetStringsLocale();
     assetBundleManager.AddActiveVariant(localeVariant.ToLower());
+    assetBundleManager.AddActiveVariant(Localization.GetCurrentFontBundleVariant());
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
