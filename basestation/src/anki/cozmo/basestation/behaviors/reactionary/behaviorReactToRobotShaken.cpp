@@ -49,7 +49,7 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
   _maxShakingAccelMag = 0.f;
   _shakingStartedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _shakenDuration_s = 0.f;
-  
+  _reactionPlayed = EReaction::None;
   
   // Start the animations:
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyShakeLoop, 0));
@@ -99,6 +99,8 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
       if (robot.GetOffTreadsState() == OffTreadsState::OnTreads) {
         _state = EState::ActDizzy;
       } else if (!IsActing()) {
+        // The "DizzyStillPickedUp" reaction played to completion, so log that as the played reaction:
+        _reactionPlayed = EReaction::StillPickedUp;
         _state = EState::Finished;
       }
       
@@ -110,10 +112,13 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
       // Play appropriate reaction based on duration of shaking:
       if (_shakenDuration_s > _kShakenDurationThresholdHard) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionHard));
+        _reactionPlayed = EReaction::Hard;
       } else if (_shakenDuration_s > _kShakenDurationThresholdMedium) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionMedium));
+        _reactionPlayed = EReaction::Medium;
       } else {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionSoft));
+        _reactionPlayed = EReaction::Soft;
       }
       
       _state = EState::Finished;
@@ -122,7 +127,7 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
     case EState::Finished:
     {
       if (!IsActing()) {
-        // Bail out:
+        // Done
         BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotShaken);
         return Status::Complete;
       }
@@ -134,6 +139,45 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
   return Status::Running;
 }
   
+
+void BehaviorReactToRobotShaken::StopInternal(Robot& robot)
+{
+  // Log some DAS stuff:
+  const int shakenDuration_ms = std::round(_shakenDuration_s * 1000.f);
+  const int maxShakenAccelMag = std::round(_maxShakingAccelMag);
+  // DAS event string: "<shakenDuration_ms>:<maxShakenAccelMag>"
+  const std::string& data = std::to_string(shakenDuration_ms) + ":" + std::to_string(maxShakenAccelMag);
+  Anki::Util::sEvent("robot.dizzy_reaction",
+                     {{DDATA, data.c_str()}},
+                     EReactionToString(_reactionPlayed));
+  
+  // Log human-readable completion info:
+  PRINT_NAMED_INFO("BehaviorReactToRobotShaken.DizzyReaction",
+                      "shakenDuration = %.3fs, maxShakingAccelMag = %.1f, reactionPlayed = '%s'",
+                      _shakenDuration_s,
+                      _maxShakingAccelMag,
+                      EReactionToString(_reactionPlayed));
+}
+  
+  
+const char* BehaviorReactToRobotShaken::EReactionToString(EReaction reaction) const
+{
+  switch(reaction) {
+    case EReaction::None:
+      return "None";
+    case EReaction::Soft:
+      return "Soft";
+    case EReaction::Medium:
+      return "Medium";
+    case EReaction::Hard:
+      return "Hard";
+    case EReaction::StillPickedUp:
+      return "StillPickedUp";
+    default:
+      return "";
+  }
+}
+        
   
 } // namespace Cozmo
 } // namespace Anki
