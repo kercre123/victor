@@ -27,11 +27,22 @@ const float BehaviorReactToRobotShaken::_kShakenDurationThresholdMedium = 2.6f;
 
   
 static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::CliffDetected,
+                                                              ReactionTrigger::CubeMoved,
+                                                              ReactionTrigger::DoubleTapDetected,
+                                                              ReactionTrigger::FacePositionUpdated,
+                                                              ReactionTrigger::FistBump,
+                                                              ReactionTrigger::Frustration,
+                                                              ReactionTrigger::ObjectPositionUpdated,
+                                                              ReactionTrigger::PetInitialDetection,
+                                                              ReactionTrigger::PyramidInitialDetection,
                                                               ReactionTrigger::ReturnedToTreads,
                                                               ReactionTrigger::RobotOnBack,
                                                               ReactionTrigger::RobotOnFace,
                                                               ReactionTrigger::RobotOnSide,
-                                                              ReactionTrigger::RobotPickedUp};
+                                                              ReactionTrigger::RobotPickedUp,
+                                                              ReactionTrigger::RobotPlacedOnSlope,
+                                                              ReactionTrigger::StackOfCubesInitialDetection,
+                                                              ReactionTrigger::UnexpectedMovement};
   
 BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
