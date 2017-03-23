@@ -122,8 +122,11 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
         g_turnPowerOff = false;   // Last until battery dies
       else if (param == 0x5A)
         Battery::powerOff();      // Kill battery immediately
-      else
+      else {
+        param = param > 254 ? 254 : param; //limit offset from counter val for modulo operations
         g_powerOffTime = GetCounter() + ((param+1)<<23);  // Last N+1 seconds longer
+        g_turnPowerOff = true;    // Enable power-down
+      }
       break;    // Reply "OK"
     
     case TEST_RADIOTX:

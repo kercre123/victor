@@ -53,8 +53,8 @@ Fixed vBat;
 Fixed vExt;
 int resultLedOn;
 int resultLedOff;
-int g_powerOffTime = (4<<23);   // 4 seconds from power-on
 #ifdef FACTORY
+u32 g_powerOffTime = (4<<23);   // 4 seconds from power-on
 bool g_turnPowerOff = false;
 #endif
 
@@ -203,8 +203,7 @@ void Battery::updateOperatingMode() {
   using namespace Anki::Cozmo;
 
   #ifdef FACTORY
-  if (g_turnPowerOff && GetCounter() > g_powerOffTime)
-  {
+  if (g_turnPowerOff && (int)(g_powerOffTime - GetCounter()) < 0 ) {
     Battery::powerOff();
     g_turnPowerOff = false;
   }
