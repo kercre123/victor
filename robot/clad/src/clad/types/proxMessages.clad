@@ -22,7 +22,7 @@ message PotentialCliff {
 
 // This is a temp message to fake obstacle detection by prox sensor.
 // TODO: This will eventually be done entirely on the engine using images.
-message ProxObstacle {
+message ProxObsDetection {
   uint_16 distance_mm
 }
 

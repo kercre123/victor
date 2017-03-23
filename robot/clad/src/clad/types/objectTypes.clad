@@ -2,6 +2,7 @@
 //  for the C-Like Abstract Data language
 // Author: Andrew Stein
 // Copyright: Anki Inc (c) 2015
+// ROBOT_CLAD_SHARED
 
 namespace Anki {
 namespace Cozmo {

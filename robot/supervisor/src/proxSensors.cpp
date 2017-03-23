@@ -250,7 +250,7 @@ namespace Anki {
               if ( eventChanged )
               {
                 // send changes in events
-                ProxObstacle msg;
+                ProxObsDetection msg;
                 msg.distance_mm = proxVal;
                 RobotInterface::SendMessage(msg);
                 _lastForwardObstacleDetectedDist = proxVal;

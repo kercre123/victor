@@ -103,7 +103,7 @@ union RobotToEngine {
   RobotPoked                 robotPoked             = 0xC3,
   ChargerMountComplete       chargerMountCompleted  = 0xC4,
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
-  ProxObstacle               proxObstacle           = 0xC6,
+  ProxObsDetection           proxObsDetection       = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
   DefaultCameraParams        defaultCameraParams    = 0xC8,
   RobotAvailable             robotAvailable         = 0xC9,
