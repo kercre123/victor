@@ -2196,6 +2196,13 @@ namespace Anki {
       SetName(enable ? "DeepRollObject" : "RollObject");
     }
     
+    bool RollObjectAction::CanActionRollObject(const Robot& robot,
+                                               const ObservableObject* object)
+    {
+      return robot.CanPickUpObjectFromGround(*object);
+    }
+
+    
     void RollObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;

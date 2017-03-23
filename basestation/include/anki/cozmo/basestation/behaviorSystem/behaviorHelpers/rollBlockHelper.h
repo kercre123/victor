@@ -45,6 +45,7 @@ private:
 
   
   void DetermineAppropriateAction(Robot& robot);
+  void UnableToRollDelegate(Robot& robot);
   void DelegateToPutDown(Robot& robot);
   void StartRollingAction(Robot& robot);
   void RespondToRollingResult(ActionResult result, Robot& robot);

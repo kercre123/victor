@@ -498,6 +498,9 @@ namespace Anki {
       // Whether or not to do the deep roll action instead of the default roll
       void EnableDeepRoll(bool enable);
       
+      static bool CanActionRollObject(const Robot& robot,
+                                      const ObservableObject* object);
+      
     protected:
       
       // Override completion signal to fill in information about rolled objects

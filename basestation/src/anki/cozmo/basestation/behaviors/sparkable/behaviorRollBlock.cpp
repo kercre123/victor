@@ -41,8 +41,10 @@ CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _isBlockRotationImportant(true)
 , _robot(robot)
+, _isBlockRotationImportant(true)
+, _didCozmoAttemptDock(false)
+, _upAxisOnBehaviorStart(AxisName::X_POS)
 {
   SetDefaultName("RollBlock");
   
@@ -55,17 +57,51 @@ bool BehaviorRollBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData
 {
   UpdateTargetBlock(preReqData.GetRobot());
   
-  return _targetBlock.IsSet() || IsActing();
+  return _targetID.IsSet() || IsActing();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRollBlock::InitInternal(Robot& robot)
 {
-  TransitionToPerformingAction(robot);
-  return Result::RESULT_OK;
-}
+  _didCozmoAttemptDock = false;
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(object != nullptr){
+    _upAxisOnBehaviorStart = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+    TransitionToPerformingAction(robot);
+    return Result::RESULT_OK;
+  }
   
+  return Result::RESULT_FAIL;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior::Status BehaviorRollBlock::UpdateInternal(Robot& robot)
+{
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(object != nullptr){
+    const AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+    if(currentUpAxis != _upAxisOnBehaviorStart){
+      _upAxisOnBehaviorStart = currentUpAxis;
+      StopActing(false, false);
+
+      if(_didCozmoAttemptDock){
+        TransitionToRollSuccess(robot);
+      }else{
+        UpdateTargetBlock(robot);
+        if(_targetID.IsSet()){
+          TransitionToPerformingAction(robot);
+        }else{
+          return IBehavior::Status::Complete;
+        }
+      }
+    }
+  }
+  
+  return base::UpdateInternal(robot);
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::StopInternal(Robot& robot)
@@ -85,8 +121,10 @@ void BehaviorRollBlock::StopInternalFromDoubleTap(Robot& robot)
 void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
   using Intent = AIWhiteboard::ObjectUseIntention;
-  const Intent intent = (_isBlockRotationImportant ? Intent::RollObjectWithAxisCheck : Intent::RollObjectWithDelegate);
-  _targetBlock = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(intent);
+  const Intent intent = (_isBlockRotationImportant ?
+                         Intent::RollObjectWithDelegateAxisCheck :
+                         Intent::RollObjectWithDelegateNoAxisCheck);
+  _targetID = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(intent);
 }
   
   
@@ -95,7 +133,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
   DEBUG_SET_STATE(PerformingAction);
   
-  if( ! _targetBlock.IsSet() ) {
+  if( ! _targetID.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorRollBlock.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
                         GetName().c_str());
@@ -113,20 +151,17 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
     {
       robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
     }
+    _didCozmoAttemptDock = true;
   };
   
   auto delegateSuccess = [this](Robot& robot) {
-    if(!_shouldStreamline){
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
-    }
-    IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
-    BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
+    TransitionToRollSuccess(robot);
   };
   
   auto delegateFailure = [this](Robot& robot) {
     PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort", "Failed to verify roll");
     
-    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
+    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(failedObject){
       robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
     }
@@ -140,20 +175,39 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   HelperHandle rollHandle = factory.CreateRollBlockHelper(robot,
                                                           *this,
-                                                          _targetBlock,
+                                                          _targetID,
                                                           upright,
                                                           params);
   
   
   SmartDelegateToHelper(robot, rollHandle, delegateSuccess, delegateFailure);
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
+  
+  // Set the cube lights to interacting for full behavior run time
+  std::vector<BehaviorStateLightInfo> basePersistantLight;
+  basePersistantLight.push_back(
+    BehaviorStateLightInfo(_targetID, CubeAnimationTrigger::InteractingBehaviorLock)
+  );
+  SetBehaviorStateLights(basePersistantLight, false);
+  
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRollBlock::TransitionToRollSuccess(Robot& robot)
+{
+  if(!_shouldStreamline){
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+  }
+  IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
+  BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::ResetBehavior(Robot& robot)
 {
-  _targetBlock.UnSet();
+  _targetID.UnSet();
 }
 
 }

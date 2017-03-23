@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
 
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
@@ -87,12 +88,10 @@ void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
     // If the block can't be accessed, pick it up and move it so it can be rolled
     const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
-      auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-      const bool canRoll = whiteboard.IsObjectValidForAction(
-                               AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck,
-                               obj->GetID());
-      if(canRoll){
-        PRINT_CH_INFO("Behaviors", "RollBlockHelper.Update.Rolling", "Doing roll action");
+      const bool canActionRoll = RollObjectAction::CanActionRollObject(robot, obj);
+      
+      if(canActionRoll){
+        PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.Update.Rolling", "Doing roll action");
         const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
                                    robot, _targetID, PreActionPose::ActionType::ROLLING);
         
@@ -107,20 +106,70 @@ void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
           StartRollingAction(robot);
         }
       }else{
-        // If we can't roll the cube, pick it up so we can put it somewhere we can roll it
-        auto pickupHelper = CreatePickupBlockHelper(robot, _targetID);
-        DelegateProperties delegateProperties;
-        delegateProperties.SetDelegateToSet(pickupHelper);
-        delegateProperties.SetOnFailureFunction( [](Robot& robot)
-                                                {return BehaviorStatus::Failure;});
-        DelegateAfterUpdate(delegateProperties);
+        UnableToRollDelegate(robot);
       }
       
     }else{
-      PRINT_CH_INFO("Behaviors", "RollBlockHelper.Update.NoObj", "Failing helper, object %d is invalid",
+      PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.Update.NoObj", "Failing helper, object %d is invalid",
                     _targetID.GetValue());
       _status = BehaviorStatus::Failure;
     }
+  }
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RollBlockHelper::UnableToRollDelegate(Robot& robot)
+{
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(obj != nullptr) {
+    auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+    const bool canPickup = whiteboard.IsObjectValidForAction(
+                             AIWhiteboard::ObjectUseIntention::PickUpAnyObject,
+                             obj->GetID());
+    
+    // See if any blocks are on top of the one we want to roll
+    BlockWorldFilter blocksOnlyFilter;
+    blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    ObservableObject* objOnTop = robot.GetBlockWorld().FindLocatedObjectOnTopOf(
+                                              *obj,
+                                              BlockWorld::kOnCubeStackHeightTolerance,
+                                              blocksOnlyFilter);
+    
+    if(canPickup){
+      PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.PickingUpTargetObject",
+                    "Picking up the target object %d to roll it once moved",
+                    obj->GetID().GetValue());
+      // If we can pickup the cube, pick it up, put it down somewhere we can roll it
+      // and then roll it
+      auto pickupHelper = CreatePickupBlockHelper(robot, _targetID);
+      DelegateProperties delegateProperties;
+      delegateProperties.SetDelegateToSet(pickupHelper);
+      delegateProperties.SetOnFailureFunction( [](Robot& robot)
+                                              {return BehaviorStatus::Failure;});
+      DelegateAfterUpdate(delegateProperties);
+    }else if(objOnTop != nullptr){
+      PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.PickingUpObjOnTop",
+                    "Picking up object %d which is sitting on top of target block",
+                    objOnTop->GetID().GetValue());
+      // The cube can't be rolled b/c it's under another cube - pickup the top
+      // cube and then we can roll the one it's beneath
+      auto pickupHelper = CreatePickupBlockHelper(robot, objOnTop->GetID());
+      DelegateProperties delegateProperties;
+      delegateProperties.SetDelegateToSet(pickupHelper);
+      delegateProperties.SetOnFailureFunction( [](Robot& robot)
+                                              {return BehaviorStatus::Failure;});
+      DelegateAfterUpdate(delegateProperties);
+    }else{
+      PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.CantInteract",
+                    "No way to interact with objID: %d defined",
+                    _targetID.GetValue());
+    }
+  }else{
+    PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.UnableToRollDelegate.NoObj",
+                  "Failing helper, object %d is invalid",
+                  _targetID.GetValue());
+    _status = BehaviorStatus::Failure;
   }
 }
   

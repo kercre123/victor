@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
@@ -127,6 +128,10 @@ IBehavior::Status BehaviorRespondPossiblyRoll::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DetermineNextResponse(Robot& robot)
 {
+  // Ensure behavior cube lights have been cleared
+  std::vector<BehaviorStateLightInfo> basePersistantLight;
+  SetBehaviorStateLights(basePersistantLight, false);
+  
   ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
   if(nullptr != object){
     if (!_metadata.GetPoseUpAxisAccurate() ||
@@ -195,6 +200,12 @@ void BehaviorRespondPossiblyRoll::DelegateToRollHelper(Robot& robot)
                                                             parameters);
     
     SmartDelegateToHelper(robot, rollHelper, [this](Robot& robot){DetermineNextResponse(robot);}, nullptr);
+    // Set the cube lights to interacting for full behavior run time
+    std::vector<BehaviorStateLightInfo> basePersistantLight;
+    basePersistantLight.push_back(
+      BehaviorStateLightInfo(_metadata.GetObjectID(), CubeAnimationTrigger::InteractingBehaviorLock)
+    );
+    SetBehaviorStateLights(basePersistantLight, false);
   }
 }
 

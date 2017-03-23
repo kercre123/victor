@@ -320,13 +320,18 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
 {
+  PRINT_CH_INFO("BehaviorHelpers",
+                "IHelper.RespondToResultWithAnim.ActionResult",
+                "Action completed with result %s - playing appropriate response",
+                EnumToString(result));
+  
   if(_actionResultMapFunc != nullptr){
     UserFacingActionResult userResult = _actionResultMapFunc(result);
     if(userResult != UserFacingActionResult::Count){
       AnimationTrigger responseAnim = AnimationResponseToActionResult(robot, userResult);
       if(responseAnim != AnimationTrigger::Count){
         StartActing(new TriggerAnimationAction(robot, responseAnim),
-                    [this, &result](ActionResult animPlayed, Robot& robot){
+                    [this, result](ActionResult animPlayed, Robot& robot){
           // Pass through the true action result, not the played animation result
           if(_callbackAfterResponseAnim != nullptr){
             _callbackAfterResponseAnim(result, robot);

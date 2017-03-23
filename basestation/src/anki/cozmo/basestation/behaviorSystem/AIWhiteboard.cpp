@@ -83,9 +83,8 @@ const char* ObjectUseIntentionToString(AIWhiteboard::ObjectUseIntention intentio
   switch(intention) {
     case ObjectUseIntention::PickUpAnyObject: { return "PickUpAnyObject"; }
     case ObjectUseIntention::PickUpObjectWithAxisCheck: { return "PickUpObjectWithAxisCheck"; }
-    case ObjectUseIntention::RollObjectWithAxisCheck: { return "RollObjectWithAxisCheck"; }
-    case ObjectUseIntention::RollObjectNoAxisCheck: { return "RollObjectNoAxisCheck"; }
-    case ObjectUseIntention::RollObjectWithDelegate: { return "RollObjectWithDelegate"; }
+    case ObjectUseIntention::RollObjectWithDelegateAxisCheck: { return "RollObjectWithDelegateAxisCheck"; }
+    case ObjectUseIntention::RollObjectWithDelegateNoAxisCheck: { return "RollObjectWithDelegateNoAxisCheck"; }
     case ObjectUseIntention::PopAWheelieOnObject: { return "PopAWheelieOnObject"; }
     case ObjectUseIntention::PyramidBaseObject: { return "PyramidBaseObject"; }
     case ObjectUseIntention::PyramidStaticObject: { return "PyramidStaticObject"; }
@@ -170,32 +169,17 @@ bool AIWhiteboard::CanPopAWheelieHelper(const ObservableObject* object) const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanRollHelper(const ObservableObject* object) const
-{
-  
-  const bool hasFailedToRoll = DidFailToUse(object->GetID(),
-                                            AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
-                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                            object->GetPose(),
-                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-    
-  return (!hasFailedToRoll && _robot.CanPickUpObjectFromGround(*object));
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanRollRotationImportantHelper(const ObservableObject* object) const
+bool AIWhiteboard::CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const
 {
   const Pose3d p = object->GetPose().GetWithRespectToOrigin();
-  return (CanRollHelper(object) &&
+  return (CanRollObjectDelegateNoAxisHelper(object) &&
           (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanRollObjectWithDelegateHelper(const ObservableObject* object) const
-{
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const
+{
   const bool hasFailedToRoll = DidFailToUse(object->GetID(),
                                             AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
                                             DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
@@ -203,10 +187,35 @@ bool AIWhiteboard::CanRollObjectWithDelegateHelper(const ObservableObject* objec
                                             DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                                             DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
   
-  return (!hasFailedToRoll && _robot.CanPickUpObject(*object));
+  if(!hasFailedToRoll){
+    // Logic from can interact with - unfortunately those helpers check for on top of
+    // which isn't relevant for roll delegate so we check the relevant properties
+    // directly here
+    if( object->GetFamily() != ObjectFamily::Block &&
+        object->GetFamily() != ObjectFamily::LightCube ) {
+      return false;
+    }
+    
+    // Only roll blocks that are resting flat
+    if( !object->IsRestingFlat() ) {
+      return false;
+    }
+    
+    Pose3d wasted;
+    // check if we can transform to robot space
+    if ( !object->GetPose().GetWithRespectTo(_robot.GetPose(), wasted) ) {
+      return false;
+    }
+    
+    return true;
+  }
+  
+  
+  
+  return false;
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) const
 {
@@ -352,29 +361,24 @@ void AIWhiteboard::CreateBlockWorldFilters()
     _filtersPerAction.insert( std::make_pair( ObjectUseIntention::PickUpObjectWithAxisCheck,
                                               std::unique_ptr<BlockWorldFilter>(pickupFilter) ) );
   }
+
   
-  // Roll with axis check
+  // Roll object with delegate - axis check
   {
     BlockWorldFilter *rollFilter = new BlockWorldFilter;
     rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollRotationImportantHelper, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::RollObjectWithAxisCheck].reset(rollFilter);
+    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollObjectDelegateWithAxisHelper,
+                                       this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::RollObjectWithDelegateAxisCheck].reset(rollFilter);
   }
   
-  // Roll no axis check
+  // Roll object with delegate - no axis check
   {
     BlockWorldFilter *rollFilter = new BlockWorldFilter;
     rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollHelper, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::RollObjectNoAxisCheck].reset(rollFilter);
-  }
-  
-  // Roll object with delegate
-  {
-    BlockWorldFilter *rollFilter = new BlockWorldFilter;
-    rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollObjectWithDelegateHelper, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::RollObjectWithDelegate].reset(rollFilter);
+    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollObjectDelegateNoAxisHelper,
+                                       this, std::placeholders::_1));
+    _filtersPerAction[ObjectUseIntention::RollObjectWithDelegateNoAxisCheck].reset(rollFilter);
   }
   
   // Pop A Wheelie check

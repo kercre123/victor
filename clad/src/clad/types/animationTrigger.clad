@@ -385,6 +385,7 @@ enum int_32 CubeAnimationTrigger
   DrivingTo,
   Flash,
   Interacting,
+  InteractingBehaviorLock,
   Onboarding,
   PyramidBaseBottom,
   PyramidFlourish,

@@ -87,6 +87,9 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
                                               _targetID,
                                               PreActionPose::ActionType::DOCKING);
   if(isAtPreAction != ActionResult::SUCCESS){
+    PRINT_CH_INFO("BehaviorHelpers", "PickupBlockHelper.StartPickupAction.DrivingToPreDockPose",
+                  "Cozmo is not at pre-action pose for cube %d, delegating to driveToHelper",
+                  _targetID.GetValue());
     DriveToParameters params;
     params.actionType = PreActionPose::ActionType::DOCKING;
     DelegateProperties properties;
@@ -98,6 +101,9 @@ void PickupBlockHelper::StartPickupAction(Robot& robot)
                                    });
     DelegateAfterUpdate(properties);
   }else{
+    PRINT_CH_INFO("BehaviorHelpers", "PickupBlockHelper.StartPickupAction.PickingUpObject",
+                  "Picking up target object %d",
+                  _targetID.GetValue());
     CompoundActionSequential* action = new CompoundActionSequential(robot);
     if(_params.animBeforeDock != AnimationTrigger::Count){
       action->AddAction(new TriggerAnimationAction(robot, _params.animBeforeDock));

@@ -86,10 +86,9 @@ public:
     PickUpAnyObject,
     // only pick up upright objects, unless rolling is locked (in which case, pick up any object)
     PickUpObjectWithAxisCheck,
-    
-    RollObjectWithAxisCheck,
-    RollObjectNoAxisCheck,
-    RollObjectWithDelegate,
+
+    RollObjectWithDelegateAxisCheck,
+    RollObjectWithDelegateNoAxisCheck,
     
     PopAWheelieOnObject,
     
@@ -316,9 +315,8 @@ private:
   // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll action
   bool CanPickupHelper(const ObservableObject* object) const;
   bool CanPopAWheelieHelper(const ObservableObject* object) const;
-  bool CanRollHelper(const ObservableObject* object) const;
-  bool CanRollRotationImportantHelper(const ObservableObject* object) const;
-  bool CanRollObjectWithDelegateHelper(const ObservableObject* object) const;
+  bool CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const;
+  bool CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const;
   bool CanUseAsPyramidBaseBlock(const ObservableObject* object) const;
   bool CanUseAsPyramidStaticBlock(const ObservableObject* object) const;
   bool CanUseAsPyramidTopBlock(const ObservableObject* object) const;

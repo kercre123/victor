@@ -27,11 +27,13 @@ class Robot;
 class BehaviorRollBlock : public IBehavior
 {
 protected:
+  using base = IBehavior;
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorRollBlock(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   virtual void   StopInternalFromDoubleTap(Robot& robot) override;
 
@@ -40,22 +42,22 @@ protected:
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { UpdateTargetBlock(robot); }
   
-  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_isBlockRotationImportant ? AIWhiteboard::ObjectUseIntention::RollObjectWithAxisCheck : AIWhiteboard::ObjectUseIntention::RollObjectNoAxisCheck)}; }
+  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_isBlockRotationImportant ? AIWhiteboard::ObjectUseIntention::RollObjectWithDelegateAxisCheck : AIWhiteboard::ObjectUseIntention::RollObjectWithDelegateNoAxisCheck)}; }
   
 private:
-  // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
-  // UpdateWhileNotRunning
-  mutable ObjectID _targetBlock;
-  
-  bool _isBlockRotationImportant;
-
   const Robot& _robot;
 
-  void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
-
+  // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
+  // UpdateWhileNotRunning
+  mutable ObjectID _targetID;
+  bool _isBlockRotationImportant;
   
-  void ResetBehavior(Robot& robot);
+  bool _didCozmoAttemptDock;
+  AxisName _upAxisOnBehaviorStart;
 
+  void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
+  void TransitionToRollSuccess(Robot& robot);
+  void ResetBehavior(Robot& robot);
   virtual void UpdateTargetBlock(const Robot& robot) const;
 };
 

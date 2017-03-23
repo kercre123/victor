@@ -37,6 +37,10 @@
             "AnimName": "interacting"
         },
         {
+            "CladEvent": "InteractingBehaviorLock",
+            "AnimName": "interactingBehaviorLock"
+        },
+        {
             "CladEvent": "Onboarding",
             "AnimName": "onboarding"
         },
