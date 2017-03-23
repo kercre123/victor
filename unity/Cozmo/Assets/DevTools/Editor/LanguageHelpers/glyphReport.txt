@@ -1,0 +1,5 @@
+Font: Mushin
+Pt.Size: 36
+Characters packed: 608/608
+
+Successfully packed all characters!

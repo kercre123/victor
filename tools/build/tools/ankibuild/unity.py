@@ -72,6 +72,10 @@ class UnityBuildConfig(object):
         return os.path.join('/', 'Applications', 'Unity', 'Unity.app', 'Contents', 'MacOS', 'Unity')
 
     @staticmethod
+    def default_log_file():
+        return os.path.join(util.Git.repo_root(), 'build', 'Unity', 'UnityBuild.log')
+
+    @staticmethod
     def get_unity_project_version(project_dir):
         project_version_path = os.path.join(project_dir, 'ProjectSettings', 'ProjectVersion.txt')
         version = None
