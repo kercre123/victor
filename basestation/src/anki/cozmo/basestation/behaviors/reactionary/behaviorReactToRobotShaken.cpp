@@ -22,8 +22,8 @@ namespace Cozmo {
 
 // define member constants:
 const float BehaviorReactToRobotShaken::_kAccelMagnitudeShakingStoppedThreshold = 13000.f;
-const float BehaviorReactToRobotShaken::_kShakenDurationThresholdHard   = 3.4f;
-const float BehaviorReactToRobotShaken::_kShakenDurationThresholdMedium = 2.6f;
+const float BehaviorReactToRobotShaken::_kShakenDurationThresholdHard   = 5.0f;
+const float BehaviorReactToRobotShaken::_kShakenDurationThresholdMedium = 2.5f;
 
   
 static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::CliffDetected,
