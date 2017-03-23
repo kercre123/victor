@@ -31,8 +31,8 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
   #region Static AddOn Methods
   public static void PreviewForAllChildrenTMP() {
     if (Selection.activeTransform != null) {
-      PreviewThemeIndex = ThemesJson.GetAllThemeIds().IndexOf(ThemesJson.CurrentlyLoadedInstance.CurrentThemeId);
-      PreviewSkinIndex = ThemesJson.GetAllSkinIds().IndexOf(ThemesJson.CurrentlyLoadedInstance.CurrentSkinId);
+      PreviewThemeIndex = ThemesJson.GetAllThemeIds().IndexOf(ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentThemeId);
+      PreviewSkinIndex = ThemesJson.GetAllSkinIds().IndexOf(ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentSkinId);
 
       //Find all children of selection that contain TextMeshPro
       List<AnkiTextMeshPro> textComponents = new List<AnkiTextMeshPro>();
@@ -90,7 +90,7 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
       }
 
       //Save
-      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance);
+      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance, ThemeSystemConfigJson.CurrentlyLoadedInstance);
 
       int totalComponentCount = textComponents.Count;
       EditorUtility.DisplayDialog("Success", "Created " + totalComponentCount + " components succesfully for id: " + baseComponentId, "OK");

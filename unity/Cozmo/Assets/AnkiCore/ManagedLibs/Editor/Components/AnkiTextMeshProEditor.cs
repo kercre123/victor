@@ -186,7 +186,7 @@ namespace Anki.Core.Editor.Components {
       }
 
       //Save the JSON
-      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance);
+      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance, ThemeSystemConfigJson.CurrentlyLoadedInstance);
 
       //Clear our save id
       ThemeSystemEditorUtilsTMP.NewSaveId = string.Empty;
@@ -198,7 +198,7 @@ namespace Anki.Core.Editor.Components {
 
       UpdateSkinnableElementsForSaving(ref themeComponentObj);
 
-      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance);
+      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance, ThemeSystemConfigJson.CurrentlyLoadedInstance);
     }
 
     public virtual void UpdateSkinnableElementsForSaving(ref ThemesJson.ThemeComponentObj themeComponentObj) {

@@ -20,8 +20,10 @@ public class CozmoThemeSystemEditorWindow : Anki.Core.Editor.Components.ThemeSys
 
     //Initialize variables
     ThemesJson.LoadJson();
-    _sLastCurrentlySelectedThemeId = ThemesJson.CurrentlyLoadedInstance.CurrentThemeId;
-    _sLastCurrentlySelectedSkinId = ThemesJson.CurrentlyLoadedInstance.CurrentSkinId;
+    ThemeSystemConfigJson.LoadJson();
+
+    _sLastCurrentlySelectedThemeId = ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentThemeId;
+    _sLastCurrentlySelectedSkinId = ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentSkinId;
   }
   #endregion
 
