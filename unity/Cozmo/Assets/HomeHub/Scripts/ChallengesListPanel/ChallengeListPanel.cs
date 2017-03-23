@@ -33,7 +33,12 @@ namespace Cozmo.HomeHub {
       ClearTiles();
 
       List<KeyValuePair<string, ChallengeStatePacket>> sortedDict = new List<KeyValuePair<string, ChallengeStatePacket>>();
-      sortedDict.AddRange(GetHomeViewInstance().GetChallengeStates());
+      // The following line has a runtime issue in mono2x on ios, having to do with generics and aot compilation.
+      // So I'm replacing with the loop below to avoid the issue.  pterry 2017/03/22
+      //sortedDict.AddRange(GetHomeViewInstance().GetChallengeStates());
+      foreach (var srcItem in GetHomeViewInstance().GetChallengeStates()) {
+        sortedDict.Add(new KeyValuePair<string, ChallengeStatePacket>(srcItem.Key, srcItem.Value));
+      }
 
       // Sort by unlocked first, then by designer order
       sortedDict.Sort((KeyValuePair<string, ChallengeStatePacket> a, KeyValuePair<string, ChallengeStatePacket> b) => {

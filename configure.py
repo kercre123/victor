@@ -104,14 +104,14 @@ def get_android_device():
 
 
 # stolen from http://stackoverflow.com/questions/1868714/how-do-i-copy-an-entire-directory-of-files-into-an-existing-directory-using-pyth
-def copytree(src, dst, symlinks=False, ignore=None):
+def copytree(src, dst):
     if not os.path.exists(dst):
         os.makedirs(dst)
     for item in os.listdir(src):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
         if os.path.isdir(s):
-            copytree(s, d, symlinks, ignore)
+            copytree(s, d)
         else:
             if not os.path.exists(d) or os.stat(s).st_mtime - os.stat(d).st_mtime > 1:
                 shutil.copy2(s, d)
@@ -343,6 +343,8 @@ class GamePlatformConfiguration(object):
 
         if platform != 'android':
             self.workspace_name = '{0}Workspace_{1}'.format(PRODUCT_NAME, self.platform.upper())
+            if options.script_engine == 'mono2x':
+                self.workspace_name += '_Mono2x'
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
             self.scheme = 'BUILD_WORKSPACE'
@@ -363,9 +365,12 @@ class GamePlatformConfiguration(object):
 
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
+            if options.script_engine == 'il2cpp':
+                proj_name = '{0}Unity_{1}.xcodeproj'
+            else:
+                proj_name = '{0}Unity_{1}_Mono2x.xcodeproj'
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
-                                                         '{0}Unity_{1}.xcodeproj'.format(PRODUCT_NAME,
-                                                                                         self.platform.upper()))
+                                                         proj_name.format(PRODUCT_NAME, self.platform.upper()))
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
             try:
                 if self.options.provision_profile is not None:
@@ -723,7 +728,7 @@ class GamePlatformConfiguration(object):
                 print('{0}: No attached devices found via adb'.format(self.options.command))
 
         else:
-            print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
+            print('install: Nothing to do on platform {0}'.format(self.platform))
 
     def run(self):
         if self.options.verbose:
@@ -745,8 +750,8 @@ class GamePlatformConfiguration(object):
             else:
                 print('{0}: No attached devices found via adb'.format(self.options.command))
 
-                # elif self.platform == 'mac':
-                # run webots?
+        # elif self.platform == 'mac':
+        # run webots?
         else:
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 

@@ -356,8 +356,8 @@ class UnityBuild(object):
         procArgs.extend(["--sdk", self.build_config.sdk])
         procArgs.extend(["--build-path", self.build_config.build_dir])
         procArgs.extend(["--script-engine", self.build_config.script_engine])
-        procArgs.extend(["--asset-path ", self.build_config.asset_destination_path])
-        procArgs.extend(["--build-type ", self.build_config.build_type])
+        procArgs.extend(["--asset-path", self.build_config.asset_destination_path])
+        procArgs.extend(["--build-type", self.build_config.build_type])
 
         if self.build_config.script_debugging:
             procArgs.extend(["--debug"])

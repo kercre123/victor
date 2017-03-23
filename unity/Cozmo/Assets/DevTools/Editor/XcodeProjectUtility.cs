@@ -30,23 +30,37 @@ namespace Xcode {
       step++;
     }
 
-//    [PostProcessBuild(1)]
-//    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
-//      if (target == BuildTarget.iOS) {
-//        FixupCozmoIos();
-//      }
-//    }
+    //    [PostProcessBuild(1)]
+    //    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
+    //      if (target == BuildTarget.iOS) {
+    //        FixupCozmoIos();
+    //      }
+    //    }
 
-    [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Project")]
-    public static void FixupCozmoIos() {
+    [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS IL2CPP Project")]
+    public static void FixupCozmoIosIl2cpp() {
+      FixupCozmoIos(true);
+    }
+
+    [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Mono2x Project")]
+    public static void FixupCozmoIosMono2x() {
+      FixupCozmoIos(false);
+    }
+
+    // Note: Brian Chapados told me that this may not be necessary for mono2x builds;
+    // because IL2CPP generates an undetermined number of files, whereas mono2x does not.  PTerry 2017/03/22
+    private static void FixupCozmoIos(bool il2cpp) {
       try {
         XcodeProject proj = null;
 
         int step = 0;
-        int totalSteps = 8;
+        int totalSteps = 7;
+        var projectName = (il2cpp ? "CozmoUnity_iOS.xcodeproj" : "CozmoUnity_iOS_Mono2x.xcodeproj");
+        var projectPath = "../ios/" + projectName + "/project.pbxproj";
+        Debug.Log("Modifying: " + projectPath);
 
         DoWithTimer("Read and Parse", ref step, totalSteps, () => {
-          string original = File.ReadAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj");
+          string original = File.ReadAllText(projectPath);
           proj = XcodeProjectParser.Deserialize(original);
         });
 
@@ -60,7 +74,7 @@ namespace Xcode {
           proj.AddFolder("../ios", "../ios/UnityBuild/Libraries", "UnityBuild/Libraries", new Regex(".*/libil2cpp(/.*)?")));
         DoWithTimer("Add Unity-iPhone", ref step, totalSteps, () =>
           proj.AddFolder("../ios", "../ios/UnityBuild/Unity-iPhone", "UnityBuild/Unity-iPhone"));
-        
+
         DoWithTimer("Add Images, etc.", ref step, totalSteps, () => {
           proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhoneLandscape.png", "UnityBuild/LaunchScreen-iPhoneLandscape.png");
           proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhonePortrait.png", "UnityBuild/LaunchScreen-iPhonePortrait.png");
@@ -69,7 +83,7 @@ namespace Xcode {
 
         DoWithTimer("Serialize and save", ref step, totalSteps, () => {
           var parsed = XcodeProjectParser.Serialize(proj);
-          File.WriteAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj", parsed);
+          File.WriteAllText(projectPath, parsed);
         });
       }
       finally {
@@ -343,7 +357,7 @@ namespace Xcode {
         if (!string.IsNullOrEmpty(extension) && FileTypeList.Exists(x => x.Extension == extension)) {
           project.AddFile(projectRootPath, folderGroup, directory);
         }
-        else {          
+        else {
           var folderName = Path.GetFileName(directory);
 
           if (folderName.StartsWith(".")) {
@@ -436,9 +450,9 @@ namespace Xcode {
 
       var len = Mathf.Min(fullPath.Length, fullWorkingDirectoryPath.Length);
       int indexOfFirstDifferent = 0;
-      for (; 
+      for (;
            indexOfFirstDifferent < len &&
-      fullPath[indexOfFirstDifferent] == fullWorkingDirectoryPath[indexOfFirstDifferent]; 
+           fullPath[indexOfFirstDifferent] == fullWorkingDirectoryPath[indexOfFirstDifferent];
            indexOfFirstDifferent++)
         ;
 
@@ -488,7 +502,7 @@ namespace Xcode {
       var subFolder = project.objects.PBXGroupSection.Find(x => x.Name.Equals(fileId));
 
       if (subFolder != null) {
-        
+
         for (var i = subFolder.Value.children.Count - 1; i >= 0; i--) {
           var child = subFolder.Value.children[i];
           project.RemoveFileOrFolder(subFolder.Value, child);
