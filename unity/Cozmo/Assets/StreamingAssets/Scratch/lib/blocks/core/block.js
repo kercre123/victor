@@ -264,6 +264,15 @@ Blockly.Block.prototype.dispose = function(healStack) {
       input.dispose();
     }
     this.inputList.length = 0;
+    // Dispose of any remaining connections (next/previous/output).
+    var connections = this.getConnections_(true);
+    for (var i = 0; i < connections.length; i++) {
+      var connection = connections[i];
+      if (connection.isConnected()) {
+        connection.disconnect();
+      }
+      connections[i].dispose();
+    }
   } finally {
     Blockly.Events.enable();
   }
