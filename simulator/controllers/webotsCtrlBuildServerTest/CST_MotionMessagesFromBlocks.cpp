@@ -36,7 +36,7 @@ private:
   bool _wasTapped = false;
   bool _wasStopped = false;
   bool _wasMoved = false;
-  UpAxis _lastReportedUpAxis = UpAxis::Unknown;
+  UpAxis _lastReportedUpAxis = UpAxis::UnknownAxis;
   
   u32 _numObjectsConnected = 0;
 };
@@ -117,7 +117,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasStopped, 5) {
         // Rotate the block onto another side
         //  (without causing the 'moved' message)
-        _lastReportedUpAxis = UpAxis::Unknown;
+        _lastReportedUpAxis = UpAxis::UnknownAxis;
         Pose3d p = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
         p.SetRotation(Radians(DEG_TO_RAD(90.f)), Y_AXIS_3D());
         SetLightCubePose(ObjectType::Block_LIGHTCUBE1, p);

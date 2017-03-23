@@ -26,7 +26,7 @@ private:
   s32 _result = 0;
 
   bool _observedLightCube = false;
-  ObjectType _lightCubeType = ObjectType::Invalid;
+  ObjectType _lightCubeType = ObjectType::InvalidObject;
   bool _driveToPoseSucceeded = false;
 
   // Motion profile for test
@@ -86,7 +86,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
                                             kHeadAngleTolerance_rad) &&
                                        _observedLightCube &&
-                                       _lightCubeType != ObjectType::Invalid, 5) {
+                                       _lightCubeType != ObjectType::InvalidObject, 5) {
         // Move cube out of the way before path planning.
         _testState = TestState::WaitOneSecond;
         // Additional Z height to drop the cube and force a cube delocalization.

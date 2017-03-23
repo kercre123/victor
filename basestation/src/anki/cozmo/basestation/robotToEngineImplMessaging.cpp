@@ -462,7 +462,7 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
 // Mapping of ActiveObjectType to ObjectType
 static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type)
 {
-  ObjectType objType = ObjectType::Unknown;
+  ObjectType objType = ObjectType::UnknownObject;
   switch(type) {
     case ActiveObjectType::OBJECT_CHARGER:
       objType = ObjectType::Charger_Basic;
@@ -498,7 +498,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<Ro
       }
       break;
     }
-    case ObjectType::Unknown:
+    case ObjectType::UnknownObject:
     {
       PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
                           "FactoryID: 0x%x, device_type: 0x%hx",

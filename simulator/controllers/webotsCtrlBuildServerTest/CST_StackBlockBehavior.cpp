@@ -97,7 +97,7 @@ private:
   // Parameters:
   const float _kRobotNearBlockThreshold_mm = 65.f;
   const float _kRobotNearBlockThresholdHigh_mm = 95.f;
-  ObjectType _cubeToMove = ObjectType::Invalid;
+  ObjectType _cubeToMove = ObjectType::InvalidObject;
   
   // Status flags:
   int _startedBehavior = 0;

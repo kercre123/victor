@@ -215,7 +215,7 @@ ReactionTriggerStrategyCubeMoved::Reaction_iter ReactionTriggerStrategyCubeMoved
 ReactionObjectData::ReactionObjectData(ObjectID objectID)
 : _objectID(objectID)
 , _timeStartedMoving(0)
-, _axisOfAccel(UpAxis::Unknown)
+, _axisOfAccel(UpAxis::UnknownAxis)
 , _isObjectMoving(false)
 , _observedSinceLastReaction(false)
 , _hasUpAxisChanged(false)

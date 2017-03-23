@@ -91,8 +91,8 @@ namespace {
   
   // To keep track of previous (and next) UpAxis
   //  sent to the robot (via UpAxisChanged msg)
-  UpAxis prevUpAxis_ = Unknown;
-  UpAxis nextUpAxis_ = Unknown;
+  UpAxis prevUpAxis_ = UnknownAxis;
+  UpAxis nextUpAxis_ = UnknownAxis;
   
   bool wasMoving_;
   double wasLastMovingTime_sec_;
@@ -357,7 +357,7 @@ UpAxis GetCurrentUpAxis()
   const double* accelVals = accel_->getValues();
 
   // Determine the axis with the largest absolute acceleration
-  UpAxis retVal = Unknown;
+  UpAxis retVal = UnknownAxis;
   double maxAbsAccel = -1;
   double absAccel[3];
 

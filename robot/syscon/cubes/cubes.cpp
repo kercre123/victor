@@ -320,9 +320,9 @@ static void onAdvertisePacket() {
     acc->active = true;
     acc->movingTimeoutCtr = 0;
     acc->isMoving = false;
-    acc->prevMotionDir = Unknown;
-    acc->prevUpAxis = Unknown;
-    acc->nextUpAxis = Unknown;
+    acc->prevMotionDir = UnknownAxis;
+    acc->prevUpAxis = UnknownAxis;
+    acc->nextUpAxis = UnknownAxis;
     acc->nextUpAxisCount = 0;
     
     SendObjectConnectionState(slot);
@@ -781,7 +781,7 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
 
   // Compute motion direction change. i.e. change in dominant acceleration vector
   s8 maxAccelVal = 0;
-  UpAxis motionDir = Unknown;
+  UpAxis motionDir = UnknownAxis;
 
   for (int i=0; i < 3; ++i) {
     s8 absAccel = ABS(FROM_FIXED_FLOOR(target->accFilt[i]));
@@ -790,7 +790,7 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
       maxAccelVal = absAccel;
     }
   }
-  bool motionDirChanged = (target->prevMotionDir != Unknown) && (target->prevMotionDir != motionDir);
+  bool motionDirChanged = (target->prevMotionDir != UnknownAxis) && (target->prevMotionDir != motionDir);
   target->prevMotionDir = motionDir;
 
   // Check for stable up axis

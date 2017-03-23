@@ -33,7 +33,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
   private List<Anki.Cozmo.ObjectType> _ObjectConnectedList = new List<Anki.Cozmo.ObjectType>();
   // staging area for newly connected objects so we can add a delay / animation before putting it into
   // the _ObjectConnectedList
-  private Anki.Cozmo.ObjectType _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
+  private Anki.Cozmo.ObjectType _NewlyConnectedObject = Anki.Cozmo.ObjectType.InvalidObject;
   private float _NewlyConnectedObjectTime;
   private int _NewlyConnectedObjectId;
 
@@ -86,7 +86,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
       return;
     }
 
-    if (_NewlyConnectedObject == Anki.Cozmo.ObjectType.Invalid) {
+    if (_NewlyConnectedObject == Anki.Cozmo.ObjectType.InvalidObject) {
       CheckForNewObjects();
     }
     else {
@@ -134,7 +134,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
                                                             kConnectedOffset);
           Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect);
         }
-        _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
+        _NewlyConnectedObject = Anki.Cozmo.ObjectType.InvalidObject;
       }
     }
   }

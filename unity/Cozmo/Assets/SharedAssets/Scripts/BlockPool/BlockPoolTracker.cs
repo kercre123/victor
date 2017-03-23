@@ -186,7 +186,7 @@ namespace Cozmo.BlockPool {
 
     private ObjectType ObjectTypeFromActiveObjectType(ActiveObjectType activeObjectType) {
       // Get the ObjectType from ActiveObjectType
-      ObjectType objectType = ObjectType.Invalid;
+      ObjectType objectType = ObjectType.InvalidObject;
       switch (activeObjectType) {
       case ActiveObjectType.OBJECT_CUBE1:
         objectType = ObjectType.Block_LIGHTCUBE1;
@@ -201,7 +201,7 @@ namespace Cozmo.BlockPool {
         objectType = ObjectType.Charger_Basic;
         break;
       case ActiveObjectType.OBJECT_UNKNOWN:
-        objectType = ObjectType.Unknown;
+        objectType = ObjectType.UnknownObject;
         break;
       }
       return objectType;

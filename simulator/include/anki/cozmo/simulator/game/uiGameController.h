@@ -54,7 +54,7 @@ public:
     
     void Reset() {
       family = ObjectFamily::Unknown;
-      type = ObjectType::Unknown;
+      type = ObjectType::UnknownObject;
       id = -1;
       area = 0;
       isActive = false;

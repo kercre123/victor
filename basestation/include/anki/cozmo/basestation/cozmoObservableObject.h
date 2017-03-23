@@ -113,7 +113,7 @@ namespace Cozmo {
     FactoryID _factoryID = 0;
     
     ObjectFamily  _family = ObjectFamily::Unknown;
-    ObjectType    _type   = ObjectType::Unknown;
+    ObjectType    _type   = ObjectType::UnknownObject;
     
     ActiveIdentityState _identityState = ActiveIdentityState::Unidentified;
     

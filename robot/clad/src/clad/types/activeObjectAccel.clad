@@ -21,7 +21,7 @@ enum uint_8 UpAxis {
   ZNegative,
   ZPositive,
   NumAxes,
-  Unknown
+  UnknownAxis
 }
 
 } // namespace Cozmo

@@ -73,7 +73,7 @@ public class LightCube : ActiveObject {
 
   public LightCube(int objectID, uint factoryID, ObjectFamily objectFamily, ObjectType objectType) : base(objectID, factoryID, objectFamily, objectType) {
 
-    UpAxis = UpAxis.Unknown;
+    UpAxis = UpAxis.UnknownAxis;
     XAccel = byte.MaxValue;
     YAccel = byte.MaxValue;
     ZAccel = byte.MaxValue;

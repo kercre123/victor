@@ -47,7 +47,7 @@ namespace Cozmo {
     // this is to match Marker coordinates, where the marker is in the X-Z plane,
     // so we want the face to also be in the X-Z plane
     static const std::map<HumanHead::Type, Point3f> Sizes = {
-      {ObjectType::Unknown, {148.f, 225.f, 195.f}},
+      {ObjectType::UnknownObject, {148.f, 225.f, 195.f}},
     };
     
     auto iter = Sizes.find(type);

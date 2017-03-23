@@ -72,7 +72,7 @@ static ObjectLights kEmptyObjectLights = {};
 struct PyramidCubePropertiesTracker{
 private:
   ObjectID _objectID = 0;
-  UpAxis _currentUpAxis = UpAxis::Unknown;
+  UpAxis _currentUpAxis = UpAxis::UnknownAxis;
   CubeAnimationTrigger _currentLightTrigger = CubeAnimationTrigger::Count;
   CubeAnimationTrigger _desiredLightTrigger = CubeAnimationTrigger::Count;
   ObjectLights _desiredLightModifier = ObjectLights();

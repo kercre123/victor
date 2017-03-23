@@ -4326,7 +4326,7 @@ ObjectType Robot::GetDiscoveredObjectType(FactoryID id)
   if (it != _discoveredObjects.end()) {
     return it->second.objectType;
   }
-  return ObjectType::Unknown;
+  return ObjectType::UnknownObject;
 }
   
 FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxRSSI) const
@@ -4483,7 +4483,7 @@ void Robot::ObjectToConnectToInfo::Reset()
 void Robot::ActiveObjectInfo::Reset()
 {
   factoryID = ActiveObject::InvalidFactoryID;
-  objectType = ObjectType::Invalid;
+  objectType = ObjectType::InvalidObject;
   connectionState = ConnectionState::Invalid;
   rssi = 0;
   lastDiscoveredTimeStamp = 0;

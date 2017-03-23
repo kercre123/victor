@@ -55,7 +55,7 @@ private:
     void Reset()
     {
       factoryID = ActiveObject::InvalidFactoryID;
-      objectType = ObjectType::Invalid;
+      objectType = ObjectType::InvalidObject;
     }
     
     FactoryID 			factoryID;
