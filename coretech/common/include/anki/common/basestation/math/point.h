@@ -159,6 +159,9 @@ namespace Anki {
     // and will be left at the origin, and zero will be returned.
     T MakeUnitLength(void);
 
+    // Returns "(x, y, ...)"
+    std::string ToString() const;
+    
   protected:
     
     std::array<T,N> data;

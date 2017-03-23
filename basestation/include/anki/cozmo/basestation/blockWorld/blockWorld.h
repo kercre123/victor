@@ -304,7 +304,7 @@ namespace Anki
       const TimeStamp_t& GetTimeOfLastChange() const;
       
       // Get/Set currently-selected object
-      ObjectID GetSelectedObject() const { return _selectedObject; }
+      ObjectID GetSelectedObject() const { return _selectedObjectID; }
       void     CycleSelectedObject();
       
       // Try to select the object with the specified ID. Return true if that
@@ -573,7 +573,7 @@ namespace Anki
       bool _didObjectsChange;
       TimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
       
-      ObjectID _selectedObject;
+      ObjectID _selectedObjectID;
 
       // For tracking, keep track of the id of the actions we are doing
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);

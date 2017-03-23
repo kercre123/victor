@@ -359,6 +359,20 @@ void sChanneledDebug(const char* channelName, const char* eventName, const KVV& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool sVerifyFailedReturnFalse(const char* eventName, const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  sErrorF(eventName, {}, format, args);
+  va_end(args);
+  _errG=true;
+  sDumpCallstack("VERIFY"); 
+  sLogFlush();
+  sDebugBreak();
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sLogFlush()
 {
   if (nullptr == gLoggerProvider) {

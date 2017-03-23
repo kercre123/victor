@@ -92,6 +92,10 @@ void sChanneledDebugV(const char* channelName, const char* eventName, const std:
 __attribute__((__used__))
 void sChanneledDebug(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
+// Helper for use with ANKI_VERIFY macro. Always returns false.
+__attribute__((__used__))
+bool sVerifyFailedReturnFalse(const char* eventName, const char* format, ...);
+
 void sSetGlobal(const char* key, const char* value);
 
 //
@@ -149,14 +153,15 @@ void sAbort();
 
 //
 // ANKI_VERIFY(expr, name, format, args...)
-// Helper macro for common error checks.
+// Helper macro for simple error checks / assertions.
+// Similar to DEV_ASSERT (below) but enabled in both debug and release (and shipping) builds.
 //
 // If the conditional expression (expr) is true, ANKI_VERIFY returns true.
-// If the conditional expression (expr) is false, ANKI_VERIFY logs an error message and returns false.
+// If the conditional expression (expr) is false, ANKI_VERIFY logs an error message, dumps the callstack,
+// and returns false.
 //
-// The conditional expression (expr) and additional arguments are evaluated exactly once.
-// Similar to DEV_ASSERT (below) but enabled in both debug and release builds.
-//
+// The conditional expression (expr) will be evaluated only once. Arguments required to produce the formatted
+// string for the log will only be evaluated if expr==false.
 //
 // Example 1:
 // Use
@@ -168,6 +173,7 @@ void sAbort();
 //     /* do stuff */
 //   } else {
 //     PRINT_NAMED_ERROR("VerifyXY", "%p != p", x, y);
+//     sDumpCallstack();
 //   }
 //
 // Example 2:
@@ -178,20 +184,12 @@ void sAbort();
 // in place of
 //   if (x != y) {
 //     PRINT_NAMED_ERROR("VerifyXY", "%p != %p", x, y);
+//     sDumpCallstack();
 //     return FAIL;
 //   }
 //
-inline bool ANKI_VERIFY(bool expr, const char * name, const char * format, ...) {
-  if (!expr) {
-    va_list args;
-    va_start(args, format);
-    ::Anki::Util::sErrorV(name, {}, format, args);
-    ::Anki::Util::_errG=true;
-    ::Anki::Util::sDebugBreak();
-    va_end(args);
-  }
-  return expr;
-}
+#define ANKI_VERIFY(expr, name, format, ...) \
+  (expr ? true : ::Anki::Util::sVerifyFailedReturnFalse(name, "VERIFY(%s): " format, #expr, ##__VA_ARGS__))
 
 //
 // Logging with channels.

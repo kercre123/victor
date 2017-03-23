@@ -25,7 +25,7 @@ const ColorRGBA PREDOCKPOSE
 const ColorRGBA PRERAMPPOSE
   (0.f, 0.0f, 1.0f, 0.75f);
 const ColorRGBA SELECTED_OBJECT
-  (0.f, 1.0f, 0.0f, 0.0f);
+  (0.f, 1.0f, 0.0f, 0.75f);
 const ColorRGBA BLOCK_BOUNDING_QUAD
   (0.f, 0.0f, 1.0f, 0.75f);
 const ColorRGBA OBSERVED_QUAD

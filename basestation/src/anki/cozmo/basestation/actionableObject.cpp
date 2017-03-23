@@ -27,7 +27,6 @@ namespace Anki {
   namespace Cozmo {
         
     ActionableObject::ActionableObject()
-    : _isSelected(false)
     {
       
     }
@@ -292,28 +291,9 @@ namespace Anki {
       
     }
     
-    
-    void ActionableObject::Visualize() const
-    {
-      if(IsSelected()) {
-        static const ColorRGBA SELECTED_COLOR(0.f,1.f,0.f,1.f);
-        Visualize(SELECTED_COLOR);
-        if (nullptr != _vizManager)
-        {
-          //VisualizePreActionPoses();
-        }
-      } else {
-        Visualize(GetColor());
-      }
-    }
-    
     void ActionableObject::VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
                                                    const Pose3d* reachableFrom) const
     {
-      // Draw the main object:
-      //Visualize();
-      ActionableObject::EraseVisualization();
-      
       // Draw the pre-action poses, using a different color for each type of action
       u32 poseID = 0;
       std::vector<PreActionPose> poses;

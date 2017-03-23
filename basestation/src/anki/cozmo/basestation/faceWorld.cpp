@@ -787,6 +787,11 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::DrawFace(FaceEntry& faceEntry, bool drawInImage)
   {
+    if(!ANKI_DEV_CHEATS) {
+      // Don't draw anything in shipping builds
+      return;
+    }
+    
     const Vision::TrackedFace& trackedFace = faceEntry.face;
     
     ColorRGBA drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)trackedFace.GetID());

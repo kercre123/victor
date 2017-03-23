@@ -76,6 +76,8 @@
 #  define PRINT_LOCALIZATION_INFO(...)
 #endif
 
+// Giving this its own local define, in case we want to control it independently of DEV_CHEATS / SHIPPING, etc.
+#define ENABLE_DRAWING ANKI_DEV_CHEATS
 
 
 namespace Anki {
@@ -1436,7 +1438,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DrawNavMemoryMap() const
   {
-    if(ANKI_DEV_CHEATS)
+    if(ENABLE_DRAWING)
     {
       if ( _isNavMemoryMapRenderEnabled )
       {
@@ -1493,7 +1495,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::ClearNavMemoryMapRender() const
   {
-    if(ANKI_DEV_CHEATS)
+    if(ENABLE_DRAWING)
     {
       for ( const auto& memMapPair : _navMemoryMaps )
       {
@@ -4284,12 +4286,12 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       _robot->UnSetCarryingObjects();
     }
     
-    if(_selectedObject == object->GetID()) {
+    if(_selectedObjectID == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingSelectedObject",
                     "Clearing %s object %d which is currently selected.",
                     ObjectTypeToString(object->GetType()),
                     object->GetID().GetValue());
-      _selectedObject.UnSet();
+      _selectedObjectID.UnSet();
     }
 
     ObservableObject* objectOnTop = FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
@@ -4782,12 +4784,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeselectCurrentObject()
   {
-    if(_selectedObject.IsSet()) {
-      ActionableObject* curSel = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(_selectedObject));
-      if(curSel != nullptr) {
-        curSel->SetSelected(false);
+    if(_selectedObjectID.IsSet())
+    {
+      if(ENABLE_DRAWING)
+      {
+        // Erase the visualization of the selected object's preaction poses/lines. Note we do this
+        // across all frames in case the selected object is in a different origin and we have delocalized
+        BlockWorldFilter filter;
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+        filter.AddAllowedID(_selectedObjectID);
+        
+        const ObservableObject* object = FindLocatedMatchingObject(filter);
+        if(nullptr != object) {
+          object->EraseVisualization();
+        }
       }
-      _selectedObject.UnSet();
+      _selectedObjectID.UnSet();
     }
   }
   
@@ -4807,22 +4819,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::SelectObject(const ObjectID& objectID)
   {
-    ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(objectID));
+    ObservableObject* newSelection = GetLocatedObjectByID(objectID);
     
     if(newSelection != nullptr) {
       // Unselect current object of interest, if it still exists (Note that it may just get
       // reselected here, but I don't think we care.)
-      // Mark new object of interest as selected so it will draw differently
       DeselectCurrentObject();
       
-      newSelection->SetSelected(true);
-      _selectedObject = objectID;
-      PRINT_STREAM_INFO("BlockWorld.SelectObject", "Selected Object with ID=" << objectID.GetValue());
+      // Record new object of interest as selected so it will draw differently
+      _selectedObjectID = objectID;
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.SelectObject",
+                    "Selected Object with ID=%d", objectID.GetValue());
       
       return true;
     } else {
-      PRINT_STREAM_INFO("BlockWorld.SelectObject.InvalidID",
-                        "Object with ID=" << objectID.GetValue() << " not found. Not updating selected object.");
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.SelectObject.InvalidID",
+                    "Object with ID=%d not found. Not updating selected object.", objectID.GetValue());
       return false;
     }
   } // SelectObject()
@@ -4830,16 +4842,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::CycleSelectedObject()
   {
-    if(_selectedObject.IsSet()) {
-      // Unselect current object of interest, if it still exists (Note that it may just get
-      // reselected here, but I don't think we care.)
-      // Mark new object of interest as selected so it will draw differently
-      ActionableObject* object = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(_selectedObject));
-      if(object != nullptr) {
-        object->SetSelected(false);
-      }
-    }
-    
     bool currSelectedObjectFound = false;
     bool newSelectedObjectSet = false;
     
@@ -4860,12 +4862,18 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         if (currSelectedObjectFound) {
           // Current block of interest has been found.
           // Set the new block of interest to the next block in the list.
-          _selectedObject = object->GetID();
+          _selectedObjectID = object->GetID();
           newSelectedObjectSet = true;
           //PRINT_INFO("new block found: id %d  type %d", block.first, blockType.first);
           break;
-        } else if (object->GetID() == _selectedObject) {
+        } else if (object->GetID() == _selectedObjectID) {
           currSelectedObjectFound = true;
+          if(ENABLE_DRAWING)
+          {
+            // Erase the visualization of the current selection so we can draw only the
+            // the new one (even if we end up just re-drawing this one)
+            object->EraseVisualization();
+          }
           //PRINT_INFO("curr block found: id %d  type %d", block.first, blockType.first);
         }
       }
@@ -4894,21 +4902,24 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       } // for each family
       
       
-      if (firstObject == _selectedObject || !firstObject.IsSet()){
+      if (firstObject == _selectedObjectID || !firstObject.IsSet()){
         //PRINT_INFO("Only one object in existence.");
       } else {
         //PRINT_INFO("Setting object of interest to first block");
-        _selectedObject = firstObject;
+        _selectedObjectID = firstObject;
       }
     }
     
-    // Mark new object of interest as selected so it will draw differently
-    ActionableObject* object = dynamic_cast<ActionableObject*>(GetLocatedObjectByID(_selectedObject));
-    if (object != nullptr) {
-      object->SetSelected(true);
-      PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "Object of interest: ID = " << _selectedObject.GetValue());
-    } else {
-      PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "No object of interest found");
+    if(_selectedObjectID.IsSet())
+    {
+      DEV_ASSERT(nullptr != GetLocatedObjectByID(_selectedObjectID),
+                 "BlockWorld.CycleSelectedObject.ObjectNotFound");
+      PRINT_CH_DEBUG("BlockWorld", "BlockWorld.CycleSelectedObject",
+                     "Object of interest: ID = %d",_selectedObjectID.GetValue());
+    }
+    else
+    {
+      PRINT_CH_DEBUG("BlockWorld", "BlockWorld.CycleSelectedObject.NoObject", "No object of interest found");
     }
 
   } // CycleSelectedObject()
@@ -4916,6 +4927,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DrawAllObjects() const
   {
+    if(!ENABLE_DRAWING) {
+      // Don't draw anything in shipping builds
+      return;
+    }
+    
     const ObjectID& locObject = _robot->GetLocalizedTo();
     
     // Note: only drawing objects in current coordinate frame!
@@ -4923,7 +4939,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
     ModifierFcn visualizeHelper = [this,&locObject](ObservableObject* object)
     {
-      if(object->GetID() == locObject) {
+      if(object->GetID() == _selectedObjectID) {
+        // Draw selected object in a different color and draw its pre-action poses
+        object->Visualize(NamedColors::SELECTED_OBJECT);
+        
+        const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(object);
+        if(selectedObject == nullptr) {
+          PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.NullSelectedObject",
+                              "Selected object ID = %d, but it came back null.",
+                              GetSelectedObject().GetValue());
+        } else {
+          std::vector<std::pair<Quad2f,ObjectID> > obstacles;
+          _robot->GetBlockWorld().GetObstacles(obstacles);
+          selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
+        }
+      }
+      else if(object->GetID() == locObject) {
         // Draw object we are localized to in a different color
         object->Visualize(NamedColors::LOCALIZATION_OBJECT);
       }
@@ -4943,27 +4974,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
-    // (Re)Draw the selected object separately so we can get its pre-action poses
-    if(GetSelectedObject().IsSet())
-    {
-      const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetLocatedObjectByID(GetSelectedObject()));
-      if(selectedObject == nullptr) {
-        PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.NullSelectedObject",
-                            "Selected object ID = %d, but it came back null.",
-                            GetSelectedObject().GetValue());
-      } else {
-        if(selectedObject->IsSelected() == false) {
-          PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.SelectionMisMatch",
-                              "Object %d is selected in BlockWorld but does not have its "
-                              "selection flag set.", GetSelectedObject().GetValue());
-        }
-        
-        std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-        _robot->GetBlockWorld().GetObstacles(obstacles);
-        selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
-      }
-    } // if selected object is set
-
   } // DrawAllObjects()
     
 } // namespace Cozmo

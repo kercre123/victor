@@ -59,11 +59,6 @@ namespace Anki {
                                     const f32 offset_mm = 0,
                                     bool visualize = false) const;
       
-      // If the object is selected, draws it using the "selected" color.
-      // Otherwise draws it in the object's defined color.
-      virtual void Visualize() const override;
-      virtual void Visualize(const ColorRGBA& color) const override = 0;
-      
       // Draws just the pre-action poses. The reachableFrom pose (e.g. the
       // current pose of the robot) is passed along to GetCurrenPreActionsPoses()
       // (see above).
@@ -73,10 +68,6 @@ namespace Anki {
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.
       virtual void EraseVisualization() const override;
-      
-      // TODO: Possibly make this more descriptive to give finer-tuned control over states and visualization options.
-      bool IsSelected() const;
-      void SetSelected(const bool tf);
       
       // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
       std::list<ActiveLED> const& GetLEDs() const { return _activeLEDs; }
@@ -121,33 +112,14 @@ namespace Anki {
       // Set of pathIDs for visualizing the preActionLines
       mutable std::set<u32> _vizPreActionLineIDs;
       
-      bool _isSelected;
-      
       std::list<ActiveLED> _activeLEDs;
       
     }; // class ActionableObject
     
     
-#if 0
-#pragma mark --- Inline Implementations ---
-#endif
-    
     inline bool ActionableObject::HasPreActionPoses() const {
       return !_preActionPoses.empty();
     }
-    
-    inline bool ActionableObject::IsSelected() const {
-      return _isSelected;
-    }
-    
-    inline void ActionableObject::SetSelected(const bool tf) {
-      _isSelected = tf;
-      if(_isSelected == false) {
-        // Don't draw pre-action poses if not selected
-        ActionableObject::EraseVisualization();
-      }
-    }
-    
   
     
   } // namespace Cozmo

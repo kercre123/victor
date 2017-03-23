@@ -119,17 +119,33 @@ namespace Anki {
   void PoseBase<PoseNd>::PrintNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
   {
     std::string str = GetNamedPathToOrigin(startPose, showTranslations);
-    fprintf(stdout, "%s\n", str.c_str());
+    fprintf(stdout, "Path to origin: %s\n", str.c_str());
   }
   
   template<class PoseNd>
   std::string PoseBase<PoseNd>::GetNamedPathToOrigin(const PoseNd& startPose, bool showTranslations)
   {
-    std::string str("Path to origin: ");
+    std::string str;
 
+    const PoseCPtrSet* validPoses = (ANKI_DEV_CHEATS ? &Dev_GetValidPoses() : nullptr);
+    
     const PoseNd* current = &startPose;
-    BOUNDED_WHILE(1000, (!current->IsOrigin()))
+
+    // NOTE: Not using any methods like GetParent() or IsOrigin() here because those
+    // call Dev_ helpers, which may also be calling this method
+    BOUNDED_WHILE(1000, true)
     {
+      if(ANKI_DEV_CHEATS)
+      {
+        assert(validPoses != nullptr);
+        if(validPoses->find(current) == validPoses->end())
+        {
+          // Stop as soon as we reach an invalid pose in the chain b/c it may be a garbage pointer
+          str += "[INVALID]";
+          return str;
+        }
+      }
+      
       const std::string& name = current->GetName();
       if(name.empty()) {
         str += "(UNNAMED)";
@@ -138,20 +154,23 @@ namespace Anki {
       }
       
       if(showTranslations) {
-        const Vec3f& T = current->GetTranslation();
-        str += "(" + std::to_string(T.x()) + "," + std::to_string(T.y()) + "," + std::to_string(T.z()) + ")";
+        str += current->GetTranslation().ToString();
+      }
+      
+      current = current->_parentPtr;
+      
+      if(nullptr == current)
+      {
+        // Reached origin (or end of the road anyway)
+        break;
       }
       
       str += " -> ";
-      
-      current = current->GetParent();
     }
-    
-    str += current->GetName();
     
     return str;
     
-  } // PrintPathToOrigin()
+  } // GetNamedPathToOrigin()
   
   
   // Count number of steps to an origin node, by walking up
@@ -315,7 +334,7 @@ namespace Anki {
   template<class PoseNd>
   void PoseBase<PoseNd>::Dev_SwitchParent(const PoseNd* oldParent, const PoseNd* newParent, const PoseBase<PoseNd>* childBasePointer)
   {
-    if ( ANKI_DEVELOPER_CODE )
+    if ( ANKI_DEV_CHEATS )
     {
       std::lock_guard<std::mutex> lock( Dev_GetMutex() );
       
@@ -344,8 +363,15 @@ namespace Anki {
         if ( match != validPoses.end() )
         {
           // make sure we were not there before
-          DEV_ASSERT(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
-                     "PoseBase.Dev_SwitchParent.DuplicatedChildOfParent");
+          ANKI_VERIFY(newParent->_devChildrenPtrs.find(castedChild) == newParent->_devChildrenPtrs.end(),
+                     "PoseBase.Dev_SwitchParent.DuplicatedChildOfParent",
+                      "Child: '%s'(%p), Old parent '%s'(%p) path to origin: %s. "
+                      "New parent '%s'(%p) path to origin: %s.",
+                      childBasePointer->GetName().c_str(), childBasePointer,
+                      oldParent == nullptr ? "(none)" : oldParent->GetName().c_str(),
+                      oldParent,
+                      oldParent == nullptr ? "(none)" : GetNamedPathToOrigin(*oldParent, true).c_str(),
+                      newParent->GetName().c_str(), newParent, GetNamedPathToOrigin(*newParent, true).c_str());
           
           // add now
           const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(newParent);
@@ -354,7 +380,10 @@ namespace Anki {
         else
         {
           // this pose can't be a parent, how did you get the pointer?!
-          DEV_ASSERT(false, "PoseBase.Dev_SwitchParent.NewParentIsNotAValidPose");
+          ANKI_VERIFY(false, "PoseBase.Dev_SwitchParent.NewParentIsNotAValidPose",
+                      "New parent '%s'(%p) path to origin: %s",
+                      newParent->GetName().c_str(), newParent,
+                      GetNamedPathToOrigin(*newParent, true).c_str());
         }
       }
     }
@@ -364,7 +393,7 @@ namespace Anki {
   template<class PoseNd>
   void PoseBase<PoseNd>::Dev_AssertIsValidParentPointer(const PoseNd* parent, const PoseBase<PoseNd>* childBasePointer)
   {
-    if ( ANKI_DEVELOPER_CODE )
+    if ( ANKI_DEV_CHEATS )
     {
       if ( nullptr != parent )
       {
@@ -373,13 +402,22 @@ namespace Anki {
         // if we have a parent, check that:
         // a) the parent is a valid pose
         PoseCPtrSet& validPoses = Dev_GetValidPoses();
-        DEV_ASSERT(validPoses.find(parent) != validPoses.end(), "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose");
+        ANKI_VERIFY(validPoses.find(parent) != validPoses.end(),
+                    "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose",
+                    "Path of parent '%s'(%p) to origin: %s. Path of child '%s'(%p) to origin: %s",
+                    parent->GetName().c_str(), parent, GetNamedPathToOrigin(*parent, true).c_str(),
+                    childBasePointer == nullptr ? "(none)" : childBasePointer->GetName().c_str(), childBasePointer,
+                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(childBasePointer), true).c_str());
         
         // b) we are a current child of it
         const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
         const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
-        DEV_ASSERT(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
-          "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent");
+        ANKI_VERIFY(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
+                    "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent",
+                    "Path of parent '%s'(%p) to origin: %s. Path of child '%s'(%p) to origin: %s",
+                    parent->GetName().c_str(), parent, GetNamedPathToOrigin(*parent, true).c_str(),
+                    childBasePointer == nullptr ? "(none)" : childBasePointer->GetName().c_str(), childBasePointer,
+                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*downCastedChild, true).c_str());
         
         // Note on b): If you crash on b), it means that the child is pointing at this parent, and this parent
         // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
@@ -401,7 +439,7 @@ namespace Anki {
   template<class PoseNd>
   void PoseBase<PoseNd>::Dev_PoseDestroyed(const PoseBase<PoseNd>* basePointer)
   {
-    if ( ANKI_DEVELOPER_CODE )
+    if ( ANKI_DEV_CHEATS )
     {
       std::lock_guard<std::mutex> lock( Dev_GetMutex() );
     
@@ -412,7 +450,10 @@ namespace Anki {
       PoseCPtrSet& validPoses = Dev_GetValidPoses();
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
       const size_t removedCount = validPoses.erase(castedSelf);
-      DEV_ASSERT(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose");
+      ANKI_VERIFY(removedCount == 1, "PoseBase.Dev_PoseDestroyed.DestroyingInvalidPose",
+                  "Path from '%s'(%p) to origin: %s",
+                  basePointer->GetName().c_str(), basePointer,
+                  GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(basePointer), true).c_str());
     }
   }
 
@@ -420,7 +461,7 @@ namespace Anki {
   template<class PoseNd>
   void PoseBase<PoseNd>::Dev_PoseCreated(const PoseBase<PoseNd>* basePointer)
   {
-    if ( ANKI_DEVELOPER_CODE )
+    if ( ANKI_DEV_CHEATS )
     {
       std::lock_guard<std::mutex> lock( Dev_GetMutex() );
     
@@ -430,7 +471,10 @@ namespace Anki {
       PoseCPtrSet& validPoses = Dev_GetValidPoses();
       const PoseNd* castedSelf = reinterpret_cast<const PoseNd*>(basePointer);
       const auto insertRetInfo = validPoses.insert(castedSelf);
-      DEV_ASSERT(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer");
+      ANKI_VERIFY(insertRetInfo.second, "PoseBase.Dev_PoseCreated.CreatingDuplicatedPointer",
+                  "Path from '%s'(%p) to origin: %s",
+                  basePointer->GetName().c_str(), basePointer,
+                  GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(basePointer), true).c_str());
     }
   }
   

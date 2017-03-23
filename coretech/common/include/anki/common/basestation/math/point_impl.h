@@ -548,6 +548,21 @@ namespace Anki {
   }
 
   template<PointDimType N, typename T>
+  std::string Point<N,T>::ToString() const
+  {
+    // Convert all but the last element to avoid a trailing ","
+    static_assert(N>0, "Point must not be empty");
+    std::ostringstream oss;
+    oss << "(";
+    std::copy(data.begin(), data.end()-1, std::ostream_iterator<T>(oss, ", "));
+    
+    // Now add the last element with no delimiter
+    oss << data.back() << ")";
+    
+    return oss.str();
+  }
+  
+  template<PointDimType N, typename T>
   std::ostream& operator<<(std::ostream& out, const Point<N,T>& p)
   {
     for (PointDimType i=0; i<N; ++i) {

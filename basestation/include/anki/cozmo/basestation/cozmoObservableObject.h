@@ -123,6 +123,8 @@ namespace Cozmo {
     
   }; // class ObservableObject
   
+#pragma mark -
+#pragma mark Inlined Implementations
   
   inline ActiveIdentityState ObservableObject::GetIdentityState() const {
     if(IsActive()) {
@@ -132,28 +134,6 @@ namespace Cozmo {
       return ActiveIdentityState::Identified;
     }
   }
-
-  inline void ObservableObject::InitPose(const Pose3d& pose, PoseState poseState)
-  {
-    // This indicates programmer error: InitPose should only be called once on
-    // an object and never once SetPose has been called
-    DEV_ASSERT_MSG(!_poseHasBeenSet,
-                   "ObservableObject.InitPose.PoseAlreadySet",
-                   "%s Object %d",
-                   EnumToString(GetType()), GetID().GetValue());
-    
-    SetPose(pose, -1.f, poseState);
-    _poseHasBeenSet = true;
-  }
-  
-  inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState)
-  {
-    Vision::ObservableObject::SetPose(newPose, fromDistance, newPoseState);
-    _poseHasBeenSet = true; // Make sure InitPose can't be called after this
-  }
-  
-#pragma mark -
-#pragma mark Inlined Implementations
   
   inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
                                          const Point3f& distThreshold,
