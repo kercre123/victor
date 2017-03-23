@@ -3,7 +3,7 @@
     "localMinLogLevel": "info",
     "localMinLogLevelOverrides": {
     },
-    "remoteMinLogLevel": "info",
+    "remoteMinLogLevel": "event",
     "gameMinLogLevel": "info",
     "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT",
     "flushInterval": 15
