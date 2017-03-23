@@ -55,7 +55,7 @@ int resultLedOn;
 int resultLedOff;
 int g_powerOffTime = (4<<23);   // 4 seconds from power-on
 #ifdef FACTORY
-bool g_turnPowerOff = true;
+bool g_turnPowerOff = false;
 #endif
 
 static bool isCharging = false;
@@ -136,14 +136,14 @@ void Battery::init()
   // Configure charge pins
   nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
- 
+
   // Configure cliff sensor pins
   nrf_gpio_cfg_output(PIN_IR_DROP);
-  
+
   // Syscon power - this should always be on until battery fail
-  nrf_gpio_pin_set(PIN_PWR_EN);
+  Battery::powerOn();
   nrf_gpio_cfg_output(PIN_PWR_EN);
-  
+
   // Encoder and LED power (enabled)
   nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
@@ -174,7 +174,9 @@ void Battery::init()
 
   startADCsample(ANALOG_CLIFF_SENSE);
 
-  Battery::powerOn();
+  #ifdef FACTORY
+  g_turnPowerOff = true;
+  #endif
 }
 
 void Battery::hookButton(bool button_pressed) {
@@ -374,8 +376,6 @@ void Battery::updateOperatingMode() {
     case BODY_STARTUP:
       motorOverride = true;
 
-      Battery::powerOn();
-
       Motors::disable(false);
 
       for (int i = 0; i < MOTOR_COUNT; i++) {
@@ -554,7 +554,6 @@ void Battery::manage()
   if (active_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
     if (++low_power_ticks >= LOW_POWER_TIME) {
       powerOff();
-      NVIC_SystemReset();
     }
   } else {
     low_power_ticks = 0;
@@ -580,7 +579,6 @@ void Battery::manage()
 
           if (ticks_left < 0) {
             powerOff();
-            NVIC_SystemReset();
           }
         } else {
           lowBatTimer = GetCounter() + LOW_BAT_TIME;

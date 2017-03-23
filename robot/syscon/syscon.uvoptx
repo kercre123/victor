@@ -149,18 +149,50 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>45</LineNumber>
+          <LineNumber>58</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>110694</Address>
+          <Address>119036</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>&lt;3&gt;.\hal\dtm.cpp</Filename>
+          <Filename>&lt;3&gt;.\hal\main.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\syscon\hal/dtm.cpp\45</Expression>
+          <Expression>\\syscon\hal/main.cpp\58</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>415</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>114270</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>&lt;3&gt;.\hal\battery.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\syscon\hal/battery.cpp\415</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>409</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>113328</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>&lt;3&gt;.\hal\battery.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\syscon\hal/battery.cpp\409</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
