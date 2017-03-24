@@ -37,7 +37,7 @@
         // Get XML toolbox definition
         var toolbox = document.getElementById('toolbox');
         window.toolbox = toolbox;
- 
+
         // Instantiate scratch-blocks and attach it to the DOM.
         var workspace = window.Blockly.inject('blocks', {
             media: './lib/blocks/media/',
@@ -125,13 +125,17 @@
  
         // Extension event handlers
         bindExtensionHandler();
- 
-        // Handle platform-specific style adjustments
-        if (window.isIphone) {
-            workspace.setScale(0.85);
-            document.getElementById('navigation').style.zoom = "80%"
-        }
+        window.onresize();
     }
+
+    window.onresize = function(event) {
+        if (window.innerWidth <= 700) {
+            workspace.setScale(0.70);
+            //document.getElementById('navigation').style.zoom = "80%"
+        }else{
+            workspace.setScale(1.2);
+        }
+    };
  
     /**
      * Binds the extension interface to `window.extensions`.

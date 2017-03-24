@@ -438,9 +438,9 @@ Blockly.Blocks['dropdown_cozmo_drive_speed'] = {
               value: 'fast', width: 48, height: 48, alt: 'Fast'}
         ]), 'CHOICE');
     this.setOutput(true);
-    this.setColour(Blockly.Colours.motion.primary,
-      Blockly.Colours.motion.secondary,
-      Blockly.Colours.motion.tertiary
+    this.setColour(Blockly.Colours.control.primary,
+      Blockly.Colours.control.secondary,
+      Blockly.Colours.control.tertiary
     );
   }
 };
@@ -470,10 +470,10 @@ Blockly.Blocks['cozmo_drive_speed'] = {
       "inputsInline": true,
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.motion,
-      "colour": Blockly.Colours.motion.primary,
-      "colourSecondary": Blockly.Colours.motion.secondary,
-      "colourTertiary": Blockly.Colours.motion.tertiary
+      "category": Blockly.Categories.control,
+      "colour": Blockly.Colours.control.primary,
+      "colourSecondary": Blockly.Colours.control.secondary,
+      "colourTertiary": Blockly.Colours.control.tertiary
     });
   }
 };

@@ -170,3 +170,42 @@ button:focus {
     height: 100%;
     margin: 0px 0 0 1px;
 }
+
+
+@media only screen and (max-width: 700px) {
+    #navigation {
+        top: calc(100% - 250px);
+    }
+
+    #close .primary {
+        display: block;
+        position: absolute;
+        top: 5px;
+        left: 5px;
+    }
+
+    #close .primary button {
+        width:60px;
+        height:60px;
+    }
+
+    #navigation .greenflag {
+        left: calc(100% - 65px);
+        top: calc(100% - 185px);;
+    }
+
+    #navigation .greenflag button {
+        width:60px;
+        height:60px;
+    }
+
+    #navigation .stop {
+        left: calc(100% - 65px);
+        top: calc(100% - 125px);;
+    }
+
+    #navigation .stop button {
+        width:60px;
+        height:60px;
+    }
+}

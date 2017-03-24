@@ -39,13 +39,6 @@
             </block>
             <block type="cozmo_turn_left"></block>
             <block type="cozmo_turn_right"></block>
-            <block type="cozmo_drive_speed">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_drive_speed">
-                        <field name="CHOICE">fast</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="cozmo_dock_with_cube"></block>
             <block type="cozmo_animation">
                 <value name="CHOICE">
@@ -85,6 +78,13 @@
             <block type="cozmo_wait_for_face"></block>
             <block type="cozmo_wait_until_see_cube"></block>
             <block type="cozmo_wait_for_cube_tap"></block>
+            <block type="cozmo_drive_speed">
+                <value name="CHOICE">
+                    <shadow type="dropdown_cozmo_drive_speed">
+                        <field name="CHOICE">fast</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="control_repeat">
                 <value name="TIMES">
                     <shadow type="math_whole_number_with_validator">
@@ -93,7 +93,6 @@
                 </value>
             </block>
             <block type="control_forever"></block>
-            <block type="control_stop"></block>
         </xml>
         
         <!-- Blocks -->
