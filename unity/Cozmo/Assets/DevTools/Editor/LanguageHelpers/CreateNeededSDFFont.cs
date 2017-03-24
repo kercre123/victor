@@ -20,9 +20,9 @@ public class CreateNeededSDFFont {
   // SDF Font generation settings. Should not change much
   private const string _kSDFFontNameSuffix = " SDF";
   private const string _kSDFFontAssetExtension = ".asset";
-  private static string[] _sSdfFontFallbackNames = { " Joyo", " Jinmeiyo" };
+  private static string[] _sSdfFontFallbackNames = { " Kana", " Ascii" };
   private const int _kFontSize = 36;
-  private const int _kFontPadding = 5;
+  private const int _kFontPadding = 4;
   private const int _kFontAtlasWidth = 1024;
   private const int _kFontAtlasHeight = 1024;
   private const FaceStyles _kFontStyle = FaceStyles.Normal;

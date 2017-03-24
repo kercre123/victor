@@ -1,4 +1,4 @@
-Font: Mushin
+Font: AXIS Std
 Pt.Size: 36
 Characters packed: 608/608
 
