@@ -85,6 +85,7 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import util
 
   if not options.ankiUtilPath or not os.path.exists(options.ankiUtilPath):
     UtilLog.error('anki-util not found [%s]' % (options.ankiUtilPath) )
@@ -174,87 +175,58 @@ def main(scriptArgs):
   # paths relative to gyp file
   clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
 
+  default_defines = {
+    'kazmath_library_type': 'static_library',
+    'jsoncpp_library_type': 'static_library',
+    'util_library_type': 'static_library',
+    'worldviz_library_type': 'static_library',
+    'libwebp_library_type': 'static_library',
+    'use_libwebp': 0,
+    'arch_group': options.arch,
+    'coretech_external_path': coretechExternalPath,
+    'cti-gtest_path': gtestPath,
+    'cti-util_gyp_path': ankiUtilProjectPath,
+    'cti-cozmo_engine_path': subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
+    'clad_dir': clad_dir_rel
+  }
+
+  getGypArgs = util.Gyp.getArgFunction(['--check', '--depth', '.', '--toplevel-dir', '../..'])
+
   # mac
   if 'mac' in options.platforms:
-    os.environ['GYP_DEFINES'] = """ 
-                                OS=mac
-                                ndk_root=INVALID
-                                kazmath_library_type=static_library
-                                jsoncpp_library_type=static_library
-                                util_library_type=static_library
-                                worldviz_library_type=static_library
-                                arch_group={0}
-                                output_location={1}
-                                coretech_external_path={2}
-                                cti-gtest_path={3}
-                                cti-util_gyp_path={4}
-                                cti-cozmo_engine_path={5}
-                                clad_dir={6}
-                                """.format(options.arch, 
-                                  os.path.join(projectRoot, 'generated/mac'), 
-                                  coretechExternalPath,
-                                  gtestPath, 
-                                  ankiUtilProjectPath, 
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
-                                  clad_dir_rel
-                                )
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
+    defines = default_defines.copy()
+    defines.update({
+      'OS': 'mac',
+      'output_location': os.path.join(projectRoot, 'generated/mac'),
+      'ndk_root': 'INVALID'
+    })
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+    gypArgs = getGypArgs('xcode', '../../generated/mac', gypFile)
     gyp.main(gypArgs)
 
 
 
   # ios
   if 'ios' in options.platforms:
-    os.environ['GYP_DEFINES'] = """  
-                                OS=ios
-                                kazmath_library_type=static_library
-                                jsoncpp_library_type=static_library
-                                util_library_type=static_library
-                                worldviz_library_type=static_library
-                                arch_group={0}
-                                output_location={1}
-                                coretech_external_path={2}
-                                cti-gtest_path={3}
-                                cti-util_gyp_path={4}
-                                cti-cozmo_engine_path={5}
-                                clad_dir={6}
-                                """.format(options.arch, 
-                                  os.path.join(projectRoot, 'generated/ios'), 
-                                  coretechExternalPath,
-                                  gtestPath, 
-                                  ankiUtilProjectPath, 
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
-                                  clad_dir_rel
-                                )
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
+    defines = default_defines.copy()
+    defines.update({
+      'OS': 'ios',
+      'output_location': os.path.join(projectRoot, 'generated/ios'),
+    })
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+    gypArgs = getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
 
   # linux
   if 'linux' in options.platforms:
     print "***************************HERE-configure.py coretech"
-    os.environ['GYP_DEFINES'] = """
-                                OS=linux
-                                ndk_root=INVALID
-                                kazmath_library_type=static_library
-                                jsoncpp_library_type=static_library
-                                util_library_type=static_library
-                                worldviz_library_type=static_library
-                                arch_group={0}
-                                output_location={1}
-                                coretech_external_path={2}
-                                cti-gtest_path={3}
-                                cti-util_gyp_path={4}
-                                cti-cozmo_engine_path={5}
-                                clad_dir={6}
-                                """.format(options.arch,
-                                  os.path.join(projectRoot, 'generated/linux'),
-                                  coretechExternalPath,
-                                  gtestPath,
-                                  ankiUtilProjectPath,
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
-                                  clad_dir_rel
-                                )
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', '../../generated/linux', gypFile]
+    defines = default_defines.copy()
+    defines.update({
+      'OS': 'linux',
+      'output_location': os.path.join(projectRoot, 'generated/linux'),
+    })
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+    gypArgs = getGypArgs('ninja', '../../generated/linux', gypFile)
     gyp.main(gypArgs)
 
   if 'android' in options.platforms:
@@ -286,43 +258,28 @@ def main(scriptArgs):
     ndk_root = os.environ['ANDROID_NDK_ROOT']
 
     os.environ['ANDROID_BUILD_TOP'] = configurePath
-    os.environ['GYP_DEFINES'] = """ 
-                                kazmath_library_type=static_library
-                                jsoncpp_library_type=static_library
-                                util_library_type=static_library
-                                worldviz_library_type=static_library
-                                das_library_type=shared_library
-                                os_posix=1
-                                OS=android
-                                GYP_CROSSCOMPILE=1
-                                target_arch=arm
-                                clang=1
-                                component=static_library
-                                use_system_stlport=0
-                                arch_group={0}
-                                output_location={1}
-                                coretech_external_path={2}
-                                cti-gtest_path={3}
-                                cti-util_gyp_path={4}
-                                cti-cozmo_engine_path={5}
-                                ndk_root={6}
-                                clad_dir={7}
-                                """.format(options.arch, 
-                                  os.path.join(projectRoot, 'generated/android'), 
-                                  coretechExternalPath,
-                                  gtestPath, 
-                                  ankiUtilProjectPath, 
-                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
-                                  ndk_root,
-                                  clad_dir_rel,
-                                )
+
+    defines = default_defines.copy()
+    defines.update({
+      'OS': 'android',
+      'output_location': os.path.join(projectRoot, 'generated/android'),
+      'das_library_type': 'shared_library',
+      'os_posix': 1,
+      'GYP_CROSSCOMPILE': 1,
+      'target_arch': 'arm',
+      'clang': 1,
+      'component': 'static_library',
+      'use_system_stlport': 0,
+      'ndk_root': ndk_root
+    })
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
+    gypArgs = getGypArgs('ninja-android', 'generated/android', gypFile)
     gyp.main(gypArgs)
 
 

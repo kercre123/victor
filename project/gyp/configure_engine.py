@@ -24,10 +24,6 @@ def gypHelp():
   print "echo PATH=$HOME/your_workspace/gyp:$PATH >> ~/.bash_profile"
   print ". ~/.bash_profile"
 
-def _getGypArgs(format, outputFolder, gypFile):
-  return ['--check', '--depth', '.', '-f', format, '--toplevel-dir', '../..', \
-    '--generator-output', outputFolder, '--include', '../../project/gyp/build-variables.gypi', gypFile]
-
 def main(scriptArgs):
   version = '1.0'
   parser = argparse.ArgumentParser(description='runs gyp to generate projects', version=version)
@@ -288,60 +284,52 @@ def main(scriptArgs):
   # paths relative to gyp file
   clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))
 
+  default_defines = {
+    'arch_group': options.arch,
+    'audio_library_type': 'static_library',
+    'audio_library_build': 'profile',
+    'kazmath_library_type': 'static_library',
+    'jsoncpp_library_type': 'static_library',
+    'util_library_type': 'static_library',
+    'audioutil_library_type': 'static_library',
+    'worldviz_library_type': 'static_library',
+    'das_library_type': 'static_library',
+    'libwebp_library_type': 'static_library',
+    'use_libwebp': 0,
+    'ndk_root': 'INVALID',
+    'coretech_external_path': coretechExternalPath,
+    'webots_path': webotsPath,
+    'cti-gtest_path': ctiGtestPath,
+    'cti-util_gyp_path': ctiAnkiUtilProjectPath,
+    'cti-cozmo_engine_path': projectRoot,
+    'ce-gtest_path': gtestPath,
+    'ce-util_gyp_path': ankiUtilProjectPath,
+    'ce-cti_gyp_path': coretechInternalProjectPath,
+    'ce-audio_path': audioProjectGypPath,
+    'cg-audio_path': audioProjectGypPath,
+    'ce-ble_cozmo_path': bleCozmoProjectPath,
+    'ce-das_path': dasProjectPath,
+    'clad_dir': clad_dir_rel,
+    'util_gyp_path': audioAnkiUtilProjectPath,
+  }
+
+  getGypArgs = util.Gyp.getArgFunction(['--check', '--depth', '.', '--toplevel-dir', '../..',
+    '--include', '../../project/gyp/build-variables.gypi'])
+
   # mac
   if 'mac' in options.platforms:
-      os.environ['GYP_DEFINES'] = """
-                                  OS=mac
-                                  ndk_root=INVALID
-                                  audio_library_type=static_library
-                                  audio_library_build=profile
-                                  kazmath_library_type=static_library
-                                  jsoncpp_library_type=static_library
-                                  util_library_type=static_library
-                                  audioutil_library_type=static_library
-                                  worldviz_library_type=static_library
-                                  das_library_type=static_library
-                                  arch_group={0}
-                                  output_location={1}
-                                  coretech_external_path={2}
-                                  webots_path={3}
-                                  cti-gtest_path={4}
-                                  cti-util_gyp_path={5}
-                                  cozmo_engine_path={6}
-                                  cti-cozmo_engine_path={6}
-                                  ce-gtest_path={7}
-                                  ce-util_gyp_path={8}
-                                  ce-cti_gyp_path={9}
-                                  ce-audio_path={10}
-                                  cg-audio_path={11}
-                                  ce-ble_cozmo_path={12}
-                                  ce-das_path={13}
-                                  clad_dir={14}
-                                  util_gyp_path={15}
-                                  """.format(
-                                    options.arch, 
-                                    os.path.join(options.projectRoot, 'generated/mac'),
-                                    coretechExternalPath, 
-                                    webotsPath,
-                                    ctiGtestPath, 
-                                    ctiAnkiUtilProjectPath,
-                                    projectRoot,
-                                    gtestPath, 
-                                    ankiUtilProjectPath, 
-                                    coretechInternalProjectPath,
-                                    audioProjectGypPath,
-                                    audioProjectGypPath,
-                                    bleCozmoProjectPath,
-                                    dasProjectPath,
-                                    clad_dir_rel,
-                                    audioAnkiUtilProjectPath,
-                                    audioGeneratedCladPath,
-                                  )
-      gypArgs = _getGypArgs('xcode', '../../generated/mac', gypFile)
+      defines = default_defines.copy()
+      defines.update({
+        'OS': 'mac',
+        'output_location': os.path.join(options.projectRoot, 'generated/mac'),
+        'cozmo_engine_path': projectRoot,
+      })
+      os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+      gypArgs = getGypArgs('xcode', '../../generated/mac', gypFile)
       gyp.main(gypArgs)
       # mac
       if options.mex:
-        gypArgs = _getGypArgs('xcode', '../../generated/mac', 'cozmoEngineMex.gyp')
+        gypArgs = getGypArgs('xcode', '../../generated/mac', 'cozmoEngineMex.gyp')
         gyp.main(gypArgs)
       
 
@@ -349,102 +337,28 @@ def main(scriptArgs):
 
   # ios
   if 'ios' in options.platforms:
-    os.environ['GYP_DEFINES'] = """
-                                OS=ios
-                                audio_library_type=static_library
-                                audio_library_build=profile
-                                kazmath_library_type=static_library
-                                jsoncpp_library_type=static_library
-                                util_library_type=static_library
-                                audioutil_library_type=static_library
-                                worldviz_library_type=static_library
-                                das_library_type=static_library
-                                arch_group={0}
-                                output_location={1}
-                                coretech_external_path={2}
-                                webots_path={3}
-                                cti-gtest_path={4}
-                                cti-util_gyp_path={5}
-                                cti-cozmo_engine_path={6}
-                                ce-gtest_path={7}
-                                ce-util_gyp_path={8}
-                                ce-cti_gyp_path={9}
-                                ce-audio_path={10}
-                                cg-audio_path={11}
-                                ce-ble_cozmo_path={12}
-                                ce-das_path={13}
-                                clad_dir={14}
-                                util_gyp_path={15}
-                                """.format(
-                                  options.arch, 
-                                  os.path.join(options.projectRoot, 'generated/ios'),
-                                  coretechExternalPath, 
-                                  webotsPath,
-                                  ctiGtestPath, 
-                                  ctiAnkiUtilProjectPath,
-                                  projectRoot,
-                                  gtestPath, 
-                                  ankiUtilProjectPath, 
-                                  coretechInternalProjectPath,
-                                  audioProjectGypPath,
-                                  audioProjectGypPath,
-                                  bleCozmoProjectPath,
-                                  dasProjectPath,
-                                  clad_dir_rel,
-                                  audioAnkiUtilProjectPath,
-                                  audioGeneratedCladPath,
-                                )
-    gypArgs = _getGypArgs('xcode', '../../generated/ios', gypFile)
+    defines = default_defines.copy()
+    defines.update({
+      'OS': 'ios',
+      'output_location': os.path.join(options.projectRoot, 'generated/ios'),
+    })
+    defines.pop('ndk_root')
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+    gypArgs = getGypArgs('xcode', '../../generated/ios', gypFile)
     gyp.main(gypArgs)
 
 
   # mex
   if 'mex' in options.platforms:
+      defines = default_defines.copy()
+      defines.update({
+        'OS': 'mac',
+        'output_location': os.path.join(options.projectRoot, 'generated/mex'),
+        'generated_clad_path': audioGeneratedCladPath,
+      })
       gypFile = 'cozmoEngineMex.gyp'
-      os.environ['GYP_DEFINES'] = """
-                                  OS=mac
-                                  ndk_root=INVALID
-                                  audio_library_type=static_library
-                                  audio_library_build=profile
-                                  kazmath_library_type=static_library
-                                  jsoncpp_library_type=static_library
-                                  util_library_type=static_library
-                                  audioutil_library_type=static_library
-                                  worldviz_library_type=static_library
-                                  das_library_type=static_library
-                                  arch_group={0}
-                                  output_location={1}
-                                  coretech_external_path={2}
-                                  webots_path={3}
-                                  cti-gtest_path={4}
-                                  cti-util_gyp_path={5}
-                                  cti-cozmo_engine_path={6}
-                                  ce-gtest_path={7}
-                                  ce-util_gyp_path={8}
-                                  ce-cti_gyp_path={9}
-                                  ce-audio_path={10}
-                                  ce-ble_cozmo_path={11}
-                                  ce-das_path={12}
-                                  clad_dir={13}
-                                  generated_clad_path={14}
-                                  """.format(
-                                    options.arch, 
-                                    os.path.join(options.projectRoot, 'generated/mex'),
-                                    coretechExternalPath, 
-                                    webotsPath,
-                                    ctiGtestPath, 
-                                    ctiAnkiUtilProjectPath,
-                                    projectRoot,
-                                    gtestPath,
-                                    ankiUtilProjectPath,
-                                    coretechInternalProjectPath,
-                                    audioProjectGypPath,
-                                    bleCozmoProjectPath,
-                                    dasProjectPath,
-                                    clad_dir_rel,
-                                    audioGeneratedCladPath,
-                                  )
-      gypArgs = _getGypArgs('xcode', '../../generated/mex', gypFile)
+      os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+      gypArgs = getGypArgs('xcode', '../../generated/mex', gypFile)
       gyp.main(gypArgs)
       
       
@@ -479,70 +393,34 @@ def main(scriptArgs):
     ndk_root = os.environ['ANDROID_NDK_ROOT']
 
     os.environ['ANDROID_BUILD_TOP'] = configurePath
+
+    defines = default_defines.copy()
+    defines.update({
+      'OS': 'android',
+      'output_location': os.path.join(options.projectRoot, 'generated/android'),
+      'das_library_type': 'shared_library',
+      'os_posix': 1,
+      'GYP_CROSSCOMPILE': 1,
+      'target_arch': 'arm',
+      'clang': 1,
+      'component': 'static_library',
+      'use_system_stlport': 0,
+      'ndk_root': ndk_root,
+      'crash_path': crashPath,
+      'ce-audio_path': audioProjectPath,
+      'util_gyp_path': ctiAnkiUtilProjectPath,
+      'generated_clad_path': audioGeneratedCladPath,
+    })
     ##################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """
-                                audio_library_type=static_library
-                                audio_library_build=profile
-                                kazmath_library_type=static_library
-                                jsoncpp_library_type=static_library
-                                util_library_type=static_library
-                                audioutil_library_type=static_library
-                                worldviz_library_type=static_library
-                                das_library_type=shared_library
-                                os_posix=1
-                                OS=android
-                                GYP_CROSSCOMPILE=1
-                                target_arch=arm
-                                clang=1
-                                component=static_library
-                                use_system_stlport=0
-                                arch_group={0}
-                                output_location={1}
-                                coretech_external_path={2}
-                                webots_path={3}
-                                cti-gtest_path={4}
-                                cti-util_gyp_path={5}
-                                cti-cozmo_engine_path={6}
-                                ce-gtest_path={7}
-                                ce-util_gyp_path={8}
-                                ce-cti_gyp_path={9}
-                                ndk_root={10}
-                                ce-audio_path={11}
-                                cg-audio_path={12}
-                                ce-ble_cozmo_path={13}
-                                ce-das_path={14}
-                                clad_dir={15}
-                                crash_path={16}
-                                util_gyp_path={17}
-                                generated_clad_path={18}
-                                """.format(
-                                  options.arch, 
-                                  os.path.join(options.projectRoot, 'generated/android'),
-                                  coretechExternalPath, 
-                                  webotsPath,
-                                  ctiGtestPath, 
-                                  ctiAnkiUtilProjectPath,
-                                  projectRoot,
-                                  gtestPath, 
-                                  ankiUtilProjectPath, 
-                                  coretechInternalProjectPath,
-                                  ndk_root,
-                                  audioProjectPath,
-                                  audioProjectGypPath,
-                                  bleCozmoProjectPath,
-                                  dasProjectPath,
-                                  clad_dir_rel,
-                                  crashPath,
-                                  ctiAnkiUtilProjectPath,
-                                  audioGeneratedCladPath,
-                                )
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = _getGypArgs('ninja-android', 'generated/android', gypFile)
+    gypArgs = getGypArgs('ninja-android', 'generated/android', gypFile)
     gyp.main(gypArgs)
 
 
@@ -550,52 +428,19 @@ def main(scriptArgs):
   # linux
   if 'linux' in options.platforms:
       print "***********************HERE-configure.py"
-      os.environ['GYP_DEFINES'] = """
-                                  OS=linux
-                                  ndk_root=INVALID
-                                  audio_library_type=static_library
-                                  audio_library_build=profile
-                                  kazmath_library_type=static_library
-                                  jsoncpp_library_type=static_library
-                                  util_library_type=static_library
-                                  audioutil_library_type=static_library
-                                  worldviz_library_type=static_library
-                                  das_library_type=static_library
-                                  arch_group={0}
-                                  output_location={1}
-                                  coretech_external_path={2}
-                                  webots_path={3}
-                                  cti-gtest_path={4}
-                                  cti-util_gyp_path={5}
-                                  cozmo_engine_path={6}
-                                  cti-cozmo_engine_path={6}
-                                  ce-gtest_path={7}
-                                  ce-util_gyp_path={8}
-                                  ce-cti_gyp_path={9}
-                                  ce-audio_path={10}
-                                  ce-ble_cozmo_path={11}
-                                  ce-das_path={12}
-                                  generated_clad_path={13}
-                                  """.format(
-                                    options.arch,
-                                    os.path.join(options.projectRoot, 'generated/linux'),
-                                    coretechExternalPath,
-                                    webotsPath,
-                                    ctiGtestPath,
-                                    ctiAnkiUtilProjectPath,
-                                    projectRoot,
-                                    gtestPath,
-                                    ankiUtilProjectPath,
-                                    coretechInternalProjectPath,
-                                    audioProjectGypPath,
-                                    bleCozmoProjectPath,
-                                    dasProjectPath,
-                                    audioGeneratedCladPath,
-                                  )
+      defines = default_defines.copy()
+      defines.update({
+        'OS': 'linux',
+        'output_location': os.path.join(options.projectRoot, 'generated/linux'),
+      })
+      defines.pop('cg-audio_path')
+      defines.pop('clad_dir')
+      defines.pop('util_gyp_path')
+      os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
       os.environ['LD_target'] = '/usr/bin/clang++'
-      gypArgs = _getGypArgs('ninja', '../../generated/linux', gypFile)
+      gypArgs = getGypArgs('ninja', '../../generated/linux', gypFile)
       gyp.main(gypArgs)
       print "***********************HERE-configure.py2"
 

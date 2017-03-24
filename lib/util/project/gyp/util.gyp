@@ -14,6 +14,7 @@
     'build_flavor%': 'dev',
     'clad_dir%': '../../tools/message-buffers',
     'has_shipping%': 1,
+    'use_libwebp%': 1,
     
     'compiler_flags': [
       '-DJSONCPP_USING_SECURE_MEMORY=0',
@@ -671,6 +672,14 @@
         ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
         ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
         ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
+        ['<(use_libwebp)==1', {
+          'export_dependent_settings': [
+            'libwebp'
+          ],
+          'dependencies': [
+            'libwebp'
+          ]
+        }]
       ],
       'include_dirs': [
         '../../source/anki',
@@ -689,12 +698,10 @@
       'export_dependent_settings': [
         'jsoncpp',
         'kazmath',
-        'libwebp',
        ],
       'dependencies': [
         'jsoncpp',
         'kazmath',
-        'libwebp',
       ],
       'type': '<(util_library_type)',
     },
