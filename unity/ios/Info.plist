@@ -43,6 +43,8 @@
 	<string>0.1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+        <key>NSCameraUsageDescription</key>
+        <string>Required for crash reporting</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>LSRequiresIPhoneOS</key>
