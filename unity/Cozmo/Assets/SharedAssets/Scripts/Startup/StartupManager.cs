@@ -509,6 +509,7 @@ public class StartupManager : MonoBehaviour {
 
     SkillSystem.Instance.Initialize();
     CozmoThemeSystemUtils.Initialize();
+    Anki.Core.UI.Components.ThemeSystem.Create();
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
