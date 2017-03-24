@@ -98,8 +98,11 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
         static const Vision::FaceID_t kMaxPetID = 4095; // max output by OMCV detector
         auto insert = DEBUG_broadcastIDs.insert(knownPet.GetID());
         
-        DEV_ASSERT_MSG(insert.second == true, "PetWorld.Update.DuplicateEvent",
-                       "Already logged event for Pet ID:%d", knownPet.GetID());
+        if(insert.second == false)
+        {
+          PRINT_NAMED_WARNING("PetWorld.Update.DuplicateEvent",
+                              "Already logged event for Pet ID:%d", knownPet.GetID());
+        }
         
         if(knownPet.GetID() == kMaxPetID) {
           // Not likely to see kMaxID pets, but if we reset the ID a bunch in a single session, we could
