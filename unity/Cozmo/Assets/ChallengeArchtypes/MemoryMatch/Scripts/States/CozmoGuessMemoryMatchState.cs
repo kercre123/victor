@@ -5,7 +5,6 @@ namespace MemoryMatch {
   public class CozmoGuessMemoryMatchState : State {
 
     private MemoryMatchGame _GameInstance;
-    private IList<int> _CurrentSequence;
     private int _CurrentSequenceIndex;
     private bool? _ShouldWinGame;
     private int _LastTargetID;
@@ -15,7 +14,6 @@ namespace MemoryMatch {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
-      _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;
       _LastTargetID = -1;
@@ -60,7 +58,7 @@ namespace MemoryMatch {
       }
       else {
         _CurrentSequenceIndex++;
-        if (_CurrentSequenceIndex >= _CurrentSequence.Count) {
+        if (_CurrentSequenceIndex >= _GameInstance.GetCurrentSequenceLength()) {
           _ShouldWinGame = true;
         }
         else {
@@ -68,7 +66,7 @@ namespace MemoryMatch {
           // Cozmo always right first time
           if (_GameInstance.GetCurrentTurnNumber > 1 && rand > _GameInstance.CozmoWinPercentage.Evaluate(_CurrentSequenceIndex)) {
             _ShouldWinGame = false;
-            int correctId = _CurrentSequence[_CurrentSequenceIndex];
+            int correctId = _GameInstance.GetIDInSequence(_CurrentSequenceIndex);
             List<int> blockIds = new List<int>();
             foreach (int cubeId in _GameInstance.CubeIdsForGame) {
               if (cubeId != correctId) {
@@ -79,7 +77,7 @@ namespace MemoryMatch {
             StartTurnToTarget(_CurrentRobot.LightCubes[_LastTargetID], false);
           }
           else {
-            _LastTargetID = _CurrentSequence[_CurrentSequenceIndex];
+            _LastTargetID = _GameInstance.GetIDInSequence(_CurrentSequenceIndex);
             StartTurnToTarget(GetCurrentTarget(), true);
           }
         }
@@ -95,7 +93,7 @@ namespace MemoryMatch {
       int goingToIndex = _GameInstance.CubeIdsForGame.IndexOf(target.ID);
       int fromIndex = 1;
       if (_CurrentSequenceIndex > 0) {
-        fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_CurrentSequence[_CurrentSequenceIndex - 1]);
+        fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_GameInstance.GetIDInSequence(_CurrentSequenceIndex - 1));
       }
       Anki.Cozmo.AnimationTrigger animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointCenterFast;
       if (goingToIndex - fromIndex == 1) {

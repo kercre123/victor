@@ -76,17 +76,24 @@ namespace MemoryMatch {
     public enum MemoryMatchMode : int {
       VS = 0,
       SOLO = 1
-    }
-
-    ;
+    };
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       _Config = (MemoryMatchGameConfig)minigameConfigData;
 
       InitializeMinigameObjects();
+
+#if ANKI_DEV_CHEATS
+      // A comma seperated list of what cubes to light up.
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("DebugSequenceString", "MemoryMatch", DebugUpdateSequence);
+#endif
     }
 
     protected override void CleanUpOnDestroy() {
+#if ANKI_DEV_CHEATS
+      // A comma seperated list of what cubes to light up.
+      Anki.Debug.DebugConsoleData.Instance.RemoveConsoleData("MemoryMatch");
+#endif
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
@@ -198,6 +205,24 @@ namespace MemoryMatch {
       }
     }
 
+    private void DebugUpdateSequence(string str) {
+      // Write _CurrentIDSequence as ordered from right to left
+      // 0 to HIS right, 2 to his left, 1 in middle cube
+      DAS.Info("mem_match.debug_sequence", str);
+      string[] debugSeq = str.Split(',');
+      _CurrentSequenceLength = debugSeq.Length;
+      _CurrentIDSequence = new List<int>();
+
+      for (int i = 0; i < _CurrentSequenceLength; ++i) {
+        int result = 1;
+        if (int.TryParse(debugSeq[i], out result)) {
+          result = Mathf.Clamp(result, 0, 2);
+          LightCube cube = GetCubeBySortedIndex(result);
+          _CurrentIDSequence.Add(cube.ID);
+        }
+      }
+    }
+
     public void GenerateNewSequence(int sequenceLength) {
       // For the first 3, require them to be unique
       bool requireUnique = sequenceLength <= CubeIdsForGame.Count;
@@ -224,27 +249,40 @@ namespace MemoryMatch {
         }
         _CurrentIDSequence.Add(pickedID);
       }
+#if ANKI_DEV_CHEATS
+      string debugDisplay = "";
+      // Joins only work in .NET 4
+      _CurrentIDSequence.ForEach(id => { debugDisplay += (GetSortedIndexByCubeID(id) + ","); });
+      DAS.Info("mem_match.current_sequence", debugDisplay);
+#endif
       GetMemoryMatchSlide().ShowStatusText(Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
     }
 
-    public IList<int> GetCurrentSequence() {
-      return _CurrentIDSequence.AsReadOnly();
+    public int GetIDInSequence(int index) {
+      if (0 <= index && index < _CurrentIDSequence.Count) {
+        return _CurrentIDSequence[index];
+      }
+      return 0;
+    }
+
+    public int GetCurrentSequenceLength() {
+      return _CurrentIDSequence.Count;
     }
 
     public Color GetColorForBlock(int blockId) {
       Color lightColor = Color.white;
-      MemoryMatchCube MemoryMatchCube;
-      if (_BlockIdToSound.TryGetValue(blockId, out MemoryMatchCube)) {
-        lightColor = MemoryMatchCube.cubeColor;
+      MemoryMatchCube memoryMatchCube;
+      if (_BlockIdToSound.TryGetValue(blockId, out memoryMatchCube)) {
+        lightColor = memoryMatchCube.cubeColor;
       }
       return lightColor;
     }
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
       AudioEventParameter audioEvent = AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect);
-      MemoryMatchCube MemoryMatchCube;
-      if (_BlockIdToSound.TryGetValue(blockId, out MemoryMatchCube)) {
-        audioEvent = MemoryMatchCube.soundName;
+      MemoryMatchCube memoryMatchCube;
+      if (_BlockIdToSound.TryGetValue(blockId, out memoryMatchCube)) {
+        audioEvent = memoryMatchCube.soundName;
       }
       return audioEvent;
     }
@@ -326,6 +364,13 @@ namespace MemoryMatch {
         }
       }
       return null;
+    }
+
+    public int GetSortedIndexByCubeID(int id) {
+      if (CurrentRobot != null && CurrentRobot.LightCubes.ContainsKey(id)) {
+        return CubeIdsForGame.FindIndex(item => id == item);
+      }
+      return -1;
     }
 
     public MemoryMatchTurnSlide GetMemoryMatchSlide() {

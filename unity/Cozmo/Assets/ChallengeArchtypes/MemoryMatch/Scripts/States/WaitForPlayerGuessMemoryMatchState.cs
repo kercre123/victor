@@ -8,7 +8,6 @@ namespace MemoryMatch {
   public class WaitForPlayerGuessMemoryMatchState : CanTimeoutState {
 
     private MemoryMatchGame _GameInstance;
-    private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
     private int _TargetCube = -1;
     private float _StartLightBlinkTime = -1;
@@ -26,7 +25,6 @@ namespace MemoryMatch {
       _SubState = SubState.WaitForInput;
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
-      _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Human, false);
@@ -59,7 +57,7 @@ namespace MemoryMatch {
             cozmoPlayer.SetGoal(null);
           }
 
-          if (_CurrentSequenceIndex == _SequenceList.Count) {
+          if (_CurrentSequenceIndex == _GameInstance.GetCurrentSequenceLength()) {
             PlayerWinHand();
           }
           else {
@@ -86,7 +84,7 @@ namespace MemoryMatch {
     }
 
     private void PlayerLoseHand() {
-      _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
+      _GameInstance.SetCubeLightsGuessWrong(_GameInstance.GetIDInSequence(_CurrentSequenceIndex), _TargetCube);
       _GameInstance.DecrementLivesRemaining(PlayerType.Human);
       AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerLoseHandSolo : AnimationTrigger.MemoryMatchPlayerLoseHand;
       _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerLoseAnimationDone);
@@ -134,10 +132,10 @@ namespace MemoryMatch {
       _LastTapRobotTime = timeStamp;
       _StartLightBlinkTime = Time.time;
       _TargetCube = id;
-      if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
+      if (_GameInstance.GetIDInSequence(_CurrentSequenceIndex) == _TargetCube) {
         GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(id));
         _CurrentSequenceIndex++;
-        if (_CurrentSequenceIndex == _SequenceList.Count) {
+        if (_CurrentSequenceIndex == _GameInstance.GetCurrentSequenceLength()) {
           //wants win anim when blink done
           _SubState = SubState.WaitForBlinkDone;
         }

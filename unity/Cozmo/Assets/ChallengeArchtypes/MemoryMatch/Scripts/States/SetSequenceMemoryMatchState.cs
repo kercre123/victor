@@ -9,8 +9,6 @@ namespace MemoryMatch {
 
     private MemoryMatchGame _GameInstance;
     private int _CurrentSequenceIndex = -1;
-    private IList<int> _CurrentSequence;
-    private int _SequenceLength;
     private float _LastSequenceTime = -1;
 
     private PlayerType _NextPlayer;
@@ -26,9 +24,8 @@ namespace MemoryMatch {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
       bool SequenceGrown;
-      _SequenceLength = _GameInstance.GetNewSequenceLength(_NextPlayer, out SequenceGrown);
-      _GameInstance.GenerateNewSequence(_SequenceLength);
-      _CurrentSequence = _GameInstance.GetCurrentSequence();
+      int sequenceLength = _GameInstance.GetNewSequenceLength(_NextPlayer, out SequenceGrown);
+      _GameInstance.GenerateNewSequence(sequenceLength);
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
@@ -85,7 +82,7 @@ namespace MemoryMatch {
           LightUpNextCube();
         }
       }
-      else if (_CurrentSequenceIndex >= _CurrentSequence.Count - 1) {
+      else if (_CurrentSequenceIndex >= _GameInstance.GetCurrentSequenceLength()) {
         // Last in sequence
 
         Anki.Cozmo.AnimationTrigger trigger = _GameInstance.IsSoloMode() ? Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternSolo :
@@ -131,9 +128,9 @@ namespace MemoryMatch {
 
     public LightCube GetCurrentTarget() {
       if (_CurrentRobot != null &&
-          _CurrentSequenceIndex >= 0 && _CurrentSequenceIndex < _CurrentSequence.Count &&
-          _CurrentRobot.LightCubes.ContainsKey(_CurrentSequence[_CurrentSequenceIndex])) {
-        return _CurrentRobot.LightCubes[_CurrentSequence[_CurrentSequenceIndex]];
+          _CurrentSequenceIndex >= 0 && _CurrentSequenceIndex < _GameInstance.GetCurrentSequenceLength() &&
+          _CurrentRobot.LightCubes.ContainsKey(_GameInstance.GetIDInSequence(_CurrentSequenceIndex))) {
+        return _CurrentRobot.LightCubes[_GameInstance.GetIDInSequence(_CurrentSequenceIndex)];
       }
       return null;
     }
