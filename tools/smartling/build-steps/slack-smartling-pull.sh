@@ -30,10 +30,23 @@ if [ -z $GIT ];then
   exit 1
 fi
 
+CURL=`which curl`
+if [ -z $CURL ];then
+  echo curl not found
+  exit 1
+fi
+
+PYTHON=`which python`
+if [ -z $PYTHON ];then
+  echo python not found
+  exit 1
+fi
+
 _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
 _LOCALIZED_STRINGS_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings
 _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/anki/cozmo-one.git
+_GIT_COZMO_PR_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@api.github.com/repos/anki/cozmo-one/pulls
 
 exit_status=0
 $_SMARTLING_PULL_SCRIPT -t published $_LOCALIZED_STRINGS_DIR || exit_status=$?
@@ -50,19 +63,6 @@ if [ "$_status" ]; then
         send_slack_message "Remote update-localized-strings-json branch exists.\nDelete or master remote branch!" "danger" 1
     fi
 
-    if [ ! -f ~/.config/hub ]; then
-        echo "> creating hub config file"
-        mkdir -p ~/.config
-
-        cat << EOF > ~/.config/hub
----
-github.com:
-- protocol: https
-  user: $ANKI_SMARTLING_GIT_USER
-  oauth_token: $ANKI_SMARTLING_ACCESS_TOKEN
-EOF
-    fi
-
     pushd $_TOPLEVEL
     $GIT fetch -p
     $GIT checkout master
@@ -77,7 +77,10 @@ EOF
     $GIT checkout -b update-localized-strings-json
     $GIT commit -am "Updating localized *.json from Smartling download."
     $GIT push origin update-localized-strings-json
-    pr_url=$(hub pull-request -m 'update-localized-strings-json')
+
+    pr_url=$($CURL -H "Content-Type: application/json" -X POST -d \
+    '{"title": "update-localized-strings-json","head": "update-localized-strings-json","base": "master"}' \
+    $_GIT_COZMO_PR_URI | $PYTHON -c "import sys, json; print json.load(sys.stdin)['html_url']")
 
     send_slack_message "cozmo-one PR for Smartling localized strings: $pr_url" "good" 0
     popd
