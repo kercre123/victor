@@ -34,7 +34,11 @@ CONSOLE_VAR(bool, kSaveModifiedConsoleVarsOnly, "Console", true);
 namespace Anki{ namespace Util {
 
 
-#define DEBUG_CONSOLE_SYSTEM ( defined(DEBUG) && 0 )
+#if defined(DEBUG)
+  #define DEBUG_CONSOLE_SYSTEM 0
+#else
+  #define DEBUG_CONSOLE_SYSTEM 0
+#endif
 
 #if DEBUG_CONSOLE_SYSTEM
   #define CONSOLE_DEBUG( message, args... ) PRINT_NAMED_INFO( "ConsoleSystem.Debugging", message, ##args )

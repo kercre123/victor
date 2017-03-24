@@ -113,3 +113,25 @@ TEST(QueueTest, ReverseTaskHeartbeat)
   Anki::Util::Dispatch::Stop(queue);
   Anki::Util::Dispatch::Release(queue);
 }
+
+// make sure that handle creates and deletes queue automatically
+TEST(QueueTest, TestQueueHandle)
+{
+  using namespace Anki::Util;
+  volatile int a = 0;
+  {
+    Dispatch::QueueHandle queue{Dispatch::create_queue};
+    Anki::Util::TaskHandle handle = Anki::Util::Dispatch::ScheduleCallback(
+      queue.get(), std::chrono::milliseconds(500), [&a] { a++; }
+    );
+    std::this_thread::sleep_for(std::chrono::milliseconds(250)); // total 250
+    ASSERT_EQ(a, 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // total 750
+    ASSERT_EQ(a, 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // total 1250
+    ASSERT_EQ(a, 2);
+  }
+  // queue should be destroyed, make sure a doesn't change anymore
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500)); // total 2750
+  ASSERT_EQ(a, 2);
+}

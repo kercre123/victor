@@ -2,6 +2,7 @@
 #define __Anki_Util_Jni_JniUtils_H__
 
 #include "util/jni/includeJni.h"
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -49,48 +50,102 @@ private:
   JNIUtils() = delete;
 };
 
+
 // Smart handle for jobject/jclass local ref that will delete itself
-template <typename jobj>
+struct JObjDefaultInitializer;
+template <typename jobj, typename deleter, typename initializer = JObjDefaultInitializer>
 class JObjHandleBase {
 public:
   JObjHandleBase(jobj obj, JNIEnv* env)
-  : _handle(obj, [env] (jobj toDelete) {
-    env->DeleteLocalRef(toDelete);
-  }) {}
+  : _handle(initializer::init(obj, env), deleter::get_deleter(env)) {}
   JObjHandleBase(JObjHandleBase&& other) = default;
   JObjHandleBase& operator=(JObjHandleBase&& other) = default;
-  jobj operator->() const { return _handle.get(); }
-  jobj get() const { return _handle.get(); }
+  jobj operator->() const { return get(); }
+  jobj get() const { return static_cast<jobj>(_handle.get()); }
 
   bool operator==(std::nullptr_t val) const { return _handle == val; }
   bool operator!=(std::nullptr_t val) const { return _handle != val; }
-  bool operator==(const JObjHandleBase& other) const { return _handle == other._handle; }
-  bool operator!=(const JObjHandleBase& other) const { return _handle != other._handle; }
 
-private:
-  using jtemplate_base = typename std::remove_pointer<jobj>::type;
-  std::unique_ptr<jtemplate_base, typename std::function<void(jobj)>> _handle;
+protected:
+  JObjHandleBase() {} // only for use by subclasses
+
+  using jobject_base = typename std::remove_pointer<jobject>::type;
+  std::unique_ptr<jobject_base, std::function<void(jobject)>> _handle;
 
   // sanity check
   static_assert(std::is_pointer<jobject>::value, "jobject not a pointer?");
 
   // requirements for template types
   static_assert(std::is_pointer<jobj>::value, "object type must be a pointer");
-  using jobject_base = typename std::remove_pointer<jobject>::type;
+  using jtemplate_base = typename std::remove_pointer<jobj>::type;
   static_assert(std::is_base_of<jobject_base, jtemplate_base>::value, "object type must be derived from jobject");
 };
 
-template <typename T>
-inline bool operator==(std::nullptr_t val, const JObjHandleBase<T>& obj) { return obj == val; }
-template <typename T>
-inline bool operator!=(std::nullptr_t val, const JObjHandleBase<T>& obj) { return obj != val; }
+template <typename T, typename D, typename I>
+inline bool operator==(std::nullptr_t val, const JObjHandleBase<T, D, I>& obj) { return obj == val; }
+template <typename T, typename D, typename I>
+inline bool operator!=(std::nullptr_t val, const JObjHandleBase<T, D, I>& obj) { return obj != val; }
 
-using JObjectHandle = JObjHandleBase<jobject>;
-using JClassHandle = JObjHandleBase<jclass>;
-using JStringHandle = JObjHandleBase<jstring>;
-using JArrayHandle = JObjHandleBase<jarray>;
-using JObjectArrayHandle = JObjHandleBase<jobjectArray>;
-using JByteArrayHandle = JObjHandleBase<jbyteArray>;
+// Deleter for local references
+struct JObjLocalDeleter {
+  static std::function<void(jobject)> get_deleter(JNIEnv* env) {
+    return [env] (jobject toDelete) {
+      env->DeleteLocalRef(toDelete);
+    };
+  }
+};
+
+// Deleter for global references
+struct JObjGlobalDeleter {
+  static std::function<void(jobject)> get_deleter(JNIEnv* env) {
+    return [] (jobject toDelete) {
+      auto wrapper = JNIUtils::getJNIEnvWrapper();
+      JNIEnv* env = wrapper->GetEnv();
+      if (env != nullptr) {
+        env->DeleteGlobalRef(toDelete);
+      }
+    };
+  }
+};
+
+// Default handle initializer is a no-op for local references...
+struct JObjDefaultInitializer {
+  static jobject init(jobject obj, JNIEnv* env) {
+    return obj;
+  }
+};
+
+// For global references, initializer creates a new global reference
+struct JObjGlobalInitializer {
+  static jobject init(jobject obj, JNIEnv* env) {
+    return env->NewGlobalRef(obj);
+  }
+};
+
+
+template <typename T>
+using JObjectLocalHandle = JObjHandleBase<T, JObjLocalDeleter>;
+
+using JObjectHandle = JObjectLocalHandle<jobject>;
+using JClassHandle = JObjectLocalHandle<jclass>;
+using JStringHandle = JObjectLocalHandle<jstring>;
+using JArrayHandle = JObjectLocalHandle<jarray>;
+using JObjectArrayHandle = JObjectLocalHandle<jobjectArray>;
+using JByteArrayHandle = JObjectLocalHandle<jbyteArray>;
+
+// For global handles, we want to add the ability to set them after construction, which
+// means giving them a default constructor
+#define HandleBase JObjHandleBase<jobj, JObjGlobalDeleter, JObjGlobalInitializer>
+template <typename jobj>
+class JObjGlobalBase : public HandleBase
+{
+public:
+  JObjGlobalBase() {}
+  JObjGlobalBase(jobj obj, JNIEnv* env) : HandleBase(obj, env) {}
+};
+#undef HandleBase
+
+using JGlobalObject = JObjGlobalBase<jobject>;
 
 }
 }

@@ -22,7 +22,7 @@
 #include "util/logging/iLoggerProvider.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/iEventProvider.h"
-#include "util/helpers/AnkiDefines.h"
+#include "util/helpers/ankiDefines.h"
 
 #include <cstdlib>
 #include <iostream>
