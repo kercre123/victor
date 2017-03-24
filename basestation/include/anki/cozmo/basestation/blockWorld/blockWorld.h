@@ -494,13 +494,7 @@ namespace Anki
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
       void ClearLocatedObjectHelper(ObservableObject* object);
-      
-      // Delete an object when you have a direct iterator pointing to it. Returns
-      // the iterator to the next object in the container.
-      ObjectsMapByID_t::iterator DeleteLocatedObjectAt(const ObjectsMapByID_t::iterator objIter,
-                                                       const ObjectType&    withType,
-                                                       const ObjectFamily&  fromFamily);
-      
+            
       Result BroadcastObjectObservation(const ObservableObject* observedObject) const;
 
       // broadcast currently located objects (in current origin)

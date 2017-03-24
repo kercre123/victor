@@ -58,6 +58,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
@@ -1989,25 +1990,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             if(object->IsActive() &&
                ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
                object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
-              
-              // If this is an active object and identification has timed out
-              // delete it if radio connection has not been established yet.
-              // Otherwise, retry identification.
-              if (object->GetActiveID() < 0) {
-                PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
-                              "Deleting unobserved %s active object %d that has "
-                              "not completed identification in %dms",
-                              EnumToString(object->GetType()),
-                              object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
-                
-                objectIter = DeleteLocatedObjectAt(objectIter, objectsByType.first, objectFamily.first);
-                objectDeleted = true;
-              } else {
-                // Don't delete objects that are still in radio communication. Retrigger Identify?
-                //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
-                //object->Identify();
-              }
-              
+              PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut", "Unsupported feature");
             } else {
               // Otherwise, add it to the list for further checks below to see if
               // we "should" have seen the object
@@ -2516,7 +2499,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           }
 
           // COZMO-9663: Separate localizable property from poseState
-          _robot->GetObjectPoseConfirmer().MarkObjectDirty(sameTypeObject);
+          const bool propagateStack = false;
+          _robot->GetObjectPoseConfirmer().MarkObjectDirty(sameTypeObject, propagateStack);
         
           // check if the instance has activeID
           if (sameTypeObject->GetActiveID() == ObservableObject::InvalidActiveID)
@@ -4083,11 +4067,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       {
         // Mark object and everything on top of it as "dirty". Next time we look
         // for it and don't see it, we will fully clear it and mark it as "unknown"
-        ObservableObject* objectOnTop = object;
-        BOUNDED_WHILE(20, objectOnTop != nullptr) {
-          _robot->GetObjectPoseConfirmer().MarkObjectDirty(objectOnTop);
-          objectOnTop = FindLocatedObjectOnTopOf(*objectOnTop, STACKED_HEIGHT_TOL_MM);
-        }
+        const bool propagateStack = true;
+        _robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
       };
       
       ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
@@ -4663,8 +4644,15 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeleteLocatedObjects(const BlockWorldFilter& filter)
   {
-    // cache objectIDs since we are going to destroy the objects
-    std::set<ObjectID> idsToBroadcast;
+    // cache object info since we are going to destroy the objects
+    struct DeletedObjectInfo {
+      DeletedObjectInfo(const Pose3d& oldPose, const PoseState oldPoseState, const ObservableObject* objCopy)
+      : _oldPose(oldPose), _oldPoseState(oldPoseState), _objectCopy(objCopy) { }
+      const Pose3d _oldPose;
+      const PoseState _oldPoseState;
+      const ObservableObject* _objectCopy;
+    };
+    std::vector<DeletedObjectInfo> objectsToBroadcast;
     
     auto originIter = _locatedObjects.begin();
     while(originIter != _locatedObjects.end())
@@ -4714,8 +4702,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                     const bool isCurrentOrigin = (crntOrigin == _robot->GetWorldOrigin());
                     if ( isCurrentOrigin )
                     {
-                      idsToBroadcast.insert(object->GetID());
                       ClearLocatedObjectHelper(object);
+                      
+                      // Create a copy of the object so we can notify listeners
+                      {
+                        DEV_ASSERT(object->HasValidPose(), "BlockWorld.DeleteLocatedObjects.InvalidPoseState");
+                        ObservableObject* objCopy = object->CloneType();
+                        objCopy->CopyID(object);
+                        objCopy->SetActiveID(object->GetActiveID()); // manually having to copy all IDs is fishy design
+                        objCopy->SetFactoryID(object->GetFactoryID());
+                        objectsToBroadcast.emplace_back( object->GetPose(), object->GetPoseState(), objCopy );
+                      }
                     }
                     
                     idIter = idContainer.erase(idIter);
@@ -4754,33 +4751,30 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     } // while(origin)
     
     // notify of the deleted objects
-    for(const auto& id : idsToBroadcast)
+    for(auto& objectDeletedInfo : objectsToBroadcast)
     {
       using namespace ExternalInterface;
-      _robot->Broadcast(MessageEngineToGame(RobotDeletedLocatedObject(_robot->GetID(), id)));
+
+      // cache values
+      const ObjectID& deletedID = objectDeletedInfo._objectCopy->GetID(); // note this won't be valid after delete
+      const Pose3d* oldPosePtr = &objectDeletedInfo._oldPose;
+      const PoseState oldPoseState = objectDeletedInfo._oldPoseState;
+      
+      // tell PoseConfirmer this object is not confirmed anymore (in case we delete without unobserving)
+      _robot->GetObjectPoseConfirmer().DeletedObjectInCurrentOrigin(deletedID);
+      
+      // PoseConfirmer::PoseChanged (should not have valid pose)
+      DEV_ASSERT(!objectDeletedInfo._objectCopy->HasValidPose(), "ObjectPoseConfirmer.CopyInheritedPose");
+      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(*objectDeletedInfo._objectCopy, oldPosePtr, oldPoseState);
+      
+      // RobotDeletedLocatedObject
+      _robot->Broadcast(MessageEngineToGame(RobotDeletedLocatedObject(_robot->GetID(), deletedID)));
+      
+      // delete the copy we made now, since it won't be useful anymore
+      Util::SafeDelete(objectDeletedInfo._objectCopy);
     }
   }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  BlockWorld::ObjectsMapByID_t::iterator BlockWorld::DeleteLocatedObjectAt(const ObjectsMapByID_t::iterator objIter,
-                                                                           const ObjectType&   withType,
-                                                                           const ObjectFamily& fromFamily)
-  {
-    ObservableObject* object = objIter->second.get();
-    
-    // clear if in current origin
-    const PoseOrigin* origin = &objIter->second->GetPose().FindOrigin();
-    const bool isCurrentOrigin = (origin == _robot->GetWorldOrigin());
-    if ( isCurrentOrigin ) {
-      ClearLocatedObjectHelper(object);
-    }
-      
-    // Erase from the container and return the iterator to the next element
-    // Note: we're using a shared_ptr so this should delete the object as well.
-    const ObjectsMapByID_t::iterator next = _locatedObjects.at(origin).at(fromFamily).at(withType).erase(objIter);
-    return next;
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeselectCurrentObject()
   {

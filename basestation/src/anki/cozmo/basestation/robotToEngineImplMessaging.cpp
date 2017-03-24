@@ -706,7 +706,8 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
-      robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
+      const bool propagateStack = false;
+      robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
     }
     
     const bool wasMoving = object->IsMoving();

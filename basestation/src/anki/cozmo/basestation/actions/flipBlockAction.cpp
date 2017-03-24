@@ -327,23 +327,35 @@ ActionResult FlipBlockAction::Init()
 
 ActionResult FlipBlockAction::CheckIfDone()
 {
-  ActionResult result = _compoundAction.Update();
+
+  const ActionResult result = _compoundAction.Update();
+  
+  // grab object now because we use regardless of result
+  ObservableObject* bottomBlock = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
+  
   if(result != ActionResult::RUNNING)
   {
-    // By clearing the bottom block the entire stack will get cleared
-    _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_objectID);
+    // Purposely forget where the bottom block is, and any currently on top
+    if ( nullptr != bottomBlock )
+    {
+      const bool propagateStack = true;
+      _robot.GetObjectPoseConfirmer().MarkObjectUnknown(bottomBlock, propagateStack);
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("FlipBlockAction.CheckIfDone.NotRunning.NullObject", "ObjectID=%d", _objectID.GetValue());
+    }
     return result;
   }
   
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
-  if(nullptr == object)
+  if(nullptr == bottomBlock)
   {
     PRINT_NAMED_WARNING("FlipBlockAction.CheckIfDone.NullObject", "ObjectID=%d", _objectID.GetValue());
     return ActionResult::BAD_OBJECT;
   }
   
   Pose3d p;
-  object->GetPose().GetWithRespectTo(_robot.GetPose(), p);
+  bottomBlock->GetPose().GetWithRespectTo(_robot.GetPose(), p);
   if(p.GetTranslation().Length() < kDistToObjectToFlip_mm && _flipTag == -1)
   {
     IAction* action = new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::CARRY);

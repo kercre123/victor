@@ -241,7 +241,8 @@ TEST(BlockWorld, AddAndRemoveObject)
   
     // Now fake an object moved message
     object->SetIsMoving(true, 0);
-    robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
+    const bool propagateStack = false;
+    robot.GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
   }
   
   // Now after not seeing the object three times, it should be Unknown
@@ -1464,7 +1465,8 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
 
   // Mark object2 in previous frame as Dirty so that frame will become a zombie (not localizable anymore)
-  robot.GetObjectPoseConfirmer().MarkObjectDirty(locatedObj2);
+  const bool propagateStack = false;
+  robot.GetObjectPoseConfirmer().MarkObjectDirty(locatedObj2, propagateStack);
   
   // Delocalizing will create a new frame and delete our 2 zombie frames
   // One of the frames has object1 and 2 the other has object3

@@ -3057,7 +3057,8 @@ Result Robot::DockWithObject(const ObjectID objectID,
   }
 
   // Mark as dirty so that the robot no longer localizes to this object
-  GetObjectPoseConfirmer().MarkObjectDirty(object);
+  const bool propagateStack = false;
+  GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
       
   _usingManualPathSpeed = useManualSpeed;
   _lastPickOrPlaceSucceeded = false;

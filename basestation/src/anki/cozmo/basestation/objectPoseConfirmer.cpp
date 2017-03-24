@@ -160,74 +160,42 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
                    EnumToString(newPoseState));
   }
   
-  DEV_ASSERT(object->HasValidPose() || ObservableObject::IsValidPoseState(newPoseState),
-             "ObjectPoseConfirmer.SetPoseHelper.BothPoseStatesAreInvalid");
+  DEV_ASSERT(object->HasValidPose(),
+             "ObjectPoseConfirmer.SetPoseHelper.ExpectedValidObjectPose");
   // note otherwise we don't delete the memory but we clear the pointer!
   DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(object->GetID()),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForBlockWorldObjects");
   // this method is only called for instances in the current origin, not in other origins (would not make sense to clients)
-  DEV_ASSERT( !object->HasValidPose() || (&object->GetPose().FindOrigin() == _robot.GetWorldOrigin()),
+  DEV_ASSERT( &object->GetPose().FindOrigin() == _robot.GetWorldOrigin(),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginCurrent");
   DEV_ASSERT( !ObservableObject::IsValidPoseState(newPoseState) || (&newPose.FindOrigin() == _robot.GetWorldOrigin()),
              "ObjectPoseConfirmer.SetPoseHelper.ShouldOnlyBeUsedForCurrentOriginNew");
-  
-  // if we destroy the object we need a copy so we can notify other systems and passing all relevant parameters
-  // like family, type, new pose, objectID etc.
-  const ObservableObject* instanceToNotify = nullptr;
-  
-  // copy vars we need to notify since we can destroy the object
-  const Pose3d oldPoseCopy = object->GetPose(); // note calling GetPose on PoseState::Invalid asserts
-  const PoseState oldPoseState = object->GetPoseState();
   
   // if setting an invalid pose, we want to destroy the located copy of this object in its origin
   const bool isNewPoseValid = ObservableObject::IsValidPoseState(newPoseState);
   if( isNewPoseValid )
   {
+    // if new pose is not known, we can't be localized to it
     if(newPoseState != PoseState::Known)
     {
       DelocalizeRobotFromObject(object->GetID());
     }
+
+    // copy vars we need to notify, since they are about to change
+    const Pose3d oldPoseCopy = object->GetPose(); // note PoseState is expected to be valid here, otherwise will assert
+    const PoseState oldPoseState = object->GetPoseState();
   
+    // change
     object->SetPose(newPose, distance, newPoseState);
-    
-    // we can pass the same instance since BlockWorld keeps it
-    instanceToNotify = object;
+
+    // notify of the change
+    BroadcastObjectPoseChanged(*object, &oldPoseCopy, oldPoseState);
   }
   else
   {
-    // we need a new instance before, remember to delete before exit
-    ObservableObject* objCopy = object->CloneType();
-    objCopy->CopyID(object);
-    DEV_ASSERT(!objCopy->HasValidPose(), "ObjectPoseConfirmer.CopyInheritedPose");
-    instanceToNotify = objCopy;
-  
-    // Notify listeners if object is becoming Unknown
-    using namespace ExternalInterface;
-    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
-    
-    // delete the object from BlockWorld
-    BlockWorldFilter filter;
-    filter.AddAllowedID(object->GetID());
-    _robot.GetBlockWorld().DeleteLocatedObjects(filter);
-    
-    object = nullptr; // do not use anymore, since it's deleted
-  }
-
-  // Notify the change
-  {
-    // should have an instance to notify
-    DEV_ASSERT(nullptr != instanceToNotify, "ObjectPoseConfirmer.SetPoseHelper.NeedInstanceRef");
-  
-    const bool isOldPoseValid = ObservableObject::IsValidPoseState(oldPoseState);
-    const Pose3d* oldPosePtr = isOldPoseValid ? &oldPoseCopy : nullptr;
-    BroadcastObjectPoseChanged(*instanceToNotify, oldPosePtr, oldPoseState);
-  }
-  
-  // destroy the copy if it's new
-  const bool isInstanceACopy = (instanceToNotify != object);
-  if ( isInstanceACopy ) {
-    DEV_ASSERT(nullptr == object, "ObjectPoseConfirmer.SetPoseHelper.WhyCopyIfItsAlive");
-    Util::SafeDelete(instanceToNotify);
+    // delegate on marking unknown
+    const bool propagateStack = true; // if we unobserve an object, we should unobserve objects on top. They should not float
+    MarkObjectUnknown(object, propagateStack);
   }
 }
 
@@ -871,15 +839,124 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject*& object)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object)
+void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool propagateStack)
+{
+  DEV_ASSERT( object == _robot.GetBlockWorld().GetLocatedObjectByID(object->GetID()),
+             "ObjectPoseConfirmer.MarkObjectUnknown.ShouldOnlyBeUsedForBlockWorldObjects");
+  
+  std::set<ObjectID> affectedObjectIDs;
+  affectedObjectIDs.insert(object->GetID());
+  
+  // first iterate stacks because we will be flagging all those objects
+  if ( propagateStack )
+  {
+    // TODO Consider using ConfigurationManager. I think now it would be worse, since I would have to check Stacks or
+    // pyramids. Maybe configuration manager could cache BlocksOnTopOfOtherBlocks?
+    const ObservableObject* curObject = object;
+    
+    while( nullptr != curObject )
+    {
+      BlockWorldFilter filterOnTop;
+      // Ignore the object we are looking on top off so that we don't consider it as on top of itself
+      filterOnTop.AddIgnoreID(curObject->GetID());
+  
+      // some objects should not be updated
+      filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
+      filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+
+      // find object on top
+      ObservableObject* objectOnTop = _robot.GetBlockWorld().FindLocatedObjectOnTopOf(*curObject, STACKED_HEIGHT_TOL_MM, filterOnTop);
+      if ( nullptr != objectOnTop )
+      {
+        // we found an object currently on top
+        const ObjectID& topID = objectOnTop->GetID();
+      
+        // if this is not an object we are carrying (rsam: I copied this from BlockWorld, not sure if it would even
+        // happen, but sounds like a good check, since detaching from lift may require additional bookkeeping)
+        if ( !_robot.IsCarryingObject(topID) )
+        {
+          // add to objects to delete
+          affectedObjectIDs.insert(topID);
+        }
+        else
+        {
+          // warn
+          PRINT_NAMED_WARNING("ObjectPoseConfirmer.MarkObjectUnknown",
+                              "Found object %d on top, but we are carrying it, so we don't want to mess with that.",
+                              topID.GetValue());
+        }
+      }
+      
+      // advance stack
+      curObject = objectOnTop;
+      
+    } // while: curObject
+  } // propagate stack
+
+  BlockWorldFilter filterOfObjectsToDelete;
+  for( const auto& objID : affectedObjectIDs )
+  {
+    // Unknown objects are deleted, add their IDs to this filter
+    filterOfObjectsToDelete.AddAllowedID(objID);
+    
+    // TODO RobotMarkedObjectPoseUnknown is redundant with RobotDeletedLocatedObject. Remove and update game and SDK.
+    // Still here for legacy purposes
+    // Notify listeners if object is becoming Unknown
+    using namespace ExternalInterface;
+    _robot.Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(_robot.GetID(), object->GetID().GetValue())));
+  }
+
+  // delete with the given filter
+  _robot.GetBlockWorld().DeleteLocatedObjects(filterOfObjectsToDelete);
+  object = nullptr; // clear the pointer because the object has been destroyed
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object, bool propagateStack)
 {
   SetPoseStateHelper(object, PoseState::Dirty);
+  
+  // we changed the pose, propagate if needed
+  if ( propagateStack )
+  {
+    BlockWorldFilter filterOnTop;
+    // Ignore the object we are looking on top off so that we don't consider it as on top of itself
+    filterOnTop.AddIgnoreID(object->GetID());
+    // some objects should not be updated
+    filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
+    filterOnTop.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+
+    // find object on top
+    ObservableObject* objectOnTop = _robot.GetBlockWorld().FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM, filterOnTop);
+    if ( nullptr != objectOnTop )
+    {
+      // if this is not an object we are carrying (rsam: I copied this from BlockWorld, not sure if it would even
+      // happen, but sounds like a good check, since cubes on lift are considered Known at the moment
+      if ( !_robot.IsCarryingObject(objectOnTop->GetID()) )
+      {
+        // can call recursively
+        MarkObjectDirty(objectOnTop, propagateStack);
+      }
+      else
+      {
+        PRINT_CH_INFO("PoseConfirmer", "ObjectPoseConfirmer.MarkObjectDirty.TryingToChangeCarriedObject",
+                      "Carrying %d, considered part of a Dirty stack. Ignoring propagation",
+                      objectOnTop->GetID().GetValue());
+      }
+    }
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectPoseConfirmer::Clear()
 {
   _poseConfirmations.clear();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectPoseConfirmer::DeletedObjectInCurrentOrigin(const ObjectID& ID)
+{
+  _poseConfirmations.erase(ID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

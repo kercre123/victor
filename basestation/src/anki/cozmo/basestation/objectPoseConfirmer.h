@@ -106,11 +106,29 @@ public:
   // Important: if the object is deleted from the world, the passed in pointer is nulled out to prevent
   // using freed memory
   Result MarkObjectUnobserved(ObservableObject*& object);
+  
+  // Purposely mark the object as Unknown in the current origin, and notify listeners of the change.
+  // In the current implementation this means the located instance will be deleted
+  // @propagateStack: if set to true, objects on top of this one will also be marked. Note that this can be ok
+  // from outside BlockWorld update ticks, but if two requests to change objects are made from different
+  // systems, no conflict resolution is made, and they are processed in the way they are requested.
+  // Note: See BlockWorld::UpdatePoseOfStackedObjects for conflict resolution inside BlockWorld
+  // Note: It does not need to count how many times we set Unknown, 1 is enough to make the change. This is in
+  // contrast with MarkObjectUnobserved, and they should be standarized so that MarkObjectX is the confirming change,
+  // rather than an unconfirmed mark.
+  // Note: This method takes a reference to a pointer, because the object will be deleted (Unknown objects
+  // are not stored in BlockWorld anymore). After deletion, the pointer will be nulled out.
+  void MarkObjectUnknown(ObservableObject*& object, bool propagateStack);
 
-  // Purposely mark the object as Dirty and notify listeners of the change. It does not need to count how many times
-  // we set Dirty. 1 is enough to make the change. This is in contrast with MarkObjectUnobserved, and they should be
-  // standarized so that MarkObjectX is the confirming change, rather than an unconfirmed mark.
-  void MarkObjectDirty(ObservableObject* object);
+  // Purposely mark the object as Dirty and notify listeners of the change.
+  // @propagateStack: if set to true, objects on top of this one will also be marked. Note that this can be ok
+  // from outside BlockWorld update ticks, but if two requests to change objects are made from different
+  // systems, no conflict resolution is made, and they are processed in the way they are requested.
+  // Note: See BlockWorld::UpdatePoseOfStackedObjects for conflict resolution inside BlockWorld
+  // Note: It does not need to count how many times we set Dirty, 1 is enough to make the change. This is in
+  // contrast with MarkObjectUnobserved, and they should be standarized so that MarkObjectX is the confirming change,
+  // rather than an unconfirmed mark.
+  void MarkObjectDirty(ObservableObject* object, bool propagateStack);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
@@ -119,6 +137,10 @@ public:
   // Remove all last pose and num observation information for all object IDs,
   // e.g. when the robot delocalizes
   void Clear();
+  
+  // notification from BlockWorld that the given object has been deleted from the current origin, and hence it should
+  // not be confirmed anymore in the PoseConfirmer
+  void DeletedObjectInCurrentOrigin(const ObjectID& ID);
   
   // Get last time that the pose of the object was updated. Returns 0 if ID not found.
   TimeStamp_t GetLastPoseUpdatedTime(const ObjectID& ID) const;

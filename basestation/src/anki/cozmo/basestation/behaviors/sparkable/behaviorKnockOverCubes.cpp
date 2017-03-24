@@ -260,6 +260,7 @@ void BehaviorKnockOverCubes::ClearStack()
 {
   _currentTallestStack = {};
   _bottomBlockID.SetToUnknown();
+  _middleBlockID.SetToUnknown();
   _topBlockID.SetToUnknown();
 }
 

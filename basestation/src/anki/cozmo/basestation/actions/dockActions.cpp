@@ -1551,6 +1551,7 @@ namespace Anki {
           // rsam: it's arguably whether the action should do this. _carryingObjectID may
           // no longer be equal robot.GetCarryingObject(), and be the reason why the actionResult
           // is != Success, which would make this operation useless if the object doesn't exist anymore.
+          // I'm not sure this should be clearing or totally deleting (from PoseState refactor)
           _robot.GetBlockWorld().ClearLocatedObjectByIDInCurOrigin(_carryingObjectID);
         }
         
