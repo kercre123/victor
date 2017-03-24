@@ -343,7 +343,7 @@ class GamePlatformConfiguration(object):
 
         if platform != 'android':
             self.workspace_name = '{0}Workspace_{1}'.format(PRODUCT_NAME, self.platform.upper())
-            if options.script_engine == 'mono2x':
+            if options.selected_script_engine == 'mono2x':
                 self.workspace_name += '_Mono2x'
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
@@ -365,7 +365,7 @@ class GamePlatformConfiguration(object):
 
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
-            if options.script_engine == 'il2cpp':
+            if options.selected_script_engine == 'il2cpp':
                 proj_name = '{0}Unity_{1}.xcodeproj'
             else:
                 proj_name = '{0}Unity_{1}_Mono2x.xcodeproj'
@@ -559,7 +559,7 @@ class GamePlatformConfiguration(object):
         else:
             buildaction = 'build'
 
-        script_engine = self.options.script_engine
+        script_engine = self.options.selected_script_engine
 
         if buildaction == 'build':
             if self.options.nobuild:
@@ -629,9 +629,9 @@ class GamePlatformConfiguration(object):
 
     def call_engine(self, command):
         args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]
-        args += ['--platform', '+'.join(self.options.platforms)]
+        args += ['--platform', self.platform]
         args += ['--config', self.options.configuration]
-        args += ['--script-engine', self.options.script_engine]
+        args += ['--script-engine', self.options.selected_script_engine]
         if self.options.verbose:
             args += ['--verbose']
         if self.options.do_not_check_dependencies:

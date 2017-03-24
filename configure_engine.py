@@ -494,12 +494,13 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     
     for platform in options.platforms:
         print_header('PLATFORM {0}:'.format(platform.upper()))
+        options.selected_script_engine = options.script_engine
         if options.script_engine == 'auto':
             # if script_engine not defined, pick one that works for the platform
             if platform == 'android':
-                options.script_engine = 'mono2x'
+                options.selected_script_engine = 'mono2x'
             else:
-                options.script_engine = 'il2cpp'
+                options.selected_script_engine = 'il2cpp'
         config = platform_configuration_type(platform, options)
         config.process()
     
