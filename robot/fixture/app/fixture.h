@@ -100,6 +100,9 @@ u32 GetSerial();
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
+// General errors
+#define ERROR_TIMEOUT               101   // The operation timed out
+
 // General motor errors
 #define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
 #define ERROR_MOTOR_LEFT_SPEED      311   // Problem driving left motor at full speed

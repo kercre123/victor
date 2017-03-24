@@ -55,22 +55,29 @@ void AllowOutdated()
   g_allowOutdated = true;
 }
 
+void EnableChargeComms(void)
+{
+  //configure charge pins for communication mode and check for active pulses from robot
+  //ConsolePrintf("enable charge comms\r\n");
+  int e=0, n = 0;
+  for (int i = 0; i < 4; i++) {
+    try { SendTestChar(-1); }
+    catch (int e) { n++; e=e; }
+  }
+  if( n > 2 ) {
+    ConsolePrintf("charge comm init: %d missed pulses\r\n", n);
+    throw e;
+  }
+  
+  // Let Espressif finish booting
+  MicroWait(300000);
+}
+
 void InfoTest(void)
 {
   unsigned int version[2];
   
-  // Pump the comm-link 4 times before trying to send
-  ConsolePrintf("warming up the com port...");
-  int n = 0;
-  for (int i = 0; i < 4; i++) {
-    try {
-      SendTestChar(-1);
-    } catch (int e) { n++; }
-  }
-  ConsolePrintf("%d missed pulses\r\n", n);
-  
-  // Let Espressif finish booting
-  MicroWait(300000); 
+  EnableChargeComms();
   
   ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
@@ -86,14 +93,8 @@ void InfoTest(void)
 
 void PlaypenTest(void)
 {
-  // Pump the comm-link 4 times before trying to send
-  for (int i = 0; i < 4; i++)
-    try {
-      SendTestChar(-1);
-    } catch (int e) { }
-  // Let Espressif finish booting
-  MicroWait(300000); 
-    
+  EnableChargeComms();
+  
   // Try to put robot into playpen mode
   SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);    
   
@@ -374,11 +375,80 @@ TestFunction* GetRobotTestFunctions(void)
   return functions;
 }
 
-// Charge for 2 minutes, then shut off reboot and restart
+//read battery voltage (recharge mode)
+static u16 _recharge_get_battVolt100x(u8 poweron_time_s)
+{
+  struct { s32 vBat; s32 vExt; } robot = {0,0}; //ADC voltage data (read from robot)
+  
+  EnableChargeComms(); //switch to comm mode
+  MicroWait(500*1000); //let battery voltage settle
+  
+  SendCommand(TEST_POWERON, poweron_time_s, 0, 0); //stay on for the next battery charge cycle (+tolerance)
+  SendCommand(FTM_ADCInfo, poweron_time_s, 0, 0);  //display ADC info on robot face (VEXT,VBAT,status bits...)
+  
+  robot.vExt = 0xDEADBEEF;
+  SendCommand(TEST_ADC, 0, sizeof(robot), (u8*)&robot ); //read battery/external voltages
+  if( robot.vBat < 0 || robot.vExt == 0xDEADBEEF ) //old body fw truncated s32 vals to u16 (data loss)
+    throw ERROR_BODY_OUTOFDATE;
+  
+  //convert raw value to 100x voltage - centivolts
+  //float batteryVoltage = ((float)robot.vBat)/65536.0f; //<--this is how esp converts raw spine data
+  u16 battVolt100x = (robot.vBat * 100) / 65536;
+  ConsolePrintf("vBat,%d,%03d,vExt,%d,%03d\r\n", robot.vBat, battVolt100x, robot.vExt, (robot.vExt*100)/65536 );
+  
+  //Note: we can never actually measure valid V-External, since we have to disable it for communication.
+  return battVolt100x;
+}
+
+// Charge to ~80% capacity
 void Recharge(void)
 {
-  SendCommand(TEST_POWERON, 120, 0, 0);
-  SendCommand(FTM_ADCInfo, 120, 0, 0);  
+  const u32 BAT_MAX_CHARGE_TIME_S = 5*60; //max amount of time to charge
+  const u8 BAT_CHECK_INTERVAL_S = 30;     //interrupt charging this often to test battery level
+  
+  uint16_t battVolt100x = _recharge_get_battVolt100x(BAT_CHECK_INTERVAL_S+10); //get initial battery level
+  u32 chargeTime = getMicroCounter();
+  while( battVolt100x < 385 ) //3.85V
+  {
+    #warning "EL: do you want recharge to timeout???"
+    if( getMicroCounter() - chargeTime >= (BAT_MAX_CHARGE_TIME_S*1000*1000) )
+      throw ERROR_TIMEOUT;
+    
+    //Turn on charging power
+    PIN_SET(GPIOC, PINC_CHGTX);
+    PIN_OUT(GPIOC, PINC_CHGTX);
+    
+    //While robot is charging, test for removal from charger
+    int offContact = 0, current = 0;
+    u32 checkTime = getMicroCounter();
+    while( getMicroCounter() - checkTime < (BAT_CHECK_INTERVAL_S*1000*1000) )
+    {
+      //Test for robot removal from charger
+      for (int i = 0; i < 64; i++) {
+        MicroWait(750);
+        current += MonitorGetCurrent();
+      } current >>= 6;
+      //ConsolePrintf("%d..", current);
+      
+      if ((offContact = current < PRESENT_CURRENT ? offContact + 1 : 0) > 10) {
+        PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
+        //ConsolePrintf("\r\n");
+        ConsolePrintf("robot off contact\r\n");
+        return;
+      }
+    }
+    //ConsolePrintf("\r\n");
+    
+    battVolt100x = _recharge_get_battVolt100x(BAT_CHECK_INTERVAL_S+10);
+  }
+  
+  EnableChargeComms(); //switch to comm mode
+  try {
+    SendCommand(TEST_POWERON, 0x5A, 0, 0);  //shut down immediately
+  } catch(int e) {
+    if( e != ERROR_NO_PULSE ) //this error is expected. robot can't pulse when it's off...
+      throw e;
+  }
 }
 
 // Turn on power until battery dead, start slamming motors!
@@ -427,7 +497,6 @@ TestFunction* GetRechargeTestFunctions(void)
   {
     InfoTest,
     Recharge,
-    PlaypenWaitTest,
     NULL
   };
 
