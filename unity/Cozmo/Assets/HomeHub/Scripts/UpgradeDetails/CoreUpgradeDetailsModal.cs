@@ -503,7 +503,7 @@ namespace Cozmo.Upgrades {
       }
     }
 
-    private void StopSparkUnlock() {
+    private void StopSparkUnlock(bool isCleanup = false) {
       // Send stop message to engine
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
@@ -511,7 +511,9 @@ namespace Cozmo.Upgrades {
         }
         // Take Music ownership back from Sparked Behavior and set next state
         RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic(_UnlockInfo.Id.Value, Anki.AudioMetaData.GameState.Music.Freeplay);
-        UpdateState();
+        if (!isCleanup) {
+          UpdateState();
+        }
       }
 
       if (UnlockablesManager.Instance.OnSparkComplete != null) {
@@ -521,7 +523,7 @@ namespace Cozmo.Upgrades {
 
     protected override void CleanUp() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
-      StopSparkUnlock();
+      StopSparkUnlock(isCleanup: true);
       // Because of a bug within DOTween Fades don't release even after being killed, so clean up
       if (_DimBackgroundInstance != null) {
         Destroy(_DimBackgroundInstance.gameObject);
