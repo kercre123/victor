@@ -6,10 +6,36 @@ adb='adb'
 #shift
 args=$@
 
+GREEN="\033[1;32m"
+NORMAL="\033[0m"
+
+echo -e "${GREEN}usage: $0 flags logcat-filter-1 logcat-filter-2 ... logcat-filter-N"
+echo -e "usage (All Messages): $0 -a${NORMAL}"
+
+
+HELP=0
+ALL=0
+
+while getopts ":ah" opt; do
+    case $opt in
+        a)
+            ALL=1
+            ;;
+        h)
+            HELP=1
+            ;;
+    esac
+done
+
+
 if [ "$#" == "0" ]; then
-  echo usage: $0 logcat-filter-1 logcat-filter-2 ... logcat-filter-N
   args="-s -v threadtime Unity:I das:D dasJava:V libc:I DEBUG:D AndroidRuntime:W fmod:V BLEPeripheral:V VehicleConnection:D WifiMessagePort:V HockeyApp:V BackgroundConnectivity:D AnkiUtil:V AudioCaptureSystem:V"
-  echo usign default filter: $args
+  echo using default filter: $args
+elif [ $ALL -eq 1 ]; then
+  args="-v threadtime *:V"
+  echo using default filter: $args
+elif [ $HELP -eq 1 ]; then
+  exit
 fi
 
 commonStart='

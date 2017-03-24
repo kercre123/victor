@@ -16,6 +16,8 @@
 namespace Anki {
 namespace Util {
 
+static int32_t kHttpRequestTimeOutMSec = 10000;
+
 enum HttpMethod {
   HttpMethodGet = 0,
   HttpMethodPost,
@@ -40,7 +42,9 @@ inline const char* HttpMethodToString(const HttpMethod m)
 class HttpRequest
 {
 public:
-  explicit HttpRequest() {};
+  explicit HttpRequest()
+  : timeOutMSec(kHttpRequestTimeOutMSec)
+  {}
 
   bool operator<(HttpRequest request) const
   {
@@ -59,16 +63,31 @@ public:
 
   std::string storageFilePath;
 
+  int32_t timeOutMSec;
+
 };
 
-inline bool isHttpSuccessCode(int responseCode) {
-  return (responseCode >= 200 && responseCode < 300);
-}
+// Error codes borrowed from OSX/iOS NSURLError.h
+static constexpr int kHttpResponseErrorTimedOut = -1001;
+static constexpr int kHttpResponseErrorCannotConnectToHost = -1004;
+static constexpr int kHttpResponseErrorNetworkConnectionLost = -1005;
+static constexpr int kHttpResponseErrorDNSLookupFailed = -1006;
+static constexpr int kHttpResponseErrorNotConnectedToInternet = -1009;
 
+static constexpr int kHttpResponseCodeOK = 200;
+static constexpr int kHttpResponseCodeMultipleChoices = 300;
 static constexpr int kHttpResponseCodeBadRequest = 400;
+static constexpr int kHttpResponseCodeUnauthorized = 401;
+static constexpr int kHttpResponseCodeForbidden = 403;
 static constexpr int kHttpResponseCodeNotFound = 404;
+static constexpr int kHttpResponseCodeProxyAuthenticationRequired = 407;
 static constexpr int kHttpResponseCodeConflict = 409;
 static constexpr int kHttpResponseCodeRequestEntityTooLarge = 413;
+
+inline bool isHttpSuccessCode(int responseCode) {
+  return (responseCode >= kHttpResponseCodeOK
+          && responseCode < kHttpResponseCodeMultipleChoices);
+}
 
 }
 }

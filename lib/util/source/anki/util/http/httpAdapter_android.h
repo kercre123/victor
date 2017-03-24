@@ -11,7 +11,7 @@
 
 #include "util/http/abstractHttpAdapter.h"
 #include "util/http/httpRequest.h"
-#include "util/jni/includeJni.h"
+#include "util/jni/jniUtils.h"
 #include <atomic>
 #include <unordered_map>
 #include <mutex>
@@ -28,30 +28,27 @@ class HttpAdapter : public IHttpAdapter
 {
 public:
 
-  HttpAdapter();
-  ~HttpAdapter();
+  HttpAdapter(Util::Dispatch::Queue* queue = nullptr);
+  virtual ~HttpAdapter();
 
-  virtual void StartRequest(const HttpRequest& request,
-                            Util::Dispatch::Queue* queue,
-                            HttpRequestCallback callback) override
-  {
-    return StartRequest(request, queue, callback, nullptr);
-  }
+  virtual void ShutdownAdapter() override;
 
-  void StartRequest(const HttpRequest& request,
+  virtual bool IsAdapterUp() override;
+
+  virtual void StartRequest(HttpRequest request,
                     Util::Dispatch::Queue* queue,
                     HttpRequestCallback callback,
-                    HttpRequestDownloadProgressCallback progressCallback);
+                    HttpRequestDownloadProgressCallback progressCallback = nullptr) override;
 
-  void ExecuteCallback(const uint64_t hash,
+  virtual void ExecuteCallback(const uint64_t hash,
                        const int responseCode,
                        std::map<std::string,std::string>& responseHeaders,
-                       std::vector<uint8_t>& responseBody);
+                       std::vector<uint8_t>& responseBody) override;
 
-  void ExecuteDownloadProgressCallback(const uint64_t hash,
+  virtual void ExecuteDownloadProgressCallback(const uint64_t hash,
                                        const int64_t bytesWritten,
                                        const int64_t totalBytesWritten,
-                                       const int64_t totalBytesExpectedToWrite);
+                                       const int64_t totalBytesExpectedToWrite) override;
 
 private:
   struct HttpRequestResponseType {
@@ -61,10 +58,18 @@ private:
     HttpRequestDownloadProgressCallback progressCallback;
   };
 
+  void StartRequestInternal(HttpRequest&& request,
+                            Util::Dispatch::Queue* queue,
+                            HttpRequestCallback callback,
+                            HttpRequestDownloadProgressCallback progressCallback);
+
+  AdapterState GetAdapterState();
+  void SetAdapterState(const AdapterState state);
+
   void GetHttpRequestResponseTypeFromHash(const uint64_t hash,
                                           HttpRequestResponseType& response);
 
-  jobject _javaObject;
+  JGlobalObject _javaObject;
 
   jmethodID _startRequestMethodID;
 
@@ -74,6 +79,10 @@ private:
 
   std::mutex _callbackMutex;
 
+  Util::Dispatch::Queue* _internalQueue;
+
+  std::mutex _adapterStateMutex;
+  AdapterState _adapterState;
 };
 
 }

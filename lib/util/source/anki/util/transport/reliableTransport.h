@@ -135,7 +135,7 @@ private:
 
   typedef std::map<TransportAddress, ReliableConnection*>  ReliableConnectionMap;
   ReliableConnectionMap   _reliableConnectionMap;
-  Dispatch::Queue*        _queue;
+  Dispatch::QueueHandle   _queue;
   TaskHandle              _updateHandle;
   std::mutex              _mutex;
 

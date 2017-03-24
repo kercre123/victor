@@ -17,11 +17,22 @@ android_prebuilt_aar(
 )
 
 android_library(
-  name = 'util',
-  srcs = glob(['src/**/*.java']),
-  manifest = 'src/AndroidManifest.xml',
+  name = 'http-adapter',
+  srcs = glob(['http/src/**/*.java']),
   source = '1.6',
   target = '1.6',
-  exported_deps = [':android-support-v4-23-aar', ':play-services-location', ':play-services-base'],
+  visibility = ['PUBLIC']
+)
+
+android_library(
+  name = 'util',
+  srcs = glob(['util/src/**/*.java']),
+  manifest = 'util/src/AndroidManifest.xml',
+  source = '1.6',
+  target = '1.6',
+  exported_deps = [':android-support-v4-23-aar',
+                   ':play-services-location',
+                   ':play-services-base',
+                   ':http-adapter'],
   visibility = ['PUBLIC'],
 )

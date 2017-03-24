@@ -28,7 +28,9 @@ namespace Util {
 
 std::atomic<uint64_t> HttpAdapter::_sHashCounter{1};
 
-HttpAdapter::HttpAdapter()
+HttpAdapter::HttpAdapter(Util::Dispatch::Queue* queue /* = nullptr */)
+: _internalQueue(queue)
+, _adapterState(IHttpAdapter::AdapterState::DOWN)
 {
   auto envWrapper = JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
@@ -40,18 +42,18 @@ HttpAdapter::HttpAdapter()
       return;
     }
 
-    // get singleton instance of adapter
-    jmethodID instanceMethodID = env->GetStaticMethodID(httpClass.get(), "getInstance", "()Lcom/anki/util/http/HttpAdapter;");
-    _javaObject = env->CallStaticObjectMethod(httpClass.get(), instanceMethodID);
+    {
+      // get singleton instance of adapter
+      jmethodID instanceMethodID = env->GetStaticMethodID(httpClass.get(), "getInstance", "()Lcom/anki/util/http/HttpAdapter;");
+      JObjectHandle objInstance{env->CallStaticObjectMethod(httpClass.get(), instanceMethodID), env};
 
-    // get global ref to class
-    jobject oldObject = _javaObject;
-    _javaObject = env->NewGlobalRef(_javaObject);
-    env->DeleteLocalRef(oldObject);
-    if (_javaObject == nullptr) {
-      PRINT_NAMED_ERROR("HttpAdapter_Android.Init.ClassGlobalRef", 
-        "Unable to initialize global reference");
-      return;
+      // get global ref to class
+      _javaObject = JGlobalObject{objInstance.get(), env};
+      if (_javaObject == nullptr) {
+        PRINT_NAMED_ERROR("HttpAdapter_Android.Init.ClassGlobalRef",
+          "Unable to initialize global reference");
+        return;
+      }
     }
 
     // find StartRequest method
@@ -63,6 +65,7 @@ HttpAdapter::HttpAdapter()
         "Unable to find startRequest method");
       return;
     }
+    SetAdapterState(IHttpAdapter::AdapterState::UP);
   }
   else {
     PRINT_NAMED_ERROR("HttpAdapter_Android.Init", "can't get JVM environment");
@@ -71,18 +74,59 @@ HttpAdapter::HttpAdapter()
 
 HttpAdapter::~HttpAdapter()
 {
-  auto envWrapper = JNIUtils::getJNIEnvWrapper();
-  JNIEnv* env = envWrapper->GetEnv();
-  if (nullptr != env && nullptr != _javaObject) {
-    env->DeleteGlobalRef(_javaObject);
-  }
+  ShutdownAdapter();
 }
 
-void HttpAdapter::StartRequest(const HttpRequest& request,
+void HttpAdapter::ShutdownAdapter()
+{
+  SetAdapterState(IHttpAdapter::AdapterState::DOWN);
+}
+
+bool HttpAdapter::IsAdapterUp()
+{
+  return (IHttpAdapter::AdapterState::UP == GetAdapterState());
+}
+
+IHttpAdapter::AdapterState HttpAdapter::GetAdapterState()
+{
+  std::lock_guard<std::mutex> lock(_adapterStateMutex);
+  return _adapterState;
+}
+
+void HttpAdapter::SetAdapterState(const IHttpAdapter::AdapterState state)
+{
+  std::lock_guard<std::mutex> lock(_adapterStateMutex);
+  _adapterState = state;
+}
+
+void HttpAdapter::StartRequest(HttpRequest request,
                                Util::Dispatch::Queue* queue,
                                HttpRequestCallback callback,
                                HttpRequestDownloadProgressCallback progressCallback)
 {
+  if (!IsAdapterUp()) {
+    return;
+  }
+  if (_internalQueue != nullptr) {
+    Dispatch::Async(_internalQueue, [this, request = std::move(request), queue, callback = std::move(callback),
+                                     progressCallback = std::move(progressCallback)] () mutable {
+      StartRequestInternal(std::move(request), queue, std::move(callback), std::move(progressCallback));
+    });
+  }
+  else {
+    StartRequestInternal(std::move(request), queue, std::move(callback), std::move(progressCallback));
+  }
+}
+
+
+void HttpAdapter::StartRequestInternal(HttpRequest&& request,
+                                       Util::Dispatch::Queue* queue,
+                                       HttpRequestCallback callback,
+                                       HttpRequestDownloadProgressCallback progressCallback)
+{
+  if (!IsAdapterUp()) {
+    return;
+  }
   auto envWrapper = JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
   JNI_CHECK(env);
@@ -99,24 +143,9 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   JObjectArrayHandle headers{JNIUtils::convertStringMapToJObjectArray(env, request.headers, stringRefs), env};
   JObjectArrayHandle params{JNIUtils::convertStringMapToJObjectArray(env, request.params, stringRefs), env};
 
-  uint64_t hash;
-  {
-    std::lock_guard<std::mutex> lock(_callbackMutex);
-    hash = _sHashCounter.fetch_add(1);
-    _requestResponseMap.emplace(hash,
-      HttpRequestResponseType{.request = request,
-        .queue = queue,
-        .callback = std::move(callback),
-        .progressCallback = std::move(progressCallback)});
-  }
-  {
-    std::lock_guard<std::mutex> lock(instancesMutex);
-    requestInstances.emplace(hash, this);
-  }
-
   jint httpMethod = (jint)(request.method);
   jsize bodySize = (jsize)request.body.size();
-  jint requestTimeout = (jint)kHttpRequestTimeOutMSec;
+  jint requestTimeout = (jint)request.timeOutMSec;
 
   JByteArrayHandle jbodyArray{env->NewByteArray(bodySize), env};
   env->SetByteArrayRegion(jbodyArray.get(), 0, bodySize, (const jbyte*)(request.body.data()));
@@ -127,8 +156,24 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
                        HttpMethodToString(request.method),
                        request.uri.c_str());
 
+  uint64_t hash;
+  {
+    std::lock_guard<std::mutex> lock(_callbackMutex);
+    hash = _sHashCounter.fetch_add(1);
+    _requestResponseMap.emplace(hash,
+      HttpRequestResponseType{.request = std::move(request),
+        .queue = queue,
+        .callback = std::move(callback),
+        .progressCallback = std::move(progressCallback)});
+  }
+  // 'request' is now invalid
+  {
+    std::lock_guard<std::mutex> lock(instancesMutex);
+    requestInstances.emplace(hash, this);
+  }
+
   PRINT_NAMED_DEBUG("http_adapter.start_request.call_java", "");
-  env->CallVoidMethod(_javaObject, _startRequestMethodID, hash, uri.get(), headers.get(), params.get(),
+  env->CallVoidMethod(_javaObject.get(), _startRequestMethodID, hash, uri.get(), headers.get(), params.get(),
                       jbodyArray.get(), httpMethod, storageFilePath.get(), requestTimeout);
   PRINT_NAMED_DEBUG("http_adapter.start_request.call_java_done", "");
 
@@ -150,6 +195,9 @@ void HttpAdapter::ExecuteCallback(const uint64_t hash,
                                   std::map<std::string,std::string>& responseHeaders,
                                   std::vector<uint8_t>& responseBody)
 {
+  if (!IsAdapterUp()) {
+    return;
+  }
   PRINT_NAMED_DEBUG("http_adapter.execute_callback", "%llx %d %d",
                     hash, responseCode, responseBody.size());
   HttpRequestResponseType response;
@@ -160,9 +208,12 @@ void HttpAdapter::ExecuteCallback(const uint64_t hash,
                        responseCode,
                        response.request.uri.c_str());
 
-  Dispatch::Async(response.queue, [this, hash, response, responseCode,
+  Dispatch::Async(response.queue, [this, hash, response = std::move(response), responseCode,
                                    responseBody = std::move(responseBody),
                                    responseHeaders = std::move(responseHeaders)] {
+    if (!IsAdapterUp()) {
+      return;
+    }
     response.callback(response.request, responseCode, responseHeaders, responseBody);
 
     PRINT_NAMED_DEBUG("http_adapter.execute_callback.callback_executed", "");
@@ -184,12 +235,18 @@ void HttpAdapter::ExecuteDownloadProgressCallback(const uint64_t hash,
                                                   const int64_t totalBytesWritten,
                                                   const int64_t totalBytesExpectedToWrite)
 {
+  if (!IsAdapterUp()) {
+    return;
+  }
   HttpRequestResponseType response;
   GetHttpRequestResponseTypeFromHash(hash, response);
 
   if (response.progressCallback) {
     Dispatch::Async(response.queue,
-      [this, response, bytesWritten, totalBytesWritten, totalBytesExpectedToWrite]() {
+      [this, response = std::move(response), bytesWritten, totalBytesWritten, totalBytesExpectedToWrite]() {
+        if (!IsAdapterUp()) {
+          return;
+        }
         response.progressCallback(response.request, bytesWritten,
                                   totalBytesWritten, totalBytesExpectedToWrite);
     });
@@ -228,7 +285,7 @@ Java_com_anki_util_http_HttpAdapter_NativeHttpRequestCallback(JNIEnv* env, jobje
     std::vector<uint8_t> body(bytes, bytes + bytesLen);
     env->ReleaseByteArrayElements(responseBody, bytes, JNI_ABORT);
     auto instanceIter = requestInstances.find(hash);
-    if (instanceIter != requestInstances.end()) {
+    if (instanceIter != requestInstances.end() && instanceIter->second->IsAdapterUp()) {
       instanceIter->second->ExecuteCallback(hash, responseCode, headers, body);
     }
   }
@@ -243,7 +300,7 @@ Java_com_anki_util_http_HttpAdapter_NativeHttpRequestDownloadProgressCallback(JN
                                                                   jlong totalBytesExpectedToWrite)
 {
   auto instanceIter = requestInstances.find(hash);
-  if (instanceIter != requestInstances.end()) {
+  if (instanceIter != requestInstances.end() && instanceIter->second->IsAdapterUp()) {
     instanceIter->second->ExecuteDownloadProgressCallback(hash, bytesWritten,
                                             totalBytesWritten, totalBytesExpectedToWrite);
   }

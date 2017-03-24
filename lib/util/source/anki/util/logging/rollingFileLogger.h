@@ -12,6 +12,7 @@
 #ifndef __Util_Logging_RollingFileLogger_H_
 #define __Util_Logging_RollingFileLogger_H_
 
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/noncopyable.h"
 
 #include <fstream>
@@ -21,24 +22,17 @@
 namespace Anki {
 namespace Util {
   
-// Forward declarations
-namespace Dispatch {
-  class Queue;
-}
-
 class RollingFileLogger : noncopyable {
 public:
   using ClockType = std::chrono::steady_clock;
-  struct create_queue_t {};
-  static constexpr create_queue_t create_queue{};
-  
+
   static constexpr std::size_t  kDefaultMaxFileSize = 1024 * 1024 * 20;
   static const char * const     kDefaultFileExtension;
   
   // use an existing queue for the file logger
   RollingFileLogger(Dispatch::Queue* queue, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
   // create a new queue that will be owned by this file logger
-  RollingFileLogger(create_queue_t, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
+  RollingFileLogger(Dispatch::create_queue_t, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
   virtual ~RollingFileLogger();
   
   void Write(std::string message);
@@ -51,8 +45,8 @@ public:
 private:
   void ExecuteBlock(const std::function<void()>& block);
   
-  Dispatch::Queue*  _dispatchQueue;
-  bool              _ownedQueue;
+  Dispatch::Queue*      _dispatchQueue;
+  Dispatch::QueueHandle _ownedQueue;
   std::string       _baseDirectory;
   std::string       _extension;
   std::string       _currentFileName;
