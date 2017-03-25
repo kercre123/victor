@@ -204,6 +204,8 @@ namespace Cozmo.HomeHub {
 
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
+    private IEnumerator _BurstEnergyAfterInitCoroutine = null;
+
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
       OnboardingManager.Instance.InitHomeHubOnboarding(this);
       ChestRewardManager.Instance.TryPopulateChestRewards();
@@ -565,7 +567,11 @@ namespace Cozmo.HomeHub {
       DailyGoalManager.Instance.ValidateExistingGoals();
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
-        StartCoroutine(BurstEnergyAfterInit());
+        if (_BurstEnergyAfterInitCoroutine != null) {
+          StopCoroutine(_BurstEnergyAfterInitCoroutine);
+        }
+        _BurstEnergyAfterInitCoroutine = BurstEnergyAfterInit();
+        StartCoroutine(_BurstEnergyAfterInitCoroutine);
         UIManager.DisableTouchEvents();
         _RewardSequenceActive = true;
       }
@@ -582,6 +588,9 @@ namespace Cozmo.HomeHub {
 
     private IEnumerator BurstEnergyAfterInit() {
       yield return new WaitForFixedUpdate();
+      if (_RewardSequence != null) {
+        _RewardSequence.Kill();
+      }
       _RewardSequence = DOTween.Sequence();
       // Only handle goal rewards 
       if (_CurrentTab == HomeTab.Play && DailyGoalManager.Instance.GoalsPending) {
@@ -601,7 +610,7 @@ namespace Cozmo.HomeHub {
       }
       // Prevent stray reward particles from being forgotten by dotween bug
       _RewardSequence.AppendInterval(GenericRewardsConfig.Instance.ExpParticleStagger);
-      _RewardSequence.AppendCallback(ResolveRewardParticleBurst);
+      _RewardSequence.OnComplete(ResolveRewardParticleBurst);
       _RewardSequence.Play();
     }
 
@@ -961,9 +970,13 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemAdded -= HandleItemValueChanged;
       playerInventory.ItemRemoved -= HandleItemValueChanged;
       playerInventory.ItemCountSet -= HandleItemValueChanged;
-      StopCoroutine(BurstEnergyAfterInit());
+      if (_BurstEnergyAfterInitCoroutine != null) {
+        StopCoroutine(_BurstEnergyAfterInitCoroutine);
+      }
 
       DialogOpenAnimationFinished -= HandleViewOpenFinished;
+
+      UIManager.EnableTouchEvents();
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
