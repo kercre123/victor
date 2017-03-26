@@ -1460,60 +1460,76 @@ namespace Anki {
                             GetTag());
         return;
       }
-
+      
       if( ! _objectID.IsSet() ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.NoObject",
                             "[%d] invalid object id",
                             GetTag());
         return;
       }
+      
+      f32 approachAngle_rad;
+      if(DriveToRollObjectAction::GetRollToUprightApproachAngle(_robot,
+                                                                _objectID,
+                                                                approachAngle_rad)){
+        SetApproachAngle(approachAngle_rad);
+      }
+      
+    }
+    
+    bool DriveToRollObjectAction::GetRollToUprightApproachAngle(Robot& robot,
+                                                                const ObjectID& objID,
+                                                                f32& approachAngle_rad)
+    {
 
-      const BlockWorld& blockWorld = _robot.GetBlockWorld();
+      if( !objID.IsSet() ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUprightStatic.NoObject",
+                            "invalid object id");
+        return false;
+      }
+      
+      const BlockWorld& blockWorld = robot.GetBlockWorld();
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
       blockWorld.GetObstacles(obstacles);
 
       // Compute approach angle so that rolling rights the block, using docking
-      ObservableObject* observableObject = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
+      ObservableObject* observableObject = robot.GetBlockWorld().GetLocatedObjectByID(objID);
       if( nullptr == observableObject ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.NullObject",
-                            "[%d] invalid object id %d",
-                            GetTag(),
-                            _objectID.GetValue());
-        return;
+                            "invalid object id %d",
+                            objID.GetValue());
+        return false;
       }
 
       if( observableObject->GetFamily() != ObjectFamily::LightCube &&
           observableObject->GetFamily() != ObjectFamily::Block ) {
         PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WrongFamily",
-                      "[%d] Can only use this function on blocks or light cubes, ignoring call",
-                      GetTag());
-        return;
+                      "Can only use this function on blocks or light cubes, ignoring call");
+        return false;
       }
 
       // unfortunately this needs to be a dynamic cast because Block inherits from observable object virtually
       Block* block = dynamic_cast<Block*>(observableObject);
       if( block == nullptr ) {
         PRINT_NAMED_ERROR("DriveToRollObjectAction.RollToUpright.NotABlock",
-                          "[%d] object %d exists, but can't be cast to a Block. This is a bug",
-                          GetTag(),
-                          _objectID.GetValue());
-        return;
+                          "object %d exists, but can't be cast to a Block. This is a bug",
+                          objID.GetValue());
+        return false;
       }
 
       
       std::vector<PreActionPose> preActionPoses;
       block->GetCurrentPreActionPoses(preActionPoses,
-                                      _robot.GetPose(),
+                                      robot.GetPose(),
                                       {PreActionPose::ROLLING},
                                       std::set<Vision::Marker::Code>(),
                                       obstacles);
 
       if( preActionPoses.empty() ) {
         PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WillNotUpright.NoPoses",
-                      "[%d] No valid pre-dock poses to roll object %d, not restricting pose",
-                      GetTag(),
-                      _objectID.GetValue());
-        return;
+                      "No valid pre-dock poses to roll object %d, not restricting pose",
+                      objID.GetValue());
+        return false;
       }
 
       // if we have any valid predock poses which approach the bottom face, use those
@@ -1526,13 +1542,11 @@ namespace Anki {
           // found at least one valid pre-action pose using the bottom marker, so limit the approach angle so
           // we will roll the block to upright
           Vec3f approachVec = ComputeVectorBetween(block->GetPose(), preActionPose.GetPose());
-          f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
-          SetApproachAngle(approachAngle_rad);
+          approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
           PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WillUpright",
-                        "[%d] Found a predock pose that should upright cube %d",
-                        GetTag(),
-                        _objectID.GetValue());
-          return;
+                        "Found a predock pose that should upright cube %d",
+                        objID.GetValue());
+          return true;
         }
       }
 
@@ -1542,9 +1556,9 @@ namespace Anki {
       // real solution would need a high-level planner to solve this. By doing nothing here, we don't limit
       // the approach angle at all
       PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WillNotUpright.NoBottomPose",
-                    "[%d] none of the %zu actions will upright the cube, allowing any",
-                    GetTag(),
+                    "none of the %zu actions will upright the cube, allowing any",
                     preActionPoses.size());
+      return false;
     }
     
     Result DriveToRollObjectAction::EnableDeepRoll(bool enable)

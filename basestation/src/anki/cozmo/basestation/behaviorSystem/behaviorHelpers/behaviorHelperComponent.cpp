@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/pickupBlockHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "util/helpers/boundedWhile.h"
 
 #include <iterator>
@@ -39,9 +40,6 @@ BehaviorHelperComponent::BehaviorHelperComponent()
 ///////
 // Functions for creating new handles
 //////
-
-  
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle BehaviorHelperComponent::AddHelperToComponent(IHelper*& helper)
@@ -73,7 +71,7 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
   }
   
   PushHelperOntoStackAndUpdate(robot, handleToRun);
-  
+  _worldOriginAtStart = robot.GetWorldOrigin();
   return true;
 }
 
@@ -131,6 +129,11 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
   if(!_helperStack.empty()){
     auto activeIter = _helperStack.end();
     activeIter--;
+    // TODO: COZMO-10389 - return to base helper if origin changes
+    bool blockWorldOriginChange = robot.GetWorldOrigin() != _worldOriginAtStart;
+    if(blockWorldOriginChange){
+      _worldOriginAtStart = robot.GetWorldOrigin();
+    }
     while(!_helperStack.empty() &&
           activeIter != _helperStack.end()){
       
@@ -143,7 +146,14 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
       
       
       HelperHandle newDelegate;
-
+      
+      // Override the helper status to fail out of all delegates and return
+      // to the lowest level delegate
+      if(blockWorldOriginChange && _helperStack.size() != 1){
+        helperStatus = IBehavior::Status::Failure;
+      }else if(blockWorldOriginChange && _helperStack.size() == 1){
+        blockWorldOriginChange = false;
+      }
       
       // Allows Delegate to directly check on success/failure
       if(helperStatus == IBehavior::Status::Running){

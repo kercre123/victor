@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
@@ -30,6 +31,8 @@ namespace Cozmo {
 
 namespace{
 static const int kMaxNumRetrys = 3;
+static const f32 driveBackDist_mm = 20;
+static const f32 driveBackSpeed_mmps = 20;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -41,9 +44,10 @@ DriveToHelper::DriveToHelper(Robot& robot,
 : IHelper("DriveToHelper", robot, behavior, helperFactory)
 , _targetID(targetID)
 , _params(params)
-, _searchLevel(0)
 , _tmpRetryCounter(0)
-, _objectObservedDuringSearch(false)
+, _searchLevel(0)
+, _searchStarted(false)
+, _searchShouldEnd(false)
 {
   const bool invalidPlaceRelParams =
                 (_params.actionType != PreActionPose::PLACE_RELATIVE) &&
@@ -52,17 +56,28 @@ DriveToHelper::DriveToHelper(Robot& robot,
   
   
   auto observedObjectCallback =
-  [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
-    if(event.GetData().Get_RobotObservedObject().objectID == _targetID){
-      _objectObservedDuringSearch = true;
+  [this, &robot](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event){
+    if(_searchStarted){
+      const ObjectID objSeen = event.GetData().Get_RobotObservedObject().objectID;
+      // Search should stop if we either 1) see the cube we're looking for and have
+      // therefore updated its known pose or 2) see an object that may have been
+      // obstructing the robots view without its knowledge previously
+      if(objSeen == _targetID){
+        _searchShouldEnd = true;
+      }else if(_objectsSeenDuringSearch.find(objSeen) == _objectsSeenDuringSearch.end()){
+        if(!ShouldBeAbleToFindTarget(robot)){
+          _searchShouldEnd = true;
+        }
+        _objectsSeenDuringSearch.insert(objSeen);
+      }
     }
   };
   
   if(robot.HasExternalInterface()){
     using namespace ExternalInterface;
     _eventHalders.push_back(robot.GetExternalInterface()->Subscribe(
-                                                                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
-                                                                    observedObjectCallback));
+                    ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
+                    observedObjectCallback));
   }
   
   
@@ -87,8 +102,8 @@ bool DriveToHelper::ShouldCancelDelegates(const Robot& robot) const
 BehaviorStatus DriveToHelper::Init(Robot& robot)
 {
   _tmpRetryCounter = 0;
-  _searchLevel = 0;
-  _objectObservedDuringSearch = false;
+  _searchStarted = false;
+  ResetSearchVariables(robot);
   DriveToPreActionPose(robot);
   return _status;
 }
@@ -97,6 +112,11 @@ BehaviorStatus DriveToHelper::Init(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStatus DriveToHelper::UpdateWhileActiveInternal(Robot& robot)
 {
+  if(_searchShouldEnd){
+    StopActing(true);
+    _status = BehaviorStatus::Complete;
+  }
+  
   return _status;
 }
   
@@ -112,8 +132,13 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
   
   if((_params.actionType != PreActionPose::PLACE_RELATIVE) ||
      ((_params.placeRelOffsetX_mm == 0) && (_params.placeRelOffsetY_mm == 0))){
-    StartActing(new DriveToObjectAction(robot, _targetID, _params.actionType),
-                &DriveToHelper::RespondToDriveResult);
+    DriveToObjectAction* driveToAction = new DriveToObjectAction(robot,
+                                                                 _targetID,
+                                                                 _params.actionType);
+    if(_params.useApproachAngle){
+      driveToAction->SetApproachAngle(_params.approachAngle_rad);
+    }
+    StartActing(driveToAction, &DriveToHelper::RespondToDriveResult);
   }else{
     // Calculate the pre-dock pose directly for PLACE_RELATIVE and drive to that pose
     ActionableObject* obj = dynamic_cast<ActionableObject*>(
@@ -163,7 +188,8 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
-      _objectObservedDuringSearch = false;
+      _searchStarted = true;
+      ResetSearchVariables(robot);
       SearchForBlock(result, robot);
       break;
     }
@@ -207,12 +233,14 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(staticBlock != nullptr){
     // Check if block observed during the last search
-    if(_objectObservedDuringSearch){
+    if(_searchShouldEnd){
       _status = BehaviorStatus::Complete;
       return;
     }
     
-    // Increment search lewel
+    // Increment search level
+    // Search for nearby - turn counter clockwise 90 deg - search for nearby
+    // Turn clockwise 90 (from start) - search for nearby - nuclear option
     switch(_searchLevel){
       case 0:
       {
@@ -225,15 +253,37 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
         
         break;
       }
+      case 2:
+      case 4:
+      {
+        auto searchNearby = new SearchForNearbyObjectAction(robot, _targetID);
+        StartActing(searchNearby, &DriveToHelper::SearchForBlock);
+        break;
+      }
       case 1:
       {
         CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+        compoundAction->AddAction(new DriveStraightAction(robot,
+                                                          -driveBackDist_mm,
+                                                          driveBackSpeed_mmps,
+                                                          false));
         compoundAction->AddAction(new TurnInPlaceAction(robot, M_PI_4, false));
         compoundAction->AddAction(new TurnInPlaceAction(robot, M_PI_4, false));
+
+        StartActing(compoundAction, &DriveToHelper::SearchForBlock);
+        break;
+      }
+      case 3:
+      {
+        CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+        compoundAction->AddAction(new DriveStraightAction(robot,
+                                                          -driveBackDist_mm,
+                                                          driveBackSpeed_mmps,
+                                                          false));
         compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_2, false));
         compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false));
         compoundAction->AddAction(new TurnInPlaceAction(robot, -M_PI_4, false));
-
+        
         StartActing(compoundAction, &DriveToHelper::SearchForBlock);
         break;
       }
@@ -241,7 +291,7 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
       {
         if(staticBlock->IsPoseStateKnown()){
           PRINT_NAMED_ERROR("DriveToHelper.SearchForBlock.GoingNuclear",
-                              "Failed to find known block - wiping");
+                            "Failed to find known block - wiping");
           BlockWorldFilter filter;
           filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame); // not necessary, just to be explicit
           robot.GetBlockWorld().DeleteLocatedObjects(filter);
@@ -255,7 +305,39 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
   
   _searchLevel++;
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool DriveToHelper::ShouldBeAbleToFindTarget(Robot& robot)
+{
+  const ObservableObject* targetObj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(targetObj != nullptr){
+    // check if the known object should no longer be visible given the robot's
+    // camera while at the pre-dock pose
+    static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see // ANDREW: is this true?
+    static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it, size doesn't matter
+    
+    Vision::KnownMarker::NotVisibleReason reason =
+    targetObj->IsVisibleFromWithReason(_robotCameraAtSearchStart,
+                                       kMaxNormalAngle,
+                                       kMinImageSizePix,
+                                       false);
+    
+    return reason != Vision::KnownMarker::NotVisibleReason::OCCLUDED;
+  }
+  
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DriveToHelper::ResetSearchVariables(Robot& robot)
+{
+  _searchLevel = 0;
+  _searchShouldEnd = false;
+  _robotCameraAtSearchStart = robot.GetVisionComponent().GetCamera();
+  _objectsSeenDuringSearch.clear();
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

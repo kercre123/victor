@@ -27,6 +27,9 @@ namespace Cozmo {
 struct DriveToParameters{
   PreActionPose::ActionType actionType = PreActionPose::ActionType::NONE;
   
+  f32 approachAngle_rad = DEG_TO_RAD(0);
+  bool useApproachAngle = false;
+  
   // PLACE_RELATIVE parameters
   f32 placeRelOffsetX_mm = 0;
   f32 placeRelOffsetY_mm = 0;
@@ -48,8 +51,7 @@ struct RollBlockParameters{
   AnimationTrigger noNameAnimationTrigger = AnimationTrigger::Count;
   Radians maxTurnToFaceAngle = 0;
 };
-
-
+  
   
 } // namespace Cozmo
 } // namespace Anki

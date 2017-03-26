@@ -89,7 +89,7 @@ void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
     const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(obj != nullptr){
       const bool canActionRoll = RollObjectAction::CanActionRollObject(robot, obj);
-      
+
       if(canActionRoll){
         PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.Update.Rolling", "Doing roll action");
         const ActionResult isAtPreAction = IsAtPreActionPoseWithVisualVerification(
@@ -98,9 +98,25 @@ void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
         if(isAtPreAction != ActionResult::SUCCESS){
           DriveToParameters params;
           params.actionType = PreActionPose::ActionType::ROLLING;
+          
+          // If rolling to upright, set the drive to helper approach angle if possible
+          f32 uprightApproachAngle_rad;
+          if(_shouldUpright &&
+             DriveToRollObjectAction::GetRollToUprightApproachAngle(
+                                                    robot,
+                                                    _targetID,
+                                                    uprightApproachAngle_rad)){
+               params.useApproachAngle = true;
+               params.approachAngle_rad = uprightApproachAngle_rad;
+          }
+          
+          // Delegate to the drive to helper
           DelegateProperties delegateProperties;
           delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, params));
-          delegateProperties.SetOnSuccessFunction([this](Robot& robot){StartRollingAction(robot); return _status;});
+          delegateProperties.SetOnSuccessFunction([this](Robot& robot)
+                                  {StartRollingAction(robot); return _status;});
+          delegateProperties.SetOnFailureFunction([this](Robot& robot)
+                                  {DetermineAppropriateAction(robot); return _status;});
           DelegateAfterUpdate(delegateProperties);
         }else{
           StartRollingAction(robot);
@@ -145,6 +161,9 @@ void RollBlockHelper::UnableToRollDelegate(Robot& robot)
       auto pickupHelper = CreatePickupBlockHelper(robot, _targetID);
       DelegateProperties delegateProperties;
       delegateProperties.SetDelegateToSet(pickupHelper);
+      delegateProperties.SetOnSuccessFunction([this](Robot& robot)
+                                              {DelegateToPutDown(robot); return _status;});
+
       delegateProperties.SetOnFailureFunction( [](Robot& robot)
                                               {return BehaviorStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
@@ -157,6 +176,9 @@ void RollBlockHelper::UnableToRollDelegate(Robot& robot)
       auto pickupHelper = CreatePickupBlockHelper(robot, objOnTop->GetID());
       DelegateProperties delegateProperties;
       delegateProperties.SetDelegateToSet(pickupHelper);
+      delegateProperties.SetOnSuccessFunction([this](Robot& robot)
+                                              {DelegateToPutDown(robot); return _status;});
+
       delegateProperties.SetOnFailureFunction( [](Robot& robot)
                                               {return BehaviorStatus::Failure;});
       DelegateAfterUpdate(delegateProperties);
@@ -182,6 +204,7 @@ void RollBlockHelper::DelegateToPutDown(Robot& robot)
   delegateProperties.SetOnSuccessFunction(
                                           [this](Robot& robot) {
                                             _shouldRoll = true;
+                                            DetermineAppropriateAction(robot);
                                             return BehaviorStatus::Running;
                                           });
   delegateProperties.SetOnFailureFunction([](Robot& robot)

@@ -46,6 +46,8 @@ const float kTopBlockOverhangMin_mm = 5;
 // Distance of 60mm used - 30 mm from corner to center plus max distance seperation of 30mm
 const float kDistMaxCornerToCenter_mm = 60;
 const float kDistMaxCornerToCenter_mm_sqr = kDistMaxCornerToCenter_mm * kDistMaxCornerToCenter_mm;
+  
+const float kMaxZAxisDifference_mm = 10;
 }
 
 // ---------------------------------------------------------
@@ -80,6 +82,17 @@ bool PyramidBase::operator==(const PyramidBase& other) const
 bool PyramidBase::BlocksFormPyramidBase(const Robot& robot, const ObservableObject* const staticBlock, const ObservableObject* const baseBlock)
 {
   if(staticBlock == nullptr || baseBlock == nullptr){
+    return false;
+  }
+
+  // Pyramid base blocks have to be within a reasonable tolerence of each other
+  // along the z axis
+  const Pose3d& basePoseWRTO   = baseBlock->GetPose().GetWithRespectToOrigin();
+  const Pose3d& staticPoseWRTO = staticBlock->GetPose().GetWithRespectToOrigin();
+
+  const float heightDiff = std::fabs(basePoseWRTO.GetTranslation().z() -
+                                     staticPoseWRTO.GetTranslation().z());
+  if(heightDiff > kMaxZAxisDifference_mm){
     return false;
   }
   
@@ -300,17 +313,13 @@ std::vector<const PyramidBase*> Pyramid::BuildAllPyramidBasesForBlock(const Robo
 {
   std::vector<const PyramidBase*> bases;
   
-  std::vector<const ObservableObject*> blocksOnGround;
+  std::vector<const ObservableObject*> blocksRestingFlat;
   
   {
     BlockWorldFilter bottomBlockFilter;
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerancePyramidOnly)){
-                                       return false;
-                                     }
-                                     
                                      if(!blockPtr->IsRestingFlat()){
                                        return false;
                                      }
@@ -318,21 +327,21 @@ std::vector<const PyramidBase*> Pyramid::BuildAllPyramidBasesForBlock(const Robo
                                      return true;
                                    });
     
-    robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, blocksOnGround);
+    robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, blocksRestingFlat);
   }
   
   // check to see if there are enough blocks on the ground for a pyramid to exist
-  if(blocksOnGround.size() < 2){
+  if(blocksRestingFlat.size() < 2){
     return bases;
   }
   
-  auto objectOnGroundIter = std::find(blocksOnGround.begin(), blocksOnGround.end(), object);
-  const bool isTargetObjectOnGround = objectOnGroundIter != blocksOnGround.end();
+  auto targetIter = std::find(blocksRestingFlat.begin(), blocksRestingFlat.end(), object);
+  const bool isTargetObjectValidForBase = targetIter != blocksRestingFlat.end();
   
-  if(isTargetObjectOnGround){
-    blocksOnGround.erase(objectOnGroundIter);
+  if(isTargetObjectValidForBase){
+    blocksRestingFlat.erase(targetIter);
     // check all other blocks on the ground to see if they form a pyramid base with the target object
-    for(const auto& baseBlock: blocksOnGround){
+    for(const auto& baseBlock: blocksRestingFlat){
       const bool blocksFormBase = PyramidBase::BlocksFormPyramidBase(robot, object, baseBlock);
       if(blocksFormBase){
         bases.push_back(new PyramidBase(object->GetID(), baseBlock->GetID()));

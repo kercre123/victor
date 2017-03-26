@@ -149,6 +149,7 @@ void BehaviorRespondPossiblyRoll::DetermineNextResponse(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(Robot& robot)
 {
+  DEBUG_SET_STATE(RespondingPositively);
   CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
   turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
   const unsigned long animIndex = _metadata.GetUprightAnimIndex() < kUprightAnims.size() ?
@@ -166,7 +167,8 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondPositively(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(Robot& robot)
 {
-  
+  DEBUG_SET_STATE(RespondingNegatively);
+
   CompoundActionSequential* turnAndReact = new CompoundActionSequential(robot);
   turnAndReact->AddAction(new TurnTowardsObjectAction(robot, _metadata.GetObjectID(), Radians(M_PI_F), true));
   if((!_metadata.GetPlayedOnSideAnim()) &&
@@ -184,29 +186,25 @@ void BehaviorRespondPossiblyRoll::TurnAndRespondNegatively(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondPossiblyRoll::DelegateToRollHelper(Robot& robot)
 {
-  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_metadata.GetObjectID());
-  if ((nullptr != object) &&
-      (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS)
-      )
-  {
-    auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
-    const bool upright = true;
-    RollBlockParameters parameters;
-    parameters.preDockCallback = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
-    HelperHandle rollHelper = factory.CreateRollBlockHelper(robot,
-                                                            *this,
-                                                            _metadata.GetObjectID(),
-                                                            upright,
-                                                            parameters);
-    
-    SmartDelegateToHelper(robot, rollHelper, [this](Robot& robot){DetermineNextResponse(robot);}, nullptr);
-    // Set the cube lights to interacting for full behavior run time
-    std::vector<BehaviorStateLightInfo> basePersistantLight;
-    basePersistantLight.push_back(
-      BehaviorStateLightInfo(_metadata.GetObjectID(), CubeAnimationTrigger::InteractingBehaviorLock)
-    );
-    SetBehaviorStateLights(basePersistantLight, false);
-  }
+  DEBUG_SET_STATE(RollingObject);
+
+  auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  const bool upright = true;
+  RollBlockParameters parameters;
+  parameters.preDockCallback = [this](Robot& robot){_metadata.SetReachedPreDockRoll();};
+  HelperHandle rollHelper = factory.CreateRollBlockHelper(robot,
+                                                          *this,
+                                                          _metadata.GetObjectID(),
+                                                          upright,
+                                                          parameters);
+  
+  SmartDelegateToHelper(robot, rollHelper, [this](Robot& robot){DetermineNextResponse(robot);}, nullptr);
+  // Set the cube lights to interacting for full behavior run time
+  std::vector<BehaviorStateLightInfo> basePersistantLight;
+  basePersistantLight.push_back(
+    BehaviorStateLightInfo(_metadata.GetObjectID(), CubeAnimationTrigger::InteractingBehaviorLock)
+  );
+  SetBehaviorStateLights(basePersistantLight, false);
 }
 
 } // namespace Cozmo

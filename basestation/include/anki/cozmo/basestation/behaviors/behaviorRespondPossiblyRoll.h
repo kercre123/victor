@@ -57,6 +57,12 @@ protected:
   void SetPoseUpAxisWillBeChecked() { _poseUpAxisAccurate = true;}
 
 private:
+  enum class DebugState {
+    RespondingNegatively,
+    RespondingPositively,
+    RollingObject
+  };
+  
   ObjectID _objID;
   s32 _uprightAnimIndex = 0;
   bool _playedUpright = false;

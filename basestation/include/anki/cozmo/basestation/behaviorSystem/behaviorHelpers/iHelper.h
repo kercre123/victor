@@ -132,6 +132,9 @@ protected:
 
   bool StartActing(IActionRunner* action, BehaviorActionResultWithRobotCallback callback);
 
+  // Stop the behavior acting so that the delegate can issue a new action
+  bool StopActing(bool allowCallback);
+  
   // Helpers to access the HelperFactory without needing access to the underlying behavior
   HelperHandle CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID,
                                        const PickupBlockParamaters& parameters = {});

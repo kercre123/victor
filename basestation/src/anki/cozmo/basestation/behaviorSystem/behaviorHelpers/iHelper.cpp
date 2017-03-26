@@ -212,6 +212,15 @@ bool IHelper::StartActing(IActionRunner* action, IBehavior::ActionResultWithRobo
   return _behaviorToCallActionsOn.StartActing(action, callback);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IHelper::StopActing(bool allowCallback)
+{
+  const bool allowHelperToContinue = true;
+  return _behaviorToCallActionsOn.StopActing(allowCallback, allowHelperToContinue);
+}
+  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HelperHandle IHelper::CreatePickupBlockHelper(Robot& robot, const ObjectID& targetID, const PickupBlockParamaters& parameters)
 {

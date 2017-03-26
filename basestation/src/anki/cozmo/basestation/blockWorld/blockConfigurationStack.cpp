@@ -33,11 +33,8 @@ namespace Cozmo {
 namespace BlockConfigurations {
 
 namespace {
-  
 using StackIterator = std::vector<StackWeakPtr>::iterator;
 using StackIteratorConst = std::vector<StackWeakPtr>::const_iterator;
-const float kOnGroundToleranceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
-
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,10 +130,6 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     bottomBlockFilter.AddFilterFcn([](const ObservableObject* blockPtr)
                                    {
-                                     if(!blockPtr->IsRestingAtHeight(0, kOnGroundToleranceStackBlockOnly)){
-                                       return false;
-                                     }
-                                     
                                      if(!blockPtr->IsRestingFlat()){
                                        return false;
                                      }

@@ -317,10 +317,9 @@ private:
   bool CanPopAWheelieHelper(const ObservableObject* object) const;
   bool CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const;
   bool CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const;
-  bool CanUseAsPyramidBaseBlock(const ObservableObject* object) const;
-  bool CanUseAsPyramidStaticBlock(const ObservableObject* object) const;
-  bool CanUseAsPyramidTopBlock(const ObservableObject* object) const;
-  
+  bool CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const;
+  bool CanUseAsBuildPyramidStaticBlock(const ObservableObject* object) const;
+  bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Failures

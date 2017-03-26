@@ -17,6 +17,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/iHelper.h"
 #include "anki/cozmo/basestation/preActionPose.h"
+#include "anki/vision/basestation/camera.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -41,14 +42,24 @@ private:
   ObjectID _targetID;
   DriveToParameters _params;
   
-  u32 _searchLevel;
+  
+  
   u32 _tmpRetryCounter;
-  bool _objectObservedDuringSearch;
   std::vector<Signal::SmartHandle> _eventHalders;
+  
+  // Variables for tracking search
+  u32 _searchLevel;
+  bool _searchStarted;
+  bool _searchShouldEnd;
+  Vision::Camera _robotCameraAtSearchStart;
+  std::set<ObjectID> _objectsSeenDuringSearch;
   
   void DriveToPreActionPose(Robot& robot);
   void RespondToDriveResult(ActionResult result, Robot& robot);
   void SearchForBlock(ActionResult result, Robot& robot);
+  
+  bool ShouldBeAbleToFindTarget(Robot& robot);
+  void ResetSearchVariables(Robot& robot);
   
 };
 

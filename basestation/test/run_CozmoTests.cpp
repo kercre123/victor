@@ -1906,22 +1906,26 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     ob1Pose = Pose3d(0, Z_AXIS_3D(), {ob1X, ob1Y, ob1Z}, &robotPose);
     
     
+    static const float secondBlockNotInStackMultiplier = 10;
+    static const float thirdBlockNotInStackMultiplier = 20;
+
     // set up second block pose
     const float ob1XOffsetRange = object1->GetSize().x()/3;
     const float ob1YOffsetRange = object1->GetSize().y()/3;
+    float zOffsetOb2 = object1->GetSize().z(); // Also used by third block
     {
       // move the block so that it is somewhat overlapping with the base cube
       float xOffsetOb2 = randGen.RandDblInRange(-ob1XOffsetRange, ob1XOffsetRange);
       float yOffsetOb2 = randGen.RandDblInRange(-ob1YOffsetRange, ob1YOffsetRange);
-      float zOffsetOb2 = object1->GetSize().z();
+      
 
       if(!secondBlockInStack){
         // Move the block's offset in one direction so that it is out of range
         const float randSelection = randGen.RandDblInRange(0, 1);
         if(randSelection < 0.3){
-          xOffsetOb2 += ob1XOffsetRange * 10;
+          xOffsetOb2 += ob1XOffsetRange * secondBlockNotInStackMultiplier;
         }else if(randSelection < 0.6){
-          yOffsetOb2 += ob1YOffsetRange * 10;
+          yOffsetOb2 += ob1YOffsetRange * secondBlockNotInStackMultiplier;
         }else{
           zOffsetOb2 += zOffsetOb2;
         }
@@ -1943,11 +1947,11 @@ TEST(BlockWorldTest, BlockConfigurationManager)
           // Move the block's offset in one direction so that it is out of range
           const float randSelection = randGen.RandDblInRange(0, 1);
           if(randSelection < 0.3){
-            xOffsetOb3 += ob1XOffsetRange * 10;
+            xOffsetOb3 += ob1XOffsetRange * thirdBlockNotInStackMultiplier;
           }else if(randSelection < 0.6){
-            yOffsetOb3 += ob1YOffsetRange * 10;
+            yOffsetOb3 += ob1YOffsetRange * thirdBlockNotInStackMultiplier;
           }else{
-            zOffsetOb3 += zOffsetOb3;
+            zOffsetOb3 += (zOffsetOb3 + zOffsetOb2);
           }
         }
 
@@ -1975,7 +1979,7 @@ TEST(BlockWorldTest, BlockConfigurationManager)
     
     // check that the expected number of stacks exist
     const auto& stacks = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache();
-    const bool stackShouldExist = firstBlockOnGround && secondBlockInStack;
+    const bool stackShouldExist = secondBlockInStack;
     
     // for testing broken cases
     /**Rotation3d ob1Rot = Rotation3d(M_PI, X_AXIS_3D()) *

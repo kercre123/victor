@@ -123,7 +123,7 @@
   "behavior.LookForFaceAndCube": {
     "translation": " "
   },
-  "behavior.behavior.RamIntoBlock": {
+  "behavior.RamIntoBlock": {
     "translation": " "
   },
   "error.TooManyFaces": {

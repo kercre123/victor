@@ -44,6 +44,10 @@ static const int kMinUprightBlocksForPyramid      = 3;
 static const float kDelayAccountForPlacing_s      = 3.0f;
 static const float kDelayAccountForBaseCreation_s = 5.0f;
 
+// Any behavior which returns a score greater than this value will not be
+// overridden by the behavior choosers non score based custom best behavior logic
+static const float kMinScoreToEnsureBehaviorRuns = 10.0f;
+
 // Interval at which disconnected cube orientations are pulled from block world
 static const float kIntervalCheckCubeOrientation = 1.0f;
 static const float kIntervalForceUpdateLightMusicState = 1.0f;
@@ -497,38 +501,45 @@ IBehavior* BuildPyramidBehaviorChooser::ChooseNextBehavior(Robot& robot,
                                                            const IBehavior* currentRunningBehavior)
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
-
-  // Thank the user if possible
-  IBehavior* bestBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
   
-  // Otherwise, see if we have to roll or respond to a block
-  if(bestBehavior == nullptr){
-    bestBehavior = CheckForResponsePossiblyRoll(robot, currentRunningBehavior);
-  }
+  IBehavior* scoredBehavior = nullptr;
   
-  // Otherwise proceed to specific chooser phase
-  if(bestBehavior == nullptr){
-    switch(_chooserPhase){
-      case ChooserPhase::SetupBlocks:
-      {
-        bestBehavior = ChooseNextBehaviorSetup(robot, currentRunningBehavior);
-        break;
-      }
-      case ChooserPhase::BuildingPyramid:
-      {
-        bestBehavior = ChooseNextBehaviorBuilding(robot, currentRunningBehavior);
-        break;
-      }
-      case ChooserPhase::None:
-      {
-        DEV_ASSERT(false, "BuildPyramidBehaviorChooser.ChooseNextBehavior.InvalidPhase");
-        break;
-      }
+  switch(_chooserPhase){
+    case ChooserPhase::SetupBlocks:
+    {
+      scoredBehavior = ChooseNextBehaviorSetup(robot, currentRunningBehavior);
+      break;
+    }
+    case ChooserPhase::BuildingPyramid:
+    {
+      scoredBehavior = ChooseNextBehaviorBuilding(robot, currentRunningBehavior);
+      break;
+    }
+    case ChooserPhase::None:
+    {
+      DEV_ASSERT(false, "BuildPyramidBehaviorChooser.ChooseNextBehavior.InvalidPhase");
+      break;
     }
   }
   
+  // If the scored behavior has a high enough score, allow it to run no matter
+  // runability of custom behaviors
+  if(scoredBehavior != nullptr &&
+     FLT_GT(scoredBehavior->EvaluateScore(robot), kMinScoreToEnsureBehaviorRuns)){
+    return scoredBehavior;
+  }
+  
+  
+  // Thank the user if possible
+  IBehavior* customBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
+  
+  // Otherwise, see if we have to roll or respond to a block
+  if(customBehavior == nullptr){
+    customBehavior = CheckForResponsePossiblyRoll(robot, currentRunningBehavior);
+  }
+  
   _objectAxisChangeIDs.clear();
-  return bestBehavior;
+  return customBehavior != nullptr ? customBehavior : scoredBehavior;
 }
 
 

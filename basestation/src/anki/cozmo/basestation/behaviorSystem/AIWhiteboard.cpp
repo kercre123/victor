@@ -195,7 +195,7 @@ bool AIWhiteboard::CanRollObjectDelegateNoAxisHelper(const ObservableObject* obj
         object->GetFamily() != ObjectFamily::LightCube ) {
       return false;
     }
-    
+
     // Only roll blocks that are resting flat
     if( !object->IsRestingFlat() ) {
       return false;
@@ -209,15 +209,13 @@ bool AIWhiteboard::CanRollObjectDelegateNoAxisHelper(const ObservableObject* obj
     
     return true;
   }
-  
-  
-  
+
   return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) const
+bool AIWhiteboard::CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const
 {
   const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
@@ -227,6 +225,11 @@ bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) cons
       return true;
     }
   }
+  
+  // If a pyramid exists and this object doesn't match the base, wait to assign that object
+  if(!pyramids.empty()){
+    return false;
+  }
 
   for(const auto& pyramidBase: pyramidBases){
     if(object->GetID() == pyramidBase->GetBaseBlockID()){
@@ -234,8 +237,8 @@ bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) cons
     }
   }
   
-  // If a pyramid or base exists and this object doesn't match the base, wait to assign that object
-  if(!(pyramids.empty() && pyramidBases.empty())){
+  // If a base exists and this object doesn't match the base, wait to assign that object
+  if(!pyramidBases.empty()){
     return false;
   }
   
@@ -264,7 +267,7 @@ bool AIWhiteboard::CanUseAsPyramidBaseBlock(const ObservableObject* object) cons
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) const
+bool AIWhiteboard::CanUseAsBuildPyramidStaticBlock(const ObservableObject* object) const
 {
   // Base block must be set before static block can be set
   auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
@@ -281,6 +284,11 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
       return true;
     }
   }
+  
+  // If a pyramid exists and this object doesn't match the static, wait to assign that object
+  if(!pyramids.empty()){
+    return false;
+  }
 
   for(const auto& pyramidBase: pyramidBases){
     if((object->GetID() == pyramidBase->GetStaticBlockID()) &&
@@ -289,8 +297,8 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
     }
   }
 
-  // If a pyramid or base exists and this object doesn't match the base, wait to assign that object
-  if(!(pyramids.empty() && pyramidBases.empty())){
+  // If a base exists and this object doesn't match the static, wait to assign that object
+  if(!pyramidBases.empty()){
     return false;
   }
   
@@ -303,7 +311,7 @@ bool AIWhiteboard::CanUseAsPyramidStaticBlock(const ObservableObject* object) co
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanUseAsPyramidTopBlock(const ObservableObject* object) const
+bool AIWhiteboard::CanUseAsBuildPyramidTopBlock(const ObservableObject* object) const
 {
   // Base and static blocks must be set before top block can be set
   auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
@@ -393,7 +401,7 @@ void AIWhiteboard::CreateBlockWorldFilters()
   {
     BlockWorldFilter *baseFilter = new BlockWorldFilter;
     baseFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    baseFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsPyramidBaseBlock, this, std::placeholders::_1));
+    baseFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsBuildPyramidBaseBlock, this, std::placeholders::_1));
     _filtersPerAction[ObjectUseIntention::PyramidBaseObject].reset(baseFilter);
   }
   
@@ -401,7 +409,7 @@ void AIWhiteboard::CreateBlockWorldFilters()
   {
     BlockWorldFilter *staticFilter = new BlockWorldFilter;
     staticFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    staticFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsPyramidStaticBlock, this, std::placeholders::_1));
+    staticFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsBuildPyramidStaticBlock, this, std::placeholders::_1));
     _filtersPerAction[ObjectUseIntention::PyramidStaticObject].reset(staticFilter);
   }
   
@@ -409,7 +417,7 @@ void AIWhiteboard::CreateBlockWorldFilters()
   {
     BlockWorldFilter *topFilter = new BlockWorldFilter;
     topFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    topFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsPyramidTopBlock, this, std::placeholders::_1));
+    topFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsBuildPyramidTopBlock, this, std::placeholders::_1));
     _filtersPerAction[ObjectUseIntention::PyramidTopObject].reset(topFilter);
   }
   
