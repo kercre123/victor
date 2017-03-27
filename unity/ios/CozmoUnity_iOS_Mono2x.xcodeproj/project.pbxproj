@@ -13,38 +13,25 @@
 		0744B8C1A40FE842EAFBC0F3 /* EAGLContextHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7DFBA0F8CB1070730F39FE86 /* EAGLContextHelper.mm */; };
 		08B24F76137BFDFA00FBA309 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B24F75137BFDFA00FBA309 /* iAd.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		0955A7781F53E5F104DD220F /* UnityViewControllerBaseiOS.mm in Sources */ = {isa = PBXBuildFile; fileRef = 585A62B76424ABC68F839B79 /* UnityViewControllerBaseiOS.mm */; };
-		0BA894917B5204F5023A3BF5 /* UnityViewControllerListener.h in Sources */ = {isa = PBXBuildFile; fileRef = 4B04686DDA2F5D36359E38B7 /* UnityViewControllerListener.h */; };
 		0D4C75D5935BD614796CF08D /* DOTween50.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = EE3ABDB1923E56BBA55FF159 /* DOTween50.dll.s */; };
-		0F5E80F9551838486D04C86F /* UnityAppController+ViewHandling.h in Sources */ = {isa = PBXBuildFile; fileRef = B0AA470945E833D356ED0422 /* UnityAppController+ViewHandling.h */; };
 		14692BB4CC542C6F1643BFDC /* CrashReporter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6973C228EA527277D69A845C /* CrashReporter.mm */; };
 		16D3930A6A0543751B4F8630 /* GlesHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 657037EBA4B2A40C8B51CEC0 /* GlesHelper.mm */; };
 		17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = C60568B36213E0CCF4C27A55 /* LaunchScreen-iPhoneLandscape.png */; };
-		1B15A8D5908124AC9010C451 /* CameraCapture.h in Sources */ = {isa = PBXBuildFile; fileRef = C813C9E519945602B91BE4B2 /* CameraCapture.h */; };
 		1BBB49FE51053934A7D3C145 /* MetalHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 498AE69526A42134628B874A /* MetalHelper.mm */; };
 		1C38ED4D3AADCF7A4BE21CDB /* AVCapture.mm in Sources */ = {isa = PBXBuildFile; fileRef = E88AB6447D8653D8C585BFC9 /* AVCapture.mm */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DEBB85E53BFF0C17783A20E /* SplashScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = EB52651E2359DD957762D896 /* SplashScreen.mm */; };
-		20B4CF765E560C37CD9CA893 /* Preprocessor.h in Sources */ = {isa = PBXBuildFile; fileRef = 6888B94A600A00596C9AABBD /* Preprocessor.h */; };
 		2578606216A9027870B5C447 /* iPhone_Sensors.mm in Sources */ = {isa = PBXBuildFile; fileRef = 66D75C4832F5ED6E030216F1 /* iPhone_Sensors.mm */; };
-		262C2EF2EDA0D30A8651E9E2 /* LifeCycleListener.h in Sources */ = {isa = PBXBuildFile; fileRef = 55C705DC5D8AEB26BFB377AF /* LifeCycleListener.h */; };
 		273EE5B9B92AC683D0CE786B /* CameraCapture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2167B9C45B33ACBC132A8820 /* CameraCapture.mm */; };
 		29A2840A00D5FA9F2ED8D140 /* AppDelegateListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 57B55EC3DAD9586C8674C1B4 /* AppDelegateListener.mm */; };
 		2B76A5B91E4E102800990EC0 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2B76A5B81E4E102800990EC0 /* WebKit.framework */; };
-		2C60367F8FF9057B68FFA7F8 /* Keyboard.h in Sources */ = {isa = PBXBuildFile; fileRef = D110889480A7DA64A3F1CF7E /* Keyboard.h */; };
-		2C69FAEB0BE4A0A66B8DD3DE /* CMVideoSampling.h in Sources */ = {isa = PBXBuildFile; fileRef = FEFB6A0B6AB803AC7EF88434 /* CMVideoSampling.h */; };
 		2C94CF28DA5EBFAF3551D645 /* Il2CppOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8B3A03F713EA1F91C1572307 /* Il2CppOptions.cpp */; };
 		2D1291F832367163EBF61D43 /* UIComponents.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = DA0F03F4B84FA4013CEBF752 /* UIComponents.dll.s */; };
 		304CEFC93FA2C2DCFBE4A5CA /* DeviceSettings.mm in Sources */ = {isa = PBXBuildFile; fileRef = 54BF5D7D4068BA8F8EEC6287 /* DeviceSettings.mm */; };
-		308B10C6BE8E530352771F9C /* CVTextureCache.h in Sources */ = {isa = PBXBuildFile; fileRef = FB802E4CEE1800D9A5E5410A /* CVTextureCache.h */; };
 		34857C4BC95EA4D614531ACF /* RegisterFeatures.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F5BC2F8353B95DFD13FEB1D9 /* RegisterFeatures.cpp */; };
-		35D15BE7E4F2E43C4285CCFC /* InternalProfiler.h in Sources */ = {isa = PBXBuildFile; fileRef = 4C218432EC4CF649E54E45E5 /* InternalProfiler.h */; };
-		387CE4430BA08C372FBDBB07 /* SplashScreen.h in Sources */ = {isa = PBXBuildFile; fileRef = 34F59211E3191AE294A6B7CF /* SplashScreen.h */; };
-		39CF11CD466C5543CD7CCB7D /* GlesHelper.h in Sources */ = {isa = PBXBuildFile; fileRef = 4362874A55BD2944BDEEDC57 /* GlesHelper.h */; };
 		405EF7C18A955864E7629C7F /* libiPhone-lib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DA379A57EB615B22B0880E66 /* libiPhone-lib.a */; };
 		419D6467E43A8879C3D680F4 /* Newtonsoft.Json.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 100D42BE26352B5E622BA76E /* Newtonsoft.Json.dll.s */; };
-		419E61EAEFCA83431ADB33E0 /* RegisterMonoModules.h in Sources */ = {isa = PBXBuildFile; fileRef = B46CDF30ADF143FC3166CA62 /* RegisterMonoModules.h */; };
 		428C6E6E29A8EDDD60E07CEE /* cozmoAppController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6037C81DF5603D213C8B2533 /* cozmoAppController.mm */; };
-		42E05A3E502AA3569F406896 /* UnityViewControllerBaseiOS.h in Sources */ = {isa = PBXBuildFile; fileRef = C533A279880DB6A84750979F /* UnityViewControllerBaseiOS.h */; };
 		44FFC551A6AB917066468A6D /* DemiLib.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 4B3B0A15DDAC3A6EC7774C03 /* DemiLib.dll.s */; };
 		468C75E91A96C18D001011B7 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75E81A96C18D001011B7 /* libc++.dylib */; };
 		46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2371B4F9D6B00FC7553 /* libcozmoEngine.a */; };
@@ -62,7 +49,6 @@
 		495653CC1C7FEE3F0054EB7F /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 495653CB1C7FEE3F0054EB7F /* opencv2.framework */; };
 		496F39DF58DEEFFACB6159C0 /* FullScreenVideoPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = FE19262FE604627F75DD2149 /* FullScreenVideoPlayer.mm */; };
 		4AE3DECF81894DFB43446A54 /* OnDemandResources.mm in Sources */ = {isa = PBXBuildFile; fileRef = 22B540F24D35CDDA4795F67E /* OnDemandResources.mm */; };
-		50D575A9A4F16A39274430C0 /* iPhone_Sensors.h in Sources */ = {isa = PBXBuildFile; fileRef = B24F496D632FBA09D6601AA8 /* iPhone_Sensors.h */; };
 		53FCE686A8AEC6E6549C142B /* RenderPluginDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC5AD5EE276544CE791A100D /* RenderPluginDelegate.mm */; };
 		5682F4B20F3B34FF007A219C /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5682F4B10F3B34FF007A219C /* MediaPlayer.framework */; };
 		5692F3DD0FA9D8E500EBA2F1 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5692F3DC0FA9D8E500EBA2F1 /* CoreLocation.framework */; };
@@ -73,26 +59,18 @@
 		58B873D3DA9D60002D35F635 /* WWWConnection.mm in Sources */ = {isa = PBXBuildFile; fileRef = 872D8FE853E21136529C3BDB /* WWWConnection.mm */; };
 		59751801F2321E0F58B4036B /* DOTween43.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = BAF01EF7CBEBBFBFDB4A7F43 /* DOTween43.dll.s */; };
 		5EB556F7464CD4F22E3E8D22 /* Keyboard.mm in Sources */ = {isa = PBXBuildFile; fileRef = 06EB52DAFDEFD540C7BEF484 /* Keyboard.mm */; };
-		5F7365DF7C64219E5E04A8A8 /* Quaternion4.h in Sources */ = {isa = PBXBuildFile; fileRef = 0F63F82F51F22DDC15B1AFDA /* Quaternion4.h */; };
-		608FA2676EE4BD275E346CC3 /* RegisterFeatures.h in Sources */ = {isa = PBXBuildFile; fileRef = C632B7F967E9AFBDF3E2708B /* RegisterFeatures.h */; };
 		654BDCE249E0B7114217EF00 /* UnityAppController+ViewHandling.mm in Sources */ = {isa = PBXBuildFile; fileRef = E01678637E413DC8C038A613 /* UnityAppController+ViewHandling.mm */; };
-		6962D809B3F43CDF4502B535 /* UnityAdsUnityWrapper.h in Sources */ = {isa = PBXBuildFile; fileRef = 0E406243E41A4F8C7258B8C3 /* UnityAdsUnityWrapper.h */; };
-		6BC5B0B6862557075B4051FB /* Vector3.h in Sources */ = {isa = PBXBuildFile; fileRef = 0A8DB35C88E2678ABFFE72EE /* Vector3.h */; };
 		6E5962D7AAE351C7B344D0FE /* CVTextureCache.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A3FBE47363BF83270FD67BF /* CVTextureCache.mm */; };
 		6F5432281C891C70006D3724 /* HockeySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432271C891C70006D3724 /* HockeySDK.framework */; };
 		6F5432371C89288F006D3724 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432361C89288F006D3724 /* AssetsLibrary.framework */; };
 		6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432381C8928AF006D3724 /* MobileCoreServices.framework */; };
 		6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F54323A1C8928C4006D3724 /* QuickLook.framework */; };
 		70C59CE08D285EDEF400756E /* LifeCycleListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = B676DEF4753207601737D2C0 /* LifeCycleListener.mm */; };
-		761363075412B07F87CC5696 /* UnityMetalSupport.h in Sources */ = {isa = PBXBuildFile; fileRef = 9B1736CCB3C0D2DBFF7E5DC8 /* UnityMetalSupport.h */; };
 		7A0EA216753BA2A39C418664 /* VideoPlayerPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */; };
-		7D2A269DAAB2294209AE78DA /* UnityRendering.h in Sources */ = {isa = PBXBuildFile; fileRef = 6B7BDDAF2EDF505368474983 /* UnityRendering.h */; };
 		7D5E1D670ECA5B47BC5FC39A /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = F380AA58FF9ED04651070A08 /* main.mm */; };
-		7EB0E1808B68C68CA66A9B57 /* AVCapture.h in Sources */ = {isa = PBXBuildFile; fileRef = D313AC8709C8F72CE4AA0751 /* AVCapture.h */; };
 		7F36C11113C5C673007FBDD9 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C10E13C5C673007FBDD9 /* CoreMedia.framework */; };
 		7F36C11213C5C673007FBDD9 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C10F13C5C673007FBDD9 /* CoreVideo.framework */; };
 		7F36C11313C5C673007FBDD9 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F36C11013C5C673007FBDD9 /* AVFoundation.framework */; settings = {ATTRIBUTES = (Required, ); }; };
-		820B4C9A3F7EA10F314BE5F6 /* AppDelegateListener.h in Sources */ = {isa = PBXBuildFile; fileRef = 5666C7C15DC70EB192946859 /* AppDelegateListener.h */; };
 		830B5C110E5ED4C100C7819F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 830B5C100E5ED4C100C7819F /* UIKit.framework */; };
 		8358D1B80ED1CC3700E3A684 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8358D1B70ED1CC3700E3A684 /* AudioToolbox.framework */; };
 		83B256E20E62FEA000468741 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B256E10E62FEA000468741 /* OpenGLES.framework */; };
@@ -111,60 +89,36 @@
 		8A130FF866E19251613A7E20 /* Filesystem.mm in Sources */ = {isa = PBXBuildFile; fileRef = 81F27C56A6EC267EF47D648C /* Filesystem.mm */; };
 		8A19EF260266ACC7F11CB6F3 /* iAD_Scripting.mm in Sources */ = {isa = PBXBuildFile; fileRef = DEEFAC7EF2342596541B73D3 /* iAD_Scripting.mm */; };
 		8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = D553E3C3AE3E9F95BAEFE9A7 /* LaunchScreen-iPhonePortrait.png */; };
-		938780A30C24FA7364AFC1E2 /* DisplayManager.h in Sources */ = {isa = PBXBuildFile; fileRef = 70F9A413DE33B396BAF2C57A /* DisplayManager.h */; };
 		93A4C14B1647E6526C7EB60B /* RegisterMonoModules.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02F7B3D102B6D56E3AED8FBD /* RegisterMonoModules.cpp */; };
-		97A9242A72B77BDB4DC1F7C1 /* UnityTrampolineConfigure.h in Sources */ = {isa = PBXBuildFile; fileRef = FC32F87B2766EDD670489C19 /* UnityTrampolineConfigure.h */; };
-		9A99A0DEA2481FA39BF9C3CB /* UnityAppController+Rendering.h in Sources */ = {isa = PBXBuildFile; fileRef = FFC5DDA932B80A2BE9AE1296 /* UnityAppController+Rendering.h */; };
 		9E0E70EAF487F837F2030006 /* OrientationSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = C413CECCC25579DB5CF75DDD /* OrientationSupport.mm */; };
-		A02EBD06F237C207E12CED19 /* iAD.h in Sources */ = {isa = PBXBuildFile; fileRef = 7D078966B66411EAF3E0FA3F /* iAD.h */; };
 		A1075F60357CDCE4BF4D02B6 /* UnityViewControllerListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 50C487894F530BC620776E29 /* UnityViewControllerListener.mm */; };
 		A275A8CA1AF27D7AB35B25DC /* CMVideoSampling.mm in Sources */ = {isa = PBXBuildFile; fileRef = 480295F402FF93083FED53F2 /* CMVideoSampling.mm */; };
 		AEECFFC6A184AD0E15EFE8BA /* ObjCRuntime.mm in Sources */ = {isa = PBXBuildFile; fileRef = DC814581D953FDA1AB4D78E8 /* ObjCRuntime.mm */; };
-		B0C1DA69D8FADAB7E66FAD78 /* UnityForwardDecls.h in Sources */ = {isa = PBXBuildFile; fileRef = C4DB973C3A0A9E635F198270 /* UnityForwardDecls.h */; };
 		B0E79F1301C53951C2DE6310 /* DisplayManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = C5A66AFCF70A4FAC3F5D6067 /* DisplayManager.mm */; };
-		B21E02BC7FA9D4FB1BC65CAC /* UnityViewControllerBaseTV.h in Sources */ = {isa = PBXBuildFile; fileRef = 1411F13C5C3F1EE316790744 /* UnityViewControllerBaseTV.h */; };
-		B3076DEAC9102AF5395081D9 /* VideoPlayer.h in Sources */ = {isa = PBXBuildFile; fileRef = F3E61363A4DBDE2EFC124787 /* VideoPlayer.h */; };
 		B4BE576FA29A1C771F875973 /* VideoPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = F0A4E509436FBFB63F42A329 /* VideoPlayer.mm */; };
 		B5DA8846078F0B538E106E72 /* UnityEngine.UI.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 335F2BB6364A8367B7AF455A /* UnityEngine.UI.dll.s */; };
 		B92377D9FC90ECA3D8AB5D74 /* WebView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4506769C2E1C900BDAEEAE47 /* WebView.mm */; };
-		BA1E99DDECE6C469F84A1697 /* UnityAppController.h in Sources */ = {isa = PBXBuildFile; fileRef = 4B13FA985EBC3CFC2FA24B34 /* UnityAppController.h */; };
 		BFAD348E48FDA12BD46DBCA2 /* ActivityIndicator.mm in Sources */ = {isa = PBXBuildFile; fileRef = B706760157BF61C7E1D856A1 /* ActivityIndicator.mm */; };
 		C0747C9E895FC106C629EACA /* DOTween.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 62306E666F9C7EEC29D8592A /* DOTween.dll.s */; };
-		C4CF1EB8784690863C36F1C6 /* ActivityIndicator.h in Sources */ = {isa = PBXBuildFile; fileRef = E66BAFC65644B7D9C12932F8 /* ActivityIndicator.h */; };
-		C4FE6A718C403942279C8203 /* CrashReporter.h in Sources */ = {isa = PBXBuildFile; fileRef = 0ADF9858C27BB1BB4FA268D9 /* CrashReporter.h */; };
 		C8492DDF9BF0A5A9D9EA32D0 /* Assembly-CSharp.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 9A7B979113A67E569C00B134 /* Assembly-CSharp.dll.s */; };
 		C93AF5A098D4D17381964239 /* UnityAppController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4B61955EFC33F67ED27FAA85 /* UnityAppController.mm */; };
-		CB77CFA83D2F19814212BD7F /* WWWConnection.h in Sources */ = {isa = PBXBuildFile; fileRef = B9774ABD9C22A7918C80D42F /* WWWConnection.h */; };
-		D014AE98A901ED3BFBC458B7 /* Prefix.pch in Sources */ = {isa = PBXBuildFile; fileRef = EFE013F157C0B1C713460F49 /* Prefix.pch */; };
-		D5949145219151B3432F9810 /* PLCrashReporter.h in Sources */ = {isa = PBXBuildFile; fileRef = D76119896990C817E42B1E38 /* PLCrashReporter.h */; };
-		D6869EFECCB99669BA590EBF /* CustomVideoPlayer.h in Sources */ = {isa = PBXBuildFile; fileRef = B703AB2167E4D819B2F4A410 /* CustomVideoPlayer.h */; };
 		D688A0149C5A80EFB1884568 /* LaunchScreen-iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7E0A6A38E5B5664A84454B0B /* LaunchScreen-iPhone.xib */; };
-		D6E9B0560CFBA3D4423A757D /* UnityView.h in Sources */ = {isa = PBXBuildFile; fileRef = E2DAAF7D57FCEC6F77219781 /* UnityView.h */; };
-		D7E75CC7FBE66CB282CB3ABD /* UnityViewControllerBase.h in Sources */ = {isa = PBXBuildFile; fileRef = FB72DA205B266276C0DD22B8 /* UnityViewControllerBase.h */; };
 		D860ACF82B3464CF57ADFF0D /* UnityAppController+UnityInterface.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1B551AAF42AE0E6A719E2CDF /* UnityAppController+UnityInterface.mm */; };
 		DA4CFCA31E3954CB00D56793 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = DA4CFCA21E3954CB00D56793 /* Settings.bundle */; };
 		DB69BDC882CA17962DF3C327 /* UnityAdsUnityWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = DE853B150001873BCA2B52A4 /* UnityAdsUnityWrapper.mm */; };
-		DBCA076DDB77D2E3C1930A4A /* EAGLContextHelper.h in Sources */ = {isa = PBXBuildFile; fileRef = 8B8E4BD5AA44C59E2B71FC05 /* EAGLContextHelper.h */; };
 		E0A470A444D31A37D6DDCC68 /* DOTween46.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = D25D4D11264A357BD9D1A9B3 /* DOTween46.dll.s */; };
 		E13C1706991F4DAC1BDC122A /* CustomVideoPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 062F41386AB5234C14755576 /* CustomVideoPlayer.mm */; };
-		E359BE470C095924DBE377C3 /* UnityAppController+UnityInterface.h in Sources */ = {isa = PBXBuildFile; fileRef = 064E4A675DD13129EB066509 /* UnityAppController+UnityInterface.h */; };
 		E3DD21DF15270BD9F3D0E2C3 /* System.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 0C8268F7D492350EA91AFC73 /* System.dll.s */; };
 		E5A80933B32A4DF7B6DE95C8 /* Assembly-CSharp-firstpass.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = CEE612FD326E8D8D05786A3C /* Assembly-CSharp-firstpass.dll.s */; };
 		E7A5306491C45B8A4C57F186 /* Mono.Security.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 58A43BD690570C5F0E104E47 /* Mono.Security.dll.s */; };
-		E9D1065F012204A474D6014C /* UnityInterface.h in Sources */ = {isa = PBXBuildFile; fileRef = 2ED3A23019D52321994584D4 /* UnityInterface.h */; };
 		EC592C7353C1438449A0B4BE /* InternalProfiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E42E274EA44A59C0030BBA5C /* InternalProfiler.cpp */; };
-		EE28E8936F3D8B1462A1891F /* UnityAdsConfig.h in Sources */ = {isa = PBXBuildFile; fileRef = 0B7DDD377CEE0F081F1DE12E /* UnityAdsConfig.h */; };
-		F560670A2A45BE2EBF173CFC /* OrientationSupport.h in Sources */ = {isa = PBXBuildFile; fileRef = 16A3CE38904C77905E030BA9 /* OrientationSupport.h */; };
-		F7A4B2A9164A00DB5C14D13A /* RenderPluginDelegate.h in Sources */ = {isa = PBXBuildFile; fileRef = CDA9CE31FBE0C996FF9AB79A /* RenderPluginDelegate.h */; };
 		F7D31C1022DA52F05AE68986 /* UnityEngine.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 2C3F3FB41535A4378CC150C9 /* UnityEngine.dll.s */; };
 		F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */; };
 		F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */; };
 		F9221A3875F6BBA6C6E357E6 /* mscorlib.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = 25001A386EFF3E454F5733FB /* mscorlib.dll.s */; };
 		FAB02F766D8180FDBEBB7E6B /* DOTweenPro.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E03818195798BCC7DAAB57FE /* DOTweenPro.dll.s */; };
-		FD50927AB879826A20F3A7C4 /* ObjCRuntime.h in Sources */ = {isa = PBXBuildFile; fileRef = 0F2A7F82868323F5E1D99F75 /* ObjCRuntime.h */; };
 		FFAB9C01FF3FA2C4E6EDF50D /* UnityAppController+Rendering.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4DEB9F0D032BF61C7A6E2609 /* UnityAppController+Rendering.mm */; };
 /* End PBXBuildFile section */
-
 
 /* Begin PBXCopyFilesBuildPhase section */
 		49109E091B8BAFB400827BBF /* Embed Frameworks */ = {
@@ -718,7 +672,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS_Mono2x" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS_Mono2x" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -891,18 +845,13 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-
-
 /* Begin XCBuildConfiguration section */
 		1D6058940D05DD3E006BFB54 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					armv7,
-					armv7s,
-				);
+				ARCHS = armv7;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
@@ -965,10 +914,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					armv7,
-					armv7s,
-				);
+				ARCHS = armv7;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
@@ -1052,10 +998,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					armv7,
-					armv7s,
-				);
+				ARCHS = armv7;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
@@ -1172,7 +1115,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS_Mono2x" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS_Mono2x" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,

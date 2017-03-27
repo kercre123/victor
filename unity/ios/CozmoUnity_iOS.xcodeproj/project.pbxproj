@@ -1245,6 +1245,7 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				UNITY_RUNTIME_VERSION = 5.2.2f1;
 				UNITY_SCRIPTING_BACKEND = il2cpp;
+				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Debug;
 		};
@@ -1304,6 +1305,7 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				UNITY_RUNTIME_VERSION = 5.2.2f1;
 				UNITY_SCRIPTING_BACKEND = il2cpp;
+				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Release;
 		};
@@ -1381,6 +1383,7 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				UNITY_RUNTIME_VERSION = 5.2.2f1;
 				UNITY_SCRIPTING_BACKEND = il2cpp;
+				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Shipping;
 		};
