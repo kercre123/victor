@@ -408,9 +408,8 @@ void Recharge(void)
   
   uint16_t battVolt100x = _recharge_get_battVolt100x(BAT_CHECK_INTERVAL_S+10); //get initial battery level
   u32 chargeTime = getMicroCounter();
-  while( battVolt100x < 385 ) //3.85V
+  while( battVolt100x < 390 ) //3.9V
   {
-    #warning "EL: do you want recharge to timeout???"
     if( getMicroCounter() - chargeTime >= (BAT_MAX_CHARGE_TIME_S*1000*1000) )
       throw ERROR_TIMEOUT;
     
