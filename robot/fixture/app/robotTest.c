@@ -302,31 +302,6 @@ void FastMotors(void)
     CheckMotor(MOTOR_LIFT,        SLOW_POWER, SLOW_LIFT_THRESH, 0);
 }
 
-// List of all functions invoked by the test, in order
-TestFunction* GetInfoTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
-    InfoTest,
-    NULL
-  };
-
-  return functions;
-}
-
-// List of all functions invoked by the test, in order
-TestFunction* GetPlaypenTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
-    PlaypenTest,
-    PlaypenWaitTest,
-    NULL
-  };
-
-  return functions;
-}
-
 // Check drop sensor in robot fixture
 const int DROP_ON_MIN = 800, DROP_OFF_MAX = 100;
 void RobotFixtureDropSensor(void)
@@ -358,33 +333,15 @@ void SpeakerTest(void)
   // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 
-// List of all functions invoked by the test, in order
-TestFunction* GetRobotTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
-    InfoTest,
-    ButtonTest,
-    SlowMotors,
-    FastMotors,
-    RobotFixtureDropSensor,
-    SpeakerTest,            // Must be last
-    NULL
-  };
-
-  return functions;
-}
-
-//read battery voltage (recharge mode)
-static u16 _recharge_get_battVolt100x(u8 poweron_time_s)
+//read battery voltage
+u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
 {
   struct { s32 vBat; s32 vExt; } robot = {0,0}; //ADC voltage data (read from robot)
   
-  EnableChargeComms(); //switch to comm mode
-  MicroWait(500*1000); //let battery voltage settle
-  
-  SendCommand(TEST_POWERON, poweron_time_s, 0, 0); //stay on for the next battery charge cycle (+tolerance)
-  SendCommand(FTM_ADCInfo, poweron_time_s, 0, 0);  //display ADC info on robot face (VEXT,VBAT,status bits...)
+  if( poweron_time_s > 0 )
+    SendCommand(TEST_POWERON, poweron_time_s, 0, 0); //keep robot powered for awhile
+  if( adcinfo_time_s > 0 )
+    SendCommand(FTM_ADCInfo, adcinfo_time_s, 0, 0);  //display ADC info on robot face (VEXT,VBAT,status bits...)
   
   robot.vExt = 0xDEADBEEF;
   SendCommand(TEST_ADC, 0, sizeof(robot), (u8*)&robot ); //read battery/external voltages
@@ -406,7 +363,10 @@ void Recharge(void)
   const u32 BAT_MAX_CHARGE_TIME_S = 5*60; //max amount of time to charge
   const u8 BAT_CHECK_INTERVAL_S = 30;     //interrupt charging this often to test battery level
   
-  uint16_t battVolt100x = _recharge_get_battVolt100x(BAT_CHECK_INTERVAL_S+10); //get initial battery level
+  EnableChargeComms(); //switch to comm mode
+  MicroWait(500*1000); //let battery voltage settle
+  uint16_t battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10); //get initial battery level
+  
   u32 chargeTime = getMicroCounter();
   while( battVolt100x < 390 ) //3.9V
   {
@@ -438,7 +398,9 @@ void Recharge(void)
     }
     //ConsolePrintf("\r\n");
     
-    battVolt100x = _recharge_get_battVolt100x(BAT_CHECK_INTERVAL_S+10);
+    EnableChargeComms(); //switch to comm mode
+    MicroWait(500*1000); //let battery voltage settle
+    battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10);
   }
   
   EnableChargeComms(); //switch to comm mode
@@ -448,6 +410,14 @@ void Recharge(void)
     if( e != ERROR_NO_PULSE ) //this error is expected. robot can't pulse when it's off...
       throw e;
   }
+}
+
+//Verify battery voltage sufficient for assembly/packout
+void BatteryCheck(void)
+{
+  u16 v100x = robot_get_battVolt100x(0,0);
+  if( v100x < 380 ) //3.8V
+    throw ERROR_BAT_UNDERVOLT;
 }
 
 // Turn on power until battery dead, start slamming motors!
@@ -490,6 +460,49 @@ void FactoryRevert(void)
     ConsolePrintf("Could not detect reset\r\n");
 }
 
+// List of all functions invoked by the test, in order
+TestFunction* GetInfoTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    NULL
+  };
+
+  return functions;
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetPlaypenTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    PlaypenTest,
+    PlaypenWaitTest,
+    NULL
+  };
+
+  return functions;
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetRobotTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    ButtonTest,
+    SlowMotors,
+    FastMotors,
+    RobotFixtureDropSensor,
+    BatteryCheck,
+    SpeakerTest,            // Must be last
+    NULL
+  };
+
+  return functions;
+}
+
 TestFunction* GetRechargeTestFunctions(void)
 {
   static TestFunction functions[] =
@@ -522,6 +535,7 @@ TestFunction* GetPackoutTestFunctions(void)
     ButtonTest,
     FastMotors,
     RobotFixtureDropSensor,
+    BatteryCheck,
     SpeakerTest,            // Must be last
     NULL
   };
