@@ -318,6 +318,10 @@ inline Result Track<FRAME_TYPE>::AddKeyFrameToBack(const FRAME_TYPE& keyFrame)
 // Specialization for BodyMotion keyframes (implemented in .cpp)
 template<>
 Result Track<BodyMotionKeyFrame>::AddKeyFrameToBack(const BodyMotionKeyFrame& keyFrame);
+
+// Specialization for BackpackLights keyframes (implemented in .cpp)
+template<>
+Result Track<BackpackLightsKeyFrame>::AddKeyFrameToBack(const BackpackLightsKeyFrame &keyFrame);
   
   
 template<typename FRAME_TYPE>
@@ -371,6 +375,10 @@ inline Result Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFrame)
 // Specialization for BodyMotion keyframes (implemented in .cpp)
 template<>
 Result Track<BodyMotionKeyFrame>::AddKeyFrameByTime(const BodyMotionKeyFrame& keyFrame);
+
+// Specialization for BackpackLights keyframes (implemented in .cpp)
+template<>
+Result Track<BackpackLightsKeyFrame>::AddKeyFrameByTime(const BackpackLightsKeyFrame &keyFrame);
 
 
 template<typename FRAME_TYPE>
