@@ -342,10 +342,11 @@ void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
         StartActing(new TriggerAnimationAction(robot, responseAnim),
                     [this, result](ActionResult animPlayed, Robot& robot){
           // Pass through the true action result, not the played animation result
-          if(_callbackAfterResponseAnim != nullptr){
-            _callbackAfterResponseAnim(result, robot);
-          }
+          BehaviorActionResultWithRobotCallback tmpCallback = _callbackAfterResponseAnim;
           _callbackAfterResponseAnim = nullptr;
+          if(tmpCallback != nullptr){
+            tmpCallback(result, robot);
+          }
         });
         _actionResultMapFunc = nullptr;
         return;
