@@ -1586,8 +1586,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // Rethink that API in following iterations of PoseConfirmer
         ObservableObject* curMatchInOrigin = GetLocatedObjectByID(objSeen->GetID());
       
-        // Add observation
-        const bool wasRobotMoving = false; // assume false, otherwise we wouldn't have gotten this far w/ marker?
+        // Add observation. Check if the robot was moving at all
+        const bool wasRobotMoving = (_robot->GetMoveComponent().WasCameraMoving(atTimestamp));
         const bool isConfirmingObservation = _robot->GetObjectPoseConfirmer().AddVisualObservation(objSeen,
                                                                                 curMatchInOrigin,
                                                                                 wasRobotMoving,

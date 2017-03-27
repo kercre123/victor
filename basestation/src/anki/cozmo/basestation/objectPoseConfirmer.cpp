@@ -78,6 +78,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
   const bool isLocalizableObject = object->CanBeUsedForLocalization();
   const bool isConfirmedMatch = (object == confirmedMatch);
+  const bool isNewObject = (nullptr == confirmedMatch);
   
   // now calculate what posestate we should set and if that poseState overrides the current one (we still need
   // to calculate which one we are going to set, even if forceUpdate is already true)
@@ -107,11 +108,25 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
 
-  const bool updatePose = isCarriedObject ||
-                          !isLocalizableObject ||
-                          !isConfirmedMatch ||
-                          setAsKnown ||
-                          !object->IsPoseStateKnown();
+
+  bool updatePose = false;
+  if ( isCarriedObject )
+  {
+    // carried objects are always updated so that they get detached from the lift upon observing them
+    updatePose = true;
+  }
+  else if ( isNewObject || !robotWasMoving )
+  {
+    // if the robot was not moving and we see an object we already knew about,
+    // update the pose of the confirmed object due to this observation.
+    // (if the robot was moving, we only confirm _new_ objects, so we don't bump into a cube
+    // placed in front of the robot for example)
+    updatePose = !isLocalizableObject ||
+                 !isConfirmedMatch ||
+                 setAsKnown ||
+                 !object->IsPoseStateKnown();
+  }
+  
   if( updatePose )
   {
     const PoseState newPoseState = (setAsKnown ? PoseState::Known : PoseState::Dirty);
@@ -504,12 +519,8 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
             confirmedMatch = unconfirmedObjectPtr;
             unconfirmedObjectPtr = nullptr;
           }
-          else if(!robotWasMoving)
+          else
           {
-            // if the robot was not moving and we see an object we already knew about,
-            // update the pose of the confirmed object due to this observation.
-            // (if the robot was moving, we only confirm _new_ objects, so we don't bump into a cube
-            //  placed in front of the robot for example)
             UpdatePoseInInstance(confirmedMatch, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           }
           
