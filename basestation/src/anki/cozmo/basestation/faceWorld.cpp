@@ -672,8 +672,9 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   const Vision::TrackedFace* FaceWorld::GetFace(Vision::FaceID_t faceID) const
   {
+    const bool kIncludeRecognizableOnly = false; // FaceID directly specified, search everything
     auto faceIter = _faceEntries.find(faceID);
-    if(faceIter != _faceEntries.end() && ShouldReturnFace(faceIter->second, 0, true)) {
+    if(faceIter != _faceEntries.end() && ShouldReturnFace(faceIter->second, 0, kIncludeRecognizableOnly)) {
       return &faceIter->second.face;
     } else {
       return nullptr;

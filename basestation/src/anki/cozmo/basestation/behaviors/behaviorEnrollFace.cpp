@@ -891,19 +891,22 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Robot& robot, Vis
       for(auto & ID : allFaceIDs)
       {
         const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(ID);
-        if(!face->HasName())
+        if(ANKI_VERIFY(face != nullptr, "BehaviorEnrollFace.CreateTurnTowardsFaceAction.NullFace", "ID:%d", ID))
         {
-          // Use this face if:
-          // - faceToTurnTowards hasn't been set yet, OR
-          // - this face is newer than the curent face to turn towards, OR
-          // - this face was seen at the same time as the current face to
-          //    turn towards and we win coin toss (to randomly break ties)
-          if((faceToTurnTowards == nullptr) ||
-             (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
-             (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
-              robot.GetRNG().RandDbl() < 0.5))
+          if(!face->HasName())
           {
-            faceToTurnTowards = face;
+            // Use this face if:
+            // - faceToTurnTowards hasn't been set yet, OR
+            // - this face is newer than the curent face to turn towards, OR
+            // - this face was seen at the same time as the current face to
+            //    turn towards and we win coin toss (to randomly break ties)
+            if((faceToTurnTowards == nullptr) ||
+               (face->GetTimeStamp() > faceToTurnTowards->GetTimeStamp()) ||
+               (face->GetTimeStamp() == faceToTurnTowards->GetTimeStamp() &&
+                robot.GetRNG().RandDbl() < 0.5))
+            {
+              faceToTurnTowards = face;
+            }
           }
         }
       }

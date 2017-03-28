@@ -531,11 +531,6 @@ namespace Vision {
         RecognitionScore score = 0;
         Result result = RecognizeFace(recognizedID, score);
         
-        if(kFaceRecognitionSimulatedDelay_ms > 0)
-        {
-          std::this_thread::sleep_for(std::chrono::milliseconds(kFaceRecognitionSimulatedDelay_ms));
-        }
-        
         if(RESULT_OK == result)
         {
           result = UpdateRecognitionData(recognizedID, score);
@@ -708,6 +703,11 @@ namespace Vision {
                                                   dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3,
                                                   _okaoPartDetectionResultHandle);
     Toc("OkaoFeatureExtraction");
+    
+    if(kFaceRecognitionSimulatedDelay_ms > 0)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(kFaceRecognitionSimulatedDelay_ms));
+    }
     
     ProcessingState newState = ProcessingState::FeaturesReady;
     
