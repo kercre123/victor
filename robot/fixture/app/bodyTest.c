@@ -347,6 +347,8 @@ TestFunction* GetBody2TestFunctions(void)
   
   return functions;
 };
+
+extern void BatteryCheck(void);
 TestFunction* GetBody3TestFunctions(void)
 {
   static TestFunction functions[] =
@@ -356,6 +358,7 @@ TestFunction* GetBody3TestFunctions(void)
     TestBackpackPullup,
     BodyMotor,
     DropLeakage,
+    BatteryCheck,
     NULL
   };
 
