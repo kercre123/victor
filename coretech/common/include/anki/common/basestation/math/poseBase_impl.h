@@ -395,31 +395,45 @@ namespace Anki {
   {
     if ( ANKI_DEV_CHEATS )
     {
+      std::lock_guard<std::mutex> lock( Dev_GetMutex() );
+      const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
+
+      // a) child is a valid pose
+      PoseCPtrSet& validPoses = Dev_GetValidPoses();
+      if( !ANKI_VERIFY(validPoses.find(downCastedChild) != validPoses.end(),
+                       "PoseBase.Dev_AssertIsValidParentPointer.ChildNotAValidPose",
+                       "This pose is bad. Not printing info because it's garbage, so I don't want to access it") )
+      {
+        Anki::Util::sAbort();
+      }
+  
       if ( nullptr != parent )
       {
-        std::lock_guard<std::mutex> lock( Dev_GetMutex() );
-      
         // if we have a parent, check that:
-        // a) the parent is a valid pose
-        PoseCPtrSet& validPoses = Dev_GetValidPoses();
-        ANKI_VERIFY(validPoses.find(parent) != validPoses.end(),
-                    "PoseBase.Dev_AssertIsValidParentPointer.NotAValidPose",
+        // b) the parent is a valid pose
+        if( !ANKI_VERIFY(validPoses.find(parent) != validPoses.end(),
+                    "PoseBase.Dev_AssertIsValidParentPointer.ParentNotAValidPose",
                     "Path of parent '%s'(%p) to origin: %s. Path of child '%s'(%p) to origin: %s",
                     parent->GetName().c_str(), parent, GetNamedPathToOrigin(*parent, true).c_str(),
                     childBasePointer == nullptr ? "(none)" : childBasePointer->GetName().c_str(), childBasePointer,
-                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(childBasePointer), true).c_str());
+                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*reinterpret_cast<const PoseNd*>(childBasePointer), true).c_str()))
+        {
+          Anki::Util::sAbort();
+        }
         
-        // b) we are a current child of it
-        const PoseNd* downCastedChild = reinterpret_cast<const PoseNd*>(childBasePointer);
+        // c) we are a current child of it
         const PoseBase<PoseNd>* upCastedParent = reinterpret_cast<const PoseBase<PoseNd>*>(parent);
-        ANKI_VERIFY(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
+        if( !ANKI_VERIFY(upCastedParent->_devChildrenPtrs.find(downCastedChild) != upCastedParent->_devChildrenPtrs.end(),
                     "PoseBase.Dev_AssertIsValidParentPointer.ChildOfOldParent",
                     "Path of parent '%s'(%p) to origin: %s. Path of child '%s'(%p) to origin: %s",
                     parent->GetName().c_str(), parent, GetNamedPathToOrigin(*parent, true).c_str(),
                     childBasePointer == nullptr ? "(none)" : childBasePointer->GetName().c_str(), childBasePointer,
-                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*downCastedChild, true).c_str());
+                    childBasePointer == nullptr ? "(none)" : GetNamedPathToOrigin(*downCastedChild, true).c_str()))
+        {
+          Anki::Util::sAbort();
+        }
         
-        // Note on b): If you crash on b), it means that the child is pointing at this parent, and this parent
+        // Note on c): If you crash on c), it means that the child is pointing at this parent, and this parent
         // is indeed a valid pose, but it is not a valid parent of this child. This can happen by this series of steps:
         // Create pose A
         // Create pose B

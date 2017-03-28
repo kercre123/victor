@@ -1950,10 +1950,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
   } // UpdatePoseOfStackedObjects()
 
-  u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
+  void BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
   {
-    u32 numVisibleObjects = 0;
-    
     // Don't bother if the robot is picked up or if it was rotating too fast to
     // have been able to see the markers on the objects anyway.
     // NOTE: Just using default speed thresholds, which should be conservative.
@@ -1961,18 +1959,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
        _robot->GetMoveComponent().WasMoving(atTimestamp) ||
        _robot->GetVisionComponent().WasRotatingTooFast(atTimestamp))
     {
-      return numVisibleObjects;
+      return;
     }
-    
-    // Create a list of observed and unobserved objects for further consideration below
-    std::vector<ObservableObject*> unobservedObjects; // not const pointers b/c we may mark as unobserved below
-    std::vector<const ObservableObject*> observedObjects;
     
     auto originIter = _locatedObjects.find(_robot->GetWorldOrigin());
     if(originIter == _locatedObjects.end()) {
       // No objects relative to this origin: Nothing to do
-      return numVisibleObjects;
+      return;
     }
+
+    // Create a list of unobserved object IDs (IDs since we can remove several of them while iterating)
+    std::vector<ObjectID> unobservedObjectIDs;
     
     for(auto & objectFamily : originIter->second)
     {
@@ -1994,41 +1991,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             continue;
           }
           
-          bool objectDeleted = false;
-          
-          // 1. Store objects we have just seen as "observed"
-          // 2. Look for "unobserved" objects not seen atTimestamp -- but skip objects:
+          // Look for "unobserved" objects not seen atTimestamp -- but skip objects:
           //    - that are currently being carried
           //    - that we are currently docking to
           //    - whose pose origin does not match the robot's
           //    - who are a charger (since those stay around)
           const TimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
-          if(lastVisuallyMatchedTime >= atTimestamp)
+          const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
+                                      (_robot->GetCarryingObject() != object->GetID()) &&
+                                      (_robot->GetDockObject() != object->GetID()) &&
+                                      (object->GetFamily() != ObjectFamily::Charger) );
+          if ( isUnobserved )
           {
-            observedObjects.push_back(object);
-          }
-          else if(_robot->GetCarryingObject() != object->GetID() &&
-                  _robot->GetDockObject() != object->GetID() &&
-                  &object->GetPose().FindOrigin() == _robot->GetWorldOrigin() &&
-                  object->GetFamily() != ObjectFamily::Charger)
-          {
-            if(object->IsActive() &&
-               ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
-               object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
-              PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut", "Unsupported feature");
-            } else {
-              // Otherwise, add it to the list for further checks below to see if
-              // we "should" have seen the object
-              if(_unidentifiedActiveObjects.count(object->GetID()) == 0) {
-                unobservedObjects.push_back(object);
-              }
-            }
+            unobservedObjectIDs.push_back(object->GetID());
           }
           
-          if(!objectDeleted)
-          {
-            ++objectIter;
-          }
+          ++objectIter;
           
         } // for object IDs of this type
       } // for each object type
@@ -2039,7 +2017,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // visibility in each camera
     const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
     DEV_ASSERT(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
-    for(ObservableObject* unobservedObject : unobservedObjects) {
+    for(const auto& objectID : unobservedObjectIDs)
+    {
+      // if the object doesn't exist anymore, it was deleted by another one, for example through a stack
+      ObservableObject* unobservedObject = GetLocatedObjectByID(objectID);
+      if ( nullptr == unobservedObject ) {
+        continue;
+      }
       
       // Remove objects that should have been visible based on their last known
       // location, but which must not be there because we saw something behind
@@ -2065,145 +2049,22 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       }
       else if(shouldBeVisible)
       {
-        // Make sure there are no currently-observed, (just-)identified objects
-        // with the same active ID present. (If there are, we'll reassign IDs
-        // on the next update instead of clearing the existing object now.)
-        bool matchingActiveIdFound = false;
-        if(unobservedObject->IsActive()) {
-          for(auto object : observedObjects) {
-            if(ActiveIdentityState::Identified == object->GetIdentityState() &&
-               object->GetActiveID() == unobservedObject->GetActiveID()) {
-              matchingActiveIdFound = true;
-              break;
-            }
-          }
-        }
+        // We "should" have seen the object! Clear it.
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
+                      "Marking object %d unobserved, which should have been seen, but wasn't. "
+                      "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
+                      unobservedObject->GetID().GetValue(),
+                      shouldBeVisible, hasNothingBehind, isDirtyPoseState);
         
-        if(!matchingActiveIdFound) {
-          // We "should" have seen the object! Clear it.
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
-                        "Marking object %d unobserved, which should have been seen, but wasn't. "
-                        "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
-                        unobservedObject->GetID().GetValue(),
-                        shouldBeVisible, hasNothingBehind, isDirtyPoseState);
-          
-          Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
-          if(RESULT_OK != markResult)
-          {
-            PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
-          }
-        }
-      }
-      else if(unobservedObject->GetFamily() != ObjectFamily::Mat && !_robot->IsCarryingObject(unobservedObject->GetID()))
-      {
-        // If the object should _not_ be visible (i.e. none of its markers project
-        // into the camera), but some part of the object is within frame, it is
-        // close enough, and was seen fairly recently, then
-        // let listeners know it's "visible" but not identifiable, so we can
-        // still interact with it in the UI, for example.
-        
-        // Did we see this currently-unobserved object in the last N seconds?
-        // This is to avoid using this feature (reporting unobserved objects
-        // that project into the image as observed) too liberally, and instead
-        // only for objects seen pretty recently, e.g. for the case that we
-        // have driven in too close and can't see an object we were just approaching.
-        // TODO: Expose / remove / fine-tune this setting
-        const s32 seenWithin_sec = -1; // Set to <0 to disable
-        const bool seenRecently = (seenWithin_sec < 0 ||
-                                   _robot->GetLastMsgTimestamp() - unobservedObject->GetLastObservedTime() < seenWithin_sec*1000);
-        
-        // How far away is the object from our current position? Again, to be
-        // conservative, we are only going to use this feature if the object is
-        // pretty close to the robot.
-        // TODO: Expose / remove / fine-tune this setting
-        const f32 distThreshold_mm = -1.f; // 150.f; // Set to <0 to disable
-        const bool closeEnough = (distThreshold_mm < 0.f ||
-                                  (_robot->GetPose().GetTranslation() -
-                                  unobservedObject->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
-        
-        // Check any of the markers should be visible and that the reason for
-        // them not being visible is not occlusion.
-        // For now just ignore the left and right 22.5% of the image blocked by the lift,
-        // *iff* we are using VGA images, which have a wide enough FOV to be occluded
-        // by the lift. (I.e., assume QVGA is a cropped, narrower FOV)
-        // TODO: Actually project a lift into the image and figure out what it will occlude
-        u16 xBorderPad = 0;
-        switch(camera.GetCalibration()->GetNcols())
+        Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
+        if(RESULT_OK != markResult)
         {
-          case 640:
-            xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration()->GetNcols()));
-            break;
-          case 400:
-            // TODO: How much should be occluded?
-            xBorderPad = static_cast<u16>(0.20f * static_cast<f32>(camera.GetCalibration()->GetNcols()));
-            break;
-          case 320:
-            // Nothing to do, leave at zero
-            break;
-          default:
-            // Not expecting other resolutions
-            PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects",
-                                "Unexpeted camera calibration ncols=%d.",
-                                camera.GetCalibration()->GetNcols());
-        }
-        
-        Vision::KnownMarker::NotVisibleReason reason;
-        bool markersShouldBeVisible = false;
-        bool markerIsOccluded = false;
-        for(auto & marker : unobservedObject->GetMarkers()) {
-          if(marker.IsVisibleFrom(_robot->GetVisionComponent().GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
-            // As soon as one marker is visible, we can stop
-            markersShouldBeVisible = true;
-            break;
-          } else if(reason == Vision::KnownMarker::NotVisibleReason::OCCLUDED) {
-            // Flag that any of the markers was not visible because it was occluded
-            // If this is the case, then we don't want to signal this object as
-            // partially visible.
-            markerIsOccluded = true;
-          }
-          // This should never be true because we set requireSomethingBehind to false in IsVisibleFrom() above.
-          assert(reason != Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND);
-        }
-
-        if(seenRecently && closeEnough && !markersShouldBeVisible && !markerIsOccluded)
-        {
-          // First three checks for object passed, now see if any of the object's
-          // corners are in our FOV
-          // TODO: Avoid ProjectObject here because it also happens inside BroadcastObjectObservation
-          f32 distance;
-          std::vector<Point2f> projectedCorners;
-          _robot->GetVisionComponent().GetCamera().ProjectObject(*unobservedObject, projectedCorners, distance);
-          
-          if(distance > 0.f) { // in front of camera?
-            for(auto & corner : projectedCorners) {
-              
-              if(camera.IsWithinFieldOfView(corner))
-              {
-                using namespace ExternalInterface;
-                const Rectangle<f32> boundingBox(projectedCorners);
-                
-                ObjectProjectsIntoFOV message(unobservedObject->GetLastObservedTime(),
-                                              unobservedObject->GetFamily(),
-                                              unobservedObject->GetType(),
-                                              unobservedObject->GetID().GetValue(),
-                                              CladRect(boundingBox.GetX(),
-                                                       boundingBox.GetY(),
-                                                       boundingBox.GetWidth(),
-                                                       boundingBox.GetHeight()));
-                
-                _robot->Broadcast(MessageEngineToGame(std::move(message)));
-                
-                ++numVisibleObjects;
-                
-              } // if(IsWithinFieldOfView)
-            } // for(each projectedCorner)
-          } // if(distance > 0)
+          PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
         }
       }
       
     } // for each unobserved object
     
-    return numVisibleObjects;
   } // CheckForUnobservedObjects()
 
   Result BlockWorld::AddMarkerlessObject(const Pose3d& p, ObjectType type)

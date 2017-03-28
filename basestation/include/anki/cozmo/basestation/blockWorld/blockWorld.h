@@ -466,13 +466,10 @@ namespace Anki
       // Helper for removing markers that are inside other detected markers
       static void RemoveMarkersWithinMarkers(std::list<Vision::ObservedMarker>& currentObsMarkers);
       
-      // 1. Looks for objects that should have been seen (markers should have been visible
-      //    but something was seen through/behind their last known location) and delete
-      //    them.
-      // 2. Looks for objects whose markers are not visible but which still have
-      //    a corner in the camera's field of view, so the _object_ is technically
-      //    still visible. Return the number of these.
-      u32 CheckForUnobservedObjects(TimeStamp_t atTimestamp);
+      // Looks for objects that should have been seen (markers should have been visible
+      // but something was seen through/behind their last known location) and delete
+      // them.
+      void CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       
       // Checks whether an object is unobserved and in collision with the robot,
       // for use in filtering objects to mark them as dirty

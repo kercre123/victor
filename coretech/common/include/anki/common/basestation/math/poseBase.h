@@ -95,11 +95,11 @@ namespace Anki {
     // Dev methods
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // updates children bookkeping variables for old and new parents
-    static void Dev_SwitchParent(const PoseNd* oldParent, const PoseNd* newParent, const PoseBase<PoseNd>* childBasePointer);
     // asserts that the parent is valid and that the child is a current valid child of the parent
     static void Dev_AssertIsValidParentPointer(const PoseNd* parent, const PoseBase<PoseNd>* childBasePointer);
 
+    // updates children bookkeping variables for old and new parents
+    static void Dev_SwitchParent(const PoseNd* oldParent, const PoseNd* newParent, const PoseBase<PoseNd>* childBasePointer);
     // note I'm not alive anymore, I can't be asked about parents
     static void Dev_PoseDestroyed(const PoseBase<PoseNd>* basePointer);
     // note I'm alive, and people can ask me about my children

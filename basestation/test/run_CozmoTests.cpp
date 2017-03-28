@@ -1383,7 +1383,100 @@ TEST(BlockWorld, CubeStacks)
   
 } // BlockWorld.CubeStacks
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorld, UnobserveCubeStack)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  std::vector<ObservableObject*> objects;
 
+  // Create objects
+  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  
+  {
+    // verify they are there now
+    BlockWorldFilter filter;
+    objects.clear();
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
+    ASSERT_EQ(2, objects.size());
+  }
+  
+  Vec3f testBottomTranslation{100.f,  0.f, 22.f};
+  Vec3f testTopTranslation{100.f, 0.f,  66.f};
+  
+  Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
+  const Pose3d object1Pose(rotZ1, testBottomTranslation, &robot.GetPose() );
+  lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
+  ASSERT_EQ(RESULT_OK, lastResult);
+
+  const Pose3d object2Pose(rotZ1, testTopTranslation, &robot.GetPose() );
+  lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
+  ASSERT_EQ(RESULT_OK, lastResult);
+
+  ObservableObject* foundObject1 = blockWorld.FindLocatedObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
+  ASSERT_NE(nullptr, foundObject1);
+  ASSERT_EQ(object2, foundObject1);
+
+  ObservableObject* foundObject2 = blockWorld.FindLocatedObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject2);
+  ASSERT_NE(object1, foundObject2);
+  
+  // mark bottom as dirty, propagating up
+  robot.GetObjectPoseConfirmer().MarkObjectDirty(object1, true);
+  
+  // unobserve objects, expecting them to be deleted
+  std::list<Vision::ObservedMarker> emptyMarkersList;
+  RobotState stateMsg( Robot::GetDefaultRobotState() );
+  for(s32 i=0; i<5; ++i)
+  {
+    // udpate robot
+    stateMsg.timestamp+=10;
+    lastResult = robot.UpdateFullRobotState(stateMsg);
+    ASSERT_EQ(RESULT_OK, lastResult);
+    
+    // fake an image
+    std::vector<const ImageImuData> imuEntries {
+      ImageImuData(i  ,0.0f,0.0f,0.0f,0),
+      ImageImuData(i+1,0.0f,0.0f,0.0f,0)
+    };
+    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp, imuEntries);
+    
+    lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
+    ASSERT_EQ(lastResult, RESULT_OK);
+  }
+  
+  {
+    // verify they are gone
+    BlockWorldFilter filter;
+    objects.clear();
+    blockWorld.FindLocatedMatchingObjects(filter, objects);
+    ASSERT_EQ(0, objects.size());
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, CopyObjectsFromZombieOrigins)
 {
   using namespace Anki;
