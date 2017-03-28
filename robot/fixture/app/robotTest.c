@@ -333,28 +333,55 @@ void SpeakerTest(void)
   // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 
+/*/read charger status
+static bool isChargeEnabled(void)
+{
+  //ConsolePrintf("SendCommand(TEST_CHGENABLE)\r\n");
+  u8 isEnabled = 0xFF;
+  SendCommand(TEST_CHGENABLE, 0, sizeof(isEnabled), (u8*)&isEnabled ); //read charge enable status
+  if( isEnabled > 1 ) //make sure body FW supports this
+    throw ERROR_BODY_OUTOFDATE;
+  
+  ConsolePrintf("isChargeEnabled,%d\r\n", isEnabled );
+  return isEnabled > 0;
+}//-*/
+
+//set charge enable/disable
+static void chargeEnable(bool enable)
+{
+  //ConsolePrintf("SendCommand(TEST_CHGENABLE)\r\n");
+  u8 dummy = 0xFF;
+  SendCommand(TEST_CHGENABLE, (enable ? 1 : 2), sizeof(dummy), (u8*)&dummy ); //read charge enable status
+  if( dummy > 1 ) //make sure body FW supports this
+    throw ERROR_BODY_OUTOFDATE;
+  
+  MicroWait(20*1000); //takes 20ms to take effect
+}
+
 //read battery voltage
 u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
 {
-  struct { s32 vBat; s32 vExt; } robot = {0,0}; //ADC voltage data (read from robot)
+  struct { s32 vBat; s32 vExt; s32 vBatFiltered; s32 vExtFiltered; } robot = {0,0,0,0}; //ADC voltage data (read from robot)
   
   if( poweron_time_s > 0 )
     SendCommand(TEST_POWERON, poweron_time_s, 0, 0); //keep robot powered for awhile
   if( adcinfo_time_s > 0 )
     SendCommand(FTM_ADCInfo, adcinfo_time_s, 0, 0);  //display ADC info on robot face (VEXT,VBAT,status bits...)
   
-  robot.vExt = 0xDEADBEEF;
+  robot.vExtFiltered = 0xDEADBEEF;
   SendCommand(TEST_ADC, 0, sizeof(robot), (u8*)&robot ); //read battery/external voltages
-  if( robot.vBat < 0 || robot.vExt == 0xDEADBEEF ) //old body fw truncated s32 vals to u16 (data loss)
+  if( robot.vBat < 0 || robot.vExtFiltered == 0xDEADBEEF ) //old body fw truncated s32 vals to u16 (data loss)
     throw ERROR_BODY_OUTOFDATE;
   
   //convert raw value to 100x voltage - centivolts
   //float batteryVoltage = ((float)robot.vBat)/65536.0f; //<--this is how esp converts raw spine data
-  u16 battVolt100x = (robot.vBat * 100) / 65536;
-  ConsolePrintf("vBat,%d,%03d,vExt,%d,%03d\r\n", robot.vBat, battVolt100x, robot.vExt, (robot.vExt*100)/65536 );
+  u16 vBat100x     = (robot.vBat * 100) / 65536;
+  u16 vBatFilt100x = (robot.vBatFiltered * 100) / 65536;
+  u16 vExt100x     = (robot.vExt * 100) / 65536;
+  u16 vExtFilt100x = (robot.vExtFiltered * 100) / 65536;
+  ConsolePrintf("vBat,%03d,%03d,vExt,%03d,%03d\r\n", vBat100x, vBatFilt100x, vExt100x, vExtFilt100x );
   
-  //Note: we can never actually measure valid V-External, since we have to disable it for communication.
-  return battVolt100x;
+  return vBatFilt100x; //return filtered vBat
 }
 
 // Charge to ~80% capacity
@@ -415,8 +442,22 @@ void Recharge(void)
 //Verify battery voltage sufficient for assembly/packout
 void BatteryCheck(void)
 {
-  u16 v100x = robot_get_battVolt100x(0,0);
-  if( v100x < 380 ) //3.8V
+  if( g_fixtureType == FIXTURE_BODY2_TEST || g_fixtureType == FIXTURE_BODY3_TEST ) {
+    //ConsolePrintf("TEST_POWERON 5s\r\n");
+    SendCommand(TEST_POWERON, 5, 0, 0); //keep robot powered for a bit longer...
+  }
+  
+  EnableChargeComms(); //switch to comm mode
+  MicroWait(100*1000); //wait for battery voltage to stabilize
+  
+  robot_get_battVolt100x(0,0); //DEBUG: read VBat before modifying charger
+  
+  chargeEnable(false);  //disable charger, which could interfere with valid battery measurement
+  MicroWait(100*1000);
+  u16 vBat100x = robot_get_battVolt100x(0,0);
+  chargeEnable(true);   //re-enable charger
+  
+  if( vBat100x < 380 ) //3.8V
     throw ERROR_BAT_UNDERVOLT;
 }
 
