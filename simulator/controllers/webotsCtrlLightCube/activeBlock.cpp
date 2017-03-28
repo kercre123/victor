@@ -127,10 +127,10 @@ namespace {
     {0, 1, 2, 3}
   };
   
-  // Mapping from block ID to activeObjectType
-  const ActiveObjectType blockIDToActiveObjectType_[MAX_NUM_CUBES] = { OBJECT_CUBE1, OBJECT_CUBE2, OBJECT_CUBE3, OBJECT_CHARGER };
+  // Mapping from block ID to ObjectType
+  const ObjectType blockIDToObjectType_[MAX_NUM_CUBES] = { Block_LIGHTCUBE1, Block_LIGHTCUBE2, Block_LIGHTCUBE3, Charger_Basic };
   u32 factoryID_ = 0;
-  ActiveObjectType activeObjectType_ = OBJECT_UNKNOWN;
+  ObjectType objectType_ = UnknownObject;
   
   // Flash ID params
   double flashIDStartTime_ = 0;
@@ -263,13 +263,13 @@ Result Init()
   if (nodeName) {
     std::string name = nodeName->getSFString();
     if (name.compare("LightCube") == 0) {
-      activeObjectType_ = blockIDToActiveObjectType_[blockID_];
+      objectType_ = blockIDToObjectType_[blockID_];
       if (blockID_ > 2) {
         printf("Expecting charger to have ID < 3\n");
         return RESULT_FAIL;
       }
     } else if (name.compare("CozmoCharger") == 0) {
-      activeObjectType_ = OBJECT_CHARGER;
+      objectType_ = Charger_Basic;
       if (blockID_ != 3) {
         printf("Expecting charger to have ID 3\n");
         return RESULT_FAIL;
@@ -585,7 +585,7 @@ Result Update() {
       BlockMessages::LightCubeMessage msg;
       msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
       msg.discovered.factory_id = factoryID_;
-      msg.discovered.device_type = activeObjectType_;
+      msg.discovered.object_type = objectType_;
       discoveryEmitter_->send(msg.GetBuffer(), msg.Size());
       discoveredSendCtr = 0;
     }

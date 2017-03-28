@@ -541,25 +541,11 @@ namespace {
 using namespace Anki::Cozmo;
 void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
 {
-  Anki::Cozmo::ActiveObjectType deviceType = Anki::Cozmo::ActiveObjectType::OBJECT_UNKNOWN;
-  switch(objectType)
-  {
-    case ObjectType::Block_LIGHTCUBE1:
-      deviceType = ActiveObjectType::OBJECT_CUBE1;
-      break;
-    case ObjectType::Block_LIGHTCUBE2:
-      deviceType = ActiveObjectType::OBJECT_CUBE2;
-      break;
-    case ObjectType::Block_LIGHTCUBE3:
-      deviceType = ActiveObjectType::OBJECT_CUBE3;
-    default:
-      DEV_ASSERT(false, "FaceRecvConnectionMessage.UnsupportedObjectType");
-      break;
-  }
+  DEV_ASSERT(IsLightCube(objectType), "FaceRecvConnectionMessage.UnsupportedObjectType");
   
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(
-                        ObjectConnectionState(activeID, factoryID, deviceType, connected) );
+                        ObjectConnectionState(activeID, factoryID, objectType, connected) );
   AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectConnectionState(event, &robot);
 }

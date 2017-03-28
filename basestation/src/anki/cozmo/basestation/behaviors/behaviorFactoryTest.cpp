@@ -2038,8 +2038,7 @@ namespace Cozmo {
   void BehaviorFactoryTest::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
   {
     const ObjectDiscovered payload = msg.GetData().Get_activeObjectDiscovered();
-    if(IsValid(payload.device_type))
-    {
+    if (IsLightCube(payload.object_type) || IsCharger(payload.object_type)) {
       _activeObjectDiscovered = true;
     }
   }

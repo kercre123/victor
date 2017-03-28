@@ -890,7 +890,7 @@ namespace Anki {
         // Forward on the 'to-engine' version of this message
         ObjectConnectionState newMsg;
         newMsg.objectID = msg.objectID;
-        newMsg.device_type = msg.device_type;
+        newMsg.object_type = msg.object_type;
         newMsg.factoryID = msg.factoryID;
         newMsg.connected = msg.connected;
         RobotInterface::SendMessage(newMsg);

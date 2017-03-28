@@ -2,8 +2,8 @@
  * ROBOT_CLAD_SHARED
  */
 
-#include "clad/types/activeObjectTypes.clad"
 #include "clad/types/activeObjectAccel.clad"
+#include "clad/types/objectTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -14,7 +14,7 @@ namespace Cozmo {
 message ObjectDiscovered
 {
   uint_32     factory_id,
-  ActiveObjectType  device_type,
+  ObjectType  object_type,
   int_8       rssi
 }
 
@@ -23,7 +23,7 @@ message ObjectConnectionState
 {  
   uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 factoryID,
-  ActiveObjectType  device_type,
+  ObjectType  object_type,
   bool connected
 }
 
@@ -33,7 +33,7 @@ message ObjectConnectionStateToRobot
 {
   uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 factoryID,
-  ActiveObjectType  device_type,
+  ObjectType  object_type,
   bool connected
 }
 

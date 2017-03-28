@@ -1,12 +1,11 @@
 /**
- * File: activeObjectTypeHelpers.cpp
+ * File: activeObjectHelpers.cpp
  *
  * Author: Andrew Stein
  * Date:   3/2/2017
  *
- * Description: Helper methods for Active Objects (and their ActiveObjectType).
- *              In a separate file for organizational reasons, especially avoid propagating
- *              the firmware ActiveObjectType enum all over the place where it isn't actually needed.
+ * Description: Helper methods for Active Objects (and their ObjectTypes).
+ *              In a separate file for organizational reasons.
  *
  *
  * Copyright: Anki, Inc. 2017
@@ -47,42 +46,21 @@ ActiveObject* CreateActiveObjectByType(ObjectType objType, ActiveID activeID, Fa
   return retPtr;
 }
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IsValid(ActiveObjectType activeObjectType)
+bool IsLightCube(ObjectType objType)
 {
- switch(activeObjectType)
-  {
-    case ActiveObjectType::OBJECT_UNKNOWN:
-    case ActiveObjectType::OBJECT_OTA_FAIL:
-      return false;
-      
-    case ActiveObjectType::OBJECT_CUBE1:
-    case ActiveObjectType::OBJECT_CUBE2:
-    case ActiveObjectType::OBJECT_CUBE3:
-    case ActiveObjectType::OBJECT_CHARGER:
-      return true;
-  }
-  return false;
-}
+  // Note: COZMO-9856 (implement 'EnumConcept' for CLAD) would
+  //  obviate the need for this function (and it would cover the
+  //  case of potentially adding more light cubes in the future)
+  return (objType == ObjectType::Block_LIGHTCUBE1) ||
+         (objType == ObjectType::Block_LIGHTCUBE2) ||
+         (objType == ObjectType::Block_LIGHTCUBE3);
+};
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IsLightCube(ActiveObjectType activeObjectType)
+bool IsCharger(ObjectType objType)
 {
-  switch(activeObjectType)
-  {
-    case ActiveObjectType::OBJECT_UNKNOWN:
-    case ActiveObjectType::OBJECT_OTA_FAIL:
-    case ActiveObjectType::OBJECT_CHARGER:
-      return false;
-      
-    case ActiveObjectType::OBJECT_CUBE1:
-    case ActiveObjectType::OBJECT_CUBE2:
-    case ActiveObjectType::OBJECT_CUBE3:
-      return true;
-  }
-  return false;
-}
+  return (objType == ObjectType::Charger_Basic);
+};
+
 
 } // namespace Cozmo
 } // namespace Anki
-

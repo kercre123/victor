@@ -135,7 +135,7 @@ namespace Anki {
 
       struct ActiveObjectSlotInfo {
         u32 assignedFactoryID;
-        ActiveObjectType device_type;
+        ObjectType object_type;
         webots::Receiver *receiver;
         TimeStamp_t lastHeardTime;
         bool connected;
@@ -624,12 +624,14 @@ namespace Anki {
 
     }
 
-    bool IsSameTypeActiveObjectAssigned(u32 device_type)
+    bool IsSameTypeActiveObjectAssigned(ObjectType object_type)
     {
-      DEV_ASSERT(device_type != 0, "sim_hal.IsSameTypeActiveObjectAssigned.InvalidType");
+      DEV_ASSERT((object_type != InvalidObject) &&
+                 (object_type != UnknownObject),
+                 "sim_hal.IsSameTypeActiveObjectAssigned.InvalidType");
       
       for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        if (activeObjectSlots_[i].assignedFactoryID != 0 && activeObjectSlots_[i].device_type == device_type) {
+        if (activeObjectSlots_[i].assignedFactoryID != 0 && activeObjectSlots_[i].object_type == object_type) {
           return true;
         }
       }
@@ -926,7 +928,7 @@ namespace Anki {
       msg.objectID = slot_id;
       msg.factoryID = acc->assignedFactoryID;
       msg.connected = acc->connected;
-      msg.device_type = acc->device_type;
+      msg.object_type = acc->object_type;
       RobotInterface::SendMessage(msg);
     }
     
@@ -1003,12 +1005,12 @@ namespace Anki {
             
             // If autoconnect is enabled, assign this block to a slot if another block
             // of the same type is not already assigned.
-            if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.device_type)) {
+            if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.object_type)) {
               for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                 ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
                 if (cubeInfo->assignedFactoryID == 0) {
-                  PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%hx, slot %d",
-                                   odMsg.factory_id, odMsg.device_type, i);
+                  PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%x, slot %d",
+                                   odMsg.factory_id, odMsg.object_type, i);
                   cubeInfo->assignedFactoryID = odMsg.factory_id;
                   break;
                 }
@@ -1028,7 +1030,7 @@ namespace Anki {
                   cubeInfo->receiver->setChannel(cubeInfo->assignedFactoryID);
                   cubeInfo->receiver->enable(TIME_STEP);
                   cubeInfo->connected = true;
-                  cubeInfo->device_type = odMsg.device_type;  // This is where we know the device type so set it here
+                  cubeInfo->object_type = odMsg.object_type;  // This is where we know the device type so set it here
                   SendObjectConnectionState(i);
                 }
                 

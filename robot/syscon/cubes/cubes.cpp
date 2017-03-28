@@ -21,6 +21,7 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/types/activeObjectTypes.h"
 
 //#define AXIS_DEBUGGER
 //#define CUBE_HOP
@@ -51,6 +52,27 @@ static const UpAxis idxToUpAxis[3][2] = { {YNegative, YPositive},
                                           {ZPositive, ZNegative},
                                           {XNegative, XPositive} };
 extern GlobalDataToHead g_dataToHead;
+
+// Mapping from activeObjectType to ObjectType (which is used by the engine)
+static ObjectType GetObjectType(ActiveObjectType type)
+{
+  switch (type) {
+    case OBJECT_OTA_FAIL:
+      return InvalidObject;
+    case OBJECT_CHARGER:
+      return Charger_Basic;
+    case OBJECT_CUBE1:
+      return Block_LIGHTCUBE1;
+    case OBJECT_CUBE2:
+      return Block_LIGHTCUBE2;
+    case OBJECT_CUBE3:
+      return Block_LIGHTCUBE3;
+    case OBJECT_UNKNOWN:
+      return UnknownObject;
+    default:
+      return UnknownObject;
+  }
+}
 
 // TX/RX FIFO
 static union {
@@ -294,7 +316,7 @@ static void onAdvertisePacket() {
   if (slot < 0) {
     if (sendDiscovery) {
       ObjectDiscovered msg;
-      msg.device_type = advertisePacket.model;
+      msg.object_type = GetObjectType(static_cast<ActiveObjectType>(advertisePacket.model)); // .model is type (uint16_t)
       msg.factory_id = advertId;
       msg.rssi = NRF_RADIO->RSSISAMPLE;
       RobotInterface::SendMessage(msg);
@@ -672,7 +694,7 @@ static void SendObjectConnectionState(int slot) {
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
-  msg.device_type = accessories[slot].model;
+  msg.object_type = GetObjectType(static_cast<ActiveObjectType>(accessories[slot].model));
   RobotInterface::SendMessage(msg);
 }
 

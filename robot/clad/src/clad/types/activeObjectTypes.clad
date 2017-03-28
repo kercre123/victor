@@ -1,5 +1,4 @@
 /** Clad definitions for *firmware* active object types
- * ROBOT_CLAD_SHARED
  */
 
 namespace Anki {

@@ -850,7 +850,7 @@ const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 template<>
 void CubeLightComponent::HandleMessage(const ObjectConnectionState& msg)
 {
-  if(msg.connected && IsLightCube(msg.device_type))
+  if(msg.connected && IsLightCube(msg.object_type))
   {
     // Add the objectID to the _objectInfo map and play the wake up animation
     ObjectInfo info = {};

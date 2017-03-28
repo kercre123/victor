@@ -25,10 +25,10 @@ enum FilterTypes {
   FILTER_DISABLED,
   FILTER_ADVERTISE,
   FILTER_ALL,
-  FILTER_CUBE1 = OBJECT_CUBE1,
-  FILTER_CUBE2 = OBJECT_CUBE2,
-  FILTER_CUBE3 = OBJECT_CUBE3,
-  FILTER_CHARGER = OBJECT_CHARGER,
+  FILTER_CUBE1 = Block_LIGHTCUBE1,
+  FILTER_CUBE2 = Block_LIGHTCUBE2,
+  FILTER_CUBE3 = Block_LIGHTCUBE3,
+  FILTER_CHARGER = Charger_Basic,
 };
 
 static FilterTypes filter_type = FILTER_DISABLED;
@@ -113,7 +113,7 @@ bool Anki::Cozmo::HAL::RadioSendMessage(const void *buffer, const u16 size, cons
         case FILTER_CUBE2:
         case FILTER_CUBE3:
         case FILTER_CHARGER:
-          if (filter_type != (FilterTypes) discovered->device_type) {
+          if (filter_type != (FilterTypes) discovered->object_type) {
             return true;
           }
           break ;

@@ -174,37 +174,12 @@ namespace Cozmo.BlockPool {
     }
 
     private void HandleObjectConnectionState(ObjectConnectionState message) {
-      ObjectType objectType = ObjectTypeFromActiveObjectType(message.device_type);
-
       AddOrUpdateBlockData(message.factoryID,
-                      objectType, 
+                      message.object_type, 
                       (int)message.objectID, 
                       null,
                       message.connected ? BlockConnectionState.Connected : BlockConnectionState.Unavailable,
                       null);
-    }
-
-    private ObjectType ObjectTypeFromActiveObjectType(ActiveObjectType activeObjectType) {
-      // Get the ObjectType from ActiveObjectType
-      ObjectType objectType = ObjectType.InvalidObject;
-      switch (activeObjectType) {
-      case ActiveObjectType.OBJECT_CUBE1:
-        objectType = ObjectType.Block_LIGHTCUBE1;
-        break;
-      case ActiveObjectType.OBJECT_CUBE2:
-        objectType = ObjectType.Block_LIGHTCUBE2;
-        break;
-      case ActiveObjectType.OBJECT_CUBE3:
-        objectType = ObjectType.Block_LIGHTCUBE3;
-        break;
-      case ActiveObjectType.OBJECT_CHARGER:
-        objectType = ObjectType.Charger_Basic;
-        break;
-      case ActiveObjectType.OBJECT_UNKNOWN:
-        objectType = ObjectType.UnknownObject;
-        break;
-      }
-      return objectType;
     }
 
     public void SendAvailableObjects(bool enable, byte robotId) {

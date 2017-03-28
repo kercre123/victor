@@ -20,7 +20,6 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/nvStorageTypes.h"
 #include "clad/types/objectFamilies.h"

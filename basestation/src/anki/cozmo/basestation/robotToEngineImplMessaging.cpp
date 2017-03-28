@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -38,7 +39,6 @@
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
-#include "clad/types/activeObjectTypes.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -459,67 +459,32 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
-// Mapping of ActiveObjectType to ObjectType
-static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type)
-{
-  ObjectType objType = ObjectType::UnknownObject;
-  switch(type) {
-    case ActiveObjectType::OBJECT_CHARGER:
-      objType = ObjectType::Charger_Basic;
-      break;
-    case ActiveObjectType::OBJECT_CUBE1:
-      objType = ObjectType::Block_LIGHTCUBE1;
-      break;
-    case ActiveObjectType::OBJECT_CUBE2:
-      objType = ObjectType::Block_LIGHTCUBE2;
-      break;
-    case ActiveObjectType::OBJECT_CUBE3:
-      objType = ObjectType::Block_LIGHTCUBE3;
-      break;
-    default:
-      break;
-  }
-  return objType;
-}
-
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectDiscovered");
   
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
   
-  // Check object type
-  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
-  switch(objType) {
-    case ObjectType::Charger_Basic:
-    {
-      if (IGNORE_CHARGER_DISCOVERY) {
-        return;
-      }
-      break;
-    }
-    case ObjectType::UnknownObject:
-    {
-      PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
-                          "FactoryID: 0x%x, device_type: 0x%hx",
-                          payload.factory_id, payload.device_type);
-      return;
-    }
-    default:
-      break;
+  if ( !IsLightCube(payload.object_type) && !IsCharger(payload.object_type)) {
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
+                        "FactoryID: 0x%x, ObjectType: '%s'",
+                        payload.factory_id, EnumToString(payload.object_type));
+    return;
+  } else if (IsCharger(payload.object_type) && IGNORE_CHARGER_DISCOVERY) {
+    return;
   }
   
-  robot->SetDiscoveredObjects(payload.factory_id, objType, payload.rssi, robot->GetLastMsgTimestamp());  // Not super accurate, but this doesn't need to be
+  robot->SetDiscoveredObjects(payload.factory_id, payload.object_type, payload.rssi, robot->GetLastMsgTimestamp());  // Not super accurate, but this doesn't need to be
   
   if (robot->GetEnableDiscoveredObjectsBroadcasting()) {
     if (payload.rssi < DISCOVERED_OBJECTS_RSSI_PRINT_THRESH) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectDiscovered.ObjectDiscovered",
                        "Type: %s, FactoryID 0x%x, rssi %d, (currTime %d)",
-                       EnumToString(objType), payload.factory_id, payload.rssi, robot->GetLastMsgTimestamp());
+                       EnumToString(payload.object_type), payload.factory_id, payload.rssi, robot->GetLastMsgTimestamp());
     }
     
     // Send ObjectAvailable to game
-    ExternalInterface::ObjectAvailable m(payload.factory_id, objType, payload.rssi);
+    ExternalInterface::ObjectAvailable m(payload.factory_id, payload.object_type, payload.rssi);
     robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
   }
 }
@@ -539,34 +504,33 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
     return;
   }
   
-  const ObjectType objType = GetTypeFromActiveObjectType(payload.device_type);
   if (payload.connected)
   {
     // log event to das
     Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s",
-                        payload.factoryID, EnumToString(payload.device_type));
+                        payload.factoryID, EnumToString(payload.object_type));
 
     // Add active object to blockworld
-    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, objType);
+    objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, payload.object_type);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
-                       "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
-                       objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
+                       "Object %d (activeID %d, factoryID 0x%x, object_type '%s')",
+                       objID.GetValue(), payload.objectID, payload.factoryID, EnumToString(payload.object_type));
       
       // do bookkeeping in robot
-      robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
+      robot->HandleConnectedToObject(payload.objectID, payload.factoryID, payload.object_type);
     }
   } else {
     // log event to das
     Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s",
-                        payload.factoryID, EnumToString(payload.device_type));
+                        payload.factoryID, EnumToString(payload.object_type));
 
     // Remove active object from blockworld if it exists, and remove all instances in all origins
     objID = robot->GetBlockWorld().RemoveConnectedActiveObject(payload.objectID);
     if ( objID.IsSet() )
     {
       // do bookkeeping in robot
-      robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
+      robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, payload.object_type);
     }
   }
   
@@ -574,7 +538,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                    payload.factoryID, payload.connected);
   
   // Viz info
-  robot->GetContext()->GetVizManager()->SendObjectConnectionState(payload.objectID, objType, payload.connected);
+  robot->GetContext()->GetVizManager()->SendObjectConnectionState(payload.objectID, payload.object_type, payload.connected);
   
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
