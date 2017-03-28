@@ -28,7 +28,7 @@ extern int resultLedOn;
 extern int resultLedOff;
 extern int g_powerOffTime;
 extern bool g_turnPowerOff;
-extern Fixed vBat, vExt;
+extern Fixed vBat, vExt, vBatFiltered, vExtFiltered; //battery.cpp
 
 static bool runMotorTest = false;
 
@@ -195,7 +195,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     case TEST_ADC:
     {
-      s32 data[2] = {vBat, vExt};
+      s32 data[4] = {vBat, vExt, vBatFiltered, vExtFiltered};
       SendDown(sizeof(data), (u8*)data);
       return;   // Already replied
     }
@@ -265,6 +265,22 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
         (state_off & (1 << PIN_ENCODER_RIGHT)) > 0};
       
       SendDown(sizeof(result), (u8*)&result[0]);
+      return;   // Already replied
+    }
+    
+    case TEST_CHGENABLE:
+    {
+      extern bool disableCharge; //from battery.cpp
+      u8 wasEnabled = !disableCharge;  //latch flag
+      
+      //param<0> = enable, param<1> = disable
+      //updated by ISR. May take up to 20ms to take effect
+      if( param & 1 ) //ENABLE
+        disableCharge = false;
+      else if( param & 2 ) //DISABLE
+        disableCharge = true;
+      
+      SendDown(sizeof(wasEnabled), (u8*)&wasEnabled);
       return;   // Already replied
     }
   }

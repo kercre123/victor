@@ -19,6 +19,7 @@ enum {
   TEST_BACKBUTTON    = 0x8B,
   TEST_BACKPULLUP    = 0x8C,
   TEST_ENCODERS      = 0x8D,
+  TEST_CHGENABLE     = 0x8E,
 };
 
 namespace TestFixtures {

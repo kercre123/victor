@@ -56,10 +56,11 @@ int resultLedOff;
 #ifdef FACTORY
 u32 g_powerOffTime = (4<<23);   // 4 seconds from power-on
 bool g_turnPowerOff = false;
+Fixed vBatFiltered=0, vExtFiltered=0;
 #endif
 
 static bool isCharging = false;
-static bool disableCharge = true;
+       bool disableCharge = true;
 static int ContactTime = 0;
 
 static Anki::Cozmo::BodyRadioMode current_operating_mode = -1;
@@ -568,6 +569,12 @@ void Battery::manage()
       {
         vBat = calcResult(VBAT_SCALE);
         
+        #ifdef FACTORY
+        //u16 vBat100x = (vBat * 100) / 65536; //convert to centiVolts
+        if( vBat < (430*65536)/100 ) //< 4.3V
+          vBatFiltered = vBat; //filter out higher voltages when connected to vExt
+        #endif
+        
         Backpack::setLowBattery(vBat < VBAT_LOW_THRESHOLD);
 
         // after 1 minute of low battery, turn off
@@ -609,8 +616,13 @@ void Battery::manage()
           ground_short = 0;
         }
 
-        vExt = calcResult(VEXT_SCALE);
+        vExt = calcResult(VEXT_SCALE);        
         updateChargeState(vExt);
+        
+        #ifdef FACTORY
+        if( vExt < (025*65536)/100 || vExt > (420*65536)/100 ) // vExt > 4.2V, or near 0 (can register ~0.5V from charge contact communications)
+          vExtFiltered = vExt; //filter out higher voltages when connected to vExt
+        #endif
         
         if (active_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
           nrf_gpio_pin_clear(PIN_IR_DROP);
