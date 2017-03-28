@@ -41,10 +41,6 @@ public:
   LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform);
   virtual ~LatticePlanner();
 
-
-  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose) override;
-
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const std::vector<Pose3d>& targetPoses) override;
 
@@ -71,6 +67,9 @@ public:
   void SetArtificialPlannerDelay_ms(int ms);
 
 protected:
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) override;
+
   EComputePathStatus ComputePathHelper(const Pose3d& startPose,
                                        const std::vector<Pose3d>& targetPoses);
 

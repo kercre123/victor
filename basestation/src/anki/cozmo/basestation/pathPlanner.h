@@ -51,14 +51,13 @@ public:
   // compute immediately in the calling thread.
   // 
   // There are two versions of the function. They both take a single start pose, one takes multiple possible
-  // target poses, and one takes a signle target pose. The one with multiple poses allows the planner to chose
-  // which pose to drive to on its own.
+  // target poses, and one takes a single target pose. The one with multiple poses allows the planner to chose
+  // which pose to drive to on its own. If the multiple goal poses version is not implemented, the single goal
+  // will be selected which is the closest according to ComputeClosestGoalPose. The single pose function is
+  // protected to simplify the external interface (simply pass a vector of one element if that is desired)
   // 
   // Return value of Error indicates that there was a problem starting the plan and it isn't running. Running
   // means it is (or may have already finished)
-
-  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose) = 0;
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const std::vector<Pose3d>& targetPoses);
@@ -137,6 +136,11 @@ protected:
   static const int finalPathSegmentSpeed_mmps = 20;
   static const int distToDecelSegLenTolerance_mm = 5;
   static const int diffInDecel = 1;
+
+  // see docs in the public section above
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) = 0;
+
   
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                         Planning::Path &path);
