@@ -573,6 +573,7 @@
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
               '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
             ],
           }, # end cozmo_physics
 
@@ -601,6 +602,7 @@
             ],
             'libraries': [
               'libCppController.dylib',
+              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
             ],
           }, # end controller Block
 
@@ -620,6 +622,7 @@
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):kazmath',
             ],
             'sources': [
               '<!@(cat <(ctrlViz_source))',
@@ -729,6 +732,7 @@
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):kazmath',
               '<(ce-util_gyp_path):jsoncpp',
             ],
             'sources': [
@@ -956,6 +960,7 @@
                   },
                 ],
               }],
+              ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}]
             ] #'conditions'
 
           }, # end cozmoEngine2_sim target
@@ -980,6 +985,7 @@
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):kazmath',
               '<(ce-util_gyp_path):jsoncpp',
             ],
             'sources': [
@@ -999,6 +1005,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreBluetooth.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '<@(flatbuffers_libs)',
               '<@(flite_libs)',
               '<@(opencv_libs)',
@@ -1071,6 +1078,7 @@
             'dependencies': [
               'cozmoEngine',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):kazmath',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -1128,6 +1136,7 @@
             'dependencies': [
               'cozmoEngine',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):kazmath',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -1141,6 +1150,9 @@
               'libCppController.dylib',
               '<@(flatbuffers_libs)',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
           }, # end controller Keyboard
 
@@ -1165,6 +1177,7 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
             ],
           }, # end controller DevLog
 
@@ -1457,6 +1470,7 @@
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
+              '<(ce-util_gyp_path):kazmath',
               '<(ce-util_gyp_path):util',
               '<(cg-audio_path):AudioEngine',
             ],
@@ -1577,6 +1591,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
               '<(ce-util_gyp_path):util',
+              '<(ce-util_gyp_path):kazmath',
               #'<(ce-audio_path):AudioEngine',
             ],
             'sources': [

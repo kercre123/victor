@@ -180,6 +180,7 @@ def main(scriptArgs):
     'jsoncpp_library_type': 'static_library',
     'util_library_type': 'static_library',
     'worldviz_library_type': 'static_library',
+    'cpufeatures_library_type': 'static_library',
     'libwebp_library_type': 'static_library',
     'use_libwebp': 0,
     'arch_group': options.arch,
@@ -187,7 +188,9 @@ def main(scriptArgs):
     'cti-gtest_path': gtestPath,
     'cti-util_gyp_path': ankiUtilProjectPath,
     'cti-cozmo_engine_path': subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"),
-    'clad_dir': clad_dir_rel
+    'clad_dir': clad_dir_rel,
+    'android_toolchain': 'arm-linux-androideabi-4.9',
+    'android_platform': 'android-18'
   }
 
   getGypArgs = util.Gyp.getArgFunction(['--check', '--depth', '.', '--toplevel-dir', '../..'])
@@ -198,6 +201,7 @@ def main(scriptArgs):
     defines.update({
       'OS': 'mac',
       'output_location': os.path.join(projectRoot, 'generated/mac'),
+      'arch_group': 'standard',
       'ndk_root': 'INVALID'
     })
     os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
@@ -273,12 +277,15 @@ def main(scriptArgs):
       'ndk_root': ndk_root
     })
     os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+
+    toolchain = defines['android_toolchain']
+
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
-    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
+    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar' % toolchain)
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
-    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
-    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
+    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm' % toolchain)
+    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf' % toolchain)
     gypArgs = getGypArgs('ninja-android', 'generated/android', gypFile)
     gyp.main(gypArgs)
 

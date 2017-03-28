@@ -679,7 +679,8 @@
           'dependencies': [
             'libwebp'
           ]
-        }]
+        }],
+        ['OS=="mac"', { 'libraries': [ '$(SDKROOT)/System/Library/Frameworks/Foundation.framework' ] }]
       ],
       'include_dirs': [
         '../../source/anki',

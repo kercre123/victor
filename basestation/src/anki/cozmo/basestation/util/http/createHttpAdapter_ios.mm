@@ -10,7 +10,7 @@
  **/
 
 #include "anki/cozmo/basestation/util/http/createHttpAdapter.h"
-#include "anki/cozmo/basestation/util/http/httpAdapter_mac_ios.h"
+#include "util/http/httpAdapter_iososx.h"
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter()
 {
