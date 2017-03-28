@@ -54,6 +54,7 @@ TracePrinter::TracePrinter(Robot* robot)
     
     doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,         &TracePrinter::HandleTrace);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,   &TracePrinter::HandleCrashReport);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::wifiFlashID,   &TracePrinter::HandleWiFiFlashID);
   }
   
   // Listen to some messages from the engine
@@ -198,6 +199,15 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   {
       _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(_lastLogRequested++);
   }
+}
+
+void TracePrinter::HandleWiFiFlashID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  ANKI_CPU_PROFILE("TracePrinter::HandleWiFiFlashID");
+  const RobotInterface::WiFiFlashID& fidMsg = message.GetData().Get_wifiFlashID();
+  const std::string idAsString = std::to_string(fidMsg.chip_id);
+  Util::sEventF("hardware.wifi.flash_id", {{DDATA, idAsString.c_str()}},
+                "%x%x", (fidMsg.chip_id>>8)&0xff, (fidMsg.chip_id>>16)&0xff);
 }
 
 const std::string& TracePrinter::GetName(const int nameId) const {

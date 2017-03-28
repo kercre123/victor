@@ -72,6 +72,11 @@ message LiftLoad
   bool hasLoad
 }
 
+message WiFiFlashID
+{
+  uint_32 chip_id
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -125,6 +130,7 @@ union RobotToEngine {
   LiftLoad                   liftLoad               = 0xDA,
   BackpackButton             backpackButton         = 0xDB,
 
+  WiFiFlashID                wifiFlashID            = 0xEC,
   ManufacturingID            mfgId                  = 0xED,
   FirmwareVersion            firmwareVersion        = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,
