@@ -177,26 +177,81 @@ class MotionPrimitiveSet:
                 ax.plot(X[-1], Y[-1], color)
         pylab.draw()
 
-    def plotPrimitives(self, longLen):
+    def plotPrimitives(self, longLen, pretty=False, style='b-', xoff=0.0, yoff=0.0, doDraw=True, linewidth=1):
         "creates a single plot with all primitives superimposed"
         import pylab
-        pylab.figure()
+        if doDraw:
+            pylab.figure()
 
         ax = pylab.subplot(1, 1, 1, aspect='equal')
-        ax.grid()
-        ax.xaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
-        ax.yaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+        if not pretty:
+            ax.grid()
+            ax.xaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+            ax.yaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+
+        if pretty:
+            pylab.axis('off')
 
         for angle in range(self.numAngles):
             for motion in self.primitivesPerAngle[angle]:
                 # print motion
                 # pprint.pprint(motion.intermediatePoses)
-                X = [p.x_mm for p in motion.intermediatePoses]
-                Y = [p.y_mm for p in motion.intermediatePoses]
-                ax.plot(X, Y, 'b-')
-                #ax.plot(X[-1], Y[-1], 'ro')
-        pylab.draw()
+                X = [p.x_mm + xoff for p in motion.intermediatePoses]
+                Y = [p.y_mm + yoff for p in motion.intermediatePoses]
 
+                ax.plot(X, Y, style, linewidth=linewidth)
+                #ax.plot(X[-1], Y[-1], 'ro')
+
+        if doDraw:
+            pylab.draw()
+
+    def plotRawActions(self, longLen, pretty=False, style='b-', xoff=0.0, yoff=0.0, doDraw=True, linewidth=1):
+        "creates a single plot with all 'desired' primitives on top of each other, not the actual primitives"
+        import pylab
+        if doDraw:
+            pylab.figure()
+
+        ax = pylab.subplot(1, 1, 1, aspect='equal')
+        if not pretty:
+            ax.grid()
+            ax.xaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+            ax.yaxis.set_ticks([float(x) * self.resolution_mm for x in range(-longLen-2, longLen+3)])
+
+        if pretty:
+            pylab.axis('off')
+
+        for action in self.actions.values():
+            if action.length <= 0:
+                # skip backups and turn in place actions
+                continue
+
+            if action.angleOffset == 0:
+                X = pylab.arange(0, action.length * self.resolution_mm, self.sampleLength)
+                Y = pylab.zeros(pylab.size(X))
+                pts = pylab.array([X, Y]).T
+            else:
+                if action.angleOffset > 0:
+                    ySign = 1.0
+                else:
+                    ySign = -1.0
+
+                dTheta = action.length * self.resolution_mm / action.targetRadius
+                T = pylab.linspace(-pi/2, -pi/2 + dTheta, 50)
+                X = action.targetRadius * pylab.cos(T)
+                Y = (action.targetRadius * pylab.sin(T) + action.targetRadius) * ySign
+                pts = pylab.array([ X, Y] ).T
+
+
+            for theta in pylab.linspace(0, 2*pi, self.numAngles+1):
+                R = pylab.array([[cos(theta),sin(theta)],[-sin(theta),cos(theta)]])
+                pts_rot = pylab.dot(pts,R)
+                
+                ax.plot(*pts_rot.T, linestyle=style[1], color=style[0], linewidth=linewidth)
+
+        if doDraw:
+            pylab.draw()
+
+            
     def generateAngles(self):
         "create numAngles worth of grid-aligned angles, as close as possible to 2*pi / numAngles radians each"
 
