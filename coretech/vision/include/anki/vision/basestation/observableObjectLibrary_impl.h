@@ -89,7 +89,7 @@ namespace Vision {
                             EnumToString(object->GetType()));
        
         // Since each Marker can only be bound to one Object, clear out the entries for the
-        // of matching known objects we are about to replace
+        // matching known object we are about to replace
         for (const auto& marker : knownObject->GetMarkers())
         {
           _objectWithCode.erase(marker.GetCode());
@@ -115,6 +115,40 @@ namespace Vision {
     _knownObjects.push_back(std::move(object));
     
     return RESULT_OK;
+  }
+  
+  template<class ObsObjectType>
+  bool ObservableObjectLibrary<ObsObjectType>::RemoveObjectWithMarker(const Marker::Code& code)
+  {
+    auto objectWithCodeIter = _objectWithCode.find(code);
+    if(objectWithCodeIter == _objectWithCode.end())
+    {
+      // Code not in use by any known objects
+      return false;
+    }
+    else
+    {
+      bool objectFound = false;
+      const ObsObjectType* objectToRemove = objectWithCodeIter->second;
+      auto knownObjectIter = _knownObjects.begin();
+      while(knownObjectIter != _knownObjects.end())
+      {
+        if(knownObjectIter->get() == objectToRemove)
+        {
+          _knownObjects.erase(knownObjectIter);
+          objectFound = true;
+          break;
+        }
+        
+        ++knownObjectIter;
+      }
+      
+      DEV_ASSERT(objectFound, "ObservableObjectLibrary.RemoveObjectWithMarker.ObjectNotFound");
+      
+      _objectWithCode.erase(objectWithCodeIter);
+      
+      return true;
+    }
   }
   
   template<class ObsObjectType>

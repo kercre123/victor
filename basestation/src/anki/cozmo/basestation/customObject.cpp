@@ -17,6 +17,8 @@
 namespace Anki {
 namespace Cozmo {
 
+IMPLEMENT_ENUM_INCREMENT_OPERATORS(CustomObjectMarker);
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
 const std::vector<Point3f>& CustomObject::GetCanonicalCorners() const
 {

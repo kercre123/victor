@@ -324,6 +324,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteAllCustomObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::UndefineAllCustomObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SelectNextObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomBox>();
@@ -384,13 +385,37 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   template<>
   void BlockWorld::HandleMessage(const ExternalInterface::DeleteAllCustomObjects& msg)
   {
-    _robot->GetContext()->GetVizManager()->EraseAllVizObjects();
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     filter.AddAllowedFamily(ObjectFamily::CustomObject);
     DeleteLocatedObjects(filter);
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>(_robot->GetID());
   };
+  
+  template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::UndefineAllCustomObjects& msg)
+  {
+    // First we need to delete any custom objects we already have, so just call the handler for that
+    ExternalInterface::DeleteAllCustomObjects deletionMsg(_robot->GetID());
+    HandleMessage(deletionMsg);
+    
+    // Remove the definition of anything that uses any Custom marker from the ObsObjLibrary
+    static_assert(Util::EnumToUnderlying(CustomObjectMarker::Circles2) == 0,
+                  "Assuming first CustomObjectMarker is Circles2");
+    
+    s32 numRemoved = 0;
+    for(auto customMarker = CustomObjectMarker::Circles2; customMarker < CustomObjectMarker::Count; ++customMarker)
+    {
+      const Vision::MarkerType markerType = CustomObject::GetVisionMarkerType(customMarker);
+      const bool removed = _objectLibrary.RemoveObjectWithMarker(markerType);
+      if(removed) {
+        ++numRemoved;
+      }
+    }
+    
+    PRINT_NAMED_INFO("BlockWorld.HandleMessage.UndefineAllCustomObjects",
+                     "%d objects removed from library", numRemoved);
+  }
   
   template<>
   void BlockWorld::HandleMessage(const ExternalInterface::SelectNextObject& msg)

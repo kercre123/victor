@@ -355,9 +355,17 @@ message SetRobotCarryingObject {
 ///////////////////////////////////////////////////////////////////////////////
 
 // DeleteAllCustomObjects
-// Deletes all custom objects, leaves blocks, chargers, faces and ledges
+// Deletes all instantiated custom objects, leaves blocks, chargers, faces and ledges.
+// The definitions of those objects remain valid (so new ones can still be created)
 message DeleteAllCustomObjects {
     uint_8 robotID
+}
+
+// UndefineAllCustomObjects
+// All custom objects definitions defined with messages below are completely removed
+// and any instantiations of those objects are deleted.
+message UndefineAllCustomObjects {
+
 }
 
 // CreateFixedCustomObject

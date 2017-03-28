@@ -23,10 +23,13 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
+#include "util/enums/enumOperators.h"
 
 namespace Anki {
 namespace Cozmo {
-    
+  
+DECLARE_ENUM_INCREMENT_OPERATORS(CustomObjectMarker);
+  
 class CustomObject : public ObservableObject
 {
 public:
@@ -63,6 +66,8 @@ public:
   static CustomObject* CreateFixedObstacle(f32 xSize_mm, f32 ySize_mm, f32 zSize_mm);
   
   virtual ~CustomObject();
+  
+  static Vision::MarkerType GetVisionMarkerType(const CustomObjectMarker customMarker);
   
   //
   // Inherited Virtual Methods
@@ -121,7 +126,6 @@ private:
   virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
   
   void SetCanonicalCorners();
-  static Vision::MarkerType GetVisionMarkerType(const CustomObjectMarker customMarker);
   void AddFace(const FaceName whichFace, const CustomObjectMarker marker);
 
   std::array<CustomObjectMarker, NumFaces> _markersByFace;

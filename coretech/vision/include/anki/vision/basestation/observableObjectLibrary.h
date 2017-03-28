@@ -43,6 +43,10 @@ namespace Anki {
       // Will return RESULT_FAIL if library already contains an object using a marker present on the given object.
       Result AddObject(std::unique_ptr<const ObsObjectType>&& object);
       
+      // Remove any object that uses the given marker code.
+      // Returns true if an object is found and removed, false otherwise.
+      bool RemoveObjectWithMarker(const Marker::Code& code);
+      
       // Groups markers referring to the same object type, and clusters them into
       // observed objects, returned in objectsSeen (which is keyed and sorted by
       // distance from the camera to the object). If seenOnlyBy is not ANY_CAMERA, only markers
@@ -56,10 +60,6 @@ namespace Anki {
       // object with that marker/code, a NULL pointer is returned.
       const ObsObjectType* GetObjectWithMarker(const Marker& marker) const;
       const ObsObjectType* GetObjectWithCode(const Marker::Code& code) const;
-      
-      using const_iterator = typename std::list<const ObsObjectType*>::const_iterator;
-      const_iterator begin() const { return _knownObjects.begin(); }
-      const_iterator end() const { return _knownObjects.end(); }
       
     protected:
       

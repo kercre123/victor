@@ -39,7 +39,8 @@ enum class TestState {
   Kidnap,
   SeeCubeInNewOrigin,
   Rejigger,
-  Redefine
+  Redefine,
+  Undefine
 };
 
 
@@ -54,6 +55,7 @@ private:
   
   virtual s32 UpdateSimInternal() override;
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) override;
+  virtual void HandleRobotDeletedAllCustomObjects(const ExternalInterface::RobotDeletedAllCustomObjects& msg) override;
   
   void GetDimension(const webots::Node* node, const std::string& name, f32& dim);
   void DefineObjects();
@@ -328,6 +330,26 @@ s32 CST_CustomObjects::UpdateSimInternal()
       // Wait for the three cubes to be deleted thanks to the redefinition of their type
       IF_CONDITION_WITH_TIMEOUT_ASSERT(GetNumObjects()==2, kDefaultTimeout_sec)
       {
+        SendMoveHeadToAngle(0.f, 100.f, 100.f);
+        
+        using namespace ExternalInterface;
+        SendMessage(MessageGameToEngine(UndefineAllCustomObjects()));
+        
+        _testState = TestState::Undefine;
+      }
+      break;
+    }
+      
+    case TestState::Undefine:
+    {
+      // Wait for the only object left to exist to be the LightCube, since all custom objects
+      // have been undefined
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(kDefaultTimeout_sec,
+                                            GetNumObjects()==1,
+                                            _numDefinesReceived==0)
+      {
+        // TODO: Add test state where we look at a custom object but no longer instantiate it?
+        
         StopMovie();
         CST_EXIT();
       }
@@ -540,6 +562,11 @@ void CST_CustomObjects::HandleDefinedCustomObject(const ExternalInterface::Defin
 {
   _defineResults[_numDefinesReceived] = msg.success;
   ++_numDefinesReceived;
+}
+      
+void CST_CustomObjects::HandleRobotDeletedAllCustomObjects(const ExternalInterface::RobotDeletedAllCustomObjects& msg)
+{
+  _numDefinesReceived = 0;
 }
 
 // ================ End of message handler callbacks ==================
