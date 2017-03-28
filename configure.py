@@ -343,7 +343,7 @@ class GamePlatformConfiguration(object):
 
         if platform != 'android':
             self.workspace_name = '{0}Workspace_{1}'.format(PRODUCT_NAME, self.platform.upper())
-            if options.selected_script_engine == 'mono2x':
+            if platform == 'ios' and options.selected_script_engine == 'mono2x':
                 self.workspace_name += '_Mono2x'
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
@@ -590,6 +590,11 @@ class GamePlatformConfiguration(object):
                 # Call unity for game
                 self.call_unity(script_engine)
 
+                if self.options.features is not None and 'standalone' in self.options.features[0]:
+                    print("Building standalone-apk")
+                    ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
+                    ankibuild.util.File.execute(['buck', 'build', ':cozmoengine_standalone_app'])
+
 
         elif not os.path.exists(self.workspace_path):
             print_status(
@@ -621,12 +626,6 @@ class GamePlatformConfiguration(object):
                     simulator=self.options.simulator,
                     scriptengine=script_engine)
         
-        if buildaction == 'build':
-            if self.options.features is not None and 'standalone' in self.options.features[0]:
-                print("Building standalone-apk")
-                ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
-                ankibuild.util.File.execute(['buck', 'build', ':cozmoengine_standalone_app'])
-
     def call_engine(self, command):
         args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]
         args += ['--platform', self.platform]
