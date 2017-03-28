@@ -442,10 +442,10 @@ void Recharge(void)
 //Verify battery voltage sufficient for assembly/packout
 void BatteryCheck(void)
 {
-  if( g_fixtureType == FIXTURE_BODY2_TEST || g_fixtureType == FIXTURE_BODY3_TEST ) {
+  //if( g_fixtureType == FIXTURE_BODY2_TEST || g_fixtureType == FIXTURE_BODY3_TEST ) {
     //ConsolePrintf("TEST_POWERON 5s\r\n");
     SendCommand(TEST_POWERON, 5, 0, 0); //keep robot powered for a bit longer...
-  }
+  //}
   
   EnableChargeComms(); //switch to comm mode
   MicroWait(100*1000); //wait for battery voltage to stabilize
