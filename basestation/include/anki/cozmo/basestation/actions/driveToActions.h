@@ -450,6 +450,7 @@ namespace Anki {
       // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
       // the block is upside down or already upright, and roll action will be allowed
       void RollToUpright();
+
       // Calculate the approach angle the robot should use to drive to the pre-dock
       // pose that will result in the block being rolled upright.  Returns true
       // if the angle parameter has been set, false if the angle couldn't be

@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
@@ -31,7 +31,8 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const AIWhiteboard::ObjectUseIntention kObjectIntention = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
+static const ObjectInteractionIntention kObjectIntention =
+                   ObjectInteractionIntention::PickUpAnyObject;
 
 // if we haven't seen the cube this recently, search for it
 // TODO:(bn) centralize this logic somewhere, every behavior should have access to this
@@ -65,8 +66,8 @@ bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preR
     return true;
   }
   else {
-    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    const bool hasCube = whiteboard.GetBestObjectForAction(kObjectIntention).IsSet();
+    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+    const bool hasCube = objInfoCache.GetBestObjectForIntention(kObjectIntention).IsSet();
     return hasCube;
   }
 }
@@ -90,8 +91,8 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   }
   else {
     _shouldBeCarrying = false;
-    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    _targetBlockID = whiteboard.GetBestObjectForAction(kObjectIntention);
+    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+    _targetBlockID = objInfoCache.GetBestObjectForIntention(kObjectIntention);
 
     TransitionToAligningToCube(robot);
   }  
@@ -127,14 +128,14 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
                                                                     _targetBlockID,
                                                                     PreActionPose::ActionType::DOCKING);
 
-  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
 
   RetryWrapperAction::RetryCallback retryCallback =
-    [this, driveToBlockAction, &whiteboard](const ExternalInterface::RobotCompletedAction& completion,
+    [this, driveToBlockAction, &objInfoCache](const ExternalInterface::RobotCompletedAction& completion,
                                const u8 retryCount,
                                AnimationTrigger& retryAnimTrigger)
     {
-      const bool blockStillValid = whiteboard.IsObjectValidForAction(kObjectIntention, _targetBlockID);
+      const bool blockStillValid = objInfoCache.IsObjectValidForInteraction(kObjectIntention, _targetBlockID);
       if( ! blockStillValid ) {
         return false;
       }
@@ -394,7 +395,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
                     // if we get here, we didn't find the block (or had another failure), set failure and bail out
                     const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
                     if(failedObject){
-                      const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
+                      const auto objectAction = AIWhiteboard::ObjectActionFailure::PickUpObject;
                       robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
                     }
                   }
@@ -405,7 +406,7 @@ void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool cou
       // we don't want to search, so just set a failure and bail from the behavior
       const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
       if(failedObject){
-        const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
+        const auto objectAction = AIWhiteboard::ObjectActionFailure::PickUpObject;
         robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
       }
     }

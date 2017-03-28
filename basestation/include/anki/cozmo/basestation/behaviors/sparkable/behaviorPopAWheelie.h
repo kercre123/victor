@@ -15,6 +15,8 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
+
 #include <string>
 
 namespace Anki {
@@ -40,7 +42,10 @@ namespace Anki {
       
       virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { UpdateTargetBlock(robot); }
       
-      virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {AIWhiteboard::ObjectUseIntention::PopAWheelieOnObject}; }
+      virtual std::set<ObjectInteractionIntention>
+            GetBehaviorObjectInteractionIntentions() const override {
+              return {ObjectInteractionIntention::PopAWheelieOnObject};
+            }
 
     private:
       

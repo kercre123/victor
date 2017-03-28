@@ -346,7 +346,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   // mark the block as unable to pickup
                   const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(targetBlockID);
                   if(failedObject){
-                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
                   }
                   
                   // couldn't pick up this block. If we have another, try that. Otherwise, fail

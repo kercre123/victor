@@ -30,9 +30,10 @@
 namespace Anki {
 namespace Cozmo {
 
+// Forward declarations
 class ObservableObject;
 class Robot;
-class BlockWorldFilter;
+class BlockWorldFilter;  
 
 namespace DefaultFailToUseParams {
 constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
@@ -73,29 +74,14 @@ public:
   using BeaconList = std::vector<AIBeacon>;
 
   // object usage reason for failure
-  enum class ObjectUseAction {
+  enum class ObjectActionFailure {
     PickUpObject,   // pick up object from location
     StackOnObject,  // stack on top of object
     PlaceObjectAt,   // place object at location
     RollOrPopAWheelie // roll or pop a wheelie on a block
   };
 
-  // intention of what to do with an object. Add things here to centralize logic for the best object to use
-  enum class ObjectUseIntention {
-    // any object which can be picked up
-    PickUpAnyObject,
-    // only pick up upright objects, unless rolling is locked (in which case, pick up any object)
-    PickUpObjectWithAxisCheck,
 
-    RollObjectWithDelegateAxisCheck,
-    RollObjectWithDelegateNoAxisCheck,
-    
-    PopAWheelieOnObject,
-    
-    PyramidBaseObject,
-    PyramidStaticObject,
-    PyramidTopObject
-   };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
@@ -145,9 +131,9 @@ public:
   
   // notify the whiteboard that we just failed to use this object.
   // uses object's current location
-  void SetFailedToUse(const ObservableObject& object, ObjectUseAction action);
+  void SetFailedToUse(const ObservableObject& object, ObjectActionFailure actionFailure);
   // specify location manually - should only be used for PlaceObjectAt
-  void SetFailedToUse(const ObservableObject& object, ObjectUseAction action, const Pose3d& atLocation);
+  void SetFailedToUse(const ObservableObject& object, ObjectActionFailure actionFailure, const Pose3d& atLocation);
 
   // returns true if someone reported a failure to use the given object (by ID), less than the specified seconds ago
   // close to the given location with the given reason(s).
@@ -159,38 +145,27 @@ public:
   // if passed onto DidFailToUse, it will try to find a match for any object
   static constexpr const int ANY_OBJECT = -1;
   // any failure for given object
-  bool DidFailToUse(const int objectID, ObjectUseAction reason) const;
+  bool DidFailToUse(const int objectID, ObjectActionFailure reason) const;
   // any recent failure for given object
-  bool DidFailToUse(const int objectID, ObjectUseAction reason, float recentSecs) const;
+  bool DidFailToUse(const int objectID, ObjectActionFailure reason, float recentSecs) const;
   // any failure for given object at given pose
-  bool DidFailToUse(const int objectID, ObjectUseAction reason, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
+  bool DidFailToUse(const int objectID, ObjectActionFailure reason,
+                    const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
   // any recent failure for given object at given pose
-  bool DidFailToUse(const int objectID, ObjectUseAction reason, float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
+  bool DidFailToUse(const int objectID, ObjectActionFailure reason, float recentSecs,
+                    const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
 
   // same as above, with multiple reasons considered at the same time. Returns true if there is a failure for
   // _any_ of the specified reasons
-  using ReasonsContainer = std::set< ObjectUseAction >;
-  bool DidFailToUse(const int objectID, ReasonsContainer reasons) const;
-  bool DidFailToUse(const int objectID, ReasonsContainer reasons, float recentSecs) const;
-  bool DidFailToUse(const int objectID, ReasonsContainer reasons, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
-  bool DidFailToUse(const int objectID, ReasonsContainer reasons, float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
+  using FailureReasonsContainer = std::set< ObjectActionFailure >;
+  bool DidFailToUse(const int objectID, FailureReasonsContainer reasons) const;
+  bool DidFailToUse(const int objectID, FailureReasonsContainer reasons, float recentSecs) const;
+  bool DidFailToUse(const int objectID, FailureReasonsContainer reasons,
+                    const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
+  bool DidFailToUse(const int objectID, FailureReasonsContainer reasons,
+                    float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
   
-
-
-  // Given an intent to use an object, let the whiteboard decide which objects are valid for the robot to
-  // use. This will check failure to use and other sensible defaults.
-  const std::set< ObjectID >& GetValidObjectsForAction(ObjectUseIntention action) const;
-
-  // small helper to check if a given ID is valid
-  bool IsObjectValidForAction(ObjectUseIntention action, const ObjectID& object) const;
-
-  // Pick which object would be "best" for the robot to interact with, out of the objects which are
-  // valid. This may use distance from the robot, or may be changed to do something else "reasonable" in the
-  // future
-  ObjectID GetBestObjectForAction(ObjectUseIntention action) const;
-
-  // returns a pointer to the filter used for the given action, or nullptr if it doesn't exist
-  const BlockWorldFilter* GetDefaultFilterForAction(ObjectUseIntention action) const;
+  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Beacons
@@ -282,14 +257,6 @@ private:
     Pose3d _pose;
     float  _timestampSecs;
   };
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Helpers
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // Initialize our list of filters for caching valid objects based on ObjectUseIntention 
-  void CreateBlockWorldFilters();
-
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Markers
@@ -309,17 +276,7 @@ private:
   // update render of beacons
   void UpdateBeaconRender();
 
-  // update the best objects for each action type
-  void UpdateValidObjects();
 
-  // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll action
-  bool CanPickupHelper(const ObservableObject* object) const;
-  bool CanPopAWheelieHelper(const ObservableObject* object) const;
-  bool CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const;
-  bool CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidStaticBlock(const ObservableObject* object) const;
-  bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Failures
@@ -337,8 +294,8 @@ private:
   bool EntryMatches(const FailureInfo& entry, float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
   
   // retrieve ObjectFailureTable for the given failure reason/action
-  const ObjectFailureTable& GetObjectFailureTable(ObjectUseAction action) const;
-  ObjectFailureTable& GetObjectFailureTable(ObjectUseAction action);
+  const ObjectFailureTable& GetObjectFailureTable(ObjectActionFailure action) const;
+  ObjectFailureTable& GetObjectFailureTable(ObjectActionFailure action);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -367,15 +324,6 @@ private:
  
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
-
-  // mapping from actions to the best object to use for that action
-  std::map< ObjectUseIntention, ObjectID > _bestObjectForAction;
-
-  // mapping to all valid objects
-  std::map< ObjectUseIntention, std::set< ObjectID > > _validObjectsForAction;
-
-  // also keep track of blockworld filters so we don't need to keep re-creating them
-  std::map< ObjectUseIntention, std::unique_ptr< BlockWorldFilter > > _filtersPerAction;
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;

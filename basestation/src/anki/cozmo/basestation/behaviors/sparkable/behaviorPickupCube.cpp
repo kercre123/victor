@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
@@ -137,22 +138,18 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
 {
   _targetBlockID.UnSet();
   
-  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-  const AIWhiteboard::ObjectUseIntention intent = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
-  const BlockWorldFilter* defaultFilter = whiteboard.GetDefaultFilterForAction( intent );
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+  const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpAnyObject;
+  const BlockWorldFilter& defaultFilter = objInfoCache.GetDefaultFilterForIntention( intent );
   
   // If we have a tap intent (an object was double tapped) then set that object as the targetBlock
-  if(whiteboard.HasTapIntent())
+  if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
-    _targetBlockID = whiteboard.GetBestObjectForAction(intent);
-    return;
-  }
-
-  if( defaultFilter == nullptr ) {
+    _targetBlockID = objInfoCache.GetBestObjectForIntention(intent);
     return;
   }
   
-  BlockWorldFilter filter(*defaultFilter);
+  BlockWorldFilter filter(defaultFilter);
   filter.AddFilterFcn(
     [&robot, this](const ObservableObject* object)
     {
@@ -206,19 +203,19 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   DEBUG_SET_STATE(PickingUpCube);
   DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlockID, false, 0, false,0, true);
   
-  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
 
   RetryWrapperAction::RetryCallback retryCallback =
-    [this, pickupAction, &whiteboard](const ExternalInterface::RobotCompletedAction& completion,
-                                                                         const u8 retryCount,
-                                                                         AnimationTrigger& retryAnimTrigger)
+    [this, pickupAction, &objInfoCache](const ExternalInterface::RobotCompletedAction& completion,
+                                        const u8 retryCount,
+                                        AnimationTrigger& retryAnimTrigger)
   {
     // use the whitebaord to check if we can still pickup the action. Note that this isn't the same check we
     // did before, so this is slightly wrong, but this still helps because if the whiteboard says we can't use
     // the object, then our filter (which may be more strict) will definitely reject it.
-    const AIWhiteboard::ObjectUseIntention intent = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
+    const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpAnyObject;
 
-    const bool blockStillValid = whiteboard.IsObjectValidForAction(intent, _targetBlockID);
+    const bool blockStillValid = objInfoCache.IsObjectValidForInteraction(intent, _targetBlockID);
     if( ! blockStillValid ) {
       return false;
     }
@@ -344,7 +341,7 @@ void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
   // mark this as failed to pickup so that we don't retry
   const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
   if(failedObject){
-    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
   }
   _targetBlockID.UnSet();
   

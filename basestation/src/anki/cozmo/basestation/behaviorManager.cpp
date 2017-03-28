@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -1218,10 +1219,11 @@ void BehaviorManager::UpdateTappedObject()
       const ObjectID& tappedObject = GetCurrTappedObject();
       for(const auto& behavior : _tapInteractionBehaviors)
       {
-        const auto& intentions = behavior->GetBehaviorObjectUseIntentions();
+        const auto& intentions = behavior->GetBehaviorObjectInteractionIntentions();
         for(const auto& intent : intentions)
         {
-          if(_robot.GetAIComponent().GetWhiteboard().IsObjectValidForAction(intent, tappedObject))
+          auto& objInfoCache = _robot.GetAIComponent().GetObjectInteractionInfoCache();
+          if(objInfoCache.IsObjectValidForInteraction(intent, tappedObject))
           {
             canAnyTapBehaviorUseObject = true;
             break;

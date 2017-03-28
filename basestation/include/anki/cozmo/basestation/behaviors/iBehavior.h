@@ -50,6 +50,7 @@ class Robot;
 class ActionableObject;
 class DriveToObjectAction;
 class IHelper;
+enum class ObjectInteractionIntention;
   
 class BehaviorPreReqNone;
 class BehaviorPreReqRobot;
@@ -180,7 +181,8 @@ public:
   void UpdateTargetBlocks(const Robot& robot) const { UpdateTargetBlocksInternal(robot); }
   
   // Get the ObjectUseIntentions this behavior uses
-  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const { return {}; }
+  virtual std::set<ObjectInteractionIntention>
+                           GetBehaviorObjectInteractionIntentions() const { return {}; }
   
   // Handles stopping, updating target blocks, and re-initing the behavior so things get updated properly with
   // the newly tapped object

@@ -148,8 +148,8 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
   // check to make sure we haven't failed to interact with the block recently
   const auto& whiteboard = robotPtr->GetAIComponent().GetWhiteboard();
   const bool recentlyFailed = whiteboard.DidFailToUse(obj->GetID(),
-                                                      {{AIWhiteboard::ObjectUseAction::PickUpObject,
-                                                        AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},
+                                                      {{AIWhiteboard::ObjectActionFailure::PickUpObject,
+                                                        AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie}},
                                                       DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec);
   
   // TODO:(bn) lee suggested we use != UNKNOWN instead of == known, so that we will still attempt to interact

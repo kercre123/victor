@@ -150,7 +150,9 @@ void SetupStackTest(Robot& robot, IBehavior*& stackBehavior, ObjectID& objID1, O
     ASSERT_EQ(RESULT_OK, result);
   }
 
-  aiComponent.Update();
+  static float incrementEngineTime = 0.0f;
+  incrementEngineTime += 100000000.0f;
+  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime);
   ASSERT_TRUE(stackBehavior->IsRunnable(prereq)) << "now behavior should be runnable";
 
 }

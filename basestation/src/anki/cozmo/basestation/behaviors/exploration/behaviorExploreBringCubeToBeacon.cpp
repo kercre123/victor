@@ -124,7 +124,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   
   // calculate if candidate pose is close to a previous failure
   const bool isLocationFailureInWhiteboard = robotRef.GetAIComponent().GetWhiteboard().DidFailToUse(-1,
-    AIWhiteboard::ObjectUseAction::PlaceObjectAt,
+    AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
     kRecentFailure_sec,
     outPose, kLocationFailureDist_mm, kLocationFailureRot_rad);
   
@@ -217,7 +217,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
       {
         const Pose3d& currentPose = objPtr->GetPose();
         const bool recentFail = whiteboard.DidFailToUse(objectInfo.id,
-          {{AIWhiteboard::ObjectUseAction::PickUpObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},
+          {{AIWhiteboard::ObjectActionFailure::PickUpObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie}},
           kRecentFailure_sec,
           currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
         
@@ -379,7 +379,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       if ( pickUpFinalFail ) {
         const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID );
         if ( failedObject ) {
-          robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+          robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
         }
         
         // rsam: considering this, but pickUp action would already fire emotion events
@@ -457,7 +457,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     if ( stackOnCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID( bottomCubeID );
       if (failedObject) {
-        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
+        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::StackOnObject);
       }
       
       // rsam: considering this, but placeOn action would already fire emotion events
@@ -532,7 +532,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     if ( placeAtCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID );
       if (failedObject) {
-        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
+        robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PlaceObjectAt, pose);
       }
 
       // rsam: considering this, but placeAt action would already fire emotion events
@@ -659,7 +659,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
     const Pose3d& currentPose = blockPtr->GetPose();
     const bool recentFail = whiteboard.DidFailToUse(blockPtr->GetID(),
-      AIWhiteboard::ObjectUseAction::StackOnObject,
+      AIWhiteboard::ObjectActionFailure::StackOnObject,
       kRecentFailure_sec,
       currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
     

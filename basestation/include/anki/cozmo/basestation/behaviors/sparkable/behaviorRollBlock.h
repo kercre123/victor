@@ -15,6 +15,8 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
+
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -42,7 +44,12 @@ protected:
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { UpdateTargetBlock(robot); }
   
-  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_isBlockRotationImportant ? AIWhiteboard::ObjectUseIntention::RollObjectWithDelegateAxisCheck : AIWhiteboard::ObjectUseIntention::RollObjectWithDelegateNoAxisCheck)}; }
+  virtual std::set<ObjectInteractionIntention>
+        GetBehaviorObjectInteractionIntentions() const override {
+          return {(_isBlockRotationImportant ?
+                   ObjectInteractionIntention::RollObjectWithDelegateAxisCheck :
+                   ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck)};
+        }
   
 private:
   const Robot& _robot;

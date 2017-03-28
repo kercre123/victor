@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -83,7 +83,8 @@ void BehaviorPopAWheelie::StopInternalFromDoubleTap(Robot& robot)
 
 void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 {
-  _targetBlock = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(AIWhiteboard::ObjectUseIntention::PopAWheelieOnObject);
+  _targetBlock = _robot.GetAIComponent().GetObjectInteractionInfoCache().
+       GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
 }
 
 void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
@@ -186,7 +187,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                     // mark the block as inaccessible
                     const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlock);
                     if(failedObject){
-                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
+                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
                     }
                     break;
                   }

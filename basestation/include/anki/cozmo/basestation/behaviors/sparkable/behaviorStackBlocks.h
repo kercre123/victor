@@ -15,6 +15,8 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -42,7 +44,12 @@ protected:
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { BehaviorStackBlocks::UpdateTargetBlocks(robot); }
   
-  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {(_stackInAnyOrientation ? AIWhiteboard::ObjectUseIntention::PickUpAnyObject : AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck)}; }
+  virtual std::set<ObjectInteractionIntention>
+        GetBehaviorObjectInteractionIntentions() const override {
+          return {(_stackInAnyOrientation ?
+                   ObjectInteractionIntention::PickUpAnyObject :
+                   ObjectInteractionIntention::PickUpObjectWithAxisCheck)};
+        }
   
 private:
   const f32   _distToBackupOnStackFailure_mm = 40;

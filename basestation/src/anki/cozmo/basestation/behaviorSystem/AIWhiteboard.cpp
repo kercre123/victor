@@ -15,12 +15,12 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
-#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -58,63 +58,41 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
 
-const int kMaxStackHeightReach = 2;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
+const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
 {
-  using ObjectUseAction = AIWhiteboard::ObjectUseAction;
+  using ObjectActionFailure = AIWhiteboard::ObjectActionFailure;
   switch(action) {
-    case ObjectUseAction::PickUpObject : { return "PickUp";  }
-    case ObjectUseAction::StackOnObject: { return "StackOn"; }
-    case ObjectUseAction::PlaceObjectAt: { return "PlaceAt"; }
-    case ObjectUseAction::RollOrPopAWheelie: { return "RollOrPop";}
+    case ObjectActionFailure::PickUpObject : { return "PickUp";  }
+    case ObjectActionFailure::StackOnObject: { return "StackOn"; }
+    case ObjectActionFailure::PlaceObjectAt: { return "PlaceAt"; }
+    case ObjectActionFailure::RollOrPopAWheelie: { return "RollOrPop";}
   };
-
+  
   // should never get here, assert if it does (programmer error specifying action enum class)
   DEV_ASSERT(false, "AIWhiteboard.ObjectUseActionToString.InvalidAction");
   return "UNDEFINED_ERROR";
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const char* ObjectUseIntentionToString(AIWhiteboard::ObjectUseIntention intention)
-{
-  using ObjectUseIntention = AIWhiteboard::ObjectUseIntention;
-  switch(intention) {
-    case ObjectUseIntention::PickUpAnyObject: { return "PickUpAnyObject"; }
-    case ObjectUseIntention::PickUpObjectWithAxisCheck: { return "PickUpObjectWithAxisCheck"; }
-    case ObjectUseIntention::RollObjectWithDelegateAxisCheck: { return "RollObjectWithDelegateAxisCheck"; }
-    case ObjectUseIntention::RollObjectWithDelegateNoAxisCheck: { return "RollObjectWithDelegateNoAxisCheck"; }
-    case ObjectUseIntention::PopAWheelieOnObject: { return "PopAWheelieOnObject"; }
-    case ObjectUseIntention::PyramidBaseObject: { return "PyramidBaseObject"; }
-    case ObjectUseIntention::PyramidStaticObject: { return "PyramidStaticObject"; }
-    case ObjectUseIntention::PyramidTopObject: { return "PyramidTopObject"; }
-  };
-
-  // should never get here, assert if it does (programmer error specifying intention enum class)
-  DEV_ASSERT(false, "AIWhiteboard.ObjectUseIntentionToString.InvalidIntention");
-  return "UNDEFINED_ERROR";
-}
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // return how many max entries of the given type we store. DO NOT return 0, at least there has to be 1
-size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
+size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectActionFailure action)
 {
-  using ObjectUseAction = AIWhiteboard::ObjectUseAction;
+  using ObjectActionFailure = AIWhiteboard::ObjectActionFailure;
   switch(action) {
-    case ObjectUseAction::PickUpObject : { return 1; }
-    case ObjectUseAction::StackOnObject: { return 1; }
-    case ObjectUseAction::PlaceObjectAt: { return 10; } // this can affect behaviorExploreBringCubeToBeacon's kLocationFailureDist_mm (read note there)
-    case ObjectUseAction::RollOrPopAWheelie: { return 1;}
+    case ObjectActionFailure::PickUpObject :     { return 1; }
+    case ObjectActionFailure::StackOnObject:     { return 1; }
+    case ObjectActionFailure::PlaceObjectAt:     { return 10;} // this can affect behaviorExploreBringCubeToBeacon's kLocationFailureDist_mm (read note there)
+    case ObjectActionFailure::RollOrPopAWheelie: { return 1; }
   };
-
+  
   // should never get here, assert if it does (programmer error specifying action enum class)
   DEV_ASSERT(false, "AIWhiteboard.GetObjectFailureListMaxSize.InvalidAction");
   return 0;
 }
-
+  
 } // namespace
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -125,302 +103,12 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 {
-  CreateBlockWorldFilters();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIWhiteboard::~AIWhiteboard()
 {
 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanPickupHelper(const ObservableObject* object) const
-{
-  if( nullptr == object ) {
-    PRINT_NAMED_ERROR("AIWhiteboard.CanPickupHelper.NullObject", "object was null");
-    return false;
-  }
-  
-  // check for recent failures
-  const bool recentlyFailed = DidFailToUse(object->GetID(),
-                                           {{ ObjectUseAction::PickUpObject, ObjectUseAction::RollOrPopAWheelie }},
-                                           DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                           object->GetPose().GetWithRespectToOrigin(),
-                                           DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                           DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-  
-  const bool canPickUp = _robot.CanPickUpObject(*object);
-  return !recentlyFailed && canPickUp;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanPopAWheelieHelper(const ObservableObject* object) const
-{
-  const bool hasFailedToPopAWheelie = DidFailToUse(object->GetID(),
-                                                   AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
-                                                   DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                                   object->GetPose(),
-                                                   DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                                   DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-  
-  return (!hasFailedToPopAWheelie && _robot.CanPickUpObjectFromGround(*object));
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const
-{
-  const Pose3d p = object->GetPose().GetWithRespectToOrigin();
-  return (CanRollObjectDelegateNoAxisHelper(object) &&
-          (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const
-{
-  const bool hasFailedToRoll = DidFailToUse(object->GetID(),
-                                            AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
-                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
-                                            object->GetPose(),
-                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
-  
-  if(!hasFailedToRoll){
-    // Logic from can interact with - unfortunately those helpers check for on top of
-    // which isn't relevant for roll delegate so we check the relevant properties
-    // directly here
-    if( object->GetFamily() != ObjectFamily::Block &&
-        object->GetFamily() != ObjectFamily::LightCube ) {
-      return false;
-    }
-
-    // Only roll blocks that are resting flat
-    if( !object->IsRestingFlat() ) {
-      return false;
-    }
-    
-    Pose3d wasted;
-    // check if we can transform to robot space
-    if ( !object->GetPose().GetWithRespectTo(_robot.GetPose(), wasted) ) {
-      return false;
-    }
-    
-    return true;
-  }
-
-  return false;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const
-{
-  const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
-  
-  for(const auto& pyramid: pyramids){
-    if(object->GetID() == pyramid->GetPyramidBase().GetBaseBlockID()){
-      return true;
-    }
-  }
-  
-  // If a pyramid exists and this object doesn't match the base, wait to assign that object
-  if(!pyramids.empty()){
-    return false;
-  }
-
-  for(const auto& pyramidBase: pyramidBases){
-    if(object->GetID() == pyramidBase->GetBaseBlockID()){
-      return true;
-    }
-  }
-  
-  // If a base exists and this object doesn't match the base, wait to assign that object
-  if(!pyramidBases.empty()){
-    return false;
-  }
-  
-  
-  // If there is a stack of 2, the top block should be selected as the base of the pyramid
-  const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
-  for(const auto& stack: stacks){
-    if(stack->GetStackHeight() == kMaxStackHeightReach &&
-       stack->GetTopBlockID() == object->GetID()){
-      return _robot.CanPickUpObject(*object);
-    }
-  }
-  
-  // If the robot is carrying a block, make that the static block
-  if(_robot.IsCarryingObject()){
-    return _robot.GetCarryingObject() == object->GetID();
-  }
-  
-  if(!stacks.empty()){
-    return false;
-  }
-  
-  // So long as we can pick the object up, it's a valid base block
-  return _robot.CanPickUpObject(*object);
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanUseAsBuildPyramidStaticBlock(const ObservableObject* object) const
-{
-  // Base block must be set before static block can be set
-  auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
-  if(!bestBaseBlock.IsSet() || (bestBaseBlock == object->GetID())){
-    return false;
-  }
-  
-  const auto& pyramidBases = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
-  const auto& pyramids = _robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
-  
-  for(const auto& pyramid: pyramids){
-    if((object->GetID() == pyramid->GetPyramidBase().GetStaticBlockID()) &&
-       (bestBaseBlock == pyramid->GetPyramidBase().GetBaseBlockID())){
-      return true;
-    }
-  }
-  
-  // If a pyramid exists and this object doesn't match the static, wait to assign that object
-  if(!pyramids.empty()){
-    return false;
-  }
-
-  for(const auto& pyramidBase: pyramidBases){
-    if((object->GetID() == pyramidBase->GetStaticBlockID()) &&
-       (bestBaseBlock == pyramidBase->GetBaseBlockID())){
-      return true;
-    }
-  }
-
-  // If a base exists and this object doesn't match the static, wait to assign that object
-  if(!pyramidBases.empty()){
-    return false;
-  }
-  
-  if(!object->IsRestingAtHeight(0, BlockWorld::kOnCubeStackHeightTolerance)){
-    return false;
-  }
-
-  return true;
-}
-  
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::CanUseAsBuildPyramidTopBlock(const ObservableObject* object) const
-{
-  // Base and static blocks must be set before top block can be set
-  auto bestBaseBlock = GetBestObjectForAction(ObjectUseIntention::PyramidBaseObject);
-  auto bestStaticBlock = GetBestObjectForAction(ObjectUseIntention::PyramidStaticObject);
-
-  if(!bestBaseBlock.IsSet() ||
-     !bestStaticBlock.IsSet() ||
-     (bestBaseBlock == object->GetID()) ||
-     (bestStaticBlock == object->GetID())){
-    return false;
-  }
-  
-  // If the robot is carrying a block, which is not needed for the base
-  // make that the TopBlock
-  if(_robot.IsCarryingObject()){
-    return _robot.GetCarryingObject() == object->GetID();
-  }
-  
-  return _robot.CanPickUpObject(*object);
-}
-  
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::CreateBlockWorldFilters()
-{
-
-  // Pickup no axis check
-  {
-    BlockWorldFilter *pickupFilter = new BlockWorldFilter;
-    pickupFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    pickupFilter->AddFilterFcn( std::bind(&AIWhiteboard::CanPickupHelper, this, std::placeholders::_1) );
-    _filtersPerAction[ObjectUseIntention::PickUpAnyObject].reset( pickupFilter );
-  }
-
-  // Pickup with axis check
-  {
-    BlockWorldFilter *pickupFilter = new BlockWorldFilter;
-    pickupFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    pickupFilter->AddFilterFcn(
-      [this](const ObservableObject* object)
-      {
-        if( ! CanPickupHelper(object) ) {
-          return false;
-        }
-        
-        // check the up axis
-        const bool forFreeplay = true;
-        const bool isRollingUnlocked = _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube,forFreeplay);
-        const bool upAxisOk = ! isRollingUnlocked ||
-          object->GetPose().GetWithRespectToOrigin().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
-        
-        return upAxisOk;
-      });
-    _filtersPerAction.insert( std::make_pair( ObjectUseIntention::PickUpObjectWithAxisCheck,
-                                              std::unique_ptr<BlockWorldFilter>(pickupFilter) ) );
-  }
-
-  
-  // Roll object with delegate - axis check
-  {
-    BlockWorldFilter *rollFilter = new BlockWorldFilter;
-    rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollObjectDelegateWithAxisHelper,
-                                       this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::RollObjectWithDelegateAxisCheck].reset(rollFilter);
-  }
-  
-  // Roll object with delegate - no axis check
-  {
-    BlockWorldFilter *rollFilter = new BlockWorldFilter;
-    rollFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    rollFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanRollObjectDelegateNoAxisHelper,
-                                       this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::RollObjectWithDelegateNoAxisCheck].reset(rollFilter);
-  }
-  
-  // Pop A Wheelie check
-  {
-    BlockWorldFilter *popFilter = new BlockWorldFilter;
-    popFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    popFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanPopAWheelieHelper, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::PopAWheelieOnObject].reset(popFilter);
-  }
-  
-  // Pyramid Base object
-  {
-    BlockWorldFilter *baseFilter = new BlockWorldFilter;
-    baseFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    baseFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsBuildPyramidBaseBlock, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::PyramidBaseObject].reset(baseFilter);
-  }
-  
-  // Pyramid Static object
-  {
-    BlockWorldFilter *staticFilter = new BlockWorldFilter;
-    staticFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    staticFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsBuildPyramidStaticBlock, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::PyramidStaticObject].reset(staticFilter);
-  }
-  
-  // Pyramid Top object
-  {
-    BlockWorldFilter *topFilter = new BlockWorldFilter;
-    topFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    topFilter->AddFilterFcn(std::bind(&AIWhiteboard::CanUseAsBuildPyramidTopBlock, this, std::placeholders::_1));
-    _filtersPerAction[ObjectUseIntention::PyramidTopObject].reset(topFilter);
-  }
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -443,7 +131,6 @@ void AIWhiteboard::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::Update()
 {
-  UpdateValidObjects();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -678,10 +365,10 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
   return allInBeacon;
 }
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseAction action)
+void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectActionFailure action)
 {
   // PlaceObjectAt should provide location
-  DEV_ASSERT(action != ObjectUseAction::PlaceObjectAt, "AIWhiteboard.SetFailedToUse.PlaceObjectAtRequiresLocation");
+  DEV_ASSERT(action != ObjectActionFailure::PlaceObjectAt, "AIWhiteboard.SetFailedToUse.PlaceObjectAtRequiresLocation");
 
   // use object current pose
   const Pose3d& objectPose = object.GetPose();
@@ -689,7 +376,7 @@ void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseActio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseAction action, const Pose3d& atLocation)
+void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectActionFailure action, const Pose3d& atLocation)
 {
   // simply store failure's timestamp
   ObjectFailureTable& failureTableForAction = GetObjectFailureTable(action);
@@ -707,7 +394,7 @@ void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseActio
     // print the one we are removing
     PRINT_CH_INFO("AIWhiteboard", "SetFailedToUse",
       "Removed failure on ['%s'] for object '%d' atPose (%.2f,%.2f,%.2f) atTime (%fs) to add one (we are at the max=%zu)",
-      ObjectUseActionToString(action),
+      ObjectActionFailureToString(action),
       object.GetID().GetValue(),
       failureListForObj.begin()->_pose.GetTranslation().x(),
       failureListForObj.begin()->_pose.GetTranslation().y(),
@@ -728,7 +415,7 @@ void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseActio
     // log the new one
     PRINT_CH_INFO("AIWhiteboard", "SetFailedToUse",
       "Added failure on ['%s'] for object '%d' atPose (%.2f,%.2f,%.2f) atTime (%fs) ",
-      ObjectUseActionToString(action),
+      ObjectActionFailureToString(action),
       object.GetID().GetValue(),
       atLocation.GetTranslation().x(),
       atLocation.GetTranslation().y(),
@@ -738,51 +425,51 @@ void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseActio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action) const
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectActionFailure action) const
 {
-  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, -1.f, Pose3d(), -1.f, Radians());
+  const bool ret = DidFailToUse(objectID, FailureReasonsContainer{action}, -1.f, Pose3d(), -1.f, Radians());
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, float recentSecs) const
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectActionFailure action, float recentSecs) const
 {
-  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, recentSecs, Pose3d(), -1.f, Radians());
+  const bool ret = DidFailToUse(objectID, FailureReasonsContainer{action}, recentSecs, Pose3d(), -1.f, Radians());
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action,
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectActionFailure action,
   const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
 {
-  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, -1.f, atPose, distThreshold_mm, angleThreshold);
+  const bool ret = DidFailToUse(objectID, FailureReasonsContainer{action}, -1.f, atPose, distThreshold_mm, angleThreshold);
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, float recentSecs,
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectActionFailure action, float recentSecs,
   const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
 {
-  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, recentSecs, atPose, distThreshold_mm, angleThreshold);
+  const bool ret = DidFailToUse(objectID, FailureReasonsContainer{action}, recentSecs, atPose, distThreshold_mm, angleThreshold);
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons) const
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::FailureReasonsContainer reasons) const
 {
   const bool ret = DidFailToUse(objectID, reasons, -1.f, Pose3d(), -1.f, Radians());
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons, float recentSecs) const
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::FailureReasonsContainer reasons, float recentSecs) const
 {
   const bool ret = DidFailToUse(objectID, reasons, recentSecs, Pose3d(), -1.f, Radians());
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons,
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::FailureReasonsContainer reasons,
   const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
 {
   const bool ret = DidFailToUse(objectID, reasons, -1.f, atPose, distThreshold_mm, angleThreshold);
@@ -790,7 +477,7 @@ bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContain
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons, float recentSecs,
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::FailureReasonsContainer reasons, float recentSecs,
   const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
 {
   for( const auto& reason : reasons ) {
@@ -888,13 +575,13 @@ bool AIWhiteboard::EntryMatches(const FailureInfo& entry, float recentSecs, cons
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseAction action) const
+const AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(AIWhiteboard::ObjectActionFailure action) const
 {
   switch(action) {
-    case ObjectUseAction::PickUpObject : { return _pickUpFailures;  }
-    case ObjectUseAction::StackOnObject: { return _stackOnFailures; }
-    case ObjectUseAction::PlaceObjectAt: { return _placeAtFailures; }
-    case ObjectUseAction::RollOrPopAWheelie: { return _rollOrPopFailures;}
+    case ObjectActionFailure::PickUpObject : { return _pickUpFailures;  }
+    case ObjectActionFailure::StackOnObject: { return _stackOnFailures; }
+    case ObjectActionFailure::PlaceObjectAt: { return _placeAtFailures; }
+    case ObjectActionFailure::RollOrPopAWheelie: { return _rollOrPopFailures;}
   }
 
   // should never get here, assert if it does (programmer error specifying action enum class)
@@ -906,13 +593,13 @@ const AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(Obje
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseAction action)
+AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(AIWhiteboard::ObjectActionFailure action)
 {
   switch(action) {
-    case ObjectUseAction::PickUpObject : { return _pickUpFailures;  }
-    case ObjectUseAction::StackOnObject: { return _stackOnFailures; }
-    case ObjectUseAction::PlaceObjectAt: { return _placeAtFailures; }
-    case ObjectUseAction::RollOrPopAWheelie: { return _rollOrPopFailures;}
+    case ObjectActionFailure::PickUpObject : { return _pickUpFailures;  }
+    case ObjectActionFailure::StackOnObject: { return _stackOnFailures; }
+    case ObjectActionFailure::PlaceObjectAt: { return _placeAtFailures; }
+    case ObjectActionFailure::RollOrPopAWheelie: { return _rollOrPopFailures;}
   }
 
   // should never get here, assert if it does (programmer error specifying action enum class)
@@ -923,60 +610,6 @@ AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseA
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::set< ObjectID >& AIWhiteboard::GetValidObjectsForAction(ObjectUseIntention action) const
-{
-  const auto setIter = _validObjectsForAction.find(action);
-  if( setIter != _validObjectsForAction.end() ) {
-    return setIter->second;
-  }
-  else {
-    // we need to return a reference, so use a static. Should only happen if this is called before our first
-    // update
-    PRINT_NAMED_WARNING("AIWhiteboard.GetValidObjectsForAction.NoObjects",
-                        "Tried to get valid objects for action intent %d, but don't have a cache yet",
-                        (int)action);
-    const static std::set< ObjectID > emptyStaticSet;
-    return emptyStaticSet;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIWhiteboard::IsObjectValidForAction(ObjectUseIntention action, const ObjectID& object) const
-{
-  const auto setIter = _validObjectsForAction.find(action);
-  if( setIter == _validObjectsForAction.end() ) {
-    return false;
-  }
-  
-  const auto objectIter = setIter->second.find(object);
-  // the object is valid if and only if it is in our valid set
-  return objectIter != setIter->second.end();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID AIWhiteboard::GetBestObjectForAction(ObjectUseIntention intent) const
-{
-  auto iter = _bestObjectForAction.find(intent);
-  if( iter != _bestObjectForAction.end() ) {
-    return iter->second;
-  }
-  else {
-    return {};
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const BlockWorldFilter* AIWhiteboard::GetDefaultFilterForAction(ObjectUseIntention action) const
-{
-  auto iter = _filtersPerAction.find(action);
-  if( iter != _filtersPerAction.end() ) {
-    return iter->second.get();
-  }
-  else {
-    return nullptr;
-  }
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vision::FaceID_t AIWhiteboard::GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
@@ -1298,60 +931,6 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::UpdateValidObjects()
-{
-  for( const auto& filterPair : _filtersPerAction ) {
-    const auto& actionIntent = filterPair.first;
-    const auto& filterPtr = filterPair.second;
-
-    // update set of valid objects
-    auto& validObjectIDSet = _validObjectsForAction[actionIntent];
-    validObjectIDSet.clear();
-      
-    std::vector<const ObservableObject*> objects;
-    _robot.GetBlockWorld().FindLocatedMatchingObjects(*filterPtr, objects);
-    for( const ObservableObject* obj : objects ) {
-      if( obj ) {
-        validObjectIDSet.insert( obj->GetID() );
-      }
-    }
-
-    const bool bestIsStillValid = validObjectIDSet.find(_bestObjectForAction[actionIntent]) != validObjectIDSet.end();
-    
-    // Only update _bestObjectForAction if we don't have a tap object, or if the tap object became invalid
-    if(!_haveTapIntentionObject || !bestIsStillValid)
-    {      
-      // select best object
-      const ObservableObject* closestObject = _robot.GetBlockWorld().FindLocatedObjectClosestTo(_robot.GetPose(),
-                                                                                                *filterPair.second);
-      if( closestObject != nullptr ) {
-
-        if( _haveTapIntentionObject && _bestObjectForAction[actionIntent].IsSet() ) {
-          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ResetBestTapped",
-                        "We have a tap intent, but object id %d is no longer valid for action %s, selecting object %d instead",
-                        _bestObjectForAction[actionIntent].GetValue(),
-                        ObjectUseIntentionToString(actionIntent),
-                        closestObject->GetID().GetValue());
-        }
-        
-        _bestObjectForAction[ actionIntent ] = closestObject->GetID();
-      }
-      else {
-
-        if( _haveTapIntentionObject && _bestObjectForAction[actionIntent].IsSet() ) {
-          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ClearBestTapped",
-                        "We have a tap intent, but object id %d is no longer valid, clearing best for action %s",
-                        _bestObjectForAction[actionIntent].GetValue(),
-                        ObjectUseIntentionToString(actionIntent));
-        }
-
-        _bestObjectForAction[ actionIntent ].UnSet();
-      }
-    }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::UpdatePossibleObjectRender()
 {
   if ( kBW_DebugRenderPossibleObjects )
@@ -1421,50 +1000,12 @@ void AIWhiteboard::UpdateBeaconRender()
 void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
 {
   const ObservableObject* connectedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
-  const ObservableObject* locatedObject   = _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
   
   // We still want to do something with this double tapped object even if it doesn't exist in the
   // current frame
   if(connectedObject != nullptr)
   {
-    bool filterCanUseObject = false;
-    
-    // For all intentions and their filters check if the filter can use the objectID
-    // and if so set objectID as the best object for the intention
-    for(const auto& filterPair : _filtersPerAction)
-    {
-      const auto& actionIntent = filterPair.first;
-      const auto& filterPtr = filterPair.second;
-
-      const ObjectID oldBest = _bestObjectForAction[actionIntent];      
-      _bestObjectForAction[actionIntent].UnSet();
-      
-      // consider located instance only, if we don't know where it is we can't use it
-      if(filterPtr && (nullptr != locatedObject) &&
-         filterPtr->ConsiderObject(locatedObject))
-      {
-
-        if( oldBest != objectID ) {
-          PRINT_CH_INFO("AIWhiteboard", "SetBestObjectForTap",
-                        "Setting tapped object %d as best for intention '%s'",
-                        objectID.GetValue(),
-                        ObjectUseIntentionToString(actionIntent));
-        }
-        
-        _bestObjectForAction[actionIntent] = objectID;
-        filterCanUseObject = true;
-      }
-    }
-    
-    // None of the action intention filters can currently use objectID but still
-    // we still have a tap intention object because ReactToDoubleTap can run and
-    // determine if we can actually use the the tapped object
-    if(!filterCanUseObject)
-    {
-      PRINT_CH_INFO("AIWhiteBoard", "SetObjectTapInteration.NoFilter",
-                          "No actionIntent filter can currently use object %u",
-                          objectID.GetValue());
-    }
+    _robot.GetAIComponent().GetObjectInteractionInfoCache().ObjectTapInteractionOccurred(objectID);
   }
   else
   {
@@ -1487,8 +1028,8 @@ void AIWhiteboard::ClearObjectTapInteraction()
   
   _suppressReactToDoubleTap = false;
   
-  // Update the valid objects for each ObjectUseIntention now that we don't have a tapIntentionObject
-  UpdateValidObjects();
+  // Invalidate current valid objects since tapIntention has changed
+  _robot.GetAIComponent().GetObjectInteractionInfoCache().InvalidateAllIntents();
 }
 
 } // namespace Cozmo

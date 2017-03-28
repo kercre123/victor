@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
@@ -336,13 +337,11 @@ bool BehaviorBuildPyramidBase::CheckBaseBlockPoseIsFree(f32 xOffset, f32 yOffset
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
 {
-  using Intention = AIWhiteboard::ObjectUseIntention;
-  auto bestBase   = robot.GetAIComponent().GetWhiteboard().
-                      GetBestObjectForAction(Intention::PyramidBaseObject);
-  auto bestStatic = robot.GetAIComponent().GetWhiteboard().
-                      GetBestObjectForAction(Intention::PyramidStaticObject);
-  auto bestTop    =  robot.GetAIComponent().GetWhiteboard().
-                      GetBestObjectForAction(Intention::PyramidTopObject);
+  using Intention = ObjectInteractionIntention;
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+  auto bestBase   = objInfoCache.GetBestObjectForIntention(Intention::PyramidBaseObject);
+  auto bestStatic = objInfoCache.GetBestObjectForIntention(Intention::PyramidStaticObject);
+  auto bestTop    = objInfoCache.GetBestObjectForIntention(Intention::PyramidTopObject);
   const bool blockAssignmentChanged = (bestBase != _baseBlockID) ||
                                       (bestStatic != _staticBlockID) ||
                                       (bestTop != _topBlockID);

@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 
 #include <vector>
 
@@ -54,7 +55,10 @@ protected:
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { CheckForNearbyObject(robot); }
   
-  virtual std::set<AIWhiteboard::ObjectUseIntention> GetBehaviorObjectUseIntentions() const override { return {AIWhiteboard::ObjectUseIntention::PickUpAnyObject}; }
+  virtual std::set<ObjectInteractionIntention>
+        GetBehaviorObjectInteractionIntentions() const override {
+           return {ObjectInteractionIntention::PickUpAnyObject};
+        }
   
 private:
   

@@ -25,10 +25,11 @@ namespace Cozmo {
 // Forward declarations
 class AIInformationAnalyzer;
 class AIWhiteboard;
+class BehaviorEventAnimResponseDirector;
 class BehaviorHelperComponent;
+class ObjectInteractionInfoCache;
 class Robot;
 class WorkoutComponent;
-class BehaviorEventAnimResponseDirector;
   
 class AIComponent : private Util::noncopyable
 {
@@ -41,12 +42,6 @@ public:
   // Components
   ////////////////////////////////////////////////////////////////////////////////
 
-  inline const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-  inline AIWhiteboard& GetNonConstWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-  inline AIWhiteboard&       GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-  
-  inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
-  inline WorkoutComponent&       GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
 
   inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const {
     assert(_aiInformationAnalyzer);
@@ -64,6 +59,16 @@ public:
   
   inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
+  
+  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
+  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
+  
+  inline const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
+  inline AIWhiteboard& GetNonConstWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
+  inline AIWhiteboard&       GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
+  
+  inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
+  inline WorkoutComponent&       GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
   
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -84,12 +89,6 @@ private:
 
   Robot& _robot;
   
-  // whiteboard for behaviors to share information, or to store information only useful to behaviors
-  std::unique_ptr<AIWhiteboard>            _whiteboard;
-
-  // component for tracking cozmo's work-out behaviors
-  std::unique_ptr< WorkoutComponent >      _workoutComponent;
-
   // module to analyze information for the AI in processes common to more than one behavior, for example
   // border calculation
   std::unique_ptr<AIInformationAnalyzer>   _aiInformationAnalyzer;
@@ -100,6 +99,15 @@ private:
   
   // component which behaviors can delegate to for automatic action error handling
   std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
+  
+  // Component which tracks and caches the best objects to use for certain interactions
+  std::unique_ptr<ObjectInteractionInfoCache> _objectInteractionInfoCache;
+  
+  // whiteboard for behaviors to share information, or to store information only useful to behaviors
+  std::unique_ptr<AIWhiteboard>            _whiteboard;
+  
+  // component for tracking cozmo's work-out behaviors
+  std::unique_ptr< WorkoutComponent >      _workoutComponent;
 };
 
 }

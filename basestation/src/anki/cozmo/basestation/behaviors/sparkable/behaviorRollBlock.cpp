@@ -120,11 +120,12 @@ void BehaviorRollBlock::StopInternalFromDoubleTap(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
-  using Intent = AIWhiteboard::ObjectUseIntention;
+  using Intent = ObjectInteractionIntention;
   const Intent intent = (_isBlockRotationImportant ?
                          Intent::RollObjectWithDelegateAxisCheck :
                          Intent::RollObjectWithDelegateNoAxisCheck);
-  _targetID = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(intent);
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+  _targetID = objInfoCache.GetBestObjectForIntention(intent);
 }
   
   
@@ -163,7 +164,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
     
     const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
     if(failedObject){
-      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
+      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
     }
   };
   

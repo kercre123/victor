@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/pickupBlockHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -114,7 +115,7 @@ void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
           DelegateProperties delegateProperties;
           delegateProperties.SetDelegateToSet(CreateDriveToHelper(robot, _targetID, params));
           delegateProperties.SetOnSuccessFunction([this](Robot& robot)
-                                  {StartRollingAction(robot); return _status;});
+                                  {StartRollingAction(robot); return _status;}); 
           delegateProperties.SetOnFailureFunction([this](Robot& robot)
                                   {DetermineAppropriateAction(robot); return _status;});
           DelegateAfterUpdate(delegateProperties);
@@ -139,9 +140,10 @@ void RollBlockHelper::UnableToRollDelegate(Robot& robot)
 {
   const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr) {
-    auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    const bool canPickup = whiteboard.IsObjectValidForAction(
-                             AIWhiteboard::ObjectUseIntention::PickUpAnyObject,
+    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+
+    const bool canPickup = objInfoCache.IsObjectValidForInteraction(
+                             ObjectInteractionIntention::PickUpAnyObject,
                              obj->GetID());
     
     // See if any blocks are on top of the one we want to roll

@@ -120,12 +120,13 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 
   if( ! _targetBlockTop.IsSet() ) {
     const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    const AIWhiteboard::ObjectUseIntention intention =
+    const ObjectInteractionIntention intention =
       _stackInAnyOrientation ?
-      AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
-      AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck;
-    _targetBlockTop = whiteboard.GetBestObjectForAction(intention);
-    _topBlockSetFromTapIntent = _robot.GetAIComponent().GetWhiteboard().HasTapIntent();
+      ObjectInteractionIntention::PickUpAnyObject :
+      ObjectInteractionIntention::PickUpObjectWithAxisCheck;
+    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+    _targetBlockTop = objInfoCache.GetBestObjectForIntention(intention);
+    _topBlockSetFromTapIntent = whiteboard.HasTapIntent();
   }
 
   if( lastTopID.IsSet() && ! _targetBlockTop.IsSet() ) {
@@ -176,7 +177,7 @@ bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) con
 {
   const bool hasFailedRecently = _robot.GetAIComponent().GetWhiteboard().
   DidFailToUse(obj->GetID(),
-               AIWhiteboard::ObjectUseAction::StackOnObject,
+               AIWhiteboard::ObjectActionFailure::StackOnObject,
                kTimeObjectInvalidAfterStackFailure_sec,
                obj->GetPose(),
                DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
@@ -194,10 +195,11 @@ bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) con
      !_topBlockSetFromTapIntent &&
      _robot.GetAIComponent().GetWhiteboard().HasTapIntent())
   {
-    using Intent = AIWhiteboard::ObjectUseIntention;
+    using Intent = ObjectInteractionIntention;
     Intent intent = _stackInAnyOrientation ? Intent::PickUpAnyObject : Intent::PickUpObjectWithAxisCheck;
     
-    const ObjectID id = _robot.GetAIComponent().GetWhiteboard().GetBestObjectForAction(intent);
+    const ObjectID id = _robot.GetAIComponent().GetObjectInteractionInfoCache()
+                                 .GetBestObjectForIntention(intent);
     ret = (id == obj->GetID());
   }
   
@@ -237,14 +239,13 @@ bool BehaviorStackBlocks::AreBlocksStillValid(const Robot& robot)
       return false;
     }
 
-
-    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    const AIWhiteboard::ObjectUseIntention intention =
+    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+    const ObjectInteractionIntention intention =
       _stackInAnyOrientation ?
-        AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
-        AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck;
+        ObjectInteractionIntention::PickUpAnyObject :
+        ObjectInteractionIntention::PickUpObjectWithAxisCheck;
     
-    if( ! whiteboard.IsObjectValidForAction(intention, _targetBlockTop ) ) {
+    if( ! objInfoCache.IsObjectValidForInteraction(intention, _targetBlockTop ) ) {
       PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.TopFailedFilter",
                        "top block failed it's filter");
       _targetBlockTop.UnSet();
@@ -357,13 +358,13 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   {
     animTrigger = AnimationTrigger::Count;
     
-    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    const AIWhiteboard::ObjectUseIntention intention =
+    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+    const ObjectInteractionIntention intention =
       _stackInAnyOrientation ?
-        AIWhiteboard::ObjectUseIntention::PickUpAnyObject :
-        AIWhiteboard::ObjectUseIntention::PickUpObjectWithAxisCheck;
+        ObjectInteractionIntention::PickUpAnyObject :
+        ObjectInteractionIntention::PickUpObjectWithAxisCheck;
 
-    const bool blockStillValid = whiteboard.IsObjectValidForAction(intention, _targetBlockTop);
+    const bool blockStillValid = objInfoCache.IsObjectValidForInteraction(intention, _targetBlockTop);
     if( ! blockStillValid ) {
       return false;
     }
@@ -427,7 +428,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                   const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
                   if(failedObject){
                     robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
-                                                                              AIWhiteboard::ObjectUseAction::PickUpObject);
+                                                                              AIWhiteboard::ObjectActionFailure::PickUpObject);
                   }
                  
                   // Play failure animation
@@ -491,7 +492,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
                     if(failedObject){
                       robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
-                                                                                AIWhiteboard::ObjectUseAction::StackOnObject);
+                                                                                AIWhiteboard::ObjectActionFailure::StackOnObject);
                     }
                     
                     if( completion.result == ActionResult::STILL_CARRYING_OBJECT ) {
