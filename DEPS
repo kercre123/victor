@@ -5,6 +5,7 @@
         "repo_names": {
             "cozmo-assets": {
                 "allow_extra_files": "True",
+                "branch": "branches/release_1.4.0",
                 "extract_types_from_tar": [
                     ".json",
                     ".png"
@@ -14,7 +15,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "1839"
+                "version": "1850"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
