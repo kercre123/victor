@@ -1630,7 +1630,7 @@ Result Robot::Update()
             _numPlansFinished = _numPlansStarted;
             PRINT_NAMED_INFO("Robot.Update.Planner.Error",
                              "Running planner returned error status, using fallback planner instead");
-            if( !StartPlanner() ) {
+            if( !StartPlannerWithFallbackPoses() ) {
               _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
               AbortDrivingToPose();
               _numPlansFinished = _numPlansStarted;
@@ -1687,7 +1687,7 @@ Result Robot::Update()
                 _numPlansFinished = _numPlansStarted;
                 PRINT_NAMED_INFO("Robot.Update.Planner.Collisions",
                                  "Planner returned a path with obstacles, using fallback planner instead");
-                if( !StartPlanner() ) {
+                if( !StartPlannerWithFallbackPoses() ) {
                   _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
                   AbortDrivingToPose();
                   _numPlansFinished = _numPlansStarted;
@@ -2117,7 +2117,7 @@ Result Robot::StartDrivingToPose(const Pose3d& targetPose,
   Pose3d targetDriveCenterPose;
   ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
 
-  const bool somePlannerSucceeded = StartPlanner(GetDriveCenterPose(), targetDriveCenterPose);
+  const bool somePlannerSucceeded = StartPlanner(GetDriveCenterPose(), {{targetDriveCenterPose}});
   if( !somePlannerSucceeded ) {
     _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
     return RESULT_FAIL;
@@ -2178,14 +2178,12 @@ ERobotDriveToPoseStatus Robot::CheckDriveToPoseStatus() const
   return _driveToPoseStatus;
 }
 
-bool Robot::StartPlanner()
+bool Robot::StartPlannerWithFallbackPoses()
 {
-  if( _fallbackPlannerTargetPoses.size() == 1 ) {
-    return StartPlanner(_fallbackPlannerDriveCenterPose, _fallbackPlannerTargetPoses.back());
-  } else if ( _fallbackPlannerTargetPoses.size() > 1 ){
+  if( !_fallbackPlannerTargetPoses.empty() ) {
     return StartPlanner(_fallbackPlannerDriveCenterPose, _fallbackPlannerTargetPoses);
   } else { // treat it as an error
-    PRINT_NAMED_ERROR("Robot.Update.Planner.Error", "Could not restart planner, missing target poses");
+    PRINT_NAMED_ERROR("Robot.Update.Planner.Error", "Could not restart planner, missing fallback target poses");
     return false;
   }
 }
@@ -2203,28 +2201,6 @@ bool Robot::StartPlanner(const Pose3d& driveCenterPose, const std::vector<Pose3d
       _selectedPathPlanner = _fallbackPathPlanner;
       _fallbackPathPlanner = nullptr;
       if( EComputePathStatus::Error != _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPoses) ) {
-        return true;
-      }
-    }
-    return false;
-  }
-  return true;
-}
-  
-bool Robot::StartPlanner(const Pose3d& driveCenterPose, const Pose3d& targetDriveCenterPose)
-{
-  // save start and target poses in case this run fails and we need to try again
-  _fallbackPlannerDriveCenterPose = driveCenterPose;
-  _fallbackPlannerTargetPoses.clear();
-  _fallbackPlannerTargetPoses.push_back(targetDriveCenterPose);
-  
-  EComputePathStatus status = _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPose);
-  if( status == EComputePathStatus::Error ) {
-    // try again with the fallback, if it hasnt been used already
-    if( nullptr != _fallbackPathPlanner ) {
-      _selectedPathPlanner = _fallbackPathPlanner;
-      _fallbackPathPlanner = nullptr;
-      if( EComputePathStatus::Error != _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPose) ) {
         return true;
       }
     }

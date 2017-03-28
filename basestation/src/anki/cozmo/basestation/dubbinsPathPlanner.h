@@ -23,6 +23,7 @@ class DubbinsPlanner : public IPathPlanner
 public:
   DubbinsPlanner();
 
+protected:
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const Pose3d& targetPose) override;
       

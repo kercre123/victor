@@ -461,11 +461,11 @@ public:
   // Starts the selected planner with ComputePath, returns true if the selected planner or its fallback
   // does not result in an error. The path may still contain obstacles if the selected planner didnt
   // consider obstacles in its search.
-  bool StartPlanner(); // calls one of the following based on cached start and target poses
-  bool StartPlanner(const Pose3d& driveCenterPose, const Pose3d& targetDriveCenterPose);
   bool StartPlanner(const Pose3d& driveCenterPose, const std::vector<Pose3d>& targetDriveCenterPoses);
   // Replans with ComputeNewPathIfNeeded
   void RestartPlannerIfNeeded(bool forceReplan);
+  // Start the planner based on the stored fallback poses
+  bool StartPlannerWithFallbackPoses();
     
   bool IsTraversingPath()      const { return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID); }
  
