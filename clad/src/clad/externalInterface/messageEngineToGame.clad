@@ -269,14 +269,6 @@ message RobotObservedPossibleObject {
     RobotObservedObject possibleObject
 }
 
-message ObjectProjectsIntoFOV {
-    uint_32       timestamp,
-    ObjectFamily  objectFamily,
-    ObjectType    objectType,
-    int_32        objectID,
-    CladRect      img_rect   // position in image coords
-}
-
 // RobotObservedFace
 message RobotObservedFace {
     int_32        faceID,         // negative: tracked but not recognized; positive: recognized face

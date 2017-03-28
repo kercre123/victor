@@ -263,7 +263,7 @@ struct DockingErrorSignal;
     Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
     // This is for faking images being processed for unit tests
-    void FakeImageProcessed(TimeStamp_t t) { _lastProcessedImageTimeStamp_ms = t; }
+    void FakeImageProcessed(TimeStamp_t t, const std::vector<const ImageImuData>& imuData={});
     
     // Handles receiving the default camera parameters from robot which are requested when we
     // read the camera calibration

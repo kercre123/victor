@@ -29,6 +29,7 @@
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -2177,6 +2178,24 @@ namespace Cozmo {
                     loadedFace.faceID);
       
       _robot.Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
+    }
+  }
+  
+  void VisionComponent::FakeImageProcessed(TimeStamp_t t, const std::vector<const ImageImuData>& imuData)
+  {
+    _lastProcessedImageTimeStamp_ms = t;
+   
+    for( const auto& entry : imuData )
+    {
+      GetImuDataHistory().AddImuData(entry.imageId,
+                                     entry.rateX,
+                                     entry.rateY,
+                                     entry.rateZ,
+                                     entry.line2Number);
+
+      GetImuDataHistory().CalculateTimestampForImageIMU(entry.imageId, t,
+                                                        RollingShutterCorrector::timeBetweenFrames_ms,
+                                                        GetCameraCalibration().GetNrows());
     }
   }
   
