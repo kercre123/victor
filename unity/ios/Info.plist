@@ -27,7 +27,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.4.0</string>
+	<string>1.5.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -43,8 +43,6 @@
 	<string>0.1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-        <key>NSCameraUsageDescription</key>
-        <string>Required for crash reporting</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.entertainment</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -73,6 +71,8 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Required for crash reporting</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UIApplicationExitsOnSuspend</key>
