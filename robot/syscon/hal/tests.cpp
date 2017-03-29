@@ -153,7 +153,8 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     {
       for (int i = 0; i < MAX_MODELS; i++) {
         if (BODY_COLOR(i) != ~0) continue ;
-
+        if( BODY_COLOR(i) == param ) break; //same as existing
+        
         NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
         while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
         BODY_COLOR(i) = param;
@@ -163,7 +164,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
         break ;
       }
 
-      break ;
+      break ; // Reply "OK"
     }
     
     case TEST_PLAYTONE:
