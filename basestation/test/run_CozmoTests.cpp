@@ -2473,6 +2473,10 @@ int main(int argc, char ** argv)
     cachePath = workRoot + "/temp";
     externalPath = workRoot + "/temp";
   }
+  
+  // Suppress break-on-error for duration of these tests
+  Anki::Util::_errBreakOnError = false;
+  
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
   cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, nullptr);

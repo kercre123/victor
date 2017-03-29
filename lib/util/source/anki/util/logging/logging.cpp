@@ -61,7 +61,13 @@ ITickTimeProvider* gTickTimeProvider = nullptr;
 ILoggerProvider*gLoggerProvider = nullptr;
 ChannelFilter gChannelFilter;
 IEventProvider* gEventProvider = nullptr;
+
+// Has an error been reported?
 bool _errG = false;
+  
+// Do we break on any error?
+bool _errBreakOnError = true;
+
 const size_t kMaxStringBufferSize = 1024;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

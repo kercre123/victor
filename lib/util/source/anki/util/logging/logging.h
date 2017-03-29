@@ -4,15 +4,15 @@
  * Author: damjan
  * Created: 4/3/2014
  *
-* Description: logging functions.
-* structure of the function names is: s<Level><style>
-*   levels are: Event, Error, Warning, Info, Debug
-*   style: f - takes (...) , v - takes va_list
-*   functions are spelled out, instead of stacked (sErrorF -> calls sErrorV -> calls sError)
-*   to improve on the stack space. If you think about improving on this, please consider macros to re-use code.
-*   If you however feel that we should stack them into one set of function that uses LogLevel as a param, think about need
-*   to translate Ank::Util::LogLevel to DasLogLevel and then to ios/android LogLevel.
-*
+ * Description: logging functions.
+ * structure of the function names is: s<Level><style>
+ *   levels are: Event, Error, Warning, Info, Debug
+ *   style: f - takes (...) , v - takes va_list
+ *   functions are spelled out, instead of stacked (sErrorF -> calls sErrorV -> calls sError)
+ *   to improve on the stack space. If you think about improving on this, please consider macros to re-use code.
+ *   If you however feel that we should stack them into one set of function that uses LogLevel as a param, think about
+ *   need to translate Ank::Util::LogLevel to DasLogLevel and then to ios/android LogLevel.
+ *
  * Copyright: Anki, Inc. 2014
  *
  **/
@@ -24,7 +24,6 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/eventKeys.h"
 #include "util/logging/callstack.h"
-#include "util/global/globalDefinitions.h"
 
 #include <string>
 #include <vector>
@@ -33,7 +32,7 @@
 #define ALLOW_DEBUG_LOGGING ANKI_DEVELOPER_CODE
 #endif
 
-namespace Anki{
+namespace Anki {
 namespace Util {
 
 class ITickTimeProvider;
@@ -48,9 +47,12 @@ extern ILoggerProvider* gLoggerProvider;
 extern ChannelFilter gChannelFilter;
 extern IEventProvider* gEventProvider;
 
-// global error flag so we can check if PRINT_ERROR was called for unit testing
+// Global error flag so we can check if PRINT_ERROR was called for unit testing
 extern bool _errG;
 
+// Global flag to control break-on-error behavior
+extern bool _errBreakOnError;
+  
 __attribute__((__used__))
 void sEventF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__ ((format (printf, 3, 4)));
 __attribute__((__used__))
@@ -104,11 +106,14 @@ void sSetGlobal(const char* key, const char* value);
 // This calls blocks until log data has been flushed.
 //
 void sLogFlush();
-  
+ 
+//
 // Anki::Util::sDebugBreak()
 // Break to debugger (if possible), then return to caller.
 // If break to debugger is not supported, this function provides
 // a convenient hook for developers to set a breakpoint by hand.
+// This function is enabled for build configurations with ANKI_DEVELOPER_CODE=1.
+// This function is a no-op for build configurations with ANKI_DEVELOPER_CODE=0.
 //
 void sDebugBreak();
 
@@ -132,7 +137,9 @@ void sAbort();
 #define PRINT_NAMED_ERROR(name, format, ...) do { \
   ::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); \
   ::Anki::Util::_errG=true; \
-  ::Anki::Util::sDebugBreak(); \
+  if (::Anki::Util::_errBreakOnError) { \
+    ::Anki::Util::sDebugBreak(); \
+  } \
 } while(0)
 
 #define PRINT_NAMED_WARNING(name, format, ...) do { \
