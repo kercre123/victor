@@ -446,10 +446,7 @@ class GamePlatformConfiguration(object):
         # FEATURES BUILD FLAGS
 
         # writes to smcs file based on feature flags
-        unityAssetsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets');
-        smcsFile = open(os.path.join(unityAssetsPath, 'smcs.rsp'), 'w')
         smcsSettings = "-warnaserror\n";
-
         if self.options.features != None and 'factoryTest' in self.options.features[0]:
             smcsSettings = smcsSettings + "-define:FACTORY_TEST"
         elif self.options.features != None and 'factoryTestDev' in self.options.features[0]:
@@ -457,23 +454,31 @@ class GamePlatformConfiguration(object):
         elif self.options.features != None and 'sdkOnly' in self.options.features[0]:
             smcsSettings = smcsSettings + "-define:SDK_ONLY"
 
-        smcsFile.write(smcsSettings + '\n');
+        unityAssetsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets');
+        smcs_temp_path = os.path.join(unityAssetsPath, 'smcs.rsp.new')
+        smcs_final_path = os.path.join(unityAssetsPath, 'smcs.rsp')
+        with open(smcs_temp_path, 'w') as smcsFile:
+            smcsFile.write(smcsSettings + '\n');
 
-        smcsFile.close()
-
-        class_code = 'public class BuildFlags { \n'
-        git_variable = '  public const string kGitHash = \"' + subprocess.check_output(
-            ['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
-        buildFlagsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
-        ankibuild.util.File.mkdir_p(buildFlagsPath)
-
-        file = open(os.path.join(buildFlagsPath, 'BuildFlags.cs'), 'w')
+        ankibuild.util.File.update_if_changed(smcs_final_path, smcs_temp_path)
 
         # writes a hash for the contents of the smcs file to force unity editor to recompile if the editor is already open.
-        file.write(class_code + git_variable + '  public const string kSmcsFileHash = \"' + hashlib.sha256(
-            smcsSettings).hexdigest() + '\";' + '\n' + '}')
+        class_code = 'public class BuildFlags { \n'
+        try:
+            git_variable = '  public const string kGitHash = \"' + subprocess.check_output(
+                ['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
+        except TypeError or AttributeError or subprocess.CalledProcessError:
+            git_variable = '  public const string kGitHash = \"0\"; # Error\n'
 
-        file.close()
+        buildFlagsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
+        ankibuild.util.File.mkdir_p(buildFlagsPath)
+        build_flags_temp_path = os.path.join(buildFlagsPath, 'BuildFlags.cs.new')
+        build_flags_final_path = os.path.join(buildFlagsPath, 'BuildFlags.cs')
+        with open(build_flags_temp_path, 'w') as file:
+            file.write(class_code + git_variable + '  public const string kSmcsFileHash = \"' + hashlib.sha256(
+                smcsSettings).hexdigest() + '\";' + '\n' + '}')
+
+        ankibuild.util.File.update_if_changed(build_flags_final_path, build_flags_temp_path)
         # NEED OF DEMO BUILD
 
         if self.platform == 'mac':
@@ -544,11 +549,27 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.mkdir_p(self.derived_data_dir)
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
+        # Copy in DASConfig.json, but don't actually update the file if it is the same as it was the last time
         DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration,
                                  'DASConfig.json')
+        DASTargetTemp = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json.new')
+        ankibuild.util.File.cp(DASSource, DASTargetTemp)
         DASTarget = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json')
-        ankibuild.util.File.rm(DASTarget)
-        ankibuild.util.File.cp(DASSource, DASTarget)
+        ankibuild.util.File.update_if_changed(DASTarget, DASTargetTemp)
+
+        # Write a dummy file with config if any key things have changed since last build
+        # This is needed to trigger a rebuild when something like script engine changes
+        buildConfigPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated')
+        ankibuild.util.File.mkdir_p(buildConfigPath)
+        build_config_temp_path = os.path.join(buildConfigPath, 'BuildConfig.cs.new')
+        build_config_final_path = os.path.join(buildConfigPath, 'BuildConfig.cs')
+
+        with open(build_config_temp_path, 'w') as file:
+            file.write('// platform = ' + self.platform + '\n')
+            file.write('// config = ' + self.options.configuration + '\n')
+            file.write('// script-engine = ' + self.options.selected_script_engine + '\n')
+
+        ankibuild.util.File.update_if_changed(build_config_final_path, build_config_temp_path)
 
         if self.options.verbose:
             print_status('Moved {0} to {1}'.format(DASSource, DASTarget))

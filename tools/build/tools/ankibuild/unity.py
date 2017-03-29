@@ -211,8 +211,12 @@ class UnityBuild(object):
 
         # We need to skip the ProjectSettings.asset file, since it can be
         # modified during the build.
+        # Also skipping GraphicsSettings.asset, because it gets touched (but not modified)
+        # per a Unity bug; waiting to upgrade for fix
+        # https://issuetracker.unity3d.com/issues/projectsettings-slash-graphicssettings-dot-asset-changes-everytime-platform-is-changed-polluting-version-control
         excludes = set(['ProjectSettings.asset',
                         'EditorUserBuildSettings.asset',
+                        'GraphicsSettings.asset',
                         '.DS_Store'])
 
         src_files = []
