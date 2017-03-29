@@ -59,7 +59,7 @@ const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 
 // Encoder scaling reworked for Cozmo 4.0
 
-// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
+// Given a gear ratio of 173.43:1 and 94mm wheel circumference and 2 ticks * 4 teeth
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
 // Applying a slip factor correction of 94.8%
 const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
@@ -439,12 +439,13 @@ static const int MAX_DRIVE_TIME[] = {
   200  // 1s
 };
 
-// Minimum drive speed in ticks
-static const int DRIVE_MINIMUM_SPEED[] ={
-  1,
-  1,
-  2,
-  2
+
+// Minimum drive speed in fixed-point m/s for wheels and rad/s for lift and head
+static const Fixed DRIVE_MINIMUM_SPEED[] ={
+  821,    // Original threshold of ~1 tic/5ms => new threshold of TO_FIXED(1 * METERS_PER_TIC * 200))
+  821,
+  119230, // Original threshold of ~2 tics/5ms => TO_FIXED(2 * RADIANS_PER_LIFT_TICK * 200)
+  60293   // Original threshold of ~2 tics/5ms => TO_FIXED(2 * RADIANS_PER_HEAD_TICK * 200)
 };
 
 static s16 limitPower(u8 motorID) {
@@ -452,9 +453,8 @@ static s16 limitPower(u8 motorID) {
 
   static int temp_count[MOTOR_COUNT];
   static bool limit[MOTOR_COUNT];
-
-  int current_speed = ABS((int)motorInfo->position - (int)motorInfo->lastPosition);
-  bool danger = (current_speed < DRIVE_MINIMUM_SPEED[motorID]) && (ABS(motorInfo->oldPWM) > POWER_THRESHOLD[motorID]);
+  
+  bool danger = (g_dataToHead.speeds[motorID] < DRIVE_MINIMUM_SPEED[motorID]) && (ABS(motorInfo->oldPWM) > POWER_THRESHOLD[motorID]);
 
   temp_count[motorID] += danger ? 1 : -1;
 
