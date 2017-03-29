@@ -175,7 +175,9 @@ namespace Anki {
       void CopyID(const ObservableObject* fromOther);
             
       void SetColor(const ColorRGBA& color);
-      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f, PoseState newPoseState = PoseState::Known);
+      virtual void SetPose(const Pose3d& newPose,
+                           f32 fromDistance = -1.f,
+                           PoseState newPoseState = PoseState::Known);
       void SetPoseParent(const Pose3d* newParent);
       
       // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.

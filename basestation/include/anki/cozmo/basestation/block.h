@@ -159,6 +159,9 @@ namespace Anki {
       Block(const ObjectType type);
       Block(const ObjectFamily family, const ObjectType type);
       
+      virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                          std::vector<PreActionPose>& preActionPoses) const override;
+      
       // Make this protected so we have to use public AddFace() method
       using ActionableObject::AddMarker;
       

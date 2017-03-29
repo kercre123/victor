@@ -56,18 +56,8 @@ namespace Anki {
       
       Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
                        Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
-      _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
-
-      // PreActionPose, initialized to be with respect to charger
-      Pose3d preActionPose(0, Z_AXIS_3D(),
-                           {0.f, 0.f, -(PreAscentDistance + SlopeLength + PlatformWidth)},
-                           &_marker->GetPose());
       
-      if(preActionPose.GetWithRespectTo(_marker->GetPose(), preActionPose) == false) {
-        PRINT_NAMED_ERROR("Charger.PreActionPoseError", "Could not get preActionPose w.r.t. front Charger marker");
-      }
-      preActionPose.SetName("Charger" + std::to_string(GetID().GetValue()) + "PreActionPose");
-      AddPreActionPose(PreActionPose::ENTRY, _marker, preActionPose, 0);
+      _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
       
     } // Charger() Constructor
     
@@ -84,6 +74,36 @@ namespace Anki {
       EraseVisualization();
     }
 
+    void Charger::GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                         std::vector<PreActionPose>& preActionPoses) const
+    {
+      preActionPoses.clear();
+      
+      switch(type)
+      {
+        case PreActionPose::ActionType::DOCKING:
+        {
+          Pose3d poseWrtMarker(0,
+                               Z_AXIS_3D(),
+                               {0.f, 0.f, -(PreAscentDistance + SlopeLength + PlatformWidth)},
+                               &_marker->GetPose());
+          
+          poseWrtMarker.SetName("Charger" + std::to_string(GetID().GetValue()) + "PreActionPose");
+          
+          preActionPoses.emplace_back(PreActionPose::ENTRY, _marker, poseWrtMarker, 0);
+          break;
+        }
+        case PreActionPose::ActionType::ENTRY:
+        case PreActionPose::ActionType::FLIPPING:
+        case PreActionPose::ActionType::PLACE_ON_GROUND:
+        case PreActionPose::ActionType::PLACE_RELATIVE:
+        case PreActionPose::ActionType::ROLLING:
+        case PreActionPose::ActionType::NONE:
+        {
+          break;
+        }
+      }
+    }
     
     Pose3d Charger::GetRobotDockedPose() const
     {

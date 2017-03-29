@@ -83,6 +83,9 @@ namespace Anki {
 
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
+      virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                          std::vector<PreActionPose>& preActionPoses) const override {};
+      
       // Unsafe regions in the canonical position, given padding
       // By default, there are no "unsafe" regions to avoid. Derived classes
       // can override that.

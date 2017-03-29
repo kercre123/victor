@@ -37,6 +37,9 @@ namespace Anki {
         ENTRY,           // for entering a bridge or ascending/descending a ramp
         ROLLING,         // for rolling a block towards the robot
         FLIPPING,        // for flipping a block
+        
+        // Add new ActionTypes here
+        
         NONE
       };
       

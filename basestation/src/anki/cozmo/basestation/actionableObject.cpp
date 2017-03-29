@@ -31,32 +31,6 @@ namespace Anki {
       
     }
     
-    
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
-                                            const Vision::KnownMarker *marker,
-                                            const f32 distance,
-                                            const f32 length_mm)
-    {
-      _preActionPoses.emplace_back(type, marker, distance, length_mm);
-    } // AddPreActionPose()
-    
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
-                                            const Vision::KnownMarker *marker,
-                                            const Vec3f& offset,
-                                            const f32 length_mm)
-    {
-      _preActionPoses.emplace_back(type, marker, offset, length_mm);
-    } // AddPreActionPose()
-    
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
-                                            const Vision::KnownMarker* marker,
-                                            const Pose3d& poseWrtMarker,
-                                            const f32 length_mm)
-    {
-      _preActionPoses.emplace_back(type, marker, poseWrtMarker, length_mm);
-    }
-    
-    
     bool ActionableObject::IsPreActionPoseValid(const PreActionPose& preActionPose,
                                                 const Pose3d* reachableFromPose,
                                                 const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
@@ -185,7 +159,7 @@ namespace Anki {
     } // IsPreActionPoseValid()
 
     
-    void ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
+    bool ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                                     const Pose3d& robotPose,
                                                     const std::set<PreActionPose::ActionType>& withAction,
                                                     const std::set<Vision::Marker::Code>& withCode,
@@ -194,10 +168,27 @@ namespace Anki {
                                                     const f32 offset_mm,
                                                     bool visualize) const
     {
+      bool res = false;
       const Pose3d& relToObjectPose = GetPose();
       
       u8 count = 0;
-      for(auto & preActionPose : _preActionPoses)
+      
+      std::vector<PreActionPose> genPreActionPoses;
+      for(const PreActionPose::ActionType type : withAction)
+      {
+        std::vector<PreActionPose>& cachedPoses = _cachedPreActionPoses[type];
+        
+        // If we don't have any cached preAction poses, generate them
+        if(cachedPoses.empty())
+        {
+          GeneratePreActionPoses(type, cachedPoses);
+          res = true;
+        }
+        
+        genPreActionPoses.insert(genPreActionPoses.end(), cachedPoses.begin(), cachedPoses.end());
+      }
+      
+      for(const auto & preActionPose : genPreActionPoses)
       {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
            (withAction.empty() || withAction.count(preActionPose.GetActionType()) > 0))
@@ -288,7 +279,7 @@ namespace Anki {
           }
         } // if preActionPose has correct code/action
       } // for each preActionPose
-      
+      return res;
     }
     
     void ActionableObject::VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
@@ -335,6 +326,16 @@ namespace Anki {
       _vizPreActionLineIDs.clear();
     }
     
+    void ActionableObject::SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState)
+    {
+      // Clear all of the cached preActionPoses
+      for(auto& cachedPoses : _cachedPreActionPoses)
+      {
+        cachedPoses.clear();
+      }
+      
+      ObservableObject::SetPose(newPose, fromDistance, newPoseState);
+    }
     
   } // namespace Cozmo
 } // namespace Anki

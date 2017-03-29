@@ -101,6 +101,9 @@ namespace Anki {
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
+      virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                          std::vector<PreActionPose>& preActionPoses) const override;
+      
       Point3f _size;
       
       const Vision::KnownMarker* _marker;

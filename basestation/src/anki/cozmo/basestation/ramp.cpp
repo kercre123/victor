@@ -22,7 +22,10 @@
 namespace Anki {
   
   namespace Cozmo {
-     
+  
+    const f32 KSideMarkerHeight = 16.f;
+    const Vec3f KPreDockPoseOffset(0.f, -DEFAULT_MIN_PREDOCK_POSE_DISTANCE_MM, -KSideMarkerHeight);
+    
     const std::vector<Point3f>& Ramp::GetCanonicalCorners() const {
     
       static const std::vector<Point3f> CanonicalCorners = {{
@@ -46,12 +49,6 @@ namespace Anki {
     Ramp::Ramp()
     : ObservableObject(ObjectFamily::Ramp, ObjectType::Ramp_Basic)
     , _size(SlopeLength+PlatformLength, Width, Height)
-    , _preAscentPose(0, Z_AXIS_3D(),
-                     {-PreAscentDistance, 0.f, 0.f},
-                     &GetPose())
-    , _preDescentPose(M_PI, Z_AXIS_3D(),
-                      {SlopeLength + PlatformLength + PreDescentDistance, 0, Height},
-                      &GetPose())
     , _vizHandle(VizManager::INVALID_HANDLE)
     
     {
@@ -71,43 +68,77 @@ namespace Anki {
       frontPose *= Pose3d(-M_PI_2_F, Z_AXIS_3D(), {0,0,0});
       _frontMarker = &AddMarker(frontMarkerType, frontPose, Ramp::TopMarkerSize);
       
-      if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
-        PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker");
-      }
-      _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose, 0);
-      
-      const f32 SideMarkerHeight = 16.f;
-      
-      const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {SlopeLength+PlatformLength, 0, SideMarkerHeight});
+      const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {SlopeLength+PlatformLength, 0, KSideMarkerHeight});
       AddMarker(backMarkerType, backPose, Ramp::SideMarkerSize);
       
-      const Vec3f PreDockPoseOffset(0.f, -DEFAULT_MIN_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
-      
-      const Pose3d rightPose(0.f, Z_AXIS_3D(), {120.f, -0.5f*Ramp::Width, SideMarkerHeight});
+      const Pose3d rightPose(0.f, Z_AXIS_3D(), {120.f, -0.5f*Ramp::Width, KSideMarkerHeight});
       _rightMarker = &AddMarker(rightMarkerType, rightPose, Ramp::SideMarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset, 0);
       
-      const Pose3d leftPose(M_PI, Z_AXIS_3D(), {120.f,  0.5f*Ramp::Width, SideMarkerHeight});
+      const Pose3d leftPose(M_PI, Z_AXIS_3D(), {120.f,  0.5f*Ramp::Width, KSideMarkerHeight});
       _leftMarker = &AddMarker(leftMarkerType, leftPose, Ramp::SideMarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, 0);
       
       Pose3d topPose(-M_PI_2_F, Y_AXIS_3D(),
                      {Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height});
       topPose *= Pose3d(M_PI_2, Z_AXIS_3D(), {0,0,0});
       _topMarker = &AddMarker(topMarkerType, topPose, Ramp::TopMarkerSize);
       
-      if(_preDescentPose.GetWithRespectTo(_topMarker->GetPose(), _preDescentPose) == false) {
-        PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker");
-      }
-      _preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose, 0);
-      
     } // Ramp() Constructor
     
     Ramp::~Ramp()
     {
       EraseVisualization();
+    }
+    
+    void Ramp::GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                      std::vector<PreActionPose>& preActionPoses) const
+    {
+      preActionPoses.clear();
+      
+      switch(type)
+      {
+        case PreActionPose::ActionType::ENTRY:
+        {
+          Pose3d preAscentPose(0, Z_AXIS_3D(),
+                               {-PreAscentDistance, 0.f, 0.f},
+                               &GetPose());
+          
+          Pose3d preDescentPose(M_PI, Z_AXIS_3D(),
+                                {SlopeLength + PlatformLength + PreDescentDistance, 0, Height},
+                                &GetPose());
+          
+          if(preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), preAscentPose) == false)
+          {
+            PRINT_NAMED_ERROR("Ramp.PreAscentPoseError",
+                              "Could not get preAscentPose w.r.t. front ramp marker");
+          }
+          preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
+          
+          if(preDescentPose.GetWithRespectTo(_topMarker->GetPose(), preDescentPose) == false)
+          {
+            PRINT_NAMED_ERROR("Ramp.PreDescentPoseError",
+                              "Could not get preDescentPose w.r.t. top ramp marker");
+          }
+          preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
+          
+          preActionPoses.emplace_back(PreActionPose::ENTRY, _frontMarker, preAscentPose,  0);
+          preActionPoses.emplace_back(PreActionPose::ENTRY, _topMarker,   preDescentPose, 0);
+          break;
+        }
+        case PreActionPose::ActionType::DOCKING:
+        {
+          preActionPoses.emplace_back(PreActionPose::DOCKING, _rightMarker, KPreDockPoseOffset, 0);
+          preActionPoses.emplace_back(PreActionPose::DOCKING, _leftMarker,  KPreDockPoseOffset, 0);
+          break;
+        }
+        case PreActionPose::ActionType::FLIPPING:
+        case PreActionPose::ActionType::PLACE_ON_GROUND:
+        case PreActionPose::ActionType::PLACE_RELATIVE:
+        case PreActionPose::ActionType::ROLLING:
+        case PreActionPose::ActionType::NONE:
+        {
+          break;
+        }
+      }
     }
     
     

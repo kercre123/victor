@@ -44,13 +44,12 @@ namespace Anki {
     public:
       ActionableObject();
       
-      // Return true if actions poses of any type exist for this object
-      bool HasPreActionPoses() const;
-      
       // Return only those pre-action poses that are "valid" (See protected
       // IsPreActionPoseValid() method below.)
       // Optionally, you may filter based on ActionType and Marker Code as well.
-      void GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
+      // Returns true if we had to generate preActionPoses, false if cached poses were used
+      // return value is currently only used for unit tests
+      bool GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                     const Pose3d& robotPose,
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
@@ -73,22 +72,6 @@ namespace Anki {
       std::list<ActiveLED> const& GetLEDs() const { return _activeLEDs; }
       
     protected:
-
-      // Wrappers for each of the PreActionPose constructors:
-      void AddPreActionPose(PreActionPose::ActionType type,
-                            const Vision::KnownMarker* marker,
-                            const f32 distance,
-                            const f32 length_mm);
-      
-      void AddPreActionPose(PreActionPose::ActionType type,
-                            const Vision::KnownMarker *marker,
-                            const Vec3f& offset,
-                            const f32 length_mm);
-      
-      void AddPreActionPose(PreActionPose::ActionType type,
-                            const Vision::KnownMarker* marker,
-                            const Pose3d& poseWrtMarker,
-                            const f32 length_mm);
  
       // Only "valid" poses are returned by GetCurrenPreActionPoses
       // By default, allows any rotation around Z, but none around X/Y, meaning
@@ -99,14 +82,17 @@ namespace Anki {
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
                                         const Pose3d* reachableFromPose,
                                         const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const;
+      
+      // Generates all possible preAction poses of the given type
+      virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                          std::vector<PreActionPose>& preActionPoses) const = 0;
+      
+      virtual void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState) override;
 
       // TODO: Define a method for adding LEDs to active objects
       //void AddActiveLED(const Pose3d& poseWrtObject);
       
-    private:
-      
-      std::vector<PreActionPose> _preActionPoses;
-      
+    private:      
       mutable std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;
       
       // Set of pathIDs for visualizing the preActionLines
@@ -114,13 +100,9 @@ namespace Anki {
       
       std::list<ActiveLED> _activeLEDs;
       
+      mutable std::array<std::vector<PreActionPose>, PreActionPose::ActionType::NONE> _cachedPreActionPoses;
+      
     }; // class ActionableObject
-    
-    
-    inline bool ActionableObject::HasPreActionPoses() const {
-      return !_preActionPoses.empty();
-    }
-  
     
   } // namespace Cozmo
 } // namespace Anki

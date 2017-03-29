@@ -36,6 +36,14 @@ namespace Anki {
     protected:
       virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
                                              std::vector<Quad3f>& regions) const override;
+      
+      virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                          std::vector<PreActionPose>& preActionPoses) const override;
+      
+    private:
+    
+      const Vision::KnownMarker* _leftMarker = nullptr;
+      const Vision::KnownMarker* _rightMarker = nullptr;
         
     }; // class Bridge
     

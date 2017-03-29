@@ -66,12 +66,6 @@ namespace Anki {
       // determined, UNKNOWN is returned.
       TraversalDirection WillAscendOrDescend(const Pose3d& robotPose) const;
       
-      // Return start poses (at Ramp's current position) for going up or down
-      // the ramp. The distance for ascent is from the tip of the slope.  The
-      // distance for descent is from the opposite edge of the ramp.
-      const Pose3d& GetPreAscentPose()  const;
-      const Pose3d& GetPreDescentPose() const;
-      
       // Return final poses (at Ramp's current position) for a robot after it
       // has finished going up or down the ramp. Takes the robot's wheel base
       // as input since the assumption is that the robot will be level when its
@@ -89,14 +83,6 @@ namespace Anki {
       virtual void    Visualize(const ColorRGBA& color) const override;
       virtual void    EraseVisualization() const override;
       
-
-      
-      /*
-      virtual void    GetPreDockPoses(const float distance_mm,
-                                      std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                                      const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
-      */
-      //virtual f32     GetDefaultPreDockDistance() const override;
       virtual Point3f GetSameDistanceTolerance()  const override;
       
     protected:
@@ -117,15 +103,15 @@ namespace Anki {
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
+      virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
+                                          std::vector<PreActionPose>& preActionPoses) const override;
+      
       Point3f _size;
       
       const Vision::KnownMarker* _leftMarker;
       const Vision::KnownMarker* _rightMarker;
       const Vision::KnownMarker* _frontMarker;
       const Vision::KnownMarker* _topMarker;
-            
-      Pose3d _preAscentPose;
-      Pose3d _preDescentPose;
       
       mutable VizManager::Handle_t _vizHandle;
       //std::array<VizManager::Handle_t,3> _vizHandle;
@@ -136,14 +122,6 @@ namespace Anki {
       
       
     }; // class Ramp
-    
-    inline const Pose3d& Ramp::GetPreAscentPose() const {
-      return _preAscentPose;
-    }
-    
-    inline const Pose3d& Ramp::GetPreDescentPose() const {
-      return _preDescentPose;
-    }
     
   } // namespace Cozmo
 } // namespace Anki

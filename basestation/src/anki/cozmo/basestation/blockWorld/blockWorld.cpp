@@ -4735,7 +4735,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
       if(object != nullptr &&
-         object->HasPreActionPoses() &&
          !_robot->IsCarryingObject(object->GetID()))
       {
         //PRINT_INFO("currID: %d", block.first);
@@ -4773,7 +4772,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       for(auto const & obj : allObjects) {
         const ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
         if(object != nullptr &&
-           object->HasPreActionPoses() &&
            !_robot->IsCarryingObject(object->GetID()))
         {
           firstObject = obj->GetID();

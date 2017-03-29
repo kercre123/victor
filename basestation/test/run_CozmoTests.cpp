@@ -1,3 +1,6 @@
+#define private public
+#define protected public
+
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -6,6 +9,7 @@
 #include "anki/common/robot/matlabInterface.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
@@ -2414,6 +2418,54 @@ TEST(FactoryTest, FindDotsInImages)
                      RAD_TO_DEG(msg.camPoseYaw_rad));
     
     // TODO: Check the rest of the message contents for sane values
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(ActionableObject, PreActionPoseCaching)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+
+  const Pose3d origin(Rotation3d(0, {0,0,1}), {0,0,0});
+  const Pose3d robotPose(Rotation3d(0, {0,0,1}), {0,0,0}, &origin);
+  const Pose3d cubePose1(Rotation3d(0, {0,0,1}), {10,10,0}, &origin);
+  const Pose3d cubePose2(Rotation3d(0, {0,0,1}), {20,20,0}, &origin);
+
+  ActiveCube cube(ObjectType::Block_LIGHTCUBE1);
+  cube.InitPose(cubePose1, PoseState::Known);
+  
+  std::vector<PreActionPose> preActionPoses;
+  // First time getting the preAction poses they should be generated
+  ASSERT_EQ(cube.GetCurrentPreActionPoses(preActionPoses, robotPose, {PreActionPose::ActionType::DOCKING}), true);
+  
+  std::vector<PreActionPose> cachedPreActionPoses;
+  // Should be using the cached preAction poses
+  ASSERT_EQ(cube.GetCurrentPreActionPoses(cachedPreActionPoses, robotPose, {PreActionPose::ActionType::DOCKING}), false);
+  
+  std::vector<PreActionPose> flippingPoses;
+  // Make sure that only DOCKING preAction poses were cached, all other ActionTypes should still need to be generated
+  ASSERT_EQ(cube.GetCurrentPreActionPoses(flippingPoses, robotPose, {PreActionPose::ActionType::FLIPPING}), true);
+  
+  // Check that the cached poses and generated poses are all the same
+  ASSERT_EQ(preActionPoses.size(), cachedPreActionPoses.size());
+  for(int i = 0; i < preActionPoses.size(); ++i)
+  {
+    ASSERT_EQ(preActionPoses[i].GetPose().IsSameAs(cachedPreActionPoses[i].GetPose(), 0, 0), true);
+  }
+  
+  // Change the cube's pose, should clear cached preAction poses
+  cube.SetPose(cubePose2, -1, PoseState::Known);
+  
+  preActionPoses.clear();
+  // Should need to regenerate preAction poses since our cached poses were cleared
+  ASSERT_EQ(cube.GetCurrentPreActionPoses(preActionPoses, robotPose, {PreActionPose::ActionType::DOCKING}), true);
+  
+  ASSERT_EQ(preActionPoses.size(), cachedPreActionPoses.size());
+  // Old cached poses should not be the same as the newly generated poses
+  for(int i = 0; i < preActionPoses.size(); ++i)
+  {
+    ASSERT_EQ(preActionPoses[i].GetPose().IsSameAs(cachedPreActionPoses[i].GetPose(), 0, 0), false);
   }
 }
 
