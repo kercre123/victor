@@ -120,7 +120,7 @@ uint32_t ReliableTransport::sMaxPacketsToSendOnSendMessage = 1;
 ReliableTransport::ReliableTransport(IUnreliableTransport* unreliableTransport, INetTransportDataReceiver* dataReceiver)
   : INetTransport(dataReceiver)
   , _unreliable(unreliableTransport)
-  , _queue(Dispatch::Create("RelTransport", ThreadPriority::High))
+  , _queue(Dispatch::create_queue, "RelTransport", ThreadPriority::High)
   , _transportStats("Reliable")
 #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
   , _timesBetweenUpdates(1000)
@@ -144,12 +144,7 @@ ReliableTransport::~ReliableTransport()
   
 void ReliableTransport::KillThread()
 {
-  if (_queue != nullptr)
-  {
-    Dispatch::Stop(_queue);
-    Dispatch::Release(_queue);
-    assert(_queue == nullptr);
-  }
+  _queue.reset();
 }
 
   
@@ -197,7 +192,7 @@ void ReliableTransport::QueueMessage(bool reliable, const TransportAddress& dest
 
 void ReliableTransport::QueueAction(std::function<void ()> action)
 {
-  Dispatch::Async(_queue, [this, action = std::move(action)] {
+  Dispatch::Async(_queue.get(), [this, action = std::move(action)] {
     std::lock_guard<std::mutex> lock(_mutex);
     action();
   });
@@ -956,7 +951,7 @@ void ReliableTransport::ChangeSyncMode(bool isSync)
   }
   else if(_runSynchronous && !isSync)
   {
-    _updateHandle = Dispatch::ScheduleCallback(_queue, std::chrono::milliseconds(2), [this] { Update(); } );
+    _updateHandle = Dispatch::ScheduleCallback(_queue.get(), std::chrono::milliseconds(2), [this] { Update(); } );
   }
   _runSynchronous = isSync;
 }

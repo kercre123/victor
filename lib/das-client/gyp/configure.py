@@ -25,6 +25,9 @@ parser.add_argument('--path', dest='pathExtension', action='store',
                     help='prepends to the environment PATH')
 parser.add_argument('--with-gyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                     help='Use gyp installation located at GYP_PATH')
+parser.add_argument('--with-build-tools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store',
+                    default=None,
+                    help='Use build-tools located at BUILD_TOOLS_PATH')
 
 # options controlling gyp output
 parser.add_argument('--arch', action='store',
@@ -34,6 +37,13 @@ parser.add_argument('--arch', action='store',
 parser.add_argument('--platform', action='append', dest='platforms',
                     choices=('ios', 'mac', 'android', 'linux'),
                     help="Generate output for a specific platform")
+parser.add_argument('--gyp-define',
+                    action='append',
+                    dest='gyp_defines',
+                    default=[],
+                    help="Set a variable that will be passed to gyp." \
+                              "Format is <key>=<value>")
+
 (options, args) = parser.parse_known_args()
 
 if options.platforms is None:
@@ -49,11 +59,18 @@ gypPath = os.path.join(projectRoot, '../drive-basestation/tools/build-tools/gyp'
 if (options.gypPath is not None):
     gypPath = options.gypPath
 
+buildToolsPath = os.path.join(projectRoot, '../drive-basestation/tools/build-tools')
+if (options.buildToolsPath is not None):
+  buildToolsPath = options.buildToolsPath
+
 # import gyp
 if (options.debug):
   print 'gyp-path = %s' % gypPath
 sys.path.insert(0, os.path.join(gypPath, 'pylib'))
 import gyp
+
+sys.path.insert(0, os.path.join(buildToolsPath, 'tools', 'ankibuild'))
+import util
 
 #check gyp version
 stdOutCapture = StringIO.StringIO()
@@ -89,24 +106,28 @@ print "[das-client] configuring libDAS..."
 # internal das location
 configurePath = os.path.join(projectRoot, 'gyp')
 
+#################### GYP_DEFINES ####
+default_defines = {
+    'das_library_type': 'shared_library',
+    'gyp_location': gypPath,
+    'configure_location': configurePath,
+    'android_toolchain': 'arm-linux-androideabi-4.9',
+    'android_platform': 'android-18'
+}
+getGypArgs = util.Gyp.getArgFunction(['--check', '--depth', '.', '--toplevel-dir', '..'])
+
 # mac
 if 'mac' in options.platforms:
     print '[das-client] generating mac project...'
     #################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """ lua_library_type=static_library
-                                bs_library_type=shared_library
-                                de_library_type=shared_library
-                                kazmath_library_type=static_library
-                                worldviz_library_type=static_library
-                                das_library_type=shared_library
-                                basestation_target_name=Basestation
-                                driveengine_target_name=DriveEngine
-                                output_location={0}
-                                gyp_location={1}
-                                configure_location={2}
-                                arch_group={3}
-                                """.format(projectRoot+'/gyp-mac', gypPath, configurePath, options.arch)
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '..', '--generator-output', '../gyp-mac']
+    defines = default_defines.copy()
+    defines.update({
+        'output_location': projectRoot+'/gyp-mac',
+        'arch_group': options.arch
+    })
+
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines, options.gyp_defines)
+    gypArgs = getGypArgs('xcode', '../gyp-mac')
     gyp.main(gypArgs)
     # gyp driveEngine.gyp --check --depth . -f xcode --generator-output=../gyp-mac
 
@@ -116,22 +137,16 @@ if 'mac' in options.platforms:
 if 'ios' in options.platforms:
     print '[das-client] generating ios project...'
     #################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """
-                                lua_library_type=static_library
-                                bs_library_type=static_library
-                                de_library_type=static_library
-                                kazmath_library_type=static_library
-                                worldviz_library_type=static_library
-                                das_library_type=static_library
-                                basestation_target_name=Basestation
-                                driveengine_target_name=DriveEngine
-                                OS=ios
-                                output_location={0}
-                                gyp_location={1}
-                                configure_location={2}
-                                arch_group={3}
-                                """.format(projectRoot+'/gyp-ios', gypPath, configurePath, options.arch)
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '..', '--generator-output', '../gyp-ios']
+    defines = default_defines.copy()
+    defines.update({
+        'das_library_type': 'static_library',
+        'OS': 'ios',
+        'output_location': projectRoot+'/gyp-ios',
+        'arch_group': options.arch
+    })
+
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines, options.gyp_defines)
+    gypArgs = getGypArgs('xcode', '../gyp-ios')
     gyp.main(gypArgs)
 
 if 'android' in options.platforms:
@@ -139,26 +154,30 @@ if 'android' in options.platforms:
     ndk_root = os.environ['ANDROID_NDK_ROOT']
     os.environ['ANDROID_BUILD_TOP'] = configurePath
     ##################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """ das_library_type=shared_library
-                                    os_posix=1
-                                    OS=android
-                                    GYP_CROSSCOMPILE=1
-                                    output_location={0}
-                                    gyp_location={1}
-                                    configure_location={2}
-                                    target_arch=arm
-                                    clang=1
-                                    component=static_library
-                                    use_system_stlport=0
-                                    ndk_root={3}
-                                """.format(projectRoot+'/gyp-android', gypPath, configurePath, ndk_root)
+    defines = default_defines.copy()
+    defines.update({
+        'os_posix': 1,
+        'OS': 'android',
+        'GYP_CROSSCOMPILE': 1,
+        'output_location': projectRoot+'/gyp-android',
+        'target_arch': 'arm',
+        'clang': 1,
+        'component': 'static_library',
+        'use_system_stlport': 0,
+        'ndk_root': ndk_root
+    })
+
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+
+    toolchain = defines['android_toolchain']
+
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
-    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
+    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar' % toolchain)
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
-    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
-    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '..', '--generator-output', 'gyp-android']
+    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm' % toolchain)
+    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf' % toolchain)
+    gypArgs = getGypArgs('ninja-android', 'gyp-android')
     gyp.main(gypArgs)
 
 if (options.xcode):

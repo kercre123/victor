@@ -447,6 +447,8 @@
             },
             'libraries': [
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework'
             ],
             'actions' : [
               {

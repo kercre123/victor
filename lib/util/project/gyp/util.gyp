@@ -7,14 +7,19 @@
     'kazmath_source_file_name': 'kazmath.lst',
     'audioutil_source_file_name': 'audioUtil.lst',
     'folly_source_file_name': 'folly.lst',
+    'libwebp_source_file_name': 'libwebp.lst',
+    'cpufeatures_source_file_name': 'cpufeatures.lst',
     'networkApp_source_file_name': 'networkApp.lst',
 
     'build_flavor%': 'dev',
     'clad_dir%': '../../tools/message-buffers',
     'has_shipping%': 1,
+    'use_libwebp%': 1,
     
     'compiler_flags': [
       '-DJSONCPP_USING_SECURE_MEMORY=0',
+      '-DWEBP_RESCALER_FIX=0',
+      '-DWEBP_USE_THREAD=1',
       '-fdiagnostics-show-category=name',
       '-Wall',
       '-Woverloaded-virtual',
@@ -74,10 +79,10 @@
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
         'compiler_flags': [
-          '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
+          '--sysroot=<(ndk_root)/platforms/<(android_platform)/arch-arm',
           '-DANDROID=1',
           '-DNO_LOCALE_SUPPORT=1',
-          '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
+          '-gcc-toolchain', '<(ndk_root)/toolchains/<(android_toolchain)/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
           '-funwind-tables',
@@ -95,11 +100,11 @@
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
           '-I<(ndk_root)/sources/android/support/include',
-          '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
+          '-I<(ndk_root)/platforms/<(android_platform)/arch-arm/usr/include',
         ],
         'linker_flags': [
-            '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
-            '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
+            '--sysroot=<(ndk_root)/platforms/<(android_platform)/arch-arm',
+            '-gcc-toolchain', '<(ndk_root)/toolchains/<(android_toolchain)/prebuilt/darwin-x86_64',
             '-no-canonical-prefixes',
             '-target armv7-none-linux-androideabi',
             '-Wl,--fix-cortex-a8',
@@ -108,7 +113,7 @@
             '-Wl,-z,relro',
             '-Wl,-z,now',
             '-mthumb',
-            '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
+            '-L<(ndk_root)/platforms/<(android_platform)/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
             '-lgcc',
             '-lc',
@@ -122,7 +127,7 @@
         'SHARED_LIB_DIR': '', #bogus, just to make the mac / ios builds happy
       },
       ],
-      ['OS=="ios"', {
+      ['OS=="ios" or OS=="mac"', {
         'compiler_flags': [
         '-fobjc-arc',
         ]
@@ -236,6 +241,36 @@
         'defines': [
           'ANDROID=1',
         ],
+
+        'targets': [
+          {
+            'target_name': 'cpufeatures',
+            'sources': [ '<!@(cat <(cpufeatures_source_file_name))' ],
+            'include_dirs': [
+              '../../source/cpufeatures',
+            ],
+            'direct_dependent_settings': {
+              'include_dirs': [
+              ],
+            },
+            'cflags': [
+              '-std=c11',
+              '-mfpu=neon',
+              '-Wno-conditional-uninitialized',
+              '-Wno-implicit-function-declaration',
+              '-Wno-shorten-64-to-32'
+            ],
+            'cflags_cc': [
+              '-std=c++14',
+              '-stdlib=libc++',
+              '-mfpu=neon',
+              '-Wno-conditional-uninitialized',
+              '-Wno-implicit-function-declaration',
+              '-Wno-shorten-64-to-32'
+            ],
+            'type': '<(cpufeatures_library_type)',
+          },
+        ]
       },
     ],
     [
@@ -316,10 +351,12 @@
             'export_dependent_settings': [
               'jsoncpp',
               'kazmath',
+              'libwebp',
             ],
             'dependencies': [
               'jsoncpp',
               'kazmath',
+              'libwebp',
             ],
             'type': '<(util_library_type)',
           },
@@ -414,6 +451,7 @@
             'export_dependent_settings': [
               'jsoncpp',
               'kazmath',
+              'libwebp',
             ],
             'defines': [
               'UNIT_TEST=1',
@@ -421,11 +459,12 @@
             'dependencies': [
               'jsoncpp',
               'kazmath',
+              'libwebp',
             ],
             'xcode_settings': {
               'LD_DYLIB_INSTALL_NAME': '@rpath/$(EXECUTABLE_PATH)'
             },
-            'type': '<(util_library_type)',
+            'type': 'shared_library',
           },
 
 
@@ -501,6 +540,62 @@
 
 
   'targets': [
+    {
+      'target_name': 'libwebp',
+      'sources': [ '<!@(cat <(libwebp_source_file_name))' ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../source/3rd/libwebp/src',
+        ],
+      },
+      'cflags': [
+        '-std=c11',
+        '-Wno-conditional-uninitialized',
+        '-Wno-shorten-64-to-32'
+      ],
+      'cflags_cc': [
+        '-std=c++14',
+        '-stdlib=libc++',
+        '-Wno-conditional-uninitialized',
+        '-Wno-shorten-64-to-32'
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-std=c11',
+          '-Wno-conditional-uninitialized',
+          '-Wno-shorten-64-to-32'
+        ],
+      },
+      'conditions': [
+        ['OS=="android"',
+          {
+            'dependencies': [
+              'cpufeatures',
+            ],
+            'include_dirs': [
+              '../../source/3rd/libwebp',
+              '../../source/3rd/cpufeatures',
+            ],
+          },
+          { # else OS!=android
+            'include_dirs': [
+              '../../source/3rd/libwebp',
+            ],
+          }
+        ], # endif OS=android
+        ['OS!="linux"',
+          {
+            'cflags': [
+              '-mfpu=neon'
+            ],
+            'cflags_cc': [
+              '-mfpu=neon'
+            ]
+          }
+        ] # endif OS!=linux
+      ],
+      'type': '<(libwebp_library_type)',
+    },
 
     {
       'target_name': 'kazmath',
@@ -577,6 +672,15 @@
         ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
         ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
         ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
+        ['<(use_libwebp)==1', {
+          'export_dependent_settings': [
+            'libwebp'
+          ],
+          'dependencies': [
+            'libwebp'
+          ]
+        }],
+        ['OS=="mac"', { 'libraries': [ '$(SDKROOT)/System/Library/Frameworks/Foundation.framework' ] }]
       ],
       'include_dirs': [
         '../../source/anki',

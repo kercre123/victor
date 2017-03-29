@@ -97,6 +97,9 @@ def main(scriptArgs):
   import updateFileLists
   import util
 
+  # create gyp arg function
+  getGypArgs = util.Gyp.getArgFunction(['--check', '--depth', '.', '--toplevel-dir', '../..'])
+
   if not options.cladPath:
       options.cladPath = util.Module.get_path('clad')
 
@@ -167,35 +170,36 @@ def main(scriptArgs):
   # paths relative to gyp file
   clad_dir_rel = os.path.relpath(options.cladPath, configurePath)
 
+  #################### GYP_DEFINES ####
+  default_defines = {
+    'jsoncpp_library_type': 'static_library',
+    'kazmath_library_type': 'static_library',
+    'libwebp_library_type': 'static_library',
+    'cpufeatures_library_type': 'static_library',
+    'util_library_type': 'static_library',
+    'audioutil_library_type': 'static_library',
+    'gyp_location': gypPath,
+    'configure_location': configurePath,
+    'clad_dir': clad_dir_rel,
+    'ndk_root': 'INVALID',
+    'android_toolchain': 'arm-linux-androideabi-4.9',
+    'android_platform': 'android-18'
+  }
+
   # mac
   if 'mac' in options.platforms:
     UtilLog.info('generating mac project')
     #################### GYP_DEFINES ####
-    defines = {
-            'jsoncpp_library_type': 'static_library',
-            'kazmath_library_type': 'static_library',
-            'util_library_type': 'static_library',
-            'audioutil_library_type': 'static_library',
+    defines = default_defines.copy()
+    defines.update({
             'OS': 'mac',
             'output_location': projectRoot+'/project/gyp-mac',
-            'gyp_location': gypPath,
-            'configure_location': configurePath,
-            'clad_dir': clad_dir_rel,
-            'arch_group': options.arch,
-            'ndk_root': 'INVALID'
-    }
+            'arch_group': 'standard'
+    })
 
-    # add configure CLI args
-    for entry in options.gyp_defines:
-        (k,v) = entry.split('=')
-        key = k.strip()
-        value = v.strip()
-        defines[key] = value
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines, options.gyp_defines)
 
-    define_args = ["%s=%s" % (k, v) for k,v in defines.iteritems()]                                 
-    os.environ['GYP_DEFINES'] = "\n".join(define_args)
-
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../gyp-mac', gypFile]
+    gypArgs = getGypArgs('xcode', '../gyp-mac', gypFile)
     if options.verbose:
       gypArgs = ['-d', 'all'] + gypArgs
     gyp.main(gypArgs)
@@ -206,31 +210,16 @@ def main(scriptArgs):
   if 'ios' in options.platforms:
     UtilLog.info('generating ios project')
     #################### GYP_DEFINES ####
-    defines = {
-            'jsoncpp_library_type': 'static_library',
-            'kazmath_library_type': 'static_library',
-            'util_library_type': 'static_library',
-            'audioutil_library_type': 'static_library',
+    defines = default_defines.copy()
+    defines.update({
             'OS': 'ios',
-            'output_location': 'gyp-ios', 
-            'gyp_location': gypPath,
-            'configure_location': configurePath,
-            'clad_dir': clad_dir_rel,
-            'arch_group': options.arch,
-            'ndk_root': 'INVALID'
-    }
+            'output_location': 'gyp-ios',
+            'arch_group': options.arch
+    })
 
-    # add configure CLI args
-    for entry in options.gyp_defines:
-        (k,v) = entry.split('=')
-        key = k.strip()
-        value = v.strip()
-        defines[key] = value
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines, options.gyp_defines)
 
-    define_args = ["%s=%s" % (k, v) for k,v in defines.iteritems()]                                 
-    os.environ['GYP_DEFINES'] = "\n".join(define_args)
-
-    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../gyp-ios', gypFile]
+    gypArgs = getGypArgs('xcode', '../gyp-ios', gypFile)
     if options.verbose:
       gypArgs = ['-d', 'all'] + gypArgs
     gyp.main(gypArgs)
@@ -238,40 +227,25 @@ def main(scriptArgs):
   # linux
   if 'linux' in options.platforms:
     ##################### GYP_DEFINES ####
-    defines = {
-            'jsoncpp_library_type': 'static_library',
-            'kazmath_library_type': 'static_library',
-            'util_library_type': 'static_library',
-            'audioutil_library_type': 'static_library',
+    defines = default_defines.copy()
+    defines.update({
             'os_posix': 1,
             'GYP_CROSSCOMPILE': 1,
-            'output_location': 'gyp-linux', 
-            'gyp_location': gypPath,
-            'configure_location': configurePath,
-            'clad_dir': clad_dir_rel,
+            'output_location': 'gyp-linux',
             'OS': 'linux',
             'target_arch': 'x64',
             'clang': 1,
             'component': 'static_library',
-            'use_system_stlport': 0,
-            'ndk_root': 'INVALID'
-    }
+            'use_system_stlport': 0
+    })
 
-    # add configure CLI args
-    for entry in options.gyp_defines:
-        (k,v) = entry.split('=')
-        key = k.strip()
-        value = v.strip()
-        defines[key] = value
-
-    define_args = ["%s=%s" % (k, v) for k,v in defines.iteritems()]                                 
-    os.environ['GYP_DEFINES'] = "\n".join(define_args)
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines, options.gyp_defines)
 
     os.environ['GYP_GENERATOR_FLAGS'] = 'output_dir=DerivedData'
     os.environ['CC_target'] = '/usr/bin/clang'
     os.environ['CXX_target'] = '/usr/bin/clang++'
     os.environ['LD_target'] = '/usr/bin/clang++'
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', 'project/gyp-linux', gypFile]
+    gypArgs = getGypArgs('ninja', 'project/gyp-linux', gypFile)
     gyp.main(gypArgs)
 
   if 'android' in options.platforms:
@@ -305,42 +279,30 @@ def main(scriptArgs):
 
     os.environ['ANDROID_BUILD_TOP'] = configurePath
     ##################### GYP_DEFINES ####
-    defines = {
-            'jsoncpp_library_type': 'static_library',
-            'kazmath_library_type': 'static_library',
-            'util_library_type': 'static_library',
-            'audioutil_library_type': 'static_library',
+    defines = default_defines.copy()
+    defines.update({
             'os_posix': 1,
             'GYP_CROSSCOMPILE': 1,
-            'output_location': 'gyp-android', 
-            'gyp_location': gypPath,
-            'configure_location': configurePath,
-            'clad_dir': clad_dir_rel,
+            'output_location': 'gyp-android',
             'OS': 'android',
             'target_arch': 'arm',
             'clang': 1,
             'component': 'static_library',
             'use_system_stlport': 0,
             'ndk_root': ndk_root
-    }
+    })
 
-    # add configure CLI args
-    for entry in options.gyp_defines:
-        (k,v) = entry.split('=')
-        key = k.strip()
-        value = v.strip()
-        defines[key] = value
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines, options.gyp_defines)
 
-    define_args = ["%s=%s" % (k, v) for k,v in defines.iteritems()]                                 
-    os.environ['GYP_DEFINES'] = "\n".join(define_args)
+    toolchain = defines['android_toolchain']
 
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
-    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
+    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar' % toolchain)
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
-    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
-    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'project/gyp-android', gypFile]
+    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm' % toolchain)
+    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf' % toolchain)
+    gypArgs = getGypArgs('ninja-android', 'project/gyp-android', gypFile)
     if options.verbose:
       gypArgs = ['-d', 'all'] + gypArgs
     gyp.main(gypArgs)
@@ -352,20 +314,15 @@ def main(scriptArgs):
     ### Install android build deps if necessary
     # TODO: We should only check for deps in configure.py, not actuall install anything
     ##################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """ 
-                                jsoncpp_library_type=static_library
-                                kazmath_library_type=static_library
-                                util_library_type=static_library
-                                audioutil_library_type=static_library
-                                os_posix=1
-                                OS=cmake
-                                output_location={0}
-                                gyp_location={1}
-                                configure_location={2}
-                                arch_group={3}
-                                ndk_root=INVALID
-                                """.format('gyp-android', gypPath, configurePath, options.arch)
-    gypArgs = ['--check', '--depth', '.', '-f', 'cmake', '--toplevel-dir', '../..', '--generator-output', '..', '-G', 'output_dir=.', gypFile]
+    defines = default_defines.copy()
+    defines.update({
+      'os_posix': 1,
+      'OS': 'cmake',
+      'output_location': 'gyp-android',
+      'arch_group': options.arch
+    })
+    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+    gypArgs = ['-G', 'output_dir=.'] + getGypArgs('cmake', '..', gypFile)
     if options.verbose:
       gypArgs = ['-d', 'all'] + gypArgs
     gyp.main(gypArgs)
