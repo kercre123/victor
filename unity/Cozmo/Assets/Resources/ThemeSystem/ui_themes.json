@@ -1301,7 +1301,7 @@
                             "ImageResourceKey": "",
                             "SkinFont": true,
                             "SkinFontStyle": true,
-                            "FontStyle": 1,
+                            "FontStyle": 0,
                             "SkinTextAlignment": true,
                             "TextAlignment": 514,
                             "SkinTextOverflow": true,
