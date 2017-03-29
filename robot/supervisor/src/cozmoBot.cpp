@@ -211,6 +211,7 @@ namespace Anki {
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           AnkiInfo( 229, "CozmoBot.Radio.Disconnected", 305, "", 0);
           Messages::ResetInit();
+          PathFollower::Init();
           SteeringController::ExecuteDirectDrive(0,0);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);

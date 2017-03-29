@@ -79,7 +79,7 @@ namespace Anki
       Result Init(void)
       {
         ClearPath();
-
+        lastPathID_ = 0;
         return RESULT_OK;
       }
 
@@ -89,9 +89,17 @@ namespace Anki
       {
         path_.Clear();
         currPathSegment_ = -1;
-        manualPathSpeed_ = false;
-        pointTurnStarted_ = false;
         realPathSegment_ = -1;
+        
+        manualPathSpeed_ = 0.f;
+        manualSpeedControl_ = false;
+        
+        pointTurnStarted_ = false;
+        
+        distToPath_mm_ = 0.f;
+        radToPath_ = 0.f;
+        startedDecelOnSegment_ = false;
+
       } // Update()
 
 
@@ -203,29 +211,6 @@ namespace Anki
           currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
           startedDecelOnSegment_ = false;
-
-
-          /*
-          // If the first part of the path is some tiny arc,
-          // skip it because it tends to report gross errors that
-          // make the steeringController jerky.
-          // This mainly occurs during docking.
-          // TODO: Do this check for EVERY path segment?
-          if ((currPathSegment_ == 0) &&
-              (path_[0].GetType() == Planning::PST_ARC) &&
-              (ABS(path_[0].GetLength() < 10))
-              path_[0].GetDef().arc.radius <= 50) {
-
-            PRINT("Skipping short arc: sweep %f deg, radius %f mm, length %fmm\n",
-                  RAD_TO_DEG_F32( path_[0].GetDef().arc.sweepRad ),
-                  path_[0].GetDef().arc.radius,
-                  path_[0].GetLength());
-
-            currPathSegment_++;
-            realPathSegment_ = currPathSegment_;
-          }
-           */
-
 
 
           // Set speed
@@ -400,20 +385,16 @@ namespace Anki
           }
         }
 
-
+        // For point turns, ignore how far off we may be from the ideal point turn location
+        shortestDistanceToPath_mm = 0.f;
+        
         return Planning::IN_SEGMENT_RANGE;
       }
 
       // Post-path completion cleanup
       void PathComplete()
       {
-        pointTurnStarted_ = false;
-        currPathSegment_ = -1;
-        realPathSegment_ = -1;
-
-        manualSpeedControl_ = false;
-        manualPathSpeed_ = 0;
-
+        ClearPath();
         AnkiEvent( 349, "PathFollower.PathComplete", 305, "", 0);
       }
 
@@ -497,12 +478,9 @@ namespace Anki
         if (!DockingController::IsBusy()) {
           // Check that starting error is not too big
           // TODO: Check for excessive heading error as well?
-          if (distToPath_mm_ > TOO_FAR_FROM_PATH_DIST_MM) {
-            currPathSegment_ = -1;
-            realPathSegment_ = -1;
-#if(DEBUG_PATH_FOLLOWER)
+          if (ABS(distToPath_mm_) > TOO_FAR_FROM_PATH_DIST_MM) {
             AnkiWarn( 353, "PathFollower.Update.StartingErrorTooLarge", 594, "%f mm", 1, distToPath_mm_);
-#endif
+            ClearPath();
             return RESULT_FAIL;
           }
         }
