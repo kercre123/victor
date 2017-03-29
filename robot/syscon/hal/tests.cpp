@@ -149,6 +149,23 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       break;    // Reply "OK"
     }
     
+    case TEST_SETCOLOR:
+    {
+      for (int i = 0; i < MAX_MODELS; i++) {
+        if (BODY_COLOR(i) != ~0) continue ;
+
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        BODY_COLOR(i) = param;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        break ;
+      }
+
+      break ;
+    }
+    
     case TEST_PLAYTONE:
     {
       RobotInterface::GenerateTestTone msg;
@@ -159,7 +176,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     // Get version and ESN information
     case TEST_GETVER:
     {
-      SendDown(8, (u8*)0x1F010);    // Bootloader/fixture version
+      SendDown(24, (u8*)0x1F010);    // Bootloader/fixture version
       return;   // Already replied
     }
     
