@@ -161,6 +161,8 @@ u32 GetSerial();
 #define ERROR_BODY_TREAD_ENC_LEFT   602   // left tread encoder failed self test
 #define ERROR_BODY_TREAD_ENC_RIGHT  603   // right tread encoder failed self test
 #define ERROR_BODY_BACKPACK_PULL    604   // backpack pull-up incorrect
+#define ERROR_BODYCOLOR_INVALID     605   // an invalid color code was detected
+#define ERROR_BODYCOLOR_FULL        606   // no space to write new bodycolor. requires full erase/re-program.
 
 // Drop sensor errors
 #define ERROR_DROP_LEAKAGE          610   // Drop leakage detected

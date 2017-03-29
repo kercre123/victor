@@ -27,6 +27,15 @@ using namespace Anki::Cozmo::RobotInterface;
 #define BOOTED_CURRENT  40000
 #define PRESENT_CURRENT 1000
 
+//Bodycolors
+enum {
+  BODYCOLOR_EMPTY     = ~0,
+  BODYCOLOR_WHITE_1V0 = 0,  //v1.0 Cozmo (1.0 bootloader had all color fields set to 0)
+  BODYCOLOR_WHITE_1V5 = 1,  //v1.5 Cozmo
+  BODYCOLOR_GRAY_LE   = 2,  //v1.5 Cozmo, Limited Edition
+  BODYCOLOR_END,            //(range checking)
+};
+
 //buttonTest.c
 extern void ButtonTest(void);
 
@@ -73,22 +82,100 @@ void EnableChargeComms(void)
   MicroWait(300000);
 }
 
+static const int MAX_BODYCOLORS = 4;
+static int m_bodyColorCnt = 0;
+static s32 m_bodyColor = BODYCOLOR_EMPTY;
+static void readBodycolor(void)
+{
+  struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
+  
+  dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
+  SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
+  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
+    throw ERROR_BODY_OUTOFDATE;
+  
+  ConsolePrintf("bodycolor,%d,%d,%d,%d\r\n", dat.bodycolor[0], dat.bodycolor[1], dat.bodycolor[2], dat.bodycolor[3] );
+  
+  //Actual bodycolor is the highest index [valid] value
+  m_bodyColorCnt = 0;
+  m_bodyColor = BODYCOLOR_EMPTY;
+  for( int i=MAX_BODYCOLORS-1; i>=0; i-- ) {
+    if( dat.bodycolor[i] == BODYCOLOR_EMPTY ) continue; //empty slot
+    if( dat.bodycolor[i] < 0 || dat.bodycolor[i] >= BODYCOLOR_END )
+      throw ERROR_BODYCOLOR_INVALID;
+    m_bodyColor = dat.bodycolor[i];
+    m_bodyColorCnt = i+1;
+    break;
+  }
+}
+
+static void setBodycolor(u8 bodycolor)
+{
+  //all tests start with InfoTest(), so we should already have updated color info
+  //readBodycolor();
+  
+  if( bodycolor != m_bodyColor ) { //only write changed values
+    if( m_bodyColorCnt >= MAX_BODYCOLORS )
+      throw ERROR_BODYCOLOR_FULL;
+    SendCommand(TEST_SETCOLOR, bodycolor, 0, 0);
+  }
+  
+  //verify
+  readBodycolor(); //readback
+  if( m_bodyColor != bodycolor ) //write failed
+    throw ERROR_BODYCOLOR_INVALID;
+}
+
+//write the body color code into syscon flash
+static void WriteBodyColor(void)
+{
+  if( g_fixtureType == FIXTURE_ROBOT3_TEST ) {
+    ConsolePrintf("write body color: white\r\n");
+    setBodycolor( BODYCOLOR_WHITE_1V5 );
+  }
+  #warning "write color for LE version"
+  /*
+  if( g_fixtureType == FIXTURE_ROBOT3_LE_TEST ) {
+    ConsolePrintf("write body color: gray (LE)\r\n");
+    setBodycolor( BODYCOLOR_GRAY_LE );
+  }
+  //-*/
+}
+
+static void VerifyBodyColor(void)
+{
+  readBodycolor();
+  
+  if( g_fixtureType == FIXTURE_PACKOUT_TEST && m_bodyColor != BODYCOLOR_WHITE_1V5 )
+    throw ERROR_BODYCOLOR_INVALID;
+  #warning "verify color for LE version"
+  /*
+  if( g_fixtureType == FIXTURE_PACKOUT_LE_TEST && m_bodyColor != BODYCOLOR_GRAY_LE )
+    throw ERROR_BODYCOLOR_INVALID;
+  //-*/
+}
+
 void InfoTest(void)
 {
-  unsigned int version[2];
+  struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
   
   EnableChargeComms();
   
   ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
-  SendCommand(TEST_GETVER, 0, sizeof(version), (u8*)version);
-
+  dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
+  SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
+  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
+    throw ERROR_BODY_OUTOFDATE;
+  
   // Mimic robot format for SMERP
-  int unused = version[0]>>16, hwversion = version[0]&0xffff, esn = version[1];
+  int unused = dat.version[0]>>16, hwversion = dat.version[0]&0xffff, esn = dat.version[1];
   ConsolePrintf("version,%08d,%08d,%08x,00000000\r\n", unused, hwversion, esn);
   
   if (hwversion < BODY_VER_SHIP && !g_allowOutdated)
     throw ERROR_BODY_OUTOFDATE;
+  
+  readBodycolor();
 }
 
 void PlaypenTest(void)
@@ -537,6 +624,7 @@ TestFunction* GetRobotTestFunctions(void)
     FastMotors,
     RobotFixtureDropSensor,
     BatteryCheck,
+    WriteBodyColor,
     SpeakerTest,            // Must be last
     NULL
   };
@@ -577,6 +665,7 @@ TestFunction* GetPackoutTestFunctions(void)
     FastMotors,
     RobotFixtureDropSensor,
     BatteryCheck,
+    VerifyBodyColor,
     SpeakerTest,            // Must be last
     NULL
   };
