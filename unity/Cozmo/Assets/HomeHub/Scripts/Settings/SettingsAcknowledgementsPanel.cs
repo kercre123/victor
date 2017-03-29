@@ -58,8 +58,11 @@ namespace Cozmo.Settings {
         System.Action<BaseModal> acknowledgementsModalCreated = (modal) => {
           _AcknowledgementsModalInstance = (ScrollingTextModal)modal;
           _AcknowledgementsModalInstance.DASEventDialogName = "acknowledgements_view";
+          // now in unity resources folder, strip extension for Resources not our loc assets
+          _AcknowledgementsTextFileName = _AcknowledgementsTextFileName.Replace(".txt", "");
+          TextAsset acknowledgementsText = Resources.Load<TextAsset>(_AcknowledgementsTextFileName);
           _AcknowledgementsModalInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
-                                                    Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
+                                                    acknowledgementsText.text);
         };
 
         UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, acknowledgementsModalCreated);
