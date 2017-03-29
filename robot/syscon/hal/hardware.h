@@ -4,9 +4,12 @@
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
 static uint32_t* const FIXTURE_HOOK = (uint32_t*)0x20003FFC;
+static const int MAX_MODELS = 4;
 
-#define BODY_VER (*((s32*) 0x1F010))  // Between -1 (unprogrammed) and BODY_VERS
-#define BODY_ESN (*((u32*) 0x1F014))
+#define BODY_VER       (*((s32*) 0x1F010))  // Between -1 (unprogrammed) and BODY_VERS
+#define BODY_ESN       (*((u32*) 0x1F014))
+#define BODY_COLOR(i)  (((s32*) 0x1F018)[i])
+
 
 enum BODY_VERS {
   BODY_VER_EP = 0,
@@ -32,7 +35,7 @@ enum e_nrf_gpio {
   PIN_ENCODER_HEADA   = 14, // ENC3 - wire harness reversed since EP3
   PIN_ENCODER_HEADB   = 17,
   PIN_ENCODER_LIFTA   = 0,  // ENC4 - wire harness reversed since EP3
-  PIN_ENCODER_LIFTB   = 1,      
+  PIN_ENCODER_LIFTB   = 1,
 
   // Motors + charge OK signal
   PIN_LEFT_P          = 19,
@@ -41,7 +44,7 @@ enum e_nrf_gpio {
   PIN_RIGHT_P         = 2,
   PIN_RIGHT_N1        = 27,
   PIN_RIGHT_N2        = 29,
-  PIN_HEAD_P          = 3, 
+  PIN_HEAD_P          = 3,
   PIN_HEAD_N1         = 28,
   PIN_HEAD_N2         = 25,
   PIN_LIFT_P          = 30,
@@ -77,7 +80,7 @@ enum e_nrf_gpio {
   PIN_TX_HEAD         = 12,
   PIN_TX_VEXT         = 6,    // This is the debug port on the battery charger
 };
- 
+
 #ifndef FIXTURE
 enum AnalogInput {
   ANALOG_CLIFF_SENSE = ADC_CONFIG_PSEL_AnalogInput0,  // P26
