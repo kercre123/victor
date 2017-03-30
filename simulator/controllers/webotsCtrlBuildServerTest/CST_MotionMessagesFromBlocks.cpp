@@ -14,6 +14,7 @@ enum class TestState {
   CheckForMovedMessage,
   CheckForStoppedMessage1,
   CheckForUpAxisChangedMessage,
+  CheckForObjectAccelMessage,
   Exit
 };
 
@@ -30,6 +31,7 @@ private:
   void HandleActiveObjectMoved(const ObjectMoved& msg) override;
   void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg) override;
   void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  void HandleActiveObjectAccel(const ObjectAccel& msg) override;
 
   TestState _testState = TestState::Init;
   const Pose3d _cubePose1 = {0, Vec3f(0.f, 0.f, 1.f), Vec3f(200.f, 50.f, 22.1f)};
@@ -37,6 +39,7 @@ private:
   bool _wasStopped = false;
   bool _wasMoved = false;
   UpAxis _lastReportedUpAxis = UpAxis::UnknownAxis;
+  u32 _numObjectAccelMsgs = 0;
   
   u32 _numObjectsConnected = 0;
 };
@@ -129,6 +132,21 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::CheckForUpAxisChangedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_lastReportedUpAxis == UpAxis::XNegative, 5) {
+        // Make sure we're getting ObjectAccel messages when we request them:
+        CST_ASSERT(_numObjectAccelMsgs == 0, "We've received ObjectAccel messages, but we shouldn't have yet!");
+        const u32 objId = 0;
+        SendStreamObjectAccel(objId, true); // TODO: This should not use a hard-coded value for ObjectID, but since
+                                            //   the robot hasn't observed any objects (head is down), the _objectIDToPoseMap
+                                            //   is empty, even though this object is connected (just not observed).
+        _testState = TestState::CheckForObjectAccelMessage;
+      }
+      break;
+    }
+      
+    case TestState::CheckForObjectAccelMessage:
+    {
+      // Should receive a stream of ObjectAccel messages (~30 per second)
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectAccelMsgs > 100, 10) {
         _testState = TestState::Exit;
       }
       break;
@@ -171,6 +189,11 @@ void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const Objec
   } else if (_numObjectsConnected > 0) {
     --_numObjectsConnected;
   }
+}
+
+void CST_MotionMessagesFromBlocks::HandleActiveObjectAccel(const ObjectAccel& msg)
+{
+  ++_numObjectAccelMsgs;
 }
 
 }  // namespace Cozmo

@@ -102,8 +102,6 @@ static unsigned int   lastSlot = MAX_ACCESSORIES;
 static bool           handshakeReceived = false;
 static int            handshakeSlot = 0;
 
-// Which slot should accelerometer data be streaming for
-static int streamAccelSlot = -1;
 
 #ifdef CUBE_HOP
 static int8_t         _wifiChannel;
@@ -139,7 +137,6 @@ void Radio::advertise(void) {
   wasTapped = false;
   handshakeReceived = false;
   sendDiscovery = true;
-  streamAccelSlot = -1;
 
   // ==== Configure Radio
   NRF_RADIO->POWER = 1;
@@ -342,6 +339,7 @@ static void onAdvertisePacket() {
     acc->active = true;
     acc->movingTimeoutCtr = 0;
     acc->isMoving = false;
+    acc->shouldStreamAccel = false;
     acc->prevMotionDir = UnknownAxis;
     acc->prevUpAxis = UnknownAxis;
     acc->nextUpAxis = UnknownAxis;
@@ -672,12 +670,8 @@ extern "C" void RTC0_IRQHandler(void) {
 
 void Radio::enableAccelStreaming(unsigned int slot, bool enable)
 {
-  if (enable) {
-    if (slot < MAX_ACCESSORIES) {
-      streamAccelSlot = slot;
-    }
-  } else if (streamAccelSlot == slot) {
-    streamAccelSlot = -1;
+  if (slot < MAX_ACCESSORIES) {
+    accessories[slot].shouldStreamAccel = enable;
   }
 }
 
@@ -868,7 +862,7 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
   
   
   // Stream accelerometer data
-  if (streamAccelSlot == id) {
+  if (target->shouldStreamAccel) {
     ObjectAccel m;
     m.timestamp = g_dataToHead.timestamp;
     m.objectID = id;

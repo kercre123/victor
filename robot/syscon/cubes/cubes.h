@@ -84,6 +84,7 @@ struct AccessorySlot {
   bool                  hopSkip;
   bool                  isMoving;
   bool                  dataReceived;
+  bool                  shouldStreamAccel;
 };
 
 __packed struct CubeFirmware {

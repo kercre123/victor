@@ -1178,6 +1178,14 @@ void RobotToEngineImplMessaging::HandleObjectAccel(const AnkiEvent<RobotInterfac
   //PRINT_NAMED_DEBUG("RobotToEngine.ObjectAccel.Values", "%f %f %f", acc.x, acc.y, acc.z);
   
   robot->GetContext()->GetVizManager()->SendObjectAccelState(activeID, acc);
+  
+  // Forward to game
+  const BlockWorld & blockWorld = robot->GetBlockWorld();
+  const ActiveObject* object = blockWorld.GetConnectedActiveObjectByActiveID(activeID);
+  if (object != nullptr) {
+    const uint32_t objectID = object->GetID();
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(payload.timestamp, objectID, acc)));
+  }
 }
   
 } // end namespace Cozmo

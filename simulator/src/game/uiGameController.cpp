@@ -243,6 +243,13 @@ namespace Anki {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
+    void UiGameController::HandleActiveObjectAccelBase(ObjectAccel const& msg)
+    {
+      //PRINT_NAMED_INFO("HandleActiveObjectAccel", "ObjectID %d, timestamp %d, accel {%.2f, %.2f, %.2f}",
+      //                 msg.objectID, msg.timestamp, msg.accel.x, msg.accel.y, msg.accel.z);
+      HandleActiveObjectAccel(msg);
+    }
+    
     void UiGameController::HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID 0x%x): %s",
@@ -538,6 +545,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
             HandleRobotCompletedActionBase(message.Get_RobotCompletedAction());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectAccel:
+            HandleActiveObjectAccelBase(message.Get_ObjectAccel());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ObjectConnectionState:
             HandleActiveObjectConnectionStateBase(message.Get_ObjectConnectionState());
@@ -1750,6 +1760,13 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
+    void UiGameController::SendStreamObjectAccel(const u32 objectID, bool enable)
+    {
+      ExternalInterface::StreamObjectAccel m(objectID, enable);
+      
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+    
     void UiGameController::SendSetActiveObjectLEDs(const u32 objectID,
                                                    const u32 onColor,
                                                    const u32 offColor,

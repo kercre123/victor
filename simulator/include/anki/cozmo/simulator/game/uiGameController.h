@@ -104,6 +104,7 @@ protected:
   virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(ImageChunk const& msg){};
+  virtual void HandleActiveObjectAccel(ObjectAccel const& msg){};
   virtual void HandleActiveObjectConnectionState(ObjectConnectionState const& msg){};
   virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
@@ -294,6 +295,7 @@ protected:
   void SendSetHeadlight(bool enable);
   void SendEnableBlockTapFilter(bool enable);
   void SendEnableBlockPool(double maxDiscoveryTime, bool enabled);
+  void SendStreamObjectAccel(const u32 objectID, bool enable = true);
 
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message
@@ -476,6 +478,7 @@ private:
   void HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg);
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
   void HandleImageChunkBase(ImageChunk const& msg);
+  void HandleActiveObjectAccelBase(ObjectAccel const& msg);
   void HandleActiveObjectConnectionStateBase(ObjectConnectionState const& msg);
   void HandleActiveObjectMovedBase(ObjectMoved const& msg);
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
