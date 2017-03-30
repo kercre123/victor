@@ -113,6 +113,13 @@ static void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
   RobotInterface::SendMessage(mfgMsg);
 }
 
+static void Process_getBodySerialNumber(const RobotInterface::GetBodySerialNumber& msg)
+{
+  RobotInterface::BodySerialNumber esnMsg;
+  esnMsg.sn = BODY_ESN;
+  RobotInterface::SendMessage(esnMsg);
+}
+
 static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
   if (msg.radioMode == BODY_ACCESSORY_OPERATING_MODE) {
     Radio::setWifiChannel(msg.wifiChannel);

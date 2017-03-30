@@ -1,4 +1,4 @@
-/** Impelementation framework for factory test firmware on the Espressif MCU
+/** Implementation framework for factory test firmware on the Espressif MCU
  * @author Daniel Casner <daniel@anki.com>
  */
 
@@ -22,6 +22,7 @@ extern "C" {
 #include "nvStorage.h"
 #include "wifi_configuration.h"
 #include "upgradeController.h"
+#include "backgroundTask.h"
 
 #include "wifi-cozmo-img.h"
 
@@ -65,6 +66,7 @@ typedef enum {
   HEAD_MOVING = 1<<3,
   LIFT_AT_LIMIT = 1<<4,
   HEAD_AT_LIMIT = 1<<5,
+  BUTTON_PRESSED = 1<<6,
 } PositionChangeFlags;
 
 
@@ -78,11 +80,10 @@ static s8  menuIndex;
 static u8  extVolt10x;
 static PlayPenTestState testModePhase;
 static int positionChanges;
+static u8 gButtonIsPressed;
+static uint32_t gBodySN;
 
 #define CHARGER_DETECT_THRESHOLD_DV (40)
-
-
-
 
   
 #define IDLE_SECONDS (1000000)  
@@ -153,6 +154,8 @@ bool Init()
   menuIndex = 0;
   extVolt10x = 50; // We turned on so we must be on the charger
   testModePhase = PP_entry;
+  gButtonIsPressed = false;
+  gBodySN = 0;
   return true;
 }
 
@@ -187,6 +190,15 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
   }
 }
 
+void SetBodySN(uint32_t sn)
+{
+   gBodySN = sn;
+}
+
+inline uint32_t GetBodySN()
+{
+  return gBodySN;
+}
 
 static inline bool NVSRead(NVStorage::NVEntryTag tag,  NVStorage::NVOperationCallback cb)
 {
@@ -305,6 +317,31 @@ static inline void ShowFAC(const bool highPos)
   Draw::Flip(frame);
 }
 
+  
+static void ShowUserDebugInfo(u8 sta_count) {
+  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "   %s\n"
+    "$&&:%s\n\n"
+    "V: %d %c%c\n"
+    "#: %08X   "
+    "%d@%d";
+  
+    const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
+    struct softap_config ap_config;
+    if (wifi_softap_get_config(&ap_config) == false)
+    {
+      os_printf("WiFiFace couldn't read back config\r\n");
+    }
+    char fmtBuf[wifiFaceFmtSz];
+    memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
+    Face::FacePrintf(fmtBuf,
+                     ap_config.ssid, ap_config.password,
+                     UpgradeController::GetFirmwareVersion(),
+                     UpgradeController::GetBuildType(),
+                     FACTORY_FACE_MENUS?'F':' ',
+                     GetBodySN(),
+                     sta_count, ap_config.channel);
+}
+  
 static void ShowWiFiInfo(uint8_t battVolt10x) {
   static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\n"
     "PSK:%s\n"
@@ -366,22 +403,55 @@ static inline void BackPackLightsBlinkRed(void) {
   RTIP::SendMessage(msg);
 }
 
-static inline void BackPackLightsYellow(void) {
+//backpack light positions
+enum bp_lightpos {
+  BP_FRONT=1<<0,
+  BP_MID  =1<<1,
+  BP_BACK =1<<2,
+};
+static inline void BackPackLightsSolid(int color, u8 which) {
   RobotInterface::EngineToRobot msg;
   os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
   msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLightsMiddle;
-  msg.setBackpackLightsMiddle.lights[1].onColor  = LED_ENC_YELLOW;
-  msg.setBackpackLightsMiddle.lights[1].offColor = LED_ENC_YELLOW;
+  int i;
+  for (i=0;i<3;i++){
+    if (which&(1<<i)) {
+      msg.setBackpackLightsMiddle.lights[i].onColor  = color;
+      msg.setBackpackLightsMiddle.lights[i].offColor = color;
+    }
+  }
   RTIP::SendMessage(msg);
 }
- 
-  static inline void EnableLiftPower(bool enable) {
-    RobotInterface::EngineToRobot msg;
-    msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableMotorPower;
-    msg.enableMotorPower.motorID = MOTOR_LIFT;
-    msg.enableMotorPower.enable = enable;
-    Anki::Cozmo::RTIP::SendMessage(msg);
+
+static inline void BackPackLightsTakeControl(bool wantControl) {
+  RobotInterface::EngineToRobot msg;
+  os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+  msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLayer;
+  msg.setBackpackLayer.layer = wantControl ? BPL_USER: BPL_IMPULSE;
+  RTIP::SendMessage(msg);
+}  
+
+void ShowWifiLights(u8 sta_count) {
+  static u8 old_count = 0xFF;
+  if (sta_count != old_count) {
+    if (sta_count > 0) {
+      BackPackLightsTakeControl(true);
+      BackPackLightsSolid(LED_ENC_BLU, (BP_FRONT|BP_MID|BP_BACK));
+    }
+    else {
+      BackPackLightsTakeControl(false);
+    }
+    old_count = sta_count;
   }
+}
+    
+static inline void EnableLiftPower(bool enable) {
+  RobotInterface::EngineToRobot msg;
+  msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableMotorPower;
+  msg.enableMotorPower.motorID = MOTOR_LIFT;
+  msg.enableMotorPower.enable = enable;
+  Anki::Cozmo::RTIP::SendMessage(msg);
+}
 
 static void RunMotorLifeTest(const u32 phase)
 {
@@ -421,6 +491,13 @@ static void SetBodyRadioMode(BodyRadioMode mode)
   RTIP::SendMessage(msg);
 }
 
+static inline void RequestBodySN(void)
+{
+  RobotInterface::EngineToRobot msg;
+  os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+  msg.tag = RobotInterface::EngineToRobot::Tag_getBodySerialNumber;
+  RTIP::SendMessage(msg);
+}
 
 static void PlayPenStateUpdate(void) {
   switch(testModePhase)
@@ -573,6 +650,19 @@ void Update()
         }
         break;
       }
+      case RobotInterface::FTM_DebugAccessStage:
+      {
+        u8 sta_count = wifi_softap_get_station_num();
+        ShowWifiLights(sta_count);
+        break;
+      }
+      case RobotInterface::FTM_UserDebug:
+      {
+        u8 sta_count = wifi_softap_get_station_num();
+        ShowWifiLights(sta_count);
+        ShowUserDebugInfo(sta_count);
+        break;
+      }
       default:
       {
         break;
@@ -605,14 +695,16 @@ static void DetectPositionChange(const RobotInterface::TestState& state)
   if (ABS(state.speedsFixed[3]) > 0)  { positionChanges |= HEAD_MOVING; }
   if ((state.positionsFixed[2] - maxPositions[2]) < -50000) { positionChanges |= LIFT_AT_LIMIT; }
   if ((state.positionsFixed[3] - minPositions[3]) > 80000) { positionChanges |= HEAD_AT_LIMIT; }
+  if (gButtonIsPressed == true) {
+    positionChanges |= BUTTON_PRESSED;
+    gButtonIsPressed |= BUTTON_PRESSED; //latch for on-change detection
+  }
 }
-
 
 static bool chargerStateChanged(uint8_t chargeVolts) {
   bool nowOnCharger = (chargeVolts > CHARGER_DETECT_THRESHOLD_DV);
   return (nowOnCharger!= IsOnCharger());
 }
-
 
 void Process_TestState(const RobotInterface::TestState& state)
 {
@@ -625,7 +717,7 @@ void Process_TestState(const RobotInterface::TestState& state)
     case RobotInterface::FTM_Off:
     case RobotInterface::FTM_FAC:
     {
-      if (positionChanges & LIFT_AT_LIMIT)
+      if (positionChanges & (LIFT_AT_LIMIT|BUTTON_PRESSED))
       {
         NotIdle(now);
         resetPositions(state.positionsFixed);
@@ -643,32 +735,80 @@ void Process_TestState(const RobotInterface::TestState& state)
       {
         NotIdle(now);
         resetPositions(state.positionsFixed);
-        SetMode(RobotInterface::FTM_Sleepy, NEVER_TIMEOUT);
+        //live robots show debug info
+        if (IsOnCharger() && hasBirthCertificate())
+        {
+          SetMode(RobotInterface::FTM_UserDebug, now+(2*60*IDLE_SECONDS));
+        }
+        else  //Off charger and FAC robots alway blank screen.
+        {
+          SetMode(RobotInterface::FTM_Sleepy, NEVER_TIMEOUT);
+        }
       }
       else if (positionChanges & HEAD_AT_LIMIT)
       {
-        if (FACTORY_BIRTH_CERTIFICATE_CHECK_ENABLED && !hasBirthCertificate() ) {
-          NotIdle(now);
+        NotIdle(now);
+        resetPositions(state.positionsFixed);
+        //FAC robots go to factory menu.
+        if (FACTORY_BIRTH_CERTIFICATE_CHECK_ENABLED &&      
+            !hasBirthCertificate() )
+        {
           SetMode(RobotInterface::FTM_menus, now + MENU_TIMEOUT);
         }
-        else
-        {
-          NotIdle(now);
-          SetMode(RobotInterface::FTM_WiFiInfo, now + (30*IDLE_SECONDS));
-        }         
-        resetPositions(state.positionsFixed);
+        //live robots do nothing.
       }
-      else if ( chargerStateChanged(state.extVolt10x) )
+      else if ( (positionChanges & BUTTON_PRESSED) ||
+                chargerStateChanged(state.extVolt10x) )
       { // If we've gotten on to or off of the charger, reset the timer
         NotIdle(now);
+      }
+      break;
+    }
+    case RobotInterface::FTM_UserDebug:
+    {
+      //lift or button goes back to SSID.
+      if (positionChanges & (LIFT_AT_LIMIT|BUTTON_PRESSED))
+      {
+        NotIdle(now);
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_SSID);
+      }
+      // Production robots only: 2 head nods for access to debug menu.
+      else if ((positionChanges & HEAD_AT_LIMIT) && !FACTORY_FACE_MENUS)
+      {
+        NotIdle(now);
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_DebugAccessStage, now + (30*IDLE_SECONDS));
+      }         
+      break;
+    }
+    case RobotInterface::FTM_DebugAccessStage:
+    {
+      // placeholder to require 2nd head bob.
+      // Factory robots can't do this.
+      // Any manipulation other than head cancels access.
+      if (FACTORY_FACE_MENUS || !IsOnCharger() ||
+          (positionChanges & (LIFT_AT_LIMIT|BUTTON_PRESSED)))
+      {
+        NotIdle(now);
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_Sleepy, NEVER_TIMEOUT);
+      }
+      //2nd head bob gets to menus.
+      else if ( (positionChanges & HEAD_AT_LIMIT))
+      {
+        NotIdle(now);
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_menus, now+MENU_TIMEOUT);
       }
       break;
     }
     case RobotInterface::FTM_WiFiInfo:
     {
       ShowWiFiInfo(state.battVolt10x);
-      if ((positionChanges & HEAD_AT_LIMIT) &&
-          !FACTORY_FACE_MENUS) //Factory robots don't have submenus
+      //Head/button on Production robots goes back to menu
+      if ( (positionChanges & (HEAD_AT_LIMIT|BUTTON_PRESSED) && 
+            !FACTORY_FACE_MENUS)) //but Factory can't get to menus this way
       {
         NotIdle(now);
         resetPositions(state.positionsFixed);
@@ -747,7 +887,7 @@ void Process_TestState(const RobotInterface::TestState& state)
           menuIndex -= 1;
           if (menuIndex < 0) menuIndex = numItems - 1;;
         }
-        else if (positionChanges & LIFT_AT_LIMIT)
+        else if (positionChanges & (LIFT_AT_LIMIT|BUTTON_PRESSED))
         {
           NotIdle(now);
           SetMode(items[menuIndex].mode, now+items[menuIndex].timeout);
@@ -797,6 +937,15 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
       RTIP::SendMessage(msg);
       break;
     }
+    case RobotInterface::FTM_FAC:
+    case RobotInterface::FTM_batteryCharging:
+    case RobotInterface::FTM_UserDebug:
+    case RobotInterface::FTM_DebugAccessStage:
+    {
+      ShowWifiLights(0xFF);  //reset light state tracker
+      BackPackLightsTakeControl(false);
+      break;
+    }
     
     default:
     {
@@ -812,6 +961,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
       os_memset(minPositions, 0, sizeof(minPositions));
       os_memset(maxPositions, 0, sizeof(maxPositions));
       NotIdle(system_get_time());
+      BackPackLightsTakeControl(false);
       break;
     }
     case RobotInterface::FTM_None:
@@ -824,6 +974,17 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
       Face::Clear();
       break;
     }
+    case RobotInterface::FTM_UserDebug:
+    {
+      RequestBodySN();
+      BackPackLightsTakeControl(true);
+      break;
+    }
+    case RobotInterface::FTM_DebugAccessStage:
+    {
+      BackPackLightsTakeControl(true);
+      break;
+    }
     case RobotInterface::FTM_Off:
     {
       Face::Clear();
@@ -834,7 +995,8 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
     case RobotInterface::FTM_batteryCharging:
     {
       Face::Clear();
-      BackPackLightsYellow();
+      BackPackLightsTakeControl(true);
+      BackPackLightsSolid(LED_ENC_YELLOW,BP_MID);
       
       Face::Clear();
       SetBodyRadioMode(BODY_BATTERY_CHARGE_TEST_MODE);
@@ -853,10 +1015,15 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
       //      SetRtipTestState(false);
       break;
     }
-  case RobotInterface::FTM_motorLifeTest:
+    case RobotInterface::FTM_motorLifeTest:
     {
       SetBodyRadioMode(BODY_ACCESSORY_OPERATING_MODE);
       EnableLiftPower(true);
+      break;
+    }
+    case RobotInterface::FTM_FAC:
+    {
+      BackPackLightsTakeControl(true);
       break;
     }
     
@@ -880,6 +1047,11 @@ void Process_EnterFactoryTestMode(const RobotInterface::EnterFactoryTestMode& ms
   SetMode(msg.mode, NEVER_TIMEOUT, msg.param);
 }
 
+void Process_ButtonState(bool isDepressed)
+{
+  gButtonIsPressed = isDepressed?true:false;
+}
+  
 } // Factory
 } // Cozmo
 } // Anki

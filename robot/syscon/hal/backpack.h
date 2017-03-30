@@ -31,6 +31,7 @@ namespace Backpack {
 
   void useTimer();
   void detachTimer();
+  void hasSync();
 
   void lightsOff();
   void setLowBattery(bool batteryLow);

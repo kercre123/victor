@@ -1023,6 +1023,10 @@ namespace Anki {
       {
         RobotInterface::SendMessage(RobotInterface::ManufacturingID());
       }
+      void Process_getBodySerialNumber(const RobotInterface::GetBodySerialNumber& msg)
+      {
+        RobotInterface::SendMessage(RobotInterface::BodySerialNumber());
+      }
 
       // These are stubbed out just to get things compiling
        // These are stubbed out just to get things compiling

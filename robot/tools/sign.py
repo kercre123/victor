@@ -25,6 +25,8 @@ from hashlib import sha1
 global messageEngineToRobotHash
 global messageRobotToEngineHash
 
+current_time = int(time.time())
+
 parser = argparse.ArgumentParser()
 parser.add_argument("output", type=str,
                     help="target location for file")
@@ -43,7 +45,7 @@ parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
 parser.add_argument("-s", "--sign", nargs=2, type=str,
                     help="Create signature block")
-parser.add_argument("-c", "--comment", type=int, nargs="?", const=int(time.time()),
+parser.add_argument("-c", "--comment", type=int, nargs="?", const=current_time,
                     help="Add version information comment block, argument is the desired version string")
 parser.add_argument("-t", "--build_type_header", type=argparse.FileType('rt'),
                     help="Headerfile to read")
@@ -177,8 +179,8 @@ def git_sha():
     return int(out, 16).to_bytes(20, byteorder='little')
 
 def make_header(key=None, iv=None, digestType=None, model=0):
-    timestamp = int(time.time())
-    ctime = bytearray(time.ctime(), 'utf-8')
+    timestamp = current_time
+    ctime = bytearray(time.ctime(current_time), 'utf-8')
 
     header = pack("<4sI%isI32s20sB" % AES_BLOCK_LENGTH,
         b'CZM0',
@@ -204,8 +206,8 @@ def get_version_comment_block(args):
     comment = {
         'version': args.comment,
         'git-rev': execute('git', 'rev-parse', 'HEAD').strip(),
-        'date': time.ctime(),
-        'time': int(time.time()),
+        'date': time.ctime(current_time),
+        'time': current_time,
         'messageEngineToRobotHash': hex(messageEngineToRobotHash)[2:],
         'messageRobotToEngineHash': hex(messageRobotToEngineHash)[2:],
     }

@@ -323,6 +323,15 @@ message CheckLiftLoad
 {
 }
 
+message GetBodySerialNumber
+{
+}
+
+message BodySerialNumber
+{ 
+  uint_32 sn,
+}
+
 // Enable/Disable power to lift completely.
 // Once disabled, must be re-enabled before motor can be commanded again.
 // Only works for MOTOR_LIFT and MOTOR_HEAD.
@@ -443,6 +452,7 @@ union EngineToRobot
   BackpackLightsTurnSignals    setBackpackLightsTurnSignals = 0x11,
   SendDTMCommand                sendDTMCommand              = 0x12,
 
+  GetBodySerialNumber           getBodySerialNumber         = 0x24,
   GetManufacturingInfo          getMfgInfo                  = 0x25,
   BLE::SendData                 bleSendData                 = 0x26,
   BLE::Disconnect               bleDisconnect               = 0x27,
@@ -541,6 +551,7 @@ union EngineToRobot
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
   BodyStorageContents           bodyStorageContents         = 0xA4,
+  BodySerialNumber              bodySerialNum               = 0xA5,
 
   ShutdownRobot                 shutdownRobot               = 0xA9,
   AppConnectConfigString        appConCfgString             = 0xAA,

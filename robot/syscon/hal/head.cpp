@@ -202,6 +202,7 @@ void Head::manage() {
   }
 
   if (Head::spokenTo) {
+    Backpack::hasSync();
     memcpy(&g_dataToBody, rxBuffer, sizeof(GlobalDataToBody));
 
     Spine::processMessages(g_dataToBody.cladData);
