@@ -110,9 +110,9 @@ void InitBoard(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
   
-  //Piezo Buzzer output
-  PIN_RESET(GPIOC, PINC_BUZZER);
-  PIN_OUT(GPIOC, PINC_BUZZER);
+  //Piezo Buzzer (BZZ)
+  PIN_IN(GPIOC, PINC_BUZZER);
+  PIN_PULL_NONE(GPIOC, PINC_BUZZER);
   
   DisableBAT();
 }
@@ -256,19 +256,19 @@ void Buzzer(u8 f_kHz, u16 duration_ms)
 {
   u32 half_period_us = f_kHz > 0 && f_kHz <= 20 ? (1000/2)/f_kHz : 125 /*4kHz*/; //half-period in us for delay loop
   
+  //initial pin config: no-pull (input state), out 0 (output state)
+  PIN_IN(GPIOC, PINC_BUZZER); //idle high
+  PIN_PULL_NONE(GPIOC, PINC_BUZZER);
   PIN_RESET(GPIOC, PINC_BUZZER);
-  PIN_OUT(GPIOC, PINC_BUZZER);
   
   u32 sqw_start = getMicroCounter();
   while( getMicroCounter() - sqw_start < duration_ms*1000 )
   {
-    PIN_SET(GPIOC, PINC_BUZZER);
+    PIN_OUT(GPIOC, PINC_BUZZER); //drive 0
     MicroWait( half_period_us );
-    PIN_RESET(GPIOC, PINC_BUZZER);
+    PIN_IN(GPIOC, PINC_BUZZER);  //pu-1
     MicroWait( half_period_us );
   }
-  
-  PIN_RESET(GPIOC, PINC_BUZZER); //idle low
 }
 
 #if 0
