@@ -91,6 +91,9 @@ private:
   virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
   
+  // Helpers:
+  void SendPickupObjectByType(const ObjectType& objType);
+  
   // State:
   TestState _testState = TestState::Init;
 
@@ -243,6 +246,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       // at some point (possibly before we stop moving) the behavior should become runnable and start on it's own
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_startedBehavior == 1, 10) {
         // behavior is running, wait for it to finish
+        _pickupObjectResult = ActionResult::RUNNING;
         SET_STATE(PickingUp)
       }
       
@@ -252,7 +256,9 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       
     case TestState::PickingUp:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT( GetCarryingObjectID() >= 0, 20) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                            GetCarryingObjectID() >= 0,
+                                            _pickupObjectResult == ActionResult::SUCCESS) {
         // move the cube we aren't holding
         ObjectType carryingCube;
         CST_ASSERT(GetObjectType(GetCarryingObjectID(), carryingCube) == Result::RESULT_OK,
@@ -358,7 +364,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior")));
         // Now attempt to pick up the top block:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObject(0, motionProfile, true);
+        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE1);
         SET_STATE(AttemptPickupHigh)
       }
       break;
@@ -392,7 +398,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING, 15) {
         // Pick up object 1:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObject(1, motionProfile, true);
+        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE2);
         SET_STATE(AttemptPickupLowOutOfView)
       }
       
@@ -438,7 +444,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_moveHeadToAngleResult == ActionResult::SUCCESS, 5) {
         // pick up object 1:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObject(1, motionProfile, true);
+        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE2);
         SET_STATE(AttemptPickupLowInView)
       }
       
@@ -493,7 +499,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::NOT_CARRYING_OBJECT_RETRY, DEFAULT_TIMEOUT) {
         // Pick up the cube again:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObject(1, motionProfile, true);
+        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE2);
         
         SET_STATE(RemoveCube)
       }
@@ -601,6 +607,19 @@ void CST_StackBlockBehavior::HandleActiveObjectConnectionState(const ObjectConne
     --_numObjectsConnected;
   }
 }
+  
+void CST_StackBlockBehavior::SendPickupObjectByType(const ObjectType& objType)
+{
+  PRINT_NAMED_INFO("CST_StackBlockBehavior.SendPickupObjectByType", "Attempting to SendPickupObject for Object Type %s", EnumToString(objType));
+  
+  std::vector<s32> objIds = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, objType);
+  
+  // Should have found exactly one object ID for this object type:
+  CST_ASSERT(objIds.size() == 1, "Did not find exactly one object ID for given type!");
+  
+  SendPickupObject(objIds[0], motionProfile, true);
+}
+  
 
 }
 }
