@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/socializeBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/sparksBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/voiceCommandBehaviorChooser.h"
 
 
 
@@ -62,6 +63,9 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   }
   else if ( typeStr == "pyramid"){
     newChooser = new BuildPyramidBehaviorChooser(robot, config);
+  }
+  else if ( typeStr == "vc" ) {
+    newChooser = new VoiceCommandBehaviorChooser(robot, config);
   }
   else
   {

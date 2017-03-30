@@ -57,7 +57,7 @@ public:
   virtual void OnDeselected() {};
 
   // read which groups/behaviors are enabled/disabled from json configuration
-  virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) = 0;
+  virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) { };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic
@@ -84,7 +84,7 @@ public:
   void HandleMessage(const T& msg);
   
 protected:
-  virtual std::vector<std::string> GetEnabledBehaviorList() = 0;
+  virtual std::vector<std::string> GetEnabledBehaviorList() { return std::vector<std::string>{}; }
   Util::RandomGenerator& GetRNG() const;
   Robot& _robot;
 

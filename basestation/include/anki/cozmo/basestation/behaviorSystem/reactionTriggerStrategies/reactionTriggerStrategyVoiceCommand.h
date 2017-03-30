@@ -34,13 +34,13 @@ public:
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
 protected:
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
   
 private:
   bool                                  _shouldTrigger = false;
-  Vision::FaceID_t                      _desiredFace = Vision::UnknownFaceID;
   std::map<Vision::FaceID_t, float>     _lookedAtTimesMap;
+  
+  Vision::FaceID_t GetDesiredFace(const Robot& robot) const;
 };
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 

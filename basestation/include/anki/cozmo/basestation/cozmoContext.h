@@ -50,6 +50,7 @@ class IExternalInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
+class VoiceCommandComponent;
 
 class ThreadIDInternal;
   
@@ -90,6 +91,9 @@ public:
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioServer.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  VoiceCommandComponent*                GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
@@ -119,6 +123,9 @@ private:
   std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
   std::unique_ptr<Util::DasTransferTask>          _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>      _gameLogTransferTask;
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  std::unique_ptr<VoiceCommandComponent>          _voiceCommandComponent;
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

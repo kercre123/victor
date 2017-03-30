@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -223,6 +224,11 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _isInitialized = true;
   
   _context->GetDataLoader()->LoadRobotConfigs();
+  
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  _context->GetVoiceCommandComponent()->Init();
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  
   _context->GetRobotManager()->Init(_config);
 
   return RESULT_OK;
@@ -343,6 +349,10 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     firstUpdate = false;
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+  
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  _context->GetVoiceCommandComponent()->Update();
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   
   // Handle UI
   Result lastResult = _uiMsgHandler->Update();

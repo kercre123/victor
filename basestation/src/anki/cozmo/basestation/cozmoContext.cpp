@@ -11,6 +11,7 @@
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"
@@ -55,6 +56,10 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
   
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  // This needs to happen after the audio server is set up
+  _voiceCommandComponent.reset(new VoiceCommandComponent(*this));
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 }
   
 

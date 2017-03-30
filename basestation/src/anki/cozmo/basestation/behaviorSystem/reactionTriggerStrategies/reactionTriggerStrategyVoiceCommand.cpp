@@ -11,14 +11,17 @@
 *
 **/
 
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "util/console/consoleInterface.h"
 
 #define LOG_CHANNEL "VoiceCommands"
@@ -29,7 +32,6 @@ namespace Cozmo {
 
 using namespace ExternalInterface;
 
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 namespace{
 static const char* kTriggerStrategyName = "Trigger Strategy Voice Command";
 }
@@ -37,52 +39,40 @@ static const char* kTriggerStrategyName = "Trigger Strategy Voice Command";
 ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
-  SubscribeToTags({
-    MessageEngineToGameTag::VoiceCommandEvent
-  });
 }
 
 bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
 {
-  if(_shouldTrigger)
+  auto* voiceCommandComponent = robot.GetContext()->GetVoiceCommandComponent();
+  if (!ANKI_VERIFY(voiceCommandComponent, "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehavior", "VoiceCommandComponent invalid"))
   {
-    _shouldTrigger = false;
+    return false;
+  }
+  
+  if(voiceCommandComponent->KeyPhraseWasHeard())
+  {
+    voiceCommandComponent->ClearHeardCommand();
+    
+    Vision::FaceID_t desiredFace = GetDesiredFace(robot);
+    
+    if (Vision::UnknownFaceID != desiredFace)
+    {
+      _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    }
     
     std::set<Vision::FaceID_t> targets;
-    targets.insert(_desiredFace);
+    targets.insert(desiredFace);
     BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
     
-    LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehavior.DesiredFace", "DesiredFaceID: %d", _desiredFace);
+    LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehavior.DesiredFace", "DesiredFaceID: %d", desiredFace);
     return behavior->IsRunnable(acknowledgeFacePreReqs);
   }
   
   return false;
 }
 
-void ReactionTriggerStrategyVoiceCommand::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(const Robot& robot) const
 {
-  if (event.GetData().GetTag() != EngineToGameTag::VoiceCommandEvent)
-  {
-    PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledEventType",
-                      "Type: %s", MessageEngineToGameTagToString(event.GetData().GetTag()));
-    return;
-  }
-  
-  const auto& vcEvent = event.GetData().Get_VoiceCommandEvent().voiceCommandEvent;
-  if (vcEvent.GetTag() != VoiceCommandEventUnionTag::commandHeardEvent)
-  {
-    PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledVoiceCommandEventType",
-                      "Type: %s", VoiceCommandEventUnionTagToString(vcEvent.GetTag()));
-    return;
-  }
-  
-  if (vcEvent.Get_commandHeardEvent().voiceCommandType != VoiceCommandType::HEY_COZMO)
-  {
-    PRINT_NAMED_ERROR("ReactionTriggerStrategyVoiceCommand.AlwaysHandleInternal.UnhandledVoiceCommandEnumType",
-                      "Type: %s", VoiceCommandTypeToString(vcEvent.Get_commandHeardEvent().voiceCommandType));
-    return;
-  }
-  
   // All recently seen face IDs
   const auto& knownFaceIDs = robot.GetFaceWorld().GetFaceIDs();
   Vision::FaceID_t desiredFace = Vision::UnknownFaceID;
@@ -114,15 +104,9 @@ void ReactionTriggerStrategyVoiceCommand::AlwaysHandleInternal(const EngineToGam
     }
   }
   
-  if (Vision::UnknownFaceID != desiredFace)
-  {
-    _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
-  
-  _desiredFace = desiredFace;
-  _shouldTrigger = true;
+  return desiredFace;
 }
-  
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+
 } // namespace Cozmo
 } // namespace Anki
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

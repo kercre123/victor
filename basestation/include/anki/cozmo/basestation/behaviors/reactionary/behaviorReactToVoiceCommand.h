@@ -36,7 +36,7 @@ public:
   
 protected:
   virtual Result InitInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override { };
+  virtual void   StopInternal(Robot& robot) override;
   
 private:
   mutable Vision::FaceID_t _desiredFace = Vision::UnknownFaceID;

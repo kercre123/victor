@@ -75,6 +75,7 @@ using TriggerMapIterator = std::vector<TriggerBehaviorMapEntry>::iterator;
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
+static const char* kVoiceCommandChooserConfigKey = "vcBehaviorChooserConfig";
   
 // reaction trigger behavior map
 static const char* kReactionTriggerBehaviorMapKey = "reactionTriggerBehaviorMap";
@@ -144,6 +145,7 @@ BehaviorManager::~BehaviorManager()
   Util::SafeDelete(_freeplayChooser);
   Util::SafeDelete(_selectionChooser);
   Util::SafeDelete(_meetCozmoChooser);
+  Util::SafeDelete(_voiceCommandChooser);
   
   Util::SafeDelete(_behaviorFactory);
 }
@@ -172,6 +174,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     // meetCozmo chooser
     const Json::Value& meetCozmoChooserConfigJson = config[kMeetCozmoChooserConfigKey];
     _meetCozmoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, meetCozmoChooserConfigJson);
+    
+    // voice command chooser
+    const Json::Value& voiceCommandChooserConfigJson = config[kVoiceCommandChooserConfigKey];
+    _voiceCommandChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, voiceCommandChooserConfigJson);
     
     // start with selection that defaults to NoneBehavior
     SetBehaviorChooser( _selectionChooser );
@@ -479,7 +485,30 @@ bool BehaviorManager::SwitchToReactionTrigger(IReactionTriggerStrategy& triggerS
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorManager::SwitchToVoiceCommandBehavior(IBehavior* nextBehavior)
+{
+  BehaviorRunningAndResumeInfo newBehaviorInfo;
+  newBehaviorInfo.SetCurrentBehavior(nextBehavior);
+
+  // if this is the first interruption, set the current scored behavior as the behavior to resume
+  if(nullptr == GetRunningAndResumeInfo().GetBehaviorToResume() &&
+     nullptr != GetRunningAndResumeInfo().GetCurrentBehavior())
+  {
+    newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetCurrentBehavior());
+  }
   
+  // if this is after the first, pass the behavior to resume along
+  if(nullptr != GetRunningAndResumeInfo().GetBehaviorToResume())
+  {
+    newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetBehaviorToResume());
+  }
+  
+  return SwitchToBehaviorBase(newBehaviorInfo);
+}
+
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::set<TriggerMapIterator> BehaviorManager::GetReactionInfoForTrigger(ReactionTrigger trigger)
 {
@@ -681,30 +710,54 @@ Result BehaviorManager::Update(Robot& robot)
   }
     
   _currentChooserPtr->Update(robot);
+  _voiceCommandChooser->Update(robot);
 
   UpdateTappedObject();
   
-  // Update the current behavior if a new object was double tapped
-  if(_needToHandleObjectTapped)
-  {
-    UpdateBehaviorWithObjectTapInteraction();
-    _needToHandleObjectTapped = false;
-  }
+  // Identify whether there is a voice command-response behavior we want to be running
+  IBehavior* voiceCommandBehavior = _voiceCommandChooser->ChooseNextBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
   
-
-  const bool currentBehaviorIsReactionary =
-                (GetRunningAndResumeInfo().GetCurrentReactionTrigger() !=
-                 ReactionTrigger::NoneTrigger);
-  if(!currentBehaviorIsReactionary)
+  if (!voiceCommandBehavior)
   {
-    ChooseNextScoredBehaviorAndSwitch();
+    // Update the current behavior if a new object was double tapped
+    if(_needToHandleObjectTapped)
+    {
+      UpdateBehaviorWithObjectTapInteraction();
+      _needToHandleObjectTapped = false;
+    }
+    
+    const bool currentBehaviorIsReactionary =
+                  (GetRunningAndResumeInfo().GetCurrentReactionTrigger() !=
+                   ReactionTrigger::NoneTrigger);
+    if(!currentBehaviorIsReactionary)
+    {
+      ChooseNextScoredBehaviorAndSwitch();
+    }
   }
   
   // Allow reactionary behaviors to request a switch without a message
-  CheckReactionTriggerStrategies();
+  const bool switchedFromReactionTrigger = CheckReactionTriggerStrategies();
+  
+  // Reaction triggers we just switched to take priority over commands
+  if (!switchedFromReactionTrigger && voiceCommandBehavior)
+  {
+    // TODO: Note this won't work with switching between multiple behaviors that are all part of the same response.
+    // The interface to the voice command behavior chooser will need to be updated so that the behavior manager knows whether
+    // this new behavior is a brand new voice command response that needs to be 'switched' to, or simply a different behavior
+    // in a line of behavior responses that can be used in the normal way (ie switched to using logic below).
+    // TODO: figure out if the above TODO's assumptions are true...
+    if (GetRunningAndResumeInfo().GetCurrentBehavior() != voiceCommandBehavior)
+    {
+      SwitchToVoiceCommandBehavior(voiceCommandBehavior);
+    }
+  }
   
   IBehavior* activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
   if (activeBehavior !=  nullptr) {
+    
+    const bool shouldAttemptResume =
+      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger ||
+      voiceCommandBehavior;
     
     // We have a current behavior, update it.
     const IBehavior::Status status = activeBehavior->Update();
@@ -721,7 +774,7 @@ Result BehaviorManager::Update(Robot& robot)
         PRINT_CH_DEBUG("Behaviors", "BehaviorManager.Update.BehaviorComplete",
                           "Behavior '%s' returned  Status::Complete",
                           activeBehavior->GetName().c_str());
-        if (currentBehaviorIsReactionary) {
+        if (shouldAttemptResume) {
           TryToResumeBehavior();
         }
         else {
@@ -735,7 +788,7 @@ Result BehaviorManager::Update(Robot& robot)
                           "Behavior '%s' failed to Update().",
                           activeBehavior->GetName().c_str());
         // same as the Complete case
-        if(currentBehaviorIsReactionary) {
+        if(shouldAttemptResume) {
           TryToResumeBehavior();
         }
         else {
@@ -828,10 +881,11 @@ void BehaviorManager::StopAndNullifyCurrentBehavior()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::CheckReactionTriggerStrategies()
+bool BehaviorManager::CheckReactionTriggerStrategies()
 {
   // Check to see if any reaction triggers want to activate a behavior
   bool hasAlreadySwitchedThisTick = false;
+  bool didSuccessfullySwitch = false;
   for(const auto& mapEntry: _reactionTriggerMap){
     IReactionTriggerStrategy& strategy = *mapEntry.first;
     IBehavior* rBehavior = mapEntry.second;
@@ -852,37 +906,40 @@ void BehaviorManager::CheckReactionTriggerStrategies()
        strategy.IsReactionEnabled() &&
        strategy.ShouldTriggerBehavior(_robot, rBehavior)){
         
-        _robot.AbortAll();
-        
-        if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
-           !_robot.GetMoveComponent().IsDirectDriving())
-        {
-          PRINT_NAMED_WARNING("BehaviorManager.CheckReactionTriggerStrategies",
-                              "Some tracks are locked, unlocking them");
-          _robot.GetMoveComponent().CompletelyUnlockAllTracks();
-        }
+      _robot.AbortAll();
       
-        const bool successfulSwitch = SwitchToReactionTrigger(strategy, rBehavior);
-   
-        if(successfulSwitch){
-          PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.SwitchingToReaction",
-                        "Trigger strategy %s triggering behavior %s",
-                        strategy.GetName().c_str(),
-                        rBehavior->GetName().c_str());
-        }else{
-          PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.FailedToSwitch",
-                        "Trigger strategy %s tried to trigger behavior %s, but init failed",
-                        strategy.GetName().c_str(),
-                        rBehavior->GetName().c_str());
-        }
+      if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
+         !_robot.GetMoveComponent().IsDirectDriving())
+      {
+        PRINT_NAMED_WARNING("BehaviorManager.CheckReactionTriggerStrategies",
+                            "Some tracks are locked, unlocking them");
+        _robot.GetMoveComponent().CompletelyUnlockAllTracks();
+      }
     
-        if(hasAlreadySwitchedThisTick){
-          PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
-                            "Multiple behaviors switched to in a single basestation tick");
-        }
-        hasAlreadySwitchedThisTick = true;
+      const bool successfulSwitch = SwitchToReactionTrigger(strategy, rBehavior);
+      didSuccessfullySwitch |= successfulSwitch;
+
+      if(successfulSwitch){
+        PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.SwitchingToReaction",
+                      "Trigger strategy %s triggering behavior %s",
+                      strategy.GetName().c_str(),
+                      rBehavior->GetName().c_str());
+      }else{
+        PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.FailedToSwitch",
+                      "Trigger strategy %s tried to trigger behavior %s, but init failed",
+                      strategy.GetName().c_str(),
+                      rBehavior->GetName().c_str());
+      }
+
+      if(hasAlreadySwitchedThisTick){
+        PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
+                          "Multiple behaviors switched to in a single basestation tick");
+      }
+      hasAlreadySwitchedThisTick = true;
     }
   }
+  
+  return didSuccessfullySwitch;
 }
 
   

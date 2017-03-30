@@ -51,10 +51,6 @@ public:
   
   // exit the current goal so that we clean up any conditions we've set up before entering the new chooser
   virtual void OnDeselected() override;
-  
-  // read which groups/behaviors are enabled/disabled from json configuration
-  virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) override { assert(false); } // todo rsam probably read goals, not behavior groups/behaviors
-  virtual std::vector<std::string> GetEnabledBehaviorList()  override {std::vector<std::string> list; return list;};
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behavior selection

@@ -232,6 +232,7 @@ private:
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
+  bool SwitchToVoiceCommandBehavior(IBehavior* nextBehavior);
   
   // Get all strategies and behavior given a trigger
   std::set<TriggerMapIterator> GetReactionInfoForTrigger(ReactionTrigger trigger);
@@ -250,7 +251,7 @@ private:
   void StopAndNullifyCurrentBehavior();
   
   // Allow reactionary behaviors to request a switch without a message
-  void CheckReactionTriggerStrategies();
+  bool CheckReactionTriggerStrategies();
   
   // Centeralized function for robot properties that are toggled between reactions
   // and normal robot opperation
@@ -312,6 +313,9 @@ private:
   
   // behavior chooser for meet cozmo activity
   IBehaviorChooser* _meetCozmoChooser = nullptr;
+  
+  // behavior chooser for voice commands
+  IBehaviorChooser* _voiceCommandChooser = nullptr;
   
   // list of behaviors that fire automatically as reactions to events
   std::vector<TriggerBehaviorMapEntry> _reactionTriggerMap;

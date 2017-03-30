@@ -15,8 +15,10 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToVoiceCommand.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/animationTrigger.h"
 
@@ -91,6 +93,11 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   return RESULT_OK;
 }
   
+void BehaviorReactToVoiceCommand::StopInternal(Robot& robot)
+{
+  robot.GetContext()->GetVoiceCommandComponent()->SetListenContext(VoiceCommandListenContext::Keyphrase);
+}
+
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 } // namespace Cozmo
 } // namespace Anki

@@ -11,21 +11,23 @@
 *
 */
 
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "audioUtil/audioRecognizerProcessor.h"
 #include "util/console/consoleInterface.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 #include "clad/types/voiceCommandTypes.h"
 
 #define LOG_CHANNEL "VoiceCommands"
@@ -43,31 +45,41 @@ namespace Cozmo {
   
 VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
 : _context(context)
-, _platform(*(_context.GetDataPlatform()))
 , _recogProcessor(new AudioUtil::AudioRecognizerProcessor{})
+, _phraseData(new CommandPhraseData())
 {
   if (!_recogProcessor->IsValid())
   {
     _recogProcessor.reset();
     LOG_INFO("VoiceCommandComponent.RecogProcessorSetupFail", "Failure often means permission to use mic was denied.");
   }
-  else
+}
+  
+VoiceCommandComponent::~VoiceCommandComponent() = default;
+
+void VoiceCommandComponent::Init()
+{
+  if (_recogProcessor == nullptr)
   {
+    PRINT_NAMED_WARNING("VoiceCommandComponent.Init", "Can't Init voice command component with an invalid audio processor.");
+    return;
+  }
+  
+  const auto* dataLoader = _context.GetDataLoader();
+  if (ANKI_VERIFY(dataLoader != nullptr, "VoiceCommandComponent.Init", "DataLoader missing"))
+  {
+    ANKI_VERIFY(_phraseData->Init(dataLoader->GetVoiceCommandConfig()), "VoiceCommandComponent.Init", "CommandPhraseData Init failed.");
+    std::vector<const char*> phraseList = _phraseData->GetPhraseListRaw();
     SpeechRecognizerTHF* newRecognizer = new SpeechRecognizerTHF();
     
-    // TODO: Need to be loading in phrases from data, probably json
-    constexpr unsigned int numTestPhrases = 1;
-    const char* testPhraseList[numTestPhrases] = { "HeyCuzmo" };
-    newRecognizer->Init(testPhraseList, numTestPhrases);
+    newRecognizer->Init(phraseList.data(), Util::numeric_cast<unsigned int>(phraseList.size()));
     
     _recognizer.reset(newRecognizer);
     _recogProcessor->SetSpeechRecognizer(_recognizer.get());
     _recogProcessor->Start();
   }
 }
-  
-VoiceCommandComponent::~VoiceCommandComponent() = default;
-  
+
 template<typename T>
 void VoiceCommandComponent::BroadcastVoiceEvent(T&& event)
 {
@@ -80,45 +92,117 @@ void VoiceCommandComponent::BroadcastVoiceEvent(T&& event)
   
 void VoiceCommandComponent::Update()
 {
-  bool heardPrimaryTrigger = false;
+  bool heardCommandUpdated = false;
+  
   while (_recogProcessor->HasResults())
   {
     const auto& nextResult = _recogProcessor->PopNextResult();
-    LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", nextResult.c_str());
     
-    // TODO: Here we will do some screening of the next result, including checking whether it's the primary trigger.
-    // For now we're only listening for the primary trigger so we know that's what we heard.
-    heardPrimaryTrigger = true;
-  }
-  
-  if (ANKI_CONSOLE_SYSTEM_ENABLED)
-  {
-    static bool forceTriggerAlreadySet = false;
-    if (kShouldForceTrigger &&
-        (static_cast<uint32_t>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) % kForceTriggerFreq_s) == 0)
+    const auto& commandsFound = _phraseData->GetCommandsInPhrase(nextResult);
+    // For now we're assuming every recognized phrase equals one command
+    if (ANKI_VERIFY(commandsFound.size() == 1,
+                    "VoiceCommandComponent.Update",
+                    "Phrase %s produced %d commands, expected only 1.",
+                    nextResult.c_str(), commandsFound.size()))
     {
-      if (!forceTriggerAlreadySet)
-      {
-        LOG_INFO("VoiceCommandComponent.ForceTrigger","");
-        heardPrimaryTrigger = true;
-        forceTriggerAlreadySet = true;
-      }
+      heardCommandUpdated = HandleCommand(commandsFound[0]);
     }
-    else
+    
+    // If we updated the pending, heard command, leave the rest of the results for later
+    if (heardCommandUpdated)
     {
-      forceTriggerAlreadySet = false;
+      LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", VoiceCommandTypeToString(commandsFound[0]));
+      break;
     }
   }
+
+  // TODO this needs updating now that I'm processing different kinds of commands
+//  if (ANKI_CONSOLE_SYSTEM_ENABLED)
+//  {
+//    static bool forceTriggerAlreadySet = false;
+//    if (kShouldForceTrigger &&
+//        (static_cast<uint32_t>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) % kForceTriggerFreq_s) == 0)
+//    {
+//      if (!forceTriggerAlreadySet)
+//      {
+//        LOG_INFO("VoiceCommandComponent.ForceTrigger","");
+//        heardCommandUpdated = true;
+//        forceTriggerAlreadySet = true;
+//      }
+//    }
+//    else
+//    {
+//      forceTriggerAlreadySet = false;
+//    }
+//  }
   
-  UpdateCommandLight(heardPrimaryTrigger);
+  UpdateCommandLight(heardCommandUpdated);
   
-  
-  if (heardPrimaryTrigger)
+  if (heardCommandUpdated)
   {
-    BroadcastVoiceEvent(CommandHeardEvent(VoiceCommandType::HEY_COZMO));
+    BroadcastVoiceEvent(CommandHeardEvent(_pendingHeardCommand));
   }
 }
+
+bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
+{
+  // Bail out early if we still have a command we're waiting on being handled
+  // This assumes that a pending, heard command that we stored intentionally (below) SHOULD be consumed and cleared
+  // by an appropriate behavior immediately, and we should never end up in a situation where commands that we
+  // want to react to are getting queued up.
+  if (AnyCommandPending())
+  {
+    PRINT_NAMED_ERROR("VoiceCommandComponent.HandleCommand.OldCommandStillPending",
+                      "A command has been heard(%s) while another was pending(%s). New command ignored.",
+                      VoiceCommandTypeToString(command),
+                      VoiceCommandTypeToString(_pendingHeardCommand));
+    return false;
+  }
   
+  bool updatedHeardCommand = false;
+  switch(_listenContext)
+  {
+    case VoiceCommandListenContext::Count:
+    {
+      // Intentionally ignore commands when there is no context to handle them
+      break;
+    }
+    case VoiceCommandListenContext::Keyphrase:
+    {
+      // TODO this if check shouldn't be necessary once recognition contexts are set up and trigger keyphrase recognition
+      // will be the ONLY thing that can occur in that context
+      if (command == VoiceCommandType::HeyCozmo)
+      {
+        _pendingHeardCommand = command;
+        updatedHeardCommand = true;
+        _listenContext = VoiceCommandListenContext::Freeplay;
+      }
+      break;
+    }
+    case VoiceCommandListenContext::Freeplay:
+    {
+      // TODO this shouldn't be necessary once recognition contexts are set up and trigger keyphrase recognition
+      // will be the ONLY thing that can occur in that context
+      if (command != VoiceCommandType::HeyCozmo)
+      {
+        _pendingHeardCommand = command;
+        updatedHeardCommand = true;
+        _listenContext = VoiceCommandListenContext::Keyphrase;
+      }
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("VoiceCommandComponent.HandleCommand.InvalidContext",
+                        "Tried to handle command %s with invalid context %s",
+                        VoiceCommandTypeToString(command),
+                        VoiceCommandListenContextToString(_listenContext));
+    }
+  }
+  
+  return updatedHeardCommand;
+}
+
 void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
 {
   auto* robot = _context.GetRobotManager()->GetFirstRobot();

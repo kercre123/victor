@@ -613,6 +613,21 @@ void RobotDataLoader::LoadRobotConfigs()
                         jsonFilename.c_str());
     }
   }
+  
+#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+  // Voice Command config
+  {
+    std::string jsonFilename = "config/basestation/config/voiceCommand_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
+                        "Voice Command Json config file %s failed to parse.",
+                        jsonFilename.c_str());
+      _voiceCommandConfig.clear();
+    }
+  }
+#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
   // feature gate
   {
