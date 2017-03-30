@@ -270,24 +270,27 @@ void DisplayPrintf(const char *format, ...)
 // This is used to print codes and fixture names
 void DisplayBigCenteredText(const char *format, ...)
 {
-  const int scale = 3;
-  const int maxsize = 7;
-  char text[maxsize+1];
+  const int scale_vert = 3;
+        int scale_horz = 3;
+  const int maxsize1 = 7;   //max, using even scaling
+  const int maxsize2 = 10;  //extended (compress x-scaling to fit)
+  char text[maxsize2+1];
 
   va_list argptr;
   va_start(argptr, format);
-  int len = vsnprintf(text, maxsize+1, format, argptr);
+  int len = vsnprintf(text, maxsize2+1, format, argptr);
   va_end(argptr);
 
   // Cut off text to max size
-  if (len > maxsize)
-    len = maxsize;
-  text[maxsize] = 0;
+  if (len > maxsize2)
+    len = maxsize2;
+  text[maxsize2] = 0;
   
-  DisplayTextHeightMultiplier(scale);
-  DisplayTextWidthMultiplier(scale);
+  if( len > maxsize1 ) //compress x-scaling for len > 7
+    scale_horz--;
   
-  DisplayMoveCursor(32-scale*4, 64-len*scale*3);
-  
+  DisplayTextHeightMultiplier(scale_vert);
+  DisplayTextWidthMultiplier(scale_horz);
+  DisplayMoveCursor(32-scale_vert*4, 64-len*scale_horz*3);
   DisplayPutString(text);
 }
