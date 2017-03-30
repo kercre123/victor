@@ -26,8 +26,6 @@
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ramp.h"
-#include "anki/planning/shared/goalDefs.h"
-#include "anki/planning/shared/path.h"
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -57,25 +55,6 @@ namespace Data {
 class DataPlatform;
 }
 }
-
-// TODO:(bn) path planning component
-enum class ERobotDriveToPoseStatus {
-  // There was an internal error while planning
-  Error,
-
-  // computing the initial path (the robot is not moving)
-  ComputingPath,
-
-  // replanning based on an environment change. The robot is likely following the old path while this is
-  // happening
-  Replanning,
-
-  // Following a planned path
-  FollowingPath,
-
-  // Stopped and waiting (not planning or following)
-  Waiting,
-};
   
 namespace Cozmo {
   
@@ -91,13 +70,11 @@ class CozmoContext;
 class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
-class IPathPlanner;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
 class ObjectPoseConfirmer;
-class PathDolerOuter;
 class PetWorld;
 class ProgressionUnlockComponent;
 class RobotIdleTimeoutComponent;
@@ -106,16 +83,14 @@ class HistRobotState;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
-class SpeedChooser;
-class DrivingAnimationHandler;
 class CubeLightComponent;
 class BodyLightComponent;
 class RobotToEngineImplMessaging;
-class SpeedChooser;
 class TextToSpeechComponent;
 class VisionComponent;
 class NeedsManager;
 struct RobotState;
+class PathComponent;
 
 namespace RobotAnimation {
 class EngineAnimationController;
@@ -272,13 +247,14 @@ public:
     assert(_aiComponent);
     return *_aiComponent;
   }
-  
-  const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
-  SpeedChooser& GetSpeedChooser() { return *_speedChooser; }
+
+  inline const PathComponent& GetPathComponent() const { return *_pathComponent; }
+  inline       PathComponent& GetPathComponent()       { return *_pathComponent; }
   
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
   
+      
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
   
@@ -438,50 +414,7 @@ public:
     
   // Computes robot origin pose for the given drive center pose
   void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
-    
-  // =========== Path Following ===========
-
-  // Begin computation of a path to drive to the given pose (or poses). Once the path is computed, the robot
-  // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically If
-  // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
-  // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
-  // the path.
-  Result StartDrivingToPose(const Pose3d& pose,
-                            const PathMotionProfile motionProfile,
-                            bool useManualSpeed = false);
-
-  // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
-  // pose it wants to go to. The optional second argument is a pointer to a Planning::GoalID, which, if not null, will
-  // be set to the pose which is selected once planning is complete
-  Result StartDrivingToPose(const std::vector<Pose3d>& poses,
-                            const PathMotionProfile motionProfile,                              
-                            Planning::GoalID* selectedPoseIndex = nullptr,
-                            bool useManualSpeed = false);
-  
-  // This function checks the planning / path following status of the robot. See the enum definition for
-  // details
-  ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
-  
-  // Starts the selected planner with ComputePath, returns true if the selected planner or its fallback
-  // does not result in an error. The path may still contain obstacles if the selected planner didnt
-  // consider obstacles in its search.
-  bool StartPlanner(const Pose3d& driveCenterPose, const std::vector<Pose3d>& targetDriveCenterPoses);
-  // Replans with ComputeNewPathIfNeeded
-  void RestartPlannerIfNeeded(bool forceReplan);
-  // Start the planner based on the stored fallback poses
-  bool StartPlannerWithFallbackPoses();
-    
-  bool IsTraversingPath()      const { return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID); }
- 
-  s8   GetCurrentPathSegment() const { return _currPathSegment; }
-  u16  GetLastRecvdPathID()    const { return _lastRecvdPathID; }
-  u16  GetLastSentPathID()     const { return _lastSentPathID; }
-
-  bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
-  
-  // Execute a manually-assembled path
-  Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
-  
+      
   // =========== Object Docking / Carrying ===========
 
   const ObjectID&            GetDockObject()          const {return _dockObjectID;}
@@ -665,7 +598,6 @@ public:
   // it was initialized with SyncTime.
   s32 GetNumAnimationBytesPlayed() const;
   s32 GetNumAnimationAudioFramesPlayed() const;
-  IPathPlanner* GetLongPathPlannerPtr() const {return _longPathPlanner; }
 
   // Returns a count of the total number of bytes or audio frames streamed to the robot.
   s32 GetNumAnimationBytesStreamed() const;
@@ -718,11 +650,10 @@ public:
   // =========== Audio =============
   Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
   
-  
+  // =========== Mood =============
+
   // Load in all data-driven behaviors
   void LoadBehaviors();
-
-  // =========== Mood =============
 
   // Load in all data-driven emotion events // TODO: move to mood manager?
   void LoadEmotionEvents();      
@@ -777,7 +708,6 @@ public:
   // Abort things individually
   Result AbortAnimation();
   Result AbortDocking(); // a.k.a. PickAndPlace
-  Result AbortDrivingToPose(); // stops planning and path following
   
   // Helper template for sending Robot messages with clean syntax
   template<typename T, typename... Args>
@@ -887,6 +817,9 @@ protected:
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;
+
+  // handles planning and path following
+  std::unique_ptr<PathComponent> _pathComponent;
   
   ///////// Animation /////////
   // TODO:(bn) make animation streamer a pointer, pull Tag out into a constants / definitions file
@@ -897,7 +830,7 @@ protected:
   s32               _numAnimationAudioFramesStreamed = 0;
   u8                _animationTag                    = 0;
   
-  DrivingAnimationHandler* _drivingAnimationHandler;
+  std::unique_ptr<DrivingAnimationHandler> _drivingAnimationHandler;
   
   ///////// NEW Animation /////////
   std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
@@ -914,32 +847,6 @@ protected:
   
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
-
-  // Path Following. There are multiple planners, only one of which can
-  // be selected at a time. Some of these might point to the same planner.
-  Pose3d                   _currentPlannerGoal;
-  IPathPlanner*            _selectedPathPlanner          = nullptr;
-  IPathPlanner*            _longPathPlanner              = nullptr;
-  IPathPlanner*            _shortPathPlanner             = nullptr;
-  IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
-  IPathPlanner*            _fallbackPathPlanner          = nullptr;
-  Planning::GoalID*        _plannerSelectedPoseIndexPtr  = nullptr;
-  int                      _numPlansStarted              = 0;
-  int                      _numPlansFinished             = 0;
-  ERobotDriveToPoseStatus  _driveToPoseStatus            = ERobotDriveToPoseStatus::Waiting;
-  s8                       _currPathSegment              = -1;
-  u16                      _lastSentPathID               = 0;
-  u16                      _lastRecvdPathID              = 0;
-  bool                     _usingManualPathSpeed         = false;
-  PathDolerOuter*          _pdo                          = nullptr;
-  PathMotionProfile        _pathMotionProfile            = DEFAULT_PATH_MOTION_PROFILE;
-  bool                     _fallbackShouldForceReplan    = false;
-  Pose3d                   _fallbackPlannerDriveCenterPose;
-  std::vector<Pose3d>      _fallbackPlannerTargetPoses;
-  
-  // This functions sets _selectedPathPlanner to the appropriate planner
-  void SelectPlanner(const Pose3d& targetPose);
-  void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
   /*
   // Proximity sensors
@@ -1096,8 +1003,6 @@ protected:
 
   ///////// Modifiers ////////
   
-  void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
-  void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
   void SetOnCharger(bool onCharger);
   void SetOnChargerPlatform(bool onPlatform);
@@ -1114,10 +1019,7 @@ protected:
   
   ///////// Progression/Skills ////////
   ProgressionUnlockComponent* _progressionUnlockComponent;
-  
-  ///////// Speed ////////
-  SpeedChooser* _speedChooser;
-  
+    
   //////// Block pool ////////
   BlockFilter* _blockFilter;
   
@@ -1184,17 +1086,6 @@ protected:
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                    const TimeStamp_t&   t,
                                    const PoseFrameID_t& frameId) const;
-
-  Result ClearPath();
-
-  // Clears the path that the robot is executing which also stops the robot
-  Result SendClearPath() const;
-
-  // Removes the specified number of segments from the front and back of the path
-  Result SendTrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments) const;
-    
-  // Sends a path to the robot to be immediately executed
-  Result SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const;
     
   // Sync time with physical robot and trigger it to send back camera calibration
   Result SendSyncTime() const;

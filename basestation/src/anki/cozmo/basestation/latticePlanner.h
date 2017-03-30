@@ -55,7 +55,10 @@ public:
 
   virtual void StopPlanning() override;
 
-  virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile = nullptr) override;
+  // TODO:(bn) remove this from IPathPlanner! Move to PathComponent
+  virtual void GetTestPath(const Pose3d& startPose,
+                           Planning::Path &path,
+                           const PathMotionProfile* motionProfile = nullptr) override;
 
   virtual EPlannerStatus CheckPlanningStatus() const override;
 

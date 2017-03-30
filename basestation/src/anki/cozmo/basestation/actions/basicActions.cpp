@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -517,7 +518,7 @@ namespace Anki {
 
     DriveStraightAction::~DriveStraightAction()
     {
-      _robot.AbortDrivingToPose();
+      _robot.GetPathComponent().Abort();
       _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
 
       _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
@@ -553,7 +554,7 @@ namespace Anki {
       _hasStarted = false;
       
       // Tell robot to execute this simple path
-      if(RESULT_OK != _robot.ExecutePath(path, false)) {
+      if(RESULT_OK != _robot.GetPathComponent().ExecutePath(path, false)) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
@@ -568,17 +569,17 @@ namespace Anki {
       {
         return ActionResult::RUNNING;
       }
-      else if ( _hasStarted && !_robot.IsTraversingPath() ) {
+      else if ( _hasStarted && !_robot.GetPathComponent().IsTraversingPath() ) {
         result = ActionResult::SUCCESS;;
       }
       
       if(!_hasStarted) {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
-        _hasStarted = _robot.IsTraversingPath();
+        _hasStarted = _robot.GetPathComponent().IsTraversingPath();
         if( _hasStarted && _shouldPlayDrivingAnimation) {
           _robot.GetDrivingAnimationHandler().PlayStartAnim();
         }
-      } else if(/*hasStarted AND*/ !_robot.IsTraversingPath() && _shouldPlayDrivingAnimation) {
+      } else if(/*hasStarted AND*/ !_robot.GetPathComponent().IsTraversingPath() && _shouldPlayDrivingAnimation) {
         if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
           return ActionResult::RUNNING;
         }

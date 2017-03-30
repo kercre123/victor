@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -586,7 +587,7 @@ namespace Anki {
     {
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
-      _robot.AbortDrivingToPose();
+      _robot.GetPathComponent().Abort();
       _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
@@ -672,6 +673,8 @@ namespace Anki {
       _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
     
       ActionResult result = ActionResult::SUCCESS;
+
+      auto& pathComponent = _robot.GetPathComponent();
       
       _timeToAbortPlanning = -1.0f;
       
@@ -698,16 +701,16 @@ namespace Anki {
         
         if(!_hasMotionProfile)
         {
-          _pathMotionProfile = GetRobot().GetSpeedChooser().GetPathMotionProfile(_goalPoses);
+          _pathMotionProfile = pathComponent.GetSpeedChooser().GetPathMotionProfile(_goalPoses);
         }
         
         if(_goalPoses.size() == 1) {
-          planningResult = _robot.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
+          planningResult = pathComponent.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
         } else {
-          planningResult = _robot.StartDrivingToPose(_goalPoses,
-                                                     _pathMotionProfile,
-                                                     &_selectedGoalIndex,
-                                                     _useManualSpeed);
+          planningResult = pathComponent.StartDrivingToPose(_goalPoses,
+                                                            _pathMotionProfile,
+                                                            &_selectedGoalIndex,
+                                                            _useManualSpeed);
           PRINT_NAMED_DEBUG("DriveToPoseAction.SelectedGoal",
                             "[%d] Selected goal %d W.R.T. robot (%f, %f, %f, %fdeg)",
                             GetTag(),
@@ -747,7 +750,7 @@ namespace Anki {
                                "Received signal that robot %d's origin changed. Resetting action.",
                                robotID);
               Reset();
-              robotPtr->AbortDrivingToPose();
+              robotPtr->GetPathComponent().Abort();
             }
           };
           _originChangedHandle = _robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
@@ -768,7 +771,7 @@ namespace Anki {
         return ActionResult::RUNNING;
       }
       
-      switch( _robot.CheckDriveToPoseStatus() ) {
+      switch( _robot.GetPathComponent().CheckDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Error:
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
@@ -786,7 +789,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.ComputingPathTimeout",
                              "Robot has been planning for more than %f seconds, aborting",
                              _maxPlanningTime);
-            _robot.AbortDrivingToPose();
+            _robot.GetPathComponent().Abort();
             result = ActionResult::PATH_PLANNING_FAILED_ABORT;
             _timeToAbortPlanning = -1.0f;
           }
@@ -804,7 +807,7 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Replanning.Timeout",
                              "Robot has been planning for more than %f seconds, aborting",
                              _maxReplanPlanningTime);
-            _robot.AbortDrivingToPose();
+            _robot.GetPathComponent().Abort();
             // re-try in this case, since we might be able to succeed once we stop and take more time to plan
             result = ActionResult::PATH_PLANNING_FAILED_RETRY;
             _timeToAbortPlanning = -1.0f;
@@ -827,9 +830,9 @@ namespace Anki {
                              "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.",
                              GetTag(),
                              _debugPrintCtr,
-                             _robot.GetCurrentPathSegment(),
-                             _robot.GetLastSentPathID(),
-                             _robot.GetLastRecvdPathID());
+                             _robot.GetPathComponent().GetCurrentPathSegment(),
+                             _robot.GetPathComponent().GetLastSentPathID(),
+                             _robot.GetPathComponent().GetLastRecvdPathID());
           }
           break;
         }
@@ -876,12 +879,13 @@ namespace Anki {
           }
           // The last path sent was definitely received by the robot
           // and it is no longer executing it, but we appear to not be in position
-          else if (_robot.GetLastSentPathID() == _robot.GetLastRecvdPathID()) {
+          // TODO:(bn) add a RobotReceivedLastPath function to hide this
+          else if (_robot.GetPathComponent().GetLastSentPathID() == _robot.GetPathComponent().GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
                              " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg), threshold (%f, %f)",
                              GetTag(),
-                             Tdiff.Length(), _robot.GetLastRecvdPathID(),
+                             Tdiff.Length(), _robot.GetPathComponent().GetLastRecvdPathID(),
                              (int) _selectedGoalIndex,
                              _goalPoses[_selectedGoalIndex].GetTranslation().x(),
                              _goalPoses[_selectedGoalIndex].GetTranslation().y(),

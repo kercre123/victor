@@ -20,17 +20,25 @@
 #include "anki/cozmo/basestation/minimalAnglePlanner.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 
 using namespace Anki;
 using namespace Cozmo;
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
+namespace {
+MinimalAnglePlanner* GetPlanner(Robot& robot)
+{
+  return dynamic_cast<MinimalAnglePlanner*>(robot.GetPathComponent()._shortMinAnglePathPlanner.get());
+}
+}                      
+
 TEST(MinAnglePlanner, Create)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 }
 
@@ -39,7 +47,7 @@ TEST(MinAnglePlanner, Straight)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
@@ -68,7 +76,7 @@ TEST(MinAnglePlanner, Simple)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
@@ -99,7 +107,7 @@ TEST(MinAnglePlanner, NoFinalTurn)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
@@ -129,7 +137,7 @@ TEST(MinAnglePlanner, StraightAndTurn)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
@@ -158,7 +166,7 @@ TEST(MinAnglePlanner, NoBackup)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
@@ -188,7 +196,7 @@ TEST(MinAnglePlanner, TurnOnly)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
@@ -216,7 +224,7 @@ TEST(MinAnglePlanner, OldBug)
 {
   Robot robot(1, cozmoContext);
 
-  MinimalAnglePlanner* planner = dynamic_cast<MinimalAnglePlanner*>(robot._shortMinAnglePathPlanner);
+  MinimalAnglePlanner* planner = GetPlanner(robot);
   ASSERT_TRUE( planner != nullptr );
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(166.914886f, 153.714859f, 0));

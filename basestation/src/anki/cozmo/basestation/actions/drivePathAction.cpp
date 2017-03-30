@@ -11,8 +11,9 @@
  **/
 
 #include "anki/cozmo/basestation/actions/drivePathAction.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/planning/shared/path.h"
 
 namespace Anki {
@@ -32,7 +33,7 @@ DrivePathAction::DrivePathAction(Robot& robot, const Planning::Path& path)
 ActionResult DrivePathAction::Init()
 {
   ActionResult result = ActionResult::SUCCESS;
-  ERobotDriveToPoseStatus status = _robot.CheckDriveToPoseStatus();
+  ERobotDriveToPoseStatus status = _robot.GetPathComponent().CheckDriveToPoseStatus();
   
   if(status != ERobotDriveToPoseStatus::Waiting){
     result = ActionResult::PATH_PLANNING_FAILED_ABORT;
@@ -40,7 +41,7 @@ ActionResult DrivePathAction::Init()
   }
   
   // Tell robot to execute this simple path
-  if(RESULT_OK != _robot.ExecutePath(_path, false)) {
+  if(RESULT_OK != _robot.GetPathComponent().ExecutePath(_path, false)) {
     result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
     return result;
   }
@@ -52,7 +53,7 @@ ActionResult DrivePathAction::CheckIfDone()
 {
   //Check if robot arrived at destination
   //TODO: Currently no way to detect path failure
-  ActionResult result = _robot.IsTraversingPath() ? ActionResult::RUNNING: ActionResult::SUCCESS;
+  ActionResult result = _robot.GetPathComponent().IsTraversingPath() ? ActionResult::RUNNING: ActionResult::SUCCESS;
   
   return result;
 }

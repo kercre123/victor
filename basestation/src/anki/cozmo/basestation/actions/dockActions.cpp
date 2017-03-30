@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
@@ -192,8 +193,8 @@ namespace Anki {
       _robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
       
       // Abort anything that shouldn't still be running
-      if(_robot.IsTraversingPath()) {
-        _robot.AbortDrivingToPose();
+      if(_robot.GetPathComponent().IsTraversingPath()) {
+        _robot.GetPathComponent().Abort();
       }
       if(_robot.IsPickingOrPlacing()) {
         _robot.AbortDocking();
@@ -1209,7 +1210,7 @@ namespace Anki {
           {
             result = ActionResult::LAST_PICK_AND_PLACE_FAILED;
           }
-          else if(_robot.IsTraversingPath())
+          else if(_robot.GetPathComponent().IsTraversingPath())
           {
             result = ActionResult::FAILED_TRAVERSING_PATH;
           }

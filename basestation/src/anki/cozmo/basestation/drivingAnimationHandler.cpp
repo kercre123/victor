@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -130,7 +131,7 @@ namespace Anki {
       }
       else if(msg.idTag == _drivingLoopAnimTag)
       {
-        if(_robot.IsTraversingPath() && msg.result == ActionResult::SUCCESS)
+        if(_robot.GetPathComponent().IsTraversingPath() && msg.result == ActionResult::SUCCESS)
         {
           PlayDrivingLoopAnim();
         }

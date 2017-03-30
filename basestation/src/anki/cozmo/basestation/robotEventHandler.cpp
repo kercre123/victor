@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -1563,12 +1564,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& 
   }
   else
   {
-    Planning::Path p;
-    
-    PathMotionProfile motionProfile(msg.motionProf);
-    
-    robot->GetLongPathPlannerPtr()->GetTestPath(robot->GetPose(), p, &motionProfile);
-    robot->ExecutePath(p);
+    robot->GetPathComponent().ExecuteTestPath(msg.motionProf);
   }
 }
 
@@ -1647,7 +1643,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
   }
   else
   {
-    robot->AbortDrivingToPose();
+    robot->GetPathComponent().Abort();
   }
 }
 
