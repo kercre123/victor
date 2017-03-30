@@ -24,8 +24,9 @@ namespace CodeLab {
     }
 
     protected override void CleanUpOnDestroy() {
-      RobotEngineManager.Instance.CurrentRobot.ExitSDKMode(false);
-
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.ExitSDKMode(false);
+      }
       if (_WebViewObject != null) {
         GameObject.Destroy(_WebViewObject);
         _WebViewObject = null;
