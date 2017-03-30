@@ -199,8 +199,10 @@ bool DetectDevice(void)
     case FIXTURE_ROBOT1_TEST:
     case FIXTURE_ROBOT2_TEST:
     case FIXTURE_ROBOT3_TEST:
+    case FIXTURE_ROBOT3LE_TEST:
     case FIXTURE_COZ187_TEST:
     case FIXTURE_PACKOUT_TEST:
+    case FIXTURE_PACKOUTLE_TEST:
     case FIXTURE_LIFETEST_TEST:
     case FIXTURE_RECHARGE_TEST:
     case FIXTURE_PLAYPEN_TEST:
@@ -394,12 +396,14 @@ static void MainExecution()
     case FIXTURE_ROBOT1_TEST:
     case FIXTURE_ROBOT2_TEST:
     case FIXTURE_ROBOT3_TEST:
+    case FIXTURE_ROBOT3LE_TEST:
       m_functions = GetRobotTestFunctions();
       break;
     case FIXTURE_COZ187_TEST:
       m_functions = GetFacRevertTestFunctions();
       break;
     case FIXTURE_PACKOUT_TEST:
+    case FIXTURE_PACKOUTLE_TEST:
       m_functions = GetPackoutTestFunctions();
       break; 
     case FIXTURE_LIFETEST_TEST:
