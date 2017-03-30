@@ -151,16 +151,22 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     case TEST_SETCOLOR:
     {
-      for (int i = 0; i < MAX_MODELS; i++) {
-        if (BODY_COLOR(i) != ~0) continue ;
-        if( BODY_COLOR(i) == param ) break; //same as existing
+      int head = ~0;
+      for (int i = 0; i < MAX_MODELS; i++)
+      {
+        if (BODY_COLOR(i) != ~0) {
+          head = BODY_COLOR(i); //find the head value
+          continue;
+        } //else, first empty slot
         
-        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-        BODY_COLOR(i) = param;
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-        while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        if( head != param ) { //only write if value is changed
+          NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+          while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+          BODY_COLOR(i) = param;
+          while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+          NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+          while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        }
         break ;
       }
 
