@@ -33,7 +33,7 @@ void DebugStart(void)
 }
 
 extern void TestLED(int i); //motorTest.c
-static void BackpackLeds(void)
+void DebugBackpackLeds(void)
 {
   int me = ERROR_OK;
   for( int i=0; i < LEDCnt(); i++ )
@@ -127,7 +127,7 @@ static bool _BtnDetectRising(int *out_sample_mv, int *out_state)
   return rising_edge;
 }
 
-static void BackpackButton(void)
+void DebugBackpackButton(void)
 {
   u32 tick_time = getMicroCounter();
   int print_len = 0, btn_press_cnt = 0, btn_invalid_cnt = 0;
@@ -184,7 +184,7 @@ bool DebugTestDetectDevice(void)
   return getMicroCounter() - start_time > (1000*1000*10);
 }
 
-static void DebugTestBuzzer(void)
+void DebugTestBuzzer(void)
 {
   ConsolePrintf("Debug Test Buzzer: ");
   for(int x=1; x<=20; x++) {
@@ -200,9 +200,9 @@ TestFunction* GetDebugTestFunctions()
   static TestFunction m_debugFunctions[] = 
   {
     DebugStart,
-    BackpackLeds,
-    //DebugTestBuzzer,
-    BackpackButton,
+    DebugTestBuzzer,
+    //DebugBackpackLeds,
+    //DebugBackpackButton,
     DebugEnd,
     NULL
   };
