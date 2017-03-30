@@ -111,8 +111,8 @@ static void readBodycolor(void)
 
 static void setBodycolor(u8 bodycolor)
 {
-  //all tests start with InfoTest(), so we should already have updated color info
-  //readBodycolor();
+  ConsolePrintf("set bodycolor: %d\r\n", bodycolor);
+  readBodycolor(); //read current color array/count
   
   if( bodycolor != m_bodyColor ) { //only write changed values
     if( m_bodyColorCnt >= MAX_BODYCOLORS )
@@ -130,13 +130,11 @@ static void setBodycolor(u8 bodycolor)
 static void WriteBodyColor(void)
 {
   if( g_fixtureType == FIXTURE_ROBOT3_TEST ) {
-    ConsolePrintf("write body color: white\r\n");
     setBodycolor( BODYCOLOR_WHITE_1V5 );
   }
   #warning "write color for LE version"
   /*
   if( g_fixtureType == FIXTURE_ROBOT3_LE_TEST ) {
-    ConsolePrintf("write body color: gray (LE)\r\n");
     setBodycolor( BODYCOLOR_GRAY_LE );
   }
   //-*/
@@ -558,34 +556,9 @@ void LifeTest(void)
 //Send a command up to the ESP to force factory revert
 void FactoryRevert(void)
 {
-  //Make sure charge comms are established (watch for robot pulses)
-  SendTestChar(-1);
-  SendTestChar(-1);
-  SendTestChar(-1);
-  
+  EnableChargeComms();
   ConsolePrintf("SendCommand(21) factory revert\n");
   SendCommand(21, 0, 0, 0);
-  
-  //Wait for comms to fail...indicates things are resetting
-  u32 start_time_us = getMicroCounter();
-  bool resetting = false;
-  while( getMicroCounter() - start_time_us < 3000000 )
-  {
-    try { 
-      SendTestChar(-1);
-    } catch(int e) { 
-      resetting = true;
-    }
-    
-    if( resetting )
-      break;
-  }
-  
-  u32 time_us = getMicroCounter() - start_time_us;
-  if( resetting )
-    ConsolePrintf("Robot in reset %u.%03ums\r\n", time_us/1000, time_us%1000 );
-  else
-    ConsolePrintf("Could not detect reset\r\n");
 }
 
 // List of all functions invoked by the test, in order
@@ -689,7 +662,6 @@ TestFunction* GetFacRevertTestFunctions(void)
 {
   static TestFunction functions[] =
   {
-    InfoTest,
     FactoryRevert,
     NULL
   };
