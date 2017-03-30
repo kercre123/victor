@@ -88,7 +88,6 @@ structure RobotState
   uint_16 lastPathID,
   uint_16 cliffDataRaw,
   int_8   currPathSegment, // -1 if not traversing a path
-  uint_8  numFreeSegmentSlots,
 }
 
 enum int_8 BodyRadioMode

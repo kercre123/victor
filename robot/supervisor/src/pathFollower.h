@@ -72,10 +72,6 @@ namespace Anki
       // Returns the index of the path segment that is currently being traversed.
       // Returns -1 if not traversing a path.
       s8 GetCurrPathSegment(void);
-
-      // Returns the number of available segment slots.
-      // This is how many more path segments can be received by the basestation.
-      u8 GetNumFreeSegmentSlots();
       
       void PrintPath();
       void PrintPathSegment(s16 segment);

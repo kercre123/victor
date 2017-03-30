@@ -192,7 +192,6 @@ namespace Anki {
         robotState_.cliffDataRaw = ProxSensors::GetMinRawCliffValue();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
-        robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
         robotState_.status = 0;
         // TODO: Make this a parameters somewhere?

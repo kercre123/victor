@@ -269,11 +269,6 @@ namespace Anki
         return realPathSegment_;// currPathSegment_;
       }
 
-      u8 GetNumFreeSegmentSlots()
-      {
-        return MAX_NUM_PATH_SEGMENTS - (path_.GetNumSegments() - currPathSegment_ + 1);
-      }
-
       Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
         // Get current robot pose

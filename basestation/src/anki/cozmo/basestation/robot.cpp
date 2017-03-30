@@ -1013,11 +1013,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   // Update other state vars
   SetCurrPathSegment( msg.currPathSegment );
-  SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);
       
   // Dole out more path segments to the physical robot if needed:
   if (IsTraversingPath() && GetLastRecvdPathID() == GetLastSentPathID()) {
-    _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
+    _pdo->Update(_currPathSegment);
   }
   
   // Update IMU data
@@ -4280,8 +4279,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          0, //uint16_t lastPathID,
                          0, //uint16_t cliffDataRaw,
-                         -1, //int8_t currPathSegment,
-                         0); //uint8_t numFreeSegmentSlots
+                         -1); //int8_t currPathSegment
   
   return state;
 }

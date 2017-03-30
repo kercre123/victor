@@ -37,8 +37,7 @@ public:
 
   // Doles out the path bit by bit to the robot. The argument is the
   // currPathIdx: The current (absolute) segment index that the robot is traversing.
-  // numFreeSlots: The number of path segments slots that the robot reports as being free.
-  void Update(const s8 currPathIdx, const u8 numFreeSlots);
+  void Update(const s8 currPathIdx);
 
 protected:
 

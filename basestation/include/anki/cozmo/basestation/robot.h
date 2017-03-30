@@ -922,7 +922,6 @@ protected:
   int                      _numPlansFinished             = 0;
   ERobotDriveToPoseStatus  _driveToPoseStatus            = ERobotDriveToPoseStatus::Waiting;
   s8                       _currPathSegment              = -1;
-  u8                       _numFreeSegmentSlots          = 0;
   u16                      _lastSentPathID               = 0;
   u16                      _lastRecvdPathID              = 0;
   bool                     _usingManualPathSpeed         = false;
@@ -1092,7 +1091,6 @@ protected:
   ///////// Modifiers ////////
   
   void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
-  void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
   void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
   void SetOnCharger(bool onCharger);

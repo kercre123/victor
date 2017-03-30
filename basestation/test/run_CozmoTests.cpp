@@ -607,8 +607,7 @@ TEST(BlockWorld, PoseUpdates)
                       (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
                       0, // lastPathID,
                       0, // cliffDataRaw,
-                      0, // currPathSegment,
-                      0); // numFreeSegmentSlots)
+                      0); // currPathSegment
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
