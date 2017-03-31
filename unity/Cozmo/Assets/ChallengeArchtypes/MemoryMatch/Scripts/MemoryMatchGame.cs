@@ -96,13 +96,8 @@ namespace MemoryMatch {
 #endif
     }
 
-    protected override void AddDisabledReactionaryBehaviors() {
-      base.AddDisabledReactionaryBehaviors();
-
-      _DisabledReactionaryBehaviors.Add(ReactionTrigger.CliffDetected);
-      _DisabledReactionaryBehaviors.Add(ReactionTrigger.RobotPickedUp);
-      _DisabledReactionaryBehaviors.Add(ReactionTrigger.ReturnedToTreads);
-      _DisabledReactionaryBehaviors.Add(ReactionTrigger.UnexpectedMovement);
+    protected override void InitializeReactionaryBehaviorsForGameStart() {
+      RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kMemoryMatchGameTriggers);
     }
 
     // Use this for initialization

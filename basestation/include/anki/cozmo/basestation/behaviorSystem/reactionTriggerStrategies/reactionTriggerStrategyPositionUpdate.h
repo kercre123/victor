@@ -27,7 +27,10 @@ namespace Cozmo {
   
 class ReactionTriggerStrategyPositionUpdate : public IReactionTriggerStrategy{
 public:
-  ReactionTriggerStrategyPositionUpdate(Robot& robot, const Json::Value& config, const std::string& strategyName);
+  ReactionTriggerStrategyPositionUpdate(Robot& robot,
+                                        const Json::Value& config,
+                                        const std::string& strategyName,
+                                        ReactionTrigger triggerAssociated);
 
   virtual bool ShouldResumeLastBehavior() const override final { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
@@ -63,7 +66,7 @@ protected:
   // handles observing a new ID. Updates internal reaction data. If reactionEnabled is omitted, it checks
   // IsReactionEnabled(). If reactionEnabled is false, it will add the observation but ignore it for reactions
   // (by faking a reaction)
-  void HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp);
+  void HandleNewObservation(const Robot& robot, s32 id, const Pose3d& pose, u32 timestamp);
   void HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp, bool reactionEnabled);
   
   // For the next three functions, the bool `matchAnyPose` defaults to false. If true, then it checks poses
@@ -87,7 +90,7 @@ protected:
   void RobotReactedToId(const Robot& robot, s32 id);
   
   // handle delocalized message
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override final;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override final;
   virtual void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) {};
   
   
@@ -102,6 +105,7 @@ private:
                                       const Pose3d& otherPair) const;
   
   ReactionDataMap _reactionData;
+  ReactionTrigger _triggerAssociated;
     
 };
 

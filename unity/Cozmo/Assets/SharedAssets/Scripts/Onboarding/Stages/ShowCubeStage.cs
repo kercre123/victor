@@ -57,7 +57,7 @@ namespace Onboarding {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("OnboardingShowCube");
         // In this behavior we allow some interuptions, but ReactToPet can interrupt from those reactions. Repress it here, instead of the C++ behavior
         // so it will be off throughout the whole thing.
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingUnity", ReactionTrigger.PetInitialDetection, false);
+        RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId, ReactionaryBehaviorEnableGroups.kOnboardingShowCubeStageTriggers);
       }
       // So there is no UI pop just start us at the right stage.
       // Next tick engine will set up at this state too.
@@ -72,7 +72,8 @@ namespace Onboarding {
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingUnity", ReactionTrigger.PetInitialDetection, true);
+        // re-enable reactionary behaviors.
+        RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId);
       }
     }
 

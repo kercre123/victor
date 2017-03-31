@@ -135,7 +135,7 @@ bool ReactionTriggerStrategyFistBump::ShouldTriggerBehavior(const Robot& robot, 
   
   
 // Listen for achieved objectives
-void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyFistBump::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch (event.GetData().GetTag())
   {

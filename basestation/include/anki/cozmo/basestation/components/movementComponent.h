@@ -160,7 +160,6 @@ private:
   bool _isHeadMoving;
   bool _isLiftMoving;
   bool _areWheelsMoving;
-  bool _isReactToUnexpectedMovementEnabled = true;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

@@ -31,11 +31,8 @@ namespace Cozmo {
           InitializeStateMachine();
         }
 
-        protected override void AddDisabledReactionaryBehaviors() {
-          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CubeMoved);
-          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CliffDetected);
-          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
-          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.RobotPlacedOnSlope);
+        protected override void InitializeReactionaryBehaviorsForGameStart() {
+          RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kDroneModeGameTriggers);
         }
 
         private void InitializeStateMachine() {

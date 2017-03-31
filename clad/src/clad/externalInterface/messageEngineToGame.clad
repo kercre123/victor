@@ -36,6 +36,7 @@
 #include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
 #include "clad/types/gameStatusFlag.clad"
+#include "clad/types/reactionTriggers.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"

@@ -28,6 +28,7 @@
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/reactionTriggers.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/uiConnectionTypes.clad"
@@ -552,14 +553,22 @@ message RequestEnabledBehaviorList{
 
 }
 
-
-// EnableReactionaryBehaviors
-message RequestEnableReactionTrigger{
-    string requesterID,
-    ReactionTrigger trigger,
-    bool enable
+//disable all the affected triggers by locking them with the specified lockID
+message DisableReactionsWithLock{
+  string lockID,
+  AllTriggersConsidered triggersAffected
 }
 
+//remove the specified lockID from all triggers -
+//if no locks remain the trigger will be re-enabled
+message RemoveDisableReactionsLock{
+  string lockID
+}
+
+// disable all reactions with a lock - SHOULD ONLY BE USED BY SDK
+message DisableAllReactionsWithLock{
+  string lockID
+}
 
 // Engine will preserve the head and lift state between reactionary behaviors
 message SetDefaultHeadAndLiftState {
@@ -889,11 +898,6 @@ message GetAllDebugConsoleVarMessage {
 message GetJsonDasLogsMessage {
 }
 
-// Msg used by maya (and SDK) to disable reaction behaviors.
-message EnableAllReactionTriggers {
-  string enableID,
-  bool enabled
-}
 
 // Message to disable path speed randomization (useful for webots tests)
 message SetEnableSpeedChooser {

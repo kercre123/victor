@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
@@ -42,15 +43,67 @@ static const char* kSparksSuccessTriggerKey          = "sparksSuccessTrigger";
 static const char* kSparksFailTriggerKey             = "sparksFailTrigger";
 static const char* kSimpleChooserDelegateKey         = "simpleChooserDelegate";
 
-  
-static std::set<ReactionTrigger> kReactionsToDisable{
-  ReactionTrigger::FacePositionUpdated,
-  ReactionTrigger::CubeMoved,
-  ReactionTrigger::Frustration,
-  ReactionTrigger::PetInitialDetection
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooserArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
 };
 
-}
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSparksChooserArray),
+              "Reaction triggers duplicate or non-sequential");
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static const char* kPlayingFinalAnimationLock         = "finalAnimLockReactions";
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimationArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFinalAnimationArray),
+              "Reaction triggers duplicate or non-sequential");
+  
+} // end namespace
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& config)
@@ -180,9 +233,8 @@ void SparksBehaviorChooser::OnSelected()
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  for(const auto& trigger: kReactionsToDisable){
-    SmartRequestEnableReactionTrigger(trigger, false);
-  }
+  SmartDisableReactionsWithLock(GetName(),
+                                kAffectTriggersSparksChooserArray);
 
   // Notify the delegate chooser if it exists
   if(_simpleBehaviorChooserDelegate != nullptr){
@@ -197,11 +249,10 @@ void SparksBehaviorChooser::OnDeselected()
 {
   ResetLightsAndAnimations();
   
-  for(const auto& trigger: _reactionsDynamicallyDisabled){
-    _robot.GetBehaviorManager().RequestEnableReactionTrigger(
-                                     GetName(), trigger, true);
+  for(const auto& entry: _smartLockIDs){
+    _robot.GetBehaviorManager().RemoveDisableReactionsLock(entry);
   }
-  _reactionsDynamicallyDisabled.clear();
+  _smartLockIDs.clear();
 
   // clear any custom light events set during the spark
   
@@ -228,20 +279,25 @@ void SparksBehaviorChooser::ResetLightsAndAnimations()
   
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SparksBehaviorChooser::SmartRequestEnableReactionTrigger(const ReactionTrigger& trigger, bool enable)
+void SparksBehaviorChooser::SmartDisableReactionsWithLock(const std::string& lockID,
+                                                          const TriggersArray& triggers)
 {
-  _robot.GetBehaviorManager().RequestEnableReactionTrigger(
-                                      GetName(), trigger, enable);
-  if(enable){
-    _reactionsDynamicallyDisabled.erase(trigger);
-  }else{
-    _reactionsDynamicallyDisabled.insert(trigger);
-  }
+  _robot.GetBehaviorManager().DisableReactionsWithLock(lockID, triggers);
+  _smartLockIDs.insert(lockID);
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SparksBehaviorChooser::SmartRemoveDisableReactionsLock(const std::string& lockID,
+                                                            const TriggersArray& triggers)
+{
+  _robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID);
+  _smartLockIDs.erase(lockID);
+}
+
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void SparksBehaviorChooser::HandleMessage(const ExternalInterface::BehaviorObjectiveAchieved& msg)
@@ -514,7 +570,8 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
     
     // Make sure we don't interrupt the final stage animation if we see a cube
-    SmartRequestEnableReactionTrigger(ReactionTrigger::ObjectPositionUpdated, false);
+    SmartDisableReactionsWithLock(kPlayingFinalAnimationLock,
+                                  kAffectTriggersFinalAnimationArray);
   }else{
     // Transitioning directly between sparks - end current spark immediately
     if(mngr.GetRequestedSpark() != UnlockId::Count){

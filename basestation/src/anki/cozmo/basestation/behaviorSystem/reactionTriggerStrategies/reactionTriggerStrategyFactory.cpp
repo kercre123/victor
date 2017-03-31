@@ -29,7 +29,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "anki/cozmo/basestation/robot.h"
 
-#include "clad/types/behaviorTypes.h"
 #include "util/logging/logging.h"
 
 

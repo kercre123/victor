@@ -56,7 +56,7 @@ bool ReactionTriggerStrategyPlacedOnCharger::ShouldTriggerBehavior(const Robot& 
 }
 
 
-void ReactionTriggerStrategyPlacedOnCharger::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyPlacedOnCharger::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ChargerEvent &&
      event.GetData().Get_ChargerEvent().onCharger)

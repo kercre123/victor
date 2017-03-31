@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -30,15 +31,43 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
+
+namespace{
 static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 
-static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::UnexpectedMovement,
-                                                           ReactionTrigger::ObjectPositionUpdated,
-                                                           ReactionTrigger::FacePositionUpdated,
-                                                           ReactionTrigger::CubeMoved};
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersReactToCliffArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           true}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersReactToCliffArray),
+              "Reaction triggers duplicate or non-sequential");
   
+}
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _shouldStopDueToCharger(false)
@@ -52,16 +81,19 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
   }});
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToCliff::InitInternal(Robot& robot)
 {
-  robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
-  
-  SmartDisableReactionTrigger(kBehaviorsToDisable);
+  robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());  
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersReactToCliffArray);
   
   switch( _state ) {
     case State::PlayingStopReaction:
@@ -103,6 +135,8 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingStopReaction);
@@ -124,7 +158,8 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
     &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
@@ -140,6 +175,8 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
   // else end the behavior now
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToBackingUp(Robot& robot)
 {
   // if the animation doesn't drive us backwards enough, do it manually
@@ -155,17 +192,22 @@ void BehaviorReactToCliff::TransitionToBackingUp(Robot& robot)
   }
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
   // Send message that we're done reacting
   robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
-
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::StopInternal(Robot& robot)
 {
   _state = State::PlayingStopReaction;
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot)
 {
   if(_shouldStopDueToCharger){
@@ -175,7 +217,8 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot)
   return base::UpdateInternal(robot);
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {  
   switch( event.GetData().GetTag() ) {
@@ -208,6 +251,8 @@ void BehaviorReactToCliff::HandleWhileNotRunning(const EngineToGameEvent& event,
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch( event.GetData().GetTag() ) {

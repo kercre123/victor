@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -71,7 +72,70 @@ static const std::map<AxisName,UpAxis> kAxisNameMap = {
 
 static ObjectLights kEmptyObjectLights = {};
 
-}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static const char* kLockForFullPyramidProcess = "lockTriggersFullPyramid";
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectFullPyramidProcessArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectFullPyramidProcessArray),
+              "Reaction triggers duplicate or non-sequential");
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static const char* kLockForPyramidSetup = "lockTriggersPyramidSetup";
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectPyramidSetupArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectPyramidSetupArray),
+              "Reaction triggers duplicate or non-sequential");
+  
+} // end namespace
 
 struct PyramidCubePropertiesTracker{
 private:
@@ -127,9 +191,7 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _onSideAnimIndex(0)
 , _forceLightMusicUpdate(false)
 , _timeRespondedRollStartedPreviously_s(-1.0f)
-{
-  UpdateActiveBehaviorGroup(_robot, true);
-  
+{  
   /////////
   // Get pointers to all behaviors that must be manually called
   ///////
@@ -244,7 +306,6 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _nextTimeCheckBlockOrientations_s = -1.0f;
   _nextTimeForceUpdateLightMusic_s = -1.0f;
   _timeRespondedRollStartedPreviously_s = _behaviorRespondPossiblyRoll->GetTimeStartedRunning_s();
-  UpdateActiveBehaviorGroup(_robot, true);
 
   _pyramidObjectiveAchieved = false;
   
@@ -255,9 +316,9 @@ void BuildPyramidBehaviorChooser::OnSelected()
     entry.second.SetHasEverBeenUpright(UpAxis::ZPositive == entry.second.GetCurrentUpAxis());
   }
   
-  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
-                                                           ReactionTrigger::FistBump,
-                                                           false);
+  
+  _robot.GetBehaviorManager().DisableReactionsWithLock(kLockForFullPyramidProcess,
+                                                      kAffectFullPyramidProcessArray);
   
   _forceLightMusicUpdate = true;
   
@@ -280,13 +341,8 @@ void BuildPyramidBehaviorChooser::OnDeselected()
   // also mapped to another behavior group
   SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
   SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, true);
-  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
-                                                          ReactionTrigger::ObjectPositionUpdated,
-                                                          true);
-  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
-                                                           ReactionTrigger::FistBump,
-                                                           true);
-
+  _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForFullPyramidProcess);
+  _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForPyramidSetup);
 }
   
   
@@ -298,16 +354,12 @@ void BuildPyramidBehaviorChooser::UpdateActiveBehaviorGroup(Robot& robot, bool s
     SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, false);
     SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, true);
     // The setup phase has its own acknowledgments
-    robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
-                                                            ReactionTrigger::ObjectPositionUpdated,
-                                                            false);
-    
+    _robot.GetBehaviorManager().DisableReactionsWithLock(kLockForPyramidSetup,
+                                                        kAffectPyramidSetupArray);
   }else{
     SetBehaviorGroupEnabled(BehaviorGroup::SetupBuildPyramid, false);
     SetBehaviorGroupEnabled(BehaviorGroup::BuildPyramid, true);
-    robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(),
-                                                            ReactionTrigger::ObjectPositionUpdated,
-                                                            true);
+    _robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockForPyramidSetup);
   }
 }
 

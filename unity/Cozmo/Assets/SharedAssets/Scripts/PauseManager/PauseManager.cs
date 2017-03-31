@@ -205,7 +205,7 @@ namespace Cozmo {
     public void StartPlayerInducedSleep(bool fromCharger) {
       Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
-        robot.EnableAllReactionTriggers(false);
+        robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
       }
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
@@ -270,7 +270,7 @@ namespace Cozmo {
 
       Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
-        robot.EnableAllReactionTriggers(true);
+        robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
       }
     }
 

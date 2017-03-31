@@ -1,5 +1,5 @@
 /**
- * File: iReactionTriggerStrategy.h
+ * File: iReactionTriggerStrategy.cpp
  *
  * Author: Kevin M. Karol
  * Created: 12/08/16
@@ -12,6 +12,7 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -31,11 +32,6 @@ IReactionTriggerStrategy::IReactionTriggerStrategy(Robot& robot, const Json::Val
 :  _robot(robot)
 ,  _strategyName(strategyName)
 {
-  // Get disable reaction messages
-  
-  SubscribeToTags({
-    MessageGameToEngineTag::RequestEnableReactionTrigger
-  });
 }
 
 
@@ -67,70 +63,8 @@ void IReactionTriggerStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
     }
   }
 }
-  
-void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
-{
-  //Turn off reactionary behaviors based on name
-  GameToEngineTag tag = event.GetData().GetTag();
-  
-  if (tag == GameToEngineTag::RequestEnableReactionTrigger){
-    auto& data = event.GetData().Get_RequestEnableReactionTrigger();
-    if(data.trigger == _triggerID){
-      std::string requesterID = data.requesterID;
-      const bool enable = data.enable;
-      if(UpdateDisableIDs(requesterID, enable)){
-        // Allow subclasses to respond to state changes
-        if((!enable && _disableIDs.size() == 1) ||
-           (enable && _disableIDs.size() == 0)){
-          EnabledStateChanged(enable);
-        }
-      }
-    }
-  }else{
-    AlwaysHandleInternal(event, robot);
-  }
-}
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IReactionTriggerStrategy::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
-{
-  AlwaysHandleInternal(event, robot);
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IReactionTriggerStrategy::UpdateDisableIDs(const std::string& requesterID, bool enable)
-{
-  
-  PRINT_CH_DEBUG("ReactionTriggers", "BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
-                 "%s: requesting behavior %s be %s",
-                 requesterID.c_str(),
-                 _strategyName.c_str(),
-                 enable ? "enabled" : "disabled");
-  
-  if(enable){
-    int countRemoved = (int)_disableIDs.erase(requesterID);
-    if(!countRemoved){
-      PRINT_NAMED_WARNING("ReactionTriggerStrategy.UpdateDisableIDs.InvalidDisable",
-                          "Attempted to enable reactionary behavior %s with invalid ID %s", _strategyName.c_str(), requesterID.c_str());
-      return false;
-    }
-    
-  }else{
-    int countInList = (int)_disableIDs.count(requesterID);
-    if(countInList){
-      PRINT_NAMED_WARNING("ReactionTriggerStrategy.UpdateDisableIDs.DuplicateDisable",
-                          "Attempted to disable reactionary behavior %s with previously registered ID %s", _strategyName.c_str(), requesterID.c_str());
-      return false;
-    }else{
-      _disableIDs.insert(requesterID);
-    }
-    
-  }
-  return true;
-}
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& IReactionTriggerStrategy::GetRNG() const
 {

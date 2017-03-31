@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
 
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -112,9 +113,9 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot,
 }
   
   
-void ReactionTriggerStrategyCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyCubeMoved::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
-  if(IsReactionEnabled()){
+  if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::ObjectPositionUpdated)){
     switch(event.GetData().GetTag()){
       case EngineToGameTag::ObjectMoved:
       HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());

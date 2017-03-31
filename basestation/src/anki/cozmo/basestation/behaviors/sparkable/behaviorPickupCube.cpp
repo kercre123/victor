@@ -35,10 +35,13 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
 static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
 static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 static const float kSecondsBetweenBlockWorldChecks = 0.5f;
-  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _lastBlockWorldCheck_s(0)
@@ -65,6 +68,8 @@ BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPickUpCube::InitInternal(Robot& robot)
 {
   if(robot.IsCarryingObject()){
@@ -82,6 +87,7 @@ Result BehaviorPickUpCube::InitInternal(Robot& robot)
 }
   
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorPickUpCube::UpdateInternal(Robot& robot)
 {
   for(auto configType: _configurationsToIgnore) {
@@ -95,17 +101,15 @@ IBehavior::Status BehaviorPickUpCube::UpdateInternal(Robot& robot)
   return super::UpdateInternal(robot);
 }
 
-
-void BehaviorPickUpCube::StopInternal(Robot& robot)
-{
   
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::StopInternalFromDoubleTap(Robot& robot)
 {
   
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
@@ -122,6 +126,8 @@ bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqDat
   return !robot.IsCarryingObject() &&  _targetBlockID.IsSet();
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
@@ -134,6 +140,8 @@ void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, c
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
 {
   _targetBlockID.UnSet();
@@ -173,6 +181,8 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
   }
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
 {
   DEBUG_SET_STATE(DoingInitialReaction);
@@ -197,7 +207,9 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
                 }
               });
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 {
   DEBUG_SET_STATE(PickingUpCube);
@@ -271,6 +283,8 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
               });
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
 {
   DEBUG_SET_STATE(DriveWithCube);
@@ -289,6 +303,8 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
                   &BehaviorPickUpCube::TransitionToPutDownCube);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
 {
   DEBUG_SET_STATE(PutDownCube);
@@ -318,7 +334,9 @@ void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
   
   StartActing(action, &BehaviorPickUpCube::TransitionToDoingFinalReaction);
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
 {
   DEBUG_SET_STATE(DoingFinalReaction);
@@ -335,7 +353,9 @@ void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
     BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
   }
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
 {
   // mark this as failed to pickup so that we don't retry

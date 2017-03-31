@@ -64,9 +64,7 @@ private:
   uint8_t     _numErrors = 0;
   uint8_t     _timesPickedUpCube = 0;
   ObjectID    _targetBlock;
-  
-  void EnableSpecificReactionaryBehavior(Robot& robot, bool enable);
-  
+    
   void HandleObjectObserved(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   
   void SetState_internal(State state, const std::string& stateName, const Robot& robot);

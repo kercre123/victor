@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -67,11 +68,6 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-// these are defined as private within BehaviorManager, but are so ugly that I'm
-// including them namespaced here for return values
-using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
-using TriggerMapIterator = std::vector<TriggerBehaviorMapEntry>::iterator;
-  
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
@@ -91,6 +87,10 @@ else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 
 }
 
+/////////
+// Running/Resume implementation
+/////////
+  
 // struct which defines information about the currently running behavior
 struct BehaviorRunningAndResumeInfo{
   void SetCurrentBehavior(IBehavior* newScoredBehavior){_currentBehavior = newScoredBehavior;}
@@ -119,6 +119,111 @@ private:
 };
   
   
+/////////
+// TriggerBehaviorInfo implementation
+/////////
+  
+struct TriggerBehaviorInfo{
+public:
+  using StrategyBehaviorMap = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
+
+  bool  IsReactionEnabled() const { return _disableIDs.empty();}
+  
+  bool AddStrategyMapping(IReactionTriggerStrategy*& strategy, IBehavior* behavior);
+  const std::vector<StrategyBehaviorMap>& GetStrategyMap() const { return _strategyBehaviorMap;}
+  
+  // For enabling/disabling the strategy
+  bool  AddDisableLockToTrigger(const std::string& disableID, ReactionTrigger debugTrigger);
+  bool  IsTriggerLockedByID(const std::string& disableID) const;
+  bool  RemoveDisableLockFromTrigger(const std::string& disableID, ReactionTrigger debugTrigger);
+  
+  
+private:
+  std::vector<StrategyBehaviorMap>          _strategyBehaviorMap;
+  std::set<std::string>                     _disableIDs;
+};
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TriggerBehaviorInfo::AddStrategyMapping(IReactionTriggerStrategy*& strategy, IBehavior* behavior)
+{
+  DEV_ASSERT_MSG(behavior != nullptr, "TriggerBehaviorInfo.BehaviorNullptr",
+                 "Nullptr passed in to triggerBehavior info for behavior");
+  DEV_ASSERT_MSG(strategy != nullptr, "TriggerBehaviorInfo.StrategyNullptr",
+                 "Nullptr passed in to triggerBehavior info for strategy");
+  
+  if(behavior != nullptr && strategy != nullptr){
+    strategy->BehaviorThatStrategyWillTrigger(behavior);
+    auto newEntry = std::make_pair(std::unique_ptr<IReactionTriggerStrategy>(strategy),
+                                   behavior);
+    _strategyBehaviorMap.emplace_back(std::move(newEntry));
+    strategy = nullptr;
+    return true;
+  }
+  
+  Util::SafeDelete(strategy);
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TriggerBehaviorInfo::IsTriggerLockedByID(const std::string& disableID) const
+{
+  return _disableIDs.find(disableID) != _disableIDs.end();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TriggerBehaviorInfo::AddDisableLockToTrigger(const std::string& disableID,
+                                                   ReactionTrigger debugTrigger)
+{
+  PRINT_CH_DEBUG("ReactionTriggers",
+                 "BehaviorManager.TriggerBehaviorInfo.AddDisableLockToTrigger",
+                 "%s: requesting trigger %s be disabled",
+                 disableID.c_str(),
+                 EnumToString(debugTrigger));
+  
+  auto disableIDIter =  _disableIDs.find(disableID);
+  if(disableIDIter != _disableIDs.end()){
+    PRINT_NAMED_WARNING("TriggerBehaviorInfo.AddDisableLockToTrigger.DuplicatDisable",
+                        "Attempted to disable reaction trigger %s with previously registered ID %s",
+                        EnumToString(debugTrigger),
+                        disableID.c_str());
+    return false;
+  }else{
+    _disableIDs.insert(disableID);
+  }
+  
+  return true;
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TriggerBehaviorInfo::RemoveDisableLockFromTrigger(const std::string& disableID,
+                                                        ReactionTrigger debugTrigger)
+{
+  PRINT_CH_DEBUG("ReactionTriggers",
+                 "BehaviorManager.TriggerBehaviorInfo.RemoveDisableLockFromTrigger",
+                 "%s: requesting trigger %s be re-enabled",
+                 disableID.c_str(),
+                 EnumToString(debugTrigger));
+  
+  int countRemoved = Util::numeric_cast<int>(_disableIDs.erase(disableID));
+  if(countRemoved == 0){
+    PRINT_NAMED_WARNING("TriggerBehaviorInfo.RemoveDisableLockFromTrigger.InvalidDisable",
+                        "Attempted to re-enable reaction trigger %s with invalid ID %s",
+                        EnumToString(debugTrigger),
+                        disableID.c_str());
+    return false;
+  }
+  
+  
+  return true;
+}
+
+/////////
+// BehaviorManager implementation
+/////////
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
 : _robot(robot)
@@ -126,7 +231,6 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _defaultLiftHeight(kIgnoreDefaultHeadAndLiftState)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
 , _behaviorFactory(new BehaviorFactory())
-, _devCheckTriggerMapImmutableSize(0)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 , _behaviorThatSetLights(BehaviorClass::NoneBehavior)
@@ -225,13 +329,40 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
+    
+    // Disable reaction triggers by locking the specified triggers with the given lockID
     _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
-                            ExternalInterface::MessageGameToEngineTag::EnableAllReactionTriggers,
+                            ExternalInterface::MessageGameToEngineTag::DisableReactionsWithLock,
                           [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                           {
-                            const std::string requesterID = event.GetData().Get_EnableAllReactionTriggers().enableID;
-                            EnableAllReactionTriggers(requesterID,event.GetData().Get_EnableAllReactionTriggers().enabled, true);
+                            const auto& msg = event.GetData().Get_DisableReactionsWithLock();
+                            DisableReactionsWithLock(
+                                  msg.lockID,
+                                  ALL_TRIGGERS_CONSIDERED_TO_FULL_ARRAY(msg.triggersAffected),
+                                  true);
                           }));
+    
+    // Remove a specified lockID from all reaction triggers
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::RemoveDisableReactionsLock,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                            {
+                              const auto& msg = event.GetData().Get_RemoveDisableReactionsLock();
+                              RemoveDisableReactionsLock(msg.lockID);
+                            }));
+    
+    // Listen for a lock to disable all reactions with - only used by SDK
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::DisableAllReactionsWithLock,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                            {
+                              const auto& msg = event.GetData().Get_DisableAllReactionsWithLock();
+                              DisableReactionsWithLock(
+                                     msg.lockID,
+                                     ReactionTriggerHelpers::kAffectAllArray,
+                                     true);
+                            }));
+    
     _eventHandlers.push_back(externalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
                                [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -296,6 +427,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
 {
+  // Add strategys from the config
   if ( !config.isNull() )
   {
     const Json::Value& reactionTriggerArray = config[kReactionTriggerBehaviorMapKey];
@@ -318,26 +450,27 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
         PRINT_CH_INFO("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
                          "Strategy %s maps to behavior %s",
                          strategy->GetName().c_str(), behavior->GetName().c_str());
-
-        strategy->BehaviorThatStrategyWillTrigger(behavior);
-        _reactionTriggerMap.push_back(
-            std::make_pair(std::unique_ptr<IReactionTriggerStrategy>(strategy), behavior));
+        
+        // Add the strategy to the trigger
+        _reactionTriggerMap[trigger].AddStrategyMapping(strategy, behavior);
+        DEV_ASSERT(strategy == nullptr,
+                   "BehaviorManager.InitReactionTriggerMap.StrategyStillValidAfterAddedToMap");
+      }else{
+        // Don't leak strategy memory if it doesn't get added to the reaction trigger map
+        Util::SafeDelete(strategy);
       }
-    }
-    
-    std::set<TriggerMapIterator> reactToDoubleTapInfo = GetReactionInfoForTrigger(ReactionTrigger::DoubleTapDetected);
-    // this logic assumes there is only one react to double tap behavior
-    DEV_ASSERT(reactToDoubleTapInfo.size() == 1,
-               "BehaviorManager.UpdateBehaviorWithObjectTapInteraction.TooManyDoubleTapTriggers");
-    if(reactToDoubleTapInfo.size() == 1){
-      _cacheDoubleTapIter = *reactToDoubleTapInfo.begin();
-      _devCheckTriggerMapImmutableSize = static_cast<int>(_reactionTriggerMap.size());
     }
   }
   
+  // Currently we load in null configs for tests - so this asserts that if you
+  // specify any reaction triggers, you have to specify them all.
+  DEV_ASSERT(config.isNull() ||
+             (Util::EnumToUnderlying(ReactionTrigger::Count) == _reactionTriggerMap.size()),
+             "BehaviorManager.InitReactionTriggerMap.NoStrategiesAddedForAReactionTrigger");
+  
   return RESULT_OK;
 }
-  
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::CreateBehaviorFromConfiguration(const Json::Value& behaviorJson)
@@ -507,36 +640,6 @@ bool BehaviorManager::SwitchToVoiceCommandBehavior(IBehavior* nextBehavior)
   return SwitchToBehaviorBase(newBehaviorInfo);
 }
 
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::set<TriggerMapIterator> BehaviorManager::GetReactionInfoForTrigger(ReactionTrigger trigger)
-{
-  std::set<TriggerMapIterator> allMappedTriggers;
-  
-  for(auto mapIter = _reactionTriggerMap.begin(); mapIter < _reactionTriggerMap.end(); mapIter++){
-    if(mapIter->first->GetReactionTrigger() == trigger){
-      allMappedTriggers.insert(mapIter);
-    }
-  }
-  
-  return allMappedTriggers;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorManager::GetReactToDoubleTapPair(TriggerMapIterator& reactIter)
-{
-  const bool triggerMapUnchanged = _devCheckTriggerMapImmutableSize == _reactionTriggerMap.size();
-  DEV_ASSERT(triggerMapUnchanged,"BehaviorManager.GetReactToDoubleTapPair.ReactionMapSizeChanged");
-  if(triggerMapUnchanged){
-    reactIter = _cacheDoubleTapIter;
-    return true;
-  }
-  
-  return false;
-}
-
-  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
@@ -664,36 +767,6 @@ void BehaviorManager::SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo
   }
   
   *_runningAndResumeInfo = newInfo;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::RequestEnableReactionTrigger(const std::string& requesterID, ReactionTrigger trigger, bool enable)
-{
-  // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
-  if (!_robot.HasExternalInterface()) {
-    return;
-  }
-  
-  _robot.GetExternalInterface()->BroadcastToEngine<
-                                 ExternalInterface::RequestEnableReactionTrigger>
-                                 (requesterID, trigger, enable);
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::RequestEnableReactionTrigger(const std::string& requesterID, const std::set<ReactionTrigger>& triggers, bool enable)
-{
-  // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
-  if (!_robot.HasExternalInterface()) {
-    return;
-  }
-  
-  for(const auto& trigger: triggers) {
-  _robot.GetExternalInterface()->BroadcastToEngine<
-                                 ExternalInterface::RequestEnableReactionTrigger>
-                                 (requesterID, trigger, enable);
-  }
 }
 
   
@@ -887,55 +960,64 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
   bool hasAlreadySwitchedThisTick = false;
   bool didSuccessfullySwitch = false;
   for(const auto& mapEntry: _reactionTriggerMap){
-    IReactionTriggerStrategy& strategy = *mapEntry.first;
-    IBehavior* rBehavior = mapEntry.second;
-    
-    bool shouldCheckStrategy = true;
-    
-    // If there is a current triggered behavior running, make sure
-    //  we are allowed to interrupt it.
-    const ReactionTrigger currentReactionTrigger = GetCurrentReactionTrigger();
-    if (currentReactionTrigger != ReactionTrigger::NoneTrigger)
-    {
-      shouldCheckStrategy = (currentReactionTrigger == strategy.GetReactionTrigger()) ?
-                            strategy.CanInterruptSelf() :
-                            strategy.CanInterruptOtherTriggeredBehavior();
+    // if a reaction is not enabled, skip evaluating its strategies
+    if(!mapEntry.second.IsReactionEnabled()){
+      continue;
     }
-
-    if(shouldCheckStrategy &&
-       strategy.IsReactionEnabled() &&
-       strategy.ShouldTriggerBehavior(_robot, rBehavior)){
-        
-      _robot.AbortAll();
-      
-      if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
-         !_robot.GetMoveComponent().IsDirectDriving())
-      {
-        PRINT_NAMED_WARNING("BehaviorManager.CheckReactionTriggerStrategies",
-                            "Some tracks are locked, unlocking them");
-        _robot.GetMoveComponent().CompletelyUnlockAllTracks();
-      }
     
-      const bool successfulSwitch = SwitchToReactionTrigger(strategy, rBehavior);
-      didSuccessfullySwitch |= successfulSwitch;
-
-      if(successfulSwitch){
-        PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.SwitchingToReaction",
-                      "Trigger strategy %s triggering behavior %s",
-                      strategy.GetName().c_str(),
-                      rBehavior->GetName().c_str());
-      }else{
-        PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.FailedToSwitch",
-                      "Trigger strategy %s tried to trigger behavior %s, but init failed",
-                      strategy.GetName().c_str(),
-                      rBehavior->GetName().c_str());
+    const auto& strategyMap = mapEntry.second.GetStrategyMap();
+    
+    for(const auto& entry: strategyMap){
+      IReactionTriggerStrategy& strategy = *entry.first;
+      IBehavior& rBehavior               =  *entry.second;
+      
+      bool shouldCheckStrategy = true;
+      
+      // If there is a current triggered behavior running, make sure
+      //  we are allowed to interrupt it.
+      const ReactionTrigger currentReactionTrigger = GetCurrentReactionTrigger();
+      if (currentReactionTrigger != ReactionTrigger::NoneTrigger)
+      {
+        shouldCheckStrategy = (currentReactionTrigger == strategy.GetReactionTrigger()) ?
+                              strategy.CanInterruptSelf() :
+                              strategy.CanInterruptOtherTriggeredBehavior();
       }
 
-      if(hasAlreadySwitchedThisTick){
-        PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
-                          "Multiple behaviors switched to in a single basestation tick");
+      if(shouldCheckStrategy &&
+         strategy.ShouldTriggerBehavior(_robot, &rBehavior)){
+          
+          _robot.AbortAll();
+          
+          if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
+             !_robot.GetMoveComponent().IsDirectDriving())
+          {
+            PRINT_NAMED_WARNING("BehaviorManager.CheckReactionTriggerStrategies",
+                                "Some tracks are locked, unlocking them");
+            _robot.GetMoveComponent().CompletelyUnlockAllTracks();
+          }
+        
+          const bool successfulSwitch = SwitchToReactionTrigger(strategy, &rBehavior);
+  
+          didSuccessfullySwitch |= successfulSwitch;
+
+          if(successfulSwitch){
+            PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.SwitchingToReaction",
+                          "Trigger strategy %s triggering behavior %s",
+                          strategy.GetName().c_str(),
+                          rBehavior.GetName().c_str());
+          }else{
+            PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.FailedToSwitch",
+                          "Trigger strategy %s tried to trigger behavior %s, but init failed",
+                          strategy.GetName().c_str(),
+                          rBehavior.GetName().c_str());
+          }
+      
+          if(hasAlreadySwitchedThisTick){
+            PRINT_NAMED_WARNING("BehaviorManager.Update.ReactionaryBehaviors",
+                              "Multiple behaviors switched to in a single basestation tick");
+          }
+          hasAlreadySwitchedThisTick = true;
       }
-      hasAlreadySwitchedThisTick = true;
     }
   }
   
@@ -1046,7 +1128,22 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
                 _isRequestedSparkSoft ? "soft" : "hard",
                 UnlockIdToString(_lastRequestedSpark));
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorManager::IsReactionTriggerEnabled(ReactionTrigger reaction) const
+{
+  auto triggerMapIter = _reactionTriggerMap.find(reaction);
+  if(ANKI_VERIFY(triggerMapIter != _reactionTriggerMap.end(),
+                 "BehaviorManager.IsReactionTriggerEnabled.ReachedEndOfMap",
+                 "Reached the end of the reaction trigger map searching for %d",
+                 Util::numeric_cast<int>(reaction))){
+    return triggerMapIter->second.IsReactionEnabled();
+  }
+  
+  return false;
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
@@ -1066,34 +1163,87 @@ const UnlockId BehaviorManager::SwitchToRequestedSpark()
   
   return _activeSpark;
 }
-  
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent)
+void BehaviorManager::DisableReactionsWithLock(
+          const std::string& lockID,
+          const ReactionTriggerHelpers::FullReactionArray& triggersAffected,
+          bool stopCurrent)
 {
-  PRINT_CH_INFO("ReactionTriggers",
-                "BehaviorManager.EnableAllReactionTriggers",
-                (isEnabled ? "Enabled" : "Disabled"));
-  
-  // Disable or re-enable all reaction triggers with a special lock
-  for(int reactionIdx = 0; reactionIdx < static_cast<int>(ReactionTrigger::Count); reactionIdx++){
-    ReactionTrigger type = static_cast<ReactionTrigger>(reactionIdx);
-    _robot.GetBehaviorManager().RequestEnableReactionTrigger(requesterID, type, isEnabled);
+  /// Iterate over all reaction triggers to see if they're affected by this request
+  for(auto& entry: _reactionTriggerMap){
+    ReactionTrigger triggerEnum = entry.first;
+    auto& allStrategyMaps = entry.second;
+    DEV_ASSERT_MSG(!allStrategyMaps.IsTriggerLockedByID(lockID),
+          "BehaviorManager.RequestDisableReactions.LockAlreadyInUse",
+          "Attempted to disable reactions with ID %s which is already in use",
+          lockID.c_str());
+    
+    if(ReactionTriggerHelpers::IsTriggerAffected(triggerEnum, triggersAffected)){
+      PRINT_CH_INFO("ReactionTriggers",
+                    "BehaviorManager.RequestDisableReactions.AllTriggersConsidered",
+                    "Trigger %s is being disabled by %s",
+                    EnumToString(triggerEnum),
+                    lockID.c_str());
+      
+
+      if(allStrategyMaps.IsReactionEnabled()){
+        //About to disable, notify reaction trigger strategy
+        const auto& allEntries = allStrategyMaps.GetStrategyMap();
+        for(auto& entry : allEntries){
+          entry.first->EnabledStateChanged(false);
+        }
+      }
+      
+      allStrategyMaps.AddDisableLockToTrigger(lockID, triggerEnum);
+      
+      // If the currently running behavior was triggered as a reaction
+      // and we are supposed to stop current, stop the current behavior
+      if(stopCurrent &&
+         _runningAndResumeInfo->GetCurrentReactionTrigger() == triggerEnum){
+        IBehavior* currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+        if(currentBehavior!= nullptr && currentBehavior->IsRunning()){
+          currentBehavior->Stop();
+        }
+      }
+      
+    }
+    triggerEnum++;
   }
-  
-  const bool activeBehaviorIsReactionary = GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
-  if(stopCurrent && !isEnabled && activeBehaviorIsReactionary)
-  {
-    PRINT_CH_INFO("ReactionTriggers",
-                  "BehaviorManager.EnableAllReactionTriggers",
-                  "Disabling reaction triggers - stopping currently running one");
-    BehaviorRunningAndResumeInfo nullInfo;
-    SwitchToBehaviorBase(nullInfo);
-  }
-  
 }
- 
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
+{
+  /// Iterate over all reaction triggers to see if they're affected by this request
+  for(auto& entry: _reactionTriggerMap){
+    ReactionTrigger triggerEnum = entry.first;
+    auto& allStrategyMaps = entry.second;
+    
+    PRINT_CH_INFO("ReactionTriggers",
+                  "BehaviorManager.RequestReEnableReactions.AllTriggersConsidered",
+                  "Trigger %s is being enabled by %s",
+                  EnumToString(triggerEnum),
+                  lockID.c_str());
+
+    if(allStrategyMaps.IsTriggerLockedByID(lockID)){
+      allStrategyMaps.RemoveDisableLockFromTrigger(lockID, triggerEnum);
+      
+      if(allStrategyMaps.IsReactionEnabled()){
+        //About to disable, notify reaction trigger strategy
+        const auto& allEntries = allStrategyMaps.GetStrategyMap();
+        for(auto& entry : allEntries){
+          entry.first->EnabledStateChanged(true);
+        }
+      }
+    }
+    triggerEnum++;
+  }
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
 {
@@ -1196,10 +1346,15 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
     return;
   }
 
-  TriggerMapIterator doubleTapMapEntry;
-  const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
-
-  if(doubleTapExists && !doubleTapMapEntry->first->IsReactionEnabled()) {
+  auto doubleTapIter = _reactionTriggerMap.find(ReactionTrigger::DoubleTapDetected);
+  if(doubleTapIter == _reactionTriggerMap.end()){
+    DEV_ASSERT(false, "BehaviorManager.HandleObjectTapInteraction.FaildToFindDoubleTap");
+    return;
+  }
+  
+  const bool isDoubleTapEnabled = doubleTapIter->second.IsReactionEnabled();
+  
+  if(!isDoubleTapEnabled) {
     PRINT_CH_INFO("Behavior", "BehaviorManager.HandleObjectTapInteraction.Disabled",
                   "Object tap interaction disabled, ignoring tap");
     return;
@@ -1250,14 +1405,18 @@ void BehaviorManager::LeaveObjectTapInteraction()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::UpdateTappedObject()
 {
+  auto doubleTapIter = _reactionTriggerMap.find(ReactionTrigger::DoubleTapDetected);
+  if(doubleTapIter == _reactionTriggerMap.end()){
+    DEV_ASSERT(false, "BehaviorManager.UpdateTappedObject.FaildToFindDoubleTap");
+    return;
+  }
   
-  TriggerMapIterator doubleTapMapEntry;
-  const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
+  const bool isDoubleTapEnabled = doubleTapIter->second.IsReactionEnabled();
   
   // If we have a tap intent and are not currently in ReactToDoubleTap
   if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent() &&
      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
-     doubleTapExists && doubleTapMapEntry->first->IsReactionEnabled())
+     isDoubleTapEnabled)
   {
     // If the tapped objects pose becomes unknown then give up and leave object tap interaction
     // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
@@ -1405,14 +1564,25 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         // to pick a behavior (all of the ObjectTapInteraction behaviors have similar requirements to run) so
         // if the current one can't run then the others probably won't be able to run either.
         
-        TriggerMapIterator doubleTapMapEntry;
-        const bool doubleTapExists = GetReactToDoubleTapPair(doubleTapMapEntry);
+        
+        auto doubleTapIter = _reactionTriggerMap.find(ReactionTrigger::DoubleTapDetected);
+        if(doubleTapIter == _reactionTriggerMap.end()){
+          DEV_ASSERT(false, "BehaviorManager.DoubleTap.FaildToFindDoubleTap");
+          return;
+        }
+        
+        const auto& doubleTapEntry = doubleTapIter->second;
+        DEV_ASSERT(doubleTapEntry.GetStrategyMap().size() == 1,
+                   "BehaviorManager.DoubleTap.MultipleDoubleTapEntriesInMap");
 
-        if(doubleTapExists){
-          IBehavior* reactToDoubleTap = doubleTapMapEntry->second;
+        if(doubleTapEntry.GetStrategyMap().size() >= 1){
           
-          const bool isReactionEnabled = doubleTapMapEntry->first->IsReactionEnabled();
-          const bool shouldTrigger = doubleTapMapEntry->first->ShouldTriggerBehavior(_robot, reactToDoubleTap);
+          
+          IBehavior* reactToDoubleTap = doubleTapEntry.GetStrategyMap().begin()->second;
+          IReactionTriggerStrategy& strategy = *doubleTapEntry.GetStrategyMap().begin()->first;
+          
+          const bool isReactionEnabled = doubleTapEntry.IsReactionEnabled();
+          const bool shouldTrigger = strategy.ShouldTriggerBehavior(_robot, reactToDoubleTap);
 
           BehaviorPreReqRobot preReqRobot(_robot);
           if(isReactionEnabled && shouldTrigger)

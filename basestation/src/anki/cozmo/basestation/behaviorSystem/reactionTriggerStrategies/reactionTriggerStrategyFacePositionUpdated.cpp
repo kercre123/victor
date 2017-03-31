@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFacePositionUpdated.h"
 
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -36,7 +37,8 @@ static const char* kTriggerStrategyName = "Strategy React To Face Position Updat
   
 ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionUpdated(Robot& robot,
                                                                                        const Json::Value& config)
-: ReactionTriggerStrategyPositionUpdate(robot, config, kTriggerStrategyName)
+: ReactionTriggerStrategyPositionUpdate(robot, config,
+                                        kTriggerStrategyName, ReactionTrigger::FacePositionUpdated)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedFace
@@ -74,7 +76,7 @@ void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot&
   const bool newNamedFace = face->HasName() && _hasReactedToFace.find( msg.faceID ) == _hasReactedToFace.end();
   
   if( newNamedFace ) {
-    bool added = AddDesiredFace( msg.faceID );
+    bool added = AddDesiredFace(robot, msg.faceID);
     if(added) {
       PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.InitialFaceReaction",
                         "saw face ID %d (which is named) for the first time, want to react",
@@ -120,7 +122,7 @@ void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot&
   const bool notOnCooldown = _lastReactionTime_s < 0.0f || _lastReactionTime_s + kFaceReactCooldown_s <= currTime_s;
   if( faceBecameClose && notOnCooldown && ! newNamedFace ) {
     
-    bool added = AddDesiredFace( msg.faceID );
+    bool added = AddDesiredFace(robot, msg.faceID);
     if(added) {
       PRINT_NAMED_DEBUG("BehaviorAcknowledgeFace.FaceBecomeClose",
                         "face ID %d became close (currDist = %fmm)",
@@ -133,9 +135,9 @@ void ReactionTriggerStrategyFacePositionUpdated::HandleFaceObserved(const Robot&
 }
 
   
-bool ReactionTriggerStrategyFacePositionUpdated::AddDesiredFace(Vision::FaceID_t faceID)
+bool ReactionTriggerStrategyFacePositionUpdated::AddDesiredFace(const Robot& robot, Vision::FaceID_t faceID)
 {
-  if( IsReactionEnabled() ) {
+  if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::FacePositionUpdated)) {
     auto res = _desiredTargets.insert(faceID);
     return res.second;
   }

@@ -37,9 +37,41 @@ namespace Anki {
 namespace Cozmo {
 using namespace ExternalInterface;
   
+namespace{
 static const char* kMaxErrorsTotalKey  = "MaxErrorsTotal";
 static const char* kMaxErrorsPickupKey = "MaxErrorsPickup";
 static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
+  
+constexpr ReactionTriggerHelpers::FullReactionArray kOnboardingTriggerAffectedArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+  
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kOnboardingTriggerAffectedArray),
+                "Reaction triggers duplicate or non-sequential");
+
+}
+  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config)
@@ -60,6 +92,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json:
   JsonTools::GetValueOptional(config, kMaxTimeBeforeTimeoutSecKey, _maxTimeBeforeTimeout_Sec);
 }
   
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorOnboardingShowCube::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
@@ -67,13 +100,14 @@ bool BehaviorOnboardingShowCube::IsRunnableInternal(const BehaviorPreReqNone& pr
   return true;
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd});
-  EnableSpecificReactionaryBehavior(robot,false);
+  SmartDisableReactionsWithLock(GetName(), kOnboardingTriggerAffectedArray);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::InitInternal", " %hhu ",_state);
@@ -86,15 +120,18 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   
   return Result::RESULT_OK;
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  EnableSpecificReactionaryBehavior(robot, true);
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   if( event.GetData().GetTag() == MessageEngineToGameTag::ReactionTriggerTransition )
@@ -146,6 +183,8 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const EngineToGameEvent& eve
 
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
 {
   switch (event.GetData().GetTag())
@@ -163,6 +202,8 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This behavior is killed by unity switching to none
 IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(Robot& robot)
 {
@@ -177,6 +218,8 @@ IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(Robot& robot)
   return Status::Running;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::SetState_internal(State state, const std::string& stateName,const Robot& robot)
 {
   _state = state;
@@ -186,6 +229,8 @@ void BehaviorOnboardingShowCube::SetState_internal(State state, const std::strin
   robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::OnboardingState(_state)));
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::TransitionToErrorState(State state, const Robot& robot)
 {
   // Something might be wrong with the robot and they're stuck. By design let them continue.
@@ -208,6 +253,8 @@ void BehaviorOnboardingShowCube::TransitionToErrorState(State state, const Robot
   ++_numErrors;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::TransitionToNextState(Robot& robot)
 {
   switch (_state)
@@ -274,6 +321,8 @@ void BehaviorOnboardingShowCube::TransitionToNextState(Robot& robot)
   }
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(Robot& robot)
 {
   SET_STATE(WaitForInspectCube,robot);
@@ -293,6 +342,8 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(Robot& robot)
               });
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
 {
   // Manually set lights to Interacting (green) lights
@@ -340,6 +391,8 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
               });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
 {
   CompoundActionSequential* action = new CompoundActionSequential(robot,
@@ -366,6 +419,8 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
               });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IsBlockFacingUp(const ObservableObject* block)
 {
   if( block != nullptr )
@@ -375,6 +430,8 @@ bool IsBlockFacingUp(const ObservableObject* block)
   return false;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
   const ObservableObject* block = robot.GetBlockWorld().GetLocatedObjectByID(msg.objectID);
@@ -418,20 +475,12 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // If we're just waiting for them to hit a final continue, don't need to pop any errors.
 bool BehaviorOnboardingShowCube::IsSequenceComplete()
 {
   return _state == State::Inactive || _state == State::ErrorFinal || _state == State::WaitForFinalContinue;
-}
-  
-void BehaviorOnboardingShowCube::EnableSpecificReactionaryBehavior(Robot& robot, bool enable)
-{
-  BehaviorManager& mgr = robot.GetBehaviorManager();
-  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::FacePositionUpdated, enable);
-  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::ObjectPositionUpdated, enable);
-  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::CubeMoved, enable);
-  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::Frustration, enable);
-  mgr.RequestEnableReactionTrigger("onboarding", ReactionTrigger::PetInitialDetection, enable);
 }
 
   

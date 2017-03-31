@@ -57,7 +57,7 @@ namespace Anki {
       
       bool _hasDisabledcliff = false;
       
-      const Robot& _robot;
+      Robot& _robot;
       
       enum class DebugState {
         ReactingToBlock,

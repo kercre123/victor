@@ -15,6 +15,7 @@
 #include "util/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/block.h"
@@ -1143,9 +1144,14 @@ namespace Anki {
                     // Mute sound because annoying
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
-
                     
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableAllReactionTriggers("webots",false)));
+                    Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
+                                        "sdk", ReactionTriggerHelpers::kAffectAllReactions);
+                    
+                    Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
+                    disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
+                    SendMessage(ExternalInterface::MessageGameToEngine(disable_reactions_msg));
+                    
                     SendSetRobotVolume(1.f);
                   }
                   
@@ -2293,16 +2299,27 @@ namespace Anki {
               case (s32)';':
               {
                 // Toggle enabling of reactionary behaviors
-                static bool enable = false;
-                printf("Enable reactionary behaviors: %d\n", enable);
-                ExternalInterface::EnableAllReactionTriggers m;
-                m.enabled = enable;
-                m.enableID = "webots";
-                ExternalInterface::MessageGameToEngine message;
-                message.Set_EnableAllReactionTriggers(m);
-                SendMessage(message);
+                static bool disable = false;
+                static const char* lockName = "sdk";
+                printf("Disable reactionary behaviors: %d\n", disable);
                 
-                enable = !enable;
+                if(disable){
+                  Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
+                                  lockName, ReactionTriggerHelpers::kAffectAllReactions);
+                  
+                  Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
+                  disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
+                  SendMessage(ExternalInterface::MessageGameToEngine(disable_reactions_msg));
+                  
+                }else{
+                  Anki::Cozmo::ExternalInterface::RemoveDisableReactionsLock enableAll(lockName);
+                  
+                  Anki::Cozmo::ExternalInterface::MessageGameToEngine re_enable_reactions_msg;
+                  re_enable_reactions_msg.Set_RemoveDisableReactionsLock(std::move(enableAll));
+                  SendMessage(ExternalInterface::MessageGameToEngine(re_enable_reactions_msg));
+                }
+                
+                disable = !disable;
                 break;
               }
                 

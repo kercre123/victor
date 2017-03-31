@@ -30,6 +30,9 @@
 
 
 
+namespace Anki {
+namespace Cozmo {
+  
 namespace {
 
 static const char* const kReachForBlockTrigger = "reachForBlockTrigger";
@@ -38,25 +41,85 @@ static const char* const kKnockOverSuccessTrigger = "knockOverSuccessTrigger";
 static const char* const kKnockOverFailureTrigger = "knockOverFailureTrigger";
 static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
+static const char* const kPreparingToKnockOverStackLock = "preparingToKnockOverDisable";
+
 
 const int kMaxNumRetries = 2;
 const float kMinThresholdRealign = 20.f;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD(90.f);
-  
+
 const float kScoreIncreaseSoNoRoll = 10.f;
-}
+
 
 
 CONSOLE_VAR(f32, kBKS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f);
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kKnockOverCubesAffectedArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
 
-namespace Anki {
-namespace Cozmo {
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kKnockOverCubesAffectedArray),
+              "Reaction triggers duplicate or non-sequential");
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPreparingKnockOverArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPreparingKnockOverArray),
+              "Reaction triggers duplicate or non-sequential");
+
+} // end namespace
+
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _numRetries(0)
@@ -69,6 +132,8 @@ BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& 
   });
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
@@ -83,6 +148,8 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
   
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorKnockOverCubes::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   UpdateTargetStack(preReqData.GetRobot());
@@ -93,6 +160,8 @@ bool BehaviorKnockOverCubes::IsRunnableInternal(const BehaviorPreReqRobot& preRe
   return false;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
 {
   if(InitializeMemberVars()){
@@ -108,6 +177,7 @@ Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
 }
   
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorKnockOverCubes::ResumeInternal(Robot& robot)
 {
   if(InitializeMemberVars()){
@@ -118,14 +188,15 @@ Result BehaviorKnockOverCubes::ResumeInternal(Robot& robot)
   }
 }
 
-
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::StopInternal(Robot& robot)
 {
   ClearStack();
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
 {
   DEBUG_SET_STATE(ReachingForBlock);
@@ -155,7 +226,8 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
   
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
 {
   DEBUG_SET_STATE(KnockingOverStack);
@@ -202,6 +274,8 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(Robot& robot)
 {
   CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
@@ -217,7 +291,8 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(Robot& robot)
   StartActing(flipAndWaitAction, &BehaviorKnockOverCubes::TransitionToPlayingReaction);
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingReaction);
@@ -238,12 +313,13 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   }
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorKnockOverCubes::InitializeMemberVars()
 {
   if(auto tallestStack = _currentTallestStack.lock()){
   // clear for success state check
-    SmartDisableReactionTrigger(ReactionTrigger::CubeMoved);
-    SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
+    SmartDisableReactionsWithLock(GetName(), kKnockOverCubesAffectedArray);
     _objectsFlipped.clear();
     _numRetries = 0;
     _bottomBlockID = tallestStack->GetBottomBlockID();
@@ -256,6 +332,7 @@ bool BehaviorKnockOverCubes::InitializeMemberVars()
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::ClearStack()
 {
   _currentTallestStack = {};
@@ -264,11 +341,15 @@ void BehaviorKnockOverCubes::ClearStack()
   _topBlockID.SetToUnknown();
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::UpdateTargetStack(const Robot& robot) const
 {
    _currentTallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, Robot& robot)
 {
   const auto& objectID = msg.objectID;
@@ -279,6 +360,8 @@ void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged
   }
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch (event.GetData().GetTag()) {
@@ -296,6 +379,8 @@ void BehaviorKnockOverCubes::HandleWhileRunning(const EngineToGameEvent& event, 
   }
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch (event.GetData().GetTag()) {
@@ -311,11 +396,14 @@ void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, const 
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
   IncreaseScoreWhileActing(kScoreIncreaseSoNoRoll);
-  SmartDisableReactionTrigger(ReactionTrigger::DoubleTapDetected);
+  SmartDisableReactionsWithLock(kPreparingToKnockOverStackLock,
+                                kAffectTriggersPreparingKnockOverArray);
 }
   
 }

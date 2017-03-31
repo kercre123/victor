@@ -151,28 +151,13 @@ public abstract class GameBase : MonoBehaviour {
   protected const string _kReactionaryBehaviorOwnerId = "unity_game";
 
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
-  private void InitializeReactionaryBehaviorsForGameStart() {
-    AddDisabledReactionaryBehaviors();
-    foreach (Anki.Cozmo.ReactionTrigger reactionaryBehavior in _DisabledReactionaryBehaviors) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger(_kReactionaryBehaviorOwnerId, reactionaryBehavior, false);
-    }
-  }
-
-  protected virtual void AddDisabledReactionaryBehaviors() {
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.CubeMoved);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FacePositionUpdated);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.Frustration);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
-    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.RobotPlacedOnSlope);
+  protected virtual void InitializeReactionaryBehaviorsForGameStart() {
+    RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
-    foreach (Anki.Cozmo.ReactionTrigger reactionaryBehavior in _DisabledReactionaryBehaviors) {
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
-      }
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
     }
   }
 

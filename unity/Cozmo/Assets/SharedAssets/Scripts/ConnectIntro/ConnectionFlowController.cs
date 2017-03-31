@@ -183,12 +183,12 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private bool StartAndroidFlowIfApplicable() {
     if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.AndroidConnectionFlow)) {
-      #if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR
       if (AndroidConnectionFlow.IsAvailable() && !AndroidConnectionFlow.HandleAlreadyOnCozmoWifi()) {
         ShowSearchForCozmoAndroid();
         return true;
       }
-      #endif
+#endif
     }
     return false;
   }
@@ -474,12 +474,8 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void WakeupSequence() {
 
-    RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(true);
-
-    //Disable reactionary behaviors during wakeup
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, false);
+    //Disable some reactionary behaviors during wakeup
+    RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kWakeupId, ReactionaryBehaviorEnableGroups.kWakeupTriggers);
 
     _WakingUpCozmoScreenInstance = UIManager.CreateUIElement(_WakingUpCozmoScreenPrefab, _ConnectionFlowBackgroundModalInstance.transform);
     if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
@@ -526,11 +522,9 @@ public class ConnectionFlowController : MonoBehaviour {
   private void FinishConnectionFlow() {
     DestroyBackgroundModal();
 
-    // explicitly enable charger behavior since it should be off by default in engine.
+    // explicitly enable wake up behaviors that are off in engine by default.
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, true);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.CubeMoved, true);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("wakeup", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, true);
+      RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kWakeupId);
     }
 
     if (ConnectionFlowComplete != null) {
@@ -619,9 +613,9 @@ public class ConnectionFlowController : MonoBehaviour {
       if (_ConnectionRejectedScreenInstance != null) {
         GameObject.Destroy(_ConnectionRejectedScreenInstance.gameObject);
       }
-      #if !UNITY_EDITOR && UNITY_ANDROID
+#if !UNITY_EDITOR && UNITY_ANDROID
       AndroidConnectionFlow.CallJava("disconnect");
-      #endif
+#endif
       ReturnToTitle();
     };
     _ConnectionRejectedScreenInstance.OnRetryButton += () => {
@@ -648,8 +642,6 @@ public class ConnectionFlowController : MonoBehaviour {
       // Enable the automatic block pool
       RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
     }
-
-    RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(false);
   }
 
   public void HandleRobotDisconnect() {

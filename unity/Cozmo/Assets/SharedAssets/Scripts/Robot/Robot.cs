@@ -183,6 +183,14 @@ public class Robot : IRobot {
   public event ChargerStateEventHandler OnChargerAdded;
   public event ChargerStateEventHandler OnChargerRemoved;
 
+  private static AllTriggersConsidered _AllTriggers = new AllTriggersConsidered(true, true, true, true, true, true,
+                                                                       true, true, true, true, true, true,
+                                                                       true, true, true, true, true, true,
+                                                                       true, true, true, true);
+
+  private static DisableReactionsWithLock _RequestDisableReactions = new DisableReactionsWithLock("unity", _AllTriggers);
+  private static RemoveDisableReactionsLock _RequestReEnableReactions = new RemoveDisableReactionsLock("unity");
+
   private ActiveObject _Charger = null;
 
   public ActiveObject Charger {
@@ -2112,14 +2120,17 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void DisableAllReactionsWithLock(string id) {
+    DisableReactionsWithLock(id, _AllTriggers);
+  }
 
-  public void EnableAllReactionTriggers(bool enable) {
-    RobotEngineManager.Instance.Message.EnableAllReactionTriggers = Singleton<EnableAllReactionTriggers>.Instance.Initialize("unity", enable);
+  public void DisableReactionsWithLock(string id, AllTriggersConsidered triggerFlags) {
+    RobotEngineManager.Instance.Message.DisableReactionsWithLock = _RequestDisableReactions.Initialize(id, triggerFlags);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable) {
-    RobotEngineManager.Instance.Message.RequestEnableReactionTrigger = Singleton<RequestEnableReactionTrigger>.Instance.Initialize(id, behaviorType, enable);
+  public void RemoveDisableReactionsLock(string id) {
+    RobotEngineManager.Instance.Message.RemoveDisableReactionsLock = _RequestReEnableReactions.Initialize(id);
     RobotEngineManager.Instance.SendMessage();
   }
 

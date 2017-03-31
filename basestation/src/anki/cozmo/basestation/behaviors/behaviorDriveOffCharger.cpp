@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -28,18 +29,41 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
 static const float kInitialDriveSpeed = 100.0f;
 static const float kInitialDriveAccel = 40.0f;
 
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
-static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::CliffDetected,
-                                                           ReactionTrigger::UnexpectedMovement,
-                                                           ReactionTrigger::PlacedOnCharger,
-                                                           ReactionTrigger::ObjectPositionUpdated,
-                                                           ReactionTrigger::FacePositionUpdated,
-                                                           ReactionTrigger::CubeMoved};
-  
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDriveOffChargerArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              true},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           true}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDriveOffChargerArray),
+              "Reaction triggers duplicate or non-sequential");
+
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
@@ -79,7 +103,7 @@ bool BehaviorDriveOffCharger::IsRunnableInternal(const BehaviorPreReqRobot& preR
 Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   //Disable Cliff Reaction during behavior
-  SmartDisableReactionTrigger(kBehaviorsToDisable);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersDriveOffChargerArray);
 
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
                                                             AnimationTrigger::DriveLoopLaunch,

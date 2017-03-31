@@ -17,12 +17,13 @@
 #define COZMO_BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/common/basestation/objectIDs.h"
+
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
-
 
 #include "util/helpers/templateHelpers.h"
 #include "util/random/randomGenerator.h"
@@ -51,7 +52,8 @@ class IReactionTriggerStrategy;
 class IBehaviorChooser;
 class Robot;
 struct BehaviorRunningAndResumeInfo;
-
+struct TriggerBehaviorInfo;
+  
 template<typename TYPE> class AnkiEvent;
 
 namespace Audio {
@@ -154,21 +156,40 @@ public:
   const IBehaviorChooser* GetBehaviorChooser() const { return _currentChooserPtr; }
   bool CurrentBehaviorTriggeredAsReaction() const;
   ReactionTrigger GetCurrentReactionTrigger() const;
-
+  
+  
+  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
+  
+  // Disables all triggers passed in through AllTriggersConsidered by placing
+  // a lock with the specified lockID on those triggers.  The specified reactions
+  // will always be disabled after this function call
+  //
+  // StopCurrent specifies whether in the case that a behavior
+  // triggered by a reaction is currently running,
+  // and that trigger is now disabled, the behavior should be stopped
+  void DisableReactionsWithLock(
+             const std::string& lockID,
+             const ReactionTriggerHelpers::FullReactionArray& triggersAffected,
+             bool stopCurrent = true);
+  
+  // Removes the reaction lock from all triggers disabled by the lock
+  // this does not gaurentee that reactions are re-enabled as there
+  // may be additional disable locks still present on them
+  void RemoveDisableReactionsLock(const std::string& lockID);
+                                
+  
+  // Allows other parts of the system to determine whether a reaction is enabled
+  bool IsReactionTriggerEnabled(ReactionTrigger reaction) const;
   
   const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
-  
-  // Enable and disable reactionary behaviors
-  void RequestEnableReactionTrigger(const std::string& requesterID, ReactionTrigger trigger, bool enable);
-  void RequestEnableReactionTrigger(const std::string& requesterID, const std::set<ReactionTrigger>& triggers, bool enable);
 
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   
-  void EnableAllReactionTriggers(const std::string& requesterID, bool isEnabled, bool stopCurrent = false);
+
   void RequestCurrentBehaviorEndOnNextActionComplete();
   
   // Have behavior manager maintain light state on blocks
@@ -221,10 +242,8 @@ public:
   
   void OnRobotDelocalized();
   
-  
 private:
-  using TriggerBehaviorMapEntry = std::pair<std::unique_ptr<IReactionTriggerStrategy>, IBehavior*>;
-  using TriggerMapIterator = std::vector<TriggerBehaviorMapEntry>::iterator;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -233,12 +252,6 @@ private:
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
   bool SwitchToVoiceCommandBehavior(IBehavior* nextBehavior);
-  
-  // Get all strategies and behavior given a trigger
-  std::set<TriggerMapIterator> GetReactionInfoForTrigger(ReactionTrigger trigger);
-  // Helper function for reactToDoubleTap that has assumptions GetReactionInfoForTrigger
-  // doesn't have - returns false if trigger doesn't exist for production
-  bool GetReactToDoubleTapPair(TriggerMapIterator& reactIter);
   
   // checks the chooser and switches to a new behavior if neccesary
   void ChooseNextScoredBehaviorAndSwitch();
@@ -317,14 +330,9 @@ private:
   // behavior chooser for voice commands
   IBehaviorChooser* _voiceCommandChooser = nullptr;
   
-  // list of behaviors that fire automatically as reactions to events
-  std::vector<TriggerBehaviorMapEntry> _reactionTriggerMap;
-  
-  // To save iterating through the whole map twice each tick we're storing an iterator
-  // to the doubleTap pair - this only works so long as the map is immutable after initialization
-  // The count variable is used to dev assert that we don't change the map size
-  TriggerMapIterator _cacheDoubleTapIter;
-  int _devCheckTriggerMapImmutableSize;
+  // map of reactionTriggers to the associated strategies/behaviors
+  // that fire as reactions to events
+  std::map<ReactionTrigger,TriggerBehaviorInfo> _reactionTriggerMap;
   
   // time at which last chooser was selected
   float _lastChooserSwitchTime;

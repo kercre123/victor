@@ -16,9 +16,11 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -32,20 +34,71 @@ namespace Cozmo {
 namespace{
 CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
- 
-static std::set<ReactionTrigger> kReactionsToDisable = {
-  ReactionTrigger::CliffDetected,
-  ReactionTrigger::FistBump,
-  ReactionTrigger::RobotPickedUp,
-  ReactionTrigger::RobotOnBack,
-  ReactionTrigger::CubeMoved,
-  ReactionTrigger::UnexpectedMovement,
-  ReactionTrigger::ReturnedToTreads,
-  ReactionTrigger::DoubleTapDetected
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  true},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           true}
 };
 
-}
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPopAWheelieArray),
+              "Reaction triggers duplicate or non-sequential");
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectRobotOnBackArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  true},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectRobotOnBackArray),
+              "Reaction triggers duplicate or non-sequential");
+
+} // end namespace
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _robot(robot)
@@ -53,6 +106,8 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config
   SetDefaultName("PopAWheelie");
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPopAWheelie::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   UpdateTargetBlock(preReqData.GetRobot());
@@ -60,6 +115,8 @@ bool BehaviorPopAWheelie::IsRunnableInternal(const BehaviorPreReqRobot& preReqDa
   return _targetBlock.IsSet();
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPopAWheelie::InitInternal(Robot& robot)
 {
   if(!_shouldStreamline){
@@ -71,22 +128,30 @@ Result BehaviorPopAWheelie::InitInternal(Robot& robot)
   return Result::RESULT_OK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::StopInternal(Robot& robot)
 {
   ResetBehavior(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::StopInternalFromDoubleTap(Robot& robot)
 {
   ResetBehavior(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 {
   _targetBlock = _robot.GetAIComponent().GetObjectInteractionInfoCache().
        GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
 {
   DEBUG_SET_STATE(ReactingToBlock);
@@ -99,12 +164,16 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
   &BehaviorPopAWheelie::TransitionToPerformingAction);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot)
 {
   DEBUG_SET_STATE(PerformingAction);
   TransitionToPerformingAction(robot,false);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
   if( ! _targetBlock.IsSet() ) {
@@ -137,7 +206,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   // that we play the correct animation instead of getting interrupted)  
   auto disableCliff = [this](Robot& robot) {
     // disable reactions we don't want
-    this->SmartDisableReactionTrigger(kReactionsToDisable);
+    this->SmartDisableReactionsWithLock(GetName(), kAffectTriggersPopAWheelieArray);
     
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
@@ -153,9 +222,11 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
 
 
   StartActing(goPopAWheelie,
-              [&,this](const ExternalInterface::RobotCompletedAction& msg) {
+              [&, this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
-                  this->SmartReEnableReactionTrigger(ReactionTrigger::RobotOnBack);
+                  // Release the on back lock directly instead of going through smart disable
+                  // so that other triggers aren't kicked out too.
+                  this->_robot.GetBehaviorManager().RemoveDisableReactionsLock(GetName());
                 }
                 
                 switch(IActionRunner::GetActionResultCategory(msg.result))
@@ -205,7 +276,8 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   IncreaseScoreWhileActing( kBPW_ScoreIncreaseForAction );
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg)
 {
   //Ensure that the closest block is selected
@@ -239,7 +311,9 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
   }
   
 }
-
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
 {
   _targetBlock.UnSet();
@@ -253,5 +327,5 @@ void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
   }
 }
   
-}
-}
+} // namespace Cozmo
+} // namespace Anki

@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
 #if ANKI_DEV_CHEATS
 
@@ -220,11 +221,23 @@
   Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
   if (external_interface)
   {
-    bool is_enabled = [path containsString:@"true"];
-    Anki::Cozmo::ExternalInterface::MessageGameToEngine reaction_enable_msg;
-    Anki::Cozmo::ExternalInterface::EnableAllReactionTriggers reaction_enable_content("sdk",is_enabled);
-    reaction_enable_msg.Set_EnableAllReactionTriggers(std::move(reaction_enable_content));
-    external_interface->BroadcastDeferred(std::move(reaction_enable_msg));
+    const bool is_enabled = [path containsString:@"true"];
+    
+    if(is_enabled){
+      Anki::Cozmo::ExternalInterface::RemoveDisableReactionsLock enableAll("sdk");
+      
+      Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
+      disable_reactions_msg.Set_RemoveDisableReactionsLock(std::move(enableAll));
+      external_interface->BroadcastDeferred(std::move(disable_reactions_msg));
+    }else{
+      Anki::Cozmo::ExternalInterface::DisableReactionsWithLock disableAll(
+                      "sdk", Anki::Cozmo::ReactionTriggerHelpers::kAffectAllReactions);
+      
+      Anki::Cozmo::ExternalInterface::MessageGameToEngine disable_reactions_msg;
+      disable_reactions_msg.Set_DisableReactionsWithLock(std::move(disableAll));
+      external_interface->BroadcastDeferred(std::move(disable_reactions_msg));
+    }
+
     return YES;
   }
   return NO;

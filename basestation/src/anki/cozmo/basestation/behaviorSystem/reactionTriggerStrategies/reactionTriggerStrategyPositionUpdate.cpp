@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPositionUpdate.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
@@ -40,8 +41,12 @@ void ReactionTriggerStrategyPositionUpdate::ReactionData::FakeReaction()
 }
 
 
-ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(Robot& robot, const Json::Value& config, const std::string& strategyName)
+ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(
+                                          Robot& robot, const Json::Value& config,
+                                          const std::string& strategyName,
+                                          ReactionTrigger triggerAssociated)
 : super(robot, config, strategyName)
+, _triggerAssociated(triggerAssociated)
 {
   
   SubscribeToTags({
@@ -78,7 +83,7 @@ ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(Rob
 // No longer used (see COZMO-9862)
 
 
-void ReactionTriggerStrategyPositionUpdate::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyPositionUpdate::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -107,16 +112,20 @@ bool ReactionTriggerStrategyPositionUpdate::RemoveReactionData(s32 idToRemove)
   return idRemoved;
 }
 
-void ReactionTriggerStrategyPositionUpdate::HandleNewObservation(s32 id, const Pose3d& pose, u32 timestamp)
+void ReactionTriggerStrategyPositionUpdate::HandleNewObservation(const Robot& robot,
+                                                                 s32 id,
+                                                                 const Pose3d& pose,
+                                                                 u32 timestamp)
 {
-  const bool reactionEnabled = IsReactionEnabled();
+  const bool reactionEnabled = robot.GetBehaviorManager().
+                     IsReactionTriggerEnabled(_triggerAssociated);
   HandleNewObservation(id, pose, timestamp, reactionEnabled);
 }
 
 void ReactionTriggerStrategyPositionUpdate::HandleNewObservation(s32 id,
-                                                             const Pose3d& pose,
-                                                             u32 timestamp,
-                                                             bool reactionEnabled)
+                                                                 const Pose3d& pose,
+                                                                 u32 timestamp,
+                                                                 bool reactionEnabled)
 {
   auto reactionIt = _reactionData.find(id);
   

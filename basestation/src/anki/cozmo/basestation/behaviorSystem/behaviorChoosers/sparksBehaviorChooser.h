@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SparksBehaviorChooser_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
 #include "clad/types/behaviorObjectives.h"
 #include "json/json-forwards.h"
@@ -67,11 +68,15 @@ protected:
   Result ReloadFromConfig(Robot& robot, const Json::Value& config);
 
 private:
-  
+  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
+
   void CheckIfSparkShouldEnd();
   void CompleteSparkLogic();
   void ResetLightsAndAnimations();
-  void SmartRequestEnableReactionTrigger(const ReactionTrigger& trigger, bool enable);
+  void SmartDisableReactionsWithLock(const std::string& lockID,
+                                     const TriggersArray& triggers);
+  void SmartRemoveDisableReactionsLock(const std::string& lockID,
+                                       const TriggersArray& triggers);
   
   enum class ChooserState{
     ChooserSelected,
@@ -86,7 +91,7 @@ private:
   
   ChooserState _state;
   std::vector<Signal::SmartHandle> _signalHandles;
-  std::set<ReactionTrigger> _reactionsDynamicallyDisabled;
+  std::set<std::string> _smartLockIDs;
 
   // Created with factory
   BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;

@@ -43,7 +43,7 @@ public:
   void ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents, EventHandleCallbackType callback = EventHandleCallbackType{});
   
 protected:
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
   
 private:

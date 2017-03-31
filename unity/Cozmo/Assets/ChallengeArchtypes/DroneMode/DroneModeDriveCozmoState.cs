@@ -179,7 +179,7 @@ namespace Cozmo {
 
           _CurrentRobot.EnableDroneMode(true);
           _CurrentRobot.SetEnableFreeplayLightStates(true);
-          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.RobotPickedUp, false);
+          _CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kDroneModeDriveId, ReactionaryBehaviorEnableGroups.kDroneModeDriveTriggers);
         }
 
         public override void Exit() {
@@ -191,7 +191,7 @@ namespace Cozmo {
             _CurrentRobot.EnableDroneMode(false);
             _CurrentRobot.SetEnableFreeplayLightStates(false);
             _CurrentRobot.SetNightVision(false);
-            _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.RobotPickedUp, true);
+            _CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kDroneModeDriveId);
           }
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
@@ -603,9 +603,14 @@ namespace Cozmo {
         }
 
         private void EnableIdleReactionaryBehaviors(bool enable) {
-          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.FacePositionUpdated, enable);
-          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.ObjectPositionUpdated, enable);
-          _CurrentRobot.RequestEnableReactionTrigger("drone_mode", Anki.Cozmo.ReactionTrigger.UnexpectedMovement, enable);
+          if (_CurrentRobot != null) {
+            if (!enable) {
+              _CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kDroneModeIdleId, ReactionaryBehaviorEnableGroups.kDroneModeIdleTriggers);
+            }
+            else {
+              _CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kDroneModeIdleId);
+            }
+          }
         }
       }
     }

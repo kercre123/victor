@@ -48,7 +48,35 @@ static const float kLiftHeightCheckTopBlock_mm = 0;
 static const float kWaitForVisualTopBlock_sec = 1;
 static const float kHeadBottomCheckTopBlock_rad = DEG_TO_RAD(15);
 
-}
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersBuildPyramidArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersBuildPyramidArray),
+              "Reaction triggers duplicate or non-sequential");
+} // end namespace
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -129,7 +157,7 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   SET_STATE(PlacingTopBlock);
-  SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersBuildPyramidArray);
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);

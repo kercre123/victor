@@ -38,14 +38,78 @@
 
 namespace{
 const float kMaxNegativeXPlacementOffset = 1.f;
-  
+static const char* kDisableReactionsID = "dockActions";
+
 }
 
 
 namespace Anki {
-  
   namespace Cozmo {
   
+    namespace{
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Disable structs for affects ObjectPositionUpdated
+    static constexpr ReactionTriggerHelpers::FullReactionArray kAffectObjectPositionTriggerArray = {
+      {ReactionTrigger::CliffDetected,                false},
+      {ReactionTrigger::CubeMoved,                    false},
+      {ReactionTrigger::DoubleTapDetected,            false},
+      {ReactionTrigger::FacePositionUpdated,          false},
+      {ReactionTrigger::FistBump,                     false},
+      {ReactionTrigger::Frustration,                  false},
+      {ReactionTrigger::MotorCalibration,             false},
+      {ReactionTrigger::NoPreDockPoses,               false},
+      {ReactionTrigger::ObjectPositionUpdated,        true},
+      {ReactionTrigger::PlacedOnCharger,              false},
+      {ReactionTrigger::PetInitialDetection,          false},
+      {ReactionTrigger::PyramidInitialDetection,      false},
+      {ReactionTrigger::RobotPickedUp,                false},
+      {ReactionTrigger::RobotPlacedOnSlope,           false},
+      {ReactionTrigger::ReturnedToTreads,             false},
+      {ReactionTrigger::RobotOnBack,                  false},
+      {ReactionTrigger::RobotOnFace,                  false},
+      {ReactionTrigger::RobotOnSide,                  false},
+      {ReactionTrigger::RobotShaken,                  false},
+      {ReactionTrigger::Sparked,                      false},
+      {ReactionTrigger::StackOfCubesInitialDetection, false},
+      {ReactionTrigger::UnexpectedMovement,           false}
+    };
+    static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectObjectPositionTriggerArray),
+                  "Reaction triggers duplicate or non-sequential");
+      
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Disable structs for affects facePlant
+    constexpr ReactionTriggerHelpers::FullReactionArray kFacePlantDisablesArray = {
+      {ReactionTrigger::CliffDetected,                true},
+      {ReactionTrigger::CubeMoved,                    true},
+      {ReactionTrigger::DoubleTapDetected,            false},
+      {ReactionTrigger::FacePositionUpdated,          false},
+      {ReactionTrigger::FistBump,                     false},
+      {ReactionTrigger::Frustration,                  false},
+      {ReactionTrigger::MotorCalibration,             false},
+      {ReactionTrigger::NoPreDockPoses,               false},
+      {ReactionTrigger::ObjectPositionUpdated,        false},
+      {ReactionTrigger::PlacedOnCharger,              false},
+      {ReactionTrigger::PetInitialDetection,          false},
+      {ReactionTrigger::PyramidInitialDetection,      false},
+      {ReactionTrigger::RobotPickedUp,                false},
+      {ReactionTrigger::RobotPlacedOnSlope,           false},
+      {ReactionTrigger::ReturnedToTreads,             false},
+      {ReactionTrigger::RobotOnBack,                  false},
+      {ReactionTrigger::RobotOnFace,                  false},
+      {ReactionTrigger::RobotOnSide,                  false},
+      {ReactionTrigger::RobotShaken,                  false},
+      {ReactionTrigger::Sparked,                      false},
+      {ReactionTrigger::StackOfCubesInitialDetection, false},
+      {ReactionTrigger::UnexpectedMovement,           true}
+    };
+      
+    static_assert(ReactionTriggerHelpers::IsSequentialArray(kFacePlantDisablesArray),
+                  "Reaction triggers duplicate or non-sequential");
+      
+    } // end namespace
+
+    
     // Which docking method actions should use
     CONSOLE_VAR(u32, kDefaultDockingMethod,"DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     CONSOLE_VAR(u32, kPickupDockingMethod, "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::HYBRID_DOCKING);
@@ -145,13 +209,12 @@ namespace Anki {
       }
 
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger("dockAction",
-                                                                 ReactionTrigger::ObjectPositionUpdated,
-                                                                 true);
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
       }
       
-      for (auto& b : _reactionTriggersToSuppress) {
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, true);
+      if(_reactionTriggersToSuppress != nullptr){
+        // Re-enable any triggers disabled by the action
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
       }
     }
 
@@ -580,10 +643,11 @@ namespace Anki {
 
       SetupTurnAndVerifyAction(dockObject);
       
-      for (auto& b : _reactionTriggersToSuppress) {
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), b, false);
+      if(_reactionTriggersToSuppress != nullptr){
+        _robot.GetBehaviorManager().DisableReactionsWithLock(
+                      kDisableReactionsID,
+                      *_reactionTriggersToSuppress);
       }
-      
       if(!_lightsSet)
       {
         PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
@@ -618,9 +682,8 @@ namespace Anki {
 
         // disable the reactionary behavior for objects, since we are about to interact with one
         // TODO:(bn) should some dock actions not do this? E.g. align with offset that doesn't touch the cube?
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger("dockAction",
-                                                                     ReactionTrigger::ObjectPositionUpdated,
-                                                                     false);
+        _robot.GetBehaviorManager().DisableReactionsWithLock(kDisableReactionsID,
+                                                            kAffectObjectPositionTriggerArray);
         
         return ActionResult::SUCCESS;
       } else {
@@ -917,9 +980,8 @@ namespace Anki {
     : IDockAction(robot, objectID, "FacePlant", RobotActionType::FACE_PLANT, useManualSpeed)
     {
       SetShouldCheckForObjectOnTopOf(false);
-      SetShouldSuppressReactionaryBehavior(ReactionTrigger::CubeMoved);
-      SetShouldSuppressReactionaryBehavior(ReactionTrigger::UnexpectedMovement);
-      SetShouldSuppressReactionaryBehavior(ReactionTrigger::CliffDetected);
+      
+      SetShouldSuppressReactionTriggers(&kFacePlantDisablesArray);
     }
     
     void FacePlantAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1456,9 +1518,7 @@ namespace Anki {
     {
       // COZMO-3434 manually request to enable AckObject
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger("PlaceObjectOnGroundAction",
-                                                                     ReactionTrigger::ObjectPositionUpdated,
-                                                                     true);
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
       }
     
       if(_faceAndVerifyAction != nullptr)
@@ -1512,9 +1572,8 @@ namespace Anki {
          ActionResult::RUNNING == result)
       {
         // disable the reactionary behavior for objects, since we are placing one
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger("PlaceObjectOnGroundAction",
-                                                                     ReactionTrigger::ObjectPositionUpdated,
-                                                                     false);
+        _robot.GetBehaviorManager().DisableReactionsWithLock(kDisableReactionsID,
+                                                            kAffectObjectPositionTriggerArray);
       }
       
       return result;

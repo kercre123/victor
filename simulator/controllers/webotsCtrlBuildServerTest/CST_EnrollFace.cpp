@@ -11,6 +11,8 @@
  **/
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+
 
 // If enabled, don't do the first enrollment where we don't see a face and just
 // wait for timeout. This flag is useful for local testing where you don't want
@@ -26,6 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace{
 enum class TestState {
   Init,
   WaitForFacePoseChange,
@@ -40,6 +43,8 @@ enum class TestState {
   NewEnroll_NoFace,                       // Should fail
   ReEnroll_SeeMultipleFaces,              // Should fail
 };
+  
+}
 
 class CST_EnrollFace : public CozmoSimTestController
 {
@@ -173,7 +178,8 @@ s32 CST_EnrollFace::UpdateSimInternal()
         
         // Disable AcknowledgeFace reaction, to keep the test simpler and avoid it cancelling
         // the LookDown action in some cases
-        SendMessage(MessageGameToEngine(RequestEnableReactionTrigger("CST_EnrollFace", ReactionTrigger::FacePositionUpdated, false)));
+        SendMessage(MessageGameToEngine(DisableReactionsWithLock("CST_EnrollFace",
+                                                                ReactionTriggerHelpers::kAffectAllReactions)));
         
         if(!ENABLE_AUDIO)
         {

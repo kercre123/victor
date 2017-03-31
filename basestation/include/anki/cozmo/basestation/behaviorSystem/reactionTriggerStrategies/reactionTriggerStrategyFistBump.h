@@ -34,7 +34,7 @@ public:
   virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;  
   
 protected:
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void ResetTrigger(bool updateLastCompletionTime) override;
   
 private:

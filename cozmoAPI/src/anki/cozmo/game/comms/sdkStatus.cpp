@@ -12,6 +12,7 @@
 
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/game/comms/sdkStatus.h"
 #include "anki/cozmo/game/comms/iSocketComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -56,17 +57,22 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
 {
   using GToE = ExternalInterface::MessageGameToEngine;
   
+  static const char* lockName = "sdk";
   if (isExitingSDKMode) {
     // Enable reactionary behaviors
-    _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", true)) );
-
+    ExternalInterface::RemoveDisableReactionsLock reEnableAll(lockName);
+    _externalInterface->Broadcast(GToE(std::move(reEnableAll)));
+    
     // Return to freeplay
     _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Freeplay)) );
   }
   else {
     // Disable reactionary behaviors
-    _externalInterface->Broadcast( GToE(ExternalInterface::EnableAllReactionTriggers("sdk", false)) );
-
+    ExternalInterface::DisableReactionsWithLock disableAll(
+                   lockName, ReactionTriggerHelpers::kAffectAllReactions);
+    _externalInterface->Broadcast(GToE(std::move(disableAll)));
+    
+    
     // Clear Behaviors
     _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );

@@ -34,7 +34,7 @@ public:
   
 protected:
   virtual void EnabledStateChanged(bool enabled) override;
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   Robot& _robot;

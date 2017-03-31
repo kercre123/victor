@@ -53,19 +53,82 @@ const char* IBehavior::kBaseDefaultName = "no_name";
 
 namespace {
   
-static const char* kNameKey                      = "name";
-static const char* kDisplayNameKey               = "displayNameKey";
-static const char* kBehaviorGroupsKey            = "behaviorGroups";
-static const char* kRequiredUnlockKey            = "requiredUnlockId";
-static const char* kRequiredDriveOffChargerKey   = "requiredRecentDriveOffCharger_sec";
-static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent_sec";
-static const char* kExecutableBehaviorTypeKey    = "executableBehaviorType";
-static const char* kRequireObjectTappedKey       = "requireObjectTapped";
-static const int kMaxResumesFromCliff            = 2;
-static const float kCooldownFromCliffResumes_sec = 15.0;
+static const char* kNameKey                          = "name";
+static const char* kDisplayNameKey                   = "displayNameKey";
+static const char* kBehaviorGroupsKey                = "behaviorGroups";
+static const char* kRequiredUnlockKey                = "requiredUnlockId";
+static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
+static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
+static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
+static const char* kRequireObjectTappedKey           = "requireObjectTapped";
+static const char* kObjectTapInteractionDisableLock  = "ObjectTapInteraction";
+static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
+
+static const int kMaxResumesFromCliff                = 2;
+static const float kCooldownFromCliffResumes_sec     = 15.0;
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kObjectTapInteractionDisablesArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kObjectTapInteractionDisablesArray),
+              "Reaction triggers duplicate or non-sequential");
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kSparkBehaviorDisablesArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kSparkBehaviorDisablesArray),
+              "Reaction triggers duplicate or non-sequential");
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
   , _robot(robot)
@@ -305,7 +368,7 @@ Result IBehavior::Init()
   if(_requiredUnlockId != UnlockId::Count
        && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark())
   {
-    SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
+    SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
   }
   
   UpdateTappedObjectLights(true);
@@ -350,7 +413,7 @@ Result IBehavior::Resume(ReactionTrigger resumingFromType)
   // Disable Acknowledge object if this behavior is the sparked version
   if(_requiredUnlockId != UnlockId::Count
      && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
-    SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
+    SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
   }
   
   UpdateTappedObjectLights(true);
@@ -392,7 +455,9 @@ void IBehavior::Stop()
   
   // Re-enable any reactionary behaviors which the behavior disabled and didn't have a chance to
   // re-enable before stopping
-  SmartReEnableReactionTrigger(_disabledReactionTriggers);
+  while(!_smartLockIDs.empty()){
+    SmartRemoveDisableReactionsLock(*_smartLockIDs.begin());
+  }
 
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
@@ -403,7 +468,7 @@ void IBehavior::Stop()
   _lockingNameToTracksMap.clear();
   _customLightObjects.clear();
   
-  DEV_ASSERT(_disabledReactionTriggers.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
+  DEV_ASSERT(_smartLockIDs.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
 }
   
   
@@ -719,52 +784,21 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartDisableReactionTrigger(ReactionTrigger trigger)
+void IBehavior::SmartDisableReactionsWithLock(const std::string& lockID,
+                                              const TriggersArray& triggers)
 {
-  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), trigger, false);
-  _disabledReactionTriggers.insert(trigger);
+  _robot.GetBehaviorManager().DisableReactionsWithLock(lockID, triggers);
+  _smartLockIDs.insert(lockID);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartDisableReactionTrigger(const std::set<ReactionTrigger>& triggerList)
+void IBehavior::SmartRemoveDisableReactionsLock(const std::string& lockID)
 {
-  for(auto trigger: triggerList){
-    SmartDisableReactionTrigger(trigger);
-  }
-  
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartReEnableReactionTrigger(ReactionTrigger trigger)
-{
-  if(_disabledReactionTriggers.find(trigger) != _disabledReactionTriggers.end()) {
-    _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), trigger, true);
-    _disabledReactionTriggers.erase(trigger);
-  }else{
-    PRINT_NAMED_ERROR("IBehavior.SmartReEnableReactionaryBehavior",
-                        "Attempted to re-enable reaction that wasn't disabled with smart disable");
-  }
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::SmartReEnableReactionTrigger(const std::set<ReactionTrigger> triggerList)
-{
-  for(auto triger: triggerList){
-    SmartReEnableReactionTrigger(triger);
-  }
+  _robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID);
+  _smartLockIDs.erase(lockID);
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::ReactionTriggerIter IBehavior::SmartReEnableReactionTrigger(ReactionTriggerIter iter)
-{
-  _robot.GetBehaviorManager().RequestEnableReactionTrigger(GetName(), *iter, true);
-  return  _disabledReactionTriggers.erase(iter);
-}
-  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)
@@ -935,9 +969,9 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
     
       if(!behaviorDisabled)
       {
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger("ObjectTapInteraction",
-                                                                 ReactionTrigger::CubeMoved,
-                                                                 false);
+        _robot.GetBehaviorManager().DisableReactionsWithLock(kObjectTapInteractionDisableLock,
+                                                            kObjectTapInteractionDisablesArray);
+
         behaviorDisabled = true;
       }
     }
@@ -945,9 +979,7 @@ void IBehavior::UpdateTappedObjectLights(const bool on) const
     {
       if(behaviorDisabled)
       {
-        _robot.GetBehaviorManager().RequestEnableReactionTrigger("ObjectTapInteraction",
-                                                                 ReactionTrigger::CubeMoved,
-                                                                 true);
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kObjectTapInteractionDisableLock);
         behaviorDisabled = false;
       }
       

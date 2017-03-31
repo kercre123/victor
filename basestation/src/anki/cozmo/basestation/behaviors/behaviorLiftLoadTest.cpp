@@ -21,6 +21,8 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -41,6 +43,7 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
+static const char* kBehaviorTestName = "LiftLoadTest";
 }
 
 
@@ -80,7 +83,10 @@ namespace Anki {
     
     Result BehaviorLiftLoadTest::InitInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("LiftLoadTest",false);
+      robot.GetBehaviorManager().DisableReactionsWithLock(
+                                     kBehaviorTestName,
+                                     ReactionTriggerHelpers::kAffectAllArray);
+      
 
       _abortTest = false;
       _currentState = State::Init;
@@ -201,7 +207,7 @@ namespace Anki {
     
     void BehaviorLiftLoadTest::StopInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("LiftLoadTest", true);
+      robot.GetBehaviorManager().RemoveDisableReactionsLock(kBehaviorTestName);
     }
     
     void BehaviorLiftLoadTest::SetCurrState(State s)

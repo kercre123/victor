@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -31,6 +32,7 @@
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorObjectives.h"
 #include "clad/types/behaviorTypes.h"
+#include "clad/types/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -92,9 +94,8 @@ protected:
   virtual ~IBehavior();
     
 public:
-
   using Status = BehaviorStatus;
-    
+
   bool IsRunning() const { return _isRunning; }
   // returns true if any action from StartAction is currently running, indicating that the behavior is
   // likely waiting for something to complete
@@ -203,7 +204,8 @@ public:
                 { DEV_ASSERT(false, "AddListener.FistBumpListener.Unimplemented"); }
   
 protected:
-  
+  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
+
   void ClearBehaviorGroups() { _behaviorGroups.ClearFlags(); }
   void SetBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) {
     _behaviorGroups.SetBitFlag(behaviorGroup, newVal);
@@ -359,14 +361,13 @@ protected:
   
   // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
   // these triggers will be automatically re-enabled when the behavior stops
-  void SmartDisableReactionTrigger(ReactionTrigger trigger);
-  void SmartDisableReactionTrigger(const std::set<ReactionTrigger>& triggerList);
+  void SmartDisableReactionsWithLock(const std::string& lockID, const TriggersArray& triggers);
   
   // If a behavior needs to re-enable a reaction trigger for later stages after being
   // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
   // and stop tracking it
-  void SmartReEnableReactionTrigger(ReactionTrigger trigger);
-  void SmartReEnableReactionTrigger(const std::set<ReactionTrigger> triggerList);
+  void SmartRemoveDisableReactionsLock(const std::string& lockID);
+
   
   // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
   // being interrupted and leaving the track locked
@@ -439,11 +440,6 @@ private:
 
   // this is an internal handler just form StartActing
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
-  
-  typedef std::set<ReactionTrigger>::iterator ReactionTriggerIter;
-  // Used internally to delete 
-  ReactionTriggerIter SmartReEnableReactionTrigger(ReactionTriggerIter iter);
-  
     
   // ==================== Static Member Vars ====================
             
@@ -487,10 +483,9 @@ private:
   const f32 kSamePreactionPoseDistThresh_mm = 30.f;
   const f32 kSamePreactionPoseAngleThresh_deg = 45.f;
   
-  // A list of reactions that have been disabled at some point during the behavior
-  // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
-  // populated by SmartDisableReactionaryBehavior and SmartReEnableReactionaryBehavior
-  std::set<ReactionTrigger> _disabledReactionTriggers;
+  // A set of the locks that a behavior has used to disable reactions
+  // these will be automatically re-enabled on behavior stop
+  std::set<std::string> _smartLockIDs;
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
@@ -503,8 +498,6 @@ private:
 
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
-  
-  
   
 ////////
 //// Scored Behavior fuctions

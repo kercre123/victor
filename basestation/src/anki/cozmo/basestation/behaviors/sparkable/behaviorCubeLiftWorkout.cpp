@@ -42,23 +42,45 @@ static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
   
 static const uint32_t kMaxReAlignsPickupFail = 1;
   
-static   std::set<ReactionTrigger> kReactionsToDisable = {
-    ReactionTrigger::ObjectPositionUpdated,
-    ReactionTrigger::FacePositionUpdated,
-    ReactionTrigger::CubeMoved,
-    ReactionTrigger::StackOfCubesInitialDetection,
-    ReactionTrigger::UnexpectedMovement,
-    ReactionTrigger::PetInitialDetection
-  };
-  
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, true},
+  {ReactionTrigger::UnexpectedMovement,           true}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersWorkoutArray),
+              "Reaction triggers duplicate or non-sequential");
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _failToPickupCount(0)
 {
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
@@ -72,9 +94,11 @@ bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preR
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 {
-  SmartDisableReactionTrigger(kReactionsToDisable);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersWorkoutArray);
 
   // disable idle
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
@@ -100,6 +124,8 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   return RESULT_OK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
   // restore previous idle
@@ -109,6 +135,8 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
 {
   if( _shouldBeCarrying && ! robot.IsCarryingObject() ) {
@@ -122,6 +150,8 @@ IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
   return super::UpdateInternal(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
 {
   DriveToObjectAction* driveToBlockAction = new DriveToObjectAction(robot,
@@ -176,6 +206,8 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
     });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToPreLiftAnim(Robot& robot)
 {
   const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
@@ -190,6 +222,8 @@ void BehaviorCubeLiftWorkout::TransitionToPreLiftAnim(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToPickingUpCube(Robot& robot)
 {
   PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetBlockID);
@@ -219,6 +253,8 @@ void BehaviorCubeLiftWorkout::TransitionToPickingUpCube(Robot& robot)
     });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(Robot& robot)
 {
   // at this point we should be carrying the object
@@ -235,6 +271,8 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToStrongLifts(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToStrongLifts", "%s: %d strong lifts remain",
@@ -251,6 +289,8 @@ void BehaviorCubeLiftWorkout::TransitionToStrongLifts(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToWeakPose(Robot& robot)
 {
   const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
@@ -263,6 +303,8 @@ void BehaviorCubeLiftWorkout::TransitionToWeakPose(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToWeakLifts(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToWeakLifts", "%s: %d weak lifts remain",
@@ -279,6 +321,8 @@ void BehaviorCubeLiftWorkout::TransitionToWeakLifts(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
 {
   _shouldBeCarrying = false;
@@ -293,6 +337,8 @@ void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
 {
   // Stop the workout cube lights as soon as we think we have put the cube down
@@ -318,6 +364,8 @@ void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToManualPutDown(Robot& robot)
 {
   // in case the put down didn't work, do it manually
@@ -331,6 +379,8 @@ void BehaviorCubeLiftWorkout::TransitionToManualPutDown(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
 {
   // if we are _still_ holding the cube, then clearly we are confused, so just mark the cube as no longer in
@@ -349,6 +399,8 @@ void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
   robot.GetAIComponent().GetWorkoutComponent().CompleteCurrentWorkout();
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool countFailure)
 {
   const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);

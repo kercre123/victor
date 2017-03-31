@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPlacedOnSlope.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -20,10 +21,39 @@
 namespace Anki {
 namespace Cozmo {
   
-static const std::set<ReactionTrigger> kReactionsToDisable = {ReactionTrigger::CliffDetected,
-                                                              ReactionTrigger::ReturnedToTreads,
-                                                              ReactionTrigger::RobotPickedUp};
+namespace{
 
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPlacedOnSlopeArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPlacedOnSlopeArray),
+              "Reaction triggers duplicate or non-sequential");
+  
+} // end namespace
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -32,16 +62,18 @@ BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(Robot& robot, const J
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToPlacedOnSlope::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToPlacedOnSlope::InitInternal(Robot& robot)
 {
-  SmartDisableReactionTrigger(kReactionsToDisable);
-  
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersPlacedOnSlopeArray);
+
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);
   
@@ -61,6 +93,7 @@ Result BehaviorReactToPlacedOnSlope::InitInternal(Robot& robot)
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPlacedOnSlope::CheckPitch(Robot& robot)
 {
   // Was the robot on an inclined surface or was the lift simply perched on something?

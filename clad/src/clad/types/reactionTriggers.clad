@@ -1,0 +1,67 @@
+// File: reactionTypes.clad
+// Author: Kevin M. Karol
+// Created: 3/1/2017
+// Copyright: Anki, inc. 2017
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 ReactionTrigger {
+
+  CliffDetected = 0,
+  CubeMoved,
+  DoubleTapDetected,
+  FacePositionUpdated,
+  FistBump,
+  Frustration,
+  MotorCalibration,
+  NoPreDockPoses,
+  ObjectPositionUpdated,
+  PlacedOnCharger,
+  PetInitialDetection,
+  PyramidInitialDetection,
+  RobotPickedUp,
+  RobotPlacedOnSlope,
+  ReturnedToTreads,
+  RobotOnBack,
+  RobotOnFace,
+  RobotOnSide,
+  RobotShaken,
+  Sparked,
+  StackOfCubesInitialDetection,
+  UnexpectedMovement,
+
+  Count,     // flag for end of mandatory declaration when enabling/disabling triggers
+  NoneTrigger // Named differently to not conflict with the Python keyword
+}
+
+
+no_default_constructor structure AllTriggersConsidered {
+  bool cliffDetected,
+  bool cubeMoved,
+  bool doubleTapDetected,
+  bool facePositionUpdated,
+  bool fistBump,
+  bool frustration,
+  bool motorCalibration,
+  bool noPreDockPoses,
+  bool objectPositionUpdated,
+  bool placedOnCharger,
+  bool petInitialDetection,
+  bool pyramidInitialDetection,
+  bool robotPickedUp,
+  bool robotPlacedOnSlope,
+  bool returnedToTreads,
+  bool robotOnBack,
+  bool robotOnFace,
+  bool robotOnSide,
+  bool robotShaken,
+  bool sparked,
+  bool stackOfCubesInitialDetection,
+  bool unexpectedMovement
+}
+
+
+
+} // namespace Cozmo
+} // namespace Anki

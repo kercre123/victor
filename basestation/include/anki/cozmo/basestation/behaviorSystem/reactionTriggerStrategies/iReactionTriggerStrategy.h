@@ -1,5 +1,5 @@
 /**
- * File: iReactionTriggerStrategy.cpp
+ * File: iReactionTriggerStrategy.h
  *
  * Author: Kevin M. Karol
  * Created: 12/08/16
@@ -39,14 +39,14 @@ class IReactionTriggerStrategy{
 public:
   // Allows the factory to set trigger type
   friend class ReactionTriggerStrategyFactory;
+  // Allows the behaviorManager to notify of enabled state changes
+  friend class BehaviorManager;
   
   IReactionTriggerStrategy(Robot& robot, const Json::Value& config, const std::string& strategyName);
   virtual ~IReactionTriggerStrategy() {};
 
-  const std::string& GetName() const{ return _strategyName;}
-  ReactionTrigger GetReactionTrigger(){ return _triggerID;}
-  
-  bool IsReactionEnabled() const { return _disableIDs.empty(); }
+  const std::string& GetName() const { return _strategyName;}
+  ReactionTrigger GetReactionTrigger() const { return _triggerID;}
 
   // behavior manager checks the return value of this function every tick
   // to see if the reactionary behavior has requested a computational switch
@@ -83,10 +83,8 @@ protected:
   void SubscribeToTags(std::set<GameToEngineTag>&& tags);
   void SubscribeToTags(std::set<EngineToGameTag>&& tags);
   
-  void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot);
-  void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot);
-  virtual void AlwaysHandleInternal(const GameToEngineEvent& event, const Robot& robot) { }
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) { }
+  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) {}
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) {}
 
   // Override if you want to respond to being enabled/disabled
   // by RequestEnableReactionaryBehavior message
@@ -105,17 +103,10 @@ private:
   Robot& _robot;
   const std::string _strategyName;
   ReactionTrigger _triggerID = ReactionTrigger::NoneTrigger;
-  std::multiset<std::string> _disableIDs;
   std::vector<::Signal::SmartHandle> _eventHandles;
   
   template<class EventType>
   void HandleEvent(const EventType& event);
-  
-  // Handle tracking enable/disable requests
-  // Returns true if ids are updated (requesterID doesn't exist/exists for enabling/disabling)
-  // false otherwise
-  virtual bool UpdateDisableIDs(const std::string& requesterID, bool enable);
-
 };
 
 template<class EventType>

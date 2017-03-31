@@ -21,30 +21,39 @@
 namespace Anki {
 namespace Cozmo {
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDrivePath::BehaviorDrivePath(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
   SetDefaultName("DrivePath");
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDrivePath::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   //Possibly add other limits later
   return preReqData.GetRobot().GetEnabledAnimationTracks() & (u8)AnimTrackFlag::BODY_TRACK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorDrivePath::EvaluateScoreInternal(const Robot& robot) const
 {
   return 0.f;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorDrivePath::InitInternal(Robot& robot)
 {
   TransitionToFollowingPath(robot);
   return Result::RESULT_OK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
 {
   DEBUG_SET_STATE(FollowingPath);
@@ -77,6 +86,8 @@ void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
   
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDrivePath::SelectPath(const Pose3d& startingPose, Planning::Path& path)
 {
   _path.Clear();
@@ -96,6 +107,8 @@ void BehaviorDrivePath::SelectPath(const Pose3d& startingPose, Planning::Path& p
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDrivePath::BuildSquare(const Pose3d& startingPose, Planning::Path& path)
 {
   Planning::PathRelativeCozmo relPath;
@@ -109,6 +122,8 @@ void BehaviorDrivePath::BuildSquare(const Pose3d& startingPose, Planning::Path& 
   relPath.GetPlanningPath(startingPose, path);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDrivePath::BuildFigureEight(const Pose3d& startingPose, Planning::Path& path)
 {
   Planning::PathRelativeCozmo relPath;
@@ -125,6 +140,8 @@ void BehaviorDrivePath::BuildFigureEight(const Pose3d& startingPose, Planning::P
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDrivePath::BuildZ(const Pose3d& startingPose, Planning::Path& path)
 {
   Planning::PathRelativeCozmo relPath;

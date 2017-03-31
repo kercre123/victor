@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
@@ -62,6 +63,9 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace{
+static const char* kBehaviorTestName = "Behavior factory test";
+}
 
   ////////////////////////////
   // Console vars
@@ -303,7 +307,9 @@ namespace Cozmo {
     robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetDebugConsoleVarMessage>(std::move(driveAnimsMsg));
     
     // Disable reactionary behaviors
-    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("lock", false);
+    robot.GetBehaviorManager().DisableReactionsWithLock(
+                                 kBehaviorTestName,
+                                 ReactionTriggerHelpers::kAffectAllArray);
     
     // Only enable vision modes we actually need
     // NOTE: we do not (yet) restore vision modes afterwards!

@@ -30,6 +30,8 @@ CONSOLE_VAR(f32, kHeadUpBodyTurnSpeed_degPerSec, "Behavior.FindFaces", 150.0f);
 CONSOLE_VAR(f32, kHeadUpHeadTurnSpeed_degPerSec, "Behavior.FindFaces", 90.0f);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   : BaseClass(robot, config)
 {
@@ -45,7 +47,9 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   }
   
 }
+ 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // we can always search for faces (override base class restrictions)
@@ -53,11 +57,14 @@ bool BehaviorFindFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::BeginStateMachine(Robot& robot)
 {
   TransitionToLookUp(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::TransitionToLookUp(Robot& robot)
 {
   DEBUG_SET_STATE(FindFacesLookUp);
@@ -89,6 +96,8 @@ void BehaviorFindFaces::TransitionToLookUp(Robot& robot)
     });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::TransitionToLookAtLastFace(Robot& robot)
 {
   DEBUG_SET_STATE(FindFacesLookAtLast);
@@ -96,6 +105,8 @@ void BehaviorFindFaces::TransitionToLookAtLastFace(Robot& robot)
   StartActing(new TurnTowardsLastFacePoseAction(robot), &BehaviorFindFaces::TransitionToBaseClass);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::TransitionToBaseClass(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToBaseClass").c_str(),

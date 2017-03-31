@@ -42,7 +42,7 @@ private:
 
   // helper to add a face as something we want to react to (or not, if we are disabled). Returns true if it
   // added anything
-  bool AddDesiredFace(Vision::FaceID_t faceID);
+  bool AddDesiredFace(const Robot& robot, Vision::FaceID_t faceID);
   
   float _lastReactionTime_s = -1.0f;
   

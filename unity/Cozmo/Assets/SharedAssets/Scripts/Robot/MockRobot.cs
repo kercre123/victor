@@ -982,11 +982,15 @@ public class MockRobot : IRobot {
 
   }
 
-  public void EnableAllReactionTriggers(bool enable) {
+  public void DisableAllReactionsWithLock(string id) {
 
   }
 
-  public void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable) {
+  public void DisableReactionsWithLock(string id, AllTriggersConsidered triggerFlags) {
+
+  }
+
+  public void RemoveDisableReactionsLock(string id) {
 
   }
 

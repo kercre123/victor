@@ -13,16 +13,19 @@
 #ifndef ANKI_COZMO_DOCKACTIONS_H
 #define ANKI_COZMO_DOCKACTIONS_H
 
-#include "clad/types/actionTypes.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
-#include "util/helpers/templateHelpers.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/reactionTriggers.h"
+
+
+#include "util/helpers/templateHelpers.h"
+
 
 #include <set>
 
@@ -98,9 +101,10 @@ namespace Anki {
       // Whether or not we should look up to check if there is an object above the dockObject
       void SetShouldCheckForObjectOnTopOf(const bool b) { _checkForObjectOnTopOf = b; }
       
-      // Whether or not to suppress the given behavior during this action
-      void SetShouldSuppressReactionaryBehavior(ReactionTrigger behavior) { _reactionTriggersToSuppress.insert(behavior); }
-      
+      // Suppress the given reaction triggers during this action
+      void SetShouldSuppressReactionTriggers(const ReactionTriggerHelpers::FullReactionArray* reactionTriggers)
+                          { _reactionTriggersToSuppress = reactionTriggers; }
+
       struct PreActionPoseInput
       {
         // Inputs
@@ -232,7 +236,8 @@ namespace Anki {
       bool                       _checkForObjectOnTopOf          = true;
       bool                       _doLiftLoadCheck                = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
-      std::set<ReactionTrigger>  _reactionTriggersToSuppress;
+      const ReactionTriggerHelpers::FullReactionArray*
+                                 _reactionTriggersToSuppress     = nullptr;
       
     private:
     

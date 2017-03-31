@@ -22,25 +22,56 @@
 namespace Anki {
 namespace Cozmo {
   
-  // Json parameter keys
-  static const char* kMaxTimeToLookForFaceKey       = "maxTimeToLookForFace_s";
-  static const char* kAbortIfNoFaceFoundKey         = "abortIfNoFaceFound";
-  static const char* kUpdateLastCompletionTimeKey   = "updateLastCompletionTime";
+namespace{
+// Json parameter keys
+static const char* kMaxTimeToLookForFaceKey       = "maxTimeToLookForFace_s";
+static const char* kAbortIfNoFaceFoundKey         = "abortIfNoFaceFound";
+static const char* kUpdateLastCompletionTimeKey   = "updateLastCompletionTime";
+
+// Constants
+static constexpr f32 kLiftAngleBumpThresh_radps   = DEG_TO_RAD(0.5f);
+static constexpr f32 kGyroYBumpThresh_radps       = DEG_TO_RAD(10.f);
+static constexpr f32 kAccelXBumpThresh_mmps2      = 4000.f;
+static constexpr u32 kMaxNumAttempts              = 2;
+static constexpr f32 kMaxTimeForMotorSettling_s   = 0.5f; // For DAS warning only
+static constexpr f32 kMaxPickedupDurationBeforeExit_s = 1.f;
+
+// Looking for face parameters
+static const std::vector<f32> kLookForFaceAngleChanges_rad = {DEG_TO_RAD(-15), DEG_TO_RAD(30)};
+static constexpr f32 kLookForFaceHeadAngle                 = DEG_TO_RAD(35);
+static constexpr f32 kMinTimeBeforeGazeChange_s            = 1.f;
+static constexpr f32 kMaxTimeBeforeGazeChange_s            = 2.f;
+static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
   
-  // Constants
-  static constexpr f32 kLiftAngleBumpThresh_radps   = DEG_TO_RAD(0.5f);
-  static constexpr f32 kGyroYBumpThresh_radps       = DEG_TO_RAD(10.f);
-  static constexpr f32 kAccelXBumpThresh_mmps2      = 4000.f;
-  static constexpr u32 kMaxNumAttempts              = 2;
-  static constexpr f32 kMaxTimeForMotorSettling_s   = 0.5f; // For DAS warning only
-  static constexpr f32 kMaxPickedupDurationBeforeExit_s = 1.f;
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFistBumpArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::PyramidInitialDetection,      true},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, true},
+  {ReactionTrigger::UnexpectedMovement,           true}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFistBumpArray),
+              "Reaction triggers duplicate or non-sequential");
   
-  // Looking for face parameters
-  static const std::vector<f32> kLookForFaceAngleChanges_rad = {DEG_TO_RAD(-15), DEG_TO_RAD(30)};
-  static constexpr f32 kLookForFaceHeadAngle                 = DEG_TO_RAD(35);
-  static constexpr f32 kMinTimeBeforeGazeChange_s            = 1.f;
-  static constexpr f32 kMaxTimeBeforeGazeChange_s            = 2.f;
-  static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
+}
   
   
 BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
@@ -72,18 +103,7 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
 {
   // Disable reactionary behaviors that we don't want interrupting this.
   // (Sometimes when he gets fist bumped too hard it can be interpreted as pickup.)
-  std::set<ReactionTrigger> kReactionsToDisable = {
-    ReactionTrigger::CubeMoved,
-    ReactionTrigger::FacePositionUpdated,
-    ReactionTrigger::ObjectPositionUpdated,
-    ReactionTrigger::PyramidInitialDetection,
-    ReactionTrigger::PetInitialDetection,
-    ReactionTrigger::ReturnedToTreads,
-    ReactionTrigger::RobotPickedUp,
-    ReactionTrigger::StackOfCubesInitialDetection,
-    ReactionTrigger::UnexpectedMovement
-  };
-  SmartDisableReactionTrigger(kReactionsToDisable);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersFistBumpArray);
 
   // Disable idle animation
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);

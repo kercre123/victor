@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToMotorCalibration.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
@@ -20,15 +21,38 @@
 namespace Anki {
 namespace Cozmo {
   
-static std::set<ReactionTrigger> kReactionsToDisable = {
-  ReactionTrigger::CliffDetected,
-  ReactionTrigger::ReturnedToTreads,
-  ReactionTrigger::RobotOnBack,
-  ReactionTrigger::RobotOnFace,
-  ReactionTrigger::RobotOnSide,
-  ReactionTrigger::RobotPickedUp
+namespace {
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersMotorCalibrationArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  true},
+  {ReactionTrigger::RobotOnFace,                  true},
+  {ReactionTrigger::RobotOnSide,                  true},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
 };
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersMotorCalibrationArray),
+              "Reaction triggers duplicate or non-sequential");
+}
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -39,16 +63,19 @@ BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(Robot& robot, c
   });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToMotorCalibration::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
 {
   LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
- 
-  SmartDisableReactionTrigger(kReactionsToDisable);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersMotorCalibrationArray);
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res) {
@@ -62,7 +89,8 @@ Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
   return RESULT_OK;
 }
   
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMotorCalibration::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch(event.GetData().GetTag()) {

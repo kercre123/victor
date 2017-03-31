@@ -32,6 +32,8 @@ public class OnboardingManager : MonoBehaviour {
 
   private Transform _OnboardingTransform;
 
+  private bool _StageDisabledReactionaryBehaviors = false;
+
   [SerializeField]
   private int _NumStagesHome = 9;
   [SerializeField]
@@ -184,7 +186,7 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
-      CurrentRobot.RequestEnableReactionTrigger("onboardingHome", ReactionTrigger.PlacedOnCharger, false);
+      RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
       bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
 
@@ -243,7 +245,7 @@ public class OnboardingManager : MonoBehaviour {
     }
     if (_CurrPhase == OnboardingPhases.Home) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("onboardingHome", ReactionTrigger.PlacedOnCharger, true);
+        RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
         RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
@@ -451,7 +453,20 @@ public class OnboardingManager : MonoBehaviour {
       _HomeView.TabButtonContainer.gameObject.SetActive(showButtons);
     }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.EnableAllReactionTriggers(reactionsEnabled);
+      if (reactionsEnabled) {
+        if (_StageDisabledReactionaryBehaviors) {
+          RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId);
+          _StageDisabledReactionaryBehaviors = false;
+        }
+
+      }
+      else {
+        if (!_StageDisabledReactionaryBehaviors) {
+          RobotEngineManager.Instance.CurrentRobot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingUpdateStageId);
+          _StageDisabledReactionaryBehaviors = true;
+        }
+      }
+
     }
   }
 

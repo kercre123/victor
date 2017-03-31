@@ -18,18 +18,53 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
-namespace{
-const float kDelayForUserPresentBlock_s = 1.0f;
-const float kDelayToRecognizeBlock_s = 0.5f;
-}
-
 namespace Anki {
 namespace Cozmo {
+  
+
+namespace{
+  
+#define SET_STATE(s) SetState_internal(State::s, #s)
+
+const float kDelayForUserPresentBlock_s = 1.0f;
+const float kDelayToRecognizeBlock_s = 0.5f;
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersAcknowledgeCubeArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersAcknowledgeCubeArray),
+              "Reaction triggers duplicate or non-sequential");
+
+}
+  
+  
   
 using namespace ExternalInterface;
 
@@ -66,7 +101,7 @@ bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const BehaviorPreReqAcknow
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorAcknowledgeCubeMoved::InitInternal(Robot& robot)
 {
-  SmartDisableReactionTrigger(ReactionTrigger::ObjectPositionUpdated);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersAcknowledgeCubeArray);
   _activeObjectSeen = false;
   switch(_state){
     case State::TurningToLastLocationOfBlock:

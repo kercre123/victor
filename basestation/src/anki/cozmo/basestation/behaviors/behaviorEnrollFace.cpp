@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -40,42 +41,72 @@ namespace Cozmo {
 
 namespace {
 
-  CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeoutForReLookForFace_ms,          CONSOLE_GROUP, 1500);
-  
-  // Thresholds for when to update face ID based on pose
-  CONSOLE_VAR(f32,               kEnrollFace_UpdateFacePositionThreshold_mm,      CONSOLE_GROUP, 100.f);
-  CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        CONSOLE_GROUP, 45.f);
-  
-  // Default timeout for overall enrollment (e.g. to be looking for a face or waiting for enrollment to complete)
-  CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 15.f);
-  CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 35.f);
-  
-  // Amount of "extra" time to add each time we re-start actually enrolling, in case we lose the face
-  // mid way or take a while to initially find the face, up to the max timeout
-  CONSOLE_VAR(f32,               kEnrollFace_TimeoutExtraTime_sec,                CONSOLE_GROUP, 8.f);
-  
-  // Amount to drive forward once face is found to signify intent
-  CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentDist_mm,           CONSOLE_GROUP, 14.f);
-  CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentSpeed_mmps,        CONSOLE_GROUP, 75.f);
-  
-  // Minimum angles to turn during tracking to keep the robot moving and looking alive
-  CONSOLE_VAR(f32,               kEnrollFace_MinTrackingPanAngle_deg,             CONSOLE_GROUP, 4.0f);
-  CONSOLE_VAR(f32,               kEnrollFace_MinTrackingTiltAngle_deg,            CONSOLE_GROUP, 4.0f);
+CONSOLE_VAR(TimeStamp_t,       kEnrollFace_TimeoutForReLookForFace_ms,          CONSOLE_GROUP, 1500);
 
-  // Min/max distance to backup while looking for a face, up to max total amount
-  CONSOLE_VAR(f32,               kEnrollFace_MinBackup_mm,                        CONSOLE_GROUP,  5.f);
-  CONSOLE_VAR(f32,               kEnrollFace_MaxBackup_mm,                        CONSOLE_GROUP, 15.f);
-  CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   CONSOLE_GROUP, 50.f);
+// Thresholds for when to update face ID based on pose
+CONSOLE_VAR(f32,               kEnrollFace_UpdateFacePositionThreshold_mm,      CONSOLE_GROUP, 100.f);
+CONSOLE_VAR(f32,               kEnrollFace_UpdateFaceAngleThreshold_deg,        CONSOLE_GROUP, 45.f);
+
+// Default timeout for overall enrollment (e.g. to be looking for a face or waiting for enrollment to complete)
+CONSOLE_VAR(f32,               kEnrollFace_Timeout_sec,                         CONSOLE_GROUP, 15.f);
+CONSOLE_VAR(f32,               kEnrollFace_TimeoutMax_sec,                      CONSOLE_GROUP, 35.f);
+
+// Amount of "extra" time to add each time we re-start actually enrolling, in case we lose the face
+// mid way or take a while to initially find the face, up to the max timeout
+CONSOLE_VAR(f32,               kEnrollFace_TimeoutExtraTime_sec,                CONSOLE_GROUP, 8.f);
+
+// Amount to drive forward once face is found to signify intent
+CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentDist_mm,           CONSOLE_GROUP, 14.f);
+CONSOLE_VAR(f32,               kEnrollFace_DriveForwardIntentSpeed_mmps,        CONSOLE_GROUP, 75.f);
+
+// Minimum angles to turn during tracking to keep the robot moving and looking alive
+CONSOLE_VAR(f32,               kEnrollFace_MinTrackingPanAngle_deg,             CONSOLE_GROUP, 4.0f);
+CONSOLE_VAR(f32,               kEnrollFace_MinTrackingTiltAngle_deg,            CONSOLE_GROUP, 4.0f);
+
+// Min/max distance to backup while looking for a face, up to max total amount
+CONSOLE_VAR(f32,               kEnrollFace_MinBackup_mm,                        CONSOLE_GROUP,  5.f);
+CONSOLE_VAR(f32,               kEnrollFace_MaxBackup_mm,                        CONSOLE_GROUP, 15.f);
+CONSOLE_VAR(f32,               kEnrollFace_MaxTotalBackup_mm,                   CONSOLE_GROUP, 50.f);
+
+CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 3);
+
+// Number of faces to consider "too many" and forced timeout when seeing that many
+CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
+CONSOLE_VAR(s32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 1.f);
+
+static const char * const kLogChannelName = "FaceRecognizer";
+static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
+static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  true},
+  {ReactionTrigger::RobotOnFace,                  true},
+  {ReactionTrigger::RobotOnSide,                  true},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           true}
+};
+
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersEnrollFaceArray),
+              "Reaction triggers duplicate or non-sequential");
   
-  CONSOLE_VAR(s32,               kEnrollFace_NumImagesToWait,                     CONSOLE_GROUP, 3);
- 
-  // Number of faces to consider "too many" and forced timeout when seeing that many
-  CONSOLE_VAR(s32,               kEnrollFace_DefaultMaxFacesVisible,              CONSOLE_GROUP, 1); // > this is "too many"
-  CONSOLE_VAR(s32,               kEnrollFace_DefaultTooManyFacesTimeout_sec,      CONSOLE_GROUP, 1.f);
-  
-  static const char * const kLogChannelName = "FaceRecognizer";
-  static const char * const kMaxFacesVisibleKey = "maxFacesVisible";
-  static const char * const kTooManyFacesTimeoutKey = "tooManyFacesTimeout_sec";
 }
   
 // Transition to a new state and update the debug name for logging/debugging
@@ -227,20 +258,8 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()), _saveID);
 
-  SmartDisableReactionTrigger({
-    ReactionTrigger::FacePositionUpdated,
-    ReactionTrigger::ObjectPositionUpdated,
-    ReactionTrigger::CliffDetected,
-    ReactionTrigger::CubeMoved,
-    ReactionTrigger::FistBump,
-    ReactionTrigger::Frustration,
-    ReactionTrigger::RobotOnBack,
-    ReactionTrigger::RobotOnFace,
-    ReactionTrigger::RobotOnSide,
-    ReactionTrigger::RobotPickedUp,
-    ReactionTrigger::ReturnedToTreads,
-    ReactionTrigger::UnexpectedMovement,
-  });
+  
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersEnrollFaceArray);
   
   // Start with this timeout (may increase as the behavior runs)
   _timeout_sec = kEnrollFace_Timeout_sec;

@@ -350,9 +350,13 @@ public interface IRobot : IDisposable {
 
   void LoadFaceAlbumFromFile(string path, bool isPathRelative = true);
 
-  void EnableAllReactionTriggers(bool enable);
+  // locks all reactionary behaviors under the id passed in.
+  void DisableAllReactionsWithLock(string id);
 
-  void RequestEnableReactionTrigger(string id, Anki.Cozmo.ReactionTrigger behaviorType, bool enable);
+  // set the locks for specific reactionary behaviors by the string id.
+  void DisableReactionsWithLock(string id, AllTriggersConsidered triggerFlags);
+
+  void RemoveDisableReactionsLock(string id);
 
   void EnableDroneMode(bool enable);
 

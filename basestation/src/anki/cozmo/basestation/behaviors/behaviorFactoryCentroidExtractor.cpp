@@ -20,7 +20,9 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -34,6 +36,10 @@
 
 namespace Anki {
 namespace Cozmo {
+
+namespace{
+static const char* kBehaviorTestName = "Factory centroid extractor";
+}
 
   // Backpack lights
   static const BackpackLights passLights = {
@@ -100,7 +106,11 @@ namespace Cozmo {
     }
     
     // Disable reactionary behaviors
-    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("Factory centroid extractor",false);
+    robot.GetBehaviorManager().DisableReactionsWithLock(
+                                   kBehaviorTestName,
+                                   ReactionTriggerHelpers::kAffectAllArray);
+    
+    
     
 #if IS_FACTORY_BRANCH
     // Set robot body to accessory mode

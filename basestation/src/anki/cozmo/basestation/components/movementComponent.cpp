@@ -63,7 +63,6 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StopAllMotors>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnableReactionTrigger>();
   
   // Engine to game
   helper.SubscribeEngineToGame<MessageEngineToGameTag::ChargerEvent>();
@@ -220,8 +219,10 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
-                                    
-    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && _isReactToUnexpectedMovementEnabled)
+    
+    const bool isReactToUnexpectedMovementEnabled = _robot.GetBehaviorManager().
+                        IsReactionTriggerEnabled(ReactionTrigger::UnexpectedMovement);
+    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && isReactToUnexpectedMovementEnabled)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?
@@ -546,15 +547,6 @@ void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
     UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
   }
 }
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::RequestEnableReactionTrigger& msg)
-{
-  if(msg.trigger == ReactionTrigger::UnexpectedMovement){
-    _isReactToUnexpectedMovementEnabled = msg.enable;
-  }
-}
-  
   
 // =========== Motor commands ============
 

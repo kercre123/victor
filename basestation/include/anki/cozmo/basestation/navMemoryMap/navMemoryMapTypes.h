@@ -93,8 +93,8 @@ using BorderRegionVector = std::vector<BorderRegion>;
 using FullContentArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EContentType, bool>;
 using Util::FullEnumToValueArrayChecker::IsSequentialArray; // import IsSequentialArray to this namespace
 
-} // namespace
-} // namespace
-} // namespace
+} // namespace NavMemoryMapTypes
+} // namespace Cozmo
+} // namespace Anki
 
 #endif // 

@@ -35,7 +35,7 @@ std::set<ObjectFamily> _objectFamilies = {{
   
   
 ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPositionUpdated(Robot& robot, const Json::Value& config)
-:ReactionTriggerStrategyPositionUpdate(robot, config, kTriggerStrategyName)
+:ReactionTriggerStrategyPositionUpdate(robot, config, kTriggerStrategyName, ReactionTrigger::ObjectPositionUpdated)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
@@ -82,7 +82,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::HandleObjectObserved(const Ro
     HandleNewObservation(msg.objectID, obsPose, msg.timestamp, considerReaction);
   }
   else {
-    HandleNewObservation(msg.objectID, obsPose, msg.timestamp);
+    HandleNewObservation(robot, msg.objectID, obsPose, msg.timestamp);
   }
 }
   

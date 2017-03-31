@@ -103,7 +103,7 @@ bool ReactionTriggerStrategyGeneric::ShouldTriggerBehavior(const Robot& robot, c
 // they're listening to. Includes a check to make sure an event being handled is one that has actually been
 // requested when the class was configured. With no callback specified this simply marks that computational switch
 // should occur whenever a relevant event is handled.
-void ReactionTriggerStrategyGeneric::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyGeneric::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   // Don't do anything if this trigger can't interrupt itself and this reaction trigger
   //  caused the current behavior to run.

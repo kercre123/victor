@@ -70,11 +70,8 @@ namespace FaceEnrollment {
       _UpdateThresholdLastEnrolledSeconds = faceEnrollmentConfig.UpdateThresholdLastEnrolledSeconds;
     }
 
-    protected override void AddDisabledReactionaryBehaviors() {
-      // Meet cozmo shouldn't use the GameBase reactionary behaviors because it is in a freeplay-like
-      // mode for the behavior chooser "MeetCozmoFindFaces"
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.PetInitialDetection);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.ReactionTrigger.FistBump);
+    protected override void InitializeReactionaryBehaviorsForGameStart() {
+      RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kFaceEnrollmentTriggers);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {

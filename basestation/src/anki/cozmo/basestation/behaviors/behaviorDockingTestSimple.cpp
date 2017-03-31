@@ -26,6 +26,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
@@ -51,6 +52,7 @@ if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
 
+static const char* kBehaviorTestName = "Docking test simple";
 }
 
 
@@ -143,7 +145,8 @@ namespace Anki {
     
     Result BehaviorDockingTestSimple::InitInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("Docking test simple",false);
+      robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
+                                                         ReactionTriggerHelpers::kAffectAllArray);
       
       _currentState = State::Init;
       _numFails = 0;
@@ -739,8 +742,8 @@ namespace Anki {
     
     void BehaviorDockingTestSimple::StopInternal(Robot& robot)
     {
-      robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableAllReactionTriggers>("Docking test simple",true);
-      
+      robot.GetBehaviorManager().RemoveDisableReactionsLock(kBehaviorTestName);
+
       // Cancel all actions
       for (const auto& tag : _actionCallbackMap) {
         robot.GetActionList().Cancel(tag.first);

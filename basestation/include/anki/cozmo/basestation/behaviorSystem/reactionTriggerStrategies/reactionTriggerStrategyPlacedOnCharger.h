@@ -27,7 +27,7 @@ public:
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
 
 protected:
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   virtual void EnabledStateChanged(bool enabled) override
                  {_shouldTrigger = false;}

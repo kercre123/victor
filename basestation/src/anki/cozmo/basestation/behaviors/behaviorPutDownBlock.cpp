@@ -21,6 +21,7 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
 CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg,    "Behavior.PutDownBlock", -20.0f);
 CONSOLE_VAR(f32, kBPDB_verifyBackupDist_mm,   "Behavior.PutDownBlock", -30.0f);
 CONSOLE_VAR(f32, kBPDB_putDownBackupSpeed_mm, "Behavior.PutDownBlock", 100.f);
@@ -29,12 +30,45 @@ CONSOLE_VAR(f32, kBPDB_scoreIncreasePostPutDown,     "Behavior.PutDownBlock", 5.
 CONSOLE_VAR(f32, kBPDB_kBackupDistanceMin_mm,     "Behavior.PutDownBlock", -45.0);
 CONSOLE_VAR(f32, kBPDB_kBackupDistanceMax_mm,     "Behavior.PutDownBlock", -75.0);
 
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPutDownBlockArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPutDownBlockArray),
+              "Reaction triggers duplicate or non-sequential");
+  
+  
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPutDownBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   return preReqData.GetRobot().IsCarryingObject() || IsActing();
@@ -44,7 +78,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
   // Disable double tap so we don't try to turn to a tapped object while in the middle of putting the block
   // down
-  SmartDisableReactionTrigger(ReactionTrigger::DoubleTapDetected);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersPutDownBlockArray);
 
   // Choose where to put the block down
   // TODO: Make this smarter and find a place away from other known objects

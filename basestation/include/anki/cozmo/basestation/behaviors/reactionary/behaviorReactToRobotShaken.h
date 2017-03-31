@@ -70,15 +70,6 @@ private:
   // The dizzy reaction that was played by this behavior:
   EReaction _reactionPlayed = EReaction::None;
   
-  // Member constants:
-
-  // Accelerometer magnitude threshold corresponding to "no longer shaking"
-  static const float _kAccelMagnitudeShakingStoppedThreshold;
-  
-  // Dizzy factor thresholds for playing the soft, medium, or hard reactions
-  static const float _kShakenDurationThresholdHard;
-  static const float _kShakenDurationThresholdMedium;
-  
 };
 
 }

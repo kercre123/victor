@@ -30,7 +30,8 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
+namespace{
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
 #define DO_FACE_VERIFICATION_STEP 0
@@ -72,7 +73,38 @@ static const int   kMaxNumberOfRetries = 2;
 // need to be as far away as the size of the robot + 2 blocks + padding
 static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
 
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRequestGameArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
 
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRequestGameArray),
+              "Reaction triggers duplicate or non-sequential");
+
+} // end namespace
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
 {
   // Valid for some of these to be "Count"
@@ -85,6 +117,7 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
   scoreFactor = config.get(kScoreFactorKey, 1.0f).asFloat();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::Value& config)
   : IBehaviorRequestGame(robot, config)
   , _numRetriesPickingUpBlock(0)
@@ -149,6 +182,8 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
@@ -184,6 +219,8 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   return RESULT_OK;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& robot)
 {
   if( _state == State::SearchingForBlock ) {
@@ -212,6 +249,8 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
   return Status::Complete;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRequestGameSimple::CheckRequestTimeout()
 {
   const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -220,6 +259,8 @@ bool BehaviorRequestGameSimple::CheckRequestTimeout()
   return (_state == State::Idle && minDelayComplete_sec >= 0.0f && currentTime_sec >= minDelayComplete_sec);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::StopInternal(Robot& robot)
 {
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.StopInternal", "");
@@ -243,6 +284,8 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot) const
 {
   // NOTE: can't use _activeConfig because we haven't been Init'd yet  
@@ -256,6 +299,8 @@ float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot) const
   return score;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   // if we have requested, and are past the timeout, then we don't want to keep running
@@ -268,6 +313,8 @@ float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot
   return EvaluateScoreInternal(robot);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
 {
   IActionRunner* animationAction = new TurnTowardsFaceWrapperAction(
@@ -277,6 +324,8 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
   SET_STATE(PlayingInitialAnimation);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
@@ -292,6 +341,8 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robot)
 {
   IActionRunner* animationAction = new TriggerAnimationAction(robot, _activeConfig->preDriveAnimTrigger);
@@ -299,6 +350,8 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
   SET_STATE(PlayingPreDriveAnimation);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
   // Ensure we don't loop forever
@@ -376,6 +429,8 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
   SET_STATE(PickingUpBlock);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
 {
   // face the last known pose, then look around a bit (left and right). The Update loop will cancel this
@@ -416,12 +471,15 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
   }
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::ComputeFaceInteractionPose(Robot& robot)
 {
   _hasFaceInteractionPose = GetFaceInteractionPose(robot, _faceInteractionPose);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
 {
   // Ensure we don't loop forever
@@ -464,6 +522,8 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 {
   // Ensure we don't loop forever
@@ -508,6 +568,8 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
   const bool sayName = true;
@@ -516,6 +578,8 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
   SET_STATE(LookingAtFace);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 {
   if( DO_FACE_VERIFICATION_STEP ) {
@@ -541,9 +605,10 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
-  // Don't interrupt the request process for a cube move
-  SmartDisableReactionTrigger(ReactionTrigger::CubeMoved);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersRequestGameArray);
 
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
@@ -553,6 +618,8 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   SET_STATE(PlayingRequestAnim);
 }
  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
   SendRequest(robot, _initialRequest);
@@ -576,6 +643,8 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
   IActionRunner* denyAnimAction = new TriggerAnimationAction( robot, _activeConfig->denyAnimTrigger );
@@ -593,6 +662,8 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   SET_STATE(PlayingDenyAnim);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
@@ -601,6 +672,7 @@ void BehaviorRequestGameSimple::SetState_internal(State state, const std::string
 }
   
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 u32 BehaviorRequestGameSimple::GetNumBlocks(const Robot& robot) const
 {
   if( _shouldUseBlocks ) {
@@ -611,6 +683,8 @@ u32 BehaviorRequestGameSimple::GetNumBlocks(const Robot& robot) const
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPoseRet)
 {
   Pose3d facePose;
@@ -689,6 +763,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
   return true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
 {
   StopActing();
@@ -696,6 +772,8 @@ void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
   TransitionToPlayingDenyAnim(robot);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
 {
   if (_requestTime_s < 0.0f) {
@@ -711,6 +789,6 @@ f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
   return _requestTime_s + minRequestDelay;
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 

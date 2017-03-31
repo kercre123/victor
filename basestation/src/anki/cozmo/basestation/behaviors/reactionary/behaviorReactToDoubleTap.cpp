@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -25,14 +26,49 @@
 namespace Anki {
 namespace Cozmo {
 
-  static const int kTappedObjectPoseZThreshold_mm = 10;
+namespace{
+static const int kTappedObjectPoseZThreshold_mm = 10;
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDoubleTapArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDoubleTapArray),
+              "Reaction triggers duplicate or non-sequential");
+
+}
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToDoubleTap::BehaviorReactToDoubleTap(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
   SetDefaultName("ReactToDoubleTap");
 }
-
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToDoubleTap::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   // Is runnable while we have a double tapped object that has a not known pose (dirty or unknown),
@@ -47,6 +83,8 @@ bool BehaviorReactToDoubleTap::IsRunnableInternal(const BehaviorPreReqRobot& pre
           !robot.GetAIComponent().GetWhiteboard().IsSuppressingReactToDoubleTap());
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
 {
   _turningTowardsGhostObject = false;
@@ -156,13 +194,15 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
                 });
     } // nullptr != action
     
-    robot.GetBehaviorManager().RequestEnableReactionTrigger("ReactToDoubleTap", ReactionTrigger::ObjectPositionUpdated, false);
+    SmartDisableReactionsWithLock(GetName(), kAffectTriggersDoubleTapArray);
     
     return RESULT_OK;
   }
   return RESULT_FAIL;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToDoubleTap::StopInternal(Robot& robot)
 {
   if(_leaveTapInteractionOnStop)
@@ -181,13 +221,13 @@ void BehaviorReactToDoubleTap::StopInternal(Robot& robot)
     
     UpdateTappedObjectLights(true);
   }
-
-  robot.GetBehaviorManager().RequestEnableReactionTrigger("ReactToDoubleTap", ReactionTrigger::ObjectPositionUpdated, true);
-  
+    
   // Let whiteboard know that this behavior can't react to the same object again
   robot.GetAIComponent().GetWhiteboard().SetReactToDoubleTapCanReactAgain(false);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToDoubleTap::IsTappedObjectValid(const Robot& robot) const
 {
   if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
@@ -212,6 +252,8 @@ bool BehaviorReactToDoubleTap::IsTappedObjectValid(const Robot& robot) const
   return false;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToDoubleTap::TransitionToDriveToCube(Robot& robot)
 {
   const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
@@ -239,6 +281,8 @@ void BehaviorReactToDoubleTap::TransitionToDriveToCube(Robot& robot)
               });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToDoubleTap::TransitionToSearchForCube(Robot& robot)
 {
   const ObjectID& objectID = robot.GetBehaviorManager().GetCurrTappedObject();
@@ -264,6 +308,5 @@ void BehaviorReactToDoubleTap::TransitionToSearchForCube(Robot& robot)
               });
 }
 
-
-}
-}
+} // namespace Cozmo
+} // namespace Anki

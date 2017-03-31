@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -31,14 +32,36 @@ const float kSpeedToDriveThroughBlock_mmps = 200.0f;
 const float kDistanceBackUpFromBlock_mm    = 100.0f;
 const float kSpeedBackUpFromBlock_mmps     = 100.0f;
 
-static std::set<ReactionTrigger> kReactionsToDisable{
-  ReactionTrigger::UnexpectedMovement,
-  ReactionTrigger::CliffDetected,
-  ReactionTrigger::ObjectPositionUpdated,
-  ReactionTrigger::FacePositionUpdated
+  
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRamIntoBlockArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           true}
 };
 
-}
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRamIntoBlockArray),
+              "Reaction triggers duplicate or non-sequential");
+
+} // end namespace
   
 using namespace ExternalInterface;
 
@@ -128,7 +151,7 @@ void BehaviorRamIntoBlock::TransitionToTurningToBlock(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(Robot& robot)
 {
-  SmartDisableReactionTrigger(kReactionsToDisable);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersRamIntoBlockArray);
   
   const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){

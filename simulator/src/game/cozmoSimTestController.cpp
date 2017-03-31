@@ -7,6 +7,7 @@
  */
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include <sys/stat.h>
 
@@ -23,6 +24,37 @@ namespace Anki {
   namespace Cozmo {
     
     namespace {
+      
+      constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSimTestArray = {
+        {ReactionTrigger::CliffDetected,                false},
+        {ReactionTrigger::CubeMoved,                    true},
+        {ReactionTrigger::DoubleTapDetected,            false},
+        {ReactionTrigger::FacePositionUpdated,          false},
+        {ReactionTrigger::FistBump,                     false},
+        {ReactionTrigger::Frustration,                  false},
+        {ReactionTrigger::MotorCalibration,             false},
+        {ReactionTrigger::NoPreDockPoses,               false},
+        {ReactionTrigger::ObjectPositionUpdated,        true},
+        {ReactionTrigger::PlacedOnCharger,              false},
+        {ReactionTrigger::PetInitialDetection,          false},
+        {ReactionTrigger::PyramidInitialDetection,      false},
+        {ReactionTrigger::RobotPickedUp,                true},
+        {ReactionTrigger::RobotPlacedOnSlope,           false},
+        {ReactionTrigger::ReturnedToTreads,             true},
+        {ReactionTrigger::RobotOnBack,                  false},
+        {ReactionTrigger::RobotOnFace,                  false},
+        {ReactionTrigger::RobotOnSide,                  false},
+        {ReactionTrigger::RobotShaken,                  false},
+        {ReactionTrigger::Sparked,                      false},
+        {ReactionTrigger::StackOfCubesInitialDetection, false},
+        {ReactionTrigger::UnexpectedMovement,           false}
+      };
+      
+      static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSimTestArray),
+                    "Reaction triggers duplicate or non-sequential");
+      
+      static const AllTriggersConsidered kAffectTriggersSimTest =
+      ReactionTriggerHelpers::ConvertReactionArrayToAllTriggersConsidered(kAffectTriggersSimTestArray);
       
     } // private namespace
   
@@ -41,23 +73,9 @@ namespace Anki {
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
   {
     // by default we don't want pick these reactions, you can override this function if you tests needs them
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DisableReactionsWithLock(
                                                          "CozmoSimTestController",
-                                                         ReactionTrigger::RobotPickedUp,
-                                                         false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
-                                                         "CozmoSimTestController",
-                                                         ReactionTrigger::CubeMoved,
-                                                         false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
-                                                         "CozmoSimTestController",
-                                                         ReactionTrigger::ObjectPositionUpdated,
-                                                         false)));
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionTrigger(
-                                                         "CozmoSimTestController",
-                                                         ReactionTrigger::ReturnedToTreads,
-                                                         false)));
-
+                                                         kAffectTriggersSimTest)));
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,

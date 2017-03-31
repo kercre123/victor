@@ -111,9 +111,12 @@ public class SayTextSlide : MonoBehaviour {
 
   private void SetSayTextReactionaryBehaviors(bool enable) {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.UnexpectedMovement, enable);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.RobotPickedUp, enable);
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionTrigger("say_text_slide", Anki.Cozmo.ReactionTrigger.CliffDetected, enable);
+      if (!enable) {
+        RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kSayTextSlideId, ReactionaryBehaviorEnableGroups.kSayTextSlideTriggers);
+      }
+      else {
+        RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kSayTextSlideId);
+      }
     }
   }
 

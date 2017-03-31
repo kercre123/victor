@@ -16,6 +16,7 @@
 
 
 #include "clad/types/behaviorTypes.h"
+#include "clad/types/reactionTriggers.h"
 #include "util/enums/enumOperators.h"
 #include <string>
 

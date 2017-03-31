@@ -10,7 +10,10 @@
  *
  **/
 
+
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotShaken.h"
+
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -20,30 +23,44 @@
 namespace Anki {
 namespace Cozmo {
 
-// define member constants:
-const float BehaviorReactToRobotShaken::_kAccelMagnitudeShakingStoppedThreshold = 13000.f;
-const float BehaviorReactToRobotShaken::_kShakenDurationThresholdHard   = 5.0f;
-const float BehaviorReactToRobotShaken::_kShakenDurationThresholdMedium = 2.5f;
+namespace{  
+// Accelerometer magnitude threshold corresponding to "no longer shaking"
+const float kAccelMagnitudeShakingStoppedThreshold = 13000.f;
+// Dizzy factor thresholds for playing the soft, medium, or hard reactions
+const float kShakenDurationThresholdHard   = 5.0f;
+const float kShakenDurationThresholdMedium = 2.5f;
+  
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRobotShakenArray = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::PyramidInitialDetection,      true},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           true},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  true},
+  {ReactionTrigger::RobotOnFace,                  true},
+  {ReactionTrigger::RobotOnSide,                  true},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, true},
+  {ReactionTrigger::UnexpectedMovement,           true}
+};
 
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRobotShakenArray),
+              "Reaction triggers duplicate or non-sequential");
+
+}
   
-static const std::set<ReactionTrigger> kBehaviorsToDisable = {ReactionTrigger::CliffDetected,
-                                                              ReactionTrigger::CubeMoved,
-                                                              ReactionTrigger::DoubleTapDetected,
-                                                              ReactionTrigger::FacePositionUpdated,
-                                                              ReactionTrigger::FistBump,
-                                                              ReactionTrigger::Frustration,
-                                                              ReactionTrigger::ObjectPositionUpdated,
-                                                              ReactionTrigger::PetInitialDetection,
-                                                              ReactionTrigger::PyramidInitialDetection,
-                                                              ReactionTrigger::ReturnedToTreads,
-                                                              ReactionTrigger::RobotOnBack,
-                                                              ReactionTrigger::RobotOnFace,
-                                                              ReactionTrigger::RobotOnSide,
-                                                              ReactionTrigger::RobotPickedUp,
-                                                              ReactionTrigger::RobotPlacedOnSlope,
-                                                              ReactionTrigger::StackOfCubesInitialDetection,
-                                                              ReactionTrigger::UnexpectedMovement};
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -51,10 +68,11 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(Robot& robot, const Json:
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
 {
   // Disable some IMU-related behaviors
-  SmartDisableReactionTrigger(kBehaviorsToDisable);
+  SmartDisableReactionsWithLock(GetName(), kAffectTriggersRobotShakenArray);
   
   // Reset variables:
   _maxShakingAccelMag = 0.f;
@@ -72,6 +90,7 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
 {
 
@@ -83,7 +102,7 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
       _maxShakingAccelMag = std::max(_maxShakingAccelMag, accMag);
       
       // Done shaking? Then transition to the next state.
-      if (accMag < _kAccelMagnitudeShakingStoppedThreshold) {
+      if (accMag < kAccelMagnitudeShakingStoppedThreshold) {
         // Now that shaking has ended, determine how long it lasted:
         const float now_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         _shakenDuration_s = now_s - _shakingStartedTime_s;
@@ -121,10 +140,11 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
     {
       StopActing(false);
       // Play appropriate reaction based on duration of shaking:
-      if (_shakenDuration_s > _kShakenDurationThresholdHard) {
+      if (_shakenDuration_s > kShakenDurationThresholdHard) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionHard));
         _reactionPlayed = EReaction::Hard;
-      } else if (_shakenDuration_s > _kShakenDurationThresholdMedium) {
+      } else if (_shakenDuration_s > kShakenDurationThresholdMedium) {
+
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionMedium));
         _reactionPlayed = EReaction::Medium;
       } else {
