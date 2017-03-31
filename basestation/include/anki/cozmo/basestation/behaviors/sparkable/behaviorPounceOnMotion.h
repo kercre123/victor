@@ -70,6 +70,7 @@ private:
   enum class State {
     Inactive,
     InitialPounce,
+    InitialReaction,
     InitialSearch,
     BringingHeadDown,
     RotateToWatchingNewArea,
@@ -113,6 +114,7 @@ private:
   
   void SetState_internal(State state, const std::string& stateName);
   void TransitionToInitialPounce(Robot& robot);
+  void TransitionToInitialReaction(Robot& robot);
   void TransitionToInitialSearch(Robot& robot);
   void TransitionToBringingHeadDown(Robot& robot);
   void TransitionToRotateToWatchingNewArea(Robot& robot);
@@ -126,6 +128,7 @@ private:
   void TransitionToGetOutBored(Robot& robot);
   
   void InitHelper(Robot& robot);
+  bool IsFingerCaught(Robot& robot);
   
 };
 

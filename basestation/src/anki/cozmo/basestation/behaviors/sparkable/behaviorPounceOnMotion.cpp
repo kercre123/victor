@@ -183,9 +183,41 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(Robot& robot)
     potentialCliffSafetyTurn = new PanAndTiltAction(robot, bodyPan, headTilt, false, false);
   }
   
-  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToInitialSearch, potentialCliffSafetyTurn);
+  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToInitialReaction, potentialCliffSafetyTurn);
 }
   
+bool BehaviorPounceOnMotion::IsFingerCaught(Robot& robot)
+{
+  const float liftHeightThresh = 35.5f;
+  const float bodyAngleThresh = 0.02f;
+  
+  float robotBodyAngleDelta = robot.GetPitchAngle().ToFloat() - _prePouncePitch;
+  
+  // check the lift angle, after some time, transition state
+  PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
+                robot.GetLiftHeight(),
+                RAD_TO_DEG(robotBodyAngleDelta),
+                robotBodyAngleDelta,
+                RAD_TO_DEG(_prePouncePitch),
+                robot.GetPitchAngle().getDegrees());
+  return robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
+}
+
+void BehaviorPounceOnMotion::TransitionToInitialReaction(Robot& robot)
+{
+  SET_STATE(InitialReaction);
+  // If we didn't catch anything this first anim is just showing intent, but react if he does happen to catch something.
+  bool caught = IsFingerCaught(robot);
+  if( caught )
+  {
+    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceSuccess), &BehaviorPounceOnMotion::TransitionToInitialSearch);
+    PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.TransitionToInitialReaction.Caught", "got it!");
+  }
+  else
+  {
+    TransitionToInitialSearch(robot);
+  }
+}
   
 void BehaviorPounceOnMotion::TransitionToInitialSearch(Robot& robot)
 {
@@ -371,21 +403,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
 {
   SET_STATE(PlayingFinalReaction);
   
-  // Tuned down for EP3
-  const float liftHeightThresh = 35.5f;
-  const float bodyAngleThresh = 0.02f;
-
-  float robotBodyAngleDelta = robot.GetPitchAngle().ToFloat() - _prePouncePitch;
-    
-  // check the lift angle, after some time, transition state
-  PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
-                robot.GetLiftHeight(),
-                RAD_TO_DEG(robotBodyAngleDelta),
-                robotBodyAngleDelta,
-                RAD_TO_DEG(_prePouncePitch),
-                robot.GetPitchAngle().getDegrees());
-
-  bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
+  bool caught = IsFingerCaught(robot);
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
