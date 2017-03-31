@@ -39,6 +39,7 @@
 namespace{
 const float kMaxNegativeXPlacementOffset = 1.f;
 static const char* kDisableReactionsID = "dockActions";
+static const char* kPlaceOnGroundDisableID = "placeOnGroundAction";
 
 }
 
@@ -1518,7 +1519,7 @@ namespace Anki {
     {
       // COZMO-3434 manually request to enable AckObject
       if(GetState() != ActionResult::NOT_STARTED) {
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kPlaceOnGroundDisableID);
       }
     
       if(_faceAndVerifyAction != nullptr)
@@ -1572,7 +1573,7 @@ namespace Anki {
          ActionResult::RUNNING == result)
       {
         // disable the reactionary behavior for objects, since we are placing one
-        _robot.GetBehaviorManager().DisableReactionsWithLock(kDisableReactionsID,
+        _robot.GetBehaviorManager().DisableReactionsWithLock(kPlaceOnGroundDisableID,
                                                             kAffectObjectPositionTriggerArray);
       }
       
