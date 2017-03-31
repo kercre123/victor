@@ -299,7 +299,7 @@ void ButtonTest(void)
   btn_start = getMicroCounter();
   while( m.btn_release_lpf_cnt < cnt_compare ) {
     _btn_execute();
-    if( getMicroCounter() - btn_start > 5*1000*1000 )
+    if( getMicroCounter() - btn_start > 3500*1000 )
       _throw_gracefully( ERROR_BACKPACK_BTN_RELEASE_TIMEOUT );
   }
   
