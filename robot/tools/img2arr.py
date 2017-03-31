@@ -4,6 +4,19 @@ import sys, os
 from PIL import Image
 from math import *
 
+#converts rgba or rgb into greyscale.
+def greyscale(pixel):
+    try:
+        r,g,b,a = pixel
+    except (ValueError,TypeError):
+        try:
+            a = 1.0
+            r,g,b = pixel
+        except (ValueError,TypeError):
+            r = g = b = pixel
+    return (r+r+g+g+g+b)/6 * a
+
+
 def img2arr(img):
     assert img.size[0] <= 128 and img.size[1] <= 64
     yr = 8
@@ -14,7 +27,7 @@ def img2arr(img):
     for x in range(img.size[0]):
         num = 0
         for y in range(img.size[1]):
-            num |= (0 if img.getpixel((x,y)) else 1) << y
+            num |= (1 if greyscale(img.getpixel((x,y))) else 0) << y
         out += fmt.format(num, os.linesep if yr >= 32 else " ")
     out += "},"
     return out
