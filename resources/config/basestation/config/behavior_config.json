@@ -50,7 +50,7 @@
         {
           "type" : "sparks",
           "minTimeSecs": 0,
-          "maxTimeSecs": 60,
+          "maxTimeSecs": 80,
           "numberOfRepetitions": 1,
           "behaviorObjective": "BlockRolled",
           "softSparkTrigger": "SoftSparkUpgradeLift",
