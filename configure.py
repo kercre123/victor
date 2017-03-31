@@ -609,7 +609,7 @@ class GamePlatformConfiguration(object):
                 # strip libraries and copy into unity
                 self.strip_libs()
                 # Call unity for game
-                self.call_unity(script_engine)
+                self.call_unity_for_android(script_engine)
 
                 if self.options.features is not None and 'standalone' in self.options.features[0]:
                     print("Building standalone-apk")
@@ -618,8 +618,7 @@ class GamePlatformConfiguration(object):
 
 
         elif not os.path.exists(self.workspace_path):
-            print_status(
-                'Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
+            print_status('Workspace {0} does not exist...you must do a generate before doing a clean or build'.format(self.workspace_path))
             sys.exit(0)
         else:
             if self.options.verbose:
@@ -646,7 +645,7 @@ class GamePlatformConfiguration(object):
                     configuration=self.options.configuration,
                     simulator=self.options.simulator,
                     scriptengine=script_engine)
-        
+
     def call_engine(self, command):
         args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]
         args += ['--platform', self.platform]
@@ -703,31 +702,36 @@ class GamePlatformConfiguration(object):
         # copy libs to unity plugin folder
         copytree(self.android_lib_dir, self.android_unity_plugin_dir)
 
-    def call_unity(self, script_engine):
-        if self.platform != 'android':
-            print ('Error: invalid call to unity. only allowed for android builds.')
-            return False
-        args = [self.options.unity_binary_path, "-quit", "-batchmode", "-nographics"]
-        args += ['-projectPath', self.unity_project_root]
-        args += ['-executeMethod', 'CommandLineBuild.Build']
-        args += ['--platform', self.platform]
-        args += ['--build-number', self.options.set_build_number]
-        args += ['--build-path', os.path.join(self.options.build_dir, self.platform)]
-        args += ['--build-type', 'PlayerAndAssets']
-        args += ['--asset-path', 'Assets/StreamingAssets/cozmo_resources']
-        args += ['--script-engine', script_engine]
+    def call_unity_for_android(self, script_engine):
+        config = ankibuild.unity.UnityBuildConfig()
+
+        config.platform = self.platform
         if self.options.google_play:
-            args += ['--config', "googleplay"]
+            config.config = 'googleplay'  # TODO Do we need to add this as an option in build.py's argument parser?
         else:
-            args += ['--config', self.options.configuration]
-        ankibuild.util.File.execute(args)
-        # TODO: Modify unity.py to handle this logic.  Problem is that unity.py is too coupled to xcode.
-        # example of what this function should look like.
-        # config = ankibuild.unity.UnityBuildConfig()
-        # config.parse_arguments(self.options)
-        # android_build = ankibuild.unity.UnityBuild(config)
-        # ret = android_build.run()
+            config.config = self.options.configuration.lower()
+        config.script_engine = script_engine
+        config.unity_exe = self.options.unity_binary_path
+        config.project_dir = '{0}/unity/{1}'.format(GAME_ROOT, PRODUCT_NAME)
+        config.build_dir = self.platform_build_dir
+        config.build_product = os.path.join(self.platform_build_dir, (PRODUCT_NAME + '.apk'))
+        config.build_type = 'PlayerAndAssets'
+        config.asset_destination_path = 'Assets/StreamingAssets/cozmo_resources'
+        config.build_number = self.options.set_build_number
+        config.log_file = os.path.join(self.platform_build_dir, ('UnityBuild-{0}-{1}.log'.format(self.options.configuration, self.platform)))
+        config.verbose = self.options.verbose
+
+        builder = ankibuild.unity.UnityBuild(config)
+        ret = builder.run()
+
+        if ret == 0:
+            print("Unity compile completed correctly.")
+        else:
+            print("UNITY COMPILE ERROR")
+            sys.exit(1)
+
         # TODO: Generate android gradle project here. Or just post this function call.
+        # Note that gradle isn't introduced until Unity 5.5 (we are on 5.3)
 
     def install(self):
         if self.options.verbose:

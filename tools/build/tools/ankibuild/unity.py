@@ -151,6 +151,8 @@ class UnityBuildConfig(object):
         parser.add_argument('--script-engine', action="store", choices=('mono2x', 'il2cpp'), default="mono2x")
         parser.add_argument('--build-type', action="store", choices=('PlayerAndAssets', 'OnlyAssets', 'OnlyPlayer'),
                             default="PlayerAndAssets", dest='build_type')
+        parser.add_argument('--build-number', metavar='string', default='1', required=False,
+                            help='Set the Android build number')
         parser.add_argument('--asset-destination-path', action="store",
                             default="Assets/StreamingAssets/cozmo_resources", dest='asset_destination_path',
                             help="where to copy assets to")
@@ -518,16 +520,14 @@ if __name__ == '__main__':
         print(default_project_dir)
         config.project_dir = default_project_dir
 
-    # platform-dependenct build_product
+    # platform-dependent build_product
     if not config.build_product:
-        #handle ios case
         if config.platform == 'ios':
             config.build_product = os.path.join(config.build_dir, 'Unity-iPhone.xcodeproj')
-        # handle mac/osx case
         elif config.platform == 'mac':
             config.build_product = os.path.join(config.build_dir, 'UnityPlayerOSX.app')
-        #handle android case
         elif config.platform == 'android':
+            # Note this path is not used for cozmo
             config.build_product = os.path.join(config.build_dir, 'OverDrive/libs/unity-classes.jar')
 
     if (config.platform == 'mac'):
