@@ -524,13 +524,9 @@ void BatteryCheck(void)
     SendCommand(TEST_POWERON, 5, 0, 0); //keep robot powered for a bit longer...
   //}
   
-  EnableChargeComms(); //switch to comm mode
-  MicroWait(100*1000); //wait for battery voltage to stabilize
-  
-  robot_get_battVolt100x(0,0); //DEBUG: read VBat before modifying charger
-  
+  EnableChargeComms();  //switch to comm mode
   chargeEnable(false);  //disable charger, which could interfere with valid battery measurement
-  MicroWait(100*1000);
+  MicroWait(100*1000);  //wait for battery voltage to stabilize
   u16 vBat100x = robot_get_battVolt100x(0,0);
   chargeEnable(true);   //re-enable charger
   
