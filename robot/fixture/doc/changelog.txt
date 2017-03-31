@@ -3,12 +3,24 @@
 Release v93
 ----------------
 
+General:
+-new fixture types: ROBOT3-LE, PACKOUT-LE
+-allow fixture names up to 10char on display (compress x-scaling for long names)
+
 MOTOR3L,MOTOR3H:
 -motor low-speed test, increased power to 1.5V for reliability with new gearbox & fixture circuit.
 
-BODY3,ROBOT1,ROBOT2,ROBOT3,PACKOUT:
+BODY3,ROBOT1,ROBOT2,ROBOT3[-LE],PACKOUT[-LE]:
 -added battery check. VBat < 3.8V causes error 621 [BAT_UNDERVOLT].
 ^Note: requires v93+ body firmware; bug-fix to properly report battery voltage.
+
+ROBOT3[-LE]:
+-write color code into robot (white/gray, depends on '-LE' mode!!!!!)
+^Note: requires v93+ body firmware; modified cmd data with new color codes.
+
+PACKOUT[-LE]:
+-read/verify proper color code is set (white/gray, depends on '-LE' mode!!!!!)
+^Note: requires v93+ body firmware; modified cmd data with new color codes.
 
 RECHARGE:
 -stop charging (OK) at 3.9V (~80%). error 101 [TIMEOUT] after 5min if still charging (not holding charge, or significantly dead battery).
