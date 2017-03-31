@@ -21,7 +21,6 @@ unsigned int COZMO_BUILD_DATE = 0;
 static uint32_t factoryData[FACTORY_DATA_SIZE/sizeof(uint32_t)];
 static uint32_t factoryFirmwareVersion;
 
-
 extern void NVStorage_ReadBirthCertificate(void); 
 
 

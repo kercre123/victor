@@ -230,6 +230,7 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_ACCESSORY_OPERATING_MODE:
+      Backpack::setLayer(BPL_IMPULSE);
       Backpack::detachTimer();
       Radio::shutdown();
       break ;
@@ -356,7 +357,6 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_BLUETOOTH_OPERATING_MODE:
-      Backpack::setLayer(BPL_IMPULSE);
       Motors::disable(true);
 
       NVIC_DisableIRQ(UART0_IRQn);

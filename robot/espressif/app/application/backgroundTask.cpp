@@ -39,7 +39,6 @@ namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
 
-
 void RadioConnectionStateMachineUpdate()
 {
   static u8 lastStaCount = 0;
