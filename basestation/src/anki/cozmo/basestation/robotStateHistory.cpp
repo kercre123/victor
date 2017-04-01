@@ -640,12 +640,17 @@ namespace Anki {
       } else {
         PRINT_NAMED_ERROR("RobotStateHistory.GetLastStateWithFrameID.FrameIdNotFound",
                           "Could not find frame ID=%d in pose history. "
-                          "(First frameID in pose history is %d, last is %d. "
-                          "First frameID in vis pose history is %d, last is %d.", frameID,
+                          "(First frameID in pose history is %d (t:%u), last is %d (t:%u). "
+                          "First frameID in vis pose history is %d (t:%u), last is %d (t:%u).)",
+                          frameID,
                           _states.begin()->second.GetFrameId(),
+                          _states.begin()->first,
                           _states.rbegin()->second.GetFrameId(),
-                          _visStates.begin()->second.GetFrameId(),
-                          _visStates.rbegin()->second.GetFrameId());
+                          _states.rbegin()->first,
+                          (_visStates.empty() ? -1 : _visStates.begin()->second.GetFrameId()),
+                          (_visStates.empty() ? 0 : _visStates.begin()->first),
+                          (_visStates.empty() ? -1 : _visStates.rbegin()->second.GetFrameId()),
+                          (_visStates.empty() ? 0 : _visStates.rbegin()->first));
         return RESULT_FAIL;
 
       }
