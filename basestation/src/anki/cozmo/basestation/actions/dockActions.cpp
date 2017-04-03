@@ -39,6 +39,7 @@
 namespace{
 static const float kMaxNegativeXPlacementOffset = 1.f;
 static const char* kDisableReactionsID = "dockActions";
+static const char* kReactionsToSuppressID = "reactionsToSuppress";
 static const char* kPlaceOnGroundDisableID = "placeOnGroundAction";
 
 // use a fairly large distance offset and tighter angle to try to rule out current pose
@@ -220,7 +221,7 @@ namespace Anki {
       
       if(_reactionTriggersToSuppress != nullptr){
         // Re-enable any triggers disabled by the action
-        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kReactionsToSuppressID);
       }
     }
 
@@ -670,7 +671,7 @@ namespace Anki {
       
       if(_reactionTriggersToSuppress != nullptr){
         _robot.GetBehaviorManager().DisableReactionsWithLock(
-                      kDisableReactionsID,
+                      kReactionsToSuppressID,
                       *_reactionTriggersToSuppress);
       }
       if(!_lightsSet)

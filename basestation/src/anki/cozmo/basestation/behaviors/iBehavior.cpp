@@ -404,21 +404,21 @@ Result IBehavior::Resume(ReactionTrigger resumingFromType)
   Result initResult = ResumeInternal(_robot);
   _isResuming = false;
   
-  if ( initResult != RESULT_OK ) {
-    _isRunning = false;
-  } else {
+  if ( initResult == RESULT_OK ) {
     // default implementation of ResumeInternal also sets it to true, but behaviors that override it
     // might not set it
     _isRunning = true;
+    
+    // Disable Acknowledge object if this behavior is the sparked version
+    if(_requiredUnlockId != UnlockId::Count
+       && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
+      SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
+    }
+    
+    UpdateTappedObjectLights(true);
+  } else {
+    _isRunning = false;
   }
-  
-  // Disable Acknowledge object if this behavior is the sparked version
-  if(_requiredUnlockId != UnlockId::Count
-     && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
-    SmartDisableReactionsWithLock(kSparkedBehaviorDisableLock, kSparkBehaviorDisablesArray);
-  }
-  
-  UpdateTappedObjectLights(true);
   
   return initResult;
 }
