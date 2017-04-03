@@ -58,7 +58,7 @@ enum class ObjectInteractionIntention {
 class  ObjectInteractionInfoCache{
 public:
   ObjectInteractionInfoCache(const Robot& robot);
-  
+  using BestObjectFunction = std::function<ObjectID(const std::set<ObjectID>& validObjects)>;
 
   ObjectID GetBestObjectForIntention(ObjectInteractionIntention intention);
   std::set<ObjectID> GetValidObjectsForIntention(ObjectInteractionIntention intention);
@@ -70,10 +70,15 @@ public:
   void EnsureInformationValid(ObjectInteractionIntention intention);
   
 protected:
-  using FullInteractionArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray
+
+  using FullValidInteractionArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray
      <ObjectInteractionIntention, BlockWorldFilter*, ObjectInteractionIntention::Count>;
+  using FullBestInteractionArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray
+     <ObjectInteractionIntention, BestObjectFunction, ObjectInteractionIntention::Count>;
   
-  void ConfigureObjectInteractionFilters(const Robot& robot, FullInteractionArray interactions);
+  void ConfigureObjectInteractionFilters(const Robot& robot,
+                                         FullValidInteractionArray validInteractions,
+                                         FullBestInteractionArray  bestInteractions);
   
   // Allows the whiteboard to notify us of taps/invalidations
   friend class AIWhiteboard;
@@ -94,7 +99,7 @@ private:
   
   static const char* ObjectUseIntentionToString(ObjectInteractionIntention intention);
   
-  // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll action
+  // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll Interactions
   bool CanPickupHelper(const ObservableObject* object) const;
   bool CanPickupWithAxisHelper(const ObservableObject* object) const;
   bool CanPopAWheelieHelper(const ObservableObject* object) const;
@@ -103,6 +108,10 @@ private:
   bool CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const;
   bool CanUseAsBuildPyramidStaticBlock(const ObservableObject* object);
   bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object);
+  
+  // Functions which return the "best" object to use given a set of valid objects
+  ObjectID DefaultBestObjectFilter(const std::set<ObjectID>& validObjects);
+  ObjectID RollBlockBestObjectFilter(const std::set<ObjectID>& validObjects);
 };
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,13 +121,15 @@ private:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class  ObjectInteractionCacheEntry{
 public:
+  using BestObjectFunction = ObjectInteractionInfoCache::BestObjectFunction;
   ObjectInteractionCacheEntry(const Robot& robot,
                               const std::string& debugName,
-                              BlockWorldFilter* filter);
+                              BlockWorldFilter* validFilter,
+                              BestObjectFunction bestFilter);
   ObjectID GetBestObject() const;
   std::set< ObjectID > GetValidObjects() const;
-  const BlockWorldFilter& GetFilter() const {assert(_blockWorldFilter);
-    return *_blockWorldFilter;}
+  const BlockWorldFilter& GetValidObjectsFilter() const {assert(_blockWorldFilterValidBlocks);
+    return *_blockWorldFilterValidBlocks;}
   
   // Updates the bestObject and validObjects if they haven't been updated this tick
   void EnsureInformationValid();
@@ -135,7 +146,8 @@ private:
   std::string                         _debugName;
   ObjectID                            _bestObject;
   std::set< ObjectID >                _validObjects;
-  std::unique_ptr< BlockWorldFilter > _blockWorldFilter;
+  std::unique_ptr< BlockWorldFilter > _blockWorldFilterValidBlocks;
+  BestObjectFunction                  _bestObjFunc;
   float                               _timeUpdated_s;
   
 };

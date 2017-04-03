@@ -99,6 +99,10 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   rollWithAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanRollObjectDelegateWithAxisHelper,
                                              this, std::placeholders::_1));
   
+  // Function for selecting the best object for rolling
+  auto rollObjectBestObjectFunc = std::bind(&ObjectInteractionInfoCache::RollBlockBestObjectFilter,
+                                            this, std::placeholders::_1);
+  
   // Pop A Wheelie check
   BlockWorldFilter *popFilter = new BlockWorldFilter;
   popFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
@@ -123,7 +127,8 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   topFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock,
                                     this, std::placeholders::_1));
   
-  FullInteractionArray allFilters = {
+  
+  FullValidInteractionArray validInteractionFilters = {
     {ObjectInteractionIntention::PickUpAnyObject,                   pickupAnyFilter},
     {ObjectInteractionIntention::PickUpObjectWithAxisCheck,         pickupWithAxisFilter},
     {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, rollNoAxisFilter},
@@ -134,21 +139,41 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
     {ObjectInteractionIntention::PyramidTopObject,                  topFilter}
   };
   
-  ConfigureObjectInteractionFilters(robot, allFilters);
+  // Function for selecting the best object given distance/position in configurations
+  auto defaultBestObjectFunc = std::bind(&ObjectInteractionInfoCache::DefaultBestObjectFilter,
+                                            this, std::placeholders::_1);
+
+  
+  FullBestInteractionArray findBestObjectFunctions = {
+    {ObjectInteractionIntention::PickUpAnyObject,                   defaultBestObjectFunc},
+    {ObjectInteractionIntention::PickUpObjectWithAxisCheck,         defaultBestObjectFunc},
+    {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, rollObjectBestObjectFunc},
+    {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   rollObjectBestObjectFunc},
+    {ObjectInteractionIntention::PopAWheelieOnObject,               defaultBestObjectFunc},
+    {ObjectInteractionIntention::PyramidBaseObject,                 defaultBestObjectFunc},
+    {ObjectInteractionIntention::PyramidStaticObject,               defaultBestObjectFunc},
+    {ObjectInteractionIntention::PyramidTopObject,                  defaultBestObjectFunc}
+  };
+
+  
+  ConfigureObjectInteractionFilters(robot, validInteractionFilters, findBestObjectFunctions);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectInteractionInfoCache::ConfigureObjectInteractionFilters(const Robot& robot,
-                                                                   FullInteractionArray interactions)
+                                                                   FullValidInteractionArray validInteractions,
+                                                                   FullBestInteractionArray  bestInteractions)
 {
   auto interactionEnum = 0;
   while(static_cast<ObjectInteractionIntention>(interactionEnum) != ObjectInteractionIntention::Count){
-    auto entry = interactions[interactionEnum];
-    _trackers.emplace(entry.EnumValue(),
+    auto validFilter = validInteractions[interactionEnum];
+    auto bestFilter  = bestInteractions[interactionEnum];
+    _trackers.emplace(validFilter.EnumValue(),
                       ObjectInteractionCacheEntry(robot,
-                                                  ObjectUseIntentionToString(entry.EnumValue()),
-                                                  entry.Value()));
+                                                  ObjectUseIntentionToString(validFilter.EnumValue()),
+                                                  validFilter.Value(),
+                                                  bestFilter.Value()));
     interactionEnum++;
   }
 }
@@ -176,7 +201,7 @@ std::set<ObjectID> ObjectInteractionInfoCache::GetValidObjectsForIntention(
 const BlockWorldFilter& ObjectInteractionInfoCache::GetDefaultFilterForIntention(
                                           ObjectInteractionIntention intention)
 {
-  return _trackers.find(intention)->second.GetFilter();
+  return _trackers.find(intention)->second.GetValidObjectsFilter();
 }
   
   
@@ -483,20 +508,118 @@ bool ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock(const ObservableOb
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID ObjectInteractionInfoCache::DefaultBestObjectFilter(const std::set<ObjectID>& validObjects)
+{
+  const ObservableObject* bestObj = nullptr;
+  f32 shortestDistSQ = FLT_MAX;
+  f32 currentDistSQ = FLT_MAX;
+  
+  // Give preference to blocks on top of the stack rather than the bottom
+  const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().
+                                                 GetStackCache().GetStacks();
+  for(const auto& stack: stacks){
+    const ObservableObject* topBlock =  _robot.GetBlockWorld().GetLocatedObjectByID(
+                                                     stack->GetTopBlockID());
+
+    if(ComputeDistanceSQBetween(_robot.GetPose(), topBlock->GetPose(), currentDistSQ) &&
+       (currentDistSQ < shortestDistSQ)){
+      bestObj = topBlock;
+      shortestDistSQ = currentDistSQ;
+    }
+  }
+  
+  
+
+  for(const auto& objID: validObjects){
+    const ObservableObject* obj =  _robot.GetBlockWorld().GetLocatedObjectByID(objID);
+    if(obj == nullptr){
+      continue;
+    }
+    
+    // if the block is the base of a stack and we have any other object already
+    // set, give the other object preference
+    bool isBottomBlock = false;
+    for(const auto& stack: stacks){
+      if(obj->GetID() == stack->GetBottomBlockID()){
+        isBottomBlock = true;
+        break;
+      }
+    }
+    if(bestObj != nullptr && isBottomBlock){
+      continue;
+    }
+    
+    // If this block is the closest block, use it as the best available
+    if(ComputeDistanceSQBetween(_robot.GetPose(), obj->GetPose(), currentDistSQ) &&
+       (currentDistSQ < shortestDistSQ)){
+      bestObj = obj;
+      shortestDistSQ = currentDistSQ;
+    }
+  }
+  
+  if(bestObj != nullptr){
+    return bestObj->GetID();
+  }else{
+    return {};
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID ObjectInteractionInfoCache::RollBlockBestObjectFilter(const std::set<ObjectID>& validObjects)
+{
+  // Use the lowest cost object as a default
+  ObjectID lowestCostID = DefaultBestObjectFilter(validObjects);
+  const ObservableObject* lowestCostObj =  _robot.GetBlockWorld().
+                                             GetLocatedObjectByID(lowestCostID);
+  
+  // If the lowest cost object is upright, see if any other objects are
+  // non-upright and prefer those instead
+  const bool lowestCostUpright = lowestCostObj == nullptr ||
+    (lowestCostObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>()
+                                                            == AxisName::Z_POS);
+  
+  if(lowestCostUpright){
+    f32 shortestDistSQ = FLT_MAX;
+    f32 currentDistSQ = FLT_MAX;
+    
+    for(const auto& objID: validObjects){
+      const ObservableObject* validObj =  _robot.GetBlockWorld().
+                                             GetLocatedObjectByID(objID);
+      if(validObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>()
+                                                            == AxisName::Z_POS){
+        continue;
+      }
+    
+      if(ComputeDistanceSQBetween(_robot.GetPose(), validObj->GetPose(), currentDistSQ) &&
+         (currentDistSQ < shortestDistSQ)){
+        lowestCostID = validObj->GetID();
+        shortestDistSQ = currentDistSQ;
+      }
+    }
+  }
+  
+  return lowestCostID;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ObjectInteractionCacheEntry
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectInteractionCacheEntry::ObjectInteractionCacheEntry(const Robot& robot,
                                                          const std::string& debugName,
-                                                         BlockWorldFilter* filter)
+                                                         BlockWorldFilter* validFilter,
+                                                         BestObjectFunction bestObjFunc)
 : _robot(robot)
 , _debugName(debugName)
-, _blockWorldFilter(filter)
+, _blockWorldFilterValidBlocks(validFilter)
+, _bestObjFunc(bestObjFunc)
 , _timeUpdated_s(kInvalidObjectCacheUpdateTime_s)
 {
-  DEV_ASSERT(_blockWorldFilter != nullptr,
-             "ObjectInteractionCacheEntry.InvalidFilterPtr");
+  DEV_ASSERT(_blockWorldFilterValidBlocks != nullptr,
+             "ObjectInteractionCacheEntry.InvalidValidFilterPtr");
 }
 
 
@@ -510,7 +633,7 @@ void ObjectInteractionCacheEntry::EnsureInformationValid()
     
     std::vector<const ObservableObject*> objects;
     const auto& blockWorld = _robot.GetBlockWorld();
-    blockWorld.FindLocatedMatchingObjects(*_blockWorldFilter, objects);
+    blockWorld.FindLocatedMatchingObjects(*_blockWorldFilterValidBlocks, objects);
     for( const ObservableObject* obj : objects ) {
       if( obj ) {
         _validObjects.insert(obj->GetID());
@@ -526,26 +649,24 @@ void ObjectInteractionCacheEntry::EnsureInformationValid()
     if(!haveTapIntentionObject || !bestIsStillValid)
     {
       // select best object
-      const ObservableObject* closestObject = blockWorld.FindLocatedObjectClosestTo(
-                                                                                    _robot.GetPose(),
-                                                                                    *_blockWorldFilter);
-      if( closestObject != nullptr ) {
+      const ObjectID bestObjID = _bestObjFunc(_validObjects);
+      if( bestObjID.IsSet() ) {
         
         if( haveTapIntentionObject && _bestObject.IsSet() ) {
-          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ResetBestTapped",
+          PRINT_CH_INFO("AIWhiteboard", "EnsureInformationValid.ResetBestTapped",
                         "We have a tap intent, but object id %d is no longer valid \
                         for action %s, selecting object %d instead",
                         _bestObject.GetValue(),
                         _debugName.c_str(),
-                        closestObject->GetID().GetValue());
+                        bestObjID.GetValue());
         }
         
-        _bestObject = closestObject->GetID();
+        _bestObject = bestObjID;
       }
       else {
         
         if( haveTapIntentionObject && _bestObject.IsSet() ) {
-          PRINT_CH_INFO("AIWhiteboard", "UpdateValidObjects.ClearBestTapped",
+          PRINT_CH_INFO("AIWhiteboard", "EnsureInformationValid.ClearBestTapped",
                         "We have a tap intent, but object id %d is no longer valid, \
                         clearing best for action %s",
                         _bestObject.GetValue(),
@@ -598,7 +719,7 @@ bool ObjectInteractionCacheEntry::ObjectTapInteractionOccurred(const ObjectID& o
   
   // consider located instance only, if we don't know where it is we can't use it
   if((nullptr != locatedObject) &&
-     _blockWorldFilter->ConsiderObject(locatedObject))
+     _blockWorldFilterValidBlocks->ConsiderObject(locatedObject))
   {
     
     if( oldBest != objectID ) {
