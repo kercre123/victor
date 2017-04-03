@@ -33,29 +33,31 @@ DrivePathAction::DrivePathAction(Robot& robot, const Planning::Path& path)
 ActionResult DrivePathAction::Init()
 {
   ActionResult result = ActionResult::SUCCESS;
-  ERobotDriveToPoseStatus status = _robot.GetPathComponent().CheckDriveToPoseStatus();
-  
-  if(status != ERobotDriveToPoseStatus::Waiting){
-    result = ActionResult::PATH_PLANNING_FAILED_ABORT;
-    return result;
-  }
   
   // Tell robot to execute this simple path
-  if(RESULT_OK != _robot.GetPathComponent().ExecutePath(_path, false)) {
+  if(RESULT_OK != _robot.GetPathComponent().ExecuteCustomPath(_path, false)) {
     result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
     return result;
   }
-  
+
   return result;
 }
 
 ActionResult DrivePathAction::CheckIfDone()
 {
   //Check if robot arrived at destination
-  //TODO: Currently no way to detect path failure
-  ActionResult result = _robot.GetPathComponent().IsTraversingPath() ? ActionResult::RUNNING: ActionResult::SUCCESS;
-  
-  return result;
+  switch( _robot.GetPathComponent().GetDriveToPoseStatus() ) {
+    case ERobotDriveToPoseStatus::Failed:
+      return ActionResult::FAILED_TRAVERSING_PATH;
+      
+    case ERobotDriveToPoseStatus::ComputingPath:
+    case ERobotDriveToPoseStatus::WaitingToBeginPath:
+    case ERobotDriveToPoseStatus::FollowingPath:
+      return ActionResult::RUNNING;
+
+    case ERobotDriveToPoseStatus::Ready:
+      return ActionResult::SUCCESS;
+  }
 }
 
   

@@ -518,8 +518,9 @@ namespace Anki {
 
     DriveStraightAction::~DriveStraightAction()
     {
-      _robot.GetPathComponent().Abort();
-      _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+      if( _robot.GetPathComponent().IsActive() ) {
+        _robot.GetPathComponent().Abort();
+      }
 
       _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
     }
@@ -554,7 +555,7 @@ namespace Anki {
       _hasStarted = false;
       
       // Tell robot to execute this simple path
-      if(RESULT_OK != _robot.GetPathComponent().ExecutePath(path, false)) {
+      if(RESULT_OK != _robot.GetPathComponent().ExecuteCustomPath(path, false)) {
         return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
       }
       
@@ -563,32 +564,35 @@ namespace Anki {
     
     ActionResult DriveStraightAction::CheckIfDone()
     {
-      ActionResult result = ActionResult::RUNNING;
-
       if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
       {
         return ActionResult::RUNNING;
       }
-      else if ( _hasStarted && !_robot.GetPathComponent().IsTraversingPath() ) {
-        result = ActionResult::SUCCESS;;
+
+      if( _robot.GetPathComponent().GetDriveToPoseStatus() == ERobotDriveToPoseStatus::Failed ) {
+        return ActionResult::FAILED_TRAVERSING_PATH;
       }
       
       if(!_hasStarted) {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
-        _hasStarted = _robot.GetPathComponent().IsTraversingPath();
+        _hasStarted = _robot.GetPathComponent().HasPathToFollow();
         if( _hasStarted && _shouldPlayDrivingAnimation) {
           _robot.GetDrivingAnimationHandler().PlayStartAnim();
         }
-      } else if(/*hasStarted AND*/ !_robot.GetPathComponent().IsTraversingPath() && _shouldPlayDrivingAnimation) {
-        if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
-          return ActionResult::RUNNING;
-        }
-        else {
-          result = ActionResult::SUCCESS;
-        }
       }
-      
-      return result;
+
+      if ( _hasStarted && !_robot.GetPathComponent().IsActive() ) {
+        if( _shouldPlayDrivingAnimation ) {
+          if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
+            return ActionResult::RUNNING;
+          }
+        }
+
+        // no end animation to play, end action now
+        return ActionResult::SUCCESS;
+      }
+
+      return ActionResult::RUNNING;
     }
     
     

@@ -131,7 +131,7 @@ namespace Anki {
       }
       else if(msg.idTag == _drivingLoopAnimTag)
       {
-        if(_robot.GetPathComponent().IsTraversingPath() && msg.result == ActionResult::SUCCESS)
+        if(_robot.GetPathComponent().HasPathToFollow() && msg.result == ActionResult::SUCCESS)
         {
           PlayDrivingLoopAnim();
         }

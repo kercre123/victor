@@ -27,6 +27,8 @@ class MinimalAnglePlanner : public IPathPlanner
 {
 public:
 
+  MinimalAnglePlanner() : IPathPlanner("MinimalAngle") {}
+  
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
                                                     bool forceReplanFromScratch = false) override;
 protected:

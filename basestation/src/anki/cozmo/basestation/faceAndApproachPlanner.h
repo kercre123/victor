@@ -24,6 +24,8 @@ class FaceAndApproachPlanner : public IPathPlanner
 {
 public:
 
+  FaceAndApproachPlanner() : IPathPlanner("FaceAndApproach") {}
+
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
                                                     bool forceReplanFromScratch = false) override;
 protected:

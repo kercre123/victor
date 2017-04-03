@@ -44,8 +44,11 @@ class IPathPlanner
 {
 public:
 
-  IPathPlanner();
+  IPathPlanner(const std::string& name);
   virtual ~IPathPlanner() {}
+
+  // return a planner name for debugging and analytics purposes
+  const std::string& GetName() const { return _name; }
 
   // ComputePath functions start computation of a path. The underlying planner may run in a thread, or it may
   // compute immediately in the calling thread.
@@ -156,14 +159,18 @@ protected:
   static bool ApplyMotionProfile(const Planning::Path &in,
                                  const PathMotionProfile& motionProfile,
                                  Planning::Path &out);
-      
+private:
+
+  std::string _name;
+
+  
 }; // Interface IPathPlanner
 
 // A stub class that never plans
 class PathPlannerStub : public IPathPlanner
 {
 public:
-  PathPlannerStub() { }
+  PathPlannerStub() : IPathPlanner("Stub") { }
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const Pose3d& targetPose) override {

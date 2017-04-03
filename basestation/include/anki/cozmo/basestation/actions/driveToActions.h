@@ -24,6 +24,7 @@
 #include "clad/types/animationTrigger.h"
 #include "clad/types/dockingSignals.h"
 #include "util/helpers/templateHelpers.h"
+#include <memory>
 
 namespace Anki {
   
@@ -89,7 +90,7 @@ namespace Anki {
       bool     _driveWithHeadDown;
       
       std::vector<Pose3d> _goalPoses;
-      Planning::GoalID    _selectedGoalIndex;
+      std::shared_ptr<Planning::GoalID> _selectedGoalIndex;
       
       PathMotionProfile _pathMotionProfile;
       bool _hasMotionProfile = false;
@@ -103,8 +104,6 @@ namespace Anki {
       
       float _timeToAbortPlanning;
             
-      Signal::SmartHandle _originChangedHandle;
-      
       // The pose of the object that the _goalPoses were generated from
       Pose3d _objectPoseGoalsGeneratedFrom;
       bool _useObjectPose = false;

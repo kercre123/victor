@@ -21,10 +21,11 @@ namespace Anki {
 namespace Cozmo {
 
 
-IPathPlanner::IPathPlanner()
+IPathPlanner::IPathPlanner(const std::string& name)
   : _hasValidPath(false)
   , _planningError(false)
   , _selectedTargetIdx(0)
+  , _name(name)
 {
 }
 

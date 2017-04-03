@@ -193,7 +193,7 @@ namespace Anki {
       _robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
       
       // Abort anything that shouldn't still be running
-      if(_robot.GetPathComponent().IsTraversingPath()) {
+      if(_robot.GetPathComponent().IsActive()) {
         _robot.GetPathComponent().Abort();
       }
       if(_robot.IsPickingOrPlacing()) {
@@ -1210,7 +1210,7 @@ namespace Anki {
           {
             result = ActionResult::LAST_PICK_AND_PLACE_FAILED;
           }
-          else if(_robot.GetPathComponent().IsTraversingPath())
+          else if(_robot.GetPathComponent().IsActive())
           {
             result = ActionResult::FAILED_TRAVERSING_PATH;
           }

@@ -1823,7 +1823,6 @@ Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
     return RESULT_FAIL;
   }
 
-  _pathComponent->SetUsingManualSpeed(useManualSpeed);
   _lastPickOrPlaceSucceeded = false;
       
   return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
@@ -2581,7 +2580,6 @@ Result Robot::DockWithObject(const ObjectID objectID,
   const bool propagateStack = false;
   GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
 
-  _pathComponent->SetUsingManualSpeed(useManualSpeed);
   _lastPickOrPlaceSucceeded = false;
       
   // Sends a message to the robot to dock with the specified marker

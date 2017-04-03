@@ -26,7 +26,7 @@
 namespace Anki {
 namespace Cozmo {
 
-DubbinsPlanner::DubbinsPlanner() {}
+DubbinsPlanner::DubbinsPlanner() : IPathPlanner("Dubbins") {}
 
 EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
                                                const Pose3d& targetPose)

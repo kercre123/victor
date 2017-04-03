@@ -31,11 +31,13 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <chrono>
 #include <condition_variable>
 #include <thread>
+
 
 // TODO:(bn) ANKI_DEVELOPER_CODE?
 #define LATTICE_PLANNER_DUMP_ENV_TO_CACHE 1
@@ -234,6 +236,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////// 
 
 LatticePlanner::LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform)
+  : IPathPlanner("LatticePlanner")
 {
   _impl = new LatticePlannerImpl(robot, dataPlatform, this);
 }
@@ -563,12 +566,26 @@ void LatticePlannerImpl::DoPlanning()
       PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: Finished blocking wait");
     }
   }
+
+  using namespace std::chrono;
   
-  bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
+  high_resolution_clock::time_point start = high_resolution_clock::now();
+  const bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
+  high_resolution_clock::time_point end = high_resolution_clock::now();
 
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: replan finished");
   }
+
+  auto duration_ms = duration_cast<std::chrono::milliseconds>(end - start);
+
+  const std::string& eventName = result ? "robot.lattice_planner_success" : "robot.lattice_planner_failure";
+  
+  Util::sEventF(eventName.c_str(),
+                {{DDATA, std::to_string(duration_ms.count()).c_str()}},
+                "%d:%d",
+                _planner.GetLastNumExpansions(),
+                _planner.GetLastNumConsiderations());
 
   if(!result) {
     _internalComputeStatus = EPlannerStatus::Error;
@@ -611,7 +628,7 @@ void LatticePlannerImpl::DoPlanning()
   else {
     // size == 0
     _internalComputeStatus = EPlannerStatus::CompleteNoPlan;
-  }    
+  }
 }
 
 void LatticePlannerImpl::worker()

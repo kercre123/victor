@@ -541,6 +541,7 @@ namespace Anki {
               (useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK))
     , _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
+    , _selectedGoalIndex(new Planning::GoalID(0))
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
@@ -587,8 +588,10 @@ namespace Anki {
     {
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
-      _robot.GetPathComponent().Abort();
-      _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+      if( _robot.GetPathComponent().IsActive() ) {
+        _robot.GetPathComponent().Abort();
+      }
+      
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
       
@@ -697,32 +700,22 @@ namespace Anki {
         
         Result planningResult = RESULT_OK;
         
-        _selectedGoalIndex = 0;
+        *_selectedGoalIndex = 0;
         
         if(!_hasMotionProfile)
         {
           _pathMotionProfile = pathComponent.GetSpeedChooser().GetPathMotionProfile(_goalPoses);
         }
         
-        if(_goalPoses.size() == 1) {
-          planningResult = pathComponent.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
-        } else {
-          planningResult = pathComponent.StartDrivingToPose(_goalPoses,
-                                                            _pathMotionProfile,
-                                                            &_selectedGoalIndex,
-                                                            _useManualSpeed);
-          PRINT_NAMED_DEBUG("DriveToPoseAction.SelectedGoal",
-                            "[%d] Selected goal %d W.R.T. robot (%f, %f, %f, %fdeg)",
-                            GetTag(),
-                            (int) _selectedGoalIndex,
-                            _goalPoses[_selectedGoalIndex].GetTranslation().x(),
-                            _goalPoses[_selectedGoalIndex].GetTranslation().y(),
-                            _goalPoses[_selectedGoalIndex].GetTranslation().z(),
-                            _goalPoses[_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees());
-        }
+        planningResult = pathComponent.StartDrivingToPose(_goalPoses,
+                                                          _pathMotionProfile,
+                                                          _selectedGoalIndex,
+                                                          _useManualSpeed);
         
         if(planningResult != RESULT_OK) {
-          PRINT_CH_INFO("Actions", "DriveToPoseAction.Init.FailedToFindPath", "Failed to get path to goal pose.");
+          PRINT_CH_INFO("Actions", "DriveToPoseAction.Init.FailedToFindPath",
+                        "[%d] Failed to get path to goal pose.",
+                        GetTag());
           result = ActionResult::PATH_PLANNING_FAILED_ABORT;
         }
         
@@ -737,25 +730,7 @@ namespace Anki {
               result = ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
             }
           }
-          
-          // Create a callback to respond to a robot world origin change that resets
-          // the action since the goal pose is likely now invalid.
-          // NOTE: I'm not passing the robot reference in because it will get create
-          //  a copy of the robot inside the lambda. I believe using the pointer
-          //  is safe because this lambda can't outlive this action which can't
-          //  outlive the robot whose queue it exists in.
-          auto cbRobotOriginChanged = [this, robotPtr = &_robot](RobotID_t robotID) {
-            if(robotID == robotPtr->GetID()) {
-              PRINT_NAMED_INFO("DriveToPoseAction",
-                               "Received signal that robot %d's origin changed. Resetting action.",
-                               robotID);
-              Reset();
-              robotPtr->GetPathComponent().Abort();
-            }
-          };
-          _originChangedHandle = _robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
-        }
-        
+        }        
       } // if/else isGoalSet
       
       return result;
@@ -771,8 +746,8 @@ namespace Anki {
         return ActionResult::RUNNING;
       }
       
-      switch( _robot.GetPathComponent().CheckDriveToPoseStatus() ) {
-        case ERobotDriveToPoseStatus::Error:
+      switch( _robot.GetPathComponent().GetDriveToPoseStatus() ) {
+        case ERobotDriveToPoseStatus::Failed:
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
           result = ActionResult::PATH_PLANNING_FAILED_ABORT;
@@ -791,25 +766,6 @@ namespace Anki {
                              _maxPlanningTime);
             _robot.GetPathComponent().Abort();
             result = ActionResult::PATH_PLANNING_FAILED_ABORT;
-            _timeToAbortPlanning = -1.0f;
-          }
-          break;
-        }
-          
-        case ERobotDriveToPoseStatus::Replanning: {
-          const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          
-          // handle aborting the plan. If we don't have a timeout set, set one now
-          if( _timeToAbortPlanning < 0.0f ) {
-            _timeToAbortPlanning = currTime + _maxReplanPlanningTime;
-          }
-          else if( currTime >= _timeToAbortPlanning ) {
-            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Replanning.Timeout",
-                             "Robot has been planning for more than %f seconds, aborting",
-                             _maxReplanPlanningTime);
-            _robot.GetPathComponent().Abort();
-            // re-try in this case, since we might be able to succeed once we stop and take more time to plan
-            result = ActionResult::PATH_PLANNING_FAILED_RETRY;
             _timeToAbortPlanning = -1.0f;
           }
           break;
@@ -837,7 +793,7 @@ namespace Anki {
           break;
         }
           
-        case ERobotDriveToPoseStatus::Waiting: {
+        case ERobotDriveToPoseStatus::Ready: {
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;
           
@@ -853,7 +809,7 @@ namespace Anki {
           // pose of the goal that was actually selected
           if(_useObjectPose)
           {
-            const Point2f thresh = ComputePreActionPoseDistThreshold(_goalPoses[_selectedGoalIndex],
+            const Point2f thresh = ComputePreActionPoseDistThreshold(_goalPoses[*_selectedGoalIndex],
                                                                      _objectPoseGoalsGeneratedFrom,
                                                                      DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
             
@@ -861,7 +817,7 @@ namespace Anki {
             distanceThreshold.y() = thresh.y();
           }
           
-          if(_robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
+          if(_robot.GetPose().IsSameAs(_goalPoses[*_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
                              "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm) robotPose (%.1f, %.1f) goalPose (%.1f %.1f) threshold (%.1f %.1f).",
@@ -870,8 +826,8 @@ namespace Anki {
                              Tdiff.Length(),
                              _robot.GetPose().GetTranslation().x(),
                              _robot.GetPose().GetTranslation().y(),
-                             _goalPoses[_selectedGoalIndex].GetTranslation().x(),
-                             _goalPoses[_selectedGoalIndex].GetTranslation().y(),
+                             _goalPoses[*_selectedGoalIndex].GetTranslation().x(),
+                             _goalPoses[*_selectedGoalIndex].GetTranslation().y(),
                              distanceThreshold.x(),
                              distanceThreshold.y());
             
@@ -879,18 +835,17 @@ namespace Anki {
           }
           // The last path sent was definitely received by the robot
           // and it is no longer executing it, but we appear to not be in position
-          // TODO:(bn) add a RobotReceivedLastPath function to hide this
           else if (_robot.GetPathComponent().GetLastSentPathID() == _robot.GetPathComponent().GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
                              " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg), threshold (%f, %f)",
                              GetTag(),
                              Tdiff.Length(), _robot.GetPathComponent().GetLastRecvdPathID(),
-                             (int) _selectedGoalIndex,
-                             _goalPoses[_selectedGoalIndex].GetTranslation().x(),
-                             _goalPoses[_selectedGoalIndex].GetTranslation().y(),
-                             _goalPoses[_selectedGoalIndex].GetTranslation().z(),
-                             _goalPoses[_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees(),
+                             (int) *_selectedGoalIndex,
+                             _goalPoses[*_selectedGoalIndex].GetTranslation().x(),
+                             _goalPoses[*_selectedGoalIndex].GetTranslation().y(),
+                             _goalPoses[*_selectedGoalIndex].GetTranslation().z(),
+                             _goalPoses[*_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees(),
                              _robot.GetPose().GetTranslation().x(),
                              _robot.GetPose().GetTranslation().y(),
                              _robot.GetPose().GetTranslation().z(),
@@ -903,12 +858,17 @@ namespace Anki {
           else {
             // Something went wrong: not in place and robot apparently hasn't
             // received all that it should have
-            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure",
-                             "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.");
+            PRINT_NAMED_ERROR("DriveToPoseAction.CheckIfDone.Failure",
+                              "Robot is not at the goal and did not receive the last path");
             result = ActionResult::FOLLOWING_PATH_BUT_NOT_TRAVERSING;
           }
           break;
         }
+
+        case ERobotDriveToPoseStatus::WaitingToBeginPath:
+          // nothing to do, just waiting for the robot to start driving the path (path component will timeout
+          // on it's own here, if needed)
+          break;
       }
       
       // If we are no longer running and have at least started moving (path planning succeeded)
