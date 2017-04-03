@@ -313,7 +313,7 @@ static void onAdvertisePacket() {
   if (slot < 0) {
     if (sendDiscovery) {
       ObjectDiscovered msg;
-      msg.object_type = GetObjectType(static_cast<ActiveObjectType>(advertisePacket.model)); // .model is type (uint16_t)
+      msg.object_type = GetObjectType((ActiveObjectType) advertisePacket.model); // .model is type (uint16_t)
       msg.factory_id = advertId;
       msg.rssi = NRF_RADIO->RSSISAMPLE;
       RobotInterface::SendMessage(msg);
@@ -688,7 +688,7 @@ static void SendObjectConnectionState(int slot) {
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
-  msg.object_type = GetObjectType(static_cast<ActiveObjectType>(accessories[slot].model));
+  msg.object_type = GetObjectType((ActiveObjectType) accessories[slot].model);
   RobotInterface::SendMessage(msg);
 }
 
