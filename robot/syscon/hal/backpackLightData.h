@@ -51,6 +51,19 @@ namespace BackpackLights {
     { 0x1ce7, 0x1ce7 },
     { 0x1ce7, 0x1ce7 }
   };
+  
+  // BOOT POST LIGHTS
+  static const LightState booted[] = {
+    { 0x07FE0, 0x07FE0 },
+    { 0x0000, 0x0000 },
+    { 0x0000, 0x0000 },
+  };
+
+  static const LightState synced[] = {
+    { 0x07FE0, 0x07FE0 },
+    { 0x07FE0, 0x07FE0 },
+    { 0x0000, 0x0000 },
+  };
 }
 
 #endif

@@ -33,7 +33,7 @@ void DebugStart(void)
 }
 
 extern void TestLED(int i); //motorTest.c
-static void BackpackLeds(void)
+void DebugBackpackLeds(void)
 {
   int me = ERROR_OK;
   for( int i=0; i < LEDCnt(); i++ )
@@ -84,85 +84,36 @@ static void BackpackLeds(void)
 #define LED_BF_D5_RED     (1 << 10)
 
 //our state machine will cycle through this display pattern
-#define LED_BITFIELD_PATTERN_COUNT  sizeof(_led_bitfield_patterns)/sizeof(u32)
-static const u32 _led_bitfield_patterns[] = {
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | 0               | LED_BF_D3_BLU,
-  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
-  
-  LED_BF_D1_GRN   | LED_BF_D2_BLU   | LED_BF_D3_GRN,
-  
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | 0               | LED_BF_D3_GRN,
-  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
-  
-  LED_BF_D1_RED   | LED_BF_D2_GRN   | LED_BF_D3_RED,
-  
+#define LED_BF_PATTERN_COUNT  sizeof(_led_bf_patterns)/sizeof(u32)
+static const u32 _led_bf_patterns[] = {
   LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  LED_BF_D1_RED   | 0               | LED_BF_D3_RED,
-  LED_BF_D1_RED   | LED_BF_D2_RED   | LED_BF_D3_RED,
-  
-  LED_BF_D1_BLU   | LED_BF_D2_RED   | LED_BF_D3_BLU,
+  0,
+  LED_BF_D1_BLU   | LED_BF_D2_BLU   | LED_BF_D3_BLU,
+  0,
+  LED_BF_D1_GRN   | LED_BF_D2_GRN   | LED_BF_D3_GRN,
+  0,
 };
 
-static void _LEDDisplay(u32 led_bitfield, u32 led_time_us) {
+static void _led_manage(void)
+{
+  static u32 led_time = 0;
+  static u8 led_state = 0;
+  
+  //Cycle through LED states every Xms
+  if( !led_time || getMicroCounter() - led_time > 250*1000 )
+  {
+    led_time = getMicroCounter();
+    if( ++led_state >= LED_BF_PATTERN_COUNT )
+      led_state = 0;
+  }
+  
+  u32 led_bf = _led_bf_patterns[led_state];
   for (int i = 0; i < LEDCnt(); i++) {
-    LEDOn( led_bitfield & 1 ? i : 255 ); //display each enabled led
-    led_bitfield >>= 1;
-    MicroWait(led_time_us);
+    LEDOn( led_bf & 1 ? i : 255 ); //display each enabled led
+    led_bf >>= 1;
+    MicroWait(150);
   }
   LEDOn(255); //all off
-}
-
-static void _LEDSequence(void)
-{
-  static int pattern = -1;
-  static u32 pattern_time = 0;
-  
-  //update state every Xms
-  if( pattern < 0 || getMicroCounter() - pattern_time > 100*1000 ) {
-    pattern_time = getMicroCounter();
-    if( ++pattern >= LED_BITFIELD_PATTERN_COUNT )
-      pattern = 0;
-  }
-  
-  _LEDDisplay( _led_bitfield_patterns[pattern], 150 );
 }
 
 static bool _BtnDetectRising(int *out_sample_mv, int *out_state)
@@ -176,7 +127,7 @@ static bool _BtnDetectRising(int *out_sample_mv, int *out_state)
   return rising_edge;
 }
 
-static void BackpackButton(void)
+void DebugBackpackButton(void)
 {
   u32 tick_time = getMicroCounter();
   int print_len = 0, btn_press_cnt = 0, btn_invalid_cnt = 0;
@@ -186,15 +137,14 @@ static void BackpackButton(void)
   
   while(1) //( getMicroCounter() - start_time < (1000000 * 10) )
   {
-    //give some juice to LED sequencer
-    _LEDSequence();
+    _led_manage();  //juice the LEDs
     
     //periodically sample the button and update console info
     if( getMicroCounter() - tick_time > 100*1000 )
     {
       tick_time = getMicroCounter();
       
-      const int btn_idle_threshold_mv = 2600;
+      const int btn_idle_threshold_mv = 2240; //0.8*Vdd, Vdd=2.8V
       int btn_mv, btn_state;
       btn_press_cnt += _BtnDetectRising(&btn_mv,&btn_state);
       
@@ -209,14 +159,14 @@ static void BackpackButton(void)
       }
       
       print_len = ConsolePrintf("%d.%03dV", btn_mv/1000, btn_mv%1000);
-      print_len+= ConsolePrintf(" %s", (btn_state ? "on " : (btn_mv < btn_idle_threshold_mv ? "---INVALID---" : "off")) );
+      print_len+= ConsolePrintf(" %s", (btn_state ? "on " : (btn_mv < btn_idle_threshold_mv ? "---" : "off")) );
       print_len+= ConsolePrintf(" cnt:%d inval:%d", btn_press_cnt, btn_invalid_cnt);
       
-      if( btn_press_cnt >= 5 )
-        break;
+      //if( btn_press_cnt >= 5 )
+      //  break;
     }
   }
-  ConsolePrintf("\r\n");
+  //ConsolePrintf("\r\n");
 }
 
 void DebugEnd(void)
@@ -234,13 +184,25 @@ bool DebugTestDetectDevice(void)
   return getMicroCounter() - start_time > (1000*1000*10);
 }
 
+void DebugTestBuzzer(void)
+{
+  ConsolePrintf("Debug Test Buzzer: ");
+  for(int x=1; x<=20; x++) {
+    ConsolePrintf("%dkHz,",x);
+    Buzzer(x,100);
+    MicroWait(100*1000);
+  }
+  ConsolePrintf("\r\n");
+}
+
 TestFunction* GetDebugTestFunctions()
 {
   static TestFunction m_debugFunctions[] = 
   {
     DebugStart,
-    BackpackLeds,
-    BackpackButton,
+    DebugTestBuzzer,
+    //DebugBackpackLeds,
+    //DebugBackpackButton,
     DebugEnd,
     NULL
   };

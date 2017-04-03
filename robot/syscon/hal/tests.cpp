@@ -28,7 +28,7 @@ extern int resultLedOn;
 extern int resultLedOff;
 extern int g_powerOffTime;
 extern bool g_turnPowerOff;
-extern Fixed vBat, vExt;
+extern Fixed vBat, vExt, vBatFiltered, vExtFiltered; //battery.cpp
 
 static bool runMotorTest = false;
 
@@ -122,8 +122,11 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
         g_turnPowerOff = false;   // Last until battery dies
       else if (param == 0x5A)
         Battery::powerOff();      // Kill battery immediately
-      else
+      else {
+        param = param > 254 ? 254 : param; //limit offset from counter val for modulo operations
         g_powerOffTime = GetCounter() + ((param+1)<<23);  // Last N+1 seconds longer
+        g_turnPowerOff = true;    // Enable power-down
+      }
       break;    // Reply "OK"
     
     case TEST_RADIOTX:
@@ -146,6 +149,30 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       break;    // Reply "OK"
     }
     
+    case TEST_SETCOLOR:
+    {
+      int head = ~0;
+      for (int i = 0; i < MAX_MODELS; i++)
+      {
+        if (BODY_COLOR(i) != ~0) {
+          head = BODY_COLOR(i); //find the head value
+          continue;
+        } //else, first empty slot
+        
+        if( head != param ) { //only write if value is changed
+          NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+          while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+          BODY_COLOR(i) = param;
+          while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+          NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+          while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+        }
+        break ;
+      }
+
+      break ; // Reply "OK"
+    }
+    
     case TEST_PLAYTONE:
     {
       RobotInterface::GenerateTestTone msg;
@@ -156,7 +183,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     // Get version and ESN information
     case TEST_GETVER:
     {
-      SendDown(8, (u8*)0x1F010);    // Bootloader/fixture version
+      SendDown(24, (u8*)0x1F010);    // Bootloader/fixture version
       return;   // Already replied
     }
     
@@ -192,7 +219,7 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     
     case TEST_ADC:
     {
-      u16 data[2] = {vBat, vExt};
+      s32 data[4] = {vBat, vExt, vBatFiltered, vExtFiltered};
       SendDown(sizeof(data), (u8*)data);
       return;   // Already replied
     }
@@ -201,6 +228,83 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     {
       u8 data = Backpack::button_pressed;
       SendDown(sizeof(data), (u8*)&data);
+      return;   // Already replied
+    }
+    
+    case TEST_BACKPULLUP:
+    {
+      //__disable_irq();
+      Backpack::detachTimer();  //disable bp control & high-z pins
+      
+      //Reset power-off counter. If backpack pull-up is missing, robot may try to turn itself off after ~5s.
+      Battery::hookButton(false);
+      
+      //discharge button input signal
+      nrf_gpio_pin_clear(PIN_BUTTON_SENSE);
+      nrf_gpio_cfg_output(PIN_BUTTON_SENSE);
+      MicroWait(10);
+      
+      //float and test time it takes to go high again.
+      u32 rtc_ticks, start = GetCounter();
+      nrf_gpio_cfg_input(PIN_BUTTON_SENSE, NRF_GPIO_PIN_NOPULL);
+      do {
+        rtc_ticks = (GetCounter() - start) >> 8;  //T[rtc]=30.6us
+        if( nrf_gpio_pin_read(PIN_BUTTON_SENSE) ) //break when signal goes high
+          break;
+      } while(rtc_ticks < 5); //timeout ~150us
+      
+      Backpack::detachTimer();  //disable bp control & high-z pins
+      Backpack::useTimer();     //re-enable backpack control
+      //__enable_irq();
+      
+      SendDown(sizeof(rtc_ticks), (u8*)&rtc_ticks);
+      return;   // Already replied
+    }
+    
+    case TEST_ENCODERS:
+    {
+      //Breif: BODY1, check that the encoders are populated and working properly.
+      //No gearbox etc installed at this point to interfere.
+      
+      __disable_irq();
+      //maybe save and restore VDDs state after our test?
+      
+      // Encoder and LED power (enabled)
+      nrf_gpio_pin_clear(PIN_VDDs_EN);
+      nrf_gpio_cfg_output(PIN_VDDs_EN);
+      MicroWait(100);
+      u32 state_on = NRF_GPIO->IN;
+      
+      // Encoder and LED power (disable)
+      nrf_gpio_pin_set(PIN_VDDs_EN);
+      MicroWait(100);
+      u32 state_off = NRF_GPIO->IN;
+      
+      __enable_irq();
+      
+      u8 result[4] = {
+        (state_on  & (1 << PIN_ENCODER_LEFT) ) > 0,
+        (state_off & (1 << PIN_ENCODER_LEFT) ) > 0,
+        (state_on  & (1 << PIN_ENCODER_RIGHT)) > 0,
+        (state_off & (1 << PIN_ENCODER_RIGHT)) > 0};
+      
+      SendDown(sizeof(result), (u8*)&result[0]);
+      return;   // Already replied
+    }
+    
+    case TEST_CHGENABLE:
+    {
+      extern bool disableCharge; //from battery.cpp
+      u8 wasEnabled = !disableCharge;  //latch flag
+      
+      //param<0> = enable, param<1> = disable
+      //updated by ISR. May take up to 20ms to take effect
+      if( param & 1 ) //ENABLE
+        disableCharge = false;
+      else if( param & 2 ) //DISABLE
+        disableCharge = true;
+      
+      SendDown(sizeof(wasEnabled), (u8*)&wasEnabled);
       return;   // Already replied
     }
   }

@@ -30,6 +30,8 @@ TestFunction* GetMotor1LTestFunctions(void);
 TestFunction* GetMotor1HTestFunctions(void);
 TestFunction* GetMotor2LTestFunctions(void);
 TestFunction* GetMotor2HTestFunctions(void);
+TestFunction* GetMotor3LTestFunctions(void);
+TestFunction* GetMotor3HTestFunctions(void);
 
 bool FinishDetect(void);
 TestFunction* GetFinishTestFunctions(void);

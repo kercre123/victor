@@ -11,9 +11,11 @@
 #define FIXTURE_HEAD1_TEST    2     // ID 2  
 
 #define FIXTURE_MOTOR1L_TEST  10    // ID 4 + 2         MOTORxL = lift
-#define FIXTURE_MOTOR2L_TEST  11    // ID 4 + 2 + 1
 #define FIXTURE_MOTOR1H_TEST  3     // ID 2 + 1         MOTORxH = head
+#define FIXTURE_MOTOR2L_TEST  11    // ID 4 + 2 + 1
 #define FIXTURE_MOTOR2H_TEST  12    // ID 4 + 3
+#define FIXTURE_MOTOR3L_TEST  30    //
+#define FIXTURE_MOTOR3H_TEST  31    //
 
 // Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
 #define FIXTURE_CHARGER_TEST  4     // ID 3
@@ -48,16 +50,20 @@
 
 #define FIXTURE_SOUND_TEST     29
 
-#define FIXTURE_COZ187_TEST    30   // murder cozmo, kill code to fac-revert via charge-contact cmd
+#define FIXTURE_COZ187_TEST    32   // murder cozmo, kill code to fac-revert via charge-contact cmd
 
-#define FIXTURE_DEBUG          32   // Should be last ID
+#define FIXTURE_DEBUG          33   // Should be last ID
+
+//DEBUG must always be last entry!!!!!!!!!!!!!!!!!!1
+#define NUM_FIXTYPES  (FIXTURE_DEBUG+1)
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID",   "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
-                        "ROBOT1",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
-                        "FINISHC", "FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX",  "ROBOT2","ROBOT3", \
-                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2",   "SOUND",  "COZ187","", \
-                        "DEBUG" }
+#define FIXTURE_TYPES {                                                                                 \
+  /*0-7*/   "NO ID",    "BODY1",    "HEAD1",    "MOTOR1H",  "CHARGER",  "CUBE1",  "CUBE2",    "CUBE3",    \
+  /*8-15*/  "ROBOT1",   "BODY2",    "MOTOR1L",  "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",     "PLAYPEN",  \
+  /*16-23*/ "FINISHC",  "FINISH1",  "FINISH2",  "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",   "ROBOT3",   \
+  /*24-31*/ "PACKOUT",  "LIFETEST", "RECHARGE", "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",  "MOTOR3H",  \
+  /*32-39*/ "COZ187",   "DEBUG" }
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();
@@ -82,17 +88,20 @@ u32 GetSerial();
 
 #define ERROR_SERIAL_EXISTS         8
 #define ERROR_LOT_CODE              9
-#define ERROR_OUT_OF_SERIALS        10    // When the fixture itself runs out of 500,000 serial numbers
+#define ERROR_OUT_OF_SERIALS        10    // When the fixture itself runs out of 500000 serial numbers
 
 #define ERROR_CUBE_ROM_OVERSIZE     11    // When you link a too-big cube ROM
 #define ERROR_CUBE_ROM_MISPATCH     12    // When you can't patch the cube ROM
-#define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
+#define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255 it can't make cubes!
 
 #define ERROR_RADIO_TIMEOUT         14    // On-board radio firmware failed to boot
 
 #define ERROR_INCOMPATIBLE_FIX_REV  15    // Test is incompatible with the current fixture hardware revision
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
+
+// General errors
+#define ERROR_TIMEOUT               101   // The operation timed out
 
 // General motor errors
 #define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
@@ -123,8 +132,8 @@ u32 GetSerial();
 #define ERROR_TESTPORT_TMI          403   // Robot misunderstood request (too much info in reply)
 #define ERROR_TESTPORT_PADDING      404   // Test fixture can't hear robot
 
-// SWD errors - in head or body test, these are CPU failures
-// In finished good test, these are fixture (radio) failures
+// SWD errors - in head or body test these are CPU failures
+// In finished good test these are fixture (radio) failures
 #define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
 #define ERROR_SWD_READ_FAULT        451   // SWD read failed
 #define ERROR_SWD_WRITE_FAULT       452   // SWD write failed
@@ -149,6 +158,11 @@ u32 GetSerial();
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
 #define ERROR_BODY_OUTOFDATE        601   // Body board is running out of date firmware
+#define ERROR_BODY_TREAD_ENC_LEFT   602   // left tread encoder failed self test
+#define ERROR_BODY_TREAD_ENC_RIGHT  603   // right tread encoder failed self test
+#define ERROR_BODY_BACKPACK_PULL    604   // backpack pull-up incorrect
+#define ERROR_BODYCOLOR_INVALID     605   // an invalid color code was detected
+#define ERROR_BODYCOLOR_FULL        606   // no space to write new bodycolor. requires full erase/re-program.
 
 // Drop sensor errors
 #define ERROR_DROP_LEAKAGE          610   // Drop leakage detected
@@ -181,13 +195,13 @@ u32 GetSerial();
 #define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 #define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
 
-// 710-713 for cube/charger types 0-3
-#define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1,2,3) does not match fixture type (1,2,3)
-#define ERROR_CUBE1_TYPE_CHANGE     711   // Cube type (1,2,3) does not match fixture type (1,2,3)
-#define ERROR_CUBE2_TYPE_CHANGE     712   // Cube type (1,2,3) does not match fixture type (1,2,3)
-#define ERROR_CUBE3_TYPE_CHANGE     713   // Cube type (1,2,3) does not match fixture type (1,2,3)
+// Errors 710-713 for cube/charger types 0-3
+#define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1 2 3) does not match fixture type (1 2 3)
+#define ERROR_CUBE1_TYPE_CHANGE     711   // Cube type (1 2 3) does not match fixture type (1 2 3)
+#define ERROR_CUBE2_TYPE_CHANGE     712   // Cube type (1 2 3) does not match fixture type (1 2 3)
+#define ERROR_CUBE3_TYPE_CHANGE     713   // Cube type (1 2 3) does not match fixture type (1 2 3)
 
-#define ERROR_CUBE_NO_BOOT          750   // Bad regulator, IMU, or crystal
+#define ERROR_CUBE_NO_BOOT          750   // Bad regulator IMU or crystal
 #define ERROR_CUBE_MISSING_LED      751   // LED wiring problem
 #define ERROR_CUBE_UNDERPOWER       752   // Bad power regulator
 #define ERROR_CUBE_OVERPOWER        753   // Too much power in active mode

@@ -1,0 +1,58 @@
+
+----------------
+Release v93
+----------------
+
+MOTOR3L,MOTOR3H:
+-motor low-speed test, increased power to 1.5V for reliability with new gearbox & fixture circuit.
+
+BODY3,ROBOT1,ROBOT2,ROBOT3,PACKOUT:
+-added battery check. VBat < 3.8V causes error 621 [BAT_UNDERVOLT].
+^Note: requires v93+ body firmware; bug-fix to properly report battery voltage.
+
+RECHARGE:
+-stop charging (OK) at 3.9V (~80%). error 101 [TIMEOUT] after 5min if still charging (not holding charge, or significantly dead battery).
+^Note: requires v93+ body firmware; bug-fix allows robot to stay on/charging for >120s.
+
+BODY1:
+-add encoder test; basic on/off part validation.
+^Note: requires v93+ body firmware; adds encoder test command.
+
+BODY1,BODY2,BODY3:
+-add test for backpack button pull-up resistor.
+^Note: requires v93+ body firmware; adds backpack resistor test command.
+
+
+----------------
+Release v92
+----------------
+
+PACKOUT:
+-add backpack button test (same as ROBOT1,2,3)
+
+MOTORx:
+-updated tests to match Vigor/EL assembly stages (see MOTORx test matrix).
+
+
+----------------
+Release v91
+----------------
+
+Backpack button test (MOTOR2H,ROBOT1,ROBOT2,ROBOT3):
+-test for stuck button. error 656 [BACKPACK_BTN_RELEASE_TIMEOUT]
+
+MOTOR1x,MOTOR2x:
+-more reliable insertion; delay and retest if fails on first try (some failures due to operator insertion too slow).
+
+
+----------------
+Release v90/c90
+----------------
+
+MOTOR2H,MOTOR2L:
+-will throw error 15 (ERROR_INCOMPATIBLE_FIX_REV) on old fixture 1.0 (green soldermask).
+-low-speed motor test 20% power increase (->1.2V). compensates for new driver IC power loss.
+
+ROBOT1,ROBOT2,ROBOT3:
+-added backpack button test
+

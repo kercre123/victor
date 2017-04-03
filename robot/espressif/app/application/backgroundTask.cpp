@@ -38,7 +38,6 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
-  
 
 void RadioConnectionStateMachineUpdate()
 {
@@ -47,15 +46,15 @@ void RadioConnectionStateMachineUpdate()
   static s8 doRTConnectPhase = 0;
   static s8 doRTDisconnectPhase = 0;
   static bool sendRadioState = true; // Need to send once just to say enabled
-  
+
   const u8 currentStaCount = wifi_softap_get_station_num();
   const u8 currentConCount = clientConnected();
-    
+
   if ((lastStaCount == 0) && (currentStaCount  > 0)) // First station connected
   {
     sendRadioState = true;
   }
-  
+
   if ((lastConCount == 0) && (currentConCount  > 0)) // First reliable transport connection
   {
     sendRadioState = true;
@@ -68,7 +67,7 @@ void RadioConnectionStateMachineUpdate()
     doRTConnectPhase    = 0;
     doRTDisconnectPhase = 1;
   }
-  
+
   if (sendRadioState)
   {
     WiFiState rws;
@@ -189,7 +188,7 @@ void RadioConnectionStateMachineUpdate()
       }
     }
   }
-  
+
   lastStaCount = currentStaCount;
   lastConCount = currentConCount;
 }
@@ -242,7 +241,7 @@ void Exec(os_event_t *event)
         if (lastPEC == 0xFFFFffff) system_deep_sleep(0); // Reported fatal error, now shutdown
         else
         {
-          if (pec > lastPEC) 
+          if (pec > lastPEC)
           {
             AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
             if (pec > 2)

@@ -21,17 +21,17 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 91;
+u8 g_fixtureReleaseVersion = 93;
 #define BUILD_INFO "EP2 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
 
 BOOL g_isDevicePresent = 0;
-const char* FIXTYPES[FIXTURE_DEBUG+1] = FIXTURE_TYPES;
+const char* FIXTYPES[NUM_FIXTYPES] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
 board_rev_t g_fixtureRev = (board_rev_t)0;
 
@@ -210,6 +210,8 @@ bool DetectDevice(void)
     case FIXTURE_MOTOR1H_TEST:
     case FIXTURE_MOTOR2L_TEST:
     case FIXTURE_MOTOR2H_TEST:
+    case FIXTURE_MOTOR3L_TEST:
+    case FIXTURE_MOTOR3H_TEST:
       return MotorDetect();
     case FIXTURE_FINISHC_TEST:
     case FIXTURE_FINISH1_TEST:
@@ -423,6 +425,12 @@ static void MainExecution()
       break;
     case FIXTURE_MOTOR2H_TEST:      
       m_functions = GetMotor2HTestFunctions();
+      break;
+    case FIXTURE_MOTOR3L_TEST:
+      m_functions = GetMotor3LTestFunctions();
+      break;
+    case FIXTURE_MOTOR3H_TEST:
+      m_functions = GetMotor3HTestFunctions();
       break;
     case FIXTURE_FINISHC_TEST:
     case FIXTURE_FINISH1_TEST:

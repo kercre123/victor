@@ -79,7 +79,9 @@ extern "C" void TIMER1_IRQHandler(void);
 void Backpack::init()
 {
   lightsOff();
+  Backpack::setLayer(BPL_USER);
   setLightsMiddle(BPL_IMPULSE, BackpackLights::disconnected);
+  setLightsMiddle(BPL_USER, BackpackLights::booted);
 
   // Clear out backpack leds
   #ifndef DISABLE_LIGHTS
@@ -95,6 +97,16 @@ void Backpack::init()
   #endif
 
   override = false;
+}
+
+void Backpack::hasSync() {
+  static bool alreadySynced = false;
+  if (alreadySynced) {
+    return ;
+  }
+  alreadySynced = true;
+
+  setLightsMiddle(BPL_USER, BackpackLights::synced);
 }
 
 void Backpack::testLight(int channel) {
@@ -127,6 +139,7 @@ static void setImpulsePattern(void) {
         setLightsMiddle(BPL_IMPULSE, BackpackLights::button_pressed[2]);
         break ;
     }
+
     return ;
   }
 

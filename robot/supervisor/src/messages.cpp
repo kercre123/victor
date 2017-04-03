@@ -5,6 +5,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/types/fwTestMessages.h"
 
 #ifdef SIMULATOR
 #include "anki/cozmo/transport/IUnreliableTransport.h"
@@ -575,7 +576,7 @@ namespace Anki {
         }
         #endif // ifdef COZMO_V2
       }
-      
+
       void Process_cameraFOVInfo(const CameraFOVInfo& msg)
       {
         #ifdef COZMO_V2
@@ -776,6 +777,12 @@ namespace Anki {
       {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
+      }
+
+
+      void Process_bodySerialNum(const Anki::Cozmo::RobotInterface::BodySerialNumber& msg)
+      {
+        // Stub
       }
 
       // ---------- Animation Key frame messages -----------
@@ -1022,6 +1029,10 @@ namespace Anki {
       {
         RobotInterface::SendMessage(RobotInterface::ManufacturingID());
       }
+      void Process_getBodySerialNumber(const RobotInterface::GetBodySerialNumber& msg)
+      {
+        RobotInterface::SendMessage(RobotInterface::BodySerialNumber());
+      }
 
       // These are stubbed out just to get things compiling
        // These are stubbed out just to get things compiling
@@ -1064,7 +1075,7 @@ namespace Anki {
           tsm.cliffLevel = g_dataToHead.cliffLevel,
           tsm.battVolt10x = static_cast<uint8_t>(robotState_.batteryVoltage * 10.0f);
           tsm.extVolt10x  = static_cast<uint8_t>(vExt_ * 10.0f);
-          tsm.chargeStat  = (onCharger_ << 0) | (isCharging_ << 1);
+          tsm.chargeStat  = (onCharger_ * RobotInterface::CS_ON_CHARGER) | (isCharging_ * RobotInterface::CS_IS_CHARGING) | (chargerOOS_ * RobotInterface::CS_BAD_CHARGER);
           RobotInterface::SendMessage(tsm);
         }
 #endif

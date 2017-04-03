@@ -53,13 +53,14 @@ Fixed vBat;
 Fixed vExt;
 int resultLedOn;
 int resultLedOff;
-int g_powerOffTime = (4<<23);   // 4 seconds from power-on
 #ifdef FACTORY
-bool g_turnPowerOff = true;
+u32 g_powerOffTime = (4<<23);   // 4 seconds from power-on
+bool g_turnPowerOff = false;
+Fixed vBatFiltered=0, vExtFiltered=0;
 #endif
 
 static bool isCharging = false;
-static bool disableCharge = true;
+       bool disableCharge = true;
 static int ContactTime = 0;
 
 static Anki::Cozmo::BodyRadioMode current_operating_mode = -1;
@@ -76,7 +77,7 @@ extern bool motorOverride;
 static inline void startADCsample(AnalogInput channel)
 {
   m_pinIndex = channel; // This is super cheap
-  
+
   NRF_ADC->CONFIG &= ~ADC_CONFIG_PSEL_Msk; // Clear any existing mux
   NRF_ADC->CONFIG |= channel << ADC_CONFIG_PSEL_Pos; // Activate analog input above
   NRF_ADC->EVENTS_END = 0;
@@ -86,8 +87,8 @@ static inline void startADCsample(AnalogInput channel)
 static inline Fixed calcResult(const Fixed scale)
 {
   int sample = NRF_ADC->RESULT;
-  
-  // Calibrate the ADC value if hardware revision is 3 or higher. 
+
+  // Calibrate the ADC value if hardware revision is 3 or higher.
   int rev = (*((uint32_t volatile *)0xF0000FE8)) & 0x000000F0;
   if (rev > 0x70) {
     const int8_t GAIN_OFFSET = *(const int8_t*) 0x10000024;
@@ -95,7 +96,7 @@ static inline Fixed calcResult(const Fixed scale)
 
     sample = sample * (1024 + GAIN_ERROR) / 1024 + GAIN_OFFSET;
   }
-  
+
   return FIXED_MUL(FIXED_DIV(TO_FIXED(sample * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), scale);
 }
 
@@ -136,14 +137,14 @@ void Battery::init()
   // Configure charge pins
   nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
- 
+
   // Configure cliff sensor pins
   nrf_gpio_cfg_output(PIN_IR_DROP);
-  
+
   // Syscon power - this should always be on until battery fail
-  nrf_gpio_pin_set(PIN_PWR_EN);
+  Battery::powerOn();
   nrf_gpio_cfg_output(PIN_PWR_EN);
-  
+
   // Encoder and LED power (enabled)
   nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
@@ -174,7 +175,9 @@ void Battery::init()
 
   startADCsample(ANALOG_CLIFF_SENSE);
 
-  Battery::powerOn();
+  #ifdef FACTORY
+  g_turnPowerOff = true;
+  #endif
 }
 
 void Battery::hookButton(bool button_pressed) {
@@ -184,7 +187,7 @@ void Battery::hookButton(bool button_pressed) {
     // 4 seconds (thanks to backpack divider)
     if (++button_count >= 200) {
       Battery::powerOff();
-      NVIC_SystemReset();
+      setOperatingMode(BODY_LOW_POWER_OPERATING_MODE);
     } else if (current_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
       setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
     }
@@ -197,17 +200,16 @@ void Battery::setOperatingMode(Anki::Cozmo::BodyRadioMode mode) {
   current_operating_mode = mode;
 }
 
-void Battery::updateOperatingMode() { 
+void Battery::updateOperatingMode() {
   using namespace Anki::Cozmo;
 
   #ifdef FACTORY
-  if (g_turnPowerOff && GetCounter() > g_powerOffTime)
-  {
+  if (g_turnPowerOff && (int)(g_powerOffTime - GetCounter()) < 0 ) {
     Battery::powerOff();
     g_turnPowerOff = false;
   }
   #endif
-  
+
   if (active_operating_mode == current_operating_mode) {
     return ;
   }
@@ -226,8 +228,9 @@ void Battery::updateOperatingMode() {
       Backpack::detachTimer();
       Bluetooth::shutdown();
       break ;
-    
+
     case BODY_ACCESSORY_OPERATING_MODE:
+      Backpack::setLayer(BPL_IMPULSE);
       Backpack::detachTimer();
       Radio::shutdown();
       break ;
@@ -262,7 +265,7 @@ void Battery::updateOperatingMode() {
       while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
       NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
       while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      
+
       NVIC_SystemReset();
       break ;
 
@@ -270,12 +273,12 @@ void Battery::updateOperatingMode() {
       nrf_gpio_pin_set(PIN_VDDs_EN);
       Motors::disable(true);
       Head::enterLowPowerMode();
-      
+
       // Spinout for ~15 seconds
       MicroWait(15000000);
-      
+
       nrf_gpio_pin_clear(PIN_PWR_EN);
-      
+
       // Spinout for ~20 minutes
       for (int i = 0; i < 20 * 60 * 1000; i++) {
         MicroWait(1000);
@@ -283,7 +286,7 @@ void Battery::updateOperatingMode() {
 
       Battery::powerOff();
       break ;
-    
+
     #ifdef FACTORY
     case BODY_DTM_OPERATING_MODE:
       Backpack::clearLights(BPL_USER);
@@ -315,7 +318,7 @@ void Battery::updateOperatingMode() {
       NVIC_DisableIRQ(SWI2_IRQn);
 
       Motors::disable(true);
-    
+
       NRF_RTC0->TASKS_STOP = 1;
       NRF_TIMER0->TASKS_STOP = 1;
       NRF_TIMER1->TASKS_STOP = 1;
@@ -354,7 +357,6 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_BLUETOOTH_OPERATING_MODE:
-      Backpack::setLayer(BPL_IMPULSE);
       Motors::disable(true);
 
       NVIC_DisableIRQ(UART0_IRQn);
@@ -374,14 +376,12 @@ void Battery::updateOperatingMode() {
     case BODY_STARTUP:
       motorOverride = true;
 
-      Battery::powerOn();
-
       Motors::disable(false);
 
       for (int i = 0; i < MOTOR_COUNT; i++) {
         Motors::setPower(i, 0);
       }
-      
+
       Motors::setPower(MOTOR_HEAD, 0x2800);
       break ;
 
@@ -430,7 +430,7 @@ static void setChargeState(CurrentChargeState state) {
 
   switch(state) {
     case CHARGE_OFF_CHARGER:
-      isCharging = false;   
+      isCharging = false;
       nrf_gpio_pin_clear(PIN_CHARGE_EN);
       break ;
     case CHARGE_CHARGING:
@@ -522,7 +522,7 @@ static void updateChargeState(Fixed vext) {
 
     case CHARGE_CHARGER_OUT_OF_SPEC:
       static int off_charger_time = 0;
-    
+
       if (!onContacts) {
         if (++off_charger_time > OffOOSChargerReset) {
           setChargeState(CHARGE_OFF_CHARGER);
@@ -554,7 +554,6 @@ void Battery::manage()
   if (active_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
     if (++low_power_ticks >= LOW_POWER_TIME) {
       powerOff();
-      NVIC_SystemReset();
     }
   } else {
     low_power_ticks = 0;
@@ -569,7 +568,13 @@ void Battery::manage()
     case ANALOG_V_BAT_SENSE:
       {
         vBat = calcResult(VBAT_SCALE);
-        
+
+        #ifdef FACTORY
+        //u16 vBat100x = (vBat * 100) / 65536; //convert to centiVolts
+        if( vBat < (430*65536)/100 ) //< 4.3V
+          vBatFiltered = vBat; //filter out higher voltages when connected to vExt
+        #endif
+
         Backpack::setLowBattery(vBat < VBAT_LOW_THRESHOLD);
 
         // after 1 minute of low battery, turn off
@@ -580,12 +585,11 @@ void Battery::manage()
 
           if (ticks_left < 0) {
             powerOff();
-            NVIC_SystemReset();
           }
         } else {
           lowBatTimer = GetCounter() + LOW_BAT_TIME;
         }
-      
+
         startADCsample(ANALOG_CLIFF_SENSE);
         sendPowerStateUpdate();
 
@@ -595,7 +599,7 @@ void Battery::manage()
       {
         // Are our power pins shorted?
         static int ground_short = 0;
-        
+
         #ifdef FACTORY
         if (*FIXTURE_HOOK != 0xDEADFACE)
         #endif
@@ -614,7 +618,12 @@ void Battery::manage()
 
         vExt = calcResult(VEXT_SCALE);
         updateChargeState(vExt);
-        
+
+        #ifdef FACTORY
+        if( vExt < (025*65536)/100 || vExt > (420*65536)/100 ) // vExt > 4.2V, or near 0 (can register ~0.5V from charge contact communications)
+          vExtFiltered = vExt; //filter out higher voltages when connected to vExt
+        #endif
+
         if (active_operating_mode == BODY_LOW_POWER_OPERATING_MODE) {
           nrf_gpio_pin_clear(PIN_IR_DROP);
           startADCsample(ANALOG_V_EXT_SENSE);
@@ -626,7 +635,7 @@ void Battery::manage()
     case ANALOG_CLIFF_SENSE:
       {
         static const uint32_t PIN_IR_DROP_MASK = 1 << PIN_IR_DROP;
-        
+
         if (NRF_GPIO->OUT & PIN_IR_DROP_MASK) {
           resultLedOn = NRF_ADC->RESULT;
           startADCsample(ANALOG_V_BAT_SENSE);
@@ -635,13 +644,13 @@ void Battery::manage()
           startADCsample(ANALOG_V_EXT_SENSE);
 
         }
-        
+
         int result = resultLedOn - resultLedOff - CLIFF_SENSOR_BLEED;
         g_dataToHead.cliffLevel = (result < 0) ? 0 : result;
         g_dataToHead.cliffOffLevel = resultLedOff;
-        
+
         nrf_gpio_pin_toggle(PIN_IR_DROP);
-        
+
         break ;
       }
   }

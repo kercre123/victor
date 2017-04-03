@@ -27,6 +27,15 @@ using namespace Anki::Cozmo::RobotInterface;
 #define BOOTED_CURRENT  40000
 #define PRESENT_CURRENT 1000
 
+//Bodycolors
+enum {
+  BODYCOLOR_EMPTY     = ~0,
+  BODYCOLOR_WHITE_1V0 = 0,  //v1.0 Cozmo (1.0 bootloader had all color fields set to 0)
+  BODYCOLOR_WHITE_1V5 = 1,  //v1.5 Cozmo
+  BODYCOLOR_GRAY_LE   = 2,  //v1.5 Cozmo, Limited Edition
+  BODYCOLOR_END,            //(range checking)
+};
+
 //buttonTest.c
 extern void ButtonTest(void);
 
@@ -55,45 +64,122 @@ void AllowOutdated()
   g_allowOutdated = true;
 }
 
-void InfoTest(void)
+void EnableChargeComms(void)
 {
-  unsigned int version[2];
-  
-  // Pump the comm-link 4 times before trying to send
-  ConsolePrintf("warming up the com port...");
-  int n = 0;
+  //configure charge pins for communication mode and check for active pulses from robot
+  //ConsolePrintf("enable charge comms\r\n");
+  int e=0, n = 0;
   for (int i = 0; i < 4; i++) {
-    try {
-      SendTestChar(-1);
-    } catch (int e) { n++; }
+    try { SendTestChar(-1); }
+    catch (int e) { n++; e=e; }
   }
-  ConsolePrintf("%d missed pulses\r\n", n);
+  if( n > 2 ) {
+    ConsolePrintf("charge comm init: %d missed pulses\r\n", n);
+    throw e;
+  }
   
   // Let Espressif finish booting
-  MicroWait(300000); 
+  MicroWait(300000);
+}
+
+static const int MAX_BODYCOLORS = 4;
+static int m_bodyColorCnt = 0;
+static s32 m_bodyColor = BODYCOLOR_EMPTY;
+static void readBodycolor(void)
+{
+  struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
+  
+  dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
+  SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
+  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
+    throw ERROR_BODY_OUTOFDATE;
+  
+  ConsolePrintf("bodycolor,%d,%d,%d,%d\r\n", dat.bodycolor[0], dat.bodycolor[1], dat.bodycolor[2], dat.bodycolor[3] );
+  
+  //Actual bodycolor is the highest index [valid] value
+  m_bodyColorCnt = 0;
+  m_bodyColor = BODYCOLOR_EMPTY;
+  for( int i=MAX_BODYCOLORS-1; i>=0; i-- ) {
+    if( dat.bodycolor[i] == BODYCOLOR_EMPTY ) continue; //empty slot
+    if( dat.bodycolor[i] < 0 || dat.bodycolor[i] >= BODYCOLOR_END )
+      throw ERROR_BODYCOLOR_INVALID;
+    m_bodyColor = dat.bodycolor[i];
+    m_bodyColorCnt = i+1;
+    break;
+  }
+}
+
+static void setBodycolor(u8 bodycolor)
+{
+  ConsolePrintf("set bodycolor: %d\r\n", bodycolor);
+  readBodycolor(); //read current color array/count
+  
+  if( bodycolor != m_bodyColor ) { //only write changed values
+    if( m_bodyColorCnt >= MAX_BODYCOLORS )
+      throw ERROR_BODYCOLOR_FULL;
+    SendCommand(TEST_SETCOLOR, bodycolor, 0, 0);
+  }
+  
+  //verify
+  readBodycolor(); //readback
+  if( m_bodyColor != bodycolor ) //write failed
+    throw ERROR_BODYCOLOR_INVALID;
+}
+
+//write the body color code into syscon flash
+static void WriteBodyColor(void)
+{
+  if( g_fixtureType == FIXTURE_ROBOT3_TEST ) {
+    setBodycolor( BODYCOLOR_WHITE_1V5 );
+  }
+  #warning "write color for LE version"
+  /*
+  if( g_fixtureType == FIXTURE_ROBOT3_LE_TEST ) {
+    setBodycolor( BODYCOLOR_GRAY_LE );
+  }
+  //-*/
+}
+
+static void VerifyBodyColor(void)
+{
+  readBodycolor();
+  
+  if( g_fixtureType == FIXTURE_PACKOUT_TEST && m_bodyColor != BODYCOLOR_WHITE_1V5 )
+    throw ERROR_BODYCOLOR_INVALID;
+  #warning "verify color for LE version"
+  /*
+  if( g_fixtureType == FIXTURE_PACKOUT_LE_TEST && m_bodyColor != BODYCOLOR_GRAY_LE )
+    throw ERROR_BODYCOLOR_INVALID;
+  //-*/
+}
+
+void InfoTest(void)
+{
+  struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
+  
+  EnableChargeComms();
   
   ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
-  SendCommand(TEST_GETVER, 0, sizeof(version), (u8*)version);
-
+  dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
+  SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
+  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
+    throw ERROR_BODY_OUTOFDATE;
+  
   // Mimic robot format for SMERP
-  int unused = version[0]>>16, hwversion = version[0]&0xffff, esn = version[1];
+  int unused = dat.version[0]>>16, hwversion = dat.version[0]&0xffff, esn = dat.version[1];
   ConsolePrintf("version,%08d,%08d,%08x,00000000\r\n", unused, hwversion, esn);
   
   if (hwversion < BODY_VER_SHIP && !g_allowOutdated)
     throw ERROR_BODY_OUTOFDATE;
+  
+  readBodycolor();
 }
 
 void PlaypenTest(void)
 {
-  // Pump the comm-link 4 times before trying to send
-  for (int i = 0; i < 4; i++)
-    try {
-      SendTestChar(-1);
-    } catch (int e) { }
-  // Let Espressif finish booting
-  MicroWait(300000); 
-    
+  EnableChargeComms();
+  
   // Try to put robot into playpen mode
   SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);    
   
@@ -301,31 +387,6 @@ void FastMotors(void)
     CheckMotor(MOTOR_LIFT,        SLOW_POWER, SLOW_LIFT_THRESH, 0);
 }
 
-// List of all functions invoked by the test, in order
-TestFunction* GetInfoTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
-    InfoTest,
-    NULL
-  };
-
-  return functions;
-}
-
-// List of all functions invoked by the test, in order
-TestFunction* GetPlaypenTestFunctions(void)
-{
-  static TestFunction functions[] =
-  {
-    PlaypenTest,
-    PlaypenWaitTest,
-    NULL
-  };
-
-  return functions;
-}
-
 // Check drop sensor in robot fixture
 const int DROP_ON_MIN = 800, DROP_OFF_MAX = 100;
 void RobotFixtureDropSensor(void)
@@ -357,28 +418,132 @@ void SpeakerTest(void)
   // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 
-// List of all functions invoked by the test, in order
-TestFunction* GetRobotTestFunctions(void)
+/*/read charger status
+static bool isChargeEnabled(void)
 {
-  static TestFunction functions[] =
-  {
-    InfoTest,
-    ButtonTest,
-    SlowMotors,
-    FastMotors,
-    RobotFixtureDropSensor,
-    SpeakerTest,            // Must be last
-    NULL
-  };
+  //ConsolePrintf("SendCommand(TEST_CHGENABLE)\r\n");
+  u8 isEnabled = 0xFF;
+  SendCommand(TEST_CHGENABLE, 0, sizeof(isEnabled), (u8*)&isEnabled ); //read charge enable status
+  if( isEnabled > 1 ) //make sure body FW supports this
+    throw ERROR_BODY_OUTOFDATE;
+  
+  ConsolePrintf("isChargeEnabled,%d\r\n", isEnabled );
+  return isEnabled > 0;
+}//-*/
 
-  return functions;
+//set charge enable/disable
+static void chargeEnable(bool enable)
+{
+  //ConsolePrintf("SendCommand(TEST_CHGENABLE)\r\n");
+  u8 dummy = 0xFF;
+  SendCommand(TEST_CHGENABLE, (enable ? 1 : 2), sizeof(dummy), (u8*)&dummy ); //read charge enable status
+  if( dummy > 1 ) //make sure body FW supports this
+    throw ERROR_BODY_OUTOFDATE;
+  
+  MicroWait(20*1000); //takes 20ms to take effect
 }
 
-// Charge for 2 minutes, then shut off reboot and restart
+//read battery voltage
+u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
+{
+  struct { s32 vBat; s32 vExt; s32 vBatFiltered; s32 vExtFiltered; } robot = {0,0,0,0}; //ADC voltage data (read from robot)
+  
+  if( poweron_time_s > 0 )
+    SendCommand(TEST_POWERON, poweron_time_s, 0, 0); //keep robot powered for awhile
+  if( adcinfo_time_s > 0 )
+    SendCommand(FTM_ADCInfo, adcinfo_time_s, 0, 0);  //display ADC info on robot face (VEXT,VBAT,status bits...)
+  
+  robot.vExtFiltered = 0xDEADBEEF;
+  SendCommand(TEST_ADC, 0, sizeof(robot), (u8*)&robot ); //read battery/external voltages
+  if( robot.vBat < 0 || robot.vExtFiltered == 0xDEADBEEF ) //old body fw truncated s32 vals to u16 (data loss)
+    throw ERROR_BODY_OUTOFDATE;
+  
+  //convert raw value to 100x voltage - centivolts
+  //float batteryVoltage = ((float)robot.vBat)/65536.0f; //<--this is how esp converts raw spine data
+  u16 vBat100x     = (robot.vBat * 100) / 65536;
+  u16 vBatFilt100x = (robot.vBatFiltered * 100) / 65536;
+  u16 vExt100x     = (robot.vExt * 100) / 65536;
+  u16 vExtFilt100x = (robot.vExtFiltered * 100) / 65536;
+  ConsolePrintf("vBat,%03d,%03d,vExt,%03d,%03d\r\n", vBat100x, vBatFilt100x, vExt100x, vExtFilt100x );
+  
+  return vBatFilt100x; //return filtered vBat
+}
+
+// Charge to ~80% capacity
 void Recharge(void)
 {
-  SendCommand(TEST_POWERON, 120, 0, 0);
-  SendCommand(FTM_ADCInfo, 120, 0, 0);  
+  const u32 BAT_MAX_CHARGE_TIME_S = 5*60; //max amount of time to charge
+  const u8 BAT_CHECK_INTERVAL_S = 30;     //interrupt charging this often to test battery level
+  
+  EnableChargeComms(); //switch to comm mode
+  MicroWait(500*1000); //let battery voltage settle
+  uint16_t battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10); //get initial battery level
+  
+  u32 chargeTime = getMicroCounter();
+  while( battVolt100x < 390 ) //3.9V
+  {
+    if( getMicroCounter() - chargeTime >= (BAT_MAX_CHARGE_TIME_S*1000*1000) )
+      throw ERROR_TIMEOUT;
+    
+    //Turn on charging power
+    PIN_SET(GPIOC, PINC_CHGTX);
+    PIN_OUT(GPIOC, PINC_CHGTX);
+    
+    //While robot is charging, test for removal from charger
+    int offContact = 0, current = 0;
+    u32 checkTime = getMicroCounter();
+    while( getMicroCounter() - checkTime < (BAT_CHECK_INTERVAL_S*1000*1000) )
+    {
+      //Test for robot removal from charger
+      for (int i = 0; i < 64; i++) {
+        MicroWait(750);
+        current += MonitorGetCurrent();
+      } current >>= 6;
+      //ConsolePrintf("%d..", current);
+      
+      if ((offContact = current < PRESENT_CURRENT ? offContact + 1 : 0) > 10) {
+        PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
+        //ConsolePrintf("\r\n");
+        ConsolePrintf("robot off contact\r\n");
+        return;
+      }
+    }
+    //ConsolePrintf("\r\n");
+    
+    EnableChargeComms(); //switch to comm mode
+    MicroWait(500*1000); //let battery voltage settle
+    battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10);
+  }
+  
+  EnableChargeComms(); //switch to comm mode
+  try {
+    SendCommand(TEST_POWERON, 0x5A, 0, 0);  //shut down immediately
+  } catch(int e) {
+    if( e != ERROR_NO_PULSE ) //this error is expected. robot can't pulse when it's off...
+      throw e;
+  }
+}
+
+//Verify battery voltage sufficient for assembly/packout
+void BatteryCheck(void)
+{
+  //if( g_fixtureType == FIXTURE_BODY2_TEST || g_fixtureType == FIXTURE_BODY3_TEST ) {
+    //ConsolePrintf("TEST_POWERON 5s\r\n");
+    SendCommand(TEST_POWERON, 5, 0, 0); //keep robot powered for a bit longer...
+  //}
+  
+  EnableChargeComms(); //switch to comm mode
+  MicroWait(100*1000); //wait for battery voltage to stabilize
+  
+  robot_get_battVolt100x(0,0); //DEBUG: read VBat before modifying charger
+  
+  chargeEnable(false);  //disable charger, which could interfere with valid battery measurement
+  MicroWait(100*1000);
+  u16 vBat100x = robot_get_battVolt100x(0,0);
+  chargeEnable(true);   //re-enable charger
+  
+  if( vBat100x < 380 ) //3.8V
+    throw ERROR_BAT_UNDERVOLT;
 }
 
 // Turn on power until battery dead, start slamming motors!
@@ -391,34 +556,53 @@ void LifeTest(void)
 //Send a command up to the ESP to force factory revert
 void FactoryRevert(void)
 {
-  //Make sure charge comms are established (watch for robot pulses)
-  SendTestChar(-1);
-  SendTestChar(-1);
-  SendTestChar(-1);
-  
+  EnableChargeComms();
   ConsolePrintf("SendCommand(21) factory revert\n");
   SendCommand(21, 0, 0, 0);
-  
-  //Wait for comms to fail...indicates things are resetting
-  u32 start_time_us = getMicroCounter();
-  bool resetting = false;
-  while( getMicroCounter() - start_time_us < 3000000 )
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetInfoTestFunctions(void)
+{
+  static TestFunction functions[] =
   {
-    try { 
-      SendTestChar(-1);
-    } catch(int e) { 
-      resetting = true;
-    }
-    
-    if( resetting )
-      break;
-  }
-  
-  u32 time_us = getMicroCounter() - start_time_us;
-  if( resetting )
-    ConsolePrintf("Robot in reset %u.%03ums\r\n", time_us/1000, time_us%1000 );
-  else
-    ConsolePrintf("Could not detect reset\r\n");
+    InfoTest,
+    NULL
+  };
+
+  return functions;
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetPlaypenTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    PlaypenTest,
+    PlaypenWaitTest,
+    NULL
+  };
+
+  return functions;
+}
+
+// List of all functions invoked by the test, in order
+TestFunction* GetRobotTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    ButtonTest,
+    SlowMotors,
+    FastMotors,
+    RobotFixtureDropSensor,
+    BatteryCheck,
+    WriteBodyColor,
+    SpeakerTest,            // Must be last
+    NULL
+  };
+
+  return functions;
 }
 
 TestFunction* GetRechargeTestFunctions(void)
@@ -427,7 +611,6 @@ TestFunction* GetRechargeTestFunctions(void)
   {
     InfoTest,
     Recharge,
-    PlaypenWaitTest,
     NULL
   };
 
@@ -451,8 +634,11 @@ TestFunction* GetPackoutTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
+    ButtonTest,
     FastMotors,
     RobotFixtureDropSensor,
+    BatteryCheck,
+    VerifyBodyColor,
     SpeakerTest,            // Must be last
     NULL
   };
@@ -476,7 +662,6 @@ TestFunction* GetFacRevertTestFunctions(void)
 {
   static TestFunction functions[] =
   {
-    InfoTest,
     FactoryRevert,
     NULL
   };

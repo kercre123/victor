@@ -29,7 +29,12 @@ namespace Anki {
       
       /// Process factory test mode messages
       void Process_EnterFactoryTestMode(const RobotInterface::EnterFactoryTestMode& msg);
-    }
+
+      /// Process backpack button messages
+      void Process_ButtonState(bool isDepressed);
+
+      void SetBodySN(uint32_t sn);
+}
   }
 }
 

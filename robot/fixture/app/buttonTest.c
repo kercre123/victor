@@ -40,12 +40,14 @@ static __inline bool _isRobot(void) {
   return  (g_fixtureType == FIXTURE_ROBOT1_TEST) ||
           (g_fixtureType == FIXTURE_ROBOT2_TEST) ||
           (g_fixtureType == FIXTURE_ROBOT3_TEST) ||
+          (g_fixtureType == FIXTURE_PACKOUT_TEST) ||
           (g_fixtureType == FIXTURE_COZ187_TEST);
 }
 
-//true for backpack test (motor2h)
+//true for backpack test (motor2h or 3h)
 static __inline bool _isBackpack(void) {
-  return g_fixtureType == FIXTURE_MOTOR2H_TEST;
+  return  (g_fixtureType == FIXTURE_MOTOR2H_TEST) ||
+          (g_fixtureType == FIXTURE_MOTOR3H_TEST);
 }
 
 //LED Bitfield Defines. bit<n> is arg map -> LEDOn(n).

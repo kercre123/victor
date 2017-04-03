@@ -169,7 +169,10 @@ namespace UpgradeController {
     json[VERSION_INFO_MAX_LENGTH] = 0; // Force NULL termination
     static const char* VERSION_TAG = "\"version\": ";
     const char* versionStr = os_strstr(json, VERSION_TAG);
-    if (versionStr) COZMO_VERSION_ID = atoi(versionStr + os_strlen(VERSION_TAG));
+    if (versionStr) {
+      COZMO_VERSION_ID = atoi(versionStr + os_strlen(VERSION_TAG));
+      os_printf("version str '%s' = %d\r\n",versionStr+os_strlen(VERSION_TAG), COZMO_VERSION_ID);
+    }
     else COZMO_VERSION_ID = -2;
     static const char* TIME_TAG = "\"time\": ";
     const char* timeStr = os_strstr(json, TIME_TAG);
@@ -1237,7 +1240,7 @@ namespace UpgradeController {
   const u32* GetVersionInfo()
   {
     #if FACTORY_USE_STATIC_VERSION_DATA
-    static const char FACTORY_STATIC_VERSION_DATA[] ICACHE_RODATA_ATTR STORE_ATTR = "{\"build\": \"FACTORY\", \"version\": \"F1.5.1\", \"date\": \"Tue Jan 10 17:29:46 2017\", \"time\": 1484098209}\0\0\0\0\0\0\0\0"; //< Ensure at u32 null padding
+    static const char FACTORY_STATIC_VERSION_DATA[] ICACHE_RODATA_ATTR STORE_ATTR = "{\"build\": \"FACTORY\", \"version\": 10500, \"date\": \"Thu Mar 30 21:50:41 2017\", \"time\": 1490910708}\0\0\0\0\0\0\0\0"; //< Ensure at u32 null padding
     return reinterpret_cast<const u32*>(FACTORY_STATIC_VERSION_DATA);
     #else
     const uint32_t VERSION_INFO_ADDR = (APPLICATION_A_SECTOR * SECTOR_SIZE) + ESP_FW_MAX_SIZE - 0x800; // Memory offset of version info for both apps

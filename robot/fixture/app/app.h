@@ -38,5 +38,9 @@ extern u32              g_dateCode;
 extern TestFunction* GetDebugTestFunctions(void);
 extern bool DebugTestDetectDevice(void);
 
+#ifndef STATIC_ASSERT
+#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
+#endif
+
 #endif
 

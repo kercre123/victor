@@ -89,8 +89,8 @@ void HeadlessBoot(void)
   ConsolePrintf("ok in %dms\r\n", (getMicroCounter()-startTime)/1000 );
   
   //Delay to make sure syscon is fully booted
-  ConsolePrintf("syscon boot delay 1s\r\n");
-  MicroWait(1000*1000);
+  ConsolePrintf("syscon boot delay\r\n");
+  MicroWait(300*1000);
 }
 
 // The real (mass production) numbers are: 8 ticks/revolution, 28.5mm diameter, 172.3:1 
@@ -254,6 +254,70 @@ static void SleepCurrent(void)
   DisableBAT();
 }
 
+// Test for the backpack btn pull-up resistor
+static void TestBackpackPullup(void)
+{
+  u32 rtc_ticks;
+  
+  /*/Debug
+  {
+    SendCommand(TEST_POWERON, 0xA5, 0, 0);
+    ConsolePrintf("backpack pull rtc ticks: \r\n");
+    for( int x=0; x<50; x++ ) {
+      rtc_ticks = 9999;
+      SendCommand(TEST_BACKPULLUP, 0, sizeof(rtc_ticks), (u8*)&rtc_ticks);
+      ConsolePrintf("PU.TICKS %03d %d \r\n", x+1, rtc_ticks);
+      MicroWait(100*1000);
+    } //ConsolePrintf("\r\n");
+  }//-*/
+  
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_BACKPULLUP)...") );
+  SendCommand(TEST_BACKPULLUP, 0, sizeof(rtc_ticks), (u8*)&rtc_ticks);
+  DBG_VERBOSE( ConsolePrintf("ok\r\n") );
+  
+  //each RTC tick is ~30.6us
+  ConsolePrintf("backpack pull-up rise time: ~%dus\r\n", rtc_ticks*30);
+  if (rtc_ticks > 1) //should be 0. allow some timing jitter.
+    throw ERROR_BODY_BACKPACK_PULL;
+}
+
+// Test the tread (L-R) encoders
+static void TestTreadEncoders(void)
+{
+  struct {
+    u8 enc_left_on;
+    u8 enc_left_off;
+    u8 enc_right_on;
+    u8 enc_right_off;
+  } dat;
+  
+  /*/Debug
+  {
+  SendCommand(TEST_POWERON, 0xA5, 0, 0);
+    ConsolePrintf("tread encoders: \r\n");
+    for( int x=0; x<50; x++ ) {
+      dat.enc_left_on   = 9;
+      dat.enc_left_off  = 9;
+      dat.enc_right_on  = 9;
+      dat.enc_right_off = 9;
+      SendCommand(TEST_POWERON, 0xA5, 0, 0);
+      SendCommand(TEST_ENCODERS, 0, sizeof(dat), (u8*)&dat);
+      ConsolePrintf("ENC %03d %d%d%d%d \r\n", x+1, dat.enc_left_on, dat.enc_left_off, dat.enc_right_on, dat.enc_right_off);
+      MicroWait(100*1000);
+    } //ConsolePrintf("\r\n");
+  }//-*/
+  
+  DBG_VERBOSE( ConsolePrintf("DBG: SendCommand(TEST_ENCODERS)...") );
+  SendCommand(TEST_ENCODERS, 0, sizeof(dat), (u8*)&dat);
+  DBG_VERBOSE( ConsolePrintf("ok\r\n") );
+  
+  ConsolePrintf("tread-encoders,%d,%d,%d,%d\r\n", dat.enc_left_on, dat.enc_left_off, dat.enc_right_on, dat.enc_right_off);
+  if( !dat.enc_left_on || dat.enc_left_off )
+    throw ERROR_BODY_TREAD_ENC_LEFT;
+  if( !dat.enc_right_on || dat.enc_right_off )
+    throw ERROR_BODY_TREAD_ENC_RIGHT;
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
@@ -261,6 +325,8 @@ TestFunction* GetBody1TestFunctions(void)
   {
     BodyNRF51,
     HeadlessBoot,
+    TestBackpackPullup,
+    TestTreadEncoders,
     SleepCurrent,
     NULL
   };
@@ -273,6 +339,7 @@ TestFunction* GetBody2TestFunctions(void)
   {
     BodyNRF51,
     HeadlessBoot,
+    TestBackpackPullup,
     DropLeakage,
     SleepCurrent,
     NULL
@@ -280,14 +347,18 @@ TestFunction* GetBody2TestFunctions(void)
   
   return functions;
 };
+
+extern void BatteryCheck(void);
 TestFunction* GetBody3TestFunctions(void)
 {
   static TestFunction functions[] =
   {
     BodyNRF51,
     HeadlessBoot,
+    TestBackpackPullup,
     BodyMotor,
     DropLeakage,
+    BatteryCheck,
     NULL
   };
 

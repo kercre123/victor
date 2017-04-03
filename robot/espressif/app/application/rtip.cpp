@@ -103,6 +103,11 @@ void Update()
         }
       }
     }
+    else {
+      if (msg.tag == RobotInterface::RobotToEngine::Tag_backpackButton) {
+        Messages::SniffMessage(*((RobotInterface::RobotToEngine*)&msg));
+      }
+    }
     size = i2spiGetCladMessage(buffer);
   }
   

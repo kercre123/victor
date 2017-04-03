@@ -38,10 +38,10 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     HardFault_Handler
                 DCD     5                         ; Syscon version - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
                 DCD     0                         ; Body ESN
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
+                DCD     0xFFFFFFFF                ; Current Color[0]
+                DCD     0xFFFFFFFF                ; Current Color[1]
+                DCD     0xFFFFFFFF                ; Current Color[2]
+                DCD     0xFFFFFFFF                ; Current Color[3]
                 DCD     0                         ; Reserved
                 DCD     SVC_Handler
                 DCD     0                         ; Reserved
@@ -51,9 +51,9 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
 
                 DCD     EnterRecovery
 
-__Vectors_End	
+__Vectors_End
 __Vectors_Size  EQU     __Vectors_End - __Vectors
-    
+
                 AREA    |.text|, CODE, READONLY
 
 ; Reset Handler
@@ -66,19 +66,19 @@ Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
-                
+
                 MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
-                
+
                 LDR     R0, =NRF_POWER_RAMON_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1
                 STR     R2, [R0]
-                
+
                 LDR     R0, =NRF_POWER_RAMONB_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1
                 STR     R2, [R0]
-                
+
                 LDR     R0, =SystemInit
                 BLX     R0
                 LDR     R0, =__main
@@ -168,7 +168,7 @@ SWI5_IRQHandler
 ; User Initial Stack & Heap
 
                 IF      :DEF:__MICROLIB
-                
+
                 EXPORT  __initial_sp
                 EXPORT  __heap_base
                 EXPORT  __heap_limit

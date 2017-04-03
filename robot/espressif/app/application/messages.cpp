@@ -37,6 +37,21 @@ namespace Anki {
       {
         RobotInterface::SendMessage(msg);
       }
+
+      void SniffMessage(RobotInterface::RobotToEngine& msg)
+      {
+        switch (msg.tag)
+        {
+          case RobotInterface::RobotToEngine::Tag_backpackButton:
+          {
+            Factory::Process_ButtonState(msg.backpackButton.depressed);
+            break;
+          }
+          default:
+            //we just don't care.
+            break;
+        }
+      }
       
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
@@ -154,6 +169,10 @@ namespace Anki {
             msg.setBodyRadioMode.radioMode = BODY_LOW_POWER_OPERATING_MODE;
             RTIP::SendMessage(msg);
             break;
+          }
+          case RobotInterface::EngineToRobot::Tag_bodySerialNum:
+          {
+            Factory::SetBodySN(msg.bodySerialNum.sn);
           }
           default:
           {
