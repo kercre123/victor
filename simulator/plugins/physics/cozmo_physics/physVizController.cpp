@@ -372,6 +372,8 @@ void PhysVizController::Cleanup()
   _objectMap.clear();
   _quadMap.clear();
   _colorMap.clear();
+  _simpleQuadVectorMapReady.clear();
+  _simpleQuadVectorMapIncoming.clear();
 }
 
 void PhysVizController::ProcessMessage(VizInterface::MessageViz&& message)
