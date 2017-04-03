@@ -100,7 +100,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArr
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           true}
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           true}
 };
 
 

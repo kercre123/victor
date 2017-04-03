@@ -47,7 +47,8 @@ namespace Anki {
         {ReactionTrigger::RobotShaken,                  false},
         {ReactionTrigger::Sparked,                      false},
         {ReactionTrigger::StackOfCubesInitialDetection, false},
-        {ReactionTrigger::UnexpectedMovement,           false}
+        {ReactionTrigger::UnexpectedMovement,           false},
+        {ReactionTrigger::VC,                           false}
       };
       
       static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSimTestArray),

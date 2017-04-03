@@ -76,7 +76,8 @@ namespace Anki {
       {ReactionTrigger::RobotShaken,                  false},
       {ReactionTrigger::Sparked,                      false},
       {ReactionTrigger::StackOfCubesInitialDetection, false},
-      {ReactionTrigger::UnexpectedMovement,           false}
+      {ReactionTrigger::UnexpectedMovement,           false},
+      {ReactionTrigger::VC,                           false}
     };
     static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectObjectPositionTriggerArray),
                   "Reaction triggers duplicate or non-sequential");
@@ -105,7 +106,8 @@ namespace Anki {
       {ReactionTrigger::RobotShaken,                  false},
       {ReactionTrigger::Sparked,                      false},
       {ReactionTrigger::StackOfCubesInitialDetection, false},
-      {ReactionTrigger::UnexpectedMovement,           true}
+      {ReactionTrigger::UnexpectedMovement,           true},
+      {ReactionTrigger::VC,                           false}
     };
       
     static_assert(ReactionTriggerHelpers::IsSequentialArray(kFacePlantDisablesArray),

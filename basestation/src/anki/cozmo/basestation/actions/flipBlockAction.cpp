@@ -65,7 +65,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           true}
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableForFlip),

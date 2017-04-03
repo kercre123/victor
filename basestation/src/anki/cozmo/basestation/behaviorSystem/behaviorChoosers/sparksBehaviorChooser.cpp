@@ -67,7 +67,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooser
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false}
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersSparksChooserArray),
@@ -97,7 +98,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimatio
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false}
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFinalAnimationArray),

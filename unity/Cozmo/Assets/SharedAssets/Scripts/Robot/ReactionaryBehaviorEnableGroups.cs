@@ -35,7 +35,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: true,
     stackOfCubesInitialDetection: true,
-    unexpectedMovement: true
+    unexpectedMovement: true,
+    vc: true
   );
 
   // triggers that are disabled during minigames. some activities/games will choose to override this.
@@ -61,7 +62,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: true,
     stackOfCubesInitialDetection: true,
-    unexpectedMovement: false
+    unexpectedMovement: false,
+    vc: true
   );
 
   // cube pounce overrides the default minigame trigger disables with this
@@ -87,7 +89,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: true,
     stackOfCubesInitialDetection: true,
-    unexpectedMovement: true
+    unexpectedMovement: true,
+    vc: true
   );
 
   // drone mode overrides the default minigame trigger disables with this
@@ -113,7 +116,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: true,
     stackOfCubesInitialDetection: true,
-    unexpectedMovement: false
+    unexpectedMovement: false,
+    vc: true
   );
 
   // face enrollment overrides the default minigame trigger disables with this
@@ -139,7 +143,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: false
+    unexpectedMovement: false,
+    vc: true
   );
 
   // memory match overrides the default minigame trigger disables with this
@@ -165,7 +170,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: true,
     stackOfCubesInitialDetection: true,
-    unexpectedMovement: true
+    unexpectedMovement: true,
+    vc: true
   );
 
   // cozmo says overrides the default minigame trigger disables with this
@@ -191,7 +197,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: true
+    unexpectedMovement: true,
+    vc: true
   );
 
   // additional trigger disables in idle drive states for drone mode
@@ -217,7 +224,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: true
+    unexpectedMovement: true,
+    vc: true
   );
 
   // additional trigger disables for drone mode when driving
@@ -243,7 +251,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: true
+    unexpectedMovement: true,
+    vc: true
   );
 
   // special speed tap end of round trigger disables
@@ -269,7 +278,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: false
+    unexpectedMovement: false,
+    vc: true
   );
 
   public static Anki.Cozmo.AllTriggersConsidered kOnboardingHomeTriggers = new Anki.Cozmo.AllTriggersConsidered(
@@ -294,7 +304,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: false
+    unexpectedMovement: false,
+    vc: true
   );
 
   public static Anki.Cozmo.AllTriggersConsidered kOnboardingShowCubeStageTriggers = new Anki.Cozmo.AllTriggersConsidered(
@@ -319,7 +330,8 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotShaken: false,
     sparked: false,
     stackOfCubesInitialDetection: false,
-    unexpectedMovement: false
+    unexpectedMovement: false,
+    vc: true
   );
 
 }

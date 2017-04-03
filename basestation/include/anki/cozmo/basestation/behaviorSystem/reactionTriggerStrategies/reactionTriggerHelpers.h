@@ -37,6 +37,7 @@
   {ReactionTrigger::Sparked,                      triggers.sparked},  \
   {ReactionTrigger::StackOfCubesInitialDetection, triggers.stackOfCubesInitialDetection},  \
   {ReactionTrigger::UnexpectedMovement,           triggers.unexpectedMovement},  \
+  {ReactionTrigger::VC,                           triggers.vc},  \
 }
 
 
@@ -238,6 +239,13 @@ static void EnsureFullReactionArrayConversionsValid(const FullReactionArray& rea
                    "EnsureFullReactionArrayConversionsValid.UnexpectedMovement");
         break;
       }
+      case ReactionTrigger::VC:
+      {
+        DEV_ASSERT((triggersAffected.vc == reactionEntry.Value()) &&
+                   (triggersAffected.vc == commutativeEntry.Value()),
+                   "EnsureFullReactionArrayConversionsValid.VoiceCommand");
+        break;
+      }
       case ReactionTrigger::Count:
       case ReactionTrigger::NoneTrigger:
       {
@@ -276,7 +284,8 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotShaken)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::Sparked)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::StackOfCubesInitialDetection)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::UnexpectedMovement)].Value());
+       reactions[Util::EnumToUnderlying(ReactionTrigger::UnexpectedMovement)].Value(),
+       reactions[Util::EnumToUnderlying(ReactionTrigger::VC)].Value());
   if(ANKI_DEV_CHEATS){
     EnsureFullReactionArrayConversionsValid(reactions, affected);
   }
@@ -309,6 +318,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::StackOfCubesInitialDetection, true},
   {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           true},
 };
   
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectAllArray),

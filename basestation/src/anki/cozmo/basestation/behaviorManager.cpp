@@ -440,12 +440,17 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
       IReactionTriggerStrategy* strategy = ReactionTriggerStrategyFactory::CreateReactionTriggerStrategy(_robot, triggerMap, trigger);
       IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
       
-      
-      DEV_ASSERT_MSG(behavior != nullptr, "BehaviorManager.InitReactionTriggerMap.BehaviorNullptr Behavior name",
-                     "Behavior name %s returned nullptr from factory", behaviorName.c_str());
-      DEV_ASSERT_MSG(strategy != nullptr, "BehaviorManager.InitReactionTriggerMap.StrategyNullptr",
-                     "Reaction trigger string %s returned nullptr", reactionTriggerString.c_str());
-      
+      // If voice recognition is turned off don't bother with the below asserts when we get to the VC reaction trigger
+#if (VOICE_RECOG_PROVIDER == VOICE_RECOG_NONE)
+      if (trigger != ReactionTrigger::VC)
+#endif // (VOICE_RECOG_PROVIDER == VOICE_RECOG_NONE)
+      {
+        DEV_ASSERT_MSG(behavior != nullptr, "BehaviorManager.InitReactionTriggerMap.BehaviorNullptr Behavior name",
+                       "Behavior name %s returned nullptr from factory", behaviorName.c_str());
+        DEV_ASSERT_MSG(strategy != nullptr, "BehaviorManager.InitReactionTriggerMap.StrategyNullptr",
+                       "Reaction trigger string %s returned nullptr", reactionTriggerString.c_str());
+      }
+        
       if(strategy != nullptr && behavior != nullptr){
         PRINT_CH_INFO("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
                          "Strategy %s maps to behavior %s",
@@ -462,10 +467,16 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
     }
   }
   
+  // If voice recognition is turned off, we won't have a config for the voice command reaction trigger
+#if (VOICE_RECOG_PROVIDER == VOICE_RECOG_NONE)
+  constexpr auto numReactionTriggers = (Util::EnumToUnderlying(ReactionTrigger::Count)) - 1;
+#else
+  constexpr auto numReactionTriggers = Util::EnumToUnderlying(ReactionTrigger::Count);
+#endif // (VOICE_RECOG_PROVIDER == VOICE_RECOG_NONE)
+  
   // Currently we load in null configs for tests - so this asserts that if you
   // specify any reaction triggers, you have to specify them all.
-  DEV_ASSERT(config.isNull() ||
-             (Util::EnumToUnderlying(ReactionTrigger::Count) == _reactionTriggerMap.size()),
+  DEV_ASSERT(config.isNull() || (numReactionTriggers == _reactionTriggerMap.size()),
              "BehaviorManager.InitReactionTriggerMap.NoStrategiesAddedForAReactionTrigger");
   
   return RESULT_OK;

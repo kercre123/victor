@@ -64,7 +64,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kOnboardingTriggerAffectedAr
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false}
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           true}
 };
   
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kOnboardingTriggerAffectedArray),

@@ -52,7 +52,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPutDownBlockA
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false}
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPutDownBlockArray),

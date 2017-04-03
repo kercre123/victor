@@ -81,7 +81,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kKnockOverCubesAffectedArray
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false}
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kKnockOverCubesAffectedArray),
@@ -110,7 +111,8 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPreparingKnoc
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false}
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPreparingKnockOverArray),

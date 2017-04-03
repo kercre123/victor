@@ -30,6 +30,7 @@ enum uint_8 ReactionTrigger {
   Sparked,
   StackOfCubesInitialDetection,
   UnexpectedMovement,
+  VC,
 
   Count,     // flag for end of mandatory declaration when enabling/disabling triggers
   NoneTrigger // Named differently to not conflict with the Python keyword
@@ -58,7 +59,8 @@ no_default_constructor structure AllTriggersConsidered {
   bool robotShaken,
   bool sparked,
   bool stackOfCubesInitialDetection,
-  bool unexpectedMovement
+  bool unexpectedMovement,
+  bool vc
 }
 
 
