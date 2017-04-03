@@ -286,19 +286,19 @@ void RobotToEngineImplMessaging::HandleRobotSetHeadID(const AnkiEvent<RobotInter
   ANKI_CPU_PROFILE("Robot::HandleRobotSetHeadID");
   
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
-  const auto model = payload.modelID;
+  const auto hwRev  = payload.hwRevision;
   const auto headID = payload.robotID;
   
   // Set DAS Global on all messages
   char string_id[32] = {};
-  snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", model, headID);
+  snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", hwRev, headID);
   Anki::Util::sSetGlobal(DGROUP, string_id);
   
   // This should be definition always have a phys ID
   Anki::Util::sEvent("robot.handle_robot_set_head_id", {{DDATA,string_id}}, string_id);
   
   robot->SetHeadSerialNumber(headID);
-  robot->SetModelNumber(model);
+  robot->SetModelNumber(hwRev);
 }
   
 void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

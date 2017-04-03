@@ -12,6 +12,7 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 #include "driver/crash.h"
+#include "driver/factoryData.h"  
 }
 #include "rtip.h"
 #include "face.h"
@@ -90,7 +91,7 @@ void RadioConnectionStateMachineUpdate()
       {
         RobotInterface::RobotAvailable idMsg;
         idMsg.robotID = getSerialNumber();
-        idMsg.modelID = getModelNumber();
+        idMsg.hwRevision = getHardwareRevision();
         if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
         break;
       }
@@ -145,7 +146,7 @@ void RadioConnectionStateMachineUpdate()
       }
       case 7:
       {
-        AnkiWarn( 1203, "hardware.model", 632, "Model 1.%d", 1, getModelNumber()&0xFF);
+        AnkiWarn( 1203, "hardware.revision", 632, "Hardware 1.%d", 1, getHardwareRevision()&0xFF);
         doRTConnectPhase++;
         break;
       }

@@ -823,6 +823,9 @@ namespace Anki {
       void Process_bodyStorageContents(Anki::Cozmo::BodyStorageContents const&) {
         // Handled on the Espressif
       }
+      void Process_bodySerialNum(Anki::Cozmo::RobotInterface::BodySerialNumber const&) {
+        // For espressif only
+      }
 
       void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
       {
