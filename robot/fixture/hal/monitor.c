@@ -162,23 +162,17 @@ void InitMonitor(void)
   PIN_SET(GPIOB, GPIOB_SCL);
   
   // Setup the charge contact calibration register
-  // XXX: This is likely wrong for Cozmo testfix, but everything else is using it right now
-  I2C_Send16(CHARGE_CONTACT_ADDRESS, 5, 0x75A5);  // Setup by TI's app... LSB = 20u
+  I2C_Send16(CHARGE_CONTACT_ADDRESS, 0, 5 + (1<<3)); // Measure current only, 10-bit (150uS), +/- 40mV (2A @ 0.02 ohm) full-scale
+  I2C_Send16(CHARGE_CONTACT_ADDRESS, 5, 0);          // No calibration - we can do our own math
   
   // Setup the battery calibration registers
   I2C_Send16(BATTERY_ADDRESS, 0, 5 + (1<<3)); // Measure current only, 10-bit (150uS), +/- 40mV (2A @ 0.02 ohm) full-scale
   I2C_Send16(BATTERY_ADDRESS, 5, 0);          // No calibration - we can do our own math
 }
 
-s32 ChargerGetCurrent(void)
+//Read the current in mA
+s32 ChargerGetCurrentMa(void)
 {
-  static bool init = false;
-  if (!init)
-  {
-    I2C_Send16(CHARGE_CONTACT_ADDRESS, 0, 5 + (1<<3)); // Measure current only, 10-bit (150uS), +/- 40mV (2A @ 0.02 ohm) full-scale
-    I2C_Send16(CHARGE_CONTACT_ADDRESS, 5, 0);          // No calibration - we can do our own math
-    init = true;
-  }
   I2C_Send8(CHARGE_CONTACT_ADDRESS, 1);  // Read shunt register directly - 4000 = 40mV or 2A
   s16 value = I2C_Receive16(CHARGE_CONTACT_ADDRESS);
   return (s32)value/2;  // 4000 = 2000mA, so easy to convert to mA 
@@ -191,14 +185,7 @@ s32 BatGetCurrent(void)
   return (s32)value/2;  // 4000 = 2000mA, so easy to convert to mA 
 }
 
-s32 MonitorGetCurrent(void)
-{
-  I2C_Send8(CHARGE_CONTACT_ADDRESS, 4);
-  s16 value = I2C_Receive16(CHARGE_CONTACT_ADDRESS);
-  return (s32)value * 20;
-}
-
-s32 MonitorGetVoltage(void)
+s32 ChargerGetVoltage(void)
 {
   I2C_Send8(CHARGE_CONTACT_ADDRESS, 2);
   s16 value = I2C_Receive16(CHARGE_CONTACT_ADDRESS);

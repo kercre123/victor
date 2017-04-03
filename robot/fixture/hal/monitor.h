@@ -7,14 +7,11 @@
 
 // Initialize the monitors and I2C clock
 void InitMonitor(void);
-
-// Get the current in uA
-s32 MonitorGetCurrent(void);
-
-// Get the voltage in mV
-s32 MonitorGetVoltage(void);
-s32 BatGetCurrent(void);
-s32 ChargerGetCurrent(void);
 void MonitorSetDoubleSpeed(void);
+
+s32 ChargerGetVoltage(void);  //Get the voltage in mV
+s32 ChargerGetCurrentMa(void);  //measured current [mA]
+
+s32 BatGetCurrent(void);
 
 #endif
