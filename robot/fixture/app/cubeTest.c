@@ -119,7 +119,7 @@ void CubePOST(void)
   while (getMicroCounter() - start < CUBE_TEST_TIME)
   {
     if (g_fixtureType == FIXTURE_CHARGER_TEST)
-      current = ChargerGetCurrent() * 5;   // Because charger runs at 5x the voltage
+      current = ChargerGetCurrentMa() * 5;   // Because charger runs at 5x the voltage
     else
       current = BatGetCurrent();
     buf[sample&MASK] = current;

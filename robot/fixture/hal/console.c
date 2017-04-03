@@ -347,13 +347,13 @@ static void SetDateCode(void)
 
 static void TestCurrent(void)
 {
-  s32 v = MonitorGetCurrent();
+  s32 v = ChargerGetCurrentMa();
   ConsolePrintf("I = %i, %X\r\n", v, v);
 }
 
 static void TestVoltage(void)
 {
-  s32 v = MonitorGetVoltage();
+  s32 v = ChargerGetVoltage();
   ConsolePrintf("V = %i, %X\r\n", v, v);
 }
 

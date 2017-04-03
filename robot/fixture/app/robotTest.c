@@ -24,8 +24,8 @@ using namespace Anki::Cozmo::RobotInterface;
 
 // XXX: Fix this if you ever fix current monitoring units
 // Robot is up and running - usually around 48K, rebooting at 32K - what a mess!
-#define BOOTED_CURRENT  40000
-#define PRESENT_CURRENT 1000
+#define BOOTED_CURRENT_MA   137   //OLD: 40000 (mis-calibrated 'uA' value) / 290 (scale factor to mA)
+#define PRESENT_CURRENT_MA  3     //OLD: 1000  (mis-calibrated 'uA' value) / 290 (scale factor to mA)
 
 //Bodycolors
 enum {
@@ -39,6 +39,17 @@ enum {
 //buttonTest.c
 extern void ButtonTest(void);
 
+//get averaged/LPF current measurement
+static int mGetCurrentMa(void)
+{
+  int current_ma = 0;
+  for (int i = 0; i < 64; i++) {
+    MicroWait(750);
+    current_ma += ChargerGetCurrentMa();
+  }
+  return (current_ma >> 6);
+}
+
 // Return true if device is detected on contacts
 bool RobotDetect(void)
 {
@@ -49,10 +60,10 @@ bool RobotDetect(void)
   MicroWait(500);
   
   // Hysteresis for shut-down robots 
-  int now = MonitorGetCurrent();
-  if (g_isDevicePresent && now > PRESENT_CURRENT)
+  int now = ChargerGetCurrentMa();
+  if (g_isDevicePresent && now > PRESENT_CURRENT_MA)
     return true;
-  if (now > BOOTED_CURRENT)
+  if (now > BOOTED_CURRENT_MA)
     return true;
   return false;
 }
@@ -191,22 +202,10 @@ void PlaypenWaitTest(void)
   PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
 
-  while (1)
-  {
-    int current = 0;
-    for (int i = 0; i < 64; i++)
-    {
-      MicroWait(750);
-      current += MonitorGetCurrent();
-    }
-    current >>= 6;
-    ConsolePrintf("%d..", current);
-    if (current < PRESENT_CURRENT)
-      offContact++;
-    else {
-      offContact = 0;
-    }
-    if (offContact > 10)
+  while (1) {
+    int current_ma = mGetCurrentMa();
+    ConsolePrintf("%d..", current_ma);
+    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10)
       return;
   }
 }
@@ -452,10 +451,10 @@ u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
   
   //convert raw value to 100x voltage - centivolts
   //float batteryVoltage = ((float)robot.vBat)/65536.0f; //<--this is how esp converts raw spine data
-  u16 vBat100x     = (robot.vBat * 100) / 65536;
-  u16 vBatFilt100x = (robot.vBatFiltered * 100) / 65536;
-  u16 vExt100x     = (robot.vExt * 100) / 65536;
-  u16 vExtFilt100x = (robot.vExtFiltered * 100) / 65536;
+  u16 vBat100x     = (robot.vBat * 100)         >> 16;// / 65536;
+  u16 vBatFilt100x = (robot.vBatFiltered * 100) >> 16;// / 65536;
+  u16 vExt100x     = (robot.vExt * 100)         >> 16;// / 65536;
+  u16 vExtFilt100x = (robot.vExtFiltered * 100) >> 16;// / 65536;
   ConsolePrintf("vBat,%03d,%03d,vExt,%03d,%03d\r\n", vBat100x, vBatFilt100x, vExt100x, vExtFilt100x );
   
   return vBatFilt100x; //return filtered vBat
@@ -482,25 +481,15 @@ void Recharge(void)
     PIN_OUT(GPIOC, PINC_CHGTX);
     
     //While robot is charging, test for removal from charger
-    int offContact = 0, current = 0;
+    int offContact = 0;
     u32 checkTime = getMicroCounter();
-    while( getMicroCounter() - checkTime < (BAT_CHECK_INTERVAL_S*1000*1000) )
-    {
-      //Test for robot removal from charger
-      for (int i = 0; i < 64; i++) {
-        MicroWait(750);
-        current += MonitorGetCurrent();
-      } current >>= 6;
-      //ConsolePrintf("%d..", current);
-      
-      if ((offContact = current < PRESENT_CURRENT ? offContact + 1 : 0) > 10) {
+    while( getMicroCounter() - checkTime < (BAT_CHECK_INTERVAL_S*1000*1000) ) {
+      if ((offContact = mGetCurrentMa() < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10) {
         PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
-        //ConsolePrintf("\r\n");
         ConsolePrintf("robot off contact\r\n");
         return;
       }
     }
-    //ConsolePrintf("\r\n");
     
     EnableChargeComms(); //switch to comm mode
     MicroWait(500*1000); //let battery voltage settle
