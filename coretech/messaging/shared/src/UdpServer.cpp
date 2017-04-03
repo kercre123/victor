@@ -101,6 +101,7 @@ bool UdpServer::StartListening(const unsigned short port)
 
 void UdpServer::StopListening() 
 {
+  client_list.clear();
   if (socketfd >= 0) {
     DEBUG_UDP_SERVER("UdpServer: Stopping server listening on socket " << socketfd);
     

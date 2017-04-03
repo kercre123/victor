@@ -77,6 +77,7 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessageEnd, this, std::placeholders::_1));
 
 
+  _server.StopListening();
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
 
   _pathMap.clear();

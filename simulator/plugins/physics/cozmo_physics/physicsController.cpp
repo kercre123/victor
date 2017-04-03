@@ -13,6 +13,7 @@ void PhysicsController::Init()
   Subscribe(PhysicsInterface::MessageSimPhysicsTag::ApplyForce,
     std::bind(&PhysicsController::ProcessApplyForceMessage, this, std::placeholders::_1));
 
+  _server.StopListening();
   _server.StartListening((uint16_t)VizConstants::WEBOTS_PHYSICS_CONTROLLER_PORT);
 }
 
