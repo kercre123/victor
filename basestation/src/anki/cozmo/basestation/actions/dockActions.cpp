@@ -522,6 +522,12 @@ namespace Anki {
     {
       _waitToVerifyTimeSecs = -1.f;
 
+      // Ensure we don't lock reactions twice on a reset/retry
+      _robot.GetBehaviorManager().RemoveDisableReactionsLock(kDisableReactionsID);
+      if(_reactionTriggersToSuppress != nullptr){
+        _robot.GetBehaviorManager().RemoveDisableReactionsLock(kReactionsToSuppressID);
+      }
+      
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_dockObjectID));
       
       if(dockObject == nullptr)
