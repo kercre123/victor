@@ -310,7 +310,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
           // queue turn in place after the move head down
           _turnInPlaceResult = ActionResult::RUNNING;
-          SendTurnInPlace(targetAngle, M_PI_F, 500.0f, true, QueueActionPosition::AT_END); // Absolute turn, put at end of action queue.
+          SendTurnInPlace(targetAngle, M_PI_F, 500.0f, POINT_TURN_ANGLE_TOL, true, QueueActionPosition::AT_END); // Absolute turn, put at end of action queue.
           
           SET_STATE(TurnToObject2);
         }        

@@ -542,6 +542,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnInPlac
   TurnInPlaceAction* action = new TurnInPlaceAction(robot, msg.angle_rad, msg.isAbsolute);
   action->SetMaxSpeed(msg.speed_rad_per_sec);
   action->SetAccel(msg.accel_rad_per_sec2);
+  action->SetTolerance(msg.tol_rad);
   return action;
 }
 

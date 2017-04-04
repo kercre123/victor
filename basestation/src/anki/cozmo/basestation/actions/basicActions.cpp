@@ -96,10 +96,16 @@ namespace Anki {
       
       // NOTE: can't be lower than what is used internally on the robot
       if( _angleTolerance.ToFloat() < POINT_TURN_ANGLE_TOL ) {
-        PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
-                            "Tried to set tolerance of %fdeg, min is %f",
-                            _angleTolerance.getDegrees(),
-                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+        if (Util::IsNear(_angleTolerance.ToFloat(), 0.f)) {
+          PRINT_CH_INFO("Actions", "TurnInPlaceAction.SetTolerance.UseDefault",
+                        "Tolerance of zero is treated as use default tolerance %f deg",
+                        RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+        } else {
+          PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
+                              "Tried to set tolerance of %fdeg, min is %f",
+                              _angleTolerance.getDegrees(),
+                              RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+        }
         _angleTolerance = POINT_TURN_ANGLE_TOL;
       }
     }

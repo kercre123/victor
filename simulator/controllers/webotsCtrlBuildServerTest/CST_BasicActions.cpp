@@ -378,7 +378,7 @@ namespace Anki {
                                                 NEAR(_angularDistTraversed_deg, -540.f, 10.f))
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
-            SendTurnInPlace(DEG_TO_RAD(180.f), DEG_TO_RAD(150), 0, true);
+            SendTurnInPlace(DEG_TO_RAD(180.f), DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);
             SET_STATE(TurnAbsolute_0);
           }
           break;
@@ -392,7 +392,7 @@ namespace Anki {
                                                 GetRobotPose().GetRotation().GetAngleAroundZaxis().IsNear(DEG_TO_RAD(180.f), DEG_TO_RAD(10.f)))
           {
             StartingAction(RobotActionType::TURN_IN_PLACE);
-            SendTurnInPlace(0.f, DEG_TO_RAD(150), 0, true);
+            SendTurnInPlace(0.f, DEG_TO_RAD(150), 0, POINT_TURN_ANGLE_TOL, true);
             SET_STATE(TestDone);
           }
           break;

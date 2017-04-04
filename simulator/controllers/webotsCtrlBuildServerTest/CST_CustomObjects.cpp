@@ -202,7 +202,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         const bool kIsParallel = true;
         const QueueActionPosition kPosition = QueueActionPosition::NOW;
         const std::vector<RobotActionUnion> kActions{
-          RobotActionUnion(TurnInPlace(DEG_TO_RAD(90), 0.f, 0.f, false, kRobotID)),
+          RobotActionUnion(TurnInPlace(DEG_TO_RAD(90), 0.f, 0.f, POINT_TURN_ANGLE_TOL, false, kRobotID)),
           RobotActionUnion(SetHeadAngle(MIN_HEAD_ANGLE, 100.f, 100.f, 0.f)),
         };
         

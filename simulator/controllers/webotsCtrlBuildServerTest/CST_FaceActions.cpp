@@ -63,7 +63,7 @@ namespace Anki {
           m.robotID = 1;
           m.position = QueueActionPosition::AT_END;
           m.idTag = 2;
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, false, 1));
+          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false, 1));
           ExternalInterface::MessageGameToEngine message;
           message.Set_QueueSingleAction(m);
           SendMessage(message);
@@ -85,7 +85,7 @@ namespace Anki {
             m.robotID = 1;
             m.position = QueueActionPosition::AT_END;
             m.idTag = 3;
-            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, false, 1));
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-M_PI_F/2, DEG_TO_RAD(100), 0, POINT_TURN_ANGLE_TOL, false, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

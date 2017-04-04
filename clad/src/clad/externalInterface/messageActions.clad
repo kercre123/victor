@@ -354,7 +354,10 @@ message TurnInPlace {
     float_32 angle_rad, // relative mode: postive turns left negative turns right
     float_32 speed_rad_per_sec = 0.0,
     float_32 accel_rad_per_sec2 = 0.0,
-    uint_8 isAbsolute,    // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+    float_32 tol_rad = 0.0, // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                            // Smaller values are ignored except 0 which is interpreted to mean
+                            // default tolerance of POINT_TURN_ANGLE_TOL.
+    uint_8 isAbsolute,      // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
     uint_8 robotID
 }
 

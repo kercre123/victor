@@ -935,6 +935,7 @@ namespace Anki {
     uint32_t UiGameController::SendTurnInPlace(const f32 angle_rad,
                                                const f32 speed_radPerSec,
                                                const f32 accel_radPerSec2,
+                                               const f32 tol_rad,                                               
                                                const bool isAbsolute,
                                                const QueueActionPosition queueActionPosition)
     {
@@ -943,7 +944,7 @@ namespace Anki {
       m.idTag = ++_queueActionIdTag;
       m.position = queueActionPosition;
       m.numRetries = 1;
-      m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( angle_rad, speed_radPerSec, accel_radPerSec2, isAbsolute, 1 ));
+      m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( angle_rad, speed_radPerSec, accel_radPerSec2, tol_rad, isAbsolute, 1 ));
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(m);
       SendMessage(message);

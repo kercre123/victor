@@ -137,6 +137,7 @@ protected:
   uint32_t SendTurnInPlace(const f32 angle_rad,
                            const f32 speed_radPerSec = 0.f,
                            const f32 accel_radPerSec2 = 0.f,
+                           const f32 tol_rad = 0.f,  // 0: Use default tolerance of POINT_TURN_ANGLE_TOL
                            const bool isAbsolute = false,
                            const QueueActionPosition queueActionPosition = QueueActionPosition::NOW);
   
