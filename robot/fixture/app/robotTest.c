@@ -463,15 +463,16 @@ u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
 // Charge to ~80% capacity
 void Recharge(void)
 {
-  const u32 BAT_MAX_CHARGE_TIME_S = 10*60; //max amount of time to charge
-  const u8 BAT_CHECK_INTERVAL_S = 60;     //interrupt charging this often to test battery level
+  const u32 BAT_MAX_CHARGE_TIME_S = 10*60;  //max amount of time to charge
+  const u8 BAT_CHECK_INTERVAL_S = 60;       //interrupt charging this often to test battery level
+  const u16 VBAT_CHARGE_LIMIT = 375;        //3.75V
   
   EnableChargeComms(); //switch to comm mode
   MicroWait(500*1000); //let battery voltage settle
   uint16_t battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10); //get initial battery level
   
   u32 chargeTime = getMicroCounter();
-  while( battVolt100x < 390 ) //3.9V
+  while( battVolt100x < VBAT_CHARGE_LIMIT )
   {
     if( getMicroCounter() - chargeTime >= (BAT_MAX_CHARGE_TIME_S*1000*1000) )
       throw ERROR_TIMEOUT;
@@ -480,16 +481,37 @@ void Recharge(void)
     PIN_SET(GPIOC, PINC_CHGTX);
     PIN_OUT(GPIOC, PINC_CHGTX);
     
-    //While robot is charging, test for removal from charger
-    int offContact = 0;
-    u32 checkTime = getMicroCounter();
-    while( getMicroCounter() - checkTime < (BAT_CHECK_INTERVAL_S*1000*1000) ) {
-      if ((offContact = mGetCurrentMa() < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10) {
+    //Don't just do something, stand there!
+    int offContact = 0, print_len = 0;
+    u32 displayTime = 0, chargeTime = getMicroCounter();
+    while( getMicroCounter() - chargeTime < (BAT_CHECK_INTERVAL_S*1000*1000) )
+    {
+      int current_ma = mGetCurrentMa();
+      
+      //display real-time current usage in console
+      if( getMicroCounter() - displayTime > 100*1000 )
+      {
+        //erase previous line
+        for(int x=0; x < print_len; x++ ) {
+          ConsolePutChar(0x08); //backspace
+          ConsolePutChar(0x20); //space
+          ConsolePutChar(0x08); //backspace
+        }
+        
+        const int DISP_MA_PER_CHAR = 15;
+        print_len = ConsolePrintf("%03d ", current_ma);
+        for(int x=current_ma; x>0; x -= DISP_MA_PER_CHAR)
+          print_len += ConsolePrintf("=");
+      }
+      
+      //test for robot removal
+      if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10) {
         PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
-        ConsolePrintf("robot off contact\r\n");
+        ConsolePrintf("\r\nrobot off contact\r\n");
         return;
       }
     }
+    ConsolePrintf("\r\n");
     
     EnableChargeComms(); //switch to comm mode
     MicroWait(500*1000); //let battery voltage settle
@@ -505,7 +527,7 @@ void Recharge(void)
   }
 }
 
-void _debug_robot_graph_current(void)
+void _debug_robot_graph_current(int num_samples)
 {
   //scale parameters for a kick-ass text-console bar-graph
   const int ma_max = 1000;
@@ -516,7 +538,7 @@ void _debug_robot_graph_current(void)
   PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
   
-  int offContact = 0, print_header = 0;
+  int offContact = 0, print_header = 0, cnt = 0;
   while(1) 
   {
     int current_ma = mGetCurrentMa();
@@ -543,21 +565,24 @@ void _debug_robot_graph_current(void)
       ConsolePrintf("=");
     ConsolePrintf("\r\n");
     
+    //stop at user specified limit
+    if( num_samples > 0 && ++cnt >= num_samples )
+      break;
+    
     //test for robot removal
     if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
       PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
       ConsolePrintf("robot off contact\r\n");
-      break;
+      throw ERROR_BAT_CHARGER;
     }
   }
-  
-  throw ERROR_BAT_CHARGER; //end current test mode
 }
 
-//Test body charging circuit by testing charge current draw
+//Test body charging circuit by verifying current draw
 void ChargeTest(void)
 {
-  const int CHARGING_CURRENT_THRESHOLD_MA = 750;
+  const int CHARGING_CURRENT_THRESHOLD_MA = 600;
+  const int NUM_SAMPLES = 8;
   
   EnableChargeComms(); //switch to comm mode
   uint16_t battVolt100x = robot_get_battVolt100x(5,0); //+POWERON extra 5s
@@ -567,25 +592,19 @@ void ChargeTest(void)
   PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
   
-  //_debug_robot_graph_current(); //DEBUG: graph the charging current (console bar graph)
+  //_debug_robot_graph_current(0); //DEBUG: graph the charging current (console bar graph)
   
-  int cnt = 0, avg = 0, offContact = 0;
+  int avg=0, avgCnt=0, offContact = 0;
   u32 waitTime = getMicroCounter();
   while( getMicroCounter() - waitTime < (5*1000*1000) )
   {
     int current_ma = mGetCurrentMa();
+    avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
+    avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
     
-    //average samples above the charge threshold
-    if( current_ma >= CHARGING_CURRENT_THRESHOLD_MA ) {
-      avg += current_ma;
-      if( ++cnt >= 8 ) {
-        avg >>= 3;
-        ConsolePrintf("charge-current-ma,%d\r\n", avg);
-        return; //OK - robot is consistently consuming charge current
-      }
-    } else {
-      cnt = 0; avg = 0;
-    }
+    //finish when average rises above our threshold (after minimum sample cnt)
+    if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
+      break;
     
     //error out quickly if robot removed from charge base
     if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
@@ -594,13 +613,18 @@ void ChargeTest(void)
     }
   }
   
-  ConsolePrintf("charge test timed out\r\n");
-  throw ERROR_BAT_CHARGER;
+  ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
+  if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
+  { } //OK
+  else
+    throw ERROR_BAT_CHARGER;
 }
 
 //Verify battery voltage sufficient for assembly/packout
 void BatteryCheck(void)
 {
+  const u16 VBAT_MIN_VOLTAGE = 360; //3.60V
+  
   //if( g_fixtureType == FIXTURE_BODY2_TEST || g_fixtureType == FIXTURE_BODY3_TEST ) {
     //ConsolePrintf("TEST_POWERON 5s\r\n");
     SendCommand(TEST_POWERON, 5, 0, 0); //keep robot powered for a bit longer...
@@ -612,7 +636,7 @@ void BatteryCheck(void)
   u16 vBat100x = robot_get_battVolt100x(0,0);
   chargeEnable(true);   //re-enable charger
   
-  if( vBat100x < 380 ) //3.8V
+  if( vBat100x < VBAT_MIN_VOLTAGE )
     throw ERROR_BAT_UNDERVOLT;
 }
 
