@@ -463,8 +463,8 @@ u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
 // Charge to ~80% capacity
 void Recharge(void)
 {
-  const u32 BAT_MAX_CHARGE_TIME_S = 5*60; //max amount of time to charge
-  const u8 BAT_CHECK_INTERVAL_S = 30;     //interrupt charging this often to test battery level
+  const u32 BAT_MAX_CHARGE_TIME_S = 10*60; //max amount of time to charge
+  const u8 BAT_CHECK_INTERVAL_S = 60;     //interrupt charging this often to test battery level
   
   EnableChargeComms(); //switch to comm mode
   MicroWait(500*1000); //let battery voltage settle
