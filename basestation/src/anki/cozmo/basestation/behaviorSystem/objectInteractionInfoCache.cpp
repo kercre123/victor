@@ -100,7 +100,7 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
                                              this, std::placeholders::_1));
   
   // Function for selecting the best object for rolling
-  auto rollObjectBestObjectFunc = std::bind(&ObjectInteractionInfoCache::RollBlockBestObjectFilter,
+  auto rollObjectBestObjectFunc = std::bind(&ObjectInteractionInfoCache::RollBlockBestObjectFunction,
                                             this, std::placeholders::_1);
   
   // Pop A Wheelie check
@@ -140,7 +140,7 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   };
   
   // Function for selecting the best object given distance/position in configurations
-  auto defaultBestObjectFunc = std::bind(&ObjectInteractionInfoCache::DefaultBestObjectFilter,
+  auto defaultBestObjectFunc = std::bind(&ObjectInteractionInfoCache::DefaultBestObjectFunction,
                                             this, std::placeholders::_1);
 
   
@@ -499,8 +499,9 @@ bool ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock(const ObservableOb
   
   // If the robot is carrying a block, which is not needed for the base
   // make that the TopBlock
-  if(_robot.IsCarryingObject()){
-    return _robot.GetCarryingObject() == object->GetID();
+  if(_robot.IsCarryingObject() &&
+     _robot.GetCarryingObject() == object->GetID()){
+    return true;
   }
   
   return _robot.CanPickUpObject(*object);
@@ -508,8 +509,15 @@ bool ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock(const ObservableOb
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID ObjectInteractionInfoCache::DefaultBestObjectFilter(const std::set<ObjectID>& validObjects)
+ObjectID ObjectInteractionInfoCache::DefaultBestObjectFunction(const std::set<ObjectID>& validObjects)
 {
+  // save some computation if we can
+  if(validObjects.size() == 0){
+    return {};
+  }else if(validObjects.size() == 1){
+    return *validObjects.begin();
+  }
+  
   const ObservableObject* bestObj = nullptr;
   f32 shortestDistSQ = FLT_MAX;
   f32 currentDistSQ = FLT_MAX;
@@ -520,15 +528,16 @@ ObjectID ObjectInteractionInfoCache::DefaultBestObjectFilter(const std::set<Obje
   for(const auto& stack: stacks){
     const ObservableObject* topBlock =  _robot.GetBlockWorld().GetLocatedObjectByID(
                                                      stack->GetTopBlockID());
-
-    if(ComputeDistanceSQBetween(_robot.GetPose(), topBlock->GetPose(), currentDistSQ) &&
-       (currentDistSQ < shortestDistSQ)){
-      bestObj = topBlock;
-      shortestDistSQ = currentDistSQ;
+    
+    // only use the stack object if it's a valid object
+    if(validObjects.find(topBlock->GetID()) != validObjects.end()){
+      if(ComputeDistanceSQBetween(_robot.GetPose(), topBlock->GetPose(), currentDistSQ) &&
+         (currentDistSQ < shortestDistSQ)){
+        bestObj = topBlock;
+        shortestDistSQ = currentDistSQ;
+      }
     }
   }
-  
-  
 
   for(const auto& objID: validObjects){
     const ObservableObject* obj =  _robot.GetBlockWorld().GetLocatedObjectByID(objID);
@@ -566,10 +575,10 @@ ObjectID ObjectInteractionInfoCache::DefaultBestObjectFilter(const std::set<Obje
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectID ObjectInteractionInfoCache::RollBlockBestObjectFilter(const std::set<ObjectID>& validObjects)
+ObjectID ObjectInteractionInfoCache::RollBlockBestObjectFunction(const std::set<ObjectID>& validObjects)
 {
   // Use the lowest cost object as a default
-  ObjectID lowestCostID = DefaultBestObjectFilter(validObjects);
+  ObjectID lowestCostID = DefaultBestObjectFunction(validObjects);
   const ObservableObject* lowestCostObj =  _robot.GetBlockWorld().
                                              GetLocatedObjectByID(lowestCostID);
   

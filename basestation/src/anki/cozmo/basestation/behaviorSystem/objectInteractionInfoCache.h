@@ -110,8 +110,8 @@ private:
   bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object);
   
   // Functions which return the "best" object to use given a set of valid objects
-  ObjectID DefaultBestObjectFilter(const std::set<ObjectID>& validObjects);
-  ObjectID RollBlockBestObjectFilter(const std::set<ObjectID>& validObjects);
+  ObjectID DefaultBestObjectFunction(const std::set<ObjectID>& validObjects);
+  ObjectID RollBlockBestObjectFunction(const std::set<ObjectID>& validObjects);
 };
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
