@@ -127,6 +127,7 @@ class UnityBuildConfig(object):
         self.script_profiling = False
         self.asset_destination_path = None
         self.build_type = 'PlayerAndAssets'
+        self.build_number = '1'
         self.verbose = False
         self.unity_exe = UnityBuildConfig.default_unity_exe()
         self.destination_file = None
@@ -309,6 +310,7 @@ class UnityBuild(object):
         message += " --script-engine " + self.build_config.script_engine
         message += " --asset-path " + self.build_config.asset_destination_path
         message += " --build-type " + self.build_config.build_type
+        message += " --build-number " + self.build_config.build_number
 
         logFilePath = os.path.expanduser('~/Library/Logs/Unity/Editor.log')
         handleUnityLog = open(logFilePath, 'r')
@@ -368,6 +370,7 @@ class UnityBuild(object):
         procArgs.extend(["--script-engine", self.build_config.script_engine])
         procArgs.extend(["--asset-path", self.build_config.asset_destination_path])
         procArgs.extend(["--build-type", self.build_config.build_type])
+        procArgs.extend(["--build-number", self.build_config.build_number])
 
         if self.build_config.script_debugging:
             procArgs.extend(["--debug"])
