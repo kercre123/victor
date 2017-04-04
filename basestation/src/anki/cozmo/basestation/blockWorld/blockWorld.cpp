@@ -4634,8 +4634,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                         DEV_ASSERT(object->HasValidPose(), "BlockWorld.DeleteLocatedObjects.InvalidPoseState");
                         ObservableObject* objCopy = object->CloneType();
                         objCopy->CopyID(object);
-                        objCopy->SetActiveID(object->GetActiveID()); // manually having to copy all IDs is fishy design
-                        objCopy->SetFactoryID(object->GetFactoryID());
+                        if (objCopy->IsActive()) {
+                          objCopy->SetActiveID(object->GetActiveID()); // manually having to copy all IDs is fishy design
+                          objCopy->SetFactoryID(object->GetFactoryID());
+                        }
                         objectsToBroadcast.emplace_back( object->GetPose(), object->GetPoseState(), objCopy );
                       }
                     }
