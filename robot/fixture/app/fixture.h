@@ -39,10 +39,10 @@
 #define FIXTURE_ROBOT1_TEST    8    // ID 4
 #define FIXTURE_ROBOT2_TEST    22
 #define FIXTURE_ROBOT3_TEST    23
-#define FIXTURE_ROBOT3LE_TEST  33
+#define FIXTURE_ROBOT3_CE_TEST 33
 
 #define FIXTURE_PACKOUT_TEST   24
-#define FIXTURE_PACKOUTLE_TEST 34
+#define FIXTURE_PACKOUT_CE_TEST 34
 #define FIXTURE_LIFETEST_TEST  25
 #define FIXTURE_RECHARGE_TEST  26
 
@@ -61,11 +61,11 @@
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES {                                                                                 \
-  /*0-7*/   "NO ID",    "BODY1",    "HEAD1",    "MOTOR1H",  "CHARGER",  "CUBE1",  "CUBE2",    "CUBE3",    \
-  /*8-15*/  "ROBOT1",   "BODY2",    "MOTOR1L",  "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",     "PLAYPEN",  \
-  /*16-23*/ "FINISHC",  "FINISH1",  "FINISH2",  "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",   "ROBOT3",   \
-  /*24-31*/ "PACKOUT",  "LIFETEST", "RECHARGE", "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",  "MOTOR3H",  \
-  /*32-39*/ "COZ187",   "ROBOT3-LE", "PACKOUT-LE", "DEBUG" }
+  /*0-7*/   "NO ID",    "BODY1",      "HEAD1",      "MOTOR1H",  "CHARGER",  "CUBE1",  "CUBE2",    "CUBE3",    \
+  /*8-15*/  "ROBOT1",   "BODY2",      "MOTOR1L",    "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",     "PLAYPEN",  \
+  /*16-23*/ "FINISHC",  "FINISH1",    "FINISH2",    "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",   "ROBOT3",   \
+  /*24-31*/ "PACKOUT",  "LIFETEST",   "RECHARGE",   "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",  "MOTOR3H",  \
+  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "DEBUG" }
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();

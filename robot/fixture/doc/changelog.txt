@@ -4,29 +4,29 @@ Release v93
 ----------------
 
 General:
--new fixture types: ROBOT3-LE, PACKOUT-LE
+-new fixture types: ROBOT3-CE, PACKOUT-CE
 -allow fixture names up to 10char on display (compress x-scaling for long names)
+
+ROBOT3[-CE]:
+-write color code into robot (code written depends on standard/-CE fixture mode)
+^Note: requires v93+ body firmware; modified cmd data with new color codes.
+
+PACKOUT[-CE]:
+-read/verify proper color code is set (code verified depends on standard/-CE fixture mode)
+^Note: requires v93+ body firmware; modified cmd data with new color codes.
 
 MOTOR3L,MOTOR3H:
 -motor low-speed test, increased power to 1.5V for reliability with new gearbox & fixture circuit.
 
-ROBOT1,ROBOT2,ROBOT3[-LE],PACKOUT[-LE]:
+ROBOT1,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]:
 -added charge-current test; verfies charging circuit ok
 
-BODY3,ROBOT1,ROBOT2,ROBOT3[-LE],PACKOUT[-LE]:
--added battery check. VBat < 3.8V causes error 621 [BAT_UNDERVOLT].
+BODY3,ROBOT1,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]:
+-added battery check. low VBat causes error 621 [BAT_UNDERVOLT].
 ^Note: requires v93+ body firmware; bug-fix to properly report battery voltage.
 
-ROBOT3[-LE]:
--write color code into robot (white/gray, depends on '-LE' mode!!!!!)
-^Note: requires v93+ body firmware; modified cmd data with new color codes.
-
-PACKOUT[-LE]:
--read/verify proper color code is set (white/gray, depends on '-LE' mode!!!!!)
-^Note: requires v93+ body firmware; modified cmd data with new color codes.
-
 RECHARGE:
--stop charging (OK) at 3.9V (~80%). error 101 [TIMEOUT] after 10min if still charging (not holding charge, or significantly dead battery).
+-stop charging (OK) at 3.75V. error 101 [TIMEOUT] after 10min if still charging (not holding charge, or significantly dead battery).
 ^Note: requires v93+ body firmware; bug-fix allows robot to stay on/charging for >120s.
 
 BODY1:

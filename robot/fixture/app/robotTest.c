@@ -29,11 +29,11 @@ using namespace Anki::Cozmo::RobotInterface;
 
 //Bodycolors
 enum {
-  BODYCOLOR_EMPTY     = ~0,
-  BODYCOLOR_WHITE_1V0 = 0,  //v1.0 Cozmo (1.0 bootloader had all color fields set to 0)
-  BODYCOLOR_WHITE_1V5 = 1,  //v1.5 Cozmo
-  BODYCOLOR_GRAY_LE   = 2,  //v1.5 Cozmo, Limited Edition
-  BODYCOLOR_END,            //(range checking)
+  BODYCOLOR_EMPTY             = ~0,
+  BODYCOLOR_M1_WHITE_COZ1V0   = 0,  //v1.0 Cozmo (1.0 bootloader had all color fields set to 0)
+  BODYCOLOR_M2_WHITE          = 1,  //standard white (v1.5 and later)
+  BODYCOLOR_M3_CE_LM          = 2,  //Collectors edition, Liquid Metal
+  BODYCOLOR_END,                    //(range checking)
 };
 
 //buttonTest.c
@@ -141,18 +141,18 @@ static void setBodycolor(u8 bodycolor)
 static void WriteBodyColor(void)
 {
   if( g_fixtureType == FIXTURE_ROBOT3_TEST )
-    setBodycolor( BODYCOLOR_WHITE_1V5 );
-  if( g_fixtureType == FIXTURE_ROBOT3LE_TEST )
-    setBodycolor( BODYCOLOR_GRAY_LE );
+    setBodycolor( BODYCOLOR_M2_WHITE );
+  if( g_fixtureType == FIXTURE_ROBOT3_CE_TEST )
+    setBodycolor( BODYCOLOR_M3_CE_LM );
 }
 
 static void VerifyBodyColor(void)
 {
   readBodycolor();
   
-  if( g_fixtureType == FIXTURE_PACKOUT_TEST && m_bodyColor != BODYCOLOR_WHITE_1V5 )
+  if( g_fixtureType == FIXTURE_PACKOUT_TEST && m_bodyColor != BODYCOLOR_M2_WHITE )
     throw ERROR_BODYCOLOR_INVALID;
-  if( g_fixtureType == FIXTURE_PACKOUTLE_TEST && m_bodyColor != BODYCOLOR_GRAY_LE )
+  if( g_fixtureType == FIXTURE_PACKOUT_CE_TEST && m_bodyColor != BODYCOLOR_M3_CE_LM )
     throw ERROR_BODYCOLOR_INVALID;
 }
 
@@ -226,7 +226,7 @@ void CheckMotor(u8 motor, u8 power, int min, int max)
   int errbase = ERROR_MOTOR_LEFT + motor*10;
 
   // For packout, scale limits to 80%
-  if (g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUTLE_TEST)
+  if (g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUT_CE_TEST)
     min = (min * 13) >> 4;
   
   // Move lift/head out of the way before test
@@ -334,7 +334,7 @@ void JamTest(void)
 void HeadLimits(void)
 {
   // Check max limit for head only on ROBOT2 and above (head is installed)
-  if (g_fixtureType < FIXTURE_ROBOT2_TEST || g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUTLE_TEST)
+  if (g_fixtureType < FIXTURE_ROBOT2_TEST || g_fixtureType == FIXTURE_PACKOUT_TEST || g_fixtureType == FIXTURE_PACKOUT_CE_TEST)
     return;
   
   const int MOTOR_RUNTIME = 2000 * 1000;  // Need about 2 seconds for normal variation
@@ -374,7 +374,7 @@ void FastMotors(void)
   CheckMotor(MOTOR_LIFT,        FAST_HEADLIFT_POWER, FAST_LIFT_THRESH, g_fixtureType < FIXTURE_ROBOT3_TEST ? 0 : FAST_LIFT_MAX);
 
   // Per Raymond/Kenny's request, run second lift test after jamming motion
-  if (g_fixtureType == FIXTURE_ROBOT3_TEST || g_fixtureType == FIXTURE_ROBOT3LE_TEST)
+  if (g_fixtureType == FIXTURE_ROBOT3_TEST || g_fixtureType == FIXTURE_ROBOT3_CE_TEST)
     CheckMotor(MOTOR_LIFT,        SLOW_POWER, SLOW_LIFT_THRESH, 0);
 }
 
