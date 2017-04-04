@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
       statsJson["context"] = contextFilenameBase;
       statsJson["planTime"] = planner.GetLastPlanTime();
       statsJson["envTime"] = envTime;
-      statsJson["expansions"] = planner.GetLastNumEpansions();
+      statsJson["expansions"] = planner.GetLastNumExpansions();
       statsJson["considerations"] = planner.GetLastNumConsiderations();
       statsJson["cost"] = planner.GetFinalCost();
       

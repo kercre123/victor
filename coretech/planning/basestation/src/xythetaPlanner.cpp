@@ -118,7 +118,7 @@ float xythetaPlanner::GetLastPlanTime() const
   return _impl->_lastPlanTime;
 }
 
-int xythetaPlanner::GetLastNumEpansions() const
+int xythetaPlanner::GetLastNumExpansions() const
 {
   return _impl->_expansions;
 }

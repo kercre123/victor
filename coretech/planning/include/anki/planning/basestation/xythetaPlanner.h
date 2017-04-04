@@ -74,7 +74,7 @@ public:
   GoalID GetChosenGoalID() const;
 
   float GetLastPlanTime() const;
-  int GetLastNumEpansions() const;
+  int GetLastNumExpansions() const;
   int GetLastNumConsiderations() const;
 
 private:
