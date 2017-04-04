@@ -16926,72 +16926,41 @@
 	    return this._promiseForCommand(requestId);
 	};    
 
-	/**
-	 * Convert a color name to a Cozmo color index.
-	 * Supports 'mystery' for a random hue.
-	 * @param colorName The color to retrieve.
-	 * @returns {number} The Cozmo color index.
-	 * @private
-	 */
-	Scratch3CozmoBlocks.prototype._getColor = function(colorName) {
-	    var colorNameToHexTable = [
-	        {colorName: 'yellow', colorHex: 0xffff00ff},
-	        {colorName: 'orange', colorHex: 0xffA500ff},
-	        {colorName: 'coral', colorHex: 0xff0000ff},
-	        {colorName: 'purple', colorHex: 0xff00ffff},
-	        {colorName: 'blue', colorHex: 0x0000ffff},
-	        {colorName: 'green', colorHex: 0x00ff00ff},
-	        {colorName: 'white', colorHex: 0xffffffff},
-	        {colorName: 'off', colorHex: 0x00000000}
-	    ];
+	Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
+	    var headAngle = Cast.toString(args.CHOICE);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
 
-	    if (colorName == 'mystery') {
-	        var randomValue = Math.floor(Math.random() * colorNameToHexTable.length);
-	        return colorNameToHexTable[randomValue].colorHex;
-	    }
-
-	    var colorHexToReturn;
-	    for (var i = 0; i < colorNameToHexTable.length; i++) {
-	        if (colorNameToHexTable[i].colorName == colorName)
-	        {
-	            colorHexToReturn = colorNameToHexTable[i].colorHex;
-	        }
-	    }
-
-	    return colorHexToReturn;
+	    return this._promiseForCommand(requestId);
 	};
 
-	/**
-	 * Convert a string to a Cozmo animation trigger index.
-	 * Supports 'mystery' for a random animation.
-	 * @param animationName The animation to retrieve.
-	 * @returns {number} The Cozmo animation trigger index.
-	 * @private
-	 */
-	Scratch3CozmoBlocks.prototype._getAnimation = function(animationName) {
-	    var animationTable = [
-	        'happy',
-	        'victory',
-	        'unhappy',
-	        'surprise',
-	        'dog',
-	        'cat',
-	        'sneeze',
-	        'excited',
-	        'thinking',
-	        'bored',
-	        'frustrated',
-	        'chatty',
-	        'dejected',
-	        'sleep'
-	    ];
+	Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDockWithCube"}');
 
-	    if (animationName == 'mystery') {
-	        var randomValue = Math.floor(Math.random() * animationTable.length);
-	        return animationTable[randomValue];
-	    }
+	    return this._promiseForCommand(requestId);
+	};
+	                                       
+	Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnLeft"}');
 
-	    return animationName;
+	    return this._promiseForCommand(requestId);
+	};
+
+	Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnRight"}');
+
+	    return this._promiseForCommand(requestId);
+	};
+
+	Scratch3CozmoBlocks.prototype.speak = function(args, util) {
+	    var textToSay = Cast.toString(args.STRING);
+	    var requestId = this._getRequestId();
+	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoSays","argString": "' + textToSay + '"}');
+
+	    return this._promiseForCommand(requestId);
 	};
 
 	/**
@@ -17042,45 +17011,77 @@
 	    return this._promiseForCommand(requestId);
 	};
 
-	Scratch3CozmoBlocks.prototype.setHeadAngle = function(args, util) {
-	    var headAngle = Cast.toString(args.CHOICE);
-	    var requestId = this._getRequestId();
-	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoHeadAngle","argString": "' + headAngle + '"}');
-
-	    return this._promiseForCommand(requestId);
-	};
-
-	Scratch3CozmoBlocks.prototype.dockWithCube = function(args, util) {
-	    var requestId = this._getRequestId();
-	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDockWithCube"}');
-
-	    return this._promiseForCommand(requestId);
-	};
-	                                       
-	Scratch3CozmoBlocks.prototype.turnLeft = function(args, util) {
-	    var requestId = this._getRequestId();
-	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnLeft"}');
-
-	    return this._promiseForCommand(requestId);
-	};
-
-	Scratch3CozmoBlocks.prototype.turnRight = function(args, util) {
-	    var requestId = this._getRequestId();
-	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoTurnRight"}');
-
-	    return this._promiseForCommand(requestId);
-	};
-
 	Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
 	    this.runtime.cozmoDriveSpeed = Cast.toString(args.CHOICE);
 	};
 
-	Scratch3CozmoBlocks.prototype.speak = function(args, util) {
-	    var textToSay = Cast.toString(args.STRING);
-	    var requestId = this._getRequestId();
-	    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoSays","argString": "' + textToSay + '"}');
+	/**
+	 * Convert a color name to a Cozmo color index.
+	 * Supports 'mystery' for a random hue.
+	 * @param colorName The color to retrieve.
+	 * @returns {number} The Cozmo color index.
+	 * @private
+	 */
+	Scratch3CozmoBlocks.prototype._getColor = function(colorName) {
+	    var colorNameToHexTable = [
+	        {colorName: 'yellow', colorHex: 0xffff00ff},
+	        {colorName: 'orange', colorHex: 0xffA500ff},
+	        {colorName: 'coral', colorHex: 0xff0000ff},
+	        {colorName: 'purple', colorHex: 0xff00ffff},
+	        {colorName: 'blue', colorHex: 0x0000ffff},
+	        {colorName: 'green', colorHex: 0x00ff00ff},
+	        {colorName: 'white', colorHex: 0xffffffff},
+	        {colorName: 'off', colorHex: 0x00000000}
+	    ];
 
-	    return this._promiseForCommand(requestId);
+	    if (colorName == 'mystery') {
+	        // Don't allow black to be an option that can be selected
+	        var randomValue = Math.floor(Math.random() * (colorNameToHexTable.length-1));
+	        return colorNameToHexTable[randomValue].colorHex;
+	    }
+
+	    var colorHexToReturn;
+	    for (var i = 0; i < colorNameToHexTable.length; i++) {
+	        if (colorNameToHexTable[i].colorName == colorName)
+	        {
+	            colorHexToReturn = colorNameToHexTable[i].colorHex;
+	        }
+	    }
+
+	    return colorHexToReturn;
+	};
+
+	/**
+	 * Convert a string to a Cozmo animation trigger index.
+	 * Supports 'mystery' for a random animation.
+	 * @param animationName The animation to retrieve.
+	 * @returns {number} The Cozmo animation trigger index.
+	 * @private
+	 */
+	Scratch3CozmoBlocks.prototype._getAnimation = function(animationName) {
+	    var animationTable = [
+	        'happy',
+	        'victory',
+	        'unhappy',
+	        'surprise',
+	        'dog',
+	        'cat',
+	        'sneeze',
+	        'excited',
+	        'thinking',
+	        'bored',
+	        'frustrated',
+	        'chatty',
+	        'dejected',
+	        'sleep'
+	    ];
+
+	    if (animationName == 'mystery') {
+	        var randomValue = Math.floor(Math.random() * animationTable.length);
+	        return animationTable[randomValue];
+	    }
+
+	    return animationName;
 	};
 
 	module.exports = Scratch3CozmoBlocks;

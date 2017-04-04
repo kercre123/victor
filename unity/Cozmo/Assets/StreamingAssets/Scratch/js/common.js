@@ -129,7 +129,19 @@
     }
 
     window.onresize = function(event) {
-        if (window.innerWidth <= 700) {
+        // innerWidth values -
+        //     iPhone 5: 568
+        //     iPhone 6: 667
+        //     iPhone 6 Plus: 736
+        //     iPad: 1024
+        //     iPad Pro: 1366
+        //     Nexus 6: 732
+        //     Galaxy Note 5: 700
+        //     Pixel: 652
+        //
+        // Also see CSS height column here: https://mydevice.io/devices/
+
+        if (window.innerWidth <= 799) {
             workspace.setScale(0.70);
             //document.getElementById('navigation').style.zoom = "80%"
         }else{

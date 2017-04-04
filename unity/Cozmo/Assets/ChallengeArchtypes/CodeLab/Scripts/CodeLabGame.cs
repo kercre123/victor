@@ -11,8 +11,8 @@ namespace CodeLab {
     private GameObject _WebViewObject;
 
     private const float kSlowDriveSpeed_mmps = 30.0f;
-    private const float kMediumDriveSpeed_mmps = 45.0f;
-    private const float kFastDriveSpeed_mmps = 60.0f;
+    private const float kMediumDriveSpeed_mmps = 100.0f;
+    private const float kFastDriveSpeed_mmps = 200.0f;
     private const float kDriveDist_mm = 44.0f; // length of one light cube
     private const float kTurnAngle = 90.0f * Mathf.Deg2Rad;
 
