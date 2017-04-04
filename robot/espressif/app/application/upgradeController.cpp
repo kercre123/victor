@@ -13,6 +13,7 @@ extern "C" {
 #include "sha1.h"
 #include "anki/cozmo/robot/espAppImageHeader.h"
 #include "driver/crash.h"
+#include "driver/factoryData.h"
 }
 #include "anki/cozmo/robot/flash_map.h"
 #include "upgradeController.h"
@@ -624,12 +625,12 @@ namespace UpgradeController {
             os_printf("OTA header block: %s\r\n", head->c_time);
             #endif
 
-            const int max_model = 
-              (head->fileVersion >= CURRENT_FILE_VERSION) ? head->max_model : PRODUCTION_V1;
+            const int max_hw_rev = 
+              (head->fileVersion >= CURRENT_FILE_VERSION) ? head->max_hw_rev : PRODUCTION_V1;
 
-            if ((getModelNumber() & 0xFF) > max_model) {
+            if ((getHardwareRevision() & 0xFF) > max_hw_rev) {
               #if DEBUG_OTA
-              os_printf("\tInvalid model version detected\r\n");
+              os_printf("\tInvalid hardware rev. OTA refused\r\n");
               #endif
 
               ack.bytesProcessed = self.bytesProcessed;

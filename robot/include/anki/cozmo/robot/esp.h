@@ -21,8 +21,6 @@ extern "C" {
 #include "user_interface.h"
 /// Returns the robot's serial number or 0xFFFFffff if not set
 uint32_t getSerialNumber(void);
-/// Returns the robot's model number or 0xffff if not set
-uint16_t getModelNumber(void);
 }
 
 #define memset os_memset

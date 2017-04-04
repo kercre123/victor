@@ -779,12 +779,6 @@ namespace Anki {
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
       }
 
-
-      void Process_bodySerialNum(const Anki::Cozmo::RobotInterface::BodySerialNumber& msg)
-      {
-        // Stub
-      }
-
       // ---------- Animation Key frame messages -----------
       void Process_animFaceImage(const Anki::Cozmo::AnimKeyFrame::FaceImage& msg)
       {
@@ -827,6 +821,9 @@ namespace Anki {
 
       void Process_bodyStorageContents(Anki::Cozmo::BodyStorageContents const&) {
         // Handled on the Espressif
+      }
+      void Process_bodySerialNum(Anki::Cozmo::RobotInterface::BodySerialNumber const&) {
+        // For espressif only
       }
 
       void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)

@@ -32,7 +32,7 @@ parser.add_argument("output", type=str,
                     help="target location for file")
 
 parser.add_argument("-m", "--model", type=int, default=5,
-                    help="Compatible model number")
+                    help="Compatible hardware revision (was called model number)")
 parser.add_argument("-r", "--rtip", type=str,
                     help="K02 ELF Image")
 parser.add_argument("-rb", "--rtipbin", type=str,
@@ -178,7 +178,7 @@ def git_sha():
     out = execute('git', 'rev-parse', 'HEAD')
     return int(out, 16).to_bytes(20, byteorder='little')
 
-def make_header(key=None, iv=None, digestType=None, model=0):
+def make_header(key=None, iv=None, digestType=None, hw_rev=0):
     timestamp = current_time
     ctime = bytearray(time.ctime(current_time), 'utf-8')
 
@@ -189,7 +189,7 @@ def make_header(key=None, iv=None, digestType=None, model=0):
         timestamp,
         ctime,
         git_sha(),
-        model)
+        hw_rev)
 
     # Include OID for the hash algorithm used
     oid = digestType.new().oid if digestType else b''
