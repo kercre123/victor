@@ -78,8 +78,11 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
   }
   
-  // Turn off all Cube Lights
-  _externalInterface->Broadcast( GToE(ExternalInterface::EnableCubeSleep(true, true)) );
+  // Do not put cubes to sleep for internal SDK
+  if (_isInExternalSdkMode) {
+    // Turn off all Cube Lights
+    _externalInterface->Broadcast( GToE(ExternalInterface::EnableCubeSleep(true, true)) );
+  }
   
   // Ensure auto-exposure is (re) enabled
   _externalInterface->Broadcast( GToE(ExternalInterface::SetCameraSettings(true, 0, 0.0f)) );
@@ -107,6 +110,7 @@ void SdkStatus::EnterMode(bool isExternalSdkMode)
   }
   else {
     _isInInternalSdkMode = true;
+    _isConnected = true;
   }
 
   _enterSdkModeTime_s = GetCurrentTime_s();
@@ -139,7 +143,7 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
     _connectionStartTime_s = GetCurrentTime_s();
     _isWrongSdkVersion = false;
     _connectedSdkBuildVersion = message.buildVersion;
-    _stopRobotOnDisconnect = true; // Always stop unless explictely requested by this program run
+    _stopRobotOnDisconnect = true; // Always stop unless explicitly requested by this program run
     
     if(_shouldAutoConnectToCubes)
     {
