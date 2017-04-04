@@ -1187,13 +1187,13 @@ void BehaviorManager::DisableReactionsWithLock(
     ReactionTrigger triggerEnum = entry.first;
     auto& allStrategyMaps = entry.second;
     DEV_ASSERT_MSG(!allStrategyMaps.IsTriggerLockedByID(lockID),
-          "BehaviorManager.RequestDisableReactions.LockAlreadyInUse",
+          "BehaviorManager.DisableReactionsWithLock.LockAlreadyInUse",
           "Attempted to disable reactions with ID %s which is already in use",
           lockID.c_str());
     
     if(ReactionTriggerHelpers::IsTriggerAffected(triggerEnum, triggersAffected)){
       PRINT_CH_INFO("ReactionTriggers",
-                    "BehaviorManager.RequestDisableReactions.AllTriggersConsidered",
+                    "BehaviorManager.DisableReactionsWithLock.DisablingWithLock",
                     "Trigger %s is being disabled by %s",
                     EnumToString(triggerEnum),
                     lockID.c_str());
@@ -1213,10 +1213,11 @@ void BehaviorManager::DisableReactionsWithLock(
       // and we are supposed to stop current, stop the current behavior
       if(stopCurrent &&
          _runningAndResumeInfo->GetCurrentReactionTrigger() == triggerEnum){
-        IBehavior* currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
-        if(currentBehavior!= nullptr && currentBehavior->IsRunning()){
-          currentBehavior->Stop();
-        }
+        PRINT_CH_INFO("ReactionTriggers",
+                      "BehaviorManager.DisableReactionsWithLock",
+                      "Disabling reaction triggers - stopping currently running one");
+        BehaviorRunningAndResumeInfo nullInfo;
+        SwitchToBehaviorBase(nullInfo);
       }
       
     }
@@ -1233,17 +1234,22 @@ void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
     ReactionTrigger triggerEnum = entry.first;
     auto& allStrategyMaps = entry.second;
     
-    PRINT_CH_INFO("ReactionTriggers",
-                  "BehaviorManager.RequestReEnableReactions.AllTriggersConsidered",
-                  "Trigger %s is being enabled by %s",
-                  EnumToString(triggerEnum),
-                  lockID.c_str());
-
     if(allStrategyMaps.IsTriggerLockedByID(lockID)){
+      PRINT_CH_INFO("ReactionTriggers",
+                    "BehaviorManager.RemoveDisableReactionsLock.RemovingLock",
+                    "Lock %s is being removed from trigger %s",
+                    lockID.c_str(),
+                    EnumToString(triggerEnum));
+      
       allStrategyMaps.RemoveDisableLockFromTrigger(lockID, triggerEnum);
       
       if(allStrategyMaps.IsReactionEnabled()){
-        //About to disable, notify reaction trigger strategy
+        PRINT_CH_INFO("ReactionTriggers",
+                      "BehaviorManager.RemoveDisableReactionsLock.ReactionReEnabled",
+                      "No remaining locks on trigger %s",
+                      EnumToString(triggerEnum));
+        
+        //About to enable, notify reaction trigger strategy
         const auto& allEntries = allStrategyMaps.GetStrategyMap();
         for(auto& entry : allEntries){
           entry.first->EnabledStateChanged(true);
