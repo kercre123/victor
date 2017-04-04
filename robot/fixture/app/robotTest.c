@@ -505,6 +505,99 @@ void Recharge(void)
   }
 }
 
+void _debug_robot_graph_current(void)
+{
+  //scale parameters for a kick-ass text-console bar-graph
+  const int ma_max = 1000;
+  const int ma_per_char = 15;
+  const int header_ma_per_column = 100; //column granularity (header)
+  
+  //Turn on charging power
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  
+  int offContact = 0, print_header = 0;
+  while(1) 
+  {
+    int current_ma = mGetCurrentMa();
+    
+    //re-print bar graph header every once in awhile
+    if( --print_header <= 0 ) {
+      print_header = 40;
+      ConsolePrintf("     "); //value column offset
+      int cur = 0;
+      while( cur <= ma_max ) {
+        int len = ConsolePrintf("%d",cur);
+        if(cur < ma_max) { //inhibit column fill for max value column
+          for(int x=len; x < header_ma_per_column/ma_per_char; x++)
+            ConsolePrintf(".");
+        }
+        cur += header_ma_per_column;
+      }
+      ConsolePrintf("\r\n");
+    }
+    
+    //Print row (current + bar graph segments)
+    ConsolePrintf("%04d ", current_ma); //value column: width 5
+    for(int x=current_ma; x>0; x -= ma_per_char)
+      ConsolePrintf("=");
+    ConsolePrintf("\r\n");
+    
+    //test for robot removal
+    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
+      PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
+      ConsolePrintf("robot off contact\r\n");
+      break;
+    }
+  }
+  
+  throw ERROR_BAT_CHARGER; //end current test mode
+}
+
+//Test body charging circuit by testing charge current draw
+void ChargeTest(void)
+{
+  const int CHARGING_CURRENT_THRESHOLD_MA = 750;
+  
+  EnableChargeComms(); //switch to comm mode
+  uint16_t battVolt100x = robot_get_battVolt100x(5,0); //+POWERON extra 5s
+  //TODO: throw en error if robot battery is too full?? can't properly detect charging current in CV mode
+  
+  //Turn on charging power
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  
+  //_debug_robot_graph_current(); //DEBUG: graph the charging current (console bar graph)
+  
+  int cnt = 0, avg = 0, offContact = 0;
+  u32 waitTime = getMicroCounter();
+  while( getMicroCounter() - waitTime < (5*1000*1000) )
+  {
+    int current_ma = mGetCurrentMa();
+    
+    //average samples above the charge threshold
+    if( current_ma >= CHARGING_CURRENT_THRESHOLD_MA ) {
+      avg += current_ma;
+      if( ++cnt >= 8 ) {
+        avg >>= 3;
+        ConsolePrintf("charge-current-ma,%d\r\n", avg);
+        return; //OK - robot is consistently consuming charge current
+      }
+    } else {
+      cnt = 0; avg = 0;
+    }
+    
+    //error out quickly if robot removed from charge base
+    if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
+      PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
+      break;
+    }
+  }
+  
+  ConsolePrintf("charge test timed out\r\n");
+  throw ERROR_BAT_CHARGER;
+}
+
 //Verify battery voltage sufficient for assembly/packout
 void BatteryCheck(void)
 {
@@ -538,6 +631,14 @@ void FactoryRevert(void)
   SendCommand(21, 0, 0, 0);
 }
 
+//intercept button test function
+void mButtonTest(void)
+{
+  SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
+  ButtonTest();
+  SendCommand(TEST_POWERON, 4, 0, 0); //reset to default 4s power-off
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetInfoTestFunctions(void)
 {
@@ -569,7 +670,8 @@ TestFunction* GetRobotTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
-    ButtonTest,
+    mButtonTest,
+    ChargeTest,             //run after mButtonTest (sets power modes)
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
@@ -611,7 +713,8 @@ TestFunction* GetPackoutTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
-    ButtonTest,
+    mButtonTest,
+    ChargeTest,             //run after mButtonTest (sets power modes)
     FastMotors,
     RobotFixtureDropSensor,
     BatteryCheck,
