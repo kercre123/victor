@@ -99,6 +99,7 @@ namespace HAL {
       else if (msg.tag < RobotInterface::TO_RTIP_START)
       {
         AnkiError( 138, "Spine.Manage", 383, "Received message %x[%d] that seems bound below", 2, msg.tag, size);
+        return; // If message is corrupt, we can't process any more messages in this frame
       }
       else if (msg.tag > RobotInterface::TO_RTIP_END)
       {
@@ -107,6 +108,7 @@ namespace HAL {
       else if (msg.Size() != size)
       {
         AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, msg.tag, size, msg.Size());
+        return; // If message is corrupt, we can't process any more messages in this frame
       }
       else
       {

@@ -35,7 +35,7 @@
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
-                "version": "1923"
+                "version": "1927"
             },
             "old_firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
