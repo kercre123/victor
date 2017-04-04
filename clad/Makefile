@@ -39,15 +39,23 @@ OUTPUT_VIZ_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_PYTHON=$(patsubst %.clad, %.py, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_LST=$(OUTPUT_DIR)viz.lst
 
+# Gather list of robot clad files
 INPUT_ROBOT_DIR=../robot/clad/src/
-INPUT_ROBOT_NOT_SHARED_FILES=$(shell cd $(INPUT_ROBOT_DIR); grep -irL ROBOT_CLAD_SHARED *)
-INPUT_ROBOT_SHARED_FILES=$(shell cd $(INPUT_ROBOT_DIR); grep -irl ROBOT_CLAD_SHARED *)
-INPUT_ROBOT_CPP_FILES=$(INPUT_ROBOT_SHARED_FILES) $(INPUT_ROBOT_NOT_SHARED_FILES)
-OUTPUT_ROBOT_CPP=$(patsubst %.clad, %.cpp, $(INPUT_ROBOT_CPP_FILES))
-OUTPUT_ROBOT_H=$(patsubst %.clad, %.h, $(INPUT_ROBOT_CPP_FILES))
+INPUT_ROBOT_FILES=$(shell cd $(INPUT_ROBOT_DIR); find . -type f -iname '*.clad')
+
+# Determine which clad files are shared with outside world
+INPUT_ROBOT_SHARED_FILES=$(shell cd $(INPUT_ROBOT_DIR); grep -il ROBOT_CLAD_SHARED $(INPUT_ROBOT_FILES))
+INPUT_ROBOT_NOT_SHARED_FILES=$(shell cd $(INPUT_ROBOT_DIR); grep -iL ROBOT_CLAD_SHARED $(INPUT_ROBOT_FILES))
+
+# Generate cpp and h for each robot clad
+OUTPUT_ROBOT_CPP=$(patsubst %.clad, %.cpp, $(INPUT_ROBOT_FILES))
+OUTPUT_ROBOT_H=$(patsubst %.clad, %.h, $(INPUT_ROBOT_FILES))
 OUTPUT_ROBOT_H_AND_CPP=$(OUTPUT_ROBOT_H) $(OUTPUT_ROBOT_CPP)
+
+# Generate cs and py for each shared robot clad
 OUTPUT_ROBOT_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_ROBOT_SHARED_FILES))
 OUTPUT_ROBOT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_ROBOT_SHARED_FILES))
+
 ROBOT_ENGINE_TO_ROBOT_UNION=clad/robotInterface/messageEngineToRobot
 ROBOT_ROBOT_TO_ENGINE_UNION=clad/robotInterface/messageRobotToEngine
 OUTPUT_ROBOT_LST=$(OUTPUT_DIR)robot.lst
@@ -142,7 +150,7 @@ $(OUTPUT_VIZ_H_AND_CPP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(C
 	python $(CLAD_HASH) -I $(INPUT_ROBOT_DIR) $(INPUT_ENGINE_DIR) $(INPUT_CTI_VISION_DIR) $(INPUT_CTI_COMMON_DIR) -o $(OUTPUT_DIR_CSHARP)$@ $<
 	chmod -f 555 $(OUTPUT_DIR_CSHARP)$@
 
-$(OUTPUT_ROBOT_H_AND_CPP): $(INPUT_ROBOT_CPP_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH) $(ROBOT_ENGINE_TO_ROBOT_UNION)_hash.h $(ROBOT_ROBOT_TO_ENGINE_UNION)_hash.h
+$(OUTPUT_ROBOT_H_AND_CPP): $(INPUT_ROBOT_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH) $(ROBOT_ENGINE_TO_ROBOT_UNION)_hash.h $(ROBOT_ROBOT_TO_ENGINE_UNION)_hash.h
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.h; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.h; fi
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.cpp; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.cpp; fi
 	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_ROBOT_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
