@@ -1412,8 +1412,8 @@ TEST(BlockWorld, UnobserveCubeStack)
     ASSERT_EQ(2, objects.size());
   }
   
-  Vec3f testBottomTranslation{100.f,  0.f, 22.f};
-  Vec3f testTopTranslation{100.f, 0.f,  66.f};
+  Vec3f testBottomTranslation{175.f,  0.f, 22.f};
+  Vec3f testTopTranslation{175.f, 0.f,  66.f};
   
   Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
   const Pose3d object1Pose(rotZ1, testBottomTranslation, &robot.GetPose() );

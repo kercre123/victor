@@ -2020,16 +2020,55 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     for(const auto& objectID : unobservedObjectIDs)
     {
       // if the object doesn't exist anymore, it was deleted by another one, for example through a stack
+      // or if doesn't have markers (like unexpected move objects), skip
       ObservableObject* unobservedObject = GetLocatedObjectByID(objectID);
-      if ( nullptr == unobservedObject ) {
+      if ( nullptr == unobservedObject || unobservedObject->GetMarkers().empty() ) {
+        continue;
+      }
+      
+      // calculate padding based on distance to object pose
+      u16 xBorderPad = 0;
+      u16 yBorderPad = 0;
+      Pose3d objectPoseWrtCamera;
+      if ( unobservedObject->GetPose().GetWithRespectTo(camera.GetPose(), objectPoseWrtCamera) )
+      {
+        // should have markers
+        const auto& markerList = unobservedObject->GetMarkers();
+        if ( !markerList.empty() )
+        {
+          // we think localizable distance is a good distance to give the object a marker's length of padding
+          // at localization distance we give a full marker of padding
+          const float localizationDistance = unobservedObject->GetMaxLocalizationDistance_mm();
+          const Point2f& markerSize = markerList.front().GetSize();
+          const f32 focalLenX = camera.GetCalibration()->GetFocalLength_x();
+          const f32 focalLenY = camera.GetCalibration()->GetFocalLength_y();
+          // distFactor = (1-distNorm) + 1; 1-distNorm to invert normalization, +1 because we want 100% at distNorm=1
+          const f32 distToObjInvFactor = 2-(objectPoseWrtCamera.GetTranslation().Length()/localizationDistance);
+          float xPadding = focalLenX*markerSize.x()*distToObjInvFactor/localizationDistance;
+          float yPadding = focalLenY*markerSize.y()*distToObjInvFactor/localizationDistance;
+          xBorderPad = static_cast<u16>(xPadding);
+          yBorderPad = static_cast<u16>(yPadding);
+        }
+        else {
+          PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects.NoMarkers",
+                            "Object %d (Type:%s)",
+                            objectID.GetValue(),
+                            EnumToString(unobservedObject->GetType()) );
+          continue;
+        }
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects.ObjectNotInCameraPoseOrigin",
+                          "Object %d (PosePath:%s)",
+                          objectID.GetValue(),
+                          unobservedObject->GetPose().GetNamedPathToOrigin(false).c_str() );
         continue;
       }
       
       // Remove objects that should have been visible based on their last known
       // location, but which must not be there because we saw something behind
       // that location:
-      const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
-      const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
       bool hasNothingBehind = false;
       const bool shouldBeVisible = unobservedObject->IsVisibleFrom(camera,
                                                                    MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD,
