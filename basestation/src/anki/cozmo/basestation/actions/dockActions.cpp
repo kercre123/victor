@@ -1945,7 +1945,7 @@ namespace Anki {
       }
       
       Pose3d dockObjectWRTRobot;
-      const Pose3d topPose = dockObject->GetZRotatedPointAboveObjectCenter(0.5f);
+      const Pose3d& topPose = dockObject->GetZRotatedPointAboveObjectCenter(0.5f);
       const bool success = topPose.GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
       
       DEV_ASSERT(success, "PlaceRelObjectAction.Verify.GetWrtRobotPoseFailed");
@@ -2093,11 +2093,17 @@ namespace Anki {
         for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); )
         {
           const Pose3d& idealCenterPose = object->GetZRotatedPointAboveObjectCenter(0.f);
-          Pose3d preDocWRTBlock;
-          fullIter->GetWithRespectTo(idealCenterPose, preDocWRTBlock);
+          Pose3d preDocWRTUnrotatedBlock;
+          const bool posesOk = fullIter->GetWithRespectTo(idealCenterPose, preDocWRTUnrotatedBlock);
+          if (!posesOk ) {
+            // this should not be possible at all, since the predock poses and the object have to be in same origin
+            PRINT_NAMED_ERROR("DriveToPlaceRelObjectAction.GetPossiblePosesFunc.InvalidPoses",
+                              "FullIter Pose and idealCenterPose not related!");
+            continue;
+          }
           
-          const float poseX = preDocWRTBlock.GetTranslation().x();
-          const float poseY = preDocWRTBlock.GetTranslation().y();
+          const float poseX = preDocWRTUnrotatedBlock.GetTranslation().x();
+          const float poseY = preDocWRTUnrotatedBlock.GetTranslation().y();
           const float minIllegalOffset = 1.f;
           
           const bool xOffsetRelevant =
@@ -2139,19 +2145,23 @@ namespace Anki {
             }
             else
             {
-              // The placementOffsets are defined relative to the object so in order to move all
-              // the preAction poses by the offsets we need to get them wrt the object, apply the offsets,
-              // and then get them wrt the origin (as they originally were)
-              Pose3d preActionPoseWRTObject;
-              fullIter->GetWithRespectTo(object->GetPose(), preActionPoseWRTObject);
-              const auto& trans = preActionPoseWRTObject.GetTranslation();
+              const auto& trans = preDocWRTUnrotatedBlock.GetTranslation();
               
-              const Radians angle = preActionPoseWRTObject.GetRotation().GetAngleAroundZaxis();
+              const Radians angle = preDocWRTUnrotatedBlock.GetRotation().GetAngleAroundZaxis();
               f32 preDockOffsetX = placementOffsetX_mm;
               f32 preDockOffsetY = placementOffsetY_mm;
               f32 distanceToObject = trans.x();
-              
-              const bool isAlignedWithYAxis = angle == DEG_TO_RAD(90) || angle == DEG_TO_RAD(270);
+
+              // we expect the Z angle to be a quarter (0,90,180,270). Check below with a small epsilon
+              const Radians kAngleEpsilonRad( DEG_TO_RAD(2.0f) );
+              DEV_ASSERT( angle.IsNear( DEG_TO_RAD(  0.0f), kAngleEpsilonRad) ||
+                          angle.IsNear( DEG_TO_RAD( 90.0f), kAngleEpsilonRad) ||
+                          angle.IsNear( DEG_TO_RAD(180.0f), kAngleEpsilonRad) ||
+                          angle.IsNear( DEG_TO_RAD(270.0f), kAngleEpsilonRad),
+                          "PlaceRelObjectAction.ComputePlaceRelObjectOffsetPoses.PreDockPoseAngleNotNearQuarter");
+
+              const bool isAlignedWithYAxis = angle.IsNear( DEG_TO_RAD( 90.0f), kAngleEpsilonRad) ||
+                                              angle.IsNear( DEG_TO_RAD(270.0f), kAngleEpsilonRad);
               
               // Flip the x and y offset and use the y translation should this preDock pose
               // be at 90 or 270 degrees relative to the object
@@ -2216,14 +2226,17 @@ namespace Anki {
                 clipY_mm = 0;
               }
               
-              PRINT_NAMED_INFO("", "moving preDock pose by x:%f y:%f",
-                               clipX_mm, clipY_mm);
+              preDocWRTUnrotatedBlock.SetTranslation({trans.x() + clipX_mm,
+                                                      trans.y() + clipY_mm,
+                                                      trans.z()});
               
-              preActionPoseWRTObject.SetTranslation({trans.x() + clipX_mm,
-                                                     trans.y() + clipY_mm,
-                                                     trans.z()});
-              
-              preActionPoseWRTObject.GetWithRespectTo(robot.GetPose().FindOrigin(), *fullIter);
+              const bool poseOriginOk = preDocWRTUnrotatedBlock.GetWithRespectTo(*robot.GetWorldOrigin(), *fullIter);
+              if ( !poseOriginOk ) {
+                // this should not be possible at all, since the predock poses are in robot origin
+                PRINT_NAMED_ERROR("DriveToPlaceRelObjectAction.GetPossiblePosesFunc.UnrotatedBlockPoseBadOrigin",
+                                  "Could not obtain predock pose from unrotated wrt origin.");
+                continue;
+              }
               
               Point2f distThreshold = ComputePreActionPoseDistThreshold(*fullIter,
                                                                         object->GetPose(),
