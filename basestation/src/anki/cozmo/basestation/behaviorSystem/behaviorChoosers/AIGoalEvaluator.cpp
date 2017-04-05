@@ -170,7 +170,9 @@ void AIGoalEvaluator::HandleMessage(const ExternalInterface::RobotOffTreadsState
     {
       const UnlockId curGoalSpark = _currentGoalPtr->GetRequiredSpark();
       const bool isSparkless = curGoalSpark == UnlockId::Count;
-      if ( isSparkless )
+      const bool isRunningDebugGoal = (_currentGoalPtr->GetName() ==
+                                                 _debugConsoleRequestedGoal);
+      if ( isSparkless && !isRunningDebugGoal )
       {
         PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.RobotOffTreadsStateChanged.KickingOutGoalOnPutDown",
           "Kicking out '%s' on put down so we pick up a new one", _currentGoalPtr->GetName().c_str() );
