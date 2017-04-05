@@ -1866,13 +1866,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
       angle_rad,
       speed_rad_per_sec,
       accel_rad_per_sec2,
-      0,
+      tolerance_rad, // Tolerance of 0.0f means use default tolerance in engine which is defined by POINT_TURN_ANGLE_TOL in cozmoEngineConfig.h
       0,
       ID
     ),

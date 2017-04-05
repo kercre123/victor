@@ -295,7 +295,7 @@ namespace MemoryMatch {
           _Game.SharedMinigameView.EnableContinueButton(false);
           const float kLeftScanDeg = 30.0f;
           const float kLeftScanUIDeg = 18.0f;
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2, HandleTurnFinished);
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2, 0.0f, HandleTurnFinished);
           if (_ShowCozmoCubesSlide != null) {
             _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanUIDeg, _RotateSecScan);
           }
@@ -305,7 +305,7 @@ namespace MemoryMatch {
           // Half speed since going further
           const float kRightScanDeg = -60.0f;
           const float kRightScanUIDeg = -18.0f;
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, MemoryMatchGame.kTurnSpeed_rps * 2, MemoryMatchGame.kTurnAccel_rps2, HandleTurnFinished);
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, MemoryMatchGame.kTurnSpeed_rps * 2, MemoryMatchGame.kTurnAccel_rps2, 0.0f, HandleTurnFinished);
           // Half of the total Degrees cozmo rotates since these are absolute          
           if (_ShowCozmoCubesSlide != null) {
             _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanUIDeg, _RotateSecScan);

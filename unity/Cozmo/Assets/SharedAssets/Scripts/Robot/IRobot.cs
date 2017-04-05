@@ -300,7 +300,7 @@ public interface IRobot : IDisposable {
 
   void VisionWhileMoving(bool enable);
 
-  void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false);
 

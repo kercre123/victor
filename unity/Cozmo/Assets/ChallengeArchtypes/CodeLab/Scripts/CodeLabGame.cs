@@ -82,11 +82,11 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left
-        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoTurnRight") {
         // Turn 90 degrees to the right
-        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoSays") {
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(scratchRequest.argString);
