@@ -175,6 +175,7 @@ u32 GetSerial();
 #define ERROR_BAT_LEAKAGE           620   // Too much leakage through battery when turned off
 #define ERROR_BAT_UNDERVOLT         621   // Battery voltage too low - must charge
 #define ERROR_BAT_CHARGER           622   // Battery charger not working
+#define ERROR_BAT_OVERVOLT          623   // Battery voltage too high for this test (e.g. charge test)
 
 // Motor harness errors
 #define ERROR_BACKPACK_LED          650   // Backpack LED miswired or bad LED

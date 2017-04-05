@@ -581,11 +581,12 @@ void _debug_robot_graph_current(int num_samples)
 //Test body charging circuit by verifying current draw
 void ChargeTest(void)
 {
-  const int CHARGING_CURRENT_THRESHOLD_MA = 600;
+  const int CHARGING_CURRENT_THRESHOLD_MA = 700;
   const int NUM_SAMPLES = 8;
+  const int BAT_OVERVOLT_THRESHOLD = 400; //4.0V
   
   EnableChargeComms(); //switch to comm mode
-  uint16_t battVolt100x = robot_get_battVolt100x(5,0); //+POWERON extra 5s
+  uint16_t battVolt100x = robot_get_battVolt100x(10,0); //+POWERON extra time [s]
   //TODO: throw en error if robot battery is too full?? can't properly detect charging current in CV mode
   
   //Turn on charging power
@@ -614,8 +615,19 @@ void ChargeTest(void)
   }
   
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
+  
   if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
   { } //OK
+  else if( battVolt100x >= BAT_OVERVOLT_THRESHOLD )
+  {
+    //time to hit the gym and burn off a few pounds
+    const int BURN_TIME_S = 120;
+    ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
+    robot_get_battVolt100x(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
+    SendCommand(TEST_MOTORSLAM, 0, 0, 0);
+    
+    throw ERROR_BAT_OVERVOLT; //error prompts operator to put robot aside for a bit
+  } 
   else
     throw ERROR_BAT_CHARGER;
 }
