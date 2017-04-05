@@ -85,6 +85,7 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
   const std::string& debugName = GetName() + ".BehaviorThinkAboutBeacons.LoadConfig";
 
   _configParams.newAreaAnimTrigger = ParseString(config, "newAreaAnimTrigger", debugName);
+  _configParams.beaconRadius_mm = ParseFloat(config, "beaconRadius_mm", debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,7 +93,7 @@ void BehaviorThinkAboutBeacons::SelectNewBeacon(Robot& robot)
 {
   // TODO implement the real deal
    AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
-  whiteboard.AddBeacon( robot.GetPose().GetWithRespectToOrigin() );
+   whiteboard.AddBeacon( robot.GetPose().GetWithRespectToOrigin(), _configParams.beaconRadius_mm );
 }
 
 } // namespace Cozmo

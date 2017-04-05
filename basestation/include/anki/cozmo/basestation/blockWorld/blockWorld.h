@@ -328,6 +328,16 @@ namespace Anki
       
       size_t GetNumAliveOrigins() const { return _locatedObjects.size(); }
       
+      // Returns the number of defined ObjectTypes for a given ObjectFamily
+      size_t GetNumDefinedObjects(const ObjectFamily& objectFamily) const {
+        auto objectTypeCount = _definedObjectTypeCount.find(objectFamily);
+        if ( objectTypeCount != _definedObjectTypeCount.end())
+        {
+          return objectTypeCount->second;
+        }
+        return 0;
+      }
+      
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -389,6 +399,9 @@ namespace Anki
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       using ObjectsByOrigin_t    = std::map<const PoseOrigin*, ObjectsMapByFamily_t>;
+      
+      // defined objects
+      using DefinedObjectsMapCountByFamily_t = std::map<ObjectFamily, size_t>;
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Helpers for accessors and queries
@@ -560,6 +573,12 @@ namespace Anki
       // lost from an origin (for example by being unobserved), their master copy should be available through the
       // connected objects container.
       ObjectsByOrigin_t _locatedObjects;
+      
+      // Number of object types we have defined for each family
+      // We are keeping track of the number of defined ObjectTypes for each ObjectFamily here instead of in ObjectLibrary
+      // because the ObjectLibrary has no concept of ObjectFamily. If we were to get this info from ObjectLibrary directly
+      // we would have to iterate over the list every time, so it's faster to keep a count when (un)defining objects.
+      DefinedObjectsMapCountByFamily_t _definedObjectTypeCount;
       
       bool _didObjectsChange;
       TimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed

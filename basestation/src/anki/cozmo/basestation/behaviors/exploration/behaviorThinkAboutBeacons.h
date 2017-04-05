@@ -61,6 +61,7 @@ private:
   struct Configuration
   {
     std::string newAreaAnimTrigger; // animation to play when we discover a new area
+    float beaconRadius_mm; // radius of the beacon
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

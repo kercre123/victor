@@ -254,6 +254,43 @@
           "type" : "Spark"
         }
       },
+      {
+        "name" : "SparksGatherCubes",
+        "requireSpark":"SparksGatherCubes",
+        "priority": 0, // lower is better
+        "driveStartAnimTrigger" : "HikingDrivingStart",
+        "driveLoopAnimTrigger" : "HikingDrivingLoop",
+        "driveEndAnimTrigger" : "HikingDrivingEnd",
+        "behaviorChooser" :
+        {
+          "type" : "sparks",
+          "minTimeSecs": 0,
+          "maxTimeSecs": 240,
+          "numberOfRepetitions": 1,
+          "behaviorObjective": "GatheredCubes",
+          "softSparkTrigger": "SoftSparkUpgradeLift",
+          // delegate out chooser logic to gather cubes chooser
+          "simpleChooserDelegate":
+          {
+            "type":"gather_cubes",
+            "behaviorGroups" : [ "SparksGatherCubes" ]
+          },
+          // these are the behaviors that are allowed in this behavior chooser
+          // no behavior groups are set here since this chooser delegates to the pyramid
+          // chooser for simple behavior purposes
+          "behaviorGroups" : [ ],
+          "scoreBonusForCurrentBehavior" : {
+            "nodes" : [
+              { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
+            ]
+          }
+
+        },
+        "goalStrategy":
+        {
+          "type" : "Spark"
+        }
+      },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay goals:
       // FP_Hiking          - when Cozmo is exploring its surroundings on his own
@@ -305,10 +342,7 @@
         {
           "type" : "Simple",
           "goalShouldEndDurationSecs" : 120.0, // hiking will automatically finish when it completes, so a higher max time is ok
-          "cooldownSecs" : 10.0,
-          "createBeacons" : true,
-          "visitInterestingEdges" : true,
-          "gatherUsableCubesOutOfBeacons" : true
+          "cooldownSecs" : 10.0
         }
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -20,15 +20,12 @@
 namespace Anki {
 namespace Cozmo {
 
-// beacon radius (it could be problem if we had too many cubes and not enough beacons to place them)
-CONSOLE_VAR(float, kB_BeaconRadius_mm, "AIBeacon", 175.0f);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Beacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIBeacon::IsLocWithinBeacon(const Pose3d& pose, float inwardThreshold_mm) const
 {
-  DEV_ASSERT(inwardThreshold_mm < kB_BeaconRadius_mm, "AIBeacon.IsLocWithinBeacon.InvalidInwardTreshold");
+  DEV_ASSERT(inwardThreshold_mm < _radius_mm, "AIBeacon.IsLocWithinBeacon.InvalidInwardTreshold");
   
   Pose3d relative;
   if ( !pose.GetWithRespectTo(_pose, relative) )
@@ -39,16 +36,10 @@ bool AIBeacon::IsLocWithinBeacon(const Pose3d& pose, float inwardThreshold_mm) c
   }
 
   const float distSQ = relative.GetTranslation().LengthSq();
-  const float innerRad = (kB_BeaconRadius_mm-inwardThreshold_mm);
+  const float innerRad = (_radius_mm-inwardThreshold_mm);
   const float innerRadSQ = innerRad*innerRad;
   const bool inInnerRadius = FLT_LE(distSQ, innerRadSQ);
   return inInnerRadius;
-}
- 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-float AIBeacon::GetRadius() const
-{
-  return kB_BeaconRadius_mm;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

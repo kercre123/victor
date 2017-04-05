@@ -33,6 +33,14 @@
             "AnimName": "flash"
         },
         {
+            "CladEvent": "GatherCubesAllCubesInBeacon",
+            "AnimName": "gatherCubesAllCubesInBeacon"
+        },
+        {
+            "CladEvent": "GatherCubesCubeInBeacon",
+            "AnimName": "gatherCubesCubeInBeacon"
+        },
+        {
             "CladEvent": "Interacting",
             "AnimName": "interacting"
         },

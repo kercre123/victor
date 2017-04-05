@@ -391,6 +391,8 @@ enum int_32 CubeAnimationTrigger
   DoubleTappedUnsure,
   DrivingTo,
   Flash,
+  GatherCubesAllCubesInBeacon,
+  GatherCubesCubeInBeacon,
   Interacting,
   InteractingBehaviorLock,
   Onboarding,

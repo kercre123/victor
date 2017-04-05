@@ -343,7 +343,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   
   Result BlockWorld::DefineObject(std::unique_ptr<const ObservableObject>&& object)
   {
-    const ObjectType objType = object->GetType(); // Store due to std::move
+    // Store due to std::move
+    const ObjectType objType = object->GetType();
+    const ObjectFamily objFamily = object->GetFamily();
     
     // Find objects that already exist with this type
     BlockWorldFilter filter;
@@ -369,6 +371,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
         filter.AddAllowedType(objType);
         DeleteLocatedObjects(filter);
+      }
+      else
+      {
+        ++_definedObjectTypeCount[objFamily];
       }
     }
     else
@@ -412,6 +418,10 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         ++numRemoved;
       }
     }
+    
+    DEV_ASSERT(numRemoved <= _definedObjectTypeCount[ObjectFamily::CustomObject],
+      "BlockWorld.UndefineAllCustomObjects.RemovingTooManyObjectTypes");
+    _definedObjectTypeCount[ObjectFamily::CustomObject] -= numRemoved;
     
     PRINT_NAMED_INFO("BlockWorld.HandleMessage.UndefineAllCustomObjects",
                      "%d objects removed from library", numRemoved);

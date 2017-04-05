@@ -4,7 +4,8 @@
   "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [
-    "FP_Hiking"
+    "FP_Hiking",
+    "SparksGatherCubes"
   ],
   
   "flatScore": 8.5

@@ -45,10 +45,6 @@ CONSOLE_VAR(bool, kBebctb_DebugRenderAll, "BehaviorExploreBringCubeToBeacon", tr
 
 // number of attempts to do an action before flagging as failure
 const int kMaxAttempts = 3; // 1 + retries (actions seem to fail fairly often for no apparent reason)
-// how long we care about recent failures. Cozmo normally shouldn't forget when things happen, but since
-// we don't have ways to reliable detect when conditions change, this has to be a sweet tweak between "not too often"
-// and "not forever"
-const float kRecentFailure_sec = 45.0f;
 // if a cube fails, how far does it have to move so that we ignore that previous failure
 const float kCubeFailureDist_mm = 20.0f;
 // if a cube fails, how far does it have to turn so that we ignore that previous failure
@@ -70,8 +66,8 @@ const float kLocationFailureRot_rad = M_PI_F;
 // LocationCalculator: given row and column can calculate a 3d pose in a beacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct LocationCalculator {
-  LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius, const Robot& robot)
-  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), renderAsFirstFind(true)
+  LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius_mm, const Robot& robot, float recentFailureCooldown_sec)
+  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius_mm*beaconRadius_mm), robotRef(robot), renderAsFirstFind(true), recentFailureCooldown_sec(recentFailureCooldown_sec)
   {
     DEV_ASSERT(nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash");
   }
@@ -82,6 +78,7 @@ struct LocationCalculator {
   const float radiusSQ;
   const Robot& robotRef;
   mutable bool renderAsFirstFind;
+  const float recentFailureCooldown_sec;
 
   // calculate location offset given current config
   float GetLocationOffset() const;
@@ -125,7 +122,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   // calculate if candidate pose is close to a previous failure
   const bool isLocationFailureInWhiteboard = robotRef.GetAIComponent().GetWhiteboard().DidFailToUse(-1,
     AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
-    kRecentFailure_sec,
+    recentFailureCooldown_sec,
     outPose, kLocationFailureDist_mm, kLocationFailureRot_rad);
   
   // calculate if candidate pose is free of other objects
@@ -179,6 +176,15 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
+{
+  using namespace JsonTools;
+  const std::string& debugName = GetName() + ".BehaviorExploreBringCubeToBeacon";
+
+  _configParams.recentFailureCooldown_sec = ParseFloat(config, "recentFailureCooldown_sec", debugName);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   _candidateObjects.clear();
@@ -195,7 +201,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
   const bool beaconEverFailed = !NEAR_ZERO(lastBeaconFailure);
   if ( beaconEverFailed ) {
     const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float beaconTimeoutUntil = lastBeaconFailure + kRecentFailure_sec;
+    const float beaconTimeoutUntil = lastBeaconFailure + _configParams.recentFailureCooldown_sec;
     const bool beaconIsInCooldown = FLT_LT(curTime, beaconTimeoutUntil);
     if ( beaconIsInCooldown ) {
       return false;
@@ -218,7 +224,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const BehaviorPreReqRo
         const Pose3d& currentPose = objPtr->GetPose();
         const bool recentFail = whiteboard.DidFailToUse(objectInfo.id,
           {{AIWhiteboard::ObjectActionFailure::PickUpObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie}},
-          kRecentFailure_sec,
+          _configParams.recentFailureCooldown_sec,
           currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
         
         if ( !recentFail )
@@ -409,18 +415,8 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     {
       PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
       
-      // emotions
-      const bool allCubesInBeacons = robot.GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
-      if ( allCubesInBeacons )
-      {
-        // fire emotion event, Cozmo is happy he brought the last cube to the beacon
-        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
-      }
-      else
-      {
-        // fire emotion event, Cozmo is happy he brought a cube to the beacon
-        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
-      }
+      // emotions and behavior objective check
+      FireEmotionEvents(robot);
     }
     if (resCat == ActionResultCategory::RETRY)
     {
@@ -484,18 +480,8 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     {
       PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done").c_str(), "Successfully placed cube");
       
-      // emotions
-      const bool allCubesInBeacons = robot.GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
-      if ( allCubesInBeacons )
-      {
-        // fire emotion event, Cozmo is happy he brought the last cube to the beacon
-        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
-      }
-      else
-      {
-        // fire emotion event, Cozmo is happy he brought a cube to the beacon
-        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
-      }
+      // emotions and behavior objective check
+      FireEmotionEvents(robot);
     }
     else if (resCat == ActionResultCategory::RETRY)
     {
@@ -547,6 +533,22 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreBringCubeToBeacon::FireEmotionEvents(Robot& robot)
+{
+  const bool allCubesInBeacons = robot.GetAIComponent().GetWhiteboard().AreAllCubesInBeacons();
+  if ( allCubesInBeacons )
+  {
+    // fire emotion event, Cozmo is happy he brought the last cube to the beacon
+    robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+  }
+  else
+  {
+    // fire emotion event, Cozmo is happy he brought a cube to the beacon
+    robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
 {
   // clear this render to not mistake previous frame debug with this
@@ -591,7 +593,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
       // 2) otherwise, find area as close to the center as possible (use memory map for this?)
       
       Pose3d dropPose;
-      const bool foundPose = FindFreePoseInBeacon(pickedUpObject, selectedBeacon, robot, dropPose);
+      const bool foundPose = FindFreePoseInBeacon(pickedUpObject, selectedBeacon, robot, dropPose, _configParams.recentFailureCooldown_sec);
       if ( foundPose )
       {
         // log
@@ -660,7 +662,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     const Pose3d& currentPose = blockPtr->GetPose();
     const bool recentFail = whiteboard.DidFailToUse(blockPtr->GetID(),
       AIWhiteboard::ObjectActionFailure::StackOnObject,
-      kRecentFailure_sec,
+      _configParams.recentFailureCooldown_sec,
       currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
     
     
@@ -786,7 +788,7 @@ bool CalculateDirectionalityClosest(AIWhiteboard::ObjectInfoList& objectsInBeaco
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObject* object,
-  const AIBeacon* beacon, const Robot& robot, Pose3d& freePose)
+  const AIBeacon* beacon, const Robot& robot, Pose3d& freePose, float recentFailureCooldown_sec)
 {
   Rotation3d beaconDirectionality(0.0f, kUpVector);
   bool isDirectionalitySetFromObjects = false;
@@ -839,7 +841,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   }
   
   const Vec3f& beaconCenter = beacon->GetPose().GetWithRespectToOrigin().GetTranslation();
-  LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot);
+  LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot, recentFailureCooldown_sec);
 
   const int kMaxRow = beacon->GetRadius() / locCalc.GetLocationOffset();
   const int kMaxCol = kMaxRow;

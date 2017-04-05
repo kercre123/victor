@@ -42,7 +42,7 @@ class BlockWorld;
 class BehaviorExploreBringCubeToBeacon : public IBehavior
 {
 private:
-  
+
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorExploreBringCubeToBeacon(Robot& robot, const Json::Value& config);
@@ -50,12 +50,18 @@ private:
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Initialization/destruction
+  // Initialization
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  void LoadConfig(const Json::Value& config);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // destructor
   virtual ~BehaviorExploreBringCubeToBeacon() override;
-
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -88,7 +94,7 @@ private:
   const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const AIBeacon* beacon, const Robot& robot) const;
   
   // find pose to drop the object inside the selected beacon. Return true/false on success/failure
-  static bool FindFreePoseInBeacon(const ObservableObject* object, const AIBeacon* selectedBeacon, const Robot& robot, Pose3d& freePose);
+  static bool FindFreePoseInBeacon(const ObservableObject* object, const AIBeacon* selectedBeacon, const Robot& robot, Pose3d& freePose, float recentFailureCooldown_sec);
   
   // helper to simplify code. Returns object addressed by index in the _candidateObjects vector, null if not a valid entry
   const ObservableObject* GetCandidate(const BlockWorld& world, size_t index) const;
@@ -99,6 +105,9 @@ private:
   // generate the proper action and callback to try to place the cube we are carrying at the given location
   void TryToPlaceAt(Robot& robot, const Pose3d& pose, int attempt);
   
+  // Fires appropriate emotion events depending on if a cube was placed at a beacon or all cubes are in beacon
+  void FireEmotionEvents(Robot& robot);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -108,6 +117,18 @@ private:
   
   // store ID in case something happen to the object while we move there
   ObjectID _selectedObjectID;
+  
+  // Configurable attributes
+  struct Configuration
+  {
+    // how long we care about recent failures. Cozmo normally shouldn't forget when things happen, but since
+    // we don't have ways to reliable detect when conditions change, this has to be a sweet tweak between "not too often"
+    // and "not forever"
+    float   recentFailureCooldown_sec;
+  };
+  
+  // parsed configurations params from json
+  Configuration _configParams;
 };
   
 

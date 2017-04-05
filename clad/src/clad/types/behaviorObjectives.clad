@@ -19,6 +19,7 @@ enum int_32 BehaviorObjective {
   FistBumpSuccess,
   FistBumpLeftHanging,
   FoundFace,
+  GatheredCubes,
   InteractedWithFace,
   KnockedOverBlocks,
   PeekABooComplete,

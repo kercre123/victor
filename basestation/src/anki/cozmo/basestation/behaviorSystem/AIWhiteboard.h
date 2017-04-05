@@ -170,7 +170,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // add a new beacon
-  void AddBeacon( const Pose3d& beaconPos );
+  void AddBeacon( const Pose3d& beaconPos, const float radius );
+  
+  // add a new beacon
+  void ClearAllBeacons();
   
   // notify whiteboard that someone tried to find good locations for cubes in this beacon and it was not possible
   void FailedToFindLocationInBeacon(AIBeacon* beacon);

@@ -141,8 +141,7 @@ void AIWhiteboard::OnRobotDelocalized()
   UpdatePossibleObjectRender();
   
   // TODO rsam we probably want to rematch beacons when robot relocalizes.
-  _beacons.clear();
-  UpdateBeaconRender();
+  ClearAllBeacons();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -316,22 +315,24 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
     // robot can't be carrying an object, otherwise they are not in beacons
     if ( !_robot.IsCarryingObject() )
     {
-      int locatedCubesInBeacon = 0;
-      int connectedCubes = 0;
+      size_t locatedCubesInBeacon = 0;
+      size_t allDefinedCubes = 0;
       
       // ask located cubes which ones are in a beacon. Note some cubes might be in the beacon already, but
       // if Cozmo doesn't know about them he won't count them before detecting them.
       {
         BlockWorldFilter filter;
-        filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+        filter.SetAllowedFamilies({ ObjectFamily::LightCube });
         filter.AddFilterFcn([this, &locatedCubesInBeacon](const ObservableObject* blockPtr)
         {
           bool isBlockInAnyBeacon = false;
-          // check if the object is within any beacon
-          for ( const auto& beacon : _beacons ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-            if ( isBlockInAnyBeacon ) {
-              break;
+          if (blockPtr->IsPoseStateKnown()){
+            // check if the object is within any beacon
+            for ( const auto& beacon : _beacons ) {
+              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+              if ( isBlockInAnyBeacon ) {
+                break;
+              }
             }
           }
         
@@ -345,19 +346,10 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
         _robot.GetBlockWorld().FilterLocatedObjects(filter);
       }
       
-      // Find how many connected cubes we have and compare
-      {
-        BlockWorldFilter filter;
-        filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-        
-        std::vector<const ActiveObject*> connectedObjects;
-        _robot.GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedObjects);
-
-        connectedCubes = Util::numeric_cast<int>( connectedObjects.size() );
-      }
+      // Find out how many defined cubes we have and compare
+      allDefinedCubes = _robot.GetBlockWorld().GetNumDefinedObjects(ObjectFamily::LightCube);
       
-      allInBeacon = (connectedCubes == locatedCubesInBeacon);
-      
+      allInBeacon = (allDefinedCubes == locatedCubesInBeacon);
     }
   }
 
@@ -681,10 +673,19 @@ void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObj
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::AddBeacon( const Pose3d& beaconPos )
+void AIWhiteboard::AddBeacon( const Pose3d& beaconPos, const float radius )
 {
-  _beacons.emplace_back( beaconPos );
+  _beacons.emplace_back( beaconPos, radius );
 
+  // update render
+  UpdateBeaconRender();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::ClearAllBeacons()
+{
+  _beacons.clear();
+  
   // update render
   UpdateBeaconRender();
 }
