@@ -80,6 +80,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRequestGameAr
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        false},

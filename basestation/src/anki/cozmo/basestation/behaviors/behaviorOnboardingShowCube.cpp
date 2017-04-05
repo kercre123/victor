@@ -49,6 +49,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kOnboardingTriggerAffectedAr
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -483,7 +484,6 @@ bool BehaviorOnboardingShowCube::IsSequenceComplete()
 {
   return _state == State::Inactive || _state == State::ErrorFinal || _state == State::WaitForFinalContinue;
 }
-
   
 }
 }

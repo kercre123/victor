@@ -39,6 +39,12 @@
   "challengeDetails.needsMoreCubesModal.button": {
     "translation": "Show Me How"
   },
+  "challengeDetails.cozmoHasHiccups.title": {
+    "translation": "Cozmo has the Hiccups"
+  },
+  "challengeDetails.cozmoHasHiccups.description": {
+    "translation": "Try to help Cozmo by putting him upside-down."
+  },
   "cubeSlap.title": {
     "translation": "Keepaway"
   },

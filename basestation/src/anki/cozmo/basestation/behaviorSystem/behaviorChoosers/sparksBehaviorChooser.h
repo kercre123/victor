@@ -78,6 +78,12 @@ private:
   void SmartRemoveDisableReactionsLock(const std::string& lockID,
                                        const TriggersArray& triggers);
   
+  // Avoid calling this function directly, use the SMART_DISABLE_REACTION_DEV_ONLY macro instead
+  // Locks a single reaction trigger instead of a full TriggersArray
+#if ANKI_DEV_CHEATS
+  void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
+#endif
+  
   enum class ChooserState{
     ChooserSelected,
     PlayingSparksIntro,

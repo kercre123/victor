@@ -16,8 +16,12 @@
     "enabled": false
   },
   {
-     "feature": "PeekABoo",
-     "enabled": false
+    "feature": "PeekABoo",
+    "enabled": false
+  },
+  {
+    "feature": "Hiccups",
+    "enabled": false
   }
 ]
 

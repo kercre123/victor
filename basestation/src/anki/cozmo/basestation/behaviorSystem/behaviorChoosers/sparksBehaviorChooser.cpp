@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
@@ -29,9 +30,12 @@
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
+
+CONSOLE_VAR(bool, kCanHiccupWhileSparked, "Hiccups", true);
 
 namespace{
 static const char* kMinTimeConfigKey                 = "minTimeSecs";
@@ -52,6 +56,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooser
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        false},
@@ -83,6 +88,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimatio
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -235,8 +241,13 @@ void SparksBehaviorChooser::OnSelected()
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
+  if(!kCanHiccupWhileSparked)
+  {
+    SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+  }
+
   SmartDisableReactionsWithLock(GetName(),
-                                kAffectTriggersSparksChooserArray);
+                                kAffectTriggersSparksChooserArray); 
 
   // Notify the delegate chooser if it exists
   if(_simpleBehaviorChooserDelegate != nullptr){
@@ -299,6 +310,14 @@ void SparksBehaviorChooser::SmartRemoveDisableReactionsLock(const std::string& l
   _smartLockIDs.erase(lockID);
 }
 
+#if ANKI_DEV_CHEATS
+void SparksBehaviorChooser::SmartDisableReactionWithLock(const std::string& lockID,
+                                                         const ReactionTrigger& trigger)
+{
+  _robot.GetBehaviorManager().DisableReactionWithLock(lockID, trigger);
+  _smartLockIDs.insert(lockID);
+}
+#endif
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>

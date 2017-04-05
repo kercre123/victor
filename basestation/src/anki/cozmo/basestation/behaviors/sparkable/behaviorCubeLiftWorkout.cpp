@@ -49,6 +49,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray 
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -198,7 +199,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
       if( res == ActionResult::SUCCESS ) {
         TransitionToPreLiftAnim(robot);
       }
-      else {
+      else if(res != ActionResult::CANCELLED) {
         // only count driving failures if there are no predock poses (that way a different cube or behavior
         // will get selected)
         const bool countFailure = (res == ActionResult::NO_PREACTION_POSES);

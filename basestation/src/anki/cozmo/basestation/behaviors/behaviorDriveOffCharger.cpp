@@ -42,6 +42,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDriveOffCharg
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},

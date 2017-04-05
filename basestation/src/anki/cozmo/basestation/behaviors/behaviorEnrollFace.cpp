@@ -85,6 +85,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArr
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -258,7 +259,6 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()), _saveID);
-
   
   SmartDisableReactionsWithLock(GetName(), kAffectTriggersEnrollFaceArray);
   

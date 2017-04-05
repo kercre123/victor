@@ -141,6 +141,9 @@
   "behavior.LookInPlaceForCube": {
     "translation": "Cozmo is looking for a cube"
   },
+  "behavior.Hiccup": {
+    "translation": "Cozmo has the hiccups and needs your help"
+  },
   "button.clearThisSlot": {
     "translation": "Clear This Slot"
   }

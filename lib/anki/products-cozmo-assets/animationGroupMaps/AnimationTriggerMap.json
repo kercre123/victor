@@ -389,6 +389,34 @@
       "AnimName": "ag_gotosleep_sleeping"
     },
     {
+      "CladEvent": "Hiccup",
+      "AnimName": "ag_hiccups"
+    },
+    {
+      "CladEvent": "HiccupGetIn",
+      "AnimName": "ag_hiccup_getin"
+    },
+    {
+      "CladEvent": "HiccupPlayerCure",
+      "AnimName": "ag_hiccup_playercure_getout"
+    },
+    {
+      "CladEvent": "HiccupRobotOnBack",
+      "AnimName": "ag_hiccup_puton_bottom"
+    },
+    {
+      "CladEvent": "HiccupRobotOnFace",
+      "AnimName": "ag_hiccup_puton_face"
+    },
+    {
+      "CladEvent": "HiccupRobotPickedUp",
+      "AnimName": "ag_hiccup_player_pickup"
+    },
+    {
+      "CladEvent": "HiccupSelfCure",
+      "AnimName": "ag_hiccup_selfcure_getout"
+    },
+    {
       "CladEvent": "HikingDrivingStart",
       "AnimName": "ag_hiking_startdriving"
     },

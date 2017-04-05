@@ -41,6 +41,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersAcknowledgeCu
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},

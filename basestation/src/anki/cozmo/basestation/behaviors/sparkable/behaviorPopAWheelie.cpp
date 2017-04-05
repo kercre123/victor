@@ -34,7 +34,8 @@ namespace Cozmo {
 namespace{
 CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
-  
+
+CONSOLE_VAR(bool, kCanHiccupWhilePopWheelie, "Hiccups", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieArray = {
@@ -44,6 +45,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieAr
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        false},
@@ -75,6 +77,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectRobotOnBackArray = {
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        false},
@@ -121,7 +124,7 @@ bool BehaviorPopAWheelie::IsRunnableInternal(const BehaviorPreReqRobot& preReqDa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPopAWheelie::InitInternal(Robot& robot)
 {
-  if(!_shouldStreamline){
+  if(!_shouldStreamline && _lastBlockReactedTo != _targetBlock){
     TransitionToReactingToBlock(robot);
   }else{
     TransitionToPerformingAction(robot);
@@ -160,10 +163,16 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
 
   // Turn towards the object and then react to it before performing the pop a wheelie action
   StartActing(new CompoundActionSequential(robot, {
-    new TurnTowardsObjectAction(robot, _targetBlock, M_PI_F),
-    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
-  }),
-  &BehaviorPopAWheelie::TransitionToPerformingAction);
+      new TurnTowardsObjectAction(robot, _targetBlock, M_PI_F),
+      new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
+    }),
+    [this, &robot](const ActionResult& res){
+      if(res == ActionResult::SUCCESS)
+      {
+        _lastBlockReactedTo = _targetBlock;
+      }
+      TransitionToPerformingAction(robot);
+    });
 }
 
   
@@ -208,7 +217,12 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   // that we play the correct animation instead of getting interrupted)  
   auto disableCliff = [this](Robot& robot) {
     // disable reactions we don't want
-    this->SmartDisableReactionsWithLock(GetName(), kAffectTriggersPopAWheelieArray);
+    if(!kCanHiccupWhilePopWheelie)
+    {
+      SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+    }
+
+    SmartDisableReactionsWithLock(GetName(), kAffectTriggersPopAWheelieArray);
     
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
@@ -235,6 +249,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 {
                   case ActionResultCategory::SUCCESS:
                   {
+                    _lastBlockReactedTo.UnSet();
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     break;

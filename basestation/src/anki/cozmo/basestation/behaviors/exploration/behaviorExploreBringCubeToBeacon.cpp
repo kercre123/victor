@@ -369,7 +369,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
           // do not queue more actions here so that we get kicked out, flag as fail
           pickUpFinalFail = true;
         }
-      } else {
+      } else if(resCat != ActionResultCategory::CANCELLED) {
         PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.NoRetry").c_str(), "Failed to pick up '%d', action does not retry.", _selectedObjectID.GetValue());
         // do not queue more actions here so that we get kicked out, flag as fail
         pickUpFinalFail = true;
@@ -448,7 +448,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
         // if we are carrying the cube, this is definitely a stack issue
         stackOnCubeFinalFail = true;
       }
-    } else {
+    } else if(resCat != ActionResultCategory::CANCELLED){
       PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.NoRetryAllowed").c_str(), "Failed to stack (no retry allowed by action)");
       stackOnCubeFinalFail = true;
     }

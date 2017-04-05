@@ -75,6 +75,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kObjectTapInteractionDisable
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        false},
@@ -106,6 +107,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kSparkBehaviorDisablesArray 
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -801,6 +803,13 @@ void IBehavior::SmartRemoveDisableReactionsLock(const std::string& lockID)
   _smartLockIDs.erase(lockID);
 }
 
+#if ANKI_DEV_CHEATS
+void IBehavior::SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger)
+{
+  _robot.GetBehaviorManager().DisableReactionWithLock(lockID, trigger);
+  _smartLockIDs.insert(lockID);
+}
+#endif
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)

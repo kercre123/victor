@@ -180,7 +180,6 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                                                           upright,
                                                           params);
   
-  
   SmartDelegateToHelper(robot, rollHandle, delegateSuccess, delegateFailure);
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
   

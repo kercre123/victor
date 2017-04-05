@@ -161,6 +161,7 @@ public class Robot : IRobot {
 
   public RobotStatusFlag RobotStatus { get; private set; }
   public OffTreadsState TreadState { get; private set; }
+  public bool HasHiccups { get; private set; }
 
   public GameStatusFlag GameStatus { get; private set; }
 
@@ -186,7 +187,7 @@ public class Robot : IRobot {
   private static AllTriggersConsidered _AllTriggers = new AllTriggersConsidered(true, true, true, true, true, true,
                                                                        true, true, true, true, true, true,
                                                                        true, true, true, true, true, true,
-                                                                       true, true, true, true, true);
+                                                                       true, true, true, true, true, true);
 
   private static DisableReactionsWithLock _RequestDisableReactions = new DisableReactionsWithLock("unity", _AllTriggers);
   private static RemoveDisableReactionsLock _RequestReEnableReactions = new RemoveDisableReactionsLock("unity");
@@ -411,6 +412,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
 
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -444,6 +446,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -656,6 +659,7 @@ public class Robot : IRobot {
     // usually this is unique
     CurrentBehaviorName = "NoneBehavior";
     CurrentBehaviorDisplayNameKey = "";
+    HasHiccups = false;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();
@@ -684,6 +688,10 @@ public class Robot : IRobot {
 
   private void HandleRobotOffTreadsStateChanged(G2U.RobotOffTreadsStateChanged message) {
     TreadState = message.treadsState;
+  }
+
+  private void HandleRobotHiccupsChanged(G2U.RobotHiccupsChanged message) {
+    HasHiccups = message.hasHiccups;
   }
 
   public LightCube GetLightCubeWithFactoryID(uint factoryID) {

@@ -234,7 +234,15 @@ public:
   float GetLastEdgeInformationTime() const { return _edgeInfoTime_sec; }
   float GetLastEdgeClosestDistance() const { return _edgeInfoClosestEdge_mm; }
   
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Hiccups
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool HasHiccups() const { return _hasHiccups; }
+  void SetHasHiccups(bool hasHiccups) { _hasHiccups = hasHiccups; }
+  
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -337,6 +345,9 @@ private:
     
   // Track objects without pre-doc poses - currently used for pyramid
   ObjectID _objectIDWithoutPreDock;
+  
+  // Whether or not Cozmo has the hiccups
+  bool _hasHiccups = false;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

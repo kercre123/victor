@@ -52,6 +52,7 @@ namespace Anki {
       // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
       // UpdateWhileNotRunning
       mutable ObjectID _targetBlock;
+      ObjectID _lastBlockReactedTo;
       
       s32 _numPopAWheelieActionRetries = 0;
       

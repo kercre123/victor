@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -57,6 +58,14 @@ BehaviorPlayAnimSequence::~BehaviorPlayAnimSequence()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
+  const bool hasAnims = !_animTriggers.empty();
+  return hasAnims;
+}
+
+bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const
+{
+  _animTriggers = preReqData.GetAnims();
+  
   const bool hasAnims = !_animTriggers.empty();
   return hasAnims;
 }

@@ -176,7 +176,13 @@ public:
   // this does not gaurentee that reactions are re-enabled as there
   // may be additional disable locks still present on them
   void RemoveDisableReactionsLock(const std::string& lockID);
-                                
+  
+#if ANKI_DEV_CHEATS
+  void DisableReactionWithLock(const std::string& lockID,
+                               const ReactionTrigger& trigger,
+                               bool stopCurrent = true);
+#endif
+  
   
   // Allows other parts of the system to determine whether a reaction is enabled
   bool IsReactionTriggerEnabled(ReactionTrigger reaction) const;

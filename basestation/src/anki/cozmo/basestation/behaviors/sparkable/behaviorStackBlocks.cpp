@@ -36,6 +36,7 @@ namespace {
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
 CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 2);
+CONSOLE_VAR(bool, kCanHiccupWhileStacking, "Hiccups", true);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
 static const float kWaitForValidTimeout_s = 0.4f;
@@ -424,11 +425,14 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                 }
                 else
                 {
-                  // mark the block as inaccessible if we've retried the appropriate number of times
-                  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
-                  if(failedObject){
-                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
-                                                                              AIWhiteboard::ObjectActionFailure::PickUpObject);
+                  if(msg.result != ActionResult::CANCELLED)
+                  {
+                    // mark the block as inaccessible if we've retried the appropriate number of times
+                    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
+                    if(failedObject){
+                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
+                                                                            AIWhiteboard::ObjectActionFailure::PickUpObject);
+                    }
                   }
                  
                   // Play failure animation
@@ -473,6 +477,38 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
     TransitionToPickingUpBlock(robot);
   }
   else {
+    // Disable hiccup so it can't interrupt the stack
+    if(!kCanHiccupWhileStacking)
+    {
+      static constexpr ReactionTriggerHelpers::FullReactionArray kTriggers = {
+        {ReactionTrigger::CliffDetected,                false},
+        {ReactionTrigger::CubeMoved,                    false},
+        {ReactionTrigger::DoubleTapDetected,            false},
+        {ReactionTrigger::FacePositionUpdated,          false},
+        {ReactionTrigger::FistBump,                     false},
+        {ReactionTrigger::Frustration,                  false},
+        {ReactionTrigger::Hiccup,                       true},
+        {ReactionTrigger::MotorCalibration,             false},
+        {ReactionTrigger::NoPreDockPoses,               false},
+        {ReactionTrigger::ObjectPositionUpdated,        false},
+        {ReactionTrigger::PlacedOnCharger,              false},
+        {ReactionTrigger::PetInitialDetection,          false},
+        {ReactionTrigger::PyramidInitialDetection,      false},
+        {ReactionTrigger::RobotPickedUp,                false},
+        {ReactionTrigger::RobotPlacedOnSlope,           false},
+        {ReactionTrigger::ReturnedToTreads,             false},
+        {ReactionTrigger::RobotOnBack,                  false},
+        {ReactionTrigger::RobotOnFace,                  false},
+        {ReactionTrigger::RobotOnSide,                  false},
+        {ReactionTrigger::RobotShaken,                  false},
+        {ReactionTrigger::Sparked,                      false},
+        {ReactionTrigger::StackOfCubesInitialDetection, false},
+        {ReactionTrigger::UnexpectedMovement,           false},
+        {ReactionTrigger::VC,                           false}
+      };
+      SmartDisableReactionsWithLock(GetName(), kTriggers);
+    }
+  
     StartActing(new DriveToPlaceOnObjectAction(robot, _targetBlockBottom),
                 [this, &robot](const ExternalInterface::RobotCompletedAction& completion) {
                   ActionResultCategory resCat = IActionRunner::GetActionResultCategory(completion.result);

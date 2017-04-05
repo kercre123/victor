@@ -21,6 +21,7 @@
   {ReactionTrigger::FacePositionUpdated,          triggers.facePositionUpdated}, \
   {ReactionTrigger::FistBump,                     triggers.fistBump}, \
   {ReactionTrigger::Frustration,                  triggers.frustration}, \
+  {ReactionTrigger::Hiccup,                       triggers.hiccup}, \
   {ReactionTrigger::MotorCalibration,             triggers.motorCalibration}, \
   {ReactionTrigger::NoPreDockPoses,               triggers.noPreDockPoses}, \
   {ReactionTrigger::ObjectPositionUpdated,        triggers.objectPositionUpdated}, \
@@ -125,6 +126,13 @@ static void EnsureFullReactionArrayConversionsValid(const FullReactionArray& rea
         DEV_ASSERT((triggersAffected.frustration == reactionEntry.Value()) &&
                    (triggersAffected.frustration == commutativeEntry.Value()),
                    "EnsureFullReactionArrayConversionsValid.Frustration");
+        break;
+      }
+      case ReactionTrigger::Hiccup:
+      {
+        DEV_ASSERT((triggersAffected.hiccup == reactionEntry.Value()) &&
+                   (triggersAffected.hiccup == commutativeEntry.Value()),
+                   "EnsureFullReactionArrayConversionsValid.Hiccup");
         break;
       }
       case ReactionTrigger::MotorCalibration:
@@ -269,6 +277,7 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
        reactions[Util::EnumToUnderlying(ReactionTrigger::FacePositionUpdated)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::FistBump)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::Frustration)].Value(),
+       reactions[Util::EnumToUnderlying(ReactionTrigger::Hiccup)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::MotorCalibration)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::NoPreDockPoses)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::ObjectPositionUpdated)].Value(),
@@ -302,6 +311,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             true},
   {ReactionTrigger::NoPreDockPoses,               true},
   {ReactionTrigger::ObjectPositionUpdated,        true},

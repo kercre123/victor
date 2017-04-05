@@ -36,6 +36,7 @@ namespace{
 static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 
+
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersReactToCliffArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
@@ -43,6 +44,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersReactToCliffA
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -66,7 +68,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersReactToCl
               "Reaction triggers duplicate or non-sequential");
   
 }
- 
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)

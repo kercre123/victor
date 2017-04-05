@@ -14,6 +14,8 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -50,7 +52,14 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
     if (robot.GetCliffDataRaw() < CLIFF_SENSOR_DROP_LEVEL) {
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FlipDownFromBack),
+      AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
+      
+      if(robot.GetAIComponent().GetWhiteboard().HasHiccups())
+      {
+        anim = AnimationTrigger::HiccupRobotOnBack;
+      }
+    
+      StartActing(new TriggerAnimationAction(robot, anim),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
       LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d", robot.GetCliffDataRaw());

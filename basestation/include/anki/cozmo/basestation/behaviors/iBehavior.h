@@ -40,6 +40,14 @@
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
 
+// Dev only macro to lock a single reaction trigger useful for enabling/disabling reactions
+// with a console var
+#if ANKI_DEV_CHEATS
+  #define SMART_DISABLE_REACTION_DEV_ONLY(lock, trigger) SmartDisableReactionWithLock(lock, trigger)
+#else
+  #define SMART_DISABLE_REACTION_DEV_ONLY(lock, trigger)
+#endif
+
 namespace Anki {
 namespace Util{
 class RandomGenerator;
@@ -60,6 +68,7 @@ class BehaviorPreReqAcknowledgeObject;
 class BehaviorPreReqAcknowledgeFace;
 class BehaviorPreReqAcknowledgePet;
 class BehaviorPreReqRespondPossiblyRoll;
+class BehaviorPreReqAnimSequence;
   
 class ISubtaskListener;
 class IReactToFaceListener;
@@ -240,6 +249,8 @@ protected:
                  { DEV_ASSERT(false, "IsRunnableInternal.PreReqAcknowledgePet.NoOverride"); return false;}
   virtual bool IsRunnableInternal(const BehaviorPreReqRespondPossiblyRoll& preReqData ) const
                  { DEV_ASSERT(false, "IsRunnableInternal.PreReqRespondPossiblyRoll.NoOverride"); return false;}
+  virtual bool IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData ) const
+                 { DEV_ASSERT(false, "IsRunnableInternal.PreReqAnimSequence.NoOverride"); return false;}
 
   // This function can be implemented by behaviors. It should return Running while it is running, and Complete
   // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
@@ -367,6 +378,12 @@ protected:
   // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
   // and stop tracking it
   void SmartRemoveDisableReactionsLock(const std::string& lockID);
+  
+  // Avoid calling this function directly, use the SMART_DISABLE_REACTION_DEV_ONLY macro instead
+  // Locks a single reaction trigger instead of a full TriggersArray
+#if ANKI_DEV_CHEATS
+  void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
+#endif
 
   
   // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior

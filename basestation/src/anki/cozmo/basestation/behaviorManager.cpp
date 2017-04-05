@@ -1225,6 +1225,46 @@ void BehaviorManager::DisableReactionsWithLock(
   }
 }
 
+#if ANKI_DEV_CHEATS
+void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
+                                              const ReactionTrigger& trigger,
+                                              bool stopCurrent)
+{
+  /// Iterate over all reaction triggers to see if they're affected by this request
+  for(auto& entry: _reactionTriggerMap)
+  {
+    ReactionTrigger triggerEnum = entry.first;
+    auto& allStrategyMaps = entry.second;
+    
+    if(allStrategyMaps.IsReactionEnabled())
+    {
+      //About to disable, notify reaction trigger strategy
+      const auto& allEntries = allStrategyMaps.GetStrategyMap();
+      for(auto& entry : allEntries)
+      {
+        entry.first->EnabledStateChanged(false);
+      }
+    }
+    
+    allStrategyMaps.AddDisableLockToTrigger(lockID, triggerEnum);
+    
+    // If the currently running behavior was triggered as a reaction
+    // and we are supposed to stop current, stop the current behavior
+    if(stopCurrent &&
+       _runningAndResumeInfo->GetCurrentReactionTrigger() == triggerEnum)
+    {
+      IBehavior* currentBehavior = _runningAndResumeInfo->GetCurrentBehavior();
+      if(currentBehavior!= nullptr && currentBehavior->IsRunning())
+      {
+        currentBehavior->Stop();
+      }
+    }
+    
+    triggerEnum++;
+  }
+}
+#endif
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)

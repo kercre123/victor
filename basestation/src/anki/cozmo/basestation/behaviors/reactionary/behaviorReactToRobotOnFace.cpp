@@ -14,6 +14,8 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -53,6 +55,11 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded(Robot& robot)
       anim = AnimationTrigger::FacePlantRoll;
     }else{
       anim = AnimationTrigger::FacePlantRollArmUp;
+    }
+    
+    if(robot.GetAIComponent().GetWhiteboard().HasHiccups())
+    {
+      anim = AnimationTrigger::HiccupRobotOnFace;
     }
     
     StartActing(new TriggerAnimationAction(robot, anim),

@@ -110,6 +110,13 @@ enum int_32 AnimationTrigger
   GoToSleepGetOut,
   GoToSleepOff,
   GoToSleepSleeping,
+  Hiccup,
+  HiccupGetIn,
+  HiccupPlayerCure,
+  HiccupRobotOnBack,
+  HiccupRobotOnFace,
+  HiccupRobotPickedUp,
+  HiccupSelfCure,
   HikingDrivingEnd,             // loco-driving anim (so that Cozmo can be humming while hiking) - end
   HikingDrivingLoop,            // loco-driving anim (so that Cozmo can be humming while hiking) - loop
   HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start

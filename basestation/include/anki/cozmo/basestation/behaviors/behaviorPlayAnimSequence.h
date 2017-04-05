@@ -32,6 +32,7 @@ public:
   virtual ~BehaviorPlayAnimSequence();
   
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
 protected:
@@ -47,7 +48,7 @@ protected:
   
   // ========== Members ==========
   
-  std::vector<AnimationTrigger> _animTriggers;
+  mutable std::vector<AnimationTrigger> _animTriggers;
   int _numLoops;
   int _sequenceLoopsDone; // for sequences it's not per animation, but per sequence, so we have to wait till the last one
 };

@@ -71,6 +71,8 @@ public interface IRobot : IDisposable {
 
   OffTreadsState TreadState { get; }
 
+  bool HasHiccups { get; }
+
   GameStatusFlag GameStatus { get; }
 
   float BatteryVoltage { get; }

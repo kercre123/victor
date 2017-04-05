@@ -19,8 +19,12 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Cozmo {
+
+  CONSOLE_VAR(bool, kCanHiccupWhileFistBumping, "Hiccups", true);
   
 namespace{
 // Json parameter keys
@@ -50,6 +54,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFistBumpArray
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -104,6 +109,11 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
 {
   // Disable reactionary behaviors that we don't want interrupting this.
   // (Sometimes when he gets fist bumped too hard it can be interpreted as pickup.)
+  if(!kCanHiccupWhileFistBumping)
+  {
+    SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+  }
+
   SmartDisableReactionsWithLock(GetName(), kAffectTriggersFistBumpArray);
 
   // Disable idle animation

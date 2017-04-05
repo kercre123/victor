@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/petWorld.h"
@@ -124,7 +126,14 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
     }
     else
     {
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToPickup));
+      AnimationTrigger anim = AnimationTrigger::ReactToPickup;
+      
+      if(robot.GetAIComponent().GetWhiteboard().HasHiccups())
+      {
+        anim = AnimationTrigger::HiccupRobotPickedUp;
+      }
+    
+      StartActing(new TriggerAnimationAction(robot, anim));
     }
   }
   

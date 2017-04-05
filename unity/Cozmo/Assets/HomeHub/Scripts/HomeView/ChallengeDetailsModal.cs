@@ -86,6 +86,8 @@ public class ChallengeDetailsModal : BaseModal {
 
   private Cozmo.HomeHub.HomeView _HomeViewInstance;
 
+  private BaseModal _hiccupAlertModal = null;
+
   public void InitializeChallengeData(ChallengeData challengeData, Cozmo.HomeHub.HomeView homeViewInstance) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
@@ -165,6 +167,10 @@ public class ChallengeDetailsModal : BaseModal {
           else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {
             OpenCozmoNotOnTreadsAlert();
           }
+          else if (robot.HasHiccups) {
+            RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
+            OpenCozmoHasHiccupsAlert();
+          }
           else {
             ChallengeStarted(_ChallengeId);
           }
@@ -207,6 +213,38 @@ public class ChallengeDetailsModal : BaseModal {
                                                   dialogCloseAnimationFinishedCallback: HandleEdgeCaseAlertClosed);
 
     UIManager.OpenAlert(cozmoNotOnTreadsData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+  }
+
+  private void OpenCozmoHasHiccupsAlert() {
+    _hiccupAlertModal = null;
+
+    var cozmoHasHiccupsData = new AlertModalData("cozmo_has_hiccups_alert",
+                                                 LocalizationKeys.kChallengeDetailsCozmoHasHiccupsTitle,
+                                                 LocalizationKeys.kChallengeDetailsCozmoHasHiccupsDescription,
+                                                 new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                                 dialogCloseAnimationFinishedCallback: HandleEdgeCaseAlertClosed);
+
+    UIManager.OpenAlert(cozmoHasHiccupsData,
+                        ModalPriorityData.CreateSlightlyHigherData(this.PriorityData),
+                        HandleHiccupsAlertCreated);
+  }
+
+  private void HandleHiccupsAlertCreated(BaseModal modal) {
+    _hiccupAlertModal = modal;
+  }
+
+  private void CloseCozmoHasHiccupsAlert() {
+    if (_hiccupAlertModal) {
+      UIManager.CloseModal(_hiccupAlertModal);
+      _hiccupAlertModal = null;
+    }
+  }
+
+  private void HandleRobotHiccupsChanged(Anki.Cozmo.ExternalInterface.RobotHiccupsChanged message) {
+    if (!message.hasHiccups) {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
+      CloseCozmoHasHiccupsAlert();
+    }
   }
 
   private void OnUpgradeClicked() {
@@ -276,6 +314,8 @@ public class ChallengeDetailsModal : BaseModal {
     if (_UnlockTween != null) {
       _UnlockTween.Kill();
     }
+
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
   }
 
   protected override void ConstructOpenAnimation(Sequence openAnimation) {

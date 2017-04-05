@@ -36,6 +36,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDoubleTapArra
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -296,6 +297,11 @@ void BehaviorReactToDoubleTap::TransitionToSearchForCube(Robot& robot)
   
   StartActing(action,
               [this, &robot](const ExternalInterface::RobotCompletedAction& msg) {
+                if(msg.result == ActionResult::CANCELLED)
+                {
+                  return;
+                }
+                
                 if(msg.result != ActionResult::SUCCESS)
                 {
                   PRINT_CH_INFO("Behaviors", "BehaviorReactToDoubleTap.CantFindCube",

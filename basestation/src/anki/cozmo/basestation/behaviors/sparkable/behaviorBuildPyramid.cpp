@@ -30,8 +30,12 @@
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Cozmo {
+  
+CONSOLE_VAR(bool, kCanHiccupWhilePlacingPyramid, "Hiccups", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace{
@@ -56,6 +60,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersBuildPyramidA
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -158,10 +163,17 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   SET_STATE(PlacingTopBlock);
+  
+  if(!kCanHiccupWhilePlacingPyramid)
+  {
+    SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+  }
+  
   SmartDisableReactionsWithLock(GetName(), kAffectTriggersBuildPyramidArray);
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);
+
   if(staticBlock  == nullptr || baseBlock == nullptr)
   {
     PRINT_NAMED_WARNING("BehaviorBuildPyramid.TransitionToPlacingTopBlock.NullObject",

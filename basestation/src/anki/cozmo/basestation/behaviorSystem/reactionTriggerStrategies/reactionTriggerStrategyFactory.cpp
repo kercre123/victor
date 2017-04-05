@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFistBump.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFrustration.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyGeneric.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyHiccup.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyNoPreDockPoses.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyObjectPositionUpdated.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPlacedOnCharger.h"
@@ -79,6 +80,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::Frustration:
     {
       strategy = new ReactionTriggerStrategyFrustration(robot, config);
+      break;
+    }
+    case ReactionTrigger::Hiccup:
+    {
+      strategy = new ReactionTriggerStrategyHiccup(robot, config);
       break;
     }
     case ReactionTrigger::MotorCalibration:
