@@ -3181,8 +3181,11 @@ void Robot::UnSetCarryObject(ObjectID objID)
 Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker::Code atMarkerCode)
 {
   if(!objectID.IsSet()) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectIDNotSet",
-                      "No docking object ID set, but told to pick one up.");
+    // This can happen if the robot is picked up after/right at the end of completing a dock
+    // The dock object gets cleared from the world but the robot ends up sending a
+    // pickAndPlaceResult success
+    PRINT_NAMED_WARNING("Robot.PickUpDockObject.ObjectIDNotSet",
+                        "No docking object ID set, but told to pick one up.");
     return RESULT_FAIL;
   }
   

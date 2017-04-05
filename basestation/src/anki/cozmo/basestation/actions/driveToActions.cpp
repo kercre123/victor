@@ -907,8 +907,11 @@ namespace Anki {
         }
       }
       
-      // If we are no longer running so start drivingEnd animation and keep this action running
-      if(ActionResult::RUNNING != result &&
+      // If we are no longer running and have at least started moving (path planning succeeded)
+      // then start the drivingEnd animation and keep this action running
+      if(result != ActionResult::RUNNING &&
+         result != ActionResult::PATH_PLANNING_FAILED_ABORT &&
+         result != ActionResult::PATH_PLANNING_FAILED_RETRY &&
          _robot.GetDrivingAnimationHandler().PlayEndAnim())
       {
         result = ActionResult::RUNNING;
