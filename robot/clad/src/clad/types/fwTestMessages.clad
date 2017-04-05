@@ -35,6 +35,14 @@ namespace RobotInterface {
     FTM_UserDebug = 22,
     FTM_DebugAccessStage = 23, 
   }
+
+  enum uint_8 ChargeStatus
+  {
+    CS_OFF_CHARGER = 0,
+    CS_ON_CHARGER =  1,
+    CS_IS_CHARGING = 2,
+    CS_BAD_CHARGER = 4,
+  }              
   
   /// The active test mode of the robot
   message EnterFactoryTestMode

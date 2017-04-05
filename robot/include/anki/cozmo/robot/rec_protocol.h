@@ -46,7 +46,7 @@ typedef struct {
   uint32_t   timestamp;
   uint8_t    c_time[32];
   uint8_t    git_sha[20];
-  uint8_t    max_model;
+  uint8_t    max_hw_rev;
 
   // HASH OID
   // MODULUS FOR CERT

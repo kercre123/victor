@@ -68,7 +68,7 @@ namespace OTA {
 message RobotAvailable
 {
   uint_32 robotID,
-  uint_16 modelID,
+  uint_16 hwRevision,
 }
 
 message FirmwareVersion

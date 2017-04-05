@@ -5,6 +5,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/types/fwTestMessages.h"
 
 #ifdef SIMULATOR
 #include "anki/cozmo/transport/IUnreliableTransport.h"
@@ -822,6 +823,9 @@ namespace Anki {
       void Process_bodyStorageContents(Anki::Cozmo::BodyStorageContents const&) {
         // Handled on the Espressif
       }
+      void Process_bodySerialNum(Anki::Cozmo::RobotInterface::BodySerialNumber const&) {
+        // For espressif only
+      }
 
       void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
       {
@@ -1069,7 +1073,7 @@ namespace Anki {
           tsm.cliffLevel = g_dataToHead.cliffLevel,
           tsm.battVolt10x = static_cast<uint8_t>(robotState_.batteryVoltage * 10.0f);
           tsm.extVolt10x  = static_cast<uint8_t>(vExt_ * 10.0f);
-          tsm.chargeStat  = (onCharger_ << 0) | (isCharging_ << 1);
+          tsm.chargeStat  = (onCharger_ * RobotInterface::CS_ON_CHARGER) | (isCharging_ * RobotInterface::CS_IS_CHARGING) | (chargerOOS_ * RobotInterface::CS_BAD_CHARGER);
           RobotInterface::SendMessage(tsm);
         }
 #endif

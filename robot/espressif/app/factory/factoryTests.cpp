@@ -30,6 +30,7 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/fwTestMessages.h"
 #include "clad/types/imu.h"
 
 typedef void (*FTMUpdateFunc)(void);
@@ -78,13 +79,14 @@ static s32 minPositions[4];
 static s32 maxPositions[4];
 static s8  menuIndex;
 static u8  extVolt10x;
+static bool chargerOOS;
 static PlayPenTestState testModePhase;
 static int positionChanges;
 static u8 gButtonIsPressed;
 static uint32_t gBodySN;
 
 #define CHARGER_DETECT_THRESHOLD_DV (40)
-
+#define ON_OOS_CHARGER (Anki::Cozmo::RobotInterface::CS_BAD_CHARGER) //|Anki::Cozmo::RobotInterface::CS_IS_CHARGING)
   
 #define IDLE_SECONDS (1000000)  
 #define MENU_TIMEOUT (100*IDLE_SECONDS)
@@ -153,6 +155,7 @@ bool Init()
   modeTimeout = NEVER_TIMEOUT;
   menuIndex = 0;
   extVolt10x = 50; // We turned on so we must be on the charger
+  chargerOOS = false;
   testModePhase = PP_entry;
   gButtonIsPressed = false;
   gBodySN = 0;
@@ -160,9 +163,11 @@ bool Init()
 }
 
 #define IsOnCharger() (extVolt10x > CHARGER_DETECT_THRESHOLD_DV)
+#define IsChargerOOS(chargeState) (((chargeState)&ON_OOS_CHARGER)==ON_OOS_CHARGER)
+
 #define IdleTimeExceeds(now, usec) (((now)-lastExecTime) > (usec))
 #define NotIdle(now)  (lastExecTime = (now))
-  
+
 static u8 getCurrentMenuItems(const FTMenuItem** items)
 {
   switch(mode)
@@ -317,6 +322,22 @@ static inline void ShowFAC(const bool highPos)
   Draw::Flip(frame);
 }
 
+static inline void ShowOOSCharger(const bool isOn)
+{
+  using namespace Anki::Cozmo::Face;
+  static bool show = 0;
+  if (isOn != show) {
+    u64 frame[COLS];
+    show = isOn;
+    if (isOn) {
+      Draw::Copy(frame, BAD_CHARGER_IMG);
+    }
+    else {
+      Draw::Clear(frame);
+    }
+    Draw::Flip(frame);
+  }
+}
   
 static void ShowUserDebugInfo(u8 sta_count) {
   static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "   %s\n"
@@ -546,6 +567,13 @@ static void PlayPenStateUpdate(void) {
     }
   }
 }
+
+//Select power-off time based on charger state (per JIRA COZMO-6838 and COZMO-9983)
+static bool IsPowerOffTime(u32 now) {
+  return ( (chargerOOS && IdleTimeExceeds(now,5*30*IDLE_SECONDS))   // 2.5 minutes on bad charger
+           || (!IsOnCharger() && IdleTimeExceeds(now,5*60*IDLE_SECONDS))  // 5 minutes off charger 
+           || IdleTimeExceeds(now, 30*60*IDLE_SECONDS));             // 30 minutes on charger 
+}
   
 void Update()
 {
@@ -583,12 +611,17 @@ void Update()
         //toggle High/low every 30 seconds.
         bool toggle = (now/(30*IDLE_SECONDS)) % 2;
         ShowSSIDAndPwd(toggle);
-        // Explicit fall through to next case to allow power off
+        if (IsPowerOffTime(now))
+        {
+          SetMode(RobotInterface::FTM_Off);
+        }
+        break;
       }
       case RobotInterface::FTM_Sleepy:
       {
-        if ( (!IsOnCharger() && IdleTimeExceeds(now,5*60*IDLE_SECONDS))  // 5 minutes off charger
-             || IdleTimeExceeds(now, 30*60*IDLE_SECONDS) )               // 30 minutes on charger
+        bool toggle = (now/(IDLE_SECONDS*1)) % 2; //toggle every 1 second
+        ShowOOSCharger(toggle && chargerOOS);
+        if (IsPowerOffTime(now))
         {
           SetMode(RobotInterface::FTM_Off);
         }
@@ -703,7 +736,7 @@ static void DetectPositionChange(const RobotInterface::TestState& state)
 
 static bool chargerStateChanged(uint8_t chargeVolts) {
   bool nowOnCharger = (chargeVolts > CHARGER_DETECT_THRESHOLD_DV);
-  return (nowOnCharger!= IsOnCharger());
+  return ( (nowOnCharger!= IsOnCharger()) && !chargerOOS);  //Charger detection unreliable when OOS bit set.
 }
 
 void Process_TestState(const RobotInterface::TestState& state)
@@ -903,6 +936,7 @@ void Process_TestState(const RobotInterface::TestState& state)
   }
   
   extVolt10x = state.extVolt10x; // Set at end for comparison in body
+  chargerOOS = IsChargerOOS(state.chargeStat);
 }
 
 RobotInterface::FactoryTestMode GetMode()
@@ -946,7 +980,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
       BackPackLightsTakeControl(false);
       break;
     }
-    
+
     default:
     {
       // Nothing to do

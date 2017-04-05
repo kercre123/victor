@@ -251,7 +251,7 @@ void user_init(void)
   wifi_status_led_uninstall();
 
   //find correct dB reduction:
-  db_mod = ((getModelNumber() & 0xFF) >= COZMO_MODEL_1_5) ? TPW_MODIFICATION_V1_5 : TPW_MODIFICATION_V1_0;
+  db_mod = ((getHardwareRevision() & 0xFF) >= COZMO_HARDWARE_REV_1_5) ? TPW_MODIFICATION_V1_5 : TPW_MODIFICATION_V1_0;
   system_phy_set_max_tpw(MAX_TPW + db_mod);
 
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
@@ -262,7 +262,7 @@ void user_init(void)
   gpio_init();
 
   os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
-  os_printf("Hardware model 1.%d, %dB\r\n",getModelNumber()&0xFF, db_mod);
+  os_printf("Hardware rev 1.%d, %dB\r\n",getHardwareRevision()&0xFF, db_mod);
 
   // Setup factory data access methods
   factoryDataInit();

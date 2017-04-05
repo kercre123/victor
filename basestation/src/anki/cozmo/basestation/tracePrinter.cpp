@@ -201,19 +201,12 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   }
 }
 
-void HandleWiFiFlashID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void TracePrinter::HandleWiFiFlashID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   ANKI_CPU_PROFILE("TracePrinter::HandleCrashReport");
   const RobotInterface::WiFiFlashID& fidMsg = message.GetData().Get_wifiFlashID();
-  std::string idAsString;
-  KVV keyValuePairs;
-  if (trace.value.size() == 1)
-  {
-    idAsString = std::to_string(fidMsg.chip_id);
-    KVV::value_type kvp(DDATA, idAsString.c_str());
-    keyValuePairs.push_back(kvp);
-  }
-  Util::sEventF("hardware.wifi.flash_id", keyValuePairs, "chip_id=%d", fidMsg.chip_id);
+  const std::string idAsString = std::to_string(fidMsg.chip_id);
+  Util::sEventF("hardware.wifi.flash_id", {{DDATA, idAsString.c_str()}}, "chip_id=%d", fidMsg.chip_id);
 }
 
 const std::string& TracePrinter::GetName(const int nameId) const {

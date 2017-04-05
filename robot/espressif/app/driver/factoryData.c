@@ -59,7 +59,7 @@ uint32_t ICACHE_FLASH_ATTR getFactoryFirmwareVersion(void)
   return factoryFirmwareVersion;
 }
 
-uint16_t ICACHE_FLASH_ATTR getModelNumber(void)
+uint16_t ICACHE_FLASH_ATTR getHardwareRevision(void)
 {
   return factoryData[1] & 0xffff;
 }
