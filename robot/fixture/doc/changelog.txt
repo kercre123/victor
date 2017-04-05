@@ -6,6 +6,7 @@ Release v93
 General:
 -new fixture types: ROBOT3-CE, PACKOUT-CE
 -allow fixture names up to 10char on display (compress x-scaling for long names)
+-external buzzer output cycles with red led for failed tests
 
 ROBOT3[-CE]:
 -write color code into robot (code written depends on standard/-CE fixture mode)
@@ -20,6 +21,7 @@ MOTOR3L,MOTOR3H:
 
 ROBOT1,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]:
 -added charge-current test; verfies charging circuit ok
+^Note: requires v93+ body firmware; bug-fix to properly report battery voltage.
 
 BODY3,ROBOT1,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]:
 -added battery check. low VBat causes error 621 [BAT_UNDERVOLT].

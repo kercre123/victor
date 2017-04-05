@@ -254,6 +254,7 @@ void WaitForDeviceOff(bool error)
     DisableBAT();
     
     u32 debounce = 0;
+    u8 buz = 0;
     while (g_isDevicePresent)
     {
       // Blink annoying red LED
@@ -262,6 +263,9 @@ void WaitForDeviceOff(bool error)
         STM_EVAL_LEDOn(LEDRED);
       else
         STM_EVAL_LEDOff(LEDRED);
+      
+      // Beep an even more annoying buzzer
+      BuzzerOnStatic( error && (buz++ & 0x80) );
       
       if (!DetectDevice())
       {
@@ -273,6 +277,7 @@ void WaitForDeviceOff(bool error)
       ConsoleUpdate();  // No need to freeze up the console while waiting
       DisplayUpdate();  // While we wait, let screen saver kick in
     }
+    BuzzerOnStatic(0);
   }
   
   // When device is removed, restore fixture text
@@ -542,7 +547,7 @@ int main(void)
 
   STM_EVAL_LEDOn(LEDRED);
   
-  ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, g_fixtureReleaseVersion );
+  ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, ((NOT_FOR_FACTORY > 0) ? 0 : g_fixtureReleaseVersion) );
   ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
   ConsolePrintf("Fixure Rev: %s\r\n", GetBoardRevStr() );
   ConsolePrintf("Mode: %s\r\n", FIXTYPES[g_fixtureType]);
