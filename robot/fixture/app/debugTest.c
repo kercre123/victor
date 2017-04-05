@@ -200,9 +200,9 @@ TestFunction* GetDebugTestFunctions()
   static TestFunction m_debugFunctions[] = 
   {
     DebugStart,
-    DebugTestBuzzer,
-    //DebugBackpackLeds,
-    //DebugBackpackButton,
+    //DebugTestBuzzer,
+    DebugBackpackLeds,
+    DebugBackpackButton,
     DebugEnd,
     NULL
   };
