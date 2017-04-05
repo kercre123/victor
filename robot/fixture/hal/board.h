@@ -120,5 +120,6 @@ void DisableBAT(void);
 void EnableVEXT(void);
 void DisableVEXT(void);
 void Buzzer(u8 f_kHz, u16 duration_ms); //piezo buzzer beep. f={1..20}kHz
+void BuzzerOnStatic(bool on); //set buzzer output static on/off
 
 #endif 
