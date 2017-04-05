@@ -130,6 +130,8 @@ namespace Anki {
 
     void RobotStateHistory::Clear()
     {
+      PRINT_NAMED_INFO("RobotStateHistory.Clear", "Clearing history");
+    
       _states.clear();
       _visStates.clear();
       _computedStates.clear();
@@ -198,7 +200,47 @@ namespace Anki {
       // If visPose entry exist at t, then overwrite it
       StateMapIter_t it = _visStates.find(t);
       if (it != _visStates.end()) {
+        const u32 oldFrameId = it->second.GetFrameId();
+        
         it->second = state;
+        
+        if(ANKI_DEV_CHEATS)
+        {
+          const u32 curId = state.GetFrameId();
+          u32 prevId = 0;
+          u32 nextId = std::numeric_limits<u32>::max();
+        
+          std::stringstream ss;
+          ss << "Old id:" << oldFrameId;
+          ss << " t:" << t;
+          ss << " New id:" << curId;
+          ss << " t:" << it->first;
+          
+          if(it != _visStates.begin())
+          {
+            --it;
+            prevId = it->second.GetFrameId();
+            ss << " Previous entry id:" << prevId;
+            ss << " t:" << it->first;
+            ++it;
+          }
+          
+          ++it;
+          if(it != _visStates.end())
+          {
+            nextId = it->second.GetFrameId();
+            ss << " Next entry id:" << nextId;
+            ss << " t:" << it->first;
+          }
+          --it;
+          
+          PRINT_CH_INFO("RobotStateHistory",
+                        "RobotStateHistory.AddVisionOnlyState.Overwriting",
+                        "%s", ss.str().c_str());
+          
+          DEV_ASSERT((prevId <= curId) && (curId <= nextId),
+                     "RobotStateHistory.AddVisionOnlyState.FrameIDsOutOfOrder");
+        }
       } else {
       
         std::pair<StateMapIter_t, bool> res;
@@ -633,7 +675,8 @@ namespace Anki {
       
       if(found) {
         // Success!
-          assert(poseIter != _states.rend());
+        DEV_ASSERT(poseIter != _states.rend(),
+                   "RobotStateHistory.GetLastStateWithFrameID.InvalidIter");
         state = poseIter->second;
         return RESULT_OK;
         
@@ -679,9 +722,25 @@ namespace Anki {
         // Delete everything before the oldest allowed timestamp
         if (!_states.empty() && it != _states.begin()) {
           _states.erase(_states.begin(), it);
+          
+          if(_states.empty())
+          {
+            PRINT_CH_DEBUG("RobotStateHistory",
+                           "RobotStateHistory.CullToWindowSize.StatesEmpty",
+                           "_states is empty after culling to window size %u",
+                           _windowSize_ms);
+          }
         }
         if (!_visStates.empty() &&  git != _visStates.begin()) {
           _visStates.erase(_visStates.begin(), git);
+          
+          if(_visStates.empty())
+          {
+            PRINT_CH_DEBUG("RobotStateHistory",
+                           "RobotStateHistory.CullToWindowSize.VisStatesEmpty",
+                           "_visStates is empty after culling to window size %u",
+                           _windowSize_ms);
+          }
         }
         if (!_computedStates.empty() && cit != _computedStates.begin()) {
           _computedStates.erase(_computedStates.begin(), cit);

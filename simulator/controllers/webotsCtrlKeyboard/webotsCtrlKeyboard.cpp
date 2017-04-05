@@ -2299,7 +2299,7 @@ namespace Anki {
               case (s32)';':
               {
                 // Toggle enabling of reactionary behaviors
-                static bool disable = false;
+                static bool disable = true;
                 static const char* lockName = "sdk";
                 printf("Disable reactionary behaviors: %d\n", disable);
                 
