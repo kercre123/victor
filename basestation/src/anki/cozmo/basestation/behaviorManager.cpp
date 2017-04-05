@@ -1435,10 +1435,11 @@ void BehaviorManager::UpdateTappedObject()
      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::DoubleTapDetected &&
      isDoubleTapEnabled)
   {
-    // If the tapped objects pose becomes unknown then give up and leave object tap interaction
-    // (we expect the pose to be unknown/dirty when ReactToDoubleTap is running)
+    // If the tapped object is not located (got deleted from the world) then give up and
+    // leave object tap interaction (we expect the object to be dirty/not in the world when
+    // ReactToDoubleTap is running)
     const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_currDoubleTappedObject);
-    if(object != nullptr)
+    if(object == nullptr)
     {
       LeaveObjectTapInteraction();
     }
