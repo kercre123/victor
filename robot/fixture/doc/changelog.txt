@@ -7,6 +7,7 @@ General:
 -new fixture types: ROBOT3-CE, PACKOUT-CE
 -allow fixture names up to 10char on display (compress x-scaling for long names)
 -external buzzer output cycles with red led for failed tests
+-build-info (display) updated to "PVT v1.5"
 
 ROBOT3[-CE]:
 -write color code into robot (code written depends on standard/-CE fixture mode)
