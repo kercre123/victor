@@ -73,15 +73,25 @@ def run(args):
 
   animationTriggerMapFilename = projectRoot + "/lib/anki/products-cozmo-assets/animationGroupMaps/AnimationTriggerMap.json"
 
+  animationTriggerCladFilename = projectRoot + "/clad/src/clad/types/animationTrigger.clad"
+
+  # All we need are names, not real python so just strip comments and names
+  cladNamesArray = []
+  with open(animationTriggerCladFilename, 'r') as cladNamesFile:
+    cladNamesArray = cladNamesFile.readlines()
+  for i in range(len(cladNamesArray)):
+    cladNamesArray[i] = cladNamesArray[i].strip().split(",")[0]
+
   animationTriggerMapData = open(animationTriggerMapFilename)
   animationTriggerMapJson = json.load(animationTriggerMapData)
   animationTriggerMapData.close()
 
   for animTriggerVal in animationTriggerMapJson['Pairs']:
-    if( animTriggerVal['AnimName'] in animGroupArray ):
-      pass
-    else:
+    if( animTriggerVal['AnimName'] not in animGroupArray ):
       print("Invalid AnimName in AnimationTriggerMap.json: " + str(animTriggerVal['AnimName']))
+      exit_code = 1
+    elif( animTriggerVal['CladEvent'] not in cladNamesArray ):
+      print("Invalid Cladname in clad: " + str(animTriggerVal['CladEvent']))
       exit_code = 1
 
   return exit_code

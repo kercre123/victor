@@ -865,7 +865,7 @@
       "AnimName": "ag_peekaboo_requesttwice"
     },
     {
-      "CladEvent": "PeekABooHightIntensity",
+      "CladEvent": "PeekABooHighIntensity",
       "AnimName": "ag_peekaboo_requestthrice"
     },
     {
