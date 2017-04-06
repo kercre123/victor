@@ -29,6 +29,9 @@ public class StartupManager : MonoBehaviour {
   private const int _kMaxSDWidth = 1136;
   private const int _kMaxSDHeight = 640;
 
+  private const char _kVersionDelimiter = '.';
+  private const int _kVersionNumbersToShow = 3;
+
   private static StartupManager _Instance;
 
   [SerializeField]
@@ -285,7 +288,15 @@ public class StartupManager : MonoBehaviour {
           break;
         }
       case Anki.Cozmo.DeviceDataType.BuildVersion: {
-          _LoadingVersionLabel.text = GetBootString("boot.appVersion", new object[] { shortData });
+          // COZMO-10049 Only show the release version number, not the full one (which includes build information)
+          string releaseVersion = "";
+          string[] versionNumbers = shortData.Split(_kVersionDelimiter);
+          for (int n = 0; n < Mathf.Min(_kVersionNumbersToShow, versionNumbers.Length); n++) {
+            releaseVersion += versionNumbers[n] + _kVersionDelimiter;
+          }
+          // Chop off the last delimiter
+          releaseVersion = releaseVersion.Substring(0, releaseVersion.Length - 1);
+          _LoadingVersionLabel.text = GetBootString("boot.appVersion", new object[] { releaseVersion });
           break;
         }
       default: {
