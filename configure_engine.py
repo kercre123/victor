@@ -307,7 +307,7 @@ def parse_engine_arguments():
 #################################
 
 def install_dependencies(options):
-    options.deps = ['ninja', 'python3', 'android-sdk', 'buck']
+    options.deps = ['ninja', 'python3', 'buck']
     if options.deps:
         print_status('Checking dependencies...')
         installer = ankibuild.installBuildDeps.DependencyInstaller(options)
