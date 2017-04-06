@@ -185,8 +185,14 @@ void Backpack::setChargeState(CurrentChargeState state) {
   setImpulsePattern();
 }
 
-static void updateLights(const LightState* update) {
+static int selectedLayer() {
   using namespace Backpack;
+  return button_pressed ? BPL_IMPULSE : currentLayer;
+}
+
+static void updateLights() {
+  using namespace Backpack;
+  const LightState* update = lightState[selectedLayer()];
 
   for (int i = 0; i < NUM_BACKPACK_LEDS; i++) {
     Lights::update(lightController.backpack[i], &update[i]);
@@ -199,7 +205,7 @@ void Backpack::setLayer(BackpackLayer layer) {
   }
 
   currentLayer = layer;
-  updateLights(lightState[currentLayer]);
+  updateLights();
 }
 
 void Backpack::clearLights(BackpackLayer layer) {
@@ -213,8 +219,8 @@ void Backpack::setLights(BackpackLayer layer, const LightState* update) {
 
   memcpy(lightState[layer], update, sizeof(LightState)*BACKPACK_LIGHTS);
 
-  if (currentLayer == layer) {
-    updateLights(lightState[layer]);
+  if (selectedLayer() == layer) {
+    updateLights();
   }
 }
 
@@ -224,8 +230,8 @@ void Backpack::setLightsMiddle(BackpackLayer layer, const LightState* update) {
   // Middle lights are indicies 2,3,4
   memcpy(&lightState[layer][2], update, sizeof(LightState)*3);
 
-  if (currentLayer == layer) {
-    updateLights(lightState[layer]);
+  if (selectedLayer() == layer) {
+    updateLights();
   }
 }
 
@@ -235,8 +241,8 @@ void Backpack::setLightsTurnSignals(BackpackLayer layer, const LightState* updat
   // Turnsignal lights are indicies 0,1
   memcpy(&lightState[layer][0], &update[0], sizeof(LightState)*2);
 
-  if (currentLayer == layer) {
-    updateLights(lightState[layer]);
+  if (selectedLayer() == layer) {
+    updateLights();
   }
 }
 
@@ -352,7 +358,12 @@ void Backpack::manage() {
         RobotInterface::SendMessage(msg);
 
         was_button_pressed = button_pressed;
-        setImpulsePattern();
+
+        if (selectedLayer() == BPL_IMPULSE) {
+          setImpulsePattern();
+        } else {
+          updateLights();
+        }
       }
     }
   }
