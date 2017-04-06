@@ -544,6 +544,7 @@ Runtime.prototype.stopAll = function () {
         // Anki code to glow blocks. - msintov, 02/14/17
         // This is adminittedly a bit of a hack.
         currentBlockId = poppedThread.peekStack();
+        poppedThread.previousPreviousBlockGlowInFrame = poppedThread.previousBlockGlowInFrame;
         poppedThread.previousBlockGlowInFrame = currentBlockId;
         poppedThread.blockGlowInFrame = currentBlockId;
         this._updateGlows();
@@ -621,6 +622,7 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
 
             // Anki code to glow blocks. - msintov, 02/14/17
             this.glowBlock(thread.previousBlockGlowInFrame, false);
+            this.glowBlock(thread.previousPreviousBlockGlowInFrame, false);
             if (thread.stackFrames.length == 0) {
                 this.glowBlock(blockForThread, false);
             }
@@ -628,7 +630,12 @@ Runtime.prototype._updateGlows = function (optExtraThreads) {
                 this.glowBlock(blockForThread, true);
             }
 
-            if (thread.requestScriptGlowInFrame) {
+            // Anki: Fix certain blocks not displaying the yellow outline when
+            // being executed directly in the toolbox. Currently we see this
+            // only with blocks that have no dropdown selector. Not tested with
+            // vertical grammar. - msintov, 4/5/2017
+            // if (thread.requestScriptGlowInFrame) {
+            if (1) {
                 var script = target.blocks.getTopLevelScript(blockForThread);
                 if (!script) {
                     // Attempt to find in flyout blocks.

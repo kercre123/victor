@@ -112,6 +112,7 @@ Sequencer.prototype.stepThread = function (thread) {
 
         // Anki code to glow blocks. - msintov, 02/14/17
         if (thread.blockGlowInFrame != currentBlockId) {
+            thread.previousPreviousBlockGlowInFrame = thread.previousBlockGlowInFrame;
             thread.previousBlockGlowInFrame = thread.blockGlowInFrame;
         }
         thread.blockGlowInFrame = currentBlockId;

@@ -15,10 +15,15 @@ namespace CodeLab {
     private const float kFastDriveSpeed_mmps = 200.0f;
     private const float kDriveDist_mm = 44.0f; // length of one light cube
     private const float kTurnAngle = 90.0f * Mathf.Deg2Rad;
+    private const float kToleranceAngle = 10.0f * Mathf.Deg2Rad;
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
+
+      // In GameBase.cs, in the function InitializeMinigame(), the lights are set to allow the minigame to control them.
+      // We don't want this behavior for CodeLab.
+      CurrentRobot.SetEnableFreeplayLightStates(true);
 
       LoadWebView();
     }
@@ -82,11 +87,11 @@ namespace CodeLab {
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left
-        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f, kToleranceAngle, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoTurnRight") {
         // Turn 90 degrees to the right
-        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f, 0.0f, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f, kToleranceAngle, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoSays") {
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(scratchRequest.argString);

@@ -2106,6 +2106,7 @@
 	        // Anki code to glow blocks. - msintov, 02/14/17
 	        // This is adminittedly a bit of a hack.
 	        currentBlockId = poppedThread.peekStack();
+	        poppedThread.previousPreviousBlockGlowInFrame = poppedThread.previousBlockGlowInFrame;
 	        poppedThread.previousBlockGlowInFrame = currentBlockId;
 	        poppedThread.blockGlowInFrame = currentBlockId;
 	        this._updateGlows();
@@ -2183,6 +2184,7 @@
 
 	            // Anki code to glow blocks. - msintov, 02/14/17
 	            this.glowBlock(thread.previousBlockGlowInFrame, false);
+	            this.glowBlock(thread.previousPreviousBlockGlowInFrame, false);
 	            if (thread.stackFrames.length == 0) {
 	                this.glowBlock(blockForThread, false);
 	            }
@@ -2190,7 +2192,12 @@
 	                this.glowBlock(blockForThread, true);
 	            }
 
-	            if (thread.requestScriptGlowInFrame) {
+	            // Anki: Fix certain blocks not displaying the yellow outline when
+	            // being executed directly in the toolbox. Currently we see this
+	            // only with blocks that have no dropdown selector. Not tested with
+	            // vertical grammar. - msintov, 4/5/2017
+	            // if (thread.requestScriptGlowInFrame) {
+	            if (1) {
 	                var script = target.blocks.getTopLevelScript(blockForThread);
 	                if (!script) {
 	                    // Attempt to find in flyout blocks.
@@ -2491,6 +2498,7 @@
 
 	        // Anki code to glow blocks. - msintov, 02/14/17
 	        if (thread.blockGlowInFrame != currentBlockId) {
+	            thread.previousPreviousBlockGlowInFrame = thread.previousBlockGlowInFrame;
 	            thread.previousBlockGlowInFrame = thread.blockGlowInFrame;
 	        }
 	        thread.blockGlowInFrame = currentBlockId;
@@ -2754,9 +2762,15 @@
 	     * Which block ID should glow during this frame, if any.
 	     * @type {?string}
 	     */
-	     // Anki code to glow blocks. - msintov, 02/14/17
+	    // Anki code to glow blocks. - msintov, 02/14/17
 	    this.previousBlockGlowInFrame = null;
 	    this.blockGlowInFrame = null;
+
+	    // Hack used to turn off the last block inside a repeat loop, COZMO-10485.
+	    // Note that there is still a bug if more than one repeat loop is embedded
+	    // in the script, such as: green flag, two repeat loops, two blocks inside
+	    // repeat loop 1 and 2 blocks inside repeat loop 2. - msintov, 04/05/17
+	    this.previousPreviousBlockGlowInFrame = null; 
 
 	    /**
 	     * A timer for when the thread enters warp mode.
