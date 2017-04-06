@@ -125,6 +125,12 @@ namespace SpeedTap {
     public SpeedTapRoundEndSlide SpeedTapRoundEndSlidePrefab {
       get { return _SpeedTapRoundEndSlidePrefab; }
     }
+
+    private bool _WantsHideRoundLabel = false;
+    public bool WantsHideRoundLabel {
+      get { return _WantsHideRoundLabel; }
+      set { _WantsHideRoundLabel = value; UpdateUI(); }
+    }
 #if ANKI_DEV_CHEATS
     public static bool sWantsSuddenDeathHumanHuman = false;
     public static bool sWantsSuddenDeathHumanCozmo = false;
@@ -302,7 +308,10 @@ namespace SpeedTap {
       }
       if (GetPlayerCount() > 2) {
         // Display the current round
-        if (IsOvertime()) {
+        if (WantsHideRoundLabel) {
+          SharedMinigameView.ShelfWidget.SetWidgetText("");
+        }
+        else if (IsOvertime()) {
           SharedMinigameView.ShelfWidget.SetWidgetText(Localization.Get(LocalizationKeys.kSpeedTapMultiplayerOverTime));
         }
         else {
@@ -310,7 +319,12 @@ namespace SpeedTap {
         }
       }
       else {
-        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
+        if (WantsHideRoundLabel) {
+          SharedMinigameView.InfoTitleText = "";
+        }
+        else {
+          SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
+        }
       }
     }
 

@@ -25,6 +25,8 @@ namespace SpeedTap {
                                    _SpeedTapGame.SpeedTapRoundEndSlidePrefab.gameObject, "speedTap_round_end_slide");
       SpeedTapRoundEndSlide roundEndSlideScript = roundEndSlide.GetComponent<SpeedTapRoundEndSlide>();
 
+      _SpeedTapGame.WantsHideRoundLabel = true;
+
       // Show current winner
       Sprite winnerPortrait = null;
       string winnerName = _Winner.name;
@@ -74,6 +76,7 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
 
+      _SpeedTapGame.WantsHideRoundLabel = false;
       // re-enable react to pickup during the next round
       EnableExtraReactions(true);
     }
