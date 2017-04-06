@@ -21,6 +21,10 @@ namespace CodeLab {
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
 
+      // Since webview takes awhile to load, keep showing the "cozmo is getting ready"
+      // load screen instead of the white background that usually shows in front ( shown in gamebase before calling this function )
+      SharedMinigameView.HideMiddleBackground();
+
       // In GameBase.cs, in the function InitializeMinigame(), the lights are set to allow the minigame to control them.
       // We don't want this behavior for CodeLab.
       CurrentRobot.SetEnableFreeplayLightStates(true);
