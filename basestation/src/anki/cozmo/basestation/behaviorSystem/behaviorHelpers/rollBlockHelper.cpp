@@ -127,7 +127,9 @@ void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
       }
       
     }else{
-      PRINT_CH_INFO("BehaviorHelpers", "RollBlockHelper.Update.NoObj", "Failing helper, object %d is invalid",
+      PRINT_CH_INFO("BehaviorHelpers",
+                    "RollBlockHelper.Update.NoObj",
+                    "Failing helper, object %d is invalid",
                     _targetID.GetValue());
       _status = BehaviorStatus::Failure;
     }
@@ -219,6 +221,7 @@ void RollBlockHelper::DelegateToPutDown(Robot& robot)
 void RollBlockHelper::StartRollingAction(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    MarkTargetAsFailedToRoll(robot);
     _status = BehaviorStatus::Failure;
     return;
   }
@@ -277,6 +280,16 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, Robot& robot)
       StartRollingAction(robot);
       break;
     }
+  }
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RollBlockHelper::MarkTargetAsFailedToRoll(Robot& robot)
+{
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(obj != nullptr){
+    auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+    whiteboard.SetFailedToUse(*obj, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
   }
 }
 

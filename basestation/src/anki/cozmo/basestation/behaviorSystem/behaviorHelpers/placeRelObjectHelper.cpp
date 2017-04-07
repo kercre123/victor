@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
 
@@ -96,6 +97,7 @@ BehaviorStatus PlaceRelObjectHelper::UpdateWhileActiveInternal(Robot& robot)
 void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
 {
   if(_tmpRetryCounter >= kMaxNumRetrys){
+    MarkFailedToStackOrPlace(robot);
     _status = BehaviorStatus::Failure;
     return;
   }
@@ -172,6 +174,37 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Robot& r
     }
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PlaceRelObjectHelper::MarkFailedToStackOrPlace(Robot& robot)
+{
+  const ObservableObject* placeRelObj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  const ObservableObject* carryingObj = robot.GetBlockWorld().GetLocatedObjectByID(
+                                                      robot.GetCarryingObject());
+  
+  if((placeRelObj != nullptr) &&
+     (carryingObj != nullptr)){
+    auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+    if(!_placingOnGround){
+      // CODE REVIEW - to clarify, should this failure indicate the block that I
+      // failed to stack on, or the one in my hand?
+      whiteboard.SetFailedToUse(*placeRelObj,
+                                AIWhiteboard::ObjectActionFailure::StackOnObject);
+      
+    }else{
+      const f32 xOffset = _params.placementOffsetX_mm;
+      const f32 yOffset = _params.placementOffsetY_mm;
+      
+      const Pose3d& placingAtPose = Pose3d(Z_AXIS_3D(),
+                                           {xOffset, yOffset, 0},
+                                           &placeRelObj->GetPose());
+      whiteboard.SetFailedToUse(*carryingObj,
+                                AIWhiteboard::ObjectActionFailure::PlaceObjectAt,
+                                placingAtPose);
+    }
+  }
+}
+
 
 
 } // namespace Cozmo

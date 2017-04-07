@@ -43,6 +43,8 @@ private:
   void StartPlaceRelObject(Robot& robot);
   void RespondToPlaceRelResult(ActionResult result, Robot& robot);
 
+  void MarkFailedToStackOrPlace(Robot& robot);
+  
 };
 
 } // namespace Cozmo

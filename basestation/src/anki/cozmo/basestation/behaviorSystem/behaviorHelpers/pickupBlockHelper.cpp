@@ -199,6 +199,7 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
         PRINT_CH_INFO("BehaviorHelpers", (GetName() + ".PickupFailedTooManyTimes").c_str(),
                       "Failing helper because pickup was already attempted %d times",
                       _dockAttemptCount);
+        MarkTargetAsFailedToPickup(robot);
         _status = BehaviorStatus::Failure;
       }
       break;
@@ -230,6 +231,7 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
         StartPickupAction(robot);
       }
       else {
+        MarkTargetAsFailedToPickup(robot);
         _status = BehaviorStatus::Failure;
       }
       break;
@@ -256,7 +258,18 @@ void PickupBlockHelper::RespondToSearchResult(ActionResult result, Robot& robot)
     }
   }
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PickupBlockHelper::MarkTargetAsFailedToPickup(Robot& robot)
+{
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(obj != nullptr){
+    auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+    whiteboard.SetFailedToUse(*obj, AIWhiteboard::ObjectActionFailure::PickUpObject);
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

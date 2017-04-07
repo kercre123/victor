@@ -47,6 +47,8 @@ private:
   void RespondToPickupResult(ActionResult result, Robot& robot);
   void RespondToSearchResult(ActionResult result, Robot& robot);
 
+  void MarkTargetAsFailedToPickup(Robot& robot);
+  
 };
 
 

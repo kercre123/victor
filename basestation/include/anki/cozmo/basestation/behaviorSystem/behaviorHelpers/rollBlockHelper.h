@@ -49,6 +49,8 @@ private:
   void DelegateToPutDown(Robot& robot);
   void StartRollingAction(Robot& robot);
   void RespondToRollingResult(ActionResult result, Robot& robot);
+  
+  void MarkTargetAsFailedToRoll(Robot& robot);
 
   bool _shouldRoll = true;
   const bool _shouldUpright;
