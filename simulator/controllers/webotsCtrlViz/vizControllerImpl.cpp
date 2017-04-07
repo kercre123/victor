@@ -1177,8 +1177,31 @@ void VizControllerImpl::ProcessObjectUpAxisState(const AnkiEvent<VizInterface::M
   
 void VizControllerImpl::ProcessObjectAccelState(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
+  // Grab message:
   const VizInterface::ObjectAccelState& payload = msg.GetData().Get_ObjectAccelState();
   const ActiveAccel& acc = payload.accel;
+  const s32 objectId = static_cast<s32>(payload.objectID);
+  
+  // Grab the Webots field indicating which ObjectID to plot:
+  webots::Node* root = _vizSupervisor.getSelf();
+  webots::Field* accelPlotObjectIdField = root->getField("accelPlotObjectId");
+  ANKI_VERIFY(accelPlotObjectIdField != nullptr, "WebotsCtrlViz.MissingAccelPlotObjectIdField", "");
+  const s32 objectIdToPlot = accelPlotObjectIdField->getSFInt32();
+  
+  // If the message's objectID doesn't match the "ObjectID to plot" from
+  //  the 'CozmoVizDisplay' tree, then disregard this message.
+  if (objectIdToPlot != objectId) {
+    return;
+  }
+  
+  // If we're plotting data from a new objectID, clear the buffers:
+  static s32 prevObjectId = objectId;
+  if (prevObjectId != objectId) {
+    for (auto& buf : _cubeAccelBuffers) {
+      buf.clear();
+    }
+    prevObjectId = objectId;
+  }
   
   const int windowWidth  = _cubeAccelDisp->getWidth();
   const int windowHeight = _cubeAccelDisp->getHeight();
@@ -1199,8 +1222,9 @@ void VizControllerImpl::ProcessObjectAccelState(const AnkiEvent<VizInterface::Me
   _cubeAccelDisp->fillRectangle(0, 0, windowWidth, windowHeight);
   
   // Draw Graph Axis labels
+  std::string title = "Cube accel (object ID " + std::to_string(objectId) + ")";
   _cubeAccelDisp->setColor(0xffffff);
-  _cubeAccelDisp->drawText("Cube accel", 0, 5);
+  _cubeAccelDisp->drawText(title.c_str(), 0, 5);
   _cubeAccelDisp->drawText("2g",  0, yValueFor1 + kTextOffsetY);
   _cubeAccelDisp->drawText("-2g", 0, yValueForNeg1 + kTextOffsetY);
   
@@ -1255,10 +1279,6 @@ void VizControllerImpl::ProcessObjectAccelState(const AnkiEvent<VizInterface::Me
     _cubeAccelDisp->drawText(text, textX, textY + kTextOffsetY);
   }
 
-  
-  
-  
-  
 }
 // ========== Start/End of Robot Updates ==========
   

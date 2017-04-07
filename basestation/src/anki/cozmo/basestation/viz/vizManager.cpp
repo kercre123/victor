@@ -907,10 +907,10 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::ObjectUpAxisState(activeID, upAxis)));
     }
     
-    void VizManager::SendObjectAccelState(u32 activeID, const ActiveAccel& accel)
+    void VizManager::SendObjectAccelState(u32 objectID, const ActiveAccel& accel)
     {
       ANKI_CPU_PROFILE("VizManager::SendObjectAccelState");
-      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(activeID, accel)));
+      SendMessage(VizInterface::MessageViz(VizInterface::ObjectAccelState(objectID, accel)));
     }
 
   

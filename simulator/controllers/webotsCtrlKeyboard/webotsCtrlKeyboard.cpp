@@ -109,6 +109,8 @@ namespace Anki {
           
         } _lastObservedImageCentroid;
         
+        std::set<u32> streamingAccelObjIds; // ObjectIDs of objects that are currently streaming accelerometer data.
+        
       } // private namespace
     
       // ======== Message handler callbacks =======
@@ -376,13 +378,13 @@ namespace Anki {
         printf("      Toggle vision while moving:  V\n");
         printf("             Toggle color images:  Alt+Shift+c\n");
         printf("       Realign with block action:  _\n");
-        printf("Toggle accel from streamObjectID: |\n");
-        printf("               Toggle headlights: ,\n");
-        printf("             Pronounce sayString: \" <double-quote>\n");
-        printf("       Pronounce sayString (raw): \' <single-quote>\n");
-        printf("                 Set console var: ]\n");
+        printf("Toggle accel from streamObjectID:  |\n");
+        printf("               Toggle headlights:  ,\n");
+        printf("             Pronounce sayString:  \" <double-quote>\n");
+        printf("       Pronounce sayString (raw):  \' <single-quote>\n");
+        printf("                 Set console var:  ]\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
-        printf("                      Print help:  ?,/\n");
+        printf("                      Print help:  ? or /\n");
         printf("\n");
       }
       
@@ -1106,12 +1108,22 @@ namespace Anki {
                 
               case (s32)'|':
               {
-                static bool enableAccelStreaming = true;
+                // Toggle streaming accel from object with ID given in 'streamObjectId' field.
+                
                 u32 streamObjectID = root_->getField("streamObjectID")->getSFInt32();
-                printf("%s streaming of accel data from object %d\n", enableAccelStreaming ? "Enable" : "Disable", streamObjectID);
-                ExternalInterface::StreamObjectAccel msg(streamObjectID, enableAccelStreaming);
+                // Try to add this objID to the set of already streaming IDs.
+                // If streamObjectID wasn't in the set before, add it and enable streaming.
+                const auto result = streamingAccelObjIds.insert(streamObjectID);
+                const bool enable = result.second;
+                
+                // if we're disabling streaming, remove this objID from the set.
+                if (!enable) {
+                  streamingAccelObjIds.erase(streamObjectID);
+                }
+                
+                printf("%s streaming of accel data from object %d (now streaming from %lu objects)\n", enable ? "Enable" : "Disable", streamObjectID, streamingAccelObjIds.size());
+                ExternalInterface::StreamObjectAccel msg(streamObjectID, enable);
                 SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-                enableAccelStreaming = !enableAccelStreaming;
                 break;
               }
                 
