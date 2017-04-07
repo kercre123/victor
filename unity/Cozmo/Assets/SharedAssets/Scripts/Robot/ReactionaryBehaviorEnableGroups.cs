@@ -145,7 +145,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnBack: false,
     robotOnFace: false,
     robotOnSide: false,
-    robotShaken: false,
+    robotShaken: true,
     sparked: false,
     stackOfCubesInitialDetection: false,
     unexpectedMovement: false,
