@@ -8,12 +8,15 @@
 
 #include "robotStateHistory.h"
 
+#include "anki/cozmo/basestation/robot.h"
+
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/common/robot/utilities.h"
 
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "util/transport/reliableConnection.h"
 
 #define DEBUG_ROBOT_POSE_HISTORY 0
 
@@ -150,16 +153,33 @@ namespace Anki {
     Result RobotStateHistory::AddRawOdomState(const TimeStamp_t t,
                                              const HistRobotState& state)
     {
+      if(!_states.empty())
+      {
+        TimeStamp_t newestTime = _states.rbegin()->first;
+        if (newestTime > _windowSize_ms && t < newestTime - _windowSize_ms) {
+          PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.TimeTooOld", "newestTime %u, oldestAllowedTime %u, t %u", newestTime, newestTime - _windowSize_ms, t);
+          return RESULT_FAIL;
+        }
+        
+        // COZMO-10525 Somehow a state message contains a garbage timestamp (possibly due to error in firmware
+        // incorrectly parsing message from body to head). Attempts to catch the garbage timestamp by checking
+        // that the delta between the previous HistRobotState's timestamp and the current one is less than 5 seconds
+        // (reliable transport timeout).
+        const u32 kMaxTimeDiffBetweenStates_ms = Embedded::saturate_cast<u32>(Util::ReliableConnection::GetConnectionTimeoutInMS());
+        const bool timeDeltaTooLarge = ABS(t - newestTime) > kMaxTimeDiffBetweenStates_ms;
+        if(!ANKI_VERIFY(!timeDeltaTooLarge,
+                        "RobotStateHistory.AddRawOdomState.TimestampDeltaTooLarge",
+                        "State with t:%u is too different from last state with t:%u, allowed delta:%u",
+                        t, newestTime, kMaxTimeDiffBetweenStates_ms))
+        {
+          return RESULT_FAIL;
+        }
+      }
+    
       if(state.GetPose().GetParent() != nullptr && !state.GetPose().GetParent()->IsOrigin()) {
         PRINT_NAMED_ERROR("RobotStateHistory.AddRawOdomState.NonFlattenedPose",
                           "Pose object inside pose stamp should be flattened (%s)",
                           state.GetPose().GetNamedPathToOrigin(false).c_str());
-        return RESULT_FAIL;
-      }
-
-      TimeStamp_t newestTime = _states.rbegin()->first;
-      if (newestTime > _windowSize_ms && t < newestTime - _windowSize_ms) {
-        PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.TimeTooOld", "newestTime %d, oldestAllowedTime %d, t %d", newestTime, newestTime - _windowSize_ms, t);
         return RESULT_FAIL;
       }
       
@@ -167,7 +187,7 @@ namespace Anki {
       res = _states.emplace(t, state);
 
       if (!res.second) {
-        PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.AddFailed", "Time: %d", t);
+        PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.AddFailed", "Time: %u", t);
         return RESULT_FAIL;
       }
 

@@ -469,7 +469,7 @@ namespace Cozmo {
       else if(lastResult != RESULT_OK)
       {
         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
-                            "Unable to get computed pose at image timestamp of %d. (rawStates: have %zu from %d:%d) (visionStates: have %zu from %d:%d)",
+                            "Unable to get computed pose at image timestamp of %u. (rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
                             encodedImage.GetTimeStamp(),
                             _robot.GetStateHistory()->GetNumRawStates(),
                             _robot.GetStateHistory()->GetOldestTimeStamp(),
