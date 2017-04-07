@@ -175,7 +175,7 @@ public class MockRobot : IRobot {
     RightWheelSpeed = rightWheelSpeedMmps;
   }
 
-  public void DriveArc(float wheelSpeedMmps, int curveRadiusMm) {
+  public void DriveArc(float wheelSpeedMmps, short curveRadiusMm, float accelMmps = 0.0f) {
   }
 
   public void StopAllMotors() {

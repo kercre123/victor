@@ -398,7 +398,7 @@ namespace Cozmo {
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
           float driveRobotSpeed_mmps = 0f;
-          float arcRadius_mm = _DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm;
+          short arcRadius_mm = _DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm;
 
           // Don't turn when going backwards (or when not turning... obviously)
           if (driveSpeed_mmps < 0 || turnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)) {
@@ -416,13 +416,13 @@ namespace Cozmo {
 
             // Turn more sharply with a greater tilt
             float absTurnDirection = Mathf.Abs(turnDirection);
-            arcRadius_mm = Mathf.Lerp(_DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm,
+            arcRadius_mm = (short)Mathf.Lerp((float)_DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm,
               minTurnRadius,
               absTurnDirection);
             if (turnDirection > 0f) {
               arcRadius_mm *= -1;
             }
-            _CurrentRobot.DriveArc(driveRobotSpeed_mmps, (int)arcRadius_mm);
+            _CurrentRobot.DriveArc(driveRobotSpeed_mmps, arcRadius_mm);
           }
 
           TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
@@ -431,14 +431,14 @@ namespace Cozmo {
 
         private float PointTurnRobotWheels(float turnDirection) {
           float pointTurnSpeed_mmps = _DroneModeGame.DroneModeConfigData.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
-          float arcRadius_mm = _DroneModeGame.DroneModeConfigData.MinTurnArcRadius_mm;
+          short arcRadius_mm = _DroneModeGame.DroneModeConfigData.MinTurnArcRadius_mm;
           if (turnDirection > 0f) {
             arcRadius_mm *= -1;
           }
 
           // TODO remove debug text field
           TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + pointTurnSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
-          _CurrentRobot.DriveArc(pointTurnSpeed_mmps, (int)arcRadius_mm);
+          _CurrentRobot.DriveArc(pointTurnSpeed_mmps, arcRadius_mm);
           return pointTurnSpeed_mmps;
         }
 

@@ -932,6 +932,17 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendDriveArc(const f32 speed, const f32 accel, const s16 curvature_mm)
+    {
+      ExternalInterface::DriveArc m;
+      m.speed = speed;
+      m.accel = accel;
+      m.curvatureRadius_mm = curvature_mm;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_DriveArc(m);
+      SendMessage(message);
+    }
+    
     uint32_t UiGameController::SendTurnInPlace(const f32 angle_rad,
                                                const f32 speed_radPerSec,
                                                const f32 accel_radPerSec2,

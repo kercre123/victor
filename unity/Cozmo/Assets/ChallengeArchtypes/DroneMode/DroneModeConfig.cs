@@ -46,16 +46,16 @@ namespace Cozmo {
       public float MaxTiltSizeDegrees { get { return _MaxTiltSizeDegrees; } }
 
       [SerializeField, Tooltip("(mm) Radius of largest circle that Cozmo will drive around when turning. (Tilt of device is very small; < NeutralTiltSizeDegrees).")]
-      private float _MaxTurnArcRadius_mm = 255f;
-      public float MaxTurnArcRadius_mm { get { return _MaxTurnArcRadius_mm; } }
+      private short _MaxTurnArcRadius_mm = 255;
+      public short MaxTurnArcRadius_mm { get { return _MaxTurnArcRadius_mm; } }
 
       [SerializeField, Tooltip("(mm) Radius of smallest circle that Cozmo will drive around when turning at Turbo speed. (Tilt of device is very large; > MaxTiltSizeDegrees)")]
       private float _MinTurnArcRadiusAtMaxSpeed_mm = 60f;
       public float MinTurnArcRadiusAtMaxSpeed_mm { get { return _MinTurnArcRadiusAtMaxSpeed_mm; } }
 
       [SerializeField, Tooltip("(mm) Radius of smallest circle that Cozmo will drive around when turning. (Tilt of device is very large; > MaxTiltSizeDegrees).")]
-      private float _MinTurnArcRadius_mm = 5f;
-      public float MinTurnArcRadius_mm { get { return _MinTurnArcRadius_mm; } }
+      private short _MinTurnArcRadius_mm = 5;
+      public short MinTurnArcRadius_mm { get { return _MinTurnArcRadius_mm; } }
 
       [SerializeField, Range(0f, 1f), Tooltip("Normalized where 0 is not tilted (< NeutralTiltSizeDegrees) and 1 is fully tilted (> MaxTiltSizeDegrees). Threshold where cozmo will start slowing down for turns if slider speed is up very high.")]
       private float _SlowDownForTurnThreshold = 0.5f;

@@ -203,7 +203,7 @@ public interface IRobot : IDisposable {
 
   void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps);
 
-  void DriveArc(float wheelSpeedMmps, int curveRadiusMm);
+  void DriveArc(float wheelSpeedMmps, short curveRadiusMm, float accelMmps = 0.0f);
 
   void StopAllMotors();
 

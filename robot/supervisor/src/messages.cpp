@@ -470,8 +470,9 @@ namespace Anki {
       }
 
       void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {
-        SteeringController::ExecuteDriveCurvature(msg.speed_mmPerSec,
-                                                  msg.curvatureRadius_mm);
+        SteeringController::ExecuteDriveCurvature(msg.speed,
+                                                  msg.curvatureRadius_mm,
+                                                  msg.accel);
       }
 
       void Process_moveLift(const RobotInterface::MoveLift& msg) {
@@ -791,7 +792,10 @@ namespace Anki {
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
       {
-        SteeringController::ExecuteDriveCurvature(msg.speed, msg.curvatureRadius_mm);
+        bool isPointTurn = msg.curvatureRadius_mm == 0;
+        SteeringController::ExecuteDriveCurvature(isPointTurn ? DEG_TO_RAD(msg.speed) : msg.speed,
+                                                  msg.curvatureRadius_mm,
+                                                  isPointTurn ? 50.f : 0.f);  // 50 is what animation point turns have all been tuned with so don't change this!
       }
       void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
       {

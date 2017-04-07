@@ -10,6 +10,7 @@
  *
  **/
 
+#include "anki/common/robot/utilities.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -457,14 +458,13 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveArc.WheelsLocked",
                      "Ignoring ExternalInterface::DriveArc while wheels are locked.");
   } else {
-    DirectDriveCheckSpeedAndLockTracks(msg.speed_mmps,
+    DirectDriveCheckSpeedAndLockTracks(msg.speed,
                                        _drivingWheels,
                                        (u8)AnimTrackFlag::BODY_TRACK,
                                        kDrivingWheelsStr,
                                        kDrivingArcStr);
-    _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(msg.speed_mmps,
-                                                                  DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
-                                                                  DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
+    _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(msg.speed,
+                                                                  std::fabsf(msg.accel),
                                                                   msg.curvatureRadius_mm);
   }
 }

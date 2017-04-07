@@ -454,7 +454,7 @@ static s16 limitPower(u8 motorID) {
   static int temp_count[MOTOR_COUNT];
   static bool limit[MOTOR_COUNT];
   
-  bool danger = (g_dataToHead.speeds[motorID] < DRIVE_MINIMUM_SPEED[motorID]) && (ABS(motorInfo->oldPWM) > POWER_THRESHOLD[motorID]);
+  bool danger = (ABS(g_dataToHead.speeds[motorID]) < DRIVE_MINIMUM_SPEED[motorID]) && (ABS(motorInfo->oldPWM) > POWER_THRESHOLD[motorID]);
 
   temp_count[motorID] += danger ? 1 : -1;
 

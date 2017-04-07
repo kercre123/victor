@@ -96,7 +96,15 @@ namespace Anki {
     // follow line index so that it doesn't compare it to the previous follow line index.
     void ReInit(void);
     
-    void ExecuteDriveCurvature(f32 speed_mmps, f32 curvatureRadius_mm);
+    // curvatureRadius_mm: Radius of arc to drive.
+    //                     u16_MAX and u16_MIN == Straight.
+    //                     0 == point turn.
+    //                     +ve: curves left, -ve: curves right
+    // speed:              Target speed in mm/sec
+    //                     If curvatureRadius_mm == 0, the speed is in rad/s where +ve means CCW rotation.
+    // accel:              Acceleration to approach target speed in mm/sec^2 (or rad/s^2 if curvatureRadius_mm == 0)
+    //                     0 == Max acceleration
+    void ExecuteDriveCurvature(f32 speed, f32 curvatureRadius_mm, f32 accel = 0.f);
 
   } // namespace SteeringController
   } // namespace Cozmo

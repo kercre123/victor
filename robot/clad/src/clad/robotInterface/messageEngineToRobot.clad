@@ -108,12 +108,16 @@ message DriveWheels
 
 message DriveWheelsCurvature
 {
-  int_16  speed_mmPerSec,      // Commanded speed in mm/sec
-  uint_16 accel_mmPerSec2,     // Commanded max absolute value of...
-  uint_16 decel_mmPerSec2,      // ...acceleration/deceleration in mm/sec^2
-  int_16  curvatureRadius_mm   // +ve: curves left, -ve: curves right, ...
-                               // ...u16_MAX: point turn left, 16_MIN: point ...
-                               // ...turn right, 0: straight
+  float_32 speed,               // Target speed in mm/sec (or rad/s if curvatureRadius_mm == 0)
+                                // If curvatureRadius_mm == 0, the speed is in rad/s where +ve means CCW rotation.
+  float_32 accel,               // Acceleration to approach target speed in mm/sec^2
+                                // (or rad/s^2 if curvatureRadius_mm == 0)
+                                // 0: Max acceleration
+
+  int_16 curvatureRadius_mm     // Radius of arc to drive
+                                // u16_MAX or u16_MIN: Straight
+                                // +ve: curves left, -ve: curves right
+                                // 0: Point turn
 }
 
 message MoveLift

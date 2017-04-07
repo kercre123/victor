@@ -76,6 +76,10 @@ PROTO WebotsKeyboardController [
   # 0 == instantaneous acceleration
   field SFFloat driveAccel 0
 
+  # Whether or not to use DriveArc msg instead of
+  # DriveWheels msg to send arrow-key driving commands
+  field SFBool useDriveArc FALSE
+
   # Point turn angle (deg) and speed (deg/s)
   field SFFloat pointTurnAngle_deg        45
   field SFFloat pointTurnSpeed_degPerSec  250

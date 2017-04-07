@@ -65,6 +65,8 @@ namespace Anki {
         bool wasMovingHead_   = false;
         bool wasMovingLift_   = false;
         
+        s16  lastDrivingCurvature_mm_ = 0;
+        
         webots::Node* root_ = nullptr;
         
         u8 poseMarkerMode_ = 0;
@@ -408,6 +410,8 @@ namespace Anki {
         f32 driveAccel = root_->getField("driveAccel")->getSFFloat();
         
         f32 steeringCurvature = root_->getField("steeringCurvature")->getSFFloat();
+        
+        bool useDriveArc = root_->getField("useDriveArc")->getSFBool();
         
         static bool keyboardRestart = false;
         if (keyboardRestart) {
@@ -2456,11 +2460,32 @@ namespace Anki {
             rightSpeed = -steeringDir * wheelSpeed;
           }
           
-          SendDriveWheels(leftSpeed, rightSpeed, driveAccel, driveAccel);
+          if (useDriveArc) {
+            f32 speed = throttleDir * wheelSpeed;
+            s16 curvature = -steeringDir * 50;
+            f32 accel = driveAccel;
+            if (steeringDir == 0) {
+              curvature = std::numeric_limits<s16>::max();
+            }
+            if (throttleDir == 0) {
+              speed = -steeringDir * wheelSpeed / WHEEL_DIST_HALF_MM;
+              curvature = 0.f;
+              accel = 3.14f;
+            }
+            SendDriveArc(speed, accel, curvature);
+            lastDrivingCurvature_mm_ = curvature;
+          } else {
+            SendDriveWheels(leftSpeed, rightSpeed, driveAccel, driveAccel);
+          }
+          
           wasMovingWheels_ = true;
         } else if(wasMovingWheels_ && !movingWheels) {
           // If we just stopped moving the wheels:
-          SendDriveWheels(0, 0, driveAccel, driveAccel);
+          if (useDriveArc) {
+            SendDriveArc(0, driveAccel, lastDrivingCurvature_mm_);
+          } else {
+            SendDriveWheels(0, 0, driveAccel, driveAccel);
+          }
           wasMovingWheels_ = false;
         }
         

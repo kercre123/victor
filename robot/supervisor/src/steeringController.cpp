@@ -511,7 +511,7 @@ namespace Anki {
       }
 
       maxAngularVel_ = maxAngularVel;
-      angularAccel_ = angularAccel;
+      angularAccel_ = NEAR_ZERO(angularAccel) ? MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2 : angularAccel;
       prevPointTurnAngleError_ = 0;
       pointTurnAngleErrorSum_ = 0;
 
@@ -771,33 +771,69 @@ namespace Anki {
       }
     }
     
-    void ExecuteDriveCurvature(f32 speed_mmps, f32 curvatureRadius_mm)
+    void ExecuteDriveCurvature(f32 speed, f32 curvatureRadius_mm, f32 accel)
     {
-      f32 leftSpeed = 0, rightSpeed = 0;
-      if(speed_mmps == 0) {
-        // Stop
-        leftSpeed = 0.f;
-        rightSpeed = 0.f;
-      } else if(curvatureRadius_mm == s16_MAX ||
-                curvatureRadius_mm == s16_MIN) {
+      // Only care about magnitude of accel
+      accel = ABS(accel);
+      
+      f32 leftSpeed = 0.f, rightSpeed = 0.f;
+      f32 leftAccel = accel, rightAccel = accel;
+
+      // Compute current commanded average wheel speed
+      f32 desL, desR;
+      WheelController::GetDesiredWheelSpeeds(desL, desR);
+      f32 avgWheelSpeed = 0.5f * (desL + desR);
+      
+      if(curvatureRadius_mm == s16_MAX || curvatureRadius_mm == s16_MIN) {
         // Drive straight
-        leftSpeed  = speed_mmps;
-        rightSpeed = speed_mmps;
+        leftSpeed  = speed;
+        rightSpeed = speed;
+        
+        // Immediately set current desired wheel speeds to match each other
+        // so that we accelerate to the target speed in a straight line
+        WheelController::SetDesiredWheelSpeeds(avgWheelSpeed, avgWheelSpeed);
+        
       } else if(curvatureRadius_mm == 0) {
-        ExecutePointTurn(DEG_TO_RAD_F32(speed_mmps), 50);
+        ExecutePointTurn(speed, accel);
         return;
       } else {
         // Drive an arc
         
         //if speed is positive, the left wheel should turn slower, so
         // it becomes the INNER wheel
-        leftSpeed = speed_mmps * (1.0f - WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+        leftSpeed = speed * (1.0f - WHEEL_DIST_HALF_MM / curvatureRadius_mm);
         
         //if speed is positive, the right wheel should turn faster, so
         // it becomes the OUTER wheel
-        rightSpeed = speed_mmps * (1.0f + WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+        rightSpeed = speed * (1.0f + WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+
+        // If acceleration is non-zero (i.e. not instantaneous)
+        // compute what it should be for each wheel.
+        if (!NEAR_ZERO(accel)) {
+          // Immediately set current desired wheel speeds to match the same ratio of
+          // target wheel speeds so that the specified curvature is maintained
+          f32 leftSpeed_instant = avgWheelSpeed * (1.0f - WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+          f32 rightSpeed_instant = avgWheelSpeed * (1.0f + WHEEL_DIST_HALF_MM / curvatureRadius_mm);
+          WheelController::SetDesiredWheelSpeeds(leftSpeed_instant, rightSpeed_instant);
+          
+          if (FLT_NEAR(speed, avgWheelSpeed)) {
+            leftAccel = 0.f;
+            rightAccel = 0.f;
+          } else {
+            // Compute what the necessary accelerations are for the individual wheels
+            // In the amount of time it should take to accelerate from avgWheelSpeed to speed_mmps
+            // at a rate of accel, it should take the same amount of time for
+            // leftSpeed_instant to accelerate to leftSpeed at a rate of leftAccel, and
+            // rightSpeed_instant to accelerate to rightSpeed at a rate of rightAccel
+            // e.g. (speed_mmps - avgWheelSpeed) / accel == (leftSpeed - leftSpeed_instant) / leftAccel
+            const f32 oneOverSpeedDiff = 1.f / (speed - avgWheelSpeed);
+            leftAccel = accel * (leftSpeed - leftSpeed_instant) * oneOverSpeedDiff;
+            rightAccel = accel * (rightSpeed - rightSpeed_instant) * oneOverSpeedDiff;
+          }
+        }
       }
-      ExecuteDirectDrive(leftSpeed, rightSpeed);
+      
+      ExecuteDirectDrive(leftSpeed, rightSpeed, leftAccel, rightAccel);
     }
     
   } // namespace SteeringController

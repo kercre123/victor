@@ -759,8 +759,10 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
               RTIP::SendMessage(msg);
               #else
-              SteeringController::ExecuteDriveCurvature(msg.animBodyMotion.speed,
-                                                        msg.animBodyMotion.curvatureRadius_mm);
+              bool isPointTurn = msg.animBodyMotion.curvatureRadius_mm == 0;
+              SteeringController::ExecuteDriveCurvature(isPointTurn ? DEG_TO_RAD_F32(msg.animBodyMotion.speed) : msg.animBodyMotion.speed,
+                                                        msg.animBodyMotion.curvatureRadius_mm,
+                                                        isPointTurn ? 50.f : 0.f);  // 50 is what animation point turns have all been tuned with so don't change this!
               #endif
             }
             break;

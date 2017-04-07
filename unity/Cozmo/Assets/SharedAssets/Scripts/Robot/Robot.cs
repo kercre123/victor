@@ -1265,12 +1265,14 @@ public class Robot : IRobot {
 
   /// <summary>
   /// Drives the motors so that cozmo moves in an arc.
+  /// Set curveRadiusMm to 32768 to go straight.
   /// When curveRadiusMm is negative, he turns to his right; positive = left
-  /// Set curveRadiusMm to 1 or -1 for a point turn and ~40000 for straight
+  /// Set curveRadiusMm to 0 for a point turn. wheelSpeedMmps must then be in rad/s.
+  /// Alternatively, you can set curveRadiusMm to 1 or -1 for something close enough to a point turn where wheelSpeedMmps remains in mm/s.
   /// </summary>
-  public void DriveArc(float wheelSpeedMmps, int curveRadiusMm) {
+  public void DriveArc(float wheelSpeedMmps, short curveRadiusMm, float accelMmps = 0.0f) {
     RobotEngineManager.Instance.Message.DriveArc =
-                        Singleton<DriveArc>.Instance.Initialize(wheelSpeedMmps, curveRadiusMm);
+                        Singleton<DriveArc>.Instance.Initialize(wheelSpeedMmps, accelMmps, curveRadiusMm);
     RobotEngineManager.Instance.SendMessage();
   }
 
