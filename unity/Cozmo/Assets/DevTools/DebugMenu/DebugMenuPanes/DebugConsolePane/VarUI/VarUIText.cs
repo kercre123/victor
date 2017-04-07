@@ -11,7 +11,7 @@ namespace Anki.Debug {
     public override void Init(DebugConsoleData.DebugConsoleVarData singleVar, GameObject go) {
       base.Init(singleVar, go);
       OnValueRefreshed();
-      _StatInputField.onValueChanged.AddListener(HandleValueChanged);
+      _StatInputField.onEndEdit.AddListener(HandleValueChanged);
     }
 
     public override void OnValueRefreshed() {
