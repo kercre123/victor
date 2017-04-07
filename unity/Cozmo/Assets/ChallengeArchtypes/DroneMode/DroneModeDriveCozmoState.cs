@@ -262,8 +262,10 @@ namespace Cozmo {
         }
 
         private void SetSlidersToCurrentPosition() {
-          SetHeadSliderToCurrentPosition();
-          _DroneModeControlsSlide.SetLiftSliderValue(_CurrentRobot.LiftHeightFactor);
+          if (_CurrentRobot != null && _DroneModeControlsSlide != null) {
+            SetHeadSliderToCurrentPosition();
+            _DroneModeControlsSlide.SetLiftSliderValue(_CurrentRobot.LiftHeightFactor);
+          }
         }
 
         private void SetHeadSliderToCurrentPosition() {
