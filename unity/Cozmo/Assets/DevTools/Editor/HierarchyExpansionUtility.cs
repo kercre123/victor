@@ -10,6 +10,8 @@ public static class HierarchyExpansionUtility {
 
   private static Type _TreeViewType;
 
+  private static Type _TreeViewItemType;
+
   private static Type _ITreeViewDataSourceType;
 
   private static PropertyInfo _SceneHierarchyWindow_treeView;
@@ -44,11 +46,15 @@ public static class HierarchyExpansionUtility {
     _ITreeViewDataSourceType = assembly.GetType("UnityEditor.ITreeViewDataSource");
 
     _SceneHierarchyWindow_treeView = _SceneHierarchyWindowType.GetProperty("treeView", BindingFlags.NonPublic | BindingFlags.Instance);
+
     _TreeView_data = _TreeViewType.GetProperty("data");
 
+    _TreeViewItemType = assembly.GetType("UnityEditor.TreeViewItem");
+
     _ITreeViewDataSource_FindItem = _ITreeViewDataSourceType.GetMethod("FindItem");
-    _ITreeViewDataSource_IsExpanded = _ITreeViewDataSourceType.GetMethod("IsExpanded");
-    _ITreeViewDataSource_SetExpanded = _ITreeViewDataSourceType.GetMethod("SetExpanded");
+    _ITreeViewDataSource_IsExpanded = _ITreeViewDataSourceType.GetMethod("IsExpanded", new Type[] { _TreeViewItemType });
+    _ITreeViewDataSource_SetExpanded = _ITreeViewDataSourceType.GetMethod("SetExpanded", new Type[] { _TreeViewItemType, typeof(bool) });
+
     _ITreeViewDataSource_ReloadData = _ITreeViewDataSourceType.GetMethod("ReloadData");
   }
 
@@ -65,12 +71,12 @@ public static class HierarchyExpansionUtility {
   public static bool IsExpanded(GameObject obj) {
     var treeView = _SceneHierarchyWindow_treeView.GetValue(Window, null);
     var data = _TreeView_data.GetValue(treeView, null);
-    var item = _ITreeViewDataSource_FindItem.Invoke(data, new object[]{ obj.GetInstanceID() });
+    var item = _ITreeViewDataSource_FindItem.Invoke(data, new object[] { obj.GetInstanceID() });
 
     if (item == null) {
       _ITreeViewDataSource_ReloadData.Invoke(data, null);
     }
-    item = _ITreeViewDataSource_FindItem.Invoke(data, new object[]{ obj.GetInstanceID() });
+    item = _ITreeViewDataSource_FindItem.Invoke(data, new object[] { obj.GetInstanceID() });
 
     return (bool)_ITreeViewDataSource_IsExpanded.Invoke(data, new object[] { item });
   }
@@ -78,12 +84,12 @@ public static class HierarchyExpansionUtility {
   public static void SetExpanded(GameObject obj, bool expanded) {
     var treeView = _SceneHierarchyWindow_treeView.GetValue(Window, null);
     var data = _TreeView_data.GetValue(treeView, null);
-    var item = _ITreeViewDataSource_FindItem.Invoke(data, new object[]{ obj.GetInstanceID() });
+    var item = _ITreeViewDataSource_FindItem.Invoke(data, new object[] { obj.GetInstanceID() });
 
     if (item == null) {
       _ITreeViewDataSource_ReloadData.Invoke(data, null);
     }
-    item = _ITreeViewDataSource_FindItem.Invoke(data, new object[]{ obj.GetInstanceID() });
+    item = _ITreeViewDataSource_FindItem.Invoke(data, new object[] { obj.GetInstanceID() });
 
     _ITreeViewDataSource_SetExpanded.Invoke(data, new object[] { item, expanded });
   }
