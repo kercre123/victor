@@ -13,6 +13,8 @@ ScriptedSequenceEditorColors.asset
 ScriptedSequenceEditorColors.asset.meta
 smcs.rsp
 smcs.rsp.meta
+mcs.rsp
+mcs.rsp.meta
 Scripts/Generated.meta
 
 StreamingAssets/AssetBundles/*

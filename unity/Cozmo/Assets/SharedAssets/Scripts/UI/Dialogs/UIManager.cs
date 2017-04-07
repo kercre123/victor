@@ -254,7 +254,9 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void EnableTouchEvents() {
-    if (_Instance != null && _Instance.EventSystemScript != null) {
+    // UIManager Instance deactives itself as its shutting down in editor, so checking that avoids errors on shutdown.
+    // usually UIManager is always active during normal flow.
+    if (_Instance != null && _Instance.isActiveAndEnabled && _Instance.EventSystemScript != null) {
       _Instance.EventSystemScript.gameObject.SetActive(true);
     }
   }

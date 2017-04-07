@@ -9,7 +9,7 @@ namespace Cozmo.UI {
   [CanEditMultipleObjects]
   public class CozmoButtonEditor : AnkiButtonEditor {
     public override void OnInspectorGUI() {
-      serializedObject.UpdateIfDirtyOrScript();
+      serializedObject.UpdateIfRequiredOrScript();
 
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextEnabledColor"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextPressedColor"));

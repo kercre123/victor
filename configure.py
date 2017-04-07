@@ -455,8 +455,8 @@ class GamePlatformConfiguration(object):
             smcsSettings = smcsSettings + "-define:SDK_ONLY"
 
         unityAssetsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets');
-        smcs_temp_path = os.path.join(unityAssetsPath, 'smcs.rsp.new')
-        smcs_final_path = os.path.join(unityAssetsPath, 'smcs.rsp')
+        smcs_temp_path = os.path.join(unityAssetsPath, 'mcs.rsp.new')
+        smcs_final_path = os.path.join(unityAssetsPath, 'mcs.rsp')
         with open(smcs_temp_path, 'w') as smcsFile:
             smcsFile.write(smcsSettings + '\n');
 

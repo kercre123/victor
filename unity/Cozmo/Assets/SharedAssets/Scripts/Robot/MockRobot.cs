@@ -17,10 +17,11 @@ public class MockRobot : IRobot {
   public event System.Action<ObservableObject> OnCarryingObjectSet;
 
   public event System.Action<ObservableObject> OnHeadTrackingObjectSet;
-
+  // Event is never used warning surpression.
+#pragma warning disable 0067
   public event System.Action<int> OnNumBlocksConnectedChanged;
-
   public event System.Action<FaceEnrollmentCompleted> OnEnrolledFaceComplete;
+#pragma warning restore 0067
 
   public MockRobot(byte id) {
     ID = id;
@@ -1042,10 +1043,12 @@ public class MockRobot : IRobot {
   public void ExitSDKMode(bool isExternalSdkMode) {
   }
 
+  public ActiveObject Charger { get; set; }
+
+  // Event is never used warning surpression.
+#pragma warning disable 0067
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;
-
-  public ActiveObject Charger { get; set; }
 
   public event ChargerStateEventHandler OnChargerAdded;
   public event ChargerStateEventHandler OnChargerRemoved;
@@ -1057,6 +1060,8 @@ public class MockRobot : IRobot {
 
   public event PetFaceStateEventHandler OnPetFaceAdded;
   public event PetFaceStateEventHandler OnPetFaceRemoved;
+#pragma warning restore 0067
+  // Restore warn about unused
 
   public List<PetFace> PetFaces { get; private set; }
 

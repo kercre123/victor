@@ -286,7 +286,7 @@ namespace Anki {
       public void UnloadSceneAsync(string sceneName, Action<bool> callback, bool unloadUnusedAssets = true) {
         Log(LogType.Log, "Unloading scene " + sceneName);
 
-        SceneManager.UnloadScene(sceneName);
+        SceneManager.UnloadSceneAsync(sceneName);
 
         if (unloadUnusedAssets) {
           StartCoroutine(UnloadUnusedAssets(callback));

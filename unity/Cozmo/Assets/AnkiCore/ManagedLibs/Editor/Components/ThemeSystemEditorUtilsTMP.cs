@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using Anki.Core.Editor.Components;
@@ -16,7 +16,8 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
   #endregion
 
   #region Static Properties
-  protected static ThemeSystemEditorUtilsTMP _sInstance = null;
+  // new keyword avoids warning of overwriting base class with same name
+  protected static new ThemeSystemEditorUtilsTMP _sInstance = null;
   public static new ThemeSystemEditorUtilsTMP sInstance {
     get {
       if (_sInstance == null) {

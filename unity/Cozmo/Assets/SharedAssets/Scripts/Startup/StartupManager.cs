@@ -256,7 +256,7 @@ public class StartupManager : MonoBehaviour {
     LoadMainScene(assetBundleManager);
 
     int startSeed = System.Environment.TickCount;
-    UnityEngine.Random.seed = startSeed;
+    UnityEngine.Random.InitState(startSeed);
     DAS.Info("Random.StartSeed", startSeed.ToString());
   }
 

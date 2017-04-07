@@ -92,7 +92,7 @@ public class DebugDisplayPane : MonoBehaviour {
     catch (System.Exception) {
       return;
     }
-    UnityEngine.Random.seed = seed;
+    Random.InitState(seed);
   }
 
   private void HandleDeviceDataMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {

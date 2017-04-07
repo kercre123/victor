@@ -74,7 +74,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     textureImporter.mipmapEnabled = false;
     textureImporter.filterMode = FilterMode.Bilinear;
     textureImporter.maxTextureSize = _kMaxTextureSize;
-    textureImporter.textureFormat = TextureImporterFormat.AutomaticTruecolor;
+    textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
 
     if (!IsUHDAsset()) {
       textureImporter.spriteBorder = GetBorderFromUHDSprite();
@@ -151,14 +151,14 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     Debug.Log("Detected texture import at " + assetPath + ". Setting default values.");
 
     TextureImporter textureImporter = (TextureImporter)assetImporter;
-    textureImporter.textureType = TextureImporterType.Image;
-    textureImporter.grayscaleToAlpha = false;
+    textureImporter.textureType = TextureImporterType.Default;
+    textureImporter.alphaSource = TextureImporterAlphaSource.FromInput;
     textureImporter.alphaIsTransparency = true;
     textureImporter.wrapMode = (useRepeatSetting) ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
     textureImporter.filterMode = FilterMode.Bilinear;
     textureImporter.anisoLevel = _kAnisoLevel;
     textureImporter.maxTextureSize = _kMaxTextureSize;
-    textureImporter.textureFormat = TextureImporterFormat.AutomaticTruecolor;
+    textureImporter.textureCompression = TextureImporterCompression.Uncompressed;
   }
 
   private void OnPostprocessTexture(Texture2D texture) {

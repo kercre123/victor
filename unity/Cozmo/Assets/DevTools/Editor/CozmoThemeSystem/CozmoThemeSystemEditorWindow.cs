@@ -10,7 +10,7 @@ public class CozmoThemeSystemEditorWindow : Anki.Core.Editor.Components.ThemeSys
   private bool[] _ButtonArrayFoldout = new bool[0];
 
   #region Intilization
-  [MenuItem("Window/Theme System")]
+  [MenuItem("Window/Cozmo Theme System")]
   protected static void InitializeWindowOverride() {
     _sWindow = EditorWindow.GetWindow<CozmoThemeSystemEditorWindow>();
     _sWindow.titleContent = new GUIContent("Theme System");

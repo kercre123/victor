@@ -10,152 +10,52 @@ Material:
   m_Shader: {fileID: 4800000, guid: cafd18099dfc0114896e0a8b277b81b6, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
+  m_EnableInstancingVariants: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
+  disabledShaderPasses: []
   m_SavedProperties:
-    serializedVersion: 2
+    serializedVersion: 3
     m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2819488}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2819488}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
-      data:
-        first:
-          name: _Stencil
-        second: 0
-      data:
-        first:
-          name: _StencilComp
-        second: 8
-      data:
-        first:
-          name: _StencilOp
-        second: 0
-      data:
-        first:
-          name: _StencilReadMask
-        second: 255
-      data:
-        first:
-          name: _StencilWriteMask
-        second: 255
-      data:
-        first:
-          name: _ColorMask
-        second: 15
-      data:
-        first:
-          name: _FaceDilate
-        second: 0
-      data:
-        first:
-          name: _UnderlayOffsetX
-        second: 0
-      data:
-        first:
-          name: _UnderlayOffsetY
-        second: 0
-      data:
-        first:
-          name: _UnderlayDilate
-        second: 0
-      data:
-        first:
-          name: _UnderlaySoftness
-        second: 0
-      data:
-        first:
-          name: _WeightNormal
-        second: 0
-      data:
-        first:
-          name: _WeightBold
-        second: 0.75
-      data:
-        first:
-          name: _OutlineWidth
-        second: 0
-      data:
-        first:
-          name: _OutlineSoftness
-        second: 0
-      data:
-        first:
-          name: _GradientScale
-        second: 6
-      data:
-        first:
-          name: _ScaleX
-        second: 1
-      data:
-        first:
-          name: _ScaleY
-        second: 1
-      data:
-        first:
-          name: _PerspectiveFilter
-        second: 0.875
-      data:
-        first:
-          name: _TextureWidth
-        second: 512
-      data:
-        first:
-          name: _TextureHeight
-        second: 512
-      data:
-        first:
-          name: _MaskSoftnessX
-        second: 0
-      data:
-        first:
-          name: _MaskSoftnessY
-        second: 0
-      data:
-        first:
-          name: _VertexOffsetX
-        second: 0
-      data:
-        first:
-          name: _VertexOffsetY
-        second: 0
-      data:
-        first:
-          name: _ShaderFlags
-        second: 0
-      data:
-        first:
-          name: _ScaleRatioA
-        second: 0.8333333
-      data:
-        first:
-          name: _ScaleRatioB
-        second: 1
-      data:
-        first:
-          name: _ScaleRatioC
-        second: 0.6770833
+    - _ColorMask: 15
+    - _FaceDilate: 0
+    - _GradientScale: 6
+    - _MaskSoftnessX: 0
+    - _MaskSoftnessY: 0
+    - _OutlineSoftness: 0
+    - _OutlineWidth: 0
+    - _PerspectiveFilter: 0.875
+    - _ScaleRatioA: 0.8333333
+    - _ScaleRatioB: 1
+    - _ScaleRatioC: 0.6770833
+    - _ScaleX: 1
+    - _ScaleY: 1
+    - _ShaderFlags: 0
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _TextureHeight: 512
+    - _TextureWidth: 512
+    - _UnderlayDilate: 0
+    - _UnderlayOffsetX: 0
+    - _UnderlayOffsetY: 0
+    - _UnderlaySoftness: 0
+    - _VertexOffsetX: 0
+    - _VertexOffsetY: 0
+    - _WeightBold: 0.75
+    - _WeightNormal: 0
     m_Colors:
-      data:
-        first:
-          name: _ClipRect
-        second: {r: -32767, g: -32767, b: 32767, a: 32767}
-      data:
-        first:
-          name: _FaceColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _UnderlayColor
-        second: {r: 0, g: 0, b: 0, a: 0.5}
-      data:
-        first:
-          name: _OutlineColor
-        second: {r: 0, g: 0, b: 0, a: 1}
+    - _ClipRect: {r: -32767, g: -32767, b: 32767, a: 32767}
+    - _FaceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _UnderlayColor: {r: 0, g: 0, b: 0, a: 0.5}
 --- !u!28 &2819488
 Texture2D:
   m_ObjectHideFlags: 0
@@ -172,7 +72,6 @@ Texture2D:
   m_TextureFormat: 1
   m_MipCount: 1
   m_IsReadable: 0
-  m_ReadAllowed: 1
   m_AlphaIsTransparency: 0
   m_ImageCount: 1
   m_TextureDimension: 2
@@ -207,12 +106,12 @@ MonoBehaviour:
   m_fontInfo:
     Name: Avenir LT Std
     PointSize: 36
-    Scale: 0
+    Scale: 1
     CharacterCount: 209
     LineHeight: 43.1875
     Baseline: 0
     Ascender: 27.25
-    CapHeight: 0
+    CapHeight: 25.5
     Descender: -8.8125
     CenterLine: 0
     SuperscriptOffset: 27.25
@@ -222,7 +121,7 @@ MonoBehaviour:
     UnderlineThickness: 1.8000001
     strikethrough: 6.7045455
     strikethroughThickness: 1.8000001
-    TabWidth: 0
+    TabWidth: 106.875
     Padding: 5
     AtlasWidth: 512
     AtlasHeight: 512
@@ -231,10 +130,10 @@ MonoBehaviour:
   - id: 32
     x: 6
     y: 517
-    width: 0
-    height: 0
+    width: 10.6875
+    height: 36.0625
     xOffset: 0
-    yOffset: 0
+    yOffset: 27.25
     xAdvance: 10.6875
     scale: 1
   - id: 33

@@ -410,13 +410,12 @@ namespace Anki {
         // save script defines
         string savePoundDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
 
-        // Later on use this to switch between building for different targets
-        // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
+        EditorUserBuildSettings.SwitchActiveBuildTarget(buildTargetGroup, buildTarget);
 
         bool isDebugBuild = config.ToLower() == "debug";
         BuildOptions buildOptions = GetBuildOptions(buildTarget, isDebugBuild, enableDebugging, connectWithProfiler);
 
-        ScriptingImplementation saveScriptingImplementation = (ScriptingImplementation)PlayerSettings.GetPropertyInt("ScriptingBackend", buildTargetGroup);
+        ScriptingImplementation saveScriptingImplementation = PlayerSettings.GetScriptingBackend(buildTargetGroup);
         ConfigurePlayerSettings(buildTargetGroup, config, scriptEngine);
 
         // Stop playing
@@ -438,7 +437,7 @@ namespace Anki {
           PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
           PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
           PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
-          PlayerSettings.SetPropertyInt("ScriptingBackend", (int)saveScriptingImplementation, buildTargetGroup);
+          PlayerSettings.SetScriptingBackend(buildTargetGroup, saveScriptingImplementation);
           return result;
         }
 
@@ -467,7 +466,7 @@ namespace Anki {
         PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
         PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
         PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
-        PlayerSettings.SetPropertyInt("ScriptingBackend", (int)saveScriptingImplementation, buildTargetGroup);
+        PlayerSettings.SetScriptingBackend(buildTargetGroup, saveScriptingImplementation);
 
         return result;
       }
@@ -569,7 +568,7 @@ namespace Anki {
 
         if (scriptEngine != null) {
           ScriptingImplementation si = (scriptEngine == "mono2x" ? ScriptingImplementation.Mono2x : ScriptingImplementation.IL2CPP);
-          PlayerSettings.SetPropertyInt("ScriptingBackend", (int)si, buildTargetGroup);
+          PlayerSettings.SetScriptingBackend(buildTargetGroup, si);
         }
       }
 

@@ -737,14 +737,6 @@ namespace UnityEditor {
     //
     // Constructors
     //
-    private GameObjectInspector() {
-      if (EditorSettings.defaultBehaviorMode == EditorBehaviorMode.Mode2D) {
-        this.previewDir = new Vector2(0, 0);
-      }
-      else {
-        this.previewDir = new Vector2(120, -20);
-      }
-    }
 
     //
     // Static Methods
@@ -1286,6 +1278,13 @@ namespace UnityEditor {
       this.m_StaticEditorFlags = base.serializedObject.FindProperty("m_StaticEditorFlags");
       this.m_Icon = base.serializedObject.FindProperty("m_Icon");
       this.CalculatePrefabStatus();
+
+      if (EditorSettings.defaultBehaviorMode == EditorBehaviorMode.Mode2D) {
+        this.previewDir = new Vector2(0, 0);
+      }
+      else {
+        this.previewDir = new Vector2(120, -20);
+      }
     }
 
     protected override void OnHeaderGUI() {

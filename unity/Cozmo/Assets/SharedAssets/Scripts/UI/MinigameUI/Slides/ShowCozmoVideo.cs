@@ -187,24 +187,24 @@ public class ShowCozmoVideo : MonoBehaviour {
     // When there is a problem with the codec, Unity doesn't gives an error back but just
     // prints error messages in the console. This is the best way we have to know if the 
     // Unity could load the video file correctly
-    if (fileWWW.movie.duration <= 0) {
+    if (fileWWW.GetMovieTexture().duration <= 0) {
       Debug.LogError("Couldn't load the video file " + filename);
       HandleVideoFinished();
       yield break;
     }
 
-    while (!fileWWW.movie.isReadyToPlay) {
+    while (!fileWWW.GetMovieTexture().isReadyToPlay) {
       yield return null;
     }
 
     // Set the texture to the RawImage's texture so the video is shown on screen and play it
-    _RawImage.texture = fileWWW.movie;
-    fileWWW.movie.Play();
+    _RawImage.texture = fileWWW.GetMovieTexture();
+    fileWWW.GetMovieTexture().Play();
 
     // duck the music while playing, then bring it back up when the movie is done
     DuckMusic();
 
-    while (fileWWW.movie.isPlaying) {
+    while (fileWWW.GetMovieTexture().isPlaying) {
       yield return null;
     }
 

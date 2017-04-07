@@ -1,4 +1,6 @@
-﻿Shader "UI/Cozmo/GradientTextureClippingShader"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "UI/Cozmo/GradientTextureClippingShader"
 {
   Properties
   {
@@ -54,7 +56,7 @@
       v2f vert (appdata v)
       {
         v2f o;
-        o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+        o.vertex = UnityObjectToClipPos(v.vertex);
         o.uv = v.uv;
 
         // translate atlas UV to sprite UV

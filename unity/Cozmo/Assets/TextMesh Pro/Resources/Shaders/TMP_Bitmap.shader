@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Copyright (C) 2014 - 2016 Stephan Schaem - All Rights Reserved
 // This code can only be used under the standard Unity Asset Store End User License Agreement
 // A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
@@ -102,7 +104,7 @@ SubShader{
 
 			vert.xy += (vert.w * 0.5) / _ScreenParams.xy;
 
-			float4 vPosition = UnityPixelSnap(mul(UNITY_MATRIX_MVP, vert));
+			float4 vPosition = UnityPixelSnap(UnityObjectToClipPos(vert));
 
 			fixed4 faceColor = i.color;
 			faceColor *= _FaceColor;
