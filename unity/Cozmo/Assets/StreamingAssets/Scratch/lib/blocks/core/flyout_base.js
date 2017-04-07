@@ -219,7 +219,8 @@ Blockly.Flyout.prototype.DRAG_RADIUS = 10;
  * @type {number}
  * @const
  */
-Blockly.Flyout.prototype.MARGIN = 12;
+// Anki change to make blocks appear closer together in the toolbox. Was 12.
+Blockly.Flyout.prototype.MARGIN = 6;
 
 /**
  * Gap between items in horizontal flyouts. Can be overridden with the "sep"

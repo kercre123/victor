@@ -285,7 +285,8 @@ Blockly.Scrollbar.prototype.containerVisible_ = true;
  */
 Blockly.Scrollbar.scrollbarThickness = 11;
 if (goog.events.BrowserFeature.TOUCH_ENABLED) {
-  Blockly.Scrollbar.scrollbarThickness = 25;
+  // Anki change to slim down the toolbox scrollbar. Was 25.
+  Blockly.Scrollbar.scrollbarThickness = 10; 
 }
 
 /**
