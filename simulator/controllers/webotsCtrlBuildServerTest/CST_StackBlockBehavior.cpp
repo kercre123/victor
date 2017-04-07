@@ -323,7 +323,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     {
       // Behavior should start right after seeing block (and so TurnInPlace may be cancelled)
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(10,
-                                            (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED),
+                                            (_turnInPlaceResult == ActionResult::SUCCESS || _turnInPlaceResult == ActionResult::CANCELLED_WHILE_RUNNING),
                                             _startedBehavior == 2) {
         SET_STATE(Stacking);
       }

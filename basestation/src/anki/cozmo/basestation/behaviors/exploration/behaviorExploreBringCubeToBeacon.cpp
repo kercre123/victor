@@ -375,7 +375,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
           // do not queue more actions here so that we get kicked out, flag as fail
           pickUpFinalFail = true;
         }
-      } else if(resCat != ActionResultCategory::CANCELLED) {
+      } else if(resCat == ActionResultCategory::ABORT) {
         PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.NoRetry").c_str(), "Failed to pick up '%d', action does not retry.", _selectedObjectID.GetValue());
         // do not queue more actions here so that we get kicked out, flag as fail
         pickUpFinalFail = true;
@@ -418,7 +418,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
       // emotions and behavior objective check
       FireEmotionEvents(robot);
     }
-    if (resCat == ActionResultCategory::RETRY)
+    else if (resCat == ActionResultCategory::RETRY)
     {
       const bool canRetry = (attempt < kMaxAttempts);
       const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
@@ -444,7 +444,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
         // if we are carrying the cube, this is definitely a stack issue
         stackOnCubeFinalFail = true;
       }
-    } else if(resCat != ActionResultCategory::CANCELLED){
+    } else if(resCat == ActionResultCategory::ABORT) {
       PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.NoRetryAllowed").c_str(), "Failed to stack (no retry allowed by action)");
       stackOnCubeFinalFail = true;
     }

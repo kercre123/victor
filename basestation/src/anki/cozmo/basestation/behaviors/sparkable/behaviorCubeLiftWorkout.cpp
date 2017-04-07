@@ -199,7 +199,7 @@ void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
       if( res == ActionResult::SUCCESS ) {
         TransitionToPreLiftAnim(robot);
       }
-      else if(res != ActionResult::CANCELLED) {
+      else if(IActionRunner::GetActionResultCategory(res) != ActionResultCategory::CANCELLED) {
         // only count driving failures if there are no predock poses (that way a different cube or behavior
         // will get selected)
         const bool countFailure = (res == ActionResult::NO_PREACTION_POSES);

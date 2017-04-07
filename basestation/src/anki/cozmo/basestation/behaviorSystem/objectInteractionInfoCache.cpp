@@ -237,8 +237,7 @@ void ObjectInteractionInfoCache::ObjectTapInteractionOccurred(const ObjectID& ob
   bool filterCanUseObject = false;
 
   for(auto& entry: _trackers){
-    filterCanUseObject = filterCanUseObject ||
-             entry.second.ObjectTapInteractionOccurred(objectID);
+    filterCanUseObject |= entry.second.ObjectTapInteractionOccurred(objectID);
   }
   
   // None of the action intention filters can currently use objectID but still

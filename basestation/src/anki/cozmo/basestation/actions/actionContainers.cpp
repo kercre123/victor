@@ -606,7 +606,7 @@ namespace Anki {
           // Current action is no longer running delete it
           DeleteAction(_currentAction);
           
-          if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
+          if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED_WHILE_RUNNING) {
             lastResult = RESULT_FAIL;
           }
         }

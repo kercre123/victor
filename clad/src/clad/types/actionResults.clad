@@ -21,7 +21,10 @@ enum no_cpp_class uint_32 ARCBitShift {
 enum uint_32 ActionResult {
   SUCCESS                             = verbatim ActionResultCategory::SUCCESS * ARCBitShift::SHIFT, // This is still zero
   RUNNING                             = verbatim ActionResultCategory::RUNNING * ARCBitShift::SHIFT,
-  CANCELLED                           = verbatim ActionResultCategory::CANCELLED * ARCBitShift::SHIFT,
+
+  CANCELLED_WHILE_RUNNING             = verbatim ActionResultCategory::CANCELLED * ARCBitShift::SHIFT,
+  NOT_STARTED, // NOT_STARTED is considered a CANCELLED type failure as
+               // it can only occur if the action was destroyed/cancelled before starting
 
   // ADD FAILURES BELOW
 
@@ -41,7 +44,6 @@ enum uint_32 ActionResult {
   NO_GOAL_SET,
   NO_PREACTION_POSES,
   NOT_CARRYING_OBJECT_ABORT,
-  NOT_STARTED,
   NULL_SUBACTION,
   PATH_PLANNING_FAILED_ABORT,
   PICKUP_OBJECT_UNEXPECTEDLY_MOVING,

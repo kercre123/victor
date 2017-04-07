@@ -425,7 +425,9 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                 }
                 else
                 {
-                  if(msg.result != ActionResult::CANCELLED)
+                  const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(msg.result);
+                  if(resCat == ActionResultCategory::ABORT ||
+                     resCat == ActionResultCategory::RETRY)
                   {
                     // mark the block as inaccessible if we've retried the appropriate number of times
                     const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);

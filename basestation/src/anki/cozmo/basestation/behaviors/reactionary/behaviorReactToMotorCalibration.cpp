@@ -80,13 +80,15 @@ Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetName(), kAffectTriggersMotorCalibrationArray);
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
-  StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res) {
-                                                    if (res != ActionResult::CANCELLED && (!robot.IsHeadCalibrated() || !robot.IsLiftCalibrated())) {
-                                                      PRINT_NAMED_WARNING("BehaviorReactToMotorCalibration.Timeout",
-                                                                          "Calibration didn't complete (lift: %d, head: %d)",
-                                                                          robot.IsLiftCalibrated(), robot.IsHeadCalibrated());
-                                                    }
-                                                  });
+  StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res)
+    {
+      if (IActionRunner::GetActionResultCategory(res) != ActionResultCategory::CANCELLED  &&
+          (!robot.IsHeadCalibrated() || !robot.IsLiftCalibrated())) {
+        PRINT_NAMED_WARNING("BehaviorReactToMotorCalibration.Timeout",
+                            "Calibration didn't complete (lift: %d, head: %d)",
+                            robot.IsLiftCalibrated(), robot.IsHeadCalibrated());
+      }
+    });
 
   return RESULT_OK;
 }

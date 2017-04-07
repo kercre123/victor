@@ -272,7 +272,7 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, Robot& robot)
       _status = BehaviorStatus::Complete;
       break;
     }
-    case ActionResult::CANCELLED:
+    case ActionResult::CANCELLED_WHILE_RUNNING:
       // leave the helper running, since it's about to be canceled
       break;
     default:

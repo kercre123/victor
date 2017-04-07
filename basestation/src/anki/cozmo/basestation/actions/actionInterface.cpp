@@ -355,7 +355,7 @@ namespace Anki {
                           "%s [%d] %s with state %s.", GetName().c_str(),
                           GetTag(),
                           (_state==ActionResult::SUCCESS ? "succeeded" :
-                           _state==ActionResult::CANCELLED ? "was cancelled" : "failed"),
+                           _state==ActionResult::CANCELLED_WHILE_RUNNING ? "was cancelled" : "failed"),
                           EnumToString(_state));
           }
           
@@ -453,7 +453,7 @@ namespace Anki {
         PRINT_CH_INFO(kLogChannelName, "IActionRunner.Cancel",
                       "Cancelling action %s[%d]",
                       _name.c_str(), GetTag());
-        _state = ActionResult::CANCELLED;
+        _state = ActionResult::CANCELLED_WHILE_RUNNING;
       }
     }
     

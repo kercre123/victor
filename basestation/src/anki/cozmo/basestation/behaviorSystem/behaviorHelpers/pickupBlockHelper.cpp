@@ -205,7 +205,7 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
       break;
     }
 
-    case ActionResult::CANCELLED:
+    case ActionResult::CANCELLED_WHILE_RUNNING:
     {
       // leave the helper running, since it's about to be canceled
       break;
@@ -248,7 +248,7 @@ void PickupBlockHelper::RespondToSearchResult(ActionResult result, Robot& robot)
       StartPickupAction(robot);
       break;
     }
-    case ActionResult::CANCELLED:
+    case ActionResult::CANCELLED_WHILE_RUNNING:
       // leave the helper running, since it's about to be canceled
       break;
     default:

@@ -125,16 +125,17 @@ namespace Cozmo {
     // Animation action is null so run the subAction
     if(_animationAction == nullptr)
     {
-      ActionResult res = _subAction->Update();
+      const ActionResult res = _subAction->Update();
       
       // Update the retryWrapperAction's type to match the subAction's type in case
       // it is changing at runtime
       SetType(_subAction->GetType());
       
       // Only attempt to retry on failure results
+      // TODO Could be updated to use ActionResultCategory
       if(res != ActionResult::RUNNING &&
          res != ActionResult::SUCCESS &&
-         res != ActionResult::CANCELLED &&
+         res != ActionResult::CANCELLED_WHILE_RUNNING &&
          res != ActionResult::INTERRUPTED)
       {
         ActionCompletedUnion completionUnion;

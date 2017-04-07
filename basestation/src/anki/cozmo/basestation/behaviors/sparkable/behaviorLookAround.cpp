@@ -271,7 +271,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
   // because we discover it is a real object
   StartActing(action,
               [this,&robot](ActionResult result) {
-                if( result != ActionResult::CANCELLED ) {
+                if( IActionRunner::GetActionResultCategory(result) != ActionResultCategory::CANCELLED ) {
                   // we finished without observing an object, so go back to roaming
                   TransitionToRoaming(robot);
                 }
@@ -306,7 +306,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
                    _oldBoringObjects.insert(recentObjectID);
                  }
 
-                 if( result != ActionResult::CANCELLED ) {
+                 if( IActionRunner::GetActionResultCategory(result) != ActionResultCategory::CANCELLED ) {
                    TransitionToRoaming(robot);
                  }
              });

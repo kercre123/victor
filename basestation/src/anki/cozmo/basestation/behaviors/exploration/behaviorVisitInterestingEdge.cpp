@@ -663,7 +663,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
           "Attempted to retry (%d) times. Bailing", attemptsDone);
         // TODO this should add a whiteboard pose failure so that we don't try to get there again
       }
-    } else {
+    } else if(resCat == ActionResultCategory::ABORT) {
       PRINT_CH_INFO("Behaviors", "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.ActionFailed", "Unhandled result");
       // TODO this should add a whiteboard pose failure so that we don't try to get there again
     }

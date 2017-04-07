@@ -297,7 +297,7 @@ void BehaviorReactToDoubleTap::TransitionToSearchForCube(Robot& robot)
   
   StartActing(action,
               [this, &robot](const ExternalInterface::RobotCompletedAction& msg) {
-                if(msg.result == ActionResult::CANCELLED)
+                if(IActionRunner::GetActionResultCategory(msg.result) == ActionResultCategory::CANCELLED)
                 {
                   return;
                 }

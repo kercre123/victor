@@ -155,7 +155,7 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Robot& r
       StartPlaceRelObject(robot);
       break;
     }
-    case ActionResult::CANCELLED:
+    case ActionResult::CANCELLED_WHILE_RUNNING:
       // leave the helper running, since it's about to be canceled
       break;
 

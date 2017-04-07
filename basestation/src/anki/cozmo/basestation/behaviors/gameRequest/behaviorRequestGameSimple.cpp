@@ -397,7 +397,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 
                   StartActing(animAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
                 }
-                else {
+                else if(resCat == ActionResultCategory::ABORT) {
                   // mark the block as unable to pickup
                   const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(targetBlockID);
                   if(failedObject){

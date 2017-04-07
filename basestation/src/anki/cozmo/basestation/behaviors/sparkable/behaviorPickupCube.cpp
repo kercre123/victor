@@ -200,7 +200,9 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   }
   StartActing(action,
               [this,&robot](ActionResult res) {
-                if(ActionResult::SUCCESS != res) {
+                const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(res);
+                if(resCat == ActionResultCategory::ABORT ||
+                   resCat == ActionResultCategory::RETRY) {
                   FailedToPickupObject(robot);
                 } else {
                   TransitionToPickingUpCube(robot);
@@ -269,7 +271,10 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   
   StartActing(action,
               [this,&robot](ActionResult res) {
-                if(ActionResult::SUCCESS != res) {
+                const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(res);
+                if(resCat == ActionResultCategory::ABORT ||
+                   resCat == ActionResultCategory::RETRY)
+                {
                   FailedToPickupObject(robot);
                   
                   // Play failure animation
