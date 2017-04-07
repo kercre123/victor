@@ -577,38 +577,27 @@ ObjectID ObjectInteractionInfoCache::DefaultBestObjectFunction(const std::set<Ob
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectID ObjectInteractionInfoCache::RollBlockBestObjectFunction(const std::set<ObjectID>& validObjects)
 {
-  // Use the lowest cost object as a default
-  ObjectID lowestCostID = DefaultBestObjectFunction(validObjects);
-  const ObservableObject* lowestCostObj =  _robot.GetBlockWorld().
-                                             GetLocatedObjectByID(lowestCostID);
-  
-  // If the lowest cost object is upright, see if any other objects are
-  // non-upright and prefer those instead
-  const bool lowestCostUpright = lowestCostObj == nullptr ||
-    (lowestCostObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>()
-                                                            == AxisName::Z_POS);
-  
-  if(lowestCostUpright){
-    f32 shortestDistSQ = FLT_MAX;
-    f32 currentDistSQ = FLT_MAX;
+  std::set<ObjectID> objsOnSideNothingOnTop;
+  for(const auto& objID : validObjects){
+    const ObservableObject* validObj =  _robot.GetBlockWorld().
+                                                 GetLocatedObjectByID(objID);
+    if(validObj == nullptr){
+      continue;
+    }
     
-    for(const auto& objID: validObjects){
-      const ObservableObject* validObj =  _robot.GetBlockWorld().
-                                             GetLocatedObjectByID(objID);
-      if(validObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>()
-                                                            == AxisName::Z_POS){
-        continue;
-      }
     
-      if(ComputeDistanceSQBetween(_robot.GetPose(), validObj->GetPose(), currentDistSQ) &&
-         (currentDistSQ < shortestDistSQ)){
-        lowestCostID = validObj->GetID();
-        shortestDistSQ = currentDistSQ;
-      }
+    if(_robot.CanPickUpObject(*validObj) &&
+       (validObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>()
+                                              != AxisName::Z_POS)){
+      objsOnSideNothingOnTop.insert(objID);
     }
   }
   
-  return lowestCostID;
+  if(objsOnSideNothingOnTop.empty()){
+    return DefaultBestObjectFunction(validObjects);
+  }else{
+    return DefaultBestObjectFunction(objsOnSideNothingOnTop);
+  }
 }
 
 
