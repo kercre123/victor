@@ -55,6 +55,11 @@ int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
+  #ifndef FACTORY
+  // don't start in fixture mode in master mode
+  while (*FIXTURE_HOOK == 0xDEADFACE) ;
+  #endif
+
   Storage::init();
 
   // Initialize our scheduler
