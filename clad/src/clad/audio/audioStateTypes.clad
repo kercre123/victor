@@ -52,6 +52,7 @@ enum uint_32 Music
   Minigame__Quick_Tap_Win = 2079381016,
   Minigame__Ride_Along = 3234084100,
   Minigame__Setup = 1317044071,
+  Nurture_Repair = 3081923682,
   Onboarding = 3360093794,
   Onboarding__Core_Upgrades = 102695299,
   Onboarding__Meet_Cozmo = 4195748652,
