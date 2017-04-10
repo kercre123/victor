@@ -42,14 +42,14 @@ public static class HierarchyExpansionUtility {
     var assembly = typeof(EditorWindow).Assembly;
 
     _SceneHierarchyWindowType = assembly.GetType("UnityEditor.SceneHierarchyWindow");
-    _TreeViewType = assembly.GetType("UnityEditor.TreeView");
-    _ITreeViewDataSourceType = assembly.GetType("UnityEditor.ITreeViewDataSource");
+    _TreeViewType = assembly.GetType("UnityEditor.IMGUI.Controls.TreeViewController");
+    _ITreeViewDataSourceType = assembly.GetType("UnityEditor.IMGUI.Controls.ITreeViewDataSource");
 
     _SceneHierarchyWindow_treeView = _SceneHierarchyWindowType.GetProperty("treeView", BindingFlags.NonPublic | BindingFlags.Instance);
 
     _TreeView_data = _TreeViewType.GetProperty("data");
 
-    _TreeViewItemType = assembly.GetType("UnityEditor.TreeViewItem");
+    _TreeViewItemType = assembly.GetType("UnityEditor.IMGUI.Controls.TreeViewItem");
 
     _ITreeViewDataSource_FindItem = _ITreeViewDataSourceType.GetMethod("FindItem");
     _ITreeViewDataSource_IsExpanded = _ITreeViewDataSourceType.GetMethod("IsExpanded", new Type[] { _TreeViewItemType });
