@@ -54,7 +54,7 @@
       "behaviorName": "Hiccup",
       "hiccupParams": {
         // How often Cozmo should get the hiccups
-        "minHiccupOccurrenceFrequency_s": 60,
+        "minHiccupOccurrenceFrequency_s": 300,
         "maxHiccupOccurrenceFrequency_s": 600,
    
         // Number of hiccups Cozmo will do when he gets the hiccups
@@ -62,8 +62,8 @@
         "maxNumberOfHiccupsToDo": 10,
    
         // Spacing between hiccups while Cozmo has the hiccups
-        "minHiccupSpacing_ms": 5500, // Make sure to consider the length of the hiccup animation
-        "maxHiccupSpacing_ms": 10000,
+        "minHiccupSpacing_ms": 4500, // Make sure to consider the length of the hiccup animation
+        "maxHiccupSpacing_ms": 8000,
    
         // When Cozmo is cured of hiccups add additional time to the next time hiccups will occur
         "hiccupsWontOccurAfterBeingCuredTime_s": 600,

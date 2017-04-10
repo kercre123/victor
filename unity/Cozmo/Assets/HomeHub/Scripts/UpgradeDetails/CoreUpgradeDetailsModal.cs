@@ -115,6 +115,9 @@ namespace Cozmo.Upgrades {
 
     private AlertModal _QuitConfirmAlertModal;
 
+    [SerializeField]
+    private HasHiccupsModal _HasHiccupModal;
+
     public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
       _UnlockInfo = unlockInfo;
       _ButtonCostPaidSuccessCallback = buttonCostPaidCallback;
@@ -225,7 +228,6 @@ namespace Cozmo.Upgrades {
         ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
 
       UpdateState();
-
     }
 
     private void SetupButton(CozmoButtonLegacy button, UnityEngine.Events.UnityAction buttonCallback,
@@ -469,6 +471,15 @@ namespace Cozmo.Upgrades {
     }
 
     private void StartSparkUnlock() {
+
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (robot.HasHiccups) {
+          _HasHiccupModal.OpenCozmoHasHiccupsAlert(this.PriorityData);
+          return;
+        }
+      }
+
       if (UnlockablesManager.Instance.OnSparkStarted != null) {
         UnlockablesManager.Instance.OnSparkStarted.Invoke(_UnlockInfo.Id.Value);
       }

@@ -35,8 +35,6 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kCanHiccupWhileSparked, "Hiccups", true);
-
 namespace{
 static const char* kMinTimeConfigKey                 = "minTimeSecs";
 static const char* kMaxTimeConfigKey                 = "maxTimeSecs";
@@ -56,7 +54,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooser
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        false},
@@ -241,11 +239,6 @@ void SparksBehaviorChooser::OnSelected()
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  if(!kCanHiccupWhileSparked)
-  {
-    SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
-  }
-
   SmartDisableReactionsWithLock(GetName(),
                                 kAffectTriggersSparksChooserArray); 
 
