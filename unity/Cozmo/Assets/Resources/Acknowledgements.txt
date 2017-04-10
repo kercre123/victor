@@ -18,7 +18,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-------------------------------------------------
+--------------------------
 Boost Software License - Version 1.0 - August 17th, 2003
 
 Permission is hereby granted, free of charge, to any person or organization obtaining a copy of the software and accompanying documentation covered by this license (the "Software") to use, reproduce, display, distribute, execute, and transmit the Software, and to prepare derivative works of the Software, and to permit third-parties to whom the Software is furnished to do so, all subject to the following:
@@ -27,30 +27,7 @@ The copyright notices in the Software and this entire statement, including the a
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-------------------------------------------------
-Braintree API
-
-Copyright (c) 2014-2016 Braintree, a division of PayPal, Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-------------------------------------------------
+--------------------------
 Google Breakpad
 
 Copyright (c) 2006, Google Inc.
@@ -82,51 +59,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-------------------------------------------------
-The fastapprox library is provided under the following license:
-
-/*=====================================================================*
- *                   Copyright (C) 2012 Paul Mineiro                   *
- * All rights reserved.                                                *
- *                                                                     *
- * Redistribution and use in source and binary forms, with             *
- * or without modification, are permitted provided that the            *
- * following conditions are met:                                       *
- *                                                                     *
- *     * Redistributions of source code must retain the                *
- *     above copyright notice, this list of conditions and             *
- *     the following disclaimer.                                       *
- *                                                                     *
- *     * Redistributions in binary form must reproduce the             *
- *     above copyright notice, this list of conditions and             *
- *     the following disclaimer in the documentation and/or            *
- *     other materials provided with the distribution.                 *
- *                                                                     *
- *     * Neither the name of Paul Mineiro nor the names                *
- *     of other contributors may be used to endorse or promote         *
- *     products derived from this software without specific            *
- *     prior written permission.                                       *
- *                                                                     *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND              *
- * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,         *
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES               *
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE             *
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER               *
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,                 *
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES            *
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE           *
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR                *
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF          *
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT           *
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY              *
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE             *
- * POSSIBILITY OF SUCH DAMAGE.                                         *
- *                                                                     *
- * Contact: Paul Mineiro <paul@mineiro.com>                            *
- *=====================================================================*/
- 
-
-------------------------------------------------
+--------------------------
 
                                  Apache License
                            Version 2.0, January 2004
@@ -330,7 +263,7 @@ The fastapprox library is provided under the following license:
    See the License for the specific language governing permissions and
    limitations under the License.
 
-------------------------------------------------
+--------------------------
 CMU Flite
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -375,7 +308,7 @@ University of California, Berkeley"
 
 Note also that in many variants of this original BSD license, both occurrences of the phrase "REGENTS AND CONTRIBUTORS" is replaced in the disclaimer section by "COPYRIGHT HOLDERS AND CONTRIBUTORS".
 
-------------------------------------------------
+--------------------------
 The zlib License
 
 Copyright (C) 2011 Keijiro Takahashi
@@ -397,7 +330,7 @@ freely, subject to the following restrictions:
    misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 
-------------------------------------------------
+--------------------------
 The Hockey SDK is provided under the following license:
 
   The MIT License
@@ -550,7 +483,7 @@ GZIP is licensed as follow:
 
   3. This notice may not be removed or altered from any source
   distribution.
-------------------------------------------------
+--------------------------
 The JsonCpp library's source code, including accompanying documentation,
 tests and demonstration applications, are licensed under the following
 conditions...
@@ -607,7 +540,7 @@ and license text in the source code. Note also that by accepting the
 Public Domain "license" you can re-license your copy using whatever
 license you like.
 
-------------------------------------------------
+--------------------------
 JSONObject
 
 Copyright (c) 2015 Matt Schoen
@@ -629,7 +562,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-------------------------------------------------
+--------------------------
 Kazmath is a 3D math library aimed at game programming. It is released under the modified BSD license.
 
 Authors
@@ -662,7 +595,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-------------------------------------------------
+--------------------------
 libarchive
 
 The libarchive distribution as a whole is Copyright by Tim Kientzle
@@ -725,7 +658,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-------------------------------------------------
+--------------------------
 libjpeg-turbo
 
 LEGAL ISSUES
@@ -814,7 +747,7 @@ We are required to state that
     CompuServe Incorporated.  GIF(sm) is a Service Mark property of
     CompuServe Incorporated."
 
-------------------------------------------------
+--------------------------
 MD5
 
 License to copy and use this software is granted provided that it
@@ -835,7 +768,7 @@ without express or implied warranty of any kind.
 These notices must be retained in any copies of any part of this
 documentation and/or software.
 
-------------------------------------------------
+--------------------------
 Open Source Computer Vision Library
 
 (3-clause BSD License)
@@ -846,7 +779,7 @@ Neither the names of the copyright holders nor the names of the contributors may
 This software is provided by the copyright holders and contributors “as is” and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall copyright holders or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of
 the use of this software, even if advised of the possibility of such damage.
 
-------------------------------------------------
+--------------------------
 Simple C++11 Signal System
 
 CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE LEGAL SERVICES. DISTRIBUTION OF THIS DOCUMENT DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS INFORMATION ON AN "AS-IS" BASIS. CREATIVE COMMONS MAKES NO WARRANTIES REGARDING THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED HEREUNDER, AND DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED HEREUNDER.
@@ -878,7 +811,7 @@ Affirmer offers the Work as-is and makes no representations or warranties of any
 Affirmer disclaims responsibility for clearing rights of other persons that may apply to the Work or any use thereof, including without limitation any person's Copyright and Related Rights in the Work. Further, Affirmer disclaims responsibility for obtaining any necessary consents, permissions or other rights required for any use of the Work.
 Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.'
 
-------------------------------------------------
+--------------------------
 Text Mesh Pro
 
 Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
@@ -1072,7 +1005,7 @@ Assets available on the Unity Asset Store may be subject to laws, administrative
 
 This EULA and END-USER's relationship with Licensor under this EULA, shall be governed by the laws of Denmark without regard to its conflict of laws provisions. Any dispute arising out of or in connection with this Agreement, including any disputes regarding the existence, validity or termination thereof, shall be settled by simplified arbitration arranged by The Danish Institute of Arbitration in accordance with the rules of simplified arbitration procedure adopted by The Danish Institute of Arbitration and in force at the time when such proceedings are commenced. Notwithstanding this, Provider agrees that Licensor shall still be allowed to apply for injunctive remedies (or an equivalent type of urgent legal relief) in any jurisdiction.
 
-------------------------------------------------
+--------------------------
 Unity UI
 
 The MIT License (MIT)
@@ -1097,4 +1030,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-------------------------------------------------
+--------------------------
