@@ -43,7 +43,17 @@ public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat
   @Override
   protected void onCreate(final android.os.Bundle bundle) {
     PermissionUtil.initialize(this, mDispatcher);
+    
+    requestWindowFeature(1);
+
     super.onCreate(bundle);
+
+    // used to make sure that unity-webview can be displayed on top.
+    // this new requiremenet is needed for unity 5.6+
+    getWindow().setFormat(2);
+    mUnityPlayer = new CUnityPlayer(this);
+    setContentView(mUnityPlayer);
+    mUnityPlayer.requestFocus();
 
     APP_RUN_ID = UUID.randomUUID().toString();
     HOCKEY_APP_ID = getManifestProperty("HOCKEYAPP_APP_ID");
