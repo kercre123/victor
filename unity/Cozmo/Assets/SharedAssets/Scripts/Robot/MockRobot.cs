@@ -45,6 +45,7 @@ public class MockRobot : IRobot {
 
     PetFaces = new List<PetFace>();
     CurrentBehaviorDisplayNameKey = string.Empty;
+    CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
   }
 
   public bool Status(Anki.Cozmo.RobotStatusFlag s) {
@@ -900,10 +901,6 @@ public class MockRobot : IRobot {
     set;
   }
   public string CurrentBehaviorDisplayNameKey { get; set; }
-
-  public bool PlayingReactionaryBehavior {
-    get; set;
-  }
 
   public BehaviorClass CurrentBehaviorClass { get; set; }
   public ReactionTrigger CurrentReactionTrigger { get; set; }

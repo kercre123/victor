@@ -304,8 +304,6 @@ public class Robot : IRobot {
 
   public string CurrentDebugAnimationString { get; set; }
 
-  public bool PlayingReactionaryBehavior { get; set; }
-
   public uint FirmwareVersion { get; set; }
 
   public uint SerialNumber { get; set; }
@@ -413,6 +411,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
+    RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleReactionTriggerTransition);
 
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -447,6 +446,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
+    RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleReactionTriggerTransition);
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -475,6 +475,10 @@ public class Robot : IRobot {
     CurrentBehaviorClass = message.newBehaviorClass;
     CurrentBehaviorName = message.newBehaviorName;
     CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
+  }
+
+  private void HandleReactionTriggerTransition(ReactionTriggerTransition message) {
+    CurrentReactionTrigger = message.newTrigger;
   }
 
   private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {

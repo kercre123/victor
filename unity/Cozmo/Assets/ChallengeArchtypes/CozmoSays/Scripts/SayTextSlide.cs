@@ -43,15 +43,22 @@ public class SayTextSlide : MonoBehaviour {
   private bool _PlayingSayAnimation = false;
   private bool _TextFieldEmpty = true;
   private bool _NotEnoughSparks = false;
-  private bool _PlayingReactionaryBehavior = false;
-
   private bool _PendingClearField = false;
+  private IRobot _CurrentRobot;
 
   public void Initialize(CozmoSays.CozmoSaysGame cozmoSaysGame) {
     _CozmoSaysGame = cozmoSaysGame;
   }
 
+  private bool PlayingReactionTrigger() {
+    if (_CurrentRobot != null) {
+      return _CurrentRobot.CurrentReactionTrigger != Anki.Cozmo.ReactionTrigger.NoneTrigger;
+    }
+    return false;
+  }
+
   private void Awake() {
+    _CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
     _SayTextButton.Initialize(HandleSayTextButton, "say_text_button", "say_text_slide");
     _TextInput.textComponent.color = _TextFieldActiveColor;
     UpdateTotalSparkCount();
@@ -199,7 +206,7 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void SetButtonInteractivity() {
-    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || _PlayingReactionaryBehavior) {
+    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || PlayingReactionTrigger()) {
       _CostLabel.color = _SayTextButton.TextDisabledColor;
       _SayTextButton.Interactable = false;
     }
@@ -210,7 +217,6 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionTriggerTransition message) {
-    _PlayingReactionaryBehavior = message.newTrigger != Anki.Cozmo.ReactionTrigger.NoneTrigger;
     SetButtonInteractivity();
   }
 }
