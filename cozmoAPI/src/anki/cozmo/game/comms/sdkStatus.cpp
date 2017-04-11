@@ -101,7 +101,10 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
 void SdkStatus::EnterMode(bool isExternalSdkMode)
 {
   DEV_ASSERT(!IsInAnySdkMode(), "SdkStatus.EnterMode.AlreadyInMode");
-  Util::sEventF("robot.sdk_mode_on", {}, "");
+  if (isExternalSdkMode)
+  {
+    Util::sEventF("robot.sdk_mode_on", {}, "");
+  }
   
   ResetRobot(false);
   
@@ -120,10 +123,16 @@ void SdkStatus::EnterMode(bool isExternalSdkMode)
 void SdkStatus::ExitMode()
 {
   DEV_ASSERT(IsInAnySdkMode(), "SdkStatus.ExitMode.NotInMode");
-  const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
-  Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
-  
+
+  // Disconnect before sending exit mode event so that all connect/disconnects are wrapped by sdk on/off
   OnDisconnect(true);
+  
+  if (_isInExternalSdkMode)
+  {
+    const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
+    Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
+  }
+
   _isInExternalSdkMode = false;
   _isInInternalSdkMode = false;
 }
@@ -133,9 +142,12 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
 {
   if (!_isConnected)
   {
-    Util::sEventF("robot.sdk_connection_started", {{DDATA, message.sdkModuleVersion.c_str()}}, "%s", message.buildVersion.c_str());
-    Util::sEventF("robot.sdk_python_version", {{DDATA, message.pythonVersion.c_str()}}, "%s", message.pythonImplementation.c_str());
-    Util::sEventF("robot.sdk_system_version", {{DDATA, message.osVersion.c_str()}}, "%s", message.cpuVersion.c_str());
+    if (_isInExternalSdkMode)
+    {
+      Util::sEventF("robot.sdk_connection_started", {{DDATA, message.sdkModuleVersion.c_str()}}, "%s", message.buildVersion.c_str());
+      Util::sEventF("robot.sdk_python_version", {{DDATA, message.pythonVersion.c_str()}}, "%s", message.pythonImplementation.c_str());
+      Util::sEventF("robot.sdk_system_version", {{DDATA, message.osVersion.c_str()}}, "%s", message.cpuVersion.c_str());
+    }
     
     _isConnected = true;
     _numCommandsSentOverConnection = 0;
@@ -161,7 +173,10 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
   
 void SdkStatus::OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message)
 {
-  Util::sEventF("robot.sdk_wrong_version", {{DDATA, message.buildVersion.c_str()}}, "");
+  if (_isInExternalSdkMode)
+  {
+    Util::sEventF("robot.sdk_wrong_version", {{DDATA, message.buildVersion.c_str()}}, "");
+  }
   OnDisconnect(false);
   _isWrongSdkVersion = true;
   _connectedSdkBuildVersion = message.buildVersion;
@@ -172,8 +187,11 @@ void SdkStatus::OnDisconnect(bool isExitingSDKMode)
 {
   if (_isConnected)
   {
-    Util::sEventF("robot.sdk_connection_ended", {{DDATA, std::to_string(TimeInCurrentConnection_s(GetCurrentTime_s(), true)).c_str()}},
-                  "%u", _numCommandsSentOverConnection);
+    if (_isInExternalSdkMode)
+    {
+      Util::sEventF("robot.sdk_connection_ended", {{DDATA, std::to_string(TimeInCurrentConnection_s(GetCurrentTime_s(), true)).c_str()}},
+                    "%u", _numCommandsSentOverConnection);
+    }
     
     if (_stopRobotOnDisconnect)
     {
