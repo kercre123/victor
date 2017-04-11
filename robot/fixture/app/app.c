@@ -101,7 +101,7 @@ u32 GetSerial()
 {
   if (FIXTURE_SERIAL >= 0xf0)
     throw ERROR_SERIAL_INVALID;
-  return (FIXTURE_SERIAL << 20) | (GetSequence() & 0xFFffff);
+  return (FIXTURE_SERIAL << 20) | (GetSequence() & 0x0Fffff);
 }
 
 extern int g_canary;
