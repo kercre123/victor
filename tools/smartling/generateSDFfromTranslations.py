@@ -7,7 +7,7 @@ import subprocess
 import argparse
 
 #anki
-sys.path.append(os.path.abspath("../build/tools/ankibuild"))
+sys.path.append(os.path.abspath("tools/build/tools/ankibuild"))
 import util
 import unity
 

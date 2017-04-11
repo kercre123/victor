@@ -24,6 +24,22 @@ _payload="{
     exit $3
 }
 
+send_slack_message_no_exit() {
+_payload="{
+              \"channel\": \"$SLACK_CHANNEL\",
+              \"username\": \"buildbot\",
+              \"attachments\": [
+                {
+                  \"text\": \"$1\",
+                  \"fallback\": \"$1\",
+                  \"color\": \"$2\"
+                }
+              ]
+            }"
+
+    curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
+}
+
 GIT=`which git`
 if [ -z $GIT ];then
   echo git not found
@@ -44,6 +60,10 @@ fi
 
 _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
+_GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
+_UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
+_TRANSLATED_ASSETS_DIR=Assets/StreamingAssets/LocalizedStrings/ja-JP
+_TRANSALATED_OUTPUT_FILE=Assets/DevTools/Editor/LanguageHelpers/japaneseTranslations.txt
 _LOCALIZED_STRINGS_DIR=${_TOPLEVEL}/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings
 _GIT_COZMO_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@github.com/anki/cozmo-one.git
 _GIT_COZMO_PR_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@api.github.com/repos/anki/cozmo-one/pulls
@@ -53,6 +73,13 @@ $_SMARTLING_PULL_SCRIPT -t published $_LOCALIZED_STRINGS_DIR || exit_status=$?
 
 if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem downloading *.json from Smartling. Check build log!" "danger" $exit_status
+fi
+
+$PYTHON $_GENERATE_SDF_SCRIPT --project-dir $_UNITY_PROJECT_DIR --translated-json-asset-dir $_TRANSLATED_ASSETS_DIR \
+--txt-output-asset-path $_TRANSALATED_OUTPUT_FILE || exit_status=$?
+
+if [ $exit_status -ne 0 ]; then
+    send_slack_message_no_exit "There was a problem generating JP SDF from translations. Check build log!" "danger"
 fi
 
 _status=$($GIT status -s)
