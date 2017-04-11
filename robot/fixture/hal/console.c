@@ -296,8 +296,8 @@ static void SetSerial(void)
   arg = GetArgument(1);
   sscanf(arg, "%i", &serial);
   
-  if ((u32)serial >= 0xf0)
-    throw ERROR_SERIAL_INVALID;
+  //if ((u32)serial >= 0xf0)
+  //  throw ERROR_SERIAL_INVALID;
   
   __disable_irq();
   FLASH_Unlock();
