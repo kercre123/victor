@@ -21,11 +21,11 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 93;
+u8 g_fixtureReleaseVersion = 94;
 #define BUILD_INFO "PVT v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -136,6 +136,13 @@ void SetFixtureText(void)
 #ifdef FCC
   DisplayMoveCursor(45, 2);
   DisplayPutString("CERT/TEST ONLY");
+#else
+  if( g_fixtureType == FIXTURE_PLAYPEN_TEST ) {
+    DisplayMoveCursor(45, 25);
+    DisplayPutString("SSID: Afix");
+    DisplayPutChar('0' + ((FIXTURE_SERIAL&63) / 10)); //param sent to cozmo in playpen / robotTest.c
+    DisplayPutChar('0' + ((FIXTURE_SERIAL&63) % 10)); //"
+  }
 #endif
   DisplayMoveCursor(55, 2);
   DisplayPutString(BUILD_INFO);
@@ -548,6 +555,8 @@ int main(void)
   STM_EVAL_LEDOn(LEDRED);
   
   ConsolePrintf("\r\n----- Cozmo Test Fixture: %s v%d -----\r\n", BUILD_INFO, ((NOT_FOR_FACTORY > 0) ? 0 : g_fixtureReleaseVersion) );
+  ConsolePrintf("Build date-time: %s %s\r\n", __DATE__, __TIME__);
+  ConsolePrintf("FIXTURE_SERIAL: %d (0x%04x)\r\n", FIXTURE_SERIAL, FIXTURE_SERIAL);
   ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
   ConsolePrintf("Fixure Rev: %s\r\n", GetBoardRevStr() );
   ConsolePrintf("Mode: %s\r\n", FIXTYPES[g_fixtureType]);
