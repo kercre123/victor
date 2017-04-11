@@ -116,7 +116,9 @@ Java_com_anki_cozmo_CozmoActivity_installBreakpad(JNIEnv* env, jclass thiz, jstr
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-  Anki::Util::JNIUtils::SetJvm(vm);
+  // Use one of our java project classes to acquire the class loader that can be used on other threads
+  Anki::Util::JNIUtils::SetJvm(vm, "com/anki/util/PermissionUtil");
+  
   return JNI_VERSION_1_6;
 }
 

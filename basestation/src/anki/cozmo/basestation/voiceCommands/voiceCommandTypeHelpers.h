@@ -20,6 +20,7 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
 
   
 DECLARE_ENUM_INCREMENT_OPERATORS(VoiceCommandType);
@@ -27,6 +28,7 @@ DECLARE_ENUM_INCREMENT_OPERATORS(VoiceCommandType);
 VoiceCommandType VoiceCommandTypeFromString(const char* inString);
 
 
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 

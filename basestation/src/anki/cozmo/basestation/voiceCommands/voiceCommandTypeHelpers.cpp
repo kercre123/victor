@@ -18,6 +18,7 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
 
   
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(VoiceCommandType);
@@ -31,7 +32,7 @@ VoiceCommandType VoiceCommandTypeFromString(const char* inString)
   return gStringToVoiceCommandTypeMapper.GetTypeFromString(inString);
 }
   
-
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

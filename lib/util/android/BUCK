@@ -36,3 +36,12 @@ android_library(
                    ':http-adapter'],
   visibility = ['PUBLIC'],
 )
+
+android_library(
+  name = 'audioUtil',
+  srcs = glob(['audioUtil/src/**/*.java']),
+  source = '1.6',
+  target = '1.6',
+  deps = [':util'],
+  visibility = ['PUBLIC']
+)

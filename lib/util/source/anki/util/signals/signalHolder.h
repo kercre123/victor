@@ -14,6 +14,7 @@
 #define __Signal_SignalHolder_H__
 
 #include "util/signals/simpleSignal_fwd.h"
+#include <utility>
 #include <vector>
 
 namespace Anki {
@@ -23,7 +24,7 @@ class SignalHolder
 {
 protected:
   void AddSignalHandle(Signal::SmartHandle&& handle) {
-    _handles.emplace_back(handle);
+    _handles.emplace_back(std::move(handle));
   }
 
   void ClearSignalHandles() {

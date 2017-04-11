@@ -38,6 +38,7 @@ public:
   AudioRecognizerProcessor& operator=(const AudioRecognizerProcessor& other) = delete;
   bool IsValid() const { return _captureSystem != nullptr; }
   
+  void SetAudioCaptureSystem(AudioCaptureSystem* newCaptureSystem);
   void SetSpeechRecognizer(SpeechRecognizer* newRecog);
   void Start();
   void Stop();
@@ -48,9 +49,9 @@ public:
   
 private:
   SpeechRecognizer*                       _recognizer = nullptr;
-  std::unique_ptr<AudioCaptureSystem>     _captureSystem;
+  AudioCaptureSystem*                     _captureSystem = nullptr;
   bool                                    _capturingAudio = false;
-  mutable std::mutex                      _recognizerMutex;
+  std::mutex                              _componentsMutex;
   mutable std::mutex                      _resultMutex;
   std::deque<ResultType>                  _procResults;
   

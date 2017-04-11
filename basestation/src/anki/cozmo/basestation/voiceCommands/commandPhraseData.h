@@ -27,6 +27,7 @@ namespace Json
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
   
 class CommandPhraseData {
 public:
@@ -56,6 +57,7 @@ private:
 };
 
 
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 

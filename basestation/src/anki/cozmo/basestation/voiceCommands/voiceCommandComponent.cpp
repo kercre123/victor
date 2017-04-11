@@ -15,8 +15,10 @@
 
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -28,30 +30,41 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 
-#include "clad/types/voiceCommandTypes.h"
+#include <functional>
 
 #define LOG_CHANNEL "VoiceCommands"
 #define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
-namespace VoiceCommandConsoleVars{
+namespace {
   CONSOLE_VAR(bool, kShouldForceTrigger, "VoiceCommands", false);
   CONSOLE_VAR(u32, kForceTriggerFreq_s, "VoiceCommands", 30);
 }
-using namespace VoiceCommandConsoleVars;
 
+using namespace Anki::AudioUtil;
+using namespace Anki::Cozmo::ExternalInterface;
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
   
 VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
 : _context(context)
 , _recogProcessor(new AudioUtil::AudioRecognizerProcessor{})
+, _captureSystem(new AudioUtil::AudioCaptureSystem{})
 , _phraseData(new CommandPhraseData())
 {
   if (!_recogProcessor->IsValid())
   {
     _recogProcessor.reset();
-    LOG_INFO("VoiceCommandComponent.RecogProcessorSetupFail", "Failure often means permission to use mic was denied.");
+    PRINT_NAMED_ERROR("VoiceCommandComponent.RecogProcessorSetupFail", "Likely error setting up AudioCaptureSystem on this platform.");
+  }
+  
+  auto* extInterface = _context.GetExternalInterface();
+  if (nullptr != extInterface)
+  {
+    auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
+    
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::VoiceCommandEvent>();
   }
 }
   
@@ -59,34 +72,134 @@ VoiceCommandComponent::~VoiceCommandComponent() = default;
 
 void VoiceCommandComponent::Init()
 {
-  if (_recogProcessor == nullptr)
+  // Set up the AudioCaptureSystem
   {
-    PRINT_NAMED_WARNING("VoiceCommandComponent.Init", "Can't Init voice command component with an invalid audio processor.");
-    return;
+    _captureSystem->Init();
+    if (!ANKI_VERIFY(_captureSystem->IsValid(), "VoiceCommandComponent.Init", "CaptureSystem Init failed"))
+    {
+      return;
+    }
+    _captureSystem->StartRecording();
   }
   
-  const auto* dataLoader = _context.GetDataLoader();
-  if (ANKI_VERIFY(dataLoader != nullptr, "VoiceCommandComponent.Init", "DataLoader missing"))
+  // Set up the SpeechRecognizer
   {
+    const auto* dataLoader = _context.GetDataLoader();
+    if (!ANKI_VERIFY(dataLoader != nullptr, "VoiceCommandComponent.Init", "DataLoader missing"))
+    {
+      return;
+    }
+
     ANKI_VERIFY(_phraseData->Init(dataLoader->GetVoiceCommandConfig()), "VoiceCommandComponent.Init", "CommandPhraseData Init failed.");
     std::vector<const char*> phraseList = _phraseData->GetPhraseListRaw();
     SpeechRecognizerTHF* newRecognizer = new SpeechRecognizerTHF();
-    
     newRecognizer->Init(phraseList.data(), Util::numeric_cast<unsigned int>(phraseList.size()));
-    
     _recognizer.reset(newRecognizer);
+    _recognizer->Start();
+  }
+  
+  // Set up the RecognizerProcessor
+  {
+    if (_recogProcessor == nullptr)
+    {
+      PRINT_NAMED_ERROR("VoiceCommandComponent.Init", "Can't Init voice command component with an invalid audio processor.");
+      return;
+    }
+    
     _recogProcessor->SetSpeechRecognizer(_recognizer.get());
+    _recogProcessor->SetAudioCaptureSystem(_captureSystem.get());
     _recogProcessor->Start();
+  }
+  
+  _initialized = true;
+}
+
+// NOTE: This will be called by this or another thread via the callback that is referenced within.
+bool VoiceCommandComponent::RequestEnableVoiceCommand(AudioCaptureSystem::PermissionState permissionState)
+{
+  std::lock_guard<std::recursive_mutex> lock(_permissionCallbackLock);
+  
+  switch (permissionState)
+  {
+    case AudioCaptureSystem::PermissionState::Granted:
+    {
+      if (!_initialized)
+      {
+        LOG_INFO("VoiceCommandComponent.HandlePermissionState.Granted", "");
+        Init();
+      }
+      return true;
+    }
+    case AudioCaptureSystem::PermissionState::DeniedNoRetry:
+    {
+      LOG_INFO("VoiceCommandComponent.HandlePermissionState.DeniedNoRetry", "");
+      _permRequestAlreadyDenied = true;
+      return false;
+    }
+    case AudioCaptureSystem::PermissionState::DeniedAllowRetry:
+    {
+      _permRequestAlreadyDenied = true;
+      // NOTE INTENTIONAL FALL THROUGH HERE
+    }
+    case AudioCaptureSystem::PermissionState::Unknown:
+    {
+      if (!_recordPermissionBeingRequested)
+      {
+        _recordPermissionBeingRequested = true;
+        LOG_INFO("VoiceCommandComponent.HandlePermissionState.UnknownOrDeniedAllowRetry", "Now requesting permission.");
+        
+        // Make a callback that lets us know when the permissions request is done
+        auto callback = [this] ()
+        {
+          const auto& permState = _captureSystem->GetPermissionState(_permRequestAlreadyDenied);
+          _commandRecogEnabled = RequestEnableVoiceCommand(permState);
+          
+          const auto& convertedPermState = ConvertAudioCapturePermission(permState);
+          LOG_INFO("VoiceCommandComponent.HandlePermissionState.PermRequestCallbackResult", "Result State: %s", EnumToString(convertedPermState));
+          
+          constexpr bool useDeferred = true;
+          BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled, convertedPermState), useDeferred);
+          
+          _recordPermissionBeingRequested = false;
+        };
+        _captureSystem->RequestCapturePermission(callback);
+      }
+      return false;
+    }
+  }
+}
+
+bool VoiceCommandComponent::StateRequiresCallback(AudioCaptureSystem::PermissionState permissionState) const
+{
+  switch (permissionState)
+  {
+    case AudioCaptureSystem::PermissionState::Granted: // NOTE INTENTIONAL FALL THROUGH HERE
+    case AudioCaptureSystem::PermissionState::DeniedNoRetry:
+    {
+      return false;
+    }
+    case AudioCaptureSystem::PermissionState::DeniedAllowRetry: // NOTE INTENTIONAL FALL THROUGH HERE
+    case AudioCaptureSystem::PermissionState::Unknown:
+    {
+      return true;
+    }
   }
 }
 
 template<typename T>
-void VoiceCommandComponent::BroadcastVoiceEvent(T&& event)
+void VoiceCommandComponent::BroadcastVoiceEvent(T&& event, bool useDeferred)
 {
   auto* externalInterface = _context.GetExternalInterface();
   if (externalInterface)
   {
-    externalInterface->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::forward<T>(event)));
+    if (useDeferred)
+    {
+      externalInterface->BroadcastDeferred(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(VoiceCommandEventUnion(std::forward<T>(event)))));
+    }
+    else
+    {
+      externalInterface->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::forward<T>(event)));
+    }
   }
 }
   
@@ -97,6 +210,11 @@ void VoiceCommandComponent::Update()
   while (_recogProcessor->HasResults())
   {
     const auto& nextResult = _recogProcessor->PopNextResult();
+    
+    if (!_commandRecogEnabled)
+    {
+      continue;
+    }
     
     const auto& commandsFound = _phraseData->GetCommandsInPhrase(nextResult);
     // For now we're assuming every recognized phrase equals one command
@@ -242,8 +360,63 @@ void VoiceCommandComponent::UpdateCommandLight(bool heardTriggerPhrase)
   }
 }
 
+// NOTE: The duplication (and thus conversion) of permission state types is due to not wanting to require a CLAD definition type
+// for AudioUtil (so it can stand alone and be shared), but still wanting to use CLAD types when communicating in Cozmo code.
+AudioCapturePermissionState VoiceCommandComponent::ConvertAudioCapturePermission(AudioUtil::AudioCaptureSystem::PermissionState state)
+{
+  switch (state)
+  {
+    case AudioCaptureSystem::PermissionState::Unknown:          return AudioCapturePermissionState::Unknown;
+    case AudioCaptureSystem::PermissionState::Granted:          return AudioCapturePermissionState::Granted;
+    case AudioCaptureSystem::PermissionState::DeniedAllowRetry: return AudioCapturePermissionState::DeniedAllowRetry;
+    case AudioCaptureSystem::PermissionState::DeniedNoRetry:    return AudioCapturePermissionState::DeniedNoRetry;
+  }
+}
+
+template<>
+void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
+{
+  const auto& vcEventUnion = event.voiceCommandEvent;
+  switch(vcEventUnion.GetTag())
+  {
+    case VoiceCommandEventUnionTag::requestStatusUpdate:
+    {
+      BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled,
+                                                  ConvertAudioCapturePermission(_captureSystem->GetPermissionState(_permRequestAlreadyDenied))));
+      break;
+    }
+    case VoiceCommandEventUnionTag::changeEnabledStatus:
+    {
+      if (vcEventUnion.Get_changeEnabledStatus().isVCEnabled)
+      {
+        // First request enabling based on current permission state
+        _commandRecogEnabled = RequestEnableVoiceCommand(_captureSystem->GetPermissionState(_permRequestAlreadyDenied));
+        
+        auto resultingPermState = _captureSystem->GetPermissionState(_permRequestAlreadyDenied);
+        
+        // If no callback is going to be broadcasting the request result, we should do it now
+        if (!StateRequiresCallback(resultingPermState))
+        {
+          BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled, ConvertAudioCapturePermission(resultingPermState)));
+        }
+      }
+      else
+      {
+        _commandRecogEnabled = false;
+        BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled,
+                                                    ConvertAudioCapturePermission(_captureSystem->GetPermissionState(_permRequestAlreadyDenied))));
+      }
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+}
+
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
-

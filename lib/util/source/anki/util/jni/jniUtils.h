@@ -16,6 +16,7 @@ class JNIEnvWrapper {
 public:
   virtual JNIEnv* GetEnv() = 0;
   virtual ~JNIEnvWrapper() {}
+  virtual jclass FindClassInProject(const char* className) = 0;
 };
 
 // Class of static helper functions
@@ -40,7 +41,8 @@ public:
   static std::unique_ptr<JNIEnvWrapper> getJNIEnvWrapper();
 
   static JavaVM* GetJvm() { return _sJvm; }
-  static void SetJvm(JavaVM* jvm) { _sJvm = jvm; }
+  static void SetJvm(JavaVM* jvm, const char* randomProjectClass = nullptr);
+  static bool AcquireClassLoaderWithClass(const char* randomProjectClass);
   static void SetCurrentActivity(JNIEnv* env, const jobject activity);
 
 private:

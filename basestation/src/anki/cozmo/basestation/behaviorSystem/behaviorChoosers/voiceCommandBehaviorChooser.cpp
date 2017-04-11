@@ -69,6 +69,7 @@ IBehavior* VoiceCommandBehaviorChooser::ChooseNextBehavior(Robot& robot, const I
     _voiceCommandBehavior = nullptr;
   }
   
+  using namespace Anki::Cozmo::VoiceCommand;
   const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
   switch (currentCommand)
   {

@@ -50,7 +50,10 @@ class IExternalInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
-class VoiceCommandComponent;
+  
+namespace VoiceCommand {
+  class VoiceCommandComponent;
+}
 
 class ThreadIDInternal;
   
@@ -92,7 +95,7 @@ public:
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
 #if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
-  VoiceCommandComponent*                GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
+  VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   
   bool  IsInSdkMode() const;
@@ -113,18 +116,18 @@ private:
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
   
   // Context holds onto these things for everybody:
-  std::unique_ptr<AudioMultiplexer>               _audioServer;
-  std::unique_ptr<CozmoFeatureGate>               _featureGate;
-  std::unique_ptr<Util::RandomGenerator>          _random;
-  std::unique_ptr<Util::Locale>                   _locale;
-  std::unique_ptr<RobotDataLoader>                _dataLoader;
-  std::unique_ptr<RobotManager>                   _robotMgr;
-  std::unique_ptr<VizManager>                     _vizManager;
-  std::unique_ptr<Util::TransferQueueMgr>         _transferQueueMgr;
-  std::unique_ptr<Util::DasTransferTask>          _dasTransferTask;
-  std::unique_ptr<Util::GameLogTransferTask>      _gameLogTransferTask;
+  std::unique_ptr<AudioMultiplexer>                     _audioServer;
+  std::unique_ptr<CozmoFeatureGate>                     _featureGate;
+  std::unique_ptr<Util::RandomGenerator>                _random;
+  std::unique_ptr<Util::Locale>                         _locale;
+  std::unique_ptr<RobotDataLoader>                      _dataLoader;
+  std::unique_ptr<RobotManager>                         _robotMgr;
+  std::unique_ptr<VizManager>                           _vizManager;
+  std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
+  std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
+  std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
 #if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
-  std::unique_ptr<VoiceCommandComponent>          _voiceCommandComponent;
+  std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
   // for holding the thread id (and avoiding needed to include the .h here)

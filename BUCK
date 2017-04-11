@@ -11,6 +11,7 @@ android_library(
   target = '1.6',
   deps = [':unity_classes',
           '//lib/util/android:util',
+          '//lib/util/android:audioUtil',
           '//lib/crash-reporting-android/HockeyAppAndroid:hockey-app',
           '//lib/das-client/android/DASJavaLib:DASJavaLib'],
   visibility = ['PUBLIC'],

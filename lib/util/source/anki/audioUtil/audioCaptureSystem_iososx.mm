@@ -91,27 +91,34 @@ static void HandleCallbackEntry(void * __nullable               inUserData,
   if (data) { data->HandleCallback(inAQ, inBuffer, inStartTime, inNumberPackets, inPacketDescs); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem()
-: _impl(new AudioCaptureSystemData{})
+AudioCaptureSystem::AudioCaptureSystem() = default;
+
+// Note this should be done AFTER permission has been granted
+void AudioCaptureSystem::Init()
 {
-  AudioStreamBasicDescription standardAudioFormat;
-  GetStandardAudioDescriptionFormat(standardAudioFormat);
-  OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
-  if (kAudioServicesNoError != status)
+  if (!_impl && GetPermissionState() == PermissionState::Granted)
   {
-    PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
-    _impl.reset();
-    return;
-  }
-  
-  for(int i = 0; i < NUM_BUFFERS; i++)
-  {
-    status = AudioQueueAllocateBuffer(_impl->_queue, kBytesPerChunk, &_impl->_buffers[i]);
+    _impl.reset(new AudioCaptureSystemData{});
+    
+    AudioStreamBasicDescription standardAudioFormat;
+    GetStandardAudioDescriptionFormat(standardAudioFormat);
+    OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
       _impl.reset();
       return;
+    }
+    
+    for(int i = 0; i < NUM_BUFFERS; i++)
+    {
+      status = AudioQueueAllocateBuffer(_impl->_queue, kBytesPerChunk, &_impl->_buffers[i]);
+      if (kAudioServicesNoError != status)
+      {
+        PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+        _impl.reset();
+        return;
+      }
     }
   }
 }
@@ -130,63 +137,76 @@ void AudioCaptureSystem::SetCallback(DataCallback newCallback)
   }
 }
  
-// TODO: StartRecording needs a lot of work; the current functionality can work if mic permissions are granted, but doesn't handle the alternate scenario.
-// See more todos and comments below.
+#if IPHONE_TYPE
+static AudioCaptureSystem::PermissionState ConvertPermissionType(AVAudioSessionRecordPermission avPermissionStatus)
+{
+  switch (avPermissionStatus)
+  {
+    case AVAudioSessionRecordPermissionUndetermined:
+    {
+      return AudioCaptureSystem::PermissionState::Unknown;
+    }
+    case AVAudioSessionRecordPermissionDenied:
+    {
+      return AudioCaptureSystem::PermissionState::DeniedNoRetry;
+    }
+    case AVAudioSessionRecordPermissionGranted:
+    {
+      return AudioCaptureSystem::PermissionState::Granted;
+    }
+    default:
+    {
+      return AudioCaptureSystem::PermissionState::Unknown;
+    }
+  }
+}
+#endif
+
+AudioCaptureSystem::PermissionState AudioCaptureSystem::GetPermissionState(bool isRepeatRequest) const
+{
+  // MacOS always grants permission to use the microphone, so use that as default
+  PermissionState permissionState = PermissionState::Granted;
+
+  #if IPHONE_TYPE
+    permissionState = ConvertPermissionType([[AVAudioSession sharedInstance] recordPermission]);
+  #endif
+  
+  return permissionState;
+}
+
+void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallback resultCallback) const
+{
+  if (IPHONE_TYPE)
+  {
+  #if IPHONE_TYPE
+    [[AVAudioSession sharedInstance] requestRecordPermission: ^(BOOL granted) {
+      resultCallback();
+    }];
+  #endif
+  }
+  else
+  {
+    resultCallback();
+  }
+}
+
 void AudioCaptureSystem::StartRecording()
 {
-  if (_impl && !_impl->_recording)
+  if (_impl && !_impl->_recording && GetPermissionState() == PermissionState::Granted)
   {
-    
-    // TODO: HACK: FIXME: This is a stub for the platform specific functionality to check microphone (and maybe other future?)
-    // permissions.
-    // Note this interface for requesting (or checking) microphone permission is iOS only.
-#if IPHONE_TYPE
-    //void(^requestBlock)(BOOL) = ^(BOOL granted) {
-    //  if (granted) {
-    //    NSLog(@"req granted");
-    //  }
-    //  else {
-    //    NSLog(@"req denied");
-    //  }
-    //};
-    
-    AVAudioSessionRecordPermission permissionStatus = [[AVAudioSession sharedInstance] recordPermission];
-    switch (permissionStatus) {
-      case AVAudioSessionRecordPermissionUndetermined:
-        [[AVAudioSession sharedInstance] requestRecordPermission: ^(BOOL granted) {
-          if (granted) {
-            std::cout << "microphone permission request granted" << std::endl;
-          }
-          else {
-            std::cout << "microphone permission request denied" << std::endl;
-          }
-        }];
-        break;
-      case AVAudioSessionRecordPermissionDenied:
-        std::cout << "microphone permission request already denied" << std::endl;
-        break;
-      case AVAudioSessionRecordPermissionGranted:
-        std::cout << "microphone permission request already granted" << std::endl;
-        break;
-      default:
-        break;
-    }
-#endif
-    
     _impl->_recording = true;
     for(int i = 0; i < NUM_BUFFERS; i++)
     {
       AudioQueueEnqueueBuffer(_impl->_queue, _impl->_buffers[i], 0, NULL);
     }
     
-    
-    // TODO: HACK: FIXME: This is a stub for the platform specific functionality to set up the audio record session on iOS. Needs polish
+    // IOS needs to have the AVAudioSession set up properly in order to begin queueing audio
 #if IPHONE_TYPE
     AVAudioSession * session = [AVAudioSession sharedInstance];
     
     if (!session)
     {
-      PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AVAudioSession.sharedInstance.Invalid", "");
+      PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.sharedInstance.Invalid", "");
     }
     else
     {
@@ -195,23 +215,21 @@ void AudioCaptureSystem::StartRecording()
       
       if (nsError)
       {
-        PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AVAudioSession.setCategory.Error", "%ld", (long)[nsError code]);
+        PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setCategory.Error", "Code %ld %s",
+                            (long)[nsError code], [[nsError localizedDescription] UTF8String]);
       }
       
       [session setActive:YES error:&nsError];
       if (nsError)
       {
-        PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AVAudioSession.setActive.Error", "%ld", (long)[nsError code]);
+        PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setActive.Error", "Code %ld %s",
+                          (long)[nsError code], [[nsError localizedDescription] UTF8String]);
       }
     }
 #endif
     
-    // TODO: HACK: FIXME: This is where we will get a failure if the app has either been denied permission for the mic in the past,
-    // or this is the first time the app is hitting this code, and we don't yet have permission from the user (see above callback block code).
-    // Either way, some work needs to happen here to pull out proper requesting logic, and use the permissions status to smartly decide
-    // what to do when StartRecording is called.
     OSStatus status = AudioQueueStart(_impl->_queue, NULL);
-    if (status)
+    if (kAudioServicesNoError != status)
     {
       PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AudioQueueStart.Error","Is permission properly granted? OSStatus errorcode: %d", (int)status);
     }

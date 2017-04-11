@@ -16,10 +16,13 @@
 #if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
+#include "audioUtil/audioCaptureSystem.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/signalHolder.h"
 #include "clad/types/voiceCommandTypes.h"
 
 #include <memory>
+#include <mutex>
 
 namespace Anki {
   
@@ -36,16 +39,22 @@ namespace Data {
   
 namespace Cozmo {
 
-class CommandPhraseData;
 class CozmoContext;
+template <typename T> class AnkiEvent;
+namespace ExternalInterface {
+  class MessageGameToEngine;
+}
+  
+namespace VoiceCommand {
 
-class VoiceCommandComponent : private Util::noncopyable
+class CommandPhraseData;
+
+
+class VoiceCommandComponent : private Util::noncopyable, private Util::SignalHolder
 {
 public:
   VoiceCommandComponent(const CozmoContext& context);
   virtual ~VoiceCommandComponent();
-  
-  void Init();
   
   void Update();
   
@@ -57,26 +66,43 @@ public:
   
   void SetListenContext(VoiceCommandListenContext listenContext) { _listenContext = listenContext; }
   
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
 private:
   const CozmoContext&                                   _context;
   std::unique_ptr<AudioUtil::AudioRecognizerProcessor>  _recogProcessor;
+  std::unique_ptr<AudioUtil::AudioCaptureSystem>        _captureSystem;
   std::unique_ptr<AudioUtil::SpeechRecognizer>          _recognizer;
   std::unique_ptr<CommandPhraseData>                    _phraseData;
   BackpackLightDataLocator                              _bodyLightDataLocator{};
   float                                                 _commandLightTimeRemaining_s = -1.f;
   VoiceCommandListenContext                             _listenContext = VoiceCommandListenContext::Keyphrase;
   VoiceCommandType                                      _pendingHeardCommand = VoiceCommandType::Count;
+  bool                                                  _initialized = false;
+  bool                                                  _commandRecogEnabled = false;
+  bool                                                  _recordPermissionBeingRequested = false;
+  bool                                                  _permRequestAlreadyDenied = false;
+  std::recursive_mutex                                  _permissionCallbackLock;
   
   template<typename T>
-  void BroadcastVoiceEvent(T&& event);
+  void BroadcastVoiceEvent(T&& event, bool useDeferred = false);
+  
+  void Init();
   
   // Updates the status of the backpack light on Cozmo that indicates hearing a command
   void UpdateCommandLight(bool heardTriggerPhrase);
   bool HandleCommand(const VoiceCommandType& command);
   
+  bool RequestEnableVoiceCommand(AudioUtil::AudioCaptureSystem::PermissionState permissionState);
+  
+  AudioCapturePermissionState ConvertAudioCapturePermission(AudioUtil::AudioCaptureSystem::PermissionState state);
+  bool StateRequiresCallback(AudioUtil::AudioCaptureSystem::PermissionState permissionState) const;
+  
 }; // class VoiceCommandComponent
 
-
+  
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 

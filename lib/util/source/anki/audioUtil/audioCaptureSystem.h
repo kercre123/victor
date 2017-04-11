@@ -32,11 +32,24 @@ public:
   bool IsValid() const { return _impl != nullptr; }
   
   using DataCallback = std::function<void(const AudioSample* ,uint32_t)>;
-  void SetCallback(DataCallback newCallback);
-  void ClearCallback() { SetCallback(DataCallback()); }
+  void SetCallback(DataCallback newCallback = DataCallback{});
+  
+  void Init();
   
   void StartRecording();
   void StopRecording();
+  
+  enum class PermissionState {
+    Unknown,
+    Granted,
+    DeniedAllowRetry,
+    DeniedNoRetry,
+  };
+  
+  PermissionState GetPermissionState(bool isRepeatRequest = false) const;
+  
+  using RequestCapturePermissionCallback = std::function<void()>;
+  void RequestCapturePermission(RequestCapturePermissionCallback resultCallback) const;
   
 private:
   std::unique_ptr<AudioCaptureSystemData>   _impl;

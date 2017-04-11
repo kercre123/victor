@@ -95,7 +95,7 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   
 void BehaviorReactToVoiceCommand::StopInternal(Robot& robot)
 {
-  robot.GetContext()->GetVoiceCommandComponent()->SetListenContext(VoiceCommandListenContext::Keyphrase);
+  robot.GetContext()->GetVoiceCommandComponent()->SetListenContext(VoiceCommand::VoiceCommandListenContext::Keyphrase);
 }
 
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

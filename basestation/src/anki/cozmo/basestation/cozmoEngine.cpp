@@ -225,10 +225,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _context->GetDataLoader()->LoadRobotConfigs();
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
-  _context->GetVoiceCommandComponent()->Init();
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
-  
   _context->GetRobotManager()->Init(_config);
 
   return RESULT_OK;

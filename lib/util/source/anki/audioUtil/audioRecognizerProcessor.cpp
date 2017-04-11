@@ -22,10 +22,6 @@ namespace AudioUtil {
 AudioRecognizerProcessor::AudioRecognizerProcessor()
 : _captureSystem(new AudioCaptureSystem())
 {
-  if (!_captureSystem->IsValid())
-  {
-    _captureSystem.reset();
-  }
 }
 
 AudioRecognizerProcessor::~AudioRecognizerProcessor()
@@ -35,55 +31,63 @@ AudioRecognizerProcessor::~AudioRecognizerProcessor()
   
 void AudioRecognizerProcessor::SetSpeechRecognizer(SpeechRecognizer* newRecog)
 {
-  std::lock_guard<std::mutex> lock(_recognizerMutex);
+  std::lock_guard<std::mutex> lock(_componentsMutex);
   if (_recognizer)
   {
-    _recognizer->Stop();
     _recognizer->SetCallback();
   }
   
   _recognizer = newRecog;
-  _recognizer->SetCallback(std::bind(&AudioRecognizerProcessor::AddRecognizerResult, this, std::placeholders::_1));
-  _recognizer->Start();
+  if (_recognizer)
+  {
+    _recognizer->SetCallback(std::bind(&AudioRecognizerProcessor::AddRecognizerResult, this, std::placeholders::_1));
+  }
+}
+
+
+void AudioRecognizerProcessor::SetAudioCaptureSystem(AudioCaptureSystem* newCaptureSystem)
+{
+  std::lock_guard<std::mutex> lock(_componentsMutex);
+  if (_captureSystem)
+  {
+    _captureSystem->SetCallback();
+  }
+  
+  _captureSystem = newCaptureSystem;
+  if (_captureSystem)
+  {
+    _captureSystem->SetCallback(std::bind(&AudioRecognizerProcessor::AudioSamplesCallback, this, std::placeholders::_1, std::placeholders::_2));
+  }
 }
 
 void AudioRecognizerProcessor::Start()
 {
-  if (!_captureSystem || _capturingAudio)
-  {
-    return;
-  }
-  
+  std::lock_guard<std::mutex> lock(_resultMutex);
   _capturingAudio = true;
-  _captureSystem->SetCallback(std::bind(&AudioRecognizerProcessor::AudioSamplesCallback, this, std::placeholders::_1, std::placeholders::_2));
-  _captureSystem->StartRecording();
+}
+
+void AudioRecognizerProcessor::Stop()
+{
+  std::lock_guard<std::mutex> lock(_resultMutex);
+  _capturingAudio = false;
 }
   
 void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, uint32_t numSamples)
 {
-  std::lock_guard<std::mutex> lock(_recognizerMutex);
+  std::lock_guard<std::mutex> lock(_componentsMutex);
   if (_recognizer)
   {
     _recognizer->Update(buffer, numSamples);
   }
 }
-
-void AudioRecognizerProcessor::Stop()
-{
-  if (!_captureSystem || !_capturingAudio)
-  {
-    return;
-  }
-  
-  _capturingAudio = false;
-  _captureSystem->StopRecording();
-  _captureSystem->ClearCallback();
-}
                            
 void AudioRecognizerProcessor::AddRecognizerResult(const char* data)
 {
   std::lock_guard<std::mutex> lock(_resultMutex);
-  _procResults.push_back(data);
+  if (_capturingAudio)
+  {
+    _procResults.push_back(data);
+  }
 }
 
 bool AudioRecognizerProcessor::HasResults() const

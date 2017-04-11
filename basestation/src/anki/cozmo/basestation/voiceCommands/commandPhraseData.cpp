@@ -21,6 +21,7 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
 
 namespace {
   const std::string& kPhraseListKey = "phraseList";
@@ -208,6 +209,7 @@ const std::vector<VoiceCommandType>& CommandPhraseData::GetCommandsInPhrase(cons
   return phraseIter->_commandsList;
 }
 
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
