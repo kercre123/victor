@@ -42,7 +42,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // Render navmesh
-  void Draw(size_t mapIdxHint) const;
+  void DrawDebugProcessorInfo(size_t mapIdxHint) const;
 
   // Stop rendering navmesh
   void ClearDraw() const;
@@ -57,6 +57,7 @@ public:
   
   // Broadcast navmesh
   void Broadcast(uint32_t originID) const;
+  void BroadcastMemoryMapDraw(uint32_t originID, size_t maxIdxHint) const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors

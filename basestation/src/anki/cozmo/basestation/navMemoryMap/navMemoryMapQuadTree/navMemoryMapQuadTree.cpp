@@ -221,9 +221,9 @@ bool NavMemoryMapQuadTree::HasContentType(EContentType type) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMapQuadTree::Draw(size_t mapIdxHint) const
+void NavMemoryMapQuadTree::DrawDebugProcessorInfo(size_t mapIdxHint) const
 {
-  _navMesh.Draw(mapIdxHint);
+  _navMesh.DrawDebugProcessorInfo(mapIdxHint);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -238,6 +238,12 @@ void NavMemoryMapQuadTree::Broadcast(uint32_t originID) const
   _navMesh.Broadcast(originID);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const
+{
+  _navMesh.BroadcastMemoryMapDraw(originID, mapIdxHint);
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMemoryMapQuadTree::AddQuadInternal(const Quad2f& quad, EContentType type)
 {

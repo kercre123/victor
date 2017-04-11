@@ -79,11 +79,12 @@ public:
   virtual bool HasContentType(EContentType type) const override;
   
   // Draw/stop drawing the memory map
-  virtual void Draw(size_t mapIdxHint) const override;
+  virtual void DrawDebugProcessorInfo(size_t mapIdxHint) const override;
   virtual void ClearDraw() const override;
   
   // Broadcast the memory map
   virtual void Broadcast(uint32_t originID) const override;
+  virtual void BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const override;
   
 protected:
 

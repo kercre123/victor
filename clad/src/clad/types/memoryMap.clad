@@ -1,0 +1,67 @@
+/** Clad message definitions for the messages sent from the engine to either SDK (external) or viz (internal).
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+structure MemoryMapInfo
+{
+  int_32   rootDepth,
+  float_32 rootSize_mm,
+  float_32 rootCenterX,
+  float_32 rootCenterY,
+  float_32 rootCenterZ,
+  string   identifier
+}
+
+enum uint_8 ENodeContentTypeEnum
+{
+  Unknown,
+  ClearOfObstacle,
+  ClearOfCliff,
+  ObstacleCube,
+  ObstacleCharger,
+  Cliff,
+  VisionBorder
+}
+
+enum uint_8 ENodeContentTypeDebugVizEnum
+{
+  Unknown,
+  ClearOfObstacle,
+  ClearOfCliff,
+  ObstacleCube,
+  ObstacleCubeRemoved,
+  ObstacleCharger,
+  ObstacleChargerRemoved,
+  ObstacleUnrecognized,
+  Cliff,
+  InterestingEdge,
+  NotInterestingEdge,
+}
+
+// Could not get this to compile
+//union MemoryMapContent
+//{
+//  ENodeContentTypeEnum         content,
+//  ENodeContentTypeDebugVizEnum contentDebugViz,
+//}
+
+// Info about an individual quad in the memory map
+structure MemoryMapQuadInfo
+{
+  ENodeContentTypeEnum content,
+  uint_8               depth
+}
+
+structure MemoryMapQuadInfoDebugViz
+{
+  ENodeContentTypeDebugVizEnum content,
+  uint_8                       depth
+}
+
+} // namespace ExternalInterface
+} // namespace Cozmo
+} // namespace Anki

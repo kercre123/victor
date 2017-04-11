@@ -819,6 +819,8 @@ public:
   // if there was no external interface).
   bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
+  bool Broadcast(VizInterface::MessageViz&& event);
+  
   void BroadcastEngineErrorCode(EngineErrorCode error);
   
   Util::Data::DataPlatform* GetContextDataPlatform();

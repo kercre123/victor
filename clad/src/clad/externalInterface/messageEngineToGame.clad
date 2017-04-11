@@ -44,6 +44,7 @@
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/ledTypes.clad"
+#include "clad/types/memoryMap.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -762,24 +763,6 @@ message MemoryMapMessageBegin
   float_32 rootSize_mm,
   float_32 rootCenterX,
   float_32 rootCenterY
-}
-
-enum uint_8 ENodeContentTypeEnum
-{
-  Unknown,
-  ClearOfObstacle,
-  ClearOfCliff,
-  ObstacleCube,
-  ObstacleCharger,
-  Cliff,
-  VisionBorder
-}
-
-// Info about an individual quad in the memory map
-structure MemoryMapQuadInfo
-{
-  ENodeContentTypeEnum content,
-  uint_8               depth
 }
 
 // A group of quad infos

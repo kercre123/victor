@@ -83,6 +83,7 @@ public:
   using QuadSegmentArray = SegmentLineEquation[4];
   using TriangleSegmentArray = SegmentLineEquation[3];
   using QuadInfoVector = std::vector<ExternalInterface::MemoryMapQuadInfo>;
+  using QuadInfoDebugVizVector = std::vector<ExternalInterface::MemoryMapQuadInfoDebugViz>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
@@ -195,6 +196,7 @@ public:
   
   // adds the necessary quad infos to the given vector to be sent
   void AddQuadsToSend(QuadInfoVector& quadInfoVector) const;
+  void AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const;
   
 private:
 

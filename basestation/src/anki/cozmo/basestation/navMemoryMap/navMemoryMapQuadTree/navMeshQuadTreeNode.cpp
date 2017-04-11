@@ -57,6 +57,32 @@ ExternalInterface::ENodeContentTypeEnum ConvertContentType(ENodeContentType cont
   return externalContentType;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// convert between our internal node content type and an internal content type
+ExternalInterface::ENodeContentTypeDebugVizEnum ConvertContentTypeDebugViz(ENodeContentType contentType )
+{
+  using namespace ExternalInterface;
+  
+  ExternalInterface::ENodeContentTypeDebugVizEnum internalContentType = ExternalInterface::ENodeContentTypeDebugVizEnum::Unknown;
+  switch (contentType) {
+    case ENodeContentType::Invalid:               { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this
+    case ENodeContentType::Subdivided:            { DEV_ASSERT(false, "NavMeshQuadTreeNode.ConvertContentTypeDebugViz");        break; } // Should never get this (we only send leaves)
+    case ENodeContentType::Unknown:               { internalContentType = ENodeContentTypeDebugVizEnum::Unknown;                break; }
+    case ENodeContentType::ClearOfObstacle:       { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfObstacle;        break; }
+    case ENodeContentType::ClearOfCliff:          { internalContentType = ENodeContentTypeDebugVizEnum::ClearOfCliff;           break; }
+    case ENodeContentType::ObstacleCube:          { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCube;           break; }
+    case ENodeContentType::ObstacleCubeRemoved:   { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCubeRemoved;    break; }
+    case ENodeContentType::ObstacleCharger:       { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleCharger;        break; }
+    case ENodeContentType::ObstacleChargerRemoved:{ internalContentType = ENodeContentTypeDebugVizEnum::ObstacleChargerRemoved; break; }
+    case ENodeContentType::ObstacleUnrecognized:  { internalContentType = ENodeContentTypeDebugVizEnum::ObstacleUnrecognized;   break; }
+    case ENodeContentType::Cliff:                 { internalContentType = ENodeContentTypeDebugVizEnum::Cliff;                  break; }
+    case ENodeContentType::InterestingEdge:       { internalContentType = ENodeContentTypeDebugVizEnum::InterestingEdge;        break; }
+    case ENodeContentType::NotInterestingEdge:    { internalContentType = ENodeContentTypeDebugVizEnum::NotInterestingEdge;     break; }
+    case ENodeContentType::_Count:                { DEV_ASSERT(false, "NavMeshQuadTreeNode._Count"); break; }
+  }
+  return internalContentType;
+}
+  
 } // namespace
 
 static_assert( !std::is_copy_assignable<NavMeshQuadTreeNode>::value, "NavMeshQuadTreeNode was designed non-copyable" );
@@ -519,45 +545,9 @@ bool NavMeshQuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t max
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVector) const
-{
-  // if we have children, delegate on them, otherwise render ourselves
-  if ( _childrenPtr.empty() )
-  {
-    ColorRGBA color =  Anki::NamedColors::WHITE;
-    switch(_content.type)
-    {
-      case ENodeContentType::Invalid                : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
-      case ENodeContentType::Subdivided             : { color = Anki::NamedColors::CYAN;     color.SetAlpha(1.0f); break; }
-      case ENodeContentType::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
-      case ENodeContentType::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
-      case ENodeContentType::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCube
-      case ENodeContentType::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCharger
-      case ENodeContentType::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
-      case ENodeContentType::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentType::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
-      case ENodeContentType::NotInterestingEdge     : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
-      case ENodeContentType::_Count                 : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
-    }
-    //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
-    quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
-  }
-  else
-  {
-    // delegate on each child
-    for( const auto& childPtr : _childrenPtr ) {
-      childPtr->AddQuadsToDraw(quadVector);
-    }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
 {
-  // if we have children, delegate on them, otherwise render ourselves
+  // if we have children, delegate on them, otherwise add data about ourselves
   if ( _childrenPtr.empty() )
   {
     const auto contentTypeExternal = ConvertContentType(_content.type);
@@ -572,6 +562,24 @@ void NavMeshQuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::AddQuadsToSendDebugViz(QuadInfoDebugVizVector& quadInfoVector) const
+{
+  // if we have children, delegate on them, otherwise add data about ourselves
+  if ( _childrenPtr.empty() )
+  {
+    const auto contentTypeDebugViz = ConvertContentTypeDebugViz(_content.type);
+    quadInfoVector.emplace_back(ExternalInterface::MemoryMapQuadInfoDebugViz(contentTypeDebugViz, _level));
+  }
+  else
+  {
+    // delegate on each child
+    for( const auto& childPtr : _childrenPtr ) {
+      childPtr->AddQuadsToSendDebugViz(quadInfoVector);
+    }
+  }
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeNode::Subdivide(NavMeshQuadTreeProcessor& processor)
 {

@@ -889,6 +889,12 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::SaveState(enabled, path)));
     }
     
+    void VizManager::SendVizMessage(VizInterface::MessageViz&& event)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendVizMessage");
+      SendMessage(event);
+    }
+
     void VizManager::SendObjectConnectionState(u32 activeID, ObjectType type, bool connected)
     {
       ANKI_CPU_PROFILE("VizManager::SendObjectConnectionState");

@@ -90,6 +90,8 @@ namespace Anki.Cozmo.Viz {
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
     private readonly Dictionary<uint, VizLabel> _ObjectLabels = new Dictionary<uint, VizLabel>();
     private readonly Dictionary<string, VizQuad> _SimpleQuadVectors = new Dictionary<string, VizQuad>();
+    private readonly Dictionary<uint, ExternalInterface.MemoryMapInfo> _MemoryMapInfos = new Dictionary<uint, ExternalInterface.MemoryMapInfo>();
+    private readonly Dictionary<uint, List<ExternalInterface.MemoryMapQuadInfoDebugViz>> _QuadInfos = new Dictionary<uint, List<ExternalInterface.MemoryMapQuadInfoDebugViz>>();
 
     private readonly Dictionary<uint, VizPath> _Paths = new Dictionary<uint, VizPath>();
     private readonly Dictionary<string, VizPath> _SegmentPrimatives = new Dictionary<string, VizPath>();
@@ -275,6 +277,16 @@ namespace Anki.Cozmo.Viz {
         break;
       case MessageViz.Tag.SimpleQuadVectorMessageEnd:
         EndSimpleQuadVector(message.SimpleQuadVectorMessageEnd);
+        break;
+
+      case MessageViz.Tag.MemoryMapMessageDebugVizBegin:
+        BeginMemoryMapMessageDebugViz(message.MemoryMapMessageDebugVizBegin);
+        break;
+      case MessageViz.Tag.MemoryMapMessageDebugViz:
+        MemoryMapMessageDebugViz(message.MemoryMapMessageDebugViz);
+        break;
+      case MessageViz.Tag.MemoryMapMessageDebugVizEnd:
+        EndMemoryMapMessageDebugViz(message.MemoryMapMessageDebugVizEnd);
         break;
 
       case MessageViz.Tag.AppendPathSegmentArc:
@@ -704,6 +716,40 @@ namespace Anki.Cozmo.Viz {
         return;
       }
       vizQuad.EndUpdateQuadList();
+    }
+
+    public void BeginMemoryMapMessageDebugViz(MemoryMapMessageDebugVizBegin msg) {
+      _MemoryMapInfos.Add(msg.originId, msg.info);
+      _QuadInfos.Add(msg.originId, new List<ExternalInterface.MemoryMapQuadInfoDebugViz>());
+    }
+
+    public void MemoryMapMessageDebugViz(MemoryMapMessageDebugViz msg) {
+      _QuadInfos[msg.originId].AddRange(msg.quadInfos);
+    }
+
+    public void EndMemoryMapMessageDebugViz(MemoryMapMessageDebugVizEnd msg) {
+      // Now that we've received the entire list of quad infos, decode them into a list of drawable quads
+
+      var info = _MemoryMapInfos[msg.originId];
+      var rootCenter = new Vector3(info.rootCenterX * .001f, info.rootCenterY * .001f, info.rootCenterZ * .001f);
+      var rootNode = new MemoryMapNode(info.rootDepth, info.rootSize_mm * .001f, rootCenter);
+
+      var key = "MemMap_" + msg.originId;
+      VizQuad vizQuad;
+      if (!_SimpleQuadVectors.TryGetValue(key, out vizQuad)) {
+        vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, _VizScene).GetComponent<VizQuad>();
+        vizQuad.Initialize("SimpleQuadVectorMemMap_" + msg.originId);
+        _SimpleQuadVectors.Add(key, vizQuad);
+      }
+      vizQuad.StartUpdateQuadList();
+
+      foreach (var quadInfo in _QuadInfos[msg.originId]) {
+        rootNode.AddChild(vizQuad, quadInfo.content, quadInfo.depth);
+      }
+      vizQuad.EndUpdateQuadList();
+
+      _MemoryMapInfos.Remove(msg.originId);
+      _QuadInfos.Remove(msg.originId);
     }
 
     public void AppendPathSegmentLine(AppendPathSegmentLine line) {

@@ -52,7 +52,7 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager, Robot* robot)
 : _gfxDirty(true)
 , _processor(vizManager)
-, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
+, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)  // Note the root is created at z=1
 , _vizManager(vizManager)
 , _robot(robot)
 {
@@ -69,46 +69,8 @@ NavMeshQuadTree::~NavMeshQuadTree()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTree::Draw(size_t mapIdxHint) const
+void NavMeshQuadTree::DrawDebugProcessorInfo(size_t mapIdxHint) const
 {
-  if ( _gfxDirty && kRenderNavMeshQuadTree )
-  {
-    ANKI_CPU_PROFILE("NavMeshQuadTree::Draw");
-    
-    // ask root to add proper quads to be rendered
-    VizManager::SimpleQuadVector quadVector;
-    _root.AddQuadsToDraw(quadVector);
-    
-    // the mapIdx hint reveals that we are not the current active map, but an old memory. Apply some offset
-    // so that we don't render on top of any other map
-    if ( mapIdxHint > 0 )
-    {
-      const float offSetPerIdx = MM_TO_M(-250.0f);
-      for( auto& q : quadVector ) {
-        q.center[2] += (mapIdxHint*offSetPerIdx);
-      }
-    }
-    else
-    {
-      // small offset to not clip with floor
-      for( auto& q : quadVector ) {
-        q.center[2] += MM_TO_M(10.0f);
-      }
-    }
-    
-    // since we have several maps rendering, each one render with its own id
-    std::stringstream instanceId;
-    instanceId << "NavMeshQuadTree_" << this;
-    _vizManager->DrawQuadVector(instanceId.str(), quadVector);
-    
-//    // compare actual size vs max
-//    size_t actual = quadVector.size();
-//    size_t max = pow(4,_root.GetLevel()) + 1;
-//    PRINT_NAMED_INFO("RSAM", "%zu / %zu", actual, max);
-    
-    _gfxDirty = false;
-  }
-  
   // draw the processor information
   if ( mapIdxHint == 0 ) {
     _processor.Draw();
@@ -120,11 +82,10 @@ void NavMeshQuadTree::ClearDraw() const
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::ClearDraw");
   
-  // clear previous quads
   std::stringstream instanceId;
-  instanceId << "NavMeshQuadTree_" << this;
+  instanceId << "New_NavMeshQuadTree_" << this;
   _vizManager->EraseQuadVector(instanceId.str());
-
+  
   _gfxDirty = true;
   
   // also clear processor information
@@ -607,11 +568,83 @@ void NavMeshQuadTree::Broadcast(uint32_t originID) const
     remainingQuads -= quadsPerMessage;
     
     // send message
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MemoryMapMessage(partQuadInfos)));
+    _robot->Broadcast(MessageEngineToGame(MemoryMapMessage(partQuadInfos)));
   }
   
   // Send the end message
-  _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::MemoryMapMessageEnd()));
+  _robot->Broadcast(MessageEngineToGame(MemoryMapMessageEnd()));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::BroadcastMemoryMapDraw(uint32_t originID, size_t mapIdxHint) const
+{
+  if ( _gfxDirty && kRenderNavMeshQuadTree )
+  {
+    ANKI_CPU_PROFILE("NavMeshQuadTree::BroadcastMemoryMapDraw");
+    
+    _gfxDirty = false;
+    
+    using namespace ExternalInterface;
+    using namespace VizInterface;
+    
+    // Create and send the start (header) message
+    const Point3f& rootCenter = _root.GetCenter();
+    float adjustedZ = rootCenter.z();
+    // The mapIdx hint reveals that we are not the current active map, but an old memory. Apply some offset
+    // so that we don't render on top of any other map
+    if (mapIdxHint > 0)
+    {
+      const float offSetPerIdx = -250.0f;
+      adjustedZ += (mapIdxHint * offSetPerIdx);
+    }
+    else
+    {
+      // small offset to not clip with floor
+      adjustedZ += 10.0f;
+    }
+    
+    std::stringstream instanceId;
+    instanceId << "New_NavMeshQuadTree_" << this;
+    ExternalInterface::MemoryMapInfo info(_root.GetLevel(), _root.GetSideLen(), rootCenter.x(), rootCenter.y(), adjustedZ, instanceId.str());
+    MemoryMapMessageDebugVizBegin msgBegin(originID, info);
+    _robot->Broadcast(MessageViz(std::move(msgBegin)));
+    
+    // Ask root to add quad info to be sent (do a DFS of entire tree)
+    NavMeshQuadTreeNode::QuadInfoDebugVizVector quadInfoVector;
+    _root.AddQuadsToSendDebugViz(quadInfoVector);
+    
+    // Now send these packets in clad message(s), respecting the clad message size limit
+    const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
+    const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
+    const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
+    size_t quadsPerMessage = kMaxBufferForQuads / sizeof(NavMeshQuadTreeNode::QuadInfoVector::value_type);
+    size_t remainingQuads = quadInfoVector.size();
+    
+    DEV_ASSERT(quadsPerMessage > 0, "NavMeshQuadTree.BroadcastMemoryMapDraw.InvalidQuadsPerMessage");
+    
+    // We can't initialize messages with a range of vectors, so we have to create copies
+    NavMeshQuadTreeNode::QuadInfoDebugVizVector partQuadInfos;
+    partQuadInfos.reserve(quadsPerMessage);
+    
+    // while we have quads to send
+    while (remainingQuads > 0)
+    {
+      // how many are we sending in this message?
+      quadsPerMessage = Anki::Util::Min(quadsPerMessage, remainingQuads);
+      
+      // clear the destination vector and insert as many as we are sending, from where we left off
+      partQuadInfos.clear();
+      partQuadInfos.insert( partQuadInfos.end(), quadInfoVector.end() - remainingQuads, quadInfoVector.end() - remainingQuads + quadsPerMessage );
+      
+      remainingQuads -= quadsPerMessage;
+      
+      // send message
+      _robot->Broadcast(MessageViz(MemoryMapMessageDebugViz(originID, partQuadInfos)));
+    }
+    
+    // Send the end message
+    _robot->Broadcast(MessageViz(MemoryMapMessageDebugVizEnd(originID)));
+  }
 }
   
 

@@ -4202,6 +4202,16 @@ bool Robot::Broadcast(ExternalInterface::MessageEngineToGame&& event)
   }
 }
 
+bool Robot::Broadcast(VizInterface::MessageViz&& event)
+{
+  auto* vizMgr = _context->GetVizManager();
+  if (vizMgr != nullptr) {
+    vizMgr->SendVizMessage(std::move(event));
+    return true;
+  }
+  return false;
+}
+
 void Robot::BroadcastEngineErrorCode(EngineErrorCode error)
 {
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineErrorCodeMessage(error)));

@@ -69,6 +69,7 @@
 		37EA452BB5E4A829C2B4F38E /* Bulk_mscorlib_1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BD197D1E30C45EEB30D1C553 /* Bulk_mscorlib_1.cpp */; };
 		387CE4430BA08C372FBDBB07 /* SplashScreen.h in Sources */ = {isa = PBXBuildFile; fileRef = 34F59211E3191AE294A6B7CF /* SplashScreen.h */; };
 		39CF11CD466C5543CD7CCB7D /* GlesHelper.h in Sources */ = {isa = PBXBuildFile; fileRef = 4362874A55BD2944BDEEDC57 /* GlesHelper.h */; };
+		39F932FA6E6C6DFA5512E632 /* Bulk_Assembly-CSharp_16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 326ACCCAC4BFC16D808A190C /* Bulk_Assembly-CSharp_16.cpp */; };
 		3B6219DCBCBA59790103B298 /* GenericMethods0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6DE1F8B422716A2BB0D2BA5 /* GenericMethods0.cpp */; };
 		3DB58D34839C5D20D5363CEA /* UnresolvedVirtualCallStubs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77C0D9475EB04FC69B2DFC45 /* UnresolvedVirtualCallStubs.cpp */; };
 		3E2FE15E93E1B9EF8F461198 /* Il2CppMethodPointerTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */; };
@@ -353,6 +354,7 @@
 		308B9A709015B7FD8A0C3F46 /* Bulk_DOTween43_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_DOTween43_0.cpp; path = UnityBuild/Classes/Native/Bulk_DOTween43_0.cpp; sourceTree = "<group>"; };
 		30D911E931B7982DD394F1A1 /* Il2CppMetadataUsage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMetadataUsage.cpp; path = UnityBuild/Classes/Native/Il2CppMetadataUsage.cpp; sourceTree = "<group>"; };
 		3256245981C473DCC2F1453B /* Bulk_Generics_5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_5.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_5.cpp; sourceTree = "<group>"; };
+		326ACCCAC4BFC16D808A190C /* Bulk_Assembly-CSharp_16.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_16.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_16.cpp"; sourceTree = "<group>"; };
 		32CA94687AE47C83B7266CE3 /* Bulk_DOTweenPro_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_DOTweenPro_0.cpp; path = UnityBuild/Classes/Native/Bulk_DOTweenPro_0.cpp; sourceTree = "<group>"; };
 		33C184C5A82AB81CF81CE4C8 /* Bulk_mscorlib_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_mscorlib_3.cpp; path = UnityBuild/Classes/Native/Bulk_mscorlib_3.cpp; sourceTree = "<group>"; };
 		34F59211E3191AE294A6B7CF /* SplashScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SplashScreen.h; path = UnityBuild/Classes/UI/SplashScreen.h; sourceTree = "<group>"; };
@@ -839,6 +841,7 @@
 				2A3166D24BFA77F17A270795 /* Bulk_Assembly-CSharp_13.cpp */,
 				9CD123A91E64796C67C5184D /* Bulk_Assembly-CSharp_14.cpp */,
 				C334DDAB54C7F3B01FA06409 /* Bulk_Assembly-CSharp_15.cpp */,
+				326ACCCAC4BFC16D808A190C /* Bulk_Assembly-CSharp_16.cpp */,
 				02116FB4BD6761255D2F34A7 /* Bulk_Assembly-CSharp_2.cpp */,
 				2A63A3FAA2BE81B674403C63 /* Bulk_Assembly-CSharp_3.cpp */,
 				128C338A16E7AD2B170E7F06 /* Bulk_Assembly-CSharp_4.cpp */,
@@ -1202,6 +1205,7 @@
 				773530D293F2703D673FD28F /* Bulk_Assembly-CSharp_13.cpp in Sources */,
 				D142565C13A9271C367F039D /* Bulk_Assembly-CSharp_14.cpp in Sources */,
 				C0053A9652EDE53F2C97E490 /* Bulk_Assembly-CSharp_15.cpp in Sources */,
+				39F932FA6E6C6DFA5512E632 /* Bulk_Assembly-CSharp_16.cpp in Sources */,
 				556E7C433F164B5F3C54987F /* Bulk_Assembly-CSharp_2.cpp in Sources */,
 				149D4FCFB154DC0C846B3464 /* Bulk_Assembly-CSharp_3.cpp in Sources */,
 				DD37D7B33548878A51FF4F9B /* Bulk_Assembly-CSharp_4.cpp in Sources */,

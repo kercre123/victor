@@ -9,6 +9,7 @@
 #include "clad/types/vizTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/activeObjectAccel.clad"
+#include "clad/types/memoryMap.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -99,6 +100,24 @@ message SimpleQuadVectorMessage
 message SimpleQuadVectorMessageEnd
 {
   string identifier,
+}
+
+// Memory map data scheme for internal use (webots viz, and app debug viz)
+message MemoryMapMessageDebugVizBegin
+{
+  uint_32  originId,
+  ExternalInterface::MemoryMapInfo info
+}
+
+message MemoryMapMessageDebugViz
+{
+  uint_32  originId,
+  ExternalInterface::MemoryMapQuadInfoDebugViz quadInfos[uint_16]
+}
+
+message MemoryMapMessageDebugVizEnd
+{
+  uint_32  originId,
 }
 
 // VizCameraQuad

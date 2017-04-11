@@ -1488,14 +1488,17 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         nextDrawTimeStamp = currentTimeInSeconds + kMemoryMapRenderRate_sec;
      
         size_t lastIndexNonCurrent = 0;
+        const auto& originList = _robot->GetPoseOriginList(); // required for NEW SCHEME below
       
         // rendering all current maps with indexHint
         for (const auto& memMapPair : _navMemoryMaps)
         {
           const bool isCurrent = memMapPair.first == _currentNavMemoryMapOrigin;
-          
           size_t indexHint = isCurrent ? 0 : (++lastIndexNonCurrent);
-          memMapPair.second->Draw(indexHint);
+          memMapPair.second->DrawDebugProcessorInfo(indexHint);
+          
+          const uint32_t originID = originList.GetOriginID(memMapPair.first);
+          memMapPair.second->BroadcastMemoryMapDraw(originID, indexHint);
         }
       }
     }

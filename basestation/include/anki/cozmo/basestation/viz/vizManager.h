@@ -415,6 +415,7 @@ namespace Anki {
       void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");
       void SendSaveState(bool enabled, std::string path = "");
+      void SendVizMessage(VizInterface::MessageViz&& event);
 
       
       // ============= ActiveObjectInfo ===========
@@ -426,7 +427,7 @@ namespace Anki {
     protected:
       
       void SendMessage(const VizInterface::MessageViz& message);
-
+      
       bool               _isInitialized;
       UdpClient          _vizClient;
       #if VIZ_ON_DEVICE
