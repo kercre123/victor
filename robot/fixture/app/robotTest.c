@@ -179,12 +179,14 @@ void InfoTest(void)
   readBodycolor();
 }
 
+const int playpenPowerOnDuration_s = 120;
 void PlaypenTest(void)
 {
   EnableChargeComms();
   
   // Try to put robot into playpen mode
-  SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);    
+  SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);
+  SendCommand(TEST_POWERON, playpenPowerOnDuration_s, 0, 0);
   
   // Do this last:  Try to put fixture radio in advertising mode
   static bool setRadio = false;
@@ -196,13 +198,24 @@ void PlaypenTest(void)
 extern int g_stepNumber;
 void PlaypenWaitTest(void)
 {
-  int offContact = 0;
-  
-  // Act like a charger - the robot expects to start on one!
-  PIN_SET(GPIOC, PINC_CHGTX);
-  PIN_OUT(GPIOC, PINC_CHGTX);
-
-  while (1) {
+  const int topOffInterval_s = 30;
+  u32 powerOnTime = 0, offContact = 0, totalTime_s = 0;
+  while( 1 )
+  {
+    //Periodically extend power-on
+    if( getMicroCounter() - powerOnTime >= topOffInterval_s*1000*1000 ) {
+      totalTime_s += topOffInterval_s; //track total time on fixture
+      ConsolePrintf("\r\nTEST_POWERON %ds (total %ds)\r\n", playpenPowerOnDuration_s, totalTime_s);
+      EnableChargeComms(); //switch to comm mode
+      SendCommand(TEST_POWERON, playpenPowerOnDuration_s, 0, 0);
+      powerOnTime = getMicroCounter();
+    }
+    
+    //Turn on charging power
+    PIN_SET(GPIOC, PINC_CHGTX);
+    PIN_OUT(GPIOC, PINC_CHGTX);
+    
+    //test for robot removal
     int current_ma = mGetCurrentMa();
     ConsolePrintf("%d..", current_ma);
     if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10)
