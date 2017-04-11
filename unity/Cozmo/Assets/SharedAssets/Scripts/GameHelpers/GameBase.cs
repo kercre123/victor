@@ -69,8 +69,6 @@ public abstract class GameBase : MonoBehaviour {
   protected bool _ShowScoreboardOnComplete = true;
   protected bool _ShowEndWinnerSlide = false;
 
-  protected List<Anki.Cozmo.ReactionTrigger> _DisabledReactionaryBehaviors = new List<ReactionTrigger>();
-
   private List<DifficultySelectOptionData> _DifficultyOptions;
 
   public List<DifficultySelectOptionData> DifficultyOptions {
@@ -765,10 +763,6 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Info(this, "Finished GameBase On Destroy");
     SkillSystem.Instance.EndGame();
 
-    DeregisterRobotReactionaryBehaviorEvents();
-
-    ResetReactionaryBehaviorsForGameEnd();
-
     if (CurrentRobot != null) {
       CurrentRobot.SetEnableFreeplayLightStates(true);
     }
@@ -864,6 +858,8 @@ public abstract class GameBase : MonoBehaviour {
 
   public void SoftEndGameRobotReset() {
     DeregisterRobotReactionaryBehaviorEvents();
+    ResetReactionaryBehaviorsForGameEnd();
+
     AddToTotalGamesPlayed();
 
     DAS.Debug("GameBase.SoftEndGameRobotReset", "soft end game reset called");
@@ -895,6 +891,10 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameQuit() {
     _StateMachine.Stop();
+
+    DeregisterRobotReactionaryBehaviorEvents();
+    ResetReactionaryBehaviorsForGameEnd();
+
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
 
