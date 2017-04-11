@@ -1,0 +1,93 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "videoSubtitles.speedTap.first": {
+    "translation": "GAME SETUP"
+  },
+  "videoSubtitles.speedTap.second": {
+    "translation": "COZMO WILL SELECT HIS CUBE"
+  },
+  "videoSubtitles.speedTap.third": {
+    "translation": "TAP TO SELECT YOUR CUBE"
+  },
+  "videoSubtitles.speedTap.fourth": {
+    "translation": "GET READY"
+  },
+  "videoSubtitles.speedTap.fifth": {
+    "translation": "TAP IF THE COLORS MATCH"
+  },
+  "videoSubtitles.speedTap.sixth": {
+    "translation": "NO MATCH"
+  },
+  "videoSubtitles.speedTap.seventh": {
+    "translation": "NO TAPPING ON RED"
+  },
+  "videoSubtitles.speedTap.eighth": {
+    "translation": "FIRST TO 5 POINTS WINS"
+  },
+  "videoSubtitles.cubePounce.first": {
+    "translation": "USE ONE CUBE"
+  },
+  "videoSubtitles.cubePounce.second": {
+    "translation": "GREEN MEANS COZMO CAN SEE IT"
+  },
+  "videoSubtitles.cubePounce.third": {
+    "translation": "PUSH IT TOWARDS COZMO"
+  },
+    "videoSubtitles.cubePounce.fourth": {
+    "translation": "PULL AWAY BEFORE HE POUNCES"
+  },
+    "videoSubtitles.cubePounce.fifth": {
+    "translation": "IF YOU ARE TOO SLOW"
+  },
+    "videoSubtitles.cubePounce.sixth": {
+    "translation": "COZMO WILL SCORE A POINT"
+  },
+  "videoSubtitles.memoryMatch.first": {
+    "translation": "GAME SETUP"
+  },
+  "videoSubtitles.memoryMatch.second": {
+    "translation": "COZMO IS READY TO PLAY"
+  },
+  "videoSubtitles.memoryMatch.third": {
+    "translation": "THE GAME BEGINS WITH A PATTERN"
+  },
+  "videoSubtitles.memoryMatch.fourth": {
+    "translation": "WATCH THE PATTERN"
+  },
+  "videoSubtitles.memoryMatch.fifth": {
+    "translation": "THEN REPEAT IT BACK"
+  },
+  "videoSubtitles.memoryMatch.sixth": {
+    "translation": "TAKE TURNS WITH COZMO"
+  },
+  "videoSubtitles.memoryMatch.seventh": {
+    "translation": "EACH ROUND, THE PATTERN WILL GROW"
+  },
+  "videoSubtitles.memoryMatch.eighth": {
+    "translation": "TOO MANY MISTAKES AND YOU ARE OUT"
+  },
+  "videoSubtitles.memoryMatch.nineth": {
+    "translation": "SEE HOW FAR YOU CAN GET"
+  },
+  "videoSubtitles.memoryMatch.tenth": {
+    "translation": "GOOD LUCK"
+  }
+}

@@ -28,6 +28,8 @@ MonoBehaviour:
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
   IsMinigame: 1
   InstructionVideoPath: Videos/Cozmo_Howto_QuickTap_handbrake.mp4
+  ChallengeVideoSubtitles: {fileID: 11400000, guid: de5036924b35d49a6963224e96ffadba,
+    type: 2}
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:
@@ -79,7 +81,7 @@ MonoBehaviour:
       _AssetDataName: SpeedTapHowToPlayExpertAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 272
+    _EnumValue: 354
   GetOutAnimTrigger:
     _EnumValueAsString: OnSpeedtapGetOut
-    _EnumValue: 134
+    _EnumValue: 176

@@ -1,0 +1,39 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "videoSubtitles.speedTap.first": {
+    "translation": "First speed tap text"
+  },
+  "videoSubtitles.speedTap.second": {
+    "translation": "Second speed tap text"
+  },
+  "videoSubtitles.speedTap.third": {
+    "translation": "Third speed tap text"
+  },
+  "videoSubtitles.cubePounce.first": {
+    "translation": "First cube pounce text"
+  },
+  "videoSubtitles.cubePounce.second": {
+    "translation": "Second cube pounce text"
+  },
+  "videoSubtitles.cubePounce.third": {
+    "translation": "Third cube pounce text"
+  }
+}

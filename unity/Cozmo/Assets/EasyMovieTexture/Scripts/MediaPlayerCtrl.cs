@@ -802,7 +802,8 @@ public class MediaPlayerCtrl : MonoBehaviour {
 		if( m_CurrentState == MEDIAPLAYER_STATE.PLAYING|| m_CurrentState == MEDIAPLAYER_STATE.READY  || m_CurrentState == MEDIAPLAYER_STATE.PAUSED  || m_CurrentState == MEDIAPLAYER_STATE.END || m_CurrentState == MEDIAPLAYER_STATE.STOPPED)
 			Call_SetSeekPosition(iSeek);
 
-    }
+    m_iCurrentSeekPosition = iSeek;
+  }
 
 
     //Gets the duration of the file.

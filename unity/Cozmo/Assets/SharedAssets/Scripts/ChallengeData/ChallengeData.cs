@@ -76,6 +76,9 @@ public class ChallengeData : ScriptableObject {
   [SerializeField]
   public string InstructionVideoPath;
 
+  [SerializeField]
+  public ChallengeVideoSubtitles ChallengeVideoSubtitles;
+
   public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
 
   [SerializeField]

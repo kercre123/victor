@@ -28,6 +28,8 @@ MonoBehaviour:
   MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}
   IsMinigame: 1
   InstructionVideoPath: Videos/Cozmo_Howto_MemoryMatch_handbrake.mp4
+  ChallengeVideoSubtitles: {fileID: 11400000, guid: 9834485999bf04cd2a806b46c70637bd,
+    type: 2}
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:
@@ -55,7 +57,7 @@ MonoBehaviour:
       _AssetDataName: MemoryMatchHowToPlayAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 311
+    _EnumValue: 354
   GetOutAnimTrigger:
     _EnumValueAsString: MemoryMatchCozmoGetOut
-    _EnumValue: 131
+    _EnumValue: 157

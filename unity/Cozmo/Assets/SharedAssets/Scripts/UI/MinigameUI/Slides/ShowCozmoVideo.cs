@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ShowCozmoVideo : MonoBehaviour {
 
@@ -30,6 +31,11 @@ public class ShowCozmoVideo : MonoBehaviour {
 
   [SerializeField, Range(0f, 2f), Tooltip("Time in seconds it should take for music to fade down/up")]
   private float _MusicDuckingFadeTime = 1f;
+
+  [SerializeField]
+  private VideoSubtitleController _VideoSubtitleController;
+
+  private List<VideoLocalizationPair> _VideoSubtitles;
 
   private string _Filename;
 #if ENABLE_DEBUG_PANEL
@@ -84,13 +90,15 @@ public class ShowCozmoVideo : MonoBehaviour {
   }
 
   // filename is a path relative to the StreamingAssets folder
-  public void PlayVideo(string filename) {
+  public void PlayVideo(string filename, List<VideoLocalizationPair> subtitles) {
     _Filename = filename;
+    _VideoSubtitles = subtitles;
 #if UNITY_EDITOR
     _PlayCoroutine = StartCoroutine(LoadAndPlayCoroutine(filename));
 #else
     _MediaPlayerCtrl.Load(filename);
 #endif
+    _VideoSubtitleController.PlaySubtitles(subtitles);
   }
 
   private void DuckMusic() {
@@ -149,7 +157,8 @@ public class ShowCozmoVideo : MonoBehaviour {
       _ReplayButton.gameObject.SetActive(false);
       _ContinueButton.gameObject.SetActive(false);
       ShowSkipButton(true);
-      PlayVideo(_Filename);
+      _MediaPlayerCtrl.SeekTo(0);
+      PlayVideo(_Filename, _VideoSubtitles);
     }
   }
 

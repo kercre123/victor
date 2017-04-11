@@ -28,10 +28,12 @@ MonoBehaviour:
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}
   IsMinigame: 1
   InstructionVideoPath: Videos/Cozmo_Howto_Keepaway_handbrake.mp4
+  ChallengeVideoSubtitles: {fileID: 11400000, guid: 5e38548ef581b4a30b1cadaabda9f4b1,
+    type: 2}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 261
+    _EnumValue: 354
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 261
+    _EnumValue: 354
