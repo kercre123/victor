@@ -13,6 +13,7 @@ import tempfile
 
 # These are the Anki modules/packages:
 import binary_conversion
+import validate_anim_data
 
 
 VERBOSE = True
@@ -460,7 +461,7 @@ def teamcity_package(tc_dict):
                 print err
 
 
-def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR):
+def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR, validate_assets=True):
     """
     Entry point to starting the dependency extraction.
 
@@ -475,6 +476,8 @@ def extract_dependencies(version_file, location=RELATIVE_EXTERNALS_DIR):
     if not os.path.isdir(location):
         os.makedirs(location)
     json_parser(version_file)
+    if validate_assets:
+        validate_anim_data.check_audio_events_all_anims(location)
 
 
 def json_parser(version_file):
