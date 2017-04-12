@@ -1,39 +1,81 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "videoSubtitles.speedTap.first": {
-    "translation": "First speed tap text"
+  "videoSubtitles.speedTap.first" : {
+    "translation" : "GAMEのSETUP"
   },
-  "videoSubtitles.speedTap.second": {
-    "translation": "Second speed tap text"
+  "videoSubtitles.speedTap.second" : {
+    "translation" : "コズモはHIS CUBEが選択されます"
   },
-  "videoSubtitles.speedTap.third": {
-    "translation": "Third speed tap text"
+  "videoSubtitles.speedTap.third" : {
+    "translation" : "YOUR CUBEを選択するために、TAP"
   },
-  "videoSubtitles.cubePounce.first": {
-    "translation": "First cube pounce text"
+  "videoSubtitles.speedTap.fourth" : {
+    "translation" : "READY GET"
   },
-  "videoSubtitles.cubePounce.second": {
-    "translation": "Second cube pounce text"
+  "videoSubtitles.speedTap.fifth" : {
+    "translation" : "TAP色が一致した場合"
   },
-  "videoSubtitles.cubePounce.third": {
-    "translation": "Third cube pounce text"
+  "videoSubtitles.speedTap.sixth" : {
+    "translation" : "勝ち目がない"
+  },
+  "videoSubtitles.speedTap.seventh" : {
+    "translation" : "RED ON NOタッピングません"
+  },
+  "videoSubtitles.speedTap.eighth" : {
+    "translation" : "FIRST 5ポイントにWINS"
+  },
+  "videoSubtitles.cubePounce.first" : {
+    "translation" : "ONE CUBEをUSE"
+  },
+  "videoSubtitles.cubePounce.second" : {
+    "translation" : "GREENはコズモはそれを見ることができることを意味します"
+  },
+  "videoSubtitles.cubePounce.third" : {
+    "translation" : "コズモに向けて押し込み"
+  },
+  "videoSubtitles.cubePounce.fourth" : {
+    "translation" : "HEはPOUNCES前に引き離します"
+  },
+  "videoSubtitles.cubePounce.fifth" : {
+    "translation" : "あなたも遅い場合"
+  },
+  "videoSubtitles.cubePounce.sixth" : {
+    "translation" : "コズモは、POINTを獲得します"
+  },
+  "videoSubtitles.memoryMatch.first" : {
+    "translation" : "GAMEのSETUP"
+  },
+  "videoSubtitles.memoryMatch.second" : {
+    "translation" : "コズモはプレイする準備ができています"
+  },
+  "videoSubtitles.memoryMatch.third" : {
+    "translation" : "GAMEはパターンでBEGINS"
+  },
+  "videoSubtitles.memoryMatch.fourth" : {
+    "translation" : "PATTERNを見ます"
+  },
+  "videoSubtitles.memoryMatch.fifth" : {
+    "translation" : "当時それを繰り返します"
+  },
+  "videoSubtitles.memoryMatch.sixth" : {
+    "translation" : "コズモWITH交代"
+  },
+  "videoSubtitles.memoryMatch.seventh" : {
+    "translation" : "各ラウンドでは、パターンが成長します"
+  },
+  "videoSubtitles.memoryMatch.eighth" : {
+    "translation" : "あまりにも多くのミスやYOUが出ています"
+  },
+  "videoSubtitles.memoryMatch.nineth" : {
+    "translation" : "あなたが得ることができるどのくらいSEE"
+  },
+  "videoSubtitles.memoryMatch.tenth" : {
+    "translation" : "がんばろう"
   }
 }

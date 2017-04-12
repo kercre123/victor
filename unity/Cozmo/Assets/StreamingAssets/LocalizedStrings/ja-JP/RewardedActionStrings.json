@@ -51,8 +51,17 @@
   "reward.description.MemoryMatch.PatternLength.Ten" : {
     "translation" : "> 10灯ロングメモリマッチパターンを完了しました。"
   },
+  "reward.description.MemoryMatch.PatternLength.Fifteen" : {
+    "translation" : "> 15灯ロングメモリマッチパターンを完了しました。"
+  },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
     "translation" : "> 20灯ロングメモリマッチパターンを完了しました。"
+  },
+  "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
+    "translation" : "> 25灯ロングメモリマッチパターンを完了しました。"
+  },
+  "reward.description.MemoryMatch.PatternLength.Thirty" : {
+    "translation" : "> 30灯ロングメモリマッチパターンを完了しました。"
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
     "translation" : "メモリーマッチソロのための新しいパターンの記録を樹立"
@@ -88,7 +97,7 @@
     "translation" : "4-4を結ばされた後にクイックタップのラウンドを獲得しました"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "コズモ対人間対QuickTap人間を演じました"
+    "translation" : "コズモ対人間対再生クイックタップ人間"
   },
   "reward.description.Keepaway.Played" : {
     "translation" : "キープアウエーの試合をしました"

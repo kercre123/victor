@@ -214,10 +214,10 @@
     "translation" : "Cozmo bewegt hat und das Spiel nicht fortgesetzt werden kann."
   },
   "minigame.lostTrackOfBlock.title" : {
-    "translation" : "Cube Fehlende"
+    "translation" : "Cube Disconnected"
   },
   "minigame.lostTrackOfBlock.description" : {
-    "translation" : "Cozmo den Überblick verloren, seine Cube und das Spiel nicht fortgesetzt werden kann."
+    "translation" : "Einer der Würfel wurde getrennt. Besuchen Sie Einstellungen, um mehr über Problem Cubes zu lernen."
   },
   "minigame.timeout.title" : {
     "translation" : "Das Spiel ist zu Ende"
@@ -338,5 +338,17 @@
   },
   "sayCozmo.button.say" : {
     "translation" : "Sagen"
+  },
+  "speedTap.playerTwo" : {
+    "translation" : "Spieler 2:"
+  },
+  "speedTap.SelectGameType" : {
+    "translation" : "Wählen Sie Spieltyp"
+  },
+  "speedTap.playerOne" : {
+    "translation" : "Spieler 1:"
+  },
+  "speedTap.tapBlock2" : {
+    "translation" : "Tippen Sie auf das blinkende Würfel"
   }
 }

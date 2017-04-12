@@ -72,8 +72,8 @@
   "behavior.ReactToPlacedOnSlope" : {
     "translation" : ""
   },
-  "behavior.ReactToShaken": {
-    "translation": "Cozmo a le vertige"
+  "behavior.ReactToShaken" : {
+    "translation" : "Cozmo est étourdi"
   },
   "behavior.RequestToPlay" : {
     "translation" : "Cozmo met en place un jeu"
@@ -111,6 +111,9 @@
   "behavior.LookForFaceAndCube" : {
     "translation" : " "
   },
+  "behavior.RamIntoBlock" : {
+    "translation" : " "
+  },
   "error.TooManyFaces" : {
     "translation" : "Assurez-vous que Cozmo ne voit que"
   },
@@ -120,8 +123,14 @@
   "behavior.PrepareCubes" : {
     "translation" : "Cozmo prépare ses cubes"
   },
+  "behavior.PeekAboo" : {
+    "translation" : "Cozmo veut jouer Peekaboo"
+  },
   "behavior.LookInPlaceForCube" : {
     "translation" : "Cozmo est à la recherche d'un cube"
+  },
+  "behavior.Hiccup" : {
+    "translation" : "Cozmo a le hoquet"
   },
   "button.clearThisSlot" : {
     "translation" : "Effacer Cette machine à sous"

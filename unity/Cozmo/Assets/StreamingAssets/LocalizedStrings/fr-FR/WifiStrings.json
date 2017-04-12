@@ -106,7 +106,7 @@
     "translation" : "Êtes-vous sûr? Sans Situation Autorisations, vous devez vous connecter à Cozmo manuellement dans les paramètres Wifi de votre téléphone. Appuyez sur \"Autoriser\" lorsqu'on lui a demandé de permettre à l'App Cozmo de se connecter pour vous, ou appuyez sur \"Annuler\" pour vous connecter."
   },
   "wifi.enableLocation" : {
-    "translation" : "Appuyez sur \"Oui\" lorsqu'on lui a demandé de tourner sur l'emplacement, de sorte que l'App Cozmo peut trouver Cozmos à proximité. Note: Nous ne pourrons jamais stocker votre emplacement!"
+    "translation" : "Appuyez sur « OK » quand on lui demande d'activer emplacement, de sorte que l'App Cozmo peut trouver à proximité Cozmos. Note: Nous ne jamais stocker votre emplacement!"
   },
   "wifi.pleaseEnableLocation" : {
     "translation" : "Êtes-vous sûr? Sans emplacement, vous devez vous connecter à Cozmo manuellement dans les paramètres Wifi de votre téléphone. Appuyez sur \"Oui\" lorsqu'on lui a demandé de permettre à l'App Cozmo de se connecter pour vous, ou appuyez sur \"Annuler\" pour vous connecter."

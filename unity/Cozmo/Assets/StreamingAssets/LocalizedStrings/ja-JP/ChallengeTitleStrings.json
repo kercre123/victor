@@ -27,6 +27,12 @@
   "challengeDetails.needsMoreCubesModal.button" : {
     "translation" : "どうするか教えて"
   },
+  "challengeDetails.cozmoHasHiccups.title" : {
+    "translation" : "コズモはしゃっくりを持っています"
+  },
+  "challengeDetails.cozmoHasHiccups.description" : {
+    "translation" : "彼に逆さまに置くことによってコズモを助けるようにしてください。"
+  },
   "cubeSlap.title" : {
     "translation" : "遠ざける"
   },
@@ -62,5 +68,11 @@
   },
   "cozmoSays.description" : {
     "translation" : "スパークと引き換えに、コズモは、単語やフレーズを言うしようとします！"
+  },
+  "codeLab.title" : {
+    "translation" : "コードラボ"
+  },
+  "codeLab.description" : {
+    "translation" : "コズモをプログラムし、彼が行うことができます楽しいことを探求するためにあなたの創造性を使用してください！"
   }
 }

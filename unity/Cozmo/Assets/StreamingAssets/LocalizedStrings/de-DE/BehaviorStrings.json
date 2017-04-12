@@ -72,8 +72,8 @@
   "behavior.ReactToPlacedOnSlope" : {
     "translation" : ""
   },
-  "behavior.ReactToShaken": {
-    "translation": "Cozmo ist schwindelig"
+  "behavior.ReactToShaken" : {
+    "translation" : "Cozmo ist schwindlig"
   },
   "behavior.RequestToPlay" : {
     "translation" : "Cozmo setzt ein Spiel nach oben"
@@ -111,6 +111,9 @@
   "behavior.LookForFaceAndCube" : {
     "translation" : " "
   },
+  "behavior.RamIntoBlock" : {
+    "translation" : " "
+  },
   "error.TooManyFaces" : {
     "translation" : "Achten Sie darauf, nur Cozmo sieht"
   },
@@ -120,8 +123,14 @@
   "behavior.PrepareCubes" : {
     "translation" : "Cozmo bereitet sich auf seine Würfel"
   },
+  "behavior.PeekAboo" : {
+    "translation" : "Cozmo will Peekaboo spielen"
+  },
   "behavior.LookInPlaceForCube" : {
     "translation" : "Cozmo sucht einen Würfel"
+  },
+  "behavior.Hiccup" : {
+    "translation" : "Cozmo hat Schluckauf"
   },
   "button.clearThisSlot" : {
     "translation" : "Deaktivieren Sie dieses Slot"

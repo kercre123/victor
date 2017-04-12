@@ -214,10 +214,10 @@
     "translation" : "コズモが移動していると、ゲームを続行することはできません。"
   },
   "minigame.lostTrackOfBlock.title" : {
-    "translation" : "キューブが見つかりません"
+    "translation" : "キューブ切断"
   },
   "minigame.lostTrackOfBlock.description" : {
-    "translation" : "コズモは彼のキューブのトラックを失い、ゲームを続行することはできません。"
+    "translation" : "キューブの一つが切断されました。トラブルシューティングのキューブについての詳細を学ぶために設定を参照してください。"
   },
   "minigame.timeout.title" : {
     "translation" : "ゲームは終了しました"
@@ -338,5 +338,17 @@
   },
   "sayCozmo.button.say" : {
     "translation" : "いう"
+  },
+  "speedTap.playerTwo" : {
+    "translation" : "プレイヤー2："
+  },
+  "speedTap.SelectGameType" : {
+    "translation" : "ゲームタイプを選択します"
+  },
+  "speedTap.playerOne" : {
+    "translation" : "プレイヤー1："
+  },
+  "speedTap.tapBlock2" : {
+    "translation" : "点滅キューブをタップします"
   }
 }

@@ -51,8 +51,17 @@
   "reward.description.MemoryMatch.PatternLength.Ten" : {
     "translation" : "Complété un motif mémoire Match> 10 lumières longtemps."
   },
+  "reward.description.MemoryMatch.PatternLength.Fifteen" : {
+    "translation" : "Achèvement d'un modèle de correspondance de mémoire> 15 lumières à long."
+  },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
     "translation" : "Complété un motif mémoire Match> 20 feux longue."
+  },
+  "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
+    "translation" : "Achèvement d'un modèle de correspondance de mémoire> 25 lumières à long."
+  },
+  "reward.description.MemoryMatch.PatternLength.Thirty" : {
+    "translation" : "Achèvement d'un modèle de correspondance de mémoire> 30 lumières à long."
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
     "translation" : "Définir un nouveau record de modèle pour Memory Match solo"
@@ -88,7 +97,7 @@
     "translation" : "A remporté une ronde de Quick Tap après avoir été attaché 4-4"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "Joué QuickTap Human vs Human vs Cozmo"
+    "translation" : "Joués rapide Tap Human vs Human vs Cozmo"
   },
   "reward.description.Keepaway.Played" : {
     "translation" : "Joué un jeu de Keepaway"

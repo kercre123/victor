@@ -54,6 +54,18 @@
   "unlockable.FistBump.SparkedStateDescription" : {
     "translation" : "Als er fertig ist, Faust Cozmo Beule"
   },
+  "unlockable.PeekABoo.Title" : {
+    "translation" : "Guck-Guck"
+  },
+  "unlockable.PeekABoo.Description" : {
+    "translation" : "Peekaboo, sehe ich Sie! Mit diesem Upgrade spielt Peekaboo mit Cozmo von Ihrem Gesicht hinter den Händen versteckt, dann zeigen Sie Ihr Gesicht wieder, ihn zu überraschen."
+  },
+  "unlockable.PeekABoo.SparkButtonDescription" : {
+    "translation" : "Tippen Sie Cozmo fragen Peekaboo zu spielen"
+  },
+  "unlockable.PeekABoo.SparkedStateDescription" : {
+    "translation" : "Zuerst verstecken Ihr Gesicht, dann Peekaboo!"
+  },
   "unlockable.Workout.Title" : {
     "translation" : "Workout mit Cubes"
   },
@@ -89,6 +101,12 @@
   },
   "unlockable.SpeedTap.Description" : {
     "translation" : "Mit diesem Upgrade lernt Cozmo, wie Sie das Spiel Quick Tap zu spielen. Im Laufe der Zeit verbessern wird seine Fähigkeiten!"
+  },
+  "unlockable.CodeLab.Title" : {
+    "translation" : "Code Lab"
+  },
+  "unlockable.CodeLab.Description" : {
+    "translation" : "Code Lab Beschreibung!"
   },
   "unlockable.cozmoSays.Title" : {
     "translation" : "Cozmo Says"
@@ -182,6 +200,18 @@
   },
   "unlockable.PickupCube.SparkedStateDescription" : {
     "translation" : "Beobachten Sie abholen Cozmo einen Cube"
+  },
+  "unlockable.GatherCubes.Title" : {
+    "translation" : "Sammeln Sie Cubes Titel <placeholder>"
+  },
+  "unlockable.GatherCubes.Description" : {
+    "translation" : "Sammeln Sie Cubes Beschreibung <placeholder>"
+  },
+  "unlockable.GatherCubes.SparkButtonDescription" : {
+    "translation" : "Sammeln Sie Cubes Spark-Button <placeholder>"
+  },
+  "unlockable.GatherCubes.SparkedStateDescription" : {
+    "translation" : "Sammeln Sie Cubes Spark-Staat <placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
     "translation" : "Demnächst!"

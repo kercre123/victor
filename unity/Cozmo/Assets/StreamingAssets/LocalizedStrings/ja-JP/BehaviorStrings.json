@@ -72,8 +72,8 @@
   "behavior.ReactToPlacedOnSlope" : {
     "translation" : ""
   },
-  "behavior.ReactToShaken": {
-    "translation": "コズモはめまいです"
+  "behavior.ReactToShaken" : {
+    "translation" : "コズモは、めまいです"
   },
   "behavior.RequestToPlay" : {
     "translation" : "コズモは、ゲームを設定されています"
@@ -111,6 +111,9 @@
   "behavior.LookForFaceAndCube" : {
     "translation" : " "
   },
+  "behavior.RamIntoBlock" : {
+    "translation" : " "
+  },
   "error.TooManyFaces" : {
     "translation" : "コズモだけ見ていることを確認します"
   },
@@ -120,8 +123,14 @@
   "behavior.PrepareCubes" : {
     "translation" : "コズモは彼のキューブを準備しています"
   },
+  "behavior.PeekAboo" : {
+    "translation" : "コズモは、いないいないばあを再生したいです"
+  },
   "behavior.LookInPlaceForCube" : {
     "translation" : "コズモは、キューブを探しています"
+  },
+  "behavior.Hiccup" : {
+    "translation" : "コズモはしゃっくりを持っています"
   },
   "button.clearThisSlot" : {
     "translation" : "このスロットをクリア"

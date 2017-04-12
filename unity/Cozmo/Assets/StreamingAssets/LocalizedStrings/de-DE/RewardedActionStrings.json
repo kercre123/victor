@@ -51,8 +51,17 @@
   "reward.description.MemoryMatch.PatternLength.Ten" : {
     "translation" : "Abgeschlossene lange ein Memory Match Muster> 10 Leuchten."
   },
+  "reward.description.MemoryMatch.PatternLength.Fifteen" : {
+    "translation" : "Abgeschlossen lange ein Memory Match Muster> 15 Lichter."
+  },
   "reward.description.MemoryMatch.PatternLength.Twenty" : {
     "translation" : "Abgeschlossene lange ein Memory Match Muster> 20 Lichter."
+  },
+  "reward.description.MemoryMatch.PatternLength.TwentyFive" : {
+    "translation" : "Abgeschlossen lange ein Memory Match Muster> 25 Lichter."
+  },
+  "reward.description.MemoryMatch.PatternLength.Thirty" : {
+    "translation" : "Abgeschlossen lange ein Memory Match Muster> 30 Lichter."
   },
   "reward.description.MemoryMatch.HighScore.Solo" : {
     "translation" : "Legen Sie ein neues Muster Rekord für Memory Match Solo"
@@ -88,7 +97,7 @@
     "translation" : "eine Runde Schnell Tap Won nach 4-4 gebunden zu sein"
   },
   "reward.description.QuickTap.PlayMP" : {
-    "translation" : "Gespielt QuickTap Mensch gegen Mensch gegen Cozmo"
+    "translation" : "Gespielt Schnell Tap Mensch gegen Mensch gegen Cozmo"
   },
   "reward.description.Keepaway.Played" : {
     "translation" : "Gespielt ein Spiel von Keepaway"

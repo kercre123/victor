@@ -27,6 +27,12 @@
   "challengeDetails.needsMoreCubesModal.button" : {
     "translation" : "Zeig mir wie"
   },
+  "challengeDetails.cozmoHasHiccups.title" : {
+    "translation" : "Cozmo hat den Schluckauf"
+  },
+  "challengeDetails.cozmoHasHiccups.description" : {
+    "translation" : "Versuchen Sie Cozmo zu helfen, indem sie ihm den Kopf nach unten setzen."
+  },
   "cubeSlap.title" : {
     "translation" : "Bleib weg"
   },
@@ -62,5 +68,11 @@
   },
   "cozmoSays.description" : {
     "translation" : "Im Gegenzug für eine Spark, wird Cozmo versuchen, ein Wort oder einen Satz zu sagen!"
+  },
+  "codeLab.title" : {
+    "translation" : "Code Lab"
+  },
+  "codeLab.description" : {
+    "translation" : "Nutzen Sie Ihre Kreativität Cozmo zu programmieren und erforschen Spaß Dinge, die er tun kann!"
   }
 }

@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "boot.errorDiskFull" : {
-    "translation" : "L'App Cozmo ne pouvait pas charger parce que le stockage de votre appareil est trop plein. Essayez de supprimer les médias ou les applications non utilisées de votre téléphone, et essayez à nouveau. ré"
+    "translation" : "L'application Cozmo n'a pas pu charger, car la mémoire de votre appareil est trop plein. Essayez de supprimer les médias ou les applications inutilisées de votre téléphone, et essayez à nouveau."
   },
   "boot.errorReadingFiles" : {
     "translation" : "L'App Cozmo ne pouvait pas lire les fichiers. Erreur: {0}"

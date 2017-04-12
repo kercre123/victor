@@ -106,7 +106,7 @@
     "translation" : "Bist du sicher? Ohne Ort Berechtigungen, werden Sie zu Cozmo verbinden müssen manuell in Ihrem Telefon Wireless-LAN-Einstellungen. Tippen Sie auf \"Allow\", wenn gefragt die Cozmo App zu ermöglichen, für Sie zu verbinden, oder tippen Sie auf \"Abbrechen\", sich zu verbinden."
   },
   "wifi.enableLocation" : {
-    "translation" : "Tippen Sie auf \"Ja\", wenn gefragt auf Ort zu drehen, so dass die Cozmo App in der Nähe Cozmos finden. Hinweis: Wir werden niemals Ihre Position speichern!"
+    "translation" : "Tippen Sie auf „OK“, wenn auf Ort drehen gefragt, so dass die Cozmo App in der Nähe Cozmos finden. Hinweis: Wir werden niemals Ihre Position speichern!"
   },
   "wifi.pleaseEnableLocation" : {
     "translation" : "Bist du sicher? Ohne Ort, werden Sie zu Cozmo verbinden müssen manuell in Ihrem Telefon Wireless-LAN-Einstellungen. Tippen Sie auf \"Ja\", wenn gefragt die Cozmo App zu ermöglichen, für Sie zu verbinden, oder tippen Sie auf \"Abbrechen\", sich zu verbinden."

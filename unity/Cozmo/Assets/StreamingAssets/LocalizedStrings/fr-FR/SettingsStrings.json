@@ -115,10 +115,10 @@
     "translation" : "Sur"
   },
   "settings.versionPanel.acknowledgementsModal.title" : {
-    "translation" : "Remerciements"
+    "translation" : "Légal"
   },
   "settings.versionPanel.button.acknowledgementsLink" : {
-    "translation" : "Remerciements"
+    "translation" : "Légal"
   },
   "settings.versionPanel.button.eraseCozmo" : {
     "translation" : "Effacer Cozmo"

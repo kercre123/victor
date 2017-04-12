@@ -23,7 +23,7 @@ public class CreateNeededSDFFont {
   private static string[] _sSdfFontFallbackNames = { " Kana", " Ascii" };
   private const int _kFontSize = 36;
   private const int _kFontPadding = 4;
-  private const int _kFontAtlasWidth = 1024;
+  private const int _kFontAtlasWidth = 2048;
   private const int _kFontAtlasHeight = 1024;
   private const FaceStyles _kFontStyle = FaceStyles.Normal;
   private const int _kFontMod = 2;

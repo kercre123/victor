@@ -1,39 +1,81 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "videoSubtitles.speedTap.first": {
-    "translation": "First speed tap text"
+  "videoSubtitles.speedTap.first" : {
+    "translation" : "GAME SETUP"
   },
-  "videoSubtitles.speedTap.second": {
-    "translation": "Second speed tap text"
+  "videoSubtitles.speedTap.second" : {
+    "translation" : "Cozmo wird seine CUBE SELECT"
   },
-  "videoSubtitles.speedTap.third": {
-    "translation": "Third speed tap text"
+  "videoSubtitles.speedTap.third" : {
+    "translation" : "Tippen Sie mit CUBE AUSWÄHLEN-"
   },
-  "videoSubtitles.cubePounce.first": {
-    "translation": "First cube pounce text"
+  "videoSubtitles.speedTap.fourth" : {
+    "translation" : "BEREIT MACHEN"
   },
-  "videoSubtitles.cubePounce.second": {
-    "translation": "Second cube pounce text"
+  "videoSubtitles.speedTap.fifth" : {
+    "translation" : "TAP IF mit den Farben"
   },
-  "videoSubtitles.cubePounce.third": {
-    "translation": "Third cube pounce text"
+  "videoSubtitles.speedTap.sixth" : {
+    "translation" : "KEINE ÜBEREINSTIMMUNG"
+  },
+  "videoSubtitles.speedTap.seventh" : {
+    "translation" : "NO Klopfen auf RED"
+  },
+  "videoSubtitles.speedTap.eighth" : {
+    "translation" : "FIRST auf 5 Punkte WINS"
+  },
+  "videoSubtitles.cubePounce.first" : {
+    "translation" : "Verwenden Sie einen CUBE"
+  },
+  "videoSubtitles.cubePounce.second" : {
+    "translation" : "Grün bedeutet, cozmo sie sehen können"
+  },
+  "videoSubtitles.cubePounce.third" : {
+    "translation" : "PUSH IT IN RICHTUNG cozmo"
+  },
+  "videoSubtitles.cubePounce.fourth" : {
+    "translation" : "Wegzuziehen BEVOR ER Pounces"
+  },
+  "videoSubtitles.cubePounce.fifth" : {
+    "translation" : "WENN SIE ZU LANGSAM"
+  },
+  "videoSubtitles.cubePounce.sixth" : {
+    "translation" : "Cozmo einen Punkt SCORE"
+  },
+  "videoSubtitles.memoryMatch.first" : {
+    "translation" : "GAME SETUP"
+  },
+  "videoSubtitles.memoryMatch.second" : {
+    "translation" : "Cozmo ist bereit zu spielen"
+  },
+  "videoSubtitles.memoryMatch.third" : {
+    "translation" : "Das Spiel beginnt mit einem Muster"
+  },
+  "videoSubtitles.memoryMatch.fourth" : {
+    "translation" : "ANSEHEN MUSTER"
+  },
+  "videoSubtitles.memoryMatch.fifth" : {
+    "translation" : "Wiederholen Sie es dann zurück"
+  },
+  "videoSubtitles.memoryMatch.sixth" : {
+    "translation" : "Abwechselnd MIT cozmo"
+  },
+  "videoSubtitles.memoryMatch.seventh" : {
+    "translation" : "Jede Runde, das Muster GROW"
+  },
+  "videoSubtitles.memoryMatch.eighth" : {
+    "translation" : "Zu viele Fehler gemacht und Sie sind OUT"
+  },
+  "videoSubtitles.memoryMatch.nineth" : {
+    "translation" : "Sehen, wie weit SIE ERHALTEN"
+  },
+  "videoSubtitles.memoryMatch.tenth" : {
+    "translation" : "VIEL GLÜCK"
   }
 }

@@ -54,6 +54,18 @@
   "unlockable.FistBump.SparkedStateDescription" : {
     "translation" : "彼は準備ができたとき、拳はコズモバンプ"
   },
+  "unlockable.PeekABoo.Title" : {
+    "translation" : "いないいないばあ"
+  },
+  "unlockable.PeekABoo.Description" : {
+    "translation" : "いないいないばあは、私はあなたを参照してください！このアップグレードでは、あなたの手の後ろにあなたの顔を隠すことで、コズモでいないいないばあを果たし、その後、彼を驚かせるもう一度あなたの顔を示しています。"
+  },
+  "unlockable.PeekABoo.SparkButtonDescription" : {
+    "translation" : "いないいないばあを再生するにはコズモを依頼するタップ"
+  },
+  "unlockable.PeekABoo.SparkedStateDescription" : {
+    "translation" : "まずいないいないばあそして、あなたの顔を隠します！"
+  },
   "unlockable.Workout.Title" : {
     "translation" : "キューブとのワークアウト"
   },
@@ -89,6 +101,12 @@
   },
   "unlockable.SpeedTap.Description" : {
     "translation" : "このアップグレードにより、コズモはゲームクイックタップを再生する方法を学習します。時間が経つにつれて、彼のスキルが改善されます！"
+  },
+  "unlockable.CodeLab.Title" : {
+    "translation" : "コードラボ"
+  },
+  "unlockable.CodeLab.Description" : {
+    "translation" : "コードラボの説明！"
   },
   "unlockable.cozmoSays.Title" : {
     "translation" : "コズモは言います"
@@ -182,6 +200,18 @@
   },
   "unlockable.PickupCube.SparkedStateDescription" : {
     "translation" : "ウォッチコズモは、キューブを拾います"
+  },
+  "unlockable.GatherCubes.Title" : {
+    "translation" : "キューブのタイトルを収集<placeholder>"
+  },
+  "unlockable.GatherCubes.Description" : {
+    "translation" : "キューブの説明を収集<placeholder>"
+  },
+  "unlockable.GatherCubes.SparkButtonDescription" : {
+    "translation" : "キューブスパークボタンを収集<placeholder>"
+  },
+  "unlockable.GatherCubes.SparkedStateDescription" : {
+    "translation" : "キューブスパーク状態を収集<placeholder>"
   },
   "unlockable.ComingSoon.Title" : {
     "translation" : "近日公開！"

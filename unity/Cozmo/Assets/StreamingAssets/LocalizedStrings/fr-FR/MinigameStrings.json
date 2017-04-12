@@ -214,10 +214,10 @@
     "translation" : "Cozmo a déménagé et ne peut pas continuer le jeu."
   },
   "minigame.lostTrackOfBlock.title" : {
-    "translation" : "Cube manquant"
+    "translation" : "cube Disconnected"
   },
   "minigame.lostTrackOfBlock.description" : {
-    "translation" : "Cozmo a perdu la trace de son Cube et ne peut pas continuer le jeu."
+    "translation" : "L'un des cubes est déconnecté. Accédez aux paramètres pour en savoir plus sur les cubes de dépannage."
   },
   "minigame.timeout.title" : {
     "translation" : "Le jeu est terminé"
@@ -338,5 +338,17 @@
   },
   "sayCozmo.button.say" : {
     "translation" : "Dire"
+  },
+  "speedTap.playerTwo" : {
+    "translation" : "Joueur 2:"
+  },
+  "speedTap.SelectGameType" : {
+    "translation" : "Sélectionner le type de jeu"
+  },
+  "speedTap.playerOne" : {
+    "translation" : "Joueur 1:"
+  },
+  "speedTap.tapBlock2" : {
+    "translation" : "Appuyez sur le Cube clignotant"
   }
 }
