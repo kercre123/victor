@@ -1,3 +1,17 @@
+----------------
+Release v94
+----------------
+
+General:
+-remove 0xf0 limit on serial# --> Cube fixtures will fail. Playpen Afix## may repeat!
+
+PLAYPEN:
+-show SSID "Afix##" on display
+-send POWERON commands to keep cozmo alive during the test (HW change)
+
+SOUND,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]
+-changed speaker test to louder frequency sweep audio
+^Note: requires v94+ head firmware; modified sound generator
 
 ----------------
 Release v93
