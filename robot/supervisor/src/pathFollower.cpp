@@ -87,6 +87,11 @@ namespace Anki
       // Deletes current path
       void ClearPath(void)
       {
+        if (currPathSegment_ >= 0) {
+          SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
+          SpeedController::SetDefaultAccelerationAndDeceleration();
+        }
+        
         path_.Clear();
         currPathSegment_ = -1;
         realPathSegment_ = -1;
@@ -410,8 +415,7 @@ namespace Anki
       Result Update()
       {
         if (currPathSegment_ < 0) {
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-          return RESULT_FAIL;
+          return RESULT_OK;
         }
 
         Planning::SegmentRangeStatus segRes = Planning::OOR_NEAR_END;

@@ -39,6 +39,8 @@ namespace Anki {
     void SetUserCommandedDeceleration(u16 ucDecel);
     u16 GetUserCommandedDeceleration(void);
     
+    void SetDefaultAccelerationAndDeceleration();
+    
     // The speed controller will vary the speed around the user commanded speed
     // based on how fast we actually drive
     void SetControllerCommandedVehicleSpeed(s16 ccspeed);

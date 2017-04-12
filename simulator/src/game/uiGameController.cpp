@@ -943,6 +943,19 @@ namespace Anki {
       SendMessage(message);
     }
     
+    
+    
+    void UiGameController::SendDriveStraight(f32 speed_mmps, f32 dist_mm, bool shouldPlayAnimation)
+    {
+      ExternalInterface::DriveStraight m;
+      m.speed_mmps = speed_mmps;
+      m.dist_mm = dist_mm;
+      m.shouldPlayAnimation = shouldPlayAnimation;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_DriveStraight(m);
+      SendMessage(message);
+    }
+    
     uint32_t UiGameController::SendTurnInPlace(const f32 angle_rad,
                                                const f32 speed_radPerSec,
                                                const f32 accel_radPerSec2,

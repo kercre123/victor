@@ -139,6 +139,12 @@ namespace Anki {
     {
       return userCommandedDeceleration_;
     }
+    
+    void SetDefaultAccelerationAndDeceleration()
+    {
+      userCommandedAcceleration_ = DEFAULT_ACCEL_MMPS2;
+      userCommandedDeceleration_ = DEFAULT_DECEL_MMPS2;
+    }
 
     void SetControllerCommandedVehicleSpeed(s16 ccspeed)
     {

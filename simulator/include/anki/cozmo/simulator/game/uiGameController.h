@@ -134,6 +134,10 @@ protected:
   void SendPing();
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2);
   void SendDriveArc(const f32 speed, const f32 accel, const s16 curvature_mm);
+  void SendDriveStraight(f32 speed_mmps,  // Speed should be positive
+                         f32 dist_mm,     // Use +ve for forward, -ve for backward
+                         bool shouldPlayAnimation = false);
+
   // SendTurnInPlace returns the IdTag of the queued action:
   uint32_t SendTurnInPlace(const f32 angle_rad,
                            const f32 speed_radPerSec = 0.f,
