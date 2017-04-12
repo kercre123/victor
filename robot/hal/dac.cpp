@@ -153,6 +153,7 @@ void GenerateTestTone(void) {
   GPIO_RESET(POWEREN);
   MCG_C1 |= MCG_C1_IREFS_MASK;
   
+  /*/============================================================================================
   // THIS ALL NEEDS TO BE ADJUSTED
   static const int CPU_OLD_CLOCK = 100000000;
   static const int CPU_NEW_CLOCK = 32768*2560;
@@ -180,6 +181,29 @@ void GenerateTestTone(void) {
     // Pitch shift
     freq /= 2;
   }
+  //============================================================================================*/
+  
+  static const float peak = 0x800; //sound is much cleaner at 0x400 (clipping?). But not nearly as annoying
+  
+  DAC::EnableAudio(true);
+  
+  //Silence. Center audio output
+  for( int i=0; i < 1000; i++ )
+    DAC_WRITE[next_write_index()] = (int)peak;
+  
+  //Frequency sweep tone
+  const float tone_start_freq = 1000, tone_end_freq = 10000;
+  const int tone_time_ms = 500;
+  const int tone_num_samples = (tone_time_ms * SAMPLE_RATE) / 1000;
+  for( float t=0, f=tone_start_freq; t < ((float)tone_time_ms)/1000; t += 1/((float)SAMPLE_RATE))
+  {
+    DAC_WRITE[next_write_index()] = (int)(peak * sinf(2*M_PI_F*f*t) + peak);
+    f += (tone_end_freq - tone_start_freq) / (float)tone_num_samples;
+  }
+  
+  for( int i=0; i < 1000; i++ )
+    DAC_WRITE[next_write_index()] = (int)peak;
   
   NVIC_SystemReset();
 }
+
