@@ -55,7 +55,7 @@
       "hiccupParams": {
         // How often Cozmo should get the hiccups
         "minHiccupOccurrenceFrequency_s": 300,
-        "maxHiccupOccurrenceFrequency_s": 600,
+        "maxHiccupOccurrenceFrequency_s": 3300,
    
         // Number of hiccups Cozmo will do when he gets the hiccups
         "minNumberOfHiccupsToDo": 5,
