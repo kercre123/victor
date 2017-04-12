@@ -111,6 +111,7 @@ namespace Vision {
     // Actually add the object to our known objects and register each marker it has on it
     for(auto & marker : object->GetMarkers()) {
       _objectWithCode[marker.GetCode()] = object.get();
+      _unknownMarkerWarningIssued.erase(marker.GetCode()); 
     }
     _knownObjects.push_back(std::move(object));
     
@@ -135,6 +136,14 @@ namespace Vision {
       {
         if(knownObjectIter->get() == objectToRemove)
         {
+          // Get rid of the reverse lookup entry for _all_ codes on the matching
+          // known object (not just the one passed in that we used to find the object)
+          for (const auto& marker : (*knownObjectIter)->GetMarkers())
+          {
+            _objectWithCode.erase(marker.GetCode());
+          }
+          
+          // Now erase the known object entry
           _knownObjects.erase(knownObjectIter);
           objectFound = true;
           break;
@@ -144,8 +153,8 @@ namespace Vision {
       }
       
       DEV_ASSERT(objectFound, "ObservableObjectLibrary.RemoveObjectWithMarker.ObjectNotFound");
-      
-      _objectWithCode.erase(objectWithCodeIter);
+      DEV_ASSERT(_objectWithCode.find(code) == _objectWithCode.end(),
+                 "ObservableObjectLibrary.RemoveObjectWithMarker.ObjectWithCodeEntryStillFound");
       
       return true;
     }
@@ -175,9 +184,14 @@ namespace Vision {
         }
         else
         {
-          PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectsFromMarkers.UnusedMarker",
-                              "No objects in library use observed '%s' marker",
-                              marker.GetCodeName());
+          auto result = _unknownMarkerWarningIssued.insert(marker.GetCode());
+          const bool didInsert = result.second;
+          if(didInsert) // i.e., new entry: no warning issued yet
+          {
+            PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectsFromMarkers.UnusedMarker",
+                                "No objects in library use observed '%s' marker",
+                                marker.GetCodeName());
+          }
         }
       } // IF seenOnlyBy
       

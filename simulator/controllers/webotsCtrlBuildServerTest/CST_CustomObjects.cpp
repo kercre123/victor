@@ -55,7 +55,7 @@ private:
   
   virtual s32 UpdateSimInternal() override;
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) override;
-  virtual void HandleRobotDeletedAllCustomObjects(const ExternalInterface::RobotDeletedAllCustomObjects& msg) override;
+  virtual void HandleRobotDeletedCustomMarkerObjects(const ExternalInterface::RobotDeletedCustomMarkerObjects& msg) override;
   
   void GetDimension(const webots::Node* node, const std::string& name, f32& dim);
   void DefineObjects();
@@ -333,7 +333,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
         SendMoveHeadToAngle(0.f, 100.f, 100.f);
         
         using namespace ExternalInterface;
-        SendMessage(MessageGameToEngine(UndefineAllCustomObjects()));
+        SendMessage(MessageGameToEngine(UndefineAllCustomMarkerObjects()));
         
         _testState = TestState::Undefine;
       }
@@ -564,7 +564,7 @@ void CST_CustomObjects::HandleDefinedCustomObject(const ExternalInterface::Defin
   ++_numDefinesReceived;
 }
       
-void CST_CustomObjects::HandleRobotDeletedAllCustomObjects(const ExternalInterface::RobotDeletedAllCustomObjects& msg)
+void CST_CustomObjects::HandleRobotDeletedCustomMarkerObjects(const ExternalInterface::RobotDeletedCustomMarkerObjects& msg)
 {
   _numDefinesReceived = 0;
 }

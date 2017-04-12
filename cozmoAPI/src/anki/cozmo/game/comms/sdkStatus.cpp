@@ -90,8 +90,11 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
   // Disable color images from camera
   _externalInterface->Broadcast( GToE(ExternalInterface::EnableColorImages(false)) );
   
-  // Delete all custom objects from the world
-  _externalInterface->Broadcast( GToE(ExternalInterface::DeleteAllCustomObjects(1)) );
+  // Undefine (and delete) all custom marker objects
+  _externalInterface->Broadcast( GToE(ExternalInterface::UndefineAllCustomMarkerObjects()) );
+  
+  // Delete all fixed custom objects from the world
+  _externalInterface->Broadcast( GToE(ExternalInterface::DeleteAllCustomObjects()) );
   
   // Stop everything else
   _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );

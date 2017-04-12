@@ -71,6 +71,10 @@ namespace Anki {
       // Note that there can only be one object with each marker
       std::map<Marker::Code, const ObsObjectType*> _objectWithCode;
       
+      // Only warn once per unknown marker to avoid spamming, e.g. while staring at an
+      // undefined object (whose markers haven't been registered)
+      mutable std::set<Marker::Code> _unknownMarkerWarningIssued;
+      
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose
       class PoseCluster

@@ -363,22 +363,38 @@ message SetRobotCarryingObject {
 ///////////////////////////////////////////////////////////////////////////////
 
 // DeleteAllCustomObjects
-// Deletes all instantiated custom objects, leaves blocks, chargers, faces and ledges.
-// The definitions of those objects remain valid (so new ones can still be created)
+// Deletes *all* custom objects ("fixed" ones and those with markers).
+// "RobotDeletedAllCustomObjects" message will be sent back as confirmation.
 message DeleteAllCustomObjects {
-    uint_8 robotID
 }
 
-// UndefineAllCustomObjects
-// All custom objects definitions defined with messages below are completely removed
-// and any instantiations of those objects are deleted.
-message UndefineAllCustomObjects {
+// DeleteCustomMarkerObjects
+// Deletes all instantiations of any custom marker objects defined below.
+// "Fixed" markerless custom objects remain.
+// The definitions remain valid so new ones can still be created.
+// "RobotDeletedCustomMarkerObjects" message will be sent back as confirmation.
+message DeleteCustomMarkerObjects {
+}
 
+// DeleteFixedCustomObjects
+// Deletes all "fixed" (markerless) custom objects created with CreateFixedCustomObject.
+// Custom marker objects will remain.
+// "RobotDeletedFixedCustomObjects" message will be sent back as confirmation.
+message DeleteFixedCustomObjects {
+}
+
+// UndefineAllCustomMarkerObjects
+// All custom marker objects definitions defined with messages below are completely removed
+// and any instantiations of those objects are deleted.
+// "Fixed" (markerless) custom objects remain.
+// "RobotDeletedCustomMarkerObjects" message will be sent back as confirmation.
+message UndefineAllCustomMarkerObjects {
 }
 
 // CreateFixedCustomObject
 // Creates a CustomObject at the specific pose with no markers associated with it
-// Since this object has no markers with which to be observed, it will remain in the specified pose as an obstacle forever
+// Since this object has no markers with which to be observed, it will remain in the
+// specified pose as an obstacle forever (or until deleted with a deletion message above)
 message CreateFixedCustomObject {
     PoseStruct3d pose,
     float_32 xSize_mm,

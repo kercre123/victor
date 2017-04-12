@@ -128,6 +128,8 @@ protected:
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   virtual void HandleDefinedCustomObject(const ExternalInterface::DefinedCustomObject& msg) {};
   virtual void HandleRobotDeletedAllCustomObjects(const ExternalInterface::RobotDeletedAllCustomObjects& msg) {};
+  virtual void HandleRobotDeletedCustomMarkerObjects(const ExternalInterface::RobotDeletedCustomMarkerObjects& msg) {};
+  virtual void HandleRobotDeletedFixedCustomObjects(const ExternalInterface::RobotDeletedFixedCustomObjects& msg) {};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -506,6 +508,8 @@ private:
   void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
   void HandleDefinedCustomObjectBase(const ExternalInterface::DefinedCustomObject& msg);
   void HandleRobotDeletedAllCustomObjectsBase(const ExternalInterface::RobotDeletedAllCustomObjects& msg);
+  void HandleRobotDeletedCustomMarkerObjectsBase(const ExternalInterface::RobotDeletedCustomMarkerObjects& msg);
+  void HandleRobotDeletedFixedCustomObjectsBase(const ExternalInterface::RobotDeletedFixedCustomObjects& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();

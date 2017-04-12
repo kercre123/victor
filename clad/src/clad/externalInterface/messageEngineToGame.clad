@@ -349,6 +349,16 @@ message RobotDeletedAllCustomObjects {
     uint_32 robotID
 }
 
+// RobotDeletedFixedCustomObjects
+message RobotDeletedFixedCustomObjects {
+    uint_32 robotID
+}
+
+// RobotDeletedCustomMarkerObjects
+message RobotDeletedCustomMarkerObjects {
+    uint_32 robotID
+}
+
 // CreatedFixedCustomObject
 message CreatedFixedCustomObject {
     uint_32 robotID,

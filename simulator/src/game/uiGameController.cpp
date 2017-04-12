@@ -438,6 +438,16 @@ namespace Anki {
       HandleRobotDeletedAllCustomObjects(msg);
     }
     
+    void UiGameController::HandleRobotDeletedCustomMarkerObjectsBase(const ExternalInterface::RobotDeletedCustomMarkerObjects& msg)
+    {
+      HandleRobotDeletedCustomMarkerObjects(msg);
+    }
+    
+    void UiGameController::HandleRobotDeletedFixedCustomObjectsBase(const ExternalInterface::RobotDeletedFixedCustomObjects& msg)
+    {
+      HandleRobotDeletedFixedCustomObjects(msg);
+    }
+    
     // ===== End of message handler callbacks ====
     
   
@@ -614,6 +624,12 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::RobotDeletedAllCustomObjects:
             HandleRobotDeletedAllCustomObjectsBase(message.Get_RobotDeletedAllCustomObjects());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::RobotDeletedCustomMarkerObjects:
+            HandleRobotDeletedCustomMarkerObjectsBase(message.Get_RobotDeletedCustomMarkerObjects());
+            break;
+          case ExternalInterface::MessageEngineToGameTag::RobotDeletedFixedCustomObjects:
+            HandleRobotDeletedFixedCustomObjectsBase(message.Get_RobotDeletedFixedCustomObjects());
             break;
           default:
             // ignore

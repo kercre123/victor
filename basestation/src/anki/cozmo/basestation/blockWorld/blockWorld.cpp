@@ -324,7 +324,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     using namespace ExternalInterface;
     auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteAllCustomObjects>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::UndefineAllCustomObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::UndefineAllCustomMarkerObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteCustomMarkerObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DeleteFixedCustomObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SelectNextObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomBox>();
@@ -389,6 +391,28 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::DeleteFixedCustomObjects& msg)
+  {
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    filter.AddAllowedFamily(ObjectFamily::CustomObject);
+    filter.AddAllowedType(ObjectType::CustomFixedObstacle);
+    DeleteLocatedObjects(filter);
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedFixedCustomObjects>(_robot->GetID());
+  }
+  
+  template<>
+  void BlockWorld::HandleMessage(const ExternalInterface::DeleteCustomMarkerObjects& msg)
+  {
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    filter.AddAllowedFamily(ObjectFamily::CustomObject);
+    filter.AddIgnoreType(ObjectType::CustomFixedObstacle); // everything custom _except_ fixed obstacles
+    DeleteLocatedObjects(filter);
+    _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedCustomMarkerObjects>(_robot->GetID());
+  }
+  
+  template<>
   void BlockWorld::HandleMessage(const ExternalInterface::DeleteAllCustomObjects& msg)
   {
     BlockWorldFilter filter;
@@ -399,11 +423,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   };
   
   template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::UndefineAllCustomObjects& msg)
+  void BlockWorld::HandleMessage(const ExternalInterface::UndefineAllCustomMarkerObjects& msg)
   {
-    // First we need to delete any custom objects we already have, so just call the handler for that
-    ExternalInterface::DeleteAllCustomObjects deletionMsg(_robot->GetID());
-    HandleMessage(deletionMsg);
+    // First we need to delete any custom markered objects we already have
+    // Note that this does 
+    HandleMessage(ExternalInterface::DeleteCustomMarkerObjects());
     
     // Remove the definition of anything that uses any Custom marker from the ObsObjLibrary
     static_assert(Util::EnumToUnderlying(CustomObjectMarker::Circles2) == 0,
@@ -421,7 +445,11 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     DEV_ASSERT(numRemoved <= _definedObjectTypeCount[ObjectFamily::CustomObject],
       "BlockWorld.UndefineAllCustomObjects.RemovingTooManyObjectTypes");
+    
     _definedObjectTypeCount[ObjectFamily::CustomObject] -= numRemoved;
+    
+    DEV_ASSERT(_definedObjectTypeCount[ObjectFamily::CustomObject] == 0,
+               "BlockWorld.UndefineAllCustomObjects.NonZeroObjectCount");
     
     PRINT_NAMED_INFO("BlockWorld.HandleMessage.UndefineAllCustomObjects",
                      "%d objects removed from library", numRemoved);
