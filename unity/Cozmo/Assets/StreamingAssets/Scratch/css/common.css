@@ -59,7 +59,7 @@ button:focus {
 }
 
 .blocklyScrollbarHandle {
-    fill: #30548a;
+    fill: #535252;
 }
 
 /**
@@ -87,9 +87,9 @@ button:focus {
 #close .primary button {
     width: 100px;
     height: 100px;
-    border: 1px solid #2a3a5b;
+    border: 1px solid #535252;
     margin-left: -1px;
-    background-color: #2a3a5b;
+    background-color: #535252;
     background-image: url('../images/ui/ui_icon_close_up.svg');
     background-repeat: no-repeat;
     background-position: 50% 50%;
@@ -127,9 +127,9 @@ button:focus {
     position: relative;
     width: 72px;
     height: 72px;
-    background-color: #2a3a5b;
+    background-color: #535252;
     background-image: url('../images/ui/greenflag-up.svg');
-    border: 1px solid #2a3a5b;
+    border: 1px solid #535252;
     pointer-events: auto;
 }
 
@@ -155,9 +155,9 @@ button:focus {
     position: relative;
     width: 72px;
     height: 72px;
-    background-color: #2a3a5b;
+    background-color: #535252;
     background-image: url('../images/ui/stop-up.svg');
-    border: 1px solid #2a3a5b;
+    border: 1px solid #535252;
     pointer-events: auto;
 }
 

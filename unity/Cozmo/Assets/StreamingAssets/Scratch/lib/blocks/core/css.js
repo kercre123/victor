@@ -535,7 +535,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutBackground {',
-    'fill: #3c558d;',
+    'fill: #58595a;',
   '}',
 
   '.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {',
