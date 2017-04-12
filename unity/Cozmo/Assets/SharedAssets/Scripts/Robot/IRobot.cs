@@ -257,7 +257,7 @@ public interface IRobot : IDisposable {
   void TurnTowardsObject(ObservableObject observableObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                          RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                         float setTiltTolerance_rad = 0f);
+                         float setTiltTolerance_rad = 0f, float maxTurnAngle_rad = float.MaxValue);
 
   void TurnTowardsFace(Face face, float maxTurnAngle_rad = Mathf.PI, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                        bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,

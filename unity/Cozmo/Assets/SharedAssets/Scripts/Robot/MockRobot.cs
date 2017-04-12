@@ -400,7 +400,7 @@ public class MockRobot : IRobot {
   }
 
   public void TurnTowardsObject(ObservableObject observableObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
-                                float setTiltTolerance_rad = 0f) {
+                                float setTiltTolerance_rad = 0f, float maxTurnAngle_rad = float.MaxValue) {
 
     LookAtPosition(observableObject.WorldPosition);
 

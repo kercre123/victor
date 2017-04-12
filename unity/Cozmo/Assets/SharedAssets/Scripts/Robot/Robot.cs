@@ -1526,17 +1526,20 @@ public class Robot : IRobot {
     TrackToObject(null);
   }
 
+  /// <summary>
+  /// Turns towards the object and then adjusts the head. Set maxTurnAngle_rad to 0 to only tilt the head.
+  /// </summary>
   public void TurnTowardsObject(ObservableObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                                 RobotCallback callback = null,
                                 QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                                float setTiltTolerance_rad = 0f) {
+                                float setTiltTolerance_rad = 0f, float maxTurnAngle_rad = float.MaxValue) {
 
     DAS.Debug(this, "Face Object " + observedObject);
 
     SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
       objectID: observedObject,
       robotID: ID,
-      maxTurnAngle_rad: float.MaxValue,
+      maxTurnAngle_rad: maxTurnAngle_rad,
       panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
       headTrackWhenDone: headTrackWhenDone,
       maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,

@@ -1,5 +1,6 @@
 ﻿using Cozmo.UI;
 using System.Collections.Generic;
+using Anki.Cozmo.ExternalInterface;
 
 public class InitialCubesState : State {
 
@@ -89,10 +90,16 @@ public class InitialCubesState : State {
 
     bool validCubesChanged = false;
     LightCube cube = null;
+    bool wasAdded = false;
+    LightCube lastAddedCube = null;
 
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       cube = lightCube.Value;
-      validCubesChanged |= TryUpdateCubeIdForGame(cube);
+      validCubesChanged |= TryUpdateCubeIdForGame(cube, out wasAdded);
+      if (wasAdded) {
+        // Cache cube so that we can tilt head towards it
+        lastAddedCube = cube;
+      }
     }
 
     if (validCubesChanged) {
@@ -101,31 +108,47 @@ public class InitialCubesState : State {
         PushIdleAnimation();
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupGetOut);
       }
-      else {
+      else if (lastAddedCube != null) {
         PopIdleAnimation();
-        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupReaction, HandlePlayReactionFinished);
         _IsPlayingReactionAnim = true;
+
+        // Stomp over any get out animation if it's playing
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GameSetupReaction,
+                                           queueActionPosition: Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+
+        // COZMO-7732: Can't rely on the animation to keep the cubes in view, so we need to turn the head towards
+        // the newly added cube. maxTurnAngle_rad = 0 means that the robot will not turn
+        _CurrentRobot.TurnTowardsObject(lastAddedCube, headTrackWhenDone: false, callback: HandlePlayReactionFinished,
+                                        queueActionPosition: Anki.Cozmo.QueueActionPosition.AT_END, maxTurnAngle_rad: 0f);
       }
     }
   }
 
   private void HandlePlayReactionFinished(bool success) {
     _IsPlayingReactionAnim = false;
-    _Game.SharedMinigameView.EnableContinueButton(true);
+
+    // Possible to play reaction on cubes 1 and 2, but we require 3
+    if (_Game.CubeIdsForGame.Count >= _CubesRequired) {
+      _Game.SharedMinigameView.EnableContinueButton(true);
+    }
   }
 
-  private bool TryUpdateCubeIdForGame(LightCube cube) {
+  private bool TryUpdateCubeIdForGame(LightCube cube, out bool wasAdded) {
     bool validCubesChanged = false;
+    wasAdded = false;
     if (cube.IsInFieldOfView) {
       if (IsReallyCloseToCube(cube) && MockRobotTray.Instance == null) {
-        validCubesChanged |= RemoveFromValidCubes(cube);
+        validCubesChanged = RemoveFromValidCubes(cube);
       }
       else {
-        validCubesChanged |= AddToValidCubes(cube);
+        if (AddToValidCubes(cube)) {
+          validCubesChanged = true;
+          wasAdded = true;
+        }
       }
     }
     else {
-      validCubesChanged |= RemoveFromValidCubes(cube);
+      validCubesChanged = RemoveFromValidCubes(cube);
     }
     return validCubesChanged;
   }
@@ -145,7 +168,8 @@ public class InitialCubesState : State {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Block_Connect);
       }
       else {
-        cube.SetLEDs(CubePalette.Instance.InViewColor.lightColor);
+        // Don't set light state to in-view if they are not needed for the game
+        cube.SetLEDs(CubePalette.Instance.OutOfViewColor.lightColor);
       }
     }
     return addCube;
