@@ -354,8 +354,8 @@
         "goalStrategy":
         {
           "type" : "Simple",
-          "goalShouldEndDurationSecs" : 120.0, // hiking will automatically finish when it completes, so a higher max time is ok
-          "cooldownSecs" : 10.0
+          "goalShouldEndDurationSecs" : 60.0, // hiking will automatically finish when it completes, so a higher max time is ok
+          "cooldownSecs" : 15.0
         }
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

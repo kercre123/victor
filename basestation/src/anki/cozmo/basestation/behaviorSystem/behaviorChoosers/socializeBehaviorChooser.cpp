@@ -140,10 +140,18 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
       else if( _maxNumIterationsToAllowForSearch > 0 &&
                _findFacesBehavior->GetNumIterationsCompleted() - _lastNumSearchIterations >=
                _maxNumIterationsToAllowForSearch ) {
+
+        // NOTE: this is different from setting "behavior_NumberOfScansBeforeStop" in the find faces behavior,
+        // because this will only transition out of the FindingFaces state if we _actually_ complete the
+        // scans, whereas if we just set behavior_NumberOfScansBeforeStop = 2, the behavior may end for any of
+        // a number of reasons (e.g. interruption)
+
         // we ran out of time searching, give up on this goal
         PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.CompletedSearchIterations",
                       "Finished %d search iterations, giving up on goal",
                       _findFacesBehavior->GetNumIterationsCompleted() - _lastNumSearchIterations);
+        // TODO:(bn) ideally this wouldn't put socialize on cooldown, but that's hard to implement in the
+        // current system
         bestBehavior = nullptr;
         _state = State::None;
       }

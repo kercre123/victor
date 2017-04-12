@@ -10,7 +10,7 @@
 
   "flatScore": 0.0, // selected manually by the socialize chooser
   
-  "maxFaceAgeToLook_ms": 120000,
+  "maxFaceAgeToLook_ms": 180000,
 
   "params":
   {
@@ -33,18 +33,18 @@
     
     // state 1 - body turn in opposite direction
     "s1_BodyAngleRangeMin_deg":  10.0,
-    "s1_BodyAngleRangeMax_deg":  30.0,
+    "s1_BodyAngleRangeMax_deg":  15.0,
     "s1_HeadAngleRangeMin_deg":  25.0,  // head min back turn
     "s1_HeadAngleRangeMax_deg":  42.0,  // head max back turn
     
-    // state 2 - wait at that location
-    "s2_WaitMin_sec": 0.30,
-    "s2_WaitMax_sec": 0.70,
+    // state 2 - wait at that location (times unused since we specify an anim trigger)
+    "s2_WaitMin_sec": 0.0,
+    "s2_WaitMax_sec": 0.0,
     "s2_WaitAnimTrigger": "LookInPlaceForFacesBodyPause",
     
     // state 3 - body turn in fwd direction (#1/2)
     "s3_BodyAngleRangeMin_deg":  5.0,
-    "s3_BodyAngleRangeMax_deg": 25.0,
+    "s3_BodyAngleRangeMax_deg": 20.0,
     "s3_HeadAngleRangeMin_deg": 30.0,   // head min fwd turn #1
     "s3_HeadAngleRangeMax_deg": 42.0,   // head max fwd turn #1
     
@@ -54,9 +54,9 @@
     "s4_HeadAngleRangeMin_deg": 20.0,   // head min in place
     "s4_HeadAngleRangeMax_deg": 45.0,   // head max in place
     "s4_HeadAngleChangesMin":  2,
-    "s4_HeadAngleChangesMax":  3,
-    "s4_WaitBetweenChangesMin_sec" : 0.01,
-    "s4_WaitBetweenChangesMax_sec" : 0.2,
+    "s4_HeadAngleChangesMax":  2,
+    "s4_WaitBetweenChangesMin_sec" : 0.0, // (times unused since we specify an anim trigger)
+    "s4_WaitBetweenChangesMax_sec" : 0.0,
     "s4_WaitAnimTrigger": "LookInPlaceForFacesHeadMovePause",
     
     // state 5 - head angle change (can have body mini-turn), here to undo what state 4 does randomly, resetting head angle before 6
