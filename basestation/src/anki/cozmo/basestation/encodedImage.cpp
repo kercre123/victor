@@ -273,7 +273,7 @@ namespace Cozmo {
         // Color images are half width
         MiniColorToJpeg(_buffer, _imgHeight, _imgWidth/2, tempBuffer);
         DecodeHelper(tempBuffer, decodedImg);
-        cv::resize(decodedImg.get_CvMat_(), decodedImg.get_CvMat_(), cv::Size(_imgWidth, _imgHeight));
+        decodedImg.Resize(_imgHeight, _imgWidth);
         break;
       }
         
@@ -318,11 +318,31 @@ namespace Cozmo {
     
     if(_encoding == ImageEncoding::JPEGMinimizedGray)
     {
-      // If this buffer is encoded as our homebrew "MinimzedGray" JPEG,
+      // If this buffer is encoded as our homebrew "MinimizedGray" JPEG,
       // we need to convert it for storage so it can be read by normal
       // JPEG decoders
       MiniGrayToJpeg(_buffer, _imgHeight, _imgWidth, tempBuffer);
       bufferPtr = &tempBuffer;
+    }
+    else if(_encoding == ImageEncoding::JPEGMinimizedColor)
+    {
+      // Special case: our homebrew "MinimizedColor" images are half width,
+      // so have to fully decode, which resizes to full size, and then save
+      // (which also re-compresses as a normal JPEG so it can be read by
+      // normal decoders)
+      Vision::ImageRGB decodedImg;
+      Result result = DecodeImageRGB(decodedImg);
+      if(RESULT_OK != result) {
+        PRINT_NAMED_WARNING("EncodedImage.Save.DecodeColorFailed", "");
+        return result;
+      }
+      
+      result = decodedImg.Save(filename);
+      if(RESULT_OK != result) {
+        PRINT_NAMED_WARNING("EncodedImage.Save.MiniJPEGSaveFailed", "");
+      }
+      
+      return result;
     }
     
     const bool success = Util::FileUtils::WriteFile(filename, *bufferPtr);
