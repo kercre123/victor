@@ -817,24 +817,23 @@ void MovementComponent::PrintLockState() const
   PRINT_NAMED_DEBUG("MovementComponent.LockState", "%s", ss.str().c_str());
 }
 
-std::string MovementComponent::WhoIsLocking(u8 tracks) const
+std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
 {
   std::stringstream ss;
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if((tracks & 1) && (_trackLockCount[i].size() > 0))
+    if((trackFlags & 1) && (_trackLockCount[i].size() > 0))
     {
-      u8 thisTrack = (i > 0) << i;
-      ss << "Track " << AnimTrackHelpers::AnimTrackFlagsToString(thisTrack);
-      ss << "[0x" << std::hex << static_cast<u32>(thisTrack) << "]";
-      ss << " locked by: ";
+      const u8 trackFlag = (1 << i);
+      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackFlag);
+      ss << " locked by ";
       for(const auto& lockInfo : _trackLockCount[i])
       {
         ss << lockInfo.debugName << "[" << lockInfo.who << "] ";
       }
       ss << "  ";
     }
-    tracks = tracks >> 1;
+    trackFlags = trackFlags >> 1;
   }
   return ss.str();
 }

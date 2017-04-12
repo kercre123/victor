@@ -1,5 +1,5 @@
 /**
-* File: dataPlatform
+* File: dataPlatform.cpp
 *
 * Author: damjan stulic
 * Created: 8/5/15
@@ -100,12 +100,12 @@ bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data
   std::ifstream jsonFile(resourceName);
   Json::Reader reader;
   bool success = reader.parse(jsonFile, data);
-  if(! success) {
-    PRINT_NAMED_ERROR("DataPlatform.readAsJson",
-      "Failed to parse Json file %s [%s]",
-        resourceName.c_str(),
-        reader.getFormattedErrorMessages().c_str());
-//    ASSERT_NAMED(false, "DataPlatform.readAsJson.malformedJson"); We have build issues. Disable for now
+  if (!success) {
+    PRINT_NAMED_ERROR("DataPlatform.readAsJson", "Failed to read [%s]", resourceName.c_str());
+    const std::string& errors = reader.getFormattedErrorMessages();
+    if (!errors.empty()) {
+      PRINT_NAMED_DEBUG("DataPlatform.readAsJson", "Json reader errors [%s]", errors.c_str());
+    }
   }
   jsonFile.close();
   return success;
@@ -117,7 +117,7 @@ bool DataPlatform::writeAsJson(const Scope& resourceScope, const std::string& re
   const std::string jsonFilename = pathToResource(resourceScope, resourceName);
   PRINT_NAMED_INFO("DataPlatform.writeAsJson", "writing to %s", jsonFilename.c_str());
   if (!Util::FileUtils::CreateDirectory(jsonFilename, true, true)) {
-    PRINT_NAMED_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s.", jsonFilename.c_str());
+    PRINT_NAMED_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s", jsonFilename.c_str());
     return false;
   }
   Json::StyledStreamWriter writer;

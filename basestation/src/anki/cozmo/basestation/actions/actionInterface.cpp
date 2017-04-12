@@ -278,42 +278,50 @@ namespace Anki {
     
     ActionResult IActionRunner::Update()
     {
-      _robot.GetActionList().GetActionWatcher().ActionStartUpdating(this);
-      switch(_state)
+      auto & actionList = _robot.GetActionList();
+      auto & actionWatcher = actionList.GetActionWatcher();
+      auto & moveComponent = _robot.GetMoveComponent();
+      
+      actionWatcher.ActionStartUpdating(this);
+      
+      switch (_state)
       {
         case ActionResult::RETRY:
         case ActionResult::NOT_STARTED:
         case ActionResult::INTERRUPTED:
         {
           _state = ActionResult::RUNNING;
-          if(!_suppressTrackLocking)
+          if (!_suppressTrackLocking)
           {
             // When the ActionRunner first starts, lock any specified subsystems
             u8 tracksToLock = GetTracksToLock();
             
-            if(_robot.GetMoveComponent().AreAnyTracksLocked(tracksToLock))
+            if (moveComponent.AreAnyTracksLocked(tracksToLock))
             {
               // Print special, more helpful message in SDK mode, if on charger
-              if(_robot.GetContext()->IsInSdkMode() && _robot.IsOnCharger())
+              if (_robot.GetContext()->IsInSdkMode() && _robot.IsOnCharger())
               {
                 PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.TracksLockedOnChargerInSDK",
                               "Use of head/lift/body motors is limited while on charger in SDK mode");
               }
               
+              // Split this into two messages so we don't send giant strings to DAS
               PRINT_NAMED_WARNING("IActionRunner.Update.TracksLocked",
-                                  "Action %s [%d] not running because required tracks (0x%x) %s are locked by: %s",
+                                  "Action %s [%d] not running because required tracks are locked",
                                   GetName().c_str(),
-                                  GetTag(),
-                                  tracksToLock,
+                                  GetTag());
+           
+              PRINT_NAMED_WARNING("IActionRunner.Update.TracksLockedBecause",
+                                  "Required tracks %s locked because %s",
                                   AnimTrackHelpers::AnimTrackFlagsToString(tracksToLock).c_str(),
-                                  _robot.GetMoveComponent().WhoIsLocking(tracksToLock).c_str());
+                                  moveComponent.WhoIsLocking(tracksToLock).c_str());
               
               _state = ActionResult::TRACKS_LOCKED;
-              _robot.GetActionList().GetActionWatcher().ActionEndUpdating(this);
+              actionWatcher.ActionEndUpdating(this);
               return ActionResult::TRACKS_LOCKED;
             }
             
-            if(DEBUG_ANIM_TRACK_LOCKING)
+            if (DEBUG_ANIM_TRACK_LOCKING)
             {
               PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.LockTracks",
                             "locked: (0x%x) %s by %s [%d]",
@@ -323,10 +331,10 @@ namespace Anki {
                             GetTag());
             }
             
-            _robot.GetMoveComponent().LockTracks(tracksToLock, GetTag(), GetName());
+            moveComponent.LockTracks(tracksToLock, GetTag(), GetName());
           }
           
-          if( DEBUG_ACTION_RUNNING && _displayMessages )
+          if (DEBUG_ACTION_RUNNING && _displayMessages)
           {
             PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.Update.IsRunning",
                            "Action [%d] %s running",
@@ -338,7 +346,7 @@ namespace Anki {
         {
           _state = UpdateInternal();
           
-          if(_state == ActionResult::RUNNING)
+          if (_state == ActionResult::RUNNING)
           {
             // Still running dont fall through
             break;
@@ -350,7 +358,7 @@ namespace Anki {
         // cancel)
         default:
         {
-          if(_displayMessages) {
+          if (_displayMessages) {
             PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.ActionCompleted",
                           "%s [%d] %s with state %s.", GetName().c_str(),
                           GetTag(),
@@ -361,7 +369,7 @@ namespace Anki {
           
           PrepForCompletion();
           
-          if( DEBUG_ACTION_RUNNING && _displayMessages ) {
+          if (DEBUG_ACTION_RUNNING && _displayMessages) {
             PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.Update.IsRunning",
                            "Action [%d] %s NOT running",
                            GetTag(),
@@ -369,7 +377,7 @@ namespace Anki {
           }
         }
       }
-      _robot.GetActionList().GetActionWatcher().ActionEndUpdating(this);
+      actionWatcher.ActionEndUpdating(this);
       return _state;
     }
 
