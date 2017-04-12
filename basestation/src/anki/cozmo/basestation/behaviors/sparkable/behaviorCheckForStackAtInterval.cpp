@@ -100,7 +100,7 @@ void BehaviorCheckForStackAtInterval::TransitionToFacingBlock(Robot& robot)
   const ObservableObject* obj = GetKnownObject(robot, _knownBlockIndex);
   if(nullptr != obj)
   {
-    IActionRunner* action = new TurnTowardsObjectAction(robot, obj->GetID(), M_PI);
+    IActionRunner* action = new TurnTowardsObjectAction(robot, obj->GetID());
     
     // check above even if turn action fails
     StartActing(action, &BehaviorCheckForStackAtInterval::TransitionToCheckingAboveBlock);

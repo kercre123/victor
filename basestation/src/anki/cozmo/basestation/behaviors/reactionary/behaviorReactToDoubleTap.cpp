@@ -128,7 +128,7 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
       });
       
       _ghostObject->InitPose(p, object->GetPoseState());
-      auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID(), DEG_TO_RAD(180.f));
+      auto* turnAction = new TurnTowardsObjectAction(robot, ObjectID());
       turnAction->UseCustomObject(_ghostObject.get());
       
       // Don't do a refined turn because in many cases when the object is in the ground it is because

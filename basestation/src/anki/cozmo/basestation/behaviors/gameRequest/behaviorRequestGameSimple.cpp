@@ -332,7 +332,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   if( targetBlockID.IsSet() ) {
-    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, M_PI_F ),
+    StartActing(new TurnTowardsObjectAction( robot, targetBlockID),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
     SET_STATE(FacingBlock);
   }
@@ -443,7 +443,7 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
-    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, M_PI_F);
+    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose);
     turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
     searchAction->AddAction(turnTowardsPoseAction);
 

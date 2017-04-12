@@ -214,7 +214,7 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
   
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   
-  action->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID, M_PI));
+  action->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
   
   Pose3d poseWrtRobot;
   if(topBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
@@ -266,7 +266,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   
   // Set the action sequence
   CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
-  flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID, M_PI));
+  flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot, _bottomBlockID));
   // emit completion signal so that the mood manager can react
   const bool shouldEmitCompletion = true;
   flipAndWaitAction->AddAction(flipAction, false, shouldEmitCompletion);

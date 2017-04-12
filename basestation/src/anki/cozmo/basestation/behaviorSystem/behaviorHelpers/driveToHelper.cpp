@@ -280,7 +280,7 @@ void DriveToHelper::SearchForBlock(ActionResult result, Robot& robot)
         auto searchNearby = new SearchForNearbyObjectAction(robot, _targetID);
         
         CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
-        compoundAction->AddAction(new TurnTowardsObjectAction(robot, _targetID, M_PI), true);
+        compoundAction->AddAction(new TurnTowardsObjectAction(robot, _targetID), true);
         compoundAction->AddAction(searchNearby);
         StartActing(compoundAction, &DriveToHelper::SearchForBlock);
         

@@ -401,7 +401,9 @@ namespace Cozmo {
     {
     public:
       // Note that the rotation information in pose will be ignored
-      TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle);
+      TurnTowardsPoseAction(Robot& robot,
+                            const Pose3d& pose,
+                            Radians maxTurnAngle = M_PI_F);
       
       void SetMaxTurnAngle(Radians angle) { _maxTurnAngle = angle; }
 
@@ -494,7 +496,7 @@ namespace Cozmo {
       
       TurnTowardsObjectAction(Robot& robot,
                               ObjectID objectID,
-                              Radians maxTurnAngle,
+                              Radians maxTurnAngle = M_PI_F,
                               bool visuallyVerifyWhenDone = false,
                               bool headTrackWhenDone = false);
       

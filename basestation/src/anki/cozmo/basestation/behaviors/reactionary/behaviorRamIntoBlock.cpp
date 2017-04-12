@@ -144,7 +144,7 @@ void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
 void BehaviorRamIntoBlock::TransitionToTurningToBlock(Robot& robot)
 {
   CompoundActionParallel* action = new CompoundActionParallel(robot, {
-    new TurnTowardsObjectAction(robot, _targetID, M_PI),
+    new TurnTowardsObjectAction(robot, _targetID),
     new MoveLiftToHeightAction(robot,  MoveLiftToHeightAction::Preset::CARRY)
   });
   StartActing(action, &BehaviorRamIntoBlock::TransitionToRammingIntoBlock);

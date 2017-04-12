@@ -288,7 +288,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()
   // Turn towards the pose and move the lift out of the way while we turn
   // then wait for a number of images
   _turnTowardsPoseAction.reset(new CompoundActionParallel(_robot, {
-    new TurnTowardsPoseAction(_robot, _pose, DEG_TO_RAD(180)),
+    new TurnTowardsPoseAction(_robot, _pose),
     new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)
   }));
   _waitForImagesAction.reset(new WaitForImagesAction(_robot, _numImagesToWaitFor, VisionMode::DetectingMarkers));

@@ -147,7 +147,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot,
       static const int kNumImagesForVerification = 5;
       
       CompoundActionSequential* action = new CompoundActionSequential(robot, {
-          new TurnTowardsPoseAction(robot, relPose, M_PI_F),
+          new TurnTowardsPoseAction(robot, relPose),
           new WaitForImagesAction(robot, kNumImagesForVerification, VisionMode::DetectingMarkers) });
 
       PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.WithinRange.Verify",
