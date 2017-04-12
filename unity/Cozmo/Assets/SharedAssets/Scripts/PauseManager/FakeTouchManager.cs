@@ -14,7 +14,10 @@ public class FakeTouchManager : MonoBehaviour {
   public static FakeTouchManager Instance {
     get {
       if (_Instance == null) {
-        DAS.Error("FakeTouchManager.NullInstance", "Do not access FakeTouchManager until start: " + System.Environment.StackTrace);
+        string stackTrace = System.Environment.StackTrace;
+        DAS.Error("FakeTouchManager.NullInstance", "Do not access FakeTouchManager until start");
+        DAS.Debug("FakeTouchManager.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+        HockeyApp.ReportStackTrace("FakeTouchManager.NullInstance", stackTrace);
       }
       return _Instance;
     }

@@ -18,7 +18,10 @@ public class ContextManager : MonoBehaviour {
   public static ContextManager Instance {
     get {
       if (_Instance == null) {
-        DAS.Error("ContextManager.NullInstance", "Do not access ContextManager until start: " + System.Environment.StackTrace);
+        string stackTrace = System.Environment.StackTrace;
+        DAS.Error("ContextManager.NullInstance", "Do not access ContextManager until start");
+        DAS.Debug("ContextManager.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+        HockeyApp.ReportStackTrace("ContextManager.NullInstance", stackTrace);
       }
       return _Instance;
     }

@@ -91,7 +91,10 @@ public class StartupManager : MonoBehaviour {
   public static StartupManager Instance {
     get {
       if (_Instance == null) {
-        DAS.Error("StartupManager.NullInstance", "Do not access StartupManager until start: " + System.Environment.StackTrace);
+        string stackTrace = System.Environment.StackTrace;
+        DAS.Error("StartupManager.NullInstance", "Do not access StartupManager until start");
+        DAS.Debug("StartupManager.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+        HockeyApp.ReportStackTrace("StartupManager.NullInstance", stackTrace);
       }
       return _Instance;
     }

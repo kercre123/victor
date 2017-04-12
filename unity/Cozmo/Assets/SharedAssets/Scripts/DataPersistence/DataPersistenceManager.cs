@@ -21,6 +21,7 @@ namespace DataPersistence {
     }
 
     private DataPersistenceManager() {
+
       if (File.Exists(sSaveFilePath)) {
         try {
           string fileData = File.ReadAllText(sSaveFilePath);
@@ -28,17 +29,19 @@ namespace DataPersistence {
           Data = JsonConvert.DeserializeObject<SaveData>(fileData, GlobalSerializerSettings.JsonSettings);
         }
         catch (Exception ex) {
-          DAS.Error(this, "Error Loading Saved Data: " + ex);
+          DAS.Error("DataPersistenceManager.Load", "Error Loading Saved Data: " + ex.Message);
+          DAS.Debug("DataPersistenceManager.Load.StackTrace", DASUtil.FormatStackTrace(ex.StackTrace));
+          HockeyApp.ReportStackTrace("DataPersistenceManager.Load", ex.StackTrace);
 
           // Try to load the backup file.
           try {
             string backupData = File.ReadAllText(sBackupSaveFilePath);
-
             Data = JsonConvert.DeserializeObject<SaveData>(backupData, GlobalSerializerSettings.JsonSettings);
           }
           catch (Exception ex2) {
-            DAS.Error(this, "Error Loading Backup Saved Data: " + ex2);
-
+            DAS.Error("DataPersistenceManager.LoadBackup", "Error Loading Backup Saved Data: " + ex2.Message);
+            DAS.Debug("DataPersistenceManager.LoadBackup.StackTrace", DASUtil.FormatStackTrace(ex2.StackTrace));
+            HockeyApp.ReportStackTrace("DataPersistenceManager.LoadBackup", ex2.StackTrace);
             Data = new SaveData();
           }
         }
@@ -251,7 +254,9 @@ namespace DataPersistence {
         File.WriteAllText(sSaveFilePath, jsonValue);
       }
       catch (Exception ex) {
-        DAS.Error(this, "Exception backing up save file: " + ex);
+        DAS.Error("DataPersistenceManager.Save", "Exception backing up save file: " + ex.Message);
+        DAS.Debug("DataPersistenceManager.Save.StackTrace", DASUtil.FormatStackTrace(ex.StackTrace));
+        HockeyApp.ReportStackTrace("DataPersistenceManager.Save", ex.StackTrace);
       }
     }
 

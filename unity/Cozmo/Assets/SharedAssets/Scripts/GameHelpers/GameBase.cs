@@ -790,7 +790,9 @@ public abstract class GameBase : MonoBehaviour {
     }
     catch (System.Exception e) {
       // This is happening sometimes when disconnecting from robot when a dialog is up.
-      DAS.Info("StopAllCoroutines null ref internally sometimes", e.StackTrace);
+      DAS.Info("GameBase.QuitMinigame", "StopAllCoroutines null ref internally sometimes: " + e.Message);
+      DAS.Debug("GameBase.QuitMinigame.StackTrace", DASUtil.FormatStackTrace(e.StackTrace));
+      HockeyApp.ReportStackTrace("GameBase.QuitMinigame", e.StackTrace);
     }
   }
 

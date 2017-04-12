@@ -53,7 +53,10 @@ namespace Cozmo {
     public static PauseManager Instance {
       get {
         if (_Instance == null) {
-          DAS.Error("PauseManager.NullInstance", "Do not access PauseManager until start: " + System.Environment.StackTrace);
+          string stackTrace = System.Environment.StackTrace;
+          DAS.Error("PauseManager.NullInstance", "Do not access PauseManager until start");
+          DAS.Debug("PauseManager.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+          HockeyApp.ReportStackTrace("PauseManager.NullInstance", stackTrace);
         }
         return _Instance;
       }

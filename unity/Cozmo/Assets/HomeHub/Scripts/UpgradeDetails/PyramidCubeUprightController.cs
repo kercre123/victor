@@ -62,7 +62,7 @@ namespace Cozmo.Upgrades {
     }
 
     private void OpenCubeShouldBeUprightModal() {
-      DAS.Debug("PyramidCubeUprightController.OpenCubeShouldBeUprightModal", "opening modal from: " + System.Environment.StackTrace);
+      DAS.Debug("PyramidCubeUprightController.OpenCubeShouldBeUprightModal", "Opening modal");
       _ReopenModalCooldownStartTimestamp = -1;
       UIManager.OpenModal(_PyramidCubeUprightModalPrefab,
                           new UI.ModalPriorityData(UI.ModalPriorityLayer.High, 0, UI.LowPriorityModalAction.CancelSelf, UI.HighPriorityModalAction.Stack),

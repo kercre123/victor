@@ -28,6 +28,26 @@ public static class DASUtil {
     return DASData;
   }
 
+  //
+  // Maximum length allowed for stack traces reported to DAS.
+  //
+  public const int MAX_STACK_LEN = 512;
+
+  //
+  // Sanitize unity stack trace for reporting to DAS.
+  // Returns string of length <= MAX_STACK_LEN.
+  // Newlines are replaced by space for readability.
+  //
+  public static string FormatStackTrace(string stackTrace) {
+    if (stackTrace != null) {
+      if (stackTrace.Length > MAX_STACK_LEN) {
+        stackTrace = stackTrace.Remove(MAX_STACK_LEN);
+      }
+      stackTrace = stackTrace.Replace('\n', ' ');
+    }
+    return stackTrace;
+  }
+
   private static string GetStringFromViewType(Cozmo.UI.BaseDialog dialog) {
     string viewString = "dialog";
     if (dialog is Cozmo.UI.AlertModal) {

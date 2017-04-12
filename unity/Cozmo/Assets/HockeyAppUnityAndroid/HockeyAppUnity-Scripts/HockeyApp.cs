@@ -556,7 +556,7 @@ public class HockeyApp : MonoBehaviour {
       }
     }
     catch (System.Exception e) {    
-      DAS.Error("game.log.file_write_error", e);    
+      DAS.Error("game.log.file_write_error", e.Message);
     }
 #endif
   }
@@ -606,8 +606,9 @@ public class HockeyApp : MonoBehaviour {
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   protected virtual void HandleException(string logString, string stackTrace) {
 #if (!UNITY_EDITOR)
-    // Just print to the log, don't upload in production, thats what Hockeyapp is for.
-    DAS.Warn("exception", logString, DASUtil.FormatExtraData(stackTrace));
+    // Report exception to DAS but don't bloat analytics with detailed stack trace
+    DAS.Warn("exception", logString);
+    DAS.Debug("exception.stacktrace", DASUtil.FormatStackTrace(stackTrace));
 
     // Stale touch exceptions occur during normal operation.
     // Don't report them as crashes.
@@ -643,6 +644,20 @@ public class HockeyApp : MonoBehaviour {
     if(args.ExceptionObject.GetType() == typeof(System.Exception)) {  
       System.Exception e  = (System.Exception)args.ExceptionObject;
       HandleException(e.Source, e.StackTrace);
+    }
+#endif
+  }
+
+  //
+  // Report stack trace to HockeyApp for processing.
+  // Note that processing is not immediate!  Stack traces are processed
+  // when application starts, and device must have internet connectivity
+  // for upload.
+  //
+  public static void ReportStackTrace(string source, string stackTrace) {
+#if (!UNITY_EDITOR)
+    if (instance != null) {
+      instance.WriteLogToDisk(source, stackTrace);
     }
 #endif
   }

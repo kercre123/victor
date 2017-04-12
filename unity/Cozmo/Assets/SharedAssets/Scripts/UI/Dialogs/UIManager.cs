@@ -13,7 +13,10 @@ public class UIManager : MonoBehaviour {
   public static UIManager Instance {
     get {
       if (_Instance == null) {
-        DAS.Error("UIManager.NullInstance", "Do not access UIManager until start: " + System.Environment.StackTrace);
+        string stackTrace = System.Environment.StackTrace;
+        DAS.Error("UIManager.NullInstance", "Do not access UIManager until start");
+        DAS.Debug("UIManager.NullInstance.StackTrace", DASUtil.FormatStackTrace(stackTrace));
+        HockeyApp.ReportStackTrace("UIManager.NullInstance", stackTrace);
       }
       return _Instance;
     }
