@@ -5,10 +5,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 4: {fileID: 441816}
-  - 114: {fileID: 11472540}
+  - component: {fileID: 441816}
+  - component: {fileID: 11472540}
   m_Layer: 0
   m_Name: UnlockablesManager
   m_TagString: Untagged
@@ -25,10 +25,10 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &11472540
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -42,7 +42,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _UnlockableInfoList: {fileID: 11400000, guid: 70b66002a720f4539948df1e77a8314a,
     type: 2}
-  _NewUnlocks: 
   _FaceSlotUnlockMap: 130000001400000015000000160000001700000018000000190000001a0000001b0000001c000000
 --- !u!1001 &100100000
 Prefab:

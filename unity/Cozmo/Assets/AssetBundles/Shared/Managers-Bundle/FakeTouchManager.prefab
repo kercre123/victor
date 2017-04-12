@@ -5,12 +5,12 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 4: {fileID: 430874}
-  - 114: {fileID: 11467430}
+  - component: {fileID: 430874}
+  - component: {fileID: 11406322}
   m_Layer: 0
-  m_Name: OnboardingManager
+  m_Name: FakeTouchManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25,11 +25,11 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!114 &11467430
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &11406322
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -37,26 +37,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 192142}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4887f77b48c344d53a94972a455cfb2a, type: 3}
+  m_Script: {fileID: 11500000, guid: c84a82a927b2843b086a0f9662e826cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _PhaseHomePrefabs:
-  - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
-  - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}
-  - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
-  - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
-  - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
-  - {fileID: 11442482, guid: f6c2e8426a4ec48fb9ad931e3b8605a2, type: 2}
-  - {fileID: 11481006, guid: 959fa8ad92264464a87d01febec5a53c, type: 2}
-  _PhaseLootPrefabs:
-  - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
-  _PhaseUpgradesPrefabs:
-  - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
-  _OnboardingUIPrefabData:
-    _AssetBundle:
-      _EnumValueAsString: onboarding_ui_prefabs
-      _EnumValue: 18
-    _AssetDataName: OnboardingUIWrapper
+  IsPlayingTouches: 0
+  IsSoakingTouches: 0
+  IsRecordingTouches: 0
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

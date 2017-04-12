@@ -10,7 +10,7 @@ public static class SceneOpener {
 
   [MenuItem("Cozmo/Scenes/Open HomeHub Scene %#2")]
   public static void OpenHomeHubScene() {
-    EditorSceneManager.OpenScene("Assets/AssetBundles/MainScene-Bundle/HomeHub.unity", OpenSceneMode.Single);
+    EditorSceneManager.OpenScene("Assets/AssetBundles/HomeHub/MainScene-Bundle/HomeHub.unity", OpenSceneMode.Single);
   }
 
   [MenuItem("Cozmo/Scenes/Open UI Sandbox Scene %#5")]

@@ -5,11 +5,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 4: {fileID: 472660}
-  - 114: {fileID: 11479852}
-  - 114: {fileID: 11456402}
+  - component: {fileID: 472660}
+  - component: {fileID: 11479852}
+  - component: {fileID: 11456402}
   m_Layer: 0
   m_Name: StartupManager
   m_TagString: Untagged
@@ -22,10 +22,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 4: {fileID: 463824}
-  - 114: {fileID: 11436284}
+  - component: {fileID: 463824}
+  - component: {fileID: 11436284}
   m_Layer: 0
   m_Name: RobotEngineManager
   m_TagString: Untagged
@@ -42,10 +42,10 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.4912033, y: -9.085854, z: -500.82257}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 472660}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &472660
 Transform:
   m_ObjectHideFlags: 1
@@ -55,11 +55,11 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 463824}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &11436284
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -105,7 +105,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _LoadingBar: {fileID: 0}
   _LoadingBarLabel: {fileID: 0}
-  _AddDotSeconds: 0.25
   _AssetBundlesToLoad:
   - main_scene
   _MainSceneAssetBundleName: main_scene
@@ -116,6 +115,10 @@ MonoBehaviour:
   _StartupDebugPrefabNames:
   - DebugMenuManager
   - VizManager
+  _LoadingCanvas: {fileID: 0}
+  _AndroidPermissionPrefab: {fileID: 0}
+  _LoadingVersionLabel: {fileID: 0}
+  _LoadingDeviceIdLabel: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
