@@ -193,15 +193,20 @@ namespace Cozmo {
             _CurrentRobot.SetNightVision(false);
             _CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kDroneModeDriveId);
           }
+
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
           _DroneModeControlsSlide.OnHeadSliderValueChanged -= HandleHeadSliderValueChanged;
           _DroneModeControlsSlide.OnLiftSliderValueChanged -= HandleLiftSliderValueChanged;
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
           DisableInput();
-          _RobotAnimator.OnTurboTransitionAnimationStarted -= HandleTurboTransitionAnimationFinished;
-          _RobotAnimator.OnTurboTransitionAnimationFinished -= HandleTurboTransitionAnimationFinished;
-          _RobotAnimator.CleanUp();
+
+          // It's possible to get a robot disconnect before this object is created
+          if (_RobotAnimator != null) {
+            _RobotAnimator.OnTurboTransitionAnimationStarted -= HandleTurboTransitionAnimationFinished;
+            _RobotAnimator.OnTurboTransitionAnimationFinished -= HandleTurboTransitionAnimationFinished;
+            _RobotAnimator.CleanUp();
+          }
         }
 
         public override void Update() {
