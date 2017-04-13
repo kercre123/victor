@@ -50,17 +50,17 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <amazon:enable-feature android:name="com.amazon.device.messaging" android:required="true"/>
-	<service android:name="com.anki.cozmo.ADMService" android:exported="false" />
-	<receiver android:name="com.anki.cozmo.ADMReceiver" android:permission="com.amazon.device.messaging.permission.SEND" >
-		<intent-filter>
-			<action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
-			<action android:name="com.amazon.device.messaging.intent.RECEIVE" />
- 
-			<category android:name="com.anki.cozmo" />
-	    </intent-filter>
-	</receiver>
+    	<service android:name="com.anki.cozmo.ADMService" android:exported="false" />
+    	<receiver android:name="com.anki.cozmo.ADMReceiver" android:permission="com.amazon.device.messaging.permission.SEND" >
+    		<intent-filter>
+    			<action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
+    			<action android:name="com.amazon.device.messaging.intent.RECEIVE" />
+     
+    			<category android:name="com.anki.cozmo" />
+    	    </intent-filter>
+    	</receiver>
 
-	<!-- End Amazon integration -->
+    	<!-- End Amazon integration -->
 
         <receiver android:name="com.anki.cozmo.notifications.NotificationAlarm" />
 
@@ -70,6 +70,7 @@
 
         <meta-data android:name="dasVersionName" android:value="1.0" />
         <meta-data android:name="HOCKEYAPP_APP_ID" android:value="" />
+        <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="true"/>
     </application>
 
 </manifest>
