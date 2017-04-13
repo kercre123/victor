@@ -4110,15 +4110,18 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       return false;
     }
     
-    // Check the that the object is in the same plane as the robot
-    // TODO: Better check for being in the same plane that takes the
-    //       vertical extent of the object (in its current pose) into account
+    // Check if the object is in the same plane as the robot
+    // Note: we pad the robot's height by the object's half-height and then
+    //       just treat the object as a point (similar to configuration-space
+    //       expansion we do for the planner)
+    const f32 objectHalfZDim = 0.5f*object->GetDimInParentFrame<'Z'>();
+    const f32 objectHeight   = objectPoseWrtRobotOrigin.GetTranslation().z();
+    const f32 robotBottom    = _robot->GetPose().GetTranslation().z();
+    const f32 robotTop       = robotBottom + ROBOT_BOUNDING_Z;
     
-    const f32 objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
-    const f32 robotBottom = _robot->GetPose().GetTranslation().z();
-    const f32 robotTop    = robotBottom + ROBOT_BOUNDING_Z;
+    const bool inSamePlane = ((objectHeight >= (robotBottom - objectHalfZDim)) &&
+                              (objectHeight <= (robotTop + objectHalfZDim)));
     
-    const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
     if(!inSamePlane) {
       return false;
     }

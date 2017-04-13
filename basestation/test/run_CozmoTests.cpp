@@ -2468,6 +2468,85 @@ TEST(ActionableObject, PreActionPoseCaching)
   }
 }
 
+TEST(BlockWorld, ObjectRobotCollisionCheck)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  ObservableObject* object = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  
+  ASSERT_NE(nullptr, object);
+  const ObjectID& objID = object->GetID();
+  ASSERT_TRUE(objID.IsSet());
+  
+  TimeStamp_t fakeTime = 10;
+  
+  // Put the robot somewhere "random" (to avoid possible special case of reasoning near origin)
+  const Pose3d robotPose(M_PI_4_F, Z_AXIS_3D(), {123.f, 456.f, 0.f}, robot.GetWorldOrigin());
+  robot.SetPose(robotPose);
+  
+  // Helper lambda for doing test with object at different heights
+  auto CheckPoseStateAtHeight = [&robot,object,&fakeTime](f32 objHeight) -> PoseState
+  {
+    // Object is always colocated with robot, but at different heights
+    const Point2f robotPosition( robot.GetPose().GetTranslation() );
+    Pose3d pose(0.f, Z_AXIS_3D(), {robotPosition.x(), robotPosition.y(), objHeight});
+    
+    // Set object's new pose with fake observations
+    {
+      robot.GetVisionComponent().FakeImageProcessed(fakeTime);
+      
+      object->SetIsMoving(false, 0);
+      object->SetLastObservedTime(fakeTime);
+      pose.SetParent(robot.GetPose().GetParent());
+      
+      // Add enough observations to fully update object's pose and make it Known
+      std::shared_ptr<ObservableObject> observation( object->CloneType() );
+      observation->InitPose(pose, PoseState::Known);
+      observation->CopyID(object);
+      for(s32 i=0; i<2; ++i)
+      {
+        robot.GetObjectPoseConfirmer().AddVisualObservation(observation, object, false, 10);
+      }
+      
+      if(!ANKI_VERIFY(object->GetPoseState() == PoseState::Known,
+                      "BlockWorld.ObjectRobotCollisionCheck.HelperLambda.PoseNotKnown",
+                      "PoseState:%s", EnumToString(object->GetPoseState())))
+      {
+        return PoseState::Invalid;
+      }
+    }
+    
+    fakeTime+=10;
+    
+    // "Unobserve" the object and update BlockWorld to trigger a collision check
+    robot.GetVisionComponent().FakeImageProcessed(fakeTime);
+    fakeTime+=10;
+    robot.GetBlockWorld().Update({});
+    
+    return object->GetPoseState();
+  };
+  
+  // Robot right on top of object should result in object being marked Dirty
+  ASSERT_EQ(PoseState::Dirty, CheckPoseStateAtHeight(object->GetSize().z() * 0.5f));
+  
+  // Object directly above robot should leave object Known
+  ASSERT_EQ(PoseState::Known, CheckPoseStateAtHeight(ROBOT_BOUNDING_Z + object->GetSize().z()));
+  
+  // Object center below ground but still sticking up above ground should be Dirty
+  ASSERT_EQ(PoseState::Dirty, CheckPoseStateAtHeight(-0.5f*object->GetSize().z() + 5.f));
+  
+  // Object completely below ground under the robot should remain Known
+  ASSERT_EQ(PoseState::Known, CheckPoseStateAtHeight(-1.5*object->GetSize().z()));
+  
+  // Object slightly off the ground, but not fully above robot should be Dirty
+  ASSERT_EQ(PoseState::Dirty, CheckPoseStateAtHeight(0.75f*ROBOT_BOUNDING_Z));
+
+}
+
 #define CONFIGROOT "ANKICONFIGROOT"
 #define WORKROOT "ANKIWORKROOT"
 
