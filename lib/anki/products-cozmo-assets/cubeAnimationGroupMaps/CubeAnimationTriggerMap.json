@@ -41,6 +41,18 @@
             "AnimName": "gatherCubesCubeInBeacon"
         },
         {
+            "CladEvent": "GuardDogBeingMoved",
+            "AnimName": "guardDogBeingMoved"
+        },
+        {
+            "CladEvent": "GuardDogOff",
+            "AnimName": "sleepNoFade"
+        },
+        {
+            "CladEvent": "GuardDogPulse",
+            "AnimName": "guardDogPulse"
+        },
+        {
             "CladEvent": "Interacting",
             "AnimName": "interacting"
         },

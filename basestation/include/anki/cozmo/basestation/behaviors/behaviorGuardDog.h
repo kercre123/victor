@@ -1,0 +1,134 @@
+/**
+ * File: behaviorGuardDog.h
+ *
+ * Author: Matt Michini
+ * Created: 2017-03-27
+ *
+ * Description: Cozmo acts as a sleepy guard dog, pretending to nap but still making sure no one tries to steal his cubes.
+ *
+ * Copyright: Anki, Inc. 2017
+ *
+ **/
+
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorGuardDog_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorGuardDog_H__
+
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+// forward declarations:
+class BlockWorldFilter;
+  
+class BehaviorGuardDog : public IBehavior
+{
+protected:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  BehaviorGuardDog(Robot& robot, const Json::Value& config);
+  
+public:
+  
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool CarryingObjectHandledInternally() const override { return false;}
+
+protected:
+  
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
+  virtual void StopInternal(Robot& robot) override;
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  
+private:
+  
+  // Message handlers:
+  void HandleObjectAccel(const Robot& robot, const ObjectAccel& msg);
+  void HandleObjectConnectionState(const Robot& robot, const ObjectConnectionState& msg);
+  void HandleObjectMoved(const Robot& robot, const ObjectMoved& msg);
+  
+  // Helpers:
+  void ComputeStartingPose(const Robot& robot, Pose3d& startingPose);
+  Result EnableCubeAccelStreaming(const Robot& robot, const bool enable = true) const;
+  void StartMonitoringCubeMotion(Robot& robot, const bool enable = true);
+  bool StartLightCubeAnim(Robot& robot, const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger);
+  bool StartLightCubeAnims(Robot& robot, const CubeAnimationTrigger& cubeAnimTrigger);
+  
+private:
+  
+  enum class State {
+    Init,               // Initialize everything and play starting animations
+    DriveToBlocks,      // Drive to a pose near the blocks
+    SettleIn,           // Play animation for 'settling in' before sleeping
+    StartSleeping,
+    Sleeping,
+    Fakeout,            // "half wakeup" due to one or two cubes being moved
+    Busted,             // Freak out because all 3 cubes have been touched/moved
+    BlockDisconnected,  // A block has disconnected (play an anim and end the behavior)
+    Timeout,            // Blocks haven't been touched and timeout has expired
+    DriveToCheckCubes,  // Drive to a pose where we can visually verify if cubes have been moved
+    VisuallyCheckCubes, // Check if cubes are still there or if they've been moved
+    BlocksRemaining,
+    BlocksMissing,
+    Complete
+  };
+  
+  State _state = State::Init;
+  
+  // struct to hold data about the blocks in question:
+  struct sCubeData {
+    ObjectID objectId;
+    float accelMag          = 0.f;   // latest accelerometer magnitude
+    float prevAccelMag      = 0.f;   // previous accelerometer magnitude
+    float hpFiltAccelMag    = 0.f;   // high-pass filtered accel magnitude
+    float maxFiltAccelMag   = 0.f;   // maximum filtered accel magnitude encountered
+    float movementScore     = 0.f;   // keeps track of how much the block is being moved (decays if block is not moving, capped at kMovementScoreMax)
+    bool filtInitialized    = false; // high-pass filter initialized?
+    bool hasBeenMoved       = false; // has the block been moved at all?
+    uint msgReceivedCnt     = 0;     // how many ObjectAccel messages have we received for this block?
+    uint badMsgCnt          = 0;     // how many weird ObjectAccel e.g. accel fields blank or really large) message have we received?
+    CubeAnimationTrigger lastCubeAnimTrigger = CubeAnimationTrigger::Count;  // the last-played animation trigger for this cube.
+    
+    // constructors:
+    sCubeData(ObjectID objId)
+      : objectId(objId)
+    {
+    };
+    
+    // member functions:
+    void ResetAccelData() {
+      accelMag        = 0.f;
+      prevAccelMag    = 0.f;
+      hpFiltAccelMag  = 0.f;
+      maxFiltAccelMag = 0.f;
+      movementScore   = 0.f;
+      filtInitialized = false;
+    }
+  };
+  
+  // Stores relevant data for each of the cubes:
+  std::vector<sCubeData> _cubesData;
+  
+  // Blockworld filter that gets used often (set up in constructor):
+  std::unique_ptr<BlockWorldFilter> _connectedCubesOnlyFilter;
+  
+  // Time that Cozmo first fell asleep (used for overall timeout detection):
+  float _firstSleepingStartTime_s = 0.f;
+  
+  // true when monitoring for cube movement
+  bool _monitoringCubeMotion = false;
+  
+  // The number of cubes that have been moved during the behavior:
+  int _nCubesMoved = 0;
+  
+  // The pose of a cube to verify at the end of the behavior:
+  Pose3d _cubePoseToVerify;
+  
+};
+  
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Cozmo_Basestation_Behaviors_BehaviorGuardDog_H__

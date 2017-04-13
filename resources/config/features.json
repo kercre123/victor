@@ -26,6 +26,10 @@
   {
     "feature": "Hiccups",
     "enabled": false
+  },
+  {
+    "feature": "GuardDog",
+    "enabled": false
   }
 ]
 

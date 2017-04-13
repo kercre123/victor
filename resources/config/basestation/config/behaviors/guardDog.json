@@ -1,0 +1,10 @@
+{
+  "behaviorClass": "GuardDog",
+  "executableBehaviorType": "GuardDog",
+  "name": "GuardDog",
+  "displayNameKey": "behavior.GuardDog",
+  "behaviorGroups": [
+    "FP_GuardDog"
+  ],
+  "flatScore": 1.0
+}

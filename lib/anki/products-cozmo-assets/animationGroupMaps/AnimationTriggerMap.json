@@ -389,6 +389,46 @@
       "AnimName": "ag_gotosleep_sleeping"
     },
     {
+      "CladEvent": "GuardDogBusted",
+      "AnimName": "ag_guarddog_getout_busted"
+    },
+    {
+      "CladEvent": "GuardDogCubeDisconnect",
+      "AnimName": "ag_guarddog_interruption_cubedisconnect"
+    },
+    {
+      "CladEvent": "GuardDogCubeRemaining",
+      "AnimName": "ag_guarddog_getout_1cubeleft_01"
+    },
+    {
+      "CladEvent": "GuardDogFakeout",
+      "AnimName": "ag_guarddog_fakeout"
+    },
+    {
+      "CladEvent": "GuardDogInterruption",
+      "AnimName": "ag_guarddog_interruption"
+    },
+    {
+      "CladEvent": "GuardDogPlayerSuccess",
+      "AnimName": "ag_guarddog_getout_playersucess"
+    },
+    {
+      "CladEvent": "GuardDogPulse",
+      "AnimName": "ag_guarddog_pulse"
+    },
+    {
+      "CladEvent": "GuardDogSettle",
+      "AnimName": "ag_guarddog_settle"
+    },
+    {
+      "CladEvent": "GuardDogSleepLoop",
+      "AnimName": "ag_guarddog_sleeploop"
+    },
+    {
+      "CladEvent": "GuardDogTimeout",
+      "AnimName": "ag_guarddog_getout_timeout"
+    },
+    {
       "CladEvent": "Hiccup",
       "AnimName": "ag_hiccups"
     },
