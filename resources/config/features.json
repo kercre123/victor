@@ -25,7 +25,7 @@
   },
   {
     "feature": "Hiccups",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "GuardDog",
