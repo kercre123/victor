@@ -58,9 +58,9 @@ namespace Cozmo
     auto retVal = eventMap.find(EnumToString(ev));
     if(retVal == eventMap.end())
     {
-      PRINT_NAMED_ERROR("AnimationTriggerResponsesContainer::GetResponse",
-                        "Animation requested for unknown response '%s'",
-                        EnumToString(ev));
+      PRINT_NAMED_WARNING("AnimationTriggerResponsesContainer::GetResponse",
+                          "Animation requested for unknown response '%s'",
+                          EnumToString(ev));
       return "";
     }
     

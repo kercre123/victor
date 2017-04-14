@@ -37,10 +37,10 @@ AudioMixingConsole::~AudioMixingConsole()
   for (auto& anInput : _inputSources) {
     Util::SafeDelete(anInput);
   }
-  // FIXME: WTF!! why isn't this able to delete?
-//  for (auto& anOutput: _outputSources) {
-//    Util::SafeDelete(anOutput);
-//  }
+
+  for (auto& anOutput: _outputSources) {
+    Util::SafeDelete(anOutput);
+  }
   
 //  Util::SafeDeleteArray(_sourceMixingBuffer);
   Util::SafeDeleteArray(_mixingBuffer);

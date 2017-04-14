@@ -1419,6 +1419,7 @@ Result Robot::Update()
   ActiveBlockLightTest(1);
   return RESULT_OK;
 #endif
+  
   GetContext()->GetVizManager()->SendStartRobotUpdate();
       
   /* DEBUG
@@ -1535,27 +1536,29 @@ Result Robot::Update()
                                  std::string(behaviorChooserName) + std::string(":") + behaviorDebugStr);
   
   //////// Update Robot's State Machine /////////////
-  Result actionResult = _actionList->Update();
-  if(actionResult != RESULT_OK) {
-    PRINT_NAMED_INFO("Robot.Update", "Robot %d had an action fail.", GetID());
-  }        
+  const RobotID_t robotID = GetID();
+  
+  Result result = _actionList->Update();
+  if (result != RESULT_OK) {
+    PRINT_NAMED_INFO("Robot.Update.ActionList", "Robot %d had an action list failure (%d)", robotID, result);
+  }
+  
   //////// Stream Animations /////////
-  if(_timeSynced) { // Don't stream anything before we've connected
-    Result animStreamResult = _animationStreamer.Update(*this);
-    if(animStreamResult != RESULT_OK) {
-      PRINT_NAMED_WARNING("Robot.Update",
-                          "Robot %d had an animation streaming failure.", GetID());
-    }
-    
+  if (_timeSynced) { // Don't stream anything before we've connected
     // NEW Animations!
     if (BUILD_NEW_ANIMATION_CODE) {
-      Result result = _animationController->Update(*this);
+      result = _animationController->Update(*this);
       if (result != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update",
-                            "Robot %d had an animation streaming failure.", GetID());
+        PRINT_NAMED_WARNING("Robot.Update.AnimationController",
+                            "Robot %d had an animation controller failure (%d)", robotID, result);
+      }
+    } else {
+      result = _animationStreamer.Update(*this);
+      if (result != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.Update.AnimationStreamer",
+                            "Robot %d had an animation streamer failure (%d)", robotID, result);
       }
     }
-    
   }
 
   /////////// Update NVStorage //////////

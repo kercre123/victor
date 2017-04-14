@@ -57,7 +57,7 @@ public:
   ~RobotAudioClient();
     
   // Audio buffer for the corresponding Game Object
-  virtual RobotAudioBuffer* GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject );
+  virtual RobotAudioBuffer* GetRobotAudioBuffer( AudioMetaData::GameObjectType gameObject );
 
   // Post Cozmo specific Audio events
   using CozmoPlayId = uint32_t;
@@ -141,10 +141,11 @@ public:
 private:
   
   using PluginId_t = uint32_t;
+  static constexpr PluginId_t kInvalidPluginId = 0;
   struct RobotBusConfiguration {
-    AudioMetaData::GameObjectType  gameObject;
-    PluginId_t      pluginId;
-    AudioMetaData::Bus::BusType    bus;
+    AudioMetaData::GameObjectType gameObject;
+    PluginId_t                    pluginId;
+    AudioMetaData::Bus::BusType   bus;
   };
   
   // Handle to parent Robot
@@ -169,8 +170,13 @@ private:
   std::queue<AudioMetaData::GameObjectType> _robotBufferGameObjectPool;
   
   // Create Audio Buffer for the corresponding Game Object
-  RobotAudioBuffer* RegisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject, PluginId_t pluginId, AudioMetaData::Bus::BusType bus );
-  void UnregisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject, PluginId_t pluginId, AudioMetaData::Bus::BusType bus );
+  // Use Default value to regester a gameObj without a bus
+  // Return: Bus pointer or Null if pluginId is kInvalidPluginId or busType is Invalid
+  RobotAudioBuffer* RegisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject,
+                                              PluginId_t pluginId = kInvalidPluginId,
+                                              AudioMetaData::Bus::BusType bus = AudioMetaData::Bus::BusType::Invalid );
+  
+  void UnregisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject );
   
   // Keep current robot volume
   float _robotVolume = 0.0f;

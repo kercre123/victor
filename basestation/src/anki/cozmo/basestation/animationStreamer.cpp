@@ -1019,7 +1019,7 @@ namespace Cozmo {
     Result rleResult = FaceAnimationManager::CompressRLE(ProceduralFaceDrawer::DrawFace(procFace), faceImageMsg.image);
     
     if(RESULT_OK != rleResult) {
-      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
+      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessageHelper",
                         "Failed to get RLE frame from procedural face.");
     } else {
       if(DEBUG_ANIMATION_STREAMING) {

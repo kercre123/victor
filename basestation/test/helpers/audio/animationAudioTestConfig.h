@@ -1,5 +1,5 @@
 /**
- * File: animationAnimationTestConfig.h
+ * File: helpers/audio/animationAudioTestConfig.h
  *
  * Author: Jordan Rivas
  * Created: 6/17/16
@@ -11,8 +11,8 @@
  *
  **/
 
-#ifndef animationAnimationTestConfig_hpp
-#define animationAnimationTestConfig_hpp
+#ifndef __Test_Helpers_Audio_AnimationAudioTestConfig_H__
+#define __Test_Helpers_Audio_AnimationAudioTestConfig_H__
 
 
 #include "clad/audio/audioEventTypes.h"
@@ -23,6 +23,9 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace RobotAnimation {
+class StreamingAnimationTest;
+}
 namespace Audio {
 class RobotAudioTestBuffer;
 }
@@ -30,7 +33,7 @@ class RobotAudioTestBuffer;
 }
 
 
-class AnimationAnimationTestConfig {
+class AnimationAudioTestConfig {
   
 public:
   
@@ -53,7 +56,7 @@ public:
     
     uint32_t GetCompletionTime_ms() const { return startTime_ms + duration_ms; }
     
-    // TODO: Add methods to offset actual buffer createion to simulate the buffer not perfectly lining up with desired
+    // TODO: Add methods to offset actual buffer creation to simulate the buffer not perfectly lining up with desired
     //       situation.
   };
   
@@ -78,6 +81,9 @@ public:
   // Create or write audio into Test Robot Buffer
   void LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTestBuffer& outBuffer );
   
+  // Add Events and fake audio buffer data to Streaming Animation
+  void LoadStreamingAnimation( Anki::Cozmo::RobotAnimation::StreamingAnimationTest& out_streamingAnimation );
+  
   
 private:
   
@@ -89,4 +95,4 @@ private:
 };
 
 
-#endif /* animationAnimationTestConfig_hpp */
+#endif /* __Test_Helpers_Audio_AnimationAudioTestConfig_H__ */

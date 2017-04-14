@@ -9,16 +9,15 @@
  * Copyright: Anki, Inc. 2016
  */
 
-
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "anki/cozmo/basestation/animations/animationSelector.h"
 #include "anki/cozmo/basestation/animations/streamingAnimation.h"
-//#include "anki/cozmo/basestation/audio/robotAudioClient.h"
-
 
 namespace Anki {
 namespace Cozmo {
 namespace RobotAnimation {
+  
+using namespace Audio;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationSelector::AnimationSelector(Audio::RobotAudioClient& audioClient)
@@ -33,14 +32,14 @@ bool AnimationSelector::BufferStreamingAnimation(Animation* animation)
   DEV_ASSERT(animation != nullptr, "AnimationSelector::BufferStreamingAnimation.Animation.IsNull");
   
   // FIXME: Need to set correct state
-  const Audio::RobotAudioClient::RobotAudioOutputSource output = _audioClient.GetOutputSource();
+  const RobotAudioClient::RobotAudioOutputSource output = _audioClient.GetOutputSource();
   
   // check if Animation is already in cache
   const auto findId = _animationMap.find(animation->GetName());
   if (findId != _animationMap.end()) {
     // Animation already in cache
     
-    // Check if it has the same output source we
+    // Check if it has the same output source
     if (findId->second.outputSource == output) {
       // All good, already have animation cached
       return false;
@@ -50,10 +49,23 @@ bool AnimationSelector::BufferStreamingAnimation(Animation* animation)
     _animationMap.erase(findId);
   }
   
-  // Create Streaming animation
-  AnimationInfo info(std::unique_ptr<StreamingAnimation>(new StreamingAnimation(*animation)), output);
+  // Determine which audio gameObj to use
+  AudioMetaData::GameObjectType audioGameObj = AudioMetaData::GameObjectType::Cozmo_OnDevice;
+  if (output == RobotAudioClient::RobotAudioOutputSource::PlayOnRobot) {
+    // FIXME: This is temporarily being disabled until we are ready to integrate with Animation "engine"
+    // FIXME: The Robot gameObj, buffer & client should not be hard coded
+    audioGameObj = AudioMetaData::GameObjectType::CozmoBus_1;
+  }
+
+  // Create new animation
+  RobotAudioBuffer * audioBuffer = _audioClient.GetRobotAudioBuffer(audioGameObj);
+  StreamingAnimation* newAnimation = new StreamingAnimation(*animation, audioGameObj, audioBuffer, _audioClient);
+  
+  // Add to animation map
+  AnimationInfo info(std::unique_ptr<StreamingAnimation>(newAnimation), output);
   auto animationIt = _animationMap.emplace(animation->GetName(), std::move(info));
   AnimationInfo& animationInfo = animationIt.first->second;
+  
   DEV_ASSERT(animationIt.second, "AnimationSelector.BufferStreamingAnimation._animationMap.emplace.false");
   
   // Start Generating audio
@@ -98,41 +110,35 @@ void AnimationSelector::RemoveStreamingAnimation(const std::string& animationKey
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationSelector::BufferAnimationAudio(AnimationInfo& animationInfo)
 {
-  // TODO: Need to be able to retry if all buffer pool is empty
+  using RobotAudioOutputSource = Audio::RobotAudioClient::RobotAudioOutputSource;
   
+  // TODO: Need to be able to retry if all buffer pool is empty
   
   // Only call this once per streaming animation
   DEV_ASSERT(!animationInfo.isBuffering, "AnimationSelector.BufferAnimationAudio.isBuffering.true");
+  
   // Check output Source type
   switch (animationInfo.outputSource) {
-    case Audio::RobotAudioClient::RobotAudioOutputSource::None:
+    case RobotAudioOutputSource::None:
     {
       // Should never be in this state
-      DEV_ASSERT(animationInfo.outputSource != Audio::RobotAudioClient::RobotAudioOutputSource::None,
+      DEV_ASSERT(animationInfo.outputSource != RobotAudioOutputSource::None,
                  "AnimationSelector.BufferAnimationAudio.outputSource.None");
       break;
     }
       
-    case Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice:
+    case RobotAudioOutputSource::PlayOnDevice:
     {
-      // Generate Animation's Audio Event List
-      animationInfo.animation->GenerateAudioEventList(_audioClient.GetRandomGenerator());
-      
-      // FIXME: Need to create device playback stuff!!
-      animationInfo.animation->GenerateDeviceAudioEvents(&_audioClient);
-      
+      animationInfo.animation->GenerateDeviceAudioEvents();
       animationInfo.isBuffering = true;
       break;
     }
       
-    case Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot:
+    case RobotAudioOutputSource::PlayOnRobot:
     {
       if (_audioClient.AvailableGameObjectAndAudioBufferInPool()) {
-        // Generate Animation's Audio Event List
-        animationInfo.animation->GenerateAudioEventList(_audioClient.GetRandomGenerator());
         // Start buffering
-        animationInfo.animation->GenerateAudioData(&_audioClient);
-        
+        animationInfo.animation->GenerateAudioData();        
         animationInfo.isBuffering = true;
       }
       else {
@@ -143,8 +149,6 @@ void AnimationSelector::BufferAnimationAudio(AnimationInfo& animationInfo)
       break;
     }
   }
-  
-  
 }
 
 } // namespace RobotAnimation

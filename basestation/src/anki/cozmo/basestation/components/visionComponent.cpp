@@ -114,7 +114,7 @@ namespace Cozmo {
                                                             Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
-                          "Insantiating VisionSystem with no context and/or data platform.");
+                          "Instantiating VisionSystem with no context and/or data platform.");
     }
     
     _visionSystem = new VisionSystem(dataPath, _vizManager);

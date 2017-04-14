@@ -123,7 +123,7 @@ public:
   // Compare current time with start time.
   RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
   
-  const FRAME_TYPE* GetCurrentKeyframe(TimeStamp_t animationTime_ms);
+  FRAME_TYPE* GetCurrentKeyFrame(TimeStamp_t animationTime_ms);
   
   // Get a reference to the current KeyFrame in the track.
   FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
@@ -382,7 +382,7 @@ Result Track<BackpackLightsKeyFrame>::AddKeyFrameByTime(const BackpackLightsKeyF
 
 
 template<typename FRAME_TYPE>
-const FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyframe(TimeStamp_t animationTime_ms)
+FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyFrame(TimeStamp_t animationTime_ms)
 {
   if (HasFramesLeft()) {
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();

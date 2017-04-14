@@ -63,23 +63,23 @@ EngineAnimationController::EngineAnimationController(const CozmoContext* context
   using namespace ExternalInterface;
   using GameToEngineEvent = AnkiEvent<MessageGameToEngine>;
   
+  // Add Listeners to Game to Engine events.
+  // Note ExternalInterface is not present during unit tests.
   IExternalInterface* interface = _context->GetExternalInterface();
+  if (interface != nullptr) {
+    // Set DEV PlayAnimation action
+    AddSignalHandle(interface->Subscribe(MessageGameToEngineTag::PlayAnimation_DEV,
+                                         [this](const GameToEngineEvent& msg) {
+                                           HandleMessage(msg.GetData().Get_PlayAnimation_DEV());
+                                         }));
   
-  // Add Listners to Game to Engine events
-  
-  // Set DEV PlayAnimation action
-  AddSignalHandle(interface->Subscribe(MessageGameToEngineTag::PlayAnimation_DEV,
-                                       [this](const GameToEngineEvent& msg) {
-                                         HandleMessage(msg.GetData().Get_PlayAnimation_DEV());
-                                       }));
-  
-  // Set Robot output volume
-  AddSignalHandle(interface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
-                                       [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& message) {
-                                         _frameInterleaver->SetRobotMasterVolume(message.GetData().Get_SetRobotVolume().volume);
-                                       }));
-  
-  
+    // Set Robot output volume
+    AddSignalHandle(interface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
+                                         [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& msg) {
+                                           const float volume = msg.GetData().Get_SetRobotVolume().volume;
+                                           _frameInterleaver->SetRobotMasterVolume(volume);
+                                         }));
+  }
   
   // Setup Modules
   // TODO: This feels like it should be temp code

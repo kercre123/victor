@@ -35,8 +35,8 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
-  
 using namespace AudioEngine;
+  
 using namespace AudioMetaData;
   
 const char* RobotAudioClient::kRobotAudioLogChannelName = CozmoAudioController::kLogChannelName;
@@ -50,14 +50,14 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
     return;
   }
   const CozmoContext* context = _robot->GetContext();
-  // For Unit Test bale out if there is no Audio Server
+  // For Unit Test bail out if there is no Audio Mux
   if ( context->GetAudioMultiplexer() == nullptr ) {
     return;
   }
 
   _audioController = static_cast<CozmoAudioController*>( context->GetAudioMultiplexer()->GetAudioController() );
   
-  // Add Listners to Game to Engine events
+  // Add Listeners to Game to Engine events
   auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
     const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
     SetRobotVolume( msg.volume );
@@ -92,7 +92,7 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
     SetOutputSource( outputSource );
     PRINT_CH_DEBUG(kRobotAudioLogChannelName,
                    "RobotAudioClient.RobotAudioClient.RobotAudioOutputSourceCallback",
-                   "outputSource: %hhu", msg.source);
+                   "outputSource: %s", EnumToString(msg.source));
   };
   
   IExternalInterface* gameToEngineInterface = context->GetExternalInterface();
@@ -114,6 +114,7 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   RegisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
   RegisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
   RegisterRobotAudioBuffer( GameObjectType::CozmoBus_4, 4, Bus::BusType::Robot_Bus_4 );
+  RegisterRobotAudioBuffer( GameObjectType::Cozmo_OnDevice );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -127,17 +128,18 @@ RobotAudioClient::~RobotAudioClient()
       _currentAnimation->AbortAnimation();
       ClearCurrentAnimation();
     }
-    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_1, 1, Bus::BusType::Robot_Bus_1 );
-    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
-    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
-    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_4, 4, Bus::BusType::Robot_Bus_4 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_1 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_4 );
+    UnregisterRobotAudioBuffer( GameObjectType::Cozmo_OnDevice );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject )
+RobotAudioBuffer* RobotAudioClient::GetRobotAudioBuffer( AudioMetaData::GameObjectType gameObject )
 {
-  DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull");
+  DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.GetRobotAudioBuffer.AudioControllerNull");
   const AudioGameObject aGameObject = static_cast<const AudioGameObject>( gameObject );
   return _audioController->GetRobotAudioBufferWithGameObject( aGameObject );
 }
@@ -272,7 +274,7 @@ void RobotAudioClient::ClearCurrentAnimation()
   std::string animationState = "No Current Audio Animation";
   if ( _currentAnimation != nullptr ) {
     animationState = "Current Audio Animation '" + _currentAnimation->GetAnimationName() + "' State: " +
-    _currentAnimation->GetStringForAnimationState( _currentAnimation->GetAnimationState() );
+                     _currentAnimation->GetStringForAnimationState( _currentAnimation->GetAnimationState() );
   }
   PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                 "RobotAudioClient.ClearCurrentAnimation", "%s", animationState.c_str());
@@ -402,7 +404,7 @@ bool RobotAudioClient::GetGameObjectAndAudioBufferFromPool(AudioMetaData::GameOb
       }
       else {
         const auto gameObj = _robotBufferGameObjectPool.front();
-        const auto buffer = GetRobotAudiobuffer(gameObj);
+        const auto buffer = GetRobotAudioBuffer(gameObj);
         DEV_ASSERT(buffer != nullptr, "RobotAudioClient.GetGameObjectAndAudioBufferFromPool.BufferIsNull");
         
         out_gameObj = gameObj;
@@ -477,9 +479,9 @@ void RobotAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(AudioMetaData::GameObjectType gameObject,
-                                                             PluginId_t pluginId,
-                                                             AudioMetaData::Bus::BusType audioBus)
+RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject,
+                                                              PluginId_t pluginId, // make default
+                                                              AudioMetaData::Bus::BusType audioBus) // make default
 {
   DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.RegisterRobotAudioBuffer.AudioControllerNull");
   
@@ -495,32 +497,35 @@ RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(AudioMetaData::Game
   // Add Game Object to pool
   _robotBufferGameObjectPool.push( busConfiguration.gameObject );
   
-  // Setup GameObject with Bus
-  AudioGameObject audioGameObject = static_cast<const AudioGameObject>( busConfiguration.gameObject );
-  
-  // Set Aux send settings in Audio Engine
-  CozmoAudioController::AuxSendList sendList = {
-    AudioAuxBusValue( static_cast<AudioAuxBusId>( busConfiguration.bus ), 1.0f )
-  };
-  
-  // Set Aux send settings in Audio Engine
-  _audioController->SetGameObjectAuxSendValues( audioGameObject, sendList );
-  _audioController->SetGameObjectOutputBusVolume( audioGameObject, 0.0f );
-  
   // Create Buffer for buses
-  return _audioController->RegisterRobotAudioBuffer( audioGameObject, pluginId );
+  if ( (pluginId != kInvalidPluginId) && (audioBus != AudioMetaData::Bus::BusType::Invalid) ) {
+    // Setup GameObject with Bus
+    AudioGameObject audioGameObject = static_cast<const AudioGameObject>( busConfiguration.gameObject );
+    
+    // Set Aux send settings in Audio Engine
+    CozmoAudioController::AuxSendList sendList {
+      AudioAuxBusValue( static_cast<AudioAuxBusId>( busConfiguration.bus ), 1.0f )
+    };
+    // Set Aux send settings in Audio Engine
+    _audioController->SetGameObjectAuxSendValues( audioGameObject, sendList );
+    _audioController->SetGameObjectOutputBusVolume( audioGameObject, 0.0f );
+    
+    return _audioController->RegisterRobotAudioBuffer( audioGameObject, pluginId );
+  }
+  
+  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::UnregisterRobotAudioBuffer(AudioMetaData::GameObjectType gameObject,
-                                                  PluginId_t pluginId,
-                                                  AudioMetaData::Bus::BusType audioBus)
+void RobotAudioClient::UnregisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject )
 {
   DEV_ASSERT(_audioController != nullptr, "RobotAudioClient.UnregisterRobotAudioBuffer.AudioControllerNull");
   
   // Remove Configuration Struct
+  PluginId_t pluginId = kInvalidPluginId;
   const auto it = _busConfigurationMap.find(gameObject);
   if ( it != _busConfigurationMap.end() ) {
+    pluginId = it->second.pluginId;
     _busConfigurationMap.erase(it);
   } else {
     // Bus doesn't exist
@@ -529,8 +534,10 @@ void RobotAudioClient::UnregisterRobotAudioBuffer(AudioMetaData::GameObjectType 
   }
   
   // Destroy buffer
-  AudioGameObject aGameObject = static_cast<const AudioGameObject>( gameObject );
-  _audioController->UnregisterRobotAudioBuffer( aGameObject, pluginId );
+  if (pluginId != kInvalidPluginId ) {
+    const AudioGameObject aGameObject = static_cast<const AudioGameObject>( gameObject );
+    _audioController->UnregisterRobotAudioBuffer( aGameObject, pluginId );
+  }
 }
 
 } // Audio

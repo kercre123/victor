@@ -126,7 +126,7 @@ bool AnimationGroupContainer::IsAnimationOnCooldown(const std::string& name, dou
   if(retVal == _animationCooldowns.end()) {
     return false;
   } else {
-    return  currentTime_s < retVal->second;
+    return currentTime_s < retVal->second;
   }
 }
 

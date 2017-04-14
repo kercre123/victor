@@ -4,7 +4,7 @@
 * Author: damjan stulic
 * Created: 6/9/16
 *
-* Description: This Client handles the Robot’s specific audio needs. It is a sub-class of AudioEngineClient.
+* Description: This Client handles the Robot’s specific audio needs. It is a subclass of AudioEngineClient.
 *
 * Copyright: Anki, inc. 2016
 *
@@ -22,7 +22,7 @@ RobotAudioTestClient::RobotAudioTestClient()
 {
 }
 
-RobotAudioBuffer* RobotAudioTestClient::GetRobotAudiobuffer( AudioMetaData::GameObjectType gameObject ) {
+RobotAudioBuffer* RobotAudioTestClient::GetRobotAudioBuffer( AudioMetaData::GameObjectType gameObject ) {
   return &_robotAudioTestBuffer;
 }
 

@@ -1,5 +1,5 @@
 /*
- * File: animationAnimationTestConfig.h
+ * File: helpers/audio/animationAudioTestConfig.cpp
  *
  * Author: Jordan Rivas
  * Created: 6/17/16
@@ -11,11 +11,11 @@
  *
  */
 
-
+#include "helpers/audio/streamingAnimationTest.h"
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "helpers/audio/animationAnimationTestConfig.h"
+#include "helpers/audio/animationAudioTestConfig.h"
 #include "helpers/audio/robotAudioTestClient.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -27,14 +27,14 @@ using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::Audio;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAnimationTestConfig::Insert( TestAudioEvent&& audioEvent )
+void AnimationAudioTestConfig::Insert( TestAudioEvent&& audioEvent )
 {
   DEV_ASSERT(!_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsTrue");
   _events.emplace_back( audioEvent );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAnimationTestConfig::InsertComplete()
+void AnimationAudioTestConfig::InsertComplete()
 {
   _lockInsert = true;
   
@@ -46,7 +46,7 @@ void AnimationAnimationTestConfig::InsertComplete()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::FrameAudioEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms )
+std::vector<AnimationAudioTestConfig::TestAudioEvent> AnimationAudioTestConfig::FrameAudioEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms )
 {
   std::vector<TestAudioEvent> frameEvents;
   for ( auto& anEvent : _events ) {
@@ -68,7 +68,7 @@ std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTest
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::GetCurrentPlayingEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms, const uint32_t framedrift_ms )
+std::vector<AnimationAudioTestConfig::TestAudioEvent> AnimationAudioTestConfig::GetCurrentPlayingEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms, const uint32_t framedrift_ms )
 {
   std::vector<TestAudioEvent> frameEvents;
   
@@ -91,7 +91,7 @@ std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTest
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAnimationTestConfig::LoadAudioKeyFrames( Anki::Cozmo::Animation& outAnimation )
+void AnimationAudioTestConfig::LoadAudioKeyFrames( Anki::Cozmo::Animation& outAnimation )
 {
   DEV_ASSERT(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
   for ( auto& anEvent : _events ) {
@@ -100,7 +100,7 @@ void AnimationAnimationTestConfig::LoadAudioKeyFrames( Anki::Cozmo::Animation& o
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTestBuffer& outBuffer )
+void AnimationAudioTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTestBuffer& outBuffer )
 {
   // Imitate how Wwise write event audio to buffer. ( This is the perfect condition )
   DEV_ASSERT(_lockInsert, "TestAnimationConfig.Insert._lockInsert.IsFalse");
@@ -117,7 +117,7 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
   int32_t animationFrameBeginTime_ms = 0;
   int32_t animationFrameEndTime_ms = animationFrameBeginTime_ms + Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS - 1;
 
-  // Shif events forward in stream to offset the difference frame "wiggle room"
+  // Shift events forward in stream to offset the difference frame "wiggle room"
   uint32_t streamEventOffset_ms = 0;
   uint32_t streamFirstEventStart_ms = 0;
   
@@ -200,10 +200,24 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioTestConfig::LoadStreamingAnimation( Anki::Cozmo::RobotAnimation::StreamingAnimationTest& out_streamingAnimation )
+{
+  // Add events to animation
+  out_streamingAnimation.GenerateAudioEventList_TEST();
+  
+  // Add Fake audio buffer data
+  LoadAudioBuffer(*(RobotAudioTestBuffer*)out_streamingAnimation.GetAudioBuffer());
+  
+  // Mark all mock events complete
+  for (size_t i = 0; i < _events.size(); ++i) {
+    out_streamingAnimation.IncrementCompletedEventCount_TEST();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper Function
-bool AnimationAnimationTestConfig::IsNextEventReady(size_t idx, uint32_t untilTime_ms)
+bool AnimationAudioTestConfig::IsNextEventReady(size_t idx, uint32_t untilTime_ms)
 {
   return ( (idx < _events.size()) && (_events[idx].startTime_ms <= untilTime_ms) );
 }

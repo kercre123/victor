@@ -335,7 +335,7 @@ return RESULT_FAIL; \
         }
         
         if(rleFrame == nullptr) {
-          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMesssage",
+          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
                             "Failed to get frame %d from animation %s",
                             _curFrame, _animName.c_str());
           return nullptr;
@@ -405,7 +405,7 @@ return RESULT_FAIL; \
       Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), _faceImageMsg.image);
       
       if(RESULT_OK != rleResult) {
-        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessageHelper",
                           "Failed to get RLE frame from procedural face.");
         return nullptr;
       }

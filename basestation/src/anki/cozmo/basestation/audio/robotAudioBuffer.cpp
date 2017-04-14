@@ -83,14 +83,11 @@ void RobotAudioBuffer::UpdateBuffer( const AudioEngine::AudioSample* samples, co
 void RobotAudioBuffer::CloseAudioBuffer()
 {
   std::lock_guard<std::mutex> lock( _lock );
-  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
+  if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG || DEBUG_ROBOT_ANIMATION_AUDIO ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.CloseAudioBuffer", "TimeStamp_s %f",
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
 
-  if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_WARNING("RobotAudioBuffer.ClearCache", "CLEAR!");
-  }
 
   // Mark the last stream in the queue completed
   if ( !_streamQueue.empty() ) {

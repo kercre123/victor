@@ -81,7 +81,7 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
   
 #if USE_AUDIO_ENGINE
   {
-    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmocContex.IsNull");
+    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.CozmoContext.IsNull");
     
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
@@ -91,7 +91,7 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
     
     if ( !assetsExist ) {
-      PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets do NOT exists - Ignore if Unit Test");
+      PRINT_NAMED_ERROR("CozmoAudioController.CozmoAudioController", "Audio Assets do NOT exist - Ignore if Unit Test");
       return;
     }
 #endif

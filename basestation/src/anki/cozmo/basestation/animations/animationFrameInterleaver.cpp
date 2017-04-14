@@ -20,6 +20,8 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+using namespace Anki::Cozmo::RobotInterface;
+
 namespace Anki {
 namespace Cozmo {
 namespace RobotAnimation {
@@ -106,20 +108,18 @@ void AnimationFrameInterleaver::PopFrameRobotMessages(EngineToRobotMessageList& 
   DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.PopFrameRobotMessages.AnimationInfo.IsNull");
   
   // Get Keyframes
-  // FIXME: TEMP Keyframe List
-  KeyframeList currentAnimFrameList;
-  
+  StreamingAnimationFrame aFrame;
+  animInfo->animation->TickPlayhead(aFrame);
   
   // Produce animation keyframes & audio frame
-  const AudioEngine::AudioFrameData* audioFrame = nullptr;
-  animInfo->animation->TickPlayhead(currentAnimFrameList, audioFrame);
 
   // Prepare Animation Audio
-  animInfo->audioInput->SetNextFrame(audioFrame);
+  animInfo->audioInput->SetNextFrame(aFrame.audioFrameData);
   
   // Tick Audio Mixer
   _audioMixer.ProcessFrame();
   
+  // TODO: Get face layers for procedure face laying
   
   // TODO: Fix state when we are transitioning
   
@@ -132,10 +132,7 @@ void AnimationFrameInterleaver::PopFrameRobotMessages(EngineToRobotMessageList& 
     positionState = AnimationPositionState::End;
   }
   
-  CreateAnimationMessages(positionState, currentAnimFrameList, out_msgList);
-  
-  // TODO: This will soon be a resued list be sure to clear 
-  currentAnimFrameList.empty();
+  CreateAnimationMessages(positionState, aFrame, out_msgList);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -168,7 +165,7 @@ void AnimationFrameInterleaver::CalculateCurrentState()
     case State:: BufferingAnimation:
     {
       // If we are in this state we should always have an Animation Info
-      DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.BufferingAnimation.AnimInfo.IsNull");
+      DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.BufferingAnimation.InvalidInfo");
       // FIXME: Do Something here!!!
       break;
     }
@@ -176,7 +173,7 @@ void AnimationFrameInterleaver::CalculateCurrentState()
     case State::PlayingAnimations:
     {
       // If we are in this state we should always have an Animation Info
-      DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.PlayingAnimations.AnimInfo.IsNull");
+      DEV_ASSERT(animInfo != nullptr, "AnimationFrameInterleaver.CalculateCurrentState.PlayingAnimations.InvalidInfo");
       // Check if still valid
       if (animInfo->animation->IsPlaybackComplete()) {
         // Pop animation
@@ -199,7 +196,7 @@ void AnimationFrameInterleaver::CalculateCurrentState()
       // TODO: Check if we need to transition
       // If we are in this state we should always have an Animation Info
       DEV_ASSERT(animInfo != nullptr,
-                 "AnimationFrameInterleaver.CalculateCurrentState.TransitioningBetweenAnimations.AnimInfo.IsNull");
+                 "AnimationFrameInterleaver.CalculateCurrentState.TransitioningBetweenAnimations.InvalidInfo");
       break;
     }
   }
@@ -250,34 +247,64 @@ AnimationFrameInterleaver::AnimationPlaybackInfo* const AnimationFrameInterleave
   return nullptr;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationFrameInterleaver::CreateAnimationMessages(AnimationPositionState positionState,
-                                                        KeyframeList &keyframeList,
-                                                        EngineToRobotMessageList &out_msgList)
+void AddKeyframeNonNullToList(IKeyFrame* keyframe, EngineToRobotMessageList &inOut_frameList)
 {
-  // Get audio frame from output source
-  const RobotInterface::EngineToRobot* audioMsg = _robotAudioOutput->PopRobotAudioFrameMsg();
-  out_msgList.emplace_back(audioMsg);
-  
-  // Convert keyframes into robot messages
-  
-  // Insert Animation First frame Marker
-  if (positionState == AnimationPositionState::Beginning) {
-    // FIXME: Animation Tags
-    out_msgList.emplace_back(new RobotInterface::EngineToRobot(AnimKeyFrame::StartOfAnimation(20)));
-  }
-  
-  // Convert Keyframes into mesages
-  for (auto& aKeyframe : keyframeList) {
-    const auto msg = aKeyframe->GetStreamMessage();
+  if (keyframe != nullptr) {
+    const EngineToRobot * msg = keyframe->GetStreamMessage();
     if (msg != nullptr) {
-      out_msgList.emplace_back(msg);
+      inOut_frameList.emplace_back(msg);
     }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationFrameInterleaver::CreateAnimationMessages(AnimationPositionState positionState,
+                                                        StreamingAnimationFrame &frame,
+                                                        EngineToRobotMessageList &out_msgList)
+{
+  // Convert animation keyframes into robot messages.
+  // Note that message order is important!  Robot audio messages
+  // must be first because they are used to synchronize frames.
+
+  // Robot Audio
+  const EngineToRobot* audioMsg = _robotAudioOutput->PopRobotAudioFrameMsg();
+  out_msgList.emplace_back(audioMsg);
   
-  // Insert Animation Last frame marker
+  // Animation Start?
+  if (positionState == AnimationPositionState::Beginning) {
+    // FIXME: Animation Tags
+    out_msgList.emplace_back(new EngineToRobot(AnimKeyFrame::StartOfAnimation(20)));
+  }
+  
+  // Device Audio
+  AddKeyframeNonNullToList(frame.deviceAudioFrame, out_msgList);
+  
+  // Procedural Face
+  //    auto& proceduralFaceTrack = GetTrack<ProceduralFaceKeyFrame>();
+  //    if (proceduralFaceTrack.HasFramesLeft() &&
+  //        proceduralFaceTrack.GetCurrentKeyFrame().IsTimeToPlay(_playheadTime_ms)) {
+  //      // FIXME: No procedural face
+  //      // Don't send procedure face
+  //      proceduralFaceTrack.MoveToNextKeyFrame();
+  //    }
+  
+  // Face Images
+  AddKeyframeNonNullToList(frame.animFaceFrame, out_msgList);
+  
+  // Motors
+  AddKeyframeNonNullToList(frame.headFrame, out_msgList);
+  AddKeyframeNonNullToList(frame.liftFrame, out_msgList);
+  AddKeyframeNonNullToList(frame.bodyFrame, out_msgList);
+  
+  // Event
+  AddKeyframeNonNullToList(frame.eventFrame, out_msgList);
+  
+  // Backpack Lights
+  AddKeyframeNonNullToList(frame.backpackFrame, out_msgList);
+  
+  // Animation End?
   if (positionState == AnimationPositionState::End) {
-    out_msgList.emplace_back(new RobotInterface::EngineToRobot(AnimKeyFrame::EndOfAnimation()));
+    out_msgList.emplace_back(new EngineToRobot(AnimKeyFrame::EndOfAnimation()));
   }
 }
 

@@ -228,7 +228,7 @@ namespace Cozmo {
     };
     
     RobotAudioKeyFrame() { }
-    RobotAudioKeyFrame( AudioRef&& audioRef, TimeStamp_t triggerTime_ms);
+    RobotAudioKeyFrame( AudioRef&& audioRef, TimeStamp_t triggerTime_ms );
     
     Result DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug);
 

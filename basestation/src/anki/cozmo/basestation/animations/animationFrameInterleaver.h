@@ -38,7 +38,7 @@ namespace RobotAnimation {
   
 class StreamingAnimation;
 class AnimationAudioInputSource;
-  
+struct StreamingAnimationFrame;
   
 class AnimationFrameInterleaver {
   
@@ -124,7 +124,7 @@ private:
   void CalculateCurrentState();
   
   
-  // Pop the current andimation and put audio input back into pool
+  // Pop the current animation and put audio input back into pool
   // Note: Always call this when removing from _playbackQueue
   void PopCurrentAnimation();
   
@@ -133,9 +133,9 @@ private:
   AnimationPlaybackInfo* const GetCurrentAnimationInfo();
   AnimationPlaybackInfo* const GetNextAnimationInfo();
   
-  // Converte animation frames into robot messages
+  // Convert animation frames into robot messages
   void CreateAnimationMessages(AnimationPositionState positionState,
-                               KeyframeList &keyframeList,
+                               StreamingAnimationFrame &frame,
                                EngineToRobotMessageList &out_msgList);
 };
   

@@ -17,6 +17,7 @@
 #define __Basestation_Animations_StreamingAnimation_H__
 
 #include "anki/cozmo/basestation/animation/animation.h"
+#include "anki/cozmo/basestation/animations/streamingAnimationTypes.h"
 #include "anki/cozmo/basestation/animations/animationControllerTypes_Internal.h"
 #include "clad/audio/audioEventTypes.h"
 
@@ -25,7 +26,6 @@
 
 #include <list>
 #include <mutex>
-
 
 
 namespace Anki {
@@ -59,8 +59,19 @@ public:
     Completed       // Has all audio data for animation
   };
   
-  // Init a Streaming Animation by copying a parent Animation
-  StreamingAnimation(const Animation& originalAnimation);
+  // Init a Streaming Animation
+  StreamingAnimation(const std::string& name,                   // Animation Name
+                     AudioMetaData::GameObjectType gameObject,  // Game Object to buffer audio with
+                     Audio::RobotAudioBuffer* audioBuffer,      // Corresponding buffer for Game Object
+                     Audio::RobotAudioClient& audioClient);     // Audio Client ref to perform audio work
+  
+  
+  StreamingAnimation(const Animation& originalAnimation,        // Copy parent Animation
+                     AudioMetaData::GameObjectType gameObject,  // Game Object to buffer audio with
+                     Audio::RobotAudioBuffer* audioBuffer,      // Corresponding buffer for Game Object
+                     Audio::RobotAudioClient& audioClient);     // Audio Client ref to perform audio work
+  
+  ~StreamingAnimation();
   
   // Reset Animation Playhead to beginning
   Result Init();
@@ -78,12 +89,15 @@ public:
   
   // Update State & Audio data
   void Update();
-
+  
   
   // Return false if there are no audio data frames to tick frame, check state to determine why (either still buffering
   // or complete)
   // Note: Next frame must be ready before ticking
-  void TickPlayhead(KeyframeList& out_keyframeList, const AudioEngine::AudioFrameData*& out_audioFrame);
+  // Note: This will clear the out_frame before adding frame's track data
+  void TickPlayhead(StreamingAnimationFrame& out_frame);
+  
+  
   
   // Once started must be ticked with every frame until completed
   bool DidStartPlaying() const { return _playheadTime_ms > 0; }
@@ -102,18 +116,25 @@ public:
   
   
   // Use animation audio event keyframes to generate a list of playable audio events
-  void GenerateAudioEventList(Util::RandomGenerator& randomGenerator);
+  // void GenerateAudioEventList();
   
   // Begin to buffer Animation's audio data
   // Note: Be sure the audioClient has an available buffer in its pool before calling
-  void GenerateAudioData(Audio::RobotAudioClient* audioClient);
+  void GenerateAudioData();
   
   // This creates the events needed to play synchronous cozmo audio on device
   // TODO: Need to implement this
-  void GenerateDeviceAudioEvents(Audio::RobotAudioClient* audioClient);
+  void GenerateDeviceAudioEvents();
+
+  // Stop audio buffering
+  void AbortAnimation();
 
   
-private:
+  // FIXME: Temp method to convert audio frame into robot message
+  RobotInterface::EngineToRobot* CreateRobotMessage(const AudioEngine::AudioFrameData* audioFrame);
+
+
+protected:
   
   // Struct to sync audio buffer streams with animation
   struct AnimationEvent {
@@ -152,17 +173,19 @@ private:
   bool _hasAltEventAudio = false;
   
   // Playing and buffering audio objects
-  AudioMetaData::GameObjectType _gameObj = AudioMetaData::GameObjectType::Invalid;
-  Audio::RobotAudioClient*      _audioClient = nullptr;
-  Audio::RobotAudioBuffer*      _audioBuffer = nullptr;
+  AudioMetaData::GameObjectType     _gameObj = AudioMetaData::GameObjectType::Invalid;
+  Audio::RobotAudioBuffer*  _audioBuffer = nullptr;
+  Audio::RobotAudioClient&  _audioClient;
   
   // Hold on to the current stream frames are being pulled from
   Audio::RobotAudioFrameStream* _currentBufferStream = nullptr;
+  
   bool HasCurrentBufferStream() const { return _currentBufferStream != nullptr; }
   
-  // Add audio frame data to animation
+  // Add audio frame data to animation. Nullptr values may be added to indicate silence.
   // NOTE: Takes ownership of frame
   void PushFrameIntoBuffer(const AudioEngine::AudioFrameData* frame);
+  
   using AudioFrameList = std::list<const AudioEngine::AudioFrameData*>;
   AudioFrameList            _audioFrames;
   
@@ -171,6 +194,7 @@ private:
   uint32_t _audioBufferedFrameCount = 0;
   uint32_t _playheadFrame = 0;
   uint32_t _playheadTime_ms = 0;
+  
   AudioFrameList::iterator  _audioPlayheadIt;
   
   // Guard against event errors on different threads
@@ -179,14 +203,18 @@ private:
   // List of playable audio events
   using AudioEventList = std::vector<AnimationEvent>;
   AudioEventList _animationAudioEvents;
+  AudioEventList::iterator _nextAnimationAudioEventIt;
   
   // Track the time the first stream was created and audio event to calculate the stream's relevant animation time
   const double kInvalidAudioStreamOffsetTime = std::numeric_limits<double>::min();
   double _audioStreamOffsetTime_ms = kInvalidAudioStreamOffsetTime;
 
+  // Use animation audio event keyframes to generate a list of playable audio events
+  void GenerateAudioEventList();
+  
   // Get the next audio event
   // Note: Will return null when there are no more events left
-  const AnimationEvent* GetNextEvent() const;
+  const AnimationEvent* GetNextAudioEvent() const;
   
   // Track the current Event in the _animationAudioEvents vector
   // Note: This is not thread safe, be sure to properly lock when using
@@ -209,6 +237,9 @@ private:
   // Handle Cozmo Event callbacks from Audio Engine
   void HandleCozmoEventCallback(AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo);
   
+  // Perform Audio Event and track event state with AudioEngine
+  void PlayAnimationAudioEvent(AnimationEvent* animationEvent, std::weak_ptr<char> isAliveWeakPtr);
+  
   // Copy audio frames into animation audio frame list
   void CopyAudioBuffer();
   
@@ -221,6 +252,7 @@ private:
   
   // Check if all of the audio events have been cached and there is an audio frame for every animation frame
   bool IsAnimationDone() const;
+  
   
 };
 

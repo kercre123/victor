@@ -30,6 +30,8 @@ public:
   
   AudioMixerOutputSource( const AudioMixingConsole& mixingConsole );
   
+  virtual ~AudioMixerOutputSource() = default;
+  
   // Final mix, apply output processing and provide data to destination
   virtual void ProcessTick( const MixingConsoleBuffer& audioFrame ) = 0;
   

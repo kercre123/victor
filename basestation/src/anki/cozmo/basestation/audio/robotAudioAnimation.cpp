@@ -209,7 +209,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   if (_gameObj != AudioMetaData::GameObjectType::Cozmo_OnDevice) {
     // When playing animation on robot get audio buffer
     if ( _audioClient != nullptr ) {
-      _audioBuffer = _audioClient->GetRobotAudiobuffer( _gameObj );
+      _audioBuffer = _audioClient->GetRobotAudioBuffer( _gameObj );
     }
     
     // Return error
