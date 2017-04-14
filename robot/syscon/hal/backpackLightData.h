@@ -1,6 +1,8 @@
 #ifndef __BACKPACK_LIGHT_DATA
 #define __BACKPACK_LIGHT_DATA
 
+#include "anki/cozmo/robot/buildTypes.h"
+
 namespace BackpackLights {
   static const LightState all_off[] = {
     { 0x0000, 0x0000 },
@@ -46,12 +48,19 @@ namespace BackpackLights {
     { 0x3C00, 0x0000, 20, 20, 10, 10,  0 }
   };
 
+#ifdef FACTORY
+  static const LightState disconnected[] = {
+    {0x03e0, 0x0000, 20, 6, 20, 6}, 
+    {0x03e0, 0x0000, 20, 6, 20, 6}, 
+    {0x03e0, 0x0000, 20, 6, 20, 6}, 
+  };
+#else
   static const LightState disconnected[] = {
     { 0x1ce7, 0x1ce7 },
     { 0x1ce7, 0x1ce7 },
     { 0x1ce7, 0x1ce7 }
   };
-  
+#endif  
   // BOOT POST LIGHTS
   static const LightState booted[] = {
     { 0x07FE0, 0x07FE0 },
