@@ -13,6 +13,10 @@ SOUND,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]
 -changed speaker test to louder frequency sweep audio
 ^Note: requires v94+ head firmware; modified sound generator
 
+HEAD1,HEAD2:
+-test if fixture pull-up (R82) is installed. Fail with E6 [ERROR_OUT_OF_RANGE] otherwise.
+
+
 ----------------
 Release v93
 ----------------
