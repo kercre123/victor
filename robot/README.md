@@ -119,6 +119,53 @@ in each build flavor.
 
 -------------------------------------------------------------------------------
 
+## Building Factory Fimrware
+
+Requirements:
+ 1. Same tools as regular firmware
+ 2. Be on a Factory branch.
+
+### Build
+
+The following process is known to work. Some steps may be redundant, but this is safe.
+
+### Clad generation and build flags.
+
+```
+make clean
+make dev BUILD_TYPE=FACTORY
+```
+
+This must be done before the other steps to ensure the FACTORY flag is set.
+
+### Keil build
+
+Use Keil on windows.
+`Project->Open Project` to load workspace "cozmo.uvmpw"
+`Project->Batch Build -> Rebuild` to build all images
+
+### Espressif build
+
+```
+make esp_factory BUILD_TYPE=FACTORY
+```
+This generates `build/esp.factory.bin`
+
+ 
+
+### Optional (OTA File)
+
+To generate a `factory.safe` file which can be used to OTA a new factory image:
+
+```
+make factory_upgrade BUILD_TYPE=FACTORY
+```
+
+Don't do this unless you really need to. Factory images should normally only be installed at the factory.
+
+
+-------------------------------------------------------------------------------
+
 ## Trace Strings
 
 To save code space and bandwidth, debugging strings in the firmware can be converted into a shared string table by the
