@@ -9,6 +9,8 @@ enum uint_32 ParameterType
   Behavior_Cubes_Stacked = 871787998,
   Behavior_Lift_Cube = 1379688411,
   Behavior_Request_Game = 4023609046,
+  Cozmo_Singing_Phaser = 265118809,
+  Cozmo_Singing_Tremolo = 1391957216,
   Cozmo_Singing_Vibrato = 3255781855,
   Dev_Tone_Freq = 2324555758,
   Event_Volume = 3530059848,
