@@ -13,14 +13,15 @@
 #ifndef ANKI_COZMO_BASIC_ACTIONS_H
 #define ANKI_COZMO_BASIC_ACTIONS_H
 
+#include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
-#include "anki/common/basestation/math/pose.h"
-#include "clad/types/actionTypes.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/smartFaceId.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+#include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/toolCodes.h"
 #include "clad/types/visionModes.h"
@@ -547,6 +548,7 @@ namespace Cozmo {
     {
     public:
       TurnTowardsFaceAction(Robot& robot, Vision::FaceID_t faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
+      TurnTowardsFaceAction(Robot& robot, const SmartFaceID& faceID, Radians maxTurnAngle = M_PI_F, bool sayName = false);
       virtual ~TurnTowardsFaceAction();
       
       // Set the maximum number of frames we are will to wait to see a face after
@@ -565,8 +567,8 @@ namespace Cozmo {
       // turned to. It is called right before the animation should be played, only if the face is named. Input
       // is the face we are reacting to, and the return value should be the animation to play. If
       // AnimationTrigger::Count is returned, no animation will play
-      using AnimTriggerForFaceCallback = std::function<AnimationTrigger(const Robot& robot, Vision::FaceID_t faceID)>;
-      void SetSayNameTriggerCallback(AnimTriggerForFaceCallback callback);
+      using AnimTriggerForFaceCallback = std::function<AnimationTrigger(const Robot& robot, const SmartFaceID& faceID)>;
+      void SetSayNameTriggerCallback(AnimTriggerForFaceCallback callback);      
 
       // same as above, but for the case when the face has no associated name
       void SetNoNameTriggerCallback(AnimTriggerForFaceCallback callback);
@@ -593,11 +595,11 @@ namespace Cozmo {
         SayingName, // saying name, or playing noNameAnimTrigger
       };
       
-      Vision::FaceID_t  _faceID                  = Vision::UnknownFaceID;
+      SmartFaceID       _faceID;
       std::unique_ptr<IActionRunner> _action     = nullptr;
       f32               _closestDistSq           = std::numeric_limits<f32>::max();
       u32               _maxFramesToWait         = 10;
-      Vision::FaceID_t  _obsFaceID               = Vision::UnknownFaceID;
+      SmartFaceID       _obsFaceID;
       State             _state                   = State::Turning;
       bool              _sayName                 = false;
       bool              _tracksLocked            = false;

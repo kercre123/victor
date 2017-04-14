@@ -25,6 +25,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/smartFaceId.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -668,7 +669,19 @@ namespace Cozmo {
     
     return updateCount;
   }
-  
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  SmartFaceID FaceWorld::GetSmartFaceID(Vision::FaceID_t faceID) const
+  {
+    return SmartFaceID{_robot, faceID};
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::UpdateSmartFaceToID(const Vision::FaceID_t faceID, SmartFaceID& smartFaceID)
+  {
+    smartFaceID.Reset(_robot, faceID);
+  }
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   const Vision::TrackedFace* FaceWorld::GetFace(Vision::FaceID_t faceID) const
   {
@@ -679,6 +692,12 @@ namespace Cozmo {
     } else {
       return nullptr;
     }
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const Vision::TrackedFace* FaceWorld::GetFace(const SmartFaceID& faceID) const
+  {
+    return GetFace(faceID.GetID());
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -772,6 +791,12 @@ namespace Cozmo {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::HasTurnedTowardsFace(const SmartFaceID& faceID) const
+  {
+    return HasTurnedTowardsFace(faceID.GetID());
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::SetTurnedTowardsFace(Vision::FaceID_t faceID, bool val)
   {
     auto it = _faceEntries.find(faceID);
@@ -783,6 +808,12 @@ namespace Cozmo {
     }
     
     it->second.hasTurnedTowards = val;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::SetTurnedTowardsFace(const SmartFaceID& faceID, bool val)
+  {
+    SetTurnedTowardsFace(faceID.GetID(), val);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -822,6 +853,12 @@ namespace Cozmo {
     _robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight,
                                                       faceID,
                                                       numEnrollmentsRequired);
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::Enroll(const SmartFaceID& faceID)
+  {
+    Enroll(faceID.GetID());
   }
 
 } // namespace Cozmo

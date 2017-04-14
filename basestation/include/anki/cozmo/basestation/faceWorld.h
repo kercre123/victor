@@ -18,6 +18,7 @@
 #include "anki/vision/basestation/trackedFace.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/smartFaceId.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "clad/types/actionTypes.h"
@@ -35,6 +36,11 @@ namespace Cozmo {
   {
   public:
     static const s32 MinTimesToSeeFace = 4;
+
+    // NOTE: many functions in this API have two versions, one which takes a Vision::FaceID_t and one which
+    // takes a SmartFaceID. The use of SmartFaceID is preferred because it automatically handles face id
+    // changes and deleted faces. The raw face id API is maintained only for backwards
+    // compatibility. COZMO-10839 is the task that will eventually remove this old interface
     
     FaceWorld(Robot& robot);
     
@@ -48,9 +54,15 @@ namespace Cozmo {
     
     // Called when Robot rejiggers its pose. Returns number of faces updated
     int UpdateFaceOrigins(const Pose3d* oldOrigin, const Pose3d* newOrigin);
-    
+
+    // create a smart face ID or update an existing ID from a raw ID (useful, for example for IDs from CLAD
+    // messages)
+    SmartFaceID GetSmartFaceID(Vision::FaceID_t faceID) const;
+    void UpdateSmartFaceToID(const Vision::FaceID_t faceID, SmartFaceID& smartFaceID);
+
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::FaceID_t faceID) const;
+    const Vision::TrackedFace* GetFace(const SmartFaceID& faceID) const;
     
     // Returns set of face IDs present in the world.
     // Set includeRecognizableOnly=true to only return faces that have been (or can be) recognized.
@@ -77,9 +89,11 @@ namespace Cozmo {
 
     // Returns true if any action has turned towards this face
     bool HasTurnedTowardsFace(Vision::FaceID_t faceID) const;
+    bool HasTurnedTowardsFace(const SmartFaceID& faceID) const;
 
     // Tell FaceWorld that the robot has turned towards this face (or not, if val=false)
     void SetTurnedTowardsFace(Vision::FaceID_t faceID, bool val = true);
+    void SetTurnedTowardsFace(const SmartFaceID& faceID, bool val = true);
     
     // Removes all faces and resets the last observed face timer to 0, so
     // GetLastObservedFace() will return 0.
@@ -89,6 +103,7 @@ namespace Cozmo {
     // of naming that person.
     // Use UnknownFaceID to enable (or return to) ongoing "enrollment" of session-only / unnamed faces.
     void Enroll(Vision::FaceID_t faceID);
+    void Enroll(const SmartFaceID& faceID);
     
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }

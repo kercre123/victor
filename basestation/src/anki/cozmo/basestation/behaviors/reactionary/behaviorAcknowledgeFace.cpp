@@ -120,7 +120,7 @@ void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)
   
   if( shouldPlayInitialGreeting ) {
     auto& moodManager = robot.GetMoodManager();
-    turnAction->SetSayNameTriggerCallback([this, &moodManager](const Robot& robot, Vision::FaceID_t faceID){
+    turnAction->SetSayNameTriggerCallback([this, &moodManager](const Robot& robot, const SmartFaceID& faceID){
         // only play the initial greeting once, so if we are going to use it, mark that here
         _hasPlayedInitialGreeting = true;
         moodManager.TriggerEmotionEvent("GreetingSayName", MoodManager::GetCurrentTimeInSeconds());
