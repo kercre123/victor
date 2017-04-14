@@ -21,6 +21,8 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _BirthdateLabel;
 
+  private IEnumerator _ActivateInputFieldCoroutine;
+
   private void Awake() {
     DAS.Debug("ProfileCreationView.Awake", "Enter Awake");
     _NameDoneButton.Initialize(HandleNameDoneButton, "name_done_button", this.DASEventDialogName);
@@ -37,7 +39,21 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
     ShowDOBEntry(false);
   }
 
+  private void OnDestroy() {
+    if (_ActivateInputFieldCoroutine != null) {
+      StopCoroutine(_ActivateInputFieldCoroutine);
+    }
+  }
+
   private void HandleViewOpenFinished() {
+    _ActivateInputFieldCoroutine = DelayRegisterInputFocus();
+    StartCoroutine(_ActivateInputFieldCoroutine);
+  }
+
+  private IEnumerator DelayRegisterInputFocus() {
+    // COZMO-10748: We have to ensure that InputField.Start gets called before InputField.ActivateInputField,
+    // otherwise there will be a null ref exception in Unity's internal logic. Therefore, wait a frame.
+    yield return new WaitForEndOfFrame();
     _NameField.Select();
     _NameField.ActivateInputField();
     _NameField.onValueChanged.AddListener(HandleNameFieldChange);

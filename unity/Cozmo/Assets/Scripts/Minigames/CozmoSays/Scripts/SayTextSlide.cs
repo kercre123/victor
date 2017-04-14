@@ -2,6 +2,7 @@
 using DataPersistence;
 using Anki.Cozmo.ExternalInterface;
 using UnityEngine.EventSystems;
+using System.Collections;
 
 public class SayTextSlide : MonoBehaviour {
 
@@ -46,6 +47,8 @@ public class SayTextSlide : MonoBehaviour {
   private bool _PendingClearField = false;
   private IRobot _CurrentRobot;
 
+  private IEnumerator _ActivateInputFieldCoroutine;
+
   public void Initialize(CozmoSays.CozmoSaysGame cozmoSaysGame) {
     _CozmoSaysGame = cozmoSaysGame;
   }
@@ -72,6 +75,10 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void OnDestroy() {
+    if (_ActivateInputFieldCoroutine != null) {
+      StopCoroutine(_ActivateInputFieldCoroutine);
+    }
+
     _TextInput.onValueChanged.RemoveListener(HandleOnTextFieldChange);
     _TextInput.onValidateInput -= HandleInputValidation;
     _TextInput.GetComponent<InputFieldEventListeners>().onSelect -= OnSelect;
@@ -88,9 +95,21 @@ public class SayTextSlide : MonoBehaviour {
 
   public void RegisterInputFocus() {
 #if UNITY_IOS
+    RegisterInputFocusInternal();
+#endif
+  }
+
+  private void RegisterInputFocusInternal() {
+    _ActivateInputFieldCoroutine = DelayRegisterInputFocus();
+    StartCoroutine(_ActivateInputFieldCoroutine);
+  }
+
+  private IEnumerator DelayRegisterInputFocus() {
+    // COZMO-10748: We have to ensure that InputField.Start gets called before InputField.ActivateInputField,
+    // otherwise there will be a null ref exception in Unity's internal logic. Therefore, wait a frame.
+    yield return new WaitForEndOfFrame();
     _TextInput.Select();
     _TextInput.ActivateInputField();
-#endif
   }
 
   private void UpdateTotalSparkCount() {

@@ -12,6 +12,8 @@ public class EnterNameSlide : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.InputField _NameInputField;
 
+  private IEnumerator _ActivateInputFieldCoroutine;
+
   private void Awake() {
     _SubmitName.Initialize(HandleSubmitNameButton, "enter_name_done", "enter_name_slide");
     _SubmitName.Interactable = false;
@@ -20,6 +22,12 @@ public class EnterNameSlide : MonoBehaviour {
   private void Start() {
     if (string.IsNullOrEmpty(_NameInputField.text) == false) {
       _SubmitName.Interactable = true;
+    }
+  }
+
+  private void OnDestroy() {
+    if (_ActivateInputFieldCoroutine != null) {
+      StopCoroutine(_ActivateInputFieldCoroutine);
     }
   }
 
@@ -36,6 +44,14 @@ public class EnterNameSlide : MonoBehaviour {
   }
 
   public void RegisterInputFocus() {
+    _ActivateInputFieldCoroutine = DelayRegisterInputFocus();
+    StartCoroutine(_ActivateInputFieldCoroutine);
+  }
+
+  private IEnumerator DelayRegisterInputFocus() {
+    // COZMO-10748: We have to ensure that InputField.Start gets called before InputField.ActivateInputField,
+    // otherwise there will be a null ref exception in Unity's internal logic. Therefore, wait a frame.
+    yield return new WaitForEndOfFrame();
     _NameInputField.Select();
     _NameInputField.ActivateInputField();
     _NameInputField.onValueChanged.AddListener(HandleInputFieldChange);
