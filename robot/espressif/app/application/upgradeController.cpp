@@ -1241,7 +1241,7 @@ namespace UpgradeController {
   const u32* GetVersionInfo()
   {
     #if FACTORY_USE_STATIC_VERSION_DATA
-    static const char FACTORY_STATIC_VERSION_DATA[] ICACHE_RODATA_ATTR STORE_ATTR = "{\"build\": \"FACTORY\", \"version\": 10500, \"date\": \"Thu Mar 30 21:50:41 2017\", \"time\": 1490910708}\0\0\0\0\0\0\0\0"; //< Ensure at u32 null padding
+    static const char FACTORY_STATIC_VERSION_DATA[] ICACHE_RODATA_ATTR STORE_ATTR = "{\"build\": \"FACTORY\", \"version\": 10501, \"date\": \"Fri Apr 14 20:28:21 2017\", \"time\": 1492201868}\0\0\0\0\0\0\0\0"; //< Ensure at u32 null padding
     return reinterpret_cast<const u32*>(FACTORY_STATIC_VERSION_DATA);
     #else
     const uint32_t VERSION_INFO_ADDR = (APPLICATION_A_SECTOR * SECTOR_SIZE) + ESP_FW_MAX_SIZE - 0x800; // Memory offset of version info for both apps
