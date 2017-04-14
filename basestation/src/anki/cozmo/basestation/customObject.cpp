@@ -46,6 +46,9 @@ CustomObject::CustomObject(ObjectType objectType,
 {
   SetCanonicalCorners();
   
+  // Ensure all markers are default initialized (AddFace can fail)
+  _markersByFace.fill(CustomObjectMarker::Count);
+  
   AddFace(FrontFace,  markerFront );
   AddFace(BackFace,   markerBack  );
   AddFace(LeftFace,   markerLeft  );
