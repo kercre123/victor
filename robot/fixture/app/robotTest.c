@@ -30,10 +30,11 @@ using namespace Anki::Cozmo::RobotInterface;
 //Bodycolors
 enum {
   BODYCOLOR_EMPTY             = ~0,
-  BODYCOLOR_M1_WHITE_COZ1V0   = 0,  //v1.0 Cozmo (1.0 bootloader had all color fields set to 0)
-  BODYCOLOR_M2_WHITE          = 1,  //standard white (v1.5 and later)
-  BODYCOLOR_M3_CE_LM          = 2,  //Collectors edition, Liquid Metal
-  BODYCOLOR_END,                    //(range checking)
+  BODYCOLOR_M1_WHITE_COZ1V0   = 0,  //v1.0 Cozmo (1.0 bootloader had unused data set to 0)
+  BODYCOLOR_M1_RESERVED       = 1,
+  BODYCOLOR_M2_WHITE          = 2,  //standard white (v1.5 and later)
+  BODYCOLOR_M3_CE_LM          = 3,  //Collectors edition, Liquid Metal
+  BODYCOLOR_END,
 };
 
 //buttonTest.c
