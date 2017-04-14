@@ -528,17 +528,33 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
   
 void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& startingPose)
 {
-  // TODO: Note - there is an open ticket to make this initial pose computation
-  //  'smarter' (COZMO-10699)
-  
-  startingPose.SetParent(robot.GetWorldOrigin());
+  // The robot's starting pose should be as follows:
+  //   - If there is a last observed face, the starting pose should be next to the cubes
+  //      such that the robot is facing toward the observed face. The final configuration
+  //      should then look like this (A = face, B = goal robot pose, C = centroid of cubes):
+  //
+  //         (A) face
+  //          |
+  //          |
+  //          |
+  //          |  goal robot pose (facing toward face)
+  //          | /
+  //          |/
+  //         (B)---(C) centroid of cubes
+  //
+  //   - If there is no last observed face, the robot should simply drive to the closest
+  //      point next to the cubes, but turned 90 degrees away from the cubes (so he's not
+  //      looking at the cubes but rather snuggled next to them).
+  //
+  // Achieve this by initializing the goal pose at the centroid of the 3 blocks and moving
+  //   it outward in the desired direction until it no longer intersects the blocks.
   
   // Create a polygon of the block centers
   Poly2f blocksPoly;
   std::vector<const ObservableObject*> locatedBlocks;
   robot.GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
   
-  DEV_ASSERT(locatedBlocks.size() == 3, "BehaviorGuardDog.InitInternal.WrongNumLocatedBlocks");
+  DEV_ASSERT(locatedBlocks.size() == 3, "BehaviorGuardDog.ComputeStartingPose.WrongNumLocatedBlocks");
 
   for (const auto& block : locatedBlocks) {
     const float x = block->GetPose().GetTranslation().x();
@@ -546,42 +562,75 @@ void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& starting
     blocksPoly.push_back(Point2f(x, y));
   }
   Pose2d blockCentroid(Radians(0.f), blocksPoly.ComputeCentroid());
-  const float largestBoundBoxEdge_mm = std::max(blocksPoly.GetMaxX() - blocksPoly.GetMinX(),
-                                                blocksPoly.GetMaxY() - blocksPoly.GetMinY());
+
+  Pose2d robotPose(robot.GetPose());
+  Radians centroidToRobotAngle(atan2f(robotPose.GetY() - blockCentroid.GetY(),
+                                      robotPose.GetX() - blockCentroid.GetX()));
   
-  // Compute a pose for the robot to start the behavior at (ideally facing a person):
   Pose3d lastObservedFace;
   const bool haveLastObservedFace = (0 != robot.GetFaceWorld().GetLastObservedFace(lastObservedFace, false));
+  Radians centroidToFaceAngle(atan2f(lastObservedFace.GetTranslation().y() - blockCentroid.GetY(),
+                                     lastObservedFace.GetTranslation().x() - blockCentroid.GetX()));
+  
+  // Create a 2D goal pose (initialize to block centroid pose)
+  Pose2d goalPose = blockCentroid;
+  
   if (haveLastObservedFace)
   {
-    // Then there is a last observed face.
-    Pose2d face2d(lastObservedFace);
-    Radians centroidToFaceAngle(atan2f(face2d.GetY() - blockCentroid.GetY(),
-                                       face2d.GetX() - blockCentroid.GetX()));
-    
-    // Create a goal pose next to the blocks and facing the last known face.
-    Pose2d goalPose = blockCentroid;
-    goalPose.SetRotation(centroidToFaceAngle + M_PI_2_F);
-    goalPose.TranslateBy(1.4f * largestBoundBoxEdge_mm);
-    goalPose.SetRotation(centroidToFaceAngle);
-    
-    startingPose.SetTranslation(Vec3f(goalPose.GetX(), goalPose.GetY(), 0.f));
-    startingPose.SetRotation(goalPose.GetAngle(), Z_AXIS_3D());
+    // Initially rotate the pose to be perpendicular to the line connecting
+    //  the block centroid to the observed face (in a direction that will
+    //  result in the shortest path from the robot's current pose)
+    if ((centroidToRobotAngle - centroidToFaceAngle).ToFloat() > 0.f) {
+      goalPose.SetRotation(centroidToFaceAngle + M_PI_2_F);
+    } else {
+      goalPose.SetRotation(centroidToFaceAngle - M_PI_2_F);
+    }
   } else {
-    // No last observed face available. Just find the closest point between the robot and the cubes
-    Pose2d robotPose(robot.GetPose());
-    Radians centroidToRobotAngle(atan2f(robotPose.GetY() - blockCentroid.GetY(),
-                                        robotPose.GetX() - blockCentroid.GetX()));
-    
-    // Create the goal pose for the robot to get to
-    Pose2d goalPose = blockCentroid;
+    // Initially rotate the pose to be parallel with the line connecting
+    //  the block centroid to the current robot position.
     goalPose.SetRotation(centroidToRobotAngle);
-    goalPose.TranslateBy(1.4f * largestBoundBoxEdge_mm);
-    goalPose.SetRotation(centroidToRobotAngle + M_PI_2_F);
-    
-    startingPose.SetTranslation(Vec3f(goalPose.GetX(), goalPose.GetY(), 0.f));
-    startingPose.SetRotation(goalPose.GetAngle(), Z_AXIS_3D());
   }
+  
+  // Incrementally move the goal pose outward from the block centroid
+  //  until it no longer intersects any blocks.
+  const float stepIncrement_mm = 10.f;
+  float totalTranslation_mm = 0.f;
+  const float maxTranslation_mm = 250.f;
+  std::vector<const ObservableObject*> intersectingObjects;
+  do {
+    goalPose.TranslateBy(stepIncrement_mm);
+    
+    // Stop condition just in case:
+    totalTranslation_mm += stepIncrement_mm;
+    if (!ANKI_VERIFY(totalTranslation_mm < maxTranslation_mm,
+                     "BehaviorGuardDog.ComputeStartingPose.TranslatedTooFar",
+                     "Candidate starting pose has been translated way too far (%.1f mm, max is %.1f mm)",
+                     totalTranslation_mm,
+                     maxTranslation_mm)) {
+      break;
+    }
+    
+    const auto candidatePoseBoundingQuad = robot.GetBoundingQuadXY(Pose3d(goalPose), 0.f);
+    intersectingObjects.clear();
+    
+    robot.GetBlockWorld().FindLocatedIntersectingObjects(candidatePoseBoundingQuad,
+                                                         intersectingObjects,
+                                                         0.0f,
+                                                         *_connectedCubesOnlyFilter);
+  } while(!intersectingObjects.empty());
+    
+  if (haveLastObservedFace) {
+    // Rotate the pose back toward the face.
+    goalPose.SetRotation(centroidToFaceAngle);
+  } else {
+    // Rotate the pose to be perpendicular to the centroidToRobot line.
+    goalPose.SetRotation(centroidToRobotAngle + M_PI_2_F);
+  }
+  
+  // Convert to full 3D pose in robot world origin:
+  startingPose.SetParent(robot.GetWorldOrigin());
+  startingPose.SetTranslation(Vec3f(goalPose.GetX(), goalPose.GetY(), 0.f));
+  startingPose.SetRotation(goalPose.GetAngle(), Z_AXIS_3D());
   
   PRINT_NAMED_INFO("BehaviorGuardDog.ComputeStartingPose.Pose",
                    "Starting pose computed %s last observed face: (%.1f, %.1f, %.1f : %.2f deg)",
@@ -590,7 +639,6 @@ void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& starting
                    startingPose.GetTranslation().y(),
                    startingPose.GetTranslation().z(),
                    startingPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-  
 }
   
 Result BehaviorGuardDog::EnableCubeAccelStreaming(const Robot& robot, const bool enable) const
