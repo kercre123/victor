@@ -155,7 +155,7 @@ This generates `build/esp.factory.bin`
 
 ### Optional (OTA File)
 
-To generate a `factory.safe` file which can be used to OTA a new factory image:
+To generate a `factory_upgrade.safe` file which can be used to OTA a new factory image:
 
 ```
 make factory_upgrade BUILD_TYPE=FACTORY
