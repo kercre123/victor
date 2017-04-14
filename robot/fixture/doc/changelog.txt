@@ -2,6 +2,9 @@
 Release v94
 ----------------
 
+Firmware:
+-rebuild esp,robot,syscon + all bootloaders with latest codebase/features.
+
 General:
 -remove 0xf0 limit on serial# --> Cube fixtures will fail. Playpen Afix## may repeat!
 
