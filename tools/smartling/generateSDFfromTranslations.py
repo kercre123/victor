@@ -8,8 +8,10 @@ import argparse
 
 #anki
 sys.path.append(os.path.abspath("tools/build/tools/ankibuild"))
+sys.path.append(os.path.abspath("."))
 import util
 import unity
+import configure
 
 
 def write_translations_to_file(translated_json_dir,output_asset_path):
@@ -50,28 +52,28 @@ def run(args):
   # Get project directory 
   project_dir = get_project_dir(args.project_dir)
   if project_dir is None:            
-  	print("Error: Could not find a Unity project")
-  	return 1
+    print("Error: Could not find a Unity project")
+    return 1
   if not os.path.exists(project_dir):          
-  	print("Error: Project directory '" + project_dir + "'does not exist")
-  	return 1
+    print("Error: Project directory '" + project_dir + "'does not exist")
+    return 1
 
   # Gather all translated strings into one text file
   translated_json_dir = get_translated_json_dir(project_dir, args.translated_json_asset_dir)
   if not os.path.exists(translated_json_dir):          
-  	print("Error: Translated JSON directory '" + translated_json_dir + "'does not exist")
-  	return 1
+    print("Error: Translated JSON directory '" + translated_json_dir + "'does not exist")
+    return 1
 
   output_asset_path = get_translated_output_path(project_dir, args.txt_output_asset_path)
   if not os.path.exists(os.path.dirname(output_asset_path)):          
-  	print("Error: Parent directory of output target '" + output_asset_path + "'does not exist")
-  	return 1
+    print("Error: Parent directory of output target '" + output_asset_path + "'does not exist")
+    return 1
 
   write_translations_to_file(translated_json_dir, output_asset_path)
   
   # Set up required config to execute Unity
-  unity_exe = unity.UnityBuildConfig.default_unity_exe()
-  log_file = unity.UnityBuildConfig.default_log_file()
+  unity_exe = os.path.join(configure.find_unity_app_path(), 'Contents', 'MacOS', 'Unity')
+  log_file = os.path.join('build','Unity','UnityBuild-JP-font-generation.log')
 
   # Execute SDF .asset generation code 
   procArgs = [unity_exe, "-batchmode", "-quit", "-nographics"]
