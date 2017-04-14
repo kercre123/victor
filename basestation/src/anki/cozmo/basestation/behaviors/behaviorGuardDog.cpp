@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -72,8 +71,8 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogA
   
   
 // Constants/thresholds:
-const float kSleepingTimeout_s = 30.f;
-const float kMovementScoreThreshold_stir = 5.f;
+const float kSleepingTimeout_s = 60.f;
+const float kMovementScoreThreshold_stir = 8.f;
 const float kMovementScoreMax = 50.f;
   
 } // end anonymous namespace
@@ -87,8 +86,10 @@ BehaviorGuardDog::BehaviorGuardDog(Robot& robot, const Json::Value& config)
   
   // subscribe to some E2G messages:
   SubscribeToTags({EngineToGameTag::ObjectAccel,
+                   EngineToGameTag::ObjectConnectionState,
                    EngineToGameTag::ObjectMoved,
-                   EngineToGameTag::ObjectConnectionState});
+                   EngineToGameTag::ObjectUpAxisChanged
+                   });
   
   // Set up the "connected light cubes only" blockworld filter:
   _connectedCubesOnlyFilter->AddAllowedFamily(ObjectFamily::LightCube);
@@ -107,7 +108,8 @@ bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
   // This behavior is runnable only if the following are all true:
   //   1. We know the locations 3 blocks
   //   2. We are connected to those 3 blocks
-  //   3. The blocks are gathered together closely enough (within a specified radius or bounding box)
+  //   3. The blocks are all upright
+  //   4. The blocks are gathered together closely enough (within a specified radius or bounding box)
   
   std::vector<const ObservableObject*> locatedBlocks;
   robot.GetBlockWorld().FindLocatedMatchingObjects(*_connectedCubesOnlyFilter, locatedBlocks);
@@ -115,6 +117,13 @@ bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
   // Ensure there are three located and connected blocks:
   if (locatedBlocks.size() != 3) {
     return false;
+  }
+  
+  // Ensure that the blocks are upright:
+  for (const auto& block : locatedBlocks) {
+    if (block->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS) {
+      return false;
+    }
   }
   
   // Now, ensure that they are grouped somewhat closely together.
@@ -149,8 +158,8 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   _cubesData.clear();
   _firstSleepingStartTime_s = 0.f;
   _nCubesMoved = 0;
+  _nCubesFlipped = 0;
   _monitoringCubeMotion = false;
-  _cubePoseToVerify = Pose3d();
 
   // Grab cube starting locations (ideally would have done this in IsRunnable(), but IsRunnable() is const)
   std::vector<const ObservableObject*> locatedBlocks;
@@ -171,34 +180,14 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   
 BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
 {
-  // Monitor for cube motion if appropriate:
+  // Check to see if all cubes were flipped or moved:
   if (_monitoringCubeMotion) {
-    for (auto& block : _cubesData) {
-      // If any cube has been moved above the crazy high threshold,
-      //  then need to wake up right away.
-      if (block.movementScore >= kMovementScoreMax) {
-        StopActing();
-        SET_STATE(Busted);
-      } else if (!block.hasBeenMoved && block.movementScore > kMovementScoreThreshold_stir) {
-        block.hasBeenMoved = true;
-        ++_nCubesMoved;
-        if (_nCubesMoved < 3) {
-          StopActing();
-          SET_STATE(Fakeout);
-        } else {
-          StopActing();
-          SET_STATE(Busted);
-        }
-      }
-      
-      // Play the appropriate light cube animation (depending on cube movement):
-      if (block.movementScore > kMovementScoreThreshold_stir) {
-        if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
-          StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogBeingMoved);
-        }
-      } else if (block.lastCubeAnimTrigger == CubeAnimationTrigger::GuardDogBeingMoved) {
-        StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogOff);
-      }
+    if (_nCubesFlipped == 3) {
+      StopActing();
+      SET_STATE(PlayerSuccess);
+    } else if (_nCubesMoved == 3) {
+      StopActing();
+      SET_STATE(Busted);
     }
   }
   
@@ -207,7 +196,6 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
   if ((_state == State::Sleeping) &&
       (now - _firstSleepingStartTime_s > kSleepingTimeout_s)) {
     StopActing();
-    StartMonitoringCubeMotion(robot, false);
     SET_STATE(Timeout);
   }
   
@@ -281,6 +269,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::Busted:
     {
+      StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogBusted);
       StartMonitoringCubeMotion(robot, false);
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
       break;
@@ -292,55 +281,55 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::Timeout:
     {
-      // TODO: React differently based on how many cubes have sensed movement at this point?
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout), [this]() { SET_STATE(DriveToCheckCubes); });
-      break;
-    }
-    case State::DriveToCheckCubes:
-    {
-      // Drive to a pose from which we can verify if there are any cubes remaining.
+      StartMonitoringCubeMotion(robot, false);
+      auto action = new CompoundActionSequential(robot);
       
-      // Ask blockworld for the closest cube:
+      // Timeout wake-up animation:
+      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
+
+      // Ask blockworld for the closest cube and turn toward it.
+      // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
+      //  purely for aesthetics and we do not want failures to prevent the animations afterward from
+      //  being played.
       const ObservableObject* closestBlock = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), *_connectedCubesOnlyFilter);
-      if (!ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal.NoClosestBlock", "No closest block returned by blockworld!")) {
-        SET_STATE(Complete);
-        break;
+      if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal.Timeout.NoClosestBlock", "No closest block returned by blockworld!")) {
+        action->AddAction(new TurnTowardsPoseAction(robot, closestBlock->GetPose()), true);
       }
-      _cubePoseToVerify = closestBlock->GetPose();
+
+      action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
       
-      auto turnToPoseAction = new TurnTowardsPoseAction(robot, _cubePoseToVerify, Radians(M_PI_F));
-      auto driveBackwardAction = new DriveStraightAction(robot, -120.f, 150.f);
+      if ((_nCubesMoved == 0) && (_nCubesFlipped == 0)) {
+        action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesUntouched));
+      } else {
+        action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesTouched));
+      }
       
-      auto action = new CompoundActionSequential(robot, {turnToPoseAction, driveBackwardAction});
-      
-      StartActing(action, [this]() { SET_STATE(VisuallyCheckCubes); });
+      StartActing(action, [this]() { SET_STATE(Complete); });
       break;
     }
-    case State::VisuallyCheckCubes:
+    case State::PlayerSuccess:
     {
-      // See if there are any blocks remaining:
-      const Point3f threshold_mm {100.f, 100.f, 100.f};
-      StartActing(new VisuallyVerifyNoObjectAtPoseAction(robot, _cubePoseToVerify, threshold_mm),
-                  [this] (ActionResult res)
-                  {
-                    const bool objSeen = (res == ActionResult::VISUAL_OBSERVATION_FAILED);
-                    if (objSeen) {
-                      SET_STATE(BlocksRemaining);
-                    } else {
-                      SET_STATE(BlocksMissing);
-                    }
-                  });
-      break;
-    }
-    case State::BlocksRemaining:
-    {
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogCubeRemaining), [this]() { SET_STATE(Complete); });
-      break;
-    }
-    case State::BlocksMissing:
-    {
-      // TODO: Need an animation for this state: this is just a placeholder:
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
+      StartMonitoringCubeMotion(robot, false);
+      auto action = new CompoundActionSequential(robot);
+      
+      // Small delay here so that reaction to all 3 cubes being flipped doesn't
+      //  trigger too quickly (triggering the animations right away felt weird)
+      const float timeToWait_s = 2.0f;
+      action->AddAction(new WaitAction(robot, timeToWait_s));
+      
+      // Ask blockworld for the closest cube and turn toward it.
+      // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
+      //  purely for aesthetics and we do not want failures to prevent the animations afterward from
+      //  being played.
+      const ObservableObject* closestBlock = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), *_connectedCubesOnlyFilter);
+      if (ANKI_VERIFY(closestBlock, "BehaviorGuardDog.UpdateInternal.PlayerSuccess.NoClosestBlock", "No closest block returned by blockworld!")) {
+        action->AddAction(new TurnTowardsPoseAction(robot, closestBlock->GetPose()), true);
+      }
+
+      action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
+      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
+      
+      StartActing(action, [this]() { SET_STATE(Complete); });
       break;
     }
     case State::Complete:
@@ -383,6 +372,9 @@ void BehaviorGuardDog::HandleWhileRunning(const EngineToGameEvent& event, Robot&
     case EngineToGameTag::ObjectMoved:
       HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
       break;
+    case EngineToGameTag::ObjectUpAxisChanged:
+      HandleObjectUpAxisChanged(robot, event.GetData().Get_ObjectUpAxisChanged());
+      break;
     default:
       PRINT_NAMED_WARNING("BehaviorGuardDog.HandleWhileRunning",
                           "Received an unhandled E2G event: %s",
@@ -392,7 +384,7 @@ void BehaviorGuardDog::HandleWhileRunning(const EngineToGameEvent& event, Robot&
 }
 
 
-void BehaviorGuardDog::HandleObjectAccel(const Robot& robot, const ObjectAccel& msg)
+void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
 {
   // Retrieve a reference to the objectData struct corresponding to this message's object ID:
   const ObjectID objId = msg.objectID;
@@ -404,8 +396,13 @@ void BehaviorGuardDog::HandleObjectAccel(const Robot& robot, const ObjectAccel& 
                 msg.objectID);
     return;
   }
-  
   sCubeData& block = *it;
+  
+  // No need to continue monitoring cube accel if the cube
+  //  has been successfully flipped over, so just bail out:
+  if (block.hasBeenFlipped) {
+    return;
+  }
   
   ++block.msgReceivedCnt;
   
@@ -452,8 +449,25 @@ void BehaviorGuardDog::HandleObjectAccel(const Robot& robot, const ObjectAccel& 
     block.movementScore = 0.f;
   }
   
-  // Cap the movement score:
-  block.movementScore = std::min(kMovementScoreMax, block.movementScore);
+  // Set behavior states based on cube movement and play the
+  //  appropriate light cube anim if appropriate:
+  if (block.movementScore > kMovementScoreMax) {
+    StopActing();
+    SET_STATE(Busted);
+  } else if (block.movementScore > kMovementScoreThreshold_stir) {
+    if (!block.hasBeenMoved) {
+      block.hasBeenMoved = true;
+      ++_nCubesMoved;
+      StopActing();
+      SET_STATE(Fakeout);
+    }
+    // Play the "being moved" light cube anim:
+    if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
+      StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogBeingMoved);
+    }
+  } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
+      StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogSleeping);
+  }
   
 //  PRINT_NAMED_WARNING("objAccel", "objId = %d, accelMag = %+8.1f, hpFiltAccelMag = %+8.1f, movementScore = %8.1f",
 //                      objId.GetValue(),
@@ -486,6 +500,28 @@ void BehaviorGuardDog::HandleObjectMoved(const Robot& robot, const ObjectMoved& 
     PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectMoved.ObjectMoved",
                      "Received ObjectMoved message for Object with ID %d even though we're not currently monitoring for movement!",
                      msg.objectID);
+  }
+}
+
+void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxisChanged& msg)
+{
+  // Retrieve a reference to the objectData struct corresponding to this message's object ID:
+  const ObjectID objId = msg.objectID;
+  auto it = std::find_if(_cubesData.begin(), _cubesData.end(), [&objId](sCubeData objData) { return objData.objectId == objId; });
+  if (ANKI_VERIFY(it != _cubesData.end(),
+                  "BehaviorGuardDog.HandleObjectUpAxisChanged.UnknownObject",
+                  "Received an UpAxisChanged message from an unknown object (objectId = %d)",
+                  msg.objectID)) {
+    auto& block = *it;
+    block.upAxis = msg.upAxis;
+    
+    // Check if the block has been flipped over successfully:
+    if (!block.hasBeenFlipped &&
+        (block.upAxis == UpAxis::ZNegative)) {
+      block.hasBeenFlipped = true;
+      ++_nCubesFlipped;
+      StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
+    }
   }
 }
 

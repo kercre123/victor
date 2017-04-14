@@ -44,9 +44,10 @@ protected:
 private:
   
   // Message handlers:
-  void HandleObjectAccel(const Robot& robot, const ObjectAccel& msg);
+  void HandleObjectAccel(Robot& robot, const ObjectAccel& msg);
   void HandleObjectConnectionState(const Robot& robot, const ObjectConnectionState& msg);
   void HandleObjectMoved(const Robot& robot, const ObjectMoved& msg);
+  void HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxisChanged& msg);
   
   // Helpers:
   void ComputeStartingPose(const Robot& robot, Pose3d& startingPose);
@@ -58,19 +59,16 @@ private:
 private:
   
   enum class State {
-    Init,               // Initialize everything and play starting animations
-    DriveToBlocks,      // Drive to a pose near the blocks
-    SettleIn,           // Play animation for 'settling in' before sleeping
+    Init,                   // Initialize everything and play starting animations
+    DriveToBlocks,          // Drive to a pose near the blocks
+    SettleIn,               // Play animation for 'settling in' before sleeping
     StartSleeping,
     Sleeping,
-    Fakeout,            // "half wakeup" due to one or two cubes being moved
-    Busted,             // Freak out because all 3 cubes have been touched/moved
-    BlockDisconnected,  // A block has disconnected (play an anim and end the behavior)
-    Timeout,            // Blocks haven't been touched and timeout has expired
-    DriveToCheckCubes,  // Drive to a pose where we can visually verify if cubes have been moved
-    VisuallyCheckCubes, // Check if cubes are still there or if they've been moved
-    BlocksRemaining,
-    BlocksMissing,
+    Fakeout,                // "half wakeup" due to one or two cubes being moved
+    Busted,                 // Freak out because all 3 cubes have been touched/moved
+    BlockDisconnected,      // A block has disconnected (play an anim and end the behavior)
+    Timeout,                // Timeout expired and player hasn't flipped all cubes or disturbed Cozmo.
+    PlayerSuccess,          // Player successfully flipped all three cubes
     Complete
   };
   
@@ -86,9 +84,11 @@ private:
     float movementScore     = 0.f;   // keeps track of how much the block is being moved (decays if block is not moving, capped at kMovementScoreMax)
     bool filtInitialized    = false; // high-pass filter initialized?
     bool hasBeenMoved       = false; // has the block been moved at all?
+    bool hasBeenFlipped     = false; // has the block been successfully flipped?
     uint msgReceivedCnt     = 0;     // how many ObjectAccel messages have we received for this block?
     uint badMsgCnt          = 0;     // how many weird ObjectAccel e.g. accel fields blank or really large) message have we received?
     CubeAnimationTrigger lastCubeAnimTrigger = CubeAnimationTrigger::Count;  // the last-played animation trigger for this cube.
+    UpAxis upAxis           = UpAxis::ZPositive;
     
     // constructors:
     sCubeData(ObjectID objId)
@@ -122,8 +122,8 @@ private:
   // The number of cubes that have been moved during the behavior:
   int _nCubesMoved = 0;
   
-  // The pose of a cube to verify at the end of the behavior:
-  Pose3d _cubePoseToVerify;
+  // The number of cubes that have been successfully flipped over:
+  int _nCubesFlipped = 0;
   
 };
   

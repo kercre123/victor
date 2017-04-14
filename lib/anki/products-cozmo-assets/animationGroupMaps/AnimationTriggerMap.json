@@ -397,10 +397,6 @@
       "AnimName": "ag_guarddog_interruption_cubedisconnect"
     },
     {
-      "CladEvent": "GuardDogCubeRemaining",
-      "AnimName": "ag_guarddog_getout_1cubeleft_01"
-    },
-    {
       "CladEvent": "GuardDogFakeout",
       "AnimName": "ag_guarddog_fakeout"
     },
@@ -427,6 +423,14 @@
     {
       "CladEvent": "GuardDogTimeout",
       "AnimName": "ag_guarddog_getout_timeout"
+    },
+    {
+      "CladEvent": "GuardDogTimeoutCubesTouched",
+      "AnimName": "ag_guarddog_getout_touched"
+    },
+    {
+      "CladEvent": "GuardDogTimeoutCubesUntouched",
+      "AnimName": "ag_guarddog_getout_untouched"
     },
     {
       "CladEvent": "Hiccup",

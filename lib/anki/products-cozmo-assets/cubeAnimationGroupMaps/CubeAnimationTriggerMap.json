@@ -45,12 +45,24 @@
             "AnimName": "guardDogBeingMoved"
         },
         {
+            "CladEvent": "GuardDogBusted",
+            "AnimName": "guardDogBusted"
+        },
+        {
             "CladEvent": "GuardDogOff",
             "AnimName": "sleepNoFade"
         },
         {
             "CladEvent": "GuardDogPulse",
             "AnimName": "guardDogPulse"
+        },
+        {
+            "CladEvent": "GuardDogSleeping",
+            "AnimName": "guardDogSleeping"
+        },
+        {
+            "CladEvent": "GuardDogSuccessfullyFlipped",
+            "AnimName": "guardDogSuccessfullyFlipped"
         },
         {
             "CladEvent": "Interacting",

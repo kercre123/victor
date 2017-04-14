@@ -107,6 +107,7 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
     case "DebugAppendConsoleLogLine":
     case "RobotState":
     case "MoodState":
+    case "ObjectAccel":
     case "ObjectProjectsIntoFOV":
       // don't log these messages
       return;
