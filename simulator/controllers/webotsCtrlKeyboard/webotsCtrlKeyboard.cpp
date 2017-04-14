@@ -2244,14 +2244,29 @@ namespace Anki {
                   }
                   
                 } else if(altKeyPressed && !shiftKeyPressed) {
-                  // ALT+F: Turn to face the pose of the last observed face:
-                  printf("Turning to last face\n");
-                  ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
-                  turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
-                  turnTowardsPose.maxTurnAngle_rad = M_PI;
-                  turnTowardsPose.robotID = 1;
-                  turnTowardsPose.sayName = true;
-                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
+                  // ALT+F turn towards a face
+
+                  int faceID = root_->getField("faceIDToTurnTowards")->getSFInt32();
+                  if( faceID == 0 ) {
+                    // turn towards last face
+                    printf("Turning to last face\n");
+                    ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
+                    turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
+                    turnTowardsPose.maxTurnAngle_rad = M_PI;
+                    turnTowardsPose.robotID = 1;
+                    turnTowardsPose.sayName = true;
+                    SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
+                  }
+                  else {
+                    printf("Turning towards face id %d\n", faceID);
+                    ExternalInterface::TurnTowardsFace turnTowardsFace;
+                    turnTowardsFace.faceID = faceID;
+                    turnTowardsFace.panTolerance_rad = DEG_TO_RAD(10);
+                    turnTowardsFace.maxTurnAngle_rad = M_PI;
+                    turnTowardsFace.robotID = 1;
+                    SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsFace)));
+                  }
+                    
                 } else if(altKeyPressed && shiftKeyPressed) {
                   // SHIFT+ALT+F: Erase current face
                   using namespace ExternalInterface;

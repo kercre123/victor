@@ -28,6 +28,9 @@ PROTO WebotsKeyboardController [
   # ID to Store Enollment as (0 just uses the ID of the face being enrolled)
   field SFInt32 enrollToID 0
 
+  # ID to turn towards by pressing alt+f. If 0, turn towards the last face pose
+  field SFInt32 faceIDToTurnTowards 0
+
   # whether or not to save the face to nvStorage
   field SFBool saveFaceToRobot FALSE
   
