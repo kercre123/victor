@@ -114,6 +114,7 @@ class RobotToEngineImplMessaging;
 class SpeedChooser;
 class TextToSpeechComponent;
 class VisionComponent;
+class NeedsManager;
 struct RobotState;
 
 namespace RobotAnimation {
@@ -235,6 +236,9 @@ public:
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
+  inline const NeedsManager& GetNeedsManager() const { assert(_needsManager); return *_needsManager; }
+  inline NeedsManager&       GetNeedsManager()       { assert(_needsManager); return *_needsManager; }
+  
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
 
@@ -1105,6 +1109,9 @@ protected:
   ///////// Mood/Emotions ////////
   MoodManager*         _moodManager;
 
+  ///////// Needs ////////
+  NeedsManager*        _needsManager;
+  
   ///////// Progression/Skills ////////
   ProgressionUnlockComponent* _progressionUnlockComponent;
   

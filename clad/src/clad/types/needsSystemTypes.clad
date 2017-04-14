@@ -1,0 +1,60 @@
+/** Clad message definitions for Needs system
+*/
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum int_32 NeedId
+{
+  Repair  = 0,
+  Energy  = 1,
+  Play    = 2,
+  Count
+}
+
+enum int_32 NeedBracketId
+{
+  Full      = 0,
+  Normal    = 1,
+  Warning   = 2,
+  Critical  = 3,
+  Count
+}
+
+enum int_32 RepairablePartId
+{
+  Head    = 0,
+  Lift    = 1,
+  Treads  = 2,
+  Count
+}
+
+
+// **** RULES ****
+// 1) Only add actionIds at the end before "Count", except for repair/feeding, where I've left some number-space...
+// 2) Never reorder or change the numbering of the actionIds including commented out ones
+// 3) Remove an actionIds by commenting out the line making sure to follow rule 2
+// 4) Renaming is not recommended
+
+enum int_32 NeedsActionId
+{
+  // Repair actions
+  RepairHead            = 0,
+  RepairLift            = 1,
+  RepairTreads          = 2,
+
+  // Feeding actions
+  FeedRed               = 20,
+  FeedBlue              = 21,
+  FeedGreen             = 22,
+
+  // Other actions (this will be a big and ever-growing list)
+  //PyramidCompleted      = 40,
+  // etc.
+
+  Count
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -46,6 +46,7 @@
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/minimalAnglePlanner.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
@@ -223,6 +224,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _driftCheckNumReadings(0)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
+  , _needsManager(new NeedsManager(this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _speedChooser(new SpeedChooser(*this))
   , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
@@ -262,6 +264,12 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _moodManager->Init(_context->GetDataLoader()->GetRobotMoodConfig());
     LoadEmotionEvents();
+  }
+  
+  if (_context->GetDataPlatform())  // shouldn't this be 'getdataloader'?  and above?
+  {
+    _needsManager->Init(_context->GetDataLoader()->GetRobotMoodConfig()); // todo change this to GetRobotNeedsConfig
+    // blah
   }
 
   // Initialize progression
@@ -355,6 +363,7 @@ Robot::~Robot()
   Util::SafeDelete(_shortPathPlanner);
   Util::SafeDelete(_shortMinAnglePathPlanner);
   Util::SafeDelete(_moodManager);
+  Util::SafeDelete(_needsManager);
   Util::SafeDelete(_progressionUnlockComponent);
   Util::SafeDelete(_tapFilterComponent);
   Util::SafeDelete(_blockFilter);
@@ -1487,6 +1496,8 @@ Result Robot::Update()
   // personality planner, etc.
       
   _moodManager->Update(currentTime);
+  
+  _needsManager->Update(currentTime);
       
   _progressionUnlockComponent->Update();
   
