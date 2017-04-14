@@ -47,10 +47,6 @@ BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value
 : super(robot, config)
 {
   SetDefaultName("AcknowledgeFace");
-
-  SubscribeToTags({
-    EngineToGameTag::RobotObservedFace,
-  });  
 }
   
   

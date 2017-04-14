@@ -31,7 +31,7 @@
     // parameters to decide between goals
     "desiredGoalNames" :
     {
-      "faceAndCubeGoalName": "FP_PlayAlone",
+      "faceAndCubeGoalName": "FP_Socialize",
       "faceOnlyGoalName": "FP_Socialize",
       "cubeOnlyGoalName": "FP_PlayAlone",
       "noFaceNoCubeGoalName": "FP_Hiking",

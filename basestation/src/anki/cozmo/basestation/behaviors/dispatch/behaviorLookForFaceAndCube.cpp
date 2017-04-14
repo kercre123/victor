@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"
@@ -31,9 +32,8 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
 
-// kBehaviorLookForFaceAndCubeDrawDebugInfo: Debug. If set to true the behavior renders debug privimitives
-CONSOLE_VAR(bool, kBehaviorLookForFaceAndCubeDrawDebugInfo, "BehaviorLookForFaceAndCube", false);
-
+static constexpr const int kNumFramesToWaitForTrackingOnlyFace = 1;
+static constexpr const int kNumFramesToWaitForUnNamedFace = 3;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,6 +47,13 @@ BehaviorLookForFaceAndCube::BehaviorLookForFaceAndCube(Robot& robot, const Json:
   
   // parse all parameters now
   LoadConfig(config["params"]);
+
+  if( _configParams.verifySeenFaces || _configParams.stopBehaviorOnAnyFace || _configParams.stopBehaviorOnNamedFace  ) {
+    // if we need to do something with seen faces, then subscribe to the message
+    SubscribeToTags({
+      EngineToGameTag::RobotObservedFace,
+    });
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,6 +91,10 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
   _configParams.cube_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, "cube_bodyAngleRelRangeMax_rad", debugName) );;
   _configParams.cube_sidePicks = ParseUint8(config, "cube_sidePicks", debugName);
   
+  _configParams.verifySeenFaces = ParseBool(config, "verifySeenFaces", debugName);
+  _configParams.stopBehaviorOnAnyFace = ParseBool(config, "stopBehaviorOnAnyFace", debugName);
+  _configParams.stopBehaviorOnNamedFace = ParseBool(config, "stopBehaviorOnNamedFace", debugName);
+  
   // anim triggers
   std::string lookInPlaceAnimTriggerStr = ParseString(config, "lookInPlaceAnimTrigger", debugName);
   _configParams.lookInPlaceAnimTrigger = lookInPlaceAnimTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(lookInPlaceAnimTriggerStr.c_str());
@@ -104,6 +115,8 @@ Result BehaviorLookForFaceAndCube::InitInternal(Robot& robot)
   _startingBodyFacing_rad = robot.GetPose().GetWithRespectToOrigin().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
   _currentState = State::S0FaceOnCenter;
+  _verifiedFaces.clear();
+  _isVerifyingFace = false;
   
   CompoundActionParallel* initialActions = new CompoundActionParallel(robot);
 
@@ -137,7 +150,21 @@ Result BehaviorLookForFaceAndCube::ResumeInternal(Robot& robot)
 {
   // reset side picks done because we always switch to next state
   _currentSidePicksDone = 0;
+  _isVerifyingFace = false;
+
+  if( _currentState == State::Done ) {
+    PRINT_NAMED_ERROR("BehaviorLookForFaceAndCube.ResumeInternal.AlreadyDone", "Behavior was done but it's trying to resume.");
+    return RESULT_FAIL;
+  }
   
+  ResumeCurrentState(robot);
+
+  return RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookForFaceAndCube::ResumeCurrentState(Robot& robot)
+{
   switch(_currentState)
   {
     case State::S0FaceOnCenter:
@@ -172,20 +199,140 @@ Result BehaviorLookForFaceAndCube::ResumeInternal(Robot& robot)
     }
     case State::Done:
     {
-      PRINT_NAMED_ERROR("BehaviorLookForFaceAndCube.ResumeInternal.AlreadyDone", "Behavior was done but it's trying to resume.");
-      return RESULT_FAIL;
+      // behavior is done, so let it end
+      return;
     }
   }
-
-  return RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::StopInternal(Robot& robot)
 {
-  if ( kBehaviorLookForFaceAndCubeDrawDebugInfo ) {
-    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookForFaceAndCube.kDrawDebugInfo");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookForFaceAndCube::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+{
+  if( event.GetData().GetTag() == EngineToGameTag::RobotObservedFace) {
+
+    if( !_configParams.verifySeenFaces &&
+        !_configParams.stopBehaviorOnAnyFace &&
+        !_configParams.stopBehaviorOnNamedFace  ) {
+      PRINT_NAMED_ERROR("BehaviorLookForFaceAndCube.HandleFace.InvalidConfig",
+                        "We are handling a face event, but we shouldn't have subscribed because we don't care");
+      return;
+    }  
+    
+    const auto& msg = event.GetData().Get_RobotObservedFace();
+    
+    if( _configParams.verifySeenFaces ) {
+
+      if( !_isVerifyingFace ) {
+        const bool haveAlreadyVerifiedFace = ( _verifiedFaces.find( msg.faceID ) != _verifiedFaces.end() );
+        const bool trackingOnlyFace = ( msg.faceID < 0 );
+    
+        if( trackingOnlyFace || !haveAlreadyVerifiedFace ) {
+          // if we have a tracking only face, we always want to turn to it so we can verify it and get a real id
+          // out of it (hopefully). Otherwise, turn towards it if we haven't already. After verifying, we'll
+          // stop the behavior if we need to
+          CancelActionAndVerifyFace(robot, msg.faceID);
+        }
+      }
+    }
+    else {
+      // since we aren't verifying, stop the behavior now, if needed
+      StopBehaviorOnFaceIfNeeded(robot, msg.faceID);
+    }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(Robot& robot, FaceID_t observedID)
+{
+  const bool trackingOnlyFace = ( observedID < 0 );
+
+  if(!trackingOnlyFace) {
+    // here we want to stop on some faces (named or any recognizable). If we are verifying faces _and_ want
+    // to stop, the CancelActionAndVerifyFace function will handle that for us _after_ the verify, so don't
+    // need to handle that here. We never kill the behavior on a tracking only face
+
+    if( _configParams.stopBehaviorOnAnyFace ) {
+      PRINT_CH_INFO("Behavior", (GetName() + ".SawFace.End").c_str(),
+                    "Stopping behavior because we saw (any) face id %d",
+                    observedID);
+        
+      const bool allowCallbacks = false;
+      StopActing(allowCallbacks);
+      TransitionToS6_Done(robot);
+    }
+    else if ( _configParams.stopBehaviorOnNamedFace )
+    {
+      // we need to check if the face has a name
+      
+      auto* facePtr = robot.GetFaceWorld().GetFace(observedID);
+      if( ANKI_VERIFY(facePtr != nullptr,
+                      "BehaviorLookForFaceAndCube.NullObservedFace",
+                      "Face '%d' observed but faceworld returns null",
+                      observedID) ) {
+        
+        if( facePtr->HasName() ) {
+          PRINT_CH_INFO("Behavior", (GetName() + ".SawFace.End").c_str(),
+                        "Stopping behavior because we saw (any) face id %d",
+                        observedID);
+        
+          const bool allowCallbacks = false;
+          StopActing(allowCallbacks);
+          TransitionToS6_Done(robot);
+        }
+      }
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(Robot& robot, FaceID_t observedFace)
+{
+  PRINT_CH_INFO("Behaviors", (GetName() + ".VerifyFace").c_str(),
+                "Stopping current action to verify face %d",
+                observedFace);
+
+  const bool allowCallbacks = false;
+  StopActing(allowCallbacks);
+  
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  action->AddAction( new TurnTowardsFaceAction(robot, observedFace, M_PI_F) );
+
+  const bool isTrackingOnly = (observedFace < 0);
+  if( isTrackingOnly ) {    
+    action->AddAction( new WaitForImagesAction(robot, kNumFramesToWaitForTrackingOnlyFace) );
+    // note that if this turns into a real face, it may trigger another "turn towards" for that face ID
+  }
+  else {
+    // don't bother waiting for any frames if we already have a name. Otherwise, give it a few frames to give
+    // it a chance to realize that this may be a named person. Note: it would be better to do this logic
+    // _after_ the turn to action completes, because we may collect data while turning, but I'm lazy
+    auto* facePtr = robot.GetFaceWorld().GetFace(observedFace);
+    if( facePtr && !facePtr->HasName() ) {
+      action->AddAction( new WaitForImagesAction(robot, kNumFramesToWaitForUnNamedFace) );
+    }
+  }
+
+  _isVerifyingFace = true;
+  
+  StartActing(action, [this, observedFace](ActionResult res, Robot& robot) {
+      const bool isTrackingOnly = observedFace < 0;
+      if( !isTrackingOnly && res == ActionResult::SUCCESS ) {
+        _verifiedFaces.insert(observedFace);
+      }
+
+      _isVerifyingFace = false;
+                                                 
+      // we might want to stop now that we've seen a face
+      StopBehaviorOnFaceIfNeeded(robot, observedFace);
+
+      // resume the state machine
+      ResumeCurrentState(robot);
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -322,6 +469,7 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::TransitionToS6_Done(Robot& robot)
 {
+  _currentState = State::Done;
   // Note that this is specific to the PutDownDispatch goal. If this behavior needs to be generic for other goals, it
   // should store the start time on InitInternal and pass it here to compare timestamps. The reason why I don't implement
   // it that way is that I want to also to track objects seen during putdown reactions, which would not be included in

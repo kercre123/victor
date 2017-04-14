@@ -414,7 +414,7 @@ void AIGoalEvaluator::CalculateDesiredGoalFromObjects()
   BlockWorldFilter cubeFilter;
   cubeFilter.SetAllowedFamilies({{ ObjectFamily::Block, ObjectFamily::LightCube }});
   const bool hasNewCube = (_robot.GetBlockWorld().FindLocatedMatchingObject(cubeFilter) != nullptr);
-
+  
   // depending on what we see, request the goal we want
   if ( hasNewFace && hasNewCube ) {
     _requestedGoal = _configParams.faceAndCubeGoalName;
@@ -425,6 +425,12 @@ void AIGoalEvaluator::CalculateDesiredGoalFromObjects()
   }  else {
     _requestedGoal = _configParams.noFaceNoCubeGoalName;
   }
+
+  Util::sEventF("robot.goal_from_face_and_cube",
+                {{DDATA, _requestedGoal.c_str()}},
+                "%d:%d",
+                hasNewFace ? 1 : 0,
+                hasNewCube ? 1 : 0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

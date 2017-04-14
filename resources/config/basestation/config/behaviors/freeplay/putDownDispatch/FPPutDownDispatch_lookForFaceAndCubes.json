@@ -39,6 +39,11 @@
     "cube_bodyAngleRelRangeMin_rad": 10,
     "cube_bodyAngleRelRangeMax_rad": 30,
     "cube_sidePicks": 1,
+
+    // stop this behavior if a named face is seen (after turning towards it)
+    "verifySeenFaces": true,
+    "stopBehaviorOnAnyFace": false,
+    "stopBehaviorOnNamedFace": true,
     
     "lookInPlaceAnimTrigger": "HikingLookAround"
   }
