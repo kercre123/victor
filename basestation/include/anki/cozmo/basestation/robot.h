@@ -678,7 +678,7 @@ public:
   void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
                  TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
   
-  AnimationStreamer& GetAnimationStreamer() {
+  IAnimationStreamer& GetAnimationStreamer() {
     return _animationStreamer;
   }
   

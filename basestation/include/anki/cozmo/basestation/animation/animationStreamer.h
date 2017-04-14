@@ -45,10 +45,74 @@ namespace Cozmo {
     class RobotAudioClient;
   }  
   
-  class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
+  //
+  // IAnimationStreamer declares an abstract interface common to all implementations of an animation
+  // streamer component. All methods are pure virtual and must be implemented by the interface provider.
+  //  
+  class IAnimationStreamer :
+    public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
   public:
     using Tag = u8;
+    using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
+    
+    IAnimationStreamer(IExternalInterface * interface) :
+      HasSettableParameters(interface)
+    {
+    }
+    
+    // Sets an animation to be streamed and how many times to stream it.
+    // Use numLoops = 0 to play the animation indefinitely.
+    // Returns a tag you can use to monitor whether the robot is done playing this
+    // animation.
+    // If interruptRunning == true, any currently-streaming animation will be aborted.
+    // Actual streaming occurs on calls to Update().
+    virtual Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) = 0;
+
+    // Set the animation to be played when no other animation has been specified.  Use the empty string to
+    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
+    virtual Result SetIdleAnimation(AnimationTrigger animName) = 0;
+
+    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
+    // idle (even if it came from SetIdleAnimation) is always on the stack
+    virtual Result PushIdleAnimation(AnimationTrigger animName) = 0;
+    
+    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
+    // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
+    // Will not pop the last idle off the stack.
+    virtual Result PopIdleAnimation() = 0;
+    
+    // Add a procedural face "layer" to be combined with whatever is streaming
+    virtual Result AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0) = 0;
+
+    // Add a procedural face "layer" that is applied and then has its final
+    // adjustment "held" until removed.
+    // A handle/tag for the layer is returned, which is needed for removal.
+    virtual Tag AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack) = 0;
+    
+    // Remove a previously-added persistent face layer using its tag.
+    // If duration > 0, that amount of time will be used to transition back
+    // to no adjustment
+    virtual void RemovePersistentFaceLayer(Tag tag, s32 duration_ms = 0) = 0;
+
+    // Add a keyframe to the end of an existing persistent face layer
+    virtual void AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe) = 0;
+
+    // Remove any existing procedural eye dart created by KeepFaceAlive
+    virtual void RemoveKeepAliveEyeDart(s32 duration_ms) = 0;
+    
+    // If any animation is set for streaming and isn't done yet, stream it.
+    virtual Result Update(Robot& robot) = 0;
+    
+    virtual const Animation* GetStreamingAnimation() const = 0;
+    
+    virtual const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const = 0;
+    
+  };
+  
+  class AnimationStreamer : public IAnimationStreamer
+  {
+  public:
     static const AnimationTrigger NeutralFaceTrigger;
     
     static const Tag  NotAnimatingTag  = 0;
@@ -65,53 +129,52 @@ namespace Cozmo {
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
-    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
+    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) override;
     
     // Set the animation to be played when no other animation has been specified.  Use the empty string to
     // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-    Result SetIdleAnimation(AnimationTrigger animName);
+    Result SetIdleAnimation(AnimationTrigger animName) override;
     
     // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
     // idle (even if it came from SetIdleAnimation) is always on the stack
-    Result PushIdleAnimation(AnimationTrigger animName);
+    Result PushIdleAnimation(AnimationTrigger animName) override;
     
     // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
     // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
     // Will not pop the last idle off the stack.
-    Result PopIdleAnimation();
+    Result PopIdleAnimation() override;
 
     const std::string& GetIdleAnimationName() const;
     
     // Add a procedural face "layer" to be combined with whatever is streaming
-    using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
-    Result AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
+    Result AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0) override;
     
     // Add a procedural face "layer" that is applied and then has its final
     // adjustment "held" until removed.
     // A handle/tag for the layer is returned, which is needed for removal.
-    Tag AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack);
+    Tag AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack) override;
     
     // Remove a previously-added persistent face layer using its tag.
     // If duration > 0, that amount of time will be used to transition back
     // to no adjustment
-    void RemovePersistentFaceLayer(Tag tag, s32 duration_ms = 0);
+    void RemovePersistentFaceLayer(Tag tag, s32 duration_ms = 0) override;
     
     // Add a keyframe to the end of an existing persistent face layer
-    void AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe);
+    void AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe) override;
     
     // Remove any existing procedural eye dart created by KeepFaceAlive
-    void RemoveKeepAliveEyeDart(s32 duration_ms);
+    void RemoveKeepAliveEyeDart(s32 duration_ms) override;
     
     // If any animation is set for streaming and isn't done yet, stream it.
-    Result Update(Robot& robot);
+    Result Update(Robot& robot) override;
      
     // Returns true if the idle animation is playing
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
-    const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
+    const Animation* GetStreamingAnimation() const override { return _streamingAnimation; }
     
-    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const;
+    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const override;
     const Animation* GetCannedAnimation(const std::string& name) const;
 
     // Required by HasSettableParameters:
