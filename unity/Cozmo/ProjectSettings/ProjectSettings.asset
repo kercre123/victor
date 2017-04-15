@@ -223,7 +223,7 @@ PlayerSettings:
   tvOSManualSigningProvisioningProfileID: 
   appleEnableAutomaticSigning: 0
   AndroidTargetDevice: 3
-  AndroidSplashScreenScale: 2
+  AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e, type: 3}
   AndroidKeystoreName: 
   AndroidKeyaliasName: 
