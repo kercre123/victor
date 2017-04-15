@@ -973,7 +973,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
                         });
     
     // Iterate over all objects and add them to the available objects list if they pass the filter
-    FindLocatedObjectHelper(filter, nullptr, false);
+    FindConnectedObjectHelper(filter, nullptr, false);
     
     _robot->Broadcast(MessageEngineToGame(std::move(objectStates)));
   }
