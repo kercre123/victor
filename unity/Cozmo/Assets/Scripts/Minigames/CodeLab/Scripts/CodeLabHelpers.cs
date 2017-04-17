@@ -1,6 +1,4 @@
-using UnityEngine;
 using Anki.Cozmo.ExternalInterface;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 namespace CodeLab {
 #if ANKI_DEV_CHEATS
@@ -8,6 +6,7 @@ namespace CodeLab {
     public int requestId { get; set; }
     public string command { get; set; }
     public string argString { get; set; }
+    public string argUUID { get; set; }
     public int argInt { get; set; }
     public uint argUInt { get; set; }
     public float argFloat { get; set; }

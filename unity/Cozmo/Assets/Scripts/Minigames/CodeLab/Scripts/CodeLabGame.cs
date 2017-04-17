@@ -1,7 +1,8 @@
 using UnityEngine;
 using Anki.Cozmo.ExternalInterface;
 using Newtonsoft.Json;
-using System.Collections.Generic;
+using DataPersistence;
+using System;
 
 namespace CodeLab {
   public class CodeLabGame : GameBase {
@@ -9,6 +10,7 @@ namespace CodeLab {
 #if ANKI_DEV_CHEATS
     // Look at CodeLabGameUnlockable.asset in editor to set when unlocked.
     private GameObject _WebViewObject;
+    private WebViewObject _WebViewObjectComponent;
 
     private const float kSlowDriveSpeed_mmps = 30.0f;
     private const float kMediumDriveSpeed_mmps = 100.0f;
@@ -16,6 +18,8 @@ namespace CodeLab {
     private const float kDriveDist_mm = 44.0f; // length of one light cube
     private const float kTurnAngle = 90.0f * Mathf.Deg2Rad;
     private const float kToleranceAngle = 10.0f * Mathf.Deg2Rad;
+
+    private const string kUserProjectName = "My Project"; // TODO Move to internationalization files
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
       DAS.Debug("Loading Webview", "");
@@ -33,6 +37,8 @@ namespace CodeLab {
     }
 
     protected override void CleanUpOnDestroy() {
+      _WebViewObjectComponent = null;
+
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExitSDKMode(false);
       }
@@ -51,8 +57,8 @@ namespace CodeLab {
 
       if (_WebViewObject == null) {
         _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
-        WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
-        webViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
+        _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+        _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
 
 #if UNITY_EDITOR
         string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
@@ -60,19 +66,74 @@ namespace CodeLab {
         string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
 #endif
 
-        webViewObjectComponent.LoadURL(indexFile);
+        _WebViewObjectComponent.LoadURL(indexFile);
       }
     }
 
     private void WebViewCallback(string text) {
+      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+
       string jsonStringFromJS = string.Format("{0}", text);
       Debug.Log("JSON from JavaScript: " + jsonStringFromJS);
       ScratchRequest scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
 
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
-      inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObject.GetComponent<WebViewObject>());
+      inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
 
-      if (scratchRequest.command == "cozmoCloseCodeLab") {
+      if (scratchRequest.command == "cozmoGetUserProjectList") {
+        string jsCallback = scratchRequest.argString;
+
+        string userProjectsAsJSON = "[{}]";
+
+        // Sort projects by most recently modified
+        defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
+
+        // Serializes all Code Lab projects
+        userProjectsAsJSON = JsonConvert.SerializeObject(defaultProfile.CodeLabProjects);
+
+        // Call jsCallback with list of serialized Code Lab projects
+        _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "');");
+      }
+      else if (scratchRequest.command == "cozmoSaveUserProject") {
+        // Save both new and existing user projects.
+        // Check if this is a new project.
+        string projectUUID = scratchRequest.argUUID;
+        string projectXML = scratchRequest.argString;
+
+        if (String.IsNullOrEmpty(projectUUID)) {
+          // Create new project with the XML stored in projectXML.
+
+          // Create project name: "My Project 1", "My Project 2", etc.
+          string newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
+          defaultProfile.CodeLabUserProjectNum++;
+
+          defaultProfile.CodeLabProjects.Add(new CodeLabProject(newUserProjectName, projectXML));
+        }
+        else {
+          // Project already has a guid. Locate the project then update it.
+          CodeLabProject projectToUpdate = FindProjectWithUUID(projectUUID);
+          projectToUpdate.ProjectXML = projectXML;
+          projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+        }
+      }
+      else if (scratchRequest.command == "cozmoRequestToOpenUserProject") {
+        string projectUUID = scratchRequest.argString;
+        CodeLabProject projectToOpen = FindProjectWithUUID(projectUUID);
+
+        // Escape quotes in XML
+        // TODO need to do the same for project name and project uuid?
+        String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
+
+        // Open requested project in webview
+        _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
+      }
+      else if (scratchRequest.command == "cozmoDeleteUserProject") {
+        CodeLabProject projectToDelete = FindProjectWithUUID(scratchRequest.argString);
+        if (projectToDelete != null) {
+          defaultProfile.CodeLabProjects.Remove(projectToDelete);
+        }
+      }
+      else if (scratchRequest.command == "cozmoCloseCodeLab") {
         RaiseMiniGameQuit();
       }
       else if (scratchRequest.command == "cozmoDriveForward") {
@@ -204,17 +265,26 @@ namespace CodeLab {
       return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
     }
 
+    CodeLabProject FindProjectWithUUID(string uuid) {
+      Guid projectGuid = new Guid(uuid);
+      CodeLabProject codeLabProject = null;
+
+      Predicate<DataPersistence.CodeLabProject> findProject = (CodeLabProject p) => { return p.ProjectUUID == projectGuid; };
+      codeLabProject = DataPersistenceManager.Instance.Data.DefaultProfile.CodeLabProjects.Find(findProject);
+
+      return codeLabProject;
+    }
+
     private void WebViewError(string text) {
       Debug.LogError(string.Format("CallOnError[{0}]", text));
     }
 
     private void WebViewLoaded(string text) {
       Debug.Log(string.Format("CallOnLoaded[{0}]", text));
-      WebViewObject webViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
-      webViewObjectComponent.SetVisibility(true);
+      _WebViewObjectComponent.SetVisibility(true);
 
 #if !UNITY_ANDROID
-      webViewObjectComponent.EvaluateJS(@"
+      _WebViewObjectComponent.EvaluateJS(@"
               window.Unity = {
                 call: function(msg) {
                   var iframe = document.createElement('IFRAME');

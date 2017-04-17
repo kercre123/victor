@@ -40,6 +40,9 @@ namespace DataPersistence {
     public int TotalDailyGoalsCompleted;
     // Mainly just for logging, but different from sessions in that you need to connect.
     public int DaysWithCozmo;
+    public int CodeLabUserProjectNum;
+
+    public List<DataPersistence.CodeLabProject> CodeLabProjects;
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
@@ -71,7 +74,9 @@ namespace DataPersistence {
       TotalSessions = 0;
       DaysWithCozmo = 0;
       TotalDailyGoalsCompleted = 0;
+      CodeLabUserProjectNum = 1;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
+      CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       PreviousTags = new List<string>();
     }

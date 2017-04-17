@@ -122,7 +122,7 @@
         stop.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
- 
+
         // Extension event handlers
         bindExtensionHandler();
         window.onresize();
