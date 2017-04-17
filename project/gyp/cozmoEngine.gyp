@@ -903,7 +903,6 @@
               '<(ce-das_path):DAS',
             ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',            
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
