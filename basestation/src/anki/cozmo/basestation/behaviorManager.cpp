@@ -184,10 +184,11 @@ bool TriggerBehaviorInfo::AddDisableLockToTrigger(const std::string& disableID,
   
   auto disableIDIter =  _disableIDs.find(disableID);
   if(disableIDIter != _disableIDs.end()){
-    PRINT_NAMED_WARNING("TriggerBehaviorInfo.AddDisableLockToTrigger.DuplicatDisable",
-                        "Attempted to disable reaction trigger %s with previously registered ID %s",
-                        EnumToString(debugTrigger),
-                        disableID.c_str());
+    DEV_ASSERT_MSG(false,
+                   "TriggerBehaviorInfo.AddDisableLockToTrigger.DuplicatDisable",
+                   "Attempted to disable reaction trigger %s with previously registered ID %s",
+                   EnumToString(debugTrigger),
+                   disableID.c_str());
     return false;
   }else{
     _disableIDs.insert(disableID);
@@ -1182,14 +1183,20 @@ void BehaviorManager::DisableReactionsWithLock(
           const ReactionTriggerHelpers::FullReactionArray& triggersAffected,
           bool stopCurrent)
 {
+  const bool sdkDifferentParadigmLock = (lockID == "sdk");
   /// Iterate over all reaction triggers to see if they're affected by this request
   for(auto& entry: _reactionTriggerMap){
     ReactionTrigger triggerEnum = entry.first;
     auto& allStrategyMaps = entry.second;
-    DEV_ASSERT_MSG(!allStrategyMaps.IsTriggerLockedByID(lockID),
-          "BehaviorManager.DisableReactionsWithLock.LockAlreadyInUse",
-          "Attempted to disable reactions with ID %s which is already in use",
-          lockID.c_str());
+    
+    const bool lockNotAlreadyInUse = !allStrategyMaps.IsTriggerLockedByID(lockID);
+    // SDK wants to be allowed to lock a reaction with the same id multiple times
+    // and then have remove lock remove all instances.  So only DEV_ASSERT if
+    // we aren't in SDK mode
+    DEV_ASSERT_MSG(sdkDifferentParadigmLock || lockNotAlreadyInUse,
+                   "BehaviorManager.DisableReactionsWithLock.LockAlreadyInUse",
+                   "Attempted to disable reactions with ID %s which is already in use",
+                   lockID.c_str());
     
     if(ReactionTriggerHelpers::IsTriggerAffected(triggerEnum, triggersAffected)){
       PRINT_CH_INFO("ReactionTriggers",
@@ -1207,7 +1214,16 @@ void BehaviorManager::DisableReactionsWithLock(
         }
       }
       
-      allStrategyMaps.AddDisableLockToTrigger(lockID, triggerEnum);
+      // This check prevents an invalid DEV_ASSERT hit caused by the fact
+      // that this function is overloaded to support two different paradigms
+      // In the case of SDK lock, we should not call the add disableLockToTrigger
+      // because they follow a different paradigm
+      // otherwise, we should have crashed on the DEV_ASSERT above
+      // The DEV_ASSERT is preserved within AddDisableLockToTrigger just in case
+      // in the future some other function tries to add disable locks
+      if(lockNotAlreadyInUse){
+        allStrategyMaps.AddDisableLockToTrigger(lockID, triggerEnum);
+      }
       
       // If the currently running behavior was triggered as a reaction
       // and we are supposed to stop current, stop the current behavior
@@ -1226,6 +1242,7 @@ void BehaviorManager::DisableReactionsWithLock(
 }
 
 #if ANKI_DEV_CHEATS
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
                                               const ReactionTrigger& trigger,
                                               bool stopCurrent)
