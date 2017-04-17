@@ -137,6 +137,17 @@
     ],
   },
 
+  'conditions': [
+    ['OS=="mac"', {
+      'variables' : {
+        'macosx_deployment_target%': '',
+      },
+      'xcode_settings': {
+        'MACOSX_DEPLOYMENT_TARGET': '<(macosx_deployment_target)',
+      },
+    }],
+  ],
+
   'target_defaults': {
     'cflags': ['<@(compiler_c_flags)'],
     'cflags_cc': ['<@(compiler_cpp_flags)'],

@@ -409,6 +409,12 @@
     [
       "OS=='mac'",
       {
+        'variables': {
+          'macosx_deployment_target%': '',
+        },
+        'xcode_settings': {
+          'MACOSX_DEPLOYMENT_TARGET' : '<(macosx_deployment_target)',
+        },
         'target_defaults': {
           'variables': {
             'mac_target_archs%': [ '<@(target_archs)' ]
