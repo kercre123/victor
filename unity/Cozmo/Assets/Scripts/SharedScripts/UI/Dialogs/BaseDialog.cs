@@ -21,6 +21,9 @@ namespace Cozmo {
       public event SimpleBaseDialogHandler DialogClosed;
       public event SimpleBaseDialogHandler DialogCloseAnimationFinished;
 
+      private const string _kOpenAnimationDisableKey = "BaseDialog.OpenAnimations";
+      private const string _kCloseAnimationDisableKey = "BaseDialog.CloseAnimations";
+
       protected enum DialogState {
         Initialized,
         IsOpening,
@@ -154,7 +157,7 @@ namespace Cozmo {
       private void PlayOpenAnimations() {
         if (_CurrentDialogState == DialogState.Initialized) {
           _CurrentDialogState = DialogState.IsOpening;
-          UIManager.DisableTouchEvents();
+          UIManager.DisableTouchEvents(_kOpenAnimationDisableKey);
 
           // Play some animations
           if (_TransitionAnimation != null) {
@@ -168,7 +171,7 @@ namespace Cozmo {
 
       private void OnOpenAnimationsFinished() {
         _CurrentDialogState = DialogState.Open;
-        UIManager.EnableTouchEvents();
+        UIManager.EnableTouchEvents(_kOpenAnimationDisableKey);
 
         // Raise event
         RaiseDialogOpenAnimationFinished();
@@ -176,7 +179,7 @@ namespace Cozmo {
 
       private void PlayCloseAnimations() {
         _CurrentDialogState = DialogState.IsClosing;
-        UIManager.DisableTouchEvents();
+        UIManager.DisableTouchEvents(_kCloseAnimationDisableKey);
 
         // Play some animations
         if (_TransitionAnimation != null) {
@@ -197,7 +200,7 @@ namespace Cozmo {
       private void BaseDialogCleanUpInternal() {
         _CurrentDialogState = DialogState.Closed;
         if (UIManager.Instance != null) {
-          UIManager.EnableTouchEvents();
+          UIManager.EnableTouchEvents(_kCloseAnimationDisableKey);
         }
         if (_TransitionAnimation != null) {
           _TransitionAnimation.Kill();

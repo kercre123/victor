@@ -20,6 +20,8 @@ namespace Cozmo.HomeHub {
       Settings
     }
 
+    private const string _kBurstEnergyAfterInitDisableKey = "HomeView.BurstEnergyAfterInit";
+
     private const float _kFreeplayIntervalCheck = 60.0f;
     private float _FreeplayIntervalLastTimestamp = -1;
     private float _FreeplayStartedTimestamp = -1;
@@ -116,8 +118,6 @@ namespace Cozmo.HomeHub {
     private Transform _EnergyRewardStart_CozmoTab;
     [SerializeField]
     private Transform _EnergyRewardTarget;
-
-    private List<Transform> _EnergyRewardsList = new List<Transform>();
 
     [SerializeField]
     private AnkiTextLegacy[] _DailyGoalsCompletionTexts;
@@ -572,7 +572,7 @@ namespace Cozmo.HomeHub {
         }
         _BurstEnergyAfterInitCoroutine = BurstEnergyAfterInit();
         StartCoroutine(_BurstEnergyAfterInitCoroutine);
-        UIManager.DisableTouchEvents();
+        UIManager.DisableTouchEvents(_kBurstEnergyAfterInitDisableKey);
         _RewardSequenceActive = true;
       }
       else if (ChestRewardManager.Instance.ChestPending) {
@@ -720,7 +720,16 @@ namespace Cozmo.HomeHub {
       int rewardCount = Mathf.CeilToInt((float)pointsEarned / (float)rc.ExpPerParticleEffect);
       for (int i = 0; i < rewardCount; i++) {
         Transform newRewardParticles = UIManager.CreateUIElement(_EnergyRewardParticlePrefab, energySource).transform;
-        _EnergyRewardsList.Add(newRewardParticles);
+
+        // COZMO-9389: Cause of DOTween bug is that in the case of rewarding goals, the particles were spawned as a 
+        // child of the Daily Goal cell. A bug in the Enable/Disable touches flow allowed you to, in certain cases, 
+        // tap another tab or otherwise cause the Daily Goal cells to be destroyed before the tween finished, which in
+        // turn would destroy the particles, which causes the target for DOTween to be null.
+        // Fix is to ensure that the particles are parented under the HomeView so that they are properly cleaned up if 
+        // HomeView is destroyed (HomeView owns the _RewardSequence). Also fixed issue where you could tap during 
+        // rewards sequence.
+        newRewardParticles.SetParent(this.transform, worldPositionStays: true);
+
         float xOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
         if (UnityEngine.Random.Range(0.0f, 1.0f) >= 0.5f) {
           xOffset *= -1.0f;
@@ -756,7 +765,7 @@ namespace Cozmo.HomeHub {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       if (ChestRewardManager.Instance.ChestPending == false) {
         EnableGameRequestsIfAllowed(true);
-        UIManager.EnableTouchEvents();
+        UIManager.EnableTouchEvents(_kBurstEnergyAfterInitDisableKey);
         _RewardSequenceActive = false;
       }
       // This is the thing that eventually opens lootview via HandleCheckForLootView handler
