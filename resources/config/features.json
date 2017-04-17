@@ -16,8 +16,8 @@
     "enabled": false
   },
   {
-     "feature": "PeekABoo",
-     "enabled": false
+    "feature": "PeekABoo",
+    "enabled": true
   },
   {
     "feature": "SparksGatherCubes",

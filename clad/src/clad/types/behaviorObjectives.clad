@@ -24,8 +24,6 @@ enum int_32 BehaviorObjective {
   KnockedOverBlocks,
   PeekABooComplete,
   PeekABooSuccess,
-  PeekABooNoResponse,
-  PeekABooLostFace,
   PerformedWorkout,
   PerformedStrongWorkout,
   PickedupBlock,

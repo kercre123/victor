@@ -190,7 +190,6 @@ void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot& rob
 void BehaviorAcknowledgeCubeMoved::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
-  PRINT_NAMED_DEBUG("BehaviorReactAcknowledgeCubeMovde.TransitionTo", "%s", stateName.c_str());
   SetDebugStateName(stateName);
 }
   

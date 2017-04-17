@@ -6,15 +6,12 @@
   "behaviorGroups": [
     "SparksPeekABoo"
   ],
-  "flatScore" : 5.0,
+  "flatScore" : 2.5,
   "minTimesPeekBeforeQuit" : 3,
   "maxTimesPeekBeforeQuit" : 3,
-  "maxTimeWithoutSeeingFace_Sec": 15,
-  "waitIncrementTime_Sec" : 0.05,
-  "waitTimeFirstSec" : 0.35,
+  "noUserInteractionTimeout_Sec": 12,
   "maxTimeOldestFaceToConsider_Sec" : 10,
   "requireFaceConfirmBeforeRequest" : false,
   "minCooldown_Sec": 0,
-  "maxTimesReShortPeek": 5,
   "playGetIn": false
 }

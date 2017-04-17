@@ -36,6 +36,12 @@
           "triggerExpiration_s": 3.0
         },
         {
+          "behaviorObjective": "PeekABooSuccess",
+          "triggerCooldownTime_s": 300.0,
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 3.0
+        },
+        {
           "behaviorObjective": "PerformedStrongWorkout",
           "triggerCooldownTime_s": 180.0,
           "triggerProbability": 0.5,

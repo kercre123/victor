@@ -668,7 +668,6 @@ void BehaviorLookAround::ResetSafeRegion(Robot& robot)
 void BehaviorLookAround::SetState_internal(State state, const std::string& stateName)
 {
   _currentState = state;
-  PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionTo", "%s", stateName.c_str());
   SetDebugStateName(stateName);
 }
 

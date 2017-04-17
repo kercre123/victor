@@ -997,9 +997,10 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
 
       if(shouldCheckStrategy &&
          strategy.ShouldTriggerBehavior(_robot, &rBehavior)){
-          
-          _robot.AbortAll();
-          
+        
+          _robot.GetMoveComponent().StopAllMotors();
+
+        
           if(_robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::ALL_TRACKS) &&
              !_robot.GetMoveComponent().IsDirectDriving())
           {
@@ -1009,7 +1010,7 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
           }
         
           const bool successfulSwitch = SwitchToReactionTrigger(strategy, &rBehavior);
-  
+        
           didSuccessfullySwitch |= successfulSwitch;
 
           if(successfulSwitch){

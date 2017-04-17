@@ -669,8 +669,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
-  PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
-  DEBUG_SET_STATE(s);
+  SetDebugStateName(stateName);
 }
   
   

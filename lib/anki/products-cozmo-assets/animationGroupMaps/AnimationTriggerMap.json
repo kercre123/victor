@@ -897,6 +897,18 @@
       "AnimName": "ag_peekaboo_getin"
     },
     {
+      "CladEvent": "PeekABooGetOutHappy",
+      "AnimName": "ag_peekaboo_successfulgetout"
+    },
+    {
+      "CladEvent": "PeekABooGetOutSad",
+      "AnimName": "ag_peekaboo_failuregetout"
+    },
+    {
+      "CladEvent": "PeekABooHighIntensity",
+      "AnimName": "ag_peekaboo_requestthrice"
+    },
+    {
       "CladEvent": "PeekABooIdle",
       "AnimName": "ag_peekaboo_idles"
     },
@@ -909,8 +921,8 @@
       "AnimName": "ag_peekaboo_requesttwice"
     },
     {
-      "CladEvent": "PeekABooHighIntensity",
-      "AnimName": "ag_peekaboo_requestthrice"
+      "CladEvent": "PeekABooNoUserInteraction",
+      "AnimName": "ag_peekaboo_fail"
     },
     {
       "CladEvent": "PeekABooShort",
@@ -919,14 +931,6 @@
     {
       "CladEvent": "PeekABooSurprised",
       "AnimName": "ag_peekaboo_success"
-    },
-    {
-      "CladEvent": "PeekABooGetOutSad",
-      "AnimName": "ag_peekaboo_failuregetout"
-    },
-    {
-      "CladEvent": "PeekABooGetOutHappy",
-      "AnimName": "ag_peekaboo_successfulgetout"
     },
     {
       "CladEvent": "PetDetectionCat",

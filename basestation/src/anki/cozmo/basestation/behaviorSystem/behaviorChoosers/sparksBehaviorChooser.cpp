@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -132,6 +133,12 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
   assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
   _behaviorAcknowledgeObject = static_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior);
   DEV_ASSERT(nullptr != _behaviorAcknowledgeObject, "SparksBehaviorChooser.BehaviorAcknowledgeObjectNotFound");
+  
+  // for COZMO-8914
+  IBehavior* sparksPeekABoo = robot.GetBehaviorFactory().FindBehaviorByName("sparksPeekABoo");
+  assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
+  _behaviorPeekABoo = dynamic_cast<BehaviorPeekABoo*>(sparksPeekABoo);
+  DEV_ASSERT(_behaviorPeekABoo != nullptr, "SparksBehaviorChooser.BehaviorPeekABooNotFound");
   
   // Listen for behavior objective achieved messages for spark repetitions counter
   if(robot.HasExternalInterface()) {
@@ -245,6 +252,11 @@ void SparksBehaviorChooser::OnSelected()
   // Notify the delegate chooser if it exists
   if(_simpleBehaviorChooserDelegate != nullptr){
     _simpleBehaviorChooserDelegate->OnSelected();
+  }
+  
+  // for COZMO-8914
+  if(mngr.GetRequestedSpark() == UnlockId::PeekABoo){
+    _behaviorPeekABoo->PeekABooSparkStarted(_maxTimeSecs);
   }
   
 }
@@ -425,17 +437,20 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
         // Set the animation behavior either to play the outro or with a placeholder for this tick
         if(!isSoftSpark && !mngr.DidGameRequestSparkEnd()){
           
-          std::vector<AnimationTrigger> getOutAnims;
           // Play different animations based on whether cozmo timed out or completed his desired reps
+          std::vector<AnimationTrigger> getOutAnims;
           if(_currentObjectiveCompletedCount >= _numberOfRepetitions){
-            getOutAnims.push_back(_sparksSuccessTrigger);
+            if(_sparksSuccessTrigger != AnimationTrigger::Count){
+              getOutAnims.push_back(_sparksSuccessTrigger);
+            }
             
             // make sure we don't immediately play frustration upon ending a spark successfully
             _robot.GetMoodManager().TriggerEmotionEvent("SuccessfulSpark", MoodManager::GetCurrentTimeInSeconds());
             
-          }else{
+          }else if(_sparksFailTrigger != AnimationTrigger::Count){
             getOutAnims.push_back(_sparksFailTrigger);
           }
+          
           // then play standard get out
           getOutAnims.push_back(AnimationTrigger::SparkGetOut);
           

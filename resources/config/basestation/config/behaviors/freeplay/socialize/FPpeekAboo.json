@@ -10,12 +10,9 @@
   "flatScore": 0.0,
   "minTimesPeekBeforeQuit" : 3,
   "maxTimesPeekBeforeQuit" : 6,
-  "maxTimeWithoutSeeingFace_Sec": 15,
-  "waitIncrementTime_Sec" : 0.05,
-  "waitTimeFirstSec" : 0.35,
+  "noUserInteractionTimeout_Sec": 12,
   "maxTimeOldestFaceToConsider_Sec" : 10,
   "requireFaceConfirmBeforeRequest" : false,
   "minCooldown_Sec": 300,
-  "maxTimesReShortPeek": 5,
   "playGetIn": true
 }

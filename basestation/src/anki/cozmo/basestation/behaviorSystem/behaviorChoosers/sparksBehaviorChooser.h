@@ -28,6 +28,7 @@ namespace Cozmo {
 class IBehavior;
 class MoodManager;
 class Robot;
+class BehaviorPeekABoo;
 class BehaviorPlayArbitraryAnim;
 class BehaviorAcknowledgeObject;
 template <typename Type> class AnkiEvent;
@@ -134,6 +135,10 @@ private:
   std::unique_ptr<IBehaviorChooser> _simpleBehaviorChooserDelegate;
   
   BackpackLightDataLocator  _bodyLightDataLocator{};
+  
+  // for COZMO-8914 - peek a boo grabbed directly so that it can know when
+  // a spark starts and when it has to play its get out;
+  BehaviorPeekABoo* _behaviorPeekABoo;
   
   IBehavior* SelectNextSparkInternalBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
 

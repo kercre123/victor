@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
@@ -809,6 +810,7 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   }
   
   // Stop whatever we were doing
+  robot->GetBehaviorManager().RequestCurrentBehaviorEndImmediately("HandleRobotStopped");
   robot->GetActionList().Cancel();
   
   // Forward on with EngineToGame event

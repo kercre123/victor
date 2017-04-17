@@ -225,7 +225,6 @@ IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(Robot& robot)
 void BehaviorOnboardingShowCube::SetState_internal(State state, const std::string& stateName,const Robot& robot)
 {
   _state = state;
-  PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube.TransitionTo", "%s", stateName.c_str());
   SetDebugStateName(stateName);
   // because this is called from some places where Robot is const, uses const safe version rather than just robot.Broadcast
   robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::OnboardingState(_state)));

@@ -71,6 +71,7 @@ void BehaviorPlayArbitraryAnim::SetAnimationTriggers(std::vector<AnimationTrigge
   // clear current triggers and add new ones
   _animTriggers.clear();
   for (AnimationTrigger trigger : triggers) {
+    DEV_ASSERT(trigger != AnimationTrigger::Count, "BehaviorPlayArbitraryAnim.InvalidTriggerPassedIn");
     _animTriggers.emplace_back(trigger);
   }
   

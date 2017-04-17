@@ -90,7 +90,7 @@
        {
          "type" : "sparks",
          "minTimeSecs": 0,
-         "maxTimeSecs": 60,
+         "maxTimeSecs": 30,
          "numberOfRepetitions": 1,
          "behaviorObjective": "PeekABooComplete",
          "softSparkTrigger": "SoftSparkUpgradeLift",
