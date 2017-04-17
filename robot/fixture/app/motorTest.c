@@ -270,7 +270,7 @@ static void CheckFixtureCompatibility(void)
   ConsolePrintf("fixture rev %s\r\n", GetBoardRevStr());
   
   //new tests require v1.5 hardware w/ H-Bridge driver
-  if( g_fixtureRev < BOARD_REV_1_5_0 )
+  if( g_fixtureRev < BOARD_REV_1_5_1 )
     throw ERROR_INCOMPATIBLE_FIX_REV;
 }
 

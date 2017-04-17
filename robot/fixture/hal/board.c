@@ -161,23 +161,22 @@ board_rev_t GetBoardRev(void)
   pinstate_e board_id0 = _test_pin_state(GPIOC, GPIOC_BOARD_ID0);
   pinstate_e board_id1 = _test_pin_state(GPIOC, GPIOC_BOARD_ID1);
   
+  //reserved ID pins are NC/float. return unknown if firmware is older than fixture hardware (or hw error).
+  if( board_id1 != Z )
+    return BOARD_REV_UNKNOWN;
+  
   //fixture 1.0 rev1,2,3 did not have a board revision check. pins are NC/float.
   //fixture 1.5+ implemented this check
   if( board_id0 == Z )
     return BOARD_REV_1_0_REV3; //or rev1,2. Can't tell.
   else if( board_id0 == LOW )
-    return BOARD_REV_1_5_0;
+    return BOARD_REV_1_5_1;
   else //no revision currently pulls this pin high.
-    assert(0);
-  
-  //additional ID pins are NC/float. crash and burn if firmware is older than fixture hardware.
-  assert( board_id1 == Z );
-  
-  return BOARD_REV_1_0_REV1; //silly compiler. we'll never make it here.
+    return BOARD_REV_UNKNOWN;
 }
 
-static const char board_rev_str_0[] = "1.0.r{1,2,3}";
-static const char board_rev_str_3[] = "1.5.0";
+static const char board_rev_str_10r[] = "1.0.r{1,2,3}";
+static const char board_rev_str_151[] = "1.5.1";
 static const char board_rev_str_x[] = "?";
 char* GetBoardRevStr(void) 
 {
@@ -185,8 +184,8 @@ char* GetBoardRevStr(void)
   switch( GetBoardRev() ) {
     case BOARD_REV_1_0_REV1:
     case BOARD_REV_1_0_REV2:
-    case BOARD_REV_1_0_REV3:  s = (char*)&board_rev_str_0[0]; break;
-    case BOARD_REV_1_5_0:     s = (char*)&board_rev_str_3[0]; break;
+    case BOARD_REV_1_0_REV3:  s = (char*)&board_rev_str_10r[0]; break;
+    case BOARD_REV_1_5_1:     s = (char*)&board_rev_str_151[0]; break;
     default:                  s = (char*)&board_rev_str_x[0]; break;
   }
   return s;
