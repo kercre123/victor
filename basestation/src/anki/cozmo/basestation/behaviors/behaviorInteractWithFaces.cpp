@@ -100,6 +100,8 @@ BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::V
 : IBehavior(robot, config)
 {
   SetDefaultName("InteractWithFaces");
+
+  SubscribeToTags({ EngineToGameTag::RobotChangedObservedFaceID });
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -132,7 +134,6 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
   
   return BaseClass::UpdateInternal(robot);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorInteractWithFaces::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
@@ -350,6 +351,19 @@ void BehaviorInteractWithFaces::SelectFaceToTrack(const Robot& robot) const
   const AIWhiteboard& whiteboard = robot.GetAIComponent().GetWhiteboard();
   const bool preferName = true;
   _targetFace = whiteboard.GetBestFaceToTrack(faces, preferName);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorInteractWithFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  if( event.GetData().GetTag() == EngineToGameTag::RobotChangedObservedFaceID )
+  {
+    auto const& msg = event.GetData().Get_RobotChangedObservedFaceID();
+    if( msg.oldID == _targetFace ) {
+      _targetFace = msg.newID;
+    }
+  }
 }
 
 

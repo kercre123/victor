@@ -60,6 +60,7 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  virtual void   AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
 
 private:
   
