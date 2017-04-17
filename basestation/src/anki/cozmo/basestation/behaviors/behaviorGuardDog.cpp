@@ -30,6 +30,8 @@
 
 #include "clad/types/behaviorTypes.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -69,11 +71,10 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogArray),
               "Reaction triggers duplicate or non-sequential");
   
-  
 // Constants/thresholds:
-const float kSleepingTimeout_s = 60.f;
-const float kMovementScoreThreshold_stir = 8.f;
-const float kMovementScoreMax = 50.f;
+CONSOLE_VAR_RANGED(float, kSleepingTimeout_s, "Behavior.GuardDog", 60.f, 20.f, 300.f);
+CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  8.f,  5.f,  30.f);
+CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
   
 } // end anonymous namespace
   
@@ -155,7 +156,7 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   //robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   
   // Reset some members in case this is running again:
-  _cubesData.clear();
+  _cubesDataMap.clear();
   _firstSleepingStartTime_s = 0.f;
   _nCubesMoved = 0;
   _nCubesFlipped = 0;
@@ -167,9 +168,9 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   
   DEV_ASSERT(locatedBlocks.size() == 3, "BehaviorGuardDog.InitInternal.WrongNumLocatedBlocks");
   
-  // Initialize stuff for each block:
+  // Initialize the map of objectId to cubeData struct:
   for (const auto& block : locatedBlocks) {
-    _cubesData.emplace_back(block->GetID());
+    _cubesDataMap.emplace(block->GetID(), sCubeData());
   }
   
   SET_STATE(Init);
@@ -217,9 +218,6 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::DriveToBlocks:
     {
-      // Stop pulsing light cube animation and go to "lights off":
-      StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogOff);
-      
       // Compute a goal starting pose near the blocks and drive there.
       Pose3d startingPose;
       ComputeStartingPose(robot, startingPose);
@@ -243,9 +241,11 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     {
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogSettle),
                   [this, &robot]() {
-                                     SET_STATE(StartSleeping);
-                                     _firstSleepingStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                                     // Stop pulsing light cube animation and go to "lights off":
+                                     StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogOff);
                                      StartMonitoringCubeMotion(robot);
+                                     _firstSleepingStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                                     SET_STATE(StartSleeping);
                                    });
       break;
     }
@@ -386,17 +386,23 @@ void BehaviorGuardDog::HandleWhileRunning(const EngineToGameEvent& event, Robot&
 
 void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
 {
-  // Retrieve a reference to the objectData struct corresponding to this message's object ID:
-  const ObjectID objId = msg.objectID;
-  auto it = std::find_if(_cubesData.begin(), _cubesData.end(), [&objId](sCubeData objData) { return objData.objectId == objId; });
-  if (it == _cubesData.end()) {
+  // Ignore if we're not monitoring for cube motion right now (sometimes we send the message to stop
+  //  ObjectAccel streaming, but still receive some stray packets from the robot in the brief time afterward)
+  if (!_monitoringCubeMotion) {
+    return;
+  }
+  
+  // Retrieve a reference to the cubeData struct corresponding to this message's object ID:
+  const ObjectID objId = msg.objectID; // convert raw u32 to ObjectID
+  auto it = _cubesDataMap.find(objId);
+  if (it == _cubesDataMap.end()) {
     ANKI_VERIFY(false,
                 "BehaviorGuardDog.HandleObjectAccel.UnknownObject",
                 "Received an ObjectAccel message from an unknown object (objectId = %d)",
                 msg.objectID);
     return;
   }
-  sCubeData& block = *it;
+  sCubeData& block = it->second;
   
   // No need to continue monitoring cube accel if the cube
   //  has been successfully flipped over, so just bail out:
@@ -454,7 +460,7 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
   if (block.movementScore > kMovementScoreMax) {
     StopActing();
     SET_STATE(Busted);
-  } else if (block.movementScore > kMovementScoreThreshold_stir) {
+  } else if (block.movementScore > kMovementScoreDetectionThreshold) {
     if (!block.hasBeenMoved) {
       block.hasBeenMoved = true;
       ++_nCubesMoved;
@@ -463,10 +469,10 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
     }
     // Play the "being moved" light cube anim:
     if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
-      StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogBeingMoved);
+      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogBeingMoved);
     }
   } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
-      StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogSleeping);
+      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSleeping);
   }
   
 //  PRINT_NAMED_WARNING("objAccel", "objId = %d, accelMag = %+8.1f, hpFiltAccelMag = %+8.1f, movementScore = %8.1f",
@@ -493,26 +499,43 @@ void BehaviorGuardDog::HandleObjectConnectionState(const Robot& robot, const Obj
   
 void BehaviorGuardDog::HandleObjectMoved(const Robot& robot, const ObjectMoved& msg)
 {
-  // TODO: Figure out what to do if an object is moved
-  //   before Cozmo starts 'guarding' his blocks
-  
-  if (!_monitoringCubeMotion) {
-    PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectMoved.ObjectMoved",
-                     "Received ObjectMoved message for Object with ID %d even though we're not currently monitoring for movement!",
+  // If an object has been moved before we start monitoring for motion
+  //  and before we fall asleep, jump right to 'Busted' reaction.
+  if (!_monitoringCubeMotion &&
+      (_firstSleepingStartTime_s == 0.f) &&
+      (_state != State::Busted)) {
+    PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectMoved.UnexpectedBlockMovement",
+                     "Received ObjectMoved message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                      msg.objectID);
+    StopActing();
+    SET_STATE(Busted);
   }
 }
 
 void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxisChanged& msg)
 {
+  // If an object has a new UpAxis, it must have been moved. If this happens before
+  //  monitoring for motion and before we fall asleep, jump right to 'Busted' reaction.
+  if (!_monitoringCubeMotion &&
+      (_firstSleepingStartTime_s == 0.f)) {
+    PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectUpAxisChanged.UnexpectedBlockMovement",
+                     "Received ObjectUpAxisChanged message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
+                     msg.objectID);
+    if (_state != State::Busted) {
+      StopActing();
+      SET_STATE(Busted);
+    }
+    return;
+  }
+  
   // Retrieve a reference to the objectData struct corresponding to this message's object ID:
   const ObjectID objId = msg.objectID;
-  auto it = std::find_if(_cubesData.begin(), _cubesData.end(), [&objId](sCubeData objData) { return objData.objectId == objId; });
-  if (ANKI_VERIFY(it != _cubesData.end(),
+  auto it = _cubesDataMap.find(objId);
+  if (ANKI_VERIFY(it != _cubesDataMap.end(),
                   "BehaviorGuardDog.HandleObjectUpAxisChanged.UnknownObject",
                   "Received an UpAxisChanged message from an unknown object (objectId = %d)",
                   msg.objectID)) {
-    auto& block = *it;
+    auto& block = it->second;
     block.upAxis = msg.upAxis;
     
     // Check if the block has been flipped over successfully:
@@ -520,7 +543,7 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
         (block.upAxis == UpAxis::ZNegative)) {
       block.hasBeenFlipped = true;
       ++_nCubesFlipped;
-      StartLightCubeAnim(robot, block.objectId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
+      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
     }
   }
 }
@@ -644,14 +667,15 @@ void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& starting
 Result BehaviorGuardDog::EnableCubeAccelStreaming(const Robot& robot, const bool enable) const
 {
   // Should have all three cubes in the cubesData container if this function is being called:
-  DEV_ASSERT(_cubesData.size() == 3, "BehaviorGuardDog.EnableCubeAccelStreaming.WrongNumCubesDataEntries");
+  DEV_ASSERT(_cubesDataMap.size() == 3, "BehaviorGuardDog.EnableCubeAccelStreaming.WrongNumCubesDataEntries");
   
-  for (const auto& block : _cubesData) {
-    const auto activeBlock = robot.GetBlockWorld().GetConnectedActiveObjectByID(block.objectId);
+  for (const auto& mapEntry : _cubesDataMap) {
+    const ObjectID objId = mapEntry.first;
+    const auto activeBlock = robot.GetBlockWorld().GetConnectedActiveObjectByID(objId);
     if (ANKI_VERIFY(activeBlock,
                     "BehaviorGuardDog.EnableCubeAccelStreaming.NullActiveBlock",
                     "Null pointer returned from blockworld for block with ID %d",
-                    block.objectId.GetValue())) {
+                    objId.GetValue())) {
       const Result res = robot.SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(activeBlock->GetActiveID(), enable)));
       if (!ANKI_VERIFY(res == Result::RESULT_OK,
                        "BehaviorGuardDog.EnableCubeAccelStreaming.SendMsgFailed",
@@ -678,8 +702,8 @@ void BehaviorGuardDog::StartMonitoringCubeMotion(Robot& robot, const bool enable
   
   // Clear out stale data for each cube:
   if (enable) {
-    for (auto& block : _cubesData) {
-      block.ResetAccelData();
+    for (auto& mapEntry : _cubesDataMap) {
+      mapEntry.second.ResetAccelData();
     }
   }
   
@@ -691,8 +715,8 @@ void BehaviorGuardDog::StartMonitoringCubeMotion(Robot& robot, const bool enable
 bool BehaviorGuardDog::StartLightCubeAnim(Robot& robot, const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger)
 {
   // Retrieve a reference to the objectData struct corresponding to this message's object ID:
-  auto it = std::find_if(_cubesData.begin(), _cubesData.end(), [&objId](sCubeData block) { return block.objectId == objId; });
-  if (it == _cubesData.end()) {
+  auto it = _cubesDataMap.find(objId);
+  if (it == _cubesDataMap.end()) {
     ANKI_VERIFY(false,
                 "BehaviorGuardDog.StartLightCubeAnim.InvalidObjectId",
                 "Could not find object with ID %d in cubesData! Trying to play %s",
@@ -700,21 +724,21 @@ bool BehaviorGuardDog::StartLightCubeAnim(Robot& robot, const ObjectID& objId, c
                 EnumToString(cubeAnimTrigger));
     return false;
   }
-  sCubeData& block = *it;
+  sCubeData& block = it->second;
   
   PRINT_NAMED_INFO("BehaviorGuardDog.StartLightCubeAnim.StartingAnim",
                    "Object %d: Playing light cube animation %s (previous was %s)",
-                   block.objectId.GetValue(),
+                   objId.GetValue(),
                    EnumToString(cubeAnimTrigger),
                    EnumToString(block.lastCubeAnimTrigger));
 
   bool success = false;
   if (block.lastCubeAnimTrigger == CubeAnimationTrigger::Count) {
     // haven't played any light cube anim yet, just play the new one:
-    success = robot.GetCubeLightComponent().PlayLightAnim(block.objectId, cubeAnimTrigger);
+    success = robot.GetCubeLightComponent().PlayLightAnim(objId, cubeAnimTrigger);
   } else {
     // we've already played a light cube anim - cancel it and play the new one:
-    success = robot.GetCubeLightComponent().StopAndPlayLightAnim(block.objectId, block.lastCubeAnimTrigger, cubeAnimTrigger);
+    success = robot.GetCubeLightComponent().StopAndPlayLightAnim(objId, block.lastCubeAnimTrigger, cubeAnimTrigger);
   }
     
   if (!success) {
@@ -722,7 +746,7 @@ bool BehaviorGuardDog::StartLightCubeAnim(Robot& robot, const ObjectID& objId, c
                 "BehaviorGuardDog.StartLightCubeAnim.PlayAnimFailed",
                 "Failed to play light cube anim trigger %s on object with ID %d",
                 EnumToString(cubeAnimTrigger),
-                block.objectId.GetValue());
+                objId.GetValue());
     return false;
   }
   
@@ -733,10 +757,10 @@ bool BehaviorGuardDog::StartLightCubeAnim(Robot& robot, const ObjectID& objId, c
 bool BehaviorGuardDog::StartLightCubeAnims(Robot& robot, const CubeAnimationTrigger& cubeAnimTrigger)
 {
   // Should have all three cubes in the cubesData container if this function is being called:
-  DEV_ASSERT(_cubesData.size() == 3, "BehaviorGuardDog.StartLightCubeAnims.WrongNumCubesDataEntries");
+  DEV_ASSERT(_cubesDataMap.size() == 3, "BehaviorGuardDog.StartLightCubeAnims.WrongNumCubesDataEntries");
   
-  for (auto& block : _cubesData) {
-    if(!StartLightCubeAnim(robot, block.objectId, cubeAnimTrigger)) {
+  for (const auto& mapEntry : _cubesDataMap) {
+    if(!StartLightCubeAnim(robot, mapEntry.first, cubeAnimTrigger)) {
       return false;
     }
   }

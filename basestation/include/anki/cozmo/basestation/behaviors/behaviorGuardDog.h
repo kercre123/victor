@@ -50,10 +50,20 @@ private:
   void HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxisChanged& msg);
   
   // Helpers:
+  
+  // Compute a goal starting pose near the blocks
   void ComputeStartingPose(const Robot& robot, Pose3d& startingPose);
+  
+  // Send message to robot to start/stop streaming ObjectAccel messages from all cubes
   Result EnableCubeAccelStreaming(const Robot& robot, const bool enable = true) const;
+  
+  // Start/stop monitoring for cube motion (calls EnableCubeAccelStreaming)
   void StartMonitoringCubeMotion(Robot& robot, const bool enable = true);
+  
+  // Start a light cube animation on the specified cube
   bool StartLightCubeAnim(Robot& robot, const ObjectID& objId, const CubeAnimationTrigger& cubeAnimTrigger);
+  
+  // Start a light cube animation on all cubes
   bool StartLightCubeAnims(Robot& robot, const CubeAnimationTrigger& cubeAnimTrigger);
   
 private:
@@ -74,9 +84,8 @@ private:
   
   State _state = State::Init;
   
-  // struct to hold data about the blocks in question:
+  // struct to hold data about the blocks in question
   struct sCubeData {
-    ObjectID objectId;
     float accelMag          = 0.f;   // latest accelerometer magnitude
     float prevAccelMag      = 0.f;   // previous accelerometer magnitude
     float hpFiltAccelMag    = 0.f;   // high-pass filtered accel magnitude
@@ -88,13 +97,7 @@ private:
     uint msgReceivedCnt     = 0;     // how many ObjectAccel messages have we received for this block?
     uint badMsgCnt          = 0;     // how many weird ObjectAccel e.g. accel fields blank or really large) message have we received?
     CubeAnimationTrigger lastCubeAnimTrigger = CubeAnimationTrigger::Count;  // the last-played animation trigger for this cube.
-    UpAxis upAxis           = UpAxis::ZPositive;
-    
-    // constructors:
-    sCubeData(ObjectID objId)
-      : objectId(objId)
-    {
-    };
+    UpAxis upAxis           = UpAxis::ZPositive;  // The last reported UpAxis for the cube
     
     // member functions:
     void ResetAccelData() {
@@ -107,22 +110,22 @@ private:
     }
   };
   
-  // Stores relevant data for each of the cubes:
-  std::vector<sCubeData> _cubesData;
+  // Stores relevant data for each of the cubes
+  std::map<ObjectID, sCubeData> _cubesDataMap;
   
-  // Blockworld filter that gets used often (set up in constructor):
+  // Blockworld filter that gets used often (set up in constructor)
   std::unique_ptr<BlockWorldFilter> _connectedCubesOnlyFilter;
   
-  // Time that Cozmo first fell asleep (used for overall timeout detection):
+  // Time that Cozmo first fell asleep (used for overall timeout detection)
   float _firstSleepingStartTime_s = 0.f;
   
   // true when monitoring for cube movement
   bool _monitoringCubeMotion = false;
   
-  // The number of cubes that have been moved during the behavior:
+  // The number of cubes that have been moved during the behavior
   int _nCubesMoved = 0;
   
-  // The number of cubes that have been successfully flipped over:
+  // The number of cubes that have been successfully flipped over
   int _nCubesFlipped = 0;
   
 };
