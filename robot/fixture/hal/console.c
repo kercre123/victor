@@ -418,7 +418,7 @@ void SetRadio(void)
 {  
   char* arg = GetArgument(1);
   ConsolePrintf("Remember to use uppercase for most modes\r\n");
-  SetRadioMode(arg[0]);
+  SetRadioMode(arg[0],false);
 }
 
 void SetMotor(void)

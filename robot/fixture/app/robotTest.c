@@ -192,7 +192,7 @@ void PlaypenTest(void)
   // Do this last:  Try to put fixture radio in advertising mode
   static bool setRadio = false;
   if (!setRadio)
-    SetRadioMode('A');
+    SetRadioMode('A',0);
   setRadio = true;
 }
 
