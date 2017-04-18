@@ -27,9 +27,9 @@ void FinishTest(void)
 {
   // Try to set the mode - if that succeeds, we're golden
   if (g_fixtureType == FIXTURE_FINISH_TEST)
-    SetRadioMode('C');  // All types
+    SetRadioMode('C',0);  // All types
   else
-    SetRadioMode('0' + g_fixtureType - FIXTURE_FINISHC_TEST);
+    SetRadioMode('0' + g_fixtureType - FIXTURE_FINISHC_TEST,0);
   _whichType = g_fixtureType;
 }
 
