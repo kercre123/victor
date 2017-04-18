@@ -85,6 +85,11 @@ public:
   // extra (technically, unncessary) movement of the robot, but keeps him looking
   // more alive while tracking. Disabled by default.
   void SetClampSmallAnglesToTolerances(bool tf) { _clampSmallAngles = tf; }
+
+  // If we are clamping small angles, this setting can be set to minimize how "often" we do the clamp. If max
+  // is > 0, a random number will be rolled between min and max and the "clamping" will next happen after that
+  // interval has elapsed
+  void SetClampSmallAnglesPeriod(float min_sec, float max_sec);
   
   void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
 
@@ -111,6 +116,9 @@ protected:
   virtual bool InterruptInternal() override final;
   
 private:
+
+  // sets internal values to track clamping small angles. Returns true if we should clamp, false otherwise
+  bool UpdateSmallAngleClamping();
   
   Mode     _mode = Mode::HeadAndBody;
   float    _updateTimeout_sec = 0.0f;
@@ -137,6 +145,9 @@ private:
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
   bool     _clampSmallAngles = false;
+  f32      _clampSmallAnglesMinPeriod_s = -1.0f;
+  f32      _clampSmallAnglesMaxPeriod_s = -1.0f;
+  f32      _nextTimeToClampSmallAngles_s = -1.0f;
   
 }; // class ITrackAction
   

@@ -6,5 +6,13 @@
     "FP_Socialize"
   ],
 
-  "flatScore": 0.0 // chosen directly by chooser
+  "flatScore": 0.0, // chosen directly by chooser
+
+  "params": {
+    "minTimeToTrackFace_s": 8.0,
+    "maxTimeToTrackFace_s": 15.0,
+    "clampSmallAngles": true,
+    "minClampPeriod_s": 0.2,
+    "maxClampPeriod_s": 0.7
+  }
 }

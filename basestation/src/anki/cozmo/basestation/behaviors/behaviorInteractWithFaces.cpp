@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/vision/basestation/faceTracker.h"
@@ -64,15 +65,9 @@ CONSOLE_VAR(bool, kInteractWithFaces_VizMemoryMapCheck, CONSOLE_GROUP, false);
 
 CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardSpeed_mmps, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
 
-// Track face for a random amount of time between min and max
-CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTimeToTrackFace_s, CONSOLE_GROUP, 8.0f, 0.0f, 30.0f);
-CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MaxTimeToTrackFace_s, CONSOLE_GROUP, 15.0f, 0.0f, 30.0f);
-
 // Minimum angles to turn during tracking to keep the robot moving and looking alive
 CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingPanAngle_deg,  CONSOLE_GROUP, 4.0f, 0.0f, 30.0f);
 CONSOLE_VAR_RANGED(f32, kInteractWithFaces_MinTrackingTiltAngle_deg, CONSOLE_GROUP, 4.0f, 0.0f, 30.0f);
-CONSOLE_VAR(bool,       kInteractWithFaces_ClampSmallTrackingAngles, CONSOLE_GROUP, true);
-
 
 // If we are doing the memory map check, these are the types which will prevent us from driving the ideal
 // distance
@@ -101,9 +96,46 @@ BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::V
 {
   SetDefaultName("InteractWithFaces");
 
+  LoadConfig(config["params"]);
+
   SubscribeToTags({ EngineToGameTag::RobotChangedObservedFaceID });
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
+{
+  using namespace JsonTools;
+  const std::string& debugName = GetName() + ".BehaviorInteractWithFaces.LoadConfig";
+
+  _configParams.minTimeToTrackFace_s = ParseFloat(config, "minTimeToTrackFace_s", debugName);
+  _configParams.maxTimeToTrackFace_s = ParseFloat(config, "maxTimeToTrackFace_s", debugName);
+
+  if( ! ANKI_VERIFY(_configParams.maxTimeToTrackFace_s >= _configParams.minTimeToTrackFace_s,
+                    "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
+                    "%s: minTrackTime = %f, maxTrackTime = %f",
+                    GetName().c_str(),
+                    _configParams.minTimeToTrackFace_s,
+                    _configParams.maxTimeToTrackFace_s) ) {
+    _configParams.maxTimeToTrackFace_s = _configParams.minTimeToTrackFace_s;
+  }
+
+  _configParams.clampSmallAngles = ParseBool(config, "clampSmallAngles", debugName);
+  if( _configParams.clampSmallAngles ) {
+    _configParams.minClampPeriod_s = ParseFloat(config, "minClampPeriod_s", debugName);
+    _configParams.maxClampPeriod_s = ParseFloat(config, "maxClampPeriod_s", debugName);
+
+    if( ! ANKI_VERIFY(_configParams.maxClampPeriod_s >= _configParams.minClampPeriod_s,
+                      "BehaviorInteractWithFaces.LoadConfig.InvalidClampPeriod",
+                      "%s: minPeriod = %f, maxPeriod = %f",
+                      GetName().c_str(),
+                      _configParams.minClampPeriod_s,
+                      _configParams.maxClampPeriod_s) ) {
+      _configParams.maxClampPeriod_s = _configParams.minClampPeriod_s;
+    }
+
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
 {
@@ -292,7 +324,8 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward(Robot& robot)
     trackWithHeadAction->StopTrackingWhenOtherActionCompleted( driveActionTag );
     trackWithHeadAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackWithHeadAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
-    trackWithHeadAction->SetClampSmallAnglesToTolerances(kInteractWithFaces_ClampSmallTrackingAngles);
+    trackWithHeadAction->SetClampSmallAnglesToTolerances(_configParams.clampSmallAngles);
+    trackWithHeadAction->SetClampSmallAnglesPeriod(_configParams.minClampPeriod_s, _configParams.maxClampPeriod_s);
 
     action->AddAction( trackWithHeadAction );
   }
@@ -307,7 +340,7 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(Robot& robot)
   DEBUG_SET_STATE(TrackingFace);
 
   const float randomTimeToTrack_s = Util::numeric_cast<float>(
-    GetRNG().RandDblInRange(kInteractWithFaces_MinTimeToTrackFace_s, kInteractWithFaces_MaxTimeToTrackFace_s));
+    GetRNG().RandDblInRange(_configParams.minTimeToTrackFace_s, _configParams.maxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
   _trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
@@ -317,7 +350,8 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace(Robot& robot)
     TrackFaceAction* trackAction = new TrackFaceAction(robot, _targetFace);
     trackAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
-    trackAction->SetClampSmallAnglesToTolerances(kInteractWithFaces_ClampSmallTrackingAngles);
+    trackAction->SetClampSmallAnglesToTolerances(_configParams.clampSmallAngles);
+    trackAction->SetClampSmallAnglesPeriod(_configParams.minClampPeriod_s, _configParams.maxClampPeriod_s);
     action->AddAction(trackAction);
   }
   

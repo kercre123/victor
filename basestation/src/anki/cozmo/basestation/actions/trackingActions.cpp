@@ -276,9 +276,11 @@ ActionResult ITrackAction::CheckIfDone()
     
     // Tilt Head:
     f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
+
+    const bool shouldClampSmallAngles = UpdateSmallAngleClamping();
     
     // If enabled, always move at least the tolerance amount
-    if(_clampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
+    if(shouldClampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
     {
       relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
       absTiltAngle = _robot.GetHeadAngle() + relTiltAngle;
@@ -311,7 +313,7 @@ ActionResult ITrackAction::CheckIfDone()
     f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
     
     // If enabled, always move at least the tolerance amount
-    if(_clampSmallAngles && FLT_LE(std::abs(relPanAngle), _panTolerance.ToFloat()))
+    if(shouldClampSmallAngles && FLT_LE(std::abs(relPanAngle), _panTolerance.ToFloat()))
     {
       relPanAngle = std::copysign(_panTolerance.ToFloat(), relPanAngle);
       absPanAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat() + relPanAngle;
@@ -410,8 +412,38 @@ ActionResult ITrackAction::CheckIfDone()
     }
     
   }
-  
+
   return ActionResult::RUNNING;
+}
+
+void ITrackAction::SetClampSmallAnglesPeriod(float min_sec, float max_sec)
+{
+  _clampSmallAnglesMinPeriod_s = min_sec;
+  _clampSmallAnglesMaxPeriod_s = max_sec;
+}
+
+bool ITrackAction::UpdateSmallAngleClamping()
+{
+  if( _clampSmallAngles ) {
+    const bool hasClampPeriod = _clampSmallAnglesMaxPeriod_s > 0.0f;
+    if( hasClampPeriod ) {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      const bool shouldClamp = _nextTimeToClampSmallAngles_s < 0.0f || ( currTime_s >= _nextTimeToClampSmallAngles_s );
+      if( shouldClamp ) {
+        // re-roll the next period
+        const float randPeriod_s = GetRNG().RandDblInRange(_clampSmallAnglesMinPeriod_s, _clampSmallAnglesMaxPeriod_s);
+        _nextTimeToClampSmallAngles_s = currTime_s + randPeriod_s;
+      }
+      return shouldClamp;
+    }
+    else {
+      // no period, so always clamp
+      return true;
+    }
+  }
+  else {
+    return false;
+  }
 }
   
 //=======================================================================================================

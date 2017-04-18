@@ -77,6 +77,8 @@ private:
   using Face = Vision::TrackedFace;
   using FaceID_t = Vision::FaceID_t;
 
+  void LoadConfig(const Json::Value& config);
+
   // sets the mutbale _targetFace to the face we want to interact with
   void SelectFaceToTrack(const Robot& robot) const;
 
@@ -87,7 +89,7 @@ private:
   void TransitionToTriggerEmotionEvent(Robot& robot);
 
   bool CanDriveIdealDistanceForward(const Robot& robot);
-  
+
   ////////////////////////////////////////////////////////////////////////////////
   // Members
   ////////////////////////////////////////////////////////////////////////////////
@@ -102,6 +104,18 @@ private:
   // In the face tracking stage the action will hang, so store a time at which we want to stop it (from within
   // Update)
   float _trackFaceUntilTime_s = -1.0f;
+
+  struct Configuration {
+    float minTimeToTrackFace_s = 0.0f;;
+    float maxTimeToTrackFace_s = 0.0f;;
+
+    float minClampPeriod_s = 0.0f;;
+    float maxClampPeriod_s = 0.0f;;
+    bool clampSmallAngles = false;
+  };
+
+  Configuration _configParams;
+
     
 }; // BehaviorInteractWithFaces
   
