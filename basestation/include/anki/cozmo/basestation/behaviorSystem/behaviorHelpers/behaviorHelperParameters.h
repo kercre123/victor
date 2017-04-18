@@ -41,6 +41,8 @@ struct DriveToParameters{
 struct PickupBlockParamaters{
   AnimationTrigger animBeforeDock = AnimationTrigger::Count;
 
+  bool sayNameBeforePickup = false;
+  
   // If true, allow this helper to try to approach the cube from different faces if the pickup fails. This
   // defaults to false so that the helper will fail and allow the behavior to decide what to do next (e.g. try
   // again with another block).

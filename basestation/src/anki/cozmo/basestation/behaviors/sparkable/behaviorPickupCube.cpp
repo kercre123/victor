@@ -4,7 +4,7 @@
  * Author: Molly Jameson
  * Created: 2016-07-26
  *
- * Description:  Spark to pick up and put down
+ * Description:  Behavior which picks up a cube
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
@@ -36,24 +37,18 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
 static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
-static const float kSecondsBetweenBlockWorldChecks = 0.5f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _lastBlockWorldCheck_s(0)
-, _shouldPutCubeBackDown(true)
 {
   SetDefaultName("BehaviorPickUpCube");
 
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });
-  
-  _shouldPutCubeBackDown = config.get(kShouldPutCubeBackDown, true).asBool();
   
   // Pull from the config any block configuration types
   // that blocks should not be picked up out of
@@ -63,21 +58,28 @@ BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
     const Json::Value::const_iterator configNameEnd = configsToIgnore.end();
     
     for(; configNameIt != configNameEnd; ++configNameIt){
-      _configurationsToIgnore.push_back(BlockConfigurations::BlockConfigurationFromString(configNameIt->asCString()));
+      _configurationsToIgnore.push_back(
+          BlockConfigurations::BlockConfigurationFromString(configNameIt->asCString()));
     }
   }
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
+{
+  const Robot& robot = preReqData.GetRobot();
+  // check even if we haven't seen a block so that we can pickup blocks we know of
+  // that are outside FOV
+  
+  UpdateTargetBlocksInternal(robot);
+  return _targetBlockID.IsSet();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPickUpCube::InitInternal(Robot& robot)
 {
-  if(robot.IsCarryingObject()){
-    _targetBlockID = robot.GetCarryingObject();
-    TransitionToDriveWithCube(robot);
-    return Result::RESULT_OK;
-  }
-  
   if(!_shouldStreamline){
     TransitionToDoingInitialReaction(robot);
   }else{
@@ -90,9 +92,11 @@ Result BehaviorPickUpCube::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorPickUpCube::UpdateInternal(Robot& robot)
 {
+  // If the block we're going to pickup ever becomes part of an illegal configuration
+  // immediately stop the behavior
   for(auto configType: _configurationsToIgnore) {
     if(robot.GetBlockWorld().GetBlockConfigurationManager()
-                            .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
+                  .IsObjectPartOfConfigurationType(configType, _targetBlockID)){
       StopWithoutImmediateRepetitionPenalty();
       return Status::Complete;
     }
@@ -100,84 +104,57 @@ IBehavior::Status BehaviorPickUpCube::UpdateInternal(Robot& robot)
   
   return super::UpdateInternal(robot);
 }
-
+ 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::StopInternalFromDoubleTap(Robot& robot)
-{
-  
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
-{
-  const Robot& robot = preReqData.GetRobot();
-  // check even if we haven't seen a block so that we can pickup blocks we know of
-  // that are outside FOV
-  TimeStamp_t currentTime_s = robot.GetLastMsgTimestamp()/1000;
-  if( !IsRunning()
-     && currentTime_s > _lastBlockWorldCheck_s + kSecondsBetweenBlockWorldChecks)
-  {
-    _lastBlockWorldCheck_s = currentTime_s;
-    CheckForNearbyObject(robot);
-  }
-  
-  return !robot.IsCarryingObject() &&  _targetBlockID.IsSet();
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
-{
-  switch(event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotObservedObject:
-      CheckForNearbyObject(robot);
-      break;
-    default:
-      break;
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
+void BehaviorPickUpCube::UpdateTargetBlocksInternal(const Robot& robot) const
 {
   _targetBlockID.UnSet();
   
   auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpAnyObject;
-  const BlockWorldFilter& defaultFilter = objInfoCache.GetDefaultFilterForIntention( intent );
+  const ObjectID& possiblyBestObjID = objInfoCache.GetBestObjectForIntention(intent);
   
-  // If we have a tap intent (an object was double tapped) then set that object as the targetBlock
-  if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
+  if(_configurationsToIgnore.empty())
   {
-    _targetBlockID = objInfoCache.GetBestObjectForIntention(intent);
-    return;
-  }
-  
-  BlockWorldFilter filter(defaultFilter);
-  filter.AddFilterFcn(
-    [&robot, this](const ObservableObject* object)
-    {
-      bool isPartOfIllegalConfiguration = false;
-      for(auto configType: _configurationsToIgnore){
-        if(robot.GetBlockWorld().GetBlockConfigurationManager()
-                .GetCacheByType(configType).AnyConfigContainsObject(object->GetID())){
-          isPartOfIllegalConfiguration = true;
-          break;
+    _targetBlockID = possiblyBestObjID;
+  }else{
+    // Filter out blocks that are part of an ignore configuration
+    const BlockWorldFilter& defaultFilter = objInfoCache.GetDefaultFilterForIntention( intent );
+    
+    BlockWorldFilter filter(defaultFilter);
+    filter.AddFilterFcn(
+      [&robot, this](const ObservableObject* object)
+      {
+        bool isPartOfIllegalConfiguration = false;
+        for(auto configType: _configurationsToIgnore){
+          if(robot.GetBlockWorld().GetBlockConfigurationManager()
+                  .GetCacheByType(configType).AnyConfigContainsObject(object->GetID())){
+            isPartOfIllegalConfiguration = true;
+            break;
+          }
         }
-      }
 
-      return !isPartOfIllegalConfiguration;
-    });
-  
-  const ObservableObject* closestObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(), filter);
-  
-  if(closestObject != nullptr)
-  {
-    _targetBlockID = closestObject->GetID();
+        return !isPartOfIllegalConfiguration;
+      });
+    
+    // If the "best" object is valid, use that one - this allows tapped objects
+    // to be given preference when valid
+    std::vector<const ObservableObject *> validObjs;
+    robot.GetBlockWorld().FindLocatedMatchingObjects(filter, validObjs);
+    
+    const ObservableObject* possiblyBestObj = robot.GetBlockWorld().GetLocatedObjectByID(possiblyBestObjID);
+    if(std::find(validObjs.begin(), validObjs.end(), possiblyBestObj) != validObjs.end()){
+      _targetBlockID = possiblyBestObjID;
+    }else{
+      const ObservableObject* closestObject = robot.GetBlockWorld().
+                                FindLocatedObjectClosestTo(robot.GetPose(), filter);
+      
+      if(closestObject != nullptr)
+      {
+        _targetBlockID = closestObject->GetID();
+      }
+    }
   }
 }
   
@@ -187,27 +164,10 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
 {
   DEBUG_SET_STATE(DoingInitialReaction);
   
-  // First, always turns towards object to acknowledge it
-  // Note: visually verify is true, so if we don't see the object anymore
-  // this compound action will fail and we will not contionue this behavior.
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  
-  // Don't visually verify when using a tap intent object since it could be far away or obscured
-  const bool shouldVisuallyVerify = !robot.GetAIComponent().GetWhiteboard().HasTapIntent();
-  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(M_PI_F), shouldVisuallyVerify));
-  if(!_shouldStreamline){
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
-  }
-  StartActing(action,
-              [this,&robot](ActionResult res) {
-                const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(res);
-                if(resCat == ActionResultCategory::ABORT ||
-                   resCat == ActionResultCategory::RETRY) {
-                  FailedToPickupObject(robot);
-                } else {
-                  TransitionToPickingUpCube(robot);
-                }
-              });
+  StartActing(new TriggerLiftSafeAnimationAction(robot,
+                     AnimationTrigger::SparkPickupInitialCubeReaction),
+              &BehaviorPickUpCube::TransitionToPickingUpCube);
+
 }
  
   
@@ -215,163 +175,26 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
 void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 {
   DEBUG_SET_STATE(PickingUpCube);
-  DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlockID, false, 0, false,0, true);
   
-  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
-
-  RetryWrapperAction::RetryCallback retryCallback =
-    [this, pickupAction, &objInfoCache](const ExternalInterface::RobotCompletedAction& completion,
-                                        const u8 retryCount,
-                                        AnimationTrigger& retryAnimTrigger)
-  {
-    // use the whitebaord to check if we can still pickup the action. Note that this isn't the same check we
-    // did before, so this is slightly wrong, but this still helps because if the whiteboard says we can't use
-    // the object, then our filter (which may be more strict) will definitely reject it.
-    const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpAnyObject;
-
-    const bool blockStillValid = objInfoCache.IsObjectValidForInteraction(intent, _targetBlockID);
-    if( ! blockStillValid ) {
-      return false;
-    }
-      
-    // This is the intended animation trigger for now - don't change without consulting Mooly
-    retryAnimTrigger = AnimationTrigger::RollBlockRealign;
-    
-    // Use a different preAction pose if we are retrying because we weren't seeing the object
-    if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
-    {
-      DriveToObjectAction* driveToObjectAction = pickupAction->GetDriveToObjectAction();
-      if(driveToObjectAction != nullptr)
-      {
-        driveToObjectAction->SetGetPossiblePosesFunc([this, pickupAction](ActionableObject* object,
-                                                                          std::vector<Pose3d>& possiblePoses,
-                                                                          bool& alreadyInPosition)
-          {
-            return IBehavior::UseSecondClosestPreActionPose(pickupAction->GetDriveToObjectAction(),
-                                                            object, possiblePoses, alreadyInPosition);
-          });
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("BehaviorPickupCube.TransitionToPickingUpCube.RetryCallback.NullDriveAction",
-                          "DriveToObjectAction in DriveToPickupObjectAction is null");
-      }
-      return true;
-    }
-    else {
-      return IActionRunner::GetActionResultCategory(completion.result) == ActionResultCategory::RETRY;
-    }
-  };
-  
-  static const u8 kNumRetries = 1;
-  RetryWrapperAction* action = new RetryWrapperAction(robot,
-                                                      pickupAction,
-                                                      retryCallback,
-                                                      kNumRetries);
-  
-  StartActing(action,
-              [this,&robot](ActionResult res) {
-                const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(res);
-                if(resCat == ActionResultCategory::ABORT ||
-                   resCat == ActionResultCategory::RETRY)
-                {
-                  FailedToPickupObject(robot);
-                  
-                  // Play failure animation
-                  if (res == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || res == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockRealign));
-                  }
-                } else {
-                  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess),
-                              &BehaviorPickUpCube::TransitionToDriveWithCube);
-                }
-              });
+  auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+  PickupBlockParamaters params;
+  params.sayNameBeforePickup = !_shouldStreamline;
+  params.allowedToRetryFromDifferentPose = true;
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this, _targetBlockID, params);
+  SmartDelegateToHelper(robot, pickupHelper, &BehaviorPickUpCube::TransitionToSuccessReaction);
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
+void BehaviorPickUpCube::TransitionToSuccessReaction(Robot& robot)
 {
-  DEBUG_SET_STATE(DriveWithCube);
-  
-  if(!_shouldPutCubeBackDown){
-    return;
-  }
-  
-  float turn_rad = (float) robot.GetRNG().RandDblInRange(M_PI_4, M_PI_F);
-  if( robot.GetRNG().RandDbl() < 0.5 )
-  {
-    turn_rad *= -1.f;
-  }
-  
-  StartActing(new TurnInPlaceAction(robot, turn_rad, false),
-                  &BehaviorPickUpCube::TransitionToPutDownCube);
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
-{
-  DEBUG_SET_STATE(PutDownCube);
-  
-  // If this behavior uses a tapped object then prevent ReactToDoubleTap from interrupting
-  if(RequiresObjectTapped())
-  {
-    robot.GetAIComponent().GetWhiteboard().SetSuppressReactToDoubleTap(true);
-  }
-
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-
-  {
-    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction(robot);
-    const bool shouldEmitCompletion = true;
-    action->AddAction(placeAction, false, shouldEmitCompletion);
-  }
-
-  {  
-    static constexpr float kBackUpMinMM = 40.0;
-    static constexpr float kBackUpMaxMM = 70.0;
-    double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
-    
-    action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
-  }
-
-  
-  StartActing(action, &BehaviorPickUpCube::TransitionToDoingFinalReaction);
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
-{
-  DEBUG_SET_STATE(DoingFinalReaction);
-  
   if(!_shouldStreamline){
-    // actively want him to just turn around with the same cube...
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupFinalCubeReaction),
-                [this,&robot](ActionResult res) {
-                    // Will no longer be runnable
-                    _targetBlockID.UnSet();
-                    BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
-                });
-  }else{
-    BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
+    DEBUG_SET_STATE(DoingFinalReaction);
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess));
   }
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
-{
-  // mark this as failed to pickup so that we don't retry
-  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockID);
-  if(failedObject){
-    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
-  }
-  _targetBlockID.UnSet();
-  
 }
 
+  
 } // namespace Cozmo
 } // namespace Anki
 

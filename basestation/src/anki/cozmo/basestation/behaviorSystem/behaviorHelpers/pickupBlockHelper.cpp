@@ -24,7 +24,8 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-  static const int kMaxDockRetries = 2;
+static const int kMaxDockRetries = 2;
+static const Radians kMaxAngleTurnToFaceBeforePickup_rad = M_PI_2_F;
 }
 
   
@@ -106,6 +107,7 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
     properties.FailImmediatelyOnDelegateFailure();
     DelegateAfterUpdate(properties);
   }else{
+
     PRINT_CH_INFO("BehaviorHelpers", "PickupBlockHelper.StartPickupAction.PickingUpObject",
                   "Picking up target object %d",
                   _targetID.GetValue());
@@ -115,8 +117,20 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
       // In case we repeat, null out anim
       _params.animBeforeDock = AnimationTrigger::Count;
     }
-
-    _dockAttemptCount++;
+    
+    if((_dockAttemptCount == 0) &&
+       _params.sayNameBeforePickup){
+      static const bool ignoreFailure = true;
+      action->AddAction(new TurnTowardsLastFacePoseAction(robot,
+                                                          kMaxAngleTurnToFaceBeforePickup_rad,
+                                                          true),
+                        ignoreFailure);
+      
+      action->AddAction(new TurnTowardsObjectAction(robot,
+                                                    _targetID,
+                                                    M_PI_F),
+                        ignoreFailure);
+    }
 
     {
       PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetID);
@@ -147,6 +161,7 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
         }
       }
     });
+    _dockAttemptCount++;
   }
 }
   

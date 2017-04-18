@@ -48,8 +48,6 @@ protected:
   
   virtual void   StopInternal(Robot& robot) override;
 
-  void TransitionToAligningToCube(Robot& robot);
-  void TransitionToPreLiftAnim(Robot& robot);
   void TransitionToPickingUpCube(Robot& robot);
   void TransitionToPostLiftAnim(Robot& robot);
   void TransitionToStrongLifts(Robot& robot);
@@ -60,8 +58,6 @@ protected:
   void TransitionToManualPutDown(Robot& robot);
   void EndIteration(Robot& robot);
 
-  void TransitionToFailureRecovery(Robot& robot, bool countFailure);
-
   // set by init to the number of lifts we should do, then decremented in the state machine
   unsigned int _numStrongLiftsToDo = 0;
   unsigned int _numWeakLiftsToDo = 0;
@@ -69,7 +65,6 @@ protected:
   bool _shouldBeCarrying = false;
 
   ObjectID _targetBlockID;
-  unsigned int _failToPickupCount;
 };
 
 }

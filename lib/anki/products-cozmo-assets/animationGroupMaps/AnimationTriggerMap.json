@@ -1397,14 +1397,6 @@
       "AnimName": "ag_reacttocliff_wait"
     },    
     {
-      "CladEvent": "WorkoutPickupRealign",
-      "AnimName": "rollCube_realign"
-    },
-    {
-      "CladEvent": "WorkoutPickupRetry",
-      "AnimName": "rollCube_retry"
-    },
-    {
       "CladEvent": "WorkoutPostLift_highEnergy",
       "AnimName": "ag_workout_highenergy_getready"
     },

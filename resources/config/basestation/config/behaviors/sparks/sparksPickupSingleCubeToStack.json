@@ -6,6 +6,5 @@
   "behaviorGroups": [
       "SparksStackBlock"
   ],
-  "flatScore": 4.0,
-  "shouldPutCubeBackDown": false
+  "flatScore": 4.0
 }

@@ -10,13 +10,15 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
+
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/iHelper.h"
+
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorEventAnimResponseDirector.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/iHelper.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
