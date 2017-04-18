@@ -165,6 +165,9 @@ public class ChallengeDetailsModal : BaseModal {
           if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.DriveOffCharger) {
             OpenCozmoNotReadyAlert();
           }
+          else if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.ReactToRobotShaken) {
+            OpenCozmoDizzyAlert();
+          }
           else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {
             OpenCozmoNotOnTreadsAlert();
           }
@@ -213,6 +216,16 @@ public class ChallengeDetailsModal : BaseModal {
                                                   dialogCloseAnimationFinishedCallback: HandleEdgeCaseAlertClosed);
 
     UIManager.OpenAlert(cozmoNotOnTreadsData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+  }
+  
+  private void OpenCozmoDizzyAlert() {
+    var cozmoDizzyData = new AlertModalData("cozmo_dizzy_alert",
+                                            LocalizationKeys.kChallengeDetailsCozmoDizzyTitle,
+                                            LocalizationKeys.kChallengeDetailsCozmoDizzyDescription,
+                                            new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                            dialogCloseAnimationFinishedCallback: HandleEdgeCaseAlertClosed);
+
+    UIManager.OpenAlert(cozmoDizzyData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
   }
 
 

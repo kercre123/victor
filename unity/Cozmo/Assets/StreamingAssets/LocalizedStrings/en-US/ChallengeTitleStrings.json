@@ -30,6 +30,12 @@
   "challengeDetails.cozmoNotOnTreads.description": {
     "translation": "Please help Cozmo get upright and ready to play."
   },
+  "challengeDetails.cozmoDizzy.title": {
+    "translation": "Cozmo is dizzy"
+  },
+  "challengeDetails.cozmoDizzy.description": {
+    "translation": "Wait until Cozmo has recovered from being dizzy and is ready to play."
+  },
   "challengeDetails.cozmoIsStillWakingUpModal.title": {
     "translation": "Cozmo is Waking Up"
   },

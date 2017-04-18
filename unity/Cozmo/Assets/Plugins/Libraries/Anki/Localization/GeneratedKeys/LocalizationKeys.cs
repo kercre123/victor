@@ -12,6 +12,7 @@ public static class LocalizationKeys {
   public const string kBehaviorPopAWheelie = "behavior.PopAWheelie";
   public const string kBehaviorPounceOnMotion = "behavior.PounceOnMotion";
   public const string kBehaviorFistBump = "behavior.FistBump";
+  public const string kBehaviorGuardDog = "behavior.GuardDog";
   public const string kBehaviorRollBlock = "behavior.RollBlock";
   public const string kBehaviorStackCube = "behavior.StackCube";
   public const string kBehaviorLookingForFaces = "behavior.LookingForFaces";
@@ -24,6 +25,7 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToOnSide = "behavior.ReactToOnSide";
   public const string kBehaviorReactToPet = "behavior.ReactToPet";
   public const string kBehaviorReactToPlacedOnSlope = "behavior.ReactToPlacedOnSlope";
+  public const string kBehaviorReactToShaken = "behavior.ReactToShaken";
   public const string kBehaviorRequestToPlay = "behavior.RequestToPlay";
   public const string kBehaviorAcknowledgeObject = "behavior.AcknowledgeObject";
   public const string kBehaviorAcknowledgeFace = "behavior.AcknowledgeFace";
@@ -36,10 +38,13 @@ public static class LocalizationKeys {
   public const string kBehaviorWorkout = "behavior.Workout";
   public const string kBehaviorCheckForStackAtInterval = "behavior.CheckForStackAtInterval";
   public const string kBehaviorLookForFaceAndCube = "behavior.LookForFaceAndCube";
+  public const string kBehaviorRamIntoBlock = "behavior.RamIntoBlock";
   public const string kErrorTooManyFaces = "error.TooManyFaces";
   public const string kBehaviorBuildPyramid = "behavior.BuildPyramid";
   public const string kBehaviorPrepareCubes = "behavior.PrepareCubes";
+  public const string kBehaviorPeekAboo = "behavior.PeekAboo";
   public const string kBehaviorLookInPlaceForCube = "behavior.LookInPlaceForCube";
+  public const string kBehaviorHiccup = "behavior.Hiccup";
   public const string kButtonClearThisSlot = "button.clearThisSlot";
 
   #endregion
@@ -63,11 +68,13 @@ public static class LocalizationKeys {
   public const string kChallengeDetailsNeedsMoreCubesModalDescription = "challengeDetails.needsMoreCubesModal.description";
   public const string kChallengeDetailsCozmoNotOnTreadsTitle = "challengeDetails.cozmoNotOnTreads.title";
   public const string kChallengeDetailsCozmoNotOnTreadsDescription = "challengeDetails.cozmoNotOnTreads.description";
+  public const string kChallengeDetailsCozmoDizzyTitle = "challengeDetails.cozmoDizzy.title";
+  public const string kChallengeDetailsCozmoDizzyDescription = "challengeDetails.cozmoDizzy.description";
   public const string kChallengeDetailsCozmoIsStillWakingUpModalTitle = "challengeDetails.cozmoIsStillWakingUpModal.title";
   public const string kChallengeDetailsCozmoIsStillWakingUpModalDescription = "challengeDetails.cozmoIsStillWakingUpModal.description";
+  public const string kChallengeDetailsNeedsMoreCubesModalButton = "challengeDetails.needsMoreCubesModal.button";
   public const string kChallengeDetailsCozmoHasHiccupsTitle = "challengeDetails.cozmoHasHiccups.title";
   public const string kChallengeDetailsCozmoHasHiccupsDescription = "challengeDetails.cozmoHasHiccups.description";
-  public const string kChallengeDetailsNeedsMoreCubesModalButton = "challengeDetails.needsMoreCubesModal.button";
   public const string kCubeSlapTitle = "cubeSlap.title";
   public const string kCubeSlapDescription = "cubeSlap.description";
   public const string kDroneModeTitle = "droneMode.title";
@@ -80,6 +87,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapDescription = "speedTap.description";
   public const string kCozmoSaysTitle = "cozmoSays.title";
   public const string kCozmoSaysDescription = "cozmoSays.description";
+  public const string kCodeLabTitle = "codeLab.title";
+  public const string kCodeLabDescription = "codeLab.description";
 
   #endregion
 
@@ -458,7 +467,10 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionMemoryMatchLivesThreeLeft = "reward.description.MemoryMatch.Lives.ThreeLeft";
   public const string kRewardDescriptionMemoryMatchPatternLengthFive = "reward.description.MemoryMatch.PatternLength.Five";
   public const string kRewardDescriptionMemoryMatchPatternLengthTen = "reward.description.MemoryMatch.PatternLength.Ten";
+  public const string kRewardDescriptionMemoryMatchPatternLengthFifteen = "reward.description.MemoryMatch.PatternLength.Fifteen";
   public const string kRewardDescriptionMemoryMatchPatternLengthTwenty = "reward.description.MemoryMatch.PatternLength.Twenty";
+  public const string kRewardDescriptionMemoryMatchPatternLengthTwentyFive = "reward.description.MemoryMatch.PatternLength.TwentyFive";
+  public const string kRewardDescriptionMemoryMatchPatternLengthThirty = "reward.description.MemoryMatch.PatternLength.Thirty";
   public const string kRewardDescriptionMemoryMatchHighScoreSolo = "reward.description.MemoryMatch.HighScore.Solo";
   public const string kRewardDescriptionQuickTapPlayed = "reward.description.QuickTap.Played";
   public const string kRewardDescriptionQuickTapWinGameOneColor = "reward.description.QuickTap.WinGame.OneColor";
@@ -643,6 +655,10 @@ public static class LocalizationKeys {
   public const string kUnlockableFistBumpDescription = "unlockable.FistBump.Description";
   public const string kUnlockableFistBumpSparkButtonDescription = "unlockable.FistBump.SparkButtonDescription";
   public const string kUnlockableFistBumpSparkedStateDescription = "unlockable.FistBump.SparkedStateDescription";
+  public const string kUnlockablePeekABooTitle = "unlockable.PeekABoo.Title";
+  public const string kUnlockablePeekABooDescription = "unlockable.PeekABoo.Description";
+  public const string kUnlockablePeekABooSparkButtonDescription = "unlockable.PeekABoo.SparkButtonDescription";
+  public const string kUnlockablePeekABooSparkedStateDescription = "unlockable.PeekABoo.SparkedStateDescription";
   public const string kUnlockableWorkoutTitle = "unlockable.Workout.Title";
   public const string kUnlockableWorkoutDescription = "unlockable.Workout.Description";
   public const string kUnlockableWorkoutSparkButtonDescription = "unlockable.Workout.SparkButtonDescription";
@@ -655,6 +671,8 @@ public static class LocalizationKeys {
   public const string kUnlockableMemoryMatchDescription = "unlockable.MemoryMatch.Description";
   public const string kUnlockableSpeedTapTitle = "unlockable.SpeedTap.Title";
   public const string kUnlockableSpeedTapDescription = "unlockable.SpeedTap.Description";
+  public const string kUnlockableCodeLabTitle = "unlockable.CodeLab.Title";
+  public const string kUnlockableCodeLabDescription = "unlockable.CodeLab.Description";
   public const string kUnlockableCozmoSaysTitle = "unlockable.cozmoSays.Title";
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
@@ -686,6 +704,10 @@ public static class LocalizationKeys {
   public const string kUnlockablePickupCubeDescription = "unlockable.PickupCube.Description";
   public const string kUnlockablePickupCubeSparkButtonDescription = "unlockable.PickupCube.SparkButtonDescription";
   public const string kUnlockablePickupCubeSparkedStateDescription = "unlockable.PickupCube.SparkedStateDescription";
+  public const string kUnlockableGatherCubesTitle = "unlockable.GatherCubes.Title";
+  public const string kUnlockableGatherCubesDescription = "unlockable.GatherCubes.Description";
+  public const string kUnlockableGatherCubesSparkButtonDescription = "unlockable.GatherCubes.SparkButtonDescription";
+  public const string kUnlockableGatherCubesSparkedStateDescription = "unlockable.GatherCubes.SparkedStateDescription";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kSparksSparked = "sparks.Sparked";
@@ -699,6 +721,35 @@ public static class LocalizationKeys {
   public const string kSparksNotEnoughSparksDesc = "sparks.NotEnoughSparks.Desc";
   public const string kSparksCubesNeedUprightTitle = "sparks.CubesNeedUpright.Title";
   public const string kSparksCubesNeedUprightDesc = "sparks.CubesNeedUpright.Desc";
+
+  #endregion
+
+  #region VideoSubtitles
+
+  public const string kVideoSubtitlesSpeedTapFirst = "videoSubtitles.speedTap.first";
+  public const string kVideoSubtitlesSpeedTapSecond = "videoSubtitles.speedTap.second";
+  public const string kVideoSubtitlesSpeedTapThird = "videoSubtitles.speedTap.third";
+  public const string kVideoSubtitlesSpeedTapFourth = "videoSubtitles.speedTap.fourth";
+  public const string kVideoSubtitlesSpeedTapFifth = "videoSubtitles.speedTap.fifth";
+  public const string kVideoSubtitlesSpeedTapSixth = "videoSubtitles.speedTap.sixth";
+  public const string kVideoSubtitlesSpeedTapSeventh = "videoSubtitles.speedTap.seventh";
+  public const string kVideoSubtitlesSpeedTapEighth = "videoSubtitles.speedTap.eighth";
+  public const string kVideoSubtitlesCubePounceFirst = "videoSubtitles.cubePounce.first";
+  public const string kVideoSubtitlesCubePounceSecond = "videoSubtitles.cubePounce.second";
+  public const string kVideoSubtitlesCubePounceThird = "videoSubtitles.cubePounce.third";
+  public const string kVideoSubtitlesCubePounceFourth = "videoSubtitles.cubePounce.fourth";
+  public const string kVideoSubtitlesCubePounceFifth = "videoSubtitles.cubePounce.fifth";
+  public const string kVideoSubtitlesCubePounceSixth = "videoSubtitles.cubePounce.sixth";
+  public const string kVideoSubtitlesMemoryMatchFirst = "videoSubtitles.memoryMatch.first";
+  public const string kVideoSubtitlesMemoryMatchSecond = "videoSubtitles.memoryMatch.second";
+  public const string kVideoSubtitlesMemoryMatchThird = "videoSubtitles.memoryMatch.third";
+  public const string kVideoSubtitlesMemoryMatchFourth = "videoSubtitles.memoryMatch.fourth";
+  public const string kVideoSubtitlesMemoryMatchFifth = "videoSubtitles.memoryMatch.fifth";
+  public const string kVideoSubtitlesMemoryMatchSixth = "videoSubtitles.memoryMatch.sixth";
+  public const string kVideoSubtitlesMemoryMatchSeventh = "videoSubtitles.memoryMatch.seventh";
+  public const string kVideoSubtitlesMemoryMatchEighth = "videoSubtitles.memoryMatch.eighth";
+  public const string kVideoSubtitlesMemoryMatchNineth = "videoSubtitles.memoryMatch.nineth";
+  public const string kVideoSubtitlesMemoryMatchTenth = "videoSubtitles.memoryMatch.tenth";
 
   #endregion
 
