@@ -516,12 +516,12 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
 {
   // If an object has a new UpAxis, it must have been moved. If this happens before
   //  monitoring for motion and before we fall asleep, jump right to 'Busted' reaction.
-  if (!_monitoringCubeMotion &&
-      (_firstSleepingStartTime_s == 0.f)) {
-    PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectUpAxisChanged.UnexpectedBlockMovement",
-                     "Received ObjectUpAxisChanged message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
-                     msg.objectID);
-    if (_state != State::Busted) {
+  if (!_monitoringCubeMotion) {
+    if ((_firstSleepingStartTime_s == 0.f) &&
+        (_state != State::Busted)) {
+      PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectUpAxisChanged.UnexpectedBlockMovement",
+                       "Received ObjectUpAxisChanged message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
+                       msg.objectID);
       StopActing();
       SET_STATE(Busted);
     }
