@@ -253,7 +253,6 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void DisableTouchEvents(string key = null) {
-    Debug.LogError("DisableTouchEvents");
     if (_Instance != null && _Instance.EventSystemScript != null) {
       // Keep old DisableTouchEvents behavior with no key
       if (string.IsNullOrEmpty(key)) {
@@ -274,7 +273,6 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void EnableTouchEvents(string key = null) {
-    Debug.LogError("EnableTouchEvents");
     // UIManager Instance deactives itself as its shutting down in editor, so checking that avoids errors on shutdown.
     // usually UIManager is always active during normal flow.
     if (_Instance != null && _Instance.isActiveAndEnabled && _Instance.EventSystemScript != null) {
@@ -419,7 +417,8 @@ public class UIManager : MonoBehaviour {
     // Check that it's not already open or in queue
 
     if (_IsForceCloseAndOpenInProgress) {
-      Debug.LogError("Queueing Modal because a force close and open open is in progress " + dasEventDialogName);
+      DAS.Warn("UIManager.OpenModalInternal.ForceCloseInProgress",
+               "Queueing Modal because a force close and open open is in progress " + dasEventDialogName);
       QueueModal(dasEventDialogName, modalPrefab, creationSuccessCallback, creationCancelledCallback,
                              priorityData, overrideBackgroundDim, overrideCloseOnTouchOutside);
     }
