@@ -119,6 +119,9 @@ private:
   // Time that Cozmo first fell asleep (used for overall timeout detection)
   float _firstSleepingStartTime_s = 0.f;
   
+  // Time of the last cube movement (used for timeout detection)
+  float _lastCubeMovementTime_s = 0.f;
+  
   // true when monitoring for cube movement
   bool _monitoringCubeMotion = false;
   

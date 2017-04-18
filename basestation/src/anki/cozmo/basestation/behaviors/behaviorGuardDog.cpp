@@ -72,7 +72,9 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogA
               "Reaction triggers duplicate or non-sequential");
   
 // Constants/thresholds:
-CONSOLE_VAR_RANGED(float, kSleepingTimeout_s, "Behavior.GuardDog", 60.f, 20.f, 300.f);
+CONSOLE_VAR_RANGED(float, kSleepingMinDuration_s, "Behavior.GuardDog",  60.f, 20.f, 120.f); // minimum time Cozmo will stay asleep before waking up
+CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60.f, 300.f); // maximum time Cozmo will stay asleep before waking up
+CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 15.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
 CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  8.f,  5.f,  30.f);
 CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
   
@@ -158,6 +160,7 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
   _firstSleepingStartTime_s = 0.f;
+  _lastCubeMovementTime_s = 0.f;
   _nCubesMoved = 0;
   _nCubesFlipped = 0;
   _monitoringCubeMotion = false;
@@ -192,12 +195,18 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
   }
   
-  // Monitor for timeout if we are currently 'sleeping':
-  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if ((_state == State::Sleeping) &&
-      (now - _firstSleepingStartTime_s > kSleepingTimeout_s)) {
-    StopActing();
-    SET_STATE(Timeout);
+  // Monitor for timeout if we are currently 'sleeping'
+  if (_state == State::Sleeping) {
+    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const bool pastMinDuration = now - _firstSleepingStartTime_s > kSleepingMinDuration_s;
+    const bool pastMaxDuration = now - _firstSleepingStartTime_s > kSleepingMaxDuration_s;
+    const bool pastCubeMotionTimeout = now - _lastCubeMovementTime_s > kSleepingTimeoutAfterCubeMotion_s;
+    // Trigger the timeout if appropriate
+    if (pastMaxDuration ||
+       (pastMinDuration && pastCubeMotionTimeout)) {
+      StopActing();
+      SET_STATE(Timeout);
+    }
   }
   
   // Only run the state machine if we're not acting:
@@ -471,6 +480,8 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
     if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
       StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogBeingMoved);
     }
+    // Record that a block was moved at this time
+    _lastCubeMovementTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
       StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSleeping);
   }
