@@ -417,8 +417,14 @@ void SendTestMessage(void)
 void SetRadio(void)
 {  
   char* arg = GetArgument(1);
+  bool forceupdate = 0;
+  try {
+    char* opt = GetArgument(2);
+    forceupdate = *opt == '1';
+  } catch(int e) { /*optional argument doesn't exist*/ }
+  
   ConsolePrintf("Remember to use uppercase for most modes\r\n");
-  SetRadioMode(arg[0],false);
+  SetRadioMode(arg[0], forceupdate );
 }
 
 void SetMotor(void)
