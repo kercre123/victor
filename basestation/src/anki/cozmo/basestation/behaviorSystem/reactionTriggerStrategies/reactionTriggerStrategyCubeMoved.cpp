@@ -92,19 +92,21 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot,
     
     static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see
     static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it
-    bool isVisible = cube->IsVisibleFrom(robot.GetVisionComponent().GetCamera(),
-                                         kMaxNormalAngle,
-                                         kMinImageSizePix,
-                                         false);
+
     
     if(objIter->ObjectOutsideIgnoreArea(robot)
-       && ((objIter->ObjectHasMovedLongEnough(robot)) || objIter->ObjectUpAxisHasChanged(robot))
-       && !isVisible)
+       && ((objIter->ObjectHasMovedLongEnough(robot)) || objIter->ObjectUpAxisHasChanged(robot)))
     {
-      objIter->ResetObject();
-      BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID());
-      
-      return behavior->IsRunnable(preReqData, behavior->IsRunning() );
+      const bool isVisible = cube->IsVisibleFrom(robot.GetVisionComponent().GetCamera(),
+                                                 kMaxNormalAngle,
+                                                 kMinImageSizePix,
+                                                 false);
+      if(!isVisible){
+        objIter->ResetObject();
+        BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID());
+        
+        return behavior->IsRunnable(preReqData, behavior->IsRunning() );
+      }
     }
     
     objIter++;
