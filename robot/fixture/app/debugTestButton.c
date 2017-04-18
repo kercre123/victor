@@ -26,12 +26,6 @@
 static u32 start_time = 0;
 static int test_cnt = 0;
 
-void DebugStart(void)
-{
-  start_time = getMicroCounter();
-  ConsolePrintf("Debug Test %d:\r\n", ++test_cnt );
-}
-
 extern void TestLED(int i); //motorTest.c
 void DebugBackpackLeds(void)
 {
@@ -169,6 +163,12 @@ void DebugBackpackButton(void)
   //ConsolePrintf("\r\n");
 }
 
+void DebugStart(void)
+{
+  start_time = getMicroCounter();
+  ConsolePrintf("Debug Test %d:\r\n", ++test_cnt );
+}
+
 void DebugEnd(void)
 {
   u32 time = getMicroCounter() - start_time;
@@ -184,23 +184,11 @@ bool DebugTestDetectDevice(void)
   return getMicroCounter() - start_time > (1000*1000*10);
 }
 
-void DebugTestBuzzer(void)
-{
-  ConsolePrintf("Debug Test Buzzer: ");
-  for(int x=1; x<=20; x++) {
-    ConsolePrintf("%dkHz,",x);
-    Buzzer(x,100);
-    MicroWait(100*1000);
-  }
-  ConsolePrintf("\r\n");
-}
-
 TestFunction* GetDebugTestFunctions()
 {
   static TestFunction m_debugFunctions[] = 
   {
     DebugStart,
-    //DebugTestBuzzer,
     DebugBackpackLeds,
     DebugBackpackButton,
     DebugEnd,
