@@ -212,6 +212,7 @@ bool DetectDevice(void)
     case FIXTURE_PACKOUT_CE_TEST:
     case FIXTURE_LIFETEST_TEST:
     case FIXTURE_RECHARGE_TEST:
+    case FIXTURE_RECHARGE2_TEST:
     case FIXTURE_PLAYPEN_TEST:
     case FIXTURE_SOUND_TEST:
       return RobotDetect();
@@ -422,6 +423,7 @@ static void MainExecution()
       m_functions = GetLifetestTestFunctions();
       break; 
     case FIXTURE_RECHARGE_TEST:
+    case FIXTURE_RECHARGE2_TEST:
       m_functions = GetRechargeTestFunctions();
       break; 
     case FIXTURE_PLAYPEN_TEST:

@@ -1,4 +1,15 @@
 ----------------
+Release v95
+----------------
+
+General:
+-revision check: change incompatible asserts to safe error state that allows bootloader (anit-brick)
+
+RECHARGE,RECHARGE2:
+-add RECHARGE2 for full battery charge (required for life test)
+-[TBD] RECHARGE time/voltage change to ?? (EL request)
+
+----------------
 Release v94
 ----------------
 

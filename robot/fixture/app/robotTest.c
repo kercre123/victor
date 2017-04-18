@@ -474,29 +474,34 @@ u16 robot_get_battVolt100x(u8 poweron_time_s, u8 adcinfo_time_s)
   return vBatFilt100x; //return filtered vBat
 }
 
-// Charge to ~80% capacity
-void Recharge(void)
+enum {
+  RECHARGE_STATUS_OK = 0,
+  RECHARGE_STATUS_OFF_CONTACT,
+  RECHARGE_STATUS_TIMEOUT,
+};
+
+//recharge cozmo. parameterized conditions: time, battery voltage, current threshold
+int m_Recharge( u16 max_charge_time_s, u16 vbat_limit_v100x, u16 i_done_ma )
 {
-  const u32 BAT_MAX_CHARGE_TIME_S = 10*60;  //max amount of time to charge
   const u8 BAT_CHECK_INTERVAL_S = 60;       //interrupt charging this often to test battery level
-  const u16 VBAT_CHARGE_LIMIT = 375;        //3.75V
   
   EnableChargeComms(); //switch to comm mode
   MicroWait(500*1000); //let battery voltage settle
   uint16_t battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10); //get initial battery level
   
   u32 chargeTime = getMicroCounter();
-  while( battVolt100x < VBAT_CHARGE_LIMIT )
+  while( vbat_limit_v100x == 0 || battVolt100x < vbat_limit_v100x )
   {
-    if( getMicroCounter() - chargeTime >= (BAT_MAX_CHARGE_TIME_S*1000*1000) )
-      throw ERROR_TIMEOUT;
+    if( max_charge_time_s > 0 )
+      if( getMicroCounter() - chargeTime >= ((u32)max_charge_time_s*1000*1000) )
+        return RECHARGE_STATUS_TIMEOUT;
     
     //Turn on charging power
     PIN_SET(GPIOC, PINC_CHGTX);
     PIN_OUT(GPIOC, PINC_CHGTX);
     
     //Don't just do something, stand there!
-    int offContact = 0, print_len = 0;
+    int offContactCnt = 0, iDoneCnt = 0, print_len = 0;
     u32 displayTime = 0, chargeTime = getMicroCounter();
     while( getMicroCounter() - chargeTime < (BAT_CHECK_INTERVAL_S*1000*1000) )
     {
@@ -511,18 +516,25 @@ void Recharge(void)
           ConsolePutChar(0x20); //space
           ConsolePutChar(0x08); //backspace
         }
-        
         const int DISP_MA_PER_CHAR = 15;
         print_len = ConsolePrintf("%03d ", current_ma);
         for(int x=current_ma; x>0; x -= DISP_MA_PER_CHAR)
           print_len += ConsolePrintf("=");
       }
       
+      //charge complete? (current threshold)
+      iDoneCnt = i_done_ma > 0 && current_ma < i_done_ma ? iDoneCnt + 1 : 0;
+      if( iDoneCnt > 25 ) {
+        PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
+        ConsolePrintf("\r\ni-done,%dmA\r\n", i_done_ma);
+        return RECHARGE_STATUS_OK;
+      }
+      
       //test for robot removal
-      if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10) {
+      if ((offContactCnt = current_ma < PRESENT_CURRENT_MA ? offContactCnt + 1 : 0) > 10) {
         PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
         ConsolePrintf("\r\nrobot off contact\r\n");
-        return;
+        return RECHARGE_STATUS_OFF_CONTACT;
       }
     }
     ConsolePrintf("\r\n");
@@ -531,13 +543,33 @@ void Recharge(void)
     MicroWait(500*1000); //let battery voltage settle
     battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10);
   }
+  return RECHARGE_STATUS_OK;
+}
+
+void Recharge(void)
+{
+  const u16 BAT_MAX_CHARGE_TIME_S = 10*60;  //max amount of time to charge
+  const u16 VBAT_CHARGE_LIMIT = 375;        //Voltage x100
+  const u16 BAT_FULL_I_THRESH_MA = 200;     //current threshold for charging complete (experimental)
+  int status;
   
-  EnableChargeComms(); //switch to comm mode
-  try {
-    SendCommand(TEST_POWERON, 0x5A, 0, 0);  //shut down immediately
-  } catch(int e) {
-    if( e != ERROR_NO_PULSE ) //this error is expected. robot can't pulse when it's off...
-      throw e;
+  if( g_fixtureType == FIXTURE_RECHARGE2_TEST ) //charge to full battery
+    status = m_Recharge( 3*BAT_MAX_CHARGE_TIME_S, 0, BAT_FULL_I_THRESH_MA );
+  else //charge to specified voltage
+    status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT, 0 );
+  
+  if( status == RECHARGE_STATUS_TIMEOUT )
+    throw ERROR_TIMEOUT;
+
+  if( status == RECHARGE_STATUS_OK )
+  {
+    EnableChargeComms(); //switch to comm mode
+    try {
+      SendCommand(TEST_POWERON, 0x5A, 0, 0);  //shut down immediately
+    } catch(int e) {
+      if( e != ERROR_NO_PULSE ) //this error is expected. robot can't pulse when it's off...
+        throw e;
+    }
   }
 }
 
