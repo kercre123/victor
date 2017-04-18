@@ -37,7 +37,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRobotShakenAr
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
