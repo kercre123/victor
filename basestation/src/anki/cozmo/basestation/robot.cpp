@@ -79,8 +79,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#define BUILD_NEW_ANIMATION_CODE 0
-
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
 
 namespace Anki {

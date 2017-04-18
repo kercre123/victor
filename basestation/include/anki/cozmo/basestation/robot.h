@@ -23,6 +23,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -92,10 +93,6 @@ class NeedsManager;
 struct RobotState;
 class PathComponent;
 
-namespace RobotAnimation {
-class EngineAnimationController;
-}
-
 namespace Audio {
 class RobotAudioClient;
 }
@@ -107,6 +104,11 @@ class RobotToEngine;
 enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
+
+//
+// Compile-time switch for Animation Streamer 2.0
+//
+#define BUILD_NEW_ANIMATION_CODE 0
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot : private Util::noncopyable
@@ -593,7 +595,17 @@ public:
   ActionList& GetActionList() { assert(_actionList); return *_actionList; }    
     
   // =========== Animation Commands =============
-    
+  
+#if BUILD_NEW_ANIMATION_CODE
+  inline IAnimationStreamer & GetAnimationStreamer() {
+    return (*_animationController.get());
+  }
+#else
+  inline IAnimationStreamer & GetAnimationStreamer() {
+    return _animationStreamer;
+  }
+#endif
+
   // Returns the number of animation bytes or audio frames played on the robot since
   // it was initialized with SyncTime.
   s32 GetNumAnimationBytesPlayed() const;
@@ -613,10 +625,6 @@ public:
   // to add the shift to that layer.
   void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
                  TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
-  
-  IAnimationStreamer& GetAnimationStreamer() {
-    return _animationStreamer;
-  }
   
   void SetNumAnimationBytesPlayed(s32 numAnimationsBytesPlayed) {
     _numAnimationBytesPlayed = numAnimationsBytesPlayed;
@@ -1154,7 +1162,7 @@ inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirectio
 inline Result Robot::SetDockObjectAsAttachedToLift(){
   return SetObjectAsAttachedToLift(_dockObjectID, _dockMarkerCode);
 }
-
+  
 inline u8 Robot::GetCurrentAnimationTag() const {
   return _animationTag;
 }

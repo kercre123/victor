@@ -47,9 +47,13 @@ namespace RobotAnimation {
   
 #define AUDIO_FRAME_SAMPLE_COUNT  static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE)
 
+// Placeholder value for invalid tag
+static constexpr IAnimationStreamer::Tag INVALID_TAG = 0;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-EngineAnimationController::EngineAnimationController(const CozmoContext* context, Audio::RobotAudioClient* audioClient)
-: _context(context)
+EngineAnimationController::EngineAnimationController(const CozmoContext* context, RobotAudioClient* audioClient) :
+  IAnimationStreamer(context->GetExternalInterface())
+, _context(context)
 , _audioClient(audioClient)
 , _audioMixer(new Audio::AudioMixingConsole(AUDIO_FRAME_SAMPLE_COUNT))
 , _animationSelector(new AnimationSelector(*_audioClient))
@@ -96,6 +100,7 @@ EngineAnimationController::~EngineAnimationController()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// If any animation is set for streaming and isn't done yet, stream it.
 Result EngineAnimationController::Update(Robot& robot)
 {
   // Update Robot Buffer with animations
@@ -179,7 +184,96 @@ void EngineAnimationController::HandleMessage(const ExternalInterface::PlayAnima
   }
 }
 
-
+// Sets an animation to be streamed and how many times to stream it.
+// Use numLoops = 0 to play the animation indefinitely.
+// Returns a tag you can use to monitor whether the robot is done playing this
+// animation.
+// If interruptRunning == true, any currently-streaming animation will be aborted.
+// Actual streaming occurs on calls to Update().
+IAnimationStreamer::Tag EngineAnimationController::SetStreamingAnimation(Animation* anim, u32 numLoops, bool interruptRunning)
+{
+  DEV_ASSERT(false, "EngineAnimationController.SetStreamingAnimation.NotImplemented");
+  return INVALID_TAG;
+}
+  
+// Set the animation to be played when no other animation has been specified.  Use the empty string to
+// disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
+Result EngineAnimationController::SetIdleAnimation(AnimationTrigger animName)
+{
+  DEV_ASSERT(false, "EngineAnimationController.SetIdleAnimation.NotImplemented");
+  return RESULT_FAIL_INVALID_OBJECT;
+}
+  
+// Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
+// idle (even if it came from SetIdleAnimation) is always on the stack
+Result EngineAnimationController::PushIdleAnimation(AnimationTrigger animName)
+{
+  DEV_ASSERT(false, "EngineAnimationController.PushIdleAnimation.NotImplemented");
+  return RESULT_FAIL_INVALID_OBJECT;
+}
+  
+// Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
+// Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
+// Will not pop the last idle off the stack.
+Result EngineAnimationController::PopIdleAnimation()
+{
+  DEV_ASSERT(false, "EngineAnimationController.PopIdleAnimation.NotImplemented");
+  return RESULT_FAIL_INVALID_OBJECT;
+}
+  
+// Add a procedural face "layer" to be combined with whatever is streaming
+Result EngineAnimationController::AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms)
+{
+  DEV_ASSERT(false, "EngineAnimationController.AddFaceLayer.NotImplemented");
+  return RESULT_FAIL_INVALID_OBJECT;
+}
+  
+// Add a procedural face "layer" that is applied and then has its final
+// adjustment "held" until removed.
+// A handle/tag for the layer is returned, which is needed for removal.
+IAnimationStreamer::Tag EngineAnimationController::AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack)
+{
+  DEV_ASSERT(false, "EngineAnimationController.AddPersistentFaceLayer.NotImplemented");
+  return INVALID_TAG;
+}
+  
+// Remove a previously-added persistent face layer using its tag.
+// If duration > 0, that amount of time will be used to transition back
+// to no adjustment
+void EngineAnimationController::RemovePersistentFaceLayer(Tag tag, s32 duration_ms)
+{
+  DEV_ASSERT(false, "EngineAnimationController.RemovePersistentFaceLayer.NotImplemented");
+}
+  
+// Add a keyframe to the end of an existing persistent face layer
+void EngineAnimationController::AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe)
+{
+  DEV_ASSERT(false, "EngineAnimationController.AddToPersistentFaceLayer.NotImplemented");
+}
+  
+// Remove any existing procedural eye dart created by KeepFaceAlive
+void EngineAnimationController::RemoveKeepAliveEyeDart(s32 duration_ms)
+{
+  DEV_ASSERT(false, "EngineAnimationController.RemoveKeepAliveEyeDart.NotImplemented");
+}
+  
+const Animation* EngineAnimationController::GetStreamingAnimation() const
+{
+  DEV_ASSERT(false, "EngineAnimationController.GetStreamingAnimation.NotImplemented");
+  return nullptr;
+}
+  
+const std::string& EngineAnimationController::GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const
+{
+  DEV_ASSERT(false, "EngineAnimationController.GetAnimationNameFromGroup.NotImplemented");
+  static const std::string invalid("invalid");
+  return invalid;
+}
+  
+void EngineAnimationController::SetDefaultParams()
+{
+  DEV_ASSERT(false, "EngineAnimationController.SetDefaultParams.NotImplemented");
+}
   
 } // namespace RobotAnimation
 } // namespace Cozmo
