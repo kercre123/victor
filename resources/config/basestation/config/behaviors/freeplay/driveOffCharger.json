@@ -6,18 +6,21 @@
   "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [
     "BuildPyramid",
-    "FP_Socialize",
+    "FP_NothingToDo",
     "FP_PlayWithHumans",
     "FP_PlayAlone",
     "FP_PutDownDispatch",
-    "FP_NothingToDo",
+    "FP_Socialize",
     "SetupBuildPyramid",
-    "SparksRollBlock",
+    "SparksFistBump",
+    "SparksKnockOverCubes",
+    "SparksPeekABoo",
+    "SparksPickUpCube",
     "SparksPopAWheelie",
     "SparksPounceOnMotion",
-    "SparksKnockOverCubes",
+    "SparksRollBlock",
     "SparksStackBlock",
-    "SparksPickUpCube",
+    "SparksWorkout",
     "MeetCozmo_Socialize"
   ]
 }
