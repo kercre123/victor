@@ -32,7 +32,7 @@
         {
           "behaviorObjective": "InteractedWithFace",
           "triggerCooldownTime_s": 300.0,
-          "triggerProbability": 0.2,
+          "triggerProbability": 0.75,
           "triggerExpiration_s": 3.0
         },
         {
