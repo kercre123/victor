@@ -252,21 +252,15 @@ public class UIManager : MonoBehaviour {
     return _Instance._HorizontalCanvas;
   }
 
-  public static void DisableTouchEvents(string key = null) {
+  public static void DisableTouchEvents(string key) {
     if (_Instance != null && _Instance.EventSystemScript != null) {
       // Keep old DisableTouchEvents behavior with no key
-      if (string.IsNullOrEmpty(key)) {
-        DAS.Warn("UIManager.DisableTouchEvents.DisableWithEmptyKey",
-                 "Disabling touches with empty key! current=" + _Instance._DisableTouchKey);
-        _Instance.EventSystemScript.gameObject.SetActive(false);
-        _Instance._DisableTouchKey = null;
-      }
-      else if (string.IsNullOrEmpty(_Instance._DisableTouchKey)) {
+      if (string.IsNullOrEmpty(_Instance._DisableTouchKey)) {
         _Instance._DisableTouchKey = key;
         _Instance.EventSystemScript.gameObject.SetActive(false);
       }
       else {
-        DAS.Warn("UIManager.DisableTouchEvents.AlreadyDisabled",
+        DAS.Debug("UIManager.DisableTouchEvents.AlreadyDisabled",
                  "Tried to disable using key=" + key + " when UI is already disabled by currentKey=" + _Instance._DisableTouchKey);
       }
     }
@@ -276,16 +270,17 @@ public class UIManager : MonoBehaviour {
     // UIManager Instance deactives itself as its shutting down in editor, so checking that avoids errors on shutdown.
     // usually UIManager is always active during normal flow.
     if (_Instance != null && _Instance.isActiveAndEnabled && _Instance.EventSystemScript != null) {
-      if (key == _Instance._DisableTouchKey || string.IsNullOrEmpty(key)) {
+      if (string.IsNullOrEmpty(_Instance._DisableTouchKey) || string.IsNullOrEmpty(key) ||
+          key == _Instance._DisableTouchKey) {
         if (string.IsNullOrEmpty(key)) {
-          DAS.Warn("UIManager.EnableTouchEvents.EnableWithEmptyKey",
+          DAS.Debug("UIManager.EnableTouchEvents.EnableWithEmptyKey",
                    "Enabling touches with empty key! current=" + _Instance._DisableTouchKey);
         }
-        _Instance._DisableTouchKey = null;
         _Instance.EventSystemScript.gameObject.SetActive(true);
+        _Instance._DisableTouchKey = null;
       }
       else {
-        DAS.Warn("UIManager.EnableTouchEvents.EnableWithWrongKey",
+        DAS.Debug("UIManager.EnableTouchEvents.EnableWithWrongKey",
                  "Tried to enable using key=" + key + " but UI is disabled by currentKey=" + _Instance._DisableTouchKey);
       }
     }

@@ -104,7 +104,6 @@ namespace Cozmo.HomeHub {
     private GameObjectDataLink _LootViewPrefabData;
 
     private bool _LootSequenceActive = false;
-    private bool _RewardSequenceActive = false;
     private System.Diagnostics.Stopwatch _Stopwatch = null;
     private string _CurrentChallengeId = null;
 
@@ -258,19 +257,6 @@ namespace Cozmo.HomeHub {
 
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
-
-      DialogOpenAnimationFinished += HandleViewOpenFinished;
-    }
-
-    private void HandleViewOpenFinished() {
-      // Because the reward sequence before lootview isn't really a dialog
-      // and because DisableTouchEvents isn't ref counted we have a problem with a race condition
-      // if we realize they need to open loot in that the lootview needs full control as is pretty fragile
-      // Revist this when redoing lootview UI, so this just disables again since Finishing open animation re-enables input
-      // even though CheckForRewardSequence might have disabled it on purpose.
-      if (_RewardSequenceActive) {
-        UIManager.DisableTouchEvents();
-      }
     }
 
     private void HandleBlockConnectivityChanged(int blocksConnected) {
@@ -573,7 +559,6 @@ namespace Cozmo.HomeHub {
         _BurstEnergyAfterInitCoroutine = BurstEnergyAfterInit();
         StartCoroutine(_BurstEnergyAfterInitCoroutine);
         UIManager.DisableTouchEvents(_kBurstEnergyAfterInitDisableKey);
-        _RewardSequenceActive = true;
       }
       else if (ChestRewardManager.Instance.ChestPending) {
         HandleCheckForLootView();
@@ -645,7 +630,6 @@ namespace Cozmo.HomeHub {
         DAS.Warn("HomeView.OpenLootview", "Attempted to Load LootView Twice");
         return;
       }
-      _RewardSequenceActive = false;
       _LootSequenceActive = true;
       _EmotionChipTag.gameObject.SetActive(false);
       EnableGameRequestsIfAllowed(false);
@@ -766,7 +750,6 @@ namespace Cozmo.HomeHub {
       if (ChestRewardManager.Instance.ChestPending == false) {
         EnableGameRequestsIfAllowed(true);
         UIManager.EnableTouchEvents(_kBurstEnergyAfterInitDisableKey);
-        _RewardSequenceActive = false;
       }
       // This is the thing that eventually opens lootview via HandleCheckForLootView handler
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
@@ -982,8 +965,6 @@ namespace Cozmo.HomeHub {
       if (_BurstEnergyAfterInitCoroutine != null) {
         StopCoroutine(_BurstEnergyAfterInitCoroutine);
       }
-
-      DialogOpenAnimationFinished -= HandleViewOpenFinished;
 
       UIManager.EnableTouchEvents();
     }
