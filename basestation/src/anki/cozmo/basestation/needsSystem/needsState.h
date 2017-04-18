@@ -48,14 +48,19 @@ public:
   
   void DecayUnconnected(float timeElapsed_secs);  //?
   
+  float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[(NeedId)i]; }
+  NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBrackets[(NeedId)i]; };
+  bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[(RepairablePartId)i]; };
+  
+  // Set current needs bracket levels from current levels
+  void SetCurNeedsBrackets(const NeedsConfig& needsConfig);
 
   // todo:  DateTime	LastConnectedDateTime
 
   using CurNeedsMap = std::map<NeedId, float>;
-  CurNeedsMap _curNeedLevel;
+  CurNeedsMap _curNeedsLevels;
 
-  using BracketThresholds = std::vector<float>;
-  using CurNeedsBrackets = std::map<NeedId, BracketThresholds>;
+  using CurNeedsBrackets = std::map<NeedId, NeedBracketId>;
   CurNeedsBrackets _curNeedsBrackets;
 
   using PartIsDamagedMap = std::map<RepairablePartId, bool>;
@@ -70,9 +75,6 @@ public:
   // todo: read/write to storage (read includes any re-gen of other fields such as CurNeedsBrackets)
 
 private:
-
-  // Set current needs bracket levels from current levels
-  void SetCurNeedsBrackets(const NeedsConfig& needsConfig);
 };
 
 

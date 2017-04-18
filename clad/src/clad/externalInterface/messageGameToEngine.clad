@@ -23,6 +23,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
+#include "clad/types/needsSystemTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -867,6 +868,25 @@ message MoodMessage {
   uint_8  robotID,
   MoodMessageUnion  MoodMessageUnion
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Needs
+///////////////////////////////////////////////////////////////////////////////
+
+message GetNeedsState {
+}
+
+message SetNeedsPauseState {
+  bool pause
+}
+
+message GetNeedsPauseState {
+}
+
+message RegisterNeedsActionCompleted {
+  NeedsActionId actionCompleted
+}
+
 
 structure SetFriendshipPoints {
   int_32 newVal

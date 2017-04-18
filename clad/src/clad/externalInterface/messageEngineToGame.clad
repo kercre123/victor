@@ -26,6 +26,7 @@
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
+#include "clad/types/needsSystemTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/objectTypes.clad"
@@ -498,6 +499,29 @@ message AnimationEvent {
 message MoodState {
   uint_8  robotID,
   float_32 emotionValues[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Needs
+///////////////////////////////////////////////////////////////////////////////
+
+message NeedsState {
+  float_32      curNeedLevel[uint_8],
+  NeedBracketId curNeedBracket[uint_8],
+  bool          partIsDamaged[uint_8],
+  int_32        curNeedsUnlockLevel,
+  int_32        numStarsAwarded,
+  int_32        numStarsForNextUnlock
+}
+
+message NeedsPauseState {
+  bool isPaused
+}
+
+message AllNeedsMet {
+  int_32      unlockLevelCompleted,
+  int_32      starsRequiredForNextUnlock,
+  NeedsReward rewards[uint_8]
 }
 
 ///////////////////////////////////////////////////////////////////////////////

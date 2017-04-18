@@ -32,7 +32,7 @@ namespace Cozmo {
 
   
 NeedsState::NeedsState()
-: _curNeedLevel()
+: _curNeedsLevels()
 , _curNeedsBrackets()
 , _partIsDamaged()
 , _curNeedsUnlockLevel(0)
@@ -50,9 +50,9 @@ void NeedsState::Init(const NeedsConfig& needsConfig)
 {
   Reset();
   
-  _curNeedLevel[NeedId::Repair] = 100.0f; // todo make these constants come from config data
-  _curNeedLevel[NeedId::Energy] = 100.0f;
-  _curNeedLevel[NeedId::Play]   = 100.0f;
+  _curNeedsLevels[NeedId::Repair] = 100.0f; // todo make these constants come from config data
+  _curNeedsLevels[NeedId::Energy] = 100.0f;
+  _curNeedsLevels[NeedId::Play]   = 100.0f;
   
   SetCurNeedsBrackets(needsConfig);
   
@@ -67,7 +67,7 @@ void NeedsState::Init(const NeedsConfig& needsConfig)
   
 void NeedsState::Reset()
 {
-  _curNeedLevel.clear();
+  _curNeedsLevels.clear();
   _curNeedsBrackets.clear();
   _partIsDamaged.clear();
 }
@@ -87,7 +87,13 @@ void NeedsState::SetCurNeedsBrackets(const NeedsConfig& needsConfig)
   // todo: set each of the needs' 'current bracket' based on the current level for that need,
   // and configuration data.
   // To be called whenever needs level changes.
+  
+  // temp code:
+  _curNeedsBrackets[NeedId::Repair] = NeedBracketId::Full;
+  _curNeedsBrackets[NeedId::Energy] = NeedBracketId::Full;
+  _curNeedsBrackets[NeedId::Play] = NeedBracketId::Full;
 }
+  
 
 //  Nathan Monson This question about managing flash comes up from time to time.
 //  _Avoid burn-out:_

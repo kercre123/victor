@@ -50,6 +50,10 @@ public:
   void HandleMessage(const T& msg);
   
 private:
+
+  void SendNeedsStateToGame();
+  void SendNeedsPauseStateToGame();
+  void SendAllNeedsMetToGame();
   
   Robot*      _robot;
   float       _lastUpdateTime;

@@ -56,5 +56,23 @@ enum int_32 NeedsActionId
   Count
 }
 
+
+enum int_32 NeedsRewardType
+{
+  Sparks        = 0,  // data: number of sparks
+  Unlock        = 1,  // data: unlockId
+  Song          = 2,  // (new?)
+  MemoryBadge   = 3,  // (new?)
+
+  Count
+}
+
+structure NeedsReward
+{
+  NeedsRewardType rewardType,
+  int_32          data
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

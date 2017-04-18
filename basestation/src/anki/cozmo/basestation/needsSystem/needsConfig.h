@@ -34,6 +34,9 @@ public:
   NeedsConfig() { foo = 2; }
 private:
   int foo = 3;
+//  using BracketThresholds = std::vector<float>;
+//  using CurNeedsBrackets = std::map<NeedId, BracketThresholds>;
+//  CurNeedsBrackets _curNeedsBrackets;
   // todo: Fill this out as I implement features; tunable constants, etc.
 };
   
