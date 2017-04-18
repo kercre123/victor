@@ -242,7 +242,7 @@ void BodyLightComponent::StartLoopingBackpackLightsInternal(BackpackLights light
   
   BackpackLightDataLocator result{};
   result._mapIter = _backpackLightMap.find(source);
-  result._listIter = --(result._mapIter->second.end());
+  result._listIter = result._mapIter->second.begin();
   result._dataPtr = std::weak_ptr<BackpackLightData>(*result._listIter);
   
   lightLocator_out = std::move(result);
