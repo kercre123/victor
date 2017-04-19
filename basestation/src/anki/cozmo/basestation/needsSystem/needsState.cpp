@@ -54,7 +54,7 @@ void NeedsState::Init(const NeedsConfig& needsConfig)
   _curNeedsLevels[NeedId::Energy] = 100.0f;
   _curNeedsLevels[NeedId::Play]   = 100.0f;
   
-  SetCurNeedsBrackets(needsConfig);
+  UpdateCurNeedsBrackets(needsConfig);
   
   _partIsDamaged[RepairablePartId::Head]   = false;
   _partIsDamaged[RepairablePartId::Lift]   = false;
@@ -82,7 +82,7 @@ void NeedsState::DecayUnconnected(float timeElasped_secs)
   // todo:
 }
 
-void NeedsState::SetCurNeedsBrackets(const NeedsConfig& needsConfig)
+void NeedsState::UpdateCurNeedsBrackets(const NeedsConfig& needsConfig)
 {
   // todo: set each of the needs' 'current bracket' based on the current level for that need,
   // and configuration data.

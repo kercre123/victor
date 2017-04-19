@@ -53,7 +53,7 @@ public:
   bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[(RepairablePartId)i]; };
   
   // Set current needs bracket levels from current levels
-  void SetCurNeedsBrackets(const NeedsConfig& needsConfig);
+  void UpdateCurNeedsBrackets(const NeedsConfig& needsConfig);
 
   // todo:  DateTime	LastConnectedDateTime
 

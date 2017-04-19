@@ -45,6 +45,10 @@ public:
   
   bool GetPaused() const { return _isPaused; };
   
+  const NeedsState& GetCurNeedsState() const { return _needsState; };
+  
+  void RegisterNeedsActionCompleted(NeedsActionId actionCompleted);
+
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);

@@ -56,7 +56,7 @@ void NeedsManager::Init(const Json::Value& inJson)
   // todo:  Init various member vars of NeedsManager as needed
   
   // Subscribe to messages
-  if (_robot != nullptr && _robot->HasExternalInterface() )
+  if (_robot != nullptr && _robot->HasExternalInterface())
   {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
@@ -94,10 +94,27 @@ void NeedsManager::SetPaused(bool paused)
 
   _isPaused = paused;
 
-  // todo:  If pausing, record current time in _timeLastPaused?
-  // todo:  If unpausing, ?
   
   SendNeedsPauseStateToGame();
+  
+  if (_isPaused) {
+    // todo:  If pausing, record current time in _timeLastPaused?
+    // Should we send the current needs state to the game as soon as we pause?
+    //  (because the periodic decay won't happen during pause)
+  }
+  else {
+    // todo:  If unpausing, ?
+  }
+}
+  
+  
+void NeedsManager::RegisterNeedsActionCompleted(NeedsActionId actionCompleted)
+{
+  // todo implement this
+  
+  // todo: Adjust zero or more needs levels based on config data for the completed action
+  
+  SendNeedsStateToGame();
 }
 
 
@@ -122,12 +139,13 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseState& ms
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterNeedsActionCompleted& msg)
 {
-  // todo implement
+  RegisterNeedsActionCompleted(msg.actionCompleted);
 }
 
+  
 void NeedsManager::SendNeedsStateToGame()
 {
-  _needsState.SetCurNeedsBrackets(_needsConfig);
+  _needsState.UpdateCurNeedsBrackets(_needsConfig);
   
   std::vector<float> needLevels;
   needLevels.reserve((size_t)NeedId::Count);
