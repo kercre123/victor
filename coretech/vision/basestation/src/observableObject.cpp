@@ -316,7 +316,6 @@ namespace Vision {
   
   void ObservableObject::SetMarkerAsObserved(const ObservedMarker* nearestTo,
                                              const TimeStamp_t     atTime,
-                                             const f32             centroidDistThreshold,
                                              const f32             areaRatioThreshold)
   {
     // Find the marker that projects nearest to the observed one and update
@@ -329,8 +328,9 @@ namespace Vision {
     
     auto markers = _markersWithCode.find(nearestTo->GetCode());
     if(markers != _markersWithCode.end()) {
+
+      f32 minCentroidDistSq = std::numeric_limits<f32>::max();
       
-      f32 minCentroidDistSq = centroidDistThreshold*centroidDistThreshold;
       Vision::KnownMarker* whichMarker = nullptr;
       for(auto marker : markers->second)
       {
@@ -339,14 +339,18 @@ namespace Vision {
           Quad2f projPoints;
           camera.Project3dPoints(marker->Get3dCorners(markerPoseWrtCamera), projPoints);
           
-          const Point2f knownCentroid = projPoints.ComputeCentroid();
-          
-          const f32 centroidDistSq = (knownCentroid - obsCentroid).LengthSq();
-          if(centroidDistSq < minCentroidDistSq) {
-            const f32 knownArea = projPoints.ComputeArea();
-            if(NEAR(knownArea * invObsArea, 1.f, areaRatioThreshold)) {
-              minCentroidDistSq = centroidDistSq;
-              whichMarker = marker;
+          const bool obsCentroidWithinProjectedQuad = projPoints.Contains(obsCentroid);
+          if(obsCentroidWithinProjectedQuad)
+          {
+            const Point2f knownCentroid = projPoints.ComputeCentroid();
+            
+            const f32 centroidDistSq = (knownCentroid - obsCentroid).LengthSq();
+            if(centroidDistSq < minCentroidDistSq) {
+              const f32 knownArea = projPoints.ComputeArea();
+              if(NEAR(knownArea * invObsArea, 1.f, areaRatioThreshold)) {
+                minCentroidDistSq = centroidDistSq;
+                whichMarker = marker;
+              }
             }
           }
         }
@@ -355,14 +359,13 @@ namespace Vision {
       if(whichMarker != nullptr) {
         whichMarker->SetLastObservedTime(atTime);
       } else {
-        PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved",
-                            "No markers found within specfied projected distance threshold (%f)",
-                            centroidDistThreshold);
+        PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved.NoMatchingMarkerFound", "Marker:%s",
+                            nearestTo->GetCodeName());
       }
     } else {
       PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved",
-                          "No markers found with code (%d) of given 'nearestTo' observed marker",
-                          nearestTo->GetCode());
+                          "No markers found with code (%d:%s) of given 'nearestTo' observed marker",
+                          nearestTo->GetCode(), nearestTo->GetCodeName());
     }
   } // SetMarkerAsObserved()
   
@@ -397,11 +400,59 @@ namespace Vision {
     return boundingQuad;
   } // GetBoundingQuadXY()
 
+  static inline bool IsPoseFlat(const Pose3d& pose, const Radians& angleTol, AxisName* outWhichAxis)
+  {
+    const RotationMatrix3d Rmat = pose.GetWithRespectToOrigin().GetRotationMatrix();
+    const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>(outWhichAxis) < angleTol);
+    return isFlat;
+  }
+  
+  bool ObservableObject::ClampPoseToFlat(Pose3d& pose, const Radians& angleTol)
+  {
+    // First make sure the pose is close enough to flat to be clamped
+    // If it is, then keepAxis will be the one around which we'd like to preserve rotation
+    // (the one aligned with Z in the parent frame)
+    AxisName keepAxis;
+    if(IsPoseFlat(pose, angleTol, &keepAxis))
+    {
+      // Original rotation
+      const Rotation3d& R = pose.GetRotation();
+      const RotationMatrix3d& Rmat = R.GetRotationMatrix();
+      
+      const s32 whichCol = AxisToIndex(keepAxis);
+      const bool isNeg = (keepAxis == AxisName::X_NEG) || (keepAxis == AxisName::Y_NEG) || (keepAxis == AxisName::Z_NEG);
+      const Vec3f& signedZ = (isNeg ? Z_AXIS_3D() * -1.f : Z_AXIS_3D());
+      
+      // Compute the angle and axis required to align the top side normal with the signed Z axis
+      // Don't bother doing anything if the angle is already near zero
+      const Vec3f& topSideNormal = Rmat.GetColumn(whichCol);
+      Radians angle = std::acosf( DotProduct(topSideNormal, signedZ) );
+      
+      const bool alreadyAligned = Util::IsNearZero(angle.ToFloat());
+      if(!alreadyAligned)
+      {
+        Vec3f axis  = CrossProduct(topSideNormal, signedZ);
+        
+        const bool zeroLength = Util::IsNearZero( axis.MakeUnitLength() );
+        DEV_ASSERT(!zeroLength, "ObservableObject.ClampPoseToFlat.ComputedRotationAxisZeroLength");
+        
+        if(!zeroLength)
+        {
+          // Update the rotation by applying the rotation required to put the top side normal in line with the
+          // (signed) Z axis
+          Rotation3d Rdiff(angle, axis);
+          pose.SetRotation(Rdiff * R);
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
   bool ObservableObject::IsRestingFlat(const Radians& angleTol) const
   {
-    const RotationMatrix3d Rmat = GetPose().GetWithRespectToOrigin().GetRotationMatrix();
-    const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < angleTol);
-    return isFlat;
+    return IsPoseFlat(GetPose(), angleTol, nullptr);
   }
   
   Pose3d ObservableObject::GetZRotatedPointAboveObjectCenter(f32 heightFraction) const

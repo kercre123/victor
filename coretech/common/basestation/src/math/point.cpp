@@ -54,6 +54,28 @@ namespace Anki {
     return zAxis;
   }
   
+  Vec3f AxisToVec3f(AxisName axis)
+  {
+    switch( axis ) {
+      case AxisName::X_NEG:
+        return -X_AXIS_3D();
+        
+      case AxisName::X_POS:
+        return  X_AXIS_3D();
+        
+      case AxisName::Y_NEG:
+        return -Y_AXIS_3D();
+        
+      case AxisName::Y_POS:
+        return  Y_AXIS_3D();
+      
+      case AxisName::Z_NEG:
+        return -Z_AXIS_3D();
+        
+      case AxisName::Z_POS:
+        return  Z_AXIS_3D();
+    }
+  }
   
   void testPointInstantiation(void)
   {

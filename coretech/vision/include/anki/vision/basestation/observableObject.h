@@ -97,6 +97,9 @@ namespace Anki {
       // is returned.
       Result UpdateMarkerObservationTimes(const ObservableObject& otherObject);
       
+      // "Active" objects are those that can be communicated with and have lights, accelerometers, etc.
+      virtual bool IsActive() const = 0;
+      
       // If object is moving, returns true and the time that it started moving in t.
       // If not moving, returns false and the time that it stopped moving in t.
       virtual bool IsMoving(TimeStamp_t* t = nullptr) const { return false; }
@@ -106,8 +109,14 @@ namespace Anki {
       
       // Override for objects that can be used for localization (e.g., mats
       // or active blocks that have not moved since last localization)
+      // Note that true means the object can be used for localization *now*, in its current state,
+      // (not whether this object is of a type that might ever be suitable for localization).
       virtual bool CanBeUsedForLocalization() const { return false; }
       
+      // How flat an object must be to be used for localization (override if different
+      // objects have different tolerances)
+      virtual f32 GetRestingFlatTolForLocalization_deg() const { return 5.f; }
+
       virtual bool IsMoveable()               const { return true; }
       
       // Add possible poses implied by seeing the observed marker to the list.
@@ -128,7 +137,6 @@ namespace Anki {
       // to have the given observed time.
       void SetMarkerAsObserved(const ObservedMarker* nearestTo,
                                const TimeStamp_t     atTime,
-                               const f32             centroidDistThreshold = 5.f, // in pixels
                                const f32             areaRatioThreshold = 0.1f);  // i.e., 1 - abs(obsArea/knownArea) < threshold
       
       // Return true if any of the object's markers is visible from the given
@@ -268,6 +276,9 @@ namespace Anki {
       // orientation around the Z axis (w.r.t. its parent), but no rotation about the
       // X and Y axes.
       bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(10)) const;
+      
+      // If the pose is within angleTol of being "flat" clamp it to exactly flat. Return true if clamping occurred
+      static bool ClampPoseToFlat(Pose3d& pose, const Radians& angleTol);
 
       PoseState GetPoseState() const { return _poseState; } // TODO Remove in favor of concepts
       void SetPoseState(PoseState newState) { _poseState = newState; }

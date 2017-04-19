@@ -88,7 +88,7 @@ namespace Anki {
   {
   public:
     RotationVector3d(); // no rotation around z axis
-    RotationVector3d(const Radians angle, const Vec3f &axis);
+    RotationVector3d(const Radians &angle, const Vec3f &axis);
     RotationVector3d(const Vec3f &rvec);
     RotationVector3d(const RotationMatrix3d &rmat);
     
@@ -188,6 +188,7 @@ namespace Anki {
     const Radians GetAngle() const;
     const Vec3f   GetAxis()  const;
     
+    Radians GetAngleAroundAxis(AxisName axis) const;
     Radians GetAngleAroundXaxis() const;
     Radians GetAngleAroundYaxis() const;
     Radians GetAngleAroundZaxis() const;
@@ -252,8 +253,9 @@ namespace Anki {
     
     // Get the angular difference between the given parent axis and its rotated version.
     // AXIS can by 'X', 'Y', or 'Z'
+    // If outWhichAxis is not null, it will be set to GetRotatedParentAxis<AXIS>() (see below)
     template<char AXIS>
-    Radians GetAngularDeviationFromParentAxis() const;
+    Radians GetAngularDeviationFromParentAxis(AxisName* outWhichAxis = nullptr) const;
 
     // Get the angle of rotation _around_ the given axis in the _parent_ frame.
     // AXIS can be 'X', 'Y', or 'Z'
@@ -348,10 +350,15 @@ namespace Anki {
   }
 
   template<char parentAxis>
-  inline Radians RotationMatrix3d::GetAngularDeviationFromParentAxis() const
+  inline Radians RotationMatrix3d::GetAngularDeviationFromParentAxis(AxisName* outWhichAxis) const
   {
     f32 maxVal;
-    GetRotatedParentAxis<parentAxis>(&maxVal);
+    AxisName axisName = GetRotatedParentAxis<parentAxis>(&maxVal);
+    if(nullptr != outWhichAxis)
+    {
+      *outWhichAxis = axisName;
+    }
+    
     return std::acos(std::abs(maxVal));
   }
   
@@ -374,14 +381,9 @@ namespace Anki {
         return GetAngleAroundZaxis();
       case AxisName::Z_NEG:
         return -GetAngleAroundZaxis();
-      default:
-        assert(false);
     }
-    
-    return 0.f; // Should not get here
   }
-
-
+  
 } // namespace Anki
 
 #endif /* defined(__CoreTech_Math__rotation__) */

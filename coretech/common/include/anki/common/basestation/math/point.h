@@ -204,6 +204,9 @@ namespace Anki {
   // returns single character axis for AxisName (ignoring sign)
   char AxisToChar(AxisName axis);
 
+  // returns +/- N_AXIS_3D() where N = {X,Y,Z}
+  Vec3f AxisToVec3f(AxisName axis);
+  
   // returns two character string for AxisName (e.g. "+X" or "-Z")
   const char* AxisToCString(AxisName axis);
 
@@ -216,6 +219,24 @@ namespace Anki {
   template<> inline s32 AxisToIndex<'Y'>() { return 1; }
   template<> inline s32 AxisToIndex<'Z'>() { return 2; }
 
+  inline s32 AxisToIndex(AxisName axis)
+  {
+    switch(axis)
+    {
+      case AxisName::X_POS:
+      case AxisName::X_NEG:
+        return AxisToIndex<'X'>();
+        
+      case AxisName::Y_POS:
+      case AxisName::Y_NEG:
+        return AxisToIndex<'Y'>();
+        
+      case AxisName::Z_POS:
+      case AxisName::Z_NEG:
+        return AxisToIndex<'Z'>();
+    }
+  }
+  
   /*
   template<PointDimType N, typename T>
   class UnitVector : public Point<N,T>

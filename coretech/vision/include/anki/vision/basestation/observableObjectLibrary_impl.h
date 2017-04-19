@@ -22,7 +22,6 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-
 namespace Anki {
 namespace Vision {
   
@@ -163,7 +162,8 @@ namespace Vision {
   template<class ObsObjectType>
   Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
                                                                           std::multimap<f32, ObsObjectType*>& objectsSeen,
-                                                                          const CameraID_t seenOnlyBy) const
+                                                                          const CameraID_t seenOnlyBy,
+                                                                          bool clampPosesToFlatIfWithinLocalizableTol) const
   {
     std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
     
@@ -257,6 +257,12 @@ namespace Vision {
         ObsObjectType* newObject = libObject->CloneType();
         const f32 observedDistSq = poseCluster.GetPose().GetTranslation().LengthSq();
         Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
+        
+        if(clampPosesToFlatIfWithinLocalizableTol && newObject->IsActive())
+        {
+          ObservableObject::ClampPoseToFlat(newPose, DEG_TO_RAD(newObject->GetRestingFlatTolForLocalization_deg()));
+        }
+
         newObject->InitPose(newPose, PoseState::Dirty); // It's not invalid, and Dirty is the next lowest atm
         
         // Set the markers in the object corresponding to those from the pose
@@ -269,7 +275,7 @@ namespace Vision {
           //objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
           //                                         observedTime);
           
-          newObject->SetMarkerAsObserved(match.first, observedTime, 5.f);
+          newObject->SetMarkerAsObserved(match.first, observedTime);
         }
         
         newObject->SetLastObservedTime(observedTime);
@@ -296,141 +302,6 @@ namespace Vision {
     
     return RESULT_OK;
   } // CreateObjectsFromMarkers()
-
-#if 0
-  // Input:   list of observed markers
-  // Outputs: the objects seen and the unused markers
-  template<class ObsObjectType>
-  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                                                          std::multimap<ObsObjectType*>& objectsSeen,
-                                                                          const CameraID_t seenOnlyBy) const
-  {
-    // Group the markers by the lib object to which they match
-    std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
-    
-    for(auto marker : markers) {
-      
-      marker->MarkUsed(false);
-      
-      // If seenOnlyBy was specified, make sure this marker was seen by that
-      // camera
-      if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetID() == seenOnlyBy)
-      {
-        // Find all objects which use this marker...
-        std::set<const ObsObjectType*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
-        
-        // ...if there are any, add this marker to the list of observed markers
-        // that corresponds to this object type.
-        if(!objectsWithMarker.empty()) {
-          if(objectsWithMarker.size() > 1) {
-            PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
-                                "Having multiple objects in the library with the "
-                                "same marker ('%s') is not supported.",
-                                marker->GetCodeName());
-            return RESULT_FAIL;
-          }
-          markersByLibObject[*objectsWithMarker.begin()].push_back(marker);
-          
-          marker->MarkUsed(true);
-        } // IF objectsWithMarker != NULL
-      } // IF seenOnlyBy
-      
-    } // For each marker we saw
-    
-    // Now go through each object type we saw a marker for, and use the
-    // corresponding observed markers to create a list of possible poses
-    // for that object. Then cluster the possible poses into one or more
-    // object instances of that type, returned in the "objectsSeen" vector.
-    for(auto & libObjectMarkersPair : markersByLibObject)
-    {
-      // A place to store the possible poses together with the observed/known
-      // markers that implied them
-      std::vector<PoseMatchPair> possiblePoses;
-      
-      const ObsObjectType* libObject = libObjectMarkersPair.first;
-      
-      // Get timestamp of the observed markers so that I can set the
-      // lastSeenTime of the observable object.
-      auto obsMarker = libObjectMarkersPair.second.begin();
-      const TimeStamp_t observedTime = (*obsMarker)->GetTimeStamp();
-      
-      // Check that all remaining markers also have the same timestamp (which
-      // they now should, since we are processing grouped by timestamp)
-      while(++obsMarker != libObjectMarkersPair.second.end()) {
-        CORETECH_ASSERT(observedTime == (*obsMarker)->GetTimeStamp());
-      }
-      
-      for(auto obsMarker : libObjectMarkersPair.second)
-      {
-        // For each observed marker, we add to the list of possible poses
-        // (each paired with the observed/known marker match from which the
-        // pose was computed).
-        // (This is all so we can recompute object pose later from clusters of
-        // markers, without having to reassociate observed and known markers.)
-        // reassociate them.)
-        // Note that each observed marker can generate multiple poses because
-        // an object may have the same known marker on it several times.
-        
-        libObject->ComputePossiblePoses(obsMarker, possiblePoses);
-        
-      } // FOR each observed marker
-      
-      // TODO: make the distance/angle thresholds parameters or else object-type-specific
-      std::vector<PoseCluster> poseClusters;
-      ClusterObjectPoses(possiblePoses, libObject,
-                         5.f, 5.f*M_PI/180.f, poseClusters);
-      
-      // Recompute the pose for any cluster which had multiple matches in it,
-      // using all of its matches simultaneously, and then add it as a new
-      // object seen
-      for(auto & poseCluster : poseClusters) {
-        CORETECH_ASSERT(poseCluster.GetSize() > 0);
-        
-        // NOTE: this does nothing for singleton clusters
-        poseCluster.RecomputePose();
-        
-        // Create a new object of the observed type from the library, and set
-        // its pose to the computed pose, in _historical_ world frame (since
-        // it is computed w.r.t. a camera from a pose in history).
-        objectsSeen.push_back(libObject->CloneType());
-        Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
-        objectsSeen.back()->SetPose(newPose);
-        
-        // Set the markers in the object corresponding to those from the pose
-        // cluster from which it was computed as "observed"
-        for(auto & match : poseCluster.GetMatches()) {
-          // Set the observed markers based on their position in the image,
-          // not based on their code, since an object can have multiple markers
-          // with the same code.
-          //const KnownMarker& marker = match.second;
-          //objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
-          //                                         observedTime);
-          
-          objectsSeen.back()->SetMarkerAsObserved(match.first, observedTime, 5.f);
-          
-        }
-        
-        objectsSeen.back()->SetLastObservedTime(observedTime);
-        
-      } // FOR each pose cluster
-      
-      /*
-       if(seenOnlyBy != NULL) {
-       // If there were (or could have been) multiple observers, we will put
-       // all poses in a common World coordinate frame *after* pose clustering,
-       // since that process takes the markers' observers into account.
-       for(auto & poseMatch : possiblePoses) {
-       poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
-       }
-       }
-       */
-      
-    } // FOR each objectType
-    
-    return RESULT_OK;
-  } // CreateObjectsFromMarkers()
-  
-#endif
   
   template<class ObsObjectType>
   ObservableObjectLibrary<ObsObjectType>::PoseCluster::PoseCluster(const PoseMatchPair& match)

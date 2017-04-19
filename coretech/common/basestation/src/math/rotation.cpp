@@ -217,7 +217,7 @@ namespace Anki {
     
   }
   
-  RotationVector3d::RotationVector3d(const Radians angleIn, const Vec3f &axisIn)
+  RotationVector3d::RotationVector3d(const Radians& angleIn, const Vec3f &axisIn)
   : _angle(angleIn)
   , _axis(axisIn)
   {
@@ -366,6 +366,27 @@ namespace Anki {
   template<> f32 Rotation3d::GetRmatEntry<2,2>() const
   {
     return 1.f - 2.f*(_q.x()*_q.x() + _q.y()*_q.y());
+  }
+  
+  Radians Rotation3d::GetAngleAroundAxis(AxisName axis) const
+  {
+    switch(axis)
+    {
+      case AxisName::X_NEG:
+        return -GetAngleAroundXaxis();
+      case AxisName::X_POS:
+        return  GetAngleAroundXaxis();
+        
+      case AxisName::Y_NEG:
+        return -GetAngleAroundYaxis();
+      case AxisName::Y_POS:
+        return  GetAngleAroundYaxis();
+        
+      case AxisName::Z_NEG:
+        return -GetAngleAroundZaxis();
+      case AxisName::Z_POS:
+        return  GetAngleAroundZaxis();
+    }
   }
   
   Radians Rotation3d::GetAngleAroundXaxis() const

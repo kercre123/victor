@@ -84,9 +84,9 @@ namespace Cozmo {
     
     void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
     
+    virtual bool IsActive()                     const override  { return false; }
     void         SetActiveID(ActiveID activeID);
     ActiveID     GetActiveID()                  const   { return _activeID; }
-    virtual bool IsActive()                     const   { return false; }
     void         SetFactoryID(FactoryID factoryID);
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
 

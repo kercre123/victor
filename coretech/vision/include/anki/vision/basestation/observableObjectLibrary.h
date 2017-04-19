@@ -49,12 +49,17 @@ namespace Anki {
       
       // Groups markers referring to the same object type, and clusters them into
       // observed objects, returned in objectsSeen (which is keyed and sorted by
-      // distance from the camera to the object). If seenOnlyBy is not ANY_CAMERA, only markers
-      // seen by that camera will be considered and objectSeen poses will be returned
-      // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
+      // distance from the camera to the object).
+      // - If seenOnlyBy is not ANY_CAMERA, only markers
+      //   seen by that camera will be considered and objectSeen poses will be returned
+      //   wrt to that camera.
+      // - If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
+      // - If clampPosesToFlatIfWithinLocalizableTol=true, poses of active objects that are within
+      //   their angular tolerance of "flat" for localization will be clamped to be exactly flat.
       Result CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
                                       std::multimap<f32, ObsObjectType*>& objectsSeen,
-                                      const CameraID_t seenOnlyBy = ANY_CAMERA) const;
+                                      const CameraID_t seenOnlyBy = ANY_CAMERA,
+                                      bool clampPosesToFlatIfWithinLocalizableTol = true) const;
       
       // Return a pointer to a known object with at least one of the specified marker or code on it. If there is no
       // object with that marker/code, a NULL pointer is returned.

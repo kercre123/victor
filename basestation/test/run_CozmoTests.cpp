@@ -137,13 +137,17 @@ TEST(BlockWorld, AddAndRemoveObject)
   const f32 halfWidth = 0.25f*static_cast<f32>(camCalib.GetNcols());
   const f32 xcen = camCalib.GetCenter_x();
   const f32 ycen = camCalib.GetCenter_y();
+
+  // stretch observed bottom side slightly to make computed pose definitely not flat (so it doesn't get clamped)
+  const f32 kNotFlatFraction = 1.03f;
   
   Quad2f corners;
   const f32 markerHalfSize = std::min(halfHeight, halfWidth);
+
   corners[Quad::TopLeft]    = {xcen - markerHalfSize, ycen - markerHalfSize};
-  corners[Quad::BottomLeft] = {xcen - markerHalfSize, ycen + markerHalfSize};
+  corners[Quad::BottomLeft] = {xcen - markerHalfSize*kNotFlatFraction, ycen + markerHalfSize};
   corners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
-  corners[Quad::BottomRight]= {xcen + markerHalfSize, ycen + markerHalfSize};
+  corners[Quad::BottomRight]= {xcen + markerHalfSize*kNotFlatFraction, ycen + markerHalfSize};
   Vision::ObservedMarker marker(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
@@ -207,6 +211,10 @@ TEST(BlockWorld, AddAndRemoveObject)
     
     ASSERT_EQ(PoseState::Known, object->GetPoseState());
   
+    // Make sure the corners used above resulted in a non-flat pose so clamping doesn't occur
+    // and we can expect the reprojected corners to closely match below
+    ASSERT_FALSE(object->IsRestingFlat(DEG_TO_RAD(object->GetRestingFlatTolForLocalization_deg())));
+    
     // Projected corners of the marker should match the corners of the fake marker
     // we queued above
     std::vector<const Vision::KnownMarker*> observedMarkers;
@@ -220,7 +228,8 @@ TEST(BlockWorld, AddAndRemoveObject)
     auto obsCorners3d = observedMarkers[0]->Get3dCorners(markerPoseWrtCamera);
     Quad2f obsCorners;
     robot.GetVisionComponent().GetCamera().Project3dPoints(obsCorners3d, obsCorners);
-    const bool cornersMatch = IsNearlyEqual(obsCorners, corners, .25f);
+    const f32 kCornerTol_pix = 0.75f;
+    const bool cornersMatch = IsNearlyEqual(obsCorners, corners, kCornerTol_pix);
     ASSERT_TRUE(cornersMatch);
   }
 

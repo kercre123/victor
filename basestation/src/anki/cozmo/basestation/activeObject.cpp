@@ -134,7 +134,7 @@ namespace Anki {
               GetActiveID() >= 0 &&
               GetLastPoseUpdateDistance() >= 0.f &&
               GetIdentityState() == ActiveIdentityState::Identified &&
-              IsRestingFlat(DEG_TO_RAD(5))); // TODO: AS: 5 was the old value, not sure if we still want it here
+              IsRestingFlat(DEG_TO_RAD(GetRestingFlatTolForLocalization_deg())));
     }
     
     /*
