@@ -24,17 +24,43 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-static int _whichType = 0;
+bool DebugTestDetectDevice(void)
+{
+  RadioProcess(); //keep uart clear
+  return true; //simulate PCB detect (body, head, cube...)
+}
 
-bool DebugTestDetectDevice(void) {
-  RadioProcess();
-  return _whichType != g_fixtureType; //true once for each fixture type change (e.g. POR)
+static int8_t m_rssidat[9];
+static void _read_rssi_dat(void)
+{
+  RadioRssiReset();   //invalidate data
+  RadioPutChar('R');  //initiate an RSSI read (reverts to idle when complete)
+  
+  //Read data
+  u32 start = getMicroCounter();
+  while( RadioGetRssi(m_rssidat) == false ) { //spin on rx
+    RadioProcess();
+    if( getMicroCounter() - start >= 1000*1000 )
+      throw ERROR_RADIO_TIMEOUT;
+  }
 }
 
 void DebugRadioModeR(void)
 {
-  SetRadioMode('R',0);
-  _whichType = g_fixtureType; //prevent further 'contact detection'
+  static int init = 0;
+  if( !init++ )
+    SetRadioMode('I'); //set to idle -> checks fw version and update if necessary
+  
+  u32 start = 0;
+  while(1)
+  {
+    if( getMicroCounter() - start > 100*1000 ) {
+      start = getMicroCounter();
+      _read_rssi_dat();
+    }
+  }
+  
+  //g_fixtureType = FIXTURE_NONE;
 }
 
 TestFunction* GetDebugTestFunctions()
