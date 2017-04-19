@@ -102,7 +102,15 @@ static void PutChar(u8 c)
     ;
 }
 
+void RadioPutChar(char c)
+{
+  PutChar(c);
+}
+
 char g_mode = 'X';
+
+static int8_t m_rssidat[9];
+static bool rssi_valid = 0;
 
 // Process incoming bytes from the radio - must call at least 12,000 times/second
 void RadioProcess()
@@ -114,7 +122,6 @@ void RadioProcess()
   
   // Otherwise, process messages or grab arguments
   static int msg = 0, argbytes = 0, argCnt = 0, cubeArg = 0;
-  static s8 rssidat[9];
   
   if (!argbytes) // Process messages
   {
@@ -145,11 +152,12 @@ void RadioProcess()
         break;
       case 'R':
         argbytes--;
-        rssidat[argCnt++] = (s8)c; //signed RSSI value
+        m_rssidat[argCnt++] = (s8)c; //signed RSSI value
         if( !argbytes ) {
+          rssi_valid = 1;
           ConsolePrintf("rssi");
           for(int i=0; i<9; i++)
-            ConsolePrintf(",%i", rssidat[i] );
+            ConsolePrintf(",%02i", m_rssidat[i] );
           ConsolePrintf("\r\n");
         }
         break;
@@ -160,8 +168,21 @@ void RadioProcess()
   }
 }
 
+void RadioRssiReset()
+{
+  rssi_valid = 0;
+}
+
+bool RadioGetRssi( int8_t out_rssi[9] )
+{
+  if( !rssi_valid )
+    return 0;
+  memcpy( out_rssi, m_rssidat, sizeof(m_rssidat) );
+  return 1;
+}
+
 // Put the radio into a specific test mode
-void SetRadioMode(char mode, bool forceupdate)
+void SetRadioMode(char mode, bool forceupdate = false )
 {
   InitRadio();
   // Try 5 times, since a buggy ISR in the NRF clobbers the update attempt
