@@ -305,6 +305,8 @@ void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareU
     {
       Robot* robot = it->second;
       
+      Util::sEventF("robot.firmware_upgrade_complete", {}, "%s", EnumToString(updateResult));
+      
       ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSig);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
@@ -338,6 +340,8 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
   {
     case FirmwareUpdateSubStage::Init:
     {
+      Util::sEventF("robot.firmware_upgrade_begin", {}, "");
+      
       WaitForLoadingThreadToExit();
 
       _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename(_type)) );
