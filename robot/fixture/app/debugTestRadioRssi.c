@@ -31,36 +31,18 @@ bool DebugTestDetectDevice(void)
 }
 
 static int8_t m_rssidat[9];
-static void _read_rssi_dat(void)
-{
-  RadioRssiReset();   //invalidate data
-  RadioPutChar('R');  //initiate an RSSI read (reverts to idle when complete)
-  
-  //Read data
-  u32 start = getMicroCounter();
-  while( RadioGetRssi(m_rssidat) == false ) { //spin on rx
-    RadioProcess();
-    if( getMicroCounter() - start >= 1000*1000 )
-      throw ERROR_RADIO_TIMEOUT;
-  }
-}
-
 void DebugRadioModeR(void)
 {
-  static int init = 0;
-  if( !init++ )
-    SetRadioMode('I'); //set to idle -> checks fw version and update if necessary
-  
   ConsolePrintf("rf.ch   0   1   2  18  19  20  37  38  39\r\n");
   ConsolePrintf("rssi ");
   int print_len = 0;
-  u32 start = 0;
-  while(1)
+  u32 updateTime = 0, totalTime = getMicroCounter();
+  while( getMicroCounter()-totalTime < 1*60*1000*1000 )
   {
-    if( getMicroCounter() - start > 100*1000 )
+    if( getMicroCounter() - updateTime > 100*1000 )
     {
-      start = getMicroCounter();
-      _read_rssi_dat();
+      updateTime = getMicroCounter();
+      RadioGetRssi( m_rssidat );
       
       //erase old data
       for(int x=0; x<print_len; x++) {
@@ -75,8 +57,8 @@ void DebugRadioModeR(void)
         print_len += ConsolePrintf(" %03i", (m_rssidat[i] < -99 ? -99 : m_rssidat[i]) );
     }
   }
-  //ConsolePrintf("\r\n");
-  //g_fixtureType = FIXTURE_NONE;
+  ConsolePrintf("\r\n");
+  g_fixtureType = FIXTURE_NONE;
 }
 
 TestFunction* GetDebugTestFunctions()

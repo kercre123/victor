@@ -9,6 +9,7 @@
 #include "hal/cube.h"
 #include "hal/flash.h"
 #include "app/binaries.h"
+#include "radio.h"
 
 bool UpdateNRF(bool forceupdate);
 
@@ -102,13 +103,7 @@ static void PutChar(u8 c)
     ;
 }
 
-void RadioPutChar(char c)
-{
-  PutChar(c);
-}
-
 char g_mode = 'X';
-
 static int8_t m_rssidat[9];
 static bool rssi_valid = 0;
 
@@ -170,21 +165,8 @@ void RadioProcess()
   }
 }
 
-void RadioRssiReset()
-{
-  rssi_valid = 0;
-}
-
-bool RadioGetRssi( int8_t out_rssi[9] )
-{
-  if( !rssi_valid )
-    return 0;
-  memcpy( out_rssi, m_rssidat, sizeof(m_rssidat) );
-  return 1;
-}
-
 // Put the radio into a specific test mode
-void SetRadioMode(char mode, bool forceupdate = false )
+void SetRadioMode(char mode, bool forceupdate )
 {
   InitRadio();
   // Try 5 times, since a buggy ISR in the NRF clobbers the update attempt
@@ -208,3 +190,25 @@ void SetRadioMode(char mode, bool forceupdate = false )
   g_mode = mode;
   PutChar(g_mode);
 }
+
+void RadioGetRssi( int8_t out_rssi[9] )
+{
+  //Must be in idle mode for rssi reading
+  if( g_mode != 'I' )
+    SetRadioMode('I');
+  
+  rssi_valid = 0;
+  PutChar('R'); //initiate an RSSI read (reverts to idle when complete)
+  
+  //Wait for response packet
+  u32 start = getMicroCounter();
+  while( !rssi_valid ) { //spin on rx
+    RadioProcess();
+    if( getMicroCounter() - start >= 1000*1000 )
+      throw ERROR_RADIO_TIMEOUT;
+  }
+
+  if( out_rssi != NULL )
+    memcpy( out_rssi, m_rssidat, sizeof(m_rssidat) );
+}
+
