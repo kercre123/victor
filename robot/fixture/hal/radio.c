@@ -155,10 +155,12 @@ void RadioProcess()
         m_rssidat[argCnt++] = (s8)c; //signed RSSI value
         if( !argbytes ) {
           rssi_valid = 1;
+          /*
           ConsolePrintf("rssi");
           for(int i=0; i<9; i++)
             ConsolePrintf(",%02i", m_rssidat[i] );
           ConsolePrintf("\r\n");
+          */
         }
         break;
       default:

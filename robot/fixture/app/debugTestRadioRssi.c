@@ -51,15 +51,31 @@ void DebugRadioModeR(void)
   if( !init++ )
     SetRadioMode('I'); //set to idle -> checks fw version and update if necessary
   
+  ConsolePrintf("rf.ch   0   1   2  18  19  20  37  38  39\r\n");
+  ConsolePrintf("rssi ");
+  int print_len = 0;
   u32 start = 0;
   while(1)
   {
-    if( getMicroCounter() - start > 100*1000 ) {
+    if( getMicroCounter() - start > 100*1000 )
+    {
       start = getMicroCounter();
       _read_rssi_dat();
+      
+      //erase old data
+      for(int x=0; x<print_len; x++) {
+        ConsolePutChar(0x08); //backspace
+        //ConsolePutChar(0x20); //space
+        //ConsolePutChar(0x08); //backspace
+      }
+      print_len = 0;
+      
+      //write new data
+      for(int i=0; i<9; i++)
+        print_len += ConsolePrintf(" %03i", (m_rssidat[i] < -99 ? -99 : m_rssidat[i]) );
     }
   }
-  
+  //ConsolePrintf("\r\n");
   //g_fixtureType = FIXTURE_NONE;
 }
 
