@@ -65,7 +65,7 @@ Blockly.Blocks.defaultToolbox = '<xml id="toolbox-categories" style="display: no
         '</block>' +
     '</category>' +
     '<category name="Wedo">' +
-        '<block type="wedo_setcolor">' +
+        '<block type="cozmo_setbackpackcolor">' +
         '<value name="CHOICE">' +
         '<shadow type="dropdown_cozmo_setcolor">' +
         '<field name="CHOICE">mystery</field>' +

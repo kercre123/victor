@@ -50,6 +50,11 @@ Blockly.Colours = {
     "secondary": "#c5a207",
     "tertiary": "#CDAD00"
   },
+  "actions": {
+    "primary": "#b15499",
+    "secondary": "#7b3a6b",
+    "tertiary": "#7b3a6b"
+  },
   "sensing": {
     "primary": "#5CB1D6",
     "secondary": "#47A8D1",

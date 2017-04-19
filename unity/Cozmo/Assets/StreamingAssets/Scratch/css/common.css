@@ -191,7 +191,7 @@ button:focus {
 
     #navigation .greenflag {
         left: calc(100% - 65px);
-        top: calc(100% - 185px);;
+        top: calc(100% - 205px);;
     }
 
     #navigation .greenflag button {
@@ -201,7 +201,7 @@ button:focus {
 
     #navigation .stop {
         left: calc(100% - 65px);
-        top: calc(100% - 125px);;
+        top: calc(100% - 145px);;
     }
 
     #navigation .stop button {

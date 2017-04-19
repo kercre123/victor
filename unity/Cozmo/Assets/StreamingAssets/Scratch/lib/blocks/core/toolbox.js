@@ -180,7 +180,10 @@ Blockly.Toolbox.prototype.createFlyout_ = function() {
  */
 Blockly.Toolbox.prototype.populate_ = function(newTree) {
   this.categoryMenu_.populate(newTree);
-  this.setSelectedItem(this.categoryMenu_.categories_[0]);
+
+  // Anki: Hack to set default category
+  // Here we set the default category to the motion blocks category.
+  this.setSelectedItem(this.categoryMenu_.categories_[1]);
 };
 
 /**
@@ -255,7 +258,11 @@ Blockly.Toolbox.prototype.getClientRect = function() {
   var toolboxRect = this.HtmlDiv.getBoundingClientRect();
 
   var x = toolboxRect.left;
-  var y = toolboxRect.top;
+
+  // Anki change: after adding categories, delete area was not tall enough.
+  // Here we increase it by adding the flyout height plus some extra.
+  var y = toolboxRect.top - 1.25*this.flyout_.getHeight(); 
+
   var width = toolboxRect.width;
   var height = toolboxRect.height;
 
@@ -380,6 +387,20 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     }
     categories.push(child);
   }
+
+  // Anki: Create 1 row for categories
+  var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
+  this.table.appendChild(row);
+  for (var a = 0; a < categories.length; a ++) {
+    child = categories[a];
+    if (child) {
+      this.categories_.push(new Blockly.Toolbox.Category(this, row,
+          child));
+    }
+  }
+  
+
+/*
   // Create categories one row at a time.
   // Note that this involves skipping around by `columnSeparator` in the DOM tree.
   var columnSeparator = Math.ceil(categories.length / 2);
@@ -396,6 +417,7 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
           categories[i + columnSeparator]));
     }
   }
+  */
   this.height_ = this.table.offsetHeight;
 };
 
@@ -454,11 +476,10 @@ Blockly.Toolbox.Category.prototype.dispose = function() {
 Blockly.Toolbox.Category.prototype.createDom = function() {
   var toolbox = this.parent_.parent_;
   this.item_ = goog.dom.createDom('td',
-      {'class': 'scratchCategoryMenuItem'},
-      this.name_);
+      {'class': 'scratchCategoryMenuItem'});
   this.bubble_ = goog.dom.createDom('div', {
     'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
-    'scratchCategoryItemBubbleLTR'});
+    'scratchCategoryItemBubbleLTR'}, this.name_.toUpperCase());
   this.bubble_.style.backgroundColor = this.colour_;
   this.bubble_.style.borderColor = this.secondaryColour_;
   this.item_.appendChild(this.bubble_);
