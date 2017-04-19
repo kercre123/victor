@@ -137,6 +137,7 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehavior(const Robot& robot, co
     if(behavior->IsRunnable(req))
     {
       _hiccupsCured = HiccupsCured::NotCured;
+      const_cast<Robot&>(robot).GetAnimationStreamer().ResetKeepFaceAliveLastStreamTimeout();
       return true;
     }
     
@@ -288,8 +289,10 @@ void ReactionTriggerStrategyHiccup::AlwaysHandle(const EngineToGameEvent& event,
         if(payload.treadsState == OffTreadsState::OnFace ||
            payload.treadsState == OffTreadsState::OnBack)
         {
-          if(HasHiccups())
+          if(HasHiccups() && _hiccupsCured == HiccupsCured::NotCured)
           {
+            const f32 kTimeout_s = 5.f;
+            const_cast<Robot&>(robot).GetAnimationStreamer().SetKeepFaceAliveLastStreamTimeout(kTimeout_s);
             _hiccupsCured = HiccupsCured::PendingCure;
           }
         }

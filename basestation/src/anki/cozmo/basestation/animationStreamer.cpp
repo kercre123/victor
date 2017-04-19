@@ -48,6 +48,10 @@ namespace Cozmo {
   // This is roughly (2 x ExpectedOneWayLatency_ms + BasestationTick_ms) / AudioSampleLength_ms
   const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
   
+  // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
+  // idle animation
+  const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
+  
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
   CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, "AnimationStreamer", 30000);
@@ -62,6 +66,7 @@ namespace Cozmo {
   , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
   , _audioClient( audioClient )
   , _lastProceduralFace(new ProceduralFace())
+  , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {
     _liveAnimation.SetIsLive(true);
     
@@ -1416,7 +1421,7 @@ namespace Cozmo {
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
     const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
     const bool haveIdleAnimation      = _idleAnimation != nullptr;
-    const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > 0.5f;
+    const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > _longEnoughSinceLastStreamTimeout_s;
     if(!haveStreamingAnimation &&
        haveStreamedAnything &&
        (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
@@ -1807,6 +1812,10 @@ namespace Cozmo {
     return _endOfAnimationSent && !anim->HasFramesLeft() && _sendBuffer.empty();
   }
 
+  void AnimationStreamer::ResetKeepFaceAliveLastStreamTimeout()
+  {
+    _longEnoughSinceLastStreamTimeout_s = kDefaultLongEnoughSinceLastStreamTimeout_s;
+  }
   
 } // namespace Cozmo
 } // namespace Anki

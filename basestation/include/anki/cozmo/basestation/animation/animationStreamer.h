@@ -108,6 +108,11 @@ namespace Cozmo {
     
     virtual const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const = 0;
     
+    // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
+    // and there is no idle animation
+    virtual void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) = 0;
+    virtual void ResetKeepFaceAliveLastStreamTimeout() = 0;
+    
   };
   
   class AnimationStreamer : public IAnimationStreamer
@@ -189,6 +194,12 @@ namespace Cozmo {
     static const s32 NUM_AUDIO_FRAMES_LEAD;
     
     ProceduralFace* GetLastProceduralFace() { return _lastProceduralFace.get(); }
+    
+    // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
+    // and there is no idle animation
+    void SetKeepFaceAliveLastStreamTimeout(const f32 time_s) override
+      { _longEnoughSinceLastStreamTimeout_s = time_s; }
+    void ResetKeepFaceAliveLastStreamTimeout() override;
 
   private:
     
@@ -348,6 +359,10 @@ namespace Cozmo {
     // For handling incoming messages
     std::vector<Signal::SmartHandle> _eventHandlers;
     void SetupHandlers(IExternalInterface* externalInterface);
+    
+    // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
+    // idle animation
+    f32 _longEnoughSinceLastStreamTimeout_s;
 
   }; // class AnimationStreamer
 
