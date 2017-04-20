@@ -128,7 +128,9 @@ namespace Anki {
         }
         case TestState::ReadSingleBlob:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_writeAckd && _lastResult == NVStorage::NVResult::NV_OKAY, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _writeAckd,
+                                                _lastResult == NVStorage::NVResult::NV_OKAY)
           {
             ClearAcks();
           
@@ -145,7 +147,9 @@ namespace Anki {
         }
         case TestState::VerifySingleBlob:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_readAckd && _lastResult == NVStorage::NVResult::NV_OKAY, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _readAckd,
+                                                _lastResult == NVStorage::NVResult::NV_OKAY)
           {
             ClearAcks();
             
@@ -180,7 +184,9 @@ namespace Anki {
         }
         case TestState::ReadMultiBlob:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_writeAckd && _lastResult == NVStorage::NVResult::NV_OKAY, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                                _writeAckd,
+                                                _lastResult == NVStorage::NVResult::NV_OKAY)
           {
             ClearAcks();
             
@@ -197,7 +203,9 @@ namespace Anki {
         }
         case TestState::VerifyMultiBlob:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_readAckd && _lastResult == NVStorage::NVResult::NV_OKAY, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _readAckd,
+                                                _lastResult == NVStorage::NVResult::NV_OKAY)
           {
             ClearAcks();
             
@@ -240,7 +248,7 @@ namespace Anki {
         }
         case TestState::VerifySingleErase:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_eraseAckd && _readAckd, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20, _eraseAckd, _readAckd)
           {
             ClearAcks();
             
@@ -274,7 +282,7 @@ namespace Anki {
         }
         case TestState::VerifyMultiErase:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_eraseAckd && _readAckd, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20, _eraseAckd, _readAckd)
           {
             ClearAcks();
             
@@ -301,8 +309,9 @@ namespace Anki {
         }
         case TestState::WriteData:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_writeAckd &&
-                                           _lastResult == NVStorage::NVResult::NV_BAD_ARGS, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _writeAckd,
+                                                _lastResult == NVStorage::NVResult::NV_BAD_ARGS)
           {
             ClearAcks();
             
@@ -362,7 +371,10 @@ namespace Anki {
         }
         case TestState::Final:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_eraseAckd && _readAckd && _lastResult == NVStorage::NVResult::NV_NOT_FOUND, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                _eraseAckd,
+                                                _readAckd,
+                                                _lastResult == NVStorage::NVResult::NV_NOT_FOUND)
           {
             CST_EXIT();
           }

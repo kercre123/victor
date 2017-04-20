@@ -83,10 +83,10 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
     case TestState::MoveCubeOutOfWay:
     {
       const f32 kHeadAngleTolerance_rad = DEG_TO_RAD(1);
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
-                                            kHeadAngleTolerance_rad) &&
-                                       _observedLightCube &&
-                                       _lightCubeType != ObjectType::InvalidObject, 5) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5,
+                                            NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad, kHeadAngleTolerance_rad),
+                                            _observedLightCube,
+                                            _lightCubeType != ObjectType::InvalidObject) {
         // Move cube out of the way before path planning.
         _testState = TestState::WaitOneSecond;
         // Additional Z height to drop the cube and force a cube delocalization.

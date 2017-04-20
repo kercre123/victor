@@ -93,9 +93,10 @@ namespace Anki {
         }
         case TestState::PickupObject:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                                GetNumObjects() == 1)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -112,11 +113,12 @@ namespace Anki {
         }
         case TestState::Stack:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 36, ROBOT_POSITION_TOL_MM) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM) &&
-                                           GetCarryingObjectID() == 0, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 36, ROBOT_POSITION_TOL_MM),
+                                                NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM),
+                                                GetCarryingObjectID() == 0)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;
@@ -151,12 +153,13 @@ namespace Anki {
                            GetRobotPose().GetTranslation().x(),
                            GetRobotPose().GetTranslation().y());
           
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1 &&
-                                           NEAR(pose0.GetTranslation().z(), 65, BLOCK_HEIGHT_TOL_MM) &&
-                                           NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 105, ROBOT_POSITION_TOL_MM) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM), 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1,
+                                                NEAR(pose0.GetTranslation().z(), 65, BLOCK_HEIGHT_TOL_MM),
+                                                NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 105, ROBOT_POSITION_TOL_MM),
+                                                NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM))
           {  
             StopMovie();
             CST_EXIT();

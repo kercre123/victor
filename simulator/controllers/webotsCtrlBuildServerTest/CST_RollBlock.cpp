@@ -80,9 +80,10 @@ namespace Anki {
         }
         case TestState::RollObject:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                                GetNumObjects() == 1)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -103,9 +104,10 @@ namespace Anki {
           // Verify robot has rolled the block
           Pose3d pose;
           GetObjectPose(0, pose);
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1 &&
-                                           pose.GetRotationAngle().IsNear(-1.5f, 0.2f), 25)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(25,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1,
+                                                pose.GetRotationAngle().IsNear(-1.5f, 0.2f))
           {
             StopMovie();
             CST_EXIT();

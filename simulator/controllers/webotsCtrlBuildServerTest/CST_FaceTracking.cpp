@@ -70,10 +70,10 @@ s32 CST_FaceTracking::UpdateSimInternal()
 
     case TestState::WaitToObserveFace:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(HasXSecondsPassedYet(1) &&
-                                       _faceIsObserved &&
-                                       NEAR(GetRobotHeadAngle_rad(), headLookupAngle_rad, headAngleTolerance_rad),
-                                       5) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5,
+                                            HasXSecondsPassedYet(1),
+                                            _faceIsObserved,
+                                            NEAR(GetRobotHeadAngle_rad(), headLookupAngle_rad, headAngleTolerance_rad)) {
         // Move in the y direction
         _face->setVelocity((double[]){0, 1, 0, 0, 0, 0});
         _testState = TestState::StopFace1;
@@ -95,11 +95,10 @@ s32 CST_FaceTracking::UpdateSimInternal()
       
       const Vec3f expectedFaceTranslation(686, 255, 389);
       const f32 margin = 20;
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(
-          NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), margin) &&
-          NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), margin) &&
-          NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin),
-          2) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(2,
+                                            NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), margin),
+                                            NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), margin),
+                                            NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin)) {
         // Moving at an faster but arbitrary speed
         _face->setVelocity((double[]){-1.5, -1.5, -1.1, 0, 0, 0});
         _testState = TestState::StopFace2;
@@ -120,11 +119,10 @@ s32 CST_FaceTracking::UpdateSimInternal()
       // (332, -102, 136) is the appx. position of the face after translating for 0.15 seconds.
       const Vec3f expectedFaceTranslation(347, -102, 138);
       const f32 margin = 10.f;
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(
-          NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), margin) &&
-          NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), margin) &&
-          NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin),
-          2) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(2,
+                                            NEAR(_facePose.GetTranslation().x(), expectedFaceTranslation.x(), margin),
+                                            NEAR(_facePose.GetTranslation().y(), expectedFaceTranslation.y(), margin),
+                                            NEAR(_facePose.GetTranslation().z(), expectedFaceTranslation.z(), margin)) {
         CST_EXIT();
       }
       break;

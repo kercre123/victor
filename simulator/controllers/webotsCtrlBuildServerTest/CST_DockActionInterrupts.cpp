@@ -76,9 +76,10 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
     }
     case TestState::StartPickup:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                       NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                       GetNumObjects() == 2, DEFAULT_TIMEOUT)
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                            GetNumObjects() == 2)
       {
         ExternalInterface::QueueSingleAction m;
         m.robotID = 1;

@@ -4,7 +4,7 @@
 
 1. Create a .cpp file in this directory with a class that inherits from `CozmoSimTestController`. The class name should start with `CST_`. This is just convention and not required for functionality.
 2. Make sure you register the class using `REGISTER_COZMO_SIM_TEST_CLASS()`.
-3. Use `CST_ASSERT()` and `CST_EXPECT()` macros to test conditions of interest. There are also helper macros such as `IF_CONDITION_WITH_TIMEOUT_ASSERT` which may be useful. Use `CST_EXIT()` to properly exit your test.
+3. Use `CST_ASSERT()` and `CST_EXPECT()` macros to test conditions of interest. There are also helper macros such as `IF_CONDITION_WITH_TIMEOUT_ASSERT` and `IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT` which may be useful. Use `CST_EXIT()` to properly exit your test.
 4. Add the name of the test class and world file to `project/build-scripts/webots/webotsTests.cfg`. The world file should be added to `simulator/worlds/` and must contain an instance of each of the following:
     * BlockWorldComms (i.e. Cozmo engine)
     * CozmoBot (i.e. Cozmo robot)

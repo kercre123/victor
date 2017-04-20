@@ -84,12 +84,13 @@ namespace Anki {
           const bool nearLift = NEAR(liftAngle, animationLift, 1);
           
           // Verify that lift is in up position
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(nearAngle &&
-                                           nearX &&
-                                           nearY &&
-                                           nearZ &&
-                                           nearHead &&
-                                           nearLift, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                nearAngle,
+                                                nearX,
+                                                nearY,
+                                                nearZ,
+                                                nearHead,
+                                                nearLift);
           {
             CST_EXIT();
           }

@@ -84,9 +84,10 @@ namespace Anki {
         }
         case TestState::PickupHigh:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(10.f), HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(10.f), HEAD_ANGLE_TOL),
+                                                GetNumObjects() == 1)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -107,8 +108,9 @@ namespace Anki {
         }
         case TestState::TestDone:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == _id, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == _id)
           {
             StopMovie();
             CST_EXIT();

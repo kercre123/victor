@@ -254,8 +254,9 @@ namespace Cozmo {
         
       case TestState::LocalizeToObjectC:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_objectID_C.IsSet() &&
-                                         _robotState.localizedToObjectID == _objectID_C, 3)
+        IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(3,
+                                              _objectID_C.IsSet(),
+                                              _robotState.localizedToObjectID == _objectID_C)
         {
           // We should only know about one object now: Object C
           CST_ASSERT(CheckObjectPoses({2}, "LocalizeToObjectC"),

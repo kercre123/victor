@@ -112,9 +112,10 @@ namespace Anki {
         }
         case TestState::DockingSpeed1:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                                GetNumObjects() == 1)
           {
             PRINT_NAMED_INFO("DockingSpeed1", "Docking with speed:%f accel:%f decel:%f", mp.dockSpeed_mmps, mp.accel_mmps2, mp.dockDecel_mmps2);
           
@@ -135,9 +136,10 @@ namespace Anki {
         }
         case TestState::DockingSpeed2:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1 &&
-                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1,
+                                                GetNumObjects() == 1)
           {
             ResetTest();
             
@@ -163,8 +165,9 @@ namespace Anki {
         }
         case TestState::DockingSpeed3:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1)
           {
             ResetTest();
             
@@ -189,8 +192,9 @@ namespace Anki {
         }
         case TestState::DockingSpeed4:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1)
           {
             ResetTest();
             
@@ -216,8 +220,9 @@ namespace Anki {
         }
         case TestState::DockingSpeed5:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1)
           {
             ResetTest();
             
@@ -242,8 +247,9 @@ namespace Anki {
         }
         case TestState::TestDone:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == 0, 20)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == 0)
           {
             StopMovie();
             CST_EXIT();
@@ -252,8 +258,9 @@ namespace Anki {
         }
         case TestState::PlaceBlock:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == 0, 55)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(55,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == 0)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -274,10 +281,11 @@ namespace Anki {
         case TestState::VerifyPlaced:
         {
           Pose3d pose0 = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1 &&
-                                           _placeActionCompleted &&
-                                           NEAR(pose0.GetTranslation().z(), 22, 1), 55)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(55,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                GetCarryingObjectID() == -1,
+                                                _placeActionCompleted,
+                                                NEAR(pose0.GetTranslation().z(), 22, 1))
           {
             ResetTest();
             
@@ -316,9 +324,10 @@ namespace Anki {
         }
         case TestState::ResetTest:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, 55)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(55,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                                GetNumObjects() == 1)
           {
             _testState = _nextState;
           }
