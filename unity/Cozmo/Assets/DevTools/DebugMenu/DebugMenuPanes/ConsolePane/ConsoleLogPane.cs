@@ -79,8 +79,8 @@ public class ConsoleLogPane : MonoBehaviour {
 
   // TODO add react behavior dropdown
   public void HandleTogglePause(bool enable) {
-    if (HomeHub.Instance != null) {
-      var game = HomeHub.Instance.MiniGameInstance;
+    if (HubWorldBase.Instance != null) {
+      var game = HubWorldBase.Instance.GetMinigameInstance();
       if (game != null) {
         if (game.Paused == false && enable) {
           game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);

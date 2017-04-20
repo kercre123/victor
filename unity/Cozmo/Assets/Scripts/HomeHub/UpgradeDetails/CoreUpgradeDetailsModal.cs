@@ -542,9 +542,14 @@ namespace Cozmo.Upgrades {
       if (_UpgradeTween != null) {
         _UpgradeTween.Kill();
       }
-      HomeHub.HomeHub instance = HomeHub.HomeHub.Instance;
-      if (instance != null && instance.HomeViewInstance != null) {
-        instance.HomeViewInstance.CheckForRewardSequence();
+      HubWorldBase instance = HubWorldBase.Instance;
+      if (instance != null) {
+        if (instance is HomeHub.HomeHub) {
+          HomeHub.HomeHub homeHubInstance = (HomeHub.HomeHub)instance;
+          if (homeHubInstance.HomeViewInstance != null) {
+            homeHubInstance.HomeViewInstance.CheckForRewardSequence();
+          }
+        }
       }
       if (_QuitConfirmAlertModal != null) {
         _QuitConfirmAlertModal.CloseDialogImmediately();

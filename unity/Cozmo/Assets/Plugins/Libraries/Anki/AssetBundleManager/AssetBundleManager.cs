@@ -654,7 +654,9 @@ namespace Anki {
       checkin_ui_prefabs,
       onboarding_ui_sprites,
       onboarding_ui_prefabs,
-      platform_specific_start_view_sprites
+      platform_specific_start_view_sprites,
+      needs_hub_connection,
+      needs_hub_view
     }
 
     [Serializable]

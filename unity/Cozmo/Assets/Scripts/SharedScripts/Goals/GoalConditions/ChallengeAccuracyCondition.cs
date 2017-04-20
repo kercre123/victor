@@ -29,7 +29,7 @@ namespace Anki {
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if ((cozEvent is MinigameGameEvent)) {
-          GameBase miniGameInstance = HomeHub.Instance.MiniGameInstance;
+          GameBase miniGameInstance = HubWorldBase.Instance.GetMinigameInstance();
           if (miniGameInstance == null) { return false; }
           MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
           if (miniGameEvent.GameSpecificValues != null && miniGameEvent.GameSpecificValues.ContainsKey(kConditionKey)) {

@@ -105,10 +105,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _LoadingBar: {fileID: 0}
   _LoadingBarLabel: {fileID: 0}
-  _AssetBundlesToLoad:
-  - main_scene
-  _MainSceneAssetBundleName: main_scene
-  _MainSceneName: HomeHub
+  _HomeHubData:
+    AssetBundlesToLoad:
+    - main_scene
+    MainSceneAssetBundleName: main_scene
+    MainSceneName: HomeHub
+  _NeedsHubData:
+    AssetBundlesToLoad:
+    - needs_hub_scene
+    MainSceneAssetBundleName: needs_hub_scene
+    MainSceneName: NeedsHub
   _BasicUIPrefabAssetBundleName: basic_ui_prefabs
   _GameMetadataAssetBundleName: minigame_metadata
   _DebugAssetBundleName: debug_prefabs
@@ -116,7 +122,8 @@ MonoBehaviour:
   - DebugMenuManager
   - VizManager
   _LoadingCanvas: {fileID: 0}
-  _AndroidPermissionPrefab: {fileID: 0}
+  _AndroidPermissionPrefab: {fileID: 155414, guid: 75db25c32349545d1b369bdf95d35477,
+    type: 2}
   _LoadingVersionLabel: {fileID: 0}
   _LoadingDeviceIdLabel: {fileID: 0}
 --- !u!1001 &100100000

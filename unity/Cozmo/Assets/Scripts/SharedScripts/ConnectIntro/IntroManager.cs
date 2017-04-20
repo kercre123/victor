@@ -18,9 +18,6 @@ public class IntroManager : MonoBehaviour {
   private FirstTimeConnectView _FirstTimeConnectViewInstance;
 
   [SerializeField]
-  private AssetBundleNames _PlatformSpecificAssetBundleName;
-
-  [SerializeField]
   private GameObjectDataLink _CheckInViewPrefabData;
   private CheckInFlowView _CheckInViewInstance;
 
@@ -73,23 +70,7 @@ public class IntroManager : MonoBehaviour {
 
     // Before starting, reset some state
     if (DebugMenuManager.Instance.DemoMode) {
-      // Set needing onboarding home, but not other phases
-      DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-      profile.OnboardingStages[OnboardingManager.OnboardingPhases.Home] = 0;
-      // reset the item inventory
-      List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
-      for (int i = 0; i < itemIDs.Count; ++i) {
-        profile.Inventory.SetItemAmount(itemIDs[i], 0);
-      }
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Loot);
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
-      // Needs to set all difficulties unlocked ( don't just return in UI so that we don't have "new difficulty unlocked popups");
-      ChallengeData[] challengeList = ChallengeDataList.Instance.ChallengeData;
-      for (int i = 0; i < challengeList.Length; ++i) {
-        profile.GameInstructionalVideoPlayed[challengeList[i].ChallengeID] = true;
-        profile.GameDifficulty[challengeList[i].ChallengeID] = challengeList[i].DifficultyOptions.Count;
-      }
-      // Later on Robot unlocks happen
+      SetupForDemoMode();
     }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -108,6 +89,34 @@ public class IntroManager : MonoBehaviour {
     else {
       ShowCheckInFlow();
     }
+  }
+
+  private void IntroFlowComplete() {
+    _StartFlowInProgress = false;
+    GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
+    hubWorldObject.transform.SetParent(transform, false);
+    _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
+    _HubWorldInstance.LoadHubWorld();
+  }
+
+  private void SetupForDemoMode() {
+    // Set needing onboarding home, but not other phases
+    DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    profile.OnboardingStages[OnboardingManager.OnboardingPhases.Home] = 0;
+    // reset the item inventory
+    List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
+    for (int i = 0; i < itemIDs.Count; ++i) {
+      profile.Inventory.SetItemAmount(itemIDs[i], 0);
+    }
+    OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Loot);
+    OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+    // Needs to set all difficulties unlocked ( don't just return in UI so that we don't have "new difficulty unlocked popups");
+    ChallengeData[] challengeList = ChallengeDataList.Instance.ChallengeData;
+    for (int i = 0; i < challengeList.Length; ++i) {
+      profile.GameInstructionalVideoPlayed[challengeList[i].ChallengeID] = true;
+      profile.GameDifficulty[challengeList[i].ChallengeID] = challengeList[i].DifficultyOptions.Count;
+    }
+    // Later on Robot unlocks happen
   }
 
   public void ForceBoot() {
@@ -138,58 +147,7 @@ public class IntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleFirstTimeConnectionFlowComplete() {
-    AssetBundleManager.Instance.UnloadAssetBundle(_FirstTimeConnectViewPrefabData.AssetBundle);
-    if (_FirstTimeConnectViewInstance != null) {
-      _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
-      _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
-      _FirstTimeConnectViewInstance.CloseDialog();
-      _FirstTimeConnectViewInstance = null;
-    }
-    IntroFlowComplete();
-  }
-
-  private void HandleCheckinFlowComplete() {
-    AssetBundleManager.Instance.UnloadAssetBundle(_CheckInViewPrefabData.AssetBundle);
-    if (_CheckInViewInstance != null) {
-      _CheckInViewInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
-      _CheckInViewInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
-      _CheckInViewInstance.CloseDialog();
-      _CheckInViewInstance = null;
-    }
-    IntroFlowComplete();
-  }
-
-  private void HandleFirstTimeConnectFlowQuit() {
-    // destroy and re-create the connect dialog to restart the flow
-    DAS.Info("IntroManager.HandleConnectionFlowQuit", "Restarting Connection Dialog Flow");
-    if (_FirstTimeConnectViewInstance != null) {
-      _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
-      _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
-      _FirstTimeConnectViewInstance.CloseDialogImmediately();
-      _FirstTimeConnectViewInstance = null;
-    }
-    ShowFirstTimeConnectDialog();
-  }
-
-  private void ShowFirstTimeConnectDialog() {
-    AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectViewPrefabData.AssetBundle, LoadConnectView);
-  }
-
-  private void HandleCheckInFlowQuit() {
-    // destroy and re-create the connect dialog to restart the flow
-    DAS.Info("IntroManager.HandleCheckInFlowQuit", "Restarting CheckIn Dialog Flow");
-
-    if (_CheckInViewInstance != null) {
-      _CheckInViewInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
-      _CheckInViewInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
-      _CheckInViewInstance.CloseDialogImmediately();
-      _CheckInViewInstance = null;
-    }
-
-    ShowCheckInFlow();
-  }
-
+  #region FirstTimeFlow
   private void ShowFirstTimeFlow() {
     AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectViewPrefabData.AssetBundle, LoadConnectView);
   }
@@ -213,14 +171,31 @@ public class IntroManager : MonoBehaviour {
     _FirstTimeConnectViewInstance.ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
   }
 
-  private void IntroFlowComplete() {
-    _StartFlowInProgress = false;
-    GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
-    hubWorldObject.transform.SetParent(transform, false);
-    _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
-    _HubWorldInstance.LoadHubWorld();
+  private void HandleFirstTimeConnectionFlowComplete() {
+    AssetBundleManager.Instance.UnloadAssetBundle(_FirstTimeConnectViewPrefabData.AssetBundle);
+    if (_FirstTimeConnectViewInstance != null) {
+      _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
+      _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
+      _FirstTimeConnectViewInstance.CloseDialog();
+      _FirstTimeConnectViewInstance = null;
+    }
+    IntroFlowComplete();
   }
 
+  private void HandleFirstTimeConnectFlowQuit() {
+    // destroy and re-create the connect dialog to restart the flow
+    DAS.Info("IntroManager.HandleConnectionFlowQuit", "Restarting Connection Dialog Flow");
+    if (_FirstTimeConnectViewInstance != null) {
+      _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
+      _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
+      _FirstTimeConnectViewInstance.CloseDialogImmediately();
+      _FirstTimeConnectViewInstance = null;
+    }
+    ShowFirstTimeFlow();
+  }
+  #endregion
+
+  #region Check-In-Flow
   private void ShowCheckInFlow() {
     AssetBundleManager.Instance.LoadAssetBundleAsync(_CheckInViewPrefabData.AssetBundle, LoadCheckInView);
   }
@@ -243,4 +218,30 @@ public class IntroManager : MonoBehaviour {
     _CheckInViewInstance.ConnectionFlowComplete += HandleCheckinFlowComplete;
     _CheckInViewInstance.CheckInFlowQuit += HandleCheckInFlowQuit;
   }
+
+  private void HandleCheckinFlowComplete() {
+    AssetBundleManager.Instance.UnloadAssetBundle(_CheckInViewPrefabData.AssetBundle);
+    if (_CheckInViewInstance != null) {
+      _CheckInViewInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
+      _CheckInViewInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
+      _CheckInViewInstance.CloseDialog();
+      _CheckInViewInstance = null;
+    }
+    IntroFlowComplete();
+  }
+
+  private void HandleCheckInFlowQuit() {
+    // destroy and re-create the connect dialog to restart the flow
+    DAS.Info("IntroManager.HandleCheckInFlowQuit", "Restarting CheckIn Dialog Flow");
+
+    if (_CheckInViewInstance != null) {
+      _CheckInViewInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
+      _CheckInViewInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
+      _CheckInViewInstance.CloseDialogImmediately();
+      _CheckInViewInstance = null;
+    }
+
+    ShowCheckInFlow();
+  }
+  #endregion
 }

@@ -11,10 +11,6 @@ using Cozmo.RequestGame;
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
-    private static HomeHub _Instance = null;
-
-    public static HomeHub Instance { get { return _Instance; } }
-
     [SerializeField]
     private SerializableAssetBundleNames _MinigameDataPrefabAssetBundle;
 
@@ -41,12 +37,6 @@ namespace Cozmo.HomeHub {
 
     private GameBase _MiniGameInstance;
 
-    public GameBase MiniGameInstance {
-      get {
-        return _MiniGameInstance;
-      }
-    }
-
     private CompletedChallengeData _CurrentChallengePlaying;
 
     private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
@@ -68,7 +58,7 @@ namespace Cozmo.HomeHub {
 
     public override void DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
-      CloseMiniGameImmediately();
+      CloseMinigameImmediately();
       if (_ChallengeDetailsModalInstance != null) {
         _ChallengeDetailsModalInstance.CloseDialogImmediately();
       }
@@ -84,6 +74,10 @@ namespace Cozmo.HomeHub {
       }
       // Kill yourself HomeHub
       GameObject.Destroy(this.gameObject);
+    }
+
+    public override GameBase GetMinigameInstance() {
+      return _MiniGameInstance;
     }
 
     private void RefreshChallengeUnlockInfo(object message) {
@@ -180,7 +174,7 @@ namespace Cozmo.HomeHub {
       });
     }
 
-    public void StartFreeplay(IRobot robot) {
+    public override void StartFreeplay(IRobot robot) {
 
       if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
           !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home) &&
@@ -446,7 +440,7 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Save();
     }
 
-    public void CloseMiniGameImmediately() {
+    public override void CloseMinigameImmediately() {
       if (_MiniGameInstance != null) {
         DeregisterMinigameEvents();
         _MiniGameInstance.CloseMinigameImmediately();
@@ -463,7 +457,7 @@ namespace Cozmo.HomeHub {
         _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
         _MiniGameInstance.OnShowEndGameDialog -= HandleEndGameDialog;
         _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
-        if (MiniGameInstance.SharedMinigameView != null) {
+        if (_MiniGameInstance.SharedMinigameView != null) {
           _MiniGameInstance.SharedMinigameView.DialogCloseAnimationFinished -= HandleMinigameFinishedClosing;
         }
       }

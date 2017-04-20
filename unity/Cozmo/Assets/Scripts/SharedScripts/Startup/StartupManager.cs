@@ -16,6 +16,12 @@ using System;
 /// Also loads all needed Asset Bundles for the initial app start.
 /// </summary>
 public class StartupManager : MonoBehaviour {
+  [System.Serializable]
+  public class MainSceneData {
+    public string[] AssetBundlesToLoad;
+    public string MainSceneAssetBundleName;
+    public string MainSceneName;
+  }
 
   private const string _kUHDVariant = "uhd";
   private const string _kHDVariant = "hd";
@@ -43,13 +49,10 @@ public class StartupManager : MonoBehaviour {
   private float _CurrentProgress;
 
   [SerializeField]
-  private string[] _AssetBundlesToLoad;
+  private MainSceneData _HomeHubData;
 
   [SerializeField]
-  private string _MainSceneAssetBundleName;
-
-  [SerializeField]
-  private string _MainSceneName;
+  private MainSceneData _NeedsHubData;
 
   [SerializeField]
   private string _BasicUIPrefabAssetBundleName;
@@ -83,6 +86,8 @@ public class StartupManager : MonoBehaviour {
   private bool _IsDebugBuild = false;
 
   private bool _EngineConnected = false;
+
+  private MainSceneData _MainSceneData;
 
   public void StartLoadAsync() {
     StartCoroutine(LoadCoroutine());
@@ -121,6 +126,14 @@ public class StartupManager : MonoBehaviour {
     Screen.orientation = ScreenOrientation.LandscapeLeft;
     Localization.LoadLocaleAndCultureInfo(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage,
                                           DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSettingOverride);
+
+    // IVY TODO: Put behind SHIPPING if def?
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseNeedsHub) {
+      _MainSceneData = _NeedsHubData;
+    }
+    else {
+      _MainSceneData = _HomeHubData;
+    }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;
@@ -413,7 +426,7 @@ public class StartupManager : MonoBehaviour {
   private IEnumerator LoadAssetBundles(AssetBundleManager assetBundleManager) {
     // Load initial asset bundles
     int loadedAssetBundles = 0;
-    foreach (string assetBundleName in _AssetBundlesToLoad) {
+    foreach (string assetBundleName in _MainSceneData.AssetBundlesToLoad) {
       assetBundleManager.LoadAssetBundleAsync(assetBundleName,
         (success) => {
           if (!success) {
@@ -424,7 +437,7 @@ public class StartupManager : MonoBehaviour {
         });
     }
 
-    while (loadedAssetBundles < _AssetBundlesToLoad.Length) {
+    while (loadedAssetBundles < _MainSceneData.AssetBundlesToLoad.Length) {
       yield return 0;
     }
   }
@@ -528,9 +541,10 @@ public class StartupManager : MonoBehaviour {
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
 #if FACTORY_TEST
-    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, "FactoryTest", loadAdditively: false, callback: null);
+    assetBundleManager.LoadSceneAsync(_HomeHubData.MainSceneAssetBundleName, "FactoryTest", loadAdditively: false, callback: null);
 #else
-    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
+    assetBundleManager.LoadSceneAsync(_MainSceneData.MainSceneAssetBundleName, _MainSceneData.MainSceneName,
+                                      loadAdditively: false, callback: null);
 #endif
   }
 

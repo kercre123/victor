@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using Cozmo.UI;
 using System;
-using System.Collections;
 using DataPersistence;
+using Cozmo.ConnectionFlow;
 
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
@@ -145,9 +145,9 @@ namespace Cozmo {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application being paused");
         _IsPaused = true;
 
-        Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
+        HubWorldBase hub = HubWorldBase.Instance;
         if (null != hub) {
-          hub.CloseMiniGameImmediately();
+          hub.CloseMinigameImmediately();
         }
 
         _ShouldPlayWakeupTimestamp = -1;
@@ -215,7 +215,7 @@ namespace Cozmo {
     }
 
     private void HandleFinishedWakeup(bool success) {
-      Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
+      HubWorldBase hub = HubWorldBase.Instance;
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
 
       if (null != robot && null != hub) {
@@ -226,7 +226,12 @@ namespace Cozmo {
         // If this is fired because we are returning from backgrounding the app
         // but Cozmo has disconnected, CloseAllDialogs and handle it like a disconnect
         PauseManager.Instance.PauseManagerReset();
-        IntroManager.Instance.ForceBoot();
+        if (IntroManager.Instance != null) {
+          IntroManager.Instance.ForceBoot();
+        }
+        else if (NeedsConnectionManager.Instance != null) {
+          NeedsConnectionManager.Instance.ForceBoot();
+        }
       }
     }
 

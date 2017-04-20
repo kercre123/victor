@@ -358,8 +358,10 @@ public class OnboardingManager : MonoBehaviour {
       _OnboardingUIInstance.RemoveDebugButtons();
       _CurrPhase = OnboardingPhases.None;
       UpdateStage();
-      if (HomeHub.Instance != null) {
-        HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+
+      HubWorldBase instance = HubWorldBase.Instance;
+      if (instance != null) {
+        instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
       }
       UnloadIfDoneWithAllPhases();
     }

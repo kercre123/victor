@@ -17,4 +17,9 @@ public static class SceneOpener {
   public static void OpenUISandboxScene() {
     EditorSceneManager.OpenScene("Assets/Scenes/UISandbox.unity", OpenSceneMode.Single);
   }
+
+  [MenuItem("Cozmo/Scenes/Open UI Sandbox Scene %#6")]
+  public static void OpenNeedsHubScene() {
+    EditorSceneManager.OpenScene("Assets/AssetBundles/NeedsHub/NeedsHubScene-Bundle/NeedsHub.unity", OpenSceneMode.Single);
+  }
 }

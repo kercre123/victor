@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 using Cozmo;
+using Cozmo.ConnectionFlow;
 
 public class ConnectionPane : MonoBehaviour {
   [SerializeField]
@@ -16,7 +16,12 @@ public class ConnectionPane : MonoBehaviour {
 
   private void OnDisconnectButtonClicked() {
     DebugMenuManager.Instance.CloseDebugMenuDialog();
-    IntroManager.Instance.ForceBoot();
+    if (IntroManager.Instance != null) {
+      IntroManager.Instance.ForceBoot();
+    }
+    else if (NeedsConnectionManager.Instance != null) {
+      NeedsConnectionManager.Instance.ForceBoot();
+    }
   }
 
   private void OnLowBatteryButtonClicked() {

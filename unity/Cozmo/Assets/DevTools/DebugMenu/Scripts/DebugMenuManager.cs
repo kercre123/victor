@@ -68,9 +68,9 @@ public class DebugMenuManager : MonoBehaviour {
   }
 
   public GameBase GetCurrMinigame() {
-    if (HomeHub.Instance != null) {
-      if (HomeHub.Instance.MiniGameInstance != null) {
-        return HomeHub.Instance.MiniGameInstance;
+    if (HubWorldBase.Instance != null) {
+      if (HubWorldBase.Instance.GetMinigameInstance() != null) {
+        return HubWorldBase.Instance.GetMinigameInstance();
       }
     }
     return null;

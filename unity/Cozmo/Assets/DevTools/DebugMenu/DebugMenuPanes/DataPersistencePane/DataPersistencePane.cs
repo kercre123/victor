@@ -1,10 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
-using System;
 using Cozmo.HomeHub;
-using System.Linq;
+using Cozmo.ConnectionFlow;
 
 namespace DataPersistence {
   public class DataPersistencePane : MonoBehaviour {
@@ -72,7 +69,12 @@ namespace DataPersistence {
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
       DataPersistenceManager.Instance.Save();
 
-      IntroManager.Instance.ForceBoot();
+      if (IntroManager.Instance != null) {
+        IntroManager.Instance.ForceBoot();
+      }
+      else if (NeedsConnectionManager.Instance != null) {
+        NeedsConnectionManager.Instance.ForceBoot();
+      }
 
       // Clear the block pool
       Anki.Cozmo.ExternalInterface.BlockPoolResetMessage blockPoolResetMessage = new Anki.Cozmo.ExternalInterface.BlockPoolResetMessage();
@@ -94,7 +96,12 @@ namespace DataPersistence {
         DataPersistenceManager.Instance.Save();
       }
       DailyGoalManager.Instance.LoadDailyGoalGenerationData();
-      IntroManager.Instance.ForceBoot();
+      if (IntroManager.Instance != null) {
+        IntroManager.Instance.ForceBoot();
+      }
+      else if (NeedsConnectionManager.Instance != null) {
+        NeedsConnectionManager.Instance.ForceBoot();
+      }
     }
 
     private void InitSkills() {

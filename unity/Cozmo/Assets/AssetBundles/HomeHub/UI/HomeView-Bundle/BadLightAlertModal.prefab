@@ -5,11 +5,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22436362}
-  - 222: {fileID: 22287782}
-  - 114: {fileID: 11413214}
+  - component: {fileID: 22436362}
+  - component: {fileID: 22287782}
+  - component: {fileID: 11413214}
   m_Layer: 5
   m_Name: BottomText
   m_TagString: Untagged
@@ -22,11 +22,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22414646}
-  - 222: {fileID: 22292316}
-  - 114: {fileID: 11489078}
+  - component: {fileID: 22414646}
+  - component: {fileID: 22292316}
+  - component: {fileID: 11489078}
   m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
@@ -39,10 +39,10 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22457750}
-  - 114: {fileID: 11450674}
+  - component: {fileID: 22457750}
+  - component: {fileID: 11450674}
   m_Layer: 5
   m_Name: CloseButtonContainer
   m_TagString: Untagged
@@ -55,13 +55,13 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22461660}
-  - 222: {fileID: 22208250}
-  - 114: {fileID: 11417498}
-  - 114: {fileID: 11497196}
-  - 225: {fileID: 22520596}
+  - component: {fileID: 22461660}
+  - component: {fileID: 22208250}
+  - component: {fileID: 11417498}
+  - component: {fileID: 11497196}
+  - component: {fileID: 22520596}
   m_Layer: 5
   m_Name: BadLightAlertModal
   m_TagString: Untagged
@@ -74,11 +74,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22457872}
-  - 222: {fileID: 22216862}
-  - 114: {fileID: 11466024}
+  - component: {fileID: 22457872}
+  - component: {fileID: 22216862}
+  - component: {fileID: 11466024}
   m_Layer: 5
   m_Name: ErrorBanner
   m_TagString: Untagged
@@ -91,11 +91,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22468048}
-  - 222: {fileID: 22215842}
-  - 114: {fileID: 11415154}
+  - component: {fileID: 22468048}
+  - component: {fileID: 22215842}
+  - component: {fileID: 11415154}
   m_Layer: 5
   m_Name: TitleText
   m_TagString: Untagged
@@ -277,24 +277,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventDialogName: no_text_alert_view
-  _DASEventDialogType: 2
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
+  _AlphaController: {fileID: 22520596}
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
-  _ModalPriorityData:
-    _PriorityLayer: 1000
-    _PriorityOffset: 0
-    _LowPriorityAction: 1
-    _HighPriorityAction: 0
+  _PreventForceClose: 0
   DimBackground: 1
   _AlertTitleText: {fileID: 0}
   _AlertMessageText: {fileID: 0}
   _PrimaryButton: {fileID: 0}
   _SecondaryButton: {fileID: 0}
   _SecondaryButtonLayoutElement: {fileID: 0}
-  _AlphaController: {fileID: 22520596}
   _Icon: {fileID: 0}
 --- !u!222 &22208250
 CanvasRenderer:
@@ -335,7 +330,6 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22468048}
   - {fileID: 22457750}
@@ -343,6 +337,7 @@ RectTransform:
   - {fileID: 22436362}
   m_Father: {fileID: 22461660}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -357,10 +352,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22414646}
   m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: -2.15, y: 163.51001}
@@ -375,10 +370,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22414646}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 170, y: -170}
@@ -393,10 +388,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22414646}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0.25, y: 0}
@@ -411,11 +406,11 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22414646}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -430,10 +425,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22414646}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -189.49973}
