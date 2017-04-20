@@ -312,8 +312,8 @@ static void onAdvertisePacket() {
 
   if (slot < 0) {
     if (sendDiscovery) {
-      ObjectDiscovered msg;
-      msg.object_type = GetObjectType((ActiveObjectType) advertisePacket.model); // .model is type (uint16_t)
+      ObjectAvailable msg;
+      msg.objectType = GetObjectType((ActiveObjectType) advertisePacket.model); // .model is type (uint16_t)
       msg.factory_id = advertId;
       msg.rssi = NRF_RADIO->RSSISAMPLE;
       RobotInterface::SendMessage(msg);

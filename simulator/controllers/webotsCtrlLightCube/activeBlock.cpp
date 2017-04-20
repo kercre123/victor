@@ -37,8 +37,8 @@ namespace {
 
   const s32 TIMESTEP = 10; // ms
 
-  // Number of cycles (of length TIMESTEP) in between transmission of discovered messages
-  const u32 DISCOVERED_MESSAGE_PERIOD = 100;
+  // Number of cycles (of length TIMESTEP) in between transmission of ObjectAvailable messages
+  const u32 OBJECT_AVAILABLE_MESSAGE_PERIOD = 100;
   
   // Number of cycles (of length TIMESTEP) in between transmission of motion update messages
   // (This is just to throttle movement messages a bit)
@@ -234,7 +234,7 @@ s32 GetBlockID() {
   }
 }
 
-void Process_discovered(const ObjectDiscovered& msg)
+void Process_available(const ObjectAvailable& msg)
 {
   //stub
 }
@@ -579,15 +579,15 @@ Result Update() {
     }
 
     
-    // Send discovered message
-    static u32 discoveredSendCtr = 0;
-    if (++discoveredSendCtr == DISCOVERED_MESSAGE_PERIOD) {
+    // Send ObjectAvailable message
+    static u32 objAvailableSendCtr = 0;
+    if (++objAvailableSendCtr == OBJECT_AVAILABLE_MESSAGE_PERIOD) {
       BlockMessages::LightCubeMessage msg;
-      msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
-      msg.discovered.factory_id = factoryID_;
-      msg.discovered.object_type = objectType_;
+      msg.tag = BlockMessages::LightCubeMessage::Tag_available;
+      msg.available.factory_id = factoryID_;
+      msg.available.objectType = objectType_;
       discoveryEmitter_->send(msg.GetBuffer(), msg.Size());
-      discoveredSendCtr = 0;
+      objAvailableSendCtr = 0;
     }
     
     // Send accel data

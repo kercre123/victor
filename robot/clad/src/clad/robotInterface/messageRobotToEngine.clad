@@ -139,7 +139,7 @@ union RobotToEngine {
   RobotState                 state                  = 0xF0,
   AnimationState             animState              = 0xF1,
   ImageChunk                 image                  = 0xF2,
-  ObjectDiscovered           activeObjectDiscovered = 0xF3,
+  ObjectAvailable            activeObjectAvailable  = 0xF3,
   ImageImuData               imageGyro              = 0xF4,
   ObjectAccel                objectAccel            = 0xF5,
 }

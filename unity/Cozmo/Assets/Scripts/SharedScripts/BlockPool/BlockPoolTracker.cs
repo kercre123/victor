@@ -61,7 +61,7 @@ namespace Cozmo.BlockPool {
     public void CleanUp() {
       _RobotEngineManager.RemoveCallback<U2G.BlockPoolDataMessage>(HandleBlockPoolData);
       _RobotEngineManager.RemoveCallback<ObjectConnectionState>(HandleObjectConnectionState);
-      _RobotEngineManager.RemoveCallback<U2G.ObjectAvailable>(HandleObjectAvailableMsg);
+      _RobotEngineManager.RemoveCallback<ObjectAvailable>(HandleObjectAvailableMsg);
       _RobotEngineManager.RemoveCallback<U2G.ObjectUnavailable>(HandleObjectUnavailableMsg);
 
       SendAvailableObjects(false, (byte)_RobotEngineManager.CurrentRobotID);
@@ -74,7 +74,7 @@ namespace Cozmo.BlockPool {
     public void InitBlockPool() {
       _RobotEngineManager.AddCallback<U2G.BlockPoolDataMessage>(HandleBlockPoolData);
       _RobotEngineManager.AddCallback<ObjectConnectionState>(HandleObjectConnectionState);
-      _RobotEngineManager.AddCallback<U2G.ObjectAvailable>(HandleObjectAvailableMsg);
+      _RobotEngineManager.AddCallback<ObjectAvailable>(HandleObjectAvailableMsg);
       _RobotEngineManager.AddCallback<U2G.ObjectUnavailable>(HandleObjectUnavailableMsg);
 
       // Gets back the InitBlockPool message to fill.
@@ -148,7 +148,7 @@ namespace Cozmo.BlockPool {
       }
     }
 
-    private void HandleObjectAvailableMsg(U2G.ObjectAvailable objAvailableMsg) {
+    private void HandleObjectAvailableMsg(ObjectAvailable objAvailableMsg) {
       switch (objAvailableMsg.objectType) {
       case ObjectType.Block_LIGHTCUBE1:
       case ObjectType.Block_LIGHTCUBE2:

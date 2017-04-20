@@ -18,7 +18,7 @@ namespace BlockMessages
     ObjectBeingCarried  setObjectBeingCarried,
     StreamObjectAccel   streamObjectAccel,
 
-    ObjectDiscovered	  discovered,
+    ObjectAvailable     available,
     ObjectMoved         moved,
     ObjectStoppedMoving stopped,
     ObjectTapped        tapped,

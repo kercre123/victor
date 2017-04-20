@@ -222,7 +222,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
     
     // bind to specific handlers in the robot class
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectAvailable, &BehaviorFactoryTest::HandleActiveObjectAvailable);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::pickAndPlaceResult, &BehaviorFactoryTest::HandlePickAndPlaceResult);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::firmwareVersion, &BehaviorFactoryTest::HandleFirmwareVersion);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryFirmwareVersion, &BehaviorFactoryTest::HandleFactoryFirmwareVersion);
@@ -275,12 +275,12 @@ static const char* kBehaviorTestName = "Behavior factory test";
 
     _numPlacementAttempts = 0;
     
-    _activeObjectDiscovered = false;
+    _activeObjectAvailable = false;
     
     // Sim robot won't hear from any blocks and also won't send back body firmware version
     if(!robot.IsPhysical())
     {
-      _activeObjectDiscovered = true;
+      _activeObjectAvailable = true;
       _gotHWVersion = true;
     }
     
@@ -1475,7 +1475,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       case FactoryTestState::StartPickup:
       {
         // If robot hasn't discovered any active objects by now it probably won't so fail
-        if(!_activeObjectDiscovered)
+        if(!_activeObjectAvailable)
         {
           PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.NoActiveObjectsDiscovered",
                            "Test ending no active objects discovered");
@@ -2041,11 +2041,11 @@ static const char* kBehaviorTestName = "Behavior factory test";
     return RESULT_OK;
   }
   
-  void BehaviorFactoryTest::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
+  void BehaviorFactoryTest::HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
   {
-    const ObjectDiscovered payload = msg.GetData().Get_activeObjectDiscovered();
-    if (IsLightCube(payload.object_type) || IsCharger(payload.object_type)) {
-      _activeObjectDiscovered = true;
+    const ObjectAvailable payload = msg.GetData().Get_activeObjectAvailable();
+    if (IsLightCube(payload.objectType) || IsCharger(payload.objectType)) {
+      _activeObjectAvailable = true;
     }
   }
  

@@ -44,7 +44,7 @@ public:
   void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);

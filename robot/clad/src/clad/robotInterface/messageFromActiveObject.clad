@@ -9,12 +9,10 @@ namespace Anki {
 namespace Cozmo {
 
 // Indicates that an active object is advertising, but not connected.
-// This message is received by engine and then translated into ObjectAvailable
-// that is sent up to game.
-message ObjectDiscovered
+message ObjectAvailable
 {
   uint_32     factory_id,
-  ObjectType  object_type,
+  ObjectType  objectType,
   int_8       rssi
 }
 

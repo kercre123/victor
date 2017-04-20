@@ -94,14 +94,6 @@ message EngineRobotCLADVersionMismatch {
   string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
 }
 
-// Indicates that the active object is advertising, but not connected
-message ObjectAvailable
-{
-  uint_32     factory_id,
-  ObjectType  objectType,
-  int_8       rssi,
-}
-
 // Indicates that a previously advertising object is no longer advertising
 message ObjectUnavailable
 {

@@ -1275,20 +1275,20 @@ namespace Anki {
         memcpy(lcm.GetBuffer(), objectDiscoveryReceiver_->getData(), objectDiscoveryReceiver_->getDataSize());
         switch(lcm.tag)
         {
-          case BlockMessages::LightCubeMessage::Tag_discovered:
+          case BlockMessages::LightCubeMessage::Tag_available:
           {
-            ObjectDiscovered odMsg;
-            memcpy(odMsg.GetBuffer(), lcm.discovered.GetBuffer(), lcm.discovered.Size());
+            ObjectAvailable oaMsg;
+            memcpy(oaMsg.GetBuffer(), lcm.available.GetBuffer(), lcm.available.Size());
             
             // If autoconnect is enabled, assign this block to a slot if another block
             // of the same type is not already assigned.
-            if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.object_type)) {
+            if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(oaMsg.objectType)) {
               for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                 ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
                 if (cubeInfo->assignedFactoryID == 0) {
                   PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%x, slot %d",
-                                   odMsg.factory_id, odMsg.object_type, i);
-                  cubeInfo->assignedFactoryID = odMsg.factory_id;
+                                   oaMsg.factory_id, oaMsg.objectType, i);
+                  cubeInfo->assignedFactoryID = oaMsg.factory_id;
                   break;
                 }
               }
@@ -1299,7 +1299,7 @@ namespace Anki {
             bool isConnected = false;
             for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
               ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
-              if (odMsg.factory_id == cubeInfo->assignedFactoryID) {
+              if (oaMsg.factory_id == cubeInfo->assignedFactoryID) {
                 
                 if (!cubeInfo->connected) {
                   // The pending block connection is processed here so send an ObjectConnectionState message.
@@ -1307,7 +1307,7 @@ namespace Anki {
                   cubeInfo->receiver->setChannel(cubeInfo->assignedFactoryID);
                   cubeInfo->receiver->enable(TIME_STEP);
                   cubeInfo->connected = true;
-                  cubeInfo->object_type = odMsg.object_type;  // This is where we know the device type so set it here
+                  cubeInfo->object_type = oaMsg.objectType;  // This is where we know the device type so set it here
                   SendObjectConnectionState(i);
                 }
                 
@@ -1317,9 +1317,9 @@ namespace Anki {
               }
             }
             if (!isConnected) {
-              // Block is not connected so send discovered message up to engine
-              odMsg.rssi = CalculateObjectRSSI(objectDiscoveryReceiver_->getSignalStrength());
-              RobotInterface::SendMessage(odMsg);
+              // Block is not connected so send ObjectAvailable message up to engine
+              oaMsg.rssi = CalculateObjectRSSI(objectDiscoveryReceiver_->getSignalStrength());
+              RobotInterface::SendMessage(oaMsg);
             }
             
             break;

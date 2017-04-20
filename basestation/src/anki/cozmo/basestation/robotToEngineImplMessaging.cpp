@@ -103,7 +103,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectDiscovered,         &RobotToEngineImplMessaging::HandleActiveObjectDiscovered);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectAvailable,         &RobotToEngineImplMessaging::HandleActiveObjectAvailable);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectConnectionState,    &RobotToEngineImplMessaging::HandleActiveObjectConnectionState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectMoved,              &RobotToEngineImplMessaging::HandleActiveObjectMoved);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectStopped,            &RobotToEngineImplMessaging::HandleActiveObjectStopped);
@@ -460,33 +460,32 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   LOG_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
-void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
-  ANKI_CPU_PROFILE("Robot::HandleActiveObjectDiscovered");
+  ANKI_CPU_PROFILE("Robot::HandleActiveObjectAvailable");
   
-  const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+  const auto& payload = message.GetData().Get_activeObjectAvailable();
   
-  if ( !IsLightCube(payload.object_type) && !IsCharger(payload.object_type)) {
-    PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
+  if ( !IsLightCube(payload.objectType) && !IsCharger(payload.objectType)) {
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectAvailable.UnknownType",
                         "FactoryID: 0x%x, ObjectType: '%s'",
-                        payload.factory_id, EnumToString(payload.object_type));
+                        payload.factory_id, EnumToString(payload.objectType));
     return;
-  } else if (IsCharger(payload.object_type) && IGNORE_CHARGER_DISCOVERY) {
+  } else if (IsCharger(payload.objectType) && IGNORE_CHARGER_DISCOVERY) {
     return;
   }
   
-  robot->SetDiscoveredObjects(payload.factory_id, payload.object_type, payload.rssi, robot->GetLastMsgTimestamp());  // Not super accurate, but this doesn't need to be
+  robot->SetDiscoveredObjects(payload.factory_id, payload.objectType, payload.rssi, robot->GetLastMsgTimestamp());  // Not super accurate, but this doesn't need to be
   
   if (robot->GetEnableDiscoveredObjectsBroadcasting()) {
     if (payload.rssi < DISCOVERED_OBJECTS_RSSI_PRINT_THRESH) {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectDiscovered.ObjectDiscovered",
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectAvailable.ObjectAvailable",
                        "Type: %s, FactoryID 0x%x, rssi %d, (currTime %d)",
-                       EnumToString(payload.object_type), payload.factory_id, payload.rssi, robot->GetLastMsgTimestamp());
+                       EnumToString(payload.objectType), payload.factory_id, payload.rssi, robot->GetLastMsgTimestamp());
     }
     
-    // Send ObjectAvailable to game
-    ExternalInterface::ObjectAvailable m(payload.factory_id, payload.object_type, payload.rssi);
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
+    // Forward to game
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAvailable(payload)));
   }
 }
 
@@ -515,7 +514,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
     objID = robot->GetBlockWorld().AddConnectedActiveObject(payload.objectID, payload.factoryID, payload.object_type);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
-                       "Object %d (activeID %d, factoryID 0x%x, object_type '%s')",
+                       "Object %d (activeID %d, factoryID 0x%x, objectType '%s')",
                        objID.GetValue(), payload.objectID, payload.factoryID, EnumToString(payload.object_type));
       
       // do bookkeeping in robot
@@ -774,7 +773,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = conObj->GetID();
   payload.robotID = robot->GetID();
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(payload)));
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
