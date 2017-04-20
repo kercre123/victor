@@ -243,15 +243,18 @@ static void SleepCurrent(void)
   DisableVEXT();
   EnableBAT();
   MicroWait(100000);
-  int total = 0;
-  // Compute microamps by summing milliamps
   
+  // Compute microamps by summing milliamps
+  int total_on = 0, total_off = 0;
   for (int i = 0; i < 1000; i++)
-    total += BatGetCurrent();
-  ConsolePrintf("sleep-current,%d\r\n", total);
-  if (total > 200)
-    throw ERROR_BAT_LEAKAGE;
+    total_on += BatGetCurrent();
   DisableBAT();
+  for (int i = 0; i < 1000; i++)
+    total_off += BatGetCurrent();
+  
+  ConsolePrintf("sleep-current,%d,%d\r\n", total_on, total_off );
+  if (total_on > 200)
+    throw ERROR_BAT_LEAKAGE;
 }
 
 // Test for the backpack btn pull-up resistor
