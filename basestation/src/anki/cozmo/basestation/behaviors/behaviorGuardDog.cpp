@@ -753,11 +753,10 @@ bool BehaviorGuardDog::StartLightCubeAnim(Robot& robot, const ObjectID& objId, c
   }
     
   if (!success) {
-    ANKI_VERIFY(false,
-                "BehaviorGuardDog.StartLightCubeAnim.PlayAnimFailed",
-                "Failed to play light cube anim trigger %s on object with ID %d",
-                EnumToString(cubeAnimTrigger),
-                objId.GetValue());
+    PRINT_NAMED_WARNING("BehaviorGuardDog.StartLightCubeAnim.PlayAnimFailed",
+                        "Failed to play light cube anim trigger %s on object with ID %d",
+                        EnumToString(cubeAnimTrigger),
+                        objId.GetValue());
     return false;
   }
   
