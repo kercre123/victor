@@ -63,6 +63,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
   // Check for new pets
   const auto & petWorld = robot.GetPetWorld();
   const auto & pets = petWorld.GetAllKnownPets();
+  std::set<Vision::FaceID_t> targets;
   
   for (const auto & it : pets) {
     const auto petID = it.first;
@@ -78,10 +79,10 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
                 petID, numTimesObserved, kReactToPetNumTimesObserved);
       continue;
     }
-    _targets.insert(petID);
+    targets.insert(petID);
   }
   
-  if (_targets.empty()) {
+  if (targets.empty()) {
     return false;
   }
 
@@ -96,7 +97,7 @@ bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehavior(const Rob
   }
   
   // If we found a good target, behavior should become active.
-  BehaviorPreReqAcknowledgePet acknowledgePetPreReqs(_targets);
+  BehaviorPreReqAcknowledgePet acknowledgePetPreReqs(targets);
   return behavior->IsRunnable(acknowledgePetPreReqs);
 }
   
@@ -129,7 +130,6 @@ void ReactionTriggerStrategyPetInitialDetection::BehaviorDidReact(const std::set
   InitReactedTo(_robot);
   _reactedTo.insert(targets.begin(), targets.end());
   _lastReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _targets.clear();
 
 }
 

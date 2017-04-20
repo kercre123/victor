@@ -40,28 +40,23 @@ protected:
   virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   
 private:
-  Robot& _robot;
+  // Illegal time value to represent "never"
   static constexpr float NEVER = -1.0f;
-  
-  // Everything we want to react to before we stop (to handle multiple targets in the same frame)
-  std::set<Vision::FaceID_t> _targets;
+
+  // Reference to associated robot
+  Robot& _robot;
   
   // Everything we have already reacted to
   std::set<Vision::FaceID_t> _reactedTo;
-
   
   // Last time we reacted to any target
   float _lastReactionTime_s = NEVER;
   
   // Internal helpers
   bool RecentlyReacted() const;
-  
-  
   void InitReactedTo(const Robot& robot);
   void UpdateReactedTo(const Robot& robot);
   
-
-
 };
 
 
