@@ -127,10 +127,10 @@
     "translation": "About"
   },
   "settings.versionPanel.acknowledgementsModal.title": {
-    "translation": "Legal"
+    "translation": "Acknowledgments"
   },
   "settings.versionPanel.button.acknowledgementsLink": {
-    "translation": "Legal"
+    "translation": "Acknowledgments"
   },
   "settings.versionPanel.button.eraseCozmo": {
     "translation": "Erase Cozmo"
@@ -181,6 +181,6 @@
     "translation": "Medium"
   },
   "settings.acknowledgementsPanel.title": {
-    "translation": "Acknowledgements"
+    "translation": "Legal"
   }
 }
