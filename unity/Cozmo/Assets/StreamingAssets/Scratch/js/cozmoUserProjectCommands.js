@@ -11,13 +11,6 @@
         window.openCozmoProject(null, null, greenFlagXML, false);
     }
 
-    // Retrieve list of user projects. Sorted by date last modified, most recent first.
-    // Callback method parameter is set to JSON of all Code Lab projects.
-    // The callback has only been tested with a method on window, like: window.myCallback(data)
-    window.getCozmoUserProjectList = function(callback) {
-        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoGetUserProjectList','argString': '" + callback + "'}");
-    }
-
     // Check that there is a script on the workspace and it contains
     // more than just the green flag.
     window.hasUserAddedBlocks = function() {
@@ -59,16 +52,6 @@
         }
 
         window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSaveUserProject','argString': '" + xmlText + "','argUUID': '" + projectUUID + "'}");
-    }
-
-    // Delete the project specified by the projectUUID.
-    window.deleteCozmoUserProject = function(projectUUID) {
-        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoDeleteUserProject','argString': '" + projectUUID + "'}");
-    }
-
-    // Calls Unity with projectUUID, requesting Unity to send project data to window.openCozmoUserProject()
-    window.requestToOpenCozmoUserProject = function(projectUUID) {
-        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoRequestToOpenUserProject','argString': '" + projectUUID + "'}");
     }
 
     window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProject) {

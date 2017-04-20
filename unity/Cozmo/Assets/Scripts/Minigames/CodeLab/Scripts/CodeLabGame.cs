@@ -3,14 +3,39 @@ using Anki.Cozmo.ExternalInterface;
 using Newtonsoft.Json;
 using DataPersistence;
 using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace CodeLab {
+  public class CodeLabSampleProject {
+    public uint DisplayOrder;
+    public Guid ProjectUUID;
+    public uint VersionNum;
+    public bool IsVertical;
+    public string ProjectIconName;
+    public string ProjectXML;
+    public string ProjectName;
+  }
+
   public class CodeLabGame : GameBase {
+
+    // When the webview is opened to display the Code Lab workspace,
+    // we can display one of the following projects.
+    private enum RequestToOpenProjectOnWorkspace {
+      DisplayNoProject,     // Unset value
+      CreateNewProject,     // Workspace displays only green flag
+      DisplayUserProject,   // Display a previously-saved user project. User project UUID saved in _ProjectUUIDToOpen.
+      DisplaySampleProject  // Display a previously-saved sample project. Sample project UUID saved in _ProjectUUIDToOpen.
+    }
 
 #if ANKI_DEV_CHEATS
     // Look at CodeLabGameUnlockable.asset in editor to set when unlocked.
     private GameObject _WebViewObject;
     private WebViewObject _WebViewObjectComponent;
+
+    private RequestToOpenProjectOnWorkspace _RequestToOpenProjectOnWorkspace;
+    private string _ProjectUUIDToOpen;
+    private List<CodeLabSampleProject> _CodeLabSampleProjects;
 
     private const float kSlowDriveSpeed_mmps = 30.0f;
     private const float kMediumDriveSpeed_mmps = 100.0f;
@@ -22,6 +47,8 @@ namespace CodeLab {
     private const string kUserProjectName = "My Project"; // TODO Move to internationalization files
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
+      SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
+
       DAS.Debug("Loading Webview", "");
       UIManager.Instance.ShowTouchCatcher();
 
@@ -32,6 +59,11 @@ namespace CodeLab {
       // In GameBase.cs, in the function InitializeMinigame(), the lights are set to allow the minigame to control them.
       // We don't want this behavior for CodeLab.
       CurrentRobot.SetEnableFreeplayLightStates(true);
+
+      // Load sample projects json from file and cache in list
+      string path = Application.streamingAssetsPath + "/Scratch/sample-projects.json";
+      string json = File.ReadAllText(path);
+      _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
       LoadWebView();
     }
@@ -61,6 +93,7 @@ namespace CodeLab {
         _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
 
 #if UNITY_EDITOR
+        // TODO Change to tutorial for first run, otherwise save/load UI.
         string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
 #else
         string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
@@ -80,19 +113,20 @@ namespace CodeLab {
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
 
-      if (scratchRequest.command == "cozmoGetUserProjectList") {
+      if (scratchRequest.command == "getCozmoUserAndSampleProjectLists") {
+        // Provide save and load UI with JSON arrays of the user and sample projects.
         string jsCallback = scratchRequest.argString;
 
-        string userProjectsAsJSON = "[{}]";
-
-        // Sort projects by most recently modified
+        // Get user projects as JSON. Sort projects by most recently modified.
         defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
+        string userProjectsAsJSON = JsonConvert.SerializeObject(defaultProfile.CodeLabProjects);
 
-        // Serializes all Code Lab projects
-        userProjectsAsJSON = JsonConvert.SerializeObject(defaultProfile.CodeLabProjects);
+        // Get sample projects as JSON. Sort projects by DisplayOrder.
+        _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
+        string sampleProjectsAsJSON = JsonConvert.SerializeObject(_CodeLabSampleProjects);
 
-        // Call jsCallback with list of serialized Code Lab projects
-        _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "');");
+        // Call jsCallback with list of serialized Code Lab user projects and sample projects
+        _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
       }
       else if (scratchRequest.command == "cozmoSaveUserProject") {
         // Save both new and existing user projects.
@@ -111,24 +145,22 @@ namespace CodeLab {
         }
         else {
           // Project already has a guid. Locate the project then update it.
-          CodeLabProject projectToUpdate = FindProjectWithUUID(projectUUID);
+          CodeLabProject projectToUpdate = FindUserProjectWithUUID(projectUUID);
           projectToUpdate.ProjectXML = projectXML;
           projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
         }
       }
       else if (scratchRequest.command == "cozmoRequestToOpenUserProject") {
-        string projectUUID = scratchRequest.argString;
-        CodeLabProject projectToOpen = FindProjectWithUUID(projectUUID);
-
-        // Escape quotes in XML
-        // TODO need to do the same for project name and project uuid?
-        String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
-
-        // Open requested project in webview
-        _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString);
+      }
+      else if (scratchRequest.command == "cozmoRequestToOpenSampleProject") {
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
+      }
+      else if (scratchRequest.command == "cozmoRequestToCreateCozmoProject") {
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
       }
       else if (scratchRequest.command == "cozmoDeleteUserProject") {
-        CodeLabProject projectToDelete = FindProjectWithUUID(scratchRequest.argString);
+        CodeLabProject projectToDelete = FindUserProjectWithUUID(scratchRequest.argString);
         if (projectToDelete != null) {
           defaultProfile.CodeLabProjects.Remove(projectToDelete);
         }
@@ -214,6 +246,24 @@ namespace CodeLab {
       return;
     }
 
+    private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
+      // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
+      SetRequestToOpenProject(request, projectUUID);
+
+#if UNITY_EDITOR
+      string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
+#else
+      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
+#endif
+
+      _WebViewObjectComponent.LoadURL(indexFile);
+    }
+
+    private void SetRequestToOpenProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
+      _RequestToOpenProjectOnWorkspace = request;
+      _ProjectUUIDToOpen = projectUUID;
+    }
+
     // Check if cozmoDriveFaster JavaScript bool arg is set by checking ScratchRequest.argBool and set speed appropriately.
     private float GetDriveSpeed(ScratchRequest scratchRequest) {
       float driveSpeed_mmps = kSlowDriveSpeed_mmps;
@@ -259,13 +309,13 @@ namespace CodeLab {
       case "sleep":
         return Anki.Cozmo.AnimationTrigger.Sleeping;
       default:
-        DAS.Error("Scratch.BadTriggerName", "Unexpected name '" + scratchAnimationName + "'");
+        DAS.Error("CodeLab.BadTriggerName", "Unexpected name '" + scratchAnimationName + "'");
         break;
       }
       return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
     }
 
-    CodeLabProject FindProjectWithUUID(string uuid) {
+    CodeLabProject FindUserProjectWithUUID(string uuid) {
       Guid projectGuid = new Guid(uuid);
       CodeLabProject codeLabProject = null;
 
@@ -281,6 +331,57 @@ namespace CodeLab {
 
     private void WebViewLoaded(string text) {
       Debug.Log(string.Format("CallOnLoaded[{0}]", text));
+
+      switch (_RequestToOpenProjectOnWorkspace) {
+      case RequestToOpenProjectOnWorkspace.CreateNewProject:
+        // Open workspace and display only a green flag on the workspace.
+        _WebViewObjectComponent.EvaluateJS("window.putStarterGreenFlagOnWorkspace();");
+        break;
+
+      case RequestToOpenProjectOnWorkspace.DisplayUserProject:
+        if (_ProjectUUIDToOpen != null) {
+          CodeLabProject projectToOpen = FindUserProjectWithUUID(_ProjectUUIDToOpen);
+          if (projectToOpen != null) {
+            // Escape quotes in XML
+            // TODO need to do the same for project name and project uuid?
+            String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
+
+            // Open requested project in webview
+            _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
+          }
+        }
+        else {
+          DAS.Error("CodeLab.NullUserProject", "User project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
+        }
+        break;
+
+      case RequestToOpenProjectOnWorkspace.DisplaySampleProject:
+        if (_ProjectUUIDToOpen != null) {
+          Guid projectGuid = new Guid(_ProjectUUIDToOpen);
+          CodeLabSampleProject codeLabSampleProject = null;
+
+          Predicate<CodeLabSampleProject> findProject = (CodeLabSampleProject p) => { return p.ProjectUUID == projectGuid; };
+          codeLabSampleProject = _CodeLabSampleProjects.Find(findProject);
+
+          // Escape quotes in XML
+          // TODO need to do the same for project name and project uuid?
+          String projectXMLEscaped = codeLabSampleProject.ProjectXML.Replace("\"", "\\\"");
+
+          // Open requested project in webview
+          _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + codeLabSampleProject.ProjectName + "',\"" + projectXMLEscaped + "\",'true');");
+        }
+        else {
+          DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
+        }
+        break;
+
+      default:
+        break;
+      }
+
+      SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
+
+      // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);
 
 #if !UNITY_ANDROID
