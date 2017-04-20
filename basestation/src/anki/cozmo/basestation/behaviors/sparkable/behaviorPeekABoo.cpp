@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
@@ -20,12 +21,13 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
-#include "anki/common/basestation/utils/timer.h"
+#include "anki/vision/basestation/faceTracker.h"
+
 #include "clad/types/animationTrigger.h"
 
 #include "util/console/consoleInterface.h"
@@ -43,6 +45,7 @@ static constexpr float kPercentCompleteMedReaction    = 0.6f;
 static constexpr float kSparkShouldPlaySparkFailFlag  = -1.0f;
 static constexpr int   kMaxTurnToFaceRetryCount       = 4;
 static constexpr int   kMaxCountTrackingEyesEntries   = 50;
+static constexpr float kHeadAngleWhereLiftBlocksCamera_deg = 22.0f;
   
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPeekABooArray = {
   {ReactionTrigger::CliffDetected,                false},
@@ -56,7 +59,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPeekABooArray
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PetInitialDetection,          true},
   {ReactionTrigger::PyramidInitialDetection,      false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
@@ -95,6 +98,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
   JsonTools::GetValueOptional(config, "minTimesPeekBeforeQuit",       _params.minPeeks);
   JsonTools::GetValueOptional(config, "maxTimesPeekBeforeQuit",       _params.maxPeeks);
   JsonTools::GetValueOptional(config, "noUserInteractionTimeout_Sec", _params.noUserInteractionTimeout_Sec);
+  JsonTools::GetValueOptional(config, "numReRequestsPerTimeout",      _params.numReRequestsPerTimeout);  
   JsonTools::GetValueOptional(config, "requireFaceConfirmBeforeRequest", _params.requireFaceConfirmBeforeRequest);
   JsonTools::GetValueOptional(config, "playGetIn",                       _params.playGetIn);
   JsonTools::GetValueOptional(config, "minCooldown_Sec",                 _params.minCoolDown_Sec);
@@ -148,8 +152,8 @@ Result BehaviorPeekABoo::InitInternal(Robot& robot)
   
   _noUserInteractionTimeout_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _params.noUserInteractionTimeout_Sec;
   _numPeeksTotal = _numPeeksRemaining = robot.GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
-  // Needs to be unique since sparked idle makes him look down
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PeekABooIdle);
+  // Disable idle so it doesn't move the head down
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   SmartDisableReactionsWithLock(GetName(), kAffectTriggersPeekABooArray);
   
   
@@ -298,23 +302,85 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(Robot& robot)
 void BehaviorPeekABoo::TransitionWaitToHideFace(Robot& robot)
 {
   SET_STATE(WaitingToHideFace);
-  // Transitioning out of this state is handled by the Update function
-  StartActing(new TrackFaceAction(robot, GetInteractionFace(robot)));
-}
 
+  // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
+  StartActing(new TurnTowardsFaceAction(robot, GetInteractionFace(robot)), [this](Robot& robot) {
+
+    // now track the face and set up the idles
+    CompoundActionParallel* trackAndIdleAction = new CompoundActionParallel(robot);
+    trackAndIdleAction->AddAction( new TrackFaceAction(robot, GetInteractionFace(robot)) );
+    trackAndIdleAction->AddAction( GetIdleAndReRequestAction(robot, false) );
+
+    // Transitioning out of this state is handled by the Update function
+    StartActing(trackAndIdleAction);
+  });
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPeekABoo::TransitionWaitToSeeFace(Robot& robot)
 {
   SET_STATE(WaitingToSeeFace);
-  // Update should transition out of this state by canceling the action/callback
-  // if we see eyes. Otherwise, if we wait until the no user interaciton timeout,
-  // transition to no user interaction
-  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  StartActing(new WaitAction(robot, _noUserInteractionTimeout_Sec - currentTime_sec), [this](Robot& robot){
-    LOG_EVENT("robot.peekaboo_face_never_came_back","%u", _numPeeksRemaining);
-    TransitionToNoUserInteraction(robot);
+
+  // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
+  StartActing(new TurnTowardsFaceAction(robot, GetInteractionFace(robot)), [this](Robot& robot) {      
+      // Update will transition out of this state by canceling the action/callback if we see eyes, or the no
+      // interaction timeout is met. Idle infinitely until then
+
+      StartActing( GetIdleAndReRequestAction(robot, true) );
   });
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(Robot& robot, bool lockHeadTrack) const
+{
+  // create action which alternated between idle and re-request for the desired number of times, and then
+  // loops idle forever. This action will never end
+
+  CompoundActionSequential* idleAndReRequestAction = new CompoundActionSequential(robot);
+
+  const u32 singleLoop = 1;
+  const bool interruptRunningAnimation = true;
+  // In cases where the head isn't already in use, lock it here so that it doesn't move
+  const u8 headLock = lockHeadTrack ? (u8)AnimTrackFlag::HEAD_TRACK : (u8)AnimTrackFlag::NO_TRACKS;
+
+  // If the face is too low, then the "PeekABooShort" anim will actually cause the lift to block the camera,
+  // which looses track of the face (and then thinks the user peeked when they didn't). If the robots head is
+  // below a certain angle, _also_ lock the lift to avoid this case
+  const bool headBelowAngle = robot.GetHeadAngle() < DEG_TO_RAD( kHeadAngleWhereLiftBlocksCamera_deg );
+  const u8 liftLock = headBelowAngle ? (u8)AnimTrackFlag::LIFT_TRACK : (u8)AnimTrackFlag::NO_TRACKS;
+
+  const u8 lockTracks = headLock | liftLock;
+
+  PRINT_CH_INFO("Behaviors", (GetName() + ".BuildAnims").c_str(),
+                "Playing idle with %d re-requests. Head angle = %fdeg Locking: %s",
+                _params.numReRequestsPerTimeout,
+                RAD_TO_DEG(robot.GetHeadAngle()),
+                AnimTrackHelpers::AnimTrackFlagsToString(lockTracks).c_str());
+
+  if( _params.numReRequestsPerTimeout > 0 ) {
+    // we want to do re-requests. To avoid eye pops, we will alternate idle animations (which are a few
+    // seconds each) with re-requests for the desired number of times
+    for( int i=0; i<_params.numReRequestsPerTimeout; ++i ) {
+      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+                                                                            AnimationTrigger::PeekABooIdle,
+                                                                            singleLoop,
+                                                                            interruptRunningAnimation,
+                                                                            lockTracks) );
+      idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+                                                                            AnimationTrigger::PeekABooShort,
+                                                                            singleLoop,
+                                                                            interruptRunningAnimation,
+                                                                            lockTracks) );
+    }
+  }
+
+  // after re-requests are done (or if there are none), do an infinite looping animation action for idles
+  const u32 infiniteLoops = 0;
+  idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+                                                                        AnimationTrigger::PeekABooIdle,
+                                                                        infiniteLoops,
+                                                                        lockTracks) );
+  return idleAndReRequestAction;
 }
 
 

@@ -67,6 +67,8 @@ protected:
   
   AnimationTrigger GetPeekABooAnimation();
   Vision::FaceID_t GetInteractionFace(const Robot& robot) const;
+
+  IActionRunner* GetIdleAndReRequestAction(Robot& robot, bool lockHead) const;
   
   void SetState_internal(State state, const std::string& stateName);
   
@@ -76,6 +78,7 @@ private:
     unsigned int minPeeks                        = 1;
     unsigned int maxPeeks                        = 3;
     float        noUserInteractionTimeout_Sec    = 30.0f;
+    unsigned int numReRequestsPerTimeout         = 0;
     float        oldestFaceToConsider_MS         = 60000;
     bool         requireFaceConfirmBeforeRequest = true;
     bool         playGetIn                       = true;

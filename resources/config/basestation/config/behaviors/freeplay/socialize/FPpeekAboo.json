@@ -11,6 +11,7 @@
   "minTimesPeekBeforeQuit" : 3,
   "maxTimesPeekBeforeQuit" : 6,
   "noUserInteractionTimeout_Sec": 12,
+  "numReRequestsPerTimeout": 2,
   "maxTimeOldestFaceToConsider_Sec" : 10,
   "requireFaceConfirmBeforeRequest" : false,
   "minCooldown_Sec": 300,
