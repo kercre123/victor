@@ -138,6 +138,15 @@ namespace Anki {
     // Default values in clad
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();
     
+    
+    /***************************************************************************
+     *
+     *                               Misc
+     *
+     **************************************************************************/
+    
+    constexpr f32 LOW_BATTERY_THRESH_VOLTS = 3.5f;
+    
   } // namespace Cozmo
 } // namespace Anki
 

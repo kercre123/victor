@@ -76,6 +76,12 @@ void BodyLightComponent::UpdateChargingLightConfig()
       state = BackpackLightsState::Charged;
     }
   }
+  else if(_robot.GetBatteryVoltage() < LOW_BATTERY_THRESH_VOLTS)
+  {
+    // Both charger out of spec and low battery backpack lights are the same
+    // so instead of duplicating a lightPattern in json just use what we've already got
+    state = BackpackLightsState::BadCharger;
+  }
   
   if(state != _curBackpackChargeState)
   {
