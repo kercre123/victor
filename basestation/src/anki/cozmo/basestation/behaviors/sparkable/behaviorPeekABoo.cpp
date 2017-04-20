@@ -36,7 +36,7 @@ namespace Cozmo {
 
 namespace{
 #define SET_STATE(s) SetState_internal(State::s, #s)
-CONSOLE_VAR(uint, kFramesWithoutFaceForPeek, "Behavior.PeekABoo", 3);
+CONSOLE_VAR(uint, kFramesWithoutFaceForPeek, "Behavior.PeekABoo", 6);
 CONSOLE_VAR(bool, kCenterFaceAfterPeekABoo, "Behavior.PeekABoo", true);
 static constexpr float kPercentCompleteSmallReaction  = 0.3f;
 static constexpr float kPercentCompleteMedReaction    = 0.6f;
