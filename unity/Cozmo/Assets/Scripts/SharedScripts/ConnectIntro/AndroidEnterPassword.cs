@@ -39,11 +39,11 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
   }
 
   private void HandlePasswordChanged(string password) {
-    bool validPassword = password.Length == 12;
+		bool validPassword = (password.Length == 12) || (password.Length == 17);
     if (validPassword) {
       // see if characters are valid
       foreach (char c in password) {
-        if (!char.IsLetterOrDigit(c)) {
+		if (!(char.IsLetterOrDigit(c) || c.Equals('-'))) {
           validPassword = false;
           break;
         }

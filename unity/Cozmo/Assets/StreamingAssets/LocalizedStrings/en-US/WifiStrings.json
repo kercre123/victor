@@ -91,7 +91,7 @@
     "translation": "Enter password for {0}"
   },
   "wifi.passwordFormat": {
-    "translation": "Password must have 12 alphanumeric characters, no spaces"
+    "translation": "Password incorrect length."
   },
   "wifi.selectNetwork": {
     "translation": "Select a Cozmo to connect to:"
@@ -124,6 +124,6 @@
     "translation": "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Yes\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
   },
   "wifi.passwordRememberStatement": {
-    "translation": "Password is visible on Cozmo's face, enter it carefully! Your device should remember this password, so you will only need to enter it once."
+    "translation": "Password is visible on Cozmo's face, enter it exactly as it appears. Your device should remember this password, so you will only need to enter it once."
   }
 }
