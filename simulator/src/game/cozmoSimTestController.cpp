@@ -45,7 +45,7 @@ namespace Anki {
         {ReactionTrigger::RobotOnBack,                  false},
         {ReactionTrigger::RobotOnFace,                  false},
         {ReactionTrigger::RobotOnSide,                  false},
-        {ReactionTrigger::RobotShaken,                  false},
+        {ReactionTrigger::RobotShaken,                  true},
         {ReactionTrigger::Sparked,                      false},
         {ReactionTrigger::StackOfCubesInitialDetection, false},
         {ReactionTrigger::UnexpectedMovement,           false},
