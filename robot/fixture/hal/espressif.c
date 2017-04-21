@@ -110,7 +110,7 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 //define regions to erase
 static const FlashLoadLocation ESPRESSIF_ERASE[] =
 {
-  //total flash erase (safest/slowest)
+  /*/total flash erase (safest/slowest)
   //{ "ERASE.ALL",0x000000, 0x200000, 0x200000,                   NULL,       0xFF }, //erase delay causes timeouts. break into smaller chunks ->
   { "ERASE.0",  0x000000, 0x080000, 0x080000,                   NULL,       0xFF },
   { "ERASE.1",  0x080000, 0x080000, 0x080000,                   NULL,       0xFF },
@@ -118,7 +118,7 @@ static const FlashLoadLocation ESPRESSIF_ERASE[] =
   { "ERASE.3",  0x180000, 0x080000, 0x080000,                   NULL,       0xFF },
   //-*/
   
-  /*/erase by assigned section (customizable full/partial erase)
+  //erase by assigned section (customizable full/partial erase)
   //{ "BOOT",     0x000000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Bootloader
   { "FAC.DAT",  0x001000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data
   { "CRASHDMP", 0x002000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
