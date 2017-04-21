@@ -11,7 +11,6 @@ import java.io.File;
 import java.util.UUID;
 
 import com.unity3d.player.UnityPlayer;
-import com.unity3d.player.UnityPlayerActivity;
 
 import com.anki.hockeyappandroid.NativeCrashManager;
 import com.anki.util.AnkitivityDispatcher;
@@ -28,7 +27,7 @@ import net.hockeyapp.android.metrics.MetricsManager;
  * Custom Activity implementation designed to work with AnkitivityDispatcher, so that results of permission requests
  * and other activities can be dispatched to code in the anki-util repository that doesn't know about CozmoActivity
  */
-public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class CozmoActivity extends HackUnityPlayerActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
   private final AnkitivityDispatcher mDispatcher = new AnkitivityDispatcher();
 
@@ -47,13 +46,6 @@ public class CozmoActivity extends UnityPlayerActivity implements ActivityCompat
     requestWindowFeature(1);
 
     super.onCreate(bundle);
-
-    // used to make sure that unity-webview can be displayed on top.
-    // this new requiremenet is needed for unity 5.6+
-    getWindow().setFormat(2);
-    mUnityPlayer = new CUnityPlayer(this);
-    setContentView(mUnityPlayer);
-    mUnityPlayer.requestFocus();
 
     APP_RUN_ID = UUID.randomUUID().toString();
     HOCKEY_APP_ID = getManifestProperty("HOCKEYAPP_APP_ID");
