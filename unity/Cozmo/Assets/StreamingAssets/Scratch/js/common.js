@@ -1,4 +1,11 @@
 (function () {
+
+    function $t(str) {
+        return str;
+    }
+    function setText(query, text) {
+        document.querySelector(query).textContent = text;
+    }
  
     /**
      * Window "onload" handler.
@@ -96,6 +103,9 @@
         vm.on('VISUAL_REPORT', function(data) {
             workspace.reportValue(data.id, data.value);
         });
+
+        setText('#app-title', $t('My Project 1'));
+        setText('#app-title-subtext', $t('Autosaved'));
  
         // Run threads
         vm.start();

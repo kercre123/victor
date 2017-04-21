@@ -59,7 +59,7 @@ button:focus {
 }
 
 .blocklyScrollbarHandle {
-    fill: #535252;
+    fill: #817e7e;
 }
 
 /**
@@ -103,6 +103,43 @@ button:focus {
 }
 
 /**
+ * projecttext
+ */
+#projecttext {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 175px;
+    z-index: 1;
+    pointer-events: none;
+    text-align: right;
+}
+
+#projecttext .primary {
+    display: block;
+    position: absolute;
+    top: 25px;
+    width: 98%;
+    text-align: right;
+    height: 200px;
+}
+
+#projecttext .primary #app-title {
+    font-weight: bold;
+    font-size: 5vh;
+    background-color: #525253;
+    color: #1fadda;
+}
+
+#projecttext .primary #app-title-subtext {    
+    color: #c0bfbf;
+    font-size: 3.5vh;
+    background-color: #525253;
+}
+
+/**
  * Navigation
  */
 #navigation {
@@ -119,7 +156,7 @@ button:focus {
 #navigation .greenflag {
     display: block;
     position: absolute;
-    left: calc(100% - 110px);
+    left: calc(100% - 90px);
 }
 
 #navigation .greenflag button {
@@ -146,7 +183,7 @@ button:focus {
 #navigation .stop {
     display: block;
     position: absolute;
-    left: calc(100% - 110px);
+    left: calc(100% - 90px);
     top: 75px;
 }
 
@@ -189,14 +226,27 @@ button:focus {
         height:60px;
     }
 
+    #projecttext {
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 200px;
+    }
+
+    #projecttext .primary {
+        top: 10px;
+        width: 98%;
+        height: 60px;
+    }
+
     #navigation .greenflag {
         left: calc(100% - 65px);
-        top: calc(100% - 205px);;
+        top: calc(100% - 200px);;
     }
 
     #navigation .greenflag button {
-        width:60px;
-        height:60px;
+        width:55px;
+        height:55px;
     }
 
     #navigation .stop {
@@ -205,7 +255,7 @@ button:focus {
     }
 
     #navigation .stop button {
-        width:60px;
-        height:60px;
+        width:55px;
+        height:55px;
     }
 }
