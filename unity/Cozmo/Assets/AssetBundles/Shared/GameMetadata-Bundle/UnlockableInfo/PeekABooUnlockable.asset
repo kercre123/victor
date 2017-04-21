@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: PeekABoo
     _EnumValue: 37
   UnlockableType: 1
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: BuildPyramid
+    _EnumValue: 3
   AnyPrereqUnlock: 0
   _ComingSoon: 0
   DescriptionKey: unlockable.PeekABoo.Description
@@ -30,16 +32,18 @@ MonoBehaviour:
   RequestTrickCostAmountCurve:
     serializedVersion: 2
     m_Curve:
-    - time: 0
+    - serializedVersion: 2
+      time: 0
       value: 0
       inSlope: 1
       outSlope: 1
-      tangentMode: 10
-    - time: 1
+      tangentMode: 34
+    - serializedVersion: 2
+      time: 1
       value: 1
       inSlope: 1
       outSlope: 1
-      tangentMode: 10
+      tangentMode: 34
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0

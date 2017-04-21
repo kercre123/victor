@@ -7,7 +7,7 @@ namespace Cozmo {
   namespace UI {
     [CustomPropertyDrawer(typeof(CoreUpgradeTintNameAttribute))]
     public class CoreUpgradeTintNameAttributeDrawer : PropertyDrawer {
-      private const string kUiColorPaletteLocation = "Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIColorPalette.asset";
+      private const string kUiColorPaletteLocation = "Assets/AssetBundles/HomeHub/UI/BasicUIPrefabs-Bundle/UIColorPalette.asset";
 
       private string[] _UpgradeTintIds = null;
       // Draw the property inside the given rect
