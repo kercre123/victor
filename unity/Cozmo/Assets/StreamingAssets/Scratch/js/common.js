@@ -136,6 +136,9 @@
         // Extension event handlers
         bindExtensionHandler();
         window.onresize();
+
+        // TODO Once save/load UI is in, this call should instead be made only when a new project is created.
+        window.putStarterGreenFlagOnWorkspace();
     }
 
     window.onresize = function(event) {

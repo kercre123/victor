@@ -4,10 +4,26 @@
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = null;
 
+    function CLPoint (x, y) {
+        this.x = x;
+        this.y = y;
+    }
+ 
+    // Starting point for one script to appear on phones and tablets.
+    window.getScriptStartingPoint = function() {
+        var point = new CLPoint(120, 200);
+        if (window.innerWidth <= 799) {
+            point.x = 100;
+            point.y = 110;
+        }
+        return point;
+    }
+
     // Put only green flag on the workspace to help the user start a script.
     // This is for newly-opened workspaces with no existing user project.
     window.putStarterGreenFlagOnWorkspace = function() {
-        var greenFlagXML = '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="event_whenflagclicked" id="RqohItYC/XpjZ2]xiar5" x="92" y="279"></block></xml>';
+        var point = window.getScriptStartingPoint();
+        var greenFlagXML = '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="event_whenflagclicked" id="RqohItYC/XpjZ2]xiar5" x="' + point.x + '" y="' + point.y +'"></block></xml>';
         window.openCozmoProject(null, null, greenFlagXML, false);
     }
 

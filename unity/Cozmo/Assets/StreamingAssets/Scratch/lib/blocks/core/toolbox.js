@@ -183,7 +183,7 @@ Blockly.Toolbox.prototype.populate_ = function(newTree) {
 
   // Anki: Hack to set default category
   // Here we set the default category to the motion blocks category.
-  this.setSelectedItem(this.categoryMenu_.categories_[1]);
+  this.setSelectedItem(this.categoryMenu_.categories_[0]);
 };
 
 /**
