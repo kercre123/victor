@@ -167,12 +167,39 @@ namespace Anki {
         // (reliable transport timeout).
         const u32 kMaxTimeDiffBetweenStates_ms = Embedded::saturate_cast<u32>(Util::ReliableConnection::GetConnectionTimeoutInMS());
         const bool timeDeltaTooLarge = ABS(t - newestTime) > kMaxTimeDiffBetweenStates_ms;
-        if(!ANKI_VERIFY(!timeDeltaTooLarge,
-                        "RobotStateHistory.AddRawOdomState.TimestampDeltaTooLarge",
-                        "State with t:%u is too different from last state with t:%u, allowed delta:%u",
-                        t, newestTime, kMaxTimeDiffBetweenStates_ms))
+        static u8 numConsecLargeDeltas = 0;
+        if(timeDeltaTooLarge)
         {
+          // Only print an error for the first state message that has a large timestamp delta
+          // This is to prevent it from spamming should we get multiple state messages
+          // in a row that have large delta timestamps
+          if(numConsecLargeDeltas == 0)
+          {
+            PRINT_NAMED_ERROR("RobotStateHistory.AddRawOdomState.TimestampDeltaTooLarge",
+                              "State with t:%u is too different from last state with t:%u, allowed delta:%u",
+                              t, newestTime, kMaxTimeDiffBetweenStates_ms);
+          }
+          
+          ++numConsecLargeDeltas;
+          
+          constexpr u8 kMaxNumConsecLargeTimestampDeltas = 5;
+          // If we get a number of consecutive state messages that have large timestamp deltas then
+          // trust the robot and clear history since it is at least kMaxTimeDiffBetweenStates_ms old
+          if(numConsecLargeDeltas > kMaxNumConsecLargeTimestampDeltas)
+          {
+            numConsecLargeDeltas = 0;
+            PRINT_NAMED_WARNING("RobotStateHistory.AddRawOdomState.TooManyConsecLargeDeltas",
+                                "Clearing state history after receiving %u consecutive state messages \
+                                 with timestamps deltas greater than %u",
+                                 kMaxNumConsecLargeTimestampDeltas,
+                                 kMaxTimeDiffBetweenStates_ms);
+            _states.clear();
+          }
           return RESULT_FAIL;
+        }
+        else
+        {
+          numConsecLargeDeltas = 0;
         }
       }
     
