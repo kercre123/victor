@@ -13,7 +13,9 @@
 */
 
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
+#include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHFTypes.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 #include "trulyhandsfree.h"
@@ -21,28 +23,29 @@
 #endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
 #include <iostream>
-
-
-#define AUDIO_BUFFERSZ 250
-
+#include <map>
 
 namespace Anki {
 namespace Cozmo {
   
-struct SpeechRecognizerTHFData
+struct SpeechRecognizerTHF::SpeechRecognizerTHFData
 {
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   thf_t*      _thfSession = nullptr;
-  recog_t*    _thfRecognizer = nullptr;
-  searchs_t*  _thfSearch = nullptr;
   pronuns_t*  _thfPronun = nullptr;
   
   // Grab references to the static data used for recognition
   // Not bothering to make these const since the API expects them NON const for some reason
   sdata_t* const precog_data = &thf_static_recog_data;
   sdata_t* const ppronun_data = &thf_static_pronun_data;
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
+  
+  IndexType                          _thfCurrentRecog = InvalidIndex;
+  IndexType                          _thfFollowupRecog = InvalidIndex;
+  std::map<IndexType, RecogDataSP>   _thfAllRecogs;
+  
+  const RecogDataSP RetrieveDataForIndex(IndexType index) const;
+#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 };
   
 SpeechRecognizerTHF::SpeechRecognizerTHF()
@@ -78,7 +81,7 @@ void SpeechRecognizerTHF::SwapAllData(SpeechRecognizerTHF& other)
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
-bool SpeechRecognizerTHF::Init(const char* const * phraseList, unsigned int numPhrases)
+bool SpeechRecognizerTHF::Init()
 {
   Cleanup();
   
@@ -87,56 +90,21 @@ bool SpeechRecognizerTHF::Init(const char* const * phraseList, unsigned int numP
   if(!createdSession)
   {
     /* as of SDK 3.0.9 thfGetLastError(NULL) will return a valid string */
-    const char *err=thfGetLastError(NULL) ? thfGetLastError(NULL) :
-    "could not find dll or out of memory";
+    const char *err=thfGetLastError(NULL) ? thfGetLastError(NULL) : "could not find dll or out of memory";
     std::string failMessage = std::string("ERROR thfSessionCreate ") + err;
     HandleInitFail(failMessage);
     return false;
   }
   _impl->_thfSession = createdSession;
   
-  /* Create recognizer */
-  recog_t* createdRecognizer = thfRecogCreateFromStatic(_impl->_thfSession, _impl->precog_data, 0, (unsigned short)(AUDIO_BUFFERSZ/1000.f*AudioUtil::kSampleRate_hz), -1, SDET);
-  if(!createdRecognizer)
-  {
-    HandleInitFail("ERROR thfRecogCreateFromFile");
-    return false;
-  }
-  _impl->_thfRecognizer = createdRecognizer;
-  
   /* Create pronunciation */
   pronuns_t* createdPronunciation = thfPronunCreateFromStatic(_impl->_thfSession, _impl->ppronun_data, 0, 0);
   if(!createdPronunciation)
   {
-    HandleInitFail("ERROR thfPronunCreateFromFile");
+    HandleInitFail(std::string("ERROR thfPronunCreateFromFile ") + thfGetLastError(_impl->_thfSession));
     return false;
   }
   _impl->_thfPronun = createdPronunciation;
-  
-  /* Create search */
-  searchs_t* createdSearch = thfPhrasespotCreateFromList(_impl->_thfSession, _impl->_thfRecognizer, _impl->_thfPronun, (const char**)phraseList, (uint16_t)numPhrases, NULL, NULL, 0, PHRASESPOT_LISTEN_SHORT);
-  if(!createdSearch)
-  {
-    const char *err = thfGetLastError(_impl->_thfSession);
-    std::string errorMessage = std::string("ERROR thfSearchCreateFromList ") + err;
-    HandleInitFail(errorMessage);
-    return false;
-  }
-  _impl->_thfSearch = createdSearch;
-  
-  
-  // To add some better configuration to the phrase spotting we're doing, try calling thfPhrasespotConfigSet with appropriate options.
-  // In particular, look at the PS_SEQ_BUFFER option in conjunction with the call to thfRecogPrepSeq (check out the documentation), which
-  // allows for switching to a secondary recognizer after a primary keyphrase has been recognized
-  // file:///Users/leecrippen/dev/TrulyHandsfreeSDK/4.4.4/doc/thfPhrasespotConfigSet.html
-  // file:///Users/leecrippen/dev/TrulyHandsfreeSDK/4.4.4/doc/thfRecogPrepSeq.html
-  
-  /* Initialize recognizer */
-  if(!thfRecogInit(_impl->_thfSession, _impl->_thfRecognizer, _impl->_thfSearch, RECOG_KEEP_NONE))
-  {
-    HandleInitFail("ERROR thfRecogInit");
-    return false;
-  }
   
   return true;
 }
@@ -147,19 +115,171 @@ void SpeechRecognizerTHF::HandleInitFail(const std::string& failMessage)
   Cleanup();
 }
 
-void SpeechRecognizerTHF::Cleanup()
+bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index, const char* const * phraseList, unsigned int numPhrases)
 {
-  if (_impl->_thfRecognizer)
+  recog_t* createdRecognizer = nullptr;
+  searchs_t* createdSearch = nullptr;
+  
+  auto cleanupAfterFailure = [&] (const std::string& failMessage)
   {
-    thfRecogDestroy(_impl->_thfRecognizer);
-    _impl->_thfRecognizer = nullptr;
+    PRINT_NAMED_ERROR("SpeechRecognizerTHF.AddRecognitionDataAutoGen.Fail", "%s %s", failMessage.c_str(), thfGetLastError(_impl->_thfSession));
+    RecogData::DestroyData(createdRecognizer, createdSearch);
+  };
+  
+  if (InvalidIndex == index)
+  {
+    cleanupAfterFailure(std::string("Specified index matches InvalidIndex and cannot be used: ") + std::to_string(index));
+    return false;
   }
   
-  if (_impl->_thfSearch)
+  // Check whether this spot is already taken
+  auto indexIter = _impl->_thfAllRecogs.find(index);
+  if (indexIter != _impl->_thfAllRecogs.end())
   {
-    thfSearchDestroy(_impl->_thfSearch);
-    _impl->_thfSearch = nullptr;
+    cleanupAfterFailure(std::string("Recognizer already added at index ") + std::to_string(index));
+    return false;
   }
+  
+  // The code examples had a buffer size as double the standard chunk size, so we'll do the same
+  auto bufferSizeInSamples = Util::numeric_cast<unsigned short>(AudioUtil::kSamplesPerChunk * 2);
+  
+  /* Create recognizer */
+  createdRecognizer = thfRecogCreateFromStatic(_impl->_thfSession, _impl->precog_data, 0, bufferSizeInSamples, -1, SDET);
+  if(!createdRecognizer)
+  {
+    cleanupAfterFailure("ERROR thfRecogCreateFromStatic");
+    return false;
+  }
+  
+  /* Create search */
+  // Using const_cast because the THF API apparently wants to be able to modify strings?
+  auto phraseListAPIType = const_cast<const char**>(phraseList);
+  createdSearch = thfPhrasespotCreateFromList(_impl->_thfSession, createdRecognizer, _impl->_thfPronun,
+                                              phraseListAPIType, Util::numeric_cast<uint16_t>(numPhrases),
+                                              NULL, NULL, 0, PHRASESPOT_LISTEN_SHORT);
+  if(!createdSearch)
+  {
+    const char *err = thfGetLastError(_impl->_thfSession);
+    std::string errorMessage = std::string("ERROR thfPhrasespotCreateFromList ") + err;
+    cleanupAfterFailure(errorMessage);
+    return false;
+  }
+  
+  /* Initialize recognizer */
+  if(!thfRecogInit(_impl->_thfSession, createdRecognizer, createdSearch, RECOG_KEEP_NONE))
+  {
+    cleanupAfterFailure("ERROR thfRecogInit");
+    return false;
+  }
+  
+  // Everything should be happily added, so store off this recognizer
+  constexpr bool isPhraseSpotted = true;
+  constexpr bool allowsFollowupRecog = false;
+  _impl->_thfAllRecogs[index] = MakeRecogDataSP(createdRecognizer, createdSearch, isPhraseSpotted, allowsFollowupRecog);
+  
+  return true;
+}
+
+bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
+                                                     const std::string& nnFilePath, const std::string& searchFilePath,
+                                                     bool isPhraseSpotted, bool allowsFollowupRecog)
+{
+  recog_t* createdRecognizer = nullptr;
+  searchs_t* createdSearch = nullptr;
+  
+  auto cleanupAfterFailure = [&] (const std::string& failMessage)
+  {
+    PRINT_NAMED_ERROR("SpeechRecognizerTHF.AddRecognitionDataFromFile.Fail", "%s %s", failMessage.c_str(), thfGetLastError(_impl->_thfSession));
+    RecogData::DestroyData(createdRecognizer, createdSearch);
+  };
+  
+  if (InvalidIndex == index)
+  {
+    cleanupAfterFailure(std::string("Specified index matches InvalidIndex and cannot be used: ") + std::to_string(index));
+    return false;
+  }
+  
+  // First check whether this spot is already taken
+  auto indexIter = _impl->_thfAllRecogs.find(index);
+  if (indexIter != _impl->_thfAllRecogs.end())
+  {
+    cleanupAfterFailure(std::string("Recognizer already added at index ") + std::to_string(index));
+    return false;
+  }
+  
+  // The code examples had a buffer size as double the standard chunk size, so we'll do the same
+  auto bufferSizeInSamples = Util::numeric_cast<unsigned short>(AudioUtil::kSamplesPerChunk * 2);
+  
+  /* Create recognizer */
+  auto doSpeechDetect = isPhraseSpotted ? NO_SDET : SDET;
+  createdRecognizer = thfRecogCreateFromFile(_impl->_thfSession, nnFilePath.c_str(), bufferSizeInSamples, -1, doSpeechDetect);
+  if(!createdRecognizer)
+  {
+    cleanupAfterFailure("ERROR thfRecogCreateFromFile");
+    return false;
+  }
+  
+  /* Create search */
+  constexpr unsigned short numBestResultsToReturn = 1;
+  createdSearch = thfSearchCreateFromFile(_impl->_thfSession, createdRecognizer, searchFilePath.c_str(), numBestResultsToReturn);
+  if(!createdSearch)
+  {
+    const char *err = thfGetLastError(_impl->_thfSession);
+    std::string errorMessage = std::string("ERROR thfSearchCreateFromFile ") + err;
+    cleanupAfterFailure(errorMessage);
+    return false;
+  }
+  
+  /* Initialize recognizer */
+  if(!thfRecogInit(_impl->_thfSession, createdRecognizer, createdSearch, RECOG_KEEP_NONE))
+  {
+    cleanupAfterFailure("ERROR thfRecogInit");
+    return false;
+  }
+  
+  if (allowsFollowupRecog)
+  {
+    if (!isPhraseSpotted)
+    {
+      cleanupAfterFailure("Tried to set up phrase following with non-phrasespotting recognizers, which is not allowed.");
+      return false;
+    }
+    
+    constexpr float overlapTime_ms = 1000.f;
+    if (!thfPhrasespotConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, PS_SEQ_BUFFER, overlapTime_ms))
+    {
+      cleanupAfterFailure("ERROR thfPhrasespotConfigSet PS_SEQ_BUFFER");
+      return false;
+    }
+  }
+  
+  if (isPhraseSpotted)
+  {
+    if (!thfPhrasespotConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, PS_DELAY, 90))
+    {
+      cleanupAfterFailure("ERROR thfPhrasespotConfigSet PS_DELAY");
+      return false;
+    }
+  }
+  
+  // Everything should be happily added, so store off this recognizer
+  _impl->_thfAllRecogs[index] = MakeRecogDataSP(createdRecognizer, createdSearch, isPhraseSpotted, allowsFollowupRecog);
+  
+  return true;
+}
+
+void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index)
+{
+  auto indexIter = _impl->_thfAllRecogs.find(index);
+  if (indexIter != _impl->_thfAllRecogs.end())
+  {
+    _impl->_thfAllRecogs.erase(indexIter);
+  }
+}
+
+void SpeechRecognizerTHF::Cleanup()
+{
+  _impl->_thfAllRecogs.clear();
   
   if (_impl->_thfPronun)
   {
@@ -192,9 +312,20 @@ bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status)
 void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen)
 {
   unsigned short status = RECOG_SILENCE;
-  if(!thfRecogPipe(_impl->_thfSession, _impl->_thfRecognizer, audioDataLen, (short*)audioData, RECOG_ONLY, &status))
+  
+  // Intentionally make a local copy of the shared ptr with the current recog data
+  const RecogDataSP currentRecogSP = _impl->RetrieveDataForIndex(_impl->_thfCurrentRecog);
+  if (!currentRecogSP)
   {
-    PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "");
+    return;
+  }
+  
+  auto recogPipeMode = currentRecogSP->IsPhraseSpotted() ? RECOG_ONLY : SDET_RECOG;
+  auto* const currentRecognizer = currentRecogSP->GetRecognizer();
+  
+  if(!thfRecogPipe(_impl->_thfSession, currentRecognizer, audioDataLen, (short*)audioData, recogPipeMode, &status))
+  {
+    PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "%s", thfGetLastError(_impl->_thfSession));
     return;
   }
   
@@ -202,29 +333,94 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   {
     float score = 0;
     const char* foundString = NULL;
-    if (!thfRecogResult(_impl->_thfSession, _impl->_thfRecognizer, &score, &foundString, NULL, NULL, NULL, NULL, NULL, NULL))
+    if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundString, NULL, NULL, NULL, NULL, NULL, NULL))
     {
-      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "");
+      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
     }
     
     if (foundString != NULL)
     {
-      DoCallback(foundString);
+      DoCallback(foundString, score);
+      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString);
     }
     
-    if (!thfRecogReset(_impl->_thfSession, _impl->_thfRecognizer))
+    // If the current recognizer allows a followup recognizer to immediately take over
+    if (status == RECOG_DONE && currentRecogSP->AllowsFollowupRecog())
     {
-      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "");
+      // Verify whether we actually have a followup recognizer set
+      const RecogDataSP nextRecogSP = _impl->RetrieveDataForIndex(_impl->_thfFollowupRecog);
+      if (nextRecogSP)
+      {
+        // Actually do the switch over to the new recognizer, which copies some buffered audio data
+        if (thfRecogPrepSeq(_impl->_thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
+        {
+          PRINT_CH_INFO("VoiceCommands",
+                        "SpeechRecognizerTHF.Update",
+                        "Switching current recog from %d to %d",
+                        _impl->_thfCurrentRecog, _impl->_thfFollowupRecog);
+          _impl->_thfCurrentRecog = _impl->_thfFollowupRecog;
+          _impl->_thfFollowupRecog = InvalidIndex;
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogPrepSeq.Fail", "%s", thfGetLastError(_impl->_thfSession));
+        }
+      }
+    }
+    
+    if (!thfRecogReset(_impl->_thfSession, currentRecognizer))
+    {
+      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
     }
   }
 }
+
+const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForIndex(IndexType index) const
+{
+  if (index == InvalidIndex)
+  {
+    return RecogDataSP();
+  }
+  
+  // We can only use recognizers that actually exist
+  auto indexIter = _thfAllRecogs.find(index);
+  if (indexIter == _thfAllRecogs.end())
+  {
+    return RecogDataSP();
+  }
+  
+  // Intentionally make a local copy of the shared ptr with the current recog data
+  return indexIter->second;
+}
+
+void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index)
+{
+  _impl->_thfCurrentRecog = index;
+}
+  
+void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index)
+{
+  _impl->_thfFollowupRecog = index;
+}
+
 #else // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
-bool SpeechRecognizerTHF::Init(const char* const * phraseList, unsigned int numPhrases) { return true; }
+bool SpeechRecognizerTHF::Init() { return true; }
+bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
+                                                    const char* const * phraseList,
+                                                    unsigned int numPhrases) { return true; }
+bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
+                                                     const std::string& nnFilePath,
+                                                     const std::string& searchFilePath,
+                                                     bool isPhraseSpotted,
+                                                     bool allowsFollowupRecog) { return true; }
+void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index) { }
 void SpeechRecognizerTHF::HandleInitFail(const std::string& failMessage) { }
 void SpeechRecognizerTHF::Cleanup() { }
 bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status) { return false; }
 void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen) { }
+void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index) { }
+void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index) { }
   
 #endif
   

@@ -43,7 +43,7 @@ public:
   void Start();
   void Stop();
 
-  using ResultType = std::string;
+  using ResultType = std::pair<std::string, float>;
   bool HasResults() const;
   ResultType PopNextResult();
   
@@ -56,7 +56,7 @@ private:
   std::deque<ResultType>                  _procResults;
   
   void AudioSamplesCallback(const AudioSample* buffer, uint32_t numSamples);
-  void AddRecognizerResult(const char* data);
+  void AddRecognizerResult(const char* data, float score);
   
 }; // class AudioRecognizerProcessor
     

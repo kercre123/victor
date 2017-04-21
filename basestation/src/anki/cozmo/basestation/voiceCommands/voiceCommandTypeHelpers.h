@@ -27,6 +27,11 @@ DECLARE_ENUM_INCREMENT_OPERATORS(VoiceCommandType);
 
 VoiceCommandType VoiceCommandTypeFromString(const char* inString);
 
+  
+DECLARE_ENUM_INCREMENT_OPERATORS(VoiceCommandListenContext);
+
+VoiceCommandListenContext VoiceCommandListenContextFromString(const char* inString);
+
 
 } // namespace VoiceCommand
 } // namespace Cozmo

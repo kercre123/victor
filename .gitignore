@@ -333,6 +333,7 @@ JLinkLog.txt
 robot/cube/lst/block.m51
 resources/config/basestation/AnkiLogStringTables.json
 coretech/generated
+lib/anki/products-cozmo-assets/voiceCommand/exports/base/
 
 # Buck
 **.buckd

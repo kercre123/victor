@@ -64,7 +64,7 @@ public:
   
   void ClearHeardCommand() { _pendingHeardCommand = VoiceCommandType::Count; }
   
-  void SetListenContext(VoiceCommandListenContext listenContext) { _listenContext = listenContext; }
+  void SetListenContext(VoiceCommandListenContext listenContext);
   
   template<typename T>
   void HandleMessage(const T& msg);

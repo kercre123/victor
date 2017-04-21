@@ -25,11 +25,11 @@ void SpeechRecognizer::Stop()
   StopInternal();
 }
 
-void SpeechRecognizer::DoCallback(const char* callbackArg)
+void SpeechRecognizer::DoCallback(const char* callbackArg, float score)
 {
   if (_speechCallback)
   {
-    _speechCallback(callbackArg);
+    _speechCallback(callbackArg, score);
   }
 }
 

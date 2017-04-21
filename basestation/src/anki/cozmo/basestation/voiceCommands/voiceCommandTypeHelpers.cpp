@@ -23,13 +23,23 @@ namespace VoiceCommand {
   
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(VoiceCommandType);
 
-
 // One global instance, created at static initialization on app launch
 static Anki::Util::StringToEnumMapper<VoiceCommandType> gStringToVoiceCommandTypeMapper;
 
 VoiceCommandType VoiceCommandTypeFromString(const char* inString)
 {
   return gStringToVoiceCommandTypeMapper.GetTypeFromString(inString);
+}
+
+
+IMPLEMENT_ENUM_INCREMENT_OPERATORS(VoiceCommandListenContext);
+
+// One global instance, created at static initialization on app launch
+static Anki::Util::StringToEnumMapper<VoiceCommandListenContext> gStringToVoiceCommandListenContextMapper;
+
+VoiceCommandListenContext VoiceCommandListenContextFromString(const char* inString)
+{
+  return gStringToVoiceCommandListenContextMapper.GetTypeFromString(inString);
 }
   
 } // namespace VoiceCommand

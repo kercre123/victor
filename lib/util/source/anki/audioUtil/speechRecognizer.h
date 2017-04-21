@@ -30,18 +30,24 @@ public:
   SpeechRecognizer(SpeechRecognizer&& other) = default;
   SpeechRecognizer& operator=(SpeechRecognizer&& other) = default;
   
-  using SpeechCallback = std::function<void(const char*)>;
+  using SpeechCallback = std::function<void(const char*,float)>;
   void SetCallback(SpeechCallback callback = SpeechCallback{} ) { _speechCallback = callback; }
   void Start();
   void Stop();
   
   virtual void Update(const AudioSample * audioData, unsigned int audioDataLen) = 0;
   
+  using IndexType = int32_t;
+  static constexpr IndexType InvalidIndex = -1;
+  
+  virtual void SetRecognizerIndex(IndexType index) { }
+  virtual void SetRecognizerFollowupIndex(IndexType index) { }
+  
 protected:
   virtual void StartInternal() { }
   virtual void StopInternal() { }
   
-  void DoCallback(const char* callbackArg);
+  void DoCallback(const char* callbackArg, float score);
   
 private:
   SpeechCallback _speechCallback;

@@ -19,8 +19,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-struct SpeechRecognizerTHFData;
 
 class SpeechRecognizerTHF : public AudioUtil::SpeechRecognizer
 {
@@ -32,11 +30,19 @@ public:
   SpeechRecognizerTHF(const SpeechRecognizerTHF& other) = delete;
   SpeechRecognizerTHF& operator=(const SpeechRecognizerTHF& other) = delete;
   
-  bool Init(const char* const * phraseList, unsigned int numPhrases);
+  bool Init();
+  bool AddRecognitionDataAutoGen(IndexType index, const char* const * phraseList, unsigned int numPhrases);
+  bool AddRecognitionDataFromFile(IndexType index,
+                                  const std::string& nnFilePath, const std::string& searchFilePath,
+                                  bool isPhraseSpotted, bool allowsFollowupRecog);
+  void RemoveRecognitionData(IndexType index);
   
   virtual void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen) override;
+  virtual void SetRecognizerIndex(IndexType index) override;
+  virtual void SetRecognizerFollowupIndex(IndexType index) override;
   
 private:
+  struct SpeechRecognizerTHFData;
   std::unique_ptr<SpeechRecognizerTHFData> _impl;
   
   void SwapAllData(SpeechRecognizerTHF& other);

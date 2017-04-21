@@ -24,9 +24,11 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "audioUtil/audioRecognizerProcessor.h"
 #include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 
@@ -93,7 +95,42 @@ void VoiceCommandComponent::Init()
     ANKI_VERIFY(_phraseData->Init(dataLoader->GetVoiceCommandConfig()), "VoiceCommandComponent.Init", "CommandPhraseData Init failed.");
     std::vector<const char*> phraseList = _phraseData->GetPhraseListRaw();
     SpeechRecognizerTHF* newRecognizer = new SpeechRecognizerTHF();
-    newRecognizer->Init(phraseList.data(), Util::numeric_cast<unsigned int>(phraseList.size()));
+    newRecognizer->Init();
+    
+    const Util::Data::DataPlatform* dataPlatform = _context.GetDataPlatform();
+    if (!ANKI_VERIFY(dataPlatform != nullptr, "VoiceCommandComponent.Init", "DataPlatform missing"))
+    {
+      return;
+    }
+    
+    // TODO: Generalize this for different languages COZMO-10089
+    static const char* const voiceCommandAssetDirStr = "assets/voiceCommand";
+    static const char* const universalDataDirStr = "base";
+    static const char* const contextualDataDirStr = "contextual";
+    static const char* const languageDirStr = "en_us_16kHz_v10";
+    
+    const std::string& pathBase = dataPlatform->pathToResource(Util::Data::Scope::Resources, voiceCommandAssetDirStr);
+    const std::string& generalNNPath = Util::FileUtils::FullFilePath( {pathBase, universalDataDirStr, languageDirStr, "nn_en_us_mfcc_16k_15_250_v5.1.1.raw"} );
+    
+    const auto& contextDataMap = _phraseData->GetContextData();
+    for (const auto& contextDataEntry : contextDataMap)
+    {
+      const auto typeIndex = Util::EnumToUnderlying(contextDataEntry.first);
+      const auto& contextData = contextDataEntry.second;
+      
+      const std::string& contextTypeString = EnumToString(contextDataEntry.first);
+      const std::string& nnFilename = Util::FileUtils::FullFilePath( {pathBase, contextualDataDirStr, languageDirStr, (contextTypeString + "_NN.raw")} );
+      const std::string& nnFileToUse = contextData._isPhraseSpotted ? nnFilename : generalNNPath;
+      const std::string& srchFilename = Util::FileUtils::FullFilePath( {pathBase, contextualDataDirStr, languageDirStr, (contextTypeString + "_SRCH.raw")} );
+      
+      newRecognizer->AddRecognitionDataFromFile(typeIndex, nnFileToUse, srchFilename, contextData._isPhraseSpotted, contextData._allowsFollowup);
+    }
+    
+    constexpr auto keyphraseIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Keyphrase);
+    constexpr auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
+    newRecognizer->SetRecognizerIndex(keyphraseIndex);
+    newRecognizer->SetRecognizerFollowupIndex(freeplayIndex);
+    
     _recognizer.reset(newRecognizer);
     _recognizer->Start();
   }
@@ -216,14 +253,25 @@ void VoiceCommandComponent::Update()
       continue;
     }
     
-    const auto& commandsFound = _phraseData->GetCommandsInPhrase(nextResult);
+    const auto& nextPhrase = nextResult.first;
+    const auto& commandsFound = _phraseData->GetCommandsInPhrase(nextPhrase);
+    
+    const auto& numCommands = commandsFound.size();
+    if (numCommands == 0)
+    {
+      LOG_INFO("VoiceCommandComponent.HeardCommand", "Heard phrase with no command: %s", nextPhrase.c_str());
+      continue;
+    }
+    
     // For now we're assuming every recognized phrase equals one command
-    if (ANKI_VERIFY(commandsFound.size() == 1,
+    if (ANKI_VERIFY(numCommands == 1,
                     "VoiceCommandComponent.Update",
                     "Phrase %s produced %d commands, expected only 1.",
-                    nextResult.c_str(), commandsFound.size()))
+                    nextPhrase.c_str(), commandsFound.size()))
     {
-      heardCommandUpdated = HandleCommand(commandsFound[0]);
+      // TODO: Update the config phrase data with an optional score minimum to use for a phrase.
+      const auto& commandFound = commandsFound[0];
+      heardCommandUpdated = HandleCommand(commandFound);
     }
     
     // If we updated the pending, heard command, leave the rest of the results for later
@@ -262,6 +310,26 @@ void VoiceCommandComponent::Update()
   }
 }
 
+void VoiceCommandComponent::SetListenContext(VoiceCommandListenContext listenContext)
+{
+  if (_listenContext == listenContext)
+  {
+    return;
+  }
+  
+  _listenContext = listenContext;
+  
+  const auto newIndex = Util::EnumToUnderlying(_listenContext);
+  _recognizer->SetRecognizerIndex(newIndex);
+  
+  // When we switch back to the keyphrase context, also update the follow index
+  if (_listenContext == VoiceCommandListenContext::Keyphrase)
+  {
+    const auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
+    _recognizer->SetRecognizerFollowupIndex(freeplayIndex);
+  }
+}
+
 bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
 {
   // Bail out early if we still have a command we're waiting on being handled
@@ -270,10 +338,10 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
   // want to react to are getting queued up.
   if (AnyCommandPending())
   {
-    PRINT_NAMED_ERROR("VoiceCommandComponent.HandleCommand.OldCommandStillPending",
-                      "A command has been heard(%s) while another was pending(%s). New command ignored.",
-                      VoiceCommandTypeToString(command),
-                      VoiceCommandTypeToString(_pendingHeardCommand));
+    PRINT_NAMED_WARNING("VoiceCommandComponent.HandleCommand.OldCommandStillPending",
+                        "A command has been heard(%s) while another was pending(%s). New command ignored.",
+                        VoiceCommandTypeToString(command),
+                        VoiceCommandTypeToString(_pendingHeardCommand));
     return false;
   }
   
@@ -293,7 +361,7 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
       {
         _pendingHeardCommand = command;
         updatedHeardCommand = true;
-        _listenContext = VoiceCommandListenContext::Freeplay;
+        SetListenContext(VoiceCommandListenContext::Freeplay);
       }
       break;
     }
@@ -305,7 +373,7 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
       {
         _pendingHeardCommand = command;
         updatedHeardCommand = true;
-        _listenContext = VoiceCommandListenContext::Keyphrase;
+        SetListenContext(VoiceCommandListenContext::Keyphrase);
       }
       break;
     }

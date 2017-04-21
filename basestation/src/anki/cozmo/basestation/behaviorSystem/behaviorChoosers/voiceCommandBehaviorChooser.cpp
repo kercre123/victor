@@ -79,6 +79,11 @@ IBehavior* VoiceCommandBehaviorChooser::ChooseNextBehavior(Robot& robot, const I
       _voiceCommandBehavior = _pounceOnMotionBehavior;
       return _voiceCommandBehavior;
     }
+    // TODO: Handle these two commands appropriately
+    case VoiceCommandType::YesPlease:
+    case VoiceCommandType::NoThankYou:
+      
+    // These two commands will never be handled by this chooser:
     case VoiceCommandType::HeyCozmo:
     case VoiceCommandType::Count:
     {
