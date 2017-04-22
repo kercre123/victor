@@ -3,11 +3,18 @@ Release v95
 ----------------
 
 General:
--revision check: change incompatible asserts to safe error state that allows bootloader (anit-brick)
+-revision check: change incompatible assert() to safe error state that allows bootloader (anti-brick)
+-updated radio.bin: add mode 'I'/'R', support for sampling channel RSSI
+
+HEAD1:
+-partial flash erase; improves pgm time
 
 RECHARGE,RECHARGE2:
--add RECHARGE2 for full battery charge (required for life test)
--[TBD] RECHARGE time/voltage change to ?? (EL request)
+-RECHARGE change to 3.9V. Timeout increase to 20min for longer charge cycle
+-add RECHARGE2, full battery charge (required for life test)
+
+DEBUG:
+-test RSSI read
 
 ----------------
 Release v94
