@@ -536,7 +536,7 @@ int m_Recharge( u16 max_charge_time_s, u16 vbat_limit_v100x, u16 i_done_ma )
       
       //charge complete? (current threshold)
       iDoneCnt = i_done_ma > 0 && current_ma < i_done_ma ? iDoneCnt + 1 : 0;
-      if( iDoneCnt > 25 ) {
+      if( iDoneCnt > 10 ) {
         PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
         ConsolePrintf("\r\ni-done,%dmA", i_done_ma);
         iDone = 1;  //flag to end charge loop
@@ -552,6 +552,7 @@ int m_Recharge( u16 max_charge_time_s, u16 vbat_limit_v100x, u16 i_done_ma )
     }
     ConsolePrintf("\r\n");
     
+    ConsolePrintf("charge time (cumulative): %ds\r\n", (getMicroCounter() - chargeTime) / 1000000 );
     EnableChargeComms(); //switch to comm mode
     MicroWait(500*1000); //let battery voltage settle
     battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10);
@@ -564,12 +565,17 @@ int m_Recharge( u16 max_charge_time_s, u16 vbat_limit_v100x, u16 i_done_ma )
 
 void Recharge(void)
 {
-  const u16 BAT_MAX_CHARGE_TIME_S = 20*60;  //max amount of time to charge
+  const u16 BAT_MAX_CHARGE_TIME_S = 25*60;  //max amount of time to charge
   const u16 VBAT_CHARGE_LIMIT = 390;        //Voltage x100
   const u16 BAT_FULL_I_THRESH_MA = 200;     //current threshold for charging complete (experimental)
   int status;
   
-  if( g_fixtureType == FIXTURE_RECHARGE2_TEST )
+  //Notes from test measurements ->
+  //conditions: 90s charge intervals, interrupted to measure vBat)
+  //full charge (3.44V-4.15V) 1880s (31.3min)
+  //typical charge (3.65V-3.92V) 990s (16.5min)
+  
+    if( g_fixtureType == FIXTURE_RECHARGE2_TEST )
     status = m_Recharge( 2*BAT_MAX_CHARGE_TIME_S, 0, BAT_FULL_I_THRESH_MA ); //charge to full battery
   else
     status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT, 0 ); //charge to specified voltage
