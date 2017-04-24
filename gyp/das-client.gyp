@@ -224,6 +224,17 @@
         },
       },
     ],
+    [
+      "OS=='mac'",
+      {
+        'variables': {
+          'macosx_deployment_target%': '',
+        },
+        'xcode_settings': {
+          'MACOSX_DEPLOYMENT_TARGET': '<(macosx_deployment_target)',
+        },
+      },
+    ],
   ],
 
   'targets': [
