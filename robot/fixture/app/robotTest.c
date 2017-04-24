@@ -552,7 +552,7 @@ int m_Recharge( u16 max_charge_time_s, u16 vbat_limit_v100x, u16 i_done_ma )
     }
     ConsolePrintf("\r\n");
     
-    ConsolePrintf("charge time (cumulative): %ds\r\n", (getMicroCounter() - chargeTime) / 1000000 );
+    ConsolePrintf("charge time: %ds\r\n", (getMicroCounter() - chargeTime) / 1000000 );
     EnableChargeComms(); //switch to comm mode
     MicroWait(500*1000); //let battery voltage settle
     battVolt100x = robot_get_battVolt100x(BAT_CHECK_INTERVAL_S+10,BAT_CHECK_INTERVAL_S+10);
@@ -575,7 +575,7 @@ void Recharge(void)
   //full charge (3.44V-4.15V) 1880s (31.3min)
   //typical charge (3.65V-3.92V) 990s (16.5min)
   
-    if( g_fixtureType == FIXTURE_RECHARGE2_TEST )
+  if( g_fixtureType == FIXTURE_RECHARGE2_TEST )
     status = m_Recharge( 2*BAT_MAX_CHARGE_TIME_S, 0, BAT_FULL_I_THRESH_MA ); //charge to full battery
   else
     status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT, 0 ); //charge to specified voltage
@@ -598,18 +598,19 @@ void Recharge(void)
 //Test body charging circuit by verifying current draw
 void ChargeTest(void)
 {
-  const int CHARGING_CURRENT_THRESHOLD_MA = 700;
-  const int NUM_SAMPLES = 8;
-  const int BAT_OVERVOLT_THRESHOLD = 400; //4.0V
+  #define CHARGE_TEST_DEBUG(x)    //x
+  const int CHARGING_CURRENT_THRESHOLD_MA = 400;
+  const int NUM_SAMPLES = 32;
+  const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
   
   EnableChargeComms(); //switch to comm mode
   uint16_t battVolt100x = robot_get_battVolt100x(10,0); //+POWERON extra time [s]
-  //TODO: throw en error if robot battery is too full?? can't properly detect charging current in CV mode
   
   //Turn on charging power
   PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
   
+  CHARGE_TEST_DEBUG( int print_len = 0; u32 displayLatch = 0; );
   int avg=0, avgCnt=0, offContact = 0;
   u32 waitTime = getMicroCounter();
   while( getMicroCounter() - waitTime < (5*1000*1000) )
@@ -618,33 +619,55 @@ void ChargeTest(void)
     avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
     avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
     
+    //========================DEBUG===============================
+    CHARGE_TEST_DEBUG( {
+      for(int x=0; x < print_len; x++ ) { //erase previous line
+        ConsolePutChar(0x08); //backspace
+        ConsolePutChar(0x20); //space
+        ConsolePutChar(0x08); //backspace
+      }
+      
+      //Display real-time averaged current
+      const int DISP_MA_PER_CHAR = 15;
+      print_len = ConsolePrintf("%03d ", avg);
+      for(int x=avg; x>0; x -= DISP_MA_PER_CHAR)
+        print_len += ConsolePrintf("=");
+      
+      //preserve a current history in the console window
+      if( getMicroCounter() - displayLatch > 500*1000 ) {
+        displayLatch = getMicroCounter();
+        ConsolePrintf("\r\n");
+        print_len = 0;
+      }
+    } );
+    //==========================================================*/
+    
     //finish when average rises above our threshold (after minimum sample cnt)
     if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
       break;
     
     //error out quickly if robot removed from charge base
     if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 5) {
-      PIN_RESET(GPIOC, PINC_CHGTX); //disable power to charge contacts
-      break;
+      CHARGE_TEST_DEBUG( ConsolePrintf("\r\n"); );
+      ConsolePrintf("robot off charger\r\n");
+      throw ERROR_BAT_CHARGER;
     }
   }
   
+  CHARGE_TEST_DEBUG( ConsolePrintf("\r\n"); );
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
-  
   if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
-  { } //OK
-  else if( battVolt100x >= BAT_OVERVOLT_THRESHOLD )
-  {
-    //time to hit the gym and burn off a few pounds
-    const int BURN_TIME_S = 120;
+    return; //OK
+  
+  if( battVolt100x >= BAT_OVERVOLT_THRESHOLD ) {
+    const int BURN_TIME_S = 120;  //time to hit the gym and burn off a few pounds
     ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
     robot_get_battVolt100x(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
-    SendCommand(TEST_MOTORSLAM, 0, 0, 0);
-    
+    //SendCommand(TEST_MOTORSLAM, 0, 0, 0);
     throw ERROR_BAT_OVERVOLT; //error prompts operator to put robot aside for a bit
-  } 
-  else
-    throw ERROR_BAT_CHARGER;
+  }
+  
+  throw ERROR_BAT_CHARGER;
 }
 
 //Verify battery voltage sufficient for assembly/packout
