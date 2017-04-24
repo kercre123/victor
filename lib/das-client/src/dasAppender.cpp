@@ -74,7 +74,10 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
   }
   uint32_t curSequence = sDasSequenceNumber++;
 
-  std::map<std::string, std::string> eventDictionary{*globals};
+  std::map<std::string, std::string> eventDictionary;
+  if (globals) {
+    eventDictionary = *globals;
+  }
   eventDictionary.insert(data.begin(), data.end());
   eventDictionary.emplace(eventName, eventValue);
 
