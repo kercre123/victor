@@ -61,7 +61,13 @@ namespace CodeLab {
       CurrentRobot.SetEnableFreeplayLightStates(true);
 
       // Load sample projects json from file and cache in list
-      string path = Application.streamingAssetsPath + "/Scratch/sample-projects.json";
+      string pathToFile = "/Scratch/sample-projects.json";
+#if UNITY_EDITOR || UNITY_IOS
+      string path = Application.streamingAssetsPath + pathToFile;
+#elif UNITY_ANDROID
+string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
+#endif
+
       string json = File.ReadAllText(path);
       _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
@@ -92,14 +98,8 @@ namespace CodeLab {
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
         _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
 
-#if UNITY_EDITOR
         // TODO Change to tutorial for first run, otherwise save/load UI.
-        string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
-#else
-        string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
-#endif
-
-        _WebViewObjectComponent.LoadURL(indexFile);
+        LoadURL("extra/projects.html");
       }
     }
 
@@ -117,13 +117,31 @@ namespace CodeLab {
         // Provide save and load UI with JSON arrays of the user and sample projects.
         string jsCallback = scratchRequest.argString;
 
-        // Get user projects as JSON. Sort projects by most recently modified.
+        // Provide JavaScript with a list of user projects as JSON, sorted projects by most recently modified.
+        // Don't include XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
         defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
-        string userProjectsAsJSON = JsonConvert.SerializeObject(defaultProfile.CodeLabProjects);
+        List<CodeLabProject> copyCodeLabProjectList = new List<CodeLabProject>();
+        for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
+          CodeLabProject proj = new CodeLabProject();
+          proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
+          proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName;
+          copyCodeLabProjectList.Add(proj);
+        }
+        string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
 
-        // Get sample projects as JSON. Sort projects by DisplayOrder.
+        // Provide JavaScript with a list of sample projects as JSON, sorted by DisplayOrder.
+        // Again, don't include the XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
         _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
-        string sampleProjectsAsJSON = JsonConvert.SerializeObject(_CodeLabSampleProjects);
+        List<CodeLabSampleProject> copyCodeLabSampleProjectList = new List<CodeLabSampleProject>();
+        for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
+          CodeLabSampleProject proj = new CodeLabSampleProject();
+          proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
+          proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
+          proj.ProjectName = _CodeLabSampleProjects[i].ProjectName;
+          copyCodeLabSampleProjectList.Add(proj);
+        }
+
+        string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
 
         // Call jsCallback with list of serialized Code Lab user projects and sample projects
         _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
@@ -141,7 +159,11 @@ namespace CodeLab {
           string newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
           defaultProfile.CodeLabUserProjectNum++;
 
-          defaultProfile.CodeLabProjects.Add(new CodeLabProject(newUserProjectName, projectXML));
+          CodeLabProject newProject = new CodeLabProject(newUserProjectName, projectXML);
+          defaultProfile.CodeLabProjects.Add(newProject);
+
+          // Inform workspace that the current work on workspace has been saved to a project.
+          _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
         }
         else {
           // Project already has a guid. Locate the project then update it.
@@ -156,7 +178,7 @@ namespace CodeLab {
       else if (scratchRequest.command == "cozmoRequestToOpenSampleProject") {
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
       }
-      else if (scratchRequest.command == "cozmoRequestToCreateCozmoProject") {
+      else if (scratchRequest.command == "cozmoRequestToCreateProject") {
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
       }
       else if (scratchRequest.command == "cozmoDeleteUserProject") {
@@ -164,6 +186,9 @@ namespace CodeLab {
         if (projectToDelete != null) {
           defaultProfile.CodeLabProjects.Remove(projectToDelete);
         }
+      }
+      else if (scratchRequest.command == "cozmoLoadProjectPage") {
+        LoadURL("extra/projects.html");
       }
       else if (scratchRequest.command == "cozmoCloseCodeLab") {
         RaiseMiniGameQuit();
@@ -249,11 +274,14 @@ namespace CodeLab {
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
+      LoadURL("index.html");
+    }
 
+    private void LoadURL(string scratchPathToHTML) {
 #if UNITY_EDITOR
-      string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
+      string indexFile = Application.streamingAssetsPath + "/Scratch/" + scratchPathToHTML;
 #else
-      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
+      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/" + scratchPathToHTML;
 #endif
 
       _WebViewObjectComponent.LoadURL(indexFile);
@@ -383,20 +411,6 @@ namespace CodeLab {
 
       // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);
-
-#if !UNITY_ANDROID
-      _WebViewObjectComponent.EvaluateJS(@"
-              window.Unity = {
-                call: function(msg) {
-                  var iframe = document.createElement('IFRAME');
-                  iframe.setAttribute('src', 'unity:' + msg);
-                  document.documentElement.appendChild(iframe);
-                  iframe.parentNode.removeChild(iframe);
-                  iframe = null;
-                }
-              }
-            ");
-#endif
     }
 #else // ANKI_DEV_CHEATS SECRET
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {

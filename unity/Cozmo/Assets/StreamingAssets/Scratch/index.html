@@ -17,6 +17,17 @@
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css">
         <link rel="stylesheet" href="./css/common.css">
+        <script>
+        window.Unity = {
+            call: function(msg) {
+                var iframe = document.createElement('IFRAME');
+                iframe.setAttribute('src', 'unity:' + msg);
+                document.documentElement.appendChild(iframe);
+                iframe.parentNode.removeChild(iframe);
+                iframe = null;
+            }
+        }
+        </script>
 	</head>
 
 	<body>

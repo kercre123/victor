@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="../css/normalize.css">
+    <link rel="stylesheet" href="projects.css"/>
+
+    <link rel="prefetch" href="images/framing_widgetBackground_player1.svg"/>
+    <link rel="prefetch" href="images/framing_widgetBackground_player2.svg"/>
+    <link rel="prefetch" href="images/framing_widgetBackground_player3.svg"/>
+    <script>
+    window.Unity = {
+      call: function(msg) {
+        var iframe = document.createElement('IFRAME');
+        iframe.setAttribute('src', 'unity:' + msg);
+        document.documentElement.appendChild(iframe);
+        iframe.parentNode.removeChild(iframe);
+        iframe = null;
+      }
+    }
+    </script>
+  </head>
+  <body>
+
+    <!-- Main Projects Display -->
+    <div id="projects">
+      <div class="hd">
+        <button id="btn-close-page" class="button-plain" data-type="btn-close-page"><img src="images/icon_closeButton.svg"/></button>
+        <span id="app-title"></span>
+        <span id="app-title-subtext"></span>
+        <img id="scratch-watermark" src="images/icon_scratchWatermark.svg"/>
+      </div>
+      <div class="bd">
+        <ol id="projects-list">
+          <li id="project-new" class="project project-new" data-type="btn-create-new-project">
+            <img src="images/framing_widgetBackground_newProject.svg"/>
+            <div id="new-project-label-outer">
+              <div id="new-project-label"></div>
+            </div>
+          </li>
+          <li class="divider"></li>
+        </ol>
+      </div>
+      <div class="ft">
+        <a id="tutorial-link" href="#" data-type="btn-tutorial">
+          <span id="tutorial-label"></span>
+          <img id="challenges-icon" src="images/icon_challengesTip.svg"/>
+        </a>
+      </div>
+    </div>
+
+    <div id="modal">
+      <div id="modal-bg" data-type="modal-background"></div>
+      <div id="modal-inner">
+        <h2 id="confirm-delete-title" class="hd"></h2>
+        <p id="confirm-delete-label" class="bd"></p>
+        <div class="ft">
+          <button id="btn-delete-project" class="button-blue-pill" data-type="btn-delete-project"></button>
+          <button id="btn-cancel-delete-project" class="button-blue-pill" data-type="btn-cancel-delete-project"></button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- cloneable DOM trees for sample and user projects -->
+    <div id="ui-prototypes" style="display:none">
+
+      <!-- sample project prototype -->
+      <li id="prototype-sample-project" class="project project-sample" data-type="load-sample-project">
+        <div class="project-type">Sample</div>
+        <img src="images/framing_widgetBackground_sample.svg"/>
+        <object class="block" data="images/icon_blockBlank.svg" type="image/svg+xml">
+        </object>
+        <img class="block-icon" src=""/>
+        <div class="project-title"></div>
+      </li>
+
+      <!-- user project prototype -->
+      <li id="prototype-user-project" class="project" data-type="load-user-project">
+        <div class="project-type">Personal</div>
+        <img class="project-card" src=""/>
+        <div class="project-title"></div>
+        <button class="btn-delete-project button-plain" data-type="btn-confirm-delete-project"></button>
+      </li>
+    </div>
+
+    <script src="../js/cozmoSaveLoadAPI.js"></script>
+    <script src="./projects.js"></script>
+  </body>
+</html>
