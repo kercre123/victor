@@ -148,6 +148,10 @@ public class MockRobot : IRobot {
     EnableSparkUnlock(UnlockId.Count);
   }
 
+  public void SetSparkedMusicState(Anki.AudioMetaData.SwitchState.Sparked sparkedState) {
+  }
+
+
   public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.AudioMetaData.GameState.Music musicState, Anki.AudioMetaData.SwitchState.Sparked sparkedState) {
     // Do nothing
   }

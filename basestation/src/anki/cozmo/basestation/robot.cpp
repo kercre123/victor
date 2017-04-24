@@ -37,6 +37,7 @@
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -174,6 +175,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _blockWorld(new BlockWorld(this))
   , _faceWorld(new FaceWorld(*this))
   , _petWorld(new PetWorld(*this))
+  , _publicStateBroadcaster(new PublicStateBroadcaster())
   , _behaviorMgr(new BehaviorManager(*this))
   , _audioClient(new Audio::RobotAudioClient(this))
   , _pathComponent(new PathComponent(*this, robotID, context))
@@ -1645,6 +1647,11 @@ Result Robot::Update()
 
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
+  
+  // Update user facing state information after everything else has been updated
+  // so that relevant information is forwarded along to whoever's listening for
+  // state changes
+  _publicStateBroadcaster->Update(*this);
 
 
   if( kDebugPossibleBlockInteraction ) {

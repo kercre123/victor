@@ -38,27 +38,11 @@ structure SparkUnlocked
   UnlockId behaviorSpark,
 }
 
-// Tells the behavior manager to start playing sparked music and allow state updates
-structure ActivateSparkedMusic
-{
-  UnlockId                            behaviorSpark,
-  AudioMetaData::GameState::Music     musicSate,
-  AudioMetaData::SwitchState::Sparked sparkedMusicState,
-}
-
-// Tells the behavior manager to no longer update sparked music states
-structure DeactivateSparkedMusic
-{
-  UnlockId                        behaviorSpark,
-  AudioMetaData::GameState::Music  musicSate,
-}
 
 union BehaviorManagerMessageUnion {
   SetAvailableGames SetAvailableGames,
   ActivateSpark ActivateSpark,
-  SparkUnlocked SparkUnlocked,
-  ActivateSparkedMusic ActivateSparkedMusic,
-  DeactivateSparkedMusic DeactivateSparkedMusic,
+  SparkUnlocked SparkUnlocked
 }
 
 } // namespace U2G
