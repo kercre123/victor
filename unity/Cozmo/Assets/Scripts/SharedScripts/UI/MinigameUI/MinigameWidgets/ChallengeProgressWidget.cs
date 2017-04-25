@@ -60,7 +60,7 @@ namespace Cozmo {
 
       public float Progress {
         set {
-          _ChallengeProgressBar.SetProgress(value);
+          _ChallengeProgressBar.SetTargetAndAnimate(value);
         }
       }
 

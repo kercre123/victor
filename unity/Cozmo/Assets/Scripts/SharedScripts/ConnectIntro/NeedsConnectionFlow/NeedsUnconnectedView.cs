@@ -1,7 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using Cozmo.Needs.UI;
 using Cozmo.UI;
+using DG.Tweening;
+using UnityEngine;
 
 namespace Cozmo.ConnectionFlow.UI {
   public class NeedsUnconnectedView : BaseView {
@@ -13,6 +13,11 @@ namespace Cozmo.ConnectionFlow.UI {
     [SerializeField]
     private CozmoButton _ConnectButton;
 
+    [SerializeField]
+    private NeedsMetersWidget _MetersWidget;
+
+    // IVY TODO: Add NeedConnectModal prefab
+
     // Use this for initialization
     void Start() {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
@@ -23,6 +28,25 @@ namespace Cozmo.ConnectionFlow.UI {
       else {
         _ConnectButton.Initialize(HandleConnectButtonPressed, "connect_button", "needs_unconnected_view");
       }
+
+      // IVY TODO: Listen to button events from NeedsMeterWidget in order to open NeedConnect modal 
+      // IVY TODO: Test allowInput
+      _MetersWidget.Initialize(allowButtonInput: true,
+                               enableButtonBasedOnNeeds: true,
+                               dasParentDialogName: DASEventDialogName,
+                               baseDialog: this);
+    }
+
+    protected override void CleanUp() {
+
+    }
+
+    protected override void ConstructOpenAnimation(Sequence openAnimation) {
+      ConstructDefaultFadeOpenAnimation(openAnimation);
+    }
+
+    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+      ConstructDefaultFadeCloseAnimation(closeAnimation);
     }
 
     private void HandleConnectButtonPressed() {

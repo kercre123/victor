@@ -15,14 +15,9 @@ namespace Cozmo {
 
       [SerializeField]
       private bool _UseEndCap = false;
+
       [SerializeField]
       private Image _EndCap;
-
-      public Sprite FillImage {
-        set {
-          _FilledForegroundImage.overrideSprite = value;
-        }
-      }
 
       [SerializeField]
       private Color _NormalColor;
@@ -33,37 +28,57 @@ namespace Cozmo {
       [SerializeField]
       private Color _IncreasingColor;
 
-      private float _StartProgress = 0f;
-      private float _TargetProgress = 0f;
-      public float CurrentTargetProgress { get { return _TargetProgress; } }
+      private float _AnimStartValue = 0f;
+      private float _TargetValue = 0f;
+      private float CurrentValue {
+        get { return _FilledForegroundImage.fillAmount; }
+        set { _FilledForegroundImage.fillAmount = value; }
+      }
 
-      private float _TimePassedSeconds = 0f;
-      private bool _ProgressUpdating = false;
+      private float _CurrentTweenTime_sec = 0f;
+
+      private enum BarAnimationState {
+        INIT,
+        IDLE,
+        TWEEN_MAIN
+      }
+
+      private BarAnimationState _CurrentAnimState = BarAnimationState.INIT;
 
       private void Start() {
         // Force filled type so that the progress bar works.
         _FilledForegroundImage.type = Image.Type.Filled;
-        _StartProgress = 0;
-        _FilledForegroundImage.fillAmount = 0;
-        _TimePassedSeconds = 0;
+
+        // Target values are sometimes set during Awake; don't override in Start
+        // _TargetValue = 0f;
+        // _CurrentAnimState = BarAnimationState.IDLE;
+
+        if (_CurrentAnimState == BarAnimationState.INIT) {
+          _AnimStartValue = 0;
+          _CurrentTweenTime_sec = 0;
+          CurrentValue = 0;
+          _CurrentAnimState = BarAnimationState.IDLE;
+        }
+
         if (_UseEndCap && _EndCap == null) {
           DAS.Warn("ProgressBar.Start", "UseEndCap enabled but EndCap is NULL");
           _UseEndCap = false;
         }
         if (_EndCap != null && ((!_UseEndCap) ||
-            ((_FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width) < _EndCap.rectTransform.rect.width))) {
+            ((CurrentValue * _FilledForegroundImage.rectTransform.rect.width) < _EndCap.rectTransform.rect.width))) {
           _EndCap.gameObject.SetActive(false);
         }
       }
 
       private void Update() {
-        if (_FilledForegroundImage.fillAmount != _TargetProgress) {
-          _TimePassedSeconds += Time.deltaTime;
-          if (_TimePassedSeconds > kTweenDuration) {
-            _TimePassedSeconds = kTweenDuration;
+        switch (_CurrentAnimState) {
+        case BarAnimationState.TWEEN_MAIN:
+          _CurrentTweenTime_sec += Time.deltaTime;
+          if (_CurrentTweenTime_sec > kTweenDuration) {
+            _CurrentTweenTime_sec = kTweenDuration;
           }
-          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress,
-            _TargetProgress - _StartProgress, kTweenDuration);
+          CurrentValue = EaseOutQuad(_CurrentTweenTime_sec, _AnimStartValue,
+            _TargetValue - _AnimStartValue, kTweenDuration);
 
           // If Endcap is enabled and != null, update position based on the width and fill amount
           // of the Foreground Image.
@@ -71,23 +86,30 @@ namespace Cozmo {
             PositionEndCap();
           }
 
-          if (_TargetProgress > _FilledForegroundImage.fillAmount) {
+          if (_TargetValue > CurrentValue) {
             _FilledForegroundImage.color = _IncreasingColor;
           }
-          else if (_TargetProgress < _FilledForegroundImage.fillAmount) {
+          else if (_TargetValue < CurrentValue) {
             _FilledForegroundImage.color = _DecreasingColor;
           }
           else {
             _FilledForegroundImage.color = _NormalColor;
-            _StartProgress = _FilledForegroundImage.fillAmount;
-            _TimePassedSeconds = 0;
+            _AnimStartValue = CurrentValue;
+            _CurrentTweenTime_sec = 0;
+
+            if (ProgressUpdateCompleted != null) {
+              ProgressUpdateCompleted.Invoke();
+            }
+            _CurrentAnimState = BarAnimationState.IDLE;
           }
-        }
-        else if (_ProgressUpdating) {
-          _ProgressUpdating = false;
-          if (ProgressUpdateCompleted != null) {
-            ProgressUpdateCompleted.Invoke();
-          }
+          break;
+        // IDLE / default - do nothing
+        case BarAnimationState.IDLE:
+          break;
+        case BarAnimationState.INIT:
+          break;
+        default:
+          break;
         }
       }
 
@@ -97,44 +119,54 @@ namespace Cozmo {
       }
 
       public void ResetProgress() {
-        _TimePassedSeconds = 0;
-        _StartProgress = 0;
-        _TargetProgress = 0;
-        SetProgress(0.0f, true);
+        SetValueInstantInternal(0f);
       }
 
       /// <summary>
       /// Sets the progress of the bar.
       /// </summary>
-      /// <param name="progress">Progress.</param>
+      /// <param name="targetProgress">Progress.</param>
       /// <param name="instant">If set to <c>true</c> cut to progress instantly without firing events.</param>
-      public void SetProgress(float progress, bool instant = false) {
-        if (progress < 0 || progress > 1) {
-          DAS.Warn("ProgressBar.SetProgress.OutOfRange", "Tried to set progress to value=" + progress + " which is not in the range of 0 to 1! Clamping.");
+      public void SetTargetAndAnimate(float targetProgress) {
+        SetTarget(targetProgress);
+        AnimateToTarget();
+      }
+
+      public void SetValueInstant(float targetProgress) {
+        SetValueInstantInternal(targetProgress);
+        if (ProgressUpdateCompleted != null) {
+          ProgressUpdateCompleted.Invoke();
         }
-        _ProgressUpdating = !instant;
-        float newProgress = Mathf.Clamp(progress, 0f, 1f);
-        if (newProgress != _TargetProgress) {
-          _TargetProgress = newProgress;
+      }
+
+      private void SetValueInstantInternal(float targetProgress) {
+        SetTarget(targetProgress);
+        _AnimStartValue = _TargetValue;
+        CurrentValue = _TargetValue;
+        _CurrentAnimState = BarAnimationState.IDLE;
+        _CurrentTweenTime_sec = 0f;
+        if (_UseEndCap) {
+          PositionEndCap();
         }
-        // If set to instant, immediately set progress bar to new value, don't fire events.
-        if (instant) {
-          _StartProgress = _TargetProgress;
-          _FilledForegroundImage.fillAmount = _TargetProgress;
-          if (_UseEndCap) {
-            PositionEndCap();
-          }
-          if (ProgressUpdateCompleted != null) {
-            ProgressUpdateCompleted.Invoke();
-          }
+      }
+
+      public void SetTarget(float targetProgress) {
+        if (targetProgress < 0 || targetProgress > 1) {
+          DAS.Warn("ProgressBar.SetTarget.OutOfRange", "Tried to set progress to value="
+                   + targetProgress + " which is not in the range of 0 to 1! Clamping.");
         }
+        _TargetValue = Mathf.Clamp(targetProgress, 0f, 1f);
+      }
+
+      public void AnimateToTarget() {
+        _CurrentAnimState = BarAnimationState.TWEEN_MAIN;
       }
 
       private void PositionEndCap() {
         float capPos = 0.0f;
-        capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width;
+        capPos = CurrentValue * _FilledForegroundImage.rectTransform.rect.width;
 
-        if (capPos < _EndCap.rectTransform.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
+        if (capPos < _EndCap.rectTransform.rect.width || (CurrentValue >= 1.0f)) {
           _EndCap.gameObject.SetActive(false);
         }
         else {

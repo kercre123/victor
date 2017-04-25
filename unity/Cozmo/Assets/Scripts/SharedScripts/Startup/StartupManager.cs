@@ -127,13 +127,18 @@ public class StartupManager : MonoBehaviour {
     Localization.LoadLocaleAndCultureInfo(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage,
                                           DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSettingOverride);
 
-    // IVY TODO: Put behind SHIPPING if def?
+    // COZMO-10921: Right now we hardcode/force the app to be in "HomeHub" mode for safety. 
+    // Need to remove flag before shipping so that consumers can see it.
+#if SHIPPING
+    _MainSceneData = _HomeHubData;
+#else
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseNeedsHub) {
       _MainSceneData = _NeedsHubData;
     }
     else {
       _MainSceneData = _HomeHubData;
     }
+#endif
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;
@@ -159,7 +164,7 @@ public class StartupManager : MonoBehaviour {
 
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
-    _LoadingBar.SetProgress(_CurrentProgress);
+    _LoadingBar.SetTargetAndAnimate(_CurrentProgress);
     _LoadingVersionLabel.text = null;
     _LoadingDeviceIdLabel.text = null;
 
@@ -254,12 +259,12 @@ public class StartupManager : MonoBehaviour {
       float progressBeforeEngineLoading = _CurrentProgress;
       while (_EngineLoadingProgress < 1.0f) {
         float progressToAdd = _EngineLoadingProgress * (1.0f - progressBeforeEngineLoading);
-        _LoadingBar.SetProgress(progressBeforeEngineLoading + progressToAdd);
+        _LoadingBar.SetTargetAndAnimate(progressBeforeEngineLoading + progressToAdd);
         yield return 0;
       }
     }
 
-    _LoadingBar.SetProgress(1.0f);
+    _LoadingBar.SetTargetAndAnimate(1.0f);
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
@@ -550,11 +555,11 @@ public class StartupManager : MonoBehaviour {
 
   private void AddLoadingBarProgress(float amount) {
     if (_CurrentProgress + amount > 0.95f) {
-      _LoadingBar.SetProgress(0.95f);
+      _LoadingBar.SetTargetAndAnimate(0.95f);
     }
     else {
       _CurrentProgress += amount;
-      _LoadingBar.SetProgress(_CurrentProgress);
+      _LoadingBar.SetTargetAndAnimate(_CurrentProgress);
     }
   }
 

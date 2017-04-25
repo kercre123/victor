@@ -60,7 +60,7 @@ namespace Cozmo {
         set {
           if (_GoalProg != value) {
             _GoalProg = value;
-            _GoalProgressBar.SetProgress(value);
+            _GoalProgressBar.SetTargetAndAnimate(value);
 
             UpdateProgressionUI();
 
