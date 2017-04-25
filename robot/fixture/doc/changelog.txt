@@ -10,8 +10,12 @@ HEAD1:
 -partial flash erase; improves pgm time
 
 RECHARGE,RECHARGE2:
--RECHARGE change to 3.9V. Timeout increase to 20min for longer charge cycle
+-RECHARGE change to 3.9V. Timeout increase for longer charge cycle
 -add RECHARGE2, full battery charge (required for life test)
+
+ROBOT1,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]:
+-relax charge-test threshold (avg 400mA) to improve detection with nearly full battery.
+-change 120s motor-slam to face display only for battery drain (if charge fail + vBat >= 4.05V)
 
 DEBUG:
 -test RSSI read
