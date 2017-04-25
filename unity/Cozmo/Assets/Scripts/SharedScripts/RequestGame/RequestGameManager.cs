@@ -121,19 +121,20 @@ namespace Cozmo.RequestGame {
         return;
       }
       if (_RobotToTrack == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest", "Not tracking a robot! _RobotToTrack is NULL");
+        // This can happen if robot has disconnected
+        DAS.Warn("RequestGameManager.PickMiniGameToRequest.NoRobot", "Not tracking a robot! _RobotToTrack is NULL");
         return;
       }
       if (RequestGameListConfig.Instance == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest", "Request minigame config is NULL");
+        DAS.Error("RequestGameManager.PickMiniGameToRequest.NoGameList", "Request minigame config is NULL");
         return;
       }
       if (ChallengeList == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest", "Challenge List is NULL");
+        DAS.Error("RequestGameManager.PickMiniGameToRequest.NoChallengeList", "Challenge List is NULL");
         return;
       }
       if (UnlockablesManager.Instance == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest", "UnlockablesManager is NULL");
+        DAS.Error("RequestGameManager.PickMiniGameToRequest.NoUnlockablesManager", "UnlockablesManager is NULL");
         return;
       }
 
