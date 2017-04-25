@@ -263,7 +263,16 @@ bool BodyLightComponent::StopLoopingBackpackLights(const BackpackLightDataLocato
     return false;
   }
   
-  lightDataLocator._mapIter->second.erase(lightDataLocator._listIter);
+  if(!lightDataLocator._mapIter->second.empty())
+  {
+    lightDataLocator._mapIter->second.erase(lightDataLocator._listIter);
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("BodyLightComponent.StopLoopingBackpackLights.NoLocators",
+                        "Trying to remove supposedly valid locator but locator list is empty");
+    return false;
+  }
   
   if (lightDataLocator._mapIter->second.empty())
   {
