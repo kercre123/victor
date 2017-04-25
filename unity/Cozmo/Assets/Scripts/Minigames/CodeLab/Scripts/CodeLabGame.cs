@@ -1,10 +1,13 @@
 using UnityEngine;
+using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using Newtonsoft.Json;
 using DataPersistence;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Cozmo.UI;
+using Cozmo.MinigameWidgets;
 
 namespace CodeLab {
   public class CodeLabSampleProject {
@@ -249,7 +252,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           liftHeight = 1.0f;
         }
 
-        RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.NOW, 2);
       }
       else if (scratchRequest.command == "cozmoSetBackpackColor") {
         RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
@@ -274,7 +277,22 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
+      ShowGettingReadyScreen();
       LoadURL("index.html");
+    }
+
+    // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup
+    private void ShowGettingReadyScreen() {
+      _WebViewObjectComponent.SetVisibility(false);
+
+      SharedMinigameView.HideQuitButton();
+      PopulateTitleWidget();
+
+      SharedMinigameView.InitializeColor(UIColorPalette.GameBackgroundColor);
+
+      SharedMinigameView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
+      SharedMinigameView.ShowShelf();
+      SharedMinigameView.ShowSpinnerWidget();
     }
 
     private void LoadURL(string scratchPathToHTML) {
@@ -408,6 +426,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
 
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
+
+      SharedMinigameView.HideMiddleBackground();
 
       // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);

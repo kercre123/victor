@@ -1051,7 +1051,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.scratchCategoryMenuItem {',
-    'padding: 7px;',
+    'padding: 2px;',
     'width: 25%;',
     'cursor: pointer;',
   '}',
@@ -1062,7 +1062,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.scratchCategoryItemBubbleLTR {',
-    'width: 80px;',
+    'width: 90px;',
     'height: 20px;',
     'border-radius: 20px;',
     'text-align: center;',
