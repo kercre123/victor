@@ -34,7 +34,8 @@ namespace Anki {
                           const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true,
-                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
+                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
+                          float timeout_sec = _kDefaultTimeout_sec);
       // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
       // Caller owns the animation -- it will not be deleted by this action.
       // Numloops 0 causes the action to loop forever
@@ -43,13 +44,14 @@ namespace Anki {
                           Animation* animation,
                           u32 numLoops = 1,
                           bool interruptRunning = true,
-                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
+                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
+                          float timeout_sec = _kDefaultTimeout_sec);
       
       virtual ~PlayAnimationAction();
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
+      virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
       
     protected:
       
@@ -64,12 +66,16 @@ namespace Anki {
       AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
       bool                      _interruptRunning;
       Animation*                _animPointer = nullptr;
+      float                     _timeout_sec = _kDefaultTimeout_sec;
       
       // For responding to AnimationStarted, AnimationEnded, and AnimationEvent events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
       Signal::SmartHandle _eventSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
+      
+    private:
+      static constexpr float _kDefaultTimeout_sec = 60.f;
       
     }; // class PlayAnimationAction
 

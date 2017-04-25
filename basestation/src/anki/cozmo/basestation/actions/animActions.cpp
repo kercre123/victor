@@ -36,7 +36,8 @@ namespace Anki {
                                              const std::string& animName,
                                              u32 numLoops,
                                              bool interruptRunning,
-                                             u8 tracksToLock)
+                                             u8 tracksToLock,
+                                             float timeout_sec)
     : IAction(robot,
               "PlayAnimation" + animName,
               RobotActionType::PLAY_ANIMATION,
@@ -44,6 +45,7 @@ namespace Anki {
     , _animName(animName)
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
+    , _timeout_sec(timeout_sec)
     {
       
     }
@@ -52,7 +54,8 @@ namespace Anki {
                                              Animation* animation,
                                              u32 numLoops,
                                              bool interruptRunning,
-                                             u8 tracksToLock)
+                                             u8 tracksToLock,
+                                             float timeout_sec)
     : IAction(robot,
               "PlayAnimation" + animation->GetName(),
               RobotActionType::PLAY_ANIMATION,
@@ -61,6 +64,7 @@ namespace Anki {
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     , _animPointer(animation)
+    , _timeout_sec(timeout_sec)
     {
      
     }
