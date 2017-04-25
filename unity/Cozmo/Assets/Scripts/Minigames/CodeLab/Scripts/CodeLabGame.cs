@@ -58,6 +58,7 @@ namespace CodeLab {
       // Since webview takes awhile to load, keep showing the "cozmo is getting ready"
       // load screen instead of the white background that usually shows in front ( shown in gamebase before calling this function )
       SharedMinigameView.HideMiddleBackground();
+      SharedMinigameView.HideQuitButton();
 
       // In GameBase.cs, in the function InitializeMinigame(), the lights are set to allow the minigame to control them.
       // We don't want this behavior for CodeLab.
@@ -88,6 +89,17 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _WebViewObject = null;
       }
       UIManager.Instance.HideTouchCatcher();
+    }
+
+    protected override void Update() {
+      base.Update();
+      // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the minigame level.
+      // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
+      if (RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
+        if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
+          RaiseMiniGameQuit();
+        }
+      }
     }
 
     private void LoadWebView() {
