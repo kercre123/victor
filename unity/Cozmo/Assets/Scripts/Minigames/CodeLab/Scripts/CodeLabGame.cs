@@ -92,8 +92,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void LoadWebView() {
       // Send EnterSDKMode to engine as we enter this view
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(false);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.EnterSDKMode(false);
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
       }
 
       if (_WebViewObject == null) {
@@ -326,34 +328,34 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {
 
       switch (scratchAnimationName) {
-      case "happy":
-        return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
-      case "victory":
-        return Anki.Cozmo.AnimationTrigger.BuildPyramidSuccess;
-      case "unhappy":
-        return Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor;
-      case "surprise":
-        return Anki.Cozmo.AnimationTrigger.DroneModeTurboDrivingStart;
-      case "dog":
-        return Anki.Cozmo.AnimationTrigger.PetDetectionDog;
-      case "cat":
-        return Anki.Cozmo.AnimationTrigger.PetDetectionCat;
-      case "sneeze":
-        return Anki.Cozmo.AnimationTrigger.PetDetectionSneeze;
-      case "excited":
-        return Anki.Cozmo.AnimationTrigger.SuccessfulWheelie;
-      case "thinking":
-        return Anki.Cozmo.AnimationTrigger.HikingReactToPossibleMarker;
       case "bored":
-        return Anki.Cozmo.AnimationTrigger.NothingToDoBoredEvent;
-      case "frustrated":
-        return Anki.Cozmo.AnimationTrigger.AskToBeRightedRight;
+        return Anki.Cozmo.AnimationTrigger.CodeLabBored;
+      case "cat":
+        return Anki.Cozmo.AnimationTrigger.CodeLabCat;
       case "chatty":
-        return Anki.Cozmo.AnimationTrigger.BuildPyramidReactToBase;
+        return Anki.Cozmo.AnimationTrigger.CodeLabChatty;
       case "dejected":
-        return Anki.Cozmo.AnimationTrigger.FistBumpLeftHanging;
+        return Anki.Cozmo.AnimationTrigger.CodeLabDejected;
+      case "dog":
+        return Anki.Cozmo.AnimationTrigger.CodeLabDog;
+      case "excited":
+        return Anki.Cozmo.AnimationTrigger.CodeLabExcited;
+      case "frustrated":
+        return Anki.Cozmo.AnimationTrigger.CodeLabFrustrated;
+      case "happy":
+        return Anki.Cozmo.AnimationTrigger.CodeLabHappy;
       case "sleep":
-        return Anki.Cozmo.AnimationTrigger.Sleeping;
+        return Anki.Cozmo.AnimationTrigger.CodeLabSleep;
+      case "sneeze":
+        return Anki.Cozmo.AnimationTrigger.CodeLabSneeze;
+      case "surprise":
+        return Anki.Cozmo.AnimationTrigger.CodeLabSurprise;
+      case "thinking":
+        return Anki.Cozmo.AnimationTrigger.CodeLabThinking;
+      case "unhappy":
+        return Anki.Cozmo.AnimationTrigger.CodeLabUnhappy;
+      case "victory":
+        return Anki.Cozmo.AnimationTrigger.CodeLabVictory;
       default:
         DAS.Error("CodeLab.BadTriggerName", "Unexpected name '" + scratchAnimationName + "'");
         break;

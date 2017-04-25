@@ -249,7 +249,7 @@ const char* SdkStatus::GetRecentCommandName(size_t index) const
   
 void SdkStatus::UpdateConnectionStatus(const ISocketComms* sdkSocketComms)
 {
-  if (_isConnected)
+  if (_isConnected && !_isInInternalSdkMode)
   {
     if (sdkSocketComms->GetNumConnectedDevices() == 0)
     {
