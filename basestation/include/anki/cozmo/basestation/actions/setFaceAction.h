@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 
 #include "anki/vision/basestation/image.h"
+#include "util/math/math.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -33,7 +34,7 @@ public:
   virtual ~SetFaceAction();
   
   // Base the timeout on the requested duration of the face animation, plus some slop
-  virtual f32 GetTimeoutInSeconds() const override { return _duration_ms + 1500; }
+  virtual f32 GetTimeoutInSeconds() const override { return Util::MilliSecToSec(_duration_ms + 1500ull); }
   
 protected:
   
