@@ -188,7 +188,7 @@ CustomObject* CustomObject::CreateFixedObstacle(f32 xSize_mm, f32 ySize_mm, f32 
                           CustomObjectMarker::Count, CustomObjectMarker::Count, CustomObjectMarker::Count,
                           CustomObjectMarker::Count, CustomObjectMarker::Count, CustomObjectMarker::Count,
                           xSize_mm, ySize_mm, zSize_mm,
-                          0.f, 0.f, true, UnmarkedBoxShape);
+                          0.f, 0.f, false, UnmarkedBoxShape);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -- - - - - - -
