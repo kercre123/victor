@@ -86,7 +86,6 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
 , _cachedFace(Vision::UnknownFaceID)
 , _numPeeksRemaining(0)
 , _numPeeksTotal(1)
-, _noUserInteractionTimeout_Sec(0.0f)
 , _nextTimeIsRunnable_Sec(0.0f)
 , _lastRequestTime_Sec(0.0f)
 , _hasMadeFollowUpRequest(false)
@@ -97,7 +96,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
 {
   JsonTools::GetValueOptional(config, "minTimesPeekBeforeQuit",       _params.minPeeks);
   JsonTools::GetValueOptional(config, "maxTimesPeekBeforeQuit",       _params.maxPeeks);
-  JsonTools::GetValueOptional(config, "noUserInteractionTimeout_Sec", _params.noUserInteractionTimeout_Sec);
+  JsonTools::GetValueOptional(config, "noUserInteractionTimeout_numIdles", _params.noUserInteractionTimeout_numIdles);
   JsonTools::GetValueOptional(config, "numReRequestsPerTimeout",      _params.numReRequestsPerTimeout);  
   JsonTools::GetValueOptional(config, "requireFaceConfirmBeforeRequest", _params.requireFaceConfirmBeforeRequest);
   JsonTools::GetValueOptional(config, "playGetIn",                       _params.playGetIn);
@@ -106,7 +105,17 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
   if( JsonTools::GetValueOptional(config, "maxTimeOldestFaceToConsider_Sec", _params.oldestFaceToConsider_MS) ) {
     _params.oldestFaceToConsider_MS *= 1000;
   }
-  
+
+  if( ! ANKI_VERIFY(_params.noUserInteractionTimeout_numIdles > _params.numReRequestsPerTimeout,
+                    "BehaviorPeekABoo.Config.InvalidTimeouts",
+                    "Behavior '%s' specified invalid values. timeout in %d idles, but re-request %d times",
+                    GetName().c_str(),
+                    _params.noUserInteractionTimeout_numIdles,
+                    _params.numReRequestsPerTimeout) ) {
+    // in prod, just update to hardcoded reasonable values
+    _params.noUserInteractionTimeout_numIdles = 3;
+    _params.numReRequestsPerTimeout = 2;
+  }
 }
 
   
@@ -150,7 +159,6 @@ Result BehaviorPeekABoo::InitInternal(Robot& robot)
   _turnToFaceRetryCount = 0;
   _timestampEyeNotVisibleMap.clear();
   
-  _noUserInteractionTimeout_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _params.noUserInteractionTimeout_Sec;
   _numPeeksTotal = _numPeeksRemaining = robot.GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
   // Disable idle so it doesn't move the head down
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
@@ -174,8 +182,7 @@ IBehavior::Status BehaviorPeekABoo::UpdateInternal(Robot& robot)
 {
   UpdateTimestampSets(robot);
   
-  const bool  seeingEyes = !WasFaceHiddenAfterTimestamp(robot, robot.GetLastImageTimeStamp());
-  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool seeingEyes = !WasFaceHiddenAfterTimestamp(robot, robot.GetLastImageTimeStamp());
   
   // Check to see if a face has appeared/disappeared every tick
   // these functions are their own callback, so allowing the callback
@@ -185,19 +192,10 @@ IBehavior::Status BehaviorPeekABoo::UpdateInternal(Robot& robot)
       StopActing(false);
       TransitionWaitToSeeFace(robot);
     }
-    else if(_noUserInteractionTimeout_Sec < currentTime_s) {
-      StopActing(false);
-      TransitionToNoUserInteraction(robot);
-      LOG_EVENT("robot.peekaboo_face_never_hidden","%u", _numPeeksRemaining);
-    }
   }else if(_currentState == State::WaitingToSeeFace){
     if(seeingEyes){
       StopActing(false);
       TransitionSeeFaceAfterHiding(robot);
-    }else if(_noUserInteractionTimeout_Sec < currentTime_s){
-      StopActing(false);
-      TransitionToNoUserInteraction(robot);
-      LOG_EVENT("robot.peekaboo_face_never_came_back","%u", _numPeeksRemaining);
     }
   }
   
@@ -285,7 +283,6 @@ void BehaviorPeekABoo::TransitionPlayPeekABooAnim(Robot& robot)
     // If we saw a face in the frame buffer, assume that they haven't tried to peekaboo yet
     // if we didn't see a face, assume their face is hidden and they are about to finish the peekaboo
     const TimeStamp_t timestampHeadSteady = robot.GetLastImageTimeStamp();
-    _noUserInteractionTimeout_Sec = _lastRequestTime_Sec + _params.noUserInteractionTimeout_Sec;
     if(WasFaceHiddenAfterTimestamp(robot, timestampHeadSteady)) {
       _stillSawFaceAfterRequest = false;
       TransitionWaitToSeeFace(robot);
@@ -308,11 +305,24 @@ void BehaviorPeekABoo::TransitionWaitToHideFace(Robot& robot)
 
     // now track the face and set up the idles
     CompoundActionParallel* trackAndIdleAction = new CompoundActionParallel(robot);
-    trackAndIdleAction->AddAction( new TrackFaceAction(robot, GetInteractionFace(robot)) );
-    trackAndIdleAction->AddAction( GetIdleAndReRequestAction(robot, false) );
 
-    // Transitioning out of this state is handled by the Update function
-    StartActing(trackAndIdleAction);
+    {
+      TrackFaceAction* trackFaceAction = new TrackFaceAction(robot, GetInteractionFace(robot));
+      IActionRunner* idleAction = GetIdleAndReRequestAction(robot, false);
+
+      // tracking should stop when the idles finish (to handle timeouts)
+      trackFaceAction->StopTrackingWhenOtherActionCompleted( idleAction->GetTag() );
+    
+      trackAndIdleAction->AddAction( trackFaceAction );
+      trackAndIdleAction->AddAction( idleAction );
+    }
+
+    // Idle until the timeout. this transition will be aborted if the face gets hidden, so this is just for
+    // the no user interaction timeout
+    StartActing(trackAndIdleAction, [this](Robot& robot) {
+        LOG_EVENT("robot.peekaboo_face_never_hidden","%u", _numPeeksRemaining);
+        TransitionToNoUserInteraction(robot);
+    });
   });
 }
   
@@ -323,10 +333,12 @@ void BehaviorPeekABoo::TransitionWaitToSeeFace(Robot& robot)
 
   // first turn towards the face so the head angle is set (needed for GetIdleAndReRequestAction)
   StartActing(new TurnTowardsFaceAction(robot, GetInteractionFace(robot)), [this](Robot& robot) {      
-      // Update will transition out of this state by canceling the action/callback if we see eyes, or the no
-      // interaction timeout is met. Idle infinitely until then
-
-      StartActing( GetIdleAndReRequestAction(robot, true) );
+      // Idle until the timeout. This transition will be aborted if the face is seen, so this just handles no
+      // user interaction timeout
+      StartActing( GetIdleAndReRequestAction(robot, true), [this](Robot& robot) {
+          LOG_EVENT("robot.peekaboo_face_never_came_back","%u", _numPeeksRemaining);
+          TransitionToNoUserInteraction(robot);
+      });
   });
 }
 
@@ -334,7 +346,7 @@ void BehaviorPeekABoo::TransitionWaitToSeeFace(Robot& robot)
 IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(Robot& robot, bool lockHeadTrack) const
 {
   // create action which alternated between idle and re-request for the desired number of times, and then
-  // loops idle forever. This action will never end
+  // loops idle the desired number of times until the timeout.
 
   CompoundActionSequential* idleAndReRequestAction = new CompoundActionSequential(robot);
 
@@ -374,12 +386,20 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(Robot& robot, bool lo
     }
   }
 
-  // after re-requests are done (or if there are none), do an infinite looping animation action for idles
-  const u32 infiniteLoops = 0;
-  idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
-                                                                        AnimationTrigger::PeekABooIdle,
-                                                                        infiniteLoops,
-                                                                        lockTracks) );
+  // after re-requests are done (or if there are none), do the desired number of loops to achieve a "timeout",
+  // which is actually in terms of number of idles rather than raw seconds
+  if( ANKI_VERIFY( _params.noUserInteractionTimeout_numIdles > _params.numReRequestsPerTimeout,
+                   "BehaviorPeekABoo.InvalidIdleConfig",
+                   "Doing %d re-requests, but only supposed to wait %d idles before timing out. This won't work",
+                   _params.numReRequestsPerTimeout,
+                   _params.noUserInteractionTimeout_numIdles) ) {
+    const u32 numFinalIdles = _params.noUserInteractionTimeout_numIdles - _params.numReRequestsPerTimeout;
+    idleAndReRequestAction->AddAction( new TriggerLiftSafeAnimationAction(robot,
+                                                                          AnimationTrigger::PeekABooIdle,
+                                                                          numFinalIdles,
+                                                                          lockTracks) );
+  }
+  
   return idleAndReRequestAction;
 }
 
