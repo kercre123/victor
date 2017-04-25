@@ -324,11 +324,16 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return _preActionPoseActionType; }
       
       virtual ActionResult SelectDockAction(ActionableObject* object) override;
       
       virtual ActionResult Verify() override;
+      
+    private:
+      
+      AlignmentType _alignmentType;
+      PreActionPose::ActionType _preActionPoseActionType = PreActionPose::ActionType::DOCKING;
       
     }; // class AlignWithObjectAction
     

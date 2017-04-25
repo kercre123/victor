@@ -461,12 +461,14 @@ namespace Anki {
       // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
       void HighDockLiftUpdate() {
         // Don't want to move the lift while we are backing up or carrying a block
+        const DockAction curAction = PickAndPlaceController::GetCurAction();
         if(failureMode_ != BACKING_UP &&
            !PickAndPlaceController::IsCarryingBlock() &&
-           PickAndPlaceController::GetCurAction() != DA_ALIGN &&
-           PickAndPlaceController::GetCurAction() != DA_ROLL_LOW &&
-           PickAndPlaceController::GetCurAction() != DA_DEEP_ROLL_LOW &&
-           PickAndPlaceController::GetCurAction() != DA_POP_A_WHEELIE)
+           curAction != DA_ALIGN &&
+           curAction != DA_ROLL_LOW &&
+           curAction != DA_DEEP_ROLL_LOW &&
+           curAction != DA_POP_A_WHEELIE &&
+           curAction != DA_ALIGN_SPECIAL)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -941,7 +943,8 @@ namespace Anki {
                       LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                     }
                     else if(!isAligning &&
-                            !PickAndPlaceController::IsCarryingBlock())
+                            !PickAndPlaceController::IsCarryingBlock() &&
+                            PickAndPlaceController::GetCurAction() != DA_ALIGN_SPECIAL)
                     {
                       LiftController::SetDesiredHeightByDuration(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                     }
@@ -1266,9 +1269,10 @@ namespace Anki {
             
             f32 distIntoBlock_mm = 0;
             
+            const DockAction curAction = PickAndPlaceController::GetCurAction();
             // If we are rolling push the block a little by planning a path into it
-            if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW ||
-               PickAndPlaceController::GetCurAction() == DA_DEEP_ROLL_LOW)
+            if(curAction == DA_ROLL_LOW ||
+               curAction == DA_DEEP_ROLL_LOW)
             {
               distIntoBlock_mm = PATH_END_DIST_INTO_BLOCK_MM;
             }

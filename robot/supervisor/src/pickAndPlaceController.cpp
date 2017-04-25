@@ -302,6 +302,7 @@ namespace Anki {
                 dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
                 break;
               case DA_ALIGN:
+              case DA_ALIGN_SPECIAL:
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
@@ -353,6 +354,7 @@ namespace Anki {
                   case DA_FACE_PLANT:
                   case DA_POP_A_WHEELIE:
                   case DA_ALIGN:
+                  case DA_ALIGN_SPECIAL:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
                     break;
                   case DA_MOUNT_CHARGER:
@@ -398,7 +400,8 @@ namespace Anki {
                 // Take snapshot of pose
                 UpdatePoseSnapshot();
 
-                if (action_ == DA_ALIGN) {
+                if (action_ == DA_ALIGN ||
+                    action_ == DA_ALIGN_SPECIAL) {
                   #if(DEBUG_PAP_CONTROLLER)
                   AnkiDebug( 14, "PAP", 123, "ALIGN", 0);
                   #endif
@@ -465,6 +468,7 @@ namespace Anki {
                     break;
                   } // PLACE
                   case DA_ALIGN:
+                  case DA_ALIGN_SPECIAL:
                   case DA_FACE_PLANT:
                   {
                     SendPickAndPlaceResultMessage(false, NO_BLOCK);

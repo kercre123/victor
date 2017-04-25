@@ -1144,6 +1144,7 @@ namespace Anki {
                   "AlignWithObject",
                   RobotActionType::ALIGN_WITH_OBJECT,
                   useManualSpeed)
+    , _alignmentType(alignmentType)
     {
       SetShouldCheckForObjectOnTopOf(false);
       
@@ -1158,6 +1159,10 @@ namespace Anki {
         case(AlignmentType::LIFT_PLATE):
         {
           distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - LIFT_FRONT_WRT_WRIST_JOINT;
+          
+          // If we are aligning to the LIFT_PLATE then assume that we want the lift fingers in the
+          // object grooves (as if to pickup the object) so use the same docking method as pickup
+          _dockingMethod = (DockingMethod)kPickupDockingMethod;
           break;
         }
         case(AlignmentType::BODY):
@@ -1168,6 +1173,11 @@ namespace Anki {
         case(AlignmentType::CUSTOM):
         {
           distance = distanceFromMarker_mm;
+          
+          // Normally this action uses the DOCKING preAction poses but if we are aligning
+          // to a custom distance then the DOCKING poses could be too close so use the PLACE_RELATIVE
+          // preAction poses
+          _preActionPoseActionType = PreActionPose::ActionType::PLACE_RELATIVE;
           break;
         }
       }
@@ -1194,6 +1204,16 @@ namespace Anki {
     ActionResult AlignWithObjectAction::SelectDockAction(ActionableObject* object)
     {
       _dockAction = DockAction::DA_ALIGN;
+      
+      // If we are aligning to the LIFT_PLATE then assume that we want the lift fingers in the
+      // object grooves (as if to pickup the object) so use a special align dock action
+      // which basically functions the same as pickup (does the Hanns Manuever)
+      // except doesn't move the lift
+      if(_alignmentType == AlignmentType::LIFT_PLATE)
+      {
+        _dockAction = DockAction::DA_ALIGN_SPECIAL;
+      }
+      
       return ActionResult::SUCCESS;
     } // SelectDockAction()
     
@@ -1205,6 +1225,7 @@ namespace Anki {
       switch(_dockAction)
       {
         case DockAction::DA_ALIGN:
+        case DockAction::DA_ALIGN_SPECIAL:
         {
           if(_robot.IsPickingOrPlacing())
           {
