@@ -74,7 +74,6 @@ namespace Anki {
       Signal::SmartHandle _eventSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
       
-    private:
       static constexpr float _kDefaultTimeout_sec = 60.f;
       
     }; // class PlayAnimationAction
@@ -89,7 +88,8 @@ namespace Anki {
                                       AnimationTrigger animEvent,
                                       u32 numLoops = 1,
                                       bool interruptRunning = true,
-                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
+                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS,
+                                      float timeout_sec = _kDefaultTimeout_sec);
       
     protected:
       virtual ActionResult Init() override;

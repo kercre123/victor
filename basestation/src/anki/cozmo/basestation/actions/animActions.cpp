@@ -209,8 +209,9 @@ namespace Anki {
                              AnimationTrigger animEvent,
                              u32 numLoops,
                              bool interruptRunning,
-                             u8 tracksToLock)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock)
+                             u8 tracksToLock,
+                             float timeout_sec)
+    : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock, timeout_sec)
     , _animTrigger(animEvent)
     , _animGroupName("")
     {
