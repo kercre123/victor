@@ -482,6 +482,13 @@ Blockly.Toolbox.Category.prototype.createDom = function() {
     'scratchCategoryItemBubbleLTR'}, this.name_.toUpperCase());
   this.bubble_.style.backgroundColor = this.colour_;
   this.bubble_.style.borderColor = this.secondaryColour_;
+  
+  if (window.innerWidth > window.TABLET_WIDTH) {
+    this.bubble_.style.fontSize = "14px";
+    this.bubble_.style.width = "130px";
+    this.bubble_.style.paddingTop = "7.5px";
+  }
+
   this.item_.appendChild(this.bubble_);
   this.parentHtml_.appendChild(this.item_);
   Blockly.bindEvent_(this.item_, 'mousedown', toolbox,

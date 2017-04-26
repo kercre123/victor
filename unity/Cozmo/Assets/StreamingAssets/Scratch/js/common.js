@@ -5,6 +5,8 @@
      * @return {void}
      */
     function onLoad () {
+        window.TABLET_WIDTH = 800;
+
         // Instantiate the VM and create an empty project
         var vm = new window.VirtualMachine();
         window.vm = vm;
@@ -142,7 +144,7 @@
         //
         // Also see CSS height column here: https://mydevice.io/devices/
 
-        if (window.innerWidth <= 799) {
+        if (window.innerWidth < window.TABLET_WIDTH) {
             workspace.setScale(0.70);
             //document.getElementById('navigation').style.zoom = "80%"
         }else{
