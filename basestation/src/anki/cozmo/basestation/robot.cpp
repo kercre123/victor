@@ -37,6 +37,7 @@
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -174,6 +175,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _blockWorld(new BlockWorld(this))
   , _faceWorld(new FaceWorld(*this))
   , _petWorld(new PetWorld(*this))
+  , _publicStateBroadcaster(new PublicStateBroadcaster())
   , _behaviorMgr(new BehaviorManager(*this))
   , _audioClient(new Audio::RobotAudioClient(this))
   , _pathComponent(new PathComponent(*this, robotID, context))
@@ -1645,6 +1647,11 @@ Result Robot::Update()
 
   _cubeLightComponent->Update();
   _bodyLightComponent->Update();
+  
+  // Update user facing state information after everything else has been updated
+  // so that relevant information is forwarded along to whoever's listening for
+  // state changes
+  _publicStateBroadcaster->Update(*this);
 
 
   if( kDebugPossibleBlockInteraction ) {
@@ -2692,6 +2699,18 @@ void Robot::UnSetCarryingObjects(bool topOnly)
                           "Setting carried object '%d' as not being carried, but the pose is still attached to the lift", objID.GetValue());
       continue;
     }
+    
+    if ( !carriedObject->GetPose().GetParent()->IsOrigin() ) {
+      // this happened as a bug when we had a stack of 2 cubes in the lift. The top one was not being detached properly,
+      // so its pose was left attached to the bottom cube, which could cause issues if we ever deleted the bottom
+      // object without seeing the top one ever again, since the pose for the bottom one (which is still top's pose's
+      // parent) is deleted.
+      // Also like &_liftPose check above, I believe it can happen when we delete the object, so downgraded to warning
+      // instead of ANKI_VERIFY (which would be my ideal choice if delete took care of also detaching)
+      PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects.StillAttachedToSomething",
+                          "Setting carried object '%d' as not being carried, but the pose is still attached to something (other cube?!)",
+                          objID.GetValue());
+    }
   }
 
   // this method should not affect the objects pose or pose state; just clear the IDs
@@ -2841,7 +2860,11 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
                         "(Possibly actually rolling or balancing or popping a wheelie.");
     return RESULT_FAIL;
   }
-      
+  
+  // we currently only support attaching/detaching two objects
+  DEV_ASSERT(GetCarryingObjects().size()<=2,"Robot.SetCarriedObjectAsUnattached.CountNotSupported");
+  
+  
   ObservableObject* object = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
       
   if(object == nullptr)
@@ -2864,10 +2887,11 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
   // unfortunate ordering dependencies with how we set the pose, set the pose state, and
   // unset the carrying objects below. It's safer to do all of that, and _then_
   // clear the objects at the end.
-  Result poseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
+  const Result poseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
   if(RESULT_OK != poseResult)
   {
-    // TODO: warn/error
+    PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
+                      "AddRobotRealtiveObservation failed for %d", object->GetID().GetValue());
     return poseResult;
   }
     
@@ -2877,6 +2901,47 @@ Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
                    object->GetPose().GetTranslation().x(),
                    object->GetPose().GetTranslation().y(),
                    object->GetPose().GetTranslation().z());
+  
+  // if we have a top one, we expect it to currently be attached to the bottom one (pose-wise)
+  // recalculate its pose right where we think it is, but detach from the block, and hook directly to the origin
+  if ( _carryingObjectOnTopID.IsSet() )
+  {
+    ObservableObject* topObject = _blockWorld->GetLocatedObjectByID(_carryingObjectOnTopID);
+    if ( nullptr != topObject )
+    {
+      // get wrt robot so that we can add a robot observation (handy way to modify a pose)
+      Pose3d topPlacedPoseWrtRobot;
+      if(topObject->GetPose().GetWithRespectTo(_pose, topPlacedPoseWrtRobot) == true)
+      {
+        const Result topPoseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(topObject, topPlacedPoseWrtRobot, PoseState::Dirty);
+        if(RESULT_OK == topPoseResult)
+        {
+          PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.TopObjectPlaced",
+                            "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
+                            _ID,
+                            topObject->GetID().GetValue(),
+                            topObject->GetPose().GetTranslation().x(),
+                            topObject->GetPose().GetTranslation().y(),
+                            topObject->GetPose().GetTranslation().z());
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
+                            "AddRobotRealtiveObservation failed for %d", topObject->GetID().GetValue());
+        }
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopOriginMisMatch",
+                          "Could not get top carrying object's pose relative to robot's origin.");
+      }
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopCarryingObjectDoesNotExist",
+                        "Top carrying object with ID=%d no longer exists.", _carryingObjectOnTopID.GetValue());
+    }
+  }
 
   // Store the object IDs we were carrying before we unset them so we can clear them later if needed
   auto const& carriedObjectIDs = GetCarryingObjects();

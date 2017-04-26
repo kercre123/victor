@@ -75,14 +75,14 @@ protected:
 private:
   // Config numbers
   struct PeekABooParams{
-    unsigned int minPeeks                        = 1;
-    unsigned int maxPeeks                        = 3;
-    float        noUserInteractionTimeout_Sec    = 30.0f;
-    unsigned int numReRequestsPerTimeout         = 0;
-    float        oldestFaceToConsider_MS         = 60000;
-    bool         requireFaceConfirmBeforeRequest = true;
-    bool         playGetIn                       = true;
-    float        minCoolDown_Sec                 = 0;
+    unsigned int minPeeks                          = 1;
+    unsigned int maxPeeks                          = 3;
+    unsigned int noUserInteractionTimeout_numIdles = 3;
+    unsigned int numReRequestsPerTimeout           = 0;
+    float        oldestFaceToConsider_MS           = 60000;
+    bool         requireFaceConfirmBeforeRequest   = true;
+    bool         playGetIn                         = true;
+    float        minCoolDown_Sec                   = 0;
   };
   
   // ID of face we were just interacting with - used to give preference
@@ -90,7 +90,6 @@ private:
   mutable Vision::FaceID_t _cachedFace = Vision::UnknownFaceID;
   unsigned int   _numPeeksRemaining;
   unsigned int   _numPeeksTotal;
-  float          _noUserInteractionTimeout_Sec;
   float          _nextTimeIsRunnable_Sec;
   float          _lastRequestTime_Sec;
   bool           _hasMadeFollowUpRequest;
@@ -104,7 +103,7 @@ private:
   std::map<TimeStamp_t, int> _timestampEyeNotVisibleMap;
 
   // for COZMO-8914
-  mutable float        _timeSparkAboutToEnd_Sec;
+  mutable float _timeSparkAboutToEnd_Sec;
   
   void UpdateTimestampSets(Robot& robot);
   

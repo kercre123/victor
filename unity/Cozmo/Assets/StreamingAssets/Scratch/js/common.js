@@ -1,17 +1,12 @@
 (function () {
 
-    function $t(str) {
-        return str;
-    }
-    function setText(query, text) {
-        document.querySelector(query).textContent = text;
-    }
- 
     /**
      * Window "onload" handler.
      * @return {void}
      */
     function onLoad () {
+        window.TABLET_WIDTH = 800;
+
         // Instantiate the VM and create an empty project
         var vm = new window.VirtualMachine();
         window.vm = vm;
@@ -104,9 +99,6 @@
             workspace.reportValue(data.id, data.value);
         });
 
-        setText('#app-title', $t('My Project 1'));
-        setText('#app-title-subtext', $t('Autosaved'));
- 
         // Run threads
         vm.start();
  
@@ -115,7 +107,8 @@
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
         closeButton.addEventListener('click', function () {
-            window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoCloseCodeLab"}');
+            clearInterval(window.saveProjectTimerId);
+            window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
         });
         closeButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
@@ -136,9 +129,6 @@
         // Extension event handlers
         bindExtensionHandler();
         window.onresize();
-
-        // TODO Once save/load UI is in, this call should instead be made only when a new project is created.
-        window.putStarterGreenFlagOnWorkspace();
     }
 
     window.onresize = function(event) {
@@ -154,14 +144,14 @@
         //
         // Also see CSS height column here: https://mydevice.io/devices/
 
-        if (window.innerWidth <= 799) {
+        if (window.innerWidth < window.TABLET_WIDTH) {
             workspace.setScale(0.70);
             //document.getElementById('navigation').style.zoom = "80%"
         }else{
             workspace.setScale(1.2);
         }
     };
- 
+
     /**
      * Binds the extension interface to `window.extensions`.
      * @return {void}

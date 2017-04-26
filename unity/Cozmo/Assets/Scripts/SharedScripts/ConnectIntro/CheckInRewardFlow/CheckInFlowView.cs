@@ -165,7 +165,12 @@ namespace Cozmo.CheckInFlow.UI {
         return;
       }
       float prog = ((float)currPoints / (float)reqPoints);
-      _EnergyChestBar.SetProgress(prog, instant);
+      if (instant) {
+        _EnergyChestBar.SetValueInstant(prog);
+      }
+      else {
+        _EnergyChestBar.SetTargetAndAnimate(prog);
+      }
       _EnergyChestBarText.text = Localization.GetNumber(currPoints);
     }
 

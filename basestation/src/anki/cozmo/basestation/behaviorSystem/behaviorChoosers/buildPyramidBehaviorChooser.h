@@ -67,17 +67,6 @@ public:
   virtual void OnDeselected() override;
   
 private:
-  // Match music Rounds to enum values - starts at 1 to match rounds set up
-  // in the current audio sound banks
-  enum class PyramidConstructionStage{
-    None = 0, // used for canceling lights
-    SearchingForCube = 1,
-    InitialCubeCarry,
-    BaseFormed,
-    TopBlockCarry,
-    PyramidCompleteFlourish
-  };
-  
   enum class ChooserPhase{
     None, // Only used to force update
     SetupBlocks,

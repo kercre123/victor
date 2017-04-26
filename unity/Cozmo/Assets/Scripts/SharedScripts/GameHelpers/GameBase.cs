@@ -892,6 +892,7 @@ public abstract class GameBase : MonoBehaviour {
   #region Minigame Exit
 
   public void RaiseMiniGameQuit() {
+    _EndStateIndex = ENDSTATE_QUIT;
     _StateMachine.Stop();
 
     DeregisterRobotReactionaryBehaviorEvents();

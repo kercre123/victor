@@ -429,11 +429,6 @@ protected:
   // If on == false will clear double tapped lights
   void UpdateTappedObjectLights(const bool on) const;
   
-  // Notify the audio controller that the behavior state has changed and the audio
-  // should change to match
-  // returns false if audio state not updated because behavior's audio counterpart
-  // is not currently active
-  bool UpdateAudioState(int newAudioState);
   
   // this process might be enabled/disabled automatically by a behavior chooser based
   // behavior specify it in code because it's a code requirement (not data driven)

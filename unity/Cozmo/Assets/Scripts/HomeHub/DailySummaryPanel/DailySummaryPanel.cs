@@ -68,7 +68,7 @@ public class DailySummaryPanel : BaseModal {
     _Title.FormattingArgs = new object[] { month, day };
 
     float dailyProg = data.GetTotalProgress();
-    _DailyProgressBar.SetProgress(dailyProg);
+    _DailyProgressBar.SetTargetAndAnimate(dailyProg);
 
     // Create a goal cell for each Daily Goal
     for (int i = 0; i < data.DailyGoals.Count; i++) {

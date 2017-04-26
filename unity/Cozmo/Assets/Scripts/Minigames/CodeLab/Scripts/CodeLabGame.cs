@@ -1,10 +1,13 @@
 using UnityEngine;
+using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using Newtonsoft.Json;
 using DataPersistence;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Cozmo.UI;
+using Cozmo.MinigameWidgets;
 
 namespace CodeLab {
   public class CodeLabSampleProject {
@@ -55,13 +58,20 @@ namespace CodeLab {
       // Since webview takes awhile to load, keep showing the "cozmo is getting ready"
       // load screen instead of the white background that usually shows in front ( shown in gamebase before calling this function )
       SharedMinigameView.HideMiddleBackground();
+      SharedMinigameView.HideQuitButton();
 
       // In GameBase.cs, in the function InitializeMinigame(), the lights are set to allow the minigame to control them.
       // We don't want this behavior for CodeLab.
       CurrentRobot.SetEnableFreeplayLightStates(true);
 
       // Load sample projects json from file and cache in list
-      string path = Application.streamingAssetsPath + "/Scratch/sample-projects.json";
+      string pathToFile = "/Scratch/sample-projects.json";
+#if UNITY_EDITOR || UNITY_IOS
+      string path = Application.streamingAssetsPath + pathToFile;
+#elif UNITY_ANDROID
+string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
+#endif
+
       string json = File.ReadAllText(path);
       _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
@@ -81,10 +91,23 @@ namespace CodeLab {
       UIManager.Instance.HideTouchCatcher();
     }
 
+    protected override void Update() {
+      base.Update();
+      // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the minigame level.
+      // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
+      if (RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
+        if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
+          RaiseMiniGameQuit();
+        }
+      }
+    }
+
     private void LoadWebView() {
       // Send EnterSDKMode to engine as we enter this view
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.EnterSDKMode(false);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.EnterSDKMode(false);
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
       }
 
       if (_WebViewObject == null) {
@@ -92,14 +115,8 @@ namespace CodeLab {
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
         _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
 
-#if UNITY_EDITOR
         // TODO Change to tutorial for first run, otherwise save/load UI.
-        string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
-#else
-        string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
-#endif
-
-        _WebViewObjectComponent.LoadURL(indexFile);
+        LoadURL("extra/projects.html");
       }
     }
 
@@ -117,13 +134,31 @@ namespace CodeLab {
         // Provide save and load UI with JSON arrays of the user and sample projects.
         string jsCallback = scratchRequest.argString;
 
-        // Get user projects as JSON. Sort projects by most recently modified.
+        // Provide JavaScript with a list of user projects as JSON, sorted projects by most recently modified.
+        // Don't include XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
         defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
-        string userProjectsAsJSON = JsonConvert.SerializeObject(defaultProfile.CodeLabProjects);
+        List<CodeLabProject> copyCodeLabProjectList = new List<CodeLabProject>();
+        for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
+          CodeLabProject proj = new CodeLabProject();
+          proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
+          proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName;
+          copyCodeLabProjectList.Add(proj);
+        }
+        string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
 
-        // Get sample projects as JSON. Sort projects by DisplayOrder.
+        // Provide JavaScript with a list of sample projects as JSON, sorted by DisplayOrder.
+        // Again, don't include the XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
         _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
-        string sampleProjectsAsJSON = JsonConvert.SerializeObject(_CodeLabSampleProjects);
+        List<CodeLabSampleProject> copyCodeLabSampleProjectList = new List<CodeLabSampleProject>();
+        for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
+          CodeLabSampleProject proj = new CodeLabSampleProject();
+          proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
+          proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
+          proj.ProjectName = _CodeLabSampleProjects[i].ProjectName;
+          copyCodeLabSampleProjectList.Add(proj);
+        }
+
+        string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
 
         // Call jsCallback with list of serialized Code Lab user projects and sample projects
         _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
@@ -141,7 +176,11 @@ namespace CodeLab {
           string newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
           defaultProfile.CodeLabUserProjectNum++;
 
-          defaultProfile.CodeLabProjects.Add(new CodeLabProject(newUserProjectName, projectXML));
+          CodeLabProject newProject = new CodeLabProject(newUserProjectName, projectXML);
+          defaultProfile.CodeLabProjects.Add(newProject);
+
+          // Inform workspace that the current work on workspace has been saved to a project.
+          _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
         }
         else {
           // Project already has a guid. Locate the project then update it.
@@ -156,7 +195,7 @@ namespace CodeLab {
       else if (scratchRequest.command == "cozmoRequestToOpenSampleProject") {
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
       }
-      else if (scratchRequest.command == "cozmoRequestToCreateCozmoProject") {
+      else if (scratchRequest.command == "cozmoRequestToCreateProject") {
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
       }
       else if (scratchRequest.command == "cozmoDeleteUserProject") {
@@ -164,6 +203,9 @@ namespace CodeLab {
         if (projectToDelete != null) {
           defaultProfile.CodeLabProjects.Remove(projectToDelete);
         }
+      }
+      else if (scratchRequest.command == "cozmoLoadProjectPage") {
+        LoadURL("extra/projects.html");
       }
       else if (scratchRequest.command == "cozmoCloseCodeLab") {
         RaiseMiniGameQuit();
@@ -224,7 +266,7 @@ namespace CodeLab {
           liftHeight = 1.0f;
         }
 
-        RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.NOW, 2);
       }
       else if (scratchRequest.command == "cozmoSetBackpackColor") {
         RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
@@ -249,11 +291,29 @@ namespace CodeLab {
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
+      ShowGettingReadyScreen();
+      LoadURL("index.html");
+    }
 
+    // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup
+    private void ShowGettingReadyScreen() {
+      _WebViewObjectComponent.SetVisibility(false);
+
+      SharedMinigameView.HideQuitButton();
+      PopulateTitleWidget();
+
+      SharedMinigameView.InitializeColor(UIColorPalette.GameBackgroundColor);
+
+      SharedMinigameView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
+      SharedMinigameView.ShowShelf();
+      SharedMinigameView.ShowSpinnerWidget();
+    }
+
+    private void LoadURL(string scratchPathToHTML) {
 #if UNITY_EDITOR
-      string indexFile = Application.streamingAssetsPath + "/Scratch/index.html";
+      string indexFile = Application.streamingAssetsPath + "/Scratch/" + scratchPathToHTML;
 #else
-      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/index.html";
+      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/" + scratchPathToHTML;
 #endif
 
       _WebViewObjectComponent.LoadURL(indexFile);
@@ -280,34 +340,34 @@ namespace CodeLab {
     private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {
 
       switch (scratchAnimationName) {
-      case "happy":
-        return Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration;
-      case "victory":
-        return Anki.Cozmo.AnimationTrigger.BuildPyramidSuccess;
-      case "unhappy":
-        return Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor;
-      case "surprise":
-        return Anki.Cozmo.AnimationTrigger.DroneModeTurboDrivingStart;
-      case "dog":
-        return Anki.Cozmo.AnimationTrigger.PetDetectionDog;
-      case "cat":
-        return Anki.Cozmo.AnimationTrigger.PetDetectionCat;
-      case "sneeze":
-        return Anki.Cozmo.AnimationTrigger.PetDetectionSneeze;
-      case "excited":
-        return Anki.Cozmo.AnimationTrigger.SuccessfulWheelie;
-      case "thinking":
-        return Anki.Cozmo.AnimationTrigger.HikingReactToPossibleMarker;
       case "bored":
-        return Anki.Cozmo.AnimationTrigger.NothingToDoBoredEvent;
-      case "frustrated":
-        return Anki.Cozmo.AnimationTrigger.AskToBeRightedRight;
+        return Anki.Cozmo.AnimationTrigger.CodeLabBored;
+      case "cat":
+        return Anki.Cozmo.AnimationTrigger.CodeLabCat;
       case "chatty":
-        return Anki.Cozmo.AnimationTrigger.BuildPyramidReactToBase;
+        return Anki.Cozmo.AnimationTrigger.CodeLabChatty;
       case "dejected":
-        return Anki.Cozmo.AnimationTrigger.FistBumpLeftHanging;
+        return Anki.Cozmo.AnimationTrigger.CodeLabDejected;
+      case "dog":
+        return Anki.Cozmo.AnimationTrigger.CodeLabDog;
+      case "excited":
+        return Anki.Cozmo.AnimationTrigger.CodeLabExcited;
+      case "frustrated":
+        return Anki.Cozmo.AnimationTrigger.CodeLabFrustrated;
+      case "happy":
+        return Anki.Cozmo.AnimationTrigger.CodeLabHappy;
       case "sleep":
-        return Anki.Cozmo.AnimationTrigger.Sleeping;
+        return Anki.Cozmo.AnimationTrigger.CodeLabSleep;
+      case "sneeze":
+        return Anki.Cozmo.AnimationTrigger.CodeLabSneeze;
+      case "surprise":
+        return Anki.Cozmo.AnimationTrigger.CodeLabSurprise;
+      case "thinking":
+        return Anki.Cozmo.AnimationTrigger.CodeLabThinking;
+      case "unhappy":
+        return Anki.Cozmo.AnimationTrigger.CodeLabUnhappy;
+      case "victory":
+        return Anki.Cozmo.AnimationTrigger.CodeLabVictory;
       default:
         DAS.Error("CodeLab.BadTriggerName", "Unexpected name '" + scratchAnimationName + "'");
         break;
@@ -381,22 +441,10 @@ namespace CodeLab {
 
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
+      SharedMinigameView.HideMiddleBackground();
+
       // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);
-
-#if !UNITY_ANDROID
-      _WebViewObjectComponent.EvaluateJS(@"
-              window.Unity = {
-                call: function(msg) {
-                  var iframe = document.createElement('IFRAME');
-                  iframe.setAttribute('src', 'unity:' + msg);
-                  document.documentElement.appendChild(iframe);
-                  iframe.parentNode.removeChild(iframe);
-                  iframe = null;
-                }
-              }
-            ");
-#endif
     }
 #else // ANKI_DEV_CHEATS SECRET
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {

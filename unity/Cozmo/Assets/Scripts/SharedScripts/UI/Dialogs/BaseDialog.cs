@@ -93,19 +93,23 @@ namespace Cozmo {
       }
 
       protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
-        // TODO: Add fade by default
-        // UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
-        // CreateAlphaControllerIfNull();
-        // _AlphaController.alpha = 0;
-        // openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(settings.FadeInEasing));
+      }
+
+      protected void ConstructDefaultFadeOpenAnimation(Sequence openAnimation) {
+        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+        CreateAlphaControllerIfNull();
+        _AlphaController.alpha = 0;
+        openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(settings.FadeInEasing));
       }
 
       protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
-        // TODO: Add fade by default
-        // UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
-        // CreateAlphaControllerIfNull();
-        // _AlphaController.alpha = 1;
-        // closeAnimation.Join(_AlphaController.DOFade(0, 0.25f).SetEase(settings.FadeOutEasing));
+      }
+
+      protected void ConstructDefaultFadeCloseAnimation(Sequence closeAnimation) {
+        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+        CreateAlphaControllerIfNull();
+        _AlphaController.alpha = 1;
+        closeAnimation.Join(_AlphaController.DOFade(0, 0.25f).SetEase(settings.FadeOutEasing));
       }
 
       private void CreateAlphaControllerIfNull() {

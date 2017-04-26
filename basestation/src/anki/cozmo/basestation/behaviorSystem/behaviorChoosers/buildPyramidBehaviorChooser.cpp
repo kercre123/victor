@@ -27,12 +27,14 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
+#include "clad/types/behaviorTypes.h"
 
 
 namespace Anki {
@@ -187,8 +189,8 @@ BuildPyramidBehaviorChooser::BuildPyramidBehaviorChooser(Robot& robot, const Jso
 , _pyramidObjectiveAchieved(false)
 , _nextTimeCheckBlockOrientations_s(-1.0f)
 , _nextTimeForceUpdateLightMusic_s(-1.0f)
-, _currentPyramidConstructionStage(PyramidConstructionStage::None)
-, _highestAudioStageReached(PyramidConstructionStage::None)
+, _currentPyramidConstructionStage(PyramidConstructionStage::NoneStage)
+, _highestAudioStageReached(PyramidConstructionStage::NoneStage)
 , _lastTimeConstructionStageChanged_s(0.0f)
 , _lastCountBasesSeen(0)
 , _uprightAnimIndex(0)
@@ -304,8 +306,8 @@ void BuildPyramidBehaviorChooser::OnSelected()
   _uprightAnimIndex = 0;
   _onSideAnimIndex = 0;
   _lastUprightBlockCount = -1;
-  _currentPyramidConstructionStage = PyramidConstructionStage::None;
-  _highestAudioStageReached = PyramidConstructionStage::None;
+  _currentPyramidConstructionStage = PyramidConstructionStage::NoneStage;
+  _highestAudioStageReached = PyramidConstructionStage::NoneStage;
   _chooserPhase = ChooserPhase::None;
   _nextTimeCheckBlockOrientations_s = -1.0f;
   _nextTimeForceUpdateLightMusic_s = -1.0f;
@@ -945,7 +947,7 @@ void BuildPyramidBehaviorChooser::UpdateChooserPhase(Robot& robot)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BuildPyramidBehaviorChooser::PyramidConstructionStage BuildPyramidBehaviorChooser::CheckLightAndPyramidConstructionStage(Robot& robot) const
+PyramidConstructionStage BuildPyramidBehaviorChooser::CheckLightAndPyramidConstructionStage(Robot& robot) const
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
@@ -956,7 +958,7 @@ BuildPyramidBehaviorChooser::PyramidConstructionStage BuildPyramidBehaviorChoose
   
   if(robot.GetOffTreadsState() != OffTreadsState::OnTreads ||
      _chooserPhase == ChooserPhase::SetupBlocks){
-    return PyramidConstructionStage::None;
+    return PyramidConstructionStage::NoneStage;
   }
   
   // Logic for updating lights/music while building pyramid
@@ -996,12 +998,14 @@ void BuildPyramidBehaviorChooser::UpdateMusic(Robot& robot, const PyramidConstru
 {
   if(desiredState > _highestAudioStageReached){
     _highestAudioStageReached = desiredState;
-    if(desiredState == PyramidConstructionStage::None){
-      robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-              UnlockId::BuildPyramid, Util::EnumToUnderlying(PyramidConstructionStage::SearchingForCube));
+    if(desiredState == PyramidConstructionStage::NoneStage){
+      robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+                                  BehaviorStageTag::PyramidConstruction,
+                                  static_cast<int>(PyramidConstructionStage::SearchingForCube));
     }else{
-      robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(
-              UnlockId::BuildPyramid, Util::EnumToUnderlying(desiredState));
+      robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+                                  BehaviorStageTag::PyramidConstruction,
+                                  static_cast<int>(desiredState));
     }
   }
 }
@@ -1083,7 +1087,7 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
       topLightsSet = true;
       break;
     }
-    case PyramidConstructionStage::None:
+    case PyramidConstructionStage::NoneStage:
     {
       // Update "onSide" lights based on block current state
       for(auto& entry: _pyramidCubePropertiesTrackers){
@@ -1105,8 +1109,8 @@ void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const Pyrami
   
   
   // Make sure that on side lights are cleared out if any cubes were on their side
-  if(_currentPyramidConstructionStage == PyramidConstructionStage::None &&
-     desiredState != PyramidConstructionStage::None){
+  if(_currentPyramidConstructionStage == PyramidConstructionStage::NoneStage &&
+     desiredState != PyramidConstructionStage::NoneStage){
     for(auto& entry:_pyramidCubePropertiesTrackers){
       if(IsAnOnSideCubeLight( entry.second.GetCurrentLightTrigger())){
         entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);

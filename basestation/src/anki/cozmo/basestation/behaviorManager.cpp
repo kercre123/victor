@@ -1079,26 +1079,6 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
       SetRequestedSpark(msg.behaviorSpark, true);
       break;
     }
-      
-    case ExternalInterface::BehaviorManagerMessageUnionTag::ActivateSparkedMusic:
-    {
-      const auto& msg = message.Get_ActivateSparkedMusic();
-      if ( !_audioClient->ActivateSparkedMusic(msg.behaviorSpark, msg.musicSate, msg.sparkedMusicState) ) {
-        PRINT_NAMED_ERROR("BehaviorManager.HandleMessage.ActivateSparkedMusic.Failed",
-                          "UnlockId %s", EnumToString(msg.behaviorSpark));
-      }
-      break;
-    }
-      
-    case ExternalInterface::BehaviorManagerMessageUnionTag::DeactivateSparkedMusic:
-    {
-      const auto& msg = message.Get_DeactivateSparkedMusic();
-      if ( !_audioClient->DeactivateSparkedMusic(msg.behaviorSpark, msg.musicSate) ) {
-        PRINT_NAMED_ERROR("BehaviorManager.HandleMessage.DeactivateSparkedMusic.Failed",
-                          "UnlockId %s", EnumToString(msg.behaviorSpark));
-      }
-      break;
-    }
 
     default:
     {

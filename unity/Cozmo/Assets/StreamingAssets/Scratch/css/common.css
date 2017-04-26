@@ -2,7 +2,7 @@
  * Global
  */
 html {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: 'Avenir Next';
 }
 
 body {
@@ -34,7 +34,7 @@ button:focus {
     top: 0;
     width: 100%;
     height: 100%;
-    font-family: "Helvetica Neue", Helvetica, sans-serif;
+    font-family: 'Avenir Next';
 }
 
 .blocklyMainBackground {
@@ -258,4 +258,13 @@ button:focus {
         width:55px;
         height:55px;
     }
+}
+
+@font-face {
+  font-family: 'Avenir Next Bold';
+  src: url("../extra/fonts/Fonts-latin/AvenirLTStd-Heavy.otf"); /* File to be stored at your site */
+}
+@font-face {
+  font-family: 'Avenir Next';
+  src: url("../extra/fonts/Fonts-latin/AvenirLTStd-Medium.otf"); /* File to be stored at your site */
 }

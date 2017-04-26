@@ -1008,13 +1008,6 @@ bool IBehavior::HandleNewDoubleTap(Robot& robot)
   Init();
   return true;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::UpdateAudioState(int newAudioState)
-{
-  return _robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(_requiredUnlockId, newAudioState);
-}
-  
 
 
 ////////

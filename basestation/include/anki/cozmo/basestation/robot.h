@@ -88,6 +88,7 @@ class CubeLightComponent;
 class BodyLightComponent;
 class RobotToEngineImplMessaging;
 class TextToSpeechComponent;
+class PublicStateBroadcaster;
 class VisionComponent;
 class NeedsManager;
 struct RobotState;
@@ -248,6 +249,16 @@ public:
   inline AIComponent& GetAIComponent() {
     assert(_aiComponent);
     return *_aiComponent;
+  }
+  
+  inline const PublicStateBroadcaster& GetPublicStateBroadcaster() const {
+    assert(_publicStateBroadcaster);
+    return *_publicStateBroadcaster;
+  }
+  
+  inline PublicStateBroadcaster& GetPublicStateBroadcaster(){
+    assert(_publicStateBroadcaster);
+    return *_publicStateBroadcaster;
   }
 
   inline const PathComponent& GetPathComponent() const { return *_pathComponent; }
@@ -821,6 +832,8 @@ protected:
   // A container for all pet faces the robot knows about
   std::unique_ptr<PetWorld>              _petWorld;
  
+  std::unique_ptr<PublicStateBroadcaster> _publicStateBroadcaster;
+
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   
   ///////// Audio /////////
@@ -843,16 +856,16 @@ protected:
   ///////// NEW Animation /////////
   std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
-  std::unique_ptr<ActionList>            _actionList;
-  std::unique_ptr<MovementComponent>     _movementComponent;
-  std::unique_ptr<VisionComponent>       _visionComponent;
-  std::unique_ptr<NVStorageComponent>    _nvStorageComponent;
-  std::unique_ptr<AIComponent>           _aiComponent;
-  std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
-  std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
-  std::unique_ptr<CubeLightComponent>    _cubeLightComponent;
-  std::unique_ptr<BodyLightComponent>    _bodyLightComponent;
-  
+  std::unique_ptr<ActionList>               _actionList;
+  std::unique_ptr<MovementComponent>        _movementComponent;
+  std::unique_ptr<VisionComponent>          _visionComponent;
+  std::unique_ptr<NVStorageComponent>       _nvStorageComponent;
+  std::unique_ptr<AIComponent>              _aiComponent;
+  std::unique_ptr<TextToSpeechComponent>    _textToSpeechComponent;
+  std::unique_ptr<ObjectPoseConfirmer>      _objectPoseConfirmerPtr;
+  std::unique_ptr<CubeLightComponent>       _cubeLightComponent;
+  std::unique_ptr<BodyLightComponent>       _bodyLightComponent;
+
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
 

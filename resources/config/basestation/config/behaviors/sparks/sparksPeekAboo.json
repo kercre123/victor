@@ -9,7 +9,7 @@
   "flatScore" : 2.5,
   "minTimesPeekBeforeQuit" : 3,
   "maxTimesPeekBeforeQuit" : 3,
-  "noUserInteractionTimeout_Sec": 12,
+  "noUserInteractionTimeout_numIdles": 3,
   "numReRequestsPerTimeout": 2,
   "maxTimeOldestFaceToConsider_Sec" : 10,
   "requireFaceConfirmBeforeRequest" : false,

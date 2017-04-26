@@ -40,13 +40,13 @@ public class BonusBarPanel : MonoBehaviour {
       // Display a "Complete" Gem at 100% for that value
       if (mult == (int)prog) {
         //_BonusProgressBg.overrideSprite = DailyGoalManager.Instance.GetDailyGoalGenConfig().BonusMults[multIndex].Complete;
-        _BonusProgressBar.SetProgress(0.0f);
+        _BonusProgressBar.SetTargetAndAnimate(0.0f);
       }
       else {
         _BonusProgressBg.gameObject.SetActive(true);
         //_BonusProgressBar.FillImage = DailyGoalManager.Instance.GetDailyGoalGenConfig().BonusMults[multIndex].Fill;
         //_BonusProgressBg.overrideSprite = DailyGoalManager.Instance.GetDailyGoalGenConfig().BonusMults[multIndex].Background;
-        _BonusProgressBar.SetProgress(prog - Mathf.Floor(prog));
+        _BonusProgressBar.SetTargetAndAnimate(prog - Mathf.Floor(prog));
       }
     }
   }

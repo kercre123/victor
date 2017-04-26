@@ -495,13 +495,14 @@ namespace Cozmo.Upgrades {
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Spark_Launch);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
+        // Give Sparked Behavior music ownership        
+        Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;      
+        if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {     
+          sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;       
+        }        
+        RobotEngineManager.Instance.CurrentRobot.SetSparkedMusicState(sparkedMusicState);
+
         RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
-        // Give Sparked Behavior music ownership
-        Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
-        if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
-          sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
-        }
-        RobotEngineManager.Instance.CurrentRobot.ActivateSparkedMusic(_UnlockInfo.Id.Value, Anki.AudioMetaData.GameState.Music.Spark, sparkedMusicState);
       }
       UpdateState();
       DataPersistenceManager.Instance.Save();
@@ -519,9 +520,10 @@ namespace Cozmo.Upgrades {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
           RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
+          // Take the audio state back to freeplay
+          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         }
-        // Take Music ownership back from Sparked Behavior and set next state
-        RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic(_UnlockInfo.Id.Value, Anki.AudioMetaData.GameState.Music.Freeplay);
+          
         if (!isCleanup) {
           UpdateState();
         }

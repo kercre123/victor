@@ -107,6 +107,22 @@ enum uint_8 ExecutableBehaviorType {
   Count
 }
 
+////////
+// User Facing Behavior Stages
+// Behavior stages which can be broadcast out
+// by the userFacingState to trigger changes in audio/ui/etc
+////////
+
+// Construction stages for pyramid
+enum uint_8 PyramidConstructionStage {
+  NoneStage = 0, // used for canceling lights
+  SearchingForCube = 1,
+  InitialCubeCarry,
+  BaseFormed,
+  TopBlockCarry,
+  PyramidCompleteFlourish
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

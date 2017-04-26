@@ -300,7 +300,14 @@ namespace Cozmo.HomeHub {
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded, bool instant = false) {
       currentPoints = Mathf.Min(currentPoints, numPointsNeeded);
       float progress = ((float)currentPoints / (float)numPointsNeeded);
-      _RequirementPointsProgressBar.SetProgress(progress, instant);
+
+      if (instant) {
+        _RequirementPointsProgressBar.SetValueInstant(progress);
+      }
+      else {
+        _RequirementPointsProgressBar.SetTargetAndAnimate(progress);
+      }
+
       _CurrentRequirementPointsLabel.text = currentPoints.ToString();
       if (progress <= 0.0f) {
         _EmotionChipTag.overrideSprite = _EmotionChipSprite_Empty;

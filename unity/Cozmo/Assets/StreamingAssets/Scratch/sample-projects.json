@@ -1,20 +1,92 @@
 [
-  {
-    "DisplayOrder": "1",
-    "VersionNum": "1",
-    "ProjectUUID": "83af4017-656c-412f-b873-1dcae6ec8b8c",
-    "IsVertical": "false",
-    "ProjectIconName": "cozmo-turn-right",
-    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\";JV_hFMY5WgfP;VK^jx~\" x=\"105\" y=\"447\"><next><block type=\"cozmo_turn_left\" id=\";|=8)`9-93RA0ab;Qx~q\"><next><block type=\"cozmo_turn_left\" id=\" ;jB1M:ocE; v vU^m(,\"><next><block type=\"cozmo_turn_left\" id=\"GoHA2n#AY $%QuroT(4}\"><next><block type=\"cozmo_turn_left\" id=\"hz@xq%BLP9!Yo{csXyvH\"><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
-    "ProjectName": "My Project 20"
+    {
+    "ProjectUUID": "034fccf5-333d-4be5-805c-d06a3940cf58",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_drive_forward\" id=\"xnU2{X6{*l`ApC^^sVy;\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"{W4hoRoOWn^=]n:Z`DR^\"><field name=\"NUM\">3<\/field><\/shadow><\/value><next><block type=\"cozmo_turn_right\" id=\"Ib;|z)[=m-qp;ok5\/_AF\"><next><block type=\"cozmo_drive_forward\" id=\"I82pBqrVEkPeMM^JaD7.\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"U,Xe6=-s\/rd@YZ:Rhy6;\"><field name=\"NUM\">3<\/field><\/shadow><\/value><next><block type=\"cozmo_turn_right\" id=\".DhXe\/7Y1{lJ?trb}D%[\"><next><block type=\"cozmo_drive_forward\" id=\"qVxE3dzr#A0ff[X:3et[\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"Xd,;wOYsNR0{5CX)?`3q\"><field name=\"NUM\">3<\/field><\/shadow><\/value><next><block type=\"cozmo_turn_right\" id=\"mjuA@VHR0Afz15\/O4@Vp\"><next><block type=\"cozmo_drive_forward\" id=\"7YlPLn~es?hK_?Ja|B|l\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"9L}meY~mOboEvF}pY4.U\"><field name=\"NUM\">3<\/field><\/shadow><\/value><next><block type=\"cozmo_turn_right\" id=\"H_zR~I4X9HNh\/V1,54Wm\"><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Drive In Square",
+    "ProjectIconName" : "cozmo-turn-right",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "1"
   },
-  {
-    "DisplayOrder": "2",
-    "VersionNum": "1",
-    "ProjectUUID": "79753ae8-9cad-443a-97d3-d6ef44c05172",
-    "IsVertical": "false",
-    "ProjectIconName": "cozmo-turn-left",
-    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\";JV_hFMY5WgfP;VK^jx~\" x=\"105\" y=\"447\"><next><block type=\"cozmo_turn_left\" id=\";|=8)`9-93RA0ab;Qx~q\"><next><block type=\"cozmo_turn_left\" id=\" ;jB1M:ocE; v vU^m(,\"><next><block type=\"cozmo_turn_left\" id=\"GoHA2n#AY $%QuroT(4}\"><next><block type=\"cozmo_turn_left\" id=\"hz@xq%BLP9!Yo{csXyvH\"><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
-    "ProjectName": "My Project 19"
+    {
+    "ProjectUUID": "9fa6ea38-5ad3-4808-ba0f-6c65354493b1",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"control_forever\" id=\"avi:k#I0u2~MdQaj.M0F\"><statement name=\"SUBSTACK\"><block type=\"cozmo_setbackpackcolor\" id=\"XHk$7`v-t]Yu~e!A! eI\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_setcolor\" id=\"M[#:o9k4g `6aayX8KgU\"><field name=\"CHOICE\">mystery<\/field><\/shadow><\/value><\/block><\/statement><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Rainbow Backpack",
+    "ProjectIconName" : "set-led_mystery",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "2"
+  },
+    {
+    "ProjectUUID": "399d35c1-b54a-43c8-bf7a-499a16d63909",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"control_repeat\" id=\"tuluOuor=WVP^eF]*P3!\"><statement name=\"SUBSTACK\"><block type=\"cozmo_drive_forward\" id=\"~9NRf_T^@wr}8z)`CywB\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"lQL3`1\/rGnN@9I,gq:mB\"><field name=\"NUM\">2<\/field><\/shadow><\/value><next><block type=\"cozmo_sneeze_animation\" id=\"wAryU#Hz:34~D|]m2*Ca\"><\/block><\/next><\/block><\/statement><value name=\"TIMES\"><shadow type=\"math_whole_number_with_validator\" id=\"i=)4MKSQZc{fNRrFRsjq\"><field name=\"NUM\">4<\/field><\/shadow><\/value><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Driving and Sneezing",
+    "ProjectIconName" : "cozmo-anim-sneeze",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "3"
+  },
+    {
+    "ProjectUUID": "a0386336-033b-4fb7-8c26-8dbc50e57b76",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"control_forever\" id=\"C fp;(Erlu{KaEWNe1[s\"><statement name=\"SUBSTACK\"><block type=\"cozmo_wait_for_cube_tap\" id=\"J:Is^bgB2q y#b*(],T`\"><next><block type=\"cozmo_mystery_animation\" id=\"b(R;mJWwYcoD]RU!L_s[\"><\/block><\/next><\/block><\/statement><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Tap Cube for Mystery Animation",
+    "ProjectIconName" : "cozmo-cube-tap",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "4"
+  },
+    {
+    "ProjectUUID": "5a5ab0d3-e9e1-47b6-9801-1e7b65215292",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"control_repeat\" id=\"Hu0;*K eKC!EC44~}Db:\"><statement name=\"SUBSTACK\"><block type=\"cozmo_drive_forward\" id=\"RPG8`CO]WQD^8J6*P}SP\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"tLj(orVl00:jul.`qw}_\"><field name=\"NUM\">3<\/field><\/shadow><\/value><next><block type=\"cozmo_turn_right\" id=\"jLPpse^~fcYZt!7Emx(!\"><\/block><\/next><\/block><\/statement><value name=\"TIMES\"><shadow type=\"math_whole_number_with_validator\" id=\"w7j5sRt}G42~far#t(v[\"><field name=\"NUM\">4<\/field><\/shadow><\/value><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Drive In Square: Advanced",
+    "ProjectIconName" : "control_repeat",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "5"
+  },
+    {
+    "ProjectUUID": "31aeb88d-3443-48ef-ab83-2ccc997d6160",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_wait_for_face\" id=\"?o8_7n!fBmAFIIa-SB~E\"><next><block type=\"cozmo_dock_with_cube\" id=\"utx}.PGhw$|G3sEsf4[E\"><next><block type=\"cozmo_drive_forward\" id=\"!yYlNYzz=R;[@AJ{LHFU\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"H=$Vo^Oa@7v]):vEHY;P\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Push Cube",
+    "ProjectIconName" : "cozmo-dock-with-cube",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "6"
+  },
+    {
+    "ProjectUUID": "0996210d-6497-4f5d-af52-7a3ee5cee384",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"control_forever\" id=\"ah0uD?XH|6.el2 R1\/:D\"><statement name=\"SUBSTACK\"><block type=\"cozmo_wait_for_face\" id=\"7Qn~PFEs8JG8GgYZ_j=Z\"><next><block type=\"cozmo_happy_animation\" id=\"5iWKm$u)B|\/@F[8b{=W*\"><\/block><\/next><\/block><\/statement><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Peekaboo",
+    "ProjectIconName" : "cozmo-face",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "7"
+  },
+    {
+    "ProjectUUID": "3a30450f-3ec8-431c-b03c-61bbddfa0d65",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_liftheight\" id=\"n[e,^d\/1}c]EQte=l(!I\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"%;rVPVRU.Z*JCC`ah-:i\"><field name=\"CHOICE\">high<\/field><\/shadow><\/value><next><block type=\"cozmo_wait_for_face\" id=\"NH62F.n,nCw(GUeDsiV%\"><next><block type=\"cozmo_dock_with_cube\" id=\")nDMdiWHm*np;},8OQY6\"><next><block type=\"cozmo_liftheight\" id=\"*K=J$]aMO9K `ZkUYum}\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"=U_!as!cfQTa6RZU4S9g\"><field name=\"CHOICE\">medium<\/field><\/shadow><\/value><next><block type=\"cozmo_drive_backward\" id=\"lcj$mn~[ezjlbnYOwkBK\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"nE@.Eecl4#!rhPIAM$LG\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Roll Cube",
+    "ProjectIconName" : "cozmo-backward",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "8"
+  },
+    {
+    "ProjectUUID": "344f6715-d9c8-4b4f-b05e-22fe79d6484f",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_wait_until_see_cube\" id=\"19mJy@4Dy2(j4,,G0!]j\"><next><block type=\"cozmo_dock_with_cube\" id=\"ncYyvj(7R^i#5dJf0GP]\"><next><block type=\"control_repeat\" id=\"q-tzf1u?!%(G{=Lqo#RD\"><statement name=\"SUBSTACK\"><block type=\"cozmo_liftheight\" id=\"46W#I3JY13LY0-!0B`nD\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"y;~A?yj3kssQ@U)L}9Qz\"><field name=\"CHOICE\">low<\/field><\/shadow><\/value><next><block type=\"cozmo_liftheight\" id=\"x8i7\/~hpRpm2dxOETx\/4\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\")G;UTd032=n@7cq:NEE[\"><field name=\"CHOICE\">high<\/field><\/shadow><\/value><\/block><\/next><\/block><\/statement><value name=\"TIMES\"><shadow type=\"math_whole_number_with_validator\" id=\"rJ1j6,q|6#DKx|66g;.(\"><field name=\"NUM\">4<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Workout with Cube",
+    "ProjectIconName" : "cozmo-forklift-high",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "9"
+  },
+    {
+    "ProjectUUID": "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_wait_for_face\" id=\"Z?[m)Kd_xS*3)Hf}4G`M\"><next><block type=\"control_forever\" id=\"2e)Lj2@;:jbO-~JNUi B\"><statement name=\"SUBSTACK\"><block type=\"cozmo_setbackpackcolor\" id=\"I7KJTD.a:pxlEjUcii1X\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_setcolor\" id=\"nB@2j\/_#YcJGr7jq~fje\"><field name=\"CHOICE\">coral<\/field><\/shadow><\/value><next><block type=\"cozmo_says\" id=\"Qlgl]=Q3_CD3E=?$-U9w\"><value name=\"STRING\"><shadow type=\"text_with_validator\" id=\"CwRy%jV8C$\/;DKKBGMRZ\"><field name=\"TEXT\">Intruder!<\/field><\/shadow><\/value><next><block type=\"cozmo_setbackpackcolor\" id=\";sJ4F`}!Oi};6R(*Lrfo\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_setcolor\" id=\"APlRLjR;E%EN-pbuxDgf\"><field name=\"CHOICE\">off<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/statement><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectName": "Intruder Alarm!",
+    "ProjectIconName" : "cozmo_says",
+    "VersionNum" : "1",
+    "IsVertical" : "false",
+    "DisplayOrder": "10"
   }
 ]

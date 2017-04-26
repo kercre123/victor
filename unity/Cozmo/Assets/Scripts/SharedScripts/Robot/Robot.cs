@@ -1855,21 +1855,8 @@ public class Robot : IRobot {
     SparkUnlockId = UnlockId.Count;
   }
 
-  public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId,
-                                   Anki.AudioMetaData.GameState.Music musicState,
-                                   Anki.AudioMetaData.SwitchState.Sparked sparkedState) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID,
-      Singleton<ActivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState, sparkedState)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.AudioMetaData.GameState.Music musicState) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID,
-      Singleton<DeactivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState)
-    );
+  public void SetSparkedMusicState(Anki.AudioMetaData.SwitchState.Sparked sparkedState) {
+    RobotEngineManager.Instance.Message.SetSparkedMusicState = Singleton<SetSparkedMusicState>.Instance.Initialize(sparkedState);
     RobotEngineManager.Instance.SendMessage();
   }
 

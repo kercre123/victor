@@ -3,6 +3,15 @@
     window.isCozmoSampleProject = false;
     window.cozmoProjectName = null;
     window.cozmoProjectUUID = null;
+    window.previouslySavedProjectXML = null;
+    window.saveProjectTimerId = null;
+
+    function $t(str) {
+        return str;
+    }
+    function setText(query, text) {
+        document.querySelector(query).textContent = text;
+    }
 
     function CLPoint (x, y) {
         this.x = x;
@@ -51,26 +60,38 @@
      *
      * @param projectUUID If the project already has a projectUUID created by Unity, pass it to this method. If not, one will be created if appropriate.
      */
-    window.saveCozmoUserProject = function(projectUUID) {
+    window.saveCozmoUserProject = function() {
+        if (window.isSampleProject) {
+            return;
+        }
+
         var xml = Blockly.Xml.workspaceToDom(workspace);
         var xmlText = Blockly.Xml.domToText(xml);
 
-        if (projectUUID == null) {
-            projectUUID = '';
+        if (window.cozmoProjectUUID == null) {
+            window.cozmoProjectUUID = '';
+        }
+        
+        if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
+            // No changes to save
+            return;
         }
 
         // If it's a new project, only save the project if the user has added blocks.
         // TODO For new projects, after they are first saved by Unity, need to get both the
         // project UUID and projectName from Unity and cache it, and display in upper right
         // corner of workspace.
-        if (projectUUID == '' &&  !window.hasUserAddedBlocks()) {
+        if (window.cozmoProjectUUID == '' &&  !window.hasUserAddedBlocks()) {
             return;
         }
 
-        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSaveUserProject','argString': '" + xmlText + "','argUUID': '" + projectUUID + "'}");
+        window.previouslySavedProjectXML = xmlText;
+        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSaveUserProject','argString': '" + xmlText + "','argUUID': '" + window.cozmoProjectUUID + "'}");
     }
 
-    window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProject) {
+    window.openCozmoProject = function(projectUUID, projectName, projectXML, isCozmoSampleProjectStr) {
+        var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
+
         // Remove all existing scripts from workspace
         window.workspace.clear();
 
@@ -79,8 +100,55 @@
         window.cozmoProjectUUID = projectUUID;
         window.cozmoProjectName = projectName;
         window.isCozmoSampleProject = isCozmoSampleProject;
+        window.previouslySavedProjectXML = null;
+
+        if (window.saveProjectTimerId) {
+            clearInterval(window.saveProjectTimerId);
+        }
+
+        if (isCozmoSampleProject) {
+            // Set the coordinate setting in the sample project xml to our desired location on-screen.
+            var startingPoint = window.getScriptStartingPoint();
+            projectXML = projectXML.replace("REPLACE_X_COORD", startingPoint.x);
+            projectXML = projectXML.replace("REPLACE_Y_COORD", startingPoint.y);
+        }
 
         openBlocklyXML(projectXML);
+        setProjectNameAndSavedText(projectName, isCozmoSampleProject);
+
+        window.startSaveProjectTimer();
+    }
+
+    window.setProjectNameAndSavedText = function(projectName, isSampleProject) {
+        setText('#app-title', $t(projectName));
+
+        var autosavedText = 'Autosaved';
+        if (isSampleProject) {
+            autosavedText = 'Sample projects not saved';
+        }
+        else if (projectName == '' || projectName == null) {
+            // When user selects 'Create New Project' from save/load UI, at first project has no name and is not yet autosaved.
+            autosavedText = '';
+        }
+        setText('#app-title-subtext', $t(autosavedText));
+    }
+
+    window.newProjectCreated = function(projectUUID, projectName) {
+        window.cozmoProjectUUID = projectUUID;
+        window.cozmoProjectName = projectName;
+
+        window.setProjectNameAndSavedText(projectName, false);
+    }
+
+    window.startSaveProjectTimer = function() {
+        // Start timer for intervals at which we'll check if the user project should be saved.
+        if (!window.isCozmoSampleProject) {
+            var timeInterval_ms = 3000;
+            window.saveProjectTimerId = setInterval(saveProjectTimer, timeInterval_ms);
+            function saveProjectTimer() {
+                window.saveCozmoUserProject();
+            }
+        }
     }
 
     window.openBlocklyXML = function(xml) {

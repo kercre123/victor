@@ -1,0 +1,37 @@
+// File: userFacingState.clad
+// Author: Kevin M. Karol
+// Created: 4/5/2017
+// Copyright: Anki, inc. 2017
+
+#include "clad/types/behaviorTypes.clad"
+#include "clad/types/reactionTriggers.clad"
+#include "clad/types/unlockTypes.clad"
+
+namespace Anki {
+namespace Cozmo {
+
+
+
+enum uint_8 BehaviorStageTag{
+  PyramidConstruction,
+  Count
+}
+
+// Specify a behavior stage - value set specified by RelevantBehaviorStageField
+// above
+structure BehaviorStageStruct{
+  BehaviorStageTag behaviorStageTag,
+  PyramidConstructionStage currentPyramidConstruction
+}
+
+// Structure which enumerates all relevant UserFacingState information
+// to provide full state updates to interested systems
+no_default_constructor structure RobotPublicState{
+  UnlockId currentSpark,
+  bool isCubeInLift,
+  ReactionTrigger currentReactionTrigger,
+  BehaviorStageStruct userFacingBehaviorStageStruct
+}
+
+} // namespace Cozmo
+} // namespace Anki

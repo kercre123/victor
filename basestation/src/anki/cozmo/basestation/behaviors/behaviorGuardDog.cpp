@@ -260,7 +260,13 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::StartSleeping:
     {
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogSleepLoop, 0));
+      // Start the sleeping loop animation (override default timeout)
+      StartActing(new TriggerAnimationAction(robot,
+                                             AnimationTrigger::GuardDogSleepLoop,
+                                             0,                                   // numLoops (0 = infinite)
+                                             true,                                // interruptRunning
+                                             (u8)AnimTrackFlag::NO_TRACKS,        // tracksToLock
+                                             kSleepingMaxDuration_s));            // timeout_sec
       SET_STATE(Sleeping);
       break;
     }

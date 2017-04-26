@@ -5,13 +5,7 @@ using Cozmo.ConnectionFlow.UI;
 namespace Cozmo.ConnectionFlow {
   public class NeedsConnectionManager : MonoBehaviour {
 
-    private static NeedsConnectionManager _Instance;
-
-    public static NeedsConnectionManager Instance {
-      get {
-        return _Instance;
-      }
-    }
+    public static NeedsConnectionManager Instance { get; private set; }
 
     [SerializeField]
     private GameObjectDataLink _NeedsUnconnectViewPrefabData;
@@ -27,12 +21,14 @@ namespace Cozmo.ConnectionFlow {
 
     private bool _StartFlowInProgress = false;
 
-    void Awake() {
-      if (_Instance != null) {
-        DAS.Error("NeedsConnectionManager.Awake", "There should only be one NeedsConnectionManager");
+    private void OnEnable() {
+      if (Instance != null && Instance != this) {
+        Destroy(gameObject);
         return;
       }
-      _Instance = this;
+      else {
+        Instance = this;
+      }
     }
 
     void Start() {

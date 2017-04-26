@@ -35,7 +35,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
     // ignore the other substate progression messages
     if (message.subStage == Anki.Cozmo.FirmwareUpdateSubStage.Flash) {
       DAS.Debug("UpdateFirmwareScreen.HandleFirmwareProgress", message.percentComplete.ToString());
-      _ProgressBar.SetProgress((message.percentComplete / 100.0f) * 0.9f);
+      _ProgressBar.SetTargetAndAnimate((message.percentComplete / 100.0f) * 0.9f);
     }
   }
 
@@ -63,7 +63,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
     while (currentTimeElapsed_s < _DoneUpdateDelay) {
       
       float delayPercentage = (currentTimeElapsed_s / _DoneUpdateDelay);
-      _ProgressBar.SetProgress(0.9f + delayPercentage * 0.1f);
+      _ProgressBar.SetTargetAndAnimate(0.9f + delayPercentage * 0.1f);
 
 
       if (!disconnectHasTriggered && currentTimeElapsed_s >= _kDelayBeforeDisconnect_s) {
@@ -76,7 +76,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
     }
 
 
-    _ProgressBar.SetProgress(1.0f);
+    _ProgressBar.SetTargetAndAnimate(1.0f);
 
     if (FirmwareUpdateDone != null) {
       FirmwareUpdateDone(true);

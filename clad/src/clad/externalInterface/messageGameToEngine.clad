@@ -601,6 +601,10 @@ message SetDefaultHeadAndLiftState {
   float_32 liftHeight
 }
 
+message SetSparkedMusicState{
+  AudioMetaData::SwitchState::Sparked sparkedMusicState
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Blockworld

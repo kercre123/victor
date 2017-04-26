@@ -81,6 +81,74 @@
       "AnimName": "ag_PatternGuessThinking"
     },
     {
+      "CladEvent": "CodeLabBored",
+      "AnimName": "ag_codelab_bored"
+    },
+    {
+      "CladEvent": "CodeLabCat",
+      "AnimName": "ag_codelab_cat"
+    },
+    {
+      "CladEvent": "CodeLabChatty",
+      "AnimName": "ag_codelab_chatty"
+    },
+    {
+      "CladEvent": "CodeLabDejected",
+      "AnimName": "ag_codelab_dejected"
+    },
+    {
+      "CladEvent": "CodeLabDog",
+      "AnimName": "ag_codelab_dog"
+    },
+    {
+      "CladEvent": "CodeLabEnter",
+      "AnimName": "ag_codelab_getin"
+    },
+    {
+      "CladEvent": "CodeLabExit",
+      "AnimName": "ag_codelab_getout"
+    },
+    {
+      "CladEvent": "CodeLabExcited",
+      "AnimName": "ag_codelab_excited"
+    },
+    {
+      "CladEvent": "CodeLabExit",
+      "AnimName": "ag_codelab_getout"
+    },
+    {
+      "CladEvent": "CodeLabFrustrated",
+      "AnimName": "ag_codelab_frustrated"
+    },
+    {
+      "CladEvent": "CodeLabHappy",
+      "AnimName": "ag_codelab_happy"
+    },
+    {
+      "CladEvent": "CodeLabSleep",
+      "AnimName": "ag_codelab_sleep"
+    },
+    {
+      "CladEvent": "CodeLabSneeze",
+      "AnimName": "ag_codelab_sneeze"
+    },
+    {
+      "CladEvent": "CodeLabSurprise",
+      "AnimName": "ag_codelab_surprise"
+    },
+    {
+      "CladEvent": "CodeLabThinking",
+      "AnimName": "ag_codelab_thinking"
+    },
+    {
+      "CladEvent": "CodeLabUnhappy",
+      "AnimName": "ag_codelab_unhappy"
+    },
+    {
+      "CladEvent": "CodeLabVictory",
+      "AnimName": "ag_codelab_victory"
+    },
+    {
       "CladEvent": "ConnectWakeUp",
       "AnimName": "ag_ConnectWakeUp"
     },

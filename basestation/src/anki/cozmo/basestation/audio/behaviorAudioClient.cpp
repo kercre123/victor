@@ -15,7 +15,11 @@
 
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -42,7 +46,27 @@ BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
     Gameplay_Round::Round_09,
     Gameplay_Round::Round_10
   };
+  
+  // Get the appropriate spark music state from unity
+  if(robot.HasExternalInterface()){
+    auto handleSetSparkMusicState = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& musicState){
+      _sparkedMusicState = musicState.GetData().Get_SetSparkedMusicState().sparkedMusicState;
+    };
+    
+    _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(
+                              ExternalInterface::MessageGameToEngineTag::SetSparkedMusicState,
+                              handleSetSparkMusicState));
+  }
+  
+  // Get state change info from the robot
+  auto handleStateChangeWrapper = [this](const AnkiEvent<RobotPublicState>& stateEvent){
+    HandleRobotPublicStateChange(stateEvent.GetData());
+  };
+  
+  _eventHandles.push_back(robot.GetPublicStateBroadcaster().Subscribe(handleStateChangeWrapper));
+
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, const int round)
@@ -73,6 +97,7 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
   return true;
 }
 
+  
 // Protected Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAudioClient::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
@@ -104,21 +129,39 @@ bool BehaviorAudioClient::ActivateSparkedMusic(const UnlockId behaviorUnlockId,
   return true;
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorAudioClient::DeactivateSparkedMusic(const UnlockId behaviorUnlockId, const AudioMetaData::GameState::Music musicState)
+void BehaviorAudioClient::DeactivateSparkedMusic()
 {
-  if (_unlockId != behaviorUnlockId && _unlockId != UnlockId::Invalid) {
-    return false;
-  }
-  
-  if (musicState != AudioMetaData::GameState::Music::Invalid) {
-    _robot.GetRobotAudioClient()->PostMusicState(static_cast<AudioMetaData::GameState::GenericState>(musicState));
-  }
-  
+  _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
   _isActive = false;
-  _unlockId = UnlockId::Invalid;
+  _unlockId = UnlockId::Count;
   SetDefaultBehaviorRound();
-  return true;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& stateEvent)
+{
+  // Update sparked music if spark ID changed
+  auto sparkID = stateEvent.currentSpark;
+  if(_unlockId != sparkID){
+    if(sparkID == UnlockId::Count){
+      DeactivateSparkedMusic();
+    }else if(_sparkedMusicState == AudioMetaData::SwitchState::Sparked::Invalid){
+      PRINT_NAMED_ERROR("BehaviorAudioClient.HandleRobotPublicStateChange.InvalidMusicState",
+                        "Attempted to activate sparked music state with invalid music state");
+    }else{
+      ActivateSparkedMusic(stateEvent.currentSpark,
+                           AudioMetaData::GameState::Music::Spark,
+                           _sparkedMusicState);
+    }
+  }
+  
+  const int behaviorRound = PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent);
+  if(_round != behaviorRound){
+    UpdateBehaviorRound(sparkID, behaviorRound);
+  }
 }
 
 

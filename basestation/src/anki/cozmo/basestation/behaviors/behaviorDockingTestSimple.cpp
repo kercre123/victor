@@ -69,6 +69,7 @@ namespace Anki {
     CONSOLE_VAR(bool, kDriveToAndPickupBlockOneAction, "DockingTest", true);
     CONSOLE_VAR(bool, kJustPickup,                 "DockingTest", false);
     CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
+    CONSOLE_VAR(bool, kAlignInsteadOfPickup,       "DockingTest", false);
     CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
     CONSOLE_VAR(bool, kUseClosePreActionPose,      "DockingTest", false);
     CONSOLE_VAR(u32,  kNumRandomObstacles,         "DockingTest", 10);
@@ -459,11 +460,32 @@ namespace Anki {
             // in seperate states
             else if(kDriveToAndPickupBlockOneAction)
             {
-              DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot,
-                                                                                _blockObjectIDPickup,
-                                                                                true,
-                                                                                _initialPreActionPoseAngle_rad);
-              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+              IActionRunner* action = nullptr;
+              if(kAlignInsteadOfPickup)
+              {
+                // This compound action will essentially function as a DriveToPickupObjectAction
+                // By aligning to the LIFT_PLATE and then moving the lift up we should
+                // pickup the object
+                action = new CompoundActionSequential(robot,
+                  {new DriveToAlignWithObjectAction(robot,
+                                                    _blockObjectIDPickup,
+                                                    0,
+                                                    false,
+                                                    0,
+                                                    AlignmentType::LIFT_PLATE),
+                   new MoveLiftToHeightAction(robot,
+                                              MoveLiftToHeightAction::Preset::CARRY)
+                  });
+              }
+              else
+              {
+                action = new DriveToPickupObjectAction(robot,
+                                                       _blockObjectIDPickup,
+                                                       true,
+                                                       _initialPreActionPoseAngle_rad);
+                static_cast<DriveToPickupObjectAction*>(action)->SetDockingMethod((DockingMethod)kTestDockingMethod);
+              }
+              
               StartActing(robot, action,
                           [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                             if (result != ActionResult::SUCCESS) {
@@ -477,6 +499,11 @@ namespace Anki {
                               }
                               return false;
                             }
+                            if(kAlignInsteadOfPickup)
+                            {
+                              robot.SetCarryingObject(_blockObjectIDPickup, _markerBeingSeen.GetCode());
+                            }
+                            
                             SetCurrState(State::PlaceLow);
                             return true;
                           });
