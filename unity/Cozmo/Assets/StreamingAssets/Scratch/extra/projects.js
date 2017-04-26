@@ -38,6 +38,9 @@
 
     // register main click handler for the document
     document.body.addEventListener('click', _handleBodyClick);
+
+    // activate CSS for taps by registering a touchstart event
+    document.addEventListener("touchstart", function(){}, true);
   }
 
   /**
@@ -166,8 +169,10 @@
       // color the puzzle piece to match the icon's group color
       var style = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
       var color = getSampleProjectColor(icon);
-      style.textContent = '.st0{fill:' + color + ';}';
-      svgDoc.documentElement.appendChild(style);
+      if (color) {
+        style.textContent = '.st0{fill:' + color + ';}';
+        svgDoc.documentElement.appendChild(style);
+      }
 
       // show the project card once everything is loaded
       project.style.visibility = 'visible';
@@ -225,51 +230,64 @@
    */
   function getSampleProjectColor(icon) {
     switch (icon) {
+
       // motion blocks
-      case 'cozmo_drive_forward':
-      case 'cozmo_drive_backward':
-      case 'cozmo_turn_left':
-      case 'cozmo_turn_right':
-      case 'cozmo_dock_with_cube':
+      case 'cozmo-backward':
+      case 'cozmo-forward':
+      case 'cozmo-turn-left':
+      case 'cozmo-turn-right':
+      case 'cozmo-dock-with-cube':
         return '#1fadda';
 
       // looks blocks
-      case 'cozmo_liftheight':
-      case 'cozmo_headangle':
-      case 'cozmo_setbackpackcolor':
+      case 'cozmo-forklift-high':
+      case 'cozmo-forklift-low':
+      case 'cozmo-forklift-medium':
+      case 'cozmo-head-angle-high':
+      case 'cozmo-head-angle-medium':
+      case 'cozmo-head-angle-low':
+      case 'set-led_black':
+      case 'set-led_blue':
+      case 'set-led_coral':
+      case 'set-led_green':
+      case 'set-led_mystery':
+      case 'set-led_orange':
+      case 'set-led_purple':
+      case 'set-led_white':
+      case 'set-led_yellow':
       case 'cozmo_says':
         return '#8a6bff';
 
       // event blocks
-      case 'cozmo_wait_for_face':
-      case 'cozmo_wait_until_see_cube':
-      case 'cozmo_wait_for_cube_tap':
+      case 'cozmo-face':
+      case 'cozmo-cube':
+      case 'cozmo-cube-tap':
         return '#f7d22f';
 
       // control blocks
-      case 'cozmo_drive_speed':
+      case 'control_forever':
+      case 'control_repeat':
         return '#e28f23';
 
       // actions blocks
-      case 'cozmo_happy_animation':
-      case 'cozmo_victory_animation':
-      case 'cozmo_unhappy_animation':
-      case 'cozmo_surprise_animation':
-      case 'cozmo_dog_animation':
-      case 'cozmo_cat_animation':
-      case 'cozmo_sneeze_animation':
-      case 'cozmo_excited_animation':
-      case 'cozmo_thinking_animation':
-      case 'cozmo_bored_animation':
-      case 'cozmo_frustrated_animation':
-      case 'cozmo_chatty_animation':
-      case 'cozmo_dejected_animation':
-      case 'cozmo_sleep_animation':
-      case 'cozmo_mystery_animation':
+      case 'cozmo-anim-bored':
+      case 'cozmo_anim-cat':
+      case 'cozmo_anim-chatty':
+      case 'cozmo-anim-dejected':
+      case 'cozmo-anim-dog':
+      case 'cozmo-anim-excited':
+      case 'cozmo-anim-frustrated':
+      case 'cozmo-anim-happy':
+      case 'cozmo-anim-mystery':
+      case 'cozmo-anim-sleep':
+      case 'cozmo-anim-sneeze':
+      case 'cozmo-anim-surprise':
+      case 'cozmo-anim-thinking':
+      case 'cozmo-anim-unhappy':
+      case 'cozmo-anim-victory':
         return '#b15499';
 
-      default:
-        return '#1fadda';   // default to motion color
+      // no default to make mistakes more obvious
     }
   }
 

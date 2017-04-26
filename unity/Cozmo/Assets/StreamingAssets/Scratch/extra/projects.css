@@ -6,17 +6,43 @@ html {
 
 }
 
-body {font-family: 'Avenir Next Bold'; user-select: none;}
+body {
+  font-family: 'Avenir Next Bold';
+  user-select: none;
+
+  /* prevent page from scrolling inside the webview */
+  position: fixed;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+
+  /* make text on page unselectable */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
 
 button {font-family: 'Avenir Next Bold'; cursor: pointer;}
 
+button:active,
+a:active,
+.clickable:active {
+  opacity: .6;
+}
+
+
 #projects {position: relative; width: 100%; height: 100vh; background-color: #525253; color: #1fadda; }
 
-#projects .hd {display: flex; flex-direction: row; justify-content: flex-end; align-items: center; height: 15vh; padding: 0 3vw;}
+#projects .hd {display: flex; flex-direction: row; justify-content: flex-end; align-items: center; height: 15vh; padding-left: 1.5vw;}
 #projects .hd #app-title {font-weight: bold; text-transform: uppercase; font-size: 7vh; padding: .1em .3em 0 0;}
 #projects .hd #app-title-subtext {color: #707173; font-size: 3.5vh;}
-#projects .hd #scratch-watermark {height: 50%;}
-#projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 0; width: 7vh;}
+#projects .hd #scratch-watermark {height: 50%; margin-right: 3vw;}
+#projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 1.5vh; width: 10vh;}
 #projects .hd #btn-close-page img {width: 100%; height: 100%;}
 
 
