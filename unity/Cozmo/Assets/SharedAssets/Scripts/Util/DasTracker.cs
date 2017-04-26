@@ -195,11 +195,6 @@ public class DasTracker {
     DAS.Event("app.age_gate.age", age.ToString());
   }
 
-  public void TrackBirthDateSkipped() {
-    // .age_gate.age - no extra data
-    DAS.Event("app.age_gate.skip", "");
-  }
-
   public void TrackCubePromptEntered() {
     // app.connect.cubes_prompt - no extra data
     DAS.Event("app.connect.cubes_prompt", "");

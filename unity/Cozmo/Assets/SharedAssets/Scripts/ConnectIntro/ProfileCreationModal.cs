@@ -21,17 +21,10 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _BirthdateLabel;
 
-  [SerializeField]
-  private GameObject _SkipBirthdateEntryButtonContainer;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _SkipBirthdateEntryButton;
-
   private void Awake() {
     DAS.Debug("ProfileCreationView.Awake", "Enter Awake");
     _NameDoneButton.Initialize(HandleNameDoneButton, "name_done_button", this.DASEventDialogName);
     _ContinueButton.Initialize(HandleBirthdateEntryDone, "continue_button", this.DASEventDialogName);
-    _SkipBirthdateEntryButton.Initialize(HandleBirthdateEntrySkip, "skip_button", this.DASEventDialogName);
 
     _BirthDatePicker.maxYear = System.DateTime.Today.Year + 1;
     _NameDoneButton.Interactable = false;
@@ -71,13 +64,6 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
     _BirthDatePicker.gameObject.SetActive(show);
     _ContinueButton.gameObject.SetActive(show);
     _BirthdateLabel.gameObject.SetActive(show);
-
-#if UNITY_IOS || UNITY_EDITOR
-    _SkipBirthdateEntryButtonContainer.SetActive(show);
-#else
-		_SkipBirthdateEntryButtonContainer.SetActive(false);
-#endif
-
     _ContinueButton.Interactable = false;
   }
 
@@ -103,18 +89,13 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
 
   private void HandleBirthdateEntryDone() {
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Birthdate = _BirthDatePicker.date;
+    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated = true;
+    DataPersistence.DataPersistenceManager.Instance.Save();
     DasTracker.Instance.TrackBirthDateEntered(_BirthDatePicker.date);
     ProfileCreationDone();
   }
 
-  private void HandleBirthdateEntrySkip() {
-    DasTracker.Instance.TrackBirthDateSkipped();
-    ProfileCreationDone();
-  }
-
   private void ProfileCreationDone() {
-    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated = true;
-    DataPersistence.DataPersistenceManager.Instance.Save();
     UIManager.CloseModal(this);
   }
 
