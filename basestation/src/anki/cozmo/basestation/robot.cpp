@@ -214,7 +214,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _driftCheckNumReadings(0)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
-  , _needsManager(new NeedsManager(this))
+  , _needsManager(new NeedsManager(*this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
@@ -255,10 +255,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     LoadEmotionEvents();
   }
   
-  if (_context->GetDataPlatform())  // shouldn't this be 'getdataloader'?  and above?
+  if (_context->GetDataPlatform() != nullptr)
   {
     _needsManager->Init(_context->GetDataLoader()->GetRobotMoodConfig()); // todo change this to GetRobotNeedsConfig
-    // blah
   }
 
   // Initialize progression

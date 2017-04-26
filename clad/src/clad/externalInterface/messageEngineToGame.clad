@@ -503,7 +503,8 @@ message NeedsState {
   bool          partIsDamaged[uint_8],
   int_32        curNeedsUnlockLevel,
   int_32        numStarsAwarded,
-  int_32        numStarsForNextUnlock
+  int_32        numStarsForNextUnlock,
+  NeedsActionId actionCausingTheUpdate
 }
 
 message NeedsPauseState {

@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -20,6 +21,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include <assert.h>
 
@@ -32,29 +34,38 @@ namespace Cozmo {
 
   
 NeedsState::NeedsState()
-: _curNeedsLevels()
-, _curNeedsBrackets()
+: _timeLastWritten(Time())
+, _robotSerialNumber(0)
+, _curNeedsLevels()
+, _curNeedsBracketsCache()
 , _partIsDamaged()
 , _curNeedsUnlockLevel(0)
 , _numStarsAwarded(0)
 , _numStarsForNextUnlock(1)
+, _needsConfig(nullptr)
 {
 }
-  
+
 NeedsState::~NeedsState()
 {
   Reset();
 }
 
-void NeedsState::Init(const NeedsConfig& needsConfig)
+void NeedsState::Init(const NeedsConfig* needsConfig, u32 serialNumber)
 {
   Reset();
+
+  _timeLastWritten = Time();  // ('never')
+
+  _needsConfig = needsConfig;
+
+  _robotSerialNumber = serialNumber;
   
-  _curNeedsLevels[NeedId::Repair] = 100.0f; // todo make these constants come from config data
-  _curNeedsLevels[NeedId::Energy] = 100.0f;
-  _curNeedsLevels[NeedId::Play]   = 100.0f;
+  _curNeedsLevels[NeedId::Repair] = 1.0f; // todo make these constants come from config data
+  _curNeedsLevels[NeedId::Energy] = 1.0f;
+  _curNeedsLevels[NeedId::Play]   = 1.0f;
   
-  UpdateCurNeedsBrackets(needsConfig);
+  UpdateCurNeedsBrackets();
   
   _partIsDamaged[RepairablePartId::Head]   = false;
   _partIsDamaged[RepairablePartId::Lift]   = false;
@@ -64,11 +75,11 @@ void NeedsState::Init(const NeedsConfig& needsConfig)
   _numStarsAwarded = 0;
   _numStarsForNextUnlock = 3; // todo set this from config data
 }
-  
+
 void NeedsState::Reset()
 {
   _curNeedsLevels.clear();
-  _curNeedsBrackets.clear();
+  _curNeedsBracketsCache.clear();
   _partIsDamaged.clear();
 }
 
@@ -82,31 +93,21 @@ void NeedsState::DecayUnconnected(float timeElasped_secs)
   // todo:
 }
 
-void NeedsState::UpdateCurNeedsBrackets(const NeedsConfig& needsConfig)
+void NeedsState::UpdateCurNeedsBrackets()
 {
   // todo: set each of the needs' 'current bracket' based on the current level for that need,
-  // and configuration data.
+  // and configuration data (_needsConfig)
   // To be called whenever needs level changes.
   
   // temp code:
-  _curNeedsBrackets[NeedId::Repair] = NeedBracketId::Full;
-  _curNeedsBrackets[NeedId::Energy] = NeedBracketId::Full;
-  _curNeedsBrackets[NeedId::Play] = NeedBracketId::Full;
+  _curNeedsBracketsCache[NeedId::Repair] = NeedBracketId::Full;
+  _curNeedsBracketsCache[NeedId::Energy] = NeedBracketId::Full;
+  _curNeedsBracketsCache[NeedId::Play] = NeedBracketId::Full;
 }
-  
 
-//  Nathan Monson This question about managing flash comes up from time to time.
-//  _Avoid burn-out:_
-//  Only write flash while gameplay is happening (never while on the charger/etc).
-//    Only write flash when something happens (unlock, etc).  Even twice a minute (on average) is perfectly fine.
-//    If you're writing something every single second of gameplay or on the charger, you should go back and fix it.
-//    (Obvious) Avoid writing data that hasn't changed.
-//    _Avoid stuttering:_
-//    Writing can sometimes be very slow - over a second even for small amounts.
-//      So, only write flash when the robot isn't doing anything.
-//      *Do NOT write periodically - you may interrupt something the robot is doing.*
-//      Be synchronous (just after objective completed), not asynchronous (every minute). (edited)
-  
+
+
+
 } // namespace Cozmo
 } // namespace Anki
 

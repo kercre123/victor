@@ -38,7 +38,7 @@ static const std::string kBackupConfig = "config/basestation/config/backup_confi
 
 // File name of the backup file for the currently connected robot
 static std::string _fileName;
-  
+
 RobotDataBackupManager::RobotDataBackupManager(Robot& robot)
 : _robot(robot)
 , kPathToFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetBackupFolder()) : ""))
@@ -146,7 +146,7 @@ void RobotDataBackupManager::RobotConnected(const AnkiEvent<RobotInterface::Robo
     stats[kConnectionCountKey][serialNumber] = 1;
   }
   
-  if(!_robot.GetContextDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, "robotBackups/" + kStatsForBackupFile, stats))
+  if(!_robot.GetContextDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetBackupFolder() + kStatsForBackupFile, stats))
   {
     PRINT_NAMED_ERROR("RobotDataBackupManager.RobotConnected.WriteStatsFailed", "Failed to write backup stats file");
   }

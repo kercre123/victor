@@ -16,6 +16,9 @@
 
 #include "anki/common/types.h"
 #include "clad/types/needsSystemTypes.h"
+
+#include <json/json.h>
+
 #include <assert.h>
 #include <map>
 
@@ -29,6 +32,8 @@ namespace ExternalInterface {
 
 class NeedsConfig;
 
+using Time = std::chrono::time_point<std::chrono::system_clock>;
+  
 
 class NeedsState
 {
@@ -37,10 +42,8 @@ public:
   NeedsState();
   ~NeedsState();
   
-  // Init
-  void Init(const NeedsConfig& needsConfig);
+  void Init(const NeedsConfig* needsConfig, u32 serialNumber);
   
-  // Reset
   void Reset();
   
   // Decay the needs values, according to how much time has passed since last decay, and config data
@@ -48,20 +51,33 @@ public:
   
   void DecayUnconnected(float timeElapsed_secs);  //?
   
-  float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[(NeedId)i]; }
-  NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBrackets[(NeedId)i]; };
-  bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[(RepairablePartId)i]; };
+  float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
+  NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBracketsCache[static_cast<NeedId>(i)]; };
+  bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };
   
   // Set current needs bracket levels from current levels
-  void UpdateCurNeedsBrackets(const NeedsConfig& needsConfig);
+  void UpdateCurNeedsBrackets();
 
-  // todo:  DateTime	LastConnectedDateTime
+
+  // Serialization versions; increment this when the format of the serialization changes
+  // This is stored in the serialized file
+  // Note that changing format of robot storage serialization will be more difficult,
+  // because it serializes a CLAD structure, so for backward compatibility we'd have
+  // to preserve older versions of that CLAD structure.
+  static const int kDeviceStorageVersion = 1;
+  static const int kRobotStorageVersion = 1;
+
+  Time _timeLastWritten;
+
+  u32 _robotSerialNumber;
 
   using CurNeedsMap = std::map<NeedId, float>;
   CurNeedsMap _curNeedsLevels;
 
+  // These are meant for convenience to the game, and indicate the 'severity bracket' of the
+  // corresponding need level (e.g. 'full', 'normal', 'warning', 'critical')
   using CurNeedsBrackets = std::map<NeedId, NeedBracketId>;
-  CurNeedsBrackets _curNeedsBrackets;
+  CurNeedsBrackets _curNeedsBracketsCache;
 
   using PartIsDamagedMap = std::map<RepairablePartId, bool>;
   PartIsDamagedMap _partIsDamaged;
@@ -70,11 +86,10 @@ public:
   int _numStarsAwarded;
   int _numStarsForNextUnlock;
 
-  // accessors:  for need level (by type); need bracket (by type), Part daamaged, stars awarded, stars for next unlcok , curneedsunlock lvel
-
-  // todo: read/write to storage (read includes any re-gen of other fields such as CurNeedsBrackets)
-
 private:
+
+  const NeedsConfig* _needsConfig;
+
 };
 
 
