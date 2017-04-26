@@ -520,9 +520,10 @@ namespace Cozmo.Upgrades {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
           RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
-          // Take the audio state back to freeplay
-          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         }
+
+        // Take the audio state back to freeplay
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
           
         if (!isCleanup) {
           UpdateState();
