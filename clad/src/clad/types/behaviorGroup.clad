@@ -24,7 +24,6 @@ enum uint_8 BehaviorGroup {
     FP_Socialize,       // interact with faces, seek owner, etc.
     FP_NothingToDo,     // none of the other freeplay goals wants to run
     FP_PutDownDispatch, // after putDown evaluate what we should do
-    FP_GuardDog,
 
     SetupBuildPyramid,
     BuildPyramid,

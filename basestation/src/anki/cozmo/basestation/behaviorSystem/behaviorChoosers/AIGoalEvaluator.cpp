@@ -93,11 +93,6 @@ void AIGoalClearSetting( ConsoleFunctionContextRef context ) {
   AIGoalEvaluatorSetDebugGoal("");
 }
 CONSOLE_FUNC( AIGoalClearSetting, "AIGoalEvaluator" );
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIGoalSetFPGuardDog( ConsoleFunctionContextRef context ) {
-  AIGoalEvaluatorSetDebugGoal("FP_GuardDog");
-}
-CONSOLE_FUNC( AIGoalSetFPGuardDog, "AIGoalEvaluator" );
   
 #endif // REMOTE_CONSOLE_ENABLED
 

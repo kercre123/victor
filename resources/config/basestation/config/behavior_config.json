@@ -303,19 +303,6 @@
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
-        "name" : "FP_GuardDog",
-        "priority": 8,
-        "behaviorChooser" :
-        {
-          "type" : "simple",
-          "behaviorGroups" : [ "FP_GuardDog" ]
-        },
-        "goalStrategy":
-        {
-          "type" : "Simple"
-        }
-      },
-      {
         "name" : "FP_NothingToDo",
         "priority": 7, // lower is better
         "behaviorChooser" :

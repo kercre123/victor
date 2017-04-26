@@ -1,10 +1,26 @@
 {
   "behaviorClass": "GuardDog",
-  "executableBehaviorType": "GuardDog",
   "name": "GuardDog",
   "displayNameKey": "behavior.GuardDog",
+  "requiredUnlockId": "BuildPyramid",    // Lock GuardDog behind Pyramid unlock (COZMO-10385)
   "behaviorGroups": [
-    "FP_GuardDog"
+    "FP_PlayAlone"
   ],
-  "flatScore": 1.0
+  "flatScore": 1.0,
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 5.0,
+        "y": 0.0
+      },
+      {
+        "x": 600.0,
+        "y": 0.5
+      },
+      {
+        "x": 900.0,
+        "y": 1.0
+      }
+    ]
+  }
 }
