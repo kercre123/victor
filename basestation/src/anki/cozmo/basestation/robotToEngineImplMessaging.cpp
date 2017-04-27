@@ -307,13 +307,17 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   ANKI_CPU_PROFILE("Robot::HandleRobotSetBodyID");
   
   const RobotInterface::ManufacturingID& payload = message.GetData().Get_mfgId();
-  const auto hwVersion = payload.hw_version;
-  const auto bodyID = payload.esn;
-  const auto bodyColor = payload.body_color;
+  const int32_t hwVersion = payload.hw_version;
+  const uint32_t bodyID = payload.esn;
+  const int32_t bodyColor = payload.body_color;
   
   // Set DAS Global on all messages
   char string_id[32] = {};
-  snprintf(string_id, sizeof(string_id), "0xbeef%08x%08x", hwVersion, bodyID);
+  snprintf(string_id, sizeof(string_id),
+           "0xbeef%04x%04x%08x",
+           Util::numeric_cast<uint16_t>(bodyColor), // We expect bodyColor and hwVersion to always be +ve
+           Util::numeric_cast<uint16_t>(hwVersion),
+           bodyID);
   
   Anki::Util::sSetGlobal(DPHYS, string_id);
   Anki::Util::sEvent("robot.handle_robot_set_body_id", {{DDATA,string_id}}, string_id);
@@ -321,9 +325,6 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   robot->SetBodySerialNumber(bodyID);
   robot->SetHWVersion(hwVersion);
   robot->SetBodyColor(bodyColor);
-  
-  const char* color = EnumToString(robot->GetBodyColor());
-  Anki::Util::sEvent("robot.body_color", {}, color);
 }
   
 void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
