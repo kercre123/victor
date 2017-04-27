@@ -95,7 +95,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       base.Update();
       // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the minigame level.
       // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
-      if (RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
+      if (_WebViewObject != null && RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
         if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
           RaiseMiniGameQuit();
         }

@@ -5,14 +5,14 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22410154}
-  - 114: {fileID: 11449606}
-  - 225: {fileID: 22589486}
-  - 222: {fileID: 22220556}
-  - 114: {fileID: 11436570}
-  - 114: {fileID: 11411974}
+  - component: {fileID: 22410154}
+  - component: {fileID: 11449606}
+  - component: {fileID: 22589486}
+  - component: {fileID: 22220556}
+  - component: {fileID: 11436570}
+  - component: {fileID: 11411974}
   m_Layer: 5
   m_Name: TouchCatcher
   m_TagString: Untagged
@@ -41,9 +41,9 @@ MonoBehaviour:
   ButtonGraphics: []
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
-    _Event: Play__Ui__Click_General
-    _EventType: Ui
-    _GameObjectType: 3
+    _Event: Invalid
+    _EventType: GenericEvent
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11436570
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -101,6 +101,7 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
