@@ -9,6 +9,7 @@ html {
 body {
   font-family: 'Avenir Next Bold';
   user-select: none;
+  background-color: #525253;
 
   /* prevent page from scrolling inside the webview */
   position: fixed;
@@ -24,6 +25,7 @@ body {
   -ms-user-select: none;
   user-select: none;
 
+  /* Turn off default tap higlighting so we can style our own */
   -webkit-tap-highlight-color:rgba(0,0,0,0);
 }
 
@@ -36,7 +38,7 @@ a:active,
 }
 
 
-#projects {position: relative; width: 100%; height: 100vh; background-color: #525253; color: #1fadda; }
+#projects {position: relative; width: 100%; height: 100vh; color: #1fadda; visibility: hidden;}
 
 #projects .hd {display: flex; flex-direction: row; justify-content: flex-end; align-items: center; height: 15vh; padding-left: 1.5vw;}
 #projects .hd #app-title {font-weight: bold; text-transform: uppercase; font-size: 7vh; padding: .1em .3em 0 0;}
@@ -46,9 +48,9 @@ a:active,
 #projects .hd #btn-close-page img {width: 100%; height: 100%;}
 
 
-#projects .bd {height: 70vh; padding: 5vh 0 0 40px;}
+#projects .bd {height: 70vh; padding: 5vh 0 0 0;}
 #projects #projects-list {
-  height: 100%; list-style-type: none; padding: 0 0 9vh 0; margin: 0; text-align: left;
+  height: 100%; list-style-type: none; padding: 0 0 9vh 7vw; margin: 0; text-align: left;
   overflow-x: scroll; overflow-y: hidden; white-space: nowrap;
   -webkit-overflow-scrolling: touch;
 }
@@ -218,11 +220,6 @@ a:active,
 }
 #modal-inner .ft button {
   font-family: 'Avenir Next';
-}
-#btn-close-modal {
-  position: absolute;
-  top: .5em;
-  left: .5em;
 }
 #btn-cancel-delete-project {
   background-image: linear-gradient(to bottom, #da6b30, #bc4613);

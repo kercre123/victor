@@ -161,23 +161,18 @@
     var iconPath = '../lib/blocks/media/icons/' + icon + '.svg';
     project.querySelector('.block-icon').setAttribute('src', iconPath);
 
+    var projectsUI = document.querySelector('#projects');
+
     // add a style to color the puzzle piece SVG after it loads
-    var block = project.querySelector('.block');
-    block.addEventListener('load', function() {
-      var svgDoc = this.contentDocument;
-
-      // color the puzzle piece to match the icon's group color
-      var style = svgDoc.createElementNS('http://www.w3.org/2000/svg', 'style');
-      var color = getSampleProjectColor(icon);
-      if (color) {
-        style.textContent = '.st0{fill:' + color + ';}';
-        svgDoc.documentElement.appendChild(style);
-      }
-
-      // show the project card once everything is loaded
+    var block = project.querySelector('.block')
+    var type = getSampleProjectType(icon);
+    block.setAttribute('src', 'images/icon_block_' + type + '.svg');
+    block.addEventListener('load', function(elem) {
       project.style.visibility = 'visible';
-    });
 
+      // show the entire Projects UI when the first sample project is ready to be shown
+      projectsUI.style.visibility = 'visible';
+    })
     return project;
   }
 
@@ -228,7 +223,7 @@
    * @param {String} icon - name of the icon
    * @returns {String} hex color background for the icon
    */
-  function getSampleProjectColor(icon) {
+  function getSampleProjectType(icon) {
     switch (icon) {
 
       // motion blocks
@@ -237,7 +232,7 @@
       case 'cozmo-turn-left':
       case 'cozmo-turn-right':
       case 'cozmo-dock-with-cube':
-        return '#1fadda';
+        return 'motion';
 
       // looks blocks
       case 'cozmo-forklift-high':
@@ -256,7 +251,7 @@
       case 'set-led_white':
       case 'set-led_yellow':
       case 'cozmo_says':
-        return '#8a6bff';
+        return 'looks';
 
       // event blocks
       case 'cozmo-face':
@@ -264,12 +259,12 @@
       case 'cozmo-face-sad':
       case 'cozmo-cube':
       case 'cozmo-cube-tap':
-        return '#f7d22f';
+        return 'event';
 
       // control blocks
       case 'control_forever':
       case 'control_repeat':
-        return '#e28f23';
+        return 'control';
 
       // actions blocks
       case 'cozmo-anim-bored':
@@ -287,7 +282,7 @@
       case 'cozmo-anim-thinking':
       case 'cozmo-anim-unhappy':
       case 'cozmo-anim-victory':
-        return '#b15499';
+        return 'action';
 
       // no default to make mistakes more obvious
     }
@@ -335,42 +330,21 @@
    *  it during development.
    */
   var CozmoAPI = function(){
-    function getProjects(callbackName) {
-      if (window.Unity) {
-        window.getCozmoUserAndSampleProjectLists(callbackName);
-      } else {
-        // development only
-        getJSON('../sample-projects.json', function(sampleProjects) {
-          // copy 3 of the sample projects and render them as user projects
-          var userProjects = sampleProjects.slice(0,3);
 
-          window.renderProjects(userProjects, sampleProjects);
-        });
-      }
+    function getProjects(callbackName) {
+      window.getCozmoUserAndSampleProjectLists(callbackName);
     }
 
     function createNewProject() {
-      if (window.Unity) {
-        window.requestToCreateCozmoProject();
-      } else {
-        alert('create new project');
-      }
+      window.requestToCreateCozmoProject();
     }
 
     function openUserProject(uuid) {
-      if (window.Unity) {
-        window.requestToOpenCozmoUserProject(uuid);
-      } else {
-       alert('open user project: ' + uuid);
-      }
+      window.requestToOpenCozmoUserProject(uuid);
     }
 
     function openSampleProject(uuid) {
-      if (window.Unity) {
-        window.requestToOpenCozmoSampleProject(uuid);
-      } else {
-        alert('open sample project: ' + uuid);
-      }
+      window.requestToOpenCozmoSampleProject(uuid);
     }
 
     function deleteProject(uuid) {
@@ -382,19 +356,11 @@
       projectElem.parentNode.removeChild(projectElem);
 
       // notify Unity to actually delete the project
-      if (window.Unity) {
-        window.deleteCozmoUserProject(uuid);
-      } else {
-        alert('delete project "' + uuid + '"');
-      }
+      window.deleteCozmoUserProject(uuid);
     }
 
     function closeCodeLab() {
-      if (window.Unity) {
-        window.closeCodeLab();
-      } else {
-        alert('close code lab');
-      }
+      window.closeCodeLab();
     }
 
     return {
