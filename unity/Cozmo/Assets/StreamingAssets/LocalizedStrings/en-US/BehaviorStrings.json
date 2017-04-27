@@ -49,7 +49,7 @@
     "translation": "Cozmo wants to fist bump"
   },
   "behavior.GuardDog": {
-    "translation": "(placeholder) Guard Dog behavior"
+    "translation": "Cozmo is guarding his cubes"
   },
   "behavior.RollBlock": {
     "translation": "Cozmo is rolling a Cube"
