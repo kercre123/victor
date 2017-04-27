@@ -610,6 +610,8 @@ class GamePlatformConfiguration(object):
                 self.strip_libs()
                 # Call unity for game
                 self.call_unity_for_android(script_engine)
+                # Fix Unity's inability to generate an APK that reflects the settings we give it
+                self.fix_unity_apk()
 
                 if self.options.features is not None and 'standalone' in self.options.features[0]:
                     print("Building standalone-apk")
@@ -732,6 +734,13 @@ class GamePlatformConfiguration(object):
 
         # TODO: Generate android gradle project here. Or just post this function call.
         # Note that gradle isn't introduced until Unity 5.5 (we are on 5.3)
+
+    def fix_unity_apk(self):
+        print_status('Performing splash screen surgery...')
+        args = [os.path.join(GAME_ROOT, 'tools', 'android', 'apkSplashScreenFix.sh')]
+        args += [os.path.join(self.platform_build_dir, 'Cozmo.apk')] # input
+        args += [os.path.join(self.platform_build_dir, 'Cozmo.apk')] # output (overwrite old file)
+        ankibuild.util.File.execute(args)
 
     def install(self):
         if self.options.verbose:
