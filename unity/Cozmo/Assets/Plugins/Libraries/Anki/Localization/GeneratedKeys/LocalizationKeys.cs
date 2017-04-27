@@ -548,6 +548,10 @@ public static class LocalizationKeys {
   public const string kSettingsVersionPanelEraseCozmoModalEraseCozmoWarningLabel = "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel";
   public const string kSettingsVersionPanelLabelAppRun = "settings.versionPanel.label.appRun";
   public const string kSettingsVersionPanelLabelAppVersion = "settings.versionPanel.label.appVersion";
+  public const string kSettingsVersionPanelLabelCozmoColor = "settings.versionPanel.label.cozmoColor";
+  public const string kSettingsVersionPanelLabelCozmoColorWhite = "settings.versionPanel.label.cozmoColor.white";
+  public const string kSettingsVersionPanelLabelCozmoColorLiquidMetal = "settings.versionPanel.label.cozmoColor.liquidMetal";
+  public const string kSettingsVersionPanelLabelCozmoColorUnknown = "settings.versionPanel.label.cozmoColor.unknown";
   public const string kSettingsVersionPanelLabelCozmoVersion = "settings.versionPanel.label.cozmoVersion";
   public const string kSettingsVersionPanelLabelDeviceId = "settings.versionPanel.label.deviceId";
   public const string kSettingsVersionPanelLabelSerialNumber = "settings.versionPanel.label.serialNumber";

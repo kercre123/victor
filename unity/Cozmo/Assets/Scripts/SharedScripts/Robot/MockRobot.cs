@@ -927,6 +927,11 @@ public class MockRobot : IRobot {
     set;
   }
 
+  public BodyColor BodyColor {
+    get;
+    set;
+  }
+
   private ObservableObject _CarryingObject;
 
   public ObservableObject CarryingObject {

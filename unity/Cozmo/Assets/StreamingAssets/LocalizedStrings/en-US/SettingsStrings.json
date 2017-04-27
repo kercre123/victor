@@ -159,6 +159,18 @@
   "settings.versionPanel.label.appVersion": {
     "translation": "App Version: {0}"
   },
+  "settings.versionPanel.label.cozmoColor": {
+    "translation": "Cozmo Color: {0}"
+  },
+  "settings.versionPanel.label.cozmoColor.white": {
+    "translation": "Original"
+  },
+  "settings.versionPanel.label.cozmoColor.liquidMetal": {
+    "translation": "Liquid Metal"
+  },
+  "settings.versionPanel.label.cozmoColor.unknown": {
+    "translation": "Unknown"
+  },
   "settings.versionPanel.label.cozmoVersion": {
     "translation": "Cozmo Version: {0}"
   },

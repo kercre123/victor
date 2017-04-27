@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/common/types.h"
+#include "clad/types/robotStatusAndActions.h"
 #include "util/signals/signalHolder.h"
 
 namespace Anki {
@@ -60,6 +61,7 @@ private:
   uint32_t _fwVersion;
   uint32_t _fwTime;
   uint32_t _serialNumber = 0;
+  BodyColor _bodyColor = BodyColor::UNKNOWN;
   bool _validFirmware;
   bool _robotIsAvailable;
 };

@@ -144,6 +144,8 @@ public interface IRobot : IDisposable {
 
   uint SerialNumber { get; set; }
 
+  BodyColor BodyColor { get; set; }
+
   ObservableObject CarryingObject { get; }
 
   event Action<ObservableObject> OnCarryingObjectSet;

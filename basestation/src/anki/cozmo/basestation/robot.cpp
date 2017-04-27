@@ -3188,7 +3188,8 @@ void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
                                                     GetBodySerialNumber(),
                                                     _modelNumber,
                                                     _hwVersion,
-                                                    std::move(cameraConfig));
+                                                    std::move(cameraConfig),
+                                                    GetBodyColor());
   
   Broadcast( ExternalInterface::MessageEngineToGame(std::move(robotSettings)) );
 }
@@ -4047,6 +4048,21 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + histState.GetPose().GetRotation().GetAngleAroundZaxis();
   
   return RESULT_OK;
+}
+
+void Robot::SetBodyColor(const s32 color)
+{
+  const BodyColor bodyColor = static_cast<BodyColor>(color);
+  if(bodyColor <= BodyColor::UNKNOWN ||
+     bodyColor >= BodyColor::COUNT ||
+     bodyColor == BodyColor::RESERVED)
+  {
+    PRINT_NAMED_ERROR("Robot.SetBodyColor.InvalidColor",
+                      "Robot has invalid body color %d", color);
+    return;
+  }
+  
+  _bodyColor = bodyColor;
 }
 
 void Robot::ObjectToConnectToInfo::Reset()

@@ -22,6 +22,9 @@ namespace Cozmo.Settings {
     private CozmoText _AppRunLabel;
 
     [SerializeField]
+    private CozmoText _CozmoColorLabel;
+
+    [SerializeField]
     private CozmoButton _SupportButton;
 
     [SerializeField]
@@ -66,6 +69,9 @@ namespace Cozmo.Settings {
 
       // Fill out Serial number args
       _SerialNumberLabel.FormattingArgs = new object[] { robot.SerialNumber.ToString("X8") };
+
+      // Fill out Cozmo color args
+      _CozmoColorLabel.FormattingArgs = new object[] { ShortenData(BodyColorToString(robot.BodyColor)) };
 
       robot.RequestRobotRestoreData();
     }
@@ -248,6 +254,25 @@ namespace Cozmo.Settings {
     private void HandleRestoreRobotOptions(RestoreRobotOptions msg) {
       // If there is only one backup file then user will not be able to restore
       _RestoreButtonIsActive = (msg.robotsWithBackupData.Length > 1);
+    }
+
+    private string BodyColorToString(Anki.Cozmo.BodyColor color) {
+      switch (color) {
+      case Anki.Cozmo.BodyColor.WHITE_v10:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorWhite);
+      case Anki.Cozmo.BodyColor.WHITE_v15:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorWhite);
+      case Anki.Cozmo.BodyColor.CE_LM_v15:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorLiquidMetal);
+      case Anki.Cozmo.BodyColor.UNKNOWN:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorUnknown);
+      case Anki.Cozmo.BodyColor.RESERVED:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorUnknown);
+      case Anki.Cozmo.BodyColor.COUNT:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorUnknown);
+      default:
+        return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorUnknown);
+      }
     }
   }
 }

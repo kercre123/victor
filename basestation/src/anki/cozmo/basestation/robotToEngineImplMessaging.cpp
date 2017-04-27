@@ -309,6 +309,7 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   const RobotInterface::ManufacturingID& payload = message.GetData().Get_mfgId();
   const auto hwVersion = payload.hw_version;
   const auto bodyID = payload.esn;
+  const auto bodyColor = payload.body_color;
   
   // Set DAS Global on all messages
   char string_id[32] = {};
@@ -319,6 +320,10 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   
   robot->SetBodySerialNumber(bodyID);
   robot->SetHWVersion(hwVersion);
+  robot->SetBodyColor(bodyColor);
+  
+  const char* color = EnumToString(robot->GetBodyColor());
+  Anki::Util::sEvent("robot.body_color", {}, color);
 }
   
 void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

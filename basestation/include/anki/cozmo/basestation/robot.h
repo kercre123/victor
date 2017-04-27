@@ -801,6 +801,9 @@ public:
   void SetModelNumber(const u32 num) { _modelNumber = num; }
   void SetHWVersion(const s32 num) { _hwVersion = num; }
   
+  void SetBodyColor(const s32 color);
+  const BodyColor GetBodyColor() const { return _bodyColor; }
+  
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
 protected:
@@ -815,6 +818,7 @@ protected:
   u32       _serialNumberBody = 0;
   u32       _modelNumber      = 0;
   s32       _hwVersion        = 0;
+  BodyColor _bodyColor        = BodyColor::UNKNOWN;
   
   // Whether or not sync time was acknowledged by physical robot
   bool _timeSynced = false;

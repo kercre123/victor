@@ -65,7 +65,8 @@ message RobotConnectionResponse {
     uint_32 robotID,
     RobotConnectionResult result,
     uint_32 fwVersion,
-    uint_32 serialNumber
+    uint_32 serialNumber,
+    BodyColor bodyColor // see robotStatusAndActions.clad
 }
 
 message RobotDisconnected {
@@ -145,7 +146,8 @@ message PerRobotSettings {
   uint_32 serialNumberBody,
   uint_32 modelNumber,
   int_32  hwVersion,
-  CameraConfig cameraConfig
+  CameraConfig cameraConfig,
+  BodyColor color // see robotStatusAndActions.clad
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -240,7 +240,22 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
   // If the connection completed successfully, ask for the robot ID and send the success once we get it
   if (RobotConnectionResult::Success == result) {
     AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::mfgId, [this, result, robotFwVersion] (const AnkiEvent<RobotToEngine>& message) {
-      _serialNumber = message.GetData().Get_mfgId().esn;
+      const auto& payload = message.GetData().Get_mfgId();
+      _serialNumber = payload.esn;
+      
+      const BodyColor bodyColor = static_cast<BodyColor>(payload.body_color);
+      if(bodyColor <= BodyColor::UNKNOWN ||
+         bodyColor >= BodyColor::COUNT ||
+         bodyColor == BodyColor::RESERVED)
+      {
+        PRINT_NAMED_ERROR("RobotInitialConnection.HandleMfgID.InvalidBodyColor",
+                          "Robot has invalid body color %d", payload.body_color);
+      }
+      else
+      {
+        _bodyColor = bodyColor;
+      }
+      
       SendConnectionResponse(result, robotFwVersion);
     }));
     
@@ -256,7 +271,11 @@ void RobotInitialConnection::SendConnectionResponse(RobotConnectionResult result
   _notified = true;
   ClearSignalHandles();
 
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result, robotFwVersion, _serialNumber}});
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id,
+                                                                            result,
+                                                                            robotFwVersion,
+                                                                            _serialNumber,
+                                                                            _bodyColor}});
 }
 
 }
