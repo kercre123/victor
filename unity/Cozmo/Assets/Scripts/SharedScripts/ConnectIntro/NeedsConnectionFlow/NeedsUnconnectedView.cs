@@ -16,7 +16,7 @@ namespace Cozmo.ConnectionFlow.UI {
     [SerializeField]
     private NeedsMetersWidget _MetersWidget;
 
-    // IVY TODO: Add NeedConnectModal prefab
+    // COZMO-10941 IVY TODO: Add NeedConnectModal prefab
 
     // Use this for initialization
     void Start() {
@@ -29,12 +29,8 @@ namespace Cozmo.ConnectionFlow.UI {
         _ConnectButton.Initialize(HandleConnectButtonPressed, "connect_button", "needs_unconnected_view");
       }
 
-      // IVY TODO: Listen to button events from NeedsMeterWidget in order to open NeedConnect modal 
-      // IVY TODO: Test allowInput
-      _MetersWidget.Initialize(allowButtonInput: true,
-                               enableButtonBasedOnNeeds: true,
-                               dasParentDialogName: DASEventDialogName,
-                               baseDialog: this);
+      // COZMO-10941 IVY TODO: Listen to button events from NeedsMeterWidget in order to open NeedConnect modal 
+      _MetersWidget.Initialize(enableButtonBasedOnNeeds: false, dasParentDialogName: DASEventDialogName, baseDialog: this);
     }
 
     protected override void CleanUp() {

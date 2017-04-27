@@ -52,6 +52,8 @@ enum int_32 NeedsActionId
   //PyramidCompleted,
   // etc.
 
+  Play                  = 40,
+
   Count
 }
 

@@ -31,7 +31,13 @@ namespace Cozmo.Needs.UI {
         return _MeterButton.Interactable;
       }
       set {
-        _MeterButton.Interactable = value;
+        // If we are disabling input, we still want to show the button in an "unpressed, enabled" state all the time
+        if (AllowInput) {
+          _MeterButton.Interactable = value;
+        }
+        else {
+          _MeterButton.Interactable = true;
+        }
       }
     }
 

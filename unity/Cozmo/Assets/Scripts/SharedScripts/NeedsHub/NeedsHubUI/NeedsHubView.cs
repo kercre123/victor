@@ -1,4 +1,8 @@
-﻿using Cozmo.UI;
+﻿using Anki.Cozmo;
+using Cozmo.Energy.UI;
+using Cozmo.Play.UI;
+using Cozmo.Repair.UI;
+using Cozmo.UI;
 using DG.Tweening;
 using UnityEngine;
 
@@ -23,9 +27,17 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private NeedsMetersWidget _MetersWidget;
 
-    // IVY TODO: Add game data for Feed
-    // IVY TODO: Add game data for Repair
-    // IVY TODO: Add play modal for Play
+    [SerializeField]
+    private NeedsRepairModal _NeedsRepairModalPrefab;
+    private NeedsRepairModal _NeedsRepairModalInstance;
+
+    [SerializeField]
+    private NeedsEnergyModal _NeedsEnergyModalPrefab;
+    private NeedsEnergyModal _NeedsEnergyModalInstance;
+
+    [SerializeField]
+    private NeedsPlayModal _NeedsPlayModalPrefab;
+    private NeedsPlayModal _NeedsPlayModalInstance;
 
     public void Start() {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
@@ -33,15 +45,24 @@ namespace Cozmo.Needs.UI {
       _PlayRandomMinigameButton.Initialize(HandlePlayMinigameButtonClicked, "play_random_minigame_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
 
-      // IVY TODO: Listen for button click events for Feed, Repair, and Play modal/game handling
-      _MetersWidget.Initialize(allowButtonInput: true,
-                               enableButtonBasedOnNeeds: true,
-                               dasParentDialogName: DASEventDialogName,
-                               baseDialog: this);
+      _MetersWidget.Initialize(enableButtonBasedOnNeeds: true, dasParentDialogName: DASEventDialogName, baseDialog: this);
+      _MetersWidget.OnRepairPressed += HandleRepairButton;
+      _MetersWidget.OnEnergyPressed += HandleEnergyButton;
+      _MetersWidget.OnPlayPressed += HandlePlayButton;
+
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+      NeedBracketId repairBracket = nsm.GetCurrentDisplayBracket(NeedId.Repair);
+      NeedBracketId energyBracket = nsm.GetCurrentDisplayBracket(NeedId.Energy);
+      EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
+
+      this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
     }
 
     protected override void CleanUp() {
-
+      _MetersWidget.OnRepairPressed -= HandleRepairButton;
+      _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
+      _MetersWidget.OnPlayPressed -= HandlePlayButton;
+      NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -79,6 +100,60 @@ namespace Cozmo.Needs.UI {
       // auto scroll to the cubes setting panel if we don't have three cubes connected.
       if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount) {
         _SettingsWidget.ScrollToCubeSettings();
+      }
+    }
+
+    private void HandleRepairButton() {
+      UIManager.OpenModal(_NeedsRepairModalPrefab, new ModalPriorityData(), HandleRepairModalCreated);
+    }
+
+    private void HandleRepairModalCreated(BaseModal newModal) {
+      _NeedsRepairModalInstance = (NeedsRepairModal)newModal;
+      _NeedsRepairModalInstance.InitializeRepairModal();
+    }
+
+    private void HandleEnergyButton() {
+      UIManager.OpenModal(_NeedsEnergyModalPrefab, new ModalPriorityData(), HandleEnergyModalCreated);
+    }
+
+    private void HandleEnergyModalCreated(BaseModal newModal) {
+      _NeedsEnergyModalInstance = (NeedsEnergyModal)newModal;
+      _NeedsEnergyModalInstance.InitializeEnergyModal();
+    }
+
+    private void HandlePlayButton() {
+      UIManager.OpenModal(_NeedsPlayModalPrefab, new ModalPriorityData(), HandlePlayModalCreated);
+    }
+
+    private void HandlePlayModalCreated(BaseModal newModal) {
+      _NeedsPlayModalInstance = (NeedsPlayModal)newModal;
+      _NeedsPlayModalInstance.InitializePlayModal();
+    }
+
+    private void HandleDialogFinishedOpenAnimation() {
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+      NeedBracketId repairBracket = nsm.PopLatestEngineBracket(NeedId.Repair);
+      NeedBracketId energyBracket = nsm.PopLatestEngineBracket(NeedId.Energy);
+      EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
+      NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+    }
+
+    private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
+      if (needId == NeedId.Repair || needId == NeedId.Energy) {
+        NeedsStateManager nsm = NeedsStateManager.Instance;
+        NeedBracketId repairBracket = nsm.PopLatestEngineBracket(NeedId.Repair);
+        NeedBracketId energyBracket = nsm.PopLatestEngineBracket(NeedId.Energy);
+        EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
+      }
+    }
+
+    private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
+      if (repairBracket == NeedBracketId.Critical || repairBracket == NeedBracketId.Warning
+          || energyBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Warning) {
+        _PlayRandomMinigameButton.Interactable = false;
+      }
+      else {
+        _PlayRandomMinigameButton.Interactable = true;
       }
     }
   }

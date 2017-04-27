@@ -660,8 +660,8 @@ public abstract class GameBase : MonoBehaviour {
     }
     return false;
   }
-  public virtual void StartBaseGameEnd(int endStateIndex) {
 
+  public virtual void StartBaseGameEnd(int endStateIndex) {
     _EndStateIndex = endStateIndex;
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete,
                                                     _ChallengeData.ChallengeID, _CurrentDifficulty, DidHumanWin(),
@@ -911,6 +911,9 @@ public abstract class GameBase : MonoBehaviour {
     if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
       RewardedActionManager.Instance.ResetPendingRewards();
     }
+
+    UpdatePlayNeed();
+
     QuitMinigame();
   }
 
@@ -926,6 +929,9 @@ public abstract class GameBase : MonoBehaviour {
     else {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
     }
+
+    UpdatePlayNeed();
+
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: DidHumanWin());
     }
@@ -934,6 +940,8 @@ public abstract class GameBase : MonoBehaviour {
 
   private void RaiseMiniGameLose() {
     _StateMachine.Stop();
+
+    UpdatePlayNeed();
 
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: DidHumanWin());
@@ -944,7 +952,17 @@ public abstract class GameBase : MonoBehaviour {
 
   private void RaiseMiniGameTie() {
     _StateMachine.Stop();
+
+    UpdatePlayNeed();
+
     ShowWinnerState(_EndStateIndex);
+  }
+
+  private void UpdatePlayNeed() {
+    // COZMO-10938: IVY TODO: Need to swap out stub Play NeedActionId with real ones (win/lose/tie/quit) for each game
+    if (Cozmo.Needs.NeedsStateManager.Instance != null) {
+      Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(NeedsActionId.Play);
+    }
   }
 
   protected virtual void UpdateScoreboard(bool didPlayerWin) {

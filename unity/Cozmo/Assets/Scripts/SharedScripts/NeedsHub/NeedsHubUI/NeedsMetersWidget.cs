@@ -19,57 +19,82 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private NeedsMeter _PlayMeter;
 
-    // Allow for a little breathing room so that players can register the change as a 
-    // separate event.
-    private const float _kDelayOpenUpdateSeconds = 0.5f;
-    private IEnumerator _DelayOpenUpdateCoroutine;
+    private bool _EnableButtonsBasedOnNeeds;
 
-    public void Initialize(bool allowButtonInput, bool enableButtonBasedOnNeeds, string dasParentDialogName, BaseDialog baseDialog) {
+    public void Initialize(bool enableButtonBasedOnNeeds, string dasParentDialogName, BaseDialog baseDialog) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
 
-      _RepairMeter.Initialize(allowButtonInput, RaiseRepairPressed, "repair_need_meter_button", dasParentDialogName);
+      bool allowInput = true;
+      _RepairMeter.Initialize(allowInput, RaiseRepairPressed, "repair_need_meter_button", dasParentDialogName);
       _RepairMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Repair));
 
-      _EnergyMeter.Initialize(allowButtonInput, RaiseEnergyPressed, "energy_need_meter_button", dasParentDialogName);
+      _EnergyMeter.Initialize(allowInput, RaiseEnergyPressed, "energy_need_meter_button", dasParentDialogName);
       _EnergyMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Energy));
 
-      _PlayMeter.Initialize(allowButtonInput, RaisePlayPressed, "play_need_meter_button", dasParentDialogName);
+      _PlayMeter.Initialize(allowInput, RaisePlayPressed, "play_need_meter_button", dasParentDialogName);
       _PlayMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Play));
 
       baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
 
-      // IVY TODO: Handle enableButtonBasedOnNeeds
+      _EnableButtonsBasedOnNeeds = enableButtonBasedOnNeeds;
+      if (_EnableButtonsBasedOnNeeds) {
+        NeedBracketId repairBracket = nsm.GetCurrentDisplayBracket(NeedId.Repair);
+        NeedBracketId energyBracket = nsm.GetCurrentDisplayBracket(NeedId.Energy);
+        EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
+      }
     }
 
     private void OnDestroy() {
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
-      if (_DelayOpenUpdateCoroutine != null) {
-        StopCoroutine(_DelayOpenUpdateCoroutine);
-      }
+      NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
     }
 
     private void HandleDialogFinishedOpenAnimation() {
-      _DelayOpenUpdateCoroutine = DelayedOpenUpdateValues();
-      StartCoroutine(_DelayOpenUpdateCoroutine);
-    }
-
-    private IEnumerator DelayedOpenUpdateValues() {
-      yield return new WaitForSeconds(_kDelayOpenUpdateSeconds);
       UpdateMetersToLatestFromEngine();
       NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+
+      if (_EnableButtonsBasedOnNeeds) {
+        NeedsStateManager nsm = NeedsStateManager.Instance;
+        NeedBracketId repairBracket = nsm.PopLatestEngineBracket(NeedId.Repair);
+        NeedBracketId energyBracket = nsm.PopLatestEngineBracket(NeedId.Energy);
+        EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
+        NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+      }
     }
 
-    private void HandleLatestNeedsLevelChanged() {
+    private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       UpdateMetersToLatestFromEngine();
     }
 
     private void UpdateMetersToLatestFromEngine() {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       _RepairMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Repair));
-
       _EnergyMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Energy));
-
       _PlayMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Play));
+    }
+
+    private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
+      if (needId == NeedId.Repair || needId == NeedId.Energy) {
+        NeedsStateManager nsm = NeedsStateManager.Instance;
+        NeedBracketId repairBracket = nsm.PopLatestEngineBracket(NeedId.Repair);
+        NeedBracketId energyBracket = nsm.PopLatestEngineBracket(NeedId.Energy);
+        EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
+      }
+    }
+
+    private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
+      if (repairBracket == NeedBracketId.Critical || repairBracket == NeedBracketId.Warning) {
+        _EnergyMeter.ButtonEnabled = false;
+        _PlayMeter.ButtonEnabled = false;
+      }
+      else if (energyBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Warning) {
+        _EnergyMeter.ButtonEnabled = true;
+        _PlayMeter.ButtonEnabled = false;
+      }
+      else {
+        _EnergyMeter.ButtonEnabled = true;
+        _PlayMeter.ButtonEnabled = true;
+      }
     }
 
     private void RaiseRepairPressed() {
