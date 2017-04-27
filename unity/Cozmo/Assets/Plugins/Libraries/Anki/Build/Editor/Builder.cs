@@ -441,11 +441,6 @@ namespace Anki {
           return result;
         }
 
-#if SHIPPING
-		// Delete Scratch assets. Will remove this when ready to ship the feature.
-		FileUtil.DeleteFileOrDirectory(Path.Combine(Application.streamingAssetsPath, "Scratch"));
-#endif
-
         // copy assets
         if (assetFolder != null && buildType.ToLower() != "onlyplayer") {
           CopyBootAssetsToResources();

@@ -31,7 +31,6 @@ namespace CodeLab {
       DisplaySampleProject  // Display a previously-saved sample project. Sample project UUID saved in _ProjectUUIDToOpen.
     }
 
-#if ANKI_DEV_CHEATS
     // Look at CodeLabGameUnlockable.asset in editor to set when unlocked.
     private GameObject _WebViewObject;
     private WebViewObject _WebViewObjectComponent;
@@ -446,15 +445,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);
     }
-#else // ANKI_DEV_CHEATS SECRET
-    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
-    }
-
-    protected override void CleanUpOnDestroy() {
-      // required function
-    }
-
-#endif
 
   }
 

@@ -13,7 +13,7 @@
   },
   {
     "feature": "CodeLabGame",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "PeekABoo",

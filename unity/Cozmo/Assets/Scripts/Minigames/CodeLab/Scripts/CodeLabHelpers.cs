@@ -1,7 +1,7 @@
 using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
 namespace CodeLab {
-#if ANKI_DEV_CHEATS
+
   public class ScratchRequest {
     public int requestId { get; set; }
     public string command { get; set; }
@@ -111,5 +111,5 @@ namespace CodeLab {
       }
     }
   }
-#endif
+
 }
