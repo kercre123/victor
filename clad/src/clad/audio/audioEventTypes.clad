@@ -74,6 +74,7 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Effort_Fail = 3308460754,
   Play__Robot_Sfx__Effort_Long = 668351040,
   Play__Robot_Sfx__Effort_Medium = 3696071919,
+  Play__Robot_Sfx__Fist_Bump = 1216170354,
   Play__Robot_Sfx__Mvt_Tread_Backward_Loop_Play = 2180021393,
   Play__Robot_Sfx__Mvt_Tread_Backward_Start = 2613090854,
   Play__Robot_Sfx__Mvt_Tread_Backward_Stop = 1888692326,
@@ -393,6 +394,10 @@ enum uint_32 GenericEvent
   Play__Sfx__Banner_Wipe = 3247701492,
   Play__Sfx__Code_Fragment_Collected = 2587766166,
   Play__Sfx__Code_Fragment_Released = 1918333736,
+  Play__Sfx__Cube_Feeding_Down = 2378985973,
+  Play__Sfx__Cube_Feeding_Loop_Play = 3618620556,
+  Play__Sfx__Cube_Feeding_Success = 3991319706,
+  Play__Sfx__Cube_Feeding_Up = 1378697730,
   Play__Sfx__Daily_Goal = 3010549659,
   Play__Sfx__Daily_Reward_Calendar_Disappear = 2897417442,
   Play__Sfx__Daily_Reward_Collect = 878067460,
@@ -468,6 +473,7 @@ enum uint_32 GenericEvent
   Stop__Robot_Vo__Shared_Happy_Loop_Stop = 4286366971,
   Stop__Robot_Vo__Shared_Idea_Loop_Stop = 273762158,
   Stop__Robot_Vo__Sparked_Workout_Lift_Fail_Struggle_Longest_Stop = 1084850966,
+  Stop__Sfx__Cube_Feeding_Loop_Stop = 3890113136,
 }
 
 enum uint_32 Music
@@ -496,6 +502,7 @@ enum uint_32 Robot_Sfx
   Effort_Long = 668351040,
   Effort_Long_Stop = 809545185,
   Effort_Medium = 3696071919,
+  Fist_Bump = 1216170354,
   Invalid = 0,  // Use this to check for Invalid events
   Mvt_Tread_Backward_Loop_Play = 2180021393,
   Mvt_Tread_Backward_Loop_Stop = 1804693497,
@@ -845,6 +852,11 @@ enum uint_32 Sfx
   Banner_Wipe = 3247701492,
   Code_Fragment_Collected = 2587766166,
   Code_Fragment_Released = 1918333736,
+  Cube_Feeding_Down = 2378985973,
+  Cube_Feeding_Loop_Play = 3618620556,
+  Cube_Feeding_Loop_Stop = 3890113136,
+  Cube_Feeding_Success = 3991319706,
+  Cube_Feeding_Up = 1378697730,
   Daily_Goal = 3010549659,
   Daily_Reward_Calendar_Disappear = 2897417442,
   Daily_Reward_Collect = 878067460,
