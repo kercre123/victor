@@ -184,6 +184,12 @@ Blockly.FieldNumber.prototype.showNumPad_ = function() {
   // Set colour and size of drop-down
   Blockly.DropDownDiv.setColour(Blockly.Colours.numPadBackground,
       Blockly.Colours.numPadBorder);
+
+  if (window.innerWidth < window.TABLET_WIDTH) {
+      // Anki fix to make numpad dropdown fit on phones and not pop down
+      Blockly.FieldNumber.DROPDOWN_WIDTH = 138;
+  }
+
   contentDiv.style.width = Blockly.FieldNumber.DROPDOWN_WIDTH + 'px';
 
   this.position_();
@@ -223,12 +229,18 @@ Blockly.FieldNumber.prototype.position_ = function() {
  * @private
  */
 Blockly.FieldNumber.prototype.addButtons_ = function(contentDiv) {
+  var numPadButtonClass = 'blocklyNumPadButton';
+  if (window.innerWidth < window.TABLET_WIDTH) {
+    // Anki fix to make numpad dropdown fit on phones and not pop down
+    numPadButtonClass = 'blocklyNumPadButtonPhone';
+  }
+
   // Add numeric keypad buttons
   var buttons = Blockly.FieldNumber.NUMPAD_BUTTONS;
   for (var i = 0, buttonText; buttonText = buttons[i]; i++) {
     var button = document.createElement('button');
     button.setAttribute('role', 'menuitem');
-    button.setAttribute('class', 'blocklyNumPadButton');
+    button.setAttribute('class', numPadButtonClass);
     button.title = buttonText;
     button.innerHTML = buttonText;
     Blockly.bindEvent_(button, 'mousedown', button,
@@ -248,7 +260,7 @@ Blockly.FieldNumber.prototype.addButtons_ = function(contentDiv) {
   // Add erase button to the end
   var eraseButton = document.createElement('button');
   eraseButton.setAttribute('role', 'menuitem');
-  eraseButton.setAttribute('class', 'blocklyNumPadButton');
+  eraseButton.setAttribute('class', numPadButtonClass);
   eraseButton.title = 'Delete';
 
   var eraseImage = document.createElement('img');
