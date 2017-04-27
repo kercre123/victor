@@ -88,7 +88,8 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
     _ContinueButton.gameObject.SetActive(show);
     _BirthdateLabel.gameObject.SetActive(show);
 
-#if UNITY_IOS || UNITY_EDITOR
+    // See COZMO-10878, COZMO-10973 for history of this feature
+#if ENABLE_BIRTHDATE_SKIP
     _SkipBirthdateEntryButtonContainer.SetActive(show);
 #else
     _SkipBirthdateEntryButtonContainer.SetActive(false);
