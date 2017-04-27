@@ -222,7 +222,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left

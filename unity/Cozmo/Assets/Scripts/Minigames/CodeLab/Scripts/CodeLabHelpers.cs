@@ -21,6 +21,10 @@ namespace CodeLab {
       _WebViewObjectComponent = webViewObjectComponent;
     }
 
+    public void NeutralFaceThenAdvanceToNextBlock(bool success) {
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
+    }
+
     public void AdvanceToNextBlock(bool success) {
       // Calls the JavaScript function resolving the Promise on the block
       _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
