@@ -918,6 +918,62 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
   }
 };
 
+Blockly.Blocks['cozmo_wait_for_happy_face'] = {
+  /**
+   * Block to wait until a Cozmo sees a happy face.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-face-happy.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Wait until Cozmo sees a happy face"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.event,
+      "colour": Blockly.Colours.event.primary,
+      "colourSecondary": Blockly.Colours.event.secondary,
+      "colourTertiary": Blockly.Colours.event.tertiary
+    });
+  }
+};
+
+Blockly.Blocks['cozmo_wait_for_sad_face'] = {
+  /**
+   * Block to wait until a Cozmo sees a sad face.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.jsonInit({
+      "message0": "%1",
+      "args0": [
+        {
+          "type": "field_image",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-face-sad.svg",
+          "width": 40,
+          "height": 40,
+          "alt": "Wait until Cozmo sees a sad face"
+        }
+      ],
+      "inputsInline": true,
+      "previousStatement": null,
+      "nextStatement": null,
+      "category": Blockly.Categories.event,
+      "colour": Blockly.Colours.event.primary,
+      "colourSecondary": Blockly.Colours.event.secondary,
+      "colourTertiary": Blockly.Colours.event.tertiary
+    });
+  }
+};
+
 Blockly.Blocks['cozmo_wait_until_see_cube'] = {
   /**
    * Block to wait until a Cozmo sees a cube.

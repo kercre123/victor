@@ -80,8 +80,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     protected override void CleanUpOnDestroy() {
       _WebViewObjectComponent = null;
 
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ExitSDKMode(false);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ExitSDKMode(false);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
       }
       if (_WebViewObject != null) {
         GameObject.Destroy(_WebViewObject);
@@ -273,6 +275,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeFace") {
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedFace);
+      }
+      else if (scratchRequest.command == "cozmoWaitUntilSeeHappyFace") {
+        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
+        RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedHappyFace);
+      }
+      else if (scratchRequest.command == "cozmoWaitUntilSeeSadFace") {
+        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
+        RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedSadFace);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeCube") {
         RobotEngineManager.Instance.AddCallback<RobotObservedObject>(inProgressScratchBlock.RobotObservedObject);

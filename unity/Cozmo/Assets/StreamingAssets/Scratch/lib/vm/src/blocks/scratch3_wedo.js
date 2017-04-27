@@ -38,6 +38,8 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_mystery_animation: this.playMysteryAnimation,
         cozmo_liftheight: this.setLiftHeight,
         cozmo_wait_for_face: this.waitUntilSeeFace,
+        cozmo_wait_for_happy_face: this.waitUntilSeeHappyFace,
+        cozmo_wait_for_sad_face: this.waitUntilSeeSadFace,
         cozmo_wait_until_see_cube: this.waitUntilSeeCube,
         cozmo_wait_for_cube_tap: this.waitForCubeTap,
         cozmo_headangle: this.setHeadAngle,
@@ -266,20 +268,54 @@ Scratch3CozmoBlocks.prototype.speak = function(args, util) {
 };
 
 /**
- * Wait until see face.
+ * Wait until see face helper.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @param commandName The name for the specific wait-for-face command
+ * @private
+ */
+Scratch3CozmoBlocks.prototype._waitUntilSeeFaceHelper = function (args, util, commandName) {
+    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
+    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
+
+    var requestId = this._getRequestId();
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "' + commandName + '"}');
+
+    return this._promiseForCommand(requestId);
+};
+
+/**
+ * Wait until see any face.
  *
  * @param argValues Parameters passed with the block.
  * @param util The util instance to use for yielding and finishing.
  * @private
  */
 Scratch3CozmoBlocks.prototype.waitUntilSeeFace = function (args, util) {
-    // For now pass -1 for requestId to indicate we don't need a Promise resolved.
-    window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoHeadAngle","argString": "high"}');
+    return this._waitUntilSeeFaceHelper(args, util, "cozmoWaitUntilSeeFace");
+};
 
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitUntilSeeFace"}');
+/**
+ * Wait until see happy face.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitUntilSeeHappyFace = function (args, util) {
+    return this._waitUntilSeeFaceHelper(args, util, "cozmoWaitUntilSeeHappyFace");
+};
 
-    return this._promiseForCommand(requestId);
+/**
+ * Wait until see sad face.
+ *
+ * @param argValues Parameters passed with the block.
+ * @param util The util instance to use for yielding and finishing.
+ * @private
+ */
+Scratch3CozmoBlocks.prototype.waitUntilSeeSadFace = function (args, util) {
+    return this._waitUntilSeeFaceHelper(args, util, "cozmoWaitUntilSeeSadFace");
 };
 
 /**

@@ -40,6 +40,28 @@ namespace CodeLab {
       AdvanceToNextBlock(true);
     }
 
+    public void RobotObservedHappyFace(RobotObservedFace message) {
+      if (message.expression == Anki.Vision.FacialExpression.Happiness) {
+        RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedHappyFace);
+        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
+        AdvanceToNextBlock(true);
+      }
+    }
+
+    public void RobotObservedSadFace(RobotObservedFace message) {
+      // Match on Angry or Sad, and only if score is high (minimize false positives)
+      if ((message.expression == Anki.Vision.FacialExpression.Anger) ||
+          (message.expression == Anki.Vision.FacialExpression.Sadness)) {
+        var expressionScore = message.expressionValues[(int)message.expression];
+        const int kMinSadExpressionScore = 75;
+        if (expressionScore >= kMinSadExpressionScore) {
+          RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
+          RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
+          AdvanceToNextBlock(true);
+        }
+      }
+    }
+
     public void RobotObservedObject(RobotObservedObject message) {
       RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(RobotObservedObject);
       AdvanceToNextBlock(true);

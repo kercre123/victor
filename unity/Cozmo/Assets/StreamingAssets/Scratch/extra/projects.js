@@ -260,6 +260,8 @@
 
       // event blocks
       case 'cozmo-face':
+      case 'cozmo-face-happy':
+      case 'cozmo-face-sad':
       case 'cozmo-cube':
       case 'cozmo-cube-tap':
         return '#f7d22f';
