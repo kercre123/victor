@@ -36,10 +36,12 @@ public:
                                   const std::string& nnFilePath, const std::string& searchFilePath,
                                   bool isPhraseSpotted, bool allowsFollowupRecog);
   void RemoveRecognitionData(IndexType index);
+  void SetForceHeardPhrase(const char* phrase);
   
   virtual void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen) override;
   virtual void SetRecognizerIndex(IndexType index) override;
   virtual void SetRecognizerFollowupIndex(IndexType index) override;
+  virtual IndexType GetRecognizerIndex() const override;
   
 private:
   struct SpeechRecognizerTHFData;

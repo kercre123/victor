@@ -28,6 +28,7 @@ namespace {
   const std::string& kPhraseCommandsMapKey = "phraseCommandsMap";
   const std::string& kPhraseCommandsMapPhraseKey = "phrase";
   const std::string& kPhraseCommandsMapCommandsKey = "commands";
+  const std::string& kPhraseCommandsMapCommandKey = "commandType";
   
   const std::string& kContextDataMapKey = "contextDataMap";
   const std::string& kContextDataTypeKey = "contextType";
@@ -38,41 +39,10 @@ namespace {
   
 bool CommandPhraseData::Init(const Json::Value& commandPhraseData)
 {
-  // Get the phrase list
+  if (!commandPhraseData.isObject())
   {
-    if (!commandPhraseData.isObject())
-    {
-      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data is not an object!");
-      return false;
-    }
-    
-    if (!commandPhraseData.isMember(kPhraseListKey))
-    {
-      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data does not contain phrase list!");
-      return false;
-    }
-    
-    const Json::Value& phraseListData = commandPhraseData[kPhraseListKey];
-    if (!phraseListData.isArray())
-    {
-      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data phrase list is not a list?");
-      return false;
-    }
-    
-    // Make our local copy of the phrase list
-    _phraseDataList.clear();
-    for (int i=0; i < phraseListData.size(); ++i)
-    {
-      const Json::Value& curItem = phraseListData[i];
-      if (!curItem.isString())
-      {
-        PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData",
-                          "Keyphrase data phrase list item index %d is not a string?\n%s",
-                          i, Json::StyledWriter().write(curItem).c_str());
-        continue;
-      }
-      _phraseDataList.push_back( {._phrase = curItem.asString()} );
-    }
+    PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data is not an object.");
+    return false;
   }
   
   // Set up the phrase to command map
@@ -142,45 +112,39 @@ bool CommandPhraseData::AddPhraseCommandMap(const Json::Value& dataObject)
     return false;
   }
   
-  std::string phraseKey = dataObject[kPhraseCommandsMapPhraseKey].asString();
-  auto phraseIter = FindPhraseIter(phraseKey);
-  if (phraseIter == _phraseDataList.end())
+  const std::string& phraseKey = dataObject[kPhraseCommandsMapPhraseKey].asString();
+  
+  // We want this to be a unique entry in the map
+  auto phraseMapIter = _phraseToTypeMap.find(phraseKey);
+  if (phraseMapIter != _phraseToTypeMap.end())
   {
-    PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Phrase command map contains phrase not found in list: %s", phraseKey.c_str());
+    PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Phrase command map contains phrase already stored once: %s", phraseKey.c_str());
     return false;
   }
   
-  if (!dataObject.isMember(kPhraseCommandsMapCommandsKey) || !dataObject[kPhraseCommandsMapCommandsKey].isArray())
+  if (!dataObject.isMember(kPhraseCommandsMapCommandKey) || !dataObject[kPhraseCommandsMapCommandKey].isString())
   {
     PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                      "Phrase command map does not contain command list!\n%s",
+                      "Phrase command map does not contain command type!\n%s",
                       Json::StyledWriter().write(dataObject).c_str());
     return false;
   }
   
-  const Json::Value& commandsListObject = dataObject[kPhraseCommandsMapCommandsKey];
-  for (int i=0; i < commandsListObject.size(); ++i)
+  const std::string& commandKey = dataObject[kPhraseCommandsMapCommandKey].asString();
+  VoiceCommandType commandType = VoiceCommandTypeFromString(commandKey.c_str());
+  if (VoiceCommandType::Count == commandType)
   {
-    const Json::Value& curItem = commandsListObject[i];
-    if (!curItem.isString())
-    {
-      PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                        "Phrase command map's command list item is not a string.\n%s",
-                        Json::StyledWriter().write(curItem).c_str());
-      continue;
-    }
-    
-    VoiceCommandType command = VoiceCommandTypeFromString(curItem.asString().c_str());
-    if (VoiceCommandType::Count == command)
-    {
-      PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                        "Phrase command map's command list item was not found.\n%s",
-                        Json::StyledWriter().write(curItem).c_str());
-      continue;
-    }
-    
-    phraseIter->_commandsList.push_back(std::move(command));
+    PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
+                      "Phrase command map's command was not found.\n%s",
+                      Json::StyledWriter().write(dataObject).c_str());
+    return false;
   }
+  
+  // There might be multiple phrases that match the command type
+
+  
+  _phraseToTypeMap[phraseKey] = commandType;
+  _commandToPhrasesMap[commandType].push_back(phraseKey);
   
   return true;
 }
@@ -276,63 +240,50 @@ bool CommandPhraseData::AddContextData(const Json::Value& dataObject)
       continue;
     }
     
-    contextData._commandsList.push_back(std::move(command));
+    // Try inserting the command. If it's not unique, complain
+    const auto& insertResult = contextData._commandsSet.insert(std::move(command));
+    if (!insertResult.second)
+    {
+      PRINT_NAMED_ERROR("CommandPhraseData.AddContextData.JsonData",
+                        "Context data item's command list item was not unique.\n%s",
+                        Json::StyledWriter().write(curItem).c_str());
+      continue;
+    }
   }
   
   return true;
-}
-  
-std::vector<CommandPhraseData::PhraseData>::const_iterator CommandPhraseData::FindPhraseIter(const std::string& phrase) const
-{
-  auto phraseIter = _phraseDataList.begin();
-  while (phraseIter != _phraseDataList.end())
-  {
-    if (phraseIter->_phrase == phrase)
-    {
-      return phraseIter;
-    }
-    ++phraseIter;
-  }
-  
-  return _phraseDataList.end();
-}
-
-std::vector<CommandPhraseData::PhraseData>::iterator CommandPhraseData::FindPhraseIter(const std::string& phrase)
-{
-  auto phraseIter = _phraseDataList.begin();
-  while (phraseIter != _phraseDataList.end())
-  {
-    if (phraseIter->_phrase == phrase)
-    {
-      return phraseIter;
-    }
-    ++phraseIter;
-  }
-  
-  return _phraseDataList.end();
 }
 
 std::vector<const char*> CommandPhraseData::GetPhraseListRaw() const
 {
   std::vector<const char*> rawList;
-  for (const auto& phraseData : _phraseDataList)
+  for (const auto& phraseData : _phraseToTypeMap)
   {
-    rawList.push_back(phraseData._phrase.c_str());
+    rawList.push_back(phraseData.first.c_str());
   }
   return rawList;
 }
   
-const std::vector<VoiceCommandType>& CommandPhraseData::GetCommandsInPhrase(const std::string& phrase) const
+VoiceCommandType CommandPhraseData::GetCommandForPhrase(const std::string& phrase) const
 {
-  static std::vector<VoiceCommandType> emptyList;
-  
-  const auto phraseIter = FindPhraseIter(phrase);
-  if (_phraseDataList.end() == phraseIter)
+  const auto& phraseDataIter = _phraseToTypeMap.find(phrase);
+  if (phraseDataIter == _phraseToTypeMap.end())
   {
-    return emptyList;
+    return VoiceCommandType::Count;
   }
   
-  return phraseIter->_commandsList;
+  return phraseDataIter->second;
+}
+  
+const char* CommandPhraseData::GetFirstPhraseForCommand(VoiceCommandType commandType) const
+{
+  const auto& iter = _commandToPhrasesMap.find(commandType);
+  if (iter != _commandToPhrasesMap.end() && iter->second.size() > 0)
+  {
+    return iter->second.front().c_str();
+  }
+  
+  return nullptr;
 }
 
 } // namespace VoiceCommand

@@ -17,6 +17,7 @@
 #include "clad/types/voiceCommandTypes.h"
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -37,35 +38,29 @@ public:
   // as any alterations to the phrase list will invalidate the pointers.
   std::vector<const char*> GetPhraseListRaw() const;
   
-  const std::vector<VoiceCommandType>& GetCommandsInPhrase(const std::string& phrase) const;
+  VoiceCommandType GetCommandForPhrase(const std::string& phrase) const;
+  const char* GetFirstPhraseForCommand(VoiceCommandType commandType) const;
   
   // Simple struct for holding the data of a context and associated list of commands
   struct ContextData
   {
-    bool                              _isPhraseSpotted = false;
-    bool                              _allowsFollowup = false;
-    std::vector<VoiceCommandType>     _commandsList;
+    bool                        _isPhraseSpotted = false;
+    bool                        _allowsFollowup = false;
+    std::set<VoiceCommandType>  _commandsSet;
   };
   using ContextDataMap = std::map<VoiceCommandListenContext, ContextData>;
   const ContextDataMap& GetContextData() const { return _contextDataMap; }
   
 private:
   
-  // Simple struct for holding the data of the phrase and associated list of commands
-  struct PhraseData
-  {
-    std::string                       _phrase;
-    std::vector<VoiceCommandType>     _commandsList;
-  };
+  // A couple maps for holding the data of the phrase and associated command
+  std::map<std::string, VoiceCommandType>                 _phraseToTypeMap;
+  std::map<VoiceCommandType, std::vector<std::string>>    _commandToPhrasesMap;
   
-  std::vector<PhraseData>                             _phraseDataList;
   std::map<VoiceCommandListenContext, ContextData>    _contextDataMap;
   
   bool AddPhraseCommandMap(const Json::Value& dataObject);
   bool AddContextData(const Json::Value& dataObject);
-  
-  std::vector<PhraseData>::const_iterator FindPhraseIter(const std::string& phrase) const;
-  std::vector<PhraseData>::iterator FindPhraseIter(const std::string& phrase);
 };
 
 

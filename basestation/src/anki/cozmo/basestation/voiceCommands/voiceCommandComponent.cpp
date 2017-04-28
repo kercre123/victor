@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandTypeHelpers.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "audioUtil/audioRecognizerProcessor.h"
@@ -38,9 +39,27 @@
 #define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
 
 namespace {
-  CONSOLE_VAR(bool, kShouldForceTrigger, "VoiceCommands", false);
-  CONSOLE_VAR(u32, kForceTriggerFreq_s, "VoiceCommands", 30);
+  Anki::Cozmo::VoiceCommand::VoiceCommandComponent* sThis = nullptr;
 }
+
+void HearHeyCozmo(ConsoleFunctionContextRef context)
+{
+  if (sThis != nullptr)
+  {
+    sThis->DoForceHeardPhrase(Anki::Cozmo::VoiceCommand::VoiceCommandType::HeyCozmo);
+  }
+}
+CONSOLE_FUNC(HearHeyCozmo, "VoiceCommand");
+
+void HearLetsPlay(ConsoleFunctionContextRef context)
+{
+  if (sThis != nullptr)
+  {
+    sThis->DoForceHeardPhrase(Anki::Cozmo::VoiceCommand::VoiceCommandType::LetsPlay);
+  }
+}
+CONSOLE_FUNC(HearLetsPlay, "VoiceCommand");
+
 
 using namespace Anki::AudioUtil;
 using namespace Anki::Cozmo::ExternalInterface;
@@ -68,9 +87,13 @@ VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
     
     helper.SubscribeGameToEngine<MessageGameToEngineTag::VoiceCommandEvent>();
   }
+  sThis = this;
 }
   
-VoiceCommandComponent::~VoiceCommandComponent() = default;
+VoiceCommandComponent::~VoiceCommandComponent()
+{
+  sThis = nullptr;
+}
 
 void VoiceCommandComponent::Init()
 {
@@ -126,12 +149,8 @@ void VoiceCommandComponent::Init()
       newRecognizer->AddRecognitionDataFromFile(typeIndex, nnFileToUse, srchFilename, contextData._isPhraseSpotted, contextData._allowsFollowup);
     }
     
-    constexpr auto keyphraseIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Keyphrase);
-    constexpr auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
-    newRecognizer->SetRecognizerIndex(keyphraseIndex);
-    newRecognizer->SetRecognizerFollowupIndex(freeplayIndex);
-    
     _recognizer.reset(newRecognizer);
+    ResetContext();
     _recognizer->Start();
   }
   
@@ -149,6 +168,17 @@ void VoiceCommandComponent::Init()
   }
   
   _initialized = true;
+}
+
+void VoiceCommandComponent::ResetContext()
+{
+  if (_recognizer)
+  {
+    constexpr auto keyphraseIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Keyphrase);
+    constexpr auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
+    _recognizer->SetRecognizerIndex(keyphraseIndex);
+    _recognizer->SetRecognizerFollowupIndex(freeplayIndex);
+  }
 }
 
 // NOTE: This will be called by this or another thread via the callback that is referenced within.
@@ -254,53 +284,24 @@ void VoiceCommandComponent::Update()
     }
     
     const auto& nextPhrase = nextResult.first;
-    const auto& commandsFound = _phraseData->GetCommandsInPhrase(nextPhrase);
+    const auto& commandFound = _phraseData->GetCommandForPhrase(nextPhrase);
     
-    const auto& numCommands = commandsFound.size();
-    if (numCommands == 0)
+    if (commandFound == VoiceCommandType::Count)
     {
       LOG_INFO("VoiceCommandComponent.HeardCommand", "Heard phrase with no command: %s", nextPhrase.c_str());
       continue;
     }
     
-    // For now we're assuming every recognized phrase equals one command
-    if (ANKI_VERIFY(numCommands == 1,
-                    "VoiceCommandComponent.Update",
-                    "Phrase %s produced %d commands, expected only 1.",
-                    nextPhrase.c_str(), commandsFound.size()))
-    {
-      // TODO: Update the config phrase data with an optional score minimum to use for a phrase.
-      const auto& commandFound = commandsFound[0];
-      heardCommandUpdated = HandleCommand(commandFound);
-    }
+    // TODO: Update the config phrase data with an optional score minimum to use for a phrase.
+    heardCommandUpdated = HandleCommand(commandFound);
     
     // If we updated the pending, heard command, leave the rest of the results for later
     if (heardCommandUpdated)
     {
-      LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", VoiceCommandTypeToString(commandsFound[0]));
+      LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", EnumToString(commandFound));
       break;
     }
   }
-
-  // TODO this needs updating now that I'm processing different kinds of commands
-//  if (ANKI_CONSOLE_SYSTEM_ENABLED)
-//  {
-//    static bool forceTriggerAlreadySet = false;
-//    if (kShouldForceTrigger &&
-//        (static_cast<uint32_t>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) % kForceTriggerFreq_s) == 0)
-//    {
-//      if (!forceTriggerAlreadySet)
-//      {
-//        LOG_INFO("VoiceCommandComponent.ForceTrigger","");
-//        heardCommandUpdated = true;
-//        forceTriggerAlreadySet = true;
-//      }
-//    }
-//    else
-//    {
-//      forceTriggerAlreadySet = false;
-//    }
-//  }
   
   UpdateCommandLight(heardCommandUpdated);
   
@@ -346,6 +347,15 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
   }
   
   bool updatedHeardCommand = false;
+  const auto& listenContextDataIter = _phraseData->GetContextData().find(_listenContext);
+  if (!ANKI_VERIFY(listenContextDataIter->second._commandsSet.count(command) > 0,
+                  "VoiceCommandComponent.HandleCommand.InvalidCommandForContext",
+                  "Tried to handle command %s with context %s",
+                   EnumToString(command), EnumToString(_listenContext)))
+  {
+    return false;
+  }
+    
   switch(_listenContext)
   {
     case VoiceCommandListenContext::Count:
@@ -355,26 +365,18 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
     }
     case VoiceCommandListenContext::Keyphrase:
     {
-      // TODO this if check shouldn't be necessary once recognition contexts are set up and trigger keyphrase recognition
-      // will be the ONLY thing that can occur in that context
-      if (command == VoiceCommandType::HeyCozmo)
-      {
-        _pendingHeardCommand = command;
-        updatedHeardCommand = true;
-        SetListenContext(VoiceCommandListenContext::Freeplay);
-      }
+      _pendingHeardCommand = command;
+      updatedHeardCommand = true;
+      SetListenContext(VoiceCommandListenContext::Freeplay);
+      
       break;
     }
     case VoiceCommandListenContext::Freeplay:
     {
-      // TODO this shouldn't be necessary once recognition contexts are set up and trigger keyphrase recognition
-      // will be the ONLY thing that can occur in that context
-      if (command != VoiceCommandType::HeyCozmo)
-      {
-        _pendingHeardCommand = command;
-        updatedHeardCommand = true;
-        SetListenContext(VoiceCommandListenContext::Keyphrase);
-      }
+      _pendingHeardCommand = command;
+      updatedHeardCommand = true;
+      SetListenContext(VoiceCommandListenContext::Keyphrase);
+      
       break;
     }
     default:
@@ -471,6 +473,7 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
       else
       {
         _commandRecogEnabled = false;
+        ResetContext();
         BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled,
                                                     ConvertAudioCapturePermission(_captureSystem->GetPermissionState(_permRequestAlreadyDenied))));
       }
@@ -481,6 +484,61 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
       break;
     }
   }
+}
+
+void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
+{
+  // Verify we have the data structures we expect from Init()
+  if (!_recognizer || !_phraseData || !_commandRecogEnabled)
+  {
+    return;
+  }
+  
+  if (commandType == VoiceCommandType::Count)
+  {
+    return;
+  }
+  
+  const char* phrase = _phraseData->GetFirstPhraseForCommand(commandType);
+  if (nullptr == phrase)
+  {
+    return;
+  }
+  
+  // Check that we have a valid current context index on the recognizer
+  auto rawIndex = _recognizer->GetRecognizerIndex();
+  if (rawIndex == SpeechRecognizer::InvalidIndex ||
+      rawIndex < 0 ||
+      rawIndex >= Util::EnumToUnderlying(VoiceCommandListenContext::Count))
+  {
+    return;
+  }
+  
+  // Verify we have context data for the current context
+  const auto& contextDataMap = _phraseData->GetContextData();
+  const auto& dataIter = contextDataMap.find(static_cast<VoiceCommandListenContext>(rawIndex));
+  if (dataIter == contextDataMap.end())
+  {
+    return;
+  }
+  
+  // Grab the commands for this context
+  const auto& commandSet = dataIter->second._commandsSet;
+  
+  // We're not going to force a command that isn't in the context
+  if (commandSet.find(commandType) == commandSet.end())
+  {
+    return;
+  }
+  
+  // We only support forcing commands on our special kind of recognizer
+  auto* recogTHF = dynamic_cast<SpeechRecognizerTHF*>(_recognizer.get());
+  if (recogTHF == nullptr)
+  {
+    return;
+  }
+    
+  recogTHF->SetForceHeardPhrase(phrase);
 }
 
 } // namespace VoiceCommand

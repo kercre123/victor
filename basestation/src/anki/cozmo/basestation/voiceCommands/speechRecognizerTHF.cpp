@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHFTypes.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
@@ -22,12 +23,26 @@
 #include "sensoryStaticData.h"
 #endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
+#include <array>
 #include <iostream>
 #include <map>
 
 namespace Anki {
 namespace Cozmo {
   
+// Anonymous namespace to use with debug console vars for manipulating input
+namespace {
+  std::string sPhraseForceHeard = "";
+}
+
+CONSOLE_VAR(bool, kIgnoreMicInput, "VoiceCommand", false);
+
+void SpeechRecognizerTHF::SetForceHeardPhrase(const char* phrase)
+{
+  sPhraseForceHeard = (phrase == nullptr) ? "" : phrase;
+}
+
+// Local definition of data used internally for more strict encapsulation
 struct SpeechRecognizerTHF::SpeechRecognizerTHFData
 {
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
@@ -311,7 +326,13 @@ bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status)
 
 void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen)
 {
-  unsigned short status = RECOG_SILENCE;
+  // If we're ignoring mic input, swap out the real mic data with silence
+  if (kIgnoreMicInput)
+  {
+    static const std::array<AudioUtil::AudioSample, AudioUtil::kSamplesPerChunk> kSilenceSample{};
+    audioData = kSilenceSample.data();
+    audioDataLen = Util::numeric_cast<unsigned int>(kSilenceSample.size());
+  }
   
   // Intentionally make a local copy of the shared ptr with the current recog data
   const RecogDataSP currentRecogSP = _impl->RetrieveDataForIndex(_impl->_thfCurrentRecog);
@@ -323,22 +344,31 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   auto recogPipeMode = currentRecogSP->IsPhraseSpotted() ? RECOG_ONLY : SDET_RECOG;
   auto* const currentRecognizer = currentRecogSP->GetRecognizer();
   
+  unsigned short status = RECOG_SILENCE;
   if(!thfRecogPipe(_impl->_thfSession, currentRecognizer, audioDataLen, (short*)audioData, recogPipeMode, &status))
   {
     PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogPipe.Fail", "%s", thfGetLastError(_impl->_thfSession));
     return;
   }
   
-  if (RecogStatusIsEndCondition(status))
+  if (!sPhraseForceHeard.empty() || RecogStatusIsEndCondition(status))
   {
     float score = 0;
-    const char* foundString = NULL;
-    if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundString, NULL, NULL, NULL, NULL, NULL, NULL))
+    const char* foundString = nullptr;
+    if (sPhraseForceHeard.empty())
     {
-      PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
+      if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundString, NULL, NULL, NULL, NULL, NULL, NULL))
+      {
+        PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
+      }
+    }
+    else
+    {
+      foundString = sPhraseForceHeard.c_str();
+      status = RECOG_DONE;
     }
     
-    if (foundString != NULL)
+    if (foundString != nullptr && foundString[0] != '\0')
     {
       DoCallback(foundString, score);
       PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString);
@@ -351,8 +381,9 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       const RecogDataSP nextRecogSP = _impl->RetrieveDataForIndex(_impl->_thfFollowupRecog);
       if (nextRecogSP)
       {
-        // Actually do the switch over to the new recognizer, which copies some buffered audio data
-        if (thfRecogPrepSeq(_impl->_thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
+        // Actually do the switch over to the new recognizer (as long as this phrase wasn't forced), which copies some buffered audio data
+        if (!sPhraseForceHeard.empty() ||
+            thfRecogPrepSeq(_impl->_thfSession, nextRecogSP->GetRecognizer(), currentRecognizer))
         {
           PRINT_CH_INFO("VoiceCommands",
                         "SpeechRecognizerTHF.Update",
@@ -372,6 +403,8 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
     {
       PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogReset.Fail", "%s", thfGetLastError(_impl->_thfSession));
     }
+    
+    sPhraseForceHeard = "";
   }
 }
 
@@ -403,6 +436,11 @@ void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index)
   _impl->_thfFollowupRecog = index;
 }
 
+SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const
+{
+  return _impl->_thfCurrentRecog;
+}
+
 #else // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
 bool SpeechRecognizerTHF::Init() { return true; }
@@ -421,6 +459,7 @@ bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status) { return fa
 void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen) { }
 void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index) { }
 void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index) { }
+SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const { return InvalidIndex; }
   
 #endif
   

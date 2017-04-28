@@ -42,6 +42,7 @@ public:
   
   virtual void SetRecognizerIndex(IndexType index) { }
   virtual void SetRecognizerFollowupIndex(IndexType index) { }
+  virtual IndexType GetRecognizerIndex() const { return InvalidIndex; }
   
 protected:
   virtual void StartInternal() { }

@@ -48,14 +48,13 @@ namespace Cozmo {
     }
   }
   
-  void FlushBuffer(std::vector<ExternalInterface::DebugConsoleVar>& dataVals, IExternalInterface* externalInterface )
+  void FlushBuffer(std::vector<ExternalInterface::DebugConsoleVar>&& dataVals, IExternalInterface* externalInterface )
   {
     if( dataVals.size() > 0 )
     {
       ExternalInterface::InitDebugConsoleVarMessage message;
-      message.varData = dataVals;
+      message.varData = std::move(dataVals);
       externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-      dataVals.clear();
     }
   }
   
@@ -125,7 +124,8 @@ namespace Cozmo {
       if( messageSize >= kMaxFlushSize)
       {
         DEV_ASSERT(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "DebugConsoleManager.VarDatabaseOverMaxSize");
-        FlushBuffer(dataVals,_externalInterface);
+        FlushBuffer(std::move(dataVals), _externalInterface);
+        dataVals.clear();
         messageSize = 0;
       }
     }
@@ -143,12 +143,14 @@ namespace Cozmo {
       if( messageSize >= kMaxFlushSize)
       {
         DEV_ASSERT(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "DebugConsoleManager.FuncDatabaseOverMaxSize");
-        FlushBuffer(dataVals,_externalInterface);
+        FlushBuffer(std::move(dataVals), _externalInterface);
+        dataVals.clear();
         messageSize = 0;
       }
     }
     // Flush remaining...
-    FlushBuffer(dataVals,_externalInterface);
+    FlushBuffer(std::move(dataVals), _externalInterface);
+    dataVals.clear();
   }
   
   

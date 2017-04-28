@@ -65,6 +65,7 @@ public:
   void ClearHeardCommand() { _pendingHeardCommand = VoiceCommandType::Count; }
   
   void SetListenContext(VoiceCommandListenContext listenContext);
+  void DoForceHeardPhrase(VoiceCommandType commandType);
   
   template<typename T>
   void HandleMessage(const T& msg);
@@ -94,6 +95,7 @@ private:
   void UpdateCommandLight(bool heardTriggerPhrase);
   bool HandleCommand(const VoiceCommandType& command);
   
+  void ResetContext();
   bool RequestEnableVoiceCommand(AudioUtil::AudioCaptureSystem::PermissionState permissionState);
   
   AudioCapturePermissionState ConvertAudioCapturePermission(AudioUtil::AudioCaptureSystem::PermissionState state);
