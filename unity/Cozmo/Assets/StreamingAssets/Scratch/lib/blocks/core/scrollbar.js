@@ -370,9 +370,9 @@ Blockly.Scrollbar.prototype.setScrollViewSize_ = function(newSize) {
 };
 
 /**
-  * Set whether this scrollbar's container is visible.
-  * @param {boolean} visible Whether the container is visible.
-  */
+ * Set whether this scrollbar's container is visible.
+ * @param {boolean} visible Whether the container is visible.
+ */
 Blockly.ScrollbarPair.prototype.setContainerVisible = function(visible) {
   this.hScroll.setContainerVisible(visible);
   this.vScroll.setContainerVisible(visible);
@@ -390,7 +390,7 @@ Blockly.Scrollbar.prototype.setPosition = function(x, y) {
   var tempX = this.position_.x + this.origin_.x;
   var tempY = this.position_.y + this.origin_.y;
   var transform = 'translate(' + tempX + 'px,' + tempY + 'px)';
-  this.outerSvg_.style.transform = transform;
+  Blockly.utils.setCssTransform(this.outerSvg_, transform);
 };
 
 /**

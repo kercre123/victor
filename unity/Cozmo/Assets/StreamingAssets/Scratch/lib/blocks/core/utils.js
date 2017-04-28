@@ -206,7 +206,7 @@ Blockly.utils.getScale_ = function(element) {
   var transform = element.getAttribute('transform');
   if (transform) {
     var transformComponents =
-      transform.match(Blockly.utils.getScale_.REGEXP_);
+        transform.match(Blockly.utils.getScale_.REGEXP_);
     if (transformComponents && transformComponents[0]) {
       scale = parseFloat(transformComponents[0]);
     }
@@ -839,4 +839,16 @@ Blockly.utils.insertAfter_ = function(newNode, refNode) {
   } else {
     parentNode.appendChild(newNode);
   }
+};
+
+/**
+ * Sets the CSS transform property on an element. This function sets the
+ * non-vendor-prefixed and vendor-prefixed versions for backwards compatibility
+ * with older browsers. See http://caniuse.com/#feat=transforms2d
+ * @param {!Element} node The node which the CSS transform should be applied.
+ * @param {string} transform The value of the CSS `transform` property.
+ */
+Blockly.utils.setCssTransform = function(node, transform) {
+  node.style['transform'] = transform;
+  node.style['-webkit-transform'] = transform;
 };
