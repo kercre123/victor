@@ -89,7 +89,7 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
     if(!knownPet.IsBeingTracked()) // The very first time we see a pet, it is not being "tracked" yet
     {
       ANKI_VERIFY(knownPet.GetNumTimesObserved() == 1, "PetWorld.Update.NewPetDetectionShouldBeObservedOnce",
-                  "%ID:%d NumTimesObserved:%d", knownPet.GetID(), knownPet.GetNumTimesObserved());
+                  "ID:%d NumTimesObserved:%d", knownPet.GetID(), knownPet.GetNumTimesObserved());
       
       if(ANKI_DEVELOPER_CODE)
       {

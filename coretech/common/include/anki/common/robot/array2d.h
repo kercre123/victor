@@ -543,7 +543,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "Array<Type>::Print", "Array<Type> is not valid");
 
-      CoreTechPrint(variableName);
+      CoreTechPrint("%s", variableName);
       CoreTechPrint(":\n");
       for(s32 y=MAX(0,minY); y<MIN(maxY+1,size[0]); y++) {
         const Type * const pThisData = this->Pointer(y, 0);
@@ -851,7 +851,7 @@ namespace Anki
       const s32 realMinY = MAX(0,minY);
       const s32 realMaxY = MIN(maxY+1,size[0]);
 
-      CoreTechPrint("%s type(int:%d,signed:%d,float:%d,sizeof:%d):\n", variableName, Flags::TypeCharacteristics<Type>::isInteger, Flags::TypeCharacteristics<Type>::isSigned, Flags::TypeCharacteristics<Type>::isFloat, sizeof(Type));
+      CoreTechPrint("%s type(int:%d,signed:%d,float:%d,sizeof:%zu):\n", variableName, Flags::TypeCharacteristics<Type>::isInteger, Flags::TypeCharacteristics<Type>::isSigned, Flags::TypeCharacteristics<Type>::isFloat, sizeof(Type));
 
       for(s32 y=realMinY; y<realMaxY; y++) {
         const Type * const pThisData = this->Pointer(y, 0);

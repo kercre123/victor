@@ -231,7 +231,7 @@ namespace Anki
 
       Snprint(buffer, bufferLength, verbose, microseconds, minCharacterToPrint);
 
-      CoreTechPrint(buffer);
+      CoreTechPrint("%s", buffer);
     }
 
     class CompileBenchmarkResults

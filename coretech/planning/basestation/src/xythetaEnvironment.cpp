@@ -1273,7 +1273,7 @@ const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& ob
                                                                 Cost cost)
 {
   if(theta >= obstaclesPerAngle_.size()) {
-    CoreTechPrint("ERROR: theta = %d, but only have %lu obstacle angles and %u angles total\n",
+    CoreTechPrint("ERROR: theta = %d, but only have %zu obstacle angles and %u angles total\n",
                   theta,
                   obstaclesPerAngle_.size(),
                   numAngles_);

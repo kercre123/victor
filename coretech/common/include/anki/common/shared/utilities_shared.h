@@ -17,8 +17,8 @@ namespace Anki
   // For printing throughout Coretech libraries.
   // Calls printf() by default, but can be made to use an externally
   // defined function via SetCoreTechPrintFunctionPtr().
-  int CoreTechPrint(const char * format, ...);
-  int CoreTechPrint(const char * format, va_list argList);
+  int CoreTechPrint(const char * format, ...) __attribute__((format(printf,1,2)));
+  int CoreTechPrint(const char * format, va_list argList) __attribute__((format(printf,1,0)));
 
   // Sets the function pointer that CoreTechPrint() uses.
   // Convenient for on-robot print which could be more complex

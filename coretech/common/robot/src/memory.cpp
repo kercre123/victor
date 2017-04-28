@@ -212,7 +212,7 @@ namespace Anki
     Result MemoryStack::Print() const
     {
       const s32 maxAllocationBytes = ComputeLargestPossibleAllocation();
-      CoreTechPrint("(id:%d totalBytes:%d usedBytes:%d maxAllocationBytes:%d bufferLocation:%d) ", id, totalBytes, usedBytes, maxAllocationBytes, buffer);
+      CoreTechPrint("(id:%d totalBytes:%d usedBytes:%d maxAllocationBytes:%d bufferLocation:%p) ", id, totalBytes, usedBytes, maxAllocationBytes, buffer);
       return RESULT_OK;
     }
 
