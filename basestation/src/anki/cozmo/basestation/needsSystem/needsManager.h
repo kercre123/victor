@@ -49,6 +49,7 @@ class NeedsManager
 {
 public:
   explicit NeedsManager(Robot& inRobot);
+  ~NeedsManager();
   
   void Init(const Json::Value& inJson);
   void InitAfterConnection();

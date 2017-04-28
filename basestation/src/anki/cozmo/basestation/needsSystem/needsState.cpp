@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
+#include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -51,20 +52,23 @@ NeedsState::~NeedsState()
   Reset();
 }
 
-void NeedsState::Init(const NeedsConfig* needsConfig, u32 serialNumber)
+void NeedsState::Init(NeedsConfig& needsConfig, u32 serialNumber)
 {
   Reset();
 
   _timeLastWritten = Time();  // ('never')
 
-  _needsConfig = needsConfig;
+  _needsConfig = &needsConfig;
 
   _robotSerialNumber = serialNumber;
+
+  _curNeedsLevels[NeedId::Repair] = needsConfig._initialNeedsLevels[NeedId::Repair];
+  _curNeedsLevels[NeedId::Energy] = needsConfig._initialNeedsLevels[NeedId::Energy];
+  _curNeedsLevels[NeedId::Play]   = needsConfig._initialNeedsLevels[NeedId::Play];
   
   _curNeedsLevels[NeedId::Repair] = 1.0f; // todo make these constants come from config data
   _curNeedsLevels[NeedId::Energy] = 1.0f;
   _curNeedsLevels[NeedId::Play]   = 1.0f;
-  
   UpdateCurNeedsBrackets();
   
   _partIsDamaged[RepairablePartId::Head]   = false;

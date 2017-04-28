@@ -137,7 +137,8 @@ namespace Anki {
   
     // Default values in clad
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();
-    
+
+
     /***************************************************************************
      *
      *                          Nurture metagame/needs system

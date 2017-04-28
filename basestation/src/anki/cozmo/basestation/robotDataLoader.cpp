@@ -571,7 +571,7 @@ void RobotDataLoader::LoadRobotConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
-                        "Mood Json config file %s not found.",
+                        "Mood Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
     }
   }
@@ -583,7 +583,7 @@ void RobotDataLoader::LoadRobotConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
-                        "Behavior Json config file %s failed to parse.",
+                        "Behavior Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
       _robotBehaviorConfig.clear();
     }
@@ -596,7 +596,7 @@ void RobotDataLoader::LoadRobotConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
-                        "Workout Json config file %s failed to parse.",
+                        "Workout Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
       _robotWorkoutConfig.clear();
     }
@@ -609,7 +609,7 @@ void RobotDataLoader::LoadRobotConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
-                        "Vision Json config file %s not found.",
+                        "Vision Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
     }
   }
@@ -622,12 +622,24 @@ void RobotDataLoader::LoadRobotConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                        "Voice Command Json config file %s failed to parse.",
+                        "Voice Command Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
       _voiceCommandConfig.clear();
     }
   }
 #endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
+
+  // needs system config
+  {
+    std::string jsonFilename = "config/basestation/config/needs_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.NeedsConfigJsonNotFound",
+                        "Needs System Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+    }
+  }
 
   // feature gate
   {
@@ -636,7 +648,7 @@ void RobotDataLoader::LoadRobotConfigs()
     _context->GetFeatureGate()->Init(fileContents);
   }
 }
-  
+
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
 {
   loadingCompleteRatio_out = _loadingCompleteRatio.load();

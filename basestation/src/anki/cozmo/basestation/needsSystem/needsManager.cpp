@@ -66,15 +66,19 @@ NeedsManager::NeedsManager(Robot& robot)
 {
 }
 
+NeedsManager::~NeedsManager()
+{
+  _signalHandles.clear();
+}
+
 
 void NeedsManager::Init(const Json::Value& inJson)
 {
   PRINT_NAMED_INFO("NeedsManager.Init", "Starting Init of NeedsManager");
-  // todo:  process the config data passed in to this function, to fill out the NeedsConfig
-  // _needsConfig.Init(inJson);
+  _needsConfig.Init(inJson);
 
   const u32 uninitializedSerialNumber = 0;
-  _needsState.Init(&_needsConfig, uninitializedSerialNumber);
+  _needsState.Init(_needsConfig, uninitializedSerialNumber);
 
   // todo:  Init various member vars of NeedsManager as needed
   
@@ -101,7 +105,7 @@ void NeedsManager::InitAfterConnection()
 {
   PRINT_NAMED_INFO("NeedsManager.InitAfterConnection",
                       "Starting MAIN Init of NeedsManager, with serial number %d", _robot.GetBodySerialNumber());
-  _needsState.Init(&_needsConfig, _robot.GetBodySerialNumber());
+  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber());
 
   // todo:  later this logic needs to deal with loading from robot storage, comparing time
   // stamps with device storage, and dealing with multiple device use

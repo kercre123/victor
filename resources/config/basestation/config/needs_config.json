@@ -1,0 +1,111 @@
+{
+  // Starting values for each need (when cozmo is born)
+  "InitialNeedsLevels": {
+    "Repair" : 0.9876,
+    "Energy" : 1.0000,
+    "Play"   : 0.8765
+  },
+
+  // Bracket levels:  For each bracket level, if the need level is AT OR ABOVE
+  //   the corresponding value, then that is the bracket we're in.  The last
+  //   bracket should always be 0.0000
+  "BracketLevels": {
+    "Repair" : {
+      "Full"     : 0.9500,
+      "Normal"   : 0.5000,
+      "Warning"  : 0.1000,
+      "Critical" : 0.0000
+    },
+    "Energy" : {
+      "Full"     : 0.9500,
+      "Normal"   : 0.5000,
+      "Warning"  : 0.1000,
+      "Critical" : 0.0000
+    },
+    "Play"   : {
+      "Full"     : 0.9500,
+      "Normal"   : 0.5000,
+      "Warning"  : 0.1000,
+      "Critical" : 0.0000
+    }
+  },
+
+  // Decay (when connected)
+  "DecayConnected": {
+    "Repair": {
+      "DecayRates": 
+      [
+        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.0000, "DecayPerMinute": 0.0020 }
+      ],
+      "DecayModifiers":
+      [
+        { "Threshold": 0.5000, "OtherNeedsAffected":
+          [
+          ]
+        },
+        { "Threshold": 0.0000, "OtherNeedsAffected":
+          [
+            { "OtherNeedID": "Energy", "Multiplier" : 1.1000 },
+            { "OtherNeedID": "Play",   "Multiplier" : 1.2000 }
+          ]
+        }
+      ]
+    },
+    "Energy": {
+      "DecayRates":
+      [
+        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+      ]
+    },
+    "Play": {
+      "DecayRates":
+      [
+        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+      ]
+    }
+  },
+
+  // Decay (when unconnected)
+  "DecayUnconnected": {
+    "Repair": {
+      "DecayRates":
+      [
+        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+      ]
+    },
+    "Energy": {
+      "DecayRates":
+      [
+        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+      ]
+    },
+    "Play": {
+      "DecayRates":
+      [
+        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+      ]
+    }
+  }
+}
+
+// TODO
+
+// Add simple vars "maximum need level" and "minimum need level"
+
+// ActionNeedChange:  One for each 'actionId' (fed, repair, etc.)
+//   each contains:  float needLevelDelta[NeedId] (signed delta); float uniformVarianceDelta (unsigned value)
+
+// Unlock levels:  Array, in order.
+//   For each:  int numStarsToUnlock; Rewards array (for each: RewardTypeEnum, secondary data)

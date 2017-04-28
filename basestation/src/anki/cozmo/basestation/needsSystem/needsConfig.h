@@ -15,29 +15,76 @@
 #define __Cozmo_Basestation_NeedsSystem_NeedsConfig_H__
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/needsSystem/needsState.h"
+#include "util/enums/enumOperators.h"
+
 
 namespace Anki {
 namespace Cozmo {
 
+DECLARE_ENUM_INCREMENT_OPERATORS(NeedId);
 
-namespace ExternalInterface {
-  class MessageGameToEngine;
-}
-  
-  
-class Robot;
+NeedId NeedIdFromString(const char* inString);
 
-  
+
+struct DecayRate
+{
+  DecayRate(float t, float d) : _threshold(t), _decayPerMinute(d) {}
+
+  float _threshold;
+  float _decayPerMinute;
+};
+
+
+struct OtherNeedModifier
+{
+  OtherNeedModifier(NeedId n, float m) : _otherNeedID(n), _multiplier(m) {}
+
+  NeedId _otherNeedID;
+  float  _multiplier;
+};
+
+
+using OtherNeedModifiers = std::vector<OtherNeedModifier>;
+
+struct DecayModifier
+{
+  DecayModifier(float t, OtherNeedModifiers onms) : _threshold(t), _otherNeedModifiers(onms) {}
+
+  float              _threshold;
+  OtherNeedModifiers _otherNeedModifiers;
+};
+
+
+using DecayRates = std::vector<DecayRate>;
+using DecayModifers = std::vector<DecayModifier>;
+
+struct DecayConfig
+{
+  DecayRates    _decayRates;
+  DecayModifers _decayModifiers;
+};
+
+
 class NeedsConfig
 {
 public:
-  NeedsConfig() { foo = 2; }
+  NeedsConfig();
+
+  void Init(const Json::Value& json);
+
+  NeedsState::CurNeedsMap _initialNeedsLevels;
+
+  using BracketThresholds = std::vector<float>;
+  using NeedsBrackets = std::map<NeedId, BracketThresholds>;
+  NeedsBrackets _needsBrackets;
+
+  DecayConfig _decayConnected;
+  DecayConfig _decayUnconnected;
+
 private:
-  int foo = 3;
-//  using BracketThresholds = std::vector<float>;
-//  using CurNeedsBrackets = std::map<NeedId, BracketThresholds>;
-//  CurNeedsBrackets _curNeedsBracketsCache;
-  // todo: Fill this out as I implement features; tunable constants, etc.
+  void InitDecay(const Json::Value& json, const std::string& decayKey, DecayConfig& decayConfig);
+
 };
   
 

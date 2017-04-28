@@ -42,7 +42,7 @@ public:
   NeedsState();
   ~NeedsState();
   
-  void Init(const NeedsConfig* needsConfig, u32 serialNumber);
+  void Init(NeedsConfig& needsConfig, u32 serialNumber);
   
   void Reset();
   
@@ -88,7 +88,7 @@ public:
 
 private:
 
-  const NeedsConfig* _needsConfig;
+  const NeedsConfig* _needsConfig;  // Do I really need this?
 
 };
 

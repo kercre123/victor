@@ -257,7 +257,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   
   if (_context->GetDataPlatform() != nullptr)
   {
-    _needsManager->Init(_context->GetDataLoader()->GetRobotMoodConfig()); // todo change this to GetRobotNeedsConfig
+    _needsManager->Init(_context->GetDataLoader()->GetRobotNeedsConfig());
   }
 
   // Initialize progression
