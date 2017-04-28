@@ -173,6 +173,12 @@ T Polygon<N,T>::GetMaxY(void) const
 }
 
 template <PolygonDimType N, typename T>
+void Polygon<N,T>::reserve(size_t n)
+{
+  _points.reserve(n);
+}
+
+template <PolygonDimType N, typename T>
 void Polygon<N,T>::push_back(const Point<N, T>& val)
 {
   _points.push_back(val);

@@ -88,6 +88,9 @@ public:
   typename PointContainer::const_iterator begin() const {return _points.begin();}
   typename PointContainer::const_iterator end() const {return _points.end();}
 
+  // reserves/allocates memory for n Points, according to the rules of underlying container, currently std::vector
+  void reserve(size_t n);
+
   void push_back(const Point<N, T>& val);
   void push_back(Point<N, T>&& val);
   void emplace_back(Point<N, T>&& val);

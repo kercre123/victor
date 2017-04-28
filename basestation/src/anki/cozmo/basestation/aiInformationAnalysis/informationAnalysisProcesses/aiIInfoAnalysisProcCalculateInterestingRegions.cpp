@@ -58,5 +58,7 @@ void AIInfoAnalysisProcCalculateInterestingRegions(AIInformationAnalyzer& analyz
   memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreInterestingBordersFrom, analyzer._interestingRegions);
 }
 
+
+
 } // namespace
 } // namespace

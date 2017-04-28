@@ -392,9 +392,9 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
         {
           Vec3f centerLine = (segment.from + segment.to)*0.5f;
           _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
-            segment.from, segment.to, Anki::NamedColors::YELLOW, false, 50.0f);
+            segment.from, segment.to, Anki::NamedColors::YELLOW, false, 10.0f);
           _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
-            centerLine, centerLine+segment.normal*5.0f, Anki::NamedColors::BLUE, false, 50.0f);
+            centerLine, centerLine+segment.normal*5.0f, Anki::NamedColors::BLUE, false, 10.0f);
         }
       }
     }
@@ -990,6 +990,7 @@ void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeCont
   _currentBorderCombination = &_bordersPerContentCombination[borderComboKey];
 
   DEV_ASSERT(IsCached(innerType), "NavMeshQuadTreeProcessor.FindBorders.InvalidType");
+  DEV_ASSERT(!IsInENodeContentTypePackedType(innerType, outerTypes), "NavMeshQuadTreeProcessor.FindBorders.InnerTypeAlsoInOuter");
   
   const NodeSet& innerSet = _nodeSets[innerType];
 

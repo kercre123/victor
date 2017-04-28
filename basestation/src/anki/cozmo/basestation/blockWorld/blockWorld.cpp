@@ -42,6 +42,7 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapFactory.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapToPlanner/navMemoryMapToPlanner.h" // for Brad testing (remove me at some point)
 #include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
 #include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/basestation/platform.h"
@@ -4057,6 +4058,9 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.Update.SanityCheckBookkeepingFailed");
     }
+    
+    // rsam: Test for Brad. Enable this to render convex hulls from memory map
+    // TestNavMemoryMapToPlanner(*_robot);
 
     return lastResult;
     
