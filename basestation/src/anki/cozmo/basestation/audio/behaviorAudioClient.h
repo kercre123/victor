@@ -20,9 +20,8 @@
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
+#include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
-
-#include <vector>
 
 
 #define kBehaviorRound  0
@@ -46,6 +45,9 @@ public:
   
   // Get Current round
   int GetRound() const { return _round; }
+  
+  // Change music switch state for Ai Goals in freeplay
+  void UpdateAiGoalMusicState(const std::string& aiGoalName);
   
 protected:
   // Activate to allow behavior to update audio engine
@@ -74,9 +76,18 @@ private:
   int       _round    = kBehaviorRound;
   std::vector<::Signal::SmartHandle> _eventHandles;
   
-  std::vector<AudioMetaData::SwitchState::Gameplay_Round> _sparkedEnums;
-  
   void SetDefaultBehaviorRound() { _round = kBehaviorRound; }
+  
+  // Keep track of the last AI goal name sent from the PublicStateBroadcaster so we
+  //  can properly handle AI goal transitions.
+  std::string _prevAiGoal {"Invalid"};
+  
+  // True if the GuardDog behavior is active (uses its own music state)
+  bool _guardDogActive = false;
+  
+  // Keep track of the last GuardDog behavior stage so we can set the
+  //  proper audio round when transitioning between stages.
+  GuardDogStage _prevGuardDogStage = GuardDogStage::Count;
   
 };
 

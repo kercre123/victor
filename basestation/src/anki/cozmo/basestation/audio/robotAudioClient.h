@@ -134,9 +134,6 @@ public:
 
   // Get shared random generator
   Util::RandomGenerator& GetRandomGenerator() const;
-
-  // Change music switch state for Ai Goals in freeplay
-  void UpdateAiGoalMusicState(const std::string& aiGoalName);
   
 private:
   

@@ -41,6 +41,7 @@ public:
   
   
   void Update(Robot& robot);
+  void UpdateAiGoal(const std::string& aiGoalName);
   void UpdateBroadcastBehaviorStage(BehaviorStageTag stageType, uint8_t stage);
   
 private:

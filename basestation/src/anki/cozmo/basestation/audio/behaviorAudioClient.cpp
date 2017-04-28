@@ -14,6 +14,7 @@
 
 
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -27,26 +28,31 @@ namespace Audio {
 
 using namespace AudioMetaData::SwitchState;
   
-static const AudioMetaData::GameObjectType kMusicGameObject = AudioMetaData::GameObjectType::Default;
+namespace {
+  
+const AudioMetaData::GameObjectType kMusicGameObject = AudioMetaData::GameObjectType::Default;
  
+// Mapping from integral index to 'Gameplay_Round'
+const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundMap = {{
+  Gameplay_Round::Round_00,
+  Gameplay_Round::Round_01,
+  Gameplay_Round::Round_02,
+  Gameplay_Round::Round_03,
+  Gameplay_Round::Round_04,
+  Gameplay_Round::Round_05,
+  Gameplay_Round::Round_06,
+  Gameplay_Round::Round_07,
+  Gameplay_Round::Round_08,
+  Gameplay_Round::Round_09,
+  Gameplay_Round::Round_10
+}};
+  
+} // end anonymous namespace
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
 : _robot(robot)
 {
-  _sparkedEnums = {
-    Gameplay_Round::Round_00,
-    Gameplay_Round::Round_01,
-    Gameplay_Round::Round_02,
-    Gameplay_Round::Round_03,
-    Gameplay_Round::Round_04,
-    Gameplay_Round::Round_05,
-    Gameplay_Round::Round_06,
-    Gameplay_Round::Round_07,
-    Gameplay_Round::Round_08,
-    Gameplay_Round::Round_09,
-    Gameplay_Round::Round_10
-  };
-  
   // Get the appropriate spark music state from unity
   if(robot.HasExternalInterface()){
     auto handleSetSparkMusicState = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& musicState){
@@ -79,11 +85,11 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
   
   // Determine Round State audio enum
   Gameplay_Round roundState = Gameplay_Round::Invalid;
-  if (_round < _sparkedEnums.size()) {
-    roundState = _sparkedEnums[_round];
+  if (_round < kGameplayRoundMap.size()) {
+    roundState = kGameplayRoundMap[_round];
   }
   else {
-    DEV_ASSERT_MSG(_round < _sparkedEnums.size(),
+    DEV_ASSERT_MSG(false,
                    "BehaviorAudioClient.SetBehaviorStateLevel.InvalidRound",
                    "round: %d", round);
   }
@@ -97,6 +103,42 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
   return true;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
+{
+  // Ai Goals from behavior_config.json
+  // FP_Hiking          - when Cozmo is exploring its surroundings on his own
+  // FP_PlayWithHumans  - when Cozmo requests games to play with the player
+  // FP_PlayAlone       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+  // FP_Socialize       - when Cozmo wants to interact with faces and players, but without playing games
+  // FP_NothingToDo     - fallback when Cozmo can't do anything else
+  
+  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                "RobotAudioClient.SetFreeplayMusic",
+                "AiGoalName '%s'", aiGoalName.c_str());
+  static const std::unordered_map<std::string, Freeplay_Mood> freeplayStateMap
+  {
+    { "FP_Hiking",          Freeplay_Mood::Hiking },
+    { "FP_PlayWithHumans",  Freeplay_Mood::Neutral },
+    { "FP_PlayAlone",       Freeplay_Mood::Neutral },
+    { "FP_Socialize",       Freeplay_Mood::Neutral },
+    { "FP_NothingToDo",     Freeplay_Mood::Bored }
+  };
+  
+  // Search for freeplay goal state
+  const auto it = freeplayStateMap.find(aiGoalName);
+  if ( it != freeplayStateMap.end() ) {
+    // Found State, update audio (and reset round)
+    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+                                                  static_cast<const GenericSwitch>(Gameplay_Round::Round_00),
+                                                  AudioMetaData::GameObjectType::Default);
+    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
+                                                  static_cast<const GenericSwitch>(it->second),
+                                                  AudioMetaData::GameObjectType::Default);
+  }
+}
+  
   
 // Protected Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -161,6 +203,48 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   const int behaviorRound = PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent);
   if(_round != behaviorRound){
     UpdateBehaviorRound(sparkID, behaviorRound);
+  }
+  
+  // Handle AI goal transitions and Guard Dog behavior transitions
+  const auto& currAiGoal = stateEvent.currentAiGoal;
+  if (currAiGoal != _prevAiGoal) {
+    UpdateAiGoalMusicState(currAiGoal);
+    _prevAiGoal = currAiGoal;
+  } else {
+    // Update the Guard Dog music mood/round if appropriate
+    const auto& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
+    if (currAiGoal == "FP_PlayAlone" &&
+        currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog)
+    {
+      // Change the freeplay mood to GuardDog if not already active
+      if (!_guardDogActive) {
+        _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
+                                                      static_cast<const GenericSwitch>(Freeplay_Mood::Guard_Dog),
+                                                      AudioMetaData::GameObjectType::Default);
+        _guardDogActive = true;
+      }
+      
+      // Update the GuardDog round if needed
+      if(currPublicStateStruct.currentGuardDogStage != _prevGuardDogStage) {
+        const auto round = Util::EnumToUnderlying(currPublicStateStruct.currentGuardDogStage);
+        DEV_ASSERT_MSG(round < kGameplayRoundMap.size(),
+                       "RobotAudioClient.HandleRobotPublicState.InvalidRound",
+                       "round: %d", round);
+        
+        _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+                                                      static_cast<const GenericSwitch>(kGameplayRoundMap[round]),
+                                                      AudioMetaData::GameObjectType::Default);
+        
+        _prevGuardDogStage = currPublicStateStruct.currentGuardDogStage;
+      }
+    } else if (_guardDogActive) {
+      // reset GuardDog stuff
+      _guardDogActive = false;
+      _prevGuardDogStage = GuardDogStage::Count;
+      // Update the AI goal state to current AI goal
+      //  (this will stop the GuardDog-specific music)
+      UpdateAiGoalMusicState(currAiGoal);
+    }
   }
 }
 

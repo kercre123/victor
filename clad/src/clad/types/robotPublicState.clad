@@ -1,4 +1,4 @@
-// File: userFacingState.clad
+// File: robotPublicState.clad
 // Author: Kevin M. Karol
 // Created: 4/5/2017
 // Copyright: Anki, inc. 2017
@@ -14,6 +14,7 @@ namespace Cozmo {
 
 enum uint_8 BehaviorStageTag{
   PyramidConstruction,
+  GuardDog,
   Count
 }
 
@@ -21,14 +22,16 @@ enum uint_8 BehaviorStageTag{
 // above
 structure BehaviorStageStruct{
   BehaviorStageTag behaviorStageTag,
-  PyramidConstructionStage currentPyramidConstruction
+  PyramidConstructionStage currentPyramidConstruction,
+  GuardDogStage currentGuardDogStage
 }
 
-// Structure which enumerates all relevant UserFacingState information
+// Structure which enumerates all relevant PublicStateBroadcaster information
 // to provide full state updates to interested systems
 no_default_constructor structure RobotPublicState{
   UnlockId currentSpark,
   bool isCubeInLift,
+  string currentAiGoal,
   ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct
 }

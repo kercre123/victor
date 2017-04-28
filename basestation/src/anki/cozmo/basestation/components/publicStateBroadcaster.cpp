@@ -35,6 +35,7 @@ PublicStateBroadcaster::PublicStateBroadcaster()
   const bool isCubeInLift = false;
   _currentState.reset(new RobotPublicState(UnlockId::Count,
                                            isCubeInLift,
+                                           "",
                                            ReactionTrigger::NoneTrigger,
                                            empty));
 }
@@ -107,6 +108,15 @@ void PublicStateBroadcaster::Update(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PublicStateBroadcaster::UpdateAiGoal(const std::string& aiGoalName)
+{
+  // update internal struct with new AI Goal name and send it out.
+  _currentState->currentAiGoal = aiGoalName;
+  SendUpdatedState();
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stageType, uint8_t stage)
 {
   // Print information about the transition that's occurring, and verify that
@@ -140,13 +150,18 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
       newStruct.currentPyramidConstruction = static_cast<PyramidConstructionStage>(stage);
       break;
     }
+    case BehaviorStageTag::GuardDog:
+    {
+      newStruct.currentGuardDogStage = static_cast<GuardDogStage>(stage);
+      break;
+    }
     case BehaviorStageTag::Count:
     {
       break;
     }
   }
   
-  _currentState->userFacingBehaviorStageStruct.behaviorStageTag = stageType;
+  newStruct.behaviorStageTag = stageType;
   _currentState->userFacingBehaviorStageStruct = newStruct;
   SendUpdatedState();
 }
@@ -167,6 +182,10 @@ int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageT
     case BehaviorStageTag::PyramidConstruction:
     {
       return Util::EnumToUnderlying(stageStruct.currentPyramidConstruction);
+    }
+    case BehaviorStageTag::GuardDog:
+    {
+      return Util::EnumToUnderlying(stageStruct.currentGuardDogStage);
     }
     case BehaviorStageTag::Count:
     {

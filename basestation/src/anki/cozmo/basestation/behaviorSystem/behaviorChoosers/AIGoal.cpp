@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -170,9 +171,9 @@ void AIGoal::Enter(Robot& robot)
   _lastTimeGoalStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _behaviorChooserPtr->OnSelected();
   
-  // Update Ai Goal state to change music theme
+  // Update Ai Goal state for the PublicStateBroadcaster
   // Note: This only applies to freeplay goals, spark goals do nothing
-  robot.GetRobotAudioClient()->UpdateAiGoalMusicState(_name);
+  robot.GetPublicStateBroadcaster().UpdateAiGoal(_name);
   
   // set driving animations for this goal if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();

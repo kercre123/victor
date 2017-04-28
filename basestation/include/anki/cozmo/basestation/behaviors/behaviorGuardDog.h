@@ -66,6 +66,10 @@ private:
   // Start a light cube animation on all cubes
   bool StartLightCubeAnims(Robot& robot, const CubeAnimationTrigger& cubeAnimTrigger);
   
+  // Update the behavior stage for the PublicStateBroadcaster (this is used to trigger the proper
+  //   music to match the current behavior state, e.g. tension for when a cube is being moved)
+  void UpdatePublicBehaviorStage(Robot& robot, const GuardDogStage& stage);
+  
 private:
   
   enum class State {
@@ -130,6 +134,10 @@ private:
   
   // The number of cubes that have been successfully flipped over
   int _nCubesFlipped = 0;
+  
+  // The current 'PublicStateBroadcaster' behavior stage (used to trigger
+  //   the proper music depending on the current state of the behavior)
+  GuardDogStage _currPublicBehaviorStage = GuardDogStage::Count;
   
 };
   

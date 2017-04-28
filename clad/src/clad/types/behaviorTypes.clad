@@ -110,7 +110,7 @@ enum uint_8 ExecutableBehaviorType {
 ////////
 // User Facing Behavior Stages
 // Behavior stages which can be broadcast out
-// by the userFacingState to trigger changes in audio/ui/etc
+// by the PublicStateBroadcaster to trigger changes in audio/ui/etc
 ////////
 
 // Construction stages for pyramid
@@ -121,6 +121,16 @@ enum uint_8 PyramidConstructionStage {
   BaseFormed,
   TopBlockCarry,
   PyramidCompleteFlourish
+}
+
+// Guard Dog behavior stages/states (values must match music rounds)
+enum uint_8 GuardDogStage {
+  Sleeping        = 0,
+  CubeBeingMoved  = 1,
+  Busted          = 2,
+  CubesRemaining  = 3,
+  AllCubesGone    = 4,
+  Count
 }
 
 

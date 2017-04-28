@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -164,6 +165,7 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   _nCubesMoved = 0;
   _nCubesFlipped = 0;
   _monitoringCubeMotion = false;
+  _currPublicBehaviorStage = GuardDogStage::Count;
 
   // Grab cube starting locations (ideally would have done this in IsRunnable(), but IsRunnable() is const)
   std::vector<const ObservableObject*> locatedBlocks;
@@ -175,6 +177,9 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   for (const auto& block : locatedBlocks) {
     _cubesDataMap.emplace(block->GetID(), sCubeData());
   }
+  
+  // Stop light cube animations:
+  robot.GetCubeLightComponent().StopAllAnims();
   
   SET_STATE(Init);
   
@@ -195,7 +200,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
   }
   
-  // Monitor for timeout if we are currently 'sleeping'
+  // Monitor for timeout if we are currently 'sleeping',
+  //  and check to see if music state should be updated.
   if (_state == State::Sleeping) {
     const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool pastMinDuration = now - _firstSleepingStartTime_s > kSleepingMinDuration_s;
@@ -206,6 +212,18 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
        (pastMinDuration && pastCubeMotionTimeout)) {
       StopActing();
       SET_STATE(Timeout);
+    }
+    
+    // Check if any blocks are being moved (in order to trigger the proper music)
+    bool anyBlocksMoving = false;
+    for (const auto& mapEntry : _cubesDataMap) {
+      if (mapEntry.second.movementScore > kMovementScoreDetectionThreshold) {
+        anyBlocksMoving = true;
+      }
+    }
+    const auto newStage = anyBlocksMoving ? GuardDogStage::CubeBeingMoved : GuardDogStage::Sleeping;
+    if (newStage != _currPublicBehaviorStage) {
+      UpdatePublicBehaviorStage(robot, newStage);
     }
   }
   
@@ -280,6 +298,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     case State::Fakeout:
     {
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogFakeout), [this]() { SET_STATE(StartSleeping); });
+      UpdatePublicBehaviorStage(robot, GuardDogStage::CubeBeingMoved);
       break;
     }
     case State::Busted:
@@ -287,6 +306,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogBusted);
       StartMonitoringCubeMotion(robot, false);
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
+      UpdatePublicBehaviorStage(robot, GuardDogStage::Busted);
       break;
     }
     case State::BlockDisconnected:
@@ -313,6 +333,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
 
       action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
       
+      // Play the CubesRemaining music and animation at the same time:
+      auto updateStageCubesRemainingLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::CubesRemaining); return true; };
+      action->AddAction(new WaitForLambdaAction(robot, updateStageCubesRemainingLambda));
+      
       if ((_nCubesMoved == 0) && (_nCubesFlipped == 0)) {
         action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesUntouched));
       } else {
@@ -326,11 +350,19 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     {
       StartMonitoringCubeMotion(robot, false);
       auto action = new CompoundActionSequential(robot);
+     
+      // Switch to the 'sleeping' music (in case a cube was being moved
+      //   when transitioned into this state, so that the 'tension' music
+      //   doesn't keep playing during the following actions)
+      UpdatePublicBehaviorStage(robot, GuardDogStage::Sleeping);
       
       // Small delay here so that reaction to all 3 cubes being flipped doesn't
       //  trigger too quickly (triggering the animations right away felt weird)
       const float timeToWait_s = 2.0f;
       action->AddAction(new WaitAction(robot, timeToWait_s));
+      
+      // Timeout wake-up animation:
+      action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
       
       // Ask blockworld for the closest cube and turn toward it.
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
@@ -342,6 +374,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       }
 
       action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
+      
+      // Play the PlayerSuccess music and animation at the same time:
+      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
+      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
       
       StartActing(action, [this]() { SET_STATE(Complete); });
@@ -364,6 +400,10 @@ void BehaviorGuardDog::StopInternal(Robot& robot)
   
   // Stop light cube animations:
   robot.GetCubeLightComponent().StopAllAnims();
+  
+  // Update the public state broadcaster to indicate that Guard Dog is no longer active
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
+  _currPublicBehaviorStage = GuardDogStage::Count;
   
   // TODO: Record relevant DAS events here.
   //   - how many cubes were moved?
@@ -422,6 +462,7 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
   // No need to continue monitoring cube accel if the cube
   //  has been successfully flipped over, so just bail out:
   if (block.hasBeenFlipped) {
+    block.movementScore = 0.f; // clear this since this block should no longer be considered 'moving'
     return;
   }
   
@@ -784,7 +825,14 @@ bool BehaviorGuardDog::StartLightCubeAnims(Robot& robot, const CubeAnimationTrig
   return true;
 }
   
-
+void BehaviorGuardDog::UpdatePublicBehaviorStage(Robot& robot, const GuardDogStage& stage)
+{
+  PRINT_NAMED_INFO("GuardDog.UpdatePublicBehaviorStage", "Updating public behavior stage to %s", EnumToString(stage));
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::GuardDog,
+                                                                 static_cast<uint8_t>(stage));
+  _currPublicBehaviorStage = stage;
+}
+ 
   
 } // namespace Cozmo
 } // namespace Anki
