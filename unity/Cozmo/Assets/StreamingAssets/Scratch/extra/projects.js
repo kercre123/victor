@@ -137,7 +137,7 @@
         projectList.appendChild(card);
       }
     }
-  }
+  };
 
 
   /**
@@ -164,7 +164,7 @@
     var projectsUI = document.querySelector('#projects');
 
     // add a style to color the puzzle piece SVG after it loads
-    var block = project.querySelector('.block')
+    var block = project.querySelector('.block');
     var type = getSampleProjectType(icon);
     block.setAttribute('src', 'images/icon_block_' + type + '.svg');
     block.addEventListener('load', function(elem) {
@@ -172,7 +172,7 @@
 
       // show the entire Projects UI when the first sample project is ready to be shown
       projectsUI.style.visibility = 'visible';
-    })
+    });
     return project;
   }
 
@@ -308,7 +308,7 @@
     document.querySelector('#btn-delete-project').dataset.uuid = uuid;
 
     // show the modal
-    document.querySelector('#modal').style.visibility = 'visible';
+    document.querySelector('#delete-project-modal').style.visibility = 'visible';
   }
 
 
@@ -317,7 +317,7 @@
    * @returns {void}
    */
   function hideConfirmDeleteProjectModal(){
-    document.querySelector('#modal').style.visibility= 'hidden';
+    document.querySelector('#delete-project-modal').style.visibility= 'hidden';
   }
 
 
@@ -410,13 +410,35 @@
     document.querySelector(selector).textContent = text;
   }
 
+
+
   /**
-   * Utilty function to fetch JSON and pass it to a callback function
-   * @param {string} url - url of the JSON to fetch
-   * @param {function} callback - function to pass the returned JSON to
+   * DEVELOPMENT ONLY
+   * Used to render projects into page when run from outside the Unity application.
+   * @returns {void}
    */
-  function getJSON(url, callback) {
-    return;
+  function _devLoadProjects() {
+
+    function getJSON(url, callback) {
+      var request = new XMLHttpRequest();
+      request.open('GET', url, true);
+
+      request.onload = function() {
+        if (this.status >= 200 && this.status < 400) {
+          // Success!
+          var data = JSON.parse(this.response);
+          callback(data);
+        }
+      };
+      request.send();
+    }
+
+    getJSON('../sample-projects.json', function(sampleProjects) {
+      // copy 3 of the sample projects and render them as user projects
+      var userProjects = sampleProjects.slice(0,3);
+      window.renderProjects(JSON.stringify(userProjects), JSON.stringify(sampleProjects));
+    });
   }
+
 })();
 
