@@ -1,0 +1,28 @@
+{
+  "name" : "sparksBuildPyramid",
+  "requireSpark":"BuildPyramid",
+  "behaviorChooser" :
+  {
+    "type" : "sparks",
+    "minTimeSecs": 0,
+    "maxTimeSecs": 300,
+    "numberOfRepetitions": 1,
+    "behaviorObjective": "BuiltPyramid",
+    "softSparkTrigger": "SoftSparkUpgradeLift",
+    "sparksSuccessTrigger": "", // don't play any animation
+    "simpleChooserDelegate":
+    {
+      "type":"pyramid",
+      "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid" ]
+    },
+    // these are the behaviors that are allowed in this behavior chooser
+    // no behavior groups are set here since this chooser delegates to the pyramid
+    // chooser for simple behavior purposes
+    "behaviorGroups" : [ ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "persistentComponentID" : "pyramidSparkUpdate"
+}

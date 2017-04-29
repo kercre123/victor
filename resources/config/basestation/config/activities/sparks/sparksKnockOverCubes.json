@@ -1,0 +1,19 @@
+{
+  "name" : "sparksKnockOverCubes",
+  "requireSpark":"KnockOverThreeCubeStack",
+  "behaviorChooser" :
+  {
+   "type" : "sparks",
+   "minTimeSecs": 0,
+   "maxTimeSecs": 60,
+   "numberOfRepetitions": 1,
+   "behaviorObjective": "KnockedOverBlocks",
+   "softSparkTrigger": "SoftSparkUpgradeTracks",
+    // these groups are the behaviors that are allowed in this behavior chooser
+    "behaviorGroups" : [ "SparksKnockOverCubes" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  }
+}

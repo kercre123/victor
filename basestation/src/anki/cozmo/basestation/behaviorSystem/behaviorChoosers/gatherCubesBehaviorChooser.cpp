@@ -10,7 +10,7 @@
  *
  **/
 
-#include "gatherCubesBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/gatherCubesBehaviorChooser.h"
 
 namespace Anki {
 namespace Cozmo {

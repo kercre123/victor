@@ -1,0 +1,16 @@
+// this activity is triggered after being put down from a pick up, so that Cozmo can select what to do next based on
+// what is around him (a face, a cube, ...)
+{
+  "name" : "FP_PutDownDispatch",
+  "behaviorChooser" :
+  {
+    "type" : "simple",
+    "behaviorGroups" : [ "FP_PutDownDispatch" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Simple",
+     // purposely high so that reactions don't prevent activity selection due to timeout
+    "requiredRecentOnTreadsEventSecs" : 5.0
+  }
+}

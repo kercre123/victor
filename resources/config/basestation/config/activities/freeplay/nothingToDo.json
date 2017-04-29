@@ -1,0 +1,16 @@
+{
+  "name" : "nothingToDo",
+  "behaviorChooser" :
+  {
+    "type" : "simple",
+    "behaviorGroups" : [ "FP_NothingToDo" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Simple",
+    // activities need to give up so that higher priority can take over. Give up as soon as we finish one
+    // iteration
+    "activityShouldEndDurationSecs" : 1.0,
+    "maxTimeWithoutInteractionSecs" : 0.0
+  }
+}

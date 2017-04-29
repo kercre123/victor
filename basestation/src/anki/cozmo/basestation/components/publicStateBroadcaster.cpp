@@ -48,7 +48,7 @@ void PublicStateBroadcaster::Update(Robot& robot)
   
   // Check if current spark has changed - when a user cancels a spark we leave the
   // active spark the same until the action ends, but this is an implementation detail
-  // of the way the goal system works - to the rest of the system the spark should
+  // of the way the activity system works - to the rest of the system the spark should
   // be considered ended
   const auto& bm = robot.GetBehaviorManager();
   
@@ -108,7 +108,7 @@ void PublicStateBroadcaster::Update(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PublicStateBroadcaster::UpdateAiGoal(const std::string& aiGoalName)
+void PublicStateBroadcaster::UpdateActivity(const std::string& aiGoalName)
 {
   // update internal struct with new AI Goal name and send it out.
   _currentState->currentAiGoal = aiGoalName;

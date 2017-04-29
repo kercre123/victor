@@ -1,0 +1,19 @@
+{
+  "name" : "buildPyramid",
+  "behaviorChooser" :
+  {
+    "type" : "pyramid",
+    "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid"  ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Pyramid",
+    // at least interact for this amount of time every time
+    "activityCanEndDurationSecs" : 5.0,
+
+    // stop running after this time (want to stop, don't actually stop until behavior is done)
+    // NOTE: this should never really be hit, only if a bunch of new behaviors get added
+    "activityShouldEndDurationSecs": 300.0,
+    "cooldownSecs" : 300.0
+  }
+}

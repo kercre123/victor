@@ -285,7 +285,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // load available behaviors into the behavior factory
   LoadBehaviors();
 
-  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
+  _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
   
   // Setting camera pose according to current head angle.

@@ -1015,7 +1015,7 @@ void BuildPyramidBehaviorChooser::UpdateMusic(Robot& robot, const PyramidConstru
 void BuildPyramidBehaviorChooser::UpdateDesiredLights(Robot& robot, const PyramidConstructionStage& desiredState)
 {
   // If the user canceled out of the spark, we want to clear all
-  // pyramid related lights since we may still sit in this goal for a while
+  // pyramid related lights since we may still sit in this activity for a while
   if(robot.GetBehaviorManager().DidGameRequestSparkEnd()){
     for(auto& entry: _pyramidCubePropertiesTrackers){
       entry.second.SetDesiredLightTrigger(CubeAnimationTrigger::Count);

@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2015
  *
  **/
-#include "simpleBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"

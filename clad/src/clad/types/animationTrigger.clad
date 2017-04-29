@@ -148,7 +148,7 @@ enum int_32 AnimationTrigger
   HikingDrivingLoop,            // loco-driving anim (so that Cozmo can be humming while hiking) - loop
   HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start
   HikingInterestingEdgeThought, // Cozmo decided something about an interesting edge (probably decided he can't reach it)
-  HikingIntro,                  // played when we start hiking. This may be used as Intro anim for hiking goal
+  HikingIntro,                  // played when we start hiking. This may be used as Intro anim for hiking activity
   HikingLookAround,             // when Cozmo spins around looking for edges and cubes
   HikingObserve,                // when Cozmo visits interesting edges, pretending he is recognizing the border/object
   HikingReactToEdge,            // when Cozmo sees an interesting edge while looking for cubes

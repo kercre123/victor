@@ -1,0 +1,20 @@
+{
+  "name" : "sparksRollBlock",
+  "requireSpark":"RollCube",
+
+  "behaviorChooser" :
+  {
+    "type" : "sparks",
+    "minTimeSecs": 0,
+    "maxTimeSecs": 80,
+    "numberOfRepetitions": 1,
+    "behaviorObjective": "BlockRolled",
+    "softSparkTrigger": "SoftSparkUpgradeLift",
+    // these groups are the behaviors that are allowed in this behavior chooser
+    "behaviorGroups" : [ "SparksRollBlock" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  }
+}

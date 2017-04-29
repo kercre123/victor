@@ -15,10 +15,10 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoal.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/freeplayActivity.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
@@ -68,10 +68,10 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
-static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
-static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
-static const char* kVoiceCommandChooserConfigKey = "vcBehaviorChooserConfig";
+static const char* kSelectionActivityConfigKey    = "selectionActivityConfig";
+static const char* kFreeplayActivityConfigKey     = "freeplayActivityConfig";
+static const char* kMeetCozmoActivityConfigKey    = "meetCozmoActivityConfig";
+static const char* kVoiceCommandActivityConfigKey = "vcActivityConfig";
   
 // reaction trigger behavior map
 static const char* kReactionTriggerBehaviorMapKey = "reactionTriggerBehaviorMap";
@@ -269,19 +269,19 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   if ( !config.isNull() )
   {
     // selection chooser - to force one specific behavior
-    const Json::Value& selectionChooserConfigJson = config[kSelectionChooserConfigKey];
+    const Json::Value& selectionChooserConfigJson = config[kSelectionActivityConfigKey];
     _selectionChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, selectionChooserConfigJson);
     
     // freeplay chooser - AI controls cozmo
-    const Json::Value& freeplayChooserConfigJson = config[kFreeplayChooserConfigKey];
+    const Json::Value& freeplayChooserConfigJson = config[kFreeplayActivityConfigKey];
     _freeplayChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, freeplayChooserConfigJson);
 
     // meetCozmo chooser
-    const Json::Value& meetCozmoChooserConfigJson = config[kMeetCozmoChooserConfigKey];
+    const Json::Value& meetCozmoChooserConfigJson = config[kMeetCozmoActivityConfigKey];
     _meetCozmoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, meetCozmoChooserConfigJson);
     
     // voice command chooser
-    const Json::Value& voiceCommandChooserConfigJson = config[kVoiceCommandChooserConfigKey];
+    const Json::Value& voiceCommandChooserConfigJson = config[kVoiceCommandActivityConfigKey];
     _voiceCommandChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, voiceCommandChooserConfigJson);
     
     // start with selection that defaults to NoneBehavior
@@ -1092,21 +1092,22 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::CalculateFreeplayGoalFromObjects()
+void BehaviorManager::CalculateFreeplayActivityFromObjects()
 {
-  // design: the choosers are generic, but this only makes sense if the freeplay chooser is an AIGoalEvaluator. I
+  // TODO: this will no longer be necessary after COZMO-10658
+  // design: the choosers are generic, but this only makes sense if the freeplay chooser is an FreeplayActivity. I
   // think that we should not be able to data-drive it, but there may be a case for it, and this method
   // should just not work in that case. Right now I feel like using dynamic_cast, but we could provide default
   // implementation in chooser interface that asserts to not be used.
-  AIGoalEvaluator* freeplayGoalEvaluator = dynamic_cast<AIGoalEvaluator*>(_freeplayChooser);
-  if ( nullptr != freeplayGoalEvaluator )
+  FreeplayActivity* freeplayActivityEvaluator = dynamic_cast<FreeplayActivity*>(_freeplayChooser);
+  if ( nullptr != freeplayActivityEvaluator )
   {
-    freeplayGoalEvaluator->CalculateDesiredGoalFromObjects();
+    freeplayActivityEvaluator->CalculateDesiredActivityFromObjects();
   }
   else
   {
-    PRINT_NAMED_ERROR("BehaviorManager.CalculateFreeplayGoalFromObjects.NotAGoalEvaluator",
-      "The current freeplay chooser is not a goal evaluator.");
+    PRINT_NAMED_ERROR("BehaviorManager.CalculateFreeplayActivityFromObjects.NotUsingFreeplayActivity",
+      "The current freeplay chooser is not a freeplay activity.");
   }
 }
 
@@ -1435,18 +1436,18 @@ void BehaviorManager::LeaveObjectTapInteraction()
   {
     PRINT_CH_INFO("Behaviors", "LeaveObjectTapInteration", "");
     
-    auto* chooser = dynamic_cast<AIGoalEvaluator*>(_currentChooserPtr);
+    auto* chooser = dynamic_cast<FreeplayActivity*>(_currentChooserPtr);
     
-    // It is possible that we have requested the ObjectTapInteraction goal but it hasn't actually
-    // been selected so we need to clear the requested goal
+    // It is possible that we have requested the ObjectTapInteraction activity but it hasn't actually
+    // been selected so we need to clear the requested activity
     if(chooser != nullptr)
     {
-      chooser->ClearObjectTapInteractionRequestedGoal();
+      chooser->ClearObjectTapInteractionRequestedActivity();
     }
     else
     {
       PRINT_NAMED_ERROR("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
-                        "Current chooser is not an AIGoalEvaluator but supports object tap interactions");
+                        "Current activity is not an FreeplayActivity but supports object tap interactions");
     }
   }
   
@@ -1528,12 +1529,12 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
     return;
   }
   
-  auto* chooser = dynamic_cast<AIGoalEvaluator*>(_currentChooserPtr);
+  auto* chooser = dynamic_cast<FreeplayActivity*>(_currentChooserPtr);
   
   if(chooser == nullptr)
   {
     PRINT_NAMED_ERROR("BehaviorManager.HandleObjectTapInteraction.NullChooser",
-                      "Freeplay chooser is not an AIGoalEvaluator or is null");
+                      "Current activity is not an FreeplayActivity or is null");
     return;
   }
   
@@ -1548,24 +1549,24 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
     return;
   }
   
-  // If the current goal is not the ObjectTapInteraction goal
-  // then update the behavior chooser and request the ObjectTapInteraction goal
-  if(!chooser->IsCurrentGoalObjectTapInteraction())
+  // If the current activity is not the ObjectTapInteraction activity
+  // then update the behavior chooser and request the ObjectTapInteraction activity
+  if(!chooser->IsCurrentActivityObjectTapInteraction())
   {
-    // Switch to ObjectTapInteraction goal
-    chooser->SwitchToObjectTapInteractionGoal();
+    // Switch to ObjectTapInteraction activity
+    chooser->SwitchToObjectTapInteractionActivity();
     
     _lastDoubleTappedObject = _currDoubleTappedObject;
     _currDoubleTappedObject = objectID;
   }
-  // Otherwise we are already in the ObjectTapInteraction goal
+  // Otherwise we are already in the ObjectTapInteraction activity
   else
   {
     bool currentBehaviorIsNoneBehavior = GetRunningAndResumeInfo().GetCurrentBehavior() == nullptr ||
              GetRunningAndResumeInfo().GetCurrentBehavior()->GetClass() == BehaviorClass::NoneBehavior;
     
     IBehavior* activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
-    // The current behavior of the goal is not NoneBehavior
+    // The current behavior of the activity is not NoneBehavior
     if(nullptr != activeBehavior && !currentBehaviorIsNoneBehavior)
     {
       // Update the interaction object
@@ -1616,7 +1617,7 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
         
         // If, for some reason, the object tap interaction behavior that was running is no longer runnable
         // then we should start the ReactToDoubleTap behavior to try to find the tapped object.
-        // This is necessary because otherwise the ObjectTapInteraction goal will exit due to not being able
+        // This is necessary because otherwise the ObjectTapInteraction activity will exit due to not being able
         // to pick a behavior (all of the ObjectTapInteraction behaviors have similar requirements to run) so
         // if the current one can't run then the others probably won't be able to run either.
         
@@ -1668,9 +1669,9 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
 void BehaviorManager::OnRobotDelocalized()
 {
   // If the robot delocalizes and we have a tapped object immediately stop the double tapped lights
-  // Normally the lights would be stopped when the tapInteraction goal exits but that is too late
+  // Normally the lights would be stopped when the tapInteraction activity exits but that is too late
   // Eg. Pick Cozmo up after double tapping a cube, the lights will stay on until he is put down and the
-  // tapInteraction goal is kicked out. Instead of having the lights stop when he is put down, they should
+  // tapInteraction activity is kicked out. Instead of having the lights stop when he is put down, they should
   // stop when he is picked up (delocalizes)
   // Can't do this on Stop() because tapInteraction behaviors are stopped and started as different objects get tapped
   if(_robot.GetAIComponent().GetWhiteboard().HasTapIntent())

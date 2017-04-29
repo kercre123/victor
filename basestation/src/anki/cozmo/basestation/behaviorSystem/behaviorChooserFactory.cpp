@@ -12,7 +12,7 @@
 #include "behaviorChooserFactory.h"
 
 // behavior choosers
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/freeplayActivity.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/buildPyramidBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/gatherCubesBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/selectionBehaviorChooser.h"
@@ -53,8 +53,8 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   else if ( typeStr == "selection" ) {
     newChooser = new SelectionBehaviorChooser(robot, config);
   }
-  else if ( typeStr == "goal" ) {
-    newChooser = new AIGoalEvaluator(robot, config);
+  else if ( typeStr == "freeplay" ) {
+    newChooser = new FreeplayActivity(robot, config);
   }
   else if ( typeStr == "sparks") {
     newChooser = new SparksBehaviorChooser(robot, config);

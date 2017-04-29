@@ -1,0 +1,78 @@
+{
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Selection
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "selectionActivityConfig" :
+  {
+    "type" : "selection"
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "meetCozmoActivityConfig" : 
+  {
+    "type" : "simple",
+    "behaviorGroups" : [ "MeetCozmo_Socialize" ]
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "vcActivityConfig" :
+  {
+    "type" : "vc"
+  },
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Freeplay activities & sparks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "freeplayActivityConfig" :
+  {
+    "type" : "freeplay",
+    "supportsObjectTapInteractions": true,
+    
+    // parameters to decide between activities on put down
+    "desiredActivityNames" :
+    {
+      "faceAndCubeActivityName"          : "socialize",
+      "faceOnlyActivityName"             : "socialize",
+      "cubeOnlyActivityName"             : "playAlone",
+      "noFaceNoCubeActivityName"         : "hiking",
+      "objectTapInteractionActivityName" : "objectTapInteraction"
+    },
+    // sub-activities to create - ensure they're in priority order
+    "activities" :
+    [
+     { "name" : "sparksRollBlock", "priority"      : 0 },
+     { "name" : "sparksStackBlock", "priority"     : 0 },
+     { "name" : "sparksPeekABoo", "priority"       : 0 },
+     { "name" : "sparksPounceOnMotion", "priority" : 0 },
+     { "name" : "sparksPopAWheelie", "priority"    : 0 },
+     { "name" : "sparksKnockOverCubes", "priority" : 0 },
+     { "name" : "sparksPickupCube", "priority"     : 0 },
+     { "name" : "sparksWorkout", "priority"        : 0 },
+     { "name" : "sparksBuildPyramid", "priority"   : 0 },
+     { "name" : "sparksFistBump", "priority"       : 0 },
+     { "name" : "sparksGatherCubes", "priority"    : 0 },
+     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     // Freeplay activities:
+     // objectTapInteraction - when the player has tapped an object and Cozmo will interact with it
+     // putDownDispatch      - when Cozmo is put down and wants to figure out what activity to go into
+     // socialize            - when Cozmo wants to interact with faces and players, but without playing games
+     // playWithHumans       - when Cozmo requests games to play with the player
+     // buildPyramid         - when Cozmo knows where his cubes are and decides to build a pyramid
+     // playAlone            - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+     // hiking               - when Cozmo is exploring its surroundings on his own
+     // nothingToDo          - fallback when Cozmo can't do anything else
+     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     { "name" : "objectTapInteraction", "priority" : 0},
+     { "name" : "putDownDispatch", "priority"      : 1},
+     { "name" : "socialize", "priority"            : 2},
+     { "name" : "playWithHumans", "priority"       : 3},
+     // pyramid is "cooler" than playing alone or hiking for the user, but it
+     // has fairly restrictive runnability and a high cooldown
+     { "name" : "buildPyramid", "priority"         : 4},
+     { "name" : "playAlone", "priority"            : 5},
+     { "name" : "hiking", "priority"               : 6},
+     { "name" : "nothingToDo", "priority"          : 7}
+    ]
+  }
+}

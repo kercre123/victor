@@ -1,0 +1,17 @@
+{
+  // we want this play alone to be higher priority than exploring, but its activation is more
+  // restrictive than PlayingAlone when there's nothing else to do
+  "name" : "playAlone",
+  "behaviorChooser" :
+  {
+    "type" : "simple",
+    "behaviorGroups" : [ "FP_PlayAlone" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Simple",
+    // future: it might be a good idea to check how many behaviors are available to tune the duration based on that
+    "activityShouldEndDurationSecs" : 25.0,
+    "cooldownSecs" : 30.0
+  }
+}

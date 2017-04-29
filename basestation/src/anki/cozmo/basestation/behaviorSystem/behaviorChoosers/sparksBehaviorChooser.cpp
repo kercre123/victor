@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "sparksBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/sparksBehaviorChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -560,7 +560,7 @@ void SparksBehaviorChooser::CompleteSparkLogic()
   
   // UI updates
   if(!mngr.DidGameRequestSparkEnd() && !_switchingToHardSpark){
-    //Allow new goal to be chosen if we haven't received any updates from the user or switching to same spark
+    //Allow new activity to be chosen if we haven't received any updates from the user or switching to same spark
     if(mngr.GetActiveSpark() == mngr.GetRequestedSpark()){
       mngr.SetRequestedSpark(UnlockId::Count, false);
     }

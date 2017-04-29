@@ -137,6 +137,11 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadActivities");
+    LoadActivities();
+  }
+  
+  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadReactionTriggerMap");
     LoadReactionTriggerMap();
   }
@@ -505,8 +510,6 @@ void RobotDataLoader::LoadEmotionEvents()
 
 void RobotDataLoader::LoadBehaviors()
 {
-  // rsam: 05/02/16 we are moving behaviors to basestation, but at the moment we support both paths for legacy
-  // reasons. Eventually I will move them to BS
   const std::string path =  "config/basestation/config/behaviors/";
 
   const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
@@ -525,6 +528,35 @@ void RobotDataLoader::LoadBehaviors()
     }
   }
 }
+  
+void RobotDataLoader::LoadActivities()
+{
+  const std::string path =  "config/basestation/config/activities/";
+  
+  const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+  auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
+  for (const auto& filename : activityJsonFiles)
+  {
+    Json::Value activityJson;
+    const bool success = _platform->readAsJson(filename, activityJson);
+    if (success && !activityJson.empty())
+    {
+      // remove path
+      auto slashIndex = filename.find_last_of("/");
+      std::string jsonName = slashIndex == std::string::npos ? filename : filename.substr(slashIndex + 1);
+      // remove extension
+      auto dotIndex = jsonName.find_last_of(".");
+      std::string activityName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+      
+      _activities.emplace(std::piecewise_construct, std::forward_as_tuple(activityName), std::forward_as_tuple(std::move(activityJson)));
+    }
+    else if (!success)
+    {
+      PRINT_NAMED_WARNING("RobotDataLoader.Activity", "Failed to read '%s'", filename.c_str());
+    }
+  }
+}
+
   
 void RobotDataLoader::LoadReactionTriggerMap()
 {
@@ -578,14 +610,14 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // behavior config
   {
-    std::string jsonFilename = "config/basestation/config/behavior_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotBehaviorConfig);
+    std::string jsonFilename = "config/basestation/config/activities_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
                         "Behavior Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
-      _robotBehaviorConfig.clear();
+      _robotActivitiesConfig.clear();
     }
   }
 

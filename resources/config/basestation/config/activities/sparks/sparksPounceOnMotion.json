@@ -1,0 +1,19 @@
+{
+  "name" : "sparksPounceOnMotion",
+  "requireSpark":"PounceOnMotionAction",
+  "behaviorChooser" :
+  {
+   "type" : "sparks",
+   "minTimeSecs": 0,
+   "maxTimeSecs": 30,
+   "numberOfRepetitions": 0,
+   "behaviorObjective": "PouncedAndCaught",
+   "softSparkTrigger": "SoftSparkUpgradeLift",
+    // these groups are the behaviors that are allowed in this behavior chooser
+    "behaviorGroups" : [ "SparksPounceOnMotion" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  }
+}

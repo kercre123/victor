@@ -10,7 +10,7 @@
  *
  **/
 
-#include "selectionBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"

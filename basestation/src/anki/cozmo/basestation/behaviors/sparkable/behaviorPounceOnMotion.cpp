@@ -430,7 +430,8 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   StartActing(newAction, callback);
 
   if( caught ) {
-    // send this after we start the action, so if the goal tries to cancel us, we will play the react first
+    // send this after we start the action, so if the activity tries to cancel us,
+    // we will play the react first
     BehaviorObjectiveAchieved(BehaviorObjective::PouncedAndCaught);
   }
 }

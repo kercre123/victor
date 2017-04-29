@@ -358,7 +358,7 @@ protected:
   bool StopActing(bool allowCallback = true, bool allowHelperToContinue = false);
   
   // Behaviors should call this function when they reach their completion state
-  // in order to log das events and notify goal strategies if they listen for the message
+  // in order to log das events and notify activity strategies if they listen for the message
   void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true);
   
   
@@ -485,7 +485,7 @@ private:
   float _requiredRecentDriveOffCharger_sec;
   // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only runnable if last time its parent behavior
   // chooser was activated happened less than this time ago. Eg: a value of 1 means 'if the parent got activated less
-  // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for goals)
+  // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for activities)
   // TODO rsam: differentiate between (de)activation and interruption
   float _requiredRecentSwitchToParent_sec;
   

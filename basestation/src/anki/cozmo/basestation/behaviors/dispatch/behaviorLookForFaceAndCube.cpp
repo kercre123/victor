@@ -470,13 +470,13 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center(Robot& robot)
 void BehaviorLookForFaceAndCube::TransitionToS6_Done(Robot& robot)
 {
   _currentState = State::Done;
-  // Note that this is specific to the PutDownDispatch goal. If this behavior needs to be generic for other goals, it
+  // Note that this is specific to the PutDownDispatch activity. If this behavior needs to be generic for other activities, it
   // should store the start time on InitInternal and pass it here to compare timestamps. The reason why I don't implement
   // it that way is that I want to also to track objects seen during putdown reactions, which would not be included in
   // that case. We could also json config it, but I don't have a reason for it atm
 
-  // ask behavior manager to trigger a goal based on what has happened
-  robot.GetBehaviorManager().CalculateFreeplayGoalFromObjects();
+  // ask behavior manager to trigger an activity based on what has happened
+  robot.GetBehaviorManager().CalculateFreeplayActivityFromObjects();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

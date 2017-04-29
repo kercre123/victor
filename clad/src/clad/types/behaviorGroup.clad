@@ -18,11 +18,11 @@ enum uint_8 BehaviorGroup {
     Unlock_CubeRoll,
 
     // Freeplay
-    FP_Hiking,          // this will be the new exploration goal
+    FP_Hiking,          // activity where cozmo explores his environment
     FP_PlayWithHumans,  // request games to play with the human player
     FP_PlayAlone,       // show-off behaviors
     FP_Socialize,       // interact with faces, seek owner, etc.
-    FP_NothingToDo,     // none of the other freeplay goals wants to run
+    FP_NothingToDo,     // none of the other freeplay activities wants to run
     FP_PutDownDispatch, // after putDown evaluate what we should do
 
     SetupBuildPyramid,

@@ -1,0 +1,62 @@
+{
+  "name" : "socialize",
+  "behaviorChooser" :
+  {
+    "type" : "socialize",
+    "behaviorGroups" : [ "FP_Socialize" ],
+
+    "maxNumFindFacesSearchIterations": 2,
+    "requiredObjectives": [
+      {
+        "objective": "PouncedAndCaught",
+        "behaviorName": "pounceOnMotion_socialize",
+        "ignoreIfLocked": "PounceOnMotionAction",
+        "probabilityToRequireObjective": 0.5,
+        "randomCompletionsNeededMin": 1,
+        "randomCompletionsNeededMax": 3
+        // NOTE: this behavior will quit on it's own if it gets "bored" due to lack of movement, so
+        // these don't need to be met every time (but if they are met, socialize will end sooner)
+      },
+      {
+        "objective": "PeekABooComplete",
+        "behaviorName": "FPPeekABoo",
+        "probabilityToRequireObjective": 0.8,
+        // peek a boo has an aggressive cooldown on it, so rules itself out more often.
+        "ignoreIfLocked": "PeekABoo"
+      }
+    ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Simple",
+    // at least interact for this amount of time every time
+    "activityCanEndDurationSecs" : 5.0,
+    
+    // stop running after this time (want to stop, don't actually stop until behavior is done)
+    // NOTE: this should never really be hit, only if a bunch of new behaviors get added
+    "activityShouldEndDurationSecs": 300.0,
+    
+    // do not go back immediately even if still wants to social
+    // (it should be possible to fire with other triggers, like pick up)
+    "cooldownSecs" : 30.0,
+    // require a minimum social score
+    "requiredMinStartMoodScore" : 0.5,
+    "startMoodScorer" :
+    [
+      {
+        // intended meaning: if we need to socialize, trigger this activity, but if we do it a lot,
+        // do not pick this activity, so we try to do something else instead
+        "emotionType" : "Social",
+        "scoreGraph" : {
+          "nodes" : [
+            { "x" : -1.0, "y" : 1.0 },
+            { "x" :  0.3, "y" : 1.0 },  // if social is below X, score high
+            { "x" :  0.3, "y" : 0.0 },  // if social is above X, score low
+            { "x" :  1.0, "y" : 0.0 }
+          ]
+        },
+        "trackDelta" : false
+      }
+    ]
+  }
+}

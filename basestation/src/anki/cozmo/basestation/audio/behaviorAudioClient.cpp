@@ -119,11 +119,11 @@ void BehaviorAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
                 "AiGoalName '%s'", aiGoalName.c_str());
   static const std::unordered_map<std::string, Freeplay_Mood> freeplayStateMap
   {
-    { "FP_Hiking",          Freeplay_Mood::Hiking },
-    { "FP_PlayWithHumans",  Freeplay_Mood::Neutral },
-    { "FP_PlayAlone",       Freeplay_Mood::Neutral },
-    { "FP_Socialize",       Freeplay_Mood::Neutral },
-    { "FP_NothingToDo",     Freeplay_Mood::Bored }
+    { "hiking",          AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
+    { "playWithHumans",  AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+    { "playAlone",       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+    { "socialize",       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+    { "nothingToDo",     AudioMetaData::SwitchState::Freeplay_Mood::Bored }
   };
   
   // Search for freeplay goal state

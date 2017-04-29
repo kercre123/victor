@@ -1,0 +1,19 @@
+{
+  "name" : "sparksStackBlock",
+  "requireSpark":"StackTwoCubes",
+  "behaviorChooser" :
+  {
+   "type" : "sparks",
+   "minTimeSecs": 0,
+   "maxTimeSecs": 80,
+   "numberOfRepetitions": 1,
+   "behaviorObjective": "StackedBlock",
+   "softSparkTrigger": "SoftSparkUpgradeLift",
+    // these groups are the behaviors that are allowed in this behavior chooser
+    "behaviorGroups" : [ "SparksStackBlock" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name" : "ObjectTapInteraction",
+  "requireObjectTapped": true,
+  "behaviorChooser" :
+  {
+    "type" : "simple",
+    "behaviorGroups" : [ "ObjectTapInteraction" ]
+  },
+  "activityStrategy":
+  {
+    "type" : "Object_Tap_Interaction"
+  }
+}

@@ -4,13 +4,13 @@
  * Author: Brad Neuman
  * Created: 2016-08-23
  *
- * Description: A behavior chooser to handle special logic for the AI "socialize" goal
+ * Description: A behavior chooser to handle special logic for the AI "socialize" activity
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
 
-#include "socializeBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/socializeBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -54,7 +54,7 @@ FPSocializeBehaviorChooser::FPSocializeBehaviorChooser(Robot& robot, const Json:
   : BaseClass(robot, config)
   , _potentialObjectives( ReadPotentialObjectives( config ) )
 {
-  // choosers and goals are created after the behaviors are added to the factory, so grab those now
+  // choosers and activities are created after the behaviors are added to the factory, so grab those now
 
   IBehavior* facesBehavior = robot.GetBehaviorFactory().FindBehaviorByName("findFaces_socialize");
   assert(dynamic_cast< BehaviorExploreLookAroundInPlace* >(facesBehavior));
@@ -146,9 +146,9 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
         // scans, whereas if we just set behavior_NumberOfScansBeforeStop = 2, the behavior may end for any of
         // a number of reasons (e.g. interruption)
 
-        // we ran out of time searching, give up on this goal
+        // we ran out of time searching, give up on this activity
         PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.CompletedSearchIterations",
-                      "Finished %d search iterations, giving up on goal",
+                      "Finished %d search iterations, giving up on activity",
                       _findFacesBehavior->GetNumIterationsCompleted() - _lastNumSearchIterations);
         // TODO:(bn) ideally this wouldn't put socialize on cooldown, but that's hard to implement in the
         // current system

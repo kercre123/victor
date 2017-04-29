@@ -28,7 +28,7 @@
     
     // we want to visit at least this many, but then we can give up for something else
     "prioritySectorCount": 3,
-    "lowPriorityScoreReduction" : 1.0, // this is to counter the +1 that the goal gives us while running
+    "lowPriorityScoreReduction" : 1.0, // this is to counter the +1 that the activity gives us while running
     
     // previous location config
     "distanceThresholdForLocations_mm" : 30.0,

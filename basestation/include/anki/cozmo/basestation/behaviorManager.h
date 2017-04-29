@@ -46,7 +46,7 @@ namespace Cozmo {
   
 // Forward declaration
 class BehaviorFactory;
-class AIGoalEvaluator;
+class FreeplayActivity;
 class IBehavior;
 class IReactionTriggerStrategy;
 class IBehaviorChooser;
@@ -205,8 +205,8 @@ public:
   // Freeplay - specific
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // calculates (and sets in the freeplay chooser) the desired goal due to objects recently seen
-  void CalculateFreeplayGoalFromObjects();
+  // calculates (and sets in the freeplay chooser) the desired activity due to objects recently seen
+  void CalculateFreeplayActivityFromObjects();
 
   // return the basestation time that freeplay first started (often useful as a notion of "session"). This
   // will be -1 until freeplay has started, and then will always be set to the time (in seconds) that freeplay
@@ -217,8 +217,8 @@ public:
   // Sparks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // Allows Goal evaluator to know if it should kick out the current goal and transition into a spark
-  // Goal evaluator only switches from non-sparked to sparked.  Otherwise the sparkBehaviorChooser will kill itself
+  // Allows FreeplayActivity to know if it should kick out the current activity and transition into a spark
+  // FreeplayActivity only switches from non-sparked to sparked.  Otherwise the sparkBehaviorChooser will kill itself
   bool ShouldSwitchToSpark() const { return _activeSpark == UnlockId::Count && _activeSpark != _lastRequestedSpark;}
   
   // Actually switches out the LastRequestedSpark from the game with the active spark
@@ -237,10 +237,10 @@ public:
   // ObjectTapInteractions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // Handles switching behavior chooser, goal, and updating whiteboard for object tap interactions
+  // Handles switching behavior chooser, activity, and updating whiteboard for object tap interactions
   void HandleObjectTapInteraction(const ObjectID& objectID);
   
-  // Leave object interaction state resets the goal and clears the tap-intended object in the whiteboard
+  // Leave object interaction state resets the activity and clears the tap-intended object in the whiteboard
   void LeaveObjectTapInteraction();
   
   const ObjectID& GetLastTappedObject() const { return _lastDoubleTappedObject; }
@@ -360,7 +360,8 @@ private:
   // Identifies if the spark is a "soft spark" - played when upgrade is unlocked and has some different playback features than normal sparks
   bool _isSoftSpark = false;
   
-  // holding variables to keep track of most recent spark messages from game until goalEvaluator Switches out the active spark
+  // holding variables to keep track of most recent spark messages from game
+  // until freeplayActivity switches out the active spark
   UnlockId _lastRequestedSpark = UnlockId::Count;
   bool _isRequestedSparkSoft = false;
   bool _didGameRequestSparkEnd = false;

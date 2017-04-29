@@ -64,6 +64,7 @@ public:
   using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
   const FileJsonMap& GetEmotionEventJsons() const { return _emotionEvents; }
   const FileJsonMap& GetBehaviorJsons() const { return _behaviors; }
+  const FileJsonMap& GetActivityJsons() const { return _activities; }
   
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
@@ -73,12 +74,12 @@ public:
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
   // robot configuration json files
-  const Json::Value& GetRobotMoodConfig() const { return _robotMoodConfig; }
-  const Json::Value& GetRobotBehaviorConfig() const { return _robotBehaviorConfig; }
-  const Json::Value& GetRobotWorkoutConfig() const { return _robotWorkoutConfig; }
-  const Json::Value& GetRobotVisionConfig() const { return _robotVisionConfig; }
-  const Json::Value& GetReactionTriggerMap() const { return _reactionTriggerMap; }
-  const Json::Value& GetVoiceCommandConfig() const { return _voiceCommandConfig; }
+  const Json::Value& GetRobotMoodConfig() const     { return _robotMoodConfig; }
+  const Json::Value& GetRobotActivitiesConfig() const { return _robotActivitiesConfig; }
+  const Json::Value& GetRobotWorkoutConfig() const  { return _robotWorkoutConfig; }
+  const Json::Value& GetRobotVisionConfig() const   { return _robotVisionConfig; }
+  const Json::Value& GetReactionTriggerMap() const  { return _reactionTriggerMap; }
+  const Json::Value& GetVoiceCommandConfig() const  { return _voiceCommandConfig; }
   const Json::Value& GetRobotNeedsConfig() const { return _needsSystemConfig; }
 
   bool IsCustomAnimLoadEnabled() const;
@@ -109,6 +110,7 @@ private:
 
   void LoadEmotionEvents();
   void LoadBehaviors();
+  void LoadActivities();
   void LoadReactionTriggerMap();
 
   const CozmoContext* const _context;
@@ -116,6 +118,7 @@ private:
 
   FileJsonMap _emotionEvents;
   FileJsonMap _behaviors;
+  FileJsonMap _activities;
 
   enum FileType {
       Animation,
@@ -141,7 +144,7 @@ private:
 
   // robot configs
   Json::Value _robotMoodConfig;
-  Json::Value _robotBehaviorConfig;
+  Json::Value _robotActivitiesConfig;
   Json::Value _robotVisionConfig;
   Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;
