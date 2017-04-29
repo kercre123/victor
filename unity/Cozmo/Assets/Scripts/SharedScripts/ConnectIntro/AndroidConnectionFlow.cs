@@ -168,6 +168,10 @@ public class AndroidConnectionFlow : JavaMessageReceiver.JavaBehaviour {
     if (_StageInstance != null) {
       DestroyStage();
     }
+    // Disable() can be called separately from OnDestroy() below, so be sure to clear listeners
+    // here, instead of relying on that being done in the base.OnDestroy() call below.
+    // This addresses COZMO-9917
+    ClearJavaListeners();
     if (Instance == this) {
       Instance = null;
     }
