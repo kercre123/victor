@@ -77,7 +77,7 @@ namespace CodeLab {
           if (kvp.Value.IsInFieldOfView) {
             success = true;
             cube = kvp.Value;
-            RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
+            RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
             return;
           }
         }
