@@ -35,6 +35,9 @@ namespace CodeLab {
     private GameObject _WebViewObject;
     private WebViewObject _WebViewObjectComponent;
 
+    [SerializeField]
+    private GameObject _BlackScreenPrefab;
+
     private RequestToOpenProjectOnWorkspace _RequestToOpenProjectOnWorkspace;
     private string _ProjectUUIDToOpen;
     private List<CodeLabSampleProject> _CodeLabSampleProjects;
@@ -451,6 +454,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
       SharedMinigameView.HideMiddleBackground();
+
+      // Add in black screen, so it looks like less of a pop.
+      SharedMinigameView.ShowFullScreenGameStateSlide(_BlackScreenPrefab, "BlackScreen");
+      SharedMinigameView.HideSpinnerWidget();
 
       // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);
