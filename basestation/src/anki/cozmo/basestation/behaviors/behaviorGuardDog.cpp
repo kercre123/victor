@@ -75,8 +75,8 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogA
 // Constants/thresholds:
 CONSOLE_VAR_RANGED(float, kSleepingMinDuration_s, "Behavior.GuardDog",  60.f, 20.f, 120.f); // minimum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60.f, 300.f); // maximum time Cozmo will stay asleep before waking up
-CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 15.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
-CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  8.f,  5.f,  30.f);
+CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 20.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
+CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  12.f,  5.f,  30.f);
 CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
   
 } // end anonymous namespace
@@ -213,8 +213,11 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       StopActing();
       SET_STATE(Timeout);
     }
-    
-    // Check if any blocks are being moved (in order to trigger the proper music)
+  }
+  
+  // Check if any blocks are being moved (in order to trigger the proper music)
+  if (_state == State::Sleeping ||
+      _state == State::Fakeout) {
     bool anyBlocksMoving = false;
     for (const auto& mapEntry : _cubesDataMap) {
       if (mapEntry.second.movementScore > kMovementScoreDetectionThreshold) {
@@ -238,8 +241,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       // Play the 'soothing' pulse animation
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPulse), [this]() { SET_STATE(DriveToBlocks); });
       
-      // Set cube lights to pulse along with animation
-      StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogPulse);
+      // Set cube lights to 'setup'
+      StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogSetup);
       
       break;
     }
@@ -268,8 +271,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     {
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogSettle),
                   [this, &robot]() {
-                                     // Stop pulsing light cube animation and go to "lights off":
-                                     StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogOff);
+                                     // Stop setup light cube animation and go to "sleeping" lights:
+                                     StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogSleeping);
                                      StartMonitoringCubeMotion(robot);
                                      _firstSleepingStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
                                      SET_STATE(StartSleeping);
@@ -298,7 +301,6 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     case State::Fakeout:
     {
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogFakeout), [this]() { SET_STATE(StartSleeping); });
-      UpdatePublicBehaviorStage(robot, GuardDogStage::CubeBeingMoved);
       break;
     }
     case State::Busted:
@@ -349,20 +351,20 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     case State::PlayerSuccess:
     {
       StartMonitoringCubeMotion(robot, false);
-      auto action = new CompoundActionSequential(robot);
      
       // Switch to the 'sleeping' music (in case a cube was being moved
       //   when transitioned into this state, so that the 'tension' music
       //   doesn't keep playing during the following actions)
       UpdatePublicBehaviorStage(robot, GuardDogStage::Sleeping);
       
-      // Small delay here so that reaction to all 3 cubes being flipped doesn't
-      //  trigger too quickly (triggering the animations right away felt weird)
-      const float timeToWait_s = 2.0f;
-      action->AddAction(new WaitAction(robot, timeToWait_s));
+      auto action = new CompoundActionSequential(robot);
       
       // Timeout wake-up animation:
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
+      
+      // Update the music stage after the wakeup animation has completed
+      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
+      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
       
       // Ask blockworld for the closest cube and turn toward it.
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
@@ -375,9 +377,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
 
       action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
       
-      // Play the PlayerSuccess music and animation at the same time:
-      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
-      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
+      // Play the PlayerSuccess animation
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
       
       StartActing(action, [this]() { SET_STATE(Complete); });
@@ -597,11 +597,15 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
     block.upAxis = msg.upAxis;
     
     // Check if the block has been flipped over successfully:
-    if (!block.hasBeenFlipped &&
-        (block.upAxis == UpAxis::ZNegative)) {
-      block.hasBeenFlipped = true;
-      ++_nCubesFlipped;
-      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
+    if (!block.hasBeenFlipped) {
+      if (block.upAxis == UpAxis::ZNegative) {
+        block.hasBeenFlipped = true;
+        ++_nCubesFlipped;
+        StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
+      }
+      
+      // Record that a block was moved at this time
+      _lastCubeMovementTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     }
   }
 }

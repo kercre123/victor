@@ -423,7 +423,7 @@ enum int_32 CubeAnimationTrigger
   GuardDogBeingMoved,
   GuardDogBusted,
   GuardDogOff,
-  GuardDogPulse,
+  GuardDogSetup,
   GuardDogSleeping,
   GuardDogSuccessfullyFlipped,
   Interacting,

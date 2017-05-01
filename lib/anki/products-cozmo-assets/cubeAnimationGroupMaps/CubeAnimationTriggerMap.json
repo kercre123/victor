@@ -53,8 +53,8 @@
             "AnimName": "sleepNoFade"
         },
         {
-            "CladEvent": "GuardDogPulse",
-            "AnimName": "guardDogPulse"
+            "CladEvent": "GuardDogSetup",
+            "AnimName": "guardDogSetup"
         },
         {
             "CladEvent": "GuardDogSleeping",
