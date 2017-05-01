@@ -12,7 +12,7 @@
     "ProjectUUID": "9fa6ea38-5ad3-4808-ba0f-6c65354493b1",
     "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"control_forever\" id=\"avi:k#I0u2~MdQaj.M0F\"><statement name=\"SUBSTACK\"><block type=\"cozmo_setbackpackcolor\" id=\"XHk$7`v-t]Yu~e!A! eI\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_setcolor\" id=\"M[#:o9k4g `6aayX8KgU\"><field name=\"CHOICE\">mystery<\/field><\/shadow><\/value><\/block><\/statement><\/block><\/next><\/block><\/xml>",
     "ProjectName": "Rainbow Backpack",
-    "ProjectIconName" : "set-led_mystery",
+    "ProjectIconName" : "set-led_white",
     "VersionNum" : "1",
     "IsVertical" : "false",
     "DisplayOrder": "2"
@@ -46,7 +46,7 @@
   },
     {
     "ProjectUUID": "31aeb88d-3443-48ef-ab83-2ccc997d6160",
-    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_wait_for_face\" id=\"?o8_7n!fBmAFIIa-SB~E\"><next><block type=\"cozmo_dock_with_cube\" id=\"utx}.PGhw$|G3sEsf4[E\"><next><block type=\"cozmo_drive_forward\" id=\"!yYlNYzz=R;[@AJ{LHFU\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"H=$Vo^Oa@7v]):vEHY;P\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_wait_until_see_cube\" id=\"?o8_7n!fBmAFIIa-SB~E\"><next><block type=\"cozmo_dock_with_cube\" id=\"utx}.PGhw$|G3sEsf4[E\"><next><block type=\"cozmo_drive_forward\" id=\"!yYlNYzz=R;[@AJ{LHFU\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"H=$Vo^Oa@7v]):vEHY;P\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
     "ProjectName": "Push Cube",
     "ProjectIconName" : "cozmo-dock-with-cube",
     "VersionNum" : "1",
@@ -64,7 +64,7 @@
   },
     {
     "ProjectUUID": "3a30450f-3ec8-431c-b03c-61bbddfa0d65",
-    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_liftheight\" id=\"n[e,^d\/1}c]EQte=l(!I\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"%;rVPVRU.Z*JCC`ah-:i\"><field name=\"CHOICE\">high<\/field><\/shadow><\/value><next><block type=\"cozmo_wait_for_face\" id=\"NH62F.n,nCw(GUeDsiV%\"><next><block type=\"cozmo_dock_with_cube\" id=\")nDMdiWHm*np;},8OQY6\"><next><block type=\"cozmo_liftheight\" id=\"*K=J$]aMO9K `ZkUYum}\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"=U_!as!cfQTa6RZU4S9g\"><field name=\"CHOICE\">medium<\/field><\/shadow><\/value><next><block type=\"cozmo_drive_backward\" id=\"lcj$mn~[ezjlbnYOwkBK\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"nE@.Eecl4#!rhPIAM$LG\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
+    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_liftheight\" id=\"n[e,^d\/1}c]EQte=l(!I\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"%;rVPVRU.Z*JCC`ah-:i\"><field name=\"CHOICE\">high<\/field><\/shadow><\/value><next><block type=\"cozmo_wait_until_see_cube\" id=\"NH62F.n,nCw(GUeDsiV%\"><next><block type=\"cozmo_dock_with_cube\" id=\")nDMdiWHm*np;},8OQY6\"><next><block type=\"cozmo_liftheight\" id=\"*K=J$]aMO9K `ZkUYum}\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"=U_!as!cfQTa6RZU4S9g\"><field name=\"CHOICE\">medium<\/field><\/shadow><\/value><next><block type=\"cozmo_drive_backward\" id=\"lcj$mn~[ezjlbnYOwkBK\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"nE@.Eecl4#!rhPIAM$LG\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
     "ProjectName": "Roll Cube",
     "ProjectIconName" : "cozmo-backward",
     "VersionNum" : "1",
