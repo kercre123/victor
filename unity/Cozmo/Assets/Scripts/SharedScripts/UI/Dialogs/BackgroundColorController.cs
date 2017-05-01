@@ -56,7 +56,7 @@ namespace Cozmo.UI {
       if (this != null) {
         CleanUpTransitionTween();
 
-        if (_FromBackgroundImage != null) {
+        if (_FromBackgroundImage != null && _FromBackgroundImage.gameObject != null) {
           _FromBackgroundImage.gameObject.SetActive(true);
           if (_ToBackgroundImage != null) {
             _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
