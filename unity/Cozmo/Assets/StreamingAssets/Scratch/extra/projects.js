@@ -228,7 +228,9 @@
 
       // motion blocks
       case 'cozmo-backward':
+      case 'cozmo-backward-fast':
       case 'cozmo-forward':
+      case 'cozmo-forward-fast':
       case 'cozmo-turn-left':
       case 'cozmo-turn-right':
       case 'cozmo-dock-with-cube':

@@ -42,8 +42,7 @@ namespace CodeLab {
     private string _ProjectUUIDToOpen;
     private List<CodeLabSampleProject> _CodeLabSampleProjects;
 
-    private const float kSlowDriveSpeed_mmps = 30.0f;
-    private const float kMediumDriveSpeed_mmps = 100.0f;
+    private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
     private const float kDriveDist_mm = 44.0f; // length of one light cube
     private const float kTurnAngle = 90.0f * Mathf.Deg2Rad;
@@ -215,14 +214,24 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         RaiseMiniGameQuit();
       }
       else if (scratchRequest.command == "cozmoDriveForward") {
-        // Here, argFloat represents the number selected from the dropdown under the "drive forward" block
+        // argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(GetDriveSpeed(scratchRequest), dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+      }
+      else if (scratchRequest.command == "cozmoDriveForwardFast") {
+        // argFloat represents the number selected from the dropdown under the "drive forward fast" block
+        float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kFastDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveBackward") {
-        // Here, argFloat represents the number selected from the dropdown under the "drive backward" block
+        // argFloat represents the number selected from the dropdown under the "drive backward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
-        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(-GetDriveSpeed(scratchRequest), -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
+      }
+      else if (scratchRequest.command == "cozmoDriveBackwardFast") {
+        // argFloat represents the number selected from the dropdown under the "drive backward fast" block
+        float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kFastDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
@@ -334,19 +343,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void SetRequestToOpenProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
       _RequestToOpenProjectOnWorkspace = request;
       _ProjectUUIDToOpen = projectUUID;
-    }
-
-    // Check if cozmoDriveFaster JavaScript bool arg is set by checking ScratchRequest.argBool and set speed appropriately.
-    private float GetDriveSpeed(ScratchRequest scratchRequest) {
-      float driveSpeed_mmps = kSlowDriveSpeed_mmps;
-      if (scratchRequest.argString == "medium") {
-        driveSpeed_mmps = kMediumDriveSpeed_mmps;
-      }
-      else if (scratchRequest.argString == "fast") {
-        driveSpeed_mmps = kFastDriveSpeed_mmps;
-      }
-
-      return driveSpeed_mmps;
     }
 
     private Anki.Cozmo.AnimationTrigger GetAnimationTriggerForScratchName(string scratchAnimationName) {

@@ -41,7 +41,21 @@
                     </shadow>
                 </value>
             </block>
+            <block type="cozmo_drive_forward_fast">
+                <value name="DISTANCE">
+                    <shadow type="math_whole_number_with_validator">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="cozmo_drive_backward">
+                <value name="DISTANCE">
+                    <shadow type="math_whole_number_with_validator">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="cozmo_drive_backward_fast">
                 <value name="DISTANCE">
                     <shadow type="math_whole_number_with_validator">
                         <field name="NUM">1</field>
@@ -108,13 +122,6 @@
             <block type="cozmo_wait_for_cube_tap"></block>
             </category>
             <category name="Control" colour="34" secondaryColour="0">
-            <block type="cozmo_drive_speed">
-                <value name="CHOICE">
-                    <shadow type="dropdown_cozmo_drive_speed">
-                        <field name="CHOICE">fast</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="control_repeat">
                 <value name="TIMES">
                     <shadow type="math_whole_number_with_validator">

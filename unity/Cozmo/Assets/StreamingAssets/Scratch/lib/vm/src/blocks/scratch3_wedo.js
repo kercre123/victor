@@ -20,7 +20,9 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
     return {
         cozmo_setbackpackcolor: this.setBackpackColor,
         cozmo_drive_forward: this.driveForward,
+        cozmo_drive_forward_fast: this.driveForwardFast,
         cozmo_drive_backward: this.driveBackward,
+        cozmo_drive_backward_fast: this.driveBackwardFast,
         cozmo_happy_animation: this.playHappyAnimation,
         cozmo_victory_animation: this.playVictoryAnimation,
         cozmo_unhappy_animation: this.playUnhappyAnimation,
@@ -46,7 +48,6 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_dock_with_cube: this.dockWithCube,
         cozmo_turn_left: this.turnLeft,
         cozmo_turn_right: this.turnRight,
-        cozmo_drive_speed: this.driveSpeed,
         cozmo_says: this.speak
     };
 };
@@ -89,20 +90,22 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
 };
 
 Scratch3CozmoBlocks.prototype.driveForward = function(args, util) {
-    if (args.DISTANCE < 1) {
-        return;
-    }
+    return this.driveBlocksHelper(args, util, "cozmoDriveForward");
+};
 
-    // The distMultiplier (as set by the parameter number under the block)
-    // will be used as a multiplier against the base dist_mm.
-    var distMultiplier = Cast.toNumber(args.DISTANCE);
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDriveForward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
-
-    return this._promiseForCommand(requestId);
+Scratch3CozmoBlocks.prototype.driveForwardFast = function(args, util) {
+    return this.driveBlocksHelper(args, util, "cozmoDriveForwardFast");
 };
 
 Scratch3CozmoBlocks.prototype.driveBackward = function(args, util) {
+    return this.driveBlocksHelper(args, util, "cozmoDriveBackward");
+};
+
+Scratch3CozmoBlocks.prototype.driveBackwardFast = function(args, util) {
+    return this.driveBlocksHelper(args, util, "cozmoDriveBackwardFast");
+};
+
+Scratch3CozmoBlocks.prototype.driveBlocksHelper = function(args, util, command) {
     if (args.DISTANCE < 1) {
         return;
     }
@@ -111,7 +114,7 @@ Scratch3CozmoBlocks.prototype.driveBackward = function(args, util) {
     // will be used as a multiplier against the base dist_mm.
     var distMultiplier = Cast.toNumber(args.DISTANCE);
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoDriveBackward","argFloat": ' + distMultiplier + ', "argString": "' + this.runtime.cozmoDriveSpeed + '"}');
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "' + command + '","argFloat": ' + distMultiplier + '}');
 
     return this._promiseForCommand(requestId);
 };
@@ -347,10 +350,6 @@ Scratch3CozmoBlocks.prototype.waitForCubeTap = function (args, util) {
     window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoWaitForCubeTap"}');
 
     return this._promiseForCommand(requestId);
-};
-
-Scratch3CozmoBlocks.prototype.driveSpeed = function(args, util) {
-    this.runtime.cozmoDriveSpeed = Cast.toString(args.CHOICE);
 };
 
 /**

@@ -143,7 +143,6 @@ Sequencer.prototype.stepThread = function (thread) {
             if (thread.stack.length === 0) {
                 // No more stack to run!
                 thread.status = Thread.STATUS_DONE;
-                this.runtime.resetCozmoVariables();
                 return;
             }
             if (thread.peekStackFrame().isLoop) {

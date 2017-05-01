@@ -127,8 +127,6 @@ var Runtime = function () {
      */
     this.redrawRequested = false;
 
-    this.resetCozmoVariables();
-
     // Register all given block packages.
     this._registerBlockPackages();
 
@@ -464,7 +462,6 @@ Runtime.prototype.startHats = function (requestedHatOpcode,
  */
 Runtime.prototype.dispose = function () {
     this.stopAll();
-    this.resetCozmoVariables();
     this.targets.map(this.disposeTarget, this);
 };
 
@@ -511,14 +508,6 @@ Runtime.prototype.greenFlag = function () {
         this.targets[i].onGreenFlag();
     }
     this.startHats('event_whenflagclicked');
-};
-
-/**
- * Reset Cozmo variables. Must be reset for each script.
- * @private
- */
-Runtime.prototype.resetCozmoVariables = function () {
-    this.cozmoDriveSpeed = "slow";
 };
 
 /**
