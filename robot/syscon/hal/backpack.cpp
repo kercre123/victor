@@ -335,7 +335,7 @@ void Backpack::manage() {
   countdown = TIMER_SKIPS;
 
   #ifndef DISABLE_LIGHTS
-  if (BODY_VER == BODY_VER_1v5) {
+  if (BODY_VER >= BODY_VER_1v5) {
     nrf_gpio_pin_clear(PIN_BUTTON_DRIVE);
     nrf_gpio_cfg_output(PIN_BUTTON_DRIVE);
     MicroWait(10);

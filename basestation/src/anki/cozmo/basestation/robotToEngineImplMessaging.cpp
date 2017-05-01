@@ -323,7 +323,7 @@ void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInter
   Anki::Util::sEvent("robot.handle_robot_set_body_id", {{DDATA,string_id}}, string_id);
   
   robot->SetBodySerialNumber(bodyID);
-  robot->SetHWVersion(hwVersion);
+  robot->SetBodyHWVersion(hwVersion);
   robot->SetBodyColor(bodyColor);
 }
   

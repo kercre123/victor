@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
@@ -930,6 +930,11 @@ public class MockRobot : IRobot {
   public BodyColor BodyColor {
     get;
     set;
+  }
+
+  public int BodyHWVersion { 
+    get;
+    set; 
   }
 
   private ObservableObject _CarryingObject;

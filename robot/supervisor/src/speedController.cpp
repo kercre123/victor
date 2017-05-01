@@ -28,8 +28,6 @@
  * only if it turns out that we need it.
  **/
 
-//#include <math.h>
-//#include "hal/portable.h"
 #include <math.h>
 #include "anki/types.h"
 #include "speedController.h"

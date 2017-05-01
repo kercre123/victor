@@ -159,6 +159,9 @@
   "settings.versionPanel.label.appVersion": {
     "translation": "App Version: {0}"
   },
+  "settings.versionPanel.label.bodyHWVersion": {
+    "translation": "Body HW Version: {0}"
+  },
   "settings.versionPanel.label.cozmoColor": {
     "translation": "Cozmo Color: {0}"
   },

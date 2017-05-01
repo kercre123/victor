@@ -799,7 +799,9 @@ public:
   void SetBodySerialNumber(const u32 num) { _serialNumberBody = num; }
   
   void SetModelNumber(const u32 num) { _modelNumber = num; }
-  void SetHWVersion(const s32 num) { _hwVersion = num; }
+  
+  void SetBodyHWVersion(const s32 num) { _bodyHWVersion = num; }
+  const s32 GetBodyHWVersion() const   { return _bodyHWVersion;}
   
   void SetBodyColor(const s32 color);
   const BodyColor GetBodyColor() const { return _bodyColor; }
@@ -817,7 +819,7 @@ protected:
   u32       _serialNumberHead = 0;
   u32       _serialNumberBody = 0;
   u32       _modelNumber      = 0;
-  s32       _hwVersion        = 0;
+  s32       _bodyHWVersion    = -1;
   BodyColor _bodyColor        = BodyColor::UNKNOWN;
   
   // Whether or not sync time was acknowledged by physical robot

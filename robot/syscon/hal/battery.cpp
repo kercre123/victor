@@ -347,7 +347,7 @@ void Battery::updateOperatingMode() {
 
       // Simply disable hardware, do not boot bluetooth on 1.0 hardware
       // it doesn't always come back and reverts to factory
-      if (BODY_VER != BODY_VER_1v5) {
+      if (BODY_VER < BODY_VER_1v5) {
         Battery::powerOff();
         break ;
       }

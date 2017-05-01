@@ -61,6 +61,7 @@ private:
   uint32_t _fwVersion;
   uint32_t _fwTime;
   uint32_t _serialNumber = 0;
+  int32_t  _bodyHWVersion = -1;
   BodyColor _bodyColor = BodyColor::UNKNOWN;
   bool _validFirmware;
   bool _robotIsAvailable;

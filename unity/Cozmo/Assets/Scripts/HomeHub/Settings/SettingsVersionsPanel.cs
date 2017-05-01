@@ -1,4 +1,4 @@
-﻿using Anki.Cozmo.ExternalInterface;
+using Anki.Cozmo.ExternalInterface;
 using Anki.UI;
 using Cozmo.UI;
 using UnityEngine;
@@ -23,6 +23,9 @@ namespace Cozmo.Settings {
 
     [SerializeField]
     private CozmoText _CozmoColorLabel;
+
+    [SerializeField]
+    private CozmoText _BodyHWVersionLabel;
 
     [SerializeField]
     private CozmoButton _SupportButton;
@@ -72,6 +75,9 @@ namespace Cozmo.Settings {
 
       // Fill out Cozmo color args
       _CozmoColorLabel.FormattingArgs = new object[] { ShortenData(BodyColorToString(robot.BodyColor)) };
+
+	    // Fill out Body HW version args
+      _BodyHWVersionLabel.FormattingArgs = new object[] { ShortenData(BodyHWVersionToString(robot.BodyHWVersion)) };
 
       robot.RequestRobotRestoreData();
     }
@@ -274,5 +280,33 @@ namespace Cozmo.Settings {
         return Localization.Get(LocalizationKeys.kSettingsVersionPanelLabelCozmoColorUnknown);
       }
     }
+
+    // See BODY_VERS enum in syscon's hardware.h
+    private string BodyHWVersionToString(int bodyHWVersion) {
+      string versionString = "";
+      switch (bodyHWVersion) {
+        case 0:  // BODY_VER_EP
+        case 1:  // BODY_VER_PILOT
+        case 2:  // BODY_VER_PROD
+          versionString = "1.0p";
+          break;
+        case 3:  // BODY_VER_SHIP
+        case 4:  // BODY_VER_SHIP
+          versionString = "1.0";
+          break;
+        case 5:  // BODY_VER_1v5
+          versionString = "1.5a";
+          break;
+        case 6:  // BODY_VER_1v5c
+          versionString = "1.5c";
+          break;
+        default:
+          versionString = "0";
+          break;
+      }
+      versionString += " (" + bodyHWVersion.ToString() + ")";
+      return versionString;
+    }
+					
   }
 }

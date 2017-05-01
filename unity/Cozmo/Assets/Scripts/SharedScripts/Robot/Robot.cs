@@ -310,6 +310,8 @@ public class Robot : IRobot {
 
   public BodyColor BodyColor { get; set; }
 
+  public int BodyHWVersion { get; set; }
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private uint _NextIdTag = (uint)Anki.Cozmo.ActionConstants.FIRST_GAME_TAG;

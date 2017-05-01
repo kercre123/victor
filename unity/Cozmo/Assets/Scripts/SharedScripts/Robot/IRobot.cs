@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -145,6 +145,8 @@ public interface IRobot : IDisposable {
   uint SerialNumber { get; set; }
 
   BodyColor BodyColor { get; set; }
+
+  int BodyHWVersion { get; set; }
 
   ObservableObject CarryingObject { get; }
 

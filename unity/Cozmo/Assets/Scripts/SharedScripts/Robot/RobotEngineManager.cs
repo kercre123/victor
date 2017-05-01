@@ -381,6 +381,7 @@ public class RobotEngineManager : MonoBehaviour {
       AddRobot((byte)message.robotID);
       CurrentRobot.FirmwareVersion = message.fwVersion;
       CurrentRobot.SerialNumber = message.serialNumber;
+      CurrentRobot.BodyHWVersion = message.bodyHWVersion;
       CurrentRobot.BodyColor = message.bodyColor;
 
       var persistence = DataPersistence.DataPersistenceManager.Instance;

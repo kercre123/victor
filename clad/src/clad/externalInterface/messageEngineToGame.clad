@@ -66,6 +66,7 @@ message RobotConnectionResponse {
     RobotConnectionResult result,
     uint_32 fwVersion,
     uint_32 serialNumber,
+    int_32  bodyHWVersion,
     BodyColor bodyColor // see robotStatusAndActions.clad
 }
 

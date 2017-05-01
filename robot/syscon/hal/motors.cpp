@@ -63,6 +63,7 @@ const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
 // Applying a slip factor correction of 94.8%
 const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
+const u32 METERS_PER_TICK_1v5c = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 149.7);
 Fixed metersPerWheelTick;
 
 // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
@@ -358,7 +359,11 @@ void Motors::init()
   ConfigurePPI(NRF_TIMER0, 0, 0);
   ConfigurePPI(NRF_TIMER2, 2, 4);
 
-  metersPerWheelTick = METERS_PER_TICK;
+  if (BODY_VER >= BODY_VER_1v5c) {
+    metersPerWheelTick = METERS_PER_TICK_1v5c;
+  } else {
+    metersPerWheelTick = METERS_PER_TICK;
+  }
   radiansPerLiftTick = RADIANS_PER_LIFT_TICK;
   radiansPerHeadTick = RADIANS_PER_HEAD_TICK;
   
@@ -370,7 +375,7 @@ void Motors::init()
   
   // On 1.0 robots, encoders have 4-flags
   // On 1.5 robots, encoders have 2-flags
-  if (BODY_VER == BODY_VER_1v5) {
+  if (BODY_VER >= BODY_VER_1v5) {
     metersPerWheelTick <<= 1;
     radiansPerLiftTick <<= 1;
     radiansPerHeadTick <<= 1;
@@ -531,7 +536,7 @@ void Motors::manage()
   g_dataToHead.speeds[MOTOR_HEAD] = Motors::getSpeed(MOTOR_HEAD) * radiansPerHeadTick;
   
   // If this is a 1.0 body, fake it to have the same 2-flag encoder resolution as a 1.5 body
-  const s32 neg_mask = (USE_HALF_ENCODER_RES_FOR_COZMO_10 && (BODY_VER != BODY_VER_1v5)) ? 1 : 0;
+  const s32 neg_mask = (USE_HALF_ENCODER_RES_FOR_COZMO_10 && (BODY_VER < BODY_VER_1v5)) ? 1 : 0;
   
   g_dataToHead.positions[MOTOR_LEFT_WHEEL] = FIXED_MUL(m_motors[MOTOR_LEFT_WHEEL].position & ~neg_mask, metersPerWheelTick);
   g_dataToHead.positions[MOTOR_RIGHT_WHEEL] = FIXED_MUL(m_motors[MOTOR_RIGHT_WHEEL].position & ~neg_mask, metersPerWheelTick);

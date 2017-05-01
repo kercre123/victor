@@ -242,6 +242,7 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
     AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::mfgId, [this, result, robotFwVersion] (const AnkiEvent<RobotToEngine>& message) {
       const auto& payload = message.GetData().Get_mfgId();
       _serialNumber = payload.esn;
+      _bodyHWVersion = payload.hw_version;
       
       const BodyColor bodyColor = static_cast<BodyColor>(payload.body_color);
       if(bodyColor <= BodyColor::UNKNOWN ||
@@ -275,6 +276,7 @@ void RobotInitialConnection::SendConnectionResponse(RobotConnectionResult result
                                                                             result,
                                                                             robotFwVersion,
                                                                             _serialNumber,
+                                                                            _bodyHWVersion,
                                                                             _bodyColor}});
 }
 

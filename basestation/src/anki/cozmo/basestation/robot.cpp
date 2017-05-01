@@ -3187,7 +3187,7 @@ void Robot::HandleMessage(const ExternalInterface::RequestRobotSettings& msg)
                                                     GetHeadSerialNumber(),
                                                     GetBodySerialNumber(),
                                                     _modelNumber,
-                                                    _hwVersion,
+                                                    GetBodyHWVersion(),
                                                     std::move(cameraConfig),
                                                     GetBodyColor());
   
