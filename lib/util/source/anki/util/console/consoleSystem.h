@@ -8,7 +8,7 @@
  *
  *  Description:
  *  - The Console System allows users to register variables so that they can be edited remotely via console/terminal
- *  - Users can also register fuctions with the system to be called remotely via console/terminal
+ *  - Users can also register functions with the system to be called remotely via console/terminal
  *  - It handles all of the text parsing from the console
  *
  *******************************************************************************************************************************/
@@ -139,7 +139,7 @@ public:
 template <typename T>
 inline void ConsoleSystem::Register( T& value, const std::string& keystring, const std::string& category )
 {
-  // The IConsoleVariable will register iteself within it's constructor.
+  // The IConsoleVariable will register itself within its constructor.
   IConsoleVariable* var = new ConsoleVar<T>( value, keystring.c_str(), category.c_str() );
   allocatedVariables_.push_back( var );
 }

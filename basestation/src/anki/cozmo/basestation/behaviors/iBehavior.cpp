@@ -923,7 +923,7 @@ bool IBehavior::StopHelperWithoutCallback()
   auto handle = _currentHelperHandle.lock();
   if( handle ) {
     PRINT_CH_INFO("Behaviors", (GetName() + ".SmartStopHelper").c_str(),
-                  "Behavior stopping it's helper");
+                  "Behavior stopping its helper");
 
     handleStopped = _robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(handle);
   }
@@ -1011,7 +1011,7 @@ bool IBehavior::HandleNewDoubleTap(Robot& robot)
 
 
 ////////
-//// Scored Behavior fuctions
+//// Scored Behavior functions
 ///////
 namespace {
   static const char* kEmotionScorersKey            = "emotionScorers";
@@ -1044,7 +1044,7 @@ float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// EvaluateScoreInternal is virtual and can optionally be overridden by subclasses
+// EvaluateRunningScoreInternal is virtual and can optionally be overridden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   // unless specifically overridden it should mimic the non-running score
@@ -1271,8 +1271,8 @@ void IBehavior::InitScored(Robot& robot)
   
 bool IBehavior::IsRunnableScored(const BehaviorPreReqNone& preReqData) const
 {
-  // Currently we only resume from scorred behaviors, which is why we have this
-  // logic seperated out
+  // Currently we only resume from scored behaviors, which is why we have this
+  // logic separated out
   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // check to see if we're on a cliff cooldown
   if(curTime < _timeCanRunAfterPossibleInfiniteLoopCooldown_sec){

@@ -457,7 +457,7 @@ namespace Anki {
                           });
             }
             // Otherwise if we are doing a DriveToPickupObject action in one state (instead of the driveTo and pickup
-            // in seperate states
+            // in separate states
             else if(kDriveToAndPickupBlockOneAction)
             {
               IActionRunner* action = nullptr;

@@ -103,7 +103,7 @@ namespace Anki {
       }
       
       auto iter = _history.begin();
-      // Seperate check for the first element due to there not being anything before it
+      // Separate check for the first element due to there not being anything before it
       if(iter->timestamp > t)
       {
         if(ABS(iter->rateX) > rateX && ABS(iter->rateY) > rateY && ABS(iter->rateZ) > rateZ)
@@ -300,7 +300,7 @@ namespace Anki {
             beforeLine -= numRows;
           }
           
-          // Linearly interpolate the imu data using the line numbers the before and after imu data was captured
+          // Linearly interpolate the imu data using the line numbers before and after imu data was captured
           rateY = (((line - beforeLine)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (afterLine - beforeLine)) + ImuBeforeT->rateY;
           rateZ = (((line - beforeLine)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (afterLine - beforeLine)) + ImuBeforeT->rateZ;
           
@@ -316,7 +316,7 @@ namespace Anki {
         rateZ = poseData.imuDataHistory.back().rateZ;
       }
       
-      // If we aren't doing vertical correction than setting rateY to zero will ensure no Y shift
+      // If we aren't doing vertical correction then setting rateY to zero will ensure no Y shift
       if(!doVerticalCorrection)
       {
         rateY = 0;

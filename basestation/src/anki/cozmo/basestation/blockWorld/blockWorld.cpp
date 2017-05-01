@@ -160,13 +160,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // old .badIsAdding message
       if(!isAdding)
       {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessOject.RemovalNotSupported",
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessObject.RemovalNotSupported",
                             "ContentType MarkerlessObject removal is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
                             kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
       }
       else
       {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessOject.AdditionNotSupported",
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessObject.AdditionNotSupported",
                             "ContentType MarkerlessObject addition is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
                             kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
         // retType = ContentType::ObstacleUnrecognized;
@@ -179,13 +179,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       // old .badIsAdding message
       if(!isAdding)
       {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomOject.RemovalNotSupported",
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomObject.RemovalNotSupported",
                             "ContentType CustomObject removal is not supported. kCustomObjectsToMemMap was (%s)",
                             kAddCustomObjectsToMemMap ? "true" : "false");
       }
       else
       {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomOject.AdditionNotSupported",
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.CustomObject.AdditionNotSupported",
                             "ContentType CustomObject addition is not supported. kCustomObjectsToMemMap was (%s)",
                             kAddCustomObjectsToMemMap ? "true" : "false");
       }

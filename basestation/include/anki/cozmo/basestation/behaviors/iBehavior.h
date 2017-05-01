@@ -220,7 +220,7 @@ protected:
     _behaviorGroups.SetBitFlag(behaviorGroup, newVal);
   }
     
-  // Only sets the name if it's currenty the base default name
+  // Only sets the name if it's currently the base default name
   void SetDefaultName(const char* inName);
   inline void SetDebugStateName(const std::string& inName) {
     _debugStateName = inName;
@@ -520,7 +520,7 @@ private:
   std::vector<ObjectID> _customLightObjects;
   
 ////////
-//// Scored Behavior fuctions
+//// Scored Behavior functions
 ///////
   
 public:
@@ -554,7 +554,7 @@ protected:
   virtual float EvaluateRunningScoreInternal(const Robot& robot) const;
   virtual float EvaluateScoreInternal(const Robot& robot) const;
   
-  // Additional start acting definitions realiting to score
+  // Additional start acting definitions relating to score
   
   // Called after StartActing, will add extraScore to the result of EvaluateRunningScoreInternal. This makes
   // it easy to encourage the system to keep a behavior running while it is acting. NOTE: multiple calls to
@@ -677,7 +677,7 @@ void IBehavior::HandleEvent(const EventType& event)
   
 
 ////////
-//// Scored Behavior fuctions
+//// Scored Behavior functions
 ///////
   
 inline bool IBehavior::StartActingExtraScore(IActionRunner* action, float extraScoreWhileActing) {

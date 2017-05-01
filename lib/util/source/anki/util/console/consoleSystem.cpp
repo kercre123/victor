@@ -94,7 +94,7 @@ ConsoleSystem::~ConsoleSystem()
   // JARROD-TODO: We should probably allocate all of our variables/functions so that we don't rely on some being static and
   // others being allocated.  Makes more sense to have them all created the same.
   // This means that IConsoleVariable and IConsoleFunction would merely be a shell class for allocating vars/funcs at runtime
-  // through the ConsoleSystem (same way the c-api does it.
+  // through the ConsoleSystem (same way the c-api does it).
 }
   
 //------------------------------------------------------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ void ConsoleSystem::Register( const std::string& keystring, ConsoleFunc function
     PRINT_NAMED_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
   }
 
-  // The IConsoleVariable will register iteself within it's constructor.
+  // The IConsoleVariable will register itself within its constructor.
   IConsoleFunction* func = new IConsoleFunction( keystring, function, categoryName, args );
   allocatedFunctions_.push_back( func );
 }
@@ -199,7 +199,7 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* fu
   // We require unique console function names so that we can call them by name.
   if ( !result.second )
   {
-    // Fail!  We're attempting to add a duplict name.
+    // Fail!  We're attempting to add a duplicate name.
     assert( false );
   }
   else

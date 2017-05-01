@@ -249,7 +249,7 @@ private:
   bool reverse_;
 };
 
-// TODO:(bn) move some of these to seperate files
+// TODO:(bn) move some of these to separate files
 class xythetaPlan
 {
 public:
