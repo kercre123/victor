@@ -17,7 +17,7 @@ cp $INFILE $OUTFILE
 pushd $(dirname $OUTFILE)
 
 # extract settings.xml
-unzip $APK_FILE $SETTINGS_FILE
+unzip -o $APK_FILE $SETTINGS_FILE
 # change the "showSplash" option from True to False
 sed -i '' -e 's/showSplash">True/showSplash">False/g' $SETTINGS_FILE
 # put our modified file back in the apk
