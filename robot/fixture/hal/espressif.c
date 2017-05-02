@@ -458,6 +458,14 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_st
 
 extern int generateCozmoPassword(char* pwOut, int len);
 
+//Model # (a.k.a. Head HW version?)
+//This should be defined somewhere in higher-level software. Clad?? For now keep a record here.
+enum {
+  HEAD_MODEL_EMPTY  = ~0,
+  HEAD_MODEL_1v0    = 0,  //Full production v1.0
+  //1-4 skipped. Attempting to bring hw-version in-line with syscon's body ver, now at #5. Possibly pointless.
+  HEAD_MODEL_1V5    = 5,  //v1.5 production
+};
 
 void ProgramEspressif(int serial)
 {
@@ -503,8 +511,8 @@ void ProgramEspressif(int serial)
       assert( sizeof(data) == (SERIALLEN+RANDLEN)*sizeof(u32) + PWDLEN );
       
       //Set serial/model
-      data.serial[0] = serial;  // Serial
-      data.serial[1] = 5;       // Model ;try to keep this in sync with HW version in sys_boot - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
+      data.serial[0] = serial;          // Serial
+      data.serial[1] = HEAD_MODEL_1V5;  // Model (HW Vers?)
       
       // Add 64 bytes of random gibberish, at Daniel's request
       for( int i=0; i < RANDLEN; i++ )
