@@ -80,9 +80,6 @@
       case 'modal-background':
         hideConfirmDeleteProjectModal();
         break;
-      case 'btn-tutorial':
-        alert('show tutorial');
-        break;
       default:
         console.log('unrecognized click data-type: ' + type);
     }

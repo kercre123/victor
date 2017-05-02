@@ -118,8 +118,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
         _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
 
-        // TODO Change to tutorial for first run, otherwise save/load UI.
-        LoadURL("extra/projects.html");
+        int timesPlayedCodeLab = 0;
+        DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(ChallengeID, out timesPlayedCodeLab);
+        if (timesPlayedCodeLab <= 0) {
+          LoadURL("extra/tutorial.html");
+        }
+        else {
+          LoadURL("extra/projects.html");
+        }
       }
     }
 
