@@ -1,7 +1,7 @@
 {
   // Starting values for each need (when cozmo is born)
   "InitialNeedsLevels": {
-    "Repair" : 0.9876,
+    "Repair" : 0.4876,
     "Energy" : 1.0000,
     "Play"   : 0.8765
   },
@@ -56,17 +56,17 @@
     "Energy": {
       "DecayRates":
       [
-        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+        { "Threshold": 0.5010, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2510, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1010, "DecayPerMinute": 0.0020 }
       ]
     },
     "Play": {
       "DecayRates":
       [
-        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
+        { "Threshold": 0.5001, "DecayPerMinute": 0.0100 },
+        { "Threshold": 0.2501, "DecayPerMinute": 0.0050 },
+        { "Threshold": 0.1001, "DecayPerMinute": 0.0020 }
       ]
     }
   },

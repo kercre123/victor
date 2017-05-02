@@ -34,6 +34,8 @@
 namespace Anki {
 namespace Cozmo {
 
+const char* NeedsManager::kLogChannelName = "NeedsSystem";
+
 
 static const std::string kNeedsStateFile = "needsState.json";
 
@@ -50,17 +52,22 @@ static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 static const float kNeedLevelStorageMultiplier = 100000.0f;
 
 
+static const float kConnectedDecayPeriod_s = 3.0f; // 3 seconds for testing; soon to be 60
+
+
 using Time = std::chrono::time_point<std::chrono::system_clock>;
+
 
 
 NeedsManager::NeedsManager(Robot& robot)
 : _robot(robot)
-, _lastUpdateTime(0.0f)
 , _needsState()
 , _needsConfig()
 , _needsStateFromRobot()
 , _isPaused(false)
-, _timeLastPaused(0.0f)
+, _currentTime_s(0.0f)
+, _timeForNextPeriodicDecay_s(0.0f)
+, _pausedDurRemainingPeriodicDecay(0.0f)
 , kPathToSavedStateFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
 {
@@ -74,7 +81,7 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const Json::Value& inJson)
 {
-  PRINT_NAMED_INFO("NeedsManager.Init", "Starting Init of NeedsManager");
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
   _needsConfig.Init(inJson);
 
   const u32 uninitializedSerialNumber = 0;
@@ -103,7 +110,7 @@ void NeedsManager::Init(const Json::Value& inJson)
 
 void NeedsManager::InitAfterConnection()
 {
-  PRINT_NAMED_INFO("NeedsManager.InitAfterConnection",
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection",
                       "Starting MAIN Init of NeedsManager, with serial number %d", _robot.GetBodySerialNumber());
   _needsState.Init(_needsConfig, _robot.GetBodySerialNumber());
 
@@ -128,7 +135,7 @@ void NeedsManager::InitAfterConnection()
   }
   else
   {
-    PRINT_NAMED_INFO("NeedsManager.InitAfterConnection", "No needs state data found on device; creating new file");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection", "No needs state data found on device; creating new file");
     _needsState._timeLastWritten = now;
     WriteToDevice(_needsState);
   }
@@ -136,13 +143,13 @@ void NeedsManager::InitAfterConnection()
   StartReadFromRobot();
 //  if (error)
 //  {
-//    PRINT_NAMED_INFO("NeedsManager.InitAfterConnection", "No needs state data found on robot; writing to robot");
+//    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection", "No needs state data found on robot; writing to robot");
 //    _needsState._timeLastWritten = now;
 //    StartWriteToRobot(_needsState);
 //  }
 //  else
 //  {
-////    PRINT_NAMED_INFO("NeedsManager.InitAfterConnection",
+////    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection",
 ////                        "robotHasNeedsState is %s", robotHasNeedsState ? "true" : "false");
 //  }
 }
@@ -152,20 +159,19 @@ void NeedsManager::HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& m
 {
   const auto& payload = message.GetData().Get_mfgId();
   _needsState._robotSerialNumber = payload.esn;
-  PRINT_NAMED_INFO("NeedsManager.HandleMfgID", "HandleMfgID holds esn %d", payload.esn);
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.HandleMfgID", "HandleMfgID holds esn %d", payload.esn);
 
   InitAfterConnection();
 }
 
 
 
-void NeedsManager::Update(float currentTime_s)
+void NeedsManager::Update(const float currentTime_s)
 {
 //  if (!_robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::NeedsSystem))
 //    return;
 
-  //_needsState._robotSerialNumber = _robot.GetBodySerialNumber();
-  //PRINT_NAMED_INFO("NeedsManager.Update", ">>>  _robotSerialNumber %d", _needsState._robotSerialNumber);
+  _currentTime_s = currentTime_s;
 
   if (_isPaused)
     return;
@@ -173,17 +179,27 @@ void NeedsManager::Update(float currentTime_s)
   // Don't do anything while reading/writing robot data
   if (_robotStorageState != RobotStorageState::Inactive)
     return;
-  
-  // todo:  calculated elapsed time.
-  // todo:  Check to see if it's time to do the per-minute decay operation, and if so, reset that timer and call _needsStata.Decay(elapsedTime (60s))
-  //SendNeedsStateToGame(NeedsActionId::Decay);
-  
+
+  if (NEAR_ZERO(_timeForNextPeriodicDecay_s))
+  {
+    _timeForNextPeriodicDecay_s = currentTime_s + kConnectedDecayPeriod_s;
+  }
+
+  if (currentTime_s >= _timeForNextPeriodicDecay_s)
+  {
+    _timeForNextPeriodicDecay_s += kConnectedDecayPeriod_s;
+
+    _needsState.ApplyDecay(kConnectedDecayPeriod_s, _needsConfig._decayConnected);
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
+  }
 }
 
 
 void NeedsManager::SetPaused(bool paused)
 {
-  if (paused == _isPaused) {
+  if (paused == _isPaused)
+  {
     DEV_ASSERT_MSG(paused != _isPaused, "NeedsManager.SetPaused.Redundant",
                    "Setting paused to %s but already in that state",
                    paused ? "true" : "false");
@@ -192,17 +208,21 @@ void NeedsManager::SetPaused(bool paused)
 
   _isPaused = paused;
 
-  
-  SendNeedsPauseStateToGame();
-  
-  if (_isPaused) {
-    // todo:  If pausing, record current time in _timeLastPaused?
+  if (_isPaused)
+  {
+    // Calculate and record how much time was left until the next decay
+    _pausedDurRemainingPeriodicDecay = _timeForNextPeriodicDecay_s - _currentTime_s;
+
     // Should we send the current needs state to the game as soon as we pause?
     //  (because the periodic decay won't happen during pause)
   }
-  else {
-    // todo:  If unpausing, ?
+  else
+  {
+    // When unpausing, set the next 'time for periodic decay'
+    _timeForNextPeriodicDecay_s = _currentTime_s + _pausedDurRemainingPeriodicDecay;
   }
+
+  SendNeedsPauseStateToGame();
 }
 
 
@@ -334,7 +354,7 @@ void NeedsManager::WriteToDevice(const NeedsState& needsState)
   }
 //  auto tickEnd = std::chrono::system_clock::now();
 //  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tickEnd - tickStart);
-//  PRINT_NAMED_INFO("NeedsManager.WriteToDevice", "Write to device took %lld microseconds", microsecs.count());
+//  PRINT_CH_INFO(kLogChannelName, "NeedsManager.WriteToDevice", "Write to device took %lld microseconds", microsecs.count());
 }
 
 bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
@@ -392,7 +412,7 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
 {
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
               "Attempting to write to robot but state is %d", _robotStorageState);
-  PRINT_NAMED_INFO("NeedsManager.StartWriteToRobot", "Writing to robot...");
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
   ANKI_CPU_PROFILE("NeedsState::StartWriteToRobot");
   auto tickStart = std::chrono::system_clock::now();
 
@@ -431,7 +451,7 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
   }
   auto tickEnd = std::chrono::system_clock::now();
   auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tickEnd - tickStart);
-  PRINT_NAMED_INFO("NeedsManager.StartWriteToRobot", "Write to robot START took %lld microseconds", microsecs.count());
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Write to robot START took %lld microseconds", microsecs.count());
 }
 
 void NeedsManager::FinishWriteToRobot(NVStorage::NVResult res)
@@ -442,7 +462,7 @@ void NeedsManager::FinishWriteToRobot(NVStorage::NVResult res)
 
 //  auto tickEnd = std::chrono::system_clock::now();
 //  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tickEnd - tickStart);
-//  PRINT_NAMED_INFO("NeedsManager.StartWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
+//  PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
 
   if (res < NVStorage::NVResult::NV_OKAY)
   {
@@ -491,7 +511,7 @@ void NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResul
     // The tag doesn't exist on the robot indicating the robot is new or has been wiped
     if (res == NVStorage::NVResult::NV_NOT_FOUND)
     {
-      PRINT_NAMED_INFO("NeedsManager.FinishReadFromRobot", "No nurture metagame data on robot");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishReadFromRobot", "No nurture metagame data on robot");
       StartWriteToRobot(_needsState);
     }
     else

@@ -12,6 +12,7 @@
 
 
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "util/enums/stringToEnumMapper.hpp"
 #include <assert.h>
 
@@ -49,27 +50,38 @@ NeedId NeedIdFromString(const char* inString)
 NeedsConfig::NeedsConfig()
 : _initialNeedsLevels()
 , _needsBrackets()
+, _decayConnected()
+, _decayUnconnected()
 {
 }
 
 void NeedsConfig::Init(const Json::Value& json)
 {
   _initialNeedsLevels.clear();
+  const auto& jsonInitialNeedsLevels = json[kInitialNeedsLevelsArrayKey];
   for (size_t i = 0; i < (size_t)NeedId::Count; i++)
   {
-    _initialNeedsLevels[static_cast<NeedId>(i)] = json[kInitialNeedsLevelsArrayKey][EnumToString(static_cast<NeedId>(i))].asFloat();
+    const auto value = JsonTools::ParseFloat(jsonInitialNeedsLevels,
+                                   EnumToString(static_cast<NeedId>(i)),
+                                   "Failed to parse an initial need level");
+    _initialNeedsLevels[static_cast<NeedId>(i)] = value;
   }
 
   _needsBrackets.clear();
   for (size_t i = 0; i < (size_t)NeedId::Count; i++)
   {
-    const Json::Value& jsonForNeedId = json[kBracketLevelsArrayKey][EnumToString(static_cast<NeedId>(i))];
+    const auto& jsonForNeedId = json[kBracketLevelsArrayKey][EnumToString(static_cast<NeedId>(i))];
     BracketThresholds thresholds;
     for (size_t i = 0; i < (size_t)NeedBracketId::Count; i++)
     {
-      const float value = jsonForNeedId[EnumToString(static_cast<NeedBracketId>(i))].asFloat();
+      const auto value = JsonTools::ParseFloat(jsonForNeedId,
+                                               EnumToString(static_cast<NeedBracketId>(i)),
+                                               "Failed to parse an initial need level");
       thresholds.push_back(value);
     }
+    DEV_ASSERT_MSG((thresholds.back() == 0.0f),
+                   "NeedsConfig.Init",
+                   "Last threshold in bracket list should be zero but is %f", thresholds.back());
     _needsBrackets[static_cast<NeedId>(i)] = std::move(thresholds);
   }
 
@@ -77,9 +89,28 @@ void NeedsConfig::Init(const Json::Value& json)
   InitDecay(json, kDecayUnconnectedKey, _decayUnconnected);
 }
 
+struct SortDecayRatesByThresholdDescending
+{
+  bool operator()(const DecayRate& a, const DecayRate& b) const
+  {
+    return (a._threshold >= b._threshold);
+  }
+};
+
+struct SortDecayModifiersByThresholdDescending
+{
+  bool operator()(const DecayModifier& a, const DecayModifier& b) const
+  {
+    return (a._threshold >= b._threshold);
+  }
+};
+
 
 void NeedsConfig::InitDecay(const Json::Value& json, const std::string& decayKey, DecayConfig& decayInfo)
 {
+  DecayRatesByNeed decayRatesByNeed;
+  DecayModifiersByNeed decayModifiersByNeed;
+
   for (size_t needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
   {
     const auto& jsonForNeed = json[decayKey][EnumToString(static_cast<NeedId>(needIndex))];
@@ -87,28 +118,46 @@ void NeedsConfig::InitDecay(const Json::Value& json, const std::string& decayKey
     DecayRates decayRates;
     for (const auto& item : jsonForNeed[kDecayRatesKey])
     {
-      const float threshold = item[kThresholdKey].asFloat();
-      const float rate = item[kDecayPerMinuteKey].asFloat();
+      const auto threshold = JsonTools::ParseFloat(item, kThresholdKey.c_str(),
+                                                   "Failed to parse a decay threshold");
+      const auto rate = JsonTools::ParseFloat(item, kDecayPerMinuteKey.c_str(),
+                                              "Failed to parse a decay rate");
+      DEV_ASSERT_MSG(rate >= 0.0f,
+                     "NeedsConfig.InitDecay",
+                     "A decay rate needs to be positive but is %f", rate);
       decayRates.push_back(DecayRate(threshold, rate));
     }
-    decayInfo._decayRates = std::move(decayRates);
+    // Sort the decay rates by descending threshold
+    std::sort(decayRates.begin(), decayRates.end(), SortDecayRatesByThresholdDescending());
 
-    DecayModifers decayModifiers;
+    decayRatesByNeed.push_back(decayRates);
+
+    DecayModifiers decayModifiers;
     for (const auto& item : jsonForNeed[kDecayModifiersKey])
     {
-      const float threshold = item[kThresholdKey].asFloat();
+      const auto threshold = JsonTools::ParseFloat(item, kThresholdKey.c_str(),
+                                                   "Failed to parse a modifier threshold");
 
       OtherNeedModifiers otherNeedModifiers;
       for (const auto& otherNeedItem : item[kOtherNeedsAffectedKey])
       {
-        const NeedId otherNeedID = NeedIdFromString(otherNeedItem[kOtherNeedIDKey].asString().c_str());
-        const float multiplier = otherNeedItem[kMultiplierKey].asFloat();
+        const auto otherNeedStr = JsonTools::ParseString(otherNeedItem, kOtherNeedIDKey.c_str(),
+                                                         "Failed to parse a modifier 'other need id'");
+        const NeedId otherNeedID = NeedIdFromString(otherNeedStr.c_str());
+        const auto multiplier = JsonTools::ParseFloat(otherNeedItem, kMultiplierKey.c_str(),
+                                                      "Failed to parse a modifier multiplier");
         otherNeedModifiers.push_back(OtherNeedModifier(otherNeedID, multiplier));
       }
       decayModifiers.push_back(DecayModifier(threshold, otherNeedModifiers));
     }
-    decayInfo._decayModifiers = std::move(decayModifiers);
+    // Sort the decay modifiers by descending threshold
+    std::sort(decayModifiers.begin(), decayModifiers.end(), SortDecayModifiersByThresholdDescending());
+
+    decayModifiersByNeed.push_back(decayModifiers);
   }
+
+  decayInfo._decayRatesByNeed = std::move(decayRatesByNeed);
+  decayInfo._decayModifiersByNeed = std::move(decayModifiersByNeed);
 }
 
 } // namespace Cozmo

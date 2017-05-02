@@ -57,12 +57,15 @@ struct DecayModifier
 
 
 using DecayRates = std::vector<DecayRate>;
-using DecayModifers = std::vector<DecayModifier>;
+using DecayRatesByNeed = std::vector<DecayRates>;
+
+using DecayModifiers = std::vector<DecayModifier>;
+using DecayModifiersByNeed = std::vector<DecayModifiers>;
 
 struct DecayConfig
 {
-  DecayRates    _decayRates;
-  DecayModifers _decayModifiers;
+  DecayRatesByNeed     _decayRatesByNeed;
+  DecayModifiersByNeed _decayModifiersByNeed;
 };
 
 

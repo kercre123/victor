@@ -27,7 +27,6 @@
 namespace Anki {
 namespace Cozmo {
 
-
 namespace ExternalInterface {
   class MessageGameToEngine;
 }
@@ -54,7 +53,7 @@ public:
   void Init(const Json::Value& inJson);
   void InitAfterConnection();
   
-  void Update(float currentTime_s);
+  void Update(const float currentTime_s);
   
   void SetPaused(bool paused);
   bool GetPaused() const { return _isPaused; };
@@ -80,6 +79,8 @@ public:
   bool StartReadFromRobot();
   void FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res);
 
+  static const char* kLogChannelName;
+
 private:
 
   void SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate);
@@ -87,14 +88,16 @@ private:
   void SendAllNeedsMetToGame();
   
   Robot&      _robot;
-  float       _lastUpdateTime;
-  
+
   NeedsState  _needsState;
   NeedsConfig _needsConfig;
   NeedsState  _needsStateFromRobot; // Not used yet but may when I implement 'resolve on connect'
 
   bool        _isPaused;
-  float       _timeLastPaused;  //??
+
+  float       _currentTime_s;
+  float       _timeForNextPeriodicDecay_s;
+  float       _pausedDurRemainingPeriodicDecay;
   
   std::vector<Signal::SmartHandle> _signalHandles;
 

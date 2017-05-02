@@ -31,9 +31,10 @@ namespace ExternalInterface {
 }
 
 class NeedsConfig;
+struct DecayConfig;
 
 using Time = std::chrono::time_point<std::chrono::system_clock>;
-  
+
 
 class NeedsState
 {
@@ -47,9 +48,7 @@ public:
   void Reset();
   
   // Decay the needs values, according to how much time has passed since last decay, and config data
-  void Decay(float timeElasped_secs);
-  
-  void DecayUnconnected(float timeElapsed_secs);  //?
+  void ApplyDecay(const float timeElasped_s, const DecayConfig& decayConfig);
   
   float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
   NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBracketsCache[static_cast<NeedId>(i)]; };
