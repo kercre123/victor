@@ -15,8 +15,6 @@ namespace DataPersistence {
 
     public Dictionary<string, bool> CompletedScriptedSequences;
 
-    public Conversations.ConversationHistory ConversationHistory;
-
     public List<DataPersistence.TimelineEntryData> Sessions;
 
     // this would work better as a HashSet or a list but for some reason
@@ -63,7 +61,6 @@ namespace DataPersistence {
       HighScores = new Dictionary<string, int>();
       TotalGamesPlayed = new Dictionary<string, int>();
       LastPlayedDifficulty = new Dictionary<string, int>();
-      ConversationHistory = new Conversations.ConversationHistory();
       Sessions = new List<DataPersistence.TimelineEntryData>();
       GameInstructionalVideoPlayed = new Dictionary<string, bool>();
       CozmoSkillLevels = new Dictionary<string, DataPersistence.GameSkillData>();

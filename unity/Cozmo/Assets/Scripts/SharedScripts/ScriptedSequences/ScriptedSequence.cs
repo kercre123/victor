@@ -27,15 +27,15 @@ namespace ScriptedSequences {
     private bool _IsComplete;
 
     [JsonIgnore]
-    public bool IsComplete { 
-      get { return _IsComplete; } 
-      private set { 
+    public bool IsComplete {
+      get { return _IsComplete; }
+      private set {
         if (value && !Repeatable) {
           DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CompletedScriptedSequences[Name] = true;
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
-        _IsComplete = value; 
-      } 
+        _IsComplete = value;
+      }
     }
 
     [JsonIgnore]
@@ -52,16 +52,14 @@ namespace ScriptedSequences {
     }
 
     public void ResetSequence() {
-      #if DEBUG_SCRIPTED_SEQUENCES
+#if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Reset Called on Scripted Sequence " +Name);
-      #endif
-
-      Conversations.ConversationManager.Instance.AbortCurrentConversation();
+#endif
 
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].Reset();
       }
-        
+
       if (Condition != null) {
         // Toggling Condition.IsEnabled should reset our sequence to its starting state
         Condition.IsEnabled = false;
@@ -91,9 +89,9 @@ namespace ScriptedSequences {
         DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CompletedScriptedSequences.TryGetValue(Name, out _IsComplete);
       }
 
-      #if DEBUG_SCRIPTED_SEQUENCES
+#if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Initialize Called on Scripted Sequence " +Name);
-      #endif
+#endif
       bool canEnable = false;
       if (Condition != null) {
         Condition.Initialize(this);
@@ -130,10 +128,10 @@ namespace ScriptedSequences {
       }
     }
 
-    public void Enable() {      
-      #if DEBUG_SCRIPTED_SEQUENCES
+    public void Enable() {
+#if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Enable Called on Scripted Sequence " +Name);
-      #endif
+#endif
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].TryEnable();
       }
