@@ -1,4 +1,11 @@
 ----------------
+Release v96
+----------------
+
+PLAYPEN:
+-remove power_on cmds keeping cozmo alive during test (caused too many problems).
+
+----------------
 Release v95
 ----------------
 
