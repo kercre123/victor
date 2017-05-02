@@ -108,11 +108,11 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
 void BehaviorAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
 {
   // Ai Goals from behavior_config.json
-  // FP_Hiking          - when Cozmo is exploring its surroundings on his own
-  // FP_PlayWithHumans  - when Cozmo requests games to play with the player
-  // FP_PlayAlone       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
-  // FP_Socialize       - when Cozmo wants to interact with faces and players, but without playing games
-  // FP_NothingToDo     - fallback when Cozmo can't do anything else
+  // 'hiking'          - when Cozmo is exploring its surroundings on his own
+  // 'playWithHumans'  - when Cozmo requests games to play with the player
+  // 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+  // 'socialize'       - when Cozmo wants to interact with faces and players, but without playing games
+  // 'nothingToDo'     - fallback when Cozmo can't do anything else
   
   PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                 "RobotAudioClient.SetFreeplayMusic",
@@ -213,7 +213,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   } else {
     // Update the Guard Dog music mood/round if appropriate
     const auto& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
-    if (currAiGoal == "FP_PlayAlone" &&
+    if (currAiGoal == "playAlone" &&
         currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog)
     {
       // Change the freeplay mood to GuardDog if not already active
