@@ -1074,7 +1074,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.scratchCategoryMenuItem.categorySelected {',
-    'background: #747272;',
+    'background: #ffffff;',
     'border-radius: 16px;',
   '}',
 

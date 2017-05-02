@@ -26,14 +26,14 @@ Blockly.Colours = {
   // SVG colours: these must be specificed in #RRGGBB style
   // To add an opacity, this must be specified as a separate property (for SVG fill-opacity)
   "motion": {
-    "primary": "#1fadda",
-    "secondary": "#167d9c",
-    "tertiary": "#3373CC"
+    "primary": "#0898c4",
+    "secondary": "#06799c",
+    "tertiary": "#056a89"
   },
   "looks": {
-    "primary": "#8a6bff",
-    "secondary": "#5f33ff",
-    "tertiary": "#774DCB"
+    "primary": "#5e3dfc",
+    "secondary": "#4b30c9",
+    "tertiary": "#412ab0"
   },
   "sounds": {
     "primary": "#CF63CF",
@@ -41,19 +41,19 @@ Blockly.Colours = {
     "tertiary": "#BD42BD"
   },
   "control": {
-    "primary": "#e28f23",
-    "secondary": "#9e6215",
-    "tertiary": "#CF8B17"
+    "primary": "#e5580a",
+    "secondary": "#b74608",
+    "tertiary": "#a03d07"
   },
   "event": {
-    "primary": "#f7d22f",
-    "secondary": "#c5a207",
-    "tertiary": "#CDAD00"
+    "primary": "#f4b606",
+    "secondary": "#c39104",
+    "tertiary": "#aa7f04"
   },
   "actions": {
-    "primary": "#b15499",
-    "secondary": "#7b3a6b",
-    "tertiary": "#7b3a6b"
+    "primary": "#a03c87",
+    "secondary": "#80306c",
+    "tertiary": "#702a5e"
   },
   "sensing": {
     "primary": "#5CB1D6",
