@@ -15,7 +15,8 @@ rm -rf $ASSETSDIR
 mkdir -p $ASSETSDIR
 rm -f $RESDIR/assets.zip
 pushd unity/Cozmo/Assets/StreamingAssets
-zip $RESDIR/assets.zip `cat resources.txt` cozmo_resources/sound/AudioAssets.zip
+cat resources.txt | zip -@ $RESDIR/assets.zip
+zip $RESDIR/assets.zip cozmo_resources/sound/AudioAssets.zip
 popd
 unzip $RESDIR/assets.zip -d $ASSETSDIR
 if [ ! -e $ASSETSDIR/resources.txt ]; then
