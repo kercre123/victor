@@ -104,22 +104,25 @@ void BodyLightComponent::Update()
 {
   UpdateChargingLightConfig();
   
-  BackpackLightDataRef bestNewConfig = GetBestLightConfig();
+  BackpackLightDataRefWeak bestNewConfig = GetBestLightConfig();
+  
+  auto newConfig = bestNewConfig.lock();
+  auto curConfig = _curBackpackLightConfig.lock();
   
   // If the best config at this time is different from what we had, change it
-  if (bestNewConfig != _curBackpackLightConfig)
+  if (newConfig != curConfig)
   {
-    _curBackpackLightConfig = bestNewConfig;
-    
     // If the best config is still a thing, use it. Otherwise use the off config
-    if (bestNewConfig)
+    if (newConfig != nullptr)
     {
-      SetBackpackLightsInternal(bestNewConfig->_lightConfiguration);
+      SetBackpackLightsInternal(newConfig->_lightConfiguration);
     }
     else
     {
       SetBackpackLightsInternal(GetOffBackpackLights());
     }
+    
+    _curBackpackLightConfig = bestNewConfig;
   }
 }
 
@@ -298,7 +301,7 @@ std::vector<BackpackLightSourceType> BodyLightComponent::GetLightSourcePriority(
   return std::vector<BackpackLightSourceType>(beginIter, endIter);
 }
   
-BackpackLightDataRef BodyLightComponent::GetBestLightConfig()
+BackpackLightDataRefWeak BodyLightComponent::GetBestLightConfig()
 {
   if (_backpackLightMap.empty())
   {

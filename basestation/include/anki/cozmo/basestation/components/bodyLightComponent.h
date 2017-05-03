@@ -82,7 +82,7 @@ private:
   BackpackLightMap                _backpackLightMap;
   
   // Reference to the most recently used light configuration
-  BackpackLightDataRef            _curBackpackLightConfig;
+  BackpackLightDataRefWeak        _curBackpackLightConfig;
   
   // Locator handle for the shared light configuration associated with SetBackpackLights above
   BackpackLightDataLocator        _sharedLightConfig{};
@@ -106,7 +106,7 @@ private:
   
   void UpdateChargingLightConfig();
   static std::vector<BackpackLightSourceType> GetLightSourcePriority();
-  BackpackLightDataRef GetBestLightConfig();
+  BackpackLightDataRefWeak GetBestLightConfig();
   
 };
 
