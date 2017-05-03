@@ -39,6 +39,9 @@
   "behavior.KnockOverCubes": {
     "translation": "Cozmo is knocking over a stack of Cubes"
   },
+  "behavior.TrackLaser": {
+    "translation": "Cozmo is following a laser"
+  },
   "behavior.PopAWheelie": {
     "translation": "Cozmo is popping a wheelie"
   },

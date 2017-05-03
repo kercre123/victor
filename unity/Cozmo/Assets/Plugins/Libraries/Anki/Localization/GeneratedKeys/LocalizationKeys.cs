@@ -9,6 +9,7 @@ public static class LocalizationKeys {
   public const string kBehaviorThinkAboutBeacons = "behavior.ThinkAboutBeacons";
   public const string kBehaviorVisitInterestingEdge = "behavior.VisitInterestingEdge";
   public const string kBehaviorKnockOverCubes = "behavior.KnockOverCubes";
+  public const string kBehaviorTrackLaser = "behavior.TrackLaser";
   public const string kBehaviorPopAWheelie = "behavior.PopAWheelie";
   public const string kBehaviorPounceOnMotion = "behavior.PounceOnMotion";
   public const string kBehaviorFistBump = "behavior.FistBump";
