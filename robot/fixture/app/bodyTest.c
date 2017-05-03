@@ -360,7 +360,7 @@ TestFunction* GetBody3TestFunctions(void)
     HeadlessBoot,
     TestBackpackPullup,
     BodyMotor,
-    DropLeakage,
+    //DropLeakage, //disable test for 1v5 PVT line changes
     BatteryCheck,
     NULL
   };
