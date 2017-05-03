@@ -23,7 +23,7 @@ def write_translations_to_file(translated_json_dir,output_asset_path):
       data = json.load(json_file);
       for key, value in data.items():
         if "translation" in value:
-          translation_string = translation_string + value["translation"]
+          translation_string = translation_string + value["translation"] + '\n'
   
   with open(output_asset_path, "w") as text_file:
     text_file.write(translation_string.encode('utf8'))
