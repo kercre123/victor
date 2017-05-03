@@ -25,13 +25,14 @@ MonoBehaviour:
     _EnumValue: 14
   _Music:
     _Music: -1060883196
-  MinigameConfig: {fileID: 11400000, guid: f01a1b66151be43caaaf3b14a0fe42b7, type: 2}
+  ChallengeConfig: {fileID: 11400000, guid: f01a1b66151be43caaaf3b14a0fe42b7, type: 2}
   IsMinigame: 0
   InstructionVideoPath: 
+  ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: CozmoSaysGetIn
-    _EnumValue: 13
+    _EnumValue: 37
   GetOutAnimTrigger:
     _EnumValueAsString: DroneModeGetOut
-    _EnumValue: 60
+    _EnumValue: 90

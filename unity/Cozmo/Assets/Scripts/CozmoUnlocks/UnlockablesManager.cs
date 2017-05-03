@@ -1,8 +1,8 @@
-﻿using UnityEngine;
 using Anki.Cozmo;
+using Cozmo.Challenge;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 using Anki.Cozmo.ExternalInterface;
 
@@ -303,8 +303,8 @@ public class UnlockablesManager : MonoBehaviour {
   // Do not clear unlock slots until they have been played once.
   private void HandleGameEvent(GameEventWrapper gameEvent) {
     ChallengeData currGameData = null;
-    if (ChallengeDataList.Instance != null && gameEvent.GameEventEnum == GameEvent.OnChallengeComplete && gameEvent is MinigameGameEvent) {
-      string currGameID = (gameEvent as MinigameGameEvent).GameID;
+    if (ChallengeDataList.Instance != null && gameEvent.GameEventEnum == GameEvent.OnChallengeComplete && gameEvent is ChallengeGameEvent) {
+      string currGameID = (gameEvent as ChallengeGameEvent).GameID;
       currGameData = Array.Find(ChallengeDataList.Instance.ChallengeData, (obj) => obj.ChallengeID == currGameID);
     }
     if (currGameData != null) {

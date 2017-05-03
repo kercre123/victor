@@ -40,7 +40,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // triggers that are disabled during minigames. some activities/games will choose to override this.
+  // triggers that are disabled during challenges. some activities/games will choose to override this.
   public static Anki.Cozmo.AllTriggersConsidered kDefaultMinigameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: true,
@@ -68,7 +68,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // cube pounce overrides the default minigame trigger disables with this
+  // cube pounce overrides the default challenge trigger disables with this
   public static Anki.Cozmo.AllTriggersConsidered kCubePounceGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
@@ -96,7 +96,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // drone mode overrides the default minigame trigger disables with this
+  // drone mode overrides the default challenge trigger disables with this
   public static Anki.Cozmo.AllTriggersConsidered kDroneModeGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
@@ -124,7 +124,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // face enrollment overrides the default minigame trigger disables with this
+  // face enrollment overrides the default challenge trigger disables with this
   public static Anki.Cozmo.AllTriggersConsidered kFaceEnrollmentTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: false,
     cubeMoved: false,
@@ -152,7 +152,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // memory match overrides the default minigame trigger disables with this
+  // memory match overrides the default challenge trigger disables with this
   public static Anki.Cozmo.AllTriggersConsidered kMemoryMatchGameTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: true,
@@ -180,7 +180,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
-  // cozmo says overrides the default minigame trigger disables with this
+  // cozmo says overrides the default challenge trigger disables with this
   public static Anki.Cozmo.AllTriggersConsidered kSayTextSlideTriggers = new Anki.Cozmo.AllTriggersConsidered(
     cliffDetected: true,
     cubeMoved: false,

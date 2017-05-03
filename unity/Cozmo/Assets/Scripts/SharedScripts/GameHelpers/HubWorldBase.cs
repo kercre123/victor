@@ -10,9 +10,9 @@ public abstract class HubWorldBase : MonoBehaviour {
   public abstract void LoadHubWorld();
   public abstract void DestroyHubWorld();
 
-  public abstract GameBase GetMinigameInstance();
+  public abstract GameBase GetChallengeInstance();
 
-  public abstract void CloseMinigameImmediately();
+  public abstract void CloseChallengeImmediately();
 
   public abstract void StartFreeplay(IRobot robot);
 }

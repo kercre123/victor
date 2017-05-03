@@ -38,7 +38,7 @@ GameObject:
   - component: {fileID: 224755537671116356}
   - component: {fileID: 114446962315980540}
   m_Layer: 5
-  m_Name: ConnectButton
+  m_Name: ChallengeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1264,7 +1264,7 @@ MonoBehaviour:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
   _AlphaController: {fileID: 225584830591259054}
-  _PlayRandomMinigameButton: {fileID: 114446962315980540}
+  _PlayRandomChallengeButton: {fileID: 114446962315980540}
   _SettingsButton: {fileID: 114905935062576232}
   _SettingsWidget: {fileID: 114928718972700030}
   _MetersWidget: {fileID: 114995038753719054}

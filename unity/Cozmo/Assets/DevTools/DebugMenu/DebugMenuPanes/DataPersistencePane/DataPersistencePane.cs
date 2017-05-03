@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using Cozmo.HomeHub;
+using Cozmo.Challenge;
 using Cozmo.ConnectionFlow;
+using Cozmo.HomeHub;
 
 namespace DataPersistence {
   public class DataPersistencePane : MonoBehaviour {

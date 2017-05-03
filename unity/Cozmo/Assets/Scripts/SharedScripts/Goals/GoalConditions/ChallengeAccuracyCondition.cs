@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,12 +28,12 @@ namespace Anki {
       // Returns true if the specified player's % points earned out of total matches the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if ((cozEvent is MinigameGameEvent)) {
-          GameBase miniGameInstance = HubWorldBase.Instance.GetMinigameInstance();
-          if (miniGameInstance == null) { return false; }
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-          if (miniGameEvent.GameSpecificValues != null && miniGameEvent.GameSpecificValues.ContainsKey(kConditionKey)) {
-            isMet = CompareConditionValues(miniGameEvent.GameSpecificValues[kConditionKey], TargetAcc, compareType);
+        if ((cozEvent is ChallengeGameEvent)) {
+          GameBase challengeInstance = HubWorldBase.Instance.GetChallengeInstance();
+          if (challengeInstance == null) { return false; }
+          ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
+          if (challengeEvent.GameSpecificValues != null && challengeEvent.GameSpecificValues.ContainsKey(kConditionKey)) {
+            isMet = CompareConditionValues(challengeEvent.GameSpecificValues[kConditionKey], TargetAcc, compareType);
           }
         }
         return isMet;

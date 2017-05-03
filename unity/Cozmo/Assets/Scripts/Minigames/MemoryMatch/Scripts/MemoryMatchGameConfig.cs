@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
-public class MemoryMatchGameConfig : MinigameConfigBase {
+public class MemoryMatchGameConfig : ChallengeConfigBase {
   public override int NumCubesRequired() {
     return 3;
   }

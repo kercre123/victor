@@ -70,7 +70,6 @@
 		387CE4430BA08C372FBDBB07 /* SplashScreen.h in Sources */ = {isa = PBXBuildFile; fileRef = 34F59211E3191AE294A6B7CF /* SplashScreen.h */; };
 		39CF11CD466C5543CD7CCB7D /* GlesHelper.h in Sources */ = {isa = PBXBuildFile; fileRef = 4362874A55BD2944BDEEDC57 /* GlesHelper.h */; };
 		39F932FA6E6C6DFA5512E632 /* Bulk_Assembly-CSharp_16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 326ACCCAC4BFC16D808A190C /* Bulk_Assembly-CSharp_16.cpp */; };
-		3A81E8700BDD7BE91EBFE537 /* Il2CppCompilerCalculateTypeValues_41Table.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEB56573969C43CE24FC6CCA /* Il2CppCompilerCalculateTypeValues_41Table.cpp */; };
 		3B6219DCBCBA59790103B298 /* GenericMethods0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6DE1F8B422716A2BB0D2BA5 /* GenericMethods0.cpp */; };
 		3DB58D34839C5D20D5363CEA /* UnresolvedVirtualCallStubs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77C0D9475EB04FC69B2DFC45 /* UnresolvedVirtualCallStubs.cpp */; };
 		3E2FE15E93E1B9EF8F461198 /* Il2CppMethodPointerTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */; };
@@ -533,7 +532,6 @@
 		CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMetadataRegistration.cpp; path = UnityBuild/Classes/Native/Il2CppMetadataRegistration.cpp; sourceTree = "<group>"; };
 		CD2E52B7B6FE39E84DD463FD /* UnityView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = UnityView.mm; path = UnityBuild/Classes/UI/UnityView.mm; sourceTree = "<group>"; };
 		CDA9CE31FBE0C996FF9AB79A /* RenderPluginDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderPluginDelegate.h; path = UnityBuild/Classes/PluginBase/RenderPluginDelegate.h; sourceTree = "<group>"; };
-		CEB56573969C43CE24FC6CCA /* Il2CppCompilerCalculateTypeValues_41Table.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppCompilerCalculateTypeValues_41Table.cpp; path = UnityBuild/Classes/Native/Il2CppCompilerCalculateTypeValues_41Table.cpp; sourceTree = "<group>"; };
 		D05B56D8F531979B83DCCC96 /* Bulk_System.Xml_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_System.Xml_0.cpp; path = UnityBuild/Classes/Native/Bulk_System.Xml_0.cpp; sourceTree = "<group>"; };
 		D110889480A7DA64A3F1CF7E /* Keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Keyboard.h; path = UnityBuild/Classes/UI/Keyboard.h; sourceTree = "<group>"; };
 		D304ACD2387428CF2448C10F /* Il2CppCompilerCalculateTypeValues_32Table.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppCompilerCalculateTypeValues_32Table.cpp; path = UnityBuild/Classes/Native/Il2CppCompilerCalculateTypeValues_32Table.cpp; sourceTree = "<group>"; };
@@ -946,7 +944,6 @@
 				BEE012AE4C996E8608825903 /* Il2CppCompilerCalculateTypeValues_39Table.cpp */,
 				4F8A2314F2B14AD9D38EA1C2 /* Il2CppCompilerCalculateTypeValues_3Table.cpp */,
 				FEB0C66798E41111AEA10204 /* Il2CppCompilerCalculateTypeValues_40Table.cpp */,
-				CEB56573969C43CE24FC6CCA /* Il2CppCompilerCalculateTypeValues_41Table.cpp */,
 				2E483B2B388E4A912F103CBE /* Il2CppCompilerCalculateTypeValues_4Table.cpp */,
 				1E20C326D675EA4291FEC909 /* Il2CppCompilerCalculateTypeValues_5Table.cpp */,
 				75C6DC12878755FC2ABDA345 /* Il2CppCompilerCalculateTypeValues_6Table.cpp */,
@@ -1311,7 +1308,6 @@
 				8299AAB10555E84BFD00BBFD /* Il2CppCompilerCalculateTypeValues_39Table.cpp in Sources */,
 				AFEDDBE6A03FA762824B351D /* Il2CppCompilerCalculateTypeValues_3Table.cpp in Sources */,
 				2C132316F8175493AF039B69 /* Il2CppCompilerCalculateTypeValues_40Table.cpp in Sources */,
-				3A81E8700BDD7BE91EBFE537 /* Il2CppCompilerCalculateTypeValues_41Table.cpp in Sources */,
 				190E6E0457A9FF6D277CB430 /* Il2CppCompilerCalculateTypeValues_4Table.cpp in Sources */,
 				EC2A36D23ACC9F83FB2DCBF5 /* Il2CppCompilerCalculateTypeValues_5Table.cpp in Sources */,
 				9021A2F5D3CC1502ECDA56B5 /* Il2CppCompilerCalculateTypeValues_6Table.cpp in Sources */,

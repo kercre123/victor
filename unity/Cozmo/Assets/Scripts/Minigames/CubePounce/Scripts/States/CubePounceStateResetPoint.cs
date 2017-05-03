@@ -3,7 +3,7 @@ using UnityEngine;
 using System;
 using Anki.Cozmo.Audio;
 
-namespace Cozmo.Minigame.CubePounce {
+namespace Cozmo.Challenge.CubePounce {
   public class CubePounceStateResetPoint : CubePounceState {
 
     private bool _GetReadyAnimCompleted;

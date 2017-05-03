@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,9 +22,9 @@ namespace Anki {
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameGameEvent) {
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-          if (miniGameEvent.Difficulty == Difficulty) {
+        if (cozEvent is ChallengeGameEvent) {
+          ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
+          if (challengeEvent.Difficulty == Difficulty) {
             isMet = true;
           }
         }

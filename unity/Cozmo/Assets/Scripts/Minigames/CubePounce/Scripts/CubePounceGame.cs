@@ -1,9 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Cozmo.Minigame.CubePounce {
+namespace Cozmo.Challenge.CubePounce {
   // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
   public class CubePounceGame : GameBase {
 
@@ -54,17 +54,17 @@ namespace Cozmo.Minigame.CubePounce {
       }
     }
 
-    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
-      GameConfig = minigameConfig as CubePounceConfig;
+    protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
+      GameConfig = challengeConfigData as CubePounceConfig;
       TotalRounds = GameConfig.Rounds;
       MaxScorePerRound = GameConfig.MaxScorePerRound;
       _CurrentTarget = null;
-      InitializeMinigameObjects(GameConfig.NumCubesRequired());
+      InitializeChallengeObjects(GameConfig.NumCubesRequired());
       LightCube.OnMovedAction += HandleCubeMoved;
       LightCube.OnStoppedAction += HandleCubeStopped;
     }
 
-    protected void InitializeMinigameObjects(int numCubes) {
+    protected void InitializeChallengeObjects(int numCubes) {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingPets, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingOverheadEdges, false);

@@ -20,12 +20,12 @@ namespace Anki {
       // Returns true if the number of players match the condition.
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if ((cozEvent is MinigameGameEvent)) {
-          GameBase miniGameInstance = HubWorldBase.Instance.GetMinigameInstance();
-          if (miniGameInstance == null) {
+        if ((cozEvent is ChallengeGameEvent)) {
+          GameBase challengeInstance = HubWorldBase.Instance.GetChallengeInstance();
+          if (challengeInstance == null) {
             return false;
           }
-          int toCheck = miniGameInstance.GetPlayerCount();
+          int toCheck = challengeInstance.GetPlayerCount();
           isMet = CompareConditionValues(toCheck, NumPlayers, compareType);
         }
         return isMet;

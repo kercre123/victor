@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using System.Collections;
+using Cozmo.Challenge;
 using Cozmo.MinigameWidgets;
+using System.Collections;
+using UnityEngine;
 
 namespace Cozmo {
-  namespace Minigame {
+  namespace Challenge {
     namespace DroneMode {
       public class DroneModeGame : GameBase {
         private const float _kCalculateSteeringInputInterval_ms = 100f;
@@ -25,8 +26,8 @@ namespace Cozmo {
         private float _CurrentTurnDirection;
         private IEnumerator _SteeringInputCoroutine;
 
-        protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
-          _DroneModeConfig = minigameConfigData as DroneModeConfig;
+        protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
+          _DroneModeConfig = challengeConfigData as DroneModeConfig;
           InitializeRobot();
           InitializeStateMachine();
         }

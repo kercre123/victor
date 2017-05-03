@@ -1,7 +1,8 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
 using Anki.Cozmo;
 using Anki.Debug;
+using Cozmo.Challenge;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Cozmo.RequestGame {
   public class RequestGameManager {
@@ -56,7 +57,7 @@ namespace Cozmo.RequestGame {
 
     public void EnableRequestGameBehaviorGroups() {
       _AllowedToRequest = true;
-      PickMiniGameToRequest();
+      PickChallengeToRequest();
       UpdateRobotWantToPlayState();
     }
 
@@ -94,7 +95,7 @@ namespace Cozmo.RequestGame {
     }
 
     private void HandleNumberCubesUpdated(LightCube cube) {
-      PickMiniGameToRequest();
+      PickChallengeToRequest();
       UpdateRobotWantToPlayState();
     }
 
@@ -114,7 +115,7 @@ namespace Cozmo.RequestGame {
       }
     }
 
-    private void PickMiniGameToRequest() {
+    private void PickChallengeToRequest() {
       _ChallengeToRequestData = null;
       _ChallengeToRequest = BehaviorGameFlag.NoGame;
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
@@ -122,19 +123,19 @@ namespace Cozmo.RequestGame {
       }
       if (_RobotToTrack == null) {
         // This can happen if robot has disconnected
-        DAS.Warn("RequestGameManager.PickMiniGameToRequest.NoRobot", "Not tracking a robot! _RobotToTrack is NULL");
+        DAS.Warn("RequestGameManager.PickChallengeToRequest.NoRobot", "Not tracking a robot! _RobotToTrack is NULL");
         return;
       }
       if (RequestGameListConfig.Instance == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest.NoGameList", "Request minigame config is NULL");
+        DAS.Error("RequestGameManager.PickChallengeToRequest.NoGameList", "Request challenge config is NULL");
         return;
       }
       if (ChallengeList == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest.NoChallengeList", "Challenge List is NULL");
+        DAS.Error("RequestGameManager.PickChallengeToRequest.NoChallengeList", "Challenge List is NULL");
         return;
       }
       if (UnlockablesManager.Instance == null) {
-        DAS.Error("RequestGameManager.PickMiniGameToRequest.NoUnlockablesManager", "UnlockablesManager is NULL");
+        DAS.Error("RequestGameManager.PickChallengeToRequest.NoUnlockablesManager", "UnlockablesManager is NULL");
         return;
       }
 
@@ -175,7 +176,7 @@ namespace Cozmo.RequestGame {
       for (int i = 0; i < requestGameConfig.RequestList.Length; ++i) {
         data = ChallengeList.GetChallengeDataById(requestGameConfig.RequestList[i].ChallengeID);
         if (data != null
-            && data.MinigameConfig.NumCubesRequired() <= currentNumLightCubes
+            && data.ChallengeConfig.NumCubesRequired() <= currentNumLightCubes
             && UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
           bool isDailyGoal = DailyGoalManager.Instance.IsAnyGoalActiveForGame(requestGameConfig.RequestList[i].ChallengeID);
           float score = requestGameConfig.RequestList[i].GetCurrentScore(isDailyGoal, _IsDebugRequest);

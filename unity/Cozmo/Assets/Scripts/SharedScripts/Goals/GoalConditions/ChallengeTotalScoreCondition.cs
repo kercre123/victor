@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,15 +26,15 @@ namespace Anki {
       // Returns true if the specified player's score matches the target range
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if ((cozEvent is MinigameGameEvent)) {
-          GameBase miniGameInstance = HubWorldBase.Instance.GetMinigameInstance();
-          if (miniGameInstance == null) { return false; }
+        if ((cozEvent is ChallengeGameEvent)) {
+          GameBase challengeInstance = HubWorldBase.Instance.GetChallengeInstance();
+          if (challengeInstance == null) { return false; }
           int toCheck = 0;
           if (IsPlayer) {
-            toCheck = miniGameInstance.HumanScoreTotal;
+            toCheck = challengeInstance.HumanScoreTotal;
           }
           else {
-            toCheck = miniGameInstance.CozmoScoreTotal;
+            toCheck = challengeInstance.CozmoScoreTotal;
           }
           isMet = CompareConditionValues(toCheck, TargetScore, compareType);
         }

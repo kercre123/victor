@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using Anki.UI;
 
-namespace Cozmo.Minigame.DroneMode {
+namespace Cozmo.Challenge.DroneMode {
   public class DroneModeCameraFeed : MonoBehaviour {
     public delegate void VisibleInCameraHandler(IVisibleInCamera newFocusedObject);
     public event VisibleInCameraHandler OnCurrentFocusChanged;

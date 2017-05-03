@@ -78,10 +78,10 @@ namespace MemoryMatch {
       SOLO = 1
     };
 
-    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
-      _Config = (MemoryMatchGameConfig)minigameConfigData;
+    protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
+      _Config = (MemoryMatchGameConfig)challengeConfigData;
 
-      InitializeMinigameObjects();
+      InitializeChallengeObjects();
 
 #if ANKI_DEV_CHEATS
       // A comma seperated list of what cubes to light up.
@@ -101,7 +101,7 @@ namespace MemoryMatch {
     }
 
     // Use this for initialization
-    protected void InitializeMinigameObjects() {
+    protected void InitializeChallengeObjects() {
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;
       _CurrLivesCozmo = _Config.MaxLivesCozmo;
       _CurrLivesHuman = _Config.MaxLivesHuman;

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace CozmoSays {
@@ -8,7 +8,7 @@ namespace CozmoSays {
     private SayTextSlide _SayTextSlidePrefab;
     private SayTextSlide _SayTextSlideInstance;
 
-    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: (success) => {
         TurnTowardsLastFaceDone();
       });

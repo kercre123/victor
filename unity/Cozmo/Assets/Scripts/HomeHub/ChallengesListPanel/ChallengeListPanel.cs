@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using Anki.UI;
-using Cozmo.UI;
+using Cozmo.Challenge;
 using Cozmo.HubWorld;
 
 namespace Cozmo.HomeHub {

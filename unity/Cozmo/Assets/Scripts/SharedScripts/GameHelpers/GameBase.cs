@@ -1,12 +1,12 @@
-using UnityEngine;
+using Anki.Assets;
+using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
+using Cozmo.Challenge;
+using Cozmo.MinigameWidgets;
 using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
-using Cozmo.MinigameWidgets;
-using Cozmo;
-using Anki.Cozmo;
-using Anki.Cozmo.ExternalInterface;
-using Anki.Assets;
+using UnityEngine;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -21,17 +21,17 @@ public abstract class GameBase : MonoBehaviour {
 
   private System.Guid? _GameUUID;
 
-  public delegate void MiniGameQuitHandler();
+  public delegate void ChallengeQuitHandler();
 
-  public event MiniGameQuitHandler OnMiniGameQuit;
+  public event ChallengeQuitHandler OnChallengeQuit;
 
-  public delegate void MiniGameWinHandler();
+  public delegate void ChallengeWinHandler();
 
-  public event MiniGameWinHandler OnMiniGameWin;
+  public event ChallengeWinHandler OnChallengeWin;
 
-  public delegate void MiniGameLoseHandler();
+  public delegate void ChallengeLoseHandler();
 
-  public event MiniGameWinHandler OnMiniGameLose;
+  public event ChallengeWinHandler OnChallengeLose;
 
   public delegate void EndGameDialogHandler();
 
@@ -159,7 +159,7 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  public void InitializeMinigame(ChallengeData challengeData) {
+  public void InitializeChallenge(ChallengeData challengeData) {
     _GameStartTime = Time.time;
     _GameIntervalLastTimestamp = -1;
     _StateMachine.SetGameRef(this);
@@ -206,11 +206,11 @@ public abstract class GameBase : MonoBehaviour {
 
   private void PlayGetInAnimation() {
     CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value, callback: (success) => {
-      InitializeMinigameDone();
+      InitializeChallengeDone();
     });
   }
 
-  private void InitializeMinigameDone() {
+  private void InitializeChallengeDone() {
     InitializeReactionaryBehaviorsForGameStart();
 
     RegisterRobotReactionaryBehaviorEvents();
@@ -288,7 +288,7 @@ public abstract class GameBase : MonoBehaviour {
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
-    newView.QuitMiniGameConfirmed += HandleQuitConfirmed;
+    newView.QuitChallengeConfirmed += HandleQuitConfirmed;
     ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
   }
@@ -339,7 +339,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
     DasTracker.Instance.TrackGameStarted();
 
-    InitializeGame(_ChallengeData.MinigameConfig);
+    InitializeGame(_ChallengeData.ChallengeConfig);
     if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
       _SharedMinigameViewInstance.ShowInstructionsVideoButton();
     }
@@ -352,14 +352,9 @@ public abstract class GameBase : MonoBehaviour {
   /// Called after Cozmo is "Ready". At this point the SharedMinigameView has already been instantiated.
   /// Use this method to initialize the state machine.
   /// </summary>
-  /// <param name="minigameConfigData">Minigame config data.</param>
-  protected abstract void InitializeGame(MinigameConfigBase minigameConfigData);
+  /// <param name="challengeConfigData">Minigame config data.</param>
+  protected abstract void InitializeGame(ChallengeConfigBase challengeConfigData);
 
-  /// <summary>
-  /// Called after Cozmo is "Ready". At this point the SharedMinigameView has already been instantiated.
-  /// Use this method to initialize the SharedMinigameView.
-  /// </summary>
-  /// <param name="minigameConfigData">Minigame config data.</param>
   protected virtual void SetupViewAfterCozmoReady(SharedMinigameView newView, ChallengeData data) {
   }
 
@@ -394,7 +389,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.UpdateStateMachine();
   }
 
-  // Use these if we need special cube behavior on app hold or whatever for specific minigames
+  // Use these if we need special cube behavior on app hold or whatever for specific challenges
   protected virtual void HandleAppHoldStart() {
     DAS.Info("GameBase.HandleAppHoldStart", "StartAppHold");
 
@@ -668,11 +663,11 @@ public abstract class GameBase : MonoBehaviour {
                                                     HumanScore, CozmoScore, IsHighIntensityRound(), GetGameSpecificEventValues()));
 
     if (endStateIndex == ENDSTATE_TIE) {
-      RaiseMiniGameTie();
+      RaiseChallengeTie();
     }
     // either our quit or none error state
     else if (endStateIndex < 0 || endStateIndex >= _PlayerInfo.Count) {
-      RaiseMiniGameQuit();
+      RaiseChallengeQuit();
     }
     // A valid player index
     else {
@@ -680,11 +675,11 @@ public abstract class GameBase : MonoBehaviour {
       // even in MP mode we show the same screens.
       // the rewards themselves fitler by num_players and rewards screen will pull winner.
       if (winningPlayer.playerType == PlayerType.Cozmo) {
-        RaiseMiniGameLose();
+        RaiseChallengeLose();
       }
       else {
         HandleUnlockRewards();
-        RaiseMiniGameWin();
+        RaiseChallengeWin();
       }
     }
   }
@@ -775,9 +770,9 @@ public abstract class GameBase : MonoBehaviour {
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 
-  private void QuitMinigame() {
+  private void QuitChallenge() {
     try {
-      _SharedMinigameViewInstance.DialogCloseAnimationFinished += QuitMinigameAnimationFinished;
+      _SharedMinigameViewInstance.DialogCloseAnimationFinished += QuitChallengeAnimationFinished;
       _SharedMinigameViewInstance.CloseDialog();
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
@@ -790,29 +785,29 @@ public abstract class GameBase : MonoBehaviour {
     }
     catch (System.Exception e) {
       // This is happening sometimes when disconnecting from robot when a dialog is up.
-      DAS.Info("GameBase.QuitMinigame", "StopAllCoroutines null ref internally sometimes: " + e.Message);
-      DAS.Debug("GameBase.QuitMinigame.StackTrace", DASUtil.FormatStackTrace(e.StackTrace));
-      HockeyApp.ReportStackTrace("GameBase.QuitMinigame", e.StackTrace);
+      DAS.Info("GameBase.QuitChallenge", "StopAllCoroutines null ref internally sometimes: " + e.Message);
+      DAS.Debug("GameBase.QuitChallenge.StackTrace", DASUtil.FormatStackTrace(e.StackTrace));
+      HockeyApp.ReportStackTrace("GameBase.QuitChallenge", e.StackTrace);
     }
   }
 
-  private void QuitMinigameAnimationFinished() {
-    _SharedMinigameViewInstance.DialogCloseAnimationFinished -= QuitMinigameAnimationFinished;
+  private void QuitChallengeAnimationFinished() {
+    _SharedMinigameViewInstance.DialogCloseAnimationFinished -= QuitChallengeAnimationFinished;
 
-    if (OnMiniGameQuit != null) {
-      OnMiniGameQuit();
+    if (OnChallengeQuit != null) {
+      OnChallengeQuit();
     }
 
     CleanUp();
   }
 
-  private void CloseMinigame() {
+  private void CloseChallenge() {
     _SharedMinigameViewInstance.DialogCloseAnimationFinished += CleanUp;
     _SharedMinigameViewInstance.CloseDialog();
   }
 
-  public void CloseMinigameImmediately() {
-    DAS.Info(this, "Close Minigame Immediately");
+  public void CloseChallengeImmediately() {
+    DAS.Info(this, "Close Challenge Immediately");
     // If quitting early from a minigame, clear the pending action rewards, they should not be rewarded
     if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
       RewardedActionManager.Instance.ResetPendingRewards();
@@ -889,9 +884,9 @@ public abstract class GameBase : MonoBehaviour {
   // end Clean Up
 
 
-  #region Minigame Exit
+  #region Challenge Exit
 
-  public void RaiseMiniGameQuit() {
+  public void RaiseChallengeQuit() {
     _EndStateIndex = ENDSTATE_QUIT;
     _StateMachine.Stop();
 
@@ -905,7 +900,13 @@ public abstract class GameBase : MonoBehaviour {
     // Also fire OnChallengeComplete here for those
     if (!_ChallengeData.IsMinigame) {
       AddToTotalGamesPlayed();
-      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, true, HumanScore, CozmoScore, IsHighIntensityRound()));
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete,
+                                                                             _ChallengeData.ChallengeID,
+                                                                             _CurrentDifficulty,
+                                                                             true,
+                                                                             HumanScore,
+                                                                             CozmoScore,
+                                                                             IsHighIntensityRound()));
     }
     // If quitting early from a minigame, clear the pending action rewards, they should not be rewarded
     if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
@@ -914,14 +915,14 @@ public abstract class GameBase : MonoBehaviour {
 
     UpdatePlayNeed();
 
-    QuitMinigame();
+    QuitChallenge();
   }
 
   protected virtual void SendCustomEndGameDasEvents() {
     // Implement in subclasses if desired
   }
 
-  private void RaiseMiniGameWin() {
+  private void RaiseChallengeWin() {
     _StateMachine.Stop();
     if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.ContainsKey(_ChallengeData.ChallengeID)) {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins[_ChallengeData.ChallengeID]++;
@@ -938,7 +939,7 @@ public abstract class GameBase : MonoBehaviour {
     ShowWinnerState(_EndStateIndex);
   }
 
-  private void RaiseMiniGameLose() {
+  private void RaiseChallengeLose() {
     _StateMachine.Stop();
 
     UpdatePlayNeed();
@@ -950,7 +951,7 @@ public abstract class GameBase : MonoBehaviour {
     ShowWinnerState(_EndStateIndex);
   }
 
-  private void RaiseMiniGameTie() {
+  private void RaiseChallengeTie() {
     _StateMachine.Stop();
 
     UpdatePlayNeed();
@@ -1074,22 +1075,22 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.TurnOffAllLights();
     }
 
-    // Close minigame UI
+    // Close challenge UI
     if (_ChallengeEndViewInstance != null) {
       _ChallengeEndViewInstance.HideScrollRectGradients();
     }
-    CloseMinigame();
+    CloseChallenge();
 
     if (DidHumanWin()) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
-      if (OnMiniGameWin != null) {
-        OnMiniGameWin();
+      if (OnChallengeWin != null) {
+        OnChallengeWin();
       }
     }
     else {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerLose);
-      if (OnMiniGameLose != null) {
-        OnMiniGameLose();
+      if (OnChallengeLose != null) {
+        OnChallengeLose();
       }
     }
 
@@ -1123,12 +1124,12 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleQuitConfirmed() {
-    RaiseMiniGameQuit();
+    RaiseChallengeQuit();
   }
 
   #endregion
 
-  // end Minigame Exit handling
+  // end Challenge Exit handling
 
   #region Difficulty Select
 
@@ -1384,7 +1385,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleInterruptionQuitGameViewClosed() {
-    RaiseMiniGameQuit();
+    RaiseChallengeQuit();
   }
 
   #endregion

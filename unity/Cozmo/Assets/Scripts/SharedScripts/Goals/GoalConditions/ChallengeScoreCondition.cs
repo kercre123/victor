@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,14 +25,14 @@ namespace Anki {
       // Returns true if the specified player's score is equal to or greater than the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameGameEvent) {
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
+        if (cozEvent is ChallengeGameEvent) {
+          ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
           int toCheck = 0;
           if (IsPlayer) {
-            toCheck = miniGameEvent.PlayerScore;
+            toCheck = challengeEvent.PlayerScore;
           }
           else {
-            toCheck = miniGameEvent.CozmoScore;
+            toCheck = challengeEvent.CozmoScore;
           }
           isMet = CompareConditionValues(toCheck, TargetScore, compareType);
         }

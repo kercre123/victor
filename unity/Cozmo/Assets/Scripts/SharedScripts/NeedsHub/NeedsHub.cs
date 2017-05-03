@@ -1,29 +1,26 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using DataPersistence;
-using Cozmo.Util;
-using Anki.Assets;
+﻿using Anki.Assets;
 using Anki.Cozmo;
-using Cozmo.UI;
-using Cozmo.Minigame;
-using Cozmo.RequestGame;
+using Cozmo.Challenge;
 using Cozmo.Needs.UI;
+using Cozmo.Util;
+using DataPersistence;
+using System.Collections;
+using UnityEngine;
 
 namespace Cozmo.Hub {
   public class NeedsHub : HubWorldBase {
 
     [SerializeField]
-    private SerializableAssetBundleNames _MinigameDataPrefabAssetBundle;
+    private SerializableAssetBundleNames _ChallengeDataPrefabAssetBundle;
 
     [SerializeField]
     private GameObjectDataLink _NeedsHubViewPrefabData;
 
     private NeedsHubView _NeedsViewHubInstance;
 
-    private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
+    private AnimationTrigger _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
 
-    private MinigameManager _MinigameManager;
+    private ChallengeManager _ChallengeManager;
 
     // Total ConnectedTime For GameEvents
     private const float _kConnectedTimeIntervalCheck = 60.0f;
@@ -31,11 +28,11 @@ namespace Cozmo.Hub {
     private float _ConnectedTimeStartedTimestamp = -1;
 
     public override void LoadHubWorld() {
-      _MinigameManager = new MinigameManager(_MinigameDataPrefabAssetBundle);
-      _MinigameManager.OnShowEndGameDialog += HandleEndGameDialog;
-      _MinigameManager.OnMinigameViewFinishedClosing += StartLoadNeedsHubView;
-      _MinigameManager.OnMinigameCompleted += HandleMinigameComplete;
-      _MinigameManager.OnMinigameFinishedLoading += HandleMinigameFinishedLoading;
+      _ChallengeManager = new ChallengeManager(_ChallengeDataPrefabAssetBundle);
+      _ChallengeManager.OnShowEndGameDialog += HandleEndGameDialog;
+      _ChallengeManager.OnChallengeViewFinishedClosing += StartLoadNeedsHubView;
+      _ChallengeManager.OnChallengeCompleted += HandleChallengeComplete;
+      _ChallengeManager.OnChallengeFinishedLoading += HandleChallengeFinishedLoading;
 
       _Instance = this;
       StartLoadNeedsHubView();
@@ -45,11 +42,11 @@ namespace Cozmo.Hub {
     }
 
     public override void DestroyHubWorld() {
-      _MinigameManager.CleanUp();
-      _MinigameManager.OnShowEndGameDialog -= HandleEndGameDialog;
-      _MinigameManager.OnMinigameViewFinishedClosing -= StartLoadNeedsHubView;
-      _MinigameManager.OnMinigameCompleted -= HandleMinigameComplete;
-      _MinigameManager.OnMinigameFinishedLoading -= HandleMinigameFinishedLoading;
+      _ChallengeManager.CleanUp();
+      _ChallengeManager.OnShowEndGameDialog -= HandleEndGameDialog;
+      _ChallengeManager.OnChallengeViewFinishedClosing -= StartLoadNeedsHubView;
+      _ChallengeManager.OnChallengeCompleted -= HandleChallengeComplete;
+      _ChallengeManager.OnChallengeFinishedLoading -= HandleChallengeFinishedLoading;
 
       // Deregister events
       // Destroy dialog if it exists
@@ -66,16 +63,16 @@ namespace Cozmo.Hub {
       GameObject.Destroy(this.gameObject);
     }
 
-    public override GameBase GetMinigameInstance() {
-      if (_MinigameManager != null) {
-        return _MinigameManager.MinigameInstance;
+    public override GameBase GetChallengeInstance() {
+      if (_ChallengeManager != null) {
+        return _ChallengeManager.ChallengeInstance;
       }
       return null;
     }
 
-    public override void CloseMinigameImmediately() {
-      if (_MinigameManager != null) {
-        _MinigameManager.CloseMiniGameImmediately();
+    public override void CloseChallengeImmediately() {
+      if (_ChallengeManager != null) {
+        _ChallengeManager.CloseChallengeImmediately();
       }
     }
 
@@ -108,15 +105,15 @@ namespace Cozmo.Hub {
     }
 
     private IEnumerator ShowNeedsHubViewAfterOtherViewClosed(GameObject needsHubViewPrefab) {
-      // wait until minigame instance is destroyed and also wait until the unlocks are properly loaded from
+      // wait until challenge instance is destroyed and also wait until the unlocks are properly loaded from
       // robot.
-      while (_MinigameManager.IsMinigamePlaying || !UnlockablesManager.Instance.UnlocksLoaded) {
+      while (_ChallengeManager.IsChallengePlaying || !UnlockablesManager.Instance.UnlocksLoaded) {
         yield return 0;
       }
 
       UIManager.OpenView(needsHubViewPrefab.GetComponent<NeedsHubView>(), (newNeedsHubView) => {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
-        _NeedsViewHubInstance.OnStartMinigameClicked += HandleStartRandomMinigame;
+        _NeedsViewHubInstance.OnStartChallengeClicked += HandleStartRandomChallenge;
 
         ResetRobotToFreeplaySettings();
 
@@ -132,8 +129,8 @@ namespace Cozmo.Hub {
             ProceduralEyeParameters.MakeDefaultRightEye());
 
           robot.ResetRobotState(() => {
-            robot.SendAnimationTrigger(_MinigameGetOutAnimTrigger, (bool success) => {
-              _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
+            robot.SendAnimationTrigger(_ChallengeGetOutAnimTrigger, (bool success) => {
+              _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
               StartFreeplay(robot);
             });
           });
@@ -151,20 +148,20 @@ namespace Cozmo.Hub {
       }
     }
 
-    private void HandleStartRandomMinigame() {
-      string randomMinigameId = _MinigameManager.GetRandomMinigame();
-      PlayMinigame(randomMinigameId, false);
+    private void HandleStartRandomChallenge() {
+      string randomChallengeId = _ChallengeManager.GetRandomChallenge();
+      PlayChallenge(randomChallengeId, false);
     }
 
-    private void PlayMinigame(string challengeId, bool wasRequest) {
-      _MinigameManager.SetCurrentMinigame(challengeId, wasRequest);
+    private void PlayChallenge(string challengeId, bool wasRequest) {
+      _ChallengeManager.SetCurrentChallenge(challengeId, wasRequest);
 
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
-        RequestGameConfig rc = _MinigameManager.GetCurrentRequestGameConfig();
+        RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();
         if (rc != null) {
           RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value);
         }
@@ -181,13 +178,13 @@ namespace Cozmo.Hub {
       }
       AssetBundleManager.Instance.UnloadAssetBundle(_NeedsHubViewPrefabData.AssetBundle);
 
-      if (!_MinigameManager.LoadMinigame()) {
+      if (!_ChallengeManager.LoadChallenge()) {
         StartLoadNeedsHubView();
       }
     }
 
-    private void HandleMinigameFinishedLoading(AnimationTrigger getOutAnim) {
-      _MinigameGetOutAnimTrigger = getOutAnim;
+    private void HandleChallengeFinishedLoading(AnimationTrigger getOutAnim) {
+      _ChallengeGetOutAnimTrigger = getOutAnim;
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
     }
 
@@ -210,7 +207,7 @@ namespace Cozmo.Hub {
       }
     }
 
-    private void HandleMinigameComplete() {
+    private void HandleChallengeComplete() {
       // the last session is not necessarily valid as the 'CurrentSession', as its possible
       // the day rolled over while we were playing the challenge.
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
@@ -231,7 +228,7 @@ namespace Cozmo.Hub {
 
     private void DeregisterDialogEvents() {
       if (_NeedsViewHubInstance != null) {
-        _NeedsViewHubInstance.OnStartMinigameClicked -= HandleStartRandomMinigame;
+        _NeedsViewHubInstance.OnStartChallengeClicked -= HandleStartRandomChallenge;
       }
     }
 

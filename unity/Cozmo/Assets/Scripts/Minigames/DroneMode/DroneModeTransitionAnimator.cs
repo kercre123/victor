@@ -1,6 +1,6 @@
 ﻿using Anki.Cozmo;
 
-namespace Cozmo.Minigame.DroneMode {
+namespace Cozmo.Challenge.DroneMode {
   public class DroneModeTransitionAnimator {
     public event System.Action OnTurboTransitionAnimationStarted;
     public event System.Action OnTurboTransitionAnimationFinished;

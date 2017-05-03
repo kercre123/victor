@@ -67,10 +67,10 @@ public class DebugMenuManager : MonoBehaviour {
 #endif
   }
 
-  public GameBase GetCurrMinigame() {
+  public GameBase GetCurrChallenge() {
     if (HubWorldBase.Instance != null) {
-      if (HubWorldBase.Instance.GetMinigameInstance() != null) {
-        return HubWorldBase.Instance.GetMinigameInstance();
+      if (HubWorldBase.Instance.GetChallengeInstance() != null) {
+        return HubWorldBase.Instance.GetChallengeInstance();
       }
     }
     return null;
@@ -85,7 +85,7 @@ public class DebugMenuManager : MonoBehaviour {
     _DebugMenuDialogInstance.Initialize(_LastOpenedDebugTab);
     _DebugMenuDialogInstance.OnDebugMenuClosed += OnDebugMenuDialogClose;
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled) {
-      GameBase game = GetCurrMinigame();
+      GameBase game = GetCurrChallenge();
       if (game != null) {
         if (game.Paused == false) {
           game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);
@@ -104,7 +104,7 @@ public class DebugMenuManager : MonoBehaviour {
     _LastOpenedDebugTab = lastOpenTab;
     if (_DebugPause == true) {
       _DebugPause = false;
-      GameBase game = GetCurrMinigame();
+      GameBase game = GetCurrChallenge();
       if (game != null) {
         if (game.Paused) {
           game.ResumeStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);

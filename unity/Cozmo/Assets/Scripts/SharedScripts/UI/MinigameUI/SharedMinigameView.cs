@@ -1,8 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+using Cozmo.Challenge;
 using Cozmo.UI;
 using DG.Tweening;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -16,7 +17,7 @@ namespace Cozmo {
 
       public delegate void SharedMinigameViewHandler();
 
-      public event SharedMinigameViewHandler QuitMiniGameConfirmed;
+      public event SharedMinigameViewHandler QuitChallengeConfirmed;
 
       [SerializeField]
       private RectTransform _BottomWidgetContainer;
@@ -695,8 +696,8 @@ namespace Cozmo {
       public void HandleQuitConfirmed() {
         HideGameStateSlide();
         HideInstructionsVideoButton();
-        if (QuitMiniGameConfirmed != null) {
-          QuitMiniGameConfirmed();
+        if (QuitChallengeConfirmed != null) {
+          QuitChallengeConfirmed();
         }
       }
 

@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using Cozmo.Challenge;
+using UnityEngine;
 using System;
 
 public enum UnlockableType {

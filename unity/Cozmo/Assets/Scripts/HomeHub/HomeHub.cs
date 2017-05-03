@@ -1,12 +1,13 @@
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using DataPersistence;
-using Cozmo.Util;
 using Anki.Assets;
 using Anki.Cozmo;
+using Cozmo.Challenge;
 using Cozmo.UI;
+using Cozmo.Util;
 using Cozmo.RequestGame;
+using DataPersistence;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
@@ -58,7 +59,7 @@ namespace Cozmo.HomeHub {
 
     public override void DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
-      CloseMinigameImmediately();
+      CloseChallengeImmediately();
       if (_ChallengeDetailsModalInstance != null) {
         _ChallengeDetailsModalInstance.CloseDialogImmediately();
       }
@@ -76,7 +77,7 @@ namespace Cozmo.HomeHub {
       GameObject.Destroy(this.gameObject);
     }
 
-    public override GameBase GetMinigameInstance() {
+    public override GameBase GetChallengeInstance() {
       return _MiniGameInstance;
     }
 
@@ -357,19 +358,19 @@ namespace Cozmo.HomeHub {
         yield return 0;
       }
 
-      GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
+      GameObject newMiniGameObject = Instantiate(prefabData.ChallengePrefab);
       _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
 
       // OnSharedMinigameViewInitialized is called as part of the InitializeMinigame flow; 
       // On device this involves loading assets from data but in editor it may be instantaneous
       // so we need to listen to the event first and then initialize
       _MiniGameInstance.OnSharedMinigameViewInitialized += HandleSharedMinigameViewInitialized;
-      _MiniGameInstance.InitializeMinigame(challengeData);
+      _MiniGameInstance.InitializeChallenge(challengeData);
 
       _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
-      _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
-      _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
-      _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+      _MiniGameInstance.OnChallengeWin += HandleMiniGameWin;
+      _MiniGameInstance.OnChallengeLose += HandleMiniGameLose;
+      _MiniGameInstance.OnChallengeQuit += HandleMiniGameQuit;
 
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
     }
@@ -440,10 +441,10 @@ namespace Cozmo.HomeHub {
       DataPersistenceManager.Instance.Save();
     }
 
-    public override void CloseMinigameImmediately() {
+    public override void CloseChallengeImmediately() {
       if (_MiniGameInstance != null) {
         DeregisterMinigameEvents();
-        _MiniGameInstance.CloseMinigameImmediately();
+        _MiniGameInstance.CloseChallengeImmediately();
         _MiniGameInstance = null;
         UnloadMinigameAssetBundle();
         StartLoadHomeView();
@@ -452,9 +453,9 @@ namespace Cozmo.HomeHub {
 
     private void DeregisterMinigameEvents() {
       if (_MiniGameInstance != null) {
-        _MiniGameInstance.OnMiniGameQuit -= HandleMiniGameQuit;
-        _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
-        _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
+        _MiniGameInstance.OnChallengeQuit -= HandleMiniGameQuit;
+        _MiniGameInstance.OnChallengeWin -= HandleMiniGameWin;
+        _MiniGameInstance.OnChallengeLose -= HandleMiniGameLose;
         _MiniGameInstance.OnShowEndGameDialog -= HandleEndGameDialog;
         _MiniGameInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
         if (_MiniGameInstance.SharedMinigameView != null) {

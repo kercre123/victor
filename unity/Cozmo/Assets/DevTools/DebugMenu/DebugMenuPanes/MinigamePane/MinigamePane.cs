@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -53,29 +53,29 @@ public class MinigamePane : MonoBehaviour {
 
   }
 
-  private GameBase GetCurrMinigame() {
+  private GameBase GetCurrChallenge() {
     if (HubWorldBase.Instance != null) {
-      if (HubWorldBase.Instance.GetMinigameInstance() != null) {
-        return HubWorldBase.Instance.GetMinigameInstance();
+      if (HubWorldBase.Instance.GetChallengeInstance() != null) {
+        return HubWorldBase.Instance.GetChallengeInstance();
       }
     }
-    Debug.LogWarning("CurrentMinigame is NULL, Only use these commands during a Minigame");
+    Debug.LogWarning("CurrentChallenge is NULL, Only use these commands during a Challenge");
     return null;
   }
 
 
   // Force Game Win For Cozmo
   private void CozmoWinGameClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      minigame.StartBaseGameEnd(false);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      challenge.StartBaseGameEnd(false);
     }
   }
   // Force Game Win For Player
   private void PlayerWinGameClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      minigame.StartBaseGameEnd(true);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      challenge.StartBaseGameEnd(true);
     }
   }
 
@@ -83,13 +83,13 @@ public class MinigamePane : MonoBehaviour {
   /// Force Round Win for Cozmo, forces cozmo score to higher than player score and then ends the round
   /// </summary>
   private void CozmoRoundButtonClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Cozmo);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      PlayerInfo playerInfo = challenge.GetFirstPlayerByType(PlayerType.Cozmo);
       if (playerInfo != null) {
-        playerInfo.playerScoreRound = Mathf.Max(minigame.HumanScore + 1, minigame.CozmoScore);
+        playerInfo.playerScoreRound = Mathf.Max(challenge.HumanScore + 1, challenge.CozmoScore);
       }
-      minigame.EndCurrentRound();
+      challenge.EndCurrentRound();
     }
   }
 
@@ -97,59 +97,59 @@ public class MinigamePane : MonoBehaviour {
   /// Force Round Win for Player, forces player score to higher than cozmo score and then ends the round
   /// </summary>
   private void PlayerRoundButtonClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      PlayerInfo playerInfo = challenge.GetFirstPlayerByType(PlayerType.Human);
       if (playerInfo != null) {
-        playerInfo.playerScoreRound = Mathf.Max(minigame.CozmoScore + 1, minigame.HumanScore);
+        playerInfo.playerScoreRound = Mathf.Max(challenge.CozmoScore + 1, challenge.HumanScore);
       }
-      minigame.EndCurrentRound();
+      challenge.EndCurrentRound();
     }
   }
 
   // Set Rounds Won for Cozmo
   private void CozmoSetRoundsButtonClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      PlayerInfo playerInfo = challenge.GetFirstPlayerByType(PlayerType.Human);
       if (playerInfo != null) {
         playerInfo.playerRoundsWon = int.Parse(_SetCozmoRoundsField.text);
       }
-      minigame.UpdateUI();
+      challenge.UpdateUI();
     }
   }
   // Set Rounds Won for Player
   private void PlayerSetRoundsButtonClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      PlayerInfo playerInfo = challenge.GetFirstPlayerByType(PlayerType.Human);
       if (playerInfo != null) {
         playerInfo.playerRoundsWon = int.Parse(_SetPlayerRoundsField.text);
       }
-      minigame.UpdateUI();
+      challenge.UpdateUI();
     }
   }
 
   // Set Score for Cozmo
   private void CozmoSetScoreButtonClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Cozmo);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      PlayerInfo playerInfo = challenge.GetFirstPlayerByType(PlayerType.Cozmo);
       if (playerInfo != null) {
         playerInfo.playerScoreRound = int.Parse(_SetCozmoScoreField.text);
       }
-      minigame.UpdateUI();
+      challenge.UpdateUI();
     }
   }
   // Set Score for Player
   private void PlayerSetScoreButtonClicked() {
-    var minigame = GetCurrMinigame();
-    if (minigame != null) {
-      PlayerInfo playerInfo = minigame.GetFirstPlayerByType(PlayerType.Human);
+    var challenge = GetCurrChallenge();
+    if (challenge != null) {
+      PlayerInfo playerInfo = challenge.GetFirstPlayerByType(PlayerType.Human);
       if (playerInfo != null) {
         playerInfo.playerScoreRound = int.Parse(_SetPlayerScoreField.text);
       }
-      minigame.UpdateUI();
+      challenge.UpdateUI();
     }
   }
 }

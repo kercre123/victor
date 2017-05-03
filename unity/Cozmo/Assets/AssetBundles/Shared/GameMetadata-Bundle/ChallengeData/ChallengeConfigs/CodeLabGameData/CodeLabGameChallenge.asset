@@ -25,13 +25,14 @@ MonoBehaviour:
     _EnumValue: 36
   _Music:
     _Music: 713847863
-  MinigameConfig: {fileID: 11400000, guid: 3ab1c940b3e3841aaa96e62c5c1b24ff, type: 2}
+  ChallengeConfig: {fileID: 11400000, guid: 3ab1c940b3e3841aaa96e62c5c1b24ff, type: 2}
   IsMinigame: 0
   InstructionVideoPath: 
+  ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 354
+    _EnumValue: 387
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 354
+    _EnumValue: 387

@@ -156,8 +156,8 @@ namespace SpeedTap {
       }
     }
 
-    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
-      SpeedTapGameConfig speedTapConfig = minigameConfigData as SpeedTapGameConfig;
+    protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
+      SpeedTapGameConfig speedTapConfig = challengeConfigData as SpeedTapGameConfig;
       // Set all Config based values
       TotalRounds = DebugMenuManager.Instance.DemoMode ? 1 : speedTapConfig.Rounds;
       MaxScorePerRound = speedTapConfig.MaxScorePerRound;
@@ -176,7 +176,7 @@ namespace SpeedTap {
       MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
       MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
       // End config based values
-      InitializeMinigameObjects(1);
+      InitializeChallengeObjects(1);
 #if ANKI_DEV_CHEATS
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("ShowdownCozmoHuman", "SpeedTap",
                             (string str) => { sWantsSuddenDeathHumanCozmo = !sWantsSuddenDeathHumanCozmo; });
@@ -186,7 +186,7 @@ namespace SpeedTap {
     }
 
     // Use this for initialization
-    protected void InitializeMinigameObjects(int cubesRequired) {
+    protected void InitializeChallengeObjects(int cubesRequired) {
       State lastState = null;
       if (FeatureGate.Instance.IsFeatureEnabled(FeatureType.SpeedTapMultiPlayer)) {
         lastState = new SpeedTapSelectNumPlayersState();

@@ -2,9 +2,9 @@ using UnityEngine;
 using Anki.Cozmo.ExternalInterface;
 using System.Collections;
 
-namespace Cozmo.Minigame.CubePounce {
+namespace Cozmo.Challenge.CubePounce {
   public class CubePounceStateCreep : CubePounceState {
-    
+
     private float _CreepDistance_mm;
 
     public CubePounceStateCreep(float creepDistance_mm) {
@@ -18,7 +18,7 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleDriveComplete(bool success) {
-      _StateMachine.SetNextState(new CubePounceStateResetPoint(overrideReadyAnimComplete:true));
+      _StateMachine.SetNextState(new CubePounceStateResetPoint(overrideReadyAnimComplete: true));
     }
 
     public override void Exit() {

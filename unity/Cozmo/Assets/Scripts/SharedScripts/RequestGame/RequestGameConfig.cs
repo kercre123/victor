@@ -1,6 +1,6 @@
-﻿using UnityEngine;
-using System.Collections;
-using Anki.Cozmo;
+﻿using Anki.Cozmo;
+using Cozmo.Challenge;
+using UnityEngine;
 
 public class RequestGameConfig : ScriptableObject {
   [ChallengeId]

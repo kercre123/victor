@@ -1,10 +1,12 @@
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using Anki.Assets;
+using System;
+using System.Collections;
+using UnityEngine;
+
+// Used by Android flow
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System;
 
 /// <summary>
 /// Add managers to this object by calling
@@ -516,9 +518,9 @@ public class StartupManager : MonoBehaviour {
         Cozmo.HexItemList.SetInstance(cd);
       });
 
-    assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName,
-      "ChallengeList", (ChallengeDataList cd) => {
-        ChallengeDataList.SetInstance(cd);
+    assetBundleManager.LoadAssetAsync<Cozmo.Challenge.ChallengeDataList>(_GameMetadataAssetBundleName,
+      "ChallengeList", (Cozmo.Challenge.ChallengeDataList cd) => {
+        Cozmo.Challenge.ChallengeDataList.SetInstance(cd);
       });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName,

@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
-public class SpeedTapGameConfig : MinigameConfigBase {
+public class SpeedTapGameConfig : ChallengeConfigBase {
   public override int NumCubesRequired() {
     return 2;
   }

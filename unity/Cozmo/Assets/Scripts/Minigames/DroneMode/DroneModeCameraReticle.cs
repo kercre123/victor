@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using Anki.UI;
 
-namespace Cozmo.Minigame.DroneMode {
+namespace Cozmo.Challenge.DroneMode {
   public class DroneModeCameraReticle : MonoBehaviour {
 
     [SerializeField]

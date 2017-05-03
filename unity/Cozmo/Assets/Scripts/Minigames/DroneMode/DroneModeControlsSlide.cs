@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using Cozmo.UI;
 using System.Collections.Generic;
 
-namespace Cozmo.Minigame.DroneMode {
+namespace Cozmo.Challenge.DroneMode {
   public class DroneModeControlsSlide : MonoBehaviour {
     private const string _kDasViewControllerName = "drone_mode_view_slide";
     private const float _kSliderChangeThreshold = 0.01f;

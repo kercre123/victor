@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
+﻿using Cozmo.Challenge;
+using UnityEngine;
 using DataPersistence;
 
 namespace Cozmo.HubWorld {

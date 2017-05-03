@@ -3,7 +3,7 @@ using Cozmo.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Cozmo.Minigame.DroneMode {
+namespace Cozmo.Challenge.DroneMode {
   public class DroneModeActionButton : MonoBehaviour {
     [SerializeField]
     private CozmoButtonLegacy _ActionButton;

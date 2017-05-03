@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Cozmo.Challenge;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Cozmo.UI {

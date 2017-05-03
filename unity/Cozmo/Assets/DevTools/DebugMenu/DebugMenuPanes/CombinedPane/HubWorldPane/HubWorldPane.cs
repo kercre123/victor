@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Cozmo.HomeHub {
@@ -28,7 +26,6 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private Dropdown _ChallengeIdSelect;
 
-
     [SerializeField]
     private Button _SelfieAlbumButton;
 
@@ -42,7 +39,7 @@ namespace Cozmo.HomeHub {
     private GameObject _MockTrayPrefab;
 
     [SerializeField]
-    private ChallengeDataList _ChallengeDataList;
+    private Cozmo.Challenge.ChallengeDataList _ChallengeDataList;
 
     private void Start() {
       _ChallengeIdSelect.options = _ChallengeDataList.ChallengeData.Select(c => new Dropdown.OptionData(c.ChallengeID)).ToList();

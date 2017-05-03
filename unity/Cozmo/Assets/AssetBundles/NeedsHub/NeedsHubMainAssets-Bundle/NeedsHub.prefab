@@ -51,7 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 449ba0a37156442be840fa62aedbd5a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _MinigameDataPrefabAssetBundle:
+  _ChallengeDataPrefabAssetBundle:
     _EnumValueAsString: minigame_data_prefabs
     _EnumValue: 1
   _NeedsHubViewPrefabData:

@@ -1,14 +1,15 @@
-using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
 using Anki.UI;
 using Anki.Assets;
 using Anki.Cozmo;
+using Cozmo.Challenge;
 using Cozmo.UI;
 using DataPersistence;
-using System;
 using DG.Tweening;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Cozmo.HomeHub {
   public class HomeView : BaseView {
@@ -862,7 +863,7 @@ namespace Cozmo.HomeHub {
           MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
         }
         else {
-          int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).MinigameConfig.NumCubesRequired();
+          int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeConfig.NumCubesRequired();
           if (RobotEngineManager.Instance.CurrentRobot.LightCubes.Count < cubesRequired) {
             // challenge request has become null due to cube(s) disconnecting.
             string challengeTitle = Localization.Get(ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeTitleLocKey);

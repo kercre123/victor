@@ -11,6 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 521e813476db3429ea107216c7671695, type: 3}
   m_Name: CubePounceGame_Prefabs
   m_EditorClassIdentifier: 
-  _MinigamePrefab: {fileID: 141604, guid: 4a17ea3fde94148d4a48ef61c4b8c725, type: 2}
+  _ChallengePrefab: {fileID: 141604, guid: 4a17ea3fde94148d4a48ef61c4b8c725, type: 2}
   _ChallengeIconPlainStyle: {fileID: 21300000, guid: 00916176a1ff0452ab93c94889523eee,
     type: 3}

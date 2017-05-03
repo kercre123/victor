@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace CozmoSays {
-  public class CozmoSaysGameConfig : MinigameConfigBase {
+  public class CozmoSaysGameConfig : ChallengeConfigBase {
     public override int NumCubesRequired() {
       return 0;
     }

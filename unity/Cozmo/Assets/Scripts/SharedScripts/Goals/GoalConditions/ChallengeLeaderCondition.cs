@@ -17,15 +17,15 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class ChallengeLeaderCondition : GoalCondition {
-     
+
       public bool IsPlayerWinning;
 
       // Returns true if the specified player has more points
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameGameEvent) {
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-          if (miniGameEvent.PlayerScore > miniGameEvent.CozmoScore) {
+        if (cozEvent is ChallengeGameEvent) {
+          ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
+          if (challengeEvent.PlayerScore > challengeEvent.CozmoScore) {
             isMet = IsPlayerWinning;
           }
           else {
@@ -35,13 +35,13 @@ namespace Anki {
         return isMet;
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         IsPlayerWinning = EditorGUILayout.Toggle(new GUIContent("Player Winning", "True if the PlayerScore is greater than CozmoScore"), IsPlayerWinning);
         EditorGUILayout.EndHorizontal();
       }
-      #endif
+#endif
     }
   }
 }

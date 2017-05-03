@@ -19,8 +19,6 @@ public class DailyGoalPanel : MonoBehaviour {
   public readonly List<GameObject> EmptyGoalCells = new List<GameObject>();
   private const float _kFadeTweenDuration = 0.25f;
 
-  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
-
   // Prefab for GoalCells
   [SerializeField]
   private GoalCell _GoalCellPrefab;

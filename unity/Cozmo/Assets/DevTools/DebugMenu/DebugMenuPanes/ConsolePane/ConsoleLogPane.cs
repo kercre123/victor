@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -80,7 +80,7 @@ public class ConsoleLogPane : MonoBehaviour {
   // TODO add react behavior dropdown
   public void HandleTogglePause(bool enable) {
     if (HubWorldBase.Instance != null) {
-      var game = HubWorldBase.Instance.GetMinigameInstance();
+      var game = HubWorldBase.Instance.GetChallengeInstance();
       if (game != null) {
         if (game.Paused == false && enable) {
           game.PauseStateMachine(State.PauseReason.DEBUG_INPUT, Anki.Cozmo.ReactionTrigger.NoneTrigger);

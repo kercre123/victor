@@ -1,3 +1,4 @@
+using Cozmo.Challenge;
 using UnityEngine;
 
 namespace FaceEnrollment {
@@ -62,9 +63,9 @@ namespace FaceEnrollment {
       set { _ShowDoneShelf = value; }
     }
 
-    protected override void InitializeGame(MinigameConfigBase minigameConfig) {
+    protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
 
-      FaceEnrollmentGameConfig faceEnrollmentConfig = (FaceEnrollmentGameConfig)minigameConfig;
+      FaceEnrollmentGameConfig faceEnrollmentConfig = (FaceEnrollmentGameConfig)challengeConfigData;
 
       _UpdateThresholdLastSeenSeconds = faceEnrollmentConfig.UpdateThresholdLastSeenSeconds;
       _UpdateThresholdLastEnrolledSeconds = faceEnrollmentConfig.UpdateThresholdLastEnrolledSeconds;
@@ -114,7 +115,7 @@ namespace FaceEnrollment {
         _FaceEnrollmentShelfContentInstance.SetShelfTextKey(LocalizationKeys.kFaceEnrollmentConditionAllChangesSaved);
         _FaceEnrollmentShelfContentInstance.ShowDoneButton(true);
         _FaceEnrollmentShelfContentInstance.GameDoneButtonPressed += () => {
-          RaiseMiniGameQuit();
+          RaiseChallengeQuit();
         };
       }
       else {

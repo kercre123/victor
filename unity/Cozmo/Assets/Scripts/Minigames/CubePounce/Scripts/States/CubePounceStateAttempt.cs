@@ -3,7 +3,7 @@ using Anki.Cozmo.Audio;
 using Anki.Cozmo.ExternalInterface;
 using System.Collections;
 
-namespace Cozmo.Minigame.CubePounce {
+namespace Cozmo.Challenge.CubePounce {
   public class CubePounceStateAttempt : CubePounceState {
 
     private float _InitialPitch_deg = 0;

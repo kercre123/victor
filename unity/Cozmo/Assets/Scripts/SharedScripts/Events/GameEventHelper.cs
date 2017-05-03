@@ -29,7 +29,7 @@ public class GameEventWrapper {
   }
 }
 
-public class MinigameStartedGameEvent : GameEventWrapper {
+public class ChallengeStartedGameEvent : GameEventWrapper {
   public string GameID;
   public int Difficulty;
   public bool RequestedGame;
@@ -47,7 +47,7 @@ public class MinigameStartedGameEvent : GameEventWrapper {
   }
 }
 
-public class MinigameGameEvent : GameEventWrapper {
+public class ChallengeGameEvent : GameEventWrapper {
   public string GameID;
   public int Difficulty;
   // Winner refers to different things in different events. But will always be true
@@ -106,7 +106,7 @@ public class MinigameGameEvent : GameEventWrapper {
 
 }
 
-public class NewHighScoreGameEvent : MinigameGameEvent {
+public class NewHighScoreGameEvent : ChallengeGameEvent {
   public int OldHighScore;
   public override void Init(GameEvent Enum, params object[] args) {
     base.Init(Enum, args);
@@ -235,10 +235,10 @@ public class GameEventWrapperFactory {
   public static void Init() {
     _EnumWrappers = new Dictionary<Anki.Cozmo.GameEvent, Type>();
     // Specific wrappers, otherwise just use the base class.
-    Register(GameEvent.OnChallengeStarted, typeof(MinigameStartedGameEvent));
-    Register(GameEvent.OnChallengePointScored, typeof(MinigameGameEvent));
-    Register(GameEvent.OnChallengeRoundEnd, typeof(MinigameGameEvent));
-    Register(GameEvent.OnChallengeComplete, typeof(MinigameGameEvent));
+    Register(GameEvent.OnChallengeStarted, typeof(ChallengeStartedGameEvent));
+    Register(GameEvent.OnChallengePointScored, typeof(ChallengeGameEvent));
+    Register(GameEvent.OnChallengeRoundEnd, typeof(ChallengeGameEvent));
+    Register(GameEvent.OnChallengeComplete, typeof(ChallengeGameEvent));
     Register(GameEvent.OnChallengeDifficultyUnlock, typeof(DifficultyUnlockedGameEvent));
     Register(GameEvent.OnUnlockableEarned, typeof(UnlockableGameEvent));
     Register(GameEvent.OnDailyGoalProgress, typeof(DailyGoalProgressGameEvent));
@@ -253,7 +253,7 @@ public class GameEventWrapperFactory {
     // This is only special because the skills system can only listen to enums for now
     // And cozmo shouldn't level up in solo mode.
     // TODO: can be removed when GameEvents have a baseclass instead of an enum or more filtering is on skillsystem.
-    Register(GameEvent.OnMemoryMatchVsComplete, typeof(MinigameGameEvent));
+    Register(GameEvent.OnMemoryMatchVsComplete, typeof(ChallengeGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {

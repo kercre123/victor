@@ -1,6 +1,6 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using Cozmo.Challenge;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class UnlockDebugPane : MonoBehaviour {
   [SerializeField]

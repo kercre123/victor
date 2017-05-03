@@ -2,7 +2,7 @@ using UnityEngine;
 using Anki.Cozmo.Audio;
 using System.Collections;
 
-namespace Cozmo.Minigame.CubePounce {
+namespace Cozmo.Challenge.CubePounce {
   public class CubePounceStatePause : CubePounceState {
 
     private float _FakeOutDelay_s;

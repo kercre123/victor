@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
 namespace Cozmo {
-  namespace Minigame.DroneMode {
+  namespace Challenge.DroneMode {
     [System.Serializable]
     public class DroneModeActionData {
       [SerializeField]
@@ -12,7 +12,7 @@ namespace Cozmo {
       public Anki.Cozmo.UnlockId ActionUnlockId { get { return _ActionUnlockId; } }
     }
 
-    public class DroneModeConfig : MinigameConfigBase {
+    public class DroneModeConfig : ChallengeConfigBase {
       public override int NumCubesRequired() {
         return 0;
       }

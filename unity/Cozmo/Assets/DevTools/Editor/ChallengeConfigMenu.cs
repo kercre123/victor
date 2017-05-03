@@ -1,12 +1,12 @@
-﻿using System;
-using UnityEditor;
+using Cozmo.Challenge;
+using System;
 using System.Reflection;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
-using System.IO;
 
 namespace AssemblyCSharpEditor {
-  public class MinigameConfigMenu : EditorWindow {
+  public class ChallengeConfigMenu : EditorWindow {
 
 
     private static string[] _typeNames;
@@ -17,9 +17,9 @@ namespace AssemblyCSharpEditor {
 
     private int _selectedIndex = 0;
 
-    static MinigameConfigMenu() {
-      var types = Assembly.GetAssembly(typeof(MinigameConfigBase)).GetTypes().Where(t => typeof(MinigameConfigBase).IsAssignableFrom(t) && t != typeof(MinigameConfigBase));
-      _types = types.Concat(new System.Type[1]{ null }).ToArray();
+    static ChallengeConfigMenu() {
+      var types = Assembly.GetAssembly(typeof(ChallengeConfigBase)).GetTypes().Where(t => typeof(ChallengeConfigBase).IsAssignableFrom(t) && t != typeof(ChallengeConfigBase));
+      _types = types.Concat(new System.Type[1] { null }).ToArray();
       _typeNames = _types.Select(x => x != null ? x.Name : "None").ToArray();
 
       _indices = new int[_typeNames.Length];
@@ -39,7 +39,7 @@ namespace AssemblyCSharpEditor {
 
         if (!string.IsNullOrEmpty(path)) {
           var challengeDataInstance = ScriptableObject.CreateInstance(typeof(ChallengeData)) as ChallengeData;
-          var configInstance = type != null ? ScriptableObject.CreateInstance(type) as MinigameConfigBase : null;
+          var configInstance = type != null ? ScriptableObject.CreateInstance(type) as ChallengeConfigBase : null;
 
           if (path.StartsWith(Application.dataPath) && path.Contains("Resources")) {
             path = "Assets" + path.Substring(Application.dataPath.Length);
@@ -49,7 +49,7 @@ namespace AssemblyCSharpEditor {
               AssetDatabase.CreateAsset(configInstance, path2);
             }
 
-            challengeDataInstance.MinigameConfig = configInstance;
+            challengeDataInstance.ChallengeConfig = configInstance;
 
             AssetDatabase.CreateAsset(challengeDataInstance, path);
 
@@ -63,9 +63,9 @@ namespace AssemblyCSharpEditor {
     }
 
     [MenuItem("Cozmo/Challenges/Create Challenge Config", false, 10)]
-    public static void OpenMinigameConfigMenu() {
+    public static void OpenChallengeConfigMenu() {
       // Get existing open window or if none, make a new one:
-      MinigameConfigMenu window = (MinigameConfigMenu)EditorWindow.GetWindow(typeof(MinigameConfigMenu));
+      ChallengeConfigMenu window = (ChallengeConfigMenu)EditorWindow.GetWindow(typeof(ChallengeConfigMenu));
       window.minSize = new Vector2(350, 40);
       window.maxSize = new Vector2(350, 40);
       window.titleContent = new GUIContent("Create New Challenge Config");

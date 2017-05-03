@@ -790,7 +790,7 @@ public class Robot : IRobot {
   }
 
   // Only debug panels should be using set.
-  // You should not be calling this from a minigame/challenge.
+  // You should not be calling this from a challenge.
   public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
     RobotEngineManager.Instance.Message.MoodMessage =
       Singleton<MoodMessage>.Instance.Initialize(

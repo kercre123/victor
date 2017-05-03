@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,27 +17,27 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class ChallengeEndedIntensityCondition : GoalCondition {
-     
+
       public bool IsHighIntensity;
 
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if (cozEvent is MinigameGameEvent) {
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-          if (miniGameEvent.HighIntensity == IsHighIntensity) {
+        if (cozEvent is ChallengeGameEvent) {
+          ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
+          if (challengeEvent.HighIntensity == IsHighIntensity) {
             isMet = true;
           }
         }
         return isMet;
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         IsHighIntensity = EditorGUILayout.Toggle(new GUIContent("HighIntensity", "Condition is true if results match this flag"), IsHighIntensity);
         EditorGUILayout.EndHorizontal();
       }
-      #endif
+#endif
     }
   }
 }

@@ -1,9 +1,8 @@
-﻿using UnityEngine;
-using System.Collections;
+using Cozmo.Challenge;
+using UnityEngine;
 using System.Collections.Generic;
 using DataPersistence;
 using G2U = Anki.Cozmo.ExternalInterface;
-using U2G = Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo.NVStorage;
 
 /* 
@@ -101,7 +100,7 @@ public class SkillSystem {
       _SkillOveride = 0;
     }
     else if (level == SkillOverrideLevel.Max && _CurrChallengeData != null) {
-      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      GameSkillConfig skillConfig = _CurrChallengeData.ChallengeConfig.SkillConfig;
       _SkillOveride = skillConfig.GetMaxLevel() - 1;
     }
   }
@@ -109,7 +108,7 @@ public class SkillSystem {
   public GameSkillLevelConfig GetSkillLevelConfig() {
     GameSkillData currSkillData = GetSkillDataForGame();
     if (currSkillData != null) {
-      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      GameSkillConfig skillConfig = _CurrChallengeData.ChallengeConfig.SkillConfig;
       GameSkillLevelConfig skillLevelConfig = skillConfig.GetCurrLevelConfig(GetCozmoSkillLevel(currSkillData));
 
       return skillLevelConfig;
@@ -196,11 +195,11 @@ public class SkillSystem {
     GameSkillData currSkillData = GetSkillDataForGame();
     if (currSkillData != null) {
       bool playerWin = false;
-      if (cozEvent is MinigameGameEvent) {
-        MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-        playerWin = miniGameEvent.PlayerWin;
+      if (cozEvent is ChallengeGameEvent) {
+        ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
+        playerWin = challengeEvent.PlayerWin;
       }
-      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      GameSkillConfig skillConfig = _CurrChallengeData.ChallengeConfig.SkillConfig;
       if (skillConfig.IsChallengePointEvent(cozEvent.GameEventEnum)) {
         // Since this controls Cozmo's skill level, these are named from Cozmo's PoV unlike the event names.
         if (playerWin) {

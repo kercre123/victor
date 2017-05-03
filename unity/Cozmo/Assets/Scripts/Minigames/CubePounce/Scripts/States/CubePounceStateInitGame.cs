@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-namespace Cozmo.Minigame.CubePounce {
+namespace Cozmo.Challenge.CubePounce {
   public class CubePounceStateInitGame : CubePounceState {
 
     public override void Enter() {

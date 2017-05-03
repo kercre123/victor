@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cozmo.UI;
 using System;
 using DataPersistence;
@@ -140,14 +140,14 @@ namespace Cozmo {
     }
 
     private void HandleApplicationPause(bool shouldBePaused) {
-      // When pausing, try to close any minigame that's open and reset robot state to Idle
+      // When pausing, try to close any challenge that's open and reset robot state to Idle
       if (!_IsPaused && shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application being paused");
         _IsPaused = true;
 
         HubWorldBase hub = HubWorldBase.Instance;
         if (null != hub) {
-          hub.CloseMinigameImmediately();
+          hub.CloseChallengeImmediately();
         }
 
         _ShouldPlayWakeupTimestamp = -1;

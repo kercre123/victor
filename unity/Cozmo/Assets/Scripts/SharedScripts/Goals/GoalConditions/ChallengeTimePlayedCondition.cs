@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,10 +25,10 @@ namespace Anki {
       // Returns true if the specified player's time played in seconds matches target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if ((cozEvent is MinigameGameEvent)) {
-          GameBase miniGameInstance = HubWorldBase.Instance.GetMinigameInstance();
-          if (miniGameInstance == null) { return false; }
-          isMet = CompareConditionValues(miniGameInstance.GetGameTimeElapsedInSeconds(), TargetTime, compareType);
+        if ((cozEvent is ChallengeGameEvent)) {
+          GameBase challengeInstance = HubWorldBase.Instance.GetChallengeInstance();
+          if (challengeInstance == null) { return false; }
+          isMet = CompareConditionValues(challengeInstance.GetGameTimeElapsedInSeconds(), TargetTime, compareType);
         }
         return isMet;
       }

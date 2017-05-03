@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public abstract class MinigameConfigBase : ScriptableObject {
+public abstract class ChallengeConfigBase : ScriptableObject {
 
   public abstract int NumCubesRequired();
 

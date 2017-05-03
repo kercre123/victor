@@ -1,11 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
 using Anki.UI;
-using System.Collections;
-using DG.Tweening;
-using Cozmo.UI;
 using Cozmo;
+using Cozmo.Challenge;
+using Cozmo.UI;
 using DataPersistence;
+using DG.Tweening;
+using UnityEngine;
 
 public class ChallengeDetailsModal : BaseModal {
 
@@ -96,7 +95,7 @@ public class ChallengeDetailsModal : BaseModal {
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _AvailableContainer.SetActive(true);
     _AffordableIcon.SetActive(false);
-    _CubesRequired = challengeData.MinigameConfig.NumCubesRequired();
+    _CubesRequired = challengeData.ChallengeConfig.NumCubesRequired();
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
     if (UnlockablesManager.Instance.IsUnlocked(challengeData.UnlockId.Value)) {
       // If Ready and Unlocked
@@ -217,7 +216,7 @@ public class ChallengeDetailsModal : BaseModal {
 
     UIManager.OpenAlert(cozmoNotOnTreadsData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
   }
-  
+
   private void OpenCozmoDizzyAlert() {
     var cozmoDizzyData = new AlertModalData("cozmo_dizzy_alert",
                                             LocalizationKeys.kChallengeDetailsCozmoDizzyTitle,

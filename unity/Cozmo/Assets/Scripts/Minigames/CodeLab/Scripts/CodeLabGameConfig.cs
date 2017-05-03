@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 namespace CodeLab {
-  public class CodeLabGameConfig : MinigameConfigBase {
+  public class CodeLabGameConfig : ChallengeConfigBase {
     public override int NumCubesRequired() {
       return 0;
     }

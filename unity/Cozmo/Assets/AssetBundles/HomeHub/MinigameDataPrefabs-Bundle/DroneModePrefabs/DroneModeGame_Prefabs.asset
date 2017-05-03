@@ -11,6 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 521e813476db3429ea107216c7671695, type: 3}
   m_Name: DroneModeGame_Prefabs
   m_EditorClassIdentifier: 
-  _MinigamePrefab: {fileID: 120548, guid: c0a79a242132d457db75dcfe14630518, type: 2}
+  _ChallengePrefab: {fileID: 120548, guid: c0a79a242132d457db75dcfe14630518, type: 2}
   _ChallengeIconPlainStyle: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f,
     type: 3}

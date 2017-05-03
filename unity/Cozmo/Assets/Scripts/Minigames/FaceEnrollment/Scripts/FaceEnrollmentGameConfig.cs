@@ -1,5 +1,5 @@
-﻿namespace FaceEnrollment {
-  public class FaceEnrollmentGameConfig : MinigameConfigBase {
+namespace FaceEnrollment {
+  public class FaceEnrollmentGameConfig : ChallengeConfigBase {
 
     public long UpdateThresholdLastSeenSeconds;
     public long UpdateThresholdLastEnrolledSeconds;

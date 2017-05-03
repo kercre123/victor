@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -21,10 +21,10 @@ namespace Anki {
       // Can probably move "Accuracy" to this state since that is only for speedtap and it's in gamebase now.
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if ((cozEvent is MinigameGameEvent)) {
-          MinigameGameEvent miniGameEvent = (MinigameGameEvent)cozEvent;
-          if (miniGameEvent.GameSpecificValues != null && miniGameEvent.GameSpecificValues.ContainsKey(ConditionKey)) {
-            isMet = CompareConditionValues(miniGameEvent.GameSpecificValues[ConditionKey], TargetValue, compareType);
+        if ((cozEvent is ChallengeGameEvent)) {
+          ChallengeGameEvent challengeEvent = (ChallengeGameEvent)cozEvent;
+          if (challengeEvent.GameSpecificValues != null && challengeEvent.GameSpecificValues.ContainsKey(ConditionKey)) {
+            isMet = CompareConditionValues(challengeEvent.GameSpecificValues[ConditionKey], TargetValue, compareType);
           }
         }
         return isMet;

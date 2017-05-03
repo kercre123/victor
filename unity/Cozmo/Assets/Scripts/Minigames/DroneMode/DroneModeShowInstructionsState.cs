@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 namespace Cozmo {
-  namespace Minigame {
+  namespace Challenge {
     namespace DroneMode {
       public class DroneModeShowInstructionsState : State {
         public override void Enter() {

@@ -62,7 +62,7 @@ namespace CodeLab {
 
     private const string kUserProjectName = "My Project"; // TODO Move to internationalization files
 
-    protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
+    protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
       DAS.Debug("Loading Webview", "");
@@ -73,7 +73,7 @@ namespace CodeLab {
       SharedMinigameView.HideMiddleBackground();
       SharedMinigameView.HideQuitButton();
 
-      // In GameBase.cs, in the function InitializeMinigame(), the lights are set to allow the minigame to control them.
+      // In GameBase.cs, in the function InitializeChallenge(), the lights are set to allow the Challenge to control them.
       // We don't want this behavior for CodeLab.
       CurrentRobot.SetEnableFreeplayLightStates(true);
 
@@ -111,11 +111,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     protected override void Update() {
       base.Update();
-      // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the minigame level.
+      // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
       // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
       if (_WebViewObject != null && RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
         if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
-          RaiseMiniGameQuit();
+          RaiseChallengeQuit();
         }
       }
     }
@@ -439,7 +439,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         LoadURL("extra/projects.html");
       }
       else if (scratchRequest.command == "cozmoCloseCodeLab") {
-        RaiseMiniGameQuit();
+        RaiseChallengeQuit();
       }
       else if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block

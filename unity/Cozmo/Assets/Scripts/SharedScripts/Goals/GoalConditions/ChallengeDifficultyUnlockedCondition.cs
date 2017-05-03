@@ -1,9 +1,5 @@
-﻿using UnityEngine;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Cozmo;
-using DataPersistence;
+﻿using Cozmo.Challenge;
+using UnityEngine;
 
 
 
@@ -24,9 +20,9 @@ namespace Anki {
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if (cozEvent is DifficultyUnlockedGameEvent) {
-          DifficultyUnlockedGameEvent miniGameEvent = (DifficultyUnlockedGameEvent)cozEvent;
-          if (miniGameEvent.GameID == ChallengeID &&
-              (miniGameEvent.NewDifficulty > 0 && miniGameEvent.NewDifficulty >= Difficulty)) {
+          DifficultyUnlockedGameEvent challengeEvent = (DifficultyUnlockedGameEvent)cozEvent;
+          if (challengeEvent.GameID == ChallengeID &&
+              (challengeEvent.NewDifficulty > 0 && challengeEvent.NewDifficulty >= Difficulty)) {
             isMet = true;
           }
         }

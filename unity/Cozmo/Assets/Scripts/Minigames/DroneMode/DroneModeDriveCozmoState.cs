@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 namespace Cozmo {
-  namespace Minigame {
+  namespace Challenge {
     namespace DroneMode {
       public class DroneModeDriveCozmoState : State {
         private const float _kSendMessageInterval_sec = 0.1f;

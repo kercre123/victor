@@ -2,7 +2,7 @@
 using Cozmo.UI;
 using DG.Tweening;
 
-namespace Cozmo.Minigame.DroneMode {
+namespace Cozmo.Challenge.DroneMode {
   public class DroneModeHowToPlayModal : BaseModal {
 
     [SerializeField]
