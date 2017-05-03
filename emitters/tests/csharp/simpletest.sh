@@ -36,6 +36,7 @@ mcs -warnaserror -warn:4 -debug+ -out:$OUTPUT_DIR/csharptest.exe \
     $OUTPUT_DIR/Bar.cs \
     $OUTPUT_DIR/Foo.cs \
     $OUTPUT_DIR/UnionOfUnion.cs \
-    $OUTPUT_DIR/DefaultValues.cs
+    $OUTPUT_DIR/DefaultValues.cs \
+    $OUTPUT_DIR/TestEnum.cs
 
 time mono --debug $OUTPUT_DIR/csharptest.exe

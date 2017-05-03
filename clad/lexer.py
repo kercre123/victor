@@ -53,6 +53,20 @@ class WrappedFloatConstant(object):
     def __repr__(self):
         return '{0}({1!r}, {2!r}, {3!r})'.format(type(self).__name__, self.text, self.type, self.value)
 
+class WrappedStringConstant(object):
+
+  def __init__(self, text):
+        self.text = text
+        self.type = None
+        # Remove 'verbatim ' from the text
+        # Make sure to update string_literal regex should 'verbatim ' be changed
+        self.value = text.replace("verbatim ", "")
+
+  def __str(self):
+        return self.text
+
+  def __repr__(self):
+        return '{0}({1!r}, {2!r}, {3!r})'.format(type(self).__name__, self.text, self.type, self.value)
 
 class AnkiBufferLexer(object):
     """ A lexer for the Anki Buffer definition language.  After building it, set the
@@ -132,6 +146,7 @@ class AnkiBufferLexer(object):
         'namespace',
         'include',
         'no_cpp_class',
+        'no_default_constructor',
         #'tag',
     )
 
@@ -146,6 +161,7 @@ class AnkiBufferLexer(object):
     ## All the tokens recognized by the lexer
     ##
     tokens = keywords_upper + (
+        'STRING_LITERAL',
         #Identifiers
         'ID',
         'QUOTED_PATH',
@@ -182,11 +198,26 @@ class AnkiBufferLexer(object):
     t_COMMA  = r','
     t_EQ = r'='
     t_COLON = r'\:'
-
+    
+    # verbatim is treated as the keyword for string literal
+    # Matches verbatim and everything that comes after it up to ", { } [ ] = ; \n"
+    # The generated code will be ID = <stuff after verbatim> so we don't want to include
+    # unique characters that may do different things depending on the language the emitter is generating
+    # Currently only enums support this
+    # Make sure to update WrappedStringConstant should 'verbatim ' be changed
+    string_literal = r'(verbatim [^,\{\}\[\]=;\n]*)'
+    
     def t_COMMENT(self, t):
         r'(/\*(.|\n)*?\*/)|(//.*)'
         t.lexer.lineno += t.value.count("\n")
-
+    
+    @TOKEN(string_literal)
+    def t_STRING_LITERAL(self, t):
+        t.value = WrappedStringConstant(t.value)
+        if t.value.value == "":
+          self._error('No text after "verbatim" keyword', t)
+        return t
+    
     @TOKEN(identifier)
     def t_ID(self, t):
         t.type = self.keyword_map.get(t.value, "ID")

@@ -159,6 +159,7 @@ class CLADParser(PLYParser):
         self._lines_to_coords = []
         processed_text = ''.join(self.preprocess(text, filename, directory))
         self._last_yielded_token = None
+
         self._syntax_tree = self.parser.parse(
             input=processed_text,
             lexer=self.lexer,
@@ -175,22 +176,45 @@ class CLADParser(PLYParser):
     def _postprocess_enums(self):
         for enum in self._enum_decls:
             value = 0
+            str_value = None
             all_values = set()
             for member in enum.members():
+                isHex = False
                 if member.initializer:
+                    str_value = None
                     value = member.initializer.value
-                if not (enum.storage_type.min <= value <= enum.storage_type.max):
+                    
+                    if member.initializer.type == "hex":
+                        value = hex(value)
+                        isHex = True
+                    
+                    # if the enum value is initialized with a string then set str_value and reset value
+                    if type(value) is str:
+                        str_value = value
+                        value = 0
+                
+                if type(value) is not str and not (enum.storage_type.min <= value <= enum.storage_type.max):
                     raise ParseError(
                         member.coord,
                         "Enum '{0}' has a value '{1}' outside the range of '{2}'".format(
                         enum.fully_qualified_name(),
                         member.name,
                         enum.storage_type.name))
+                
+                # if the enum value is a string add " + <incrementing value>" to the end of the string so the actual generated value
+                # is incrementing
+                if str_value is not None:
+                    addition = " + {0}".format(value) if value != 0 else ""
+                    member.value = str_value + addition
+                else:
+                    member.value = value
 
-                member.value = value
-                if value in all_values:
+                comp_value = member.initializer.value if isHex else member.value
+                if comp_value in all_values:
                     member.is_duplicate = True
-                all_values.add(value)
+
+                all_values.add(comp_value)
+
                 value += 1
 
     def _postprocess_unions(self):
@@ -494,7 +518,17 @@ class CLADParser(PLYParser):
         """ message_decl : message_decl_begin ID LBRACE message_member_decl_list RBRACE
                          | message_decl_begin ID LBRACE message_member_decl_list COMMA RBRACE
                          | message_decl_begin ID LBRACE RBRACE
+                         | NO_DEFAULT_CONSTRUCTOR message_decl_begin ID LBRACE message_member_decl_list RBRACE
+                         | NO_DEFAULT_CONSTRUCTOR message_decl_begin ID LBRACE message_member_decl_list COMMA RBRACE
+                         | NO_DEFAULT_CONSTRUCTOR message_decl_begin ID LBRACE RBRACE
         """
+        default_constructor = p[1] != "no_default_constructor"
+        
+        # if no default constructor remove the word from the list(YaccProduction object)
+        # so the later code is not affected by it
+        if not default_constructor:
+            p.pop(1)
+        
         if len(p) >= 6:
             members = p[4]
         else:
@@ -504,7 +538,8 @@ class CLADParser(PLYParser):
         p[0] = ast.MessageDecl(p[2], members,
                                self.production_to_coord(p, 2),
                                self._get_current_namespace(),
-                               is_structure)
+                               is_structure,
+                               default_constructor)
 
         self._check_duplicates(p[0], p[1])
 
@@ -572,8 +607,9 @@ class CLADParser(PLYParser):
 
     def p_message_fixed_array_member(self, p):
         """ message_fixed_array_member : type ID LSQ int_constant RSQ
+                                       | type ID LSQ string_constant RSQ
         """
-        if p[4].value < 0:
+        if not isinstance(p[4].value, str) and p[4].value < 0:
             self._parse_error("Array index must be positive, got {0}".format(p[4].value),
                               self.production_to_coord(p, 1))
         type = ast.FixedArrayType(p[1].type, p[4].value, self.production_to_coord(p, 1))
@@ -611,8 +647,10 @@ class CLADParser(PLYParser):
     def p_enum_member(self, p):
         """ enum_member : ID
                         | ID EQ int_constant
+                        | ID EQ string_constant
         """
         value = p[3] if len(p) == 4 else None
+            
         p[0] = ast.EnumMember(p[1], value, self.production_to_coord(p, 1))
 
     def p_union_decl_begin(self, p):
@@ -779,6 +817,7 @@ class CLADParser(PLYParser):
     def p_constant(self, p):
         """ constant : int_constant
                      | float_constant
+                     | string_constant
         """
         p[0] = p[1]
 
@@ -792,7 +831,12 @@ class CLADParser(PLYParser):
         """ float_constant : FLOAT_CONST_DEC
         """
         p[0] = ast.FloatConst(p[1].value, p[1].type, self.production_to_coord(p, 1))
-
+    
+    def p_string_constant(self, p):
+        """ string_constant : STRING_LITERAL
+        """
+        p[0] = ast.StringConst(p[1].value, self.production_to_coord(p, 1))
+        
     def p_error(self, p):
         if p:
             self._parse_error("before '{0}'".format(p.value),

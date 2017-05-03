@@ -19,6 +19,7 @@
 #include "Bar.clad"
 #include "ExplicitUnion.clad"
 #include "ExplicitAutoUnion.clad"
+#include "TestEnum.clad"
 
 namespace Baz {
   message Dog {
@@ -79,6 +80,80 @@ namespace Cat {
     od432 myOD432 = 254
   }
 } // namespace Cat
+
+
+namespace Constructor {
+  structure HasDefaultConstructor {
+    float_32 foo,
+    int_32 bar
+  }
+
+  no_default_constructor structure HasNoDefaultConstructor {
+    float_32 foo,
+    int_32 bar
+  }
+
+  no_default_constructor structure NoDefaultConstructorComplex {
+    HasDefaultConstructor c,
+    string s,
+    uint_8 arr[20]
+  }
+
+  message MessageWithStruct {
+    HasNoDefaultConstructor c1234,
+    int_32 i,
+    float_32 f,
+    HasDefaultConstructor c4321
+  }
+
+  message OtherMessageWithStruct {
+    NoDefaultConstructorComplex complex,
+    HasDefaultConstructor c
+  }
+
+  no_default_constructor structure NestedNoDefaults {
+    NoDefaultConstructorComplex c,
+    HasDefaultConstructor c1,
+    uint_8 arr[20],
+    HasNoDefaultConstructor c2,
+    string s
+  }
+
+  message SuperComplex {
+    NestedNoDefaults n,
+    HasDefaultConstructor d,
+    NoDefaultConstructorComplex c
+  }
+
+  structure Nest1 {
+    HasNoDefaultConstructor c
+  }
+
+  structure Nest2 {
+    Nest1 c
+  }
+
+  structure Nest3 {
+    Nest2 c
+  }
+}
+
+namespace Arrays {
+  enum no_cpp_class uint_32 ArrSize {
+    sizeTen = 10,
+    sizeTwenty = 20
+  }
+
+  structure s {
+    uint_8 arr8[verbatim ArrSize::sizeTen],
+    uint_16 arr16[verbatim ArrSize::sizeTwenty]
+  }
+
+  message m {
+    uint_8 arr8[verbatim ArrSize::sizeTen],
+    uint_16 arr16[verbatim ArrSize::sizeTwenty]
+  }
+}
 
 /*union MetaUnion {
   Foo foo,

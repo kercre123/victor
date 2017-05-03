@@ -59,12 +59,12 @@ done
 echo "*********"
 echo ""
 
-if [ -n `which valgrind` ]; then
+if `which valgrind > /dev/null`; then
     echo "Memcheck"
     for std in $STDS; do
         COMMAND="valgrind $OUTPUT_DIR/ctest_$std.out"
         echo $COMMAND
-        $(COMMAND)
+        eval $COMMAND
     done
     echo "*********"
     echo ""

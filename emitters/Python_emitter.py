@@ -32,6 +32,7 @@ _modify_path()
 
 from clad import clad
 from clad import ast
+from clad import emitterutil
 
 class PythonQualifiedNamer(object):
 
@@ -165,11 +166,20 @@ class DeclEmitter(BaseEmitter):
         self.body_emitter.visit(node, *args, **kwargs)
 
         if node.namespace:
-            self.output.write('{qualified_decl_name} = {decl_name}\n'.format(**globals))
-            if need_to_save_name:
-                self.output.write('{decl_name} = {saved_name}\n\n'.format(**globals))
-            else:
-                self.output.write('del {decl_name}\n\n'.format(**globals))
+            # The idea is that if an enum is referencing another enum using the verbatim keyword then the enum that is being
+            # referenced has to specify no_cpp_class in order for the c++ code to compile. Generated python code needs to not
+            # delete the decl_name in this case
+            try:
+                # Only EnumDecls have cpp_class so this needs to be in a try except
+                # cpp_class is false if no_cpp_class was specified in the clad file so we need to save the decl name
+                need_to_save_name = not node.cpp_class
+            except AttributeError:
+                pass
+            finally:
+              self.output.write('{qualified_decl_name} = {decl_name}\n'.format(**globals))
+              # if we don't need to save the decl_name then delete it
+              if not need_to_save_name:
+                  self.output.write('del {decl_name}\n\n'.format(**globals))
 
         self.output.write('\n')
 
@@ -197,15 +207,15 @@ class EnumEmitter(BaseEmitter):
             starts = []
             ends = []
             enum_val = 0
+            enum_str_val = None
             for member in node.members():
-                if member.initializer:
-                    enum_val = member.initializer.value
-                    initializer = '0x{0:x}'.format(enum_val) if member.initializer.type == "hex" else '{0:d}'.format(enum_val)
-                else:
-                    initializer = '{0:d}'.format(enum_val)
+                value = member.value
+                
+                if type(value) is str and "::" in member.value:
+                    value = value.replace("::", ".")
+                
                 start = '\t{member_name}'.format(member_name=member.name)
-                end = ' = {initializer}\n'.format(initializer=initializer)
-                enum_val += 1
+                end = ' = {initializer}\n'.format(initializer=str(value))
 
                 starts.append(start)
                 ends.append(end)
@@ -286,8 +296,17 @@ class MessageEmitter(BaseEmitter):
     def emitConstructor(self, node, globals):
         default_value_visitor = DefaultValueVisitor(output=self.output)
         self.output.write('\tdef __init__(self')
+        
+        all_members_have_default_constructor = emitterutil._do_all_members_have_default_constructor(node) and node.default_constructor
+        
         for member in node.members():
-            self.output.write(', {member_name}='.format(member_name=member.name))
+            self.output.write(', {member_name}'.format(member_name=member.name))
+            
+            # If any members do not have a default constructor then don't generate the assignment
+            if not all_members_have_default_constructor:
+                continue
+            
+            self.output.write('=')
             default_value_visitor.visit(member)
         self.output.write('):\n')
 
@@ -760,8 +779,11 @@ class SetterVisitor(PythonMemberVisitor):
     def visit_FixedArrayType(self, node, name, value):
         self.output.write("{support_module}.validate_farray(\n".format(support_module=support_module))
         self.output.write('\t' * (self.depth + 1))
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
         self.output.write("{name}, {value}, {length},\n".format(
-            name=name, value=value, length=node.length))
+            name=name, value=value, length=length))
         self.output.write('\t' * (self.depth + 1))
         inner = '{value}_inner'.format(value=value)
         self.output.write('lambda name, {inner}: '.format(inner=inner))
@@ -832,7 +854,10 @@ class DefaultValueVisitor(PythonMemberVisitor):
     def visit_FixedArrayType(self, node):
         self.output.write('(')
         self.visit(node.member_type)
-        self.output.write(',) * {length}'.format(length=node.length))
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.output.write(',) * {length}'.format(length=length))
 
     def visit_VariableArrayType(self, node):
         self.output.write('()')
@@ -908,7 +933,10 @@ class ReadVisitor(PythonMemberVisitor):
             reader=reader, format=type_translations[node.length_type.name]))
 
     def visit_FixedArrayType(self, node, reader):
-        self.fixed_visitor.visit(node.member_type, reader=reader, length=node.length)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.fixed_visitor.visit(node.member_type, reader=reader, length=length)
 
     def visit_VariableArrayType(self, node, reader):
         self.variable_visitor.visit(node.member_type, reader=reader, length_type=node.length_type)
@@ -980,7 +1008,10 @@ class WriteVisitor(PythonMemberVisitor):
             writer=writer, value=value, format=type_translations[node.length_type.name], support_module=support_module))
 
     def visit_FixedArrayType(self, node, writer, value):
-        self.fixed_visitor.visit(node.member_type, writer=writer, value=value, length=node.length)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.fixed_visitor.visit(node.member_type, writer=writer, value=value, length=length)
 
     def visit_VariableArrayType(self, node, writer, value):
         self.variable_visitor.visit(node.member_type, writer=writer, value=value, length_type=node.length_type)
@@ -1046,7 +1077,10 @@ class SizeVisitor(PythonMemberVisitor):
             value=value, length_format=type_translations[node.length_type.name], support_module=support_module))
 
     def visit_FixedArrayType(self, node, value):
-        self.fixed_visitor.visit(node.member_type, value=value, length=node.length)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+        self.fixed_visitor.visit(node.member_type, value=value, length=length)
 
     def visit_VariableArrayType(self, node, value):
         self.variable_visitor.visit(node.member_type, value=value, length_type=node.length_type)

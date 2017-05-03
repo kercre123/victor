@@ -17,7 +17,7 @@
 set -e
 set -u
 
-CLAD="${PYTHON:=python} ${PYTHONFLAGS:=} ${EMITTER:=../../CPP_emitter.py}"
+CLAD="${PYTHON:=python} ${PYTHONFLAGS:=} ${EMITTER:=../../CPP_emitter.py} ${EMITTERFLAGS}"
 CLADSRC=../src
 OUTPUT_DIR=${OUTPUT_DIR:-./build/big}
 SUPPORTDIR=../../../support/cpp
@@ -51,7 +51,10 @@ SRCFILES="$OUTPUT_DIR/cpptest.cpp \
     $OUTPUT_DIR/ExplicitUnion.cpp \
     $OUTPUT_DIR/ExplicitAutoUnion.cpp \
     $OUTPUT_DIR/UnionOfUnion.cpp \
-    $SUPPORTDIR/source/SafeMessageBuffer.cpp"
+    $OUTPUT_DIR/TestEnum.cpp \
+    $SUPPORTDIR/source/SafeMessageBuffer.cpp \
+    $OUTPUT_DIR/JsonSerialization.cpp \
+    $SUPPORTDIR/source/jsoncpp.cpp"
 
 echo "clang++ -std=gnu++11 $COMMON_CFLAGS -o $OUTPUT_DIR/cpptest_gnu.out $SRCFILES"
 time clang++ -std=gnu++11 $COMMON_CFLAGS -o $OUTPUT_DIR/cpptest_gnu.out $SRCFILES
@@ -68,7 +71,7 @@ time $OUTPUT_DIR/cpptest_clang.out
 echo "*********"
 echo ""
 
-if [ -n `which valgrind` ]; then
+if `which valgrind > /dev/null`; then
    echo "Memcheck"
    valgrind --suppressions=./fprintf.supp --leak-check=full $OUTPUT_DIR/cpptest_clang.out
    valgrind --suppressions=./fprintf.supp --leak-check=full $OUTPUT_DIR/cpptest_gnu.out

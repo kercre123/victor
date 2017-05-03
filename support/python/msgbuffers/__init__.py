@@ -1,8 +1,8 @@
-# Copyright 2015-2016 Anki Inc.
+# Copyright (c) 2016 Anki, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# You may obtain a copy of the License in the file LICENSE.txt or at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #

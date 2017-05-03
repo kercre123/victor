@@ -36,7 +36,7 @@ CPP_LINKERFLAGS?=-Wall -Wextra -std=c++11 -stdlib=libc++ -Os -g
 PYTHON?=python
 PYTHONFLAGS?=
 CPP_EMITTER?=$(CPP_ROOT_DIR)/emitters/CPP_emitter.py
-CPP_EMITTERFLAGS?=
+CPP_EMITTERFLAGS?=--output-json --output-properties
 
 
 ###############################################

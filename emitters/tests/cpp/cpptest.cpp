@@ -19,6 +19,10 @@
 #include "UnionOfUnion.h"
 #include "DefaultValues.h"
 #include "aligned/AutoUnionTest.h"
+#include "TestEnum.h"
+#include "JsonSerialization.h"
+#include "json/json.h"
+
 
 // AMAZING UNIT TEST FRAMEWORK RIGHT HERE
 // JUST ONE HEADER (pauley)
@@ -47,6 +51,7 @@ TEST AnkiEnum_Basics()
   ASSERT_EQ("e1", AnkiTypes::AnkiEnumToString(ae::e1));
   ASSERT_EQ("myReallySilly_EnumVal", AnkiTypes::AnkiEnumToString(ae::myReallySilly_EnumVal));
   ASSERT_EQ(nullptr, AnkiTypes::AnkiEnumToString((ae) (-1)));
+
   PASS();
 }
 
@@ -64,10 +69,9 @@ TEST AnkiEnum_NoClass()
   bool isClassAnkiNoClassEnum = std::is_convertible<AnkiNoClassEnum, std::underlying_type<AnkiNoClassEnum>::type>::value;
   ASSERT_EQ(isClassAnkiEnum, false);
   ASSERT_EQ(isClassAnkiNoClassEnum, true);
-  
+
   PASS();
 }
-
 
 TEST Foo_should_round_trip()
 {
@@ -350,7 +354,12 @@ TEST CopyConstructors_should_round_trip() {
 
   ASSERT_EQ("hello", cWrapper.Get_myFoo().myString);
   ASSERT_EQ(AnkiTypes::AnkiEnum::e3, cWrapper.Get_myFoo().myFoo);
-  // Assert that aWrapper has been cleared?
+  ASSERT_EQ(aWrapper.GetTag(), Cat::MyMessageTag::INVALID);
+  ASSERT_EQ(cWrapper.GetTag(), Cat::MyMessageTag::myFoo);
+  
+  // There was a bug that would cause cWrapper's tag to get cleared
+  cWrapper = cWrapper;
+  ASSERT_EQ(cWrapper.GetTag(), Cat::MyMessageTag::myFoo);
 
   PASS();
 }
@@ -561,6 +570,277 @@ TEST DefaultValues_Floats() {
   PASS();
 }
 
+TEST JsonSerialization_BasicTypes() {
+  std::string json = R"json(
+{
+	"testBool": true,
+	"testString": "stringValue",
+	"testShort": 26723,
+  "testFloat": 111.5
+}
+)json";
+
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_BasicTypes testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string.
+  ASSERT_EQ(testStruct.testBool, true);
+  ASSERT_EQ(testStruct.testString, "stringValue");
+  ASSERT_EQ(testStruct.testShort, 26723);
+  ASSERT_EQ(testStruct.testFloat, 111.5);
+
+  // GetJSON() will serialize a CLAD generated structure into a Json::Value, the
+  // opposite of what we're doing above.
+  // This reloads the output of GetJSON() back into a Json::Value and then back into
+  // another CLAD object, they should then contain the same data.
+  JsonSerialization::testStructure_BasicTypes testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
+TEST JsonSerialization_List() {
+  std::string json = R"json(
+{
+	"testList": [0,1,2,3,4,5,6,7,8,9]
+}
+)json";
+
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_Lists testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string.
+  ASSERT_EQ(testStruct.testList.size(), 10);
+
+  for(int i = 0; i < 10; i++) {
+    ASSERT_EQ(testStruct.testList[i], i);
+  }
+
+  // GetJSON() will serialize a CLAD generated structure into a Json::Value, the
+  // opposite of what we're doing above.
+  // This reloads the output of GetJSON() back into a Json::Value and then back into
+  // another CLAD object, they should then contain the same data.
+  JsonSerialization::testStructure_Lists testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
+TEST JsonSerialization_Nested() {
+  std::string json = R"json(
+{
+  "testNestedStructure": {
+    "testDouble": -111.5,
+    "testUint64": 18446744073709551615,
+    "testStruct1": {
+      "test": true
+    },
+    "testStruct2": {
+      "test": 99999
+    },
+    "testStruct3": {
+      "test": "Just string things"
+    }
+  }
+}
+)json";
+
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_Nested testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string.
+  ASSERT_EQ(testStruct.testNestedStructure.testDouble, -111.5);
+  ASSERT_EQ(testStruct.testNestedStructure.testUint64, 18446744073709551615UL);
+
+  ASSERT_EQ(testStruct.testNestedStructure.testStruct1.test, true);
+  ASSERT_EQ(testStruct.testNestedStructure.testStruct2.test, 99999);
+  ASSERT_EQ(testStruct.testNestedStructure.testStruct3.test, "Just string things");
+
+  // Ensure that GetJSON is producing equivalent results as loading from the file.
+  JsonSerialization::testStructure_Nested testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
+TEST JsonSerialization_Unions() {
+  std::string json = R"json(
+{
+  "testUnionPrimitive": {
+    "type": "testUint8",
+    "value": 127
+  },
+  "testUnionStructures": {
+    "type": "testStruct3",
+    "test": "stringValue"
+  }
+}
+)json";
+
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_Unions testStruct;
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string.
+  ASSERT_EQ(testStruct.testUnionPrimitive.GetTag(), JsonSerialization::testUnionPrimitiveTag::testUint8);
+  ASSERT_EQ(testStruct.testUnionPrimitive.Get_testUint8(), 127);
+  ASSERT_EQ(testStruct.testUnionStructures.GetTag(), JsonSerialization::testUnionStructuresTag::testStruct3);
+  ASSERT_EQ(testStruct.testUnionStructures.Get_testStruct3().test, "stringValue");
+
+  // Ensure that GetJSON is producing equivalent results as loading from the file.
+  JsonSerialization::testStructure_Unions testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
+TEST JsonSerialization_PartialJson() {
+  std::string json = R"json(
+{
+  "testBool": false
+}
+)json";
+
+  // Load Json from string into jsoncpp Json::Value
+  Json::Reader reader;
+  Json::Value root;
+  ASSERT(reader.parse(json, root));
+
+  // testStruct is the CLAD generated class that we want to serialize into.
+  JsonSerialization::testStructure_PartialJson testStruct;
+  testStruct.testBool = true; // This value should change because it exists in the Json string.
+  testStruct.unreadValue = "This should not change when calling SetFromJSON.";
+
+  ASSERT(testStruct.SetFromJSON(root));
+
+  // Ensure data in objects matches data from the json string, and that SetFromJSON() did
+  // not change the value that was not in the json string.
+  ASSERT_EQ(testStruct.testBool, false);
+  ASSERT_EQ(testStruct.unreadValue, "This should not change when calling SetFromJSON.");
+
+  // Ensure that GetJSON is producing equivalent results as loading from the file.
+  JsonSerialization::testStructure_PartialJson testStructReserialized;
+  testStructReserialized.SetFromJSON(testStruct.GetJSON());
+  ASSERT(testStruct == testStructReserialized);
+
+  PASS();
+}
+
+TEST Enum_Complex() {
+  ASSERT_EQ(FooEnum::foo1, 0);
+  ASSERT_EQ(FooEnum::foo2, 8);
+  ASSERT_EQ(FooEnum::foo3, 9);
+  ASSERT_EQ(FooEnum::foo4, 10);
+  ASSERT_EQ(FooEnum::foo5, 1280);
+  ASSERT_EQ(FooEnum::foo6, 1281);
+  ASSERT_EQ(FooEnum::foo7, 1000);
+  
+  ASSERT_EQ((unsigned int)BarEnum::bar1, 0);
+  ASSERT_EQ((unsigned int)BarEnum::bar2, 8);
+  ASSERT_EQ((unsigned int)BarEnum::bar3, 9);
+  ASSERT_EQ((unsigned int)BarEnum::bar4, 1291);
+  ASSERT_EQ((unsigned int)BarEnum::bar5, 16);
+  ASSERT_EQ((unsigned int)BarEnum::bar6, 17);
+  
+  PASS();
+}
+
+TEST DefaultConstructor() {
+  // HasDefaultConstructor should be constructible with no arguments or two arguments
+  ASSERT_EQ((std::is_constructible<Constructor::HasDefaultConstructor>::value), true);
+  ASSERT_EQ((std::is_constructible<Constructor::HasDefaultConstructor, double, int>::value), true);
+  
+  // HasNoDefaultConstructor should NOT be constructible with no arguments but should be constructible with two arguments
+  ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor, double, int>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::NoDefaultConstructorComplex>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::NoDefaultConstructorComplex,
+                                   Constructor::HasDefaultConstructor,
+                                   std::string,
+                                   std::array<unsigned char, 20>>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::MessageWithStruct>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::MessageWithStruct,
+                                   Constructor::HasNoDefaultConstructor,
+                                   int,
+                                   float,
+                                   Constructor::HasDefaultConstructor>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::OtherMessageWithStruct>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::OtherMessageWithStruct,
+                                   Constructor::NoDefaultConstructorComplex,
+                                   Constructor::HasDefaultConstructor>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::NestedNoDefaults>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::NestedNoDefaults,
+                                   Constructor::NoDefaultConstructorComplex,
+                                   Constructor::HasDefaultConstructor,
+                                   std::array<unsigned char, 20>,
+                                   Constructor::HasNoDefaultConstructor,
+                                   std::string>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::SuperComplex>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::SuperComplex,
+                                   Constructor::NestedNoDefaults,
+                                   Constructor::HasDefaultConstructor,
+                                   Constructor::NoDefaultConstructorComplex>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::Nest1>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::Nest1,
+             Constructor::HasNoDefaultConstructor>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::Nest2>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::Nest2,
+             Constructor::Nest1>::value), true);
+  
+  ASSERT_EQ((std::is_constructible<Constructor::Nest3>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::Nest3,
+             Constructor::Nest2>::value), true);
+  
+  PASS();
+}
+
+TEST FixedArray() {
+  Arrays::s s;
+  ASSERT_EQ(s.arr8.size() == Arrays::ArrSize::sizeTen, true);
+  ASSERT_EQ(s.arr16.size() == Arrays::ArrSize::sizeTwenty, true);
+  ASSERT_EQ(s.Size() == (Arrays::ArrSize::sizeTen * sizeof(uint8_t) + Arrays::ArrSize::sizeTwenty * sizeof(uint16_t)), true);
+  
+  Arrays::m m;
+  ASSERT_EQ(m.arr8.size() == Arrays::ArrSize::sizeTen, true);
+  ASSERT_EQ(m.arr16.size() == Arrays::ArrSize::sizeTwenty, true);
+  ASSERT_EQ(m.Size() == (Arrays::ArrSize::sizeTen * sizeof(uint8_t) + Arrays::ArrSize::sizeTwenty * sizeof(uint16_t)), true);
+  
+  PASS();
+}
 
 SUITE(CPP_Emitter) {
 
@@ -568,6 +848,7 @@ SUITE(CPP_Emitter) {
   RUN_TEST(AnkiEnum_Basics);
   RUN_TEST(AnkiEnum_NoClass);
   RUN_TEST(Enum_VersionHash);
+  RUN_TEST(Enum_Complex);
 
   // Message Tests
   RUN_TEST(Message_VersionHash);
@@ -601,7 +882,19 @@ SUITE(CPP_Emitter) {
   // Default Values
   RUN_TEST(DefaultValues_Ints);
   RUN_TEST(DefaultValues_Floats);
+  
+  // Default constructor generation
+  RUN_TEST(DefaultConstructor);
+  
+  RUN_TEST(FixedArray);
 
+
+  // Json Serialization
+  RUN_TEST(JsonSerialization_BasicTypes);
+  RUN_TEST(JsonSerialization_List);
+  RUN_TEST(JsonSerialization_Nested);
+  RUN_TEST(JsonSerialization_Unions);
+  RUN_TEST(JsonSerialization_PartialJson);
 }
 
 /* Add definitions that need to be in the test runner's main file. */

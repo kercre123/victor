@@ -32,6 +32,7 @@ _modify_path()
 
 from clad import ast
 from clad import clad
+from clad import emitterutil
 
 class CSharpQualifiedNamer(object):
 
@@ -120,11 +121,10 @@ class EnumEmitter(ast.NodeVisitor):
         {{
         """.format(node.name, type_translations[node.storage_type.name]))
         self.output.write(header)
-        enum_val = 0
         members = node.members()
         #print each member of the enum
         for i, member in enumerate(members):
-            enum_val = self.emitEnum(member, enum_val, i < len(members) - 1, prefix='')
+            self.emitEnum(member, i < len(members) - 1, prefix='')
         #print the footer
         footer = '};\n\n'
         self.output.write(footer)
@@ -143,25 +143,22 @@ class EnumEmitter(ast.NodeVisitor):
         current = -1
         values = set()
         for member in node.members():
+            if member.initializer and type(member.initializer.value) is str:
+              return False
             current = member.initializer.value if member.initializer else current + 1
             values.add(current)
 
         minimum, maximum, length = min(values), max(values), len(values)
         return minimum >= 0 and maximum - minimum + 1 != length
 
-    def emitEnum(self, member, enum_val, trailing_comma=True, prefix=''):
+    def emitEnum(self, member, trailing_comma=True, prefix=''):
         separator = ',' if trailing_comma else ''
-        if not member.initializer:
-            self.output.write('\t' + prefix + member.name + separator + '\t// %d\n' % enum_val)
-            return enum_val + 1
-        else:
-            initial_value = member.initializer
-            enum_val = initial_value.value
-            enum_str = hex(enum_val) if initial_value.type == "hex" else str(enum_val)
-            self.output.write("\t" + "%s%s = %s"
-                           % (prefix, member.name, enum_str) + separator
-                           + '\t// %d\n' % enum_val)
-            return enum_val + 1
+        value = member.value
+        
+        if type(value) is str and "::" in member.value:
+            value = value.replace("::", ".")
+    
+        self.output.write('\t' + prefix + member.name + ' = {0}'.format(value) + separator + '\n')
 
 class StructEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout):
@@ -304,7 +301,8 @@ class StructEmitter(ast.NodeVisitor):
     def emitConstructors(self, node, globals):
         self.output.write('\t/**** Constructors ****/\n\n')
 
-        self.emitDefaultConstructor(node, globals)
+        if(node.default_constructor and emitterutil._do_all_members_have_default_constructor(node)):
+            self.emitDefaultConstructor(node, globals)
         if node.members():
             self.emitValueConstructor(node, globals)
         self.emitUnpackConstructors(node, globals)
@@ -313,10 +311,14 @@ class StructEmitter(ast.NodeVisitor):
         self.output.write('\tpublic {message_name}()\n\t{{\n'.format(**globals))
         for member in node.members():
             if isinstance(member.type, ast.FixedArrayType):
+                length = member.type.length
+                if isinstance(length, str) and "::" in length:
+                    length = length.replace("::", ".")
+                    length = "(int)" + length
                 self.output.write('\t\tthis.{member_name} = new {element_type}[{length}];\n'.format(
                     member_name=member.name,
                     element_type=cast_type(member.type.member_type),
-                    length=member.type.length))
+                    length=length))
             elif isinstance(member.type, ast.CompoundType):
                 self.output.write('\t\tthis.{member_name} = new {member_type}();\n'.format(
                     member_name=member.name,
@@ -478,6 +480,37 @@ class StructEmitter(ast.NodeVisitor):
         self.output.write('\t\treturn this;\n')
         self.output.write('\t}\n\n')
 
+
+    def emitSize(self, node, globals):
+        
+        self.output.write('>(')
+
+        visitor = TypeVisitor(self.output)
+        union_index = 0
+        for i, member in enumerate(node.members()):
+            if self.isUnion(member.type):
+                self.output.write('T%d' % union_index)
+                self.output.write(' {member_name}State'.format(member_name=member.name))
+                union_index += 1
+            else:
+                visitor.visit(member.type)
+                self.output.write(' {member_name}'.format(member_name=member.name))
+            if (i < len(node.members()) - 1):
+                self.output.write(',\n\t\t')
+
+        self.output.write(')\n')
+
+        self.output.write('\t{\n')
+        union_index = 0
+        for member in node.members():
+          if self.isUnion(member.type):
+              self.output.write('\t\tthis.{member_name}.Initialize<T{union_index}>({member_name}State);\n'.format(member_name=member.name, union_index=union_index))
+              union_index += 1
+          else:
+              self.output.write('\t\tthis.{member_name} = {member_name};\n'.format(member_name=member.name))
+        self.output.write('\t\treturn this;\n')
+        self.output.write('\t}\n\n')
+
     def emitSize(self, node, globals):
 
         self.output.write(textwrap.dedent('''\
@@ -487,7 +520,28 @@ class StructEmitter(ast.NodeVisitor):
             #''')[:-1].format(**globals))
 
         if node.is_message_size_fixed():
-            self.output.write('\t\t\treturn {size};\n'.format(size=node.max_message_size()))
+            max_size = node.max_message_size()
+            size = 0
+            if isinstance(max_size, list):
+                size = ""
+                # For every unique element in max_size
+                for s in set(max_size):
+                    # If it is a string then generate code that casts it to an int and multiplies it by the number
+                    # of occurences there are in max_size
+                    if isinstance(s, str):
+                        s_count = max_size.count(s)
+                        s = "((int)" + s + ")"
+                        if s_count > 1:
+                            s += "*" + str(s_count)
+                        size += (s.replace("::", "."))
+                    else:
+                        size += str(s)
+                    size += "+"
+                # remove last '+' that was added
+                size = size[:-1]
+            else:
+                size = max_size
+            self.output.write('\t\t\treturn {size};\n'.format(size=size))
         else:
             self.output.write('\t\t\tint result = 0;\n')
             visitor = SizeVisitor(self.output)
@@ -596,8 +650,12 @@ class PropertyVisitor(ast.NodeVisitor):
                 \t\t\t\tthrow new System.ArgumentException("{member_name} variable-length array is too long. Must be less than or equal to {max_length}.", "value");
                 \t\t\t}}
                 #''')[:-1].format(member_name=member_name, max_length=max_length))
-
+        
     def visit_FixedArrayType(self, node, member_name):
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+            length = "(int)" + length
         self.visit_Verbose(node, member_name,
             check_body=textwrap.dedent('''\
             \t\t\tif (value == null) {{
@@ -606,7 +664,7 @@ class PropertyVisitor(ast.NodeVisitor):
             \t\t\tif (value.Length != {length}) {{
             \t\t\t\tthrow new System.ArgumentException("{member_name} fixed-length array is the wrong size. Must have a length of {length}.", "value");
             \t\t\t}}
-            #''')[:-1].format(member_name=member_name, length=node.length))
+            #''')[:-1].format(member_name=member_name, length=length))
 
 class UnpackVisitor(ast.NodeVisitor):
 
@@ -670,6 +728,10 @@ class UnpackVisitor(ast.NodeVisitor):
 
     def visit_FixedArrayType(self, node, destination, depth):
         index_variable = self.get_index_variable(depth)
+        length = node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+            length = "(int)" + length
         self.output.write(textwrap.dedent('''\
             {indent}{destination} = new {element_type}[{length}];
             {indent}for (int {index} = 0; {index} < {length}; ++{index}) {{
@@ -677,7 +739,7 @@ class UnpackVisitor(ast.NodeVisitor):
             indent='\t' * depth,
             destination=destination,
             element_type=cast_type(node.member_type),
-            length=node.length,
+            length=length,
             index=index_variable))
         self.visit(node.member_type, '{old}[{index}]'.format(old=destination, index=index_variable), depth + 1)
         self.output.write('{indent}}}\n'.format(indent='\t' * depth))
@@ -754,11 +816,15 @@ class PackVisitor(ast.NodeVisitor):
 
     def visit_FixedArrayType(self, node, value, depth):
         index_variable = self.get_index_variable(depth)
+        length=node.length
+        if isinstance(length, str) and "::" in length:
+            length = length.replace("::", ".")
+            length = "(int)" + length
         self.output.write(textwrap.dedent('''\
             {indent}for (int {index} = 0; {index} < {length}; ++{index}) {{
             ''').format(
             indent='\t' * depth,
-            length=node.length,
+            length=length,
             index=index_variable))
         self.visit(node.member_type, '{old}[{index}]'.format(old=value, index=index_variable), depth + 1)
         self.output.write('{indent}}}\n'.format(indent='\t' * depth))
@@ -832,9 +898,13 @@ class SizeVisitor(ast.NodeVisitor):
 
     def visit_FixedArrayType(self, node, value, depth):
         if node.is_message_size_fixed():
+            length = node.length
+            if isinstance(length, str) and "::" in length:
+                length = length.replace("::", ".")
+                length = "(int)" + length
             self.output.write('{indent}result += {length} * {element_size};\n'.format(
                 indent='\t' * depth,
-                length=node.length,
+                length=length,
                 element_size=node.member_type.max_message_size()))
         else:
             index_variable = self.get_index_variable(depth)

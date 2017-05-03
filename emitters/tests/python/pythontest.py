@@ -27,11 +27,12 @@ import sys
 
 import unittest
 
-from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings
+from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings, Constructor, Arrays
 from SimpleTest import ExplicitlyTaggedUnion, AnInt, AFloat, AListOfDoubles, AFixedListOfBytes
 from SimpleTest import ExplicitlyTaggedAutoUnion, AnIntMessage, AFloatMessage, AListOfDoublesMessage, AFixedListOfBytesMessage, ABoolMessage
 from aligned.AutoUnionTest import FunkyMessage, Funky, Monkey, Music
 from DefaultValues import IntsWithDefaultValue, FloatsWithDefaultValue
+from SimpleTest import FooEnum, BarEnum
 
 class TestSimpleMessage(unittest.TestCase):
 
@@ -282,6 +283,47 @@ class TestDefaultValues(unittest.TestCase):
       self.assertAlmostEqual(lastData.c, -10)
       self.assertAlmostEqual(lastData.d, False)
 
+class TestEnumComplex(unittest.TestCase):
+    def test_enumComplex(self):
+      self.assertEqual(FooEnum.foo1, 0)
+      self.assertEqual(FooEnum.foo2, 8)
+      self.assertEqual(FooEnum.foo3, 9)
+      self.assertEqual(FooEnum.foo4, 10)
+      self.assertEqual(FooEnum.foo5, 1280)
+      self.assertEqual(FooEnum.foo6, 1281)
+      self.assertEqual(FooEnum.foo7, 1000)
+
+      self.assertEqual(BarEnum.bar1, 0)
+      self.assertEqual(BarEnum.bar2, 8)
+      self.assertEqual(BarEnum.bar3, 9)
+      self.assertEqual(BarEnum.bar4, 1291)
+      self.assertEqual(BarEnum.bar5, 16)
+      self.assertEqual(BarEnum.bar6, 17)
+
+class TestDefaultConstructor(unittest.TestCase):
+    def test_defaultConstructor(self):
+      self.assertEqual(Constructor.HasDefaultConstructor.__init__.__defaults__, (0.0,0))
+      self.assertEqual(Constructor.HasNoDefaultConstructor.__init__.__defaults__, None)
+      self.assertEqual(Constructor.NoDefaultConstructorComplex.__init__.__defaults__, None)
+      self.assertEqual(Constructor.MessageWithStruct.__init__.__defaults__, None)
+      self.assertEqual(Constructor.OtherMessageWithStruct.__init__.__defaults__, None)
+      self.assertEqual(Constructor.NestedNoDefaults.__init__.__defaults__, None)
+      self.assertEqual(Constructor.SuperComplex.__init__.__defaults__, None)
+      self.assertEqual(Constructor.Nest1.__init__.__defaults__, None)
+      self.assertEqual(Constructor.Nest2.__init__.__defaults__, None)
+      self.assertEqual(Constructor.Nest3.__init__.__defaults__, None)
+
+class TestFixedArray(unittest.TestCase):
+    def test_fixedArray(self):
+      s = Arrays.s()
+      self.assertEqual(len(s.arr8) == Arrays.ArrSize.sizeTen, True)
+      self.assertEqual(len(s.arr16) == Arrays.ArrSize.sizeTwenty, True)
+      self.assertEqual(len(s) == Arrays.ArrSize.sizeTen*1 + Arrays.ArrSize.sizeTwenty*2, True)
+
+      m = Arrays.m()
+      self.assertEqual(len(m.arr8) == Arrays.ArrSize.sizeTen, True)
+      self.assertEqual(len(m.arr16) == Arrays.ArrSize.sizeTwenty, True)
+      self.assertEqual(len(m) == Arrays.ArrSize.sizeTen*1 + Arrays.ArrSize.sizeTwenty*2, True)
 
 # Required unittest.main
 if __name__ == '__main__':
