@@ -30,8 +30,12 @@ ReactionTriggerStrategyRobotShaken::ReactionTriggerStrategyRobotShaken(Robot& ro
 {
 }
   
-
-bool ReactionTriggerStrategyRobotShaken::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyRobotShaken::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+}
+  
+bool ReactionTriggerStrategyRobotShaken::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   // ensure behavior is runnable (it is if already running - otherwise IsRunnable will assert):
   const bool isRunnable = behavior->IsRunning() || behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);

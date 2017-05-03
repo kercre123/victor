@@ -85,6 +85,7 @@ public:
   
 protected:
   virtual std::vector<std::string> GetEnabledBehaviorList() { return std::vector<std::string>{}; }
+  std::vector<std::string> GetChooserBehaviors();
   Util::RandomGenerator& GetRNG() const;
   Robot& _robot;
 

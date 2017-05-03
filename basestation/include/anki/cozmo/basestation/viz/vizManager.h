@@ -411,6 +411,7 @@ namespace Anki {
       void SendRobotMood(VizInterface::RobotMood&& robotMood);
       void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
       void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
+      void SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered);
       void SendStartRobotUpdate();
       void SendEndRobotUpdate();
       void SendSaveImages(ImageSendMode mode, std::string path = "");

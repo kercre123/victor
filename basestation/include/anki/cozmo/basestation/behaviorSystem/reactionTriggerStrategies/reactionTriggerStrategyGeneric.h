@@ -28,7 +28,6 @@ public:
                                                                               const Json::Value& config);
   
   // Functionality being overridden from base class
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return _shouldResumeLast;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return _canInterruptOtherTriggeredBehavior; }
   
@@ -43,8 +42,11 @@ public:
   void ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents, EventHandleCallbackType callback = EventHandleCallbackType{});
   
 protected:
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
+
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   
 private:
   bool                          _shouldTrigger = false;

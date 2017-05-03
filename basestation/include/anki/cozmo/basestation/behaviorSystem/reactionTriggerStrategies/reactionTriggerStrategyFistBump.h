@@ -28,13 +28,15 @@ class ReactionTriggerStrategyFistBump : public IReactionTriggerStrategy, IFistBu
 public:
   ReactionTriggerStrategyFistBump(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return false; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
-  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;  
   
 protected:
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void ResetTrigger(bool updateLastCompletionTime) override;
   
 private:

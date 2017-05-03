@@ -1908,6 +1908,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void ExecuteReactionTrigger(Anki.Cozmo.ReactionTriggerToBehavior reactionTriggerToBehaviorEntry) {
+    DAS.Debug(this, "ActivateReactionChooser: " + reactionTriggerToBehaviorEntry.ToString());
+
+    RobotEngineManager.Instance.Message.ExecuteReactionTrigger = Singleton<ExecuteReactionTrigger>.Instance.Initialize(reactionTriggerToBehaviorEntry);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type) {
     DAS.Debug(this, "Execute Behavior " + type);
 
@@ -1943,10 +1950,26 @@ public class Robot : IRobot {
     }
   }
 
+  public void RequestReactionTriggerMap() {
+    DAS.Debug(this, "Requested Reaction Trigger Map");
+
+    RobotEngineManager.Instance.Message.RequestReactionTriggerMap = Singleton<RequestReactionTriggerMap>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void RequestChooserBehaviorList(Anki.Cozmo.BehaviorChooserType behaviorChooserType) {
+    DAS.Debug(this, "Requested Chooser Behavior List");
+
+    RobotEngineManager.Instance.Message.RequestChooserBehaviorList =
+                        Singleton<RequestChooserBehaviorList>.Instance.Initialize(behaviorChooserType);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
     DAS.Debug(this, "ActivateBehaviorChooser: " + behaviorChooserType);
 
-    RobotEngineManager.Instance.Message.ActivateBehaviorChooser = Singleton<ActivateBehaviorChooser>.Instance.Initialize(behaviorChooserType);
+    RobotEngineManager.Instance.Message.ActivateBehaviorChooser =
+                        Singleton<ActivateBehaviorChooser>.Instance.Initialize(behaviorChooserType);
     RobotEngineManager.Instance.SendMessage();
   }
 

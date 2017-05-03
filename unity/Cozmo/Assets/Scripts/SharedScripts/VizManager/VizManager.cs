@@ -103,6 +103,8 @@ namespace Anki.Cozmo.Viz {
 
     public string[] RecentMoodEvents { get; private set; }
 
+    public string Reaction { get; private set; }
+
     public string Behavior { get; private set; }
 
     public BehaviorScoreData[] BehaviorScoreData { get; private set; }
@@ -317,6 +319,9 @@ namespace Anki.Cozmo.Viz {
         break;
       case MessageViz.Tag.NewBehaviorSelected:
         Behavior = message.NewBehaviorSelected.newCurrentBehavior;
+        break;
+      case MessageViz.Tag.NewReactionTriggered:
+        Reaction = message.NewReactionTriggered.newReactionTriggered;
         break;
       case MessageViz.Tag.RobotBehaviorSelectData:
         BehaviorScoreData = message.RobotBehaviorSelectData.scoreData;

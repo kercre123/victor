@@ -572,9 +572,24 @@ message StartTestMode {
     TestMode mode
 }
 
+// request behaviors for chooser
+message RequestChooserBehaviorList {
+  BehaviorChooserType behaviorChooserType
+}
+
+// request reaction trigger map
+message RequestReactionTriggerMap {
+
+}
+
 //request currently enabled behavior list
 message RequestEnabledBehaviorList{
 
+}
+
+// Execute Reaction
+message ExecuteReactionTrigger {
+  ReactionTriggerToBehavior reactionTriggerToBehaviorEntry
 }
 
 //disable all the affected triggers by locking them with the specified lockID

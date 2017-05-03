@@ -38,9 +38,14 @@ ReactionTriggerStrategyNoPreDockPoses::ReactionTriggerStrategyNoPreDockPoses(Rob
 {
 }
 
+
+void ReactionTriggerStrategyNoPreDockPoses::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ReactionTriggerStrategyNoPreDockPoses::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyNoPreDockPoses::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   const ObjectID& objID = robot.GetAIComponent().GetWhiteboard().GetNoPreDockPosesOnObject();
   if(objID.IsSet()){

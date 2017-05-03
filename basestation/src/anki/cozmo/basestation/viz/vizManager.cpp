@@ -864,7 +864,13 @@ namespace Anki {
       ANKI_CPU_PROFILE("VizManager::SendNewBehaviorSelected");
       SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
     }
-
+      
+    void VizManager::SendNewReactionTriggered(VizInterface::NewReactionTriggered&& newReactionTriggered)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendNewReactionTriggered");
+      SendMessage(VizInterface::MessageViz(std::move(newReactionTriggered)));
+    }
+      
     void VizManager::SendStartRobotUpdate()
     {
       ANKI_CPU_PROFILE("VizManager::SendStartRobotUpdate");

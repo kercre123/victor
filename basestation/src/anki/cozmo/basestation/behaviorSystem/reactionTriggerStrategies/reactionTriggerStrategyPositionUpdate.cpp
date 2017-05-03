@@ -83,7 +83,7 @@ ReactionTriggerStrategyPositionUpdate::ReactionTriggerStrategyPositionUpdate(
 // No longer used (see COZMO-9862)
 
 
-void ReactionTriggerStrategyPositionUpdate::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyPositionUpdate::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {

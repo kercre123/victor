@@ -351,6 +351,11 @@ message NewBehaviorSelected
   string  newCurrentBehavior
 }
 
+message NewReactionTriggered
+{
+  string  newReactionTriggered
+}
+
 message StartRobotUpdate
 {
 }

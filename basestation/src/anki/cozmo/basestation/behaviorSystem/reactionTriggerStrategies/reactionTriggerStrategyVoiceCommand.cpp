@@ -41,10 +41,19 @@ ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Robot& 
 {
 }
 
-bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  std::set<Vision::FaceID_t> targets;
+  targets.insert(GetDesiredFace(robot));
+  BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
+  
+  behavior->IsRunnable(acknowledgeFacePreReqs);
+}
+  
+bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   auto* voiceCommandComponent = robot.GetContext()->GetVoiceCommandComponent();
-  if (!ANKI_VERIFY(voiceCommandComponent, "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehavior", "VoiceCommandComponent invalid"))
+  if (!ANKI_VERIFY(voiceCommandComponent, "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal", "VoiceCommandComponent invalid"))
   {
     return false;
   }
@@ -64,7 +73,7 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehavior(const Robot& rob
     targets.insert(desiredFace);
     BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
     
-    LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehavior.DesiredFace", "DesiredFaceID: %d", desiredFace);
+    LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.DesiredFace", "DesiredFaceID: %d", desiredFace);
     return behavior->IsRunnable(acknowledgeFacePreReqs);
   }
   

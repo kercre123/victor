@@ -46,7 +46,27 @@ ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionU
 }
 
 
-bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  if(!_desiredTargets.empty()){
+    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
+    behavior->IsRunnable(acknowledgeFacePreReqs);
+  }
+  else{
+    std::set<Vision::FaceID_t> possibleFaces = robot.GetFaceWorld().GetFaceIDs();
+    if (!possibleFaces.empty()){
+      //  acknowledge even if it's empty?
+      BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(possibleFaces, robot);
+      behavior->IsRunnable(acknowledgeFacePreReqs);
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("ReactionTriggerStrategyFacePositionUpdated.SetupForceTriggerBehavior", "Tried to run behavior without any faces");
+    }
+  }
+}
+  
+bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   if(!_desiredTargets.empty()){
     BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
@@ -174,7 +194,7 @@ void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(c
   }
 }
 
-void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

@@ -47,8 +47,12 @@ void ReactionTriggerStrategyFrustration::LoadJson(const Json::Value& config)
   }
 }
 
+void ReactionTriggerStrategyFrustration::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+}
   
-bool ReactionTriggerStrategyFrustration::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyFrustration::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   float confidentVal = robot.GetMoodManager().GetEmotionValue(EmotionType::Confident);
@@ -65,7 +69,7 @@ bool ReactionTriggerStrategyFrustration::ShouldTriggerBehavior(const Robot& robo
   return false;
 }
 
-void ReactionTriggerStrategyFrustration::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyFrustration::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

@@ -106,9 +106,12 @@ void ReactionTriggerStrategyFistBump::LoadJson(const Json::Value& config)
   }
 }
   
-
+void ReactionTriggerStrategyFistBump::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+}
   
-bool ReactionTriggerStrategyFistBump::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyFistBump::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
@@ -135,7 +138,7 @@ bool ReactionTriggerStrategyFistBump::ShouldTriggerBehavior(const Robot& robot, 
   
   
 // Listen for achieved objectives
-void ReactionTriggerStrategyFistBump::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyFistBump::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch (event.GetData().GetTag())
   {
@@ -176,7 +179,7 @@ void ReactionTriggerStrategyFistBump::AlwaysHandle(const EngineToGameEvent& even
   }
 }
   
-void ReactionTriggerStrategyFistBump::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyFistBump::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
 {
   behavior->AddListener(this);
 }

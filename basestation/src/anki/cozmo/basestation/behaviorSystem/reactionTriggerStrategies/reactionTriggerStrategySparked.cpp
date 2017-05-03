@@ -31,8 +31,12 @@ ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(Robot& robot, con
 }
 
   
+void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+}
   
-bool ReactionTriggerStrategySparked::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   bool currentBehaviorIsReaction = robot.GetBehaviorManager().CurrentBehaviorTriggeredAsReaction();
   if(!currentBehaviorIsReaction){

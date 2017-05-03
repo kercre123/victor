@@ -418,6 +418,13 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                   float liftHeight = event.GetData().Get_SetDefaultHeadAndLiftState().liftHeight;
                                   SetDefaultHeadAndLiftState(enable, headAngle, liftHeight);
                                 }));
+      
+    _eventHandlers.push_back(externalInterface->Subscribe(
+                                ExternalInterface::MessageGameToEngineTag::RequestReactionTriggerMap,
+                                [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
+                                {
+                                  BroadcastReactionTriggerMap();
+                                }));
   }
   _isInitialized = true;
     
@@ -511,6 +518,25 @@ ReactionTrigger BehaviorManager::GetCurrentReactionTrigger() const
   return GetRunningAndResumeInfo().GetCurrentReactionTrigger();
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::BroadcastReactionTriggerMap() const {
+  std::vector<ReactionTriggerToBehavior> reactionTriggerToBehaviors;
+
+  for(const auto& mapEntry: _reactionTriggerMap){
+    ReactionTriggerToBehavior newEntry;
+    newEntry.trigger = mapEntry.first;
+    
+    const std::vector<TriggerBehaviorInfo::StrategyBehaviorMap> &strategyMap = mapEntry.second.GetStrategyMap();
+      
+    for(const auto& strategy: strategyMap)
+    {
+        newEntry.BehaviorName = strategy.second->GetName();
+        reactionTriggerToBehaviors.push_back(newEntry);
+    }
+  }
+  
+  _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::RespondReactionTriggerMap>(reactionTriggerToBehaviors);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight)
@@ -607,6 +633,9 @@ bool BehaviorManager::SwitchToReactionTrigger(IReactionTriggerStrategy& triggerS
     return false;
   }
   
+  VIZ_BEHAVIOR_SELECTION_ONLY(_robot.GetContext()->GetVizManager()->SendNewReactionTriggered(
+                              VizInterface::NewReactionTriggered( triggerStrategy.GetName())));
+
   BehaviorRunningAndResumeInfo newBehaviorInfo;
   newBehaviorInfo.SetCurrentBehavior(nextBehavior);
   newBehaviorInfo.SetCurrentReactionType(triggerStrategy.GetReactionTrigger());
@@ -971,6 +1000,7 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
   // Check to see if any reaction triggers want to activate a behavior
   bool hasAlreadySwitchedThisTick = false;
   bool didSuccessfullySwitch = false;
+  
   for(const auto& mapEntry: _reactionTriggerMap){
     // if a reaction is not enabled, skip evaluating its strategies
     if(!mapEntry.second.IsReactionEnabled()){
@@ -982,7 +1012,7 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
     for(const auto& entry: strategyMap){
       IReactionTriggerStrategy& strategy = *entry.first;
       IBehavior& rBehavior               =  *entry.second;
-      
+
       bool shouldCheckStrategy = true;
       
       // If there is a current triggered behavior running, make sure
@@ -994,7 +1024,7 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
                               strategy.CanInterruptSelf() :
                               strategy.CanInterruptOtherTriggeredBehavior();
       }
-
+      
       if(shouldCheckStrategy &&
          strategy.ShouldTriggerBehavior(_robot, &rBehavior)){
         

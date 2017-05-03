@@ -279,6 +279,9 @@ private:
   void SendDasTransitionMessage(const BehaviorRunningAndResumeInfo& oldBehaviorInfo,
                                 const BehaviorRunningAndResumeInfo& newBehaviorInfo);
   
+  // broadcasting the reaction trigger map (to the game)
+  void BroadcastReactionTriggerMap() const;
+  
   // Allow unity to set head angles and lift heights to preserve after reactionary behaviors
   void SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight);
   bool AreDefaultHeadAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeadAndLiftState;}
@@ -388,7 +391,6 @@ private:
   std::vector<BehaviorStateLightInfo> _behaviorStateLights;
   BehaviorClass _behaviorThatSetLights;
   bool _behaviorStateLightsPersistOnReaction;
-  
 }; // class BehaviorManager
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

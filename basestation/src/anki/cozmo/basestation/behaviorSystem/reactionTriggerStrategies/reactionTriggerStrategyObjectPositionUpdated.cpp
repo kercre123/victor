@@ -42,8 +42,21 @@ ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPosit
   });
 }
   
+void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) {
+  if (HasDesiredReactionTargets(robot)){
+    std::set<s32> targets;
+    GetDesiredReactionTargets(robot, targets);
+    
+    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets);
+    behavior->IsRunnable(acknowledgeObjectPreReqs);
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("ReactionTriggerStrategyObjectPositionUpdated.SetupForceTriggerBehavior", "No target to update");
+  }
+}
   
-bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   const bool robotInValidState = kEnableObjectAcknowledgement &&
                                   !robot.IsCarryingObject() &&
@@ -116,7 +129,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
   
 }
 
-void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTrigger(IBehavior* behavior)
+void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
 {
   behavior->AddListener(this);
   _classTriggerMapsTo = behavior->GetClass();

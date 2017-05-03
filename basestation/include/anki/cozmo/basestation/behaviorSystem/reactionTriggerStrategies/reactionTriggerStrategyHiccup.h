@@ -29,12 +29,15 @@ public:
   ReactionTriggerStrategyHiccup(Robot& robot, const Json::Value& config);
   virtual ~ReactionTriggerStrategyHiccup();
   
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
   
   // Forcibly gives Cozmo the hiccups
   void ForceHiccups();
+
+protected:
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
 
 private:
 
@@ -53,7 +56,7 @@ private:
   // Returns which animation to play depending on our state
   std::vector<AnimationTrigger> GetHiccupAnim() const;
   
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
   virtual void EnabledStateChanged(bool enabled) override;
   

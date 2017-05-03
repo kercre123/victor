@@ -29,13 +29,14 @@ class ReactionTriggerStrategyVoiceCommand : public IReactionTriggerStrategy {
 public:
   ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
 protected:
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
-  
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+
 private:
   bool                                  _shouldTrigger = false;
   std::map<Vision::FaceID_t, float>     _lookedAtTimesMap;

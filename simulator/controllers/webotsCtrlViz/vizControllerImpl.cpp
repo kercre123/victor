@@ -87,6 +87,8 @@ void VizControllerImpl::Init(u32 blankImageFrequency_ms)
     std::bind(&VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::NewBehaviorSelected,
     std::bind(&VizControllerImpl::ProcessVizNewBehaviorSelectedMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::NewReactionTriggered,
+    std::bind(&VizControllerImpl::ProcessVizNewReactionTriggeredMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::StartRobotUpdate,
     std::bind(&VizControllerImpl::ProcessVizStartRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EndRobotUpdate,
@@ -908,7 +910,26 @@ void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<Viz
     }
   }
 }
-  
+
+void VizControllerImpl::ProcessVizNewReactionTriggeredMessage(const AnkiEvent<VizInterface::MessageViz> &msg)
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+      return;
+  }
+   
+  const VizInterface::NewReactionTriggered& selectData = msg.GetData().Get_NewReactionTriggered();
+    
+  if (_reactionEventBuffer.size() > 0)
+  {
+    std::vector<std::string>& latestEvents = _reactionEventBuffer.back();
+    
+    if (!selectData.newReactionTriggered.empty())
+    {
+      latestEvents.push_back(selectData.newReactionTriggered);
+    }
+  }
+}
 
 void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {

@@ -25,10 +25,7 @@ class ReactionTriggerStrategyFacePositionUpdated : public ReactionTriggerStrateg
 public:
   ReactionTriggerStrategyFacePositionUpdated(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
-  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
-  
-  // Implement IReactToFaceListener
+   // Implement IReactToFaceListener
   virtual void FinishedReactingToFace(Robot& robot,Vision::FaceID_t faceID) override;
   virtual void ClearDesiredTargets() override;
 
@@ -36,6 +33,10 @@ protected:
   virtual void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void EnabledStateChanged(bool enabled) override
                  {_desiredTargets.clear();}
+
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   
 private:
   void HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg);

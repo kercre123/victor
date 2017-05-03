@@ -583,6 +583,10 @@ public class MockRobot : IRobot {
     RobotEngineManager.Instance.MockCallback(message, 0.5f);
   }
 
+  public void ExecuteReactionTrigger(Anki.Cozmo.ReactionTriggerToBehavior reactionTrigger) {
+    // Do nothing
+  }
+
   public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type) {
     // Do nothing
   }
@@ -592,6 +596,14 @@ public class MockRobot : IRobot {
   }
 
   public void SetEnableFreeplayBehaviorChooser(bool enable) {
+    // Do nothing
+  }
+
+  public void RequestReactionTriggerMap() {
+    // Do nothing
+  }
+
+  public void RequestChooserBehaviorList(Anki.Cozmo.BehaviorChooserType behaviorChooserType) {
     // Do nothing
   }
 

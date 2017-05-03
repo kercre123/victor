@@ -25,7 +25,6 @@ class ReactionTriggerStrategyPetInitialDetection : public IReactionTriggerStrate
 public:
   ReactionTriggerStrategyPetInitialDetection(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
@@ -37,7 +36,10 @@ public:
 
   
 protected:
-  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
+
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   
 private:
   // Illegal time value to represent "never"

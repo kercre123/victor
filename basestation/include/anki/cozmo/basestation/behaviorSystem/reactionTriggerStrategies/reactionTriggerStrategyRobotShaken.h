@@ -23,10 +23,13 @@ class ReactionTriggerStrategyRobotShaken : public IReactionTriggerStrategy
 public:
   ReactionTriggerStrategyRobotShaken(Robot& robot, const Json::Value& config);
   
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return false;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
-  
+
+protected:
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+
 private:
   
   // Accelerometer magnitude threshold which corresponds to 'shaking' the robot:

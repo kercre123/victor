@@ -90,7 +90,7 @@ protected:
   void RobotReactedToId(const Robot& robot, s32 id);
   
   // handle delocalized message
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override final;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override final;
   virtual void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) {};
   
   

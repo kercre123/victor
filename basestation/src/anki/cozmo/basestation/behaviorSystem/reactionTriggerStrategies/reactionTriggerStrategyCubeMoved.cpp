@@ -79,8 +79,28 @@ ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot,
   }});
 }
 
+void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  //  already failed to find a suitable cube so just grab the first valid cube
+  auto objIter = _reactionObjects.begin();
+  while(objIter != _reactionObjects.end()){
+    const ObservableObject* cube = robot.GetBlockWorld().GetLocatedObjectByID(objIter->GetObjectID());
+    if(cube == nullptr){
+      objIter = _reactionObjects.erase(objIter);
+      continue;
+    }
+    
+    objIter->ResetObject();
+    BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID());
+    
+    behavior->IsRunnable(preReqData, behavior->IsRunning() );
+    return;
+  }
   
-bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+  PRINT_NAMED_WARNING("ReactionTriggerStrategyCubeMoved.SetupForceTriggerBehavior", "No cubes found to force behavior");
+}
+  
+bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   auto objIter = _reactionObjects.begin();
   while(objIter != _reactionObjects.end()){
@@ -115,7 +135,7 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehavior(const Robot& robot,
 }
   
   
-void ReactionTriggerStrategyCubeMoved::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::ObjectPositionUpdated)){
     switch(event.GetData().GetTag()){

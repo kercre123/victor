@@ -128,6 +128,7 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   _selectedBehavior = selectedBehavior;
 }
   
+ // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorClass newType)
 {
   Json::Value nullConfig;

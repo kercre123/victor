@@ -24,9 +24,12 @@ public:
   ReactionTriggerStrategyPyramidInitialDetection(Robot& robot, const Json::Value& config);
 
   // Currently disabled until we want to respond to pyramids for some reason
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override { return false; }
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
+  
+protected:
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override { return false; }
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override {}
 };
 
 

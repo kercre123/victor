@@ -27,14 +27,16 @@ class ReactionTriggerStrategyCubeMoved : public IReactionTriggerStrategy{
 public:
   ReactionTriggerStrategyCubeMoved(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return true;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   virtual bool CanInterruptSelf() const override { return true; }
   
 protected:
   virtual void EnabledStateChanged(bool enabled) override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   
 private:
   Robot& _robot;

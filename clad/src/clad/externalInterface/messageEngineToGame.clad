@@ -745,11 +745,17 @@ message ReactionTriggerTransition{
   ReactionTrigger newTrigger
 }
 
-//respond with the list of freeplay behavior
+message RespondChooserBehaviorList{
+  string behaviors[uint_8]
+}
+
 message RespondEnabledBehaviorList{
   string behaviors[uint_8]
 }
 
+message RespondReactionTriggerMap{
+  ReactionTriggerToBehavior reactionTriggerEntries[uint_8]
+}
 
 message BehaviorObjectiveAchieved{
   BehaviorObjective behaviorObjective

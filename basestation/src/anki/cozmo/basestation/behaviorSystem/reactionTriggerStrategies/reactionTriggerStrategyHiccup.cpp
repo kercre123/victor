@@ -98,7 +98,13 @@ ReactionTriggerStrategyHiccup::~ReactionTriggerStrategyHiccup()
   _this = nullptr;
 }
 
-bool ReactionTriggerStrategyHiccup::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  BehaviorPreReqAnimSequence req(GetHiccupAnim());
+  behavior->IsRunnable(req);
+}
+  
+bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   // If Hiccups are not enabled then do nothing
   if(!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::Hiccups))
@@ -275,7 +281,7 @@ void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
   }
 }
 
-void ReactionTriggerStrategyHiccup::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   if(robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::Hiccup))
   {

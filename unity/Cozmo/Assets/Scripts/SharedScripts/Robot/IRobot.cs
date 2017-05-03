@@ -312,11 +312,17 @@ public interface IRobot : IDisposable {
 
   void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked);
 
+  void ExecuteReactionTrigger(Anki.Cozmo.ReactionTriggerToBehavior reactionTrigger);
+
   void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type);
 
   void ExecuteBehaviorByName(string behaviorName);
 
   void SetEnableFreeplayBehaviorChooser(bool enable);
+
+  void RequestReactionTriggerMap();
+
+  void RequestChooserBehaviorList(BehaviorChooserType behaviorChooserType);
 
   void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType);
 

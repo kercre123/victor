@@ -73,10 +73,22 @@ ReactionTriggerStrategyGeneric::ReactionTriggerStrategyGeneric(Robot& robot,
   }
 }
 
+void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  if (_needsRobotPreReq)
+  {
+    behavior->IsRunnable(BehaviorPreReqRobot(robot));
+  }
+  else
+  {
+    behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  }
+}
+  
 // Overrides interface to allow for instances with different configurations to decide how they should trigger.
 // If the ShouldTriggerCallback isn't set, there are no relevant events being watched, and other values are
 // default, this boils down to only checking behavior->IsRunnable with no prereqs.
-bool ReactionTriggerStrategyGeneric::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   if(_relevantEvents.empty() || _shouldTrigger)
   {
@@ -103,7 +115,7 @@ bool ReactionTriggerStrategyGeneric::ShouldTriggerBehavior(const Robot& robot, c
 // they're listening to. Includes a check to make sure an event being handled is one that has actually been
 // requested when the class was configured. With no callback specified this simply marks that computational switch
 // should occur whenever a relevant event is handled.
-void ReactionTriggerStrategyGeneric::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void ReactionTriggerStrategyGeneric::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   // Don't do anything if this trigger can't interrupt itself and this reaction trigger
   //  caused the current behavior to run.

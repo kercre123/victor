@@ -102,6 +102,7 @@ private:
   void PreUpdateBehaviorDisplay();
   void ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizNewReactionTriggeredMessage(const AnkiEvent<VizInterface::MessageViz> &msg);
   void DrawBehaviorDisplay();
   
   void ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -128,6 +129,7 @@ private:
   
   using BehaviorScoreBufferMap = std::map<std::string, BehaviorScoreBuffer>;
   using BehaviorEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
+  using ReactionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   
   BehaviorScoreBuffer& FindOrAddScoreBuffer(const std::string& inName);
 
@@ -194,6 +196,7 @@ private:
   EmotionEventBuffer      _emotionEventBuffer;
   BehaviorScoreBufferMap  _behaviorScoreBuffers;
   BehaviorEventBuffer     _behaviorEventBuffer;
+  ReactionEventBuffer     _reactionEventBuffer;
   std::array<CubeAccelBuffer,3> _cubeAccelBuffers;
   
   struct ActiveObjectInfo

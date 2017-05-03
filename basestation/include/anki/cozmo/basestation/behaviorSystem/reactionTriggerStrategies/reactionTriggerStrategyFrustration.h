@@ -24,13 +24,16 @@ class ReactionTriggerStrategyFrustration : public IReactionTriggerStrategy, publ
 public:
   ReactionTriggerStrategyFrustration(Robot& robot, const Json::Value& config);
   
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return false;}
 
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
-  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   virtual void AnimationComplete() override;
-  
+
+protected:
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+
 private:
   void LoadJson(const Json::Value& config);
   

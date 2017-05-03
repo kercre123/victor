@@ -24,17 +24,18 @@ class ReactionTriggerStrategyObjectPositionUpdated : public ReactionTriggerStrat
 public:
   ReactionTriggerStrategyObjectPositionUpdated(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
-  virtual void BehaviorThatStrategyWillTrigger(IBehavior* behavior) override;
   
   /// Implementation IReactToObjectListener
   virtual void ReactedToID(Robot& robot, s32 id) override;
   virtual void ClearDesiredTargets(Robot& robot) override;
   
 protected:
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
   void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) override;
-                
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  
 private:
   BehaviorClass _classTriggerMapsTo = BehaviorClass::Count;
                   

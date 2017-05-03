@@ -27,11 +27,14 @@ class ReactionTriggerStrategyNoPreDockPoses : public IReactionTriggerStrategy{
 public:
   ReactionTriggerStrategyNoPreDockPoses(Robot& robot, const Json::Value& config);
 
-  virtual bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   virtual bool ShouldResumeLastBehavior() const override { return false;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   virtual bool CanInterruptSelf() const override { return false; }
-  
+
+protected:
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+
 private:
   
 };

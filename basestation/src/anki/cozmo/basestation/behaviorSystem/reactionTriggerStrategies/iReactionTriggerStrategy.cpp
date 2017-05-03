@@ -29,9 +29,11 @@ using namespace ExternalInterface;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IReactionTriggerStrategy::IReactionTriggerStrategy(Robot& robot, const Json::Value& config, const std::string& strategyName)
-:  _robot(robot)
-,  _strategyName(strategyName)
+: _robot(robot)
+, _strategyName(strategyName)
+, _userForcingTrigger(false)
 {
+  SubscribeToTags({GameToEngineTag::ExecuteReactionTrigger});
 }
 
 
@@ -64,7 +66,64 @@ void IReactionTriggerStrategy::SubscribeToTags(std::set<EngineToGameTag> &&tags)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IReactionTriggerStrategy::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  AlwaysHandleInternal(event, robot);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case GameToEngineTag::ExecuteReactionTrigger:
+    {
+      Anki::Cozmo::ExternalInterface::ExecuteReactionTrigger queuedTrigger = event.GetData().Get_ExecuteReactionTrigger();
+      if ( (_triggerID == queuedTrigger.reactionTriggerToBehaviorEntry.trigger) &&
+          (_DebugBehaviorName == queuedTrigger.reactionTriggerToBehaviorEntry.BehaviorName) )
+      {
+        _userForcingTrigger = true;
+      }
+      else if (queuedTrigger.reactionTriggerToBehaviorEntry.trigger == ReactionTrigger::NoneTrigger)
+      {
+        _userForcingTrigger = false;
+      }
+      break;
+    }
+    default:
+    {
+      AlwaysHandleInternal(event, robot);
+    }
+    break;
+  }
 
+}
+
+void IReactionTriggerStrategy::BehaviorThatStrategyWillTrigger(IBehavior *behavior)
+{
+  _DebugBehaviorName = behavior->GetName();
+  BehaviorThatStrategyWillTriggerInternal(behavior);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IReactionTriggerStrategy::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+{
+  //  if the user is forcing
+  //  try to trigger normally but if that fails
+  //  force the behavior
+  if (_userForcingTrigger)
+  {
+    if (!ShouldTriggerBehaviorInternal(robot, behavior))
+    {
+      SetupForceTriggerBehavior(robot, behavior);
+    }
+    _userForcingTrigger = false;
+    return true;
+  }
+  
+  return ShouldTriggerBehaviorInternal(robot, behavior);
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Util::RandomGenerator& IReactionTriggerStrategy::GetRNG() const
 {

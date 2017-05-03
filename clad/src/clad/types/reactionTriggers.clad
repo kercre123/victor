@@ -65,7 +65,11 @@ no_default_constructor structure AllTriggersConsidered {
   bool vc
 }
 
-
+structure ReactionTriggerToBehavior
+{
+  ReactionTrigger trigger,
+  string BehaviorName
+}
 
 } // namespace Cozmo
 } // namespace Anki
