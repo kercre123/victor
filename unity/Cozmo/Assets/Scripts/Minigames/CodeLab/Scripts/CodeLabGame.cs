@@ -42,11 +42,23 @@ namespace CodeLab {
     private string _ProjectUUIDToOpen;
     private List<CodeLabSampleProject> _CodeLabSampleProjects;
 
+    // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
+    private Queue<ScratchRequest> _queuedScratchRequests = new Queue<ScratchRequest>();
+
+    private int _PendingResetToHomeActions = 0;
+    private bool _HasQueuedResetToHomePose = false;
+
+    private bool _ReceivedGreenFlagEvent = false;
+    private bool _IsProgramRunning = false;
+    private bool _WasProgramAborted = false;
+
     private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
     private const float kDriveDist_mm = 44.0f; // length of one light cube
     private const float kTurnAngle = 90.0f * Mathf.Deg2Rad;
     private const float kToleranceAngle = 10.0f * Mathf.Deg2Rad;
+    private const float kLiftSpeed_rps = 2.0f;
+    private const float kTimeoutForResetToHomePose_s = 3.0f;
 
     private const string kUserProjectName = "My Project"; // TODO Move to internationalization files
 
@@ -84,6 +96,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel all current actions
+        robot.PopDrivingAnimations();
+        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabExit);
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
       }
@@ -109,6 +124,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
       }
@@ -129,12 +145,218 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
-    private void WebViewCallback(string text) {
-      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+    // SetHeadAngleLazy only calls SetHeadAngle if difference is far enough
+    private bool SetHeadAngleLazy(float desiredHeadAngle, RobotCallback callback,
+                    QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      var currentHeadAngle = robot.HeadAngle;
+      var angleDiff = desiredHeadAngle - currentHeadAngle;
+      var kAngleEpsilon = 0.05; // ~2.8deg // if closer than this then skip the action
 
+      if (System.Math.Abs(angleDiff) > kAngleEpsilon) {
+        robot.SetHeadAngle(desiredHeadAngle, callback, useExactAngle: true);
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+
+    // SetLiftHeightLazy only calls SetLiftHeight if difference is far enough
+    private bool SetLiftHeightLazy(float desiredHeightFactor, RobotCallback callback,
+                     QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+                     float speed_radPerSec = kLiftSpeed_rps) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      var currentLiftHeightFactor = robot.LiftHeightFactor; // 0..1
+      var heightFactorDiff = desiredHeightFactor - currentLiftHeightFactor;
+      var kHeightFactorEpsilon = 0.05; // 5% of range // if closer than this then skip the action
+
+      if (System.Math.Abs(heightFactorDiff) > kHeightFactorEpsilon) {
+        robot.SetLiftHeight(desiredHeightFactor, callback, queueActionPosition, speed_radPerSec: speed_radPerSec);
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+
+    private bool IsResettingToHomePose() {
+      return _HasQueuedResetToHomePose || (_PendingResetToHomeActions > 0);
+    }
+
+    private void OnTimeoutForResetToHomeCompleted(bool success) {
+      if (success && _HasQueuedResetToHomePose) {
+        DAS.Info("CodeLab.OnTimeoutForResetToHomeCompleted.DoStuff", "");
+        _HasQueuedResetToHomePose = false;
+        ResetRobotToHomePos();
+      }
+      else {
+        DAS.Info("CodeLab.OnTimeoutForResetToHomeCompleted.WasCancelled", "success = " + success + ", wasQueued = " + _HasQueuedResetToHomePose);
+      }
+    }
+
+    private void QueueResetRobotToHomePos() {
+      if (_HasQueuedResetToHomePose) {
+        DAS.Warn("CodeLab.QueueResetRobotToHomePos.AlreadyQueued", "Ignoring");
+        return;
+      }
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel any pending actions
+      robot.WaitAction(kTimeoutForResetToHomePose_s, this.OnTimeoutForResetToHomeCompleted);
+      _HasQueuedResetToHomePose = true;
+    }
+
+    private void CancelQueueResetRobotToHomePos() {
+      if (_HasQueuedResetToHomePose) {
+        _HasQueuedResetToHomePose = false;
+        // Cancelling all wait actions will cause the handler to receive success=false on the next engine tick
+        RobotEngineManager.Instance.CurrentRobot.CancelAction(RobotActionType.WAIT);
+      }
+    }
+
+    private void OnResetToHomeCompleted(bool success) {
+      --_PendingResetToHomeActions;
+
+      if (_PendingResetToHomeActions <= 0) {
+        if (_PendingResetToHomeActions < 0) {
+          DAS.Error("CodeLab.OnResetToHomeCompleted.NegativeHomeActions", "_PendingResetToHomeActions = " + _PendingResetToHomeActions);
+        }
+
+        if (_queuedScratchRequests.Count > 0) {
+          // Unqueue all requests (could be one per green-flag in the case of parallel scripts)
+          while (_queuedScratchRequests.Count > 0) {
+            var scratchRequest = _queuedScratchRequests.Dequeue();
+            DAS.Info("CodeLab.OnResetToHomeCompleted.AllDone.UnQueue", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId);
+            HandleBlockScratchRequest(scratchRequest);
+          }
+        }
+        else {
+          DAS.Info("CodeLab.OnResetToHomeCompleted.AllDone.NoQueue", "");
+        }
+      }
+    }
+
+    private void ResetRobotToHomePos() {
+      // Reset the robot to a default pose (head straight, lift down)
+      // Only does anything if not already close to that pose.
+      // Any other in-progress actions will be cancelled by the first queued (NOW) action
+
+      // Cancel any queued up requests and just do it immediately
+      CancelQueueResetRobotToHomePos();
+
+      Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.NOW;
+
+      RobotEngineManager.Instance.CurrentRobot.TurnOffAllBackpackBarLED();
+
+      if (SetHeadAngleLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
+        ++_PendingResetToHomeActions;
+        // Ensure subsequent reset actions run in parallel with this
+        queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
+      }
+
+      if (SetLiftHeightLazy(0.0f, callback: this.OnResetToHomeCompleted, queueActionPosition: queuePos)) {
+        ++_PendingResetToHomeActions;
+        // Ensure subsequent reset actions run in parallel with this
+        queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
+      }
+
+      if (_PendingResetToHomeActions > 0) {
+        DAS.Info("CodeLab.ResetRobotToHomePos.Started", _PendingResetToHomeActions + " Pending Actions");
+      }
+      else {
+        DAS.Info("CodeLab.ResetRobotToHomePos.AlreadyHome", "");
+      }
+    }
+
+    private void OnGreenFlag() {
+      DAS.Info("Codelab.OnGreenFlag", "");
+      _ReceivedGreenFlagEvent = true;
+    }
+
+    private void OnScriptStart() {
+      DAS.Info("Codelab.OnScriptStart", "");
+      if (_IsProgramRunning) {
+        DAS.Error("Codelab.OnScriptStart.AlreadyRunning", "");
+      }
+      _IsProgramRunning = true;
+      _WasProgramAborted = false;
+      _queuedScratchRequests.Clear();
+      ResetRobotToHomePos();
+    }
+
+    private void OnScriptStopped() {
+      DAS.Info("Codelab.OnScriptStopped", "WasProgramAborted = " + _WasProgramAborted);
+      if (!_IsProgramRunning) {
+        DAS.Error("Codelab.OnScriptStopped.WasNotRunning", "");
+      }
+      _IsProgramRunning = false;
+      _queuedScratchRequests.Clear();
+      QueueResetRobotToHomePos();
+    }
+
+    private void OnStopAll() {
+      DAS.Info("Codelab.OnStopAll", "");
+
+      if (_ReceivedGreenFlagEvent) {
+        // This was sent from the greenflag, and isn't a normal stop request
+        _ReceivedGreenFlagEvent = false;
+      }
+
+      if (_IsProgramRunning) {
+        _WasProgramAborted = true;
+      }
+
+      _queuedScratchRequests.Clear();
+
+      // Cancel any in-progress actions (unless we're resetting to position)
+      // (if we're resetting to position then we will have already canceled other actions,
+      // and we don't want to cancel the in-progress reset animations).
+      if (!IsResettingToHomePose()) {
+        RobotEngineManager.Instance.CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+      }
+    }
+
+    private bool HandleNonBlockScratchRequest(ScratchRequest scratchRequest) {
+      // Handle any Scratch requests that don't need an InProgressScratchBlock initializing
+      switch (scratchRequest.command) {
+      case "cozmoScriptStarted":
+        OnScriptStart();
+        return true;
+      case "cozmoScriptStopped":
+        OnScriptStopped();
+        return true;
+      case "cozmoGreenFlag":
+        OnGreenFlag();
+        return true;
+      case "cozmoStopAll":
+        OnStopAll();
+        return true;
+      default:
+        return false;
+      }
+    }
+
+    private void WebViewCallback(string text) {
       string jsonStringFromJS = string.Format("{0}", text);
       Debug.Log("JSON from JavaScript: " + jsonStringFromJS);
       ScratchRequest scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
+
+      if (HandleNonBlockScratchRequest(scratchRequest)) {
+        return;
+      }
+
+      if (IsResettingToHomePose()) {
+        // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
+        DAS.Info("CodeLab.QueueScratchReq", "command = '" + scratchRequest.command + "', id = " + scratchRequest.requestId + ", argString = " + scratchRequest.argString);
+        _queuedScratchRequests.Enqueue(scratchRequest);
+      }
+      else {
+        HandleBlockScratchRequest(scratchRequest);
+      }
+    }
+
+    private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
+      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
@@ -268,13 +490,20 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         else if (scratchRequest.argString == "high") {
           desiredHeadAngle = CozmoUtil.kIdealFaceViewHeadValue;
         }
+        // convert angle-factor to an actual angle
+        desiredHeadAngle = CozmoUtil.HeadAngleFactorToRadians(desiredHeadAngle, false);
 
-        if (System.Math.Abs(desiredHeadAngle - RobotEngineManager.Instance.CurrentRobot.HeadAngle) > float.Epsilon) {
-          RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock);
+        if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock)) {
+          // Trigger a short wait action to ensure that our promise is met after this method exits
+          RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoDockWithCube") {
-        RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue, callback: inProgressScratchBlock.DockWithCube);
+        float desiredHeadAngle = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, false);
+        if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.DockWithCube)) {
+          // Trigger a very short wait action first instead to ensure callbacks happen after this method exits
+          RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, callback: inProgressScratchBlock.DockWithCube);
+        }
       }
       else if (scratchRequest.command == "cozmoForklift") {
         float liftHeight = 0.5f; // medium setting
@@ -285,7 +514,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           liftHeight = 1.0f;
         }
 
-        RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.NOW, 2);
+        if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock)) {
+          // Trigger a short wait action to ensure that our promise is met after this method exits
+          RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
+        }
       }
       else if (scratchRequest.command == "cozmoSetBackpackColor") {
         RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
@@ -309,7 +541,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         LightCube.TappedAction += inProgressScratchBlock.CubeTapped;
       }
       else {
-        Debug.LogError("Scratch: no match for command");
+        Debug.LogError("Scratch: no match for command: '" + scratchRequest.command + "'");
       }
 
       return;

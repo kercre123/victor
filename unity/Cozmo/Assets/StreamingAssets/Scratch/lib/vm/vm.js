@@ -1693,6 +1693,8 @@
 	     */
 	    this.redrawRequested = false;
 
+	    this._ankiAreThreadsRunning = false;  // Anki code to handle start/end script events. - mwesley, 05/01/17
+
 	    // Register all given block packages.
 	    this._registerBlockPackages();
 
@@ -1869,6 +1871,24 @@
 	// -----------------------------------------------------------------------------
 	// -----------------------------------------------------------------------------
 
+	// Anki code to handle start/end script events. - mwesley, 05/01/17
+	Runtime.prototype._ankiUpdateIsRunning = function () {
+	    if (this._ankiAreThreadsRunning) {
+	        if (this.threads.length == 0) {
+	            // Script has just stopped
+	            this._ankiAreThreadsRunning = false
+	            window.Unity.call('{"command": "cozmoScriptStopped"}');
+	        }
+	    }
+	    else {
+	        if (this.threads.length != 0) {
+	            // Script has just started
+	            this._ankiAreThreadsRunning = true
+	            window.Unity.call('{"command": "cozmoScriptStarted"}');
+	        }
+	    }
+	};
+
 	/**
 	 * Create a thread and push it to the list of threads.
 	 * @param {!string} id ID of block that starts the stack.
@@ -1880,6 +1900,7 @@
 	    thread.target = target;
 	    thread.pushStack(id);
 	    this.threads.push(thread);
+	    this._ankiUpdateIsRunning();  // Anki code to handle start/end script events. - mwesley, 05/01/17
 	    return thread;
 	};
 
@@ -1895,6 +1916,7 @@
 	    if (i > -1) {
 	        this.threads.splice(i, 1);
 	    }
+	    this._ankiUpdateIsRunning();  // Anki code to handle start/end script events. - mwesley, 05/01/17
 	};
 
 	/**
@@ -2066,6 +2088,7 @@
 	 * Start all threads that start with the green flag.
 	 */
 	Runtime.prototype.greenFlag = function () {
+	    window.Unity.call('{"command": "cozmoGreenFlag"}');  // Anki code to handle start/end script events. - mwesley, 05/01/17
 	    this.stopAll();
 	    this.ioDevices.clock.resetProjectTimer();
 	    this.clearEdgeActivatedValues();
@@ -2080,6 +2103,7 @@
 	 * Stop "everything."
 	 */
 	Runtime.prototype.stopAll = function () {
+	    window.Unity.call('{"command": "cozmoStopAll"}');  // Anki code to handle start/end script events. - mwesley, 05/01/17
 	    // Dispose all clones.
 	    var newTargets = [];
 	    for (var i = 0; i < this.targets.length; i++) {
@@ -2122,6 +2146,7 @@
 	    }
 	    this.redrawRequested = false;
 	    var inactiveThreads = this.sequencer.stepThreads();
+	    this._ankiUpdateIsRunning();  // Anki code to handle start/end script events. - mwesley, 05/01/17
 	    this._updateGlows(inactiveThreads);
 	    if (this.renderer) {
 	        // @todo: Only render when this.redrawRequested or clones rendered.

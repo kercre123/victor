@@ -512,7 +512,7 @@ public class MockRobot : IRobot {
     QueueCallback(2f, callback);
   }
 
-  public void AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, byte numRetries = 0) {
 
     Rotation = obj.Rotation.zRotation();
     WorldPosition = (obj.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
@@ -1026,7 +1026,7 @@ public class MockRobot : IRobot {
   public void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, byte[] data, byte index, byte numTotalBlobs) {
   }
 
-  public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
     return 0;
   }
 
@@ -1080,5 +1080,8 @@ public class MockRobot : IRobot {
   }
 
   public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
+  }
+
+  public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
   }
 }

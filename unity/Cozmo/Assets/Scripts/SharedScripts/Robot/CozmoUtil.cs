@@ -39,6 +39,7 @@ public static class CozmoUtil {
   // Setting this to -0.8 allows the block to be close enough where he
   // can lift it. -0.9 is too far down can can cut off the top of the cube.
   // (great without lift though)
+  // NOTE: These are not angles, they are "angle factors" - see HeadAngleFactorToRadians
   public const float kIdealBlockViewHeadValue = -0.65f;
   public const float kIdealBlockViewHeadValueWithoutLift = -0.9f;
 

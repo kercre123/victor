@@ -26,8 +26,10 @@ namespace CodeLab {
     }
 
     public void AdvanceToNextBlock(bool success) {
-      // Calls the JavaScript function resolving the Promise on the block
-      _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
+      if (this._RequestId >= 0) {
+        // Calls the JavaScript function resolving the Promise on the block
+        _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
+      }
     }
 
     public void CubeTapped(int id, int tappedTimes, float timeStamp) {
@@ -77,7 +79,7 @@ namespace CodeLab {
           if (kvp.Value.IsInFieldOfView) {
             success = true;
             cube = kvp.Value;
-            RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE);
+            RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
             return;
           }
         }

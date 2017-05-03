@@ -712,12 +712,12 @@ public class Robot : IRobot {
     return null;
   }
 
-  public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction =
       Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID,
       idTag: tag,
-      numRetries: 0,
+      numRetries: numRetries,
       position: queueActionPosition,
       actionState: action);
     RobotEngineManager.Instance.SendMessage();
@@ -1708,7 +1708,7 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservableObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
     SendQueueSingleAction(
       Singleton<AlignWithObject>.Instance.Initialize(
         objectID: obj,
@@ -1721,7 +1721,8 @@ public class Robot : IRobot {
         useManualSpeed: false
       ),
       callback,
-      queueActionPosition);
+      queueActionPosition,
+      numRetries);
   }
 
   public LightCube GetClosestLightCube() {
@@ -2224,4 +2225,9 @@ public class Robot : IRobot {
   public void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null) {
     SendQueueSingleAction(Singleton<PlayCubeAnimationTrigger>.Instance.Initialize(ID, obj, trigger), callback, QueueActionPosition.IN_PARALLEL);
   }
+
+  public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(Singleton<Wait>.Instance.Initialize(waitTime_s), callback, queueActionPosition);
+  }
+
 }
