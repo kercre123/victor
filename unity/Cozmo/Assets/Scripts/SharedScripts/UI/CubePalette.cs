@@ -58,6 +58,10 @@ namespace Cozmo {
       private LightCubeSprite _IsometricLightCubeSpritePrefab;
       public LightCubeSprite IsometricLightCubeSpritePrefab { get { return _IsometricLightCubeSpritePrefab; } }
 
+      [SerializeField]
+      private LightCubeSprite _UpsideDownLightCubeSpritePrefab;
+      public LightCubeSprite UpsideDownLightCubeSpritePrefab { get { return _UpsideDownLightCubeSpritePrefab; } }
+
       [System.Serializable]
       public class CubeColor {
         // TODO: Remove and only track color to tint sprites

@@ -275,6 +275,9 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
                                      StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogSleeping);
                                      StartMonitoringCubeMotion(robot);
                                      _firstSleepingStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                    
+                                     using namespace ExternalInterface;
+                                     robot.Broadcast( MessageEngineToGame( GuardDogStart() ) );
                                      SET_STATE(StartSleeping);
                                    });
       break;
@@ -307,12 +310,19 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     {
       StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogBusted);
       StartMonitoringCubeMotion(robot, false);
+
+      using namespace ExternalInterface;
+      robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
+
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogBusted), [this]() { SET_STATE(Complete); });
       UpdatePublicBehaviorStage(robot, GuardDogStage::Busted);
       break;
     }
     case State::BlockDisconnected:
     {
+      using namespace ExternalInterface;
+      robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
+
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogCubeDisconnect), [this]() { SET_STATE(Complete); });
       break;
     }
@@ -345,6 +355,9 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
         action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesTouched));
       }
       
+      using namespace ExternalInterface;
+      robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
+
       StartActing(action, [this]() { SET_STATE(Complete); });
       break;
     }
@@ -380,6 +393,9 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       // Play the PlayerSuccess animation
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
       
+      using namespace ExternalInterface;
+      robot.Broadcast( MessageEngineToGame( GuardDogEnd(true) ) );
+
       StartActing(action, [this]() { SET_STATE(Complete); });
       break;
     }

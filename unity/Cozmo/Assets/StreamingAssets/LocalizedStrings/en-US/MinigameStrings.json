@@ -362,5 +362,11 @@
   },
   "speedTap.tapBlock2": {
     "translation": "Tap the flashing Cube"
+  },
+  "minigame.GuardDog.Title": {
+    "translation": "Cozmo Is Guarding His Cubes"
+  },
+  "minigame.GuardDog.Desc": {
+    "translation": "Try to flip all of Cozmo's cubes upside down without waking him up."
   }
 }

@@ -395,6 +395,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapSelectGameType = "speedTap.SelectGameType";
   public const string kSpeedTapPlayerOne = "speedTap.playerOne";
   public const string kSpeedTapTapBlock2 = "speedTap.tapBlock2";
+  public const string kMinigameGuardDogTitle = "minigame.GuardDog.Title";
+  public const string kMinigameGuardDogDesc = "minigame.GuardDog.Desc";
 
   #endregion
 
