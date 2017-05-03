@@ -627,10 +627,7 @@ class PascalStringType(VariableArrayType):
 
 class FixedArrayType(Type):
     def __init__(self, member_type, length, coord):
-        if isinstance(length, str):
-            super(FixedArrayType, self).__init__('%s[%s]' % (member_type.name, length), coord)
-        else:
-            super(FixedArrayType, self).__init__('%s[%d]' % (member_type.name, length), coord)
+        super(FixedArrayType, self).__init__('%s[%s]' % (member_type.name, length), coord)
         self.member_type = member_type
         self.length = length
 

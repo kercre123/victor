@@ -109,19 +109,43 @@ def cpp_parameter_type(type):
     else:
         return 'const {value_type}&'.format(value_type=cpp_value_type(type))
 
+_jsoncpp_as_method_translations = {
+    'bool': 'asBool()',
+    'int_8': 'asInt()',
+    'int_16': 'asInt()',
+    'int_32': 'asInt()',
+    'int_64': 'asInt64()',
+    'uint_8': 'asUInt()',
+    'uint_16': 'asUInt()',
+    'uint_32': 'asUInt()',
+    'uint_64': 'asUInt64()',
+    'float_32': 'asFloat()',
+    'float_64': 'asDouble()'
+}
+
+def jsoncpp_as_method(type):
+    if isinstance(type, ast.BuiltinType):
+        if not type.name in _jsoncpp_as_method_translations:
+            raise ValueError('Error: {0} was expected to be a primitive type, but is not.'.format(type.name))
+        return _jsoncpp_as_method_translations[type.name]
+    elif isinstance(type, ast.PascalStringType):
+        return 'asString()'
+    else:
+        return None
+
 class BaseEmitter(ast.NodeVisitor):
     "Base class for emitters."
-    
+
     def __init__(self, output=sys.stdout, options=None):
         self.output = output
         self.options = options
-    
+
     # ignore includes unless explicitly allowed
     def visit_IncludeDecl(self, node, *args, **kwargs):
         pass
 
 class HNamespaceEmitter(BaseEmitter):
-    
+
     def visit_DeclList(self, node, *args, **kwargs):
         last_was_include = False
         for c_name, c in node.children():
@@ -131,7 +155,7 @@ class HNamespaceEmitter(BaseEmitter):
             last_was_include = isinstance(c, ast.IncludeDecl)
         if last_was_include:
             self.output.write('\n')
-    
+
     def visit_IncludeDecl(self, node, *args, **kwargs):
         new_header_file_name = emitterutil.get_included_file(node.name, self.options.header_output_extension)
         self.output.write('#include "{0}"\n'.format(new_header_file_name))
@@ -140,44 +164,44 @@ class HNamespaceEmitter(BaseEmitter):
         self.output.write('namespace {namespace_name} {{\n\n'.format(namespace_name=node.name))
         self.generic_visit(node, *args, **kwargs)
         self.output.write('}} // namespace {namespace_name}\n\n'.format(namespace_name=node.name))
-    
+
     def visit_EnumDecl(self, node, *args, **kwargs):
         HEnumEmitter(self.output, self.options).visit(node, *args, **kwargs)
-    
+
     def visit_MessageDecl(self, node, *args, **kwargs):
         HStructEmitter(self.output, self.options).visit(node, *args, **kwargs)
-    
+
     def visit_UnionDecl(self, node, *args, **kwargs):
         HUnionEmitter(self.output, self.options).visit(node, *args, **kwargs)
 
 class CPPNamespaceEmitter(HNamespaceEmitter):
-    
+
     def visit_IncludeDecl(self, node, *args, **kwargs):
         pass
-    
+
     def visit_EnumDecl(self, node, *args, **kwargs):
         CPPEnumEmitter(self.output, self.options).visit(node, *args, **kwargs)
-    
+
     def visit_MessageDecl(self, node, *args, **kwargs):
         CPPStructEmitter(self.output, self.options).visit(node, *args, **kwargs)
-    
+
     def visit_UnionDecl(self, node, *args, **kwargs):
         CPPUnionEmitter(self.output, self.options).visit(node, *args, **kwargs)
 
 class HEnumEmitter(BaseEmitter):
-    
+
     def visit_EnumDecl(self, node):
         globals = dict(
             enum_name=node.name,
             enum_hash=node.hash_str,
-            enum_storage_type=cpp_value_type(node.storage_type.builtin_type()),
+            enum_storage_type=cpp_value_type(node.storage_type.builtin_type())
         )
-        
+
         self.emitHeader(node, globals)
         self.emitMembers(node, globals)
         self.emitFooter(node, globals)
         self.emitSuffix(node, globals)
-        
+
     def emitHeader(self, node, globals):
         if (node.cpp_class):
             self.output.write(textwrap.dedent('''\
@@ -189,11 +213,11 @@ class HEnumEmitter(BaseEmitter):
                 // ENUM {enum_name}
                 enum {enum_name} : {enum_storage_type} {{
                 ''').format(**globals));
-        
-    
+
+
     def emitFooter(self, node, globals):
         self.output.write('};\n\n')
-    
+
     def emitMembers(self, node, globals):
         with self.output.indent(1):
             if node.members():
@@ -204,34 +228,52 @@ class HEnumEmitter(BaseEmitter):
                     end = ''
             
                     pieces.append((start, middle, end))
-                
+
                 self.output.write_with_aligned_whitespace(pieces)
 
     def emitSuffix(self, node, globals):
-        self.output.write('const char* EnumToString(const {enum_name} m);\n\n'.format(**globals))
+        self.output.write('const char* EnumToString(const {enum_name} m);\n'.format(**globals))
+        if self.options.emitJSON:
+            self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
+        else:
+            self.output.write('\n')
         self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         self.output.write('extern const char* {enum_name}VersionHashStr;\n'.format(**globals))
         self.output.write('extern const uint8_t {enum_name}VersionHash[16];\n\n'.format(**globals))
-        
+
 class CPPEnumEmitter(HEnumEmitter):
-    
-    def emitHeader(self, node, globals):
+
+    def visit_EnumDecl(self, node):
+        globals = dict(
+            enum_name=node.name,
+            enum_hash=node.hash_str,
+            enum_storage_type=cpp_value_type(node.storage_type.builtin_type())
+        )
+
+        self.emitToStringHeader(node, globals)
+        self.emitToStringMembers(node, globals)
+        self.emitToStringFooter(node, globals)
+        if self.options.emitJSON:
+            self.emitStringToEnum(node, globals)
+        self.emitSuffix(node, globals)
+
+    def emitToStringHeader(self, node, globals):
         self.output.write(textwrap.dedent('''\
             const char* EnumToString(const {enum_name} m)
             {{
             \tswitch(m) {{
             ''').format(**globals))
-    
-    def emitFooter(self, node, globals):
+
+    def emitToStringFooter(self, node, globals):
         self.output.write(textwrap.dedent('''\
             \t\tdefault: return nullptr;
             \t}
             \treturn nullptr;
             }
-            
+
             '''))
-    
-    def emitMembers(self, node, globals):
+
+    def emitToStringMembers(self, node, globals):
         with self.output.indent(2):
             for member in node.members():
                 if not member.is_duplicate:
@@ -239,7 +281,32 @@ class CPPEnumEmitter(HEnumEmitter):
                         case {enum_name}::{member_name}:
                         \treturn "{member_name}";
                         ''').format(member_name=member.name, **globals))
-    
+
+    def emitStringToEnum(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+            {enum_name} {enum_name}FromString(const std::string& str)
+            {{
+            ''').format(num_values=len(node.members()), **globals))
+
+        with self.output.indent(1):
+            self.output.write('const std::unordered_map<std::string, {enum_name}> stringToEnumMap = {{\n'.format(**globals))
+            for member in node.members():
+                self.output.write('\t{{"{member_name}", {enum_name}::{member_name}}},\n'.format(member_name=member.name, **globals))
+            self.output.write('};\n\n')
+
+            self.output.write(textwrap.dedent('''\
+                auto it = stringToEnumMap.find(str);
+                if(it == stringToEnumMap.end()) {{
+                    assert(false);
+                    return {enum_name}::{first_val};
+                }}
+
+            ''').format(first_val=node.members()[0].name, **globals))
+
+            self.output.write('return it->second;\n')
+
+        self.output.write('}\n\n')
+
     def emitSuffix(self, node, globals):
         self.output.write('const char* {enum_name}VersionHashStr = "{enum_hash}";\n\n'.format(**globals))
         self.output.write('const uint8_t {enum_name}VersionHash[16] = {{ \n'.format(**globals))
@@ -250,21 +317,21 @@ class CPPEnumEmitter(HEnumEmitter):
                 if i == (len(hex_data) - 1):
                     separator = ''
                 self.output.write("{hex_byte}{separator} ".format(hex_byte=hex(byte),
-                                                                  separator=separator))        
+                                                                  separator=separator))
         self.output.write("\n};\n\n")
 
 class HStructEmitter(BaseEmitter):
-    
+
     body_indent = 1
-    
+
     def visit_MessageDecl(self, node):
-        
+
         globals = dict(
             message_name=node.name,
             message_hash=node.hash_str,
             object_type=node.object_type().upper(),
         )
-        
+
         self.emitHeader(node, globals)
         with self.output.indent(self.body_indent):
             self.emitMembers(node, globals)
@@ -274,15 +341,19 @@ class HStructEmitter(BaseEmitter):
             self.emitSize(node, globals)
             self.emitEquality(node, globals)
             self.emitInvoke(node, globals)
+            if node.object_type() == 'structure' and self.options.emitProperties:
+                self.emitProperties(node, globals)
+            if node.object_type() == 'structure' and self.options.emitJSON:
+                self.emitJSONSerializer(node, globals)
         self.emitFooter(node, globals)
-        
+
     def emitHeader(self, node, globals):
         self.output.write(textwrap.dedent('''\
             // {object_type} {message_name}
             struct {message_name}
             {{
             ''').format(**globals))
-        
+
     def emitFooter(self, node, globals):
         self.output.write('};\n\n')
         self.output.write('extern const char* {message_name}VersionHashStr;\n'.format(**globals))
@@ -328,13 +399,13 @@ class HStructEmitter(BaseEmitter):
             {message_name}({message_name}& other) = default;
             {message_name}({message_name}&& other) noexcept = default;
             {message_name}& operator=(const {message_name}& other) = default;
-            {message_name}& operator=({message_name}&& other) noexcept = default;
-            
+            {message_name}& operator=({message_name}&& other) = default;
+
             '''.format(**globals)))
 
         if node.members():
             self.output.write('explicit {message_name}('.format(**globals))
-            
+
             # parameters
             with self.output.indent(1):
                 for i, member in enumerate(node.members()):
@@ -345,7 +416,7 @@ class HStructEmitter(BaseEmitter):
                         self.output.write(',\n')
                     else:
                         self.output.write(')\n')
-            
+
             # initializers
             for i, member in enumerate(node.members()):
                 if i == 0:
@@ -359,15 +430,15 @@ class HStructEmitter(BaseEmitter):
         self.output.write(textwrap.dedent('''\
             explicit {message_name}(const uint8_t* buff, size_t len);
             explicit {message_name}(const CLAD::SafeMessageBuffer& buffer);
-            
+
             '''.format(**globals)))
-    
+
     def emitPack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             /**** Pack ****/
             size_t Pack(uint8_t* buff, size_t len) const;
             size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
-            
+
             '''))
 
     def emitUnpack(self, node, globals):
@@ -375,7 +446,7 @@ class HStructEmitter(BaseEmitter):
             /**** Unpack ****/
             size_t Unpack(const uint8_t* buff, const size_t len);
             size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
-            
+
             '''))
 
     def emitSize(self, node, globals):
@@ -387,13 +458,47 @@ class HStructEmitter(BaseEmitter):
             bool operator!=(const {message_name}& other) const;
             ''').format(**globals))
 
+    def emitProperties(self, node, globals):
+        def prettifyName(str):
+            str = str.lstrip('_')
+            for i,c in enumerate(str):
+                if c.isalpha():
+                    return str[:i] + str[i].capitalize() + str[i+1:]
+            return str
+
+        self.output.write(textwrap.dedent('''
+        /**** Properties ****/
+        '''))
+        for member in node.members():
+            is_basic_type = isinstance(member.type, ast.BuiltinType)
+            member_type = cpp_value_type(member.type) if is_basic_type else 'const ' + cpp_value_type(member.type) + '&'
+
+            self.output.write(textwrap.dedent('''\
+                {member_type} Get{pretty_name}() const {{ return {member_name}; }};
+                void Set{pretty_name}({member_type} __value) {{ {member_name} = __value; }};
+
+                '''.format(
+                    member_type=member_type,
+                    member_name=member.name,
+                    pretty_name=prettifyName(member.name))))
+
+    def emitJSONSerializer(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+            /**** JSON ****/
+            Json::Value GetJSON() const;
+            bool SetFromJSON(const Json::Value& json);
+
+            '''))
+
+
+
 class CPPStructEmitter(HStructEmitter):
-    
+
     body_indent = 0
-    
+
     def emitHeader(self, node, globals):
         self.output.write("// {object_type} {message_name}\n\n".format(**globals))
-        
+
     def emitFooter(self, node, globals):
         self.output.write('\n')
         self.output.write('const char* {message_name}VersionHashStr = "{message_hash}";\n\n'.format(**globals))
@@ -405,10 +510,10 @@ class CPPStructEmitter(HStructEmitter):
                 if i == (len(hex_data) - 1):
                     separator = ''
                 self.output.write("{hex_byte}{separator} ".format(hex_byte=hex(byte),
-                                                                  separator=separator))        
+                                                                  separator=separator))
         self.output.write("\n};\n\n")
 
-    
+
     def emitMembers(self, node, globals):
         pass
     
@@ -487,7 +592,7 @@ class CPPStructEmitter(HStructEmitter):
             }
 
             '''))
-    
+
     def emitUnpack(self, node, globals):
         self.output.write(textwrap.dedent('''\
             size_t {message_name}::Unpack(const uint8_t* buff, const size_t len)
@@ -508,7 +613,7 @@ class CPPStructEmitter(HStructEmitter):
             }
 
             '''))
-    
+
     def emitSize(self, node, globals):
         self.output.write(textwrap.dedent('''\
             size_t {message_name}::Size() const
@@ -552,20 +657,97 @@ class CPPStructEmitter(HStructEmitter):
 
             '''.format(**globals)))
 
+    def emitProperties(self, node, globals):
+        pass
+
+    def emitJSONSerializer(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+            Json::Value {message_name}::GetJSON() const
+            ''').format(**globals))
+
+        self.output.write(textwrap.dedent('''\
+        {
+        \tJson::Value root;
+
+        '''))
+
+        def toJsonValue(member_name, member_type):
+            if isinstance(member_type, ast.DefinedType):
+                return 'EnumToString({member_name})'.format(member_name=member_name)
+            elif isinstance(member_type, ast.CompoundType):
+                return '{member_name}.GetJSON()'.format(member_name=member_name)
+            else:
+                return member_name
+
+        for member in node.members():
+            if isinstance(member.type, (ast.VariableArrayType, ast.FixedArrayType)) and not isinstance(member.type, ast.PascalStringType):
+                self.output.write(textwrap.dedent('''\
+                    \tfor(auto& value : {member_name}) {{
+                        root["{json_name}"].append({json_value});
+                    \t}}
+                ''').format(json_name=member.name.lstrip('_'), member_name=member.name, json_value=toJsonValue("value", member.type.member_type)))
+            else:
+                self.output.write('\troot["{json_name}"] = {json_value};\n'.format(json_name=member.name.lstrip('_'), member_name=member.name, json_value=toJsonValue(member.name, member.type)))
+
+        self.output.write(textwrap.dedent('''
+        \treturn root;
+        }
+        '''))
+
+        self.output.write(textwrap.dedent('''
+            bool {message_name}::SetFromJSON(const Json::Value& root)
+            {{
+            ''').format(**globals))
+
+        for member in node.members():
+            json_name = member.name.lstrip('_')
+
+            self.output.write('\tif (root.isMember("{json_name}")) {{\n'.format(json_name=json_name))
+            with self.output.indent(1):
+                if jsoncpp_as_method(member.type) is not None:
+                    self.output.write('\t{member_name} = root["{json_name}"].{as_method};\n'.format(json_name=json_name, member_name=member.name, as_method=jsoncpp_as_method(member.type)))
+                elif isinstance(member.type, (ast.VariableArrayType, ast.FixedArrayType)):
+                    self.output.write('\tauto& json_array = root["{json_name}"];\n'.format(json_name=json_name))
+
+                    if isinstance(member.type, ast.VariableArrayType):
+                        self.output.write('\t{member_name}.resize(json_array.size());\n'.format(member_name=member.name))
+
+                    self.output.write('\tfor(Json::ArrayIndex i = 0; i < json_array.size(); i++) {\n')
+
+                    with self.output.indent(1):
+                        if jsoncpp_as_method(member.type.member_type) is not None:
+                            self.output.write('\t{member_name}[i] = json_array[i].{as_method};\n'.format(member_name=member.name, as_method=jsoncpp_as_method(member.type.member_type)))
+                        elif isinstance(member.type.member_type, ast.DefinedType):
+                            self.output.write('\t{member_name}[i] = {member_type}FromString(json_array[i].asString());\n'.format(member_type=cpp_value_type(member.type.member_type), member_name=member.name))
+                        else:
+                            self.output.write('\t{member_name}[i].SetFromJSON(json_array[i]);\n'.format(member_name=member.name))
+
+                    self.output.write('\t}\n')
+                elif isinstance(member.type, ast.DefinedType):
+                    self.output.write('\t{member_name} = {member_type}FromString(root["{json_name}"].asString());\n'.format(member_type=cpp_value_type(member.type), json_name=json_name, member_name=member.name))
+                else:
+                    self.output.write('\t{member_name}.SetFromJSON(root["{json_name}"]);\n'.format(json_name=json_name, member_name=member.name))
+            self.output.write('\t}\n')
+
+        self.output.write(textwrap.dedent('''
+            \treturn true;
+            }}
+            ''').format(**globals))
+
 class UnionDiscoverer(ast.NodeVisitor):
-    
+
     found = False
-    
+
     def visit_IncludeDecl(self, node):
         pass
-    
+
     def visit_UnionDecl(self, node):
         self.found = True
 
 class HUnionEmitter(BaseEmitter):
-    
+
     def visit_UnionDecl(self, node):
-        
+
         globals = dict(
             union_name=node.name,
             union_hash=node.hash_str,
@@ -573,30 +755,30 @@ class HUnionEmitter(BaseEmitter):
             qualified_union_name=node.fully_qualified_name(),
             qualified_tag_name='{union_name}Tag'.format(union_name=node.fully_qualified_name()),
             object_type='UNION')
-            
-        # Templated TagToType lookup structs         
+
+        # Templated TagToType lookup structs
         self.output.write(textwrap.dedent('''\
             // "Lookup Tables" for getting type by tag using template specializations
             template<{union_name}Tag tag>
             struct {union_name}_TagToType;
-        
+
             ''').format(**globals))
-            
+
         for member in node.members():
             locals = dict(
                 member_name=member.name,
                 value_type=cpp_value_type(member.type),
                 **globals)
-            
+
             self.output.write(textwrap.dedent('''\
                 template<>
                 struct {union_name}_TagToType<{union_name}Tag::{member_name}> {{
                 \tusing type = {value_type};
                 }};
                 ''').format(**locals))
-        
+
         self.emitHeader(node, globals)
-        
+
         # public stuff
         self.output.write('public:\n')
         with self.output.indent(1):
@@ -611,7 +793,9 @@ class HUnionEmitter(BaseEmitter):
             self.emitPack(node, globals)
             self.emitSize(node, globals)
             self.emitEquality(node, globals)
-    
+            if self.options.emitJSON:
+                self.emitJSONSerializer(node, globals)
+
         # private stuff
         self.output.write('private:\n')
         with self.output.indent(1):
@@ -620,15 +804,15 @@ class HUnionEmitter(BaseEmitter):
             self.emitUnionMembers(node, globals)
 
         self.emitFooter(node, globals)
-        
+
     def emitHeader(self, node, globals):
         self.output.write(textwrap.dedent('''\
-        
+
             // {object_type} {union_name}
             class {union_name}
             {{
             ''').format(**globals))
-        
+
     def emitFooter(self, node, globals):
         self.output.write('};\n')
         self.output.write('extern const char* {union_name}VersionHashStr;\n'.format(**globals))
@@ -655,10 +839,10 @@ class HUnionEmitter(BaseEmitter):
 
     def emitDestructor(self, node, globals):
         self.output.write('~{union_name}() {{ ClearCurrent(); }}\n'.format(**globals))
-        
+
     def emitGetTag(self, node, globals):
         self.output.write('Tag GetTag() const { return _tag; }\n\n')
-        
+
     def emitTemplatedGet(self, node, globals):
         self.output.write('// Templated getter for union members by type\n')
         self.output.write('// NOTE: Always returns a reference, even for trivial types, unlike untemplated version\n')
@@ -677,16 +861,16 @@ class HUnionEmitter(BaseEmitter):
                 value_type=cpp_value_type(member.type),
                 parameter_type=cpp_parameter_type(member.type),
                 **globals)
-            
+
             self.output.write('/** {member_name} **/\n'.format(**locals))
             self.output.write('static {union_name} Create{member_name}({value_type}&& new_{member_name});\n'.format(**locals))
-            
+
             if self.options and self.options.helperConstructors:
                 self.output.write('explicit {union_name}({value_type}&& new_{member_name});\n'.format(**locals))
-            
+
             self.output.write('{parameter_type} Get_{member_name}() const;\n'.format(**locals))
             self.output.write('void Set_{member_name}({parameter_type} new_{member_name});\n'.format(**locals))
-            
+
             # emit r-val setter if this is a complex type
             if not is_pass_by_value(member.type):
                 self.output.write('void Set_{member_name}({value_type}&& new_{member_name});\n'.format(**locals))
@@ -708,7 +892,15 @@ class HUnionEmitter(BaseEmitter):
             bool operator==(const {union_name}& other) const;
             bool operator!=(const {union_name}& other) const;
             ''').format(**globals))
-    
+
+    def emitJSONSerializer(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+            /**** JSON ****/
+            Json::Value GetJSON() const;
+            bool SetFromJSON(const Json::Value& json);
+
+            '''))
+
     def emitClearCurrent(self, node, globals):
         self.output.write('void ClearCurrent();\n')
 
@@ -725,7 +917,7 @@ class HUnionEmitter(BaseEmitter):
         self.output.write('};\n')
 
 class TagHUnionTagEmitter(BaseEmitter):
-    
+
     def visit_NamespaceDecl(self, node, *args, **kwargs):
         discoverer = UnionDiscoverer()
         discoverer.visit(node)
@@ -733,7 +925,7 @@ class TagHUnionTagEmitter(BaseEmitter):
             self.output.write('namespace {namespace_name} {{\n\n'.format(namespace_name=node.name))
             self.generic_visit(node, *args, **kwargs)
             self.output.write('}} // namespace {namespace_name}\n\n'.format(namespace_name=node.name))
-    
+
     def visit_UnionDecl(self, node):
         globals = dict(
             union_name=node.name,
@@ -741,18 +933,18 @@ class TagHUnionTagEmitter(BaseEmitter):
             qualified_union_name=node.fully_qualified_name(),
             qualified_tag_name='{union_name}Tag'.format(union_name=node.fully_qualified_name()),
             object_type='UNION')
-        
+
         members = node.members()
         self.emitTags(node, globals)
         self.output.write(textwrap.dedent('''\
             const char* {tag_name}ToString(const {tag_name} tag);
-            
+
             '''.format(**globals)))
-    
+
     def emitTags(self, node, globals):
         # Tags are 1 byte only for now!
         self.output.write('enum class {tag_name} : uint8_t {{\n'.format(**globals))
-        
+
         with self.output.indent(1):
             lines = []
             for member in node.members():
@@ -765,20 +957,20 @@ class TagHUnionTagEmitter(BaseEmitter):
                     middle = ''
                 end = ' // {value}'.format(value=member.tag)
                 lines.append((start, middle, end))
-        
+
             start = 'INVALID'.format(**globals)
             middle = ' = {invalid_tag}'.format(invalid_tag=node.invalid_tag)
             lines.append((start, middle))
-            
+
             self.output.write_with_aligned_whitespace(lines)
-            
+
         self.output.write(textwrap.dedent('''\
             };
 
             '''))
 
 class TagHHashEmitter(BaseEmitter):
-    
+
     def visit_UnionDecl(self, node):
         globals = dict(
             union_name=node.name,
@@ -786,7 +978,7 @@ class TagHHashEmitter(BaseEmitter):
             qualified_union_name=node.fully_qualified_name(),
             qualified_tag_name='{union_name}Tag'.format(union_name=node.fully_qualified_name()),
             object_type='UNION')
-        
+
         self.output.write(textwrap.dedent('''\
             template<>
             struct std::hash<{qualified_tag_name}>
@@ -796,7 +988,7 @@ class TagHHashEmitter(BaseEmitter):
             \t\treturn static_cast<std::underlying_type<{qualified_tag_name}>::type>(t);
             \t}}
             }};
-        
+
             ''').format(**globals))
 
 class CPPUnionEmitter(BaseEmitter):
@@ -806,7 +998,7 @@ class CPPUnionEmitter(BaseEmitter):
         self.prefix = prefix
 
     def visit_UnionDecl(self, node):
-        
+
         globals = dict(
             union_name=node.name,
             union_hash=node.hash_str,
@@ -814,16 +1006,18 @@ class CPPUnionEmitter(BaseEmitter):
             qualified_union_name=node.fully_qualified_name(),
             qualified_tag_name='{union_name}Tag'.format(union_name=node.fully_qualified_name()),
             object_type='UNION')
-        
+
         self.emitHeader(node, globals)
-        
+
         self.emitConstructors(node, globals)
         self.emitAccessors(node, globals)
         self.emitUnpack(node, globals)
         self.emitPack(node, globals)
         self.emitSize(node, globals)
         self.emitEquality(node, globals)
-        
+        if self.options.emitJSON:
+            self.emitJSONSerializer(node, globals)
+
         self.emitClearCurrent(node, globals)
         self.emitTagToString(node, globals)
 
@@ -832,9 +1026,9 @@ class CPPUnionEmitter(BaseEmitter):
     def emitHeader(self, node, globals):
         self.output.write(textwrap.dedent('''\
             // {object_type} {union_name}
-            
+
             ''').format(**globals))
-        
+
     def emitFooter(self, node, globals):
         self.output.write('\n')
         self.output.write('const char* {union_name}VersionHashStr = "{union_hash}";\n\n'.format(**globals))
@@ -846,22 +1040,22 @@ class CPPUnionEmitter(BaseEmitter):
                 if i == (len(hex_data) - 1):
                     separator = ''
                 self.output.write("{hex_byte}{separator} ".format(hex_byte=hex(byte),
-                                                                  separator=separator))        
+                                                                  separator=separator))
         self.output.write("\n};\n\n")
 
 
     def emitSwitch(self, node, globals, callback, tag_type='Tag', argument='GetTag()', default_case='break;\n'):
         self.output.write('switch({argument}) {{\n'.format(argument=argument))
-        
+
         for member in node.members():
             self.output.write('case {tag_type}::{member_name}:\n'.format(member_name=member.name, tag_type=tag_type))
             with self.output.indent(1):
                 callback(member)
-        
+
         self.output.write('default:\n')
         with self.output.indent(1):
             self.output.write(default_case)
-        
+
         self.output.write('}\n')
 
     def emitConstructors(self, node, globals):
@@ -892,7 +1086,7 @@ class CPPUnionEmitter(BaseEmitter):
                     private_name='_{member_name}'.format(member_name=member.name),
                     member_type=cpp_value_type(member.type)))
             self.output.write('break;\n')
-        
+
         def move_body(member):
             if is_trivial_type(member.type):
                 copy_body(member)
@@ -901,7 +1095,7 @@ class CPPUnionEmitter(BaseEmitter):
                     private_name='_{member_name}'.format(member_name=member.name),
                     member_type=cpp_value_type(member.type)))
             self.output.write('break;\n')
-        
+
         # copy contructor
         self.output.write(textwrap.dedent('''\
             {union_name}::{union_name}(const {union_name}& other)
@@ -971,7 +1165,7 @@ class CPPUnionEmitter(BaseEmitter):
                 value_type=cpp_value_type(member.type),
                 parameter_type=cpp_parameter_type(member.type),
                 **globals)
-            
+
             # factory
             self.output.write(textwrap.dedent('''\
               {union_name} {union_name}::Create{member_name}({value_type}&& new_{member_name})
@@ -982,7 +1176,7 @@ class CPPUnionEmitter(BaseEmitter):
               }}
 
               ''').format(**locals))
-            
+
             # helper constructor
             if self.options and self.options.helperConstructors:
                 value_type = locals['value_type']
@@ -993,7 +1187,7 @@ class CPPUnionEmitter(BaseEmitter):
                             value_types[value_type].name,
                             member.name))
                 value_types[value_type] = member
-                
+
                 self.output.write(textwrap.dedent('''\
                     {union_name}::{union_name}({value_type}&& new_{member_name})
                     {{
@@ -1002,14 +1196,14 @@ class CPPUnionEmitter(BaseEmitter):
                     }}
 
                     ''').format(**locals))
-            
+
             self.output.write(textwrap.dedent('''\
                 {parameter_type} {union_name}::Get_{member_name}() const
                 {{
                 \tassert(_tag == Tag::{member_name});
                 \treturn this->{private_name};
                 }}
-                
+
                 void {union_name}::Set_{member_name}({parameter_type} new_{member_name})
                 {{
                 \tif(this->_tag == Tag::{member_name}) {{
@@ -1018,30 +1212,30 @@ class CPPUnionEmitter(BaseEmitter):
                 \telse {{
                 \t\tClearCurrent();
                 ''').format(**locals))
-            
+
             with self.output.indent(2):
                 if not is_trivial_type(member.type):
                     self.output.write('new(&this->{private_name}) {value_type}(new_{member_name});\n'.format(**locals))
                 else:
                     self.output.write('this->{private_name} = new_{member_name};\n'.format(**locals))
-            
+
             self.output.write(textwrap.dedent('''\
                 \t\t_tag = Tag::{member_name};
                 \t}}
                 }}
-                
+
                 ''').format(**locals))
-            
-            # Emit templated Get_<Tag>() 
+
+            # Emit templated Get_<Tag>()
             value_type = locals['value_type']
             self.output.write(textwrap.dedent('''\
                 template<>
-                const {value_type}& {union_name}::Get_<{union_name}::Tag::{member_name}>() const 
-                {{ 
+                const {value_type}& {union_name}::Get_<{union_name}::Tag::{member_name}>() const
+                {{
                 \tassert(_tag == Tag::{member_name});
                 \treturn this->{private_name};
                 }}
-        
+
                 ''').format(**locals))
 
             # Emit templated Create_<Tag>()
@@ -1053,8 +1247,7 @@ class CPPUnionEmitter(BaseEmitter):
                 }}
 
                 ''').format(**locals))
-            
-            
+
             # emit r-val setter if this is a complex type
             if not is_pass_by_value(member.type):
                 self.output.write(textwrap.dedent('''\
@@ -1078,7 +1271,7 @@ class CPPUnionEmitter(BaseEmitter):
             visitor.visit(member.type,
                 member_name='_{member_name}'.format(member_name=member.name))
             self.output.write('break;\n')
-        
+
         self.output.write(textwrap.dedent('''\
             size_t {union_name}::Pack(uint8_t* buff, size_t len) const
             {{
@@ -1128,7 +1321,7 @@ class CPPUnionEmitter(BaseEmitter):
                         member_type=cpp_value_type(member.type)))
                 visitor.visit(member.type, member_name=private_name)
             self.output.write('break;\n')
-        
+
         self.output.write(textwrap.dedent('''\
             size_t {union_name}::Unpack(const uint8_t* buff, const size_t len)
             {{
@@ -1145,7 +1338,7 @@ class CPPUnionEmitter(BaseEmitter):
             \t\tClearCurrent();
             \t}}
             ''').format(**globals))
-        
+
         with self.output.indent(1):
             self.emitSwitch(node, globals, body, argument='newTag')
         self.output.write(textwrap.dedent('''\
@@ -1161,7 +1354,7 @@ class CPPUnionEmitter(BaseEmitter):
             visitor.visit(member.type,
                 member_name='_{member_name}'.format(member_name=member.name))
             self.output.write('break;\n')
-        
+
         # Tags are one byte only for now!
         self.output.write(textwrap.dedent('''\
             size_t {union_name}::Size() const
@@ -1181,7 +1374,7 @@ class CPPUnionEmitter(BaseEmitter):
             private_name = '_{member_name}'.format(member_name=member.name)
             self.output.write('return this->{private_name} == other.{private_name};\n'.format(
                 private_name=private_name))
-        
+
         self.output.write(textwrap.dedent('''\
             bool {union_name}::operator==(const {union_name}& other) const
             {{
@@ -1201,6 +1394,71 @@ class CPPUnionEmitter(BaseEmitter):
 
             '''.format(**globals)))
 
+    def emitJSONSerializer(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+            Json::Value {union_name}::GetJSON() const
+            {{
+            \tJson::Value root;
+            ''').format(**globals))
+
+        def body(member):
+            private_name = '_{member_name}'.format(member_name=member.name)
+            if jsoncpp_as_method(member.type) is None:
+                if isinstance(member.type.type_decl, ast.MessageDecl) and member.type.type_decl.object_type() == "structure":
+                    self.output.write('root = this->{private_name}.GetJSON();\n'.format(private_name=private_name))
+                else:
+                    self.output.write('// {member_name} is not serializable.\n'.format(member_name=member.name))
+            else:
+                self.output.write('root["value"] = this->{private_name};\n'.format(private_name=private_name))
+            self.output.write('root["type"] = "{member_name}";\n'.format(member_name=member.name))
+            self.output.write('break;\n')
+
+        with self.output.indent(1):
+            self.emitSwitch(node, globals, body)
+
+        self.output.write(textwrap.dedent('''\
+        \treturn root;
+        }
+        '''))
+
+        self.output.write(textwrap.dedent('''
+            bool {union_name}::SetFromJSON(const Json::Value& json)
+            {{
+            \tClearCurrent();
+
+            \tif(json.isMember("type")) {{
+            \t\tstd::string tagStr = json["type"].asString();
+
+                if(tagStr == "INVALID") {{
+                    // Already cleared, do nothing.
+                }}
+            ''').format(**globals))
+
+        with self.output.indent(2):
+            for member in node.members():
+                self.output.write('else if(tagStr == "{member_name}") {{\n'.format(member_name=member.name))
+                with self.output.indent(1):
+                    private_name = '_{member_name}'.format(member_name=member.name)
+                    self.output.write('new(&(this->{private_name})) {member_type};\n'.format(private_name=private_name, member_type=cpp_value_type(member.type)))
+                    if jsoncpp_as_method(member.type) is None:
+                        if isinstance(member.type.type_decl, ast.MessageDecl) and member.type.type_decl.object_type() == "structure":
+                            self.output.write('this->{private_name}.SetFromJSON(json);\n'.format(private_name=private_name))
+                        else:
+                            self.output.write('// {member_name} is not a structure, is not serializable.\n'.format(member_name=member.name))
+                    else:
+                        self.output.write('this->{private_name} = json["value"].{as_method};\n'.format(private_name=private_name, as_method=jsoncpp_as_method(member.type)))
+                    self.output.write('_tag = Tag::{member_name};\n'.format(member_name=member.name))
+
+                self.output.write('}\n')
+
+        self.output.write(textwrap.dedent('''\
+            \t}
+
+            \treturn true;
+            }
+
+        '''))
+
     def emitClearCurrent(self, node, globals):
         def body(member):
             if (not is_trivial_type(member.type)):
@@ -1209,7 +1467,7 @@ class CPPUnionEmitter(BaseEmitter):
                     private_name='_{member_name}'.format(member_name=member.name),
                     member_type=cpp_value_type_destructor(member.type)))
             self.output.write('break;\n')
-        
+
         self.output.write(textwrap.dedent('''\
             void {union_name}::ClearCurrent()
             {{
@@ -1219,13 +1477,13 @@ class CPPUnionEmitter(BaseEmitter):
         self.output.write(textwrap.dedent('''\
             \t_tag = Tag::INVALID;
             }
-            
+
             '''))
-    
+
     def emitTagToString(self, node, globals):
         def body(member):
             self.output.write('return "{member_name}";\n'.format(member_name=member.name, **globals))
-        
+
         self.output.write(textwrap.dedent('''\
             const char* {tag_name}ToString(const {tag_name} tag) {{
             ''').format(**globals))
@@ -1233,23 +1491,23 @@ class CPPUnionEmitter(BaseEmitter):
             self.emitSwitch(node, globals, body,
                 tag_type=globals['tag_name'], argument='tag', default_case='return "INVALID";\n')
         self.output.write('}\n')
-    
+
 class CPPPackStatementEmitter(BaseEmitter):
-    
+
     def visit_BuiltinType(self, node, member_name):
         self.output.write('buffer.Write(this->{member_name});\n'.format(member_name=member_name))
-    
+
     def visit_DefinedType(self, *args, **kwargs):
         self.visit_BuiltinType(*args, **kwargs)
-    
+
     def visit_PascalStringType(self, node, member_name):
         self.output.write('buffer.WritePString<{length_type}>(this->{member_name});\n'.format(
             length_type=cpp_value_type(node.length_type),
             member_name=member_name))
-    
+
     def visit_CompoundType(self, node, member_name):
         self.output.write('this->{member_name}.Pack(buffer);\n'.format(member_name=member_name))
-    
+
     def visit_FixedArrayType(self, node, member_name):
         if isinstance(node.member_type, ast.PascalStringType):
             self.output.write('buffer.WritePStringFArray<{length}, {string_length_type}>(this->{member_name});\n'.format(
@@ -1298,21 +1556,21 @@ class CPPPackStatementEmitter(BaseEmitter):
                 member_name=member_name))
 
 class CPPUnpackStatementEmitter(BaseEmitter):
-    
+
     def visit_BuiltinType(self, node, member_name):
         self.output.write('buffer.Read(this->{member_name});\n'.format(member_name=member_name))
-    
+
     def visit_DefinedType(self, *args, **kwargs):
         self.visit_BuiltinType(*args, **kwargs)
-    
+
     def visit_PascalStringType(self, node, member_name):
         self.output.write('buffer.ReadPString<{length_type}>(this->{member_name});\n'.format(
             length_type=cpp_value_type(node.length_type),
             member_name=member_name))
-    
+
     def visit_CompoundType(self, node, member_name):
         self.output.write('this->{member_name}.Unpack(buffer);\n'.format(member_name=member_name))
-    
+
     def visit_FixedArrayType(self, node, member_name):
         if isinstance(node.member_type, ast.PascalStringType):
             self.output.write('buffer.ReadPStringFArray<{length}, {string_length_type}>(this->{member_name});\n'.format(
@@ -1354,14 +1612,14 @@ class CPPUnpackStatementEmitter(BaseEmitter):
                 member_name=member_name))
 
 class CPPSizeStatementEmitter(BaseEmitter):
-    
+
     def visit_BuiltinType(self, node, member_name):
         self.output.write('result += {size}; // {type}\n'.format(
             size=node.size, type=node.name))
-    
+
     def visit_DefinedType(self, *args, **kwargs):
         self.visit_BuiltinType(*args, **kwargs)
-    
+
     def visit_PascalStringType(self, node, member_name):
         self.output.write(textwrap.dedent('''\
             result += {length_size}; // {length_type} (string length)
@@ -1371,11 +1629,11 @@ class CPPSizeStatementEmitter(BaseEmitter):
                 length_type=node.length_type.name,
                 member_type=node.member_type.name,
                 member_name=member_name))
-    
+
     def visit_CompoundType(self, node, member_name):
         self.output.write('result += this->{member_name}.Size(); // {type}\n'.format(
             member_name=member_name, type=node.name))
-    
+
     def visit_FixedArrayType(self, node, member_name):
         if isinstance(node.member_type, ast.PascalStringType):
             self.output.write('result += {string_length_size} * {length}; // {string_length_type} (string lengths)\n'.format(
@@ -1415,7 +1673,7 @@ class CPPSizeStatementEmitter(BaseEmitter):
                 member_size=node.member_type.size,
                 member_type=node.member_type.name,
                 member_name=member_name))
-    
+
     def emitPascalStringArraySize(self, node, member_name):
         self.output.write('result += {string_length_size} * this->{member_name}.size(); // {string_length_type} (string lengths)\n'.format(
             string_length_size=node.member_type.length_type.size,
@@ -1436,11 +1694,11 @@ class CPPSizeStatementEmitter(BaseEmitter):
 
 if __name__ == '__main__':
     from clad import emitterutil
-    
+
     language = 'C++'
     default_header_extension = '.h'
     source_extension = '.cpp'
-    
+
     option_parser = emitterutil.StandardArgumentParser(language)
     option_parser.add_argument('-r', '--header-output-directory', metavar='dir',
         help='The directory to output the {language} header file(s) to.'.format(language=language))
@@ -1448,36 +1706,42 @@ if __name__ == '__main__':
         help='The extension to use for header files. (Helps work around a CMake Xcode issue.)')
     option_parser.add_argument('--output-union-helper-constructors', dest='helperConstructors', action='store_true',
         help='Emits helper union constructor, one for each member')
-    
+    option_parser.add_argument('--output-properties', dest='emitProperties', action='store_true',
+        help='Emits accessors and mutators for all members of a structure.')
+    option_parser.add_argument('--output-json', dest='emitJSON', action='store_true',
+        help='Emits code to serialize all members in a structure to and from jsoncpp values.')
+
     options = option_parser.parse_args()
     if not options.header_output_directory:
         options.header_output_directory = options.output_directory
-    
+
     tree = emitterutil.parse(options)
     comment_lines = emitterutil.get_comment_lines(options, language)
-    
+
     union_discoverer = UnionDiscoverer()
     union_discoverer.visit(tree)
-    
+
     if union_discoverer.found:
         def tag_output_header_callback(output):
             for emitter_type in [TagHUnionTagEmitter, TagHHashEmitter]:
                 emitter_type(output, options=options).visit(tree)
-        
+
         tag_output_header = emitterutil.get_output_file(options, 'Tag' + options.header_output_extension)
         emitterutil.write_c_file(options.header_output_directory, tag_output_header,
             tag_output_header_callback,
             comment_lines, use_inclusion_guards=True,
             system_headers=['functional'])
-        
+
         main_output_header_local_headers = [tag_output_header]
     else:
-        main_output_header_local_headers = None
-    
-    
+        main_output_header_local_headers = []
+
+    if options.emitJSON:
+        main_output_header_local_headers += ['json/json.h']
+
     def main_output_header_callback(output):
         HNamespaceEmitter(output, options=options).visit(tree)
-    
+
     main_output_header = emitterutil.get_output_file(options, options.header_output_extension)
     emitterutil.write_c_file(options.header_output_directory, main_output_header,
         main_output_header_callback,
@@ -1485,14 +1749,19 @@ if __name__ == '__main__':
         use_inclusion_guards=True,
         system_headers=['array', 'cassert', 'cstdint', 'string', 'vector', 'CLAD/SafeMessageBuffer.h'],
         local_headers=main_output_header_local_headers)
-    
-    
+
+
     def main_output_source_callback(output):
         CPPNamespaceEmitter(output, options=options).visit(tree)
-    
+
+    cfile_system_headers = []
+    if options.emitJSON:
+        cfile_system_headers += ['unordered_map', 'limits']
+
     main_output_source = emitterutil.get_output_file(options, source_extension)
     emitterutil.write_c_file(options.output_directory, main_output_source,
         main_output_source_callback,
         comment_lines=comment_lines,
         use_inclusion_guards=False,
+        system_headers=cfile_system_headers,
         local_headers=[main_output_header])

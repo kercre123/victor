@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <array>
 
 namespace CLAD
 {
