@@ -1,4 +1,14 @@
 ----------------
+Release v97
+----------------
+
+PLAYPEN:
+-revert v96 change. return to sending power_on cmds.
+
+BODY3:
+-disable DropLeakage test
+
+----------------
 Release v96
 ----------------
 
