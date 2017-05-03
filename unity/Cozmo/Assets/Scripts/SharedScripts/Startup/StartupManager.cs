@@ -570,8 +570,16 @@ public class StartupManager : MonoBehaviour {
     if (_BootStrings == null) {
       // Copied over from a build process.
       string loadFromPath = "bootstrap/LocalizedStrings/" + Localization.GetStringsLocale() + "/BootStrings";
+      loadFromPath = loadFromPath.ToLower();
+      // unity is making everything lower case in resources it seems.
+      // http://stackoverflow.com/questions/6502712/isnt-android-file-exists-case-sensitive
       TextAsset jsonfile = Resources.Load<TextAsset>(loadFromPath);
-      _BootStrings = JSONObject.Create(jsonfile.text);
+      if (jsonfile != null) {
+        _BootStrings = JSONObject.Create(jsonfile.text);
+      }
+      else {
+        DAS.Error("bootstrings.load.fail", loadFromPath);
+      }
     }
     if (_BootStrings != null) {
       JSONObject wrapper = _BootStrings.GetField(key);
