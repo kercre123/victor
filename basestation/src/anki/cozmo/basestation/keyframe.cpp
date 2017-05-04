@@ -778,7 +778,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
 
       const std::string& radiusStr = bodyKeyframe->radius_mm()->str();
       if (has_any_digits(radiusStr)) {
-        _streamMsg.curvatureRadius_mm = (uint16_t) std::atof(radiusStr.c_str());
+        _streamMsg.curvatureRadius_mm = std::atoi(radiusStr.c_str());
         CheckTurnSpeed(animNameDebug);
       } else {
         Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
@@ -807,7 +807,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
           return lastResult;
         }
       } else {
-        _streamMsg.curvatureRadius_mm = (uint16_t)jsonRoot["radius_mm"].asInt();
+        _streamMsg.curvatureRadius_mm = jsonRoot["radius_mm"].asInt();
         CheckTurnSpeed(animNameDebug);
       }
       
