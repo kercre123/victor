@@ -17,6 +17,10 @@ public class DasTracker {
   private double _RunningSessionTime;
   private double? _RunningRobotTime = null;
 
+  public DasTracker() {
+    _LastBackgroundUtcTime = DateTime.UtcNow;
+  }
+
   public void TrackAppBackgrounded() {
     UpdateRunningTimers();
     _LastBackgroundUtcTime = DateTime.UtcNow;
