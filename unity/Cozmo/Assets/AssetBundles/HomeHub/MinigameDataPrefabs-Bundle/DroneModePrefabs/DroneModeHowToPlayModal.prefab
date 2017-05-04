@@ -1173,7 +1173,7 @@ MonoBehaviour:
     JsonValue: '"#button.back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.Minigame.DroneMode.DroneModeHowToPlayModal:_PreviousSlideButton
+    FieldName: Cozmo.Challenge.DroneMode.DroneModeHowToPlayModal:_PreviousSlideButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11401658
@@ -1359,7 +1359,7 @@ MonoBehaviour:
     JsonValue: '"#button.next"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.Minigame.DroneMode.DroneModeHowToPlayModal:_NextSlideButton
+    FieldName: Cozmo.Challenge.DroneMode.DroneModeHowToPlayModal:_NextSlideButton
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11420572
@@ -2199,7 +2199,7 @@ MonoBehaviour:
     JsonValue: 0.141176477
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Cozmo.Minigame.DroneMode.DroneModeHowToPlayModal:_OptionalCloseDialogButton
+    FieldName: Cozmo.Challenge.DroneMode.DroneModeHowToPlayModal:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: ButtonIcon

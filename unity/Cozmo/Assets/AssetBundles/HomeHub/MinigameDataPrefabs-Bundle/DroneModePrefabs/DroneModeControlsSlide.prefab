@@ -1779,7 +1779,7 @@ MonoBehaviour:
     FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance
     ReferencePath: 
   - ObjectPath: ../../
-    FieldName: Cozmo.Minigame.DroneMode.DroneModeControlsSlide:_QuitDroneModeButtonImage
+    FieldName: Cozmo.Challenge.DroneMode.DroneModeControlsSlide:_QuitDroneModeButtonImage
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: ButtonIcon
@@ -2644,7 +2644,7 @@ MonoBehaviour:
     JsonValue: 0.141176477
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Cozmo.Minigame.DroneMode.DroneModeControlsSlide:_HowToPlayButton
+    FieldName: Cozmo.Challenge.DroneMode.DroneModeControlsSlide:_HowToPlayButton
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: ButtonIcon
