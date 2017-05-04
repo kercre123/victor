@@ -334,6 +334,10 @@ public:
   // whether or not the robot should react (the sensor may still be enabled)
   const bool GetIsCliffReactionDisabled() { return _isCliffReactionDisabled; }
   
+  // =========== Face Display ============
+  u32 GetDisplayWidthInPixels() const;
+  u32 GetDisplayHeightInPixels() const;
+   
   // =========== Camera / Vision ===========
   Vision::Camera GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const;
   Result         GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;

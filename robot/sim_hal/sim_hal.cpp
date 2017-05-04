@@ -86,7 +86,7 @@ namespace Anki {
 
     namespace { // "Private members"
 
-      // Const paramters / settings
+      // Const parameters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
 
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();

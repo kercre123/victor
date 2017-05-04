@@ -9,7 +9,8 @@ enum uint_8 FeatureType {
   PeekABoo,
   SparksGatherCubes,
   Hiccups,
-  GuardDog
+  GuardDog,
+  Bouncer
 }
 
 structure FeatureToggle {

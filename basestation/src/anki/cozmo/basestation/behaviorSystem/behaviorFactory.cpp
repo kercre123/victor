@@ -22,6 +22,7 @@
 #include "../behaviors/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
+#include "anki/cozmo/basestation/behaviors/behaviorBouncer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
@@ -142,6 +143,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::NoneBehavior:
     {
       newBehavior = new BehaviorNone(robot, config);
+      break;
+    }
+    case BehaviorClass::Bouncer:
+    {
+      newBehavior = new BehaviorBouncer(robot, config);
       break;
     }
     case BehaviorClass::LookAround:

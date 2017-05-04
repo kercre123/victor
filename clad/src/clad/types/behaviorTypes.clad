@@ -23,6 +23,7 @@ enum uint_8 BehaviorClass {
   NoneBehavior, // Named differently to not conflict with the Python keyword
 
   // Behaviors based on scores
+  Bouncer,
   BringCubeToBeacon,
   BuildPyramid,
   BuildPyramidBase,

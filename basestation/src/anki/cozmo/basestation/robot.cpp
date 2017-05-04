@@ -298,7 +298,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   }
   
 # ifndef COZMO_V2   // TODO: RobotDataBackupManager needs to reside on the Unity-side for Cozmo 2.0
-  // Read all neccessary data off the robot and back it up
+  // Read all necessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent->GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
 # endif
@@ -388,7 +388,7 @@ void Robot::SetOnCharger(bool onCharger)
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }
 
-  // update flag now (note this gets updated after notifying; this might be an issue for listerners)
+  // update flag now (note this gets updated after notifying; this might be an issue for listeners)
   _isOnCharger = onCharger;
 }
 
@@ -1313,7 +1313,20 @@ Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp
       
   return camPose;
 }
-    
+
+//
+// Return constant display parameters for Cozmo v1.0.
+// Future hardware may support different values.
+u32 Robot::GetDisplayWidthInPixels() const
+{
+    return FaceAnimationManager::IMAGE_WIDTH;
+}
+  
+u32 Robot::GetDisplayHeightInPixels() const
+{
+  return FaceAnimationManager::IMAGE_HEIGHT;
+}
+  
 Vision::Camera Robot::GetHistoricalCamera(const HistRobotState& histState, TimeStamp_t t) const
 {
   Vision::Camera camera(_visionComponent->GetCamera());
