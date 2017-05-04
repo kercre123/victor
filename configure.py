@@ -549,6 +549,21 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.mkdir_p(self.derived_data_dir)
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
+        # These are special boot strings that need to be localized, but need to be pulled out of asset bundles and loaded early.
+        localized_strings_dir_src = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'StreamingAssets', 'LocalizedStrings')
+        localized_strings_dir_dest = os.path.join(self.unity_project_root, 'Assets', 'Resources', 'bootstrap', 'LocalizedStrings')
+        if not os.path.exists(localized_strings_dir_dest):
+            os.makedirs(localized_strings_dir_dest)
+        for localeName in os.listdir(localized_strings_dir_src):
+            if os.path.isdir(os.path.join(localized_strings_dir_src, localeName)):
+                single_locale_src = os.path.join(localized_strings_dir_src, localeName, 'BootStrings.json')
+                single_locale_dir = os.path.join(localized_strings_dir_dest, localeName)
+                if not os.path.exists(single_locale_dir):
+                    os.makedirs(single_locale_dir)
+                single_locale_dest = os.path.join(localized_strings_dir_dest, localeName, 'BootStrings.json')
+                if not os.path.exists(single_locale_dest) or os.stat(single_locale_src).st_mtime - os.stat(single_locale_dest).st_mtime > 1:
+                    shutil.copy2(single_locale_src, single_locale_dest)
+
         # Copy in DASConfig.json, but don't actually update the file if it is the same as it was the last time
         DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration,
                                  'DASConfig.json')

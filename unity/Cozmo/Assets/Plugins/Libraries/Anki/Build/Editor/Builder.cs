@@ -200,10 +200,6 @@ namespace Anki {
         }
       }
 
-      public static void CopyBootAssetsToResources() {
-        LocalizationEditorUtility.CopyBootStringFiles();
-      }
-
       public static void CopyEngineAssets(string assetFolder, BuildTarget buildTarget) {
         // Delete and create the directory to make sure we don't leave stale assets
         FileUtil.DeleteFileOrDirectory(assetFolder);
@@ -443,7 +439,6 @@ namespace Anki {
 
         // copy assets
         if (assetFolder != null && buildType.ToLower() != "onlyplayer") {
-          CopyBootAssetsToResources();
           CopyEngineAssets(assetFolder, buildTarget);
           GenerateResourcesManifest();
         }

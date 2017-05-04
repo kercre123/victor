@@ -343,3 +343,9 @@ local.properties
 # DAS
 unity/Cozmo/Assets/StreamingAssets/DASConfig.json
 unity/Cozmo/Assets/StreamingAssets/DASConfig.json.meta
+
+#Copied LocalizedStrings For Boot Before Asset Bundles Load
+unity/Cozmo/Assets/Resources/bootstrap/LocalizedStrings/
+unity/Cozmo/Assets/Resources/bootstrap/LocalizedStrings.meta
+
+
