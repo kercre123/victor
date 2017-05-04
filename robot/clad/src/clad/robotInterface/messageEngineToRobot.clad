@@ -76,7 +76,8 @@ namespace RobotInterface {
 
 message GenerateTestTone
 {
-
+  uint_8 tone_sel,  //tone selection
+  uint_8 volume,    //volume 1-255 (0=default)
 }
 
 message SendDTMCommand
