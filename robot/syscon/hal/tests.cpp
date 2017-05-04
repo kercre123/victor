@@ -176,6 +176,8 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
     case TEST_PLAYTONE:
     {
       RobotInterface::GenerateTestTone msg;
+      msg.tone_sel = param & 0x03; //Map the fixture's 1-byte param to tone args
+      msg.volume   = param & 0xFC; //"
       RobotInterface::SendMessage(msg);
       break;    // Reply "OK"
     }
