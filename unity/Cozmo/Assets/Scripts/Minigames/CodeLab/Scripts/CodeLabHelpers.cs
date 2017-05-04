@@ -25,16 +25,36 @@ namespace CodeLab {
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
     }
 
+    public void OnReleased() {
+      RemoveAllCallbacks();
+      Init();
+    }
+
+    public void ReleaseFromPool() {
+      InProgressScratchBlockPool.ReleaseInProgressScratchBlock(this);
+    }
+
     public void AdvanceToNextBlock(bool success) {
       if (this._RequestId >= 0) {
         // Calls the JavaScript function resolving the Promise on the block
         _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
       }
+
+      ReleaseFromPool();
     }
 
     public void CubeTapped(int id, int tappedTimes, float timeStamp) {
       LightCube.TappedAction -= CubeTapped;
       AdvanceToNextBlock(true);
+    }
+
+    public void RemoveAllCallbacks() {
+      // Just attempt to remove all callbacks rather than track the ones added
+      var rEM = RobotEngineManager.Instance;
+      rEM.RemoveCallback<RobotObservedFace>(RobotObservedFace);
+      rEM.RemoveCallback<RobotObservedFace>(RobotObservedHappyFace);
+      rEM.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
+      rEM.RemoveCallback<RobotObservedObject>(RobotObservedObject);
     }
 
     public void RobotObservedFace(RobotObservedFace message) {
@@ -45,7 +65,6 @@ namespace CodeLab {
     public void RobotObservedHappyFace(RobotObservedFace message) {
       if (message.expression == Anki.Vision.FacialExpression.Happiness) {
         RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedHappyFace);
-        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
         AdvanceToNextBlock(true);
       }
     }
@@ -58,7 +77,6 @@ namespace CodeLab {
         const int kMinSadExpressionScore = 75;
         if (expressionScore >= kMinSadExpressionScore) {
           RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
-          RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
           AdvanceToNextBlock(true);
         }
       }
@@ -126,8 +144,21 @@ namespace CodeLab {
       }
     }
 
+    public static void ReleaseAllInUse() {
+      lock (_available) {
+        if (_inUse.Count > 0) {
+          for (int i = 0; i < _inUse.Count; ++i) {
+            InProgressScratchBlock po = _inUse[i];
+            po.OnReleased();
+            _available.Add(po);
+          }
+          _inUse.Clear();
+        }
+      }
+    }
+
     public static void ReleaseInProgressScratchBlock(InProgressScratchBlock po) {
-      po.Init();
+      po.OnReleased();
 
       lock (_available) {
         _available.Add(po);

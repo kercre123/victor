@@ -154,7 +154,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       var kAngleEpsilon = 0.05; // ~2.8deg // if closer than this then skip the action
 
       if (System.Math.Abs(angleDiff) > kAngleEpsilon) {
-        robot.SetHeadAngle(desiredHeadAngle, callback, useExactAngle: true);
+        robot.SetHeadAngle(desiredHeadAngle, callback, queueActionPosition, useExactAngle: true);
         return true;
       }
       else {
@@ -289,6 +289,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (!_IsProgramRunning) {
         DAS.Error("Codelab.OnScriptStopped.WasNotRunning", "");
       }
+
+      // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
+      InProgressScratchBlockPool.ReleaseAllInUse();
+      // We enable the facial expressions when first needed, and disable when scripts end (rather than ref-counting need)
+      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, false);
       _IsProgramRunning = false;
       _queuedScratchRequests.Clear();
       QueueResetRobotToHomePos();
@@ -316,6 +321,88 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
+    private void OnGetCozmoUserAndSampleProjectLists(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnGetCozmoUserAndSampleProjectLists", "");
+
+      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+
+      // Provide save and load UI with JSON arrays of the user and sample projects.
+      string jsCallback = scratchRequest.argString;
+
+      // Provide JavaScript with a list of user projects as JSON, sorted projects by most recently modified.
+      // Don't include XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
+      defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
+      List<CodeLabProject> copyCodeLabProjectList = new List<CodeLabProject>();
+      for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
+        CodeLabProject proj = new CodeLabProject();
+        proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
+        proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName;
+        copyCodeLabProjectList.Add(proj);
+      }
+      string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
+
+      // Provide JavaScript with a list of sample projects as JSON, sorted by DisplayOrder.
+      // Again, don't include the XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
+      _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
+      List<CodeLabSampleProject> copyCodeLabSampleProjectList = new List<CodeLabSampleProject>();
+      for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
+        CodeLabSampleProject proj = new CodeLabSampleProject();
+        proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
+        proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
+        proj.ProjectName = _CodeLabSampleProjects[i].ProjectName;
+        copyCodeLabSampleProjectList.Add(proj);
+      }
+
+      string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
+
+      // Call jsCallback with list of serialized Code Lab user projects and sample projects
+      _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
+    }
+
+    private void OnCozmoSaveUserProject(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnCozmoSaveUserProject", "UUID=" + scratchRequest.argUUID);
+      // Save both new and existing user projects.
+      // Check if this is a new project.
+      string projectUUID = scratchRequest.argUUID;
+      string projectXML = scratchRequest.argString;
+
+      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+
+      if (String.IsNullOrEmpty(projectUUID)) {
+        // Create new project with the XML stored in projectXML.
+
+        // Create project name: "My Project 1", "My Project 2", etc.
+        string newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
+        defaultProfile.CodeLabUserProjectNum++;
+
+        CodeLabProject newProject = new CodeLabProject(newUserProjectName, projectXML);
+        defaultProfile.CodeLabProjects.Add(newProject);
+
+        // Inform workspace that the current work on workspace has been saved to a project.
+        _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
+      }
+      else {
+        // Project already has a guid. Locate the project then update it.
+        CodeLabProject projectToUpdate = FindUserProjectWithUUID(projectUUID);
+        projectToUpdate.ProjectXML = projectXML;
+        projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+      }
+    }
+
+    private void OnCozmoDeleteUserProject(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnCozmoDeleteUserProject", "UUID=" + scratchRequest.argString);
+      CodeLabProject projectToDelete = FindUserProjectWithUUID(scratchRequest.argString);
+      if (projectToDelete != null) {
+        PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
+        defaultProfile.CodeLabProjects.Remove(projectToDelete);
+      }
+    }
+
+    private void OnCozmoLoadProjectPage() {
+      DAS.Info("Codelab.OnCozmoLoadProjectPage", "");
+      LoadURL("extra/projects.html");
+    }
+
     private bool HandleNonBlockScratchRequest(ScratchRequest scratchRequest) {
       // Handle any Scratch requests that don't need an InProgressScratchBlock initializing
       switch (scratchRequest.command) {
@@ -330,6 +417,31 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "cozmoStopAll":
         OnStopAll();
+        return true;
+      case "getCozmoUserAndSampleProjectLists":
+        OnGetCozmoUserAndSampleProjectLists(scratchRequest);
+        return true;
+      case "cozmoSaveUserProject":
+        OnCozmoSaveUserProject(scratchRequest);
+        return true;
+      case "cozmoRequestToOpenUserProject":
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString);
+        return true;
+      case "cozmoRequestToOpenSampleProject":
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
+        return true;
+      case "cozmoRequestToCreateProject":
+        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
+        return true;
+      case "cozmoDeleteUserProject":
+        OnCozmoDeleteUserProject(scratchRequest);
+        return true;
+      case "cozmoLoadProjectPage":
+        OnCozmoLoadProjectPage();
+        return true;
+      case "cozmoCloseCodeLab":
+        DAS.Info("Codelab.cozmoCloseCodeLab", "");
+        RaiseChallengeQuit();
         return true;
       default:
         return false;
@@ -356,92 +468,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
-      PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
-
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
 
-      if (scratchRequest.command == "getCozmoUserAndSampleProjectLists") {
-        // Provide save and load UI with JSON arrays of the user and sample projects.
-        string jsCallback = scratchRequest.argString;
-
-        // Provide JavaScript with a list of user projects as JSON, sorted projects by most recently modified.
-        // Don't include XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
-        defaultProfile.CodeLabProjects.Sort((proj1, proj2) => -proj1.DateTimeLastModifiedUTC.CompareTo(proj2.DateTimeLastModifiedUTC));
-        List<CodeLabProject> copyCodeLabProjectList = new List<CodeLabProject>();
-        for (int i = 0; i < defaultProfile.CodeLabProjects.Count; i++) {
-          CodeLabProject proj = new CodeLabProject();
-          proj.ProjectUUID = defaultProfile.CodeLabProjects[i].ProjectUUID;
-          proj.ProjectName = defaultProfile.CodeLabProjects[i].ProjectName;
-          copyCodeLabProjectList.Add(proj);
-        }
-        string userProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabProjectList);
-
-        // Provide JavaScript with a list of sample projects as JSON, sorted by DisplayOrder.
-        // Again, don't include the XML as the JavaScript chokes on it and it isn't necessary to send along with this list.
-        _CodeLabSampleProjects.Sort((proj1, proj2) => proj1.DisplayOrder.CompareTo(proj2.DisplayOrder));
-        List<CodeLabSampleProject> copyCodeLabSampleProjectList = new List<CodeLabSampleProject>();
-        for (int i = 0; i < _CodeLabSampleProjects.Count; i++) {
-          CodeLabSampleProject proj = new CodeLabSampleProject();
-          proj.ProjectUUID = _CodeLabSampleProjects[i].ProjectUUID;
-          proj.ProjectIconName = _CodeLabSampleProjects[i].ProjectIconName;
-          proj.ProjectName = _CodeLabSampleProjects[i].ProjectName;
-          copyCodeLabSampleProjectList.Add(proj);
-        }
-
-        string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
-
-        // Call jsCallback with list of serialized Code Lab user projects and sample projects
-        _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
-      }
-      else if (scratchRequest.command == "cozmoSaveUserProject") {
-        // Save both new and existing user projects.
-        // Check if this is a new project.
-        string projectUUID = scratchRequest.argUUID;
-        string projectXML = scratchRequest.argString;
-
-        if (String.IsNullOrEmpty(projectUUID)) {
-          // Create new project with the XML stored in projectXML.
-
-          // Create project name: "My Project 1", "My Project 2", etc.
-          string newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
-          defaultProfile.CodeLabUserProjectNum++;
-
-          CodeLabProject newProject = new CodeLabProject(newUserProjectName, projectXML);
-          defaultProfile.CodeLabProjects.Add(newProject);
-
-          // Inform workspace that the current work on workspace has been saved to a project.
-          _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
-        }
-        else {
-          // Project already has a guid. Locate the project then update it.
-          CodeLabProject projectToUpdate = FindUserProjectWithUUID(projectUUID);
-          projectToUpdate.ProjectXML = projectXML;
-          projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
-        }
-      }
-      else if (scratchRequest.command == "cozmoRequestToOpenUserProject") {
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString);
-      }
-      else if (scratchRequest.command == "cozmoRequestToOpenSampleProject") {
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
-      }
-      else if (scratchRequest.command == "cozmoRequestToCreateProject") {
-        OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
-      }
-      else if (scratchRequest.command == "cozmoDeleteUserProject") {
-        CodeLabProject projectToDelete = FindUserProjectWithUUID(scratchRequest.argString);
-        if (projectToDelete != null) {
-          defaultProfile.CodeLabProjects.Remove(projectToDelete);
-        }
-      }
-      else if (scratchRequest.command == "cozmoLoadProjectPage") {
-        LoadURL("extra/projects.html");
-      }
-      else if (scratchRequest.command == "cozmoCloseCodeLab") {
-        RaiseChallengeQuit();
-      }
-      else if (scratchRequest.command == "cozmoDriveForward") {
+      if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
@@ -541,6 +571,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         LightCube.TappedAction += inProgressScratchBlock.CubeTapped;
       }
       else {
+        inProgressScratchBlock.ReleaseFromPool();
         Debug.LogError("Scratch: no match for command: '" + scratchRequest.command + "'");
       }
 
@@ -548,6 +579,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
+      DAS.Info("Codelab.OpenCodeLabProject", "request=" + request + ", UUID=" + projectUUID);
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
@@ -569,6 +601,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void LoadURL(string scratchPathToHTML) {
+      if (_IsProgramRunning) {
+        // Program is currently running and we won't receive OnScriptStopped notification
+        // when the active page and Javascript is nuked, so manually force an OnScriptStopped event
+        DAS.Info("Codelab.ManualOnScriptStopped", "");
+        OnScriptStopped();
+      }
+
 #if UNITY_EDITOR
       string indexFile = Application.streamingAssetsPath + "/Scratch/" + scratchPathToHTML;
 #else
