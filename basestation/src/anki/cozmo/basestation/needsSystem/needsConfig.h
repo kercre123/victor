@@ -76,6 +76,10 @@ public:
 
   void Init(const Json::Value& json);
 
+  float _minNeedLevel;
+  float _maxNeedLevel;
+  float _decayPeriod;
+
   NeedsState::CurNeedsMap _initialNeedsLevels;
 
   using BracketThresholds = std::vector<float>;

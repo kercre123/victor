@@ -20,6 +20,10 @@
 namespace Anki {
 namespace Cozmo {
 
+static const std::string kMinNeedLevelKey = "MinimumNeedLevel";
+static const std::string kMaxNeedLevelKey = "MaximumNeedLevel";
+static const std::string kDecayPeriodSecondsKey = "DecayPeriodSeconds";
+
 static const std::string kInitialNeedsLevelsArrayKey = "InitialNeedsLevels";
 static const std::string kBracketLevelsArrayKey = "BracketLevels";
 
@@ -48,7 +52,10 @@ NeedId NeedIdFromString(const char* inString)
 }
 
 NeedsConfig::NeedsConfig()
-: _initialNeedsLevels()
+: _minNeedLevel(0.0f)
+, _maxNeedLevel(1.0f)
+, _decayPeriod(60.0f)
+, _initialNeedsLevels()
 , _needsBrackets()
 , _decayConnected()
 , _decayUnconnected()
@@ -57,6 +64,10 @@ NeedsConfig::NeedsConfig()
 
 void NeedsConfig::Init(const Json::Value& json)
 {
+  _minNeedLevel = JsonTools::ParseFloat(json, kMinNeedLevelKey.c_str(), "Failed to parse min need level");
+  _maxNeedLevel = JsonTools::ParseFloat(json, kMaxNeedLevelKey.c_str(), "Failed to parse max need level");
+  _decayPeriod = JsonTools::ParseFloat(json, kDecayPeriodSecondsKey.c_str(), "Failed to parse decay frequency");
+
   _initialNeedsLevels.clear();
   const auto& jsonInitialNeedsLevels = json[kInitialNeedsLevelsArrayKey];
   for (size_t i = 0; i < (size_t)NeedId::Count; i++)
@@ -72,11 +83,16 @@ void NeedsConfig::Init(const Json::Value& json)
   {
     const auto& jsonForNeedId = json[kBracketLevelsArrayKey][EnumToString(static_cast<NeedId>(i))];
     BracketThresholds thresholds;
+    float prevValue = 1.0f;
     for (size_t i = 0; i < (size_t)NeedBracketId::Count; i++)
     {
       const auto value = JsonTools::ParseFloat(jsonForNeedId,
                                                EnumToString(static_cast<NeedBracketId>(i)),
                                                "Failed to parse an initial need level");
+      DEV_ASSERT_MSG(value <= prevValue,
+                     "NeedsConfig.Init",
+                     "Bracket level thresholds not in descending order (%f vs %f)", value, prevValue);
+      prevValue = value;
       thresholds.push_back(value);
     }
     DEV_ASSERT_MSG((thresholds.back() == 0.0f),

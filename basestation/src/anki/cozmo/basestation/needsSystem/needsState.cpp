@@ -67,7 +67,7 @@ void NeedsState::Init(NeedsConfig& needsConfig, u32 serialNumber)
     _curNeedsLevels[needId] = needsConfig._initialNeedsLevels[needId];
   }
 
-  UpdateCurNeedsBrackets();
+  UpdateCurNeedsBrackets(needsConfig._needsBrackets);
   
   for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
   {
@@ -186,25 +186,39 @@ void NeedsState::ApplyDecay(const float timeElasped_s, const DecayConfig& decayC
       }
     }
 
-    if (curNeedLevel < 0.0f)  // TODO use 'minimum level value' here from config
+    if (curNeedLevel < _needsConfig->_minNeedLevel)
     {
-      curNeedLevel = 0.0f;
+      curNeedLevel = _needsConfig->_minNeedLevel;
     }
     _curNeedsLevels[static_cast<NeedId>(needIndex)] = curNeedLevel;
   }
 }
 
 
-void NeedsState::UpdateCurNeedsBrackets()
+void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
 {
-  // todo: set each of the needs' 'current bracket' based on the current level for that need,
-  // and configuration data (_needsConfig)
-  // To be called whenever needs level changes.
-  
-  // temp code:
-  _curNeedsBracketsCache[NeedId::Repair] = NeedBracketId::Full;
-  _curNeedsBracketsCache[NeedId::Energy] = NeedBracketId::Full;
-  _curNeedsBracketsCache[NeedId::Play] = NeedBracketId::Full;
+  // Set each of the needs' "current bracket" based on the current level for that need
+  for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+  {
+    const NeedId needId = static_cast<NeedId>(needIndex);
+    const float curNeedLevel = _curNeedsLevels[needId];
+
+    const auto& bracketThresholds = needsBrackets.find(needId)->second;
+    size_t bracketIndex = 0;
+    const auto numBracketThresholds = bracketThresholds.size();
+    for ( ; bracketIndex < numBracketThresholds; bracketIndex++)
+    {
+      if (curNeedLevel >= bracketThresholds[bracketIndex])
+      {
+        break;
+      }
+    }
+    if (bracketIndex >= numBracketThresholds)
+    {
+      bracketIndex = numBracketThresholds - 1;
+    }
+    _curNeedsBracketsCache[needId] = static_cast<NeedBracketId>(bracketIndex);
+  }
 }
 
 

@@ -15,11 +15,13 @@
 #define __Cozmo_Basestation_NeedsSystem_NeedsState_H__
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "clad/types/needsSystemTypes.h"
 
 #include <json/json.h>
 
 #include <assert.h>
+#include <vector>
 #include <map>
 
 namespace Anki {
@@ -33,8 +35,10 @@ namespace ExternalInterface {
 class NeedsConfig;
 struct DecayConfig;
 
-using Time = std::chrono::time_point<std::chrono::system_clock>;
+using BracketThresholds = std::vector<float>;
+using NeedsBrackets = std::map<NeedId, BracketThresholds>;
 
+using Time = std::chrono::time_point<std::chrono::system_clock>;
 
 class NeedsState
 {
@@ -55,8 +59,7 @@ public:
   bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };
   
   // Set current needs bracket levels from current levels
-  void UpdateCurNeedsBrackets();
-
+  void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);
 
   // Serialization versions; increment this when the format of the serialization changes
   // This is stored in the serialized file
@@ -80,15 +83,12 @@ public:
 
   using PartIsDamagedMap = std::map<RepairablePartId, bool>;
   PartIsDamagedMap _partIsDamaged;
-  
+
   int _curNeedsUnlockLevel;
   int _numStarsAwarded;
   int _numStarsForNextUnlock;
 
-private:
-
-  const NeedsConfig* _needsConfig;  // Do I really need this?
-
+  const NeedsConfig* _needsConfig;
 };
 
 

@@ -51,11 +51,12 @@ static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 
 static const float kNeedLevelStorageMultiplier = 100000.0f;
 
+static const int kMinimumTimeBetweenPeriodicDeviceSaves_sec = 20; // 20 for testing; probably make this 60
+static const int kMinimumTimeBetweenPeriodicRobotSaves_sec = (60 * 1);  // 60 secs for testing; probably make this 10 minutes
 
-static const float kConnectedDecayPeriod_s = 3.0f; // 3 seconds for testing; soon to be 60
 
-
-using Time = std::chrono::time_point<std::chrono::system_clock>;
+using namespace std::chrono;
+using Time = time_point<system_clock>;
 
 
 
@@ -64,13 +65,25 @@ NeedsManager::NeedsManager(Robot& robot)
 , _needsState()
 , _needsConfig()
 , _needsStateFromRobot()
+, _timeLastWrittenToRobot()
+, _robotHadValidNeedsData(false)
+, _deviceHadValidNeedsData(false)
+, _robotNeedsVersionUpdate(false)
+, _deviceNeedsVersionUpdate(false)
 , _isPaused(false)
+, _isDecayPausedForNeed()
+, _isActionsPausedForNeed()
 , _currentTime_s(0.0f)
 , _timeForNextPeriodicDecay_s(0.0f)
 , _pausedDurRemainingPeriodicDecay(0.0f)
 , kPathToSavedStateFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
 {
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    _isDecayPausedForNeed[i] = false;
+    _isActionsPausedForNeed[i] = false;
+  }
 }
 
 NeedsManager::~NeedsManager()
@@ -87,8 +100,15 @@ void NeedsManager::Init(const Json::Value& inJson)
   const u32 uninitializedSerialNumber = 0;
   _needsState.Init(_needsConfig, uninitializedSerialNumber);
 
-  // todo:  Init various member vars of NeedsManager as needed
-  
+  // We want to pause the whole system until we've finished reading from robot
+  _isPaused = true;
+
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    _isDecayPausedForNeed[i] = false;
+    _isActionsPausedForNeed[i] = false;
+  }
+
   // Subscribe to messages
   if (_robot.HasExternalInterface())
   {
@@ -97,7 +117,10 @@ void NeedsManager::Init(const Json::Value& inJson)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseStates>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
   }
 
   // Subscribe to message from robot to get serial number;
@@ -112,46 +135,119 @@ void NeedsManager::InitAfterConnection()
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection",
                       "Starting MAIN Init of NeedsManager, with serial number %d", _robot.GetBodySerialNumber());
-  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber());
 
-  // todo:  later this logic needs to deal with loading from robot storage, comparing time
-  // stamps with device storage, and dealing with multiple device use
-  // Also need to deal with multiple robots (even if just for dev purposes)
-
-  Time now = std::chrono::system_clock::now();
-  const bool deviceHasNeedsState = DeviceHasNeedsState();
-  if (deviceHasNeedsState)
+  // First, see if the device has valid stored state, and if so load it
+  _deviceHadValidNeedsData = false;
+  _deviceNeedsVersionUpdate = false;
+  if (DeviceHasNeedsState())
   {
-    bool versionUpdated = false;
-    if (ReadFromDevice(_needsState, versionUpdated))
-    {
-      if (versionUpdated)
-      {
-        // If we've loaded an older verson of the state file, write out the newer version immediately
-        _needsState._timeLastWritten = now;
-        WriteToDevice(_needsState);
-      }
-    }
+    _deviceHadValidNeedsData = ReadFromDevice(_needsState, _deviceNeedsVersionUpdate);
+  }
+
+  // Second, see if the robot has valid stored state, and if so load it
+  _robotHadValidNeedsData = false;
+  _robotNeedsVersionUpdate = false;
+  if (!StartReadFromRobot())
+  {
+    // If the read from robot fails immediately, move on to post-robot-read init
+    InitAfterReadFromRobotAttempt();
+  }
+}
+
+
+void NeedsManager::InitAfterReadFromRobotAttempt()
+{
+  // First, we can finally un-pause the system now that we've read data from the robot
+  _isPaused = false;
+
+  bool needToWriteToDevice = false;
+  bool needToWriteToRobot = false;
+
+  if (!_robotHadValidNeedsData && !_deviceHadValidNeedsData)
+  {
+    // Neither robot nor device has needs data
+    needToWriteToDevice = true;
+    needToWriteToRobot = true;
+  }
+  else if (_robotHadValidNeedsData && !_deviceHadValidNeedsData)
+  {
+    // Robot has needs data, but device doesn't
+    // (Use case:  Robot has been used with another device)
+    needToWriteToDevice = true;
+    // Copy the loaded robot needs state into our device needs state
+    _needsState = _needsStateFromRobot;
+  }
+  else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
+  {
+    // Robot does NOT have needs data, but device does
+    // So just go with device data, and write that to robot
+    needToWriteToRobot = true;
   }
   else
   {
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection", "No needs state data found on device; creating new file");
+    // Both robot and device have needs data
+    if (_needsState._robotSerialNumber == _needsStateFromRobot._robotSerialNumber)
+    {
+      // This was the same robot the device had been connected to before.
+      if (_needsState._timeLastWritten < _needsStateFromRobot._timeLastWritten)
+      {
+        // Robot data is newer; possibly someone controlled this robot with another device
+        // Go with the robot data
+        needToWriteToDevice = true;
+        // Copy the loaded robot needs state into our device needs state
+        _needsState = _needsStateFromRobot;
+      }
+      else if (_needsState._timeLastWritten > _needsStateFromRobot._timeLastWritten)
+      {
+        // Device data is newer; something weird happened
+        // Go with the device data
+        // TODO:  Add DAS event for analytics purposes
+        needToWriteToRobot = true;
+      }
+      // (else the times are identical, which is the normal case...nothing to do)
+    }
+    else
+    {
+      // User has connected to a different robot that has used the needs feature.
+      // Use the robot's state; copy it to the device.
+      needToWriteToDevice = true;
+      // Copy the loaded robot needs state into our device needs state
+      _needsState = _needsStateFromRobot;
+    }
+  }
+
+  const Time now = system_clock::now();
+
+  if (needToWriteToDevice)
+  {
+    if (_deviceNeedsVersionUpdate)
+    {
+      _deviceNeedsVersionUpdate = false;
+      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device due to storage version update");
+    }
+    else
+    {
+      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device for the first time");
+    }
     _needsState._timeLastWritten = now;
     WriteToDevice(_needsState);
   }
 
-  StartReadFromRobot();
-//  if (error)
-//  {
-//    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection", "No needs state data found on robot; writing to robot");
-//    _needsState._timeLastWritten = now;
-//    StartWriteToRobot(_needsState);
-//  }
-//  else
-//  {
-////    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection",
-////                        "robotHasNeedsState is %s", robotHasNeedsState ? "true" : "false");
-//  }
+  if (needToWriteToRobot)
+  {
+    if (_robotNeedsVersionUpdate)
+    {
+      _robotNeedsVersionUpdate = false;
+      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot due to storage version update");
+    }
+    else
+    {
+      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot for the first time");
+    }
+    _timeLastWrittenToRobot = now;
+    _needsState._timeLastWritten = now;
+    StartWriteToRobot(_needsState);
+  }
 }
 
 
@@ -163,7 +259,6 @@ void NeedsManager::HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& m
 
   InitAfterConnection();
 }
-
 
 
 void NeedsManager::Update(const float currentTime_s)
@@ -182,16 +277,22 @@ void NeedsManager::Update(const float currentTime_s)
 
   if (NEAR_ZERO(_timeForNextPeriodicDecay_s))
   {
-    _timeForNextPeriodicDecay_s = currentTime_s + kConnectedDecayPeriod_s;
+    _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
   }
 
   if (currentTime_s >= _timeForNextPeriodicDecay_s)
   {
-    _timeForNextPeriodicDecay_s += kConnectedDecayPeriod_s;
+    _timeForNextPeriodicDecay_s += _needsConfig._decayPeriod;
 
-    _needsState.ApplyDecay(kConnectedDecayPeriod_s, _needsConfig._decayConnected);
+    _needsState.ApplyDecay(_needsConfig._decayPeriod, _needsConfig._decayConnected);
 
     SendNeedsStateToGame(NeedsActionId::Decay);
+
+    // Note that we don't want to write to robot at this point, as that
+    // can take a long time (300 ms) and can interfere with animations.
+    // So we generally only write to robot on actions completed.
+    // However, it's quick to write to device, so we [possibly] do that here:
+    PossiblyWriteToDevice(_needsState);
   }
 }
 
@@ -228,11 +329,19 @@ void NeedsManager::SetPaused(bool paused)
 
 void NeedsManager::RegisterNeedsActionCompleted(NeedsActionId actionCompleted)
 {
+  if (_isPaused)
+    return;
+
   // todo implement this
   
   // todo: Adjust zero or more needs levels based on config data for the completed action
+
+  // todo: Clamp any changed need level with _needsConfig._minNeedLevel and _maxNeedLevel
   
   SendNeedsStateToGame(actionCompleted);
+
+  PossiblyWriteToDevice(_needsState);
+  PossiblyStartWriteToRobot(_needsState);
 }
 
 
@@ -255,15 +364,64 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseState& ms
 }
 
 template<>
+void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& msg)
+{
+  // TODO:  For each flag, detect when the flag goes from true to false
+  // (meaning becoming un-paused), and for decay, apply delayed decay, and
+  // for actions, apply decayed actions (for the given need).
+  for (int i = 0; i < _isDecayPausedForNeed.size(); i++)
+  {
+    _isDecayPausedForNeed[i] = msg.decayPause[i];
+  }
+
+  for (int i = 0; i < _isActionsPausedForNeed.size(); i++)
+  {
+    _isActionsPausedForNeed[i] = msg.actionPause[i];
+  }
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseStates& msg)
+{
+  SendNeedsPauseStatesToGame();
+}
+
+template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterNeedsActionCompleted& msg)
 {
   RegisterNeedsActionCompleted(msg.actionCompleted);
 }
 
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg)
+{
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.HandleSetGameBeingPaused",
+                "Game being paused set to %s",
+                msg.isPaused ? "TRUE" : "FALSE");
+
+  // When app is backgrounded, we want to also pause the whole needs system
+  SetPaused(msg.isPaused);
+
+  if (msg.isPaused)
+  {
+    const Time now = system_clock::now();
+    _needsState._timeLastWritten = now;
+    WriteToDevice(_needsState);
+
+    if (_robotStorageState == RobotStorageState::Inactive)
+    {
+      const Time now = system_clock::now();
+      _timeLastWrittenToRobot = now;
+      _needsState._timeLastWritten = now;
+      StartWriteToRobot(_needsState);
+    }
+  }
+}
+
 
 void NeedsManager::SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate)
 {
-  _needsState.UpdateCurNeedsBrackets();
+  _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
   
   std::vector<float> needLevels;
   needLevels.reserve((size_t)NeedId::Count);
@@ -302,6 +460,26 @@ void NeedsManager::SendNeedsPauseStateToGame()
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
+void NeedsManager::SendNeedsPauseStatesToGame()
+{
+  std::vector<bool> decayPause;
+  decayPause.reserve(_isDecayPausedForNeed.size());
+  for (int i = 0; i < _isDecayPausedForNeed.size(); i++)
+  {
+    decayPause.push_back(_isDecayPausedForNeed[i]);
+  }
+
+  std::vector<bool> actionPause;
+  actionPause.reserve(_isActionsPausedForNeed.size());
+  for (int i = 0; i < _isActionsPausedForNeed.size(); i++)
+  {
+    actionPause.push_back(_isActionsPausedForNeed[i]);
+  }
+
+  ExternalInterface::NeedsPauseStates message(decayPause, actionPause);
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
 void NeedsManager::SendAllNeedsMetToGame()
 {
   // todo
@@ -322,13 +500,25 @@ bool NeedsManager::DeviceHasNeedsState()
   return Util::FileUtils::FileExists(kPathToSavedStateFile + kNeedsStateFile);
 }
 
+void NeedsManager::PossiblyWriteToDevice(NeedsState& needsState)
+{
+  const Time now = system_clock::now();
+  const auto elapsed = now - needsState._timeLastWritten;
+  const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
+  if (secsSinceLastSave > kMinimumTimeBetweenPeriodicDeviceSaves_sec)
+  {
+    needsState._timeLastWritten = now;
+    WriteToDevice(needsState);
+  }
+}
+
 void NeedsManager::WriteToDevice(const NeedsState& needsState)
 {
+  const auto startTime = std::chrono::system_clock::now();
   Json::Value state;
 
   state[kStateFileVersionKey] = needsState.kDeviceStorageVersion;
 
-  using namespace std::chrono;
   const auto time_s = duration_cast<seconds>(needsState._timeLastWritten.time_since_epoch()).count();
   state[kDateTimeKey] = Util::numeric_cast<Json::LargestInt>(time_s);
 
@@ -348,13 +538,17 @@ void NeedsManager::WriteToDevice(const NeedsState& needsState)
     state[kPartIsDamagedKey][EnumToString(part.first)] = part.second;
   }
 
+  const auto midTime = std::chrono::system_clock::now();
   if (!_robot.GetContextDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
-//  auto tickEnd = std::chrono::system_clock::now();
-//  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tickEnd - tickStart);
-//  PRINT_CH_INFO(kLogChannelName, "NeedsManager.WriteToDevice", "Write to device took %lld microseconds", microsecs.count());
+  const auto endTime = std::chrono::system_clock::now();
+  const auto microsecsMid =std::chrono::duration_cast<std::chrono::microseconds>(endTime - midTime);
+  const auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.WriteToDevice",
+                "Write to device took %lld microseconds total; %lld microseconds for the actual write",
+                microsecs.count(), microsecsMid.count());
 }
 
 bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
@@ -377,7 +571,6 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
     return false;
   }
 
-  using namespace std::chrono;
   const seconds durationSinceEpoch_s(state[kDateTimeKey].asLargestInt());
   needsState._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
 
@@ -402,23 +595,38 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
     // Sensible defaults go here for new stuff, as needed, when the format changes
   }
 
-  _needsState.UpdateCurNeedsBrackets();
+  _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
 
   return true;
 }
 
 
+void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState)
+{
+  if (_robotStorageState != RobotStorageState::Inactive)
+    return;
+
+  const Time now = system_clock::now();
+  const auto elapsed = now - _timeLastWrittenToRobot;
+  const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
+  if (secsSinceLastSave > kMinimumTimeBetweenPeriodicRobotSaves_sec)
+  {
+    _timeLastWrittenToRobot = now;
+    needsState._timeLastWritten = now;
+    StartWriteToRobot(needsState);
+  }
+}
+
 void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
 {
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
               "Attempting to write to robot but state is %d", _robotStorageState);
+
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
-  ANKI_CPU_PROFILE("NeedsState::StartWriteToRobot");
-  auto tickStart = std::chrono::system_clock::now();
+  const auto startTime = std::chrono::system_clock::now();
 
   _robotStorageState = RobotStorageState::Writing;
 
-  using namespace std::chrono;
   const auto time_s = duration_cast<seconds>(needsState._timeLastWritten.time_since_epoch()).count();
   const auto timeLastWritten = Util::numeric_cast<uint64_t>(time_s);
 
@@ -441,28 +649,28 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
   if (!_robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_NurtureGameData, stateVec.data(), stateVec.size(),
-                                           [this, tickStart](NVStorage::NVResult res)
+                                           [this, startTime](NVStorage::NVResult res)
                                            {
-                                             FinishWriteToRobot(res);
+                                             FinishWriteToRobot(res, startTime);
                                            }))
   {
     PRINT_NAMED_ERROR("NeedsState.StartWriteToRobot.WriteFailed", "Write failed");
     _robotStorageState = RobotStorageState::Inactive;
   }
-  auto tickEnd = std::chrono::system_clock::now();
-  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tickEnd - tickStart);
+  auto endTime = std::chrono::system_clock::now();
+  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Write to robot START took %lld microseconds", microsecs.count());
 }
 
-void NeedsManager::FinishWriteToRobot(NVStorage::NVResult res)
+void NeedsManager::FinishWriteToRobot(NVStorage::NVResult res, const Time startTime)
 {
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Writing, "NeedsManager.FinishWriteToRobot.RobotStorageConflict",
               "Robot storage state should be Writing but instead is %d", _robotStorageState);
   _robotStorageState = RobotStorageState::Inactive;
 
-//  auto tickEnd = std::chrono::system_clock::now();
-//  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(tickEnd - tickStart);
-//  PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
+  auto endTime = std::chrono::system_clock::now();
+  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
 
   if (res < NVStorage::NVResult::NV_OKAY)
   {
@@ -489,7 +697,9 @@ bool NeedsManager::StartReadFromRobot()
   if (!_robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
-                                            FinishReadFromRobot(data, size, res);
+                                            _robotHadValidNeedsData = FinishReadFromRobot(data, size, res);
+
+                                            InitAfterReadFromRobotAttempt();
                                           }))
   {
     PRINT_NAMED_ERROR("NeedsManager.StartReadFromRobot.ReadFailed", "Failed to start read of needs system robot storage");
@@ -500,7 +710,7 @@ bool NeedsManager::StartReadFromRobot()
   return true;
 }
 
-void NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res)
+bool NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res)
 {
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Reading, "NeedsManager.FinishReadFromRobot.RobotStorageConflict",
               "Robot storage state should be Reading but instead is %d", _robotStorageState);
@@ -512,66 +722,63 @@ void NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResul
     if (res == NVStorage::NVResult::NV_NOT_FOUND)
     {
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishReadFromRobot", "No nurture metagame data on robot");
-      StartWriteToRobot(_needsState);
     }
     else
     {
       PRINT_NAMED_ERROR("NeedsManager.FinishReadFromRobot.ReadFailedFinish", "Read failed with %s", EnumToString(res));
     }
 
-    return;
+    return false;
   }
 
   NeedsStateOnRobot stateOnRobot;
   stateOnRobot.Unpack(data, size);
 
   int versionLoaded = stateOnRobot.version;
-  if (versionLoaded > _needsState.kRobotStorageVersion)
+  if (versionLoaded > _needsStateFromRobot.kRobotStorageVersion)
   {
-    ANKI_VERIFY(versionLoaded <= _needsState.kRobotStorageVersion, "NeedsManager.FinishReadFromRobot.StateFileVersionIsFuture",
+    ANKI_VERIFY(versionLoaded <= _needsStateFromRobot.kRobotStorageVersion, "NeedsManager.FinishReadFromRobot.StateFileVersionIsFuture",
                 "Needs state robot storage version read was %d but app thinks latest version is %d",
-                versionLoaded, _needsState.kRobotStorageVersion);
-    return;
+                versionLoaded, _needsStateFromRobot.kRobotStorageVersion);
+    return false;
   }
 
-  // TODO Compare timeLastWritten with what we have on the device storage.
-  // TODO Compare _robotSerialNumber with what we have on the device storage.
+  // Now initialize _needsStateFromRobot from the loaded NeedsStateOnRobot:
 
-  if (true) // xxx if we want to use the robot's saved data instead of the device's saved data:
+  const seconds durationSinceEpoch_s(stateOnRobot.timeLastWritten);
+  _needsStateFromRobot._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
+
+  _needsStateFromRobot._robotSerialNumber = _robot.GetBodySerialNumber();
+
+  _needsStateFromRobot._curNeedsUnlockLevel = stateOnRobot.curNeedsUnlockLevel;
+  _needsStateFromRobot._numStarsAwarded = stateOnRobot.numStarsAwarded;
+  _needsStateFromRobot._numStarsForNextUnlock = 3;  // todo fill in from config data and curNeedsUnlockLevel
+
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
-    using namespace std::chrono;
-    const seconds durationSinceEpoch_s(stateOnRobot.timeLastWritten);
-    _needsState._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
-
-    _needsState._robotSerialNumber = _robot.GetBodySerialNumber();
-
-    _needsState._curNeedsLevels.clear();
-    for (size_t i = 0; i < (size_t)NeedId::Count; i++)
-    {
-      _needsState._curNeedsLevels[static_cast<NeedId>(i)] = Util::numeric_cast<float>(stateOnRobot.curNeedLevel[i]) / kNeedLevelStorageMultiplier;
-    }
-
-    _needsState._partIsDamaged.clear();
-    for (size_t i = 0; i < (size_t)RepairablePartId::Count; i++)
-    {
-      _needsState._partIsDamaged[static_cast<RepairablePartId>(i)] = stateOnRobot.partIsDamaged[i];
-    }
-
-    _needsState._curNeedsUnlockLevel = stateOnRobot.curNeedsUnlockLevel;
-    _needsState._numStarsAwarded = stateOnRobot.numStarsAwarded;
-    _needsState._numStarsForNextUnlock = 3;  // TODO fill in _needsState.numStarsForNextUnlock from config data
-
-    if (versionLoaded < _needsState.kRobotStorageVersion)
-    {
-      // Sensible defaults go here for new stuff, as needed, when the format changes
-      // NOTE:  For this robot storage, changing the format is more difficult because the
-      // NeedsStateOnRobot structure has to change, meaning that we'd have to maintain prior
-      // versions of it to be able to load earlier data.
-    }
-
-    _needsState.UpdateCurNeedsBrackets();
+    const auto& needId = static_cast<NeedId>(i);
+    _needsStateFromRobot._curNeedsLevels[needId] = Util::numeric_cast<float>(stateOnRobot.curNeedLevel[i]) / kNeedLevelStorageMultiplier;
   }
+
+  for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
+  {
+    const auto& pardId = static_cast<RepairablePartId>(i);
+    _needsStateFromRobot._partIsDamaged[pardId] = stateOnRobot.partIsDamaged[i];
+  }
+
+  _needsStateFromRobot._needsConfig = &_needsConfig;
+
+  if (versionLoaded < _needsStateFromRobot.kRobotStorageVersion)
+  {
+    _robotNeedsVersionUpdate = true;
+    // Sensible defaults go here for new stuff, as needed, when the format changes
+  }
+
+  _needsStateFromRobot.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
+
+  return true;
 }
+
 
 
 } // namespace Cozmo

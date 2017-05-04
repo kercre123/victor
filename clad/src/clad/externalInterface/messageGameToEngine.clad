@@ -902,10 +902,21 @@ message SetNeedsPauseState {
 message GetNeedsPauseState {
 }
 
+message SetNeedsPauseStates {
+  bool decayPause[uint_8],
+  bool actionPause[uint_8]
+}
+
+message GetNeedsPauseStates {
+}
+
 message RegisterNeedsActionCompleted {
   NeedsActionId actionCompleted
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////////////////////////////
 
 structure SetFriendshipPoints {
   int_32 newVal

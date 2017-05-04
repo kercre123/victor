@@ -62,38 +62,52 @@ public:
   
   void RegisterNeedsActionCompleted(NeedsActionId actionCompleted);
 
+  static const char* kLogChannelName;
+
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
 
+private:
+
   void HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
   bool DeviceHasNeedsState();
+  void PossiblyWriteToDevice(NeedsState& needsState);
   void WriteToDevice(const NeedsState& needsState);
   bool ReadFromDevice(NeedsState& needsState, bool& versionUpdated);
 
   static inline const std::string GetNurtureFolder() { return "nurture/"; }
 
+  void PossiblyStartWriteToRobot(NeedsState& needsState);
   void StartWriteToRobot(const NeedsState& needsState);
-  void FinishWriteToRobot(NVStorage::NVResult res);
+  void FinishWriteToRobot(NVStorage::NVResult res, const Time startTime);
   bool StartReadFromRobot();
-  void FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res);
+  bool FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res);
 
-  static const char* kLogChannelName;
-
-private:
+  void InitAfterReadFromRobotAttempt();
 
   void SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate);
   void SendNeedsPauseStateToGame();
+  void SendNeedsPauseStatesToGame();
   void SendAllNeedsMetToGame();
   
   Robot&      _robot;
 
   NeedsState  _needsState;
   NeedsConfig _needsConfig;
-  NeedsState  _needsStateFromRobot; // Not used yet but may when I implement 'resolve on connect'
+  NeedsState  _needsStateFromRobot;
+
+  Time        _timeLastWrittenToRobot;
+  bool        _robotHadValidNeedsData;
+  bool        _deviceHadValidNeedsData;
+  bool        _robotNeedsVersionUpdate;
+  bool        _deviceNeedsVersionUpdate;
 
   bool        _isPaused;
+
+  std::array<bool, static_cast<size_t>(NeedId::Count)> _isDecayPausedForNeed;
+  std::array<bool, static_cast<size_t>(NeedId::Count)> _isActionsPausedForNeed;
 
   float       _currentTime_s;
   float       _timeForNextPeriodicDecay_s;

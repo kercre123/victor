@@ -1,4 +1,8 @@
 {
+  "MinimumNeedLevel": 0.01,
+  "MaximumNeedLevel": 0.98,
+  "DecayPeriodSeconds": 3.0, // How frequently to decay needs while connected (3 for testing; soon to be 60)
+
   // Starting values for each need (when cozmo is born)
   "InitialNeedsLevels": {
     "Repair" : 0.4876,
@@ -102,10 +106,10 @@
 
 // TODO
 
-// Add simple vars "maximum need level" and "minimum need level"
-
 // ActionNeedChange:  One for each 'actionId' (fed, repair, etc.)
 //   each contains:  float needLevelDelta[NeedId] (signed delta); float uniformVarianceDelta (unsigned value)
+// (Put in a separate json file)
 
 // Unlock levels:  Array, in order.
 //   For each:  int numStarsToUnlock; Rewards array (for each: RewardTypeEnum, secondary data)
+// (Put in a separate json file)

@@ -514,6 +514,11 @@ message NeedsPauseState {
   bool isPaused
 }
 
+message NeedsPauseStates {
+  bool decayPause[uint_8],
+  bool actionPause[uint_8]
+}
+
 message AllNeedsMet {
   int_32      unlockLevelCompleted,
   int_32      starsRequiredForNextUnlock,
