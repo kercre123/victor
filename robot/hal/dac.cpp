@@ -146,25 +146,57 @@ static int next_write_index(void) {
   return (index - 1) & 0xF;
 }
 
-void GenerateTestTone(void) {
+void GenerateTestTone(u8 tone_sel, u8 volume) {
   using namespace Anki::Cozmo::HAL;
-   
+  
   __disable_irq();
   GPIO_RESET(POWEREN);
   MCG_C1 |= MCG_C1_IREFS_MASK;
   
-  /*/============================================================================================
+  const int MAX_AMPLITUDE = 0x1000;
+  const int VOLUME_STEP = MAX_AMPLITUDE / 0x100;
+  int amplitude = !volume ? MAX_AMPLITUDE : volume * VOLUME_STEP;
+  
+  //bump up the DAC audio rate to avoid aliasing from our frequency generator
+  //XXX: doesn't work. how do we modify DAC output rate?
+  const int TEST_SAMPLE_RATE = SAMPLE_RATE * 1;
+  //PDB0_MOD = (PERF_CLOCK / TEST_SAMPLE_RATE)-1; /*CLOCK_MOD-1*/
+  
+  DAC::EnableAudio(true);
+  
+  //Silently ramp audio signal to nominal
+  for( int i=1; i <= 2000; i++ )
+    DAC_WRITE[next_write_index()] = (int)((i * (amplitude/2)) / 2000);
+  
+  //play the selected tone
+  extern void m_play_nathan_og_tone(int max_amplitude, int sample_rate);
+  extern void m_play_freq_sweep_tone(int max_amplitude, int sample_rate);
+  extern void m_play_pleasant_tones(int max_amplitude, int sample_rate);
+  switch( tone_sel ) {
+    default:
+    case 0:   m_play_nathan_og_tone( amplitude, TEST_SAMPLE_RATE ); break;
+    case 1:   m_play_freq_sweep_tone( amplitude, TEST_SAMPLE_RATE ); break;
+    case 2:   m_play_pleasant_tones( amplitude, TEST_SAMPLE_RATE ); break;
+  }
+  
+  //Silently ramp down audio signal to gnd
+  for( int i=2000; i > 0; i-- )
+    DAC_WRITE[next_write_index()] = (int)((i * (amplitude/2)) / 2000);
+  
+  NVIC_SystemReset();
+}
+
+static void m_play_nathan_og_tone(int max_amplitude, int sample_rate)
+{
   // THIS ALL NEEDS TO BE ADJUSTED
   static const int CPU_OLD_CLOCK = 100000000;
   static const int CPU_NEW_CLOCK = 32768*2560;
   static const float FREQ_DILATION = (float)CPU_OLD_CLOCK / (float)CPU_NEW_CLOCK;
   
-  static const float peak = 0x800;
-  static const int ticks_per_freq = (int)(SAMPLE_RATE * FREQ_DILATION * 20 / 1000); // 40ms
+  float peak = max_amplitude/2; //0x800;
+  int ticks_per_freq = (int)(sample_rate * FREQ_DILATION * 20 / 1000); // 40ms
+  float freq = (float)(M_PI_2 * 8000.0 / sample_rate * FREQ_DILATION);
 
-  float freq = (float)(M_PI_2 * 8000.0 / SAMPLE_RATE * FREQ_DILATION);
-
-  DAC::EnableAudio(true);
   for (int g = 0; g < 8; g++) {   
     // Silence
     for (int i = 0; i < ticks_per_freq; i++) {
@@ -181,35 +213,29 @@ void GenerateTestTone(void) {
     // Pitch shift
     freq /= 2;
   }
-  //============================================================================================*/
+}
+
+static void m_play_freq_sweep_tone(int max_amplitude, int sample_rate)
+{
+  const float TONE_START_FREQ = 1000, TONE_END_FREQ = 8000;
+  const int TONE_TIME_MS = 400;
+  int tone_num_samples = (TONE_TIME_MS * sample_rate) / 1000;
   
-  const int MAX_AMPLITUDE = 0xFFF;
-  
-  //bump up the DAC audio rate to avoid aliasing from our frequency generator
-  //XXX: doesn't work. how do we modify DAC output rate?
-  const int TEST_SAMPLE_RATE = SAMPLE_RATE * 1;
-  //PDB0_MOD = (PERF_CLOCK / TEST_SAMPLE_RATE)-1; /*CLOCK_MOD-1*/
-  
-  DAC::EnableAudio(true);
-  
-  //Silently ramp audio signal to nominal
-  for( int i=1; i <= 2000; i++ )
-    DAC_WRITE[next_write_index()] = (int)((i * (MAX_AMPLITUDE/2)) / 2000);
-  
-  //Frequency sweep tone
-  const float tone_start_freq = 1000, tone_end_freq = 8000;
-  const int tone_time_ms = 400;
-  const int tone_num_samples = (tone_time_ms * TEST_SAMPLE_RATE) / 1000;
-  for( float t=0, f=tone_start_freq; t < ((float)tone_time_ms)/1000; t += 1/((float)TEST_SAMPLE_RATE))
-  {
-    DAC_WRITE[next_write_index()] = (int)((float)(MAX_AMPLITUDE/2) * sinf(2*M_PI_F*f*t) + (MAX_AMPLITUDE/2));
-    f += (tone_end_freq - tone_start_freq) / (float)tone_num_samples;
+  for( float t=0, f=TONE_START_FREQ; t < ((float)TONE_TIME_MS)/1000; t += 1/((float)sample_rate)) {
+    DAC_WRITE[next_write_index()] = (int)((float)(max_amplitude/2) * sinf(2*M_PI_F*f*t) + (max_amplitude/2));
+    f += (TONE_END_FREQ - TONE_START_FREQ) / (float)tone_num_samples;
   }
+}
+
+static void m_play_pleasant_tones(int max_amplitude, int sample_rate)
+{
+  const int FREQ[] = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+  const int NUM_FREQ = sizeof(FREQ)/sizeof(int);
+  const int FREQ_TIME_MS = 200;
   
-  //Silently ramp down audio signal to gnd
-  for( int i=2000; i > 0; i-- )
-    DAC_WRITE[next_write_index()] = (int)((i * (MAX_AMPLITUDE/2)) / 2000);
-  
-  NVIC_SystemReset();
+  for( int i=0; i < NUM_FREQ; i++ ) {
+    for( float t=0, f=FREQ[i]; t < ((float)FREQ_TIME_MS)/1000; t += 1/((float)sample_rate))
+      DAC_WRITE[next_write_index()] = (int)((float)(max_amplitude/2) * sinf(2*M_PI_F*f*t) + (max_amplitude/2));
+  }
 }
 
