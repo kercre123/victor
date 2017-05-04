@@ -231,7 +231,7 @@
       case 'cozmo-turn-left':
       case 'cozmo-turn-right':
       case 'cozmo-dock-with-cube':
-        return 'motion';
+        return 'blue';
 
       // looks blocks
       case 'cozmo-forklift-high':
@@ -250,7 +250,7 @@
       case 'set-led_white':
       case 'set-led_yellow':
       case 'cozmo_says':
-        return 'looks';
+        return 'purple';
 
       // event blocks
       case 'cozmo-face':
@@ -258,12 +258,12 @@
       case 'cozmo-face-sad':
       case 'cozmo-cube':
       case 'cozmo-cube-tap':
-        return 'event';
+        return 'yellow';
 
       // control blocks
       case 'control_forever':
       case 'control_repeat':
-        return 'control';
+        return 'orange';
 
       // actions blocks
       case 'cozmo-anim-bored':
@@ -281,7 +281,7 @@
       case 'cozmo-anim-thinking':
       case 'cozmo-anim-unhappy':
       case 'cozmo-anim-victory':
-        return 'action';
+        return 'pink';
 
       // no default to make mistakes more obvious
     }
@@ -331,6 +331,7 @@
   var CozmoAPI = function(){
 
     function getProjects(callbackName) {
+
       window.getCozmoUserAndSampleProjectLists(callbackName);
     }
 
