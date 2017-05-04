@@ -70,7 +70,6 @@
     var modal;
     var btnNext;
     var btnBack;
-    var slideWidth;
     var numSlides;
 
     /**
@@ -86,7 +85,6 @@
       btnBack = modal.querySelector('#btn-back');
 
       // cache values
-      slideWidth = slides[0].parentNode.offsetWidth;
       numSlides = slides.length;
       strip.style.left = 0; // allows transition animation to second page
 
@@ -135,7 +133,15 @@
      */
     function _getCurrentSlideNum() {
       var left = parseInt(strip.style.left, 10) || 0;
-      return Math.round(-left / slideWidth) + 1;
+      var slideWidth = strip.offsetWidth;
+      var slideNum = Math.round(-left / slideWidth) + 1;
+
+      if (isNaN(slideNum)) {
+        // on older android devices, slideWidth might be null early in page life
+        return 1;
+      } else {
+        return slideNum;
+      }
     }
 
     /**
