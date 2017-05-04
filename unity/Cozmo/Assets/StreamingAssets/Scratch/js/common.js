@@ -100,6 +100,7 @@
  
         // DOM event handlers
         var closeButton = document.querySelector('#closebutton');
+        var challengesButton = document.querySelector('#challengesbutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
         closeButton.addEventListener('click', function () {
@@ -107,6 +108,12 @@
             window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
         });
         closeButton.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+        });
+        challengesButton.addEventListener('click', function () {
+            // TODO Load challengs here
+        });
+        challengesButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
         greenFlag.addEventListener('click', function () {

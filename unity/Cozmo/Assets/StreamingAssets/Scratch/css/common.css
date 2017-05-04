@@ -116,6 +116,46 @@ button:focus {
 }
 
 /**
+  * Challenges button
+  */
+
+#challenges {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#challenges .primary {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 100px;
+}
+
+#challenges .primary button {
+    width: 100px;
+    height: 100px;
+    border: 1px solid #535252;
+    margin-left: -1px;
+    background-color: #535252;
+    background-image: url('../images/ui/challenges_up.svg');
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    background-size: 75%;
+    transition: background-color 100ms;
+    pointer-events: auto;
+}
+
+#challenges .primary button:active {
+    background-image: url('../images/ui/challenges_down.svg');
+}
+
+/**
  * projecttext
  */
 #projecttext {
@@ -235,8 +275,20 @@ button:focus {
     }
 
     #close .primary button {
-        width:60px;
-        height:60px;
+        width:44px;
+        height:44px;
+    }
+
+    #challenges .primary {
+        display: block;
+        position: absolute;
+        top: 5px;
+        left: 55px;
+    }
+
+    #challenges .primary button {
+        width:44px;
+        height:44px;
     }
 
     #projecttext {
@@ -253,23 +305,23 @@ button:focus {
     }
 
     #navigation .greenflag {
-        left: calc(100% - 65px);
-        top: calc(100% - 200px);;
+        left: calc(100% - 55px);
+        top: calc(100% - 170px);;
     }
 
     #navigation .greenflag button {
-        width:55px;
-        height:55px;
+        width:44px;
+        height:44px;
     }
 
     #navigation .stop {
-        left: calc(100% - 65px);
-        top: calc(100% - 145px);;
+        left: calc(100% - 55px);
+        top: calc(100% - 125px);;
     }
 
     #navigation .stop button {
-        width:55px;
-        height:55px;
+        width:44px;
+        height:44px;
     }
 
     .blocklyTooltipDiv { 
