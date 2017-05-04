@@ -79,8 +79,7 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/set-led_blue.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Set LED Color"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -95,6 +94,7 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
+    this.setTooltip("Set color on Cozmo's backpack");
   }
 };
 
@@ -112,8 +112,7 @@ Blockly.Blocks['cozmo_drive_forward'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forward.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Drive forward"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -129,6 +128,7 @@ Blockly.Blocks['cozmo_drive_forward'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Drive forward");
   }
 };
 
@@ -146,8 +146,7 @@ Blockly.Blocks['cozmo_drive_forward_fast'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forward-fast.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Drive forward fast"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -163,6 +162,7 @@ Blockly.Blocks['cozmo_drive_forward_fast'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Drive forward fast");
   }
 };
 
@@ -180,8 +180,7 @@ Blockly.Blocks['cozmo_drive_backward'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-backward.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Drive backward"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -197,6 +196,7 @@ Blockly.Blocks['cozmo_drive_backward'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Drive backward");
   }
 };
 
@@ -214,8 +214,7 @@ Blockly.Blocks['cozmo_drive_backward_fast'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-backward-fast.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Drive backward fast"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -231,6 +230,7 @@ Blockly.Blocks['cozmo_drive_backward_fast'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Drive backward fast");
   }
 };
 
@@ -248,8 +248,7 @@ Blockly.Blocks['cozmo_happy_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-happy.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Happy"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -260,6 +259,7 @@ Blockly.Blocks['cozmo_happy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be happy");
   }
 };
 
@@ -277,8 +277,7 @@ Blockly.Blocks['cozmo_victory_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-victory.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Celebrate"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -289,6 +288,7 @@ Blockly.Blocks['cozmo_victory_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Celebrate");
   }
 };
 
@@ -306,8 +306,7 @@ Blockly.Blocks['cozmo_unhappy_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-unhappy.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Sad"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -318,6 +317,7 @@ Blockly.Blocks['cozmo_unhappy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be sad");
   }
 };
 
@@ -335,8 +335,7 @@ Blockly.Blocks['cozmo_surprise_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-surprise.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Surprised"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -347,6 +346,7 @@ Blockly.Blocks['cozmo_surprise_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be surprised");
   }
 };
 
@@ -364,8 +364,7 @@ Blockly.Blocks['cozmo_dog_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-dog.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Think About Dog"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -376,6 +375,7 @@ Blockly.Blocks['cozmo_dog_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Think about dog");
   }
 };
 
@@ -393,8 +393,7 @@ Blockly.Blocks['cozmo_cat_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-cat.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Think About Cat"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -405,6 +404,7 @@ Blockly.Blocks['cozmo_cat_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Think about cat");
   }
 };
 
@@ -422,8 +422,7 @@ Blockly.Blocks['cozmo_sneeze_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-sneeze.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Sneeze"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -434,6 +433,7 @@ Blockly.Blocks['cozmo_sneeze_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Sneeze");
   }
 };
 
@@ -451,8 +451,7 @@ Blockly.Blocks['cozmo_excited_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-excited.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Excited"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -463,6 +462,7 @@ Blockly.Blocks['cozmo_excited_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be excited");
   }
 };
 
@@ -480,8 +480,7 @@ Blockly.Blocks['cozmo_thinking_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-thinking.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Think Hard"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -492,6 +491,7 @@ Blockly.Blocks['cozmo_thinking_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Think hard");
   }
 };
 
@@ -509,8 +509,7 @@ Blockly.Blocks['cozmo_bored_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-bored.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Bored"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -521,6 +520,7 @@ Blockly.Blocks['cozmo_bored_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be bored");
   }
 };
 
@@ -538,8 +538,7 @@ Blockly.Blocks['cozmo_frustrated_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-frustrated.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Frustrated"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -550,6 +549,7 @@ Blockly.Blocks['cozmo_frustrated_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be frustrated");
   }
 };
 
@@ -567,8 +567,7 @@ Blockly.Blocks['cozmo_chatty_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-chatty.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Chatty"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -579,6 +578,7 @@ Blockly.Blocks['cozmo_chatty_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be chatty");
   }
 };
 
@@ -596,8 +596,7 @@ Blockly.Blocks['cozmo_dejected_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-dejected.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Be Disappointed"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -608,6 +607,7 @@ Blockly.Blocks['cozmo_dejected_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Be disappointed");
   }
 };
 
@@ -625,8 +625,7 @@ Blockly.Blocks['cozmo_sleep_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-sleep.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Snore"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -637,6 +636,7 @@ Blockly.Blocks['cozmo_sleep_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Snore");
   }
 };
 
@@ -654,8 +654,7 @@ Blockly.Blocks['cozmo_mystery_animation'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-anim-mystery.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Mystery Action"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -666,6 +665,7 @@ Blockly.Blocks['cozmo_mystery_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
+    this.setTooltip("Mystery animation");
   }
 };
 
@@ -706,8 +706,7 @@ Blockly.Blocks['cozmo_liftheight'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-forklift-medium.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Move lift"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -722,6 +721,7 @@ Blockly.Blocks['cozmo_liftheight'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
+    this.setTooltip("Move lift");
   }
 };
 
@@ -762,8 +762,7 @@ Blockly.Blocks['cozmo_headangle'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-head-angle-high.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Move head"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -778,6 +777,7 @@ Blockly.Blocks['cozmo_headangle'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
+    this.setTooltip("Move head");
   }
 };
 
@@ -795,8 +795,7 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-dock-with-cube.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Dock with cube"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -807,6 +806,7 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Dock with cube");
   }
 };
 
@@ -824,8 +824,7 @@ init: function() {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo_says.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Make robot speak"
+          "height": 40
         },
         {
           "type": "input_value",
@@ -841,6 +840,7 @@ init: function() {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
+    this.setTooltip("Make Cozmo speak");
   }
 };
 
@@ -858,8 +858,7 @@ Blockly.Blocks['cozmo_turn_left'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn-left.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Turn left"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -870,6 +869,7 @@ Blockly.Blocks['cozmo_turn_left'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Turn left");
   }
 };
 
@@ -887,8 +887,7 @@ Blockly.Blocks['cozmo_turn_right'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-turn-right.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Turn right"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -899,6 +898,7 @@ Blockly.Blocks['cozmo_turn_right'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
+    this.setTooltip("Turn right");
   }
 };
 
@@ -915,8 +915,7 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-face.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Wait until Cozmo sees face"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -927,6 +926,7 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
+    this.setTooltip("Wait until Cozmo sees a face");
   }
 };
 
@@ -943,8 +943,7 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-face-happy.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Wait until Cozmo sees a happy face"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -955,6 +954,7 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
+    this.setTooltip("Wait until Cozmo sees a happy face");
   }
 };
 
@@ -971,8 +971,7 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-face-sad.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Wait until Cozmo sees a sad face"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -983,6 +982,7 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
+    this.setTooltip("Wait until Cozmo sees a sad face");
   }
 };
 
@@ -999,8 +999,7 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-cube.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Wait until Cozmo sees a cube"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -1011,6 +1010,7 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
+    this.setTooltip("Wait until Cozmo sees a cube");
   }
 };
 
@@ -1027,8 +1027,7 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
           "type": "field_image",
           "src": Blockly.mainWorkspace.options.pathToMedia + "icons/cozmo-cube-tap.svg",
           "width": 40,
-          "height": 40,
-          "alt": "Wait for cube tap"
+          "height": 40
         }
       ],
       "inputsInline": true,
@@ -1039,5 +1038,6 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
+    this.setTooltip("Wait for cube tap");
   }
 };

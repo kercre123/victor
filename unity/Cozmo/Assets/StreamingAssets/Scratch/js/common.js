@@ -73,10 +73,6 @@
         // should proceed to the next block.
         window.resolveCommands = [];
  
-        // Disable long-press
-        // TODO Need to turn this off for tool tips?
-        Blockly.longStart_ = function() {};
- 
         // Attach blocks to the VM
         workspace.addChangeListener(vm.blockListener);
         var flyoutWorkspace = workspace.getFlyout().getWorkspace();

@@ -711,6 +711,12 @@ Blockly.Flyout.prototype.onMouseDown_ = function(e) {
  * @private
  */
 Blockly.Flyout.prototype.onMouseUp_ = function(/*e*/) {
+  if (Blockly.Tooltip.visible) {
+    // ANKI: If tooltip is showing, prevent the mouse up from the tooltip longpress from causing the block to get executed.
+    Blockly.Touch.clearTouchIdentifier();
+    return;
+  }
+
   if (!this.workspace_.isDragging()) {
     // This was a click, not a drag.  End the gesture.
     Blockly.Touch.clearTouchIdentifier();

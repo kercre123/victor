@@ -211,8 +211,17 @@ Blockly.Tooltip.onMouseMove_ = function(e) {
     // The mouse moved, clear any previously scheduled tooltip.
     clearTimeout(Blockly.Tooltip.showPid_);
     // Maybe this time the mouse will stay put.  Schedule showing of tooltip.
-    Blockly.Tooltip.lastX_ = e.pageX;
-    Blockly.Tooltip.lastY_ = e.pageY;
+
+    // ANKI: yOffset is used to position the tooltip to appear at the upper right corner of the touch location.
+    var yOffset = 70;
+    if (window.innerWidth < window.TABLET_WIDTH) {
+      yOffset = 50;
+    }
+
+    // ANKI: The following two lines were set to e.pageX and e.pageY but those values are undefined for mobile.
+    Blockly.Tooltip.lastX_ = e.targetTouches[0].clientX;
+    Blockly.Tooltip.lastY_ = e.targetTouches[0].clientY - yOffset;
+
     Blockly.Tooltip.showPid_ =
         setTimeout(Blockly.Tooltip.show_, Blockly.Tooltip.HOVER_MS);
   }

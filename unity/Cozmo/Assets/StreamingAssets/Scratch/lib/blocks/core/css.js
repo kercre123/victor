@@ -232,20 +232,6 @@ Blockly.Css.CONTENT = [
     'z-index: 5000;',
   '}',
 
-  '.blocklyTooltipDiv {',
-    'background-color: #ffffc7;',
-    'border: 1px solid #ddc;',
-    'box-shadow: 4px 4px 20px 1px rgba(0,0,0,.15);',
-    'color: #000;',
-    'display: none;',
-    'font-family: "Avenir Next Bold";',
-    'font-size: 9pt;',
-    'opacity: 0.9;',
-    'padding: 2px;',
-    'position: absolute;',
-    'z-index: 100000;', /* big value for bootstrap3 compatibility */
-  '}',
-
   '.blocklyDropDownDiv {',
     'position: fixed;',
     'left: 0;',

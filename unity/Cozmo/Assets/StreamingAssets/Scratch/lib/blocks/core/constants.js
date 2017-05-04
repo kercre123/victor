@@ -63,7 +63,7 @@ Blockly.COLLAPSE_CHARS = 30;
 /**
  * Length in ms for a touch to become a long press.
  */
-Blockly.LONGPRESS = 750;
+Blockly.LONGPRESS = 250; // ANKI Changed value from 750.
 
 /**
  * Prevent a sound from playing if another sound preceded it within this many

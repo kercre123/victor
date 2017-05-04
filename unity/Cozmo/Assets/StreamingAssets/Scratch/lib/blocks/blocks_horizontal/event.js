@@ -56,6 +56,7 @@ Blockly.Blocks['event_whenflagclicked'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
+    this.setTooltip("Start script");
   }
 };
 

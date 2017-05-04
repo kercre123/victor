@@ -64,11 +64,14 @@ if (goog.events.BrowserFeature.TOUCH_ENABLED) {
  */
 Blockly.longPid_ = 0;
 
+// Anki: PID of queued task to dismiss tooltip.
+Blockly.clearTooltipPid_ = 0;
+
 /**
- * Context menus on touch devices are activated using a long-press.
- * Unfortunately the contextmenu touch event is currently (2015) only suported
- * by Chrome.  This function is fired on any touchstart event, queues a task,
- * which after about a second opens the context menu.  The tasks is killed
+ * ANKI modification to have longStart show a tooltip.
+ *
+ * This function is fired on any touchstart event, queues a task,
+ * which after about a second opens the tooltip.  The tasks is killed
  * if the touch event terminates early.
  * @param {!Event} e Touch start event.
  * @param {!Blockly.Block|!Blockly.WorkspaceSvg} uiObject The block or workspace
@@ -77,10 +80,18 @@ Blockly.longPid_ = 0;
  */
 Blockly.longStart_ = function(e, uiObject) {
   Blockly.longStop_();
+  clearTimeout(Blockly.clearTooltipPid_);
+
   Blockly.longPid_ = setTimeout(function() {
-    e.button = 2;  // Simulate a right button click.
-    uiObject.onMouseDown_(e);
+    Blockly.Tooltip.onMouseOver_(e); // Sets element so Tooltip.onMouseMove can be successful.
+    Blockly.Tooltip.onMouseMove_(e);
   }, Blockly.LONGPRESS);
+
+  // Start 5 timer to dismiss tooltip
+  var clearTooltipMillis = 5000;
+  Blockly.clearTooltipPid_ = setTimeout(function() {
+    Blockly.Tooltip.hide();
+  }, clearTooltipMillis);
 };
 
 /**
@@ -94,7 +105,6 @@ Blockly.longStop_ = function() {
     Blockly.longPid_ = 0;
   }
 };
-
 
 /**
  * Handle a mouse-up anywhere on the page.

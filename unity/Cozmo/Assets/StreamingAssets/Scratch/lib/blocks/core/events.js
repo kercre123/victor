@@ -293,7 +293,7 @@ Blockly.Events.fromJson = function(json, workspace) {
  * @constructor
  */
 Blockly.Events.Abstract = function(block) {
-  if (block) {
+  if (block && block.workspace) {
     this.blockId = block.id;
     this.workspaceId = block.workspace.id;
   }

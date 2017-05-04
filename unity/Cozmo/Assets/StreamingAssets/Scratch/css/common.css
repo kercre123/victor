@@ -62,6 +62,19 @@ button:focus {
     fill: #817e7e;
 }
 
+.blocklyTooltipDiv { 
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 3px;
+    color: #000;
+    display: none;
+    font-family: "Avenir Next";
+    font-size: 14pt;
+    padding: 4px;
+    position: absolute;
+    z-index: 100000; /* big value for bootstrap3 compatibility */
+}
+
 /**
   * Close button
   */
@@ -257,6 +270,10 @@ button:focus {
     #navigation .stop button {
         width:55px;
         height:55px;
+    }
+
+    .blocklyTooltipDiv { 
+        font-size: 10pt;
     }
 }
 
