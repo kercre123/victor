@@ -84,6 +84,12 @@ public:
   // marks the current workout as complete, may advance the current workout
   void CompleteCurrentWorkout();
 
+  // returns true if 80's music should be played for the current workout
+  bool ShouldPlayEightiesMusic();
+  
+  // re-determine if 80's music should be played for the current/next workout
+  void ShouldRecomputeEightiesMusic() { _hasComputedIfEightiesMusicShouldPlay = false; };
+  
 private:
 
   using WorkoutList = std::vector< WorkoutConfig >;
@@ -92,6 +98,13 @@ private:
   // which workout we are doing, must be set after the constructor is complete
   WorkoutList::const_iterator _currWorkout;
 
+  // Should we play the 80's music for the current workout?
+  bool _shouldPlayEightiesMusic = false;
+  
+  // Have we already computed whether or not to play 80's music for the current workout?
+  //   (should only compute it once per workout since it involves random numbers)
+  bool _hasComputedIfEightiesMusicShouldPlay = false;
+  
   Robot& _robot;
 
 };

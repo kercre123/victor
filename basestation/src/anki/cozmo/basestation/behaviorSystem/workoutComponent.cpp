@@ -19,10 +19,13 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "json/json.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+CONSOLE_VAR_RANGED(double, kEightiesWorkoutMusicProbability, "WorkoutComponent",  0.1, 0.0, 1.0); // probability that 80's music will be played during 'strong' workout
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // WorkoutConfig
@@ -93,7 +96,7 @@ unsigned int WorkoutConfig::GetNumWeakLifts(const Robot& robot) const
 {
   return MoodScoreHelper(robot, _numWeakLiftScorer);
 }
-
+  
 unsigned int WorkoutConfig::MoodScoreHelper(const Robot& robot, const MoodScorer& moodScorer)
 {
   if( moodScorer.IsEmpty() ) {
@@ -160,6 +163,20 @@ void WorkoutComponent::CompleteCurrentWorkout()
     }
     // else curr workout stays on the last element
   }
+}
+
+bool WorkoutComponent::ShouldPlayEightiesMusic()
+{
+  if (!_hasComputedIfEightiesMusicShouldPlay) {
+    // 80's music should only be played if this is a strong workout, and it should be
+    //   pseudo-random with the configured probability.
+    _shouldPlayEightiesMusic = (_currWorkout->GetNumStrongLifts(_robot) > 0) &&
+                               (_robot.GetRNG().RandDbl() < kEightiesWorkoutMusicProbability);
+    
+    _hasComputedIfEightiesMusicShouldPlay = true;
+  }
+
+  return _shouldPlayEightiesMusic;
 }
 
 }

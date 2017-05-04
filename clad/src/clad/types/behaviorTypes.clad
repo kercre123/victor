@@ -134,6 +134,13 @@ enum uint_8 GuardDogStage {
   Count
 }
 
+// Workout behavior stages (values must match music rounds)
+enum uint_8 WorkoutStage {
+  NormalWorkout        = 0,
+  EightiesWorkoutPrep  = 1,
+  EightiesWorkoutLift  = 2,
+  Count
+}
 
 } // namespace Cozmo
 } // namespace Anki

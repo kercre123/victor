@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -129,6 +130,9 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
   
   // Ensure the cube workout lights are not set
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
+  
+  // Need to re-compute whether or not eighties music should be played for the next workout
+  robot.GetAIComponent().GetWorkoutComponent().ShouldRecomputeEightiesMusic();
 }
 
   
@@ -193,6 +197,12 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(Robot& robot)
   
   StartActing(driveBackAndAnimateAction,
               &BehaviorCubeLiftWorkout::TransitionToStrongLifts);
+  
+  // Update the music round if we're playing 80's music for this workout
+  if (robot.GetAIComponent().GetWorkoutComponent().ShouldPlayEightiesMusic()) {
+    robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout,
+                                                                   static_cast<uint8_t>(WorkoutStage::EightiesWorkoutLift));
+  }
 }
 
   

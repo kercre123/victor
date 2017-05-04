@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -194,16 +196,33 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
       PRINT_NAMED_ERROR("BehaviorAudioClient.HandleRobotPublicStateChange.InvalidMusicState",
                         "Attempted to activate sparked music state with invalid music state");
     }else{
+      // Special handling for Workout (blergghhhhbleghgh... ahemm, excuse me)
+      int startingRound = 0;
+      if (sparkID == UnlockId::Workout) {
+        // If 80's music is to be played, we need to start at music stage 'EightiesWorkoutPrep' (round 1).
+        //   If not, start at stage 'NormalWorkout' (round 0)
+        auto& workoutComponent = _robot.GetAIComponent().GetWorkoutComponent();
+        const bool playEightiesMusic = workoutComponent.ShouldPlayEightiesMusic();
+        startingRound = Util::EnumToUnderlying(playEightiesMusic ?
+                                               WorkoutStage::EightiesWorkoutPrep :
+                                               WorkoutStage::NormalWorkout);
+        // Need to tell the PublicStateBroadcaster so that it stays in sync with the proper music round
+        _robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Workout, startingRound);
+      }
+      
       ActivateSparkedMusic(stateEvent.currentSpark,
                            AudioMetaData::GameState::Music::Spark,
-                           _sparkedMusicState);
+                           _sparkedMusicState,
+                           startingRound);
+    }
+  } else {
+    // Same spark - just update the behavior round
+    const int behaviorRound = PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent);
+    if(_round != behaviorRound){
+      UpdateBehaviorRound(sparkID, behaviorRound);
     }
   }
   
-  const int behaviorRound = PublicStateBroadcaster::GetBehaviorRoundFromMessage(stateEvent);
-  if(_round != behaviorRound){
-    UpdateBehaviorRound(sparkID, behaviorRound);
-  }
   
   // Handle AI goal transitions and Guard Dog behavior transitions
   const auto& currAiGoal = stateEvent.currentAiGoal;

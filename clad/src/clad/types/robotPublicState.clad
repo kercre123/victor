@@ -15,6 +15,7 @@ namespace Cozmo {
 enum uint_8 BehaviorStageTag{
   PyramidConstruction,
   GuardDog,
+  Workout,
   Count
 }
 
@@ -23,7 +24,8 @@ enum uint_8 BehaviorStageTag{
 structure BehaviorStageStruct{
   BehaviorStageTag behaviorStageTag,
   PyramidConstructionStage currentPyramidConstruction,
-  GuardDogStage currentGuardDogStage
+  GuardDogStage currentGuardDogStage,
+  WorkoutStage currentWorkoutStage
 }
 
 // Structure which enumerates all relevant PublicStateBroadcaster information
