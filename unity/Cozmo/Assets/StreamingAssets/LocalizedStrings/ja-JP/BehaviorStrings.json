@@ -27,6 +27,9 @@
   "behavior.KnockOverCubes" : {
     "translation" : "コズモは、キューブの積み重ねの上にノックされ、"
   },
+  "behavior.TrackLaser" : {
+    "translation" : "コズモは、レーザーを以下れます"
+  },
   "behavior.PopAWheelie" : {
     "translation" : "コズモはウイリーをポップされ、"
   },
@@ -35,6 +38,9 @@
   },
   "behavior.FistBump" : {
     "translation" : "コズモは、バンプを拳たいです"
+  },
+  "behavior.GuardDog" : {
+    "translation" : "コズモは彼のキューブを守っています"
   },
   "behavior.RollBlock" : {
     "translation" : "コズモは、キューブを展開して"

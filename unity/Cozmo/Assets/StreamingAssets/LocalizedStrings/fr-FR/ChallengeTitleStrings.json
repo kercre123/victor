@@ -18,6 +18,12 @@
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "S'il vous plaît aider Cozmo obtenir debout et prêt à jouer."
   },
+  "challengeDetails.cozmoDizzy.title" : {
+    "translation" : "Cozmo est étourdi"
+  },
+  "challengeDetails.cozmoDizzy.description" : {
+    "translation" : "Attendez que Cozmo a récupéré d'être étourdi et est prêt à jouer."
+  },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "Cozmo se réveille"
   },

@@ -115,10 +115,10 @@
     "translation" : "約"
   },
   "settings.versionPanel.acknowledgementsModal.title" : {
-    "translation" : "法的"
+    "translation" : "謝辞"
   },
   "settings.versionPanel.button.acknowledgementsLink" : {
-    "translation" : "法的"
+    "translation" : "謝辞"
   },
   "settings.versionPanel.button.eraseCozmo" : {
     "translation" : "コズモを消去"
@@ -147,6 +147,21 @@
   "settings.versionPanel.label.appVersion" : {
     "translation" : "アプリのバージョン： {0}"
   },
+  "settings.versionPanel.label.bodyHWVersion" : {
+    "translation" : "ボディHWバージョン： {0}"
+  },
+  "settings.versionPanel.label.cozmoColor" : {
+    "translation" : "コズモ色： {0}"
+  },
+  "settings.versionPanel.label.cozmoColor.white" : {
+    "translation" : "元の"
+  },
+  "settings.versionPanel.label.cozmoColor.liquidMetal" : {
+    "translation" : "液体金属"
+  },
+  "settings.versionPanel.label.cozmoColor.unknown" : {
+    "translation" : "未知の"
+  },
   "settings.versionPanel.label.cozmoVersion" : {
     "translation" : "コズモバージョン： {0}"
   },
@@ -169,6 +184,6 @@
     "translation" : "中"
   },
   "settings.acknowledgementsPanel.title" : {
-    "translation" : "謝辞"
+    "translation" : "法的"
   }
 }

@@ -79,7 +79,7 @@
     "translation" : "Entrez le mot de passe {0}"
   },
   "wifi.passwordFormat" : {
-    "translation" : "Mot de passe doit avoir 12 caractères alphanumériques, sans espaces"
+    "translation" : "Mot de passe longueur incorrecte."
   },
   "wifi.selectNetwork" : {
     "translation" : "Sélectionnez un Cozmo pour se connecter à:"
@@ -112,6 +112,6 @@
     "translation" : "Êtes-vous sûr? Sans emplacement, vous devez vous connecter à Cozmo manuellement dans les paramètres Wifi de votre téléphone. Appuyez sur \"Oui\" lorsqu'on lui a demandé de permettre à l'App Cozmo de se connecter pour vous, ou appuyez sur \"Annuler\" pour vous connecter."
   },
   "wifi.passwordRememberStatement" : {
-    "translation" : "Mot de passe est visible sur le visage de Cozmo, entrez soigneusement! Votre appareil devrait se rappeler ce mot de passe, de sorte que vous aurez seulement besoin d'entrer une fois."
+    "translation" : "Mot de passe est visible sur le visage de Cozmo, saisissez exactement comme il apparaît. Votre appareil ne doit pas oublier ce mot de passe, vous ne devez entrer une fois."
   }
 }

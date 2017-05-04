@@ -18,6 +18,12 @@
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "Bitte helfen Cozmo aufrecht und bereit zu spielen."
   },
+  "challengeDetails.cozmoDizzy.title" : {
+    "translation" : "Cozmo ist schwindlig"
+  },
+  "challengeDetails.cozmoDizzy.description" : {
+    "translation" : "Warten Sie, bis Cozmo vom Sein schwindlig erholt hat und bereit ist, zu spielen."
+  },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "Cozmo erwacht"
   },

@@ -27,6 +27,9 @@
   "behavior.KnockOverCubes" : {
     "translation" : "Cozmo klopft über einen Stapel von Cubes"
   },
+  "behavior.TrackLaser" : {
+    "translation" : "Cozmo folgt einen Laser"
+  },
   "behavior.PopAWheelie" : {
     "translation" : "Cozmo knallt einen Wheelie"
   },
@@ -35,6 +38,9 @@
   },
   "behavior.FistBump" : {
     "translation" : "Cozmo will Beule auf Faust"
+  },
+  "behavior.GuardDog" : {
+    "translation" : "Cozmo bewacht seine Würfel"
   },
   "behavior.RollBlock" : {
     "translation" : "Cozmo rollt einen Würfel"

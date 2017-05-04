@@ -115,10 +115,10 @@
     "translation" : "Sur"
   },
   "settings.versionPanel.acknowledgementsModal.title" : {
-    "translation" : "Légal"
+    "translation" : "Remerciements"
   },
   "settings.versionPanel.button.acknowledgementsLink" : {
-    "translation" : "Légal"
+    "translation" : "Remerciements"
   },
   "settings.versionPanel.button.eraseCozmo" : {
     "translation" : "Effacer Cozmo"
@@ -147,6 +147,21 @@
   "settings.versionPanel.label.appVersion" : {
     "translation" : "Version de l'application: {0}"
   },
+  "settings.versionPanel.label.bodyHWVersion" : {
+    "translation" : "Corps HW Version: {0}"
+  },
+  "settings.versionPanel.label.cozmoColor" : {
+    "translation" : "Cozmo Couleur: {0}"
+  },
+  "settings.versionPanel.label.cozmoColor.white" : {
+    "translation" : "Original"
+  },
+  "settings.versionPanel.label.cozmoColor.liquidMetal" : {
+    "translation" : "Métal liquide"
+  },
+  "settings.versionPanel.label.cozmoColor.unknown" : {
+    "translation" : "Inconnu"
+  },
   "settings.versionPanel.label.cozmoVersion" : {
     "translation" : "Cozmo Version: {0}"
   },
@@ -169,6 +184,6 @@
     "translation" : "Moyen"
   },
   "settings.acknowledgementsPanel.title" : {
-    "translation" : "Remerciements"
+    "translation" : "Légal"
   }
 }

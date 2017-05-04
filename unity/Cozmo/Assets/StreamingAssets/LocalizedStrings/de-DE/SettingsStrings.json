@@ -115,10 +115,10 @@
     "translation" : "Über"
   },
   "settings.versionPanel.acknowledgementsModal.title" : {
-    "translation" : "Rechts-"
+    "translation" : "Anerkennungen"
   },
   "settings.versionPanel.button.acknowledgementsLink" : {
-    "translation" : "Rechts-"
+    "translation" : "Anerkennungen"
   },
   "settings.versionPanel.button.eraseCozmo" : {
     "translation" : "Erase Cozmo"
@@ -147,6 +147,21 @@
   "settings.versionPanel.label.appVersion" : {
     "translation" : "App Version: {0}"
   },
+  "settings.versionPanel.label.bodyHWVersion" : {
+    "translation" : "Körper HW-Version: {0}"
+  },
+  "settings.versionPanel.label.cozmoColor" : {
+    "translation" : "Cozmo Farbe: {0}"
+  },
+  "settings.versionPanel.label.cozmoColor.white" : {
+    "translation" : "Original"
+  },
+  "settings.versionPanel.label.cozmoColor.liquidMetal" : {
+    "translation" : "Flüssiges Metall"
+  },
+  "settings.versionPanel.label.cozmoColor.unknown" : {
+    "translation" : "Unbekannt"
+  },
   "settings.versionPanel.label.cozmoVersion" : {
     "translation" : "Cozmo Version: {0}"
   },
@@ -169,6 +184,6 @@
     "translation" : "Mittel"
   },
   "settings.acknowledgementsPanel.title" : {
-    "translation" : "Danksagungen"
+    "translation" : "Rechts-"
   }
 }

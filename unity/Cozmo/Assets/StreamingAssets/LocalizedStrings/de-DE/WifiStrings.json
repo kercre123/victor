@@ -79,7 +79,7 @@
     "translation" : "Geben Sie das Kennwort für {0}"
   },
   "wifi.passwordFormat" : {
-    "translation" : "Das Passwort muss 12 alphanumerische Zeichen, keine Leerzeichen"
+    "translation" : "Kennwort falsche Länge."
   },
   "wifi.selectNetwork" : {
     "translation" : "Wählen Sie eine Cozmo zu verbinden:"
@@ -112,6 +112,6 @@
     "translation" : "Bist du sicher? Ohne Ort, werden Sie zu Cozmo verbinden müssen manuell in Ihrem Telefon Wireless-LAN-Einstellungen. Tippen Sie auf \"Ja\", wenn gefragt die Cozmo App zu ermöglichen, für Sie zu verbinden, oder tippen Sie auf \"Abbrechen\", sich zu verbinden."
   },
   "wifi.passwordRememberStatement" : {
-    "translation" : "Passwort ist sichtbar auf Cozmo Gesicht, geben Sie ihn sorgfältig! Ihr Gerät sollte dieses Passwort vergessen haben, so dass Sie nur einmal eingeben müssen."
+    "translation" : "Passwort ist sichtbar auf Cozmo Gesicht, geben Sie es genau so, wie es scheint. Ihr Gerät sollte dieses Passwort vergessen haben, so dass Sie nur einmal eingeben müssen."
   }
 }

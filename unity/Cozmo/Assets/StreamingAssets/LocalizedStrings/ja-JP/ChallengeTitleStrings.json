@@ -18,6 +18,12 @@
   "challengeDetails.cozmoNotOnTreads.description" : {
     "translation" : "コズモが直立して再生する準備を手伝ってください。"
   },
+  "challengeDetails.cozmoDizzy.title" : {
+    "translation" : "コズモは、めまいです"
+  },
+  "challengeDetails.cozmoDizzy.description" : {
+    "translation" : "コズモはめまいとプレーする準備ができていることから回復するまで待ってください。"
+  },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "コズモが目覚めるれます"
   },
