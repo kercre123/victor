@@ -13,7 +13,8 @@ using System.IO;
 /// </summary>
 public class SpriteAssetPostProcessor : AssetPostprocessor {
 
-  private const string _kParentFolder = "AssetBundles/Art";
+  private const string _kHomeHubParentFolder = "AssetBundles/HomeHub/Art";
+  private const string _kNeedsHubParentFolder = "AssetBundles/NeedsHub/Art";
   private const string _kPackSpriteFolderName = "Packed";
   private const string _kUnpackSpriteFolderName = "Unpacked";
   private const string _kTexturesFolderName = "Textures";
@@ -173,13 +174,13 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   }
 
   private bool IsUISprite() {
-    return (assetPath.Contains(_kParentFolder) &&
+    return (InHubParentFolder(assetPath) &&
         (assetPath.Contains(_kPackSpriteFolderName) || assetPath.Contains(_kUnpackSpriteFolderName))
             && assetPath.EndsWith(_kGraphicSuffix));
   }
 
   private bool ShouldPackSprite() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kPackSpriteFolderName);
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kPackSpriteFolderName);
   }
 
   private string GenerateSpritePackingTag() {
@@ -200,16 +201,20 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     return packingTag;
   }
 
+  private bool InHubParentFolder(string assetPath) {
+    return assetPath.Contains(_kNeedsHubParentFolder) || assetPath.Contains(_kHomeHubParentFolder);
+  }
+
   private bool IsUHDAsset() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kUHDBundleTag);
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kUHDBundleTag);
   }
 
   private bool IsHDAsset() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kHDBundleTag) && !assetPath.Contains(_kUHDBundleTag);
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kHDBundleTag) && !assetPath.Contains(_kUHDBundleTag);
   }
 
   private bool IsSDAsset() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kSDBundleTag);
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kSDBundleTag);
   }
 
   private void CreateCopyOfTexture(Texture2D baseTexture, float scale, string newBundleTag) {
@@ -249,11 +254,11 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   }
 
   private bool IsTexture() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kTexturesFolderName)
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kTexturesFolderName)
                     && assetPath.EndsWith(_kGraphicSuffix) && !assetPath.Contains(_kRepeatTexturesFolderName);
   }
   private bool IsRepeatTexture() {
-    return assetPath.Contains(_kParentFolder) && assetPath.Contains(_kRepeatTexturesFolderName)
+    return InHubParentFolder(assetPath) && assetPath.Contains(_kRepeatTexturesFolderName)
                     && assetPath.EndsWith(_kGraphicSuffix);
   }
 }
