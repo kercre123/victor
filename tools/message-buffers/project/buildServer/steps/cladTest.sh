@@ -27,6 +27,10 @@ if [ "${1}" == "3" ]; then
 else
     PYTHON_VERSION=""
 fi
+
+# clean
+make -C emitters/tests clean
+
 # build
 make $PYTHON_VERSION OUTPUT_DIR=build -C emitters/tests
 

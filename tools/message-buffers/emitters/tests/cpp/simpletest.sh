@@ -29,10 +29,11 @@ for file in $CLADSRC/Foo.clad $CLADSRC/Bar.clad $CLADSRC/SimpleTest.clad \
                               $CLADSRC/aligned/AutoUnionTest.clad \
                               $CLADSRC/aligned/AnkiEnum.clad \
                               $CLADSRC/DefaultValues.clad \
-                              $CLADSRC/TestEnum.clad; do
+                              $CLADSRC/TestEnum.clad\
+                              $CLADSRC/JsonSerialization.clad; do
     OUTPUT_DIR_PARAM=$(dirname $OUTPUT_DIR/${file#$CLADSRC/};)
     mkdir -p ${OUTPUT_DIR_PARAM}
-    $CLAD --output-union-helper-constructors -o ${OUTPUT_DIR_PARAM} -C $(dirname $file) $(basename $file);
+    $CLAD --output-json --output-union-helper-constructors -o ${OUTPUT_DIR_PARAM} -C $(dirname $file) $(basename $file);
 done
 
 cp -f cpptest.cpp $OUTPUT_DIR
@@ -50,5 +51,7 @@ clang++ -Wall -Wextra -std=c++11 -stdlib=libc++ \
     $OUTPUT_DIR/UnionOfUnion.cpp \
     $SUPPORTDIR/source/SafeMessageBuffer.cpp \
     $OUTPUT_DIR/DefaultValues.cpp \
-    $OUTPUT_DIR/TestEnum.cpp
+    $OUTPUT_DIR/TestEnum.cpp \
+    $SUPPORTDIR/source/jsoncpp.cpp \
+    $OUTPUT_DIR/JsonSerialization.cpp
 $OUTPUT_DIR/cpptest.out

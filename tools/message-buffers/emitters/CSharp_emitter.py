@@ -480,6 +480,37 @@ class StructEmitter(ast.NodeVisitor):
         self.output.write('\t\treturn this;\n')
         self.output.write('\t}\n\n')
 
+
+    def emitSize(self, node, globals):
+        
+        self.output.write('>(')
+
+        visitor = TypeVisitor(self.output)
+        union_index = 0
+        for i, member in enumerate(node.members()):
+            if self.isUnion(member.type):
+                self.output.write('T%d' % union_index)
+                self.output.write(' {member_name}State'.format(member_name=member.name))
+                union_index += 1
+            else:
+                visitor.visit(member.type)
+                self.output.write(' {member_name}'.format(member_name=member.name))
+            if (i < len(node.members()) - 1):
+                self.output.write(',\n\t\t')
+
+        self.output.write(')\n')
+
+        self.output.write('\t{\n')
+        union_index = 0
+        for member in node.members():
+          if self.isUnion(member.type):
+              self.output.write('\t\tthis.{member_name}.Initialize<T{union_index}>({member_name}State);\n'.format(member_name=member.name, union_index=union_index))
+              union_index += 1
+          else:
+              self.output.write('\t\tthis.{member_name} = {member_name};\n'.format(member_name=member.name))
+        self.output.write('\t\treturn this;\n')
+        self.output.write('\t}\n\n')
+
     def emitSize(self, node, globals):
 
         self.output.write(textwrap.dedent('''\
@@ -619,7 +650,7 @@ class PropertyVisitor(ast.NodeVisitor):
                 \t\t\t\tthrow new System.ArgumentException("{member_name} variable-length array is too long. Must be less than or equal to {max_length}.", "value");
                 \t\t\t}}
                 #''')[:-1].format(member_name=member_name, max_length=max_length))
-
+        
     def visit_FixedArrayType(self, node, member_name):
         length = node.length
         if isinstance(length, str) and "::" in length:
