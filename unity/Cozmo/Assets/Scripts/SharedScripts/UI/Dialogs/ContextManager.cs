@@ -151,8 +151,10 @@ public class ContextManager : MonoBehaviour {
     if (_ForegroundTweener != null) {
       _ForegroundTweener.Kill(true);
     }
-    _ForegroundTweener.Append(_OverlayForeground.DOFade(0.0f, _DefaultSettings.ContextFlashDuration));
-    _ForegroundTweener.Play();
+    if (_OverlayForeground != null) {
+      _ForegroundTweener.Append(_OverlayForeground.DOFade(0.0f, _DefaultSettings.ContextFlashDuration));
+      _ForegroundTweener.Play();
+    }
   }
 
   // Only Call this during Free Play
