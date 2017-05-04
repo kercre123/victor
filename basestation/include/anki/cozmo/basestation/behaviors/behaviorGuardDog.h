@@ -70,6 +70,12 @@ private:
   //   music to match the current behavior state, e.g. tension for when a cube is being moved)
   void UpdatePublicBehaviorStage(Robot& robot, const GuardDogStage& stage);
   
+  // Record the game result (also computes the game duration)
+  void RecordResult(std::string&& result);
+  
+  // Log out some analytics events at the end of the behavior
+  void LogDasEvents() const;
+  
 private:
   
   enum class State {
@@ -98,6 +104,8 @@ private:
     bool filtInitialized    = false; // high-pass filter initialized?
     bool hasBeenMoved       = false; // has the block been moved at all?
     bool hasBeenFlipped     = false; // has the block been successfully flipped?
+    float firstMovedTime_s  = 0.f;   // first time that the block was moved (in basestation timer seconds)
+    float flippedTime_s     = 0.f;   // time that the block was successfully flipped by the player (in basestation timer seconds)
     uint msgReceivedCnt     = 0;     // how many ObjectAccel messages have we received for this block?
     uint badMsgCnt          = 0;     // how many weird ObjectAccel e.g. accel fields blank or really large) message have we received?
     CubeAnimationTrigger lastCubeAnimTrigger = CubeAnimationTrigger::Count;  // the last-played animation trigger for this cube.
@@ -123,6 +131,9 @@ private:
   // Time that Cozmo first fell asleep (used for overall timeout detection)
   float _firstSleepingStartTime_s = 0.f;
   
+  // Total duration that Cozmo was asleep
+  float _sleepingDuration_s = 0.f;
+  
   // Time of the last cube movement (used for timeout detection)
   float _lastCubeMovementTime_s = 0.f;
   
@@ -138,6 +149,9 @@ private:
   // The current 'PublicStateBroadcaster' behavior stage (used to trigger
   //   the proper music depending on the current state of the behavior)
   GuardDogStage _currPublicBehaviorStage = GuardDogStage::Count;
+  
+  // The result of the GuardDog 'game' (e.g. "PlayerSuccess" or "Busted")
+  std::string _result;
   
 };
   

@@ -186,10 +186,10 @@ void BehaviorReactToRobotShaken::StopInternal(Robot& robot)
   
   // Log human-readable completion info:
   PRINT_NAMED_INFO("BehaviorReactToRobotShaken.DizzyReaction",
-                      "shakenDuration = %.3fs, maxShakingAccelMag = %.1f, reactionPlayed = '%s'",
-                      _shakenDuration_s,
-                      _maxShakingAccelMag,
-                      EReactionToString(_reactionPlayed));
+                   "shakenDuration = %.3fs, maxShakingAccelMag = %.1f, reactionPlayed = '%s'",
+                   _shakenDuration_s,
+                   _maxShakingAccelMag,
+                   EReactionToString(_reactionPlayed));
 }
   
   

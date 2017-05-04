@@ -161,11 +161,13 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
   _firstSleepingStartTime_s = 0.f;
+  _sleepingDuration_s = 0.f;
   _lastCubeMovementTime_s = 0.f;
   _nCubesMoved = 0;
   _nCubesFlipped = 0;
   _monitoringCubeMotion = false;
   _currPublicBehaviorStage = GuardDogStage::Count;
+  _result = "None";
 
   // Grab cube starting locations (ideally would have done this in IsRunnable(), but IsRunnable() is const)
   std::vector<const ObservableObject*> locatedBlocks;
@@ -308,6 +310,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::Busted:
     {
+      RecordResult("Busted");
       StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogBusted);
       StartMonitoringCubeMotion(robot, false);
 
@@ -320,6 +323,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::BlockDisconnected:
     {
+      RecordResult("BlockDisconnected");
+      
       using namespace ExternalInterface;
       robot.Broadcast( MessageEngineToGame( GuardDogEnd(false) ) );
 
@@ -350,8 +355,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       action->AddAction(new WaitForLambdaAction(robot, updateStageCubesRemainingLambda));
       
       if ((_nCubesMoved == 0) && (_nCubesFlipped == 0)) {
+        RecordResult("TimeoutCubesUntouched");
         action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesUntouched));
       } else {
+        RecordResult("TimeoutCubesTouched");
         action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeoutCubesTouched));
       }
       
@@ -363,6 +370,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
     }
     case State::PlayerSuccess:
     {
+      RecordResult("PlayerSuccess");
+      
       StartMonitoringCubeMotion(robot, false);
      
       // Switch to the 'sleeping' music (in case a cube was being moved
@@ -421,12 +430,8 @@ void BehaviorGuardDog::StopInternal(Robot& robot)
   robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(BehaviorStageTag::Count, 0);
   _currPublicBehaviorStage = GuardDogStage::Count;
   
-  // TODO: Record relevant DAS events here.
-  //   - how many cubes were moved?
-  //   - when was each cube initially moved?
-  //   - what was the max magnitude for each cube?
-  //   - how many 'bad' messages did we get from the cubes?
-  //   - ...
+  // Log some DAS Events:
+  LogDasEvents();
 }
   
   
@@ -533,8 +538,10 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
     StopActing();
     SET_STATE(Busted);
   } else if (block.movementScore > kMovementScoreDetectionThreshold) {
+    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (!block.hasBeenMoved) {
       block.hasBeenMoved = true;
+      block.firstMovedTime_s = now;
       ++_nCubesMoved;
       StopActing();
       SET_STATE(Fakeout);
@@ -544,18 +551,11 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
       StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogBeingMoved);
     }
     // Record that a block was moved at this time
-    _lastCubeMovementTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _lastCubeMovementTime_s = now;
   } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
       StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSleeping);
   }
-  
-//  PRINT_NAMED_WARNING("objAccel", "objId = %d, accelMag = %+8.1f, hpFiltAccelMag = %+8.1f, movementScore = %8.1f",
-//                      objId.GetValue(),
-//                      block.accelMag,
-//                      block.hpFiltAccelMag,
-//                      block.movementScore);
 }
-  
   
   
 void BehaviorGuardDog::HandleObjectConnectionState(const Robot& robot, const ObjectConnectionState& msg)
@@ -609,6 +609,7 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
                   "BehaviorGuardDog.HandleObjectUpAxisChanged.UnknownObject",
                   "Received an UpAxisChanged message from an unknown object (objectId = %d)",
                   msg.objectID)) {
+    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     auto& block = it->second;
     block.upAxis = msg.upAxis;
     
@@ -616,12 +617,13 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
     if (!block.hasBeenFlipped) {
       if (block.upAxis == UpAxis::ZNegative) {
         block.hasBeenFlipped = true;
+        block.flippedTime_s = now;
         ++_nCubesFlipped;
         StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSuccessfullyFlipped);
       }
       
       // Record that a block was moved at this time
-      _lastCubeMovementTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _lastCubeMovementTime_s = now;
     }
   }
 }
@@ -852,7 +854,101 @@ void BehaviorGuardDog::UpdatePublicBehaviorStage(Robot& robot, const GuardDogSta
                                                                  static_cast<uint8_t>(stage));
   _currPublicBehaviorStage = stage;
 }
- 
+  
+void BehaviorGuardDog::RecordResult(std::string&& result)
+{
+  _result = std::move(result);
+  
+  // Compute the duration from when sleeping started til now
+  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if (_firstSleepingStartTime_s == 0.f) {
+    _sleepingDuration_s = 0.f;
+  } else {
+    _sleepingDuration_s = now - _firstSleepingStartTime_s;
+  }
+  
+  PRINT_CH_INFO("Behaviors",
+                "GuardDog result = %s, sleepingDuration = %.2f",
+                _result.c_str(),
+                _sleepingDuration_s);
+}
+  
+  
+void BehaviorGuardDog::LogDasEvents() const
+{
+  // DAS Event: "robot.guarddog.result"
+  // s_val: Result of the game as a string (e.g. "PlayerSuccess", "Busted", etc.)
+  // data: Total duration that Cozmo was sleeping (milliseconds)
+  const int sleepingDuration_ms = std::round(_sleepingDuration_s * 1000.f);
+  Anki::Util::sEvent("robot.guarddog.result",
+                     {{DDATA, std::to_string(sleepingDuration_ms).c_str()}},
+                     _result.c_str());
+  
+  // DAS Event: "robot.guarddog.cubes_moved"
+  // s_val: Number of cubes that were moved
+  // data: Number of cubes that were flipped successfully
+  Anki::Util::sEvent("robot.guarddog.cubes_moved",
+                     {{DDATA, std::to_string(_nCubesFlipped).c_str()}},
+                     std::to_string(_nCubesMoved).c_str());
+  
+  // Loop over the cube data map to gather cube-specific data
+  //   for the DAS events that follow
+  std::string cubeMovedTimes, cubeFlippedTimes, cubeMaxAccels, cubeTotalMsgs, cubeBadMsgs;
+  for (auto it = _cubesDataMap.begin() ; it != _cubesDataMap.end() ; ++it) {
+    const auto& block = it->second;
+    
+    int cubeMovedTime_ms = 0;
+    if (block.firstMovedTime_s != 0.f) {
+      cubeMovedTime_ms = std::round((block.firstMovedTime_s - _firstSleepingStartTime_s) * 1000.f);
+    }
+    
+    int cubeFlippedTime_ms = 0;
+    if (block.flippedTime_s != 0.f) {
+      cubeFlippedTime_ms = std::round((block.flippedTime_s - _firstSleepingStartTime_s) * 1000.f);
+    }
+    
+    const int maxFiltAccel_int = std::round(block.maxFiltAccelMag);
+    
+    // Append to strings and comma-separate if appropriate
+    cubeMovedTimes   += std::to_string(cubeMovedTime_ms);
+    cubeFlippedTimes += std::to_string(cubeFlippedTime_ms);
+    cubeMaxAccels    += std::to_string(maxFiltAccel_int);
+    cubeTotalMsgs    += std::to_string(block.msgReceivedCnt);
+    cubeBadMsgs      += std::to_string(block.badMsgCnt);
+    
+    if (std::next(it) != _cubesDataMap.end()) {
+      cubeMovedTimes   += ",";
+      cubeFlippedTimes += ",";
+      cubeMaxAccels    += ",";
+      cubeTotalMsgs    += ",";
+      cubeBadMsgs      += ",";
+    }
+  }
+  
+  // DAS Event: "robot.guarddog.cubes_moved_times"
+  // s_val: Time in milliseconds (from when sleeping started) that the cubes were first moved
+  // data: Time in milliseconds (from when sleeping started) that the cubes were flipped over
+  // Note: The two fields contain data for all three cubes, comma-separated. A value of
+  //   0 means the cube was not moved/flipped
+  Anki::Util::sEvent("robot.guarddog.cubes_moved_times",
+                     {{DDATA, cubeFlippedTimes.c_str()}},
+                     cubeMovedTimes.c_str());
+  
+  // DAS Event: "robot.guarddog.cube_max_accels"
+  // s_val: Max high-pass filtered accelerometer values for each of the cubes
+  // data: (empty - available for future use)
+  Anki::Util::sEvent("robot.guarddog.cube_max_accels",
+                     {{DDATA, ""}},
+                     cubeMaxAccels.c_str());
+  
+  // DAS Event: "robot.guarddog.object_accel_messages"
+  // s_val: Total number of ObjectAccel messages received for each cube
+  // data: Total number of 'bad'/'corrupt' ObjectAccel messages received for each cube
+  Anki::Util::sEvent("robot.guarddog.object_accel_messages",
+                     {{DDATA, cubeBadMsgs.c_str()}},
+                     cubeTotalMsgs.c_str());
+}
+
   
 } // namespace Cozmo
 } // namespace Anki
