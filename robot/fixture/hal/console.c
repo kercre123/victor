@@ -340,12 +340,19 @@ static void SetTime(void)
 }
 
 extern void RobotSetSoundTestVolume(u8 volume);
-static void SetSoundTestVolume(void)
-{
+static void SetSoundTestVolume(void) {
   int volume = 0;
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &volume);
   RobotSetSoundTestVolume( volume & 0xFF );
+}
+
+extern void RobotSetSoundTestTone(u8 tone);
+static void SetSoundTestTone(void) {
+  int tone = 0;
+  char* arg = GetArgument(1);  
+  sscanf(arg, "%i", &tone);
+  RobotSetSoundTestTone( tone & 0xFF );
 }
 
 static void SetDateCode(void)
@@ -477,7 +484,8 @@ static CommandFunction m_functions[] =
   {"SetLotCode", SetLotCode, FALSE},
   {"SetMode", SetMode, FALSE},
   {"SetSerial", SetSerial, FALSE},
-  {"SetSoundTestVolume", SetSoundTestVolume, FALSE},  
+  {"SetSoundTestVolume", SetSoundTestVolume, FALSE},
+  {"SetSoundTestTone", SetSoundTestTone, FALSE},
   {"SetTime", SetTime, FALSE},
   {"Current", TestCurrent, FALSE},
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
