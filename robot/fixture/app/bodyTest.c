@@ -351,6 +351,7 @@ TestFunction* GetBody2TestFunctions(void)
   return functions;
 };
 
+extern void ChargeTest(void);
 extern void BatteryCheck(void);
 TestFunction* GetBody3TestFunctions(void)
 {
@@ -358,6 +359,7 @@ TestFunction* GetBody3TestFunctions(void)
   {
     BodyNRF51,
     HeadlessBoot,
+    ChargeTest,   //must be immediately after boot; measures beginning of charge cycle
     TestBackpackPullup,
     BodyMotor,
     //DropLeakage, //disable test for 1v5 PVT line changes
