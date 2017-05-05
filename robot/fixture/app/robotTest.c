@@ -411,15 +411,23 @@ void RobotFixtureDropSensor(void)
     throw ERROR_DROP_TOO_DIM;
 }
 
+u8 tone_volume = 0x100/2;
+void RobotSetToneVolume(u8 volume) {
+  tone_volume = volume;
+}
+
 void SpeakerTest(void)
 {
   //const int TEST_TIME_US = 1000000;
+  const u8 TONE_SELECT = 2; //low-freq melody
   
   // Speaker test not on robot1 (head not yet properly fixtured)
   if (g_fixtureType == FIXTURE_ROBOT1_TEST)
     return;
-  SendCommand(TEST_PLAYTONE, 0, 0, 0);
-
+  
+  ConsolePrintf("Play Tone #%d, volume %d\r\n", TONE_SELECT & 0x3, tone_volume & 0xFC );
+  SendCommand(TEST_PLAYTONE, (tone_volume & 0xFC) | (TONE_SELECT & 0x03), 0, 0);
+  
   // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 
