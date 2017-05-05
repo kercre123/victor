@@ -321,6 +321,25 @@ static void TestTreadEncoders(void)
     throw ERROR_BODY_TREAD_ENC_RIGHT;
 }
 
+extern void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x );
+static void BodyChargeTest(void)
+{
+  try {
+    const int CHARGING_CURRENT_THRESHOLD_MA = 350; //lower than robot. no head sucking up extra power.
+    const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
+    RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
+  } catch(int e) {
+    if( e == ERROR_BAT_OVERVOLT ) {
+      ConsolePrintf("motorslam!\r\n");
+      SendCommand(TEST_POWERON, 60, 0, 0);
+      SendCommand(TEST_MOTORSLAM, 0, 0, 0); //spin tread motors on body board (no head to burn energy)
+      //XXX: gracefully disconnect body debug signals? physical disconnect here causes body cpu to reset
+      DisableVEXT();
+    }
+    throw e;
+  }
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
@@ -351,7 +370,6 @@ TestFunction* GetBody2TestFunctions(void)
   return functions;
 };
 
-extern void ChargeTest(void);
 extern void BatteryCheck(void);
 TestFunction* GetBody3TestFunctions(void)
 {
@@ -359,7 +377,7 @@ TestFunction* GetBody3TestFunctions(void)
   {
     BodyNRF51,
     HeadlessBoot,
-    ChargeTest,   //must be immediately after boot; measures beginning of charge cycle
+    BodyChargeTest, //must be immediately after boot; measures beginning of charge cycle
     TestBackpackPullup,
     BodyMotor,
     //DropLeakage, //disable test for 1v5 PVT line changes
