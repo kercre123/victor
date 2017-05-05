@@ -171,12 +171,12 @@ void GenerateTestTone(u8 tone_sel, u8 volume) {
   //play the selected tone
   extern void m_play_nathan_og_tone(int max_amplitude, int sample_rate);
   extern void m_play_freq_sweep_tone(int max_amplitude, int sample_rate);
-  extern void m_play_pleasant_tones(int max_amplitude, int sample_rate);
+  extern void m_play_melody1(int max_amplitude, int sample_rate);
   switch( tone_sel ) {
     default:
     case 0:   m_play_nathan_og_tone( amplitude, TEST_SAMPLE_RATE ); break;
     case 1:   m_play_freq_sweep_tone( amplitude, TEST_SAMPLE_RATE ); break;
-    case 2:   m_play_pleasant_tones( amplitude, TEST_SAMPLE_RATE ); break;
+    case 2:   m_play_melody1( amplitude, TEST_SAMPLE_RATE ); break;
   }
   
   //Silently ramp down audio signal to gnd
@@ -227,11 +227,11 @@ static void m_play_freq_sweep_tone(int max_amplitude, int sample_rate)
   }
 }
 
-static void m_play_pleasant_tones(int max_amplitude, int sample_rate)
+static void m_play_melody1(int max_amplitude, int sample_rate)
 {
-  const int FREQ[] = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+  const int FREQ[] = { 750, 1100, 1450, 1800, 1450, 1100, 750, 500 };
   const int NUM_FREQ = sizeof(FREQ)/sizeof(int);
-  const int FREQ_TIME_MS = 200;
+  const int FREQ_TIME_MS = 30;
   
   for( int i=0; i < NUM_FREQ; i++ ) {
     for( float t=0, f=FREQ[i]; t < ((float)FREQ_TIME_MS)/1000; t += 1/((float)sample_rate))
