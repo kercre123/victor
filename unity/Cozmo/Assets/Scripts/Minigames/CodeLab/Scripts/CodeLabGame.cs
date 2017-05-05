@@ -111,9 +111,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     protected override void Update() {
       base.Update();
-      // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
-      // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
-      if (_WebViewObject != null && RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
+      // Error case exiting conditions:
+      // WebView visibility is the same as being "loaded." Attaching is platform depended so for this edge case
+      // avoid cases where the load callback might be called after the quit wait until loaded.
+      if (_WebViewObjectComponent != null && _WebViewObjectComponent.GetVisibility() &&
+          RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
+        // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
+        // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
         if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
           RaiseChallengeQuit();
         }
