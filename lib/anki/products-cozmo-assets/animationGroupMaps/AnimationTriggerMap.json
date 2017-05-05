@@ -25,6 +25,10 @@
       "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
+      "CladEvent": "AudioTestAnim",
+      "AnimName": "ag_audio_test"
+    },
+    {
       "CladEvent": "BlockReact",
       "AnimName": "blockReact"
     },

@@ -19,6 +19,7 @@ enum int_32 AnimationTrigger
   AcknowledgeObject,
   AskToBeRightedLeft,
   AskToBeRightedRight,
+  AudioTestAnim,
   BlockReact,
   BuildPyramidFirstBlockOnSide,
   BuildPyramidFirstBlockUpright,
