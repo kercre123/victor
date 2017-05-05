@@ -43,11 +43,17 @@ namespace FaceEnrollment {
     }
 
     private void Start() {
-      RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete += HandleEnrolledFace;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.OnEnrolledFaceComplete += HandleEnrolledFace;
+      }
     }
 
     private void OnDestroy() {
-      RobotEngineManager.Instance.CurrentRobot.OnEnrolledFaceComplete -= HandleEnrolledFace;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.OnEnrolledFaceComplete -= HandleEnrolledFace;
+      }
     }
 
     private void ClearList() {
