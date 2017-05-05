@@ -198,7 +198,12 @@ namespace Cozmo.HomeHub {
           OpenComingSoonAlert();
         }
         else if (!available) {
-          OpenNotAvailableDialog(unlockInfo, challenge);
+          if (!UnlockablesManager.Instance.IsOSSupported(unlockInfo)) {
+            OpenOSUnsupportedDialog(unlockInfo, challenge);
+          }
+          else {
+            OpenNotAvailableDialog(unlockInfo, challenge);
+          }
         }
         else {
           OpenAvailableDialog(challenge);
@@ -214,6 +219,20 @@ namespace Cozmo.HomeHub {
 
       UIManager.OpenAlert(comingSoonAlertData, _ChallengeDetailsPriorityData, HandleChallengeAlertViewCreated,
                           overrideCloseOnTouchOutside: true);
+    }
+
+    private void OpenOSUnsupportedDialog(UnlockableInfo unlockInfo, string challenge) {
+      var descLocArgs = new object[] { unlockInfo.AndroidReleaseVersion };
+
+      var notAvailableAlertData = new AlertModalData("activity_locked_alert",
+                           unlockInfo.TitleKey,
+                           LocalizationKeys.kUnlockableOSNotSupportedDescription,
+                           new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                           icon: _ChallengeStatesById[challenge].Data.ChallengeIcon,
+                           descLocArgs: descLocArgs);
+
+      UIManager.OpenAlert(notAvailableAlertData, _ChallengeDetailsPriorityData, HandleChallengeAlertViewCreated,
+                                overrideCloseOnTouchOutside: true);
     }
 
     private void OpenNotAvailableDialog(UnlockableInfo unlockInfo, string challenge) {

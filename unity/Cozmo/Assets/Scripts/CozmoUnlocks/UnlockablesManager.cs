@@ -3,6 +3,7 @@ using Cozmo.Challenge;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Text.RegularExpressions;
 
 using Anki.Cozmo.ExternalInterface;
 
@@ -216,6 +217,10 @@ public class UnlockablesManager : MonoBehaviour {
       return false;
     }
 
+    if (!IsOSSupported(unlockableInfo)) {
+      return false;
+    }
+
     if (unlockableInfo.ComingSoon || !unlockableInfo.FeatureIsEnabled) {
       return false;
     }
@@ -234,7 +239,26 @@ public class UnlockablesManager : MonoBehaviour {
     }
 
     return true;
+  }
 
+  public bool IsOSSupported(UnlockableInfo unlockInfo) {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    if (!string.IsNullOrEmpty(unlockInfo.AndroidReleaseVersion)) {
+      //  stripping out all the characters (4.4W.4 will be treated as 4.4.4)
+      //  4.4W is the only time they've used a character and it's for watch, but better to have a plan
+      //  Version only handles ints being parsed, so have to do something
+      string requiredReleaseVersionString = Regex.Replace(unlockInfo.AndroidReleaseVersion, "[^0-9.]", "");
+      Version requiredReleaseVersion = new Version(requiredReleaseVersionString);
+
+      var activity = CozmoBinding.GetCurrentActivity();
+      string releaseVersionString = activity.CallStatic<string>("getReleaseVersion");
+      releaseVersionString = Regex.Replace(releaseVersionString, "[^0-9.]", "");
+      Version releaseVersion = new Version(releaseVersionString);
+
+      return releaseVersion >= requiredReleaseVersion;
+    }
+#endif
+    return true;
   }
 
   private void HandleUnlockStatus(Anki.Cozmo.ExternalInterface.UnlockStatus message) {

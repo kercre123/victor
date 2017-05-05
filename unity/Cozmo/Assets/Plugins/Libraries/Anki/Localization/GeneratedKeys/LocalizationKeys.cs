@@ -653,6 +653,7 @@ public static class LocalizationKeys {
   public const string kUnlockableUpgrade = "unlockable.Upgrade";
   public const string kUnlockableAvailable = "unlockable.Available";
   public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
+  public const string kUnlockableOSNotSupportedDescription = "unlockable.OSNotSupported.Description";
   public const string kUnlockableBitsRequiredTitle = "unlockable.BitsRequired.Title";
   public const string kUnlockableCurrencyRequired = "unlockable.CurrencyRequired";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";

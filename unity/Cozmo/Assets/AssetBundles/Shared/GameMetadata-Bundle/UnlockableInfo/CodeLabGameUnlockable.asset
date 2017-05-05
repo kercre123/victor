@@ -18,9 +18,8 @@ MonoBehaviour:
   Prerequisites: []
   AnyPrereqUnlock: 0
   _ComingSoon: 0
-  _HideInUI: 0
-  DescriptionKey: unlockable.CodeLab.Title
-  TitleKey: unlockable.CodeLab.Description
+  DescriptionKey: unlockable.CodeLab.Desciption
+  TitleKey: unlockable.CodeLab.Title
   SparkButtonDescription: 
   SparkedStateDescription: 
   SparkedMusicState:
@@ -43,3 +42,4 @@ MonoBehaviour:
     type: 3}
   CubesRequired: 0
   SortOrder: 600
+  AndroidReleaseVersion: 4.4.4

@@ -106,4 +106,5 @@ public class UnlockableInfo : ScriptableObject, IComparable {
     return 1;
   }
 
+  public string AndroidReleaseVersion;
 }
