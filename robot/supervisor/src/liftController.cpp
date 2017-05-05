@@ -592,7 +592,7 @@ namespace Anki {
           return RESULT_OK;
         }
 
-#if SIMULATOR
+#ifdef SIMULATOR
         if (disengageGripperAtDest_ && currentAngle_.ToFloat() < disengageAtAngle_) {
           HAL::DisengageGripper();
           disengageGripperAtDest_ = false;

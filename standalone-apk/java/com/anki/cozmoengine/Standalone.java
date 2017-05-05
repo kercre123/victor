@@ -118,7 +118,7 @@ public class Standalone {
     static {
         System.loadLibrary("c++_shared");
         System.loadLibrary("DAS");
-        System.loadLibrary("cozmoEngine");
+        System.loadLibrary("cozmoEngine2");
     }
 
 

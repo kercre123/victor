@@ -7,14 +7,14 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/types/fwTestMessages.h"
 
-#ifdef SIMULATOR
+#ifndef TARGET_K02
 #include "anki/cozmo/transport/IUnreliableTransport.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
 #ifndef COZMO_V2
 #include "nvStorage.h"
 #endif // #ifndef COZMO_V2
-#endif // #ifdef SIMULATOR
+#endif // #ifndef TARGET_K02
 #include <string.h>
 
 #include "blockLightController.h"
@@ -31,7 +31,7 @@
 #include "testModeController.h"
 #include "wheelController.h"
 
-#ifndef SIMULATOR
+#ifdef TARGET_K02
 #include "hal/dac.h"
 #include "hal/uart.h"
 #include "hal/imu.h"
@@ -48,13 +48,13 @@ extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
-#ifdef SIMULATOR
+#ifndef TARGET_K02
     ReliableConnection connection;
 #endif
     namespace Messages {
 
       namespace {
-#ifdef SIMULATOR
+#ifndef TARGET_K02
         u8 pktBuffer_[2048];
 #endif
         // For waiting for a particular message ID
@@ -97,7 +97,7 @@ namespace Anki {
 
       Result Init()
       {
-#ifdef SIMULATOR
+#ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
@@ -114,7 +114,7 @@ namespace Anki {
       {
         switch(msg.tag)
         {
-#ifndef SIMULATOR
+#ifdef TARGET_K02
           #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
           // Need to add additional messages for special cases handled both on the Espressif and K02
           case RobotInterface::EngineToRobot::Tag_animHeadAngle:
@@ -230,9 +230,9 @@ namespace Anki {
 // #pragma --- Message Dispatch Functions ---
 
       void Process_setAudioVolume(const SetAudioVolume& msg) {
-#ifndef SIMULATOR
+        #ifdef TARGET_K02
         HAL::DAC::SetVolume(msg.volume);
-#endif
+        #endif
       }
 
       void Process_adjustTimestamp(const RobotInterface::AdjustTimestamp& msg)
@@ -263,7 +263,7 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-#ifdef SIMULATOR
+#ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
         AnimationController::EngineDisconnect();
 
@@ -349,7 +349,7 @@ namespace Anki {
 
 
         // Process incoming messages
-#ifdef SIMULATOR
+#ifndef TARGET_K02
         u32 dataLen;
 
         //ReliableConnection_printState(&connection);
@@ -596,7 +596,7 @@ namespace Anki {
       }
 
       void Process_generateTestTone(const RobotInterface::GenerateTestTone& msg) {
-        #ifndef SIMULATOR
+        #ifdef TARGET_K02
         GenerateTestTone();
         #endif
       }
@@ -637,7 +637,7 @@ namespace Anki {
       }
 
       void Process_enterSleepMode(const EnterSleepMode& msg) {
-        #ifndef SIMULATOR
+        #ifdef TARGET_K02
         Anki::Cozmo::HAL::Power::enterSleepMode();
         #endif
       }
@@ -654,33 +654,33 @@ namespace Anki {
 
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
       {
-        #ifdef SIMULATOR
+        #ifndef TARGET_K02
         AnimationController::Clear();
         #endif
       }
 
       void Process_disableAnimTracks(const AnimKeyFrame::DisableAnimTracks& msg)
       {
-        #ifdef SIMULATOR
+        #ifndef TARGET_K02
         AnimationController::DisableTracks(msg.whichTracks);
         #endif
       }
 
       void Process_enableAnimTracks(const AnimKeyFrame::EnableAnimTracks& msg)
       {
-        #ifdef SIMULATOR
+        #ifndef TARGET_K02
         AnimationController::EnableTracks(msg.whichTracks);
         #endif
       }
 
       void Process_initAnimController(const AnimKeyFrame::InitController& msg)
       {
-        #ifdef SIMULATOR
+        #ifndef TARGET_K02
         AnimationController::EngineInit(msg);
         #endif
       }
 
-#ifdef SIMULATOR
+#ifndef TARGET_K02
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
@@ -915,6 +915,7 @@ namespace Anki {
 
       void Process_wifiState(const WiFiState& state)
       {
+#ifndef COZMO_V2
 #ifndef SIMULATOR
         if (state.rtCount == 0)
         {
@@ -927,11 +928,12 @@ namespace Anki {
           while (RobotInterface::SendMessage(bMsg) == false);
         }
 #endif
-        HAL::RadioUpdateState(state.rtCount, false);
+#endif
+        HAL::RadioUpdateState(state.rtCount);
       }
 
 
-#ifdef SIMULATOR
+#ifndef TARGET_K02
       void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
       {
 
@@ -981,9 +983,11 @@ namespace Anki {
       }
       void Process_setCubeID(const CubeID& msg)
       {
+        #ifdef SIMULATOR
         cubeID_ = msg.objectID;
         rotationPeriod_ = msg.rotationPeriod_frames;
         cubIDSet_ = true;
+        #endif
       }
 
       void Process_streamObjectAccel(const StreamObjectAccel& msg)
@@ -993,12 +997,14 @@ namespace Anki {
 
       void Process_setCubeLights(const CubeLights& msg)
       {
+        #ifdef SIMULATOR
         if(!cubIDSet_)
         {
           return;
         }
         BlockLightController::SetLights(cubeID_, msg.lights, rotationPeriod_);
         cubIDSet_ = false;
+        #endif
       }
       void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
       {
@@ -1065,6 +1071,7 @@ namespace Anki {
 
       void SendTestStateMsg()
       {
+#ifndef COZMO_V2
 #ifndef SIMULATOR
         if (sendTestStateMessages)
         {
@@ -1079,6 +1086,7 @@ namespace Anki {
           tsm.chargeStat  = (onCharger_ * RobotInterface::CS_ON_CHARGER) | (isCharging_ * RobotInterface::CS_IS_CHARGING) | (chargerOOS_ * RobotInterface::CS_BAD_CHARGER);
           RobotInterface::SendMessage(tsm);
         }
+#endif
 #endif
       }
 
@@ -1206,7 +1214,7 @@ namespace Anki {
 
 
     namespace RobotInterface {
-      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const int32_t numArgs, ...)
       {
         PrintTrace m;
         if (Messages::missedLogs_ > 0)
@@ -1243,7 +1251,7 @@ namespace Anki {
     } // namespace RobotInterface
 
     namespace HAL {
-#ifndef SIMULATOR
+#ifdef TARGET_K02
       f32 BatteryGetVoltage()
       {
         return Messages::robotState_.batteryVoltage;
@@ -1305,7 +1313,7 @@ namespace Anki {
   } // namespace Cozmo
 } // namespace Anki
 
-#ifdef SIMULATOR
+#ifndef TARGET_K02
 // Shim for reliable transport
 bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
 {
@@ -1336,21 +1344,21 @@ void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
   ReliableTransport_FinishConnection(connection); // Accept the connection
   AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1, 0);
+  Anki::Cozmo::HAL::RadioUpdateState(1);
 }
 
 void Receiver_OnConnected(ReliableConnection* connection)
 {
   AnkiInfo( 122, "Receiver_OnConnected", 370, "ReliableTransport connection completed", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1, 0);
+  Anki::Cozmo::HAL::RadioUpdateState(1);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
-  Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
+  Anki::Cozmo::HAL::RadioUpdateState(0);   // Must mark connection disconnected BEFORE trying to print
   AnkiInfo( 123, "Receiver_OnDisconnect", 371, "ReliableTransport disconnected", 0);
   ReliableConnection_Init(connection, NULL); // Reset the connection
-  Anki::Cozmo::HAL::RadioUpdateState(0, 0);
+  Anki::Cozmo::HAL::RadioUpdateState(0);
 }
 
 int Anki::Cozmo::HAL::RadioQueueAvailable()

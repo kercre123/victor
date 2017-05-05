@@ -27,7 +27,7 @@ namespace Anki
   {
     namespace HAL
     {
-      Result Init(void);
+      //Result Init(void);
       void Destroy(void);
 
       // Misc simulator-only stuff
@@ -35,7 +35,7 @@ namespace Anki
       void UpdateDisplay();
 
       // Take a step (needed for webots only)
-      Result Step(void);
+      //Result Step(void);
 
       // Ground truth (no-op if not in simulation)
       void GetGroundTruthPose(f32 &x, f32 &y, f32& rad);

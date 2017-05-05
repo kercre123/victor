@@ -70,8 +70,9 @@ def start_sim(coz_conn):
       print("Timed out after %s seconds waiting to load engine" % time_waiting_for_engine_load)
 
     is_simulated = 0 if _options and _options.is_real_robot else 1
+    is_cozmoV2 = 1 if _options and _options.is_cozmoV2 else 0
 
-    if is_simulated != 0:
+    if is_simulated != 0 or is_cozmoV2 != 0:
       ip_address = "127.0.0.1\0\0\0\0\0\0\0".encode('ascii')
     else:
       ip_address = "172.31.1.1\0\0\0\0\0\0".encode('ascii')
@@ -107,6 +108,12 @@ if __name__ == '__main__':
                         action='store_const',
                         const=True,
                         help='Start in freeplay mode')
+    parser.add_argument('-v2', '--cozmoV2',
+                        dest='is_cozmoV2',
+                        default=False,
+                        action='store_const',
+                        const=True,
+                        help='Connecting to Cozmo V2')
     _options = parser.parse_args()
     cozmo.setup_basic_logging()
   

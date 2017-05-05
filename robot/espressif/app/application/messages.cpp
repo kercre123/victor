@@ -244,7 +244,7 @@ namespace Anki {
     } // namespace Messages
     
     namespace RobotInterface {
-      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const int32_t numArgs, ...)
       {
         PrintTrace m;
         if (Messages::missedLogs_ > 0)

@@ -503,7 +503,7 @@ namespace Anki
       //
       bool RadioIsConnected();
 
-      void RadioUpdateState(u8 wifi, u8 blue);
+      void RadioUpdateState(u8 wifi);
 
       int RadioQueueAvailable();
 

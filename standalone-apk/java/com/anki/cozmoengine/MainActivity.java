@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-    private final static String TAG = "CozmoEngine";
+    private final static String TAG = "CozmoEngine2";
 
     private Standalone mStandalone;
 

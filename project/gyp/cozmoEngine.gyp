@@ -11,6 +11,7 @@
     'engine_source': 'cozmoEngine.lst',
     'engine2_source': 'cozmoEngine2.lst',
     'engine2_sim_source': 'cozmoEngine2_sim.lst',
+    'cozmoRobot2_source': 'cozmoRobot2.lst',
     'clad_vision_source': '../../generated/clad/vision.lst',
     'clad_common_source': '../../generated/clad/common.lst',
     'clad_engine_source': '../../generated/clad/engine.lst',
@@ -2077,6 +2078,72 @@
 
     }, # end engine2 target
 
+    {
+      'target_name': 'cozmoRobot2',   # standalone robot process
+      'type': 'executable',
+      'include_dirs': [
+        '../../robot2/hal/include',
+        '../../robot/include',
+        '../../robot/generated',
+      ],
+      'dependencies': [
+        #'<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiMessagingRobot',  # radio.cpp
+        'robotClad',
+      ],
+      'sources': [
+        '<!@(cat <(cozmoRobot2_source))',
+      ],
+      'defines': [
+        'COZMO_ROBOT',
+        'CORETECH_ROBOT',
+        'COZMO_V2',
+        '_DEBUG'
+      ],
+      'conditions': [
+        [
+          'OS=="ios" or OS=="mac"',
+          {
+            #'type': 'static_library',
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+            ],
+
+            # This should also be done in Android, but ninja doesn't like it when actions have no output,
+            # so instead this step is called explicitly in configure.py when building Android.
+            'actions': [
+               {
+                 'action_name': 'Robot pre-build steps',
+                 'inputs': [],
+                 'outputs': [],
+                 'action': [
+                   'make', '-C', '../../robot/', 'dev2', 'BUILD_TYPE=DEVELOPMENT'
+                 ],
+               }
+            ],
+
+          },
+      	  'OS=="android"',
+          {
+            #'type': 'shared_library',
+
+            # Compile as position-independent executable (PIE)
+            'cflags': [
+              '-fPIE'
+            ],
+            'cflags_cc': [
+              '-fPIE'
+            ],
+            'ldflags': [
+              '-fPIE',
+              '-pie'
+            ],
+          },
+        ],
+      ],
+
+    }, # end cozmoRobot2
 
     {
       'target_name': 'robotClad',

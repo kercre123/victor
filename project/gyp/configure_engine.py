@@ -231,6 +231,9 @@ def main(scriptArgs):
   generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot2'],
                           ['project/gyp/ctrlRobot2.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c', 'nvStorage.*'])
+  generator.processFolder(['robot2/hal/src', 'robot/supervisor/src', 'robot/transport'],
+                          ['project/gyp/cozmoRobot2.lst'],
+                          ['matlabVisionProcessor.*', 'matlabVisualization.*', 'nvStorage.*'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/shared'], ['project/gyp/ctrlShared.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])

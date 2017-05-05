@@ -448,6 +448,12 @@ class EnginePlatformConfiguration(object):
                 configuration=self.options.configuration,
                 simulator=self.options.simulator)
         elif self.platform == 'android':
+            # Do prebuild step for robot process.
+            # This is V2-specific, but there's currently no V2 configure switch so just putting it here for now.
+            # Normally, this would go in the cozmoRobot2 gyp target in cozmoEngine.gyp, but ninja doesn't
+            # like it when actions have no output.
+            subprocess.call("make dev2 BUILD_TYPE=DEVELOPMENT", shell=True, cwd=os.path.join(ENGINE_ROOT, 'robot'))
+
             command = ['ninja']
             cwd_loc = os.path.join(ENGINE_ROOT, 'generated', 'android', 'out', self.options.configuration)
             if self.options.verbose:

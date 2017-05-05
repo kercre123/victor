@@ -227,6 +227,12 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _context->GetRobotManager()->Init(_config);
 
+#ifdef COZMO_V2
+  PRINT_NAMED_INFO("CozmoEngine.Init.Version", "2");
+#else
+  PRINT_NAMED_INFO("CozmoEngine.Init.Version", "1");
+#endif
+  
   return RESULT_OK;
 }
 

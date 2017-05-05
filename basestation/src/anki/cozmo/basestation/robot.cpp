@@ -9,6 +9,10 @@
 
 #include "anki/cozmo/basestation/robot.h"
 
+#ifdef COZMO_V2
+#include "anki/cozmo/basestation/androidHAL/androidHAL.h"
+#endif
+
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/poseOriginList.h"
@@ -3071,7 +3075,11 @@ Result Robot::SendSyncTime() const
 {
   Result result = SendMessage(RobotInterface::EngineToRobot(
                                 RobotInterface::SyncTime(_ID,
+                                                         #ifdef COZMO_V2
+                                                         AndroidHAL::getInstance()->GetTimeStamp(),
+                                                         #else
                                                          BaseStationTimer::getInstance()->GetCurrentTimeStamp(),
+                                                         #endif
                                                          DRIVE_CENTER_OFFSET)));
   if (result == RESULT_OK) {
     result = SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::InitController()));

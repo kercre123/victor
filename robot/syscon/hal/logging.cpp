@@ -11,7 +11,7 @@ void ResetMissedLogCount()
   missedLogs = 0;
 }
 
-int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
+int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const int32_t numArgs, ...)
 {
   using namespace Anki::Cozmo::RobotInterface;
   PrintTrace m;

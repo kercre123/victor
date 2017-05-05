@@ -163,9 +163,9 @@ namespace Anki {
     }
 
 
-    void HAL::RadioUpdateState(u8 wifi, u8 blue)
+    void HAL::RadioUpdateState(u8 wifi)
     {
-      if (wifi == 0 && blue == 0) DisconnectRadio();
+      if (wifi == 0) DisconnectRadio();
     }
 
     void HAL::DisconnectRadio(void)

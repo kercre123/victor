@@ -93,7 +93,9 @@ namespace Anki {
 
 #ifndef SIMULATOR
         // Don't warn about set but unread variables because we have too many different code paths and shared pieces below
+        #ifdef TARGET_K02
         #pragma diag_suppress 550
+        #endif
         // Compensating for motor backlash by lifting a little higher when
         // approaching an object for high pickup.
         // Lift heights are reached reasonably accurately when moving down
@@ -817,7 +819,7 @@ namespace Anki {
                         ABS(dockingErrSignalMsg_.angleErr) <= ERRMSG_HM_ANGLE_TOL)
                     {
                       AnkiDebug( 309, "DockingController.Update.AbleToDoHannsManeuver_1", 305, "", 0);
-  #if(!SIMULATOR)
+  #ifndef SIMULATOR
                       doHannsManeuver = true;
   #endif
                     }
@@ -837,7 +839,7 @@ namespace Anki {
                         ABS(rel_angle_to_block) < POSE_HM_ANGLE_TOL)
                     {
                       AnkiDebug( 311, "DockingController.Update.AbleToDoHannsManeuver_2", 305, "", 0);
-  #if(!SIMULATOR)
+  #ifndef SIMULATOR
                       doHannsManeuver = true;
   #endif
                     }

@@ -38,7 +38,11 @@ namespace Anki
 {
   namespace Cozmo
   {
-
+    namespace AnimKeyFrame {
+      struct AudioSample;
+    }
+    
+    
     namespace HAL
     {
 
@@ -55,6 +59,11 @@ namespace Anki
       /// Maximum number of object advertisements reported in a time step
       //static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
 
+      
+      // TODO: Can probably move these back to sim_hal once real hal is working
+      Result Init(void);
+      Result Step(void);
+      
 /************************************************************************
  * \section Time
  */
@@ -174,6 +183,19 @@ namespace Anki
       void GetMicrophoneData(u8* buffer);
 
 /************************************************************************
+ * \section Audio 
+ *          TODO: Only here because animationController calls them, but eventually shouldn't need to be
+ */
+      bool AudioReady();
+      
+      // Play one frame of audio or silence
+      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+      void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
+      void AudioPlaySilence();
+
+      void FaceAnimate(u8* frame, const u16 length);
+      
+/************************************************************************
  * \section Buttons
  */
 
@@ -292,7 +314,7 @@ namespace Anki
  */
       bool RadioIsConnected();
       
-      void RadioUpdateState(u8 wifi, u8 blue);
+      void RadioUpdateState(u8 wifi);
       
       int RadioQueueAvailable();
       

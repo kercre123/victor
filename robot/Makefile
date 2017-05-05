@@ -54,6 +54,8 @@ all: sim app esp k02 nrf
 
 dev: AnkiLog nrf k02 esp $(BUILD_TYPE_HEADER)
 
+dev2: AnkiLog k02 $(BUILD_TYPE_HEADER)
+
 ota: $(OTA_FILE)
 	if test -e build/app/robot.map; then mv build/app/robot.map $(BUILD_DIR)/robot.map; fi
 	if test -e syscon/build/app/syscon.map; then mv syscon/build/app/syscon.map $(BUILD_DIR)/syscon.map; fi

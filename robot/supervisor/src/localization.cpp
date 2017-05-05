@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "localization.h"
 #include "pickAndPlaceController.h"
 #include "imuFilter.h"
@@ -701,18 +702,12 @@ namespace Anki {
                   x_, y_,
                   orientation_.getDegrees());
 
-          //PRINT("Est. Pose: (x,y)=(%.4f, %.4f) at deg=%.1f\n",
-          //      x_, y_,
-          //      orientation_.getDegrees());
-
           HAL::GetGroundTruthPose(xTrue_, yTrue_, angleTrue_);
           Radians angleRad(angleTrue_);
 
 
           SetText(CURR_TRUE_POSE, "True Pose: (x,y)=(%.4f, %.4f) at deg=%.1f",
                   xTrue_ * 1000, yTrue_ * 1000, angleRad.getDegrees());
-          //f32 trueDist = sqrtf((yTrue_ - prev_yTrue_)*(yTrue_ - prev_yTrue_) + (xTrue_ - prev_xTrue_)*(xTrue_ - prev_xTrue_));
-          //PRINT("True Pose: (x,y)=(%.4f, %.4f) at deg=%.1f (trueDist = %f)\n", xTrue_, yTrue_, angleRad.getDegrees(), trueDist);
 
           prev_xTrue_ = xTrue_;
           prev_yTrue_ = yTrue_;

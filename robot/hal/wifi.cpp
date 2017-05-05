@@ -75,7 +75,7 @@ namespace HAL {
     return wifiState;
   }
 
-  void RadioUpdateState(u8 wifi, u8 blue)
+  void RadioUpdateState(u8 wifi)
   {
     wifiState = wifi;
   }

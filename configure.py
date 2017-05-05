@@ -615,6 +615,9 @@ class GamePlatformConfiguration(object):
                                                     "libcozmoEngine.so"),
                                        os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
+                                                    "libcozmoEngine2.so"),
+                                       os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+                ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
                                                     "libDAS.so"),
                                        os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 # build android-specific java files

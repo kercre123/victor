@@ -18,8 +18,12 @@
 #include "pathFollower.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/logging.h"
-#ifdef SIMULATOR
+
+#ifndef TARGET_K02
 #include "animationController.h"
+#endif
+
+#ifdef SIMULATOR
 #include "anki/common/shared/utilities_shared.h"
 #include "blockLightController.h"
 #endif
@@ -102,7 +106,7 @@ namespace Anki {
         Result lastResult = RESULT_OK;
 
         // HAL and supervisor init
-#ifdef  SIMULATOR    // The HAL/Operating System cannot be Init()ed or Destroy()ed on a real robot
+#ifndef TARGET_K02
         lastResult = HAL::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 219, "CozmoBot.InitFail.HAL", 305, "", 0);
         
@@ -143,10 +147,6 @@ namespace Anki {
         START_TIME_PROFILE(CozmoBotMain, TOTAL);
         START_TIME_PROFILE(CozmoBot, HAL);
 
-        #ifdef SIMULATOR
-        HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
-        #endif
-
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
@@ -175,7 +175,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Simulated NVStorage
         //////////////////////////////////////////////////////////////
-#if SIMULATOR
+#ifdef SIMULATOR
 #ifndef COZMO_V2
         NVStorage::Update();
 #endif
@@ -203,7 +203,7 @@ namespace Anki {
           AnkiEvent( 228, "CozmoBot.Radio.Connected", 305, "", 0);
           wasConnected_ = true;
           
-#if SIMULATOR
+#ifdef SIMULATOR
           LiftController::Enable();
           HeadController::Enable();
           WheelController::Enable();
@@ -223,7 +223,7 @@ namespace Anki {
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
-#if SIMULATOR
+#ifdef SIMULATOR
           LiftController::Disable();
           HeadController::Disable();
           WheelController::Disable();

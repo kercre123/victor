@@ -15,7 +15,7 @@
 #include "util/logging/logging.h"
 
 #include <vector>
-
+#include <chrono>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using androidHAL.cpp
@@ -26,6 +26,9 @@ namespace Anki {
     
     namespace { // "Private members"
 
+      // Time
+      std::chrono::steady_clock::time_point timeOffset_ = std::chrono::steady_clock::now();
+      
     } // "private" namespace
 
 
@@ -66,8 +69,8 @@ namespace Anki {
 
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
-      // STUB
-      return 0;
+      auto currTime = std::chrono::steady_clock::now();
+      return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime - timeOffset_).count());
     }
 
     bool AndroidHAL::IMUReadData(IMU_DataStructure &IMUData)

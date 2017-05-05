@@ -1,6 +1,7 @@
 #ifdef TARGET_ESPRESSIF
 #include "c_types.h"
 #else
+#include <stdbool.h>
 #include <stdint.h>
 #endif
 #include "anki/cozmo/transport/reliableSequenceId.h"
