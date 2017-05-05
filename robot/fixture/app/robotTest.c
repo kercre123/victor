@@ -412,7 +412,7 @@ void RobotFixtureDropSensor(void)
 }
 
 u8 tone_volume = 0x100/2;
-void RobotSetToneVolume(u8 volume) {
+void RobotSetSoundTestVolume(u8 volume) {
   tone_volume = volume;
 }
 
