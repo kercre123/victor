@@ -49,6 +49,8 @@ struct StreamingAnimationFrame {
   EventKeyFrame*                      eventFrame;
   BackpackLightsKeyFrame*             backpackFrame;
   BodyMotionKeyFrame*                 bodyFrame;
+  RecordHeadingKeyFrame*              recordHeadingFrame;
+  TurnToRecordedHeadingKeyFrame*      turnToRecordedHeadingFrame;
   DeviceAudioKeyFrame*                deviceAudioFrame;
   RobotAudioKeyFrame*                 robotAudioFrame;
   const AudioEngine::AudioFrameData*  audioFrameData;
@@ -68,6 +70,8 @@ struct StreamingAnimationFrame {
     eventFrame = nullptr;
     backpackFrame = nullptr;
     bodyFrame = nullptr;
+    recordHeadingFrame = nullptr;
+    turnToRecordedHeadingFrame = nullptr;
     deviceAudioFrame = nullptr;
     robotAudioFrame = nullptr;
     audioFrameData = nullptr;

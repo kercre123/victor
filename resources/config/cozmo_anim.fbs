@@ -63,6 +63,22 @@ table BodyMotion {
   speed:float;
 }
 
+table RecordHeading {
+  triggerTime_ms:float;
+}
+
+table TurnToRecordedHeading {
+  triggerTime_ms:float;
+  offset_deg:float = 0.0;
+  durationTime_ms:float;
+  speed_degPerSec:float;
+  accel_degPerSec2:float = 1000.0;
+  decel_degPerSec2:float = 1000.0;
+  tolerance_deg:float = 2.0;
+  numHalfRevs:int = 0;
+  useShortestDir:bool = false;
+}
+
 table Keyframes {
   LiftHeightKeyFrame:[LiftHeight];
   ProceduralFaceKeyFrame:[ProceduralFace];
@@ -72,6 +88,8 @@ table Keyframes {
   FaceAnimationKeyFrame:[FaceAnimation];
   EventKeyFrame:[Event];
   BodyMotionKeyFrame:[BodyMotion];
+  RecordHeadingKeyFrame:[RecordHeading];
+  TurnToRecordedHeadingKeyFrame:[TurnToRecordedHeading];
 }
 
 table AnimClip {

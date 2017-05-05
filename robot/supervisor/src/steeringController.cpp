@@ -110,6 +110,8 @@ namespace Anki {
       VelocityProfileGenerator vpg_;
 
       const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0;
+      
+      f32 recordedHeading_ = 0.f;
 
     } // Private namespace
 
@@ -835,6 +837,24 @@ namespace Anki {
       
       ExecuteDirectDrive(leftSpeed, rightSpeed, leftAccel, rightAccel);
     }
+    
+    void RecordHeading()
+    {
+      recordedHeading_ = Localization::GetCurrPose_angle().ToFloat();
+    }
+    
+    // Execute point turn to the heading recorded by RecordHeading() + offset_rad
+    void ExecutePointTurnToRecordedHeading(f32 offset_rad,
+                                           f32 maxAngularVel_radPerSec,
+                                           f32 angularAccel_radPerSec2,
+                                           f32 angularDecel_radPerSec2,
+                                           f32 angleTolerance_rad,
+                                           uint16_t numHalfRevolutions,
+                                           bool useShortestDir)
+    {
+      ExecutePointTurn(recordedHeading_ + offset_rad, maxAngularVel_radPerSec, angularAccel_radPerSec2, angularDecel_radPerSec2, angleTolerance_rad, useShortestDir, numHalfRevolutions);
+    }
+
     
   } // namespace SteeringController
   } // namespace Cozmo

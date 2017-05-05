@@ -147,6 +147,7 @@ return RESULT_FAIL; \
 
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(headAngleKeyframe != nullptr, "HeadAngleKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) headAngleKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(headAngleKeyframe, animNameDebug);
       return lastResult;
@@ -201,6 +202,7 @@ return RESULT_FAIL; \
 
     Result LiftHeightKeyFrame::DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(liftHeightKeyframe != nullptr, "LiftHeightKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) liftHeightKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(liftHeightKeyframe, animNameDebug);
       return lastResult;
@@ -300,6 +302,7 @@ return RESULT_FAIL; \
 
     Result FaceAnimationKeyFrame::DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(faceAnimKeyframe != nullptr, "FaceAnimationKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) faceAnimKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(faceAnimKeyframe, animNameDebug);
       return lastResult;
@@ -365,6 +368,7 @@ return RESULT_FAIL; \
     
     Result ProceduralFaceKeyFrame::DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(procFaceKeyframe != nullptr, "ProceduralFaceKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) procFaceKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(procFaceKeyframe, animNameDebug);
       return lastResult;
@@ -491,6 +495,7 @@ return RESULT_FAIL; \
 
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(audioKeyframe != nullptr, "RobotAudioKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) audioKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(audioKeyframe, animNameDebug);
       return lastResult;
@@ -605,6 +610,7 @@ return RESULT_FAIL; \
 
     Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(eventKeyframe != nullptr, "EventKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) eventKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(eventKeyframe, animNameDebug);
       return lastResult;
@@ -653,6 +659,7 @@ return RESULT_FAIL; \
     
     Result BackpackLightsKeyFrame::DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(backpackKeyframe != nullptr, "BackpackLightsKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) backpackKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(backpackKeyframe, animNameDebug);
       return lastResult;
@@ -766,6 +773,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
 
     Result BodyMotionKeyFrame::DefineFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
     {
+      DEV_ASSERT(bodyKeyframe != nullptr, "BodyMotionKeyFrame.DefineFromFlatBuf.NullAnim");
       _triggerTime_ms = (uint) bodyKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(bodyKeyframe, animNameDebug);
       return lastResult;
@@ -859,6 +867,157 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
         return true;
       }
       
+      return IsDoneHelper(_durationTime_ms);
+    }
+
+#pragma mark -
+#pragma mark RecordHeadingKeyFrame
+    
+    RecordHeadingKeyFrame::RecordHeadingKeyFrame()
+    {
+    }
+    
+    Result RecordHeadingKeyFrame::DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug)
+    {
+      DEV_ASSERT(recordHeadingKeyframe != nullptr, "RecordedHeadingKeyFrame.DefineFromFlatBuf.NullAnim");
+      _triggerTime_ms = (uint) recordHeadingKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(recordHeadingKeyframe, animNameDebug);
+      return lastResult;
+    }
+    
+    Result RecordHeadingKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug)
+    {
+      return RESULT_OK;
+    }
+    
+    Result RecordHeadingKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
+    {
+      return RESULT_OK;
+    }
+    
+    RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
+    {
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::RecordHeading(_streamMsg));
+    }
+    
+    bool RecordHeadingKeyFrame::IsDone()
+    {
+      return true;
+    }
+    
+    
+#pragma mark -
+#pragma mark TurnToRecordedHeadingKeyFrame
+    
+    TurnToRecordedHeadingKeyFrame::TurnToRecordedHeadingKeyFrame()
+    {
+    }
+    
+    TurnToRecordedHeadingKeyFrame::TurnToRecordedHeadingKeyFrame(s16 offset_deg,
+                                                                 s16 speed_degPerSec,
+                                                                 s16 accel_degPerSec2,
+                                                                 s16 decel_degPerSec2,
+                                                                 u16 tolerance_deg,
+                                                                 u16 numHalfRevs,
+                                                                 bool useShortestDir,
+                                                                 s32 duration_ms)
+    : TurnToRecordedHeadingKeyFrame()
+    {
+      _durationTime_ms = duration_ms;
+      _streamMsg.offset_deg = offset_deg;
+      _streamMsg.speed_degPerSec = speed_degPerSec;
+      _streamMsg.accel_degPerSec2 = accel_degPerSec2;
+      _streamMsg.decel_degPerSec2 = decel_degPerSec2;
+      _streamMsg.tolerance_deg = tolerance_deg;
+      _streamMsg.numHalfRevs = numHalfRevs;
+      _streamMsg.useShortestDir = useShortestDir;
+    }
+    
+    void TurnToRecordedHeadingKeyFrame::CheckRotationSpeed(const std::string& animNameDebug)
+    {
+      // Check that speed is valid
+      if (std::abs(_streamMsg.speed_degPerSec) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
+        PRINT_NAMED_INFO("TurnToRecordedHeadingKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                         "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                         animNameDebug.c_str(),
+                         std::abs(_streamMsg.speed_degPerSec),
+                         MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        _streamMsg.speed_degPerSec = CLIP((f32)_streamMsg.speed_degPerSec,
+                                          -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
+                                          MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+      }
+      
+      // Check that accel/decel are within range
+      if (std::abs(_streamMsg.accel_degPerSec2) > MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2) {
+        PRINT_NAMED_INFO("TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnAccelExceedsLimit",
+                         "%s: PointTurn accel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
+                         animNameDebug.c_str(),
+                         std::abs(_streamMsg.accel_degPerSec2),
+                         MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+        _streamMsg.accel_degPerSec2 = CLIP((f32)_streamMsg.accel_degPerSec2,
+                                          -MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2,
+                                          MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+      }
+      if (std::abs(_streamMsg.decel_degPerSec2) > MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2) {
+        PRINT_NAMED_INFO("TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnDecelExceedsLimit",
+                         "%s: PointTurn decel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
+                         animNameDebug.c_str(),
+                         std::abs(_streamMsg.decel_degPerSec2),
+                         MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+        _streamMsg.decel_degPerSec2 = CLIP((f32)_streamMsg.decel_degPerSec2,
+                                           -MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2,
+                                           MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+      }
+    }
+    
+    Result TurnToRecordedHeadingKeyFrame::DefineFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug)
+    {
+      DEV_ASSERT(turnToRecordedHeadingKeyframe != nullptr, "TurnToRecordedHeadingKeyFrame.DefineFromFlatBuf.NullAnim");
+      _triggerTime_ms = (uint) turnToRecordedHeadingKeyframe->triggerTime_ms();
+      Result lastResult = SetMembersFromFlatBuf(turnToRecordedHeadingKeyframe, animNameDebug);
+      return lastResult;
+    }
+    
+    Result TurnToRecordedHeadingKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug)
+    {
+      this->_durationTime_ms = turnToRecordedHeadingKeyframe->durationTime_ms();
+      this->_streamMsg.offset_deg = turnToRecordedHeadingKeyframe->offset_deg();
+      this->_streamMsg.speed_degPerSec = turnToRecordedHeadingKeyframe->speed_degPerSec();
+      this->_streamMsg.accel_degPerSec2 = turnToRecordedHeadingKeyframe->accel_degPerSec2();
+      this->_streamMsg.decel_degPerSec2 = turnToRecordedHeadingKeyframe->decel_degPerSec2();
+      this->_streamMsg.tolerance_deg = turnToRecordedHeadingKeyframe->tolerance_deg();
+      this->_streamMsg.numHalfRevs = turnToRecordedHeadingKeyframe->numHalfRevs();
+      this->_streamMsg.useShortestDir = turnToRecordedHeadingKeyframe->useShortestDir();
+      
+      CheckRotationSpeed(animNameDebug);
+      
+      return RESULT_OK;
+    }
+    
+    Result TurnToRecordedHeadingKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
+    {
+      GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, offset_deg,       streamMsg.offset_deg);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed_degPerSec,  streamMsg.speed_degPerSec);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, accel_degPerSec2, streamMsg.accel_degPerSec2);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, decel_degPerSec2, streamMsg.decel_degPerSec2);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, tolerance_deg,    streamMsg.tolerance_deg);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, numHalfRevs,      streamMsg.numHalfRevs);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, useShortestDir,   streamMsg.useShortestDir);
+      
+      CheckRotationSpeed(animNameDebug);
+
+      return RESULT_OK;
+    }
+    
+    
+    RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
+    {
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::TurnToRecordedHeading(_streamMsg));
+    }
+    
+    bool TurnToRecordedHeadingKeyFrame::IsDone()
+    {
       return IsDoneHelper(_durationTime_ms);
     }
     

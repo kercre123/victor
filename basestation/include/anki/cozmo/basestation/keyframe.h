@@ -34,6 +34,8 @@ namespace CozmoAnim {
   struct Event;
   struct BackpackLights;
   struct BodyMotion;
+  struct RecordHeading;
+  struct TurnToRecordedHeading;
 }
 
 namespace Anki {
@@ -485,6 +487,79 @@ namespace Cozmo {
     AnimKeyFrame::BodyMotion _stopMsg;
     
   }; // class BodyMotionKeyFrame
+  
+  
+  // A RecordHeadingKeyFrame records an angular heading so that it can be returned
+  // to (with an optional offset) using TurnToRecordedHeadingKeyFrame
+  class RecordHeadingKeyFrame : public IKeyFrame
+  {
+  public:
+    RecordHeadingKeyFrame();
+    
+    Result DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug);
+    
+    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    
+    static const std::string& GetClassName() {
+      static const std::string ClassName("RecordHeadingKeyFrame");
+      return ClassName;
+    }
+    
+    virtual bool IsDone() override;
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug = "");
+    
+  private:
+    
+    AnimKeyFrame::RecordHeading _streamMsg;
+    
+  }; // class RecordHeadingKeyFrame
+  
+  
+  // A TurnToRecordedHeadingKeyFrame commands the robot to turn to the heading that was
+  // previously recorded by a RecordHeadingKeyFrame
+  class TurnToRecordedHeadingKeyFrame : public IKeyFrame
+  {
+  public:
+    TurnToRecordedHeadingKeyFrame();
+    TurnToRecordedHeadingKeyFrame(s16 offset_deg,
+                                  s16 speed_degPerSec,
+                                  s16 accel_degPerSec2,
+                                  s16 decel_degPerSec2,
+                                  u16 tolerance_deg,
+                                  u16 numHalfRevs,
+                                  bool useShortestDir,
+                                  s32 duration_ms);
+    
+    Result DefineFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug);
+    
+    void CheckRotationSpeed(const std::string& animNameDebug);
+    
+    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    
+    static const std::string& GetClassName() {
+      static const std::string ClassName("TurnToRecordedHeadingKeyFrame");
+      return ClassName;
+    }
+    
+    virtual bool IsDone() override;
+    
+    s32 GetDurationTime() const { return _durationTime_ms; }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual Result SetMembersFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyFrame, const std::string& animNameDebug = "");
+    
+  private:
+    
+    s32 _durationTime_ms;
+    
+    AnimKeyFrame::TurnToRecordedHeading _streamMsg;
+    
+  }; // class TurnToRecordedHeadingKeyFrame
+  
   
 } // namespace Cozmo
 } // namespace Anki

@@ -161,7 +161,7 @@ namespace Anki {
       WheelController::GetFilteredWheelSpeeds(filteredSpeedL, filteredSpeedR);
 
       // TODO: are we sure this should be returned as s16?
-      return static_cast<s16>(0.5f*(filteredSpeedL + filteredSpeedR));
+      return (s16)(0.5f*(filteredSpeedL + filteredSpeedR));
     }
 
     void RunAccelerationUpdate(void)

@@ -28,6 +28,8 @@ namespace CozmoAnim {
   struct ProceduralFace;
   struct Event;
   struct BodyMotion;
+  struct RecordHeading;
+  struct TurnToRecordedHeading;
 }
 
 namespace Anki {
@@ -110,7 +112,9 @@ public:
   Result AddKeyFrameToBack(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
   Result AddKeyFrameToBack(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug = "");
-
+  Result AddKeyFrameToBack(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug = "");
+  Result AddKeyFrameToBack(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug = "");
+  
   Result AddNewKeyFrameToBack(const FRAME_TYPE& newKeyFrame);
   
   Result AddKeyFrameByTime(const FRAME_TYPE& keyFrame);
@@ -507,6 +511,28 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::BodyMotion* bodyKey
 {
   FRAME_TYPE newKeyFrame;
   Result lastResult = newKeyFrame.DefineFromFlatBuf(bodyKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(recordHeadingKeyframe, animNameDebug);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  return AddNewKeyFrameToBack(newKeyFrame);
+}
+
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug)
+{
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromFlatBuf(turnToRecordedHeadingKeyframe, animNameDebug);
   if(RESULT_OK != lastResult) {
     return lastResult;
   }

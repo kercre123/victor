@@ -81,6 +81,21 @@ namespace AnimKeyFrame {
                                // ...0: turn in place (+ve speed: left, -ve speed: right)
   }
 
+  message RecordHeading
+  {
+  }
+
+  message TurnToRecordedHeading
+  {
+    int_16 offset_deg,        // Offset from recorded angle
+    int_16 speed_degPerSec,
+    int_16 accel_degPerSec2,
+    int_16 decel_degPerSec2,
+    uint_16 tolerance_deg,
+    uint_16 numHalfRevs,
+    bool useShortestDir,
+  }
+
   message Event
   {
     AnimEvent event_id

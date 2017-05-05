@@ -57,6 +57,12 @@ namespace Animations {
     
     return result;
   }
+  
+  // TODO: Define AddKeyFrameToBack for TurnToRecordedHeading?
+  //       Shouldn't be necessary since this command doesn't make the robot move indefinitely,
+  //       plus it should really only be used at the end of an animation where animationController
+  //       will automatically command a stop anyway since it treats the keyframe the same
+  //       as a BodyMotionKeyFrame.
 
   
   template<>

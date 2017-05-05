@@ -126,6 +126,12 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_animLiftHeight:
             Process_animLiftHeight(msg.animLiftHeight);
             break;
+          case RobotInterface::EngineToRobot::Tag_animRecordHeading:
+            Process_animRecordHeading(msg.animRecordHeading);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animTurnToRecordedHeading:
+            Process_animTurnToRecordedHeading(msg.animTurnToRecordedHeading);
+            break;
           case RobotInterface::EngineToRobot::Tag_animEventToRTIP:
             Process_animEventToRTIP(msg.animEventToRTIP);
             break;
@@ -727,7 +733,7 @@ namespace Anki {
 
       void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
       {
-        AnkiDebug( 162, "ReadToolCodeMode", 449, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
+        //AnkiDebug( 162, "ReadToolCodeMode", 449, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
@@ -787,8 +793,8 @@ namespace Anki {
       }
       void Process_animHeadAngle(const Anki::Cozmo::AnimKeyFrame::HeadAngle& msg)
       {
-        HeadController::SetDesiredAngleByDuration(DEG_TO_RAD_F32(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
-                                                  static_cast<f32>(msg.time_ms)*.001f);
+        HeadController::SetDesiredAngleByDuration(DEG_TO_RAD_F32(msg.angle_deg), 0.1f, 0.1f,
+                                                  (f32)(msg.time_ms)*.001f);
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
       {
@@ -799,9 +805,22 @@ namespace Anki {
       }
       void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
       {
-        LiftController::SetDesiredHeightByDuration(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
-                                                   static_cast<f32>(msg.time_ms)*.001f);
-
+        LiftController::SetDesiredHeightByDuration((f32)(msg.height_mm), 0.1f, 0.1f,
+                                                   (f32)(msg.time_ms)*.001f);
+      }
+      void Process_animRecordHeading(const Anki::Cozmo::AnimKeyFrame::RecordHeading& msg)
+      {
+        SteeringController::RecordHeading();
+      }
+      void Process_animTurnToRecordedHeading(const Anki::Cozmo::AnimKeyFrame::TurnToRecordedHeading& msg)
+      {
+        SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
+                                                              DEG_TO_RAD_F32(msg.speed_degPerSec),
+                                                              DEG_TO_RAD_F32(msg.accel_degPerSec2),
+                                                              DEG_TO_RAD_F32(msg.decel_degPerSec2),
+                                                              DEG_TO_RAD_F32(msg.tolerance_deg),
+                                                              msg.numHalfRevs,
+                                                              msg.useShortestDir);
       }
       void Process_animAudioSample(const Anki::Cozmo::AnimKeyFrame::AudioSample&)
       {
@@ -868,8 +887,8 @@ namespace Anki {
 
       void Process_powerState(const PowerState& msg)
       {
-        robotState_.batteryVoltage = static_cast<float>(msg.VBatFixed)/65536.0f;
-        vExt_ = static_cast<float>(msg.VExtFixed)/65536.0f;
+        robotState_.batteryVoltage = (float)(msg.VBatFixed)/65536.0f;
+        vExt_ = (float)(msg.VExtFixed)/65536.0f;
         onCharger_  = msg.onCharger;
         isCharging_ = msg.isCharging;
         chargerOOS_ = msg.chargerOOS;
@@ -1081,8 +1100,8 @@ namespace Anki {
           memcpy((void*)tsm.gyro, (void*)HAL::IMU::IMUState.gyro, sizeof(tsm.gyro));
           memcpy((void*)tsm.acc,  (void*)HAL::IMU::IMUState.acc,  sizeof(tsm.acc));
           tsm.cliffLevel = g_dataToHead.cliffLevel,
-          tsm.battVolt10x = static_cast<uint8_t>(robotState_.batteryVoltage * 10.0f);
-          tsm.extVolt10x  = static_cast<uint8_t>(vExt_ * 10.0f);
+          tsm.battVolt10x = (uint8_t)(robotState_.batteryVoltage * 10.0f);
+          tsm.extVolt10x  = (uint8_t)(vExt_ * 10.0f);
           tsm.chargeStat  = (onCharger_ * RobotInterface::CS_ON_CHARGER) | (isCharging_ * RobotInterface::CS_IS_CHARGING) | (chargerOOS_ * RobotInterface::CS_BAD_CHARGER);
           RobotInterface::SendMessage(tsm);
         }

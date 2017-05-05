@@ -5,7 +5,7 @@ ROBOT_AUDIO_TRACK = "RobotAudioKeyFrame"
 
 ALL_TRACKS = ["LiftHeightKeyFrame", "HeadAngleKeyFrame", "ProceduralFaceKeyFrame",
               "BackpackLightsKeyFrame", "FaceAnimationKeyFrame", "EventKeyFrame",
-              ROBOT_AUDIO_TRACK, BODY_MOTION_TRACK]
+              ROBOT_AUDIO_TRACK, BODY_MOTION_TRACK, "RecordHeadingKeyFrame", "TurnToRecordedHeadingKeyFrame"]
 
 BODY_RADIUS_ATTR = "radius_mm"
 
@@ -82,6 +82,8 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
                        'LiftHeightKeyFrame': [<list of dictionaries>],
                        'ProceduralFaceKeyFrame': [<list of dictionaries>],
                        'RobotAudioKeyFrame': [<list of dictionaries>],
+                       'RecordHeadingKeyFrame': [<list of dictionaries>],
+                       'TurnToRecordedHeadingKeyFrame': [<list of dictionaries>],
                       }
         }
     """

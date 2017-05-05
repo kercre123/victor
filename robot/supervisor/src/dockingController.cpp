@@ -298,7 +298,7 @@ namespace Anki {
       {
         if(!IsBusy())
         {
-          AnkiDebug( 5, "DockingController", 400, "Setting docking method: %d", 1, method);
+          //AnkiDebug( 5, "DockingController", 400, "Setting docking method: %d", 1, method);
           dockingMethod_ = method;
         }
       }
@@ -533,9 +533,9 @@ namespace Anki {
           AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 362, "DockingController.Init.NullHeadCamInfo", 305, "", 0);
 
           // Compute FOV from focal length (currently used for tracker prediciton)
-          headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
+          headCamFOV_ver_ = 2.f * atanf((f32)(headCamInfo->nrows) /
                                         (2.f * headCamInfo->focalLength_y));
-          headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo->ncols) /
+          headCamFOV_hor_ = 2.f * atanf((f32)(headCamInfo->ncols) /
                                         (2.f * headCamInfo->focalLength_x));
         }
         #endif // COZMO_V2
@@ -818,7 +818,7 @@ namespace Anki {
                         ABS(dockingErrSignalMsg_.y_horErr) <= ERRMSG_HM_LATERAL_DOCK_TOL_MM &&
                         ABS(dockingErrSignalMsg_.angleErr) <= ERRMSG_HM_ANGLE_TOL)
                     {
-                      AnkiDebug( 309, "DockingController.Update.AbleToDoHannsManeuver_1", 305, "", 0);
+                      //AnkiDebug( 309, "DockingController.Update.AbleToDoHannsManeuver_1", 305, "", 0);
   #ifndef SIMULATOR
                       doHannsManeuver = true;
   #endif
@@ -838,7 +838,7 @@ namespace Anki {
                         ABS(rel_horz_dist_block) < POSE_HM_HORZ_TOL_MM &&
                         ABS(rel_angle_to_block) < POSE_HM_ANGLE_TOL)
                     {
-                      AnkiDebug( 311, "DockingController.Update.AbleToDoHannsManeuver_2", 305, "", 0);
+                      //AnkiDebug( 311, "DockingController.Update.AbleToDoHannsManeuver_2", 305, "", 0);
   #ifndef SIMULATOR
                       doHannsManeuver = true;
   #endif
@@ -959,8 +959,8 @@ namespace Anki {
               // Otherwise we are in position and docking can succeed
               else if(inPosition && failureMode_ == NO_FAILURE)
               {
-                AnkiDebug( 315, "DockingController.Update", 575, "vert:%f hort:%f rel_x:%f rel_y:%f t:%d", 5, rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
-                AnkiDebug( 316, "DockingController.Update.DockingSucces", 305, "", 0);
+                AnkiDebug( 1212, "DockingController.Update.Success", 638, "vert:%f hort:%f rel_x:%f rel_y:%f t:%d", 5,  rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
+                //AnkiDebug( 316, "DockingController.Update.DockingSucces", 305, "", 0);
                 if(numDockingFails_ > 0)
                 {
                   StopDocking(DOCK_SUCCESS_RETRY);
@@ -1145,7 +1145,7 @@ namespace Anki {
           // Marker has been outside field of view,
           // but the latest error signal may indicate that it is back in.
           if (IsMarkerInFOV(blockPose_, MARKER_WIDTH)) {
-            AnkiDebug( 323, "DockingController.SetRelDockPose.MarkerInsideFOV", 305, "", 0);
+            //AnkiDebug( 323, "DockingController.SetRelDockPose.MarkerInsideFOV", 305, "", 0);
             markerOutOfFOV_ = false;
           } else {
             //AnkiDebug( 5, "DockingController", 431, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);

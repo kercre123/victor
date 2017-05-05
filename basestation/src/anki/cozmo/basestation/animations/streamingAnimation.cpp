@@ -262,6 +262,13 @@ void StreamingAnimation::TickPlayhead(StreamingAnimationFrame& out_frame)
   auto& bodyTrack = GetTrack<BodyMotionKeyFrame>();
   out_frame.bodyFrame = bodyTrack.GetCurrentKeyFrame(_playheadTime_ms);
   
+  auto& turnToRecordedHeadingTrack = GetTrack<TurnToRecordedHeadingKeyFrame>();
+  out_frame.turnToRecordedHeadingFrame = turnToRecordedHeadingTrack.GetCurrentKeyFrame(_playheadTime_ms);
+  
+  // Record heading
+  auto& recordHeadingTrack = GetTrack<RecordHeadingKeyFrame>();
+  out_frame.recordHeadingFrame = recordHeadingTrack.GetCurrentKeyFrame(_playheadTime_ms);
+  
   // Animation Events
   auto& eventTrack = GetTrack<EventKeyFrame>();
   out_frame.eventFrame = eventTrack.GetCurrentKeyFrame(_playheadTime_ms);

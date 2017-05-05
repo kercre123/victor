@@ -563,10 +563,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   const auto& payload = msg.GetData().Get_RobotStateMessage();
   char txt[128];
 
-  sprintf(txt, "Pose: %6.1f, %6.1f, ang: %4.1f",
+  sprintf(txt, "Pose: %6.1f, %6.1f, ang: %4.1f  [fid: %u, oid: %u]",
     payload.state.pose.x,
     payload.state.pose.y,
-    RAD_TO_DEG(payload.state.pose.angle));
+    RAD_TO_DEG(payload.state.pose.angle),
+    payload.state.pose_frame_id,
+    payload.state.pose_origin_id);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_POSE, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Head: %5.1f deg, Lift: %4.1f mm",
@@ -637,7 +639,8 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "        %7s %7s %6s %6s",
+  sprintf(txt, "   %4s %7s %7s %6s %6s",
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_PATHING ? "PATH" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS ? "" : "LIFTING",
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",

@@ -62,6 +62,8 @@ namespace AnimationController {
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
 
+    bool _turningToRecordedHeading = false;
+    
     s32 _tracksToPlay;
 
     int _tracksInUse = 0;
@@ -251,6 +253,8 @@ namespace AnimationController {
     _isPlaying = false;
     _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
+    
+    _turningToRecordedHeading = false;
 
     StopTracksInUse();
 
@@ -748,6 +752,14 @@ namespace AnimationController {
             GetFromBuffer(&msg);
 
             if(_tracksToPlay & BODY_TRACK) {
+              
+              // If currently executing turnToRecordedHeading then ignore this command if it's a stop
+              // message since it was probably sent at the end of the last BodyMotionKeyFrame.
+              if (_turningToRecordedHeading && msg.animBodyMotion.speed == 0) {
+                break;
+              }
+              _turningToRecordedHeading = false;
+              
 #               if DEBUG_ANIMATION_CONTROLLER
               AnkiDebug( 386, "AnimationController.SetBodyMotion", 24, "[t=%dms(%d)] setting body motion to radius=%d, speed=%d", 4,
                     _currentTime_ms, system_get_time(), msg.animBodyMotion.curvatureRadius_mm,
@@ -764,6 +776,56 @@ namespace AnimationController {
                                                         msg.animBodyMotion.curvatureRadius_mm,
                                                         isPointTurn ? 50.f : 0.f);  // 50 is what animation point turns have all been tuned with so don't change this!
               #endif
+            }
+            break;
+          }
+
+          case RobotInterface::EngineToRobot::Tag_animRecordHeading:
+          {
+            GetFromBuffer(&msg);
+            
+#           if DEBUG_ANIMATION_CONTROLLER
+            AnkiDebug( 1209, "AnimationController.RecordHeading", 636, "[t=%dms(%d)]", 2,
+                      _currentTime_ms, system_get_time());
+#           endif
+            
+#ifdef TARGET_ESPRESSIF
+            RTIP::SendMessage(msg);
+#else
+            SteeringController::RecordHeading();
+#endif
+
+            break;
+          }
+            
+          case RobotInterface::EngineToRobot::Tag_animTurnToRecordedHeading:
+          {
+            GetFromBuffer(&msg);
+            
+            if(_tracksToPlay & BODY_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+              AnkiDebug( 1210, "AnimationController.SetTurnToRecordedHeading", 637, "[t=%dms(%d)] turning to recorded heading with offset %d at speed=%d, accel=%d, decel=%d", 6,
+                        _currentTime_ms, system_get_time(),
+                        msg.animTurnToRecordedHeading.offset_deg,
+                        msg.animTurnToRecordedHeading.speed_degPerSec,
+                        msg.animTurnToRecordedHeading.accel_degPerSec2,
+                        msg.animTurnToRecordedHeading.decel_degPerSec2);
+#               endif
+              
+              _turningToRecordedHeading = true;
+              _tracksInUse |= BODY_TRACK;
+              
+#ifdef TARGET_ESPRESSIF
+              RTIP::SendMessage(msg);
+#else
+              SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.animTurnToRecordedHeading.offset_deg),
+                                                                    DEG_TO_RAD_F32(msg.animTurnToRecordedHeading.speed_degPerSec),
+                                                                    DEG_TO_RAD_F32(msg.animTurnToRecordedHeading.accel_degPerSec2),
+                                                                    DEG_TO_RAD_F32(msg.animTurnToRecordedHeading.decel_degPerSec2),
+                                                                    DEG_TO_RAD_F32(msg.animTurnToRecordedHeading.tolerance_deg),
+                                                                    msg.animTurnToRecordedHeading.numHalfRevs,
+                                                                    msg.animTurnToRecordedHeading.useShortestDir);
+#endif
             }
             break;
           }

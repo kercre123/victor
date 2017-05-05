@@ -107,6 +107,8 @@ private:
   Animations::Track<EventKeyFrame>          _eventTrack;
   Animations::Track<BackpackLightsKeyFrame> _backpackLightsTrack;
   Animations::Track<BodyMotionKeyFrame>     _bodyPosTrack;
+  Animations::Track<RecordHeadingKeyFrame>  _recordHeadingTrack;
+  Animations::Track<TurnToRecordedHeadingKeyFrame> _turnToRecordedHeadingTrack;
   Animations::Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
   Animations::Track<RobotAudioKeyFrame>     _robotAudioTrack;
   

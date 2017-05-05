@@ -1187,6 +1187,8 @@ namespace Cozmo {
     auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
     auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
     auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
+    auto & recordHeadingTrack = anim->GetTrack<RecordHeadingKeyFrame>();
+    auto & turnToRecordedHeadingTrack = anim->GetTrack<TurnToRecordedHeadingKeyFrame>();
     auto & eventTrack       = anim->GetTrack<EventKeyFrame>();
     auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
     auto & backpackLedTrack = anim->GetTrack<BackpackLightsKeyFrame>();
@@ -1272,6 +1274,14 @@ namespace Cozmo {
       
       if(BufferMessageToSend(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
+      }
+      
+      if(BufferMessageToSend(recordHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+        DEBUG_STREAM_KEYFRAME_MESSAGE("RecordHeading");
+      }
+
+      if(BufferMessageToSend(turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+        DEBUG_STREAM_KEYFRAME_MESSAGE("TurnToRecordedHeading");
       }
       
 #     undef DEBUG_STREAM_KEYFRAME_MESSAGE

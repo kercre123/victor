@@ -106,6 +106,18 @@ namespace Anki {
     //                     0 == Max acceleration
     void ExecuteDriveCurvature(f32 speed, f32 curvatureRadius_mm, f32 accel = 0.f);
 
+    // Saves the current heading
+    void RecordHeading();
+    
+    // Execute point turn to the heading recorded by RecordHeading() + offset_rad
+    void ExecutePointTurnToRecordedHeading(f32 offset_rad,
+                                           f32 maxAngularVel_radPerSec,
+                                           f32 angularAccel_radPerSec2,
+                                           f32 angularDecel_radPerSec2,
+                                           f32 angleTolerance_rad,
+                                           uint16_t numHalfRevolutions,
+                                           bool useShortestDir);
+    
   } // namespace SteeringController
   } // namespace Cozmo
 } // namespace Anki
