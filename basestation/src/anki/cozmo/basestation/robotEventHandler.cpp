@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/setFaceAction.h"
+#include "anki/cozmo/basestation/actions/trackGroundPointAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
@@ -666,6 +667,15 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFac
   
   return action;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToLaserPoint& trackLaser)
+{
+  TrackGroundPointAction* action = new TrackGroundPointAction(robot, ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint);
+  
+  return action;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -987,7 +997,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       // These should be added in the same order as they are defined in the
       // RobotActionUnion in messageActions.clad.
       //
-      // If the order or number is not done correct, you will get a compilation error!
+      // If the order or number is not done correctly, you will get a compilation error!
       //
       // Usage:
       //   DEFINE_HANDLER(actionUnionTag, msgGameToEngineTag, defaultNumRetriesa)
@@ -1027,6 +1037,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(setLiftHeight,            SetLiftHeight,            0),
       DEFINE_HANDLER(trackFace,                TrackToFace,              0),
       DEFINE_HANDLER(trackObject,              TrackToObject,            0),
+      DEFINE_HANDLER(trackLaserPoint,          TrackToLaserPoint,        0),
       DEFINE_HANDLER(trackPet,                 TrackToPet,               0),
       DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
       DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
@@ -1074,7 +1085,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableColorImages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
@@ -1661,24 +1671,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   else
   {
     robot->AbortAll();
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::EnableColorImages& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnableColorImages.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    // Forward to robot
-    robot->SendRobotMessage<RobotInterface::EnableColorImages>(msg.enable);
   }
 }
 

@@ -35,9 +35,10 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry_declarations.h"
 
-#include "anki/cozmo/basestation/robotStateHistory.h"
+#include "anki/cozmo/basestation/debugImageList.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
+#include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
 #include "anki/cozmo/basestation/visionModeSchedule.h"
 #include "anki/cozmo/basestation/visionPoseData.h"
@@ -85,9 +86,11 @@ namespace Vision {
 namespace Cozmo {
     
   // Forward declaration:
+  class EncodedImage;
+  class LaserPointDetector;
   class Robot;
   class VizManager;
-  class EncodedImage;
+  
   
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
@@ -99,20 +102,21 @@ namespace Cozmo {
     s32 exposureTime_ms;  // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
     f32 cameraGain;       // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
     
-    std::list<VizInterface::TrackerQuad>               trackerQuads;
-    std::list<ExternalInterface::RobotObservedMotion>  observedMotions;
-    std::list<Vision::ObservedMarker>                  observedMarkers;
-    std::list<Vision::TrackedFace>                     faces;
-    std::list<Vision::TrackedPet>                      pets;
-    std::list<Pose3d>                                  dockingPoses;
-    std::list<OverheadEdgeFrame>                       overheadEdges;
-    std::list<Vision::UpdatedFaceID>                   updatedFaceIDs;
-    std::list<ToolCodeInfo>                            toolCodes;
-    std::list<Vision::CameraCalibration>               cameraCalibrations;
+    std::list<VizInterface::TrackerQuad>                        trackerQuads;
+    std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
+    std::list<Vision::ObservedMarker>                           observedMarkers;
+    std::list<Vision::TrackedFace>                              faces;
+    std::list<Vision::TrackedPet>                               pets;
+    std::list<Pose3d>                                           dockingPoses;
+    std::list<OverheadEdgeFrame>                                overheadEdges;
+    std::list<Vision::UpdatedFaceID>                            updatedFaceIDs;
+    std::list<ToolCodeInfo>                                     toolCodes;
+    std::list<Vision::CameraCalibration>                        cameraCalibrations;
+    std::list<ExternalInterface::RobotObservedLaserPoint>       laserPoints;
     
     // Used to pass debug images back to main thread for display:
-    std::list<std::pair<std::string, Vision::Image>>    debugImages;
-    std::list<std::pair<std::string, Vision::ImageRGB>> debugImageRGBs;
+    DebugImageList<Vision::Image>    debugImages;
+    DebugImageList<Vision::ImageRGB> debugImageRGBs;
   };
   
 
@@ -146,7 +150,8 @@ namespace Cozmo {
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const VisionPoseData&      robotState,
-                  const Vision::ImageRGB&    inputImg);
+                  const Vision::ImageRGB&    inputImg,
+                  Vision::Image&             inputImgGray); // Can be modified by rolling shutter correction
     
     // First decodes the image then calls Update() above
     Result Update(const VisionPoseData&      robotState,
@@ -294,6 +299,12 @@ namespace Cozmo {
                                  const u8  midValue,
                                  const f32 midPercentile,
                                  const f32 maxChangeFraction);
+    
+    // Just specify what the current values are (don't actually change the robot's camera)
+    Result SetNextCameraParams(s32 exposure_ms, f32 gain);
+    
+    s32 GetCurrentCameraExposureTime_ms() const;
+    f32 GetCurrentCameraGain() const;
 
     const std::string& GetDataPath() const { return _dataPath; }
   
@@ -308,6 +319,10 @@ namespace Cozmo {
 
     Result CheckImageQuality(const Vision::Image& inputImage,
                              const std::vector<Anki::Rectangle<s32>>& detectionRects);
+    
+    // Will use color if not empty, or gray otherwise
+    Result DetectLaserPoints(const Vision::ImageRGB& inputImage,
+                             const Vision::Image&    inputImageGray);
     
     bool IsExposureValid(s32 exposure) const;
     
@@ -331,17 +346,12 @@ namespace Cozmo {
 #   endif
     
     Vision::ImageRGB _image;
+    Vision::Image    _imageGray;
     
     // Previous image for doing background subtraction, e.g. for saliency
     // NOTE: previous images stored at resolution of motion detection processing.
     Vision::ImageRGB _prevImage;
-    Vision::ImageRGB _prevPrevImage;
     TimeStamp_t      _lastMotionTime = 0;
-    //Vision::Image    _prevRatioImg;
-    Anki::Point2f    _prevMotionCentroid;
-    Anki::Point2f    _prevGroundMotionCentroid;
-    f32              _prevCentroidFilterWeight = 0.f;
-    f32              _prevGroundCentroidFilterWeight = 0.f;
     
     //
     // Formerly in Embedded VisionSystem "private" namespace:
@@ -356,12 +366,17 @@ namespace Cozmo {
     std::unique_ptr<Vision::ImagingPipeline> _imagingPipeline;
     s32 _maxCameraExposureTime_ms = 66;
     s32 _minCameraExposureTime_ms = 1;
-    s32 _currentExposureTime_ms   = 16;
     
     // These baseline defaults are overridden by whatever we receive from the camera
     f32 _minCameraGain     = 0.1f; 
-    f32 _maxCameraGain     = 4.0f; 
-    f32 _currentCameraGain = 2.0f; 
+    f32 _maxCameraGain     = 4.0f;
+    
+    struct CameraParams {
+      s32  exposure_ms;
+      f32  gain;
+    };
+    CameraParams _currentCameraParams{16, 2.0};
+    std::pair<bool,CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     
     // The tracker can fail to converge this many times before we give up
     // and reset the docker
@@ -499,8 +514,8 @@ namespace Cozmo {
     
     Result ApplyCLAHE(const Vision::Image& inputImageGray, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
-                                  Vision::Image& claheImage,
+    Result DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+                                  const Vision::Image& claheImage,
                                   std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);
     
@@ -544,6 +559,8 @@ namespace Cozmo {
     
     Result EnableMode(VisionMode whichMode, bool enabled);
     
+    std::unique_ptr<LaserPointDetector> _laserPointDetector;
+    
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
     s32 _lastClaheTileSize;
@@ -557,7 +574,6 @@ namespace Cozmo {
     
   }; // class VisionSystem
   
-      
 } // namespace Cozmo
 } // namespace Anki
 

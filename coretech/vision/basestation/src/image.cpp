@@ -14,6 +14,7 @@
 #include "anki/vision/basestation/image_impl.h"
 
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/ankiDefines.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core.hpp"
@@ -102,7 +103,14 @@ namespace Vision {
   template<typename T>
   void ImageBase<T>::Display(const char *windowName, s32 pauseTime_ms) const
   {
-#   if ANKICORETECH_USE_OPENCV
+#   if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID)
+    {
+      PRINT_NAMED_WARNING("ImageBase.Display.NoDisplayOnAndroidOrIOS",
+                          "Ignoring display request for %s", windowName);
+      return;
+    }
+#   endif
+    
     switch(GetNumChannels())
     {
       case 1:
@@ -129,19 +137,37 @@ namespace Vision {
                           "Cannot display image with %d channels.", GetNumChannels());
         return;
     }
+    
     cv::waitKey(pauseTime_ms);
-#   endif
   }
 
   template<typename T>
   void ImageBase<T>::CloseDisplayWindow(const char *windowName)
   {
+#   if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID)
+    {
+      PRINT_NAMED_WARNING("ImageBase.CloseDisplayWindow.NoDisplayOnAndroidOrIOS",
+                          "Ignoring close display request for %s", windowName);
+      return;
+    }
+#   endif
+    
     cv::destroyWindow(windowName);
   }
   
   template<typename T>
   void ImageBase<T>::CloseAllDisplayWindows()
   {
+#   if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID)
+    {
+      // NOTE: Display should not be possible (via similar checks above), so
+      // there's no real harm in calling this method, so just a debug, not
+      // a warning.
+      PRINT_NAMED_DEBUG("ImageBase.CloseAllDisplayWindows.NoDisplayOnAndroidOrIOS", "");
+      return;
+    }
+#   endif
+    
     cv::destroyAllWindows();
   }
   
@@ -310,12 +336,9 @@ namespace Vision {
     return thresholdedImage.Threshold(value);
   }
 
-  
   s32 Image::GetConnectedComponents(Array2d<s32>& labelImage) const
   {
-    
     const s32 count = cv::connectedComponents(this->get_CvMat_(), labelImage.get_CvMat_());
-    
     return count;
   } // GetConnectedComponents()
   
@@ -323,7 +346,7 @@ namespace Vision {
   {
     cv::Mat cvStats, cvCentroids;
     const s32 count = cv::connectedComponentsWithStats(this->get_CvMat_(), labelImage.get_CvMat_(), cvStats, cvCentroids);
-    for(s32 iComp=0; iComp < count; ++iComp)
+    for(s32 iComp=0; iComp < count; ++iComp) 
     {
       const s32* compStats = cvStats.ptr<s32>(iComp);
       const f64* compCentroid = cvCentroids.ptr<f64>(iComp);
@@ -388,6 +411,7 @@ namespace Vision {
     return grayImage;
   }
   
+  
 #if 0 
 #pragma mark --- ImageRGB ---
 #endif 
@@ -440,6 +464,24 @@ namespace Vision {
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
     return grayImage;
   }
+  
+  Image ImageRGB::Threshold(u8 value, bool anyChannel) const
+  {
+    std::function<u8(const PixelRGB&)> thresholdFcn = [value,anyChannel](const PixelRGB& p)
+    {
+      if(p.IsBrighterThan(value, anyChannel)) {
+        return 255;
+      } else {
+        return 0;
+      }
+    };
+    
+    Image out(GetNumRows(), GetNumCols());
+    ApplyScalarFunction(thresholdFcn, out);
+    
+    return out;
+  }
+  
 
 } // namespace Vision
 } // namespace Anki

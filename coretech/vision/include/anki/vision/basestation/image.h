@@ -187,6 +187,10 @@ namespace Vision {
     
     Image ToGray() const;
     
+    // Sets all pixels > value to 255 and all values <= value to 0.
+    // If anyChannel=true, then any channel being above the value suffices. Otherwise, all channels must be.
+    Image Threshold(u8 value, bool anyChannel) const;
+    
     virtual s32 GetNumChannels() const override { return 4; }
     
   }; // class ImageRGB

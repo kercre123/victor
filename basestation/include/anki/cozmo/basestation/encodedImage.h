@@ -44,6 +44,8 @@ namespace Cozmo {
     void Clear() { _buffer.clear(); }
     bool IsEmpty() const { return _buffer.empty(); }
     
+    bool IsColor() const;
+    
     u32 GetImageID() const { return _imgID; }
     s32 GetWidth()   const { return _imgWidth; }
     s32 GetHeight()  const { return _imgHeight; }

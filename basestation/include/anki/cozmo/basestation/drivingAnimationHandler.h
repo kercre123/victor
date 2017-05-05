@@ -50,11 +50,19 @@ namespace Anki {
         // Resets the driving animations to default
         void ClearAllDrivingAnimations();
       
-        // Returns true if the drivingEnd animation is playing
+        // Returns true if the drivingEnd animation is currently playing
+        // Calling action should return ActionResult::RUNNING as long as this is true.
         bool IsPlayingEndAnim() const { return _state == AnimState::PlayingEnd; }
       
+        // Returns true if the drivingEnd animation has finished.
+        // Once this is true, action's CheckIfDone can return return a non-running ActionResult.
+        bool HasFinishedEndAnim() const { return (_state == AnimState::FinishedEnd); }
+      
         // Takes in the tag of the action that is calling this and whether or not it is suppressing track locking
-        void Init(const u8 tracksToUnlock, const u32 tag, const bool isActionSuppressingLockingTracks);
+        // If keepLoopingWithoutPath is false, endAnim is played automatically once no path is being followed.
+        // If true, then calling action must call PlayEndAnim.
+        void Init(const u8 tracksToUnlock, const u32 tag, const bool isActionSuppressingLockingTracks,
+                  const bool keepLoopingWithoutPath = false);
       
         // Starts playing drivingStart or drivingLoop if drivingStart isn't specified
         void PlayStartAnim();
@@ -102,6 +110,7 @@ namespace Anki {
         u32 _actionTag;
         u8 _tracksToUnlock = (u8)AnimTrackFlag::NO_TRACKS;
         bool _isActionLockingTracks = true;
+        bool _keepLoopingWithoutPath = false;
       
         std::vector<Signal::SmartHandle> _signalHandles;
 

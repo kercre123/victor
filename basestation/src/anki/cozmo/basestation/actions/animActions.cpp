@@ -223,6 +223,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
                               "Event: %s", EnumToString(animEvent));
         }
+        SetName("PlayAnimation" + _animGroupName);
       } else {
         PRINT_NAMED_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
                             "Event: %s", EnumToString(animEvent));

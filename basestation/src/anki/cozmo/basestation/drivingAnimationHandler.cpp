@@ -131,7 +131,8 @@ namespace Anki {
       }
       else if(msg.idTag == _drivingLoopAnimTag)
       {
-        if(_robot.GetPathComponent().HasPathToFollow() && msg.result == ActionResult::SUCCESS)
+        const bool keepLooping = (_keepLoopingWithoutPath || _robot.GetPathComponent().HasPathToFollow());
+        if(keepLooping && msg.result == ActionResult::SUCCESS)
         {
           PlayDrivingLoopAnim();
         }
@@ -170,7 +171,8 @@ namespace Anki {
     
     void DrivingAnimationHandler::Init(const u8 tracksToUnlock,
                                        const u32 tag,
-                                       const bool isActionSuppressingLockingTracks)
+                                       const bool isActionSuppressingLockingTracks,
+                                       const bool keepLoopingWithoutPath)
     {
       UpdateCurrDrivingAnimations();
       
@@ -181,6 +183,7 @@ namespace Anki {
       _tracksToUnlock = tracksToUnlock;
       _actionTag = tag;
       _isActionLockingTracks = !isActionSuppressingLockingTracks;
+      _keepLoopingWithoutPath = keepLoopingWithoutPath;
     }
     
     void DrivingAnimationHandler::PlayStartAnim()

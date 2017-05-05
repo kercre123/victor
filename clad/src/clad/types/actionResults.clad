@@ -31,6 +31,7 @@ enum uint_32 ActionResult {
   ABORT                               = verbatim ActionResultCategory::ABORT * ARCBitShift::SHIFT,
   ANIM_ABORTED,
   BAD_MARKER,
+  BAD_MESSAGE_TAG,
   BAD_OBJECT,
   BAD_POSE,
   BAD_TAG,

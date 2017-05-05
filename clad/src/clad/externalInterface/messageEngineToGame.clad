@@ -317,13 +317,32 @@ message RobotObservedPet {
 
 // RobotObservedMotion
 message RobotObservedMotion {
-    uint_32  timestamp, // Of the corresponding image
-    float_32 img_area,  // Size of the region of detected motion, as a fraction of image
-    int_16   img_x,     // Centroid of the motion region relative to image center, in pixels
+    uint_32  timestamp,     // Of the corresponding image
+
+    // Pixel coordinate of the point in the image, relative to image center.
+    // Area of the supporting region for the point, as a fraction of the image
+    float_32 img_area,
+    int_16   img_x,
     int_16   img_y,
-    float_32 ground_area, // Amount of motion on the ground, as a fraction of the ground ROI (0 if none)
-    int_16   ground_x,    // Centroid of the motion on the ground in robot coordinates, in mm
+
+    // Coordinates of the point on the ground, relative to robot, in mm
+    // Area of the supporting region for the point, as a fraction of the ground ROI
+    // If unable to map to the ground, area=0
+    float_32 ground_area,
+    int_16   ground_x,
     int_16   ground_y
+}
+
+// RobotObservedLaserPoint
+message RobotObservedLaserPoint {
+    uint_32  timestamp,
+
+    // Coordinates of the point on the ground, relative to robot, in mm.
+    // Area of the supporting region for the point, as a fraction of the ground ROI.
+    // If unable to map to the ground, area=0.
+    float_32 ground_area_fraction,
+    int_16   ground_x_mm,
+    int_16   ground_y_mm
 }
 
 // RobotDeletedFace - sent when an _observed_ face has been deleted (e.g. if not seen for too long)

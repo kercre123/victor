@@ -223,9 +223,9 @@ protected:
   // Only sets the name if it's currently the base default name
   void SetDefaultName(const char* inName);
   inline void SetDebugStateName(const std::string& inName) {
+    PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
+                  GetName().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
-    PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, State:%s",
-                  GetName().c_str(), _debugStateName.c_str());
   }
   
   inline void SetExecutableType(ExecutableBehaviorType type) { _executableType = type; }

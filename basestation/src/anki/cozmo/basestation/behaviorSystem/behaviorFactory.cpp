@@ -80,6 +80,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPyramidThankYou.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorStackBlocks.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorTrackLaser.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -358,6 +359,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::PyramidThankYou:
     {
       newBehavior = new BehaviorPyramidThankYou(robot, config);
+      break;
+    }
+    case BehaviorClass::TrackLaser:
+    {
+      newBehavior = new BehaviorTrackLaser(robot, config);
       break;
     }
       

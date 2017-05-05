@@ -625,6 +625,30 @@
       "AnimName": "knockOverStack_success"
     },
     {
+      "CladEvent": "LaserDriveEnd",
+      "AnimName": "ag_pounceDriveEnd"
+    },
+    {
+      "CladEvent": "LaserDriveLoop",
+      "AnimName": "ag_laserDriveLoop"
+    },
+    {
+      "CladEvent": "LaserDriveStart",
+      "AnimName": "ag_laserDriveStart"
+    },
+    {
+      "CladEvent": "LaserFace",
+      "AnimName": "ag_pounceDriveFace"
+    },
+    {
+      "CladEvent": "LaserGetOut",
+      "AnimName": "ag_pounceDriveFace_getOut"
+    },
+    {
+      "CladEvent": "LaserPounce",
+      "AnimName": "ag_pounceOnMotionPounce"
+    },
+    {
       "CladEvent": "LookInPlaceForFacesBodyPause",
       "AnimName": "ag_lookInPlaceForFaces_bodyMovePause"
     },

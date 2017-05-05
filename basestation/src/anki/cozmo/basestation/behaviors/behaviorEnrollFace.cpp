@@ -645,10 +645,7 @@ void BehaviorEnrollFace::TransitionToEnrolling(Robot& robot)
   robot.GetFaceWorld().Enroll(_faceID);
   
   TrackFaceAction* trackAction = new TrackFaceAction(robot, _faceID);
-  
-  // Disable tracking sounds because we have a scanning animation with sound
-  trackAction->SetSound(AnimationTrigger::Count);
-  
+    
   if(!CanMoveTreads(robot))
   {
     // Only move head during tracking if robot is off the ground or a cliff is detected

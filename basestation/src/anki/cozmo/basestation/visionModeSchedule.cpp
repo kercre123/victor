@@ -69,15 +69,19 @@ bool VisionModeSchedule::CheckTimeToProcessAndAdvance()
 AllVisionModesSchedule::ScheduleArray AllVisionModesSchedule::sDefaultSchedules = AllVisionModesSchedule::InitDefaultSchedules();
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AllVisionModesSchedule::AllVisionModesSchedule()
-: _schedules(sDefaultSchedules)
+AllVisionModesSchedule::AllVisionModesSchedule(bool useDefaults)
 {
-  
+  if(useDefaults) {
+    _schedules = sDefaultSchedules;
+  } else {
+    _schedules.fill(VisionModeSchedule(false));
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AllVisionModesSchedule::AllVisionModesSchedule(const std::list<std::pair<VisionMode,VisionModeSchedule>>& schedules)
-: AllVisionModesSchedule()
+AllVisionModesSchedule::AllVisionModesSchedule(const std::list<std::pair<VisionMode,VisionModeSchedule>>& schedules,
+                                               bool useDefaultsForUnspecified)
+: AllVisionModesSchedule(useDefaultsForUnspecified)
 {
   for(auto schedIter = schedules.begin(); schedIter != schedules.end(); ++schedIter)
   {
@@ -93,9 +97,24 @@ AllVisionModesSchedule::ScheduleArray AllVisionModesSchedule::InitDefaultSchedul
   return defaultInitialArray;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionModeSchedule& AllVisionModesSchedule::GetScheduleForMode(VisionMode mode)
 {
   return _schedules[(size_t)mode];
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const VisionModeSchedule& AllVisionModesSchedule::GetScheduleForMode(VisionMode mode) const
+{
+  return _schedules[(size_t)mode];
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AllVisionModesSchedule::CheckTimeToProcessAndAdvance(VisionMode mode)
+{
+  VisionModeSchedule& schedule = GetScheduleForMode(mode); // Note that we return a reference!
+  const bool isTimeToProcess = schedule.CheckTimeToProcessAndAdvance();
+  return isTimeToProcess;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

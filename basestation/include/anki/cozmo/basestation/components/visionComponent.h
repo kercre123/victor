@@ -134,6 +134,7 @@ struct DockingErrorSignal;
     Result UpdateTrackingQuad(const VisionProcessingResult& result);
     Result UpdateDockingErrorSignal(const VisionProcessingResult& result);
     Result UpdateMotionCentroid(const VisionProcessingResult& result);
+    Result UpdateLaserPoints(const VisionProcessingResult& result);
     Result UpdateOverheadEdges(const VisionProcessingResult& result);
     Result UpdateToolCode(const VisionProcessingResult& result);
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
@@ -274,12 +275,17 @@ struct DockingErrorSignal;
     void HandleMessage(const T& msg);
     
     void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
-    void EnableAutoExposure(bool enable) { _enableAutoExposure = enable; }
+    void EnableAutoExposure(bool enable);
+    void EnableColorImages(bool enable);
     
     s32 GetMinCameraExposureTime_ms() const;
     s32 GetMaxCameraExposureTime_ms() const;
     f32 GetMinCameraGain() const;
     f32 GetMaxCameraGain() const;
+    
+    bool AreColorImagesEnabled() const { return _enableColorImages; }
+    s32  GetCurrentCameraExposureTime_ms() const;
+    f32  GetCurrentCameraGain() const;
     
 #   ifdef COZMO_V2
     // COZMO 2.0 ONLY
@@ -374,6 +380,7 @@ struct DockingErrorSignal;
     bool _doFactoryDotTest = false;
     
     bool _enableAutoExposure = true;
+    bool _enableColorImages = false;
     
   }; // class VisionComponent
   

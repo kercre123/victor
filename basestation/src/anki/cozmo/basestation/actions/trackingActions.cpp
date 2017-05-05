@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/petWorld.h"
@@ -36,6 +37,7 @@ namespace Anki {
 namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
+  
   
 #pragma mark -
 #pragma mark ITrackAction
@@ -86,6 +88,8 @@ ITrackAction::~ITrackAction()
         break;
     }
   }
+  
+  _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
 }
 
 // TODO:(bn) if we implemented a parallel compound action function like "Stop on first action complete"
@@ -132,31 +136,103 @@ void ITrackAction::StopTrackingWhenOtherActionCompleted( u32 otherActionTag )
     _stopOnOtherActionTag = otherActionTag;
   }
 }
-
-void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
-  if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
-    PRINT_NAMED_WARNING("ITrackAction.SetTiltSpeeds.InvalidSpeeds",
-                        "Min (%f) should be < max (%f)",
-                        minSpeed_radPerSec, maxSpeed_radPerSec);
-  } else {
-    _minTiltSpeed_radPerSec = minSpeed_radPerSec;
-    _maxTiltSpeed_radPerSec = maxSpeed_radPerSec;
-  }
+ 
+void ITrackAction::SetPanDuration(f32 panDuration_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanDuration.ActionAlreadyStarted");
+  _panDuration_sec = panDuration_sec;
 }
 
-void ITrackAction::SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec) {
-  if(minSpeed_radPerSec >= maxSpeed_radPerSec) {
-    PRINT_NAMED_WARNING("ITrackAction.SetPanSpeeds.InvalidSpeeds",
-                        "Min (%f) should be < max (%f)",
-                        minSpeed_radPerSec, maxSpeed_radPerSec);
-  } else {
-    _minPanSpeed_radPerSec = minSpeed_radPerSec;
-    _maxPanSpeed_radPerSec = maxSpeed_radPerSec;
-  }
+void ITrackAction::SetTiltDuration(f32 tiltDuration_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetTiltDuration.ActionAlreadyStarted");
+  _tiltDuration_sec = tiltDuration_sec;
 }
 
+void ITrackAction::SetUpdateTimeout(float timeout_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetUpdateTimeout.ActionAlreadyStarted");
+  _updateTimeout_sec = timeout_sec;
+}
+  
+void ITrackAction::SetDesiredTimeToReachTarget(f32 time_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetDesiredTimeToReachTarget.ActionAlreadyStarted");
+  _timeToReachTarget_sec = time_sec;
+}
+
+void ITrackAction::EnableDrivingAnimation(bool enable)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.EnableDrivingAnimation.ActionAlreadyStarted");
+  _shouldPlayDrivingAnimation = enable;
+}
+
+void ITrackAction::SetSound(const AnimationTrigger animName)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetSound.ActionAlreadyStarted");
+  _turningSoundAnimTrigger = animName;
+}
+
+void ITrackAction::SetMinPanAngleForSound(const Radians& angle)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMinPanAngleForSound.ActionAlreadyStarted");
+  _minPanAngleForSound = angle.getAbsoluteVal();
+}
+
+void ITrackAction::SetMinTiltAngleForSound(const Radians& angle)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMinTiltAngleForSound.ActionAlreadyStarted");
+  _minTiltAngleForSound = angle.getAbsoluteVal();
+}
+
+void ITrackAction::SetClampSmallAnglesToTolerances(bool tf)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetClampSmallAnglesToTolerances.ActionAlreadyStarted");
+  _clampSmallAngles = tf;
+}
+
+void ITrackAction::SetClampSmallAnglesPeriod(float min_sec, float max_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetClampSmallAnglesPeriod.ActionAlreadyStarted");
+  _clampSmallAnglesMinPeriod_s = min_sec;
+  _clampSmallAnglesMaxPeriod_s = max_sec;
+}
+  
+void ITrackAction::SetMaxHeadAngle(const Radians& maxHeadAngle_rads)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMaxHeadAngle.ActionAlreadyStarted");
+  _maxHeadAngle = maxHeadAngle_rads;
+}
+
+void ITrackAction::SetMoveEyes(bool moveEyes)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMoveEyes.ActionAlreadyStarted");
+  _moveEyes = moveEyes;
+}
+
+void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetSoundSpacing.ActionAlreadyStarted");
+  _soundSpacingMin_sec = spacingMin_sec;
+  _soundSpacingMax_sec = spacingMax_sec;
+}
+
+void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol,
+                                   f32 minDist_mm, f32 maxDist_mm, f32 time_sec)
+{
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
+  _stopCriteria.panTol       = panTol;
+  _stopCriteria.tiltTol      = tiltTol;
+  _stopCriteria.minDist_mm   = minDist_mm;
+  _stopCriteria.maxDist_mm   = maxDist_mm;
+  _stopCriteria.duration_sec = time_sec;
+  
+  _stopCriteria.withinTolSince_sec = -1.f;
+}
+  
 void ITrackAction::SetMode(Mode newMode)
 {
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetMode.ActionAlreadyStarted");
   _mode = newMode;
   if(GetState() == ActionResult::NOT_STARTED)
   {
@@ -182,6 +258,7 @@ void ITrackAction::SetMode(Mode newMode)
   
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)
 {
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanTolerance.ActionAlreadyStarted");
   _panTolerance = panThreshold.getAbsoluteVal();
   
   // NOTE: can't be lower than what is used internally on the robot
@@ -197,6 +274,7 @@ void ITrackAction::SetPanTolerance(const Radians& panThreshold)
   
 void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 {
+  DEV_ASSERT(!HasStarted(), "ITrackAction.SetTiltTolerance.ActionAlreadyStarted");
   _tiltTolerance = tiltThreshold.getAbsoluteVal();
   
   // NOTE: can't be lower than what is used internally on the robot
@@ -211,6 +289,13 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 
 ActionResult ITrackAction::Init()
 {
+  if(_shouldPlayDrivingAnimation)
+  {
+    const bool kLoopWithoutPathToFollow = true;
+    _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking(),
+                                             kLoopWithoutPathToFollow);
+  }
+  
   // Store eye dart setting so we can restore after tracking
   _originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
@@ -226,7 +311,14 @@ ActionResult ITrackAction::Init()
     return ActionResult::ABORT;
   }
   
-  return InitInternal();
+  _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  const ActionResult result = InitInternal();
+  if(ActionResult::SUCCESS == result && _shouldPlayDrivingAnimation)
+  {
+    _robot.GetDrivingAnimationHandler().PlayStartAnim();
+  }
+  return result;
 }
   
 bool ITrackAction::InterruptInternal()
@@ -235,9 +327,35 @@ bool ITrackAction::InterruptInternal()
   return true;
 }
 
+ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result)
+{
+  if(_shouldPlayDrivingAnimation)
+  {
+    _robot.GetDrivingAnimationHandler().PlayEndAnim();
+    _finalActionResult = result; // This will get returned once the end anim completes
+    return ActionResult::RUNNING;
+  }
+  else
+  {
+    return result;
+  }
+}
+  
 ActionResult ITrackAction::CheckIfDone()
 {
-
+  if(_shouldPlayDrivingAnimation)
+  {
+    if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+    {
+      return ActionResult::RUNNING;
+    }
+    else if(_robot.GetDrivingAnimationHandler().HasFinishedEndAnim())
+    {
+      DEV_ASSERT(_finalActionResult != ActionResult::NOT_STARTED, "ITrackAction.CheckIfDone.FinalActionResultNotSet");
+      return _finalActionResult;
+    }
+  }
+  
   if(_stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
      !IsTagInUse(_stopOnOtherActionTag) )
   {
@@ -245,181 +363,285 @@ ActionResult ITrackAction::CheckIfDone()
                   "[%d] action %s stopping because we were told to stop when another action stops (and it did)",
                   GetTag(),
                   GetName().c_str());
-    return ActionResult::SUCCESS;
+    
+    return CheckIfDoneReturnHelper(ActionResult::SUCCESS);
   }
   
-  Radians absPanAngle = 0, absTiltAngle = 0;
-
-  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // See if there are new absolute pan/tilt angles from the derived class
-  if(GetAngles(absPanAngle, absTiltAngle))
+  Radians absPanAngle = 0, absTiltAngle = 0;
+  f32 distance_mm = 0.f;
+  const UpdateResult updateResult = UpdateTracking(absPanAngle, absTiltAngle, distance_mm);
+  switch(updateResult)
   {
-
-    if( absTiltAngle > _maxHeadAngle ) {
-      absTiltAngle = _maxHeadAngle;
-    }
-    
-    // Record latest update to avoid timing out
-    if(_updateTimeout_sec > 0.0f) {
-      _lastUpdateTime = currentTime;
-    }
-    
-#   if DEBUG_TRACKING_ACTIONS
-    PRINT_NAMED_INFO("ITrackAction.CheckIfDone.NewAngles",
-                     "Commanding abs angles: pan=%.1fdeg, tilt=%.1fdeg",
-                     absPanAngle.getDegrees(), absTiltAngle.getDegrees());
-#   endif
-    
-    bool angleLargeEnoughForSound = false;
-    f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
-    
-    // Tilt Head:
-    f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
-
-    const bool shouldClampSmallAngles = UpdateSmallAngleClamping();
-    
-    // If enabled, always move at least the tolerance amount
-    if(shouldClampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
+    case UpdateResult::NewInfo:
+    case UpdateResult::PredictedInfo:
     {
-      relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
-      absTiltAngle = _robot.GetHeadAngle() + relTiltAngle;
-    }
-    
-    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
-       FLT_GE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
-    {
-      // Set speed/accel based on angle difference
-      const f32 angleFrac = std::abs(relTiltAngle)/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
-      const f32 speed = (_maxTiltSpeed_radPerSec - _minTiltSpeed_radPerSec)*angleFrac + _minTiltSpeed_radPerSec;
-      const f32 accel = 20.f; // (MaxAccel - MinAccel)*angleFrac + MinAccel;
+      if( absTiltAngle > _maxHeadAngle ) {
+        absTiltAngle = _maxHeadAngle;
+      }
       
-      if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
+      // Record latest update to avoid timing out
+      if(_updateTimeout_sec > 0.0f) {
+        _lastUpdateTime = currentTime;
+      }
+      
+      if(DEBUG_TRACKING_ACTIONS) {
+        PRINT_NAMED_INFO("ITrackAction.CheckIfDone.NewInfo",
+                         "Commanding %sabs angles: pan=%.1fdeg, tilt=%.1fdeg, dist=%1.fmm",
+                         updateResult == UpdateResult::PredictedInfo ? "predicted " : "",
+                         absPanAngle.getDegrees(), absTiltAngle.getDegrees(), distance_mm);
+      }
+      
+      bool angleLargeEnoughForSound = false;
+      f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
+      
+      // Tilt Head:
+      f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
+      
+      const bool shouldClampSmallAngles = UpdateSmallAngleClamping();
+        
+      // If enabled, always move at least the tolerance amount
+      if(shouldClampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
       {
-        return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
+        relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
+        absTiltAngle = _robot.GetHeadAngle() + relTiltAngle;
       }
       
-      if(std::abs(relTiltAngle) > _minTiltAngleForSound) {
-        angleLargeEnoughForSound = true;
+      if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
+         FLT_GE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
+      {
+        const f32 speed = std::abs(relTiltAngle) / _tiltDuration_sec;
+        const f32 accel = MAX_HEAD_ACCEL_RAD_PER_S2;
+        
+        if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
+        {
+          return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED);
+        }
+        
+        if(std::abs(relTiltAngle) > _minTiltAngleForSound) {
+          angleLargeEnoughForSound = true;
+        }
+        
+        if(_moveEyes) {
+          const f32 y_mm = std::tan(-relTiltAngle) * HEAD_CAM_POSITION[0];
+          eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/2) / SCREEN_SIZE[1]);
+        }
       }
-    
-      if(_moveEyes) {
-        const f32 y_mm = std::tan(-relTiltAngle) * HEAD_CAM_POSITION[0];
-        eyeShiftY = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT/2) / SCREEN_SIZE[1]);
+      
+      // Pan Body:
+      f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+      
+      const bool isPanWithinTol = Util::IsFltLE(std::abs(relPanAngle), _panTolerance.ToFloat());
+      // If enabled, always move at least the tolerance amount
+      if(shouldClampSmallAngles && isPanWithinTol)
+      {
+        relPanAngle = std::copysign(_panTolerance.ToFloat(), relPanAngle);
+        absPanAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat() + relPanAngle;
       }
+      
+      // If distance is non-zero and the body is allowed to move based on mode, then we need to move
+      // forward (fwd) or backward (bwd)
+      const bool needToMoveFwdBwd = (_mode != Mode::HeadOnly) && !Util::IsNearZero(distance_mm);
+      
+      // If the relative pan angle is greater than the tolerance, we need to pan
+      const bool needToPan = Util::IsFltGE(std::abs(relPanAngle), _panTolerance.ToFloat());
+      
+      if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && (needToMoveFwdBwd || needToPan))
+      {
+        const f32 kMaxPanAngle_deg = 89.f;
+        
+        if(needToMoveFwdBwd)
+        {
+          s16 radius = std::numeric_limits<s16>::max(); // default: drive straight
+          if(!isPanWithinTol)
+          {
+            // Set wheel speeds to drive an arc to the salient point. Note: use the *relative* angle for this!
+            const f32 denomAngle = std::min(std::abs(relPanAngle), DEG_TO_RAD(kMaxPanAngle_deg));
+            const f32 d = distance_mm / std::cosf(denomAngle);
+            const f32 d2 = d*d;
+            const f32 radiusDenom = 2.f*std::sqrtf(d2 - distance_mm*distance_mm);
+            radius = std::round( std::copysign( (d2 / radiusDenom), relPanAngle) );
+          }
+          
+          // Specify a fixed duration to reach the goal and compute speed from it
+          const f32 wheelspeed_mmps = std::min(MAX_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
+          const f32 accel = MAX_WHEEL_ACCEL_MMPS2; // Expose?
+          
+          if(DEBUG_TRACKING_ACTIONS) {
+            PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.DriveWheelsCurvature",
+                           "d=%f r=%hd relPan=%.1fdeg speed=%f accel=%f",
+                           distance_mm, radius, RAD_TO_DEG(relPanAngle), wheelspeed_mmps, accel);
+          }
+          
+          Result result = _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(wheelspeed_mmps, accel, radius);
+          
+          if(RESULT_OK != result) {
+            return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED);
+          }
+          
+        }
+        else
+        {
+          // Get rotation angle around drive center
+          Pose3d rotatedPose;
+          Pose3d dcPose = _robot.GetDriveCenterPose();
+          dcPose.SetRotation(absPanAngle, Z_AXIS_3D());
+          _robot.ComputeOriginPose(dcPose, rotatedPose);
+          
+          const Radians& turnAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
+
+          // Just turn in place
+          const f32 rotSpeed_radPerSec = std::min(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, std::abs(relPanAngle) / _panDuration_sec);
+          const f32 accel = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
+          
+          if(DEBUG_TRACKING_ACTIONS) {
+            PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.SetBodyAngle",
+                           "d=%f relPan=%.1fdeg speed=%f accel=%f",
+                           distance_mm, RAD_TO_DEG(relPanAngle), rotSpeed_radPerSec, accel);
+          }
+          
+          RobotInterface::SetBodyAngle setBodyAngle(turnAngle.ToFloat(),      // angle_rad
+                                                    rotSpeed_radPerSec,       // max_speed_rad_per_sec
+                                                    accel,                    // accel_rad_per_sec2
+                                                    _panTolerance.ToFloat(),  // angle_tolerance
+                                                    0,                        // num_half_revolutions
+                                                    true);                    // use_shortest_direction
+          
+          if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+            return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED);
+          }
+        }
+        
+        if(std::abs(relPanAngle) > _minPanAngleForSound) {
+          angleLargeEnoughForSound = true;
+        }
+        
+        if(_moveEyes) {
+          // Compute horizontal eye movement
+          // Note: assuming screen is about the same x distance from the neck joint as the head cam
+          const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
+          eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH/2) / SCREEN_SIZE[0]);
+        }
+      }
+      
+      // Play sound if it's time and either angle was big enough
+      const bool haveTurningSoundAnim = (AnimationTrigger::Count != _turningSoundAnimTrigger);
+      if(haveTurningSoundAnim && (currentTime > _nextSoundTime) && angleLargeEnoughForSound)
+      {
+        // Queue sound to only play if nothing else is playing
+        PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
+        _soundAnimTag = soundAction->GetTag();
+        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
+        
+        _nextSoundTime = currentTime + Util::numeric_cast<float>(GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec));
+      }
+      
+      // Move eyes if indicated
+      if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
+      {
+        // Clip, but retain sign
+        eyeShiftX = CLIP(eyeShiftX, (f32)-ProceduralFace::WIDTH/4,  (f32)ProceduralFace::WIDTH/4);
+        eyeShiftY = CLIP(eyeShiftY, (f32)-ProceduralFace::HEIGHT/4, (f32)ProceduralFace::HEIGHT/4);
+        
+        if(DEBUG_TRACKING_ACTIONS) {
+          PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
+                            "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
+                            eyeShiftX, eyeShiftY, _eyeShiftTag);
+        }
+        
+        // Expose as params?
+        const f32 kMaxLookUpScale   = 1.1f;
+        const f32 kMinLookDownScale = 0.8f;
+        const f32 kOuterEyeScaleIncrease = 0.1f;
+        
+        ProceduralFace procFace;
+        procFace.LookAt(eyeShiftX, eyeShiftY,
+                        static_cast<f32>(ProceduralFace::WIDTH/4),
+                        static_cast<f32>(ProceduralFace::HEIGHT/4),
+                        kMaxLookUpScale, kMinLookDownScale, kOuterEyeScaleIncrease);
+        
+        if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
+          // Start a new eye shift layer
+          AnimationStreamer::FaceTrack faceTrack;
+          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
+          _eyeShiftTag = _robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
+        } else {
+          // Augment existing eye shift layer
+          _robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
+        }
+      } // if(_moveEyes)
+      
+      // Can't meet stop criteria based on predicted updates (as opposed to actual observations)
+      if(updateResult != UpdateResult::PredictedInfo)
+      {
+        const bool shouldStop = StopCriteriaMetAndTimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
+        if(shouldStop)
+        {
+          return CheckIfDoneReturnHelper(ActionResult::SUCCESS);
+        }
+      }
+      
+      break;
     }
-    
-    // Pan Body:
-    f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
-    
-    // If enabled, always move at least the tolerance amount
-    if(shouldClampSmallAngles && FLT_LE(std::abs(relPanAngle), _panTolerance.ToFloat()))
+
+      
+    case UpdateResult::ShouldStop:
     {
-      relPanAngle = std::copysign(_panTolerance.ToFloat(), relPanAngle);
-      absPanAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat() + relPanAngle;
+      // Stop immediately. Yes, the destructor will also do this, but if we have driving animations, we may
+      // return RUNNING for a bit while those finish and we want to make sure to stop _now_ if the UpdateTracking
+      // function said we should.
+      switch(_mode)
+      {
+        case Mode::HeadAndBody:
+          _robot.GetMoveComponent().StopHead();
+          _robot.GetMoveComponent().StopBody();
+          break;
+          
+        case Mode::HeadOnly:
+          _robot.GetMoveComponent().StopHead();
+          break;
+          
+        case Mode::BodyOnly:
+          _robot.GetMoveComponent().StopBody();
+          break;
+      }
+      
+      // NOTE: Intentional fall-through to NoNewInfo case below so we check for timeout
     }
-    
-    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) &&
-       FLT_GE(std::abs(relPanAngle), _panTolerance.ToFloat()))
+      
+      
+    case UpdateResult::NoNewInfo:
     {
-      // Get rotation angle around drive center
-      Pose3d rotatedPose;
-      Pose3d dcPose = _robot.GetDriveCenterPose();
-      dcPose.SetRotation(absPanAngle, Z_AXIS_3D());
-      _robot.ComputeOriginPose(dcPose, rotatedPose);
-      
-      // Set speed/accel based on angle difference
-      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/M_PI_F);
-      const f32 speed = (_maxPanSpeed_radPerSec - _minPanSpeed_radPerSec)*angleFrac + _minPanSpeed_radPerSec;
-      const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
-      
-      RobotInterface::SetBodyAngle setBodyAngle;
-      setBodyAngle.angle_rad              = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-      setBodyAngle.max_speed_rad_per_sec  = speed;
-      setBodyAngle.accel_rad_per_sec2     = accel;
-      setBodyAngle.angle_tolerance        = _panTolerance.ToFloat();
-      setBodyAngle.num_half_revolutions   = 0;
-      setBodyAngle.use_shortest_direction = true;
-      if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
-        return ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED;
+      // Didn't get an observation, see if we haven't had new info in awhile
+      if(_updateTimeout_sec > 0.0f && _lastUpdateTime > 0.0f)
+      {
+        if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.Timeout",
+                        "No tracking angle update received in %f seconds, returning done.",
+                        _updateTimeout_sec);
+          
+          // If no stop criteria are set, we consider this a success
+          // If we have stop criteria, then this is a timeout
+          const bool haveStopCriteria = HaveStopCriteria();
+          if(haveStopCriteria) {
+            return CheckIfDoneReturnHelper(ActionResult::TIMEOUT);
+          } else {
+            return CheckIfDoneReturnHelper(ActionResult::SUCCESS);
+          }
+        }
+        else if(DEBUG_TRACKING_ACTIONS) {
+          PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.NotTimedOut",
+                         "Current t=%f, LastUpdate t=%f, Timeout=%f",
+                         currentTime, _lastUpdateTime, _updateTimeout_sec);
+        }
       }
-      
-      if(std::abs(relPanAngle) > _minPanAngleForSound) {
-        angleLargeEnoughForSound = true;
-      }
-      
-      if(_moveEyes) {
-        // Compute horizontal eye movement
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
-        eyeShiftX = x_mm * (static_cast<f32>(ProceduralFace::WIDTH/2) / SCREEN_SIZE[0]);
-      }
+      break;
     }
-    
-    // Play sound if it's time and either angle was big enough
-    const bool haveTurningSoundAnim = AnimationTrigger::Count != _turningSoundAnimTrigger;
-    if(haveTurningSoundAnim && (currentTime > _nextSoundTime) && angleLargeEnoughForSound)
-    {
-      // Queue sound to only play if nothing else is playing
-      PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
-      _soundAnimTag = soundAction->GetTag();
-      _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
       
-      _nextSoundTime = currentTime + Util::numeric_cast<float>(GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec));
-    }
-    
-    // Move eyes if indicated
-    if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
-    {
-      // Clip, but retain sign
-      eyeShiftX = CLIP(eyeShiftX, (f32)-ProceduralFace::WIDTH/4,  (f32)ProceduralFace::WIDTH/4);
-      eyeShiftY = CLIP(eyeShiftY, (f32)-ProceduralFace::HEIGHT/4, (f32)ProceduralFace::HEIGHT/4);
-      
-#     if DEBUG_TRACKING_ACTIONS
-      PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",
-                        "Adjusting eye shift to (%.1f,%.1f), with tag=%d",
-                        eyeShiftX, eyeShiftY, _eyeShiftTag);
-#     endif
-      
-      // Expose as params?
-      const f32 maxLookUpScale   = 1.1f;
-      const f32 minLookDownScale = 0.8f;
-      const f32 outerEyeScaleIncrease = 0.1f;
-      
-      ProceduralFace procFace;
-      procFace.LookAt(eyeShiftX, eyeShiftY,
-                      static_cast<f32>(ProceduralFace::WIDTH/4),
-                      static_cast<f32>(ProceduralFace::HEIGHT/4),
-                      maxLookUpScale, minLookDownScale, outerEyeScaleIncrease);
-      
-      if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
-        // Start a new eye shift layer
-        AnimationStreamer::FaceTrack faceTrack;
-        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
-        _eyeShiftTag = _robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
-      } else {
-        // Augment existing eye shift layer
-        _robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
-      }
-    } // if(_moveEyes)
-    
-  } else if(_updateTimeout_sec > 0.0f) {
-    if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
-      PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.Timeout",
-                    "No tracking angle update received in %f seconds, returning done.",
-                    _updateTimeout_sec);
-      return ActionResult::SUCCESS;
-    }
-    
   }
-
   return ActionResult::RUNNING;
-}
-
-void ITrackAction::SetClampSmallAnglesPeriod(float min_sec, float max_sec)
-{
-  _clampSmallAnglesMinPeriod_s = min_sec;
-  _clampSmallAnglesMaxPeriod_s = max_sec;
 }
 
 bool ITrackAction::UpdateSmallAngleClamping()
@@ -444,6 +666,72 @@ bool ITrackAction::UpdateSmallAngleClamping()
   else {
     return false;
   }
+}
+  
+bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32 relTiltAngle,
+                                                const f32 distance_mm, const f32 currentTime)
+{
+  const bool haveStopCriteria = HaveStopCriteria();
+  if(haveStopCriteria)
+  {
+    const bool isWithinPanTol  = Util::IsFltLE(std::abs(relPanAngle), _stopCriteria.panTol.ToFloat());
+    const bool isWithinTiltTol = Util::IsFltLE(std::abs(relTiltAngle), _stopCriteria.tiltTol.ToFloat());
+    const bool isWithinDistTol = Util::InRange(distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
+    
+    const bool isWithinTol = (isWithinPanTol && isWithinTiltTol && isWithinDistTol);
+    
+    if(DEBUG_TRACKING_ACTIONS)
+    {
+      PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.CheckingStopCriteria",
+                     "Pan:%.1fdeg vs %.1f (%c), Tilt:%.1fdeg vs %.1f (%c), Dist:%.1fmm vs (%.1f,%.1f) (%c)",
+                     std::abs(RAD_TO_DEG(relPanAngle)), _stopCriteria.panTol.getDegrees(),
+                     isWithinPanTol ? 'Y' : 'N',
+                     std::abs(RAD_TO_DEG(relTiltAngle)), _stopCriteria.tiltTol.getDegrees(),
+                     isWithinTiltTol ? 'Y' : 'N',
+                     distance_mm, _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm,
+                     isWithinDistTol ? 'Y' : 'N');
+    }
+    
+    if(isWithinTol)
+    {
+      const bool wasWithinTol = (_stopCriteria.withinTolSince_sec >= 0.f);
+      
+      if(wasWithinTol)
+      {
+        // Been within tolerance for long enough to stop yet?
+        if( (currentTime - _stopCriteria.withinTolSince_sec) > _stopCriteria.duration_sec)
+        {
+          PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
+                        "Within tolerances for > %.1fsec (panTol=%.1fdeg tiltTol=%.1fdeg distTol=[%.1f,%.1f]",
+                        _stopCriteria.duration_sec,
+                        _stopCriteria.panTol.getDegrees(),
+                        _stopCriteria.tiltTol.getDegrees(),
+                        _stopCriteria.minDist_mm, _stopCriteria.maxDist_mm);
+          
+          return true;
+        }
+      }
+      else
+      {
+        if(DEBUG_TRACKING_ACTIONS)
+        {
+          PRINT_CH_DEBUG(kLogChannelName, "ITrackAction.CheckIfDone.StopCriteriaMet",
+                         "Setting start of stop criteria being met to t=%.1fsec",
+                         currentTime);
+        }
+        
+        // Just got (back) into tolerance, set "since" time
+        _stopCriteria.withinTolSince_sec = currentTime;
+      }
+    }
+    else
+    {
+      // Not within tolerances, reset
+      _stopCriteria.withinTolSince_sec = -1.f;
+    }
+  }
+  
+  return false;
 }
   
 //=======================================================================================================
@@ -491,7 +779,7 @@ ActionResult TrackObjectAction::InitInternal()
   return ActionResult::SUCCESS;
 } // InitInternal()
   
-bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
+ITrackAction::UpdateResult TrackObjectAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
 {
   ObservableObject* matchingObject = nullptr;
   
@@ -508,7 +796,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
                        "Could not find matching %s object.",
                        EnumToString(_objectType));
 #     endif
-      return false;
+      return UpdateResult::NoNewInfo;
     } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
       // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
       _robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
@@ -519,7 +807,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
       PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.ObjectNoLongerExists",
                           "Object %d no longer exists in BlockWorld",
                           _objectID.GetValue());
-      return false;
+      return UpdateResult::NoNewInfo;
     }
   }
   
@@ -538,7 +826,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
                       "expecting at least one.",
                       matchingObject->GetID().GetValue(),
                       matchingObject->GetLastObservedTime());
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   
   const Vision::KnownMarker* closestMarker = nullptr;
@@ -550,7 +838,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
       PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.PoseOriginError",
                         "Could not get pose of observed marker w.r.t. robot");
-      return false;
+      return UpdateResult::NoNewInfo;
     }
     
     const f32 xDist_crnt = markerPoseWrtRobot.GetTranslation().x();
@@ -574,7 +862,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   if(closestMarker == nullptr) {
     PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.NoClosestMarker", "");
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   
   DEV_ASSERT(minDistSq > 0.f, "Distance to closest marker should be > 0");
@@ -582,9 +870,9 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
   
-  return true;
+  return UpdateResult::NewInfo;
   
-} // GetAngles()
+} // UpdateTracking()
   
 //=======================================================================================================
 #pragma mark -
@@ -643,19 +931,20 @@ void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) 
   completionUnion.Set_trackFaceCompleted(std::move(completion));
 }
   
-bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
+ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
 {
   const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
+  distance_mm = 0.f;
   
   if(nullptr == face) {
     // No such face
     PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.GetAngles.BadFaceID", "No face %d in FaceWorld", _faceID);
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   
   // Only update pose if we've actually observed the face again since last update
   if(face->GetTimeStamp() <= _lastFaceUpdate) {
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   _lastFaceUpdate = face->GetTimeStamp();
   
@@ -663,7 +952,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headPoseWrtRobot)) {
     PRINT_NAMED_ERROR("TrackFaceAction.GetAngles.PoseOriginError",
                       "Could not get pose of face w.r.t. robot.");
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   
   const f32 xDist = headPoseWrtRobot.GetTranslation().x();
@@ -684,14 +973,14 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   if (xyDistSq <= 0.f)
   {
     DEV_ASSERT(false, "TrackFaceAction.GetAngles.ZeroDistance");
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
 
-  return true;
-} // GetAngles()
+  return UpdateResult::NewInfo;
+} // UpdateTracking()
   
 //=======================================================================================================
 #pragma mark -
@@ -742,7 +1031,7 @@ void TrackPetFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnio
   completionUnion.Set_trackFaceCompleted(std::move(completion));
 }
 
-bool TrackPetFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
+ITrackAction::UpdateResult TrackPetFaceAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
 {
   const Vision::TrackedPet* petFace = nullptr;
   
@@ -754,7 +1043,7 @@ bool TrackPetFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     {
       // No such face
       PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.BadFaceID", "No face %d in PetWorld", _faceID);
-      return false;
+      return UpdateResult::NoNewInfo;
     }
   }
   else
@@ -768,13 +1057,13 @@ bool TrackPetFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
     {
       PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.NoPetsWithType", "Type=%s",
                     EnumToString(_petType));
-      return false;
+      return UpdateResult::NoNewInfo;
     }
   }
 
   // Only update pose if we've actually observed the face again since last update
   if(petFace->GetTimeStamp() <= _lastFaceUpdate) {
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   _lastFaceUpdate = petFace->GetTimeStamp();
   
@@ -783,11 +1072,11 @@ bool TrackPetFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   if(RESULT_OK != result)
   {
     PRINT_NAMED_WARNING("TrackpetFaceAction.GetAngles.ComputeTurnTowardsImagePointAnglesFailed", "t=%u", petFace->GetTimeStamp());
-    return false;
+    return UpdateResult::NoNewInfo;
   }
   
-  return true;
-} // GetAngles()
+  return UpdateResult::NewInfo;
+} // UpdateTracking()
   
 //=======================================================================================================
 #pragma mark -
@@ -817,8 +1106,10 @@ ActionResult TrackMotionAction::InitInternal()
 } // InitInternal()
 
   
-bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
+ITrackAction::UpdateResult TrackMotionAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
 {
+  distance_mm = 0.f;
+  
   if(_gotNewMotionObservation && _motionObservation.img_area > 0)
   {
     _gotNewMotionObservation = false;
@@ -836,7 +1127,7 @@ bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
                         _robot.GetLastMsgTimestamp());
-      return false;
+      return UpdateResult::NoNewInfo;
     }
     
     assert(nullptr != histStatePtr);
@@ -852,14 +1143,13 @@ bool TrackMotionAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
                      motionCentroid.x(), motionCentroid.y());
 #   endif
     
-    return true;
+    return UpdateResult::NewInfo;
     
   } // if(_gotNewMotionObservation && _motionObservation.img_area > 0)
   
-  return false;
+  return UpdateResult::NoNewInfo;
   
-} // GetAngles()
-  
+} // UpdateTracking()
   
 } // namespace Cozmo
 } // namespace Anki

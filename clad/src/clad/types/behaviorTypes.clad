@@ -64,6 +64,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
   StackBlocks,
   ThinkAboutBeacons,
+  TrackLaser,
   VisitInterestingEdge,
 
   // Behaviors mapped to reaction triggers
@@ -97,6 +98,8 @@ enum uint_8 BehaviorClass {
 // Only needs to include behaviors that make sense for e.g. SDK to request directly
 enum uint_8 ExecutableBehaviorType {
   NoneBehavior,
+
+  EnrollFace,
   FindFaces,
   FistBump,
   KnockOverCubes,
@@ -105,7 +108,8 @@ enum uint_8 ExecutableBehaviorType {
   PounceOnMotion,
   RollBlock,
   StackBlocks,
-  EnrollFace,
+  TrackLaser,
+
   Count
 }
 

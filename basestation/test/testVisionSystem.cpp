@@ -109,6 +109,7 @@ TEST(VisionSystem, MarkerDetectionTests)
   };
   
   Vision::ImageRGB img;
+  Vision::Image    imgGray;
   
   for(auto & testDefinition : testDefinitions)
   {
@@ -122,8 +123,10 @@ TEST(VisionSystem, MarkerDetectionTests)
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
       
+      imgGray = img.ToGray();
+      
       Cozmo::VisionPoseData robotState; // not needed just to detect markers
-      result = visionSystem.Update(robotState, img);
+      result = visionSystem.Update(robotState, img, imgGray);
       ASSERT_EQ(RESULT_OK, result);
       
       Cozmo::VisionProcessingResult processingResult;
@@ -238,6 +241,7 @@ TEST(VisionSystem, ImageQuality)
   };
   
   Vision::ImageRGB img;
+  Vision::Image    imgGray;
   
   // Fake the exposure parameters so that we are always against the extremes in order
   // to trigger TooDark and TooBright
@@ -254,8 +258,10 @@ TEST(VisionSystem, ImageQuality)
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
       
+      imgGray = img.ToGray();
+      
       Cozmo::VisionPoseData robotState; // not needed for image quality check
-      result = visionSystem.Update(robotState, img);
+      result = visionSystem.Update(robotState, img, imgGray);
       ASSERT_EQ(RESULT_OK, result);
       
       Cozmo::VisionProcessingResult processingResult;

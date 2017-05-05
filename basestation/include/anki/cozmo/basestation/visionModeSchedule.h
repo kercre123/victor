@@ -44,11 +44,13 @@ class AllVisionModesSchedule
 {
 public:
   
-  // All modes' schedules set to current default values
-  AllVisionModesSchedule();
+  // If initWithDefaults=true, all modes' schedules are set to current defaults.
+  // Otherwise, everything starts disabled.
+  AllVisionModesSchedule(bool initWithDefaults = true);
   
   // Initialize specified modes with given schedules, and initialize any unspecified
-  // modes' schedules to the current defaults.
+  // modes' schedules to the current defaults. (If useDefaultsForUnspecified=false,
+  // any unspecified modes will be disabled.)
   //
   // Example for setting one mode:
   //   AllVisionModesSchedule({{VisionMode::DetectingMarkers, VisionModeSchedule(1)}})
@@ -57,10 +59,16 @@ public:
   //   AllVisionModesSchedule({{VisionMode::DetectingPets,          VisionModeSchedule({true, false})},
   //                           {VisionMode::DetectingOverheadEdges, VisionModeSchedule({false, true})}});
   //
-  AllVisionModesSchedule(const std::list<std::pair<VisionMode,VisionModeSchedule>>&  schedules);
+  AllVisionModesSchedule(const std::list<std::pair<VisionMode,VisionModeSchedule>>&  schedules,
+                         bool useDefaultsForUnspecified = true);
   
   // Get the schedule for a specific mode
   VisionModeSchedule& GetScheduleForMode(VisionMode mode);
+  const VisionModeSchedule& GetScheduleForMode(VisionMode mode) const;
+  
+  // Returns whether it is time to process a mode and advances that mode for the next query
+  // (So should only be called once per image/tick, for each mode)
+  bool CheckTimeToProcessAndAdvance(VisionMode mode);
   
   // Change the defaults to use for unspecified modes
   static void SetDefaultSchedule(VisionMode mode, VisionModeSchedule&& schedule);

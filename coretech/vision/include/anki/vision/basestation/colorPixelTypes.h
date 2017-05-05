@@ -29,16 +29,20 @@ namespace Vision {
     
     // Const accessors
     Type  r() const { return this->operator[](0); }
-    Type  b() const { return this->operator[](1); }
-    Type  g() const { return this->operator[](2); }
+    Type  g() const { return this->operator[](1); }
+    Type  b() const { return this->operator[](2); }
     
     // Non-const accessors
     Type& r() { return this->operator[](0); }
-    Type& b() { return this->operator[](1); }
-    Type& g() { return this->operator[](2); }
+    Type& g() { return this->operator[](1); }
+    Type& b() { return this->operator[](2); }
     
     // Convert to gray
     Type gray() const;
+    
+    // Return min/max across channels
+    Type max() const;
+    Type min() const;
     
     // Return true if all channels are > or < than given value.
     // If "any" is set to true, then returns true if any channel is > or <.
@@ -156,6 +160,18 @@ namespace Vision {
     f32 gray = r() + g()*0.5f + b(); // give green double weight
     gray *= 0.25f;
     return gray;
+  }
+  
+  template<typename Type>
+  inline Type PixelRGB_<Type>::max() const
+  {
+    return std::max(r(), std::max(g(), b()));
+  }
+  
+  template<typename Type>
+  inline Type PixelRGB_<Type>::min() const
+  {
+    return std::min(r(), std::min(g(), b()));
   }
   
 } // namespace Vision

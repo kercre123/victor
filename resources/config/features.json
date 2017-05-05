@@ -34,6 +34,10 @@
   {
     "feature": "Bouncer",
     "enabled": false
+  },
+  {
+    "feature": "Laser",
+    "enabled": false
   }
 ]
 

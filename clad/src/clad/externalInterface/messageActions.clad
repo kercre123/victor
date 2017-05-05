@@ -333,6 +333,11 @@ message TrackToObject {
     bool    headOnly
 }
 
+// TrackToLaserPoint
+message TrackToLaserPoint {
+
+}
+
 // TrackToPet
 message TrackToPet {
     float_32         timeout_sec, // Give up after not seeing a pet for this long (0 to never give up)
@@ -552,6 +557,7 @@ union RobotActionUnion {
   SetLiftHeight             setLiftHeight,
   TrackToFace               trackFace,
   TrackToObject             trackObject,
+  TrackToLaserPoint         trackLaserPoint,
   TrackToPet                trackPet,
   TraverseObject            traverseObject,
   TurnInPlace               turnInPlace,

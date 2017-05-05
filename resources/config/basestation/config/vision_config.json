@@ -11,7 +11,8 @@
     "EstimatingFacialExpression" : false,
     "DetectingSmileAmount"       : false,
     "DetectingGaze"              : false,
-    "DetectingBlinkAmount"       : false
+    "DetectingBlinkAmount"       : false,
+    "DetectingLaserPoints"       : true
   },
   
   "InitialModeSchedules" :
@@ -21,7 +22,8 @@
     // value to process every Nth frame
     "DetectingPets"          : [true, false],
     "DetectingOverheadEdges" : [false, true],
-    "CheckingQuality"        : 15
+    "CheckingQuality"        : 15,
+    "DetectingLaserPoints"   : 2
   },
   
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot

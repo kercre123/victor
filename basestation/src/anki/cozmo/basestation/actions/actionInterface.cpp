@@ -157,6 +157,7 @@ namespace Anki {
         case RobotActionType::PLAY_CUBE_ANIMATION:
         case RobotActionType::SAY_TEXT:
         case RobotActionType::SEARCH_FOR_NEARBY_OBJECT:
+        case RobotActionType::TRACK_GROUND_POINT:
         case RobotActionType::TRACK_MOTION:
         case RobotActionType::TRACK_OBJECT:
         case RobotActionType::TRAVERSE_OBJECT:

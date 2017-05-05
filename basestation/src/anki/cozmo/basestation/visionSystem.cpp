@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
+#include "anki/cozmo/basestation/vision/laserPointDetector.h"
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"
 #include "anki/vision/basestation/faceTracker.h"
@@ -63,12 +64,9 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#define DEBUG_MOTION_DETECTION 0
-#define DEBUG_FACE_DETECTION   0
+#define DEBUG_MOTION_DETECTION    0
+#define DEBUG_FACE_DETECTION      0
 #define DEBUG_DISPLAY_CLAHE_IMAGE 0
-
-#define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
-#define USE_THREE_FRAME_MOTION_DETECTION 0
 
 #define DRAW_TOOL_CODE_DEBUG 0
 #define DRAW_CALIB_IMAGES 0
@@ -109,7 +107,6 @@ namespace Cozmo {
   // This is the main sensitivity parameter: higher means more image difference is required
   // to register a change and thus report motion.
   CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
-  // NOTE: This has no effect with USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID turned off
   CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   // For computing robust "centroid" of motion
   CONSOLE_VAR(f32,  kMotionCentroidPercentileX,       "Vision.MotionDetection", 0.5f);  // In image coordinates
@@ -156,6 +153,7 @@ namespace Cozmo {
   , _dataPath(dataPath)
   , _imagingPipeline(new Vision::ImagingPipeline())
   , _vizManager(vizMan)
+  , _laserPointDetector(new LaserPointDetector(vizMan))
   , _clahe(cv::createCLAHE())
   {
     
@@ -479,6 +477,24 @@ namespace Cozmo {
   Result VisionSystem::SetNextMode(VisionMode mode, bool enable)
   {
     _nextModes.push({mode, enable});
+    return RESULT_OK;
+  }
+  
+  Result VisionSystem::SetNextCameraParams(s32 exposure_ms, f32 gain)
+  {
+    bool& nextParamsSet = _nextCameraParams.first;
+    if(nextParamsSet)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.SetNextCameraParams.OverwritingPreviousParams",
+                          "Params already requested (%dms,%.2f) but not sent. Replacing with (%dms,%.2f)",
+                          _nextCameraParams.second.exposure_ms, _nextCameraParams.second.gain,
+                          exposure_ms, gain);
+    }
+    
+    _nextCameraParams.second.exposure_ms = exposure_ms;
+    _nextCameraParams.second.gain = gain;
+    nextParamsSet = true;
+    
     return RESULT_OK;
   }
   
@@ -1042,8 +1058,8 @@ namespace Cozmo {
           _currentResult.debugImageRGBs.emplace_back("HistWeights", dispWeights);
         }
       }
-    else
-    {
+      else
+      {
         // Detections already make up more than half the image, so they'll already
         // get more focus. Just expose normally
         expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
@@ -1057,7 +1073,6 @@ namespace Cozmo {
       return expResult;
     }
     
-
     if(DEBUG_IMAGE_HISTOGRAM)
     {
       const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
@@ -1075,21 +1090,25 @@ namespace Cozmo {
     } // if(DEBUG_IMAGE_HISTOGRAM)
     
     // Default: we checked the image quality and it's fine (no longer "Unchecked")
-      _currentResult.imageQuality = ImageQuality::Good;
+    // Desired exposure settings are what they already were.
+    _currentResult.imageQuality = ImageQuality::Good;
+    
+    s32 desiredExposureTime_ms = _currentCameraParams.exposure_ms;
+    f32 desiredGain = _currentCameraParams.gain;
     
     if(FLT_LT(exposureAdjFrac, 1.f))
     {
       // Want to bring brightness down: reduce exposure first, if possible
-      if(_currentExposureTime_ms > _minCameraExposureTime_ms)
+      if(_currentCameraParams.exposure_ms > _minCameraExposureTime_ms)
       {
-        _currentExposureTime_ms = std::round(static_cast<f32>(_currentExposureTime_ms) * exposureAdjFrac);
-        _currentExposureTime_ms = std::max(_minCameraExposureTime_ms, _currentExposureTime_ms);
-    }
-      else if(FLT_GT(_currentCameraGain, _minCameraGain))
+        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposure_ms) * exposureAdjFrac);
+        desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
+      }
+      else if(FLT_GT(_currentCameraParams.gain, _minCameraGain))
       {
         // Already at min exposure time; reduce gain
-        _currentCameraGain *= exposureAdjFrac;
-        _currentCameraGain = std::max(_minCameraGain, _currentCameraGain);
+        desiredGain *= exposureAdjFrac;
+        desiredGain = std::max(_minCameraGain, desiredGain);
       }
       else
       {
@@ -1105,16 +1124,16 @@ namespace Cozmo {
     else if(FLT_GT(exposureAdjFrac, 1.f))
     {
       // Want to bring brightness up: increase gain first, if possible
-      if(FLT_LT(_currentCameraGain, _maxCameraGain))
+      if(FLT_LT(_currentCameraParams.gain, _maxCameraGain))
       {
-        _currentCameraGain *= exposureAdjFrac;
-        _currentCameraGain = std::min(_maxCameraGain, _currentCameraGain);
+        desiredGain *= exposureAdjFrac;
+        desiredGain = std::min(_maxCameraGain, desiredGain);
       }
-      else if(_currentExposureTime_ms < _maxCameraExposureTime_ms)
+      else if(_currentCameraParams.exposure_ms < _maxCameraExposureTime_ms)
       {
         // Already at max gain; increase exposure
-        _currentExposureTime_ms = std::round(static_cast<f32>(_currentExposureTime_ms) * exposureAdjFrac);
-        _currentExposureTime_ms = std::min(_maxCameraExposureTime_ms, _currentExposureTime_ms);
+        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposure_ms) * exposureAdjFrac);
+        desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
       }
       else
       {
@@ -1134,18 +1153,18 @@ namespace Cozmo {
     {
       static const int kExposureMultiple = 10;
 
-      const int remainder = _currentExposureTime_ms % kExposureMultiple;
+      const int remainder = desiredExposureTime_ms % kExposureMultiple;
       // Round _maxCameraExposureTime_ms down to the nearest multiple of kExposureMultiple
       const int maxCameraExposureRounded_ms = _maxCameraExposureTime_ms - (_maxCameraExposureTime_ms % kExposureMultiple);
       if(remainder != 0)
       {
-        _currentExposureTime_ms += (kExposureMultiple - remainder);
-        _currentExposureTime_ms = std::min(maxCameraExposureRounded_ms, _currentExposureTime_ms);
+        desiredExposureTime_ms += (kExposureMultiple - remainder);
+        desiredExposureTime_ms = std::min(maxCameraExposureRounded_ms, desiredExposureTime_ms);
       }
     }
     
-    _currentResult.exposureTime_ms = _currentExposureTime_ms;
-    _currentResult.cameraGain      = _currentCameraGain;
+    _currentResult.exposureTime_ms = desiredExposureTime_ms;
+    _currentResult.cameraGain      = desiredGain;
     
     return RESULT_OK;
   }
@@ -1903,40 +1922,9 @@ namespace Cozmo {
     
 	} // DetectPets()
   
-#if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
-  static size_t FindLargestRegionCentroid(const std::vector<std::vector<Anki::Point2i>>& regionPoints,
-                                        size_t minArea, Anki::Point2f& centroid)
-  {
-    size_t largestRegion = 0;
-    
-    for(auto & region : regionPoints) {
-      //PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update.FoundMotionRegion",
-      //                 "Area=%lu", (unsigned long)region.size());
-      if(region.size() > minArea && region.size() > largestRegion) {
-        centroid = 0.f;
-        for(auto & point : region) {
-          centroid += point;
-        }
-        centroid /= static_cast<f32>(region.size());
-        largestRegion = region.size();
-      }
-    } // for each region
-    
-    return largestRegion;
-  }
-#endif
-  
   // Computes "centroid" at specified percentiles in X and Y
-  size_t GetCentroid(const Vision::Image& motionImg, size_t minArea, Anki::Point2f& centroid,
-                     f32 xPercentile, f32 yPercentile)
+  size_t GetCentroid(const Vision::Image& motionImg, Anki::Point2f& centroid, f32 xPercentile, f32 yPercentile)
   {
-#   if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
-    Array2d<s32> motionRegions(motionImg.GetNumRows(), motionImg.GetNumCols());
-    std::vector<std::vector<Point2<s32>>> regionPoints;
-    motionImg.GetConnectedComponents(motionRegions, regionPoints);
-    
-    return FindLargestRegionCentroid(regionPoints, minArea, centroid);
-#   else
     std::vector<s32> xValues, yValues;
     
     for(s32 y=0; y<motionImg.GetNumRows(); ++y)
@@ -1973,7 +1961,7 @@ namespace Cozmo {
                      "ycen=%f, not in [0,%d)", centroid.y(), motionImg.GetNumRows());
       return area;
     }
-#   endif // USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
+
   } // GetCentroid()
   
   bool VisionSystem::HasBodyPoseChanged(const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const
@@ -2005,6 +1993,8 @@ namespace Cozmo {
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
+    // TODO: Move this to its own detection component, analogous to LaserPointDetector (COZMO-10951)
+    
     const bool headSame = !HasHeadAngleChanged(DEG_TO_RAD(kMotionDetectionMaxHeadAngleChange_deg));
     
     const bool poseSame = !HasBodyPoseChanged(DEG_TO_RAD(kMotionDetectionMaxBodyAngleChange_deg),
@@ -2022,9 +2012,6 @@ namespace Cozmo {
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
     if(headSame && poseSame && !_prevImage.IsEmpty() && !_poseData.histState.WasCameraMoving() &&
-#      if USE_THREE_FRAME_MOTION_DETECTION
-       !_prevPrevImage.IsEmpty() &&
-#      endif
        image.GetTimestamp() - _lastMotionTime > kLastMotionDelay_ms)
     {
       s32 numAboveThresh = 0;
@@ -2059,22 +2046,10 @@ namespace Cozmo {
       Vision::Image ratio12(image.GetNumRows(), image.GetNumCols());
       image.ApplyScalarFunction(ratioTest, _prevImage, ratio12);
       
-#     if USE_THREE_FRAME_MOTION_DETECTION
-      Vision::Image ratio01(image.GetNumRows(), image.GetNumCols());
-      _prevImage.ApplyScalarFunction(ratioTest, _prevPrevImage, ratio01);
-#     endif
-      
       static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
       cv::morphologyEx(ratio12.get_CvMat_(), ratio12.get_CvMat_(), cv::MORPH_OPEN, kernel);
       
-#     if USE_THREE_FRAME_MOTION_DETECTION
-      cv::morphologyEx(ratio01.get_CvMat_(), ratio01.get_CvMat_(), cv::MORPH_OPEN, kernel);
-      cv::Mat_<u8> cvAND(255*(ratio01.get_CvMat_() & ratio12.get_CvMat_()));
-      cv::Mat_<u8> cvDIFF(ratio12.get_CvMat_() - cvAND);
-      Vision::Image foregroundMotion(cvDIFF);
-#     else
       Vision::Image foregroundMotion = ratio12;
-#     endif
       
       Anki::Point2f centroid(0.f,0.f); // Not Embedded::
       Anki::Point2f groundPlaneCentroid(0.f,0.f);
@@ -2084,8 +2059,7 @@ namespace Cozmo {
       f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
-        imgRegionArea = GetCentroid(foregroundMotion, minArea, centroid,
-                                    kMotionCentroidPercentileX, kMotionCentroidPercentileY);
+        imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionCentroidPercentileX, kMotionCentroidPercentileY);
       }
       
       // Get centroid of all the motion within the ground plane, if we have one to reason about
@@ -2131,7 +2105,6 @@ namespace Cozmo {
         //        the centroid is actually being computed here.
         const f32 imgQuadArea = imgQuad.ComputeArea();
         groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
-                                       imgQuadArea*kMinMotionAreaFraction,
                                        groundPlaneCentroid,
                                        kGroundMotionCentroidPercentileY,
                                        (1.f - kGroundMotionCentroidPercentileX));
@@ -2185,7 +2158,7 @@ namespace Cozmo {
             const f32 divisor = 1.f/temp.z();
             groundPlaneCentroid.x() = temp.x() * divisor;
             groundPlaneCentroid.y() = temp.y() * divisor;
-
+            
             // This is just a sanity check that the centroid is reasonable
             if(ANKI_DEVELOPER_CODE)
             {
@@ -2220,23 +2193,13 @@ namespace Cozmo {
         
         if(imgRegionArea > 0)
         {
-          DEV_ASSERT(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
-                     centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
+          DEV_ASSERT(centroid.x() >= 0.f && centroid.x() <= image.GetNumCols() &&
+                     centroid.y() >= 0.f && centroid.y() <= image.GetNumRows(),
                      "VisionSystem.DetectMotion.CentroidOOB");
           
           // make relative to image center *at processing resolution*
           DEV_ASSERT(_camera.IsCalibrated(), "Camera must be calibrated");
           centroid -= _camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier);
-          
-          // Filter so as not to move too much from last motion detection,
-          // IFF we observed motion in the previous check
-          if(_prevCentroidFilterWeight > 0.f) {
-            centroid = (centroid * (1.f-_prevCentroidFilterWeight) +
-                        _prevMotionCentroid * _prevCentroidFilterWeight);
-            _prevMotionCentroid = centroid;
-          } else {
-            _prevCentroidFilterWeight = 0.1f;
-          }
           
           // Convert area to fraction of image area (to be resolution-independent)
           // Using scale multiplier to return the coordinates in original image coordinates
@@ -2247,21 +2210,10 @@ namespace Cozmo {
           msg.img_area = 0;
           msg.img_x = 0;
           msg.img_y = 0;
-          _prevCentroidFilterWeight = 0.f;
         }
         
         if(groundRegionArea > 0.f)
         {
-          // Filter so as not to move too much from last motion detection,
-          // IFF we observed motion in the previous check
-          if(_prevGroundCentroidFilterWeight > 0.f) {
-            groundPlaneCentroid = (groundPlaneCentroid * (1.f - _prevGroundCentroidFilterWeight) +
-                                   _prevGroundMotionCentroid * _prevGroundCentroidFilterWeight);
-            _prevGroundMotionCentroid = groundPlaneCentroid;
-          } else {
-            _prevGroundCentroidFilterWeight = 0.1f;
-          }
-          
           msg.ground_x = std::round(groundPlaneCentroid.x());
           msg.ground_y = std::round(groundPlaneCentroid.y());
           msg.ground_area = groundRegionArea;
@@ -2269,11 +2221,10 @@ namespace Cozmo {
           msg.ground_area = 0;
           msg.ground_x = 0;
           msg.ground_y = 0;
-          _prevGroundCentroidFilterWeight = 0.f;
         }
         
-        _currentResult.observedMotions.push_back(std::move(msg));
-      
+        _currentResult.observedMotions.emplace_back(std::move(msg));
+        
         if(DEBUG_MOTION_DETECTION)
         {
           char tempText[128];
@@ -2314,15 +2265,26 @@ namespace Cozmo {
     // Store a copy of the current image for next time (at correct resolution!)
     // NOTE: Now _prevImage should correspond to _prevRobotState
     // TODO: switch to just swapping pointers between current and previous image
-#   if USE_THREE_FRAME_MOTION_DETECTION
-    _prevImage.CopyTo(_prevPrevImage);
-#   endif
     image.CopyTo(_prevImage);
     
     return RESULT_OK;
   } // DetectMotion()
   
-
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result VisionSystem::DetectLaserPoints(const Vision::ImageRGB& inputImage,
+                                         const Vision::Image&    inputImageGray)
+  {
+    const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposure_ms, _minCameraExposureTime_ms) &&
+                                 Util::IsNear(_currentCameraParams.gain, _minCameraGain));
+    
+    Result result = _laserPointDetector->Detect(inputImage, inputImageGray, _poseData, isDarkExposure,
+                                                _currentResult.laserPoints,
+                                                _currentResult.debugImageRGBs);
+    
+    // Remove any points that are not surrounding by dark stuff
+    // (the "on" area in the image should be about the same if 
+    return result;
+  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector<OverheadEdgePointChain>& imageChains )
@@ -3092,8 +3054,8 @@ namespace Cozmo {
   } // ApplyCLAHE()
   
   
-  Result VisionSystem::DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
-                                              Vision::Image& claheImage,
+  Result VisionSystem::DetectMarkersWithCLAHE(const Vision::Image& inputImageGray,
+                                              const Vision::Image& claheImage,
                                               std::vector<Anki::Rectangle<s32>>& detectionRects,
                                               MarkerDetectionCLAHE useCLAHE)
   {
@@ -3138,7 +3100,7 @@ namespace Cozmo {
         
       case MarkerDetectionCLAHE::Alternating:
       {
-        Vision::Image* whichImg = &inputImageGray;
+        const Vision::Image* whichImg = &inputImageGray;
         if(_currentUseCLAHE) {
           DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useAlternating.ImageIsEmpty");
           whichImg = &claheImage;
@@ -3153,7 +3115,7 @@ namespace Cozmo {
       {
         // NOTE: _currentUseCLAHE should have been set based on image brightness already
         
-        Vision::Image* whichImg = &inputImageGray;
+        const Vision::Image* whichImg = &inputImageGray;
         if(_currentUseCLAHE)
         {
           DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
@@ -3181,27 +3143,41 @@ namespace Cozmo {
     Tic("DecodeJPEG");
     // Should only get allocated the first time, but should re-use _image's memory
     // from then on, so long as the decoded image is the same size.
-    Result decodeResult = encodedImg.DecodeImageRGB(_image);
+    Result decodeResult = RESULT_FAIL;
+    if(encodedImg.IsColor())
+    {
+      decodeResult = encodedImg.DecodeImageRGB(_image);
+      _imageGray = _image.ToGray();
+      DEV_ASSERT(_imageGray.GetTimestamp() == _image.GetTimestamp(), "VisionSystem.Update.MismatchedTimestamps");
+    }
+    else
+    {
+      decodeResult = encodedImg.DecodeImageGray(_imageGray);
+      _image = Vision::ImageRGB();
+      _image.SetTimestamp(_imageGray.GetTimestamp());
+    }
     Toc("DecodeJPEG");
     
     if(RESULT_OK != decodeResult) {
       return decodeResult;
     }
     
-    if(_image.IsEmpty())
+    // Gray image should never be empty, though color may be
+    if(_imageGray.IsEmpty())
     {
       PRINT_NAMED_ERROR("VisionSystem.Update.EmptyDecodedImage", "t=%u",
                         encodedImg.GetTimeStamp());
       return RESULT_FAIL;
     }
     
-    return Update(poseData, _image);
+    return Update(poseData, _image, _imageGray);
   }
   
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,
-                              const Vision::ImageRGB&    inputImage)
+                              const Vision::ImageRGB&    inputImage,
+                              Vision::Image&             inputImageGray)
   {
     Result lastResult = RESULT_OK;
     
@@ -3229,7 +3205,7 @@ namespace Cozmo {
     
     // Set up the results for this frame:
     VisionProcessingResult result;
-    result.timestamp = inputImage.GetTimestamp();
+    result.timestamp = inputImageGray.GetTimestamp();
     result.imageQuality = ImageQuality::Unchecked;
     result.exposureTime_ms = -1;
     std::swap(result, _currentResult);
@@ -3246,7 +3222,7 @@ namespace Cozmo {
     
     while(!_nextSchedules.empty())
     {
-      const auto entry = _nextSchedules.front();
+      const auto& entry = _nextSchedules.front();
 
       const bool isPush = entry.first;
       if(isPush)
@@ -3266,8 +3242,12 @@ namespace Cozmo {
       _nextSchedules.pop();
     }
     
-    // Lots of the processing below needs a grayscale version of the image:
-    Vision::Image inputImageGray = inputImage.ToGray();
+    bool& cameraParamsRequested = _nextCameraParams.first;
+    if(cameraParamsRequested)
+    {
+      _currentCameraParams = _nextCameraParams.second;
+      cameraParamsRequested = false;
+    }
     
     Vision::Image claheImage;
     
@@ -3317,8 +3297,6 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
       
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
-      
       // Have to do this here, outside of DetectMarkers because we could call
       // DetectMarkers() twice below, depending on kUseCLAHE setting (and we don't
       // want to reset the memory twice because the tracker, which gets initialized
@@ -3331,84 +3309,105 @@ namespace Cozmo {
         return lastResult;
       }
       
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMarkers, true);
+      
       Toc("TotalDetectingMarkers");
     }
     
     if(ShouldProcessVisionMode(VisionMode::Tracking)) {
-      visionModesProcessed.SetBitFlag(VisionMode::Tracking, true);
       // Update the tracker transformation using this image
       if((lastResult = TrackTemplate(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.TrackTemplateFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::Tracking, true);
     }
     
     if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
       Tic("TotalDetectingFaces");
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
       if((lastResult = DetectFaces(inputImageGray, detectionRects)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
       Toc("TotalDetectingFaces");
     }
     
     if(ShouldProcessVisionMode(VisionMode::DetectingPets)) {
       Tic("TotalDetectingPets");
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
       if((lastResult = DetectPets(inputImageGray, detectionRects)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
       Toc("TotalDetectingPets");
+    }
+    
+    // TODO: support color and grayscale edge detection (COZMO-10950)
+    // TODO: support color and grayscale motion detection (COZMO-10951)
+    Vision::ImageRGB tempColorImage;
+    if(inputImage.IsEmpty()) {
+      tempColorImage = Vision::ImageRGB(inputImageGray);
+    } else {
+      tempColorImage = inputImage; // use the passed-in color data if we already have it
     }
     
     if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
     {
       Tic("TotalDetectingMotion");
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
-      if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
+      if((lastResult = DetectMotion(tempColorImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingMotion, true);
       Toc("TotalDetectingMotion");
     }
     
     if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
     {
       Tic("TotalDetectingOverheadEdges");
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
-      if((lastResult = DetectOverheadEdges(inputImage)) != RESULT_OK) {
+      
+      if((lastResult = DetectOverheadEdges(tempColorImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingOverheadEdges, true);
       Toc("TotalDetectingOverheadEdges");
     }
     
     if(ShouldProcessVisionMode(VisionMode::ReadingToolCode))
     {
-      visionModesProcessed.SetBitFlag(VisionMode::ReadingToolCode, true);
       if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ReadToolCodeFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::ReadingToolCode, true);
     }
     
     if(ShouldProcessVisionMode(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
     {
-      visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
       if((lastResult = ComputeCalibration()) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::ComputingCalibration, true);
+    }
+    
+    if(ShouldProcessVisionMode(VisionMode::DetectingLaserPoints))
+    {
+      Tic("TotalDetectingLaserPoints");
+      if((lastResult = DetectLaserPoints(inputImage, inputImageGray)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
+      Toc("TotalDetectingLaserPoints");
     }
 
     // NOTE: This should come after any detectors that add things to "detectionRects"
     //       since it meters exposure based on those.
     if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
     {
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
-      
       Tic("CheckingImageQuality");
       lastResult = CheckImageQuality(inputImageGray, detectionRects);
       Toc("CheckingImageQuality");
@@ -3417,17 +3416,8 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
         return lastResult;
       }
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
     }
-    
-    /*
-    // Store a copy of the current image for next time
-    // NOTE: Now _prevImage should correspond to _prevRobotState
-    // TODO: switch to just swapping pointers between current and previous image
-#   if USE_THREE_FRAME_MOTION_DETECTION
-    _prevImage.CopyTo(_prevPrevImage);
-#   endif
-    inputImage.CopyTo(_prevImage);
-    */
     
     // We've computed everything from this image that we're gonna compute.
     // Push it onto the queue of results all together.
@@ -3453,11 +3443,18 @@ namespace Cozmo {
     }
     
     // See if it's time to process based on the schedule
-    VisionModeSchedule& modeSchedule = _modeScheduleStack.front().GetScheduleForMode(mode);
-    
-    const bool isTimeToProcess = modeSchedule.CheckTimeToProcessAndAdvance();
-    
+    const bool isTimeToProcess = _modeScheduleStack.front().CheckTimeToProcessAndAdvance(mode);
     return isTimeToProcess;
+  }
+  
+  s32 VisionSystem::GetCurrentCameraExposureTime_ms() const
+  {
+    return _currentCameraParams.exposure_ms;
+  }
+  
+  f32 VisionSystem::GetCurrentCameraGain() const
+  {
+    return _currentCameraParams.gain;
   }
   
   Result VisionSystem::SetAutoExposureParams(const s32 subSample,
@@ -3511,12 +3508,12 @@ namespace Cozmo {
       _minCameraExposureTime_ms = minExposureTime_ms;
     }
     
-    _currentExposureTime_ms   = currentExposureTime_ms;
     _maxCameraExposureTime_ms = maxExposureTime_ms;
     
-    _currentCameraGain = currentGain;
     _minCameraGain     = minGain;
     _maxCameraGain     = maxGain;
+    
+    SetNextCameraParams(currentExposureTime_ms, currentGain);
     
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
                   "Current Gain:%dms Limits:[%d %d], Current Exposure:%.3f Limits:[%.3f %.3f]",

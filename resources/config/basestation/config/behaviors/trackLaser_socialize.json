@@ -1,0 +1,51 @@
+{
+  "behaviorClass": "TrackLaser",
+  "executableBehaviorType": "TrackLaser",
+  "name": "trackLaser",
+  "displayNameKey":"behavior.TrackLaser",
+  "behaviorGroups": [
+    "FP_Socialize",
+    "FP_Hiking",
+    "FP_PlayAlone",
+    "FP_NothingToDo",
+    "FP_PlayWithHumans"
+  ],
+  
+  "flatScore": 10.0, 
+  
+  "startIfLaserSeenWithin_sec": 1.0,
+  "maxDistToGetAttention_mm": 80.0,
+  
+  "darkenedExposure_ms": 1.0,
+  "darkenedGain": 0.1,
+  "timeToWaitForExposureChange_ms": 100.0,
+
+  "maxTimeToConfirm_ms": 65.0,
+  
+  "searchAmplitude_deg": 90.0,
+  
+  "maxTimeSinceNoLaser_running_sec": 3.5,
+  "maxTimeSinceNoLaser_notRunning_sec": 1.5,
+  "maxTimeBehaviorTimeout_sec": 60.0,
+  "maxTimeBeforeRotate_sec": 2.5,
+  "trackingTimeout_sec": 1.25,
+  
+  "pounceAfterTrackingFor_sec": 0.8,
+  "pounceIfWithinDist_mm": 50.0,
+  "pouncePanTol_deg": 10.0,
+  "pounceTiltTol_deg": 15.0,
+  "backupDistAfterPounce_mm": -15.0,
+  "backupDurationAfterPounce_sec": 0.25,
+  
+  "randomInitialSearchPanMin_deg": 20.0,
+  "randomInitialSearchPanMax_deg": 45.0,
+  
+  "minPanDuration_sec": 0.30,
+  "maxPanDuration_sec": 0.40,
+  
+  "minTimeToReachLaser_sec": 0.5,
+  "maxTimeToReachLaser_sec": 0.7,
+  
+  "predictionDuration_sec": 2.0,
+  "trackingTimeToAchieveObjective_sec": 5.0
+}

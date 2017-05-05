@@ -178,6 +178,35 @@ namespace Cozmo {
     return isLastChunk;
   }
   
+  bool EncodedImage::IsColor() const
+  {
+    switch(_encoding)
+    {
+      case ImageEncoding::NoneImageEncoding:
+      {
+        ANKI_VERIFY(false, "EncodedImage.IsColor.UnsupportedImageEncoding", "%s", EnumToString(_encoding));
+        // Intentional fallthrough!
+      }
+        
+      case ImageEncoding::JPEGGray:
+      case ImageEncoding::JPEGMinimizedGray:
+      case ImageEncoding::RawGray:
+      {
+        return false;
+      }
+        
+      case ImageEncoding::JPEGColor:
+      case ImageEncoding::JPEGMinimizedColor:
+      case ImageEncoding::JPEGColorHalfWidth:
+      case ImageEncoding::RawRGB:
+      case ImageEncoding::YUYV:
+      case ImageEncoding::BAYER:
+      {
+        return true;
+      }
+    }
+  }
+  
   static inline void DecodeHelper(const std::vector<u8>& buffer, Vision::ImageRGB& decodedImg)
   {
     cv::imdecode(buffer, cv::IMREAD_COLOR, &decodedImg.get_CvMat_());

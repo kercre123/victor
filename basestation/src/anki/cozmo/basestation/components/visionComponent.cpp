@@ -126,6 +126,7 @@ namespace Cozmo {
       auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
       
       // In alphabetical order:
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableColorImages>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
@@ -298,6 +299,9 @@ namespace Cozmo {
 
   VisionComponent::~VisionComponent()
   {
+    Vision::Image::CloseAllDisplayWindows();
+    Vision::ImageRGB::CloseAllDisplayWindows();
+    
     Stop();
     
     Util::SafeDelete(_visionSystem);
@@ -861,13 +865,39 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
+        tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
         
         // Display any debug images left by the vision system
-        for(auto & debugGray : result.debugImages) {
-          debugGray.second.Display(debugGray.first.c_str());
+        if(ANKI_DEV_CHEATS)
+        {
+          for(auto & debugGray : result.debugImages) {
+            debugGray.second.Display(debugGray.first.c_str());
+          }
+          for(auto & debugRGB : result.debugImageRGBs) {
+            debugRGB.second.Display(debugRGB.first.c_str());
+          }
         }
-        for(auto & debugRGB : result.debugImageRGBs) {
-          debugRGB.second.Display(debugRGB.first.c_str());
+        else if(!result.debugImages.empty() || !result.debugImageRGBs.empty())
+        {
+          // We do not expect to have debug images to draw without dev cheats enabled
+          std::string grayStr;
+          for(auto & debugGray : result.debugImages)
+          {
+            grayStr += debugGray.first;
+            grayStr += " ";
+          }
+          
+          std::string rgbStr;
+          for(auto & debugRGB : result.debugImageRGBs)
+          {
+            rgbStr += debugRGB.first;
+            rgbStr += " ";
+          }
+          
+          PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.DebugImagesPresent",
+                            "Gray:%s RGB:%s",
+                            grayStr.empty() ? "<none>" : grayStr.c_str(),
+                            rgbStr.empty() ? "<none>" : rgbStr.c_str());
         }
         
         // Store frame rate and last image processed time. Time should only move forward.
@@ -1131,12 +1161,21 @@ namespace Cozmo {
   
   Result VisionComponent::UpdateMotionCentroid(const VisionProcessingResult& procResult)
   {
-  
-    for(auto motionCentroid : procResult.observedMotions)
+    for(auto motionCentroid : procResult.observedMotions) // deliberate copy
     {
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
     }
 
+    return RESULT_OK;
+  } // UpdateMotionCentroid()
+  
+  Result VisionComponent::UpdateLaserPoints(const VisionProcessingResult& procResult)
+  {
+    for(auto laserPoint : procResult.laserPoints) // deliberate copy: we move this to the message
+    {
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(laserPoint)));
+    }
+    
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
@@ -2241,6 +2280,22 @@ namespace Cozmo {
     
   }
   
+  s32 VisionComponent::GetCurrentCameraExposureTime_ms() const
+  {
+    return _visionSystem->GetCurrentCameraExposureTime_ms();
+  }
+  
+  f32 VisionComponent::GetCurrentCameraGain() const
+  {
+    return _visionSystem->GetCurrentCameraGain();
+  }
+  
+  void VisionComponent::EnableAutoExposure(bool enable)
+  {
+    _enableAutoExposure = enable;
+    _visionSystem->SetNextMode(VisionMode::CheckingQuality, enable);
+  }
+  
   void VisionComponent::SetAndDisableAutoExposure(u16 exposure_ms, f32 gain)
   {
     SetCameraSettings(exposure_ms, gain);
@@ -2269,6 +2324,8 @@ namespace Cozmo {
     _robot.SendMessage(RobotInterface::EngineToRobot(std::move(params)));
     _vizManager->SendCameraInfo(exposure_ms_u16, gain);
     
+    _visionSystem->SetNextCameraParams(exposure_ms, gain);
+
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));
   }
@@ -2399,6 +2456,18 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::UpdateEnrolledFaceByID& msg)
   {
     RenameFace(msg.faceID, msg.oldName, msg.newName);
+  }
+  
+  void VisionComponent::EnableColorImages(bool enable)
+  {
+    _enableColorImages = enable;
+    _robot.SendRobotMessage<RobotInterface::EnableColorImages>(enable);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::EnableColorImages& msg)
+  {
+    EnableColorImages(msg.enable);
   }
   
   template<>

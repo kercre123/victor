@@ -22,6 +22,8 @@ enum int_32 BehaviorObjective {
   GatheredCubes,
   InteractedWithFace,
   KnockedOverBlocks,
+  LaserPounced,
+  LaserTracked,
   PeekABooComplete,
   PeekABooSuccess,
   PerformedWorkout,
