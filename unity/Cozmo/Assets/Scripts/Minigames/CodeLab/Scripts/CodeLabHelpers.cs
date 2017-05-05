@@ -30,6 +30,10 @@ namespace CodeLab {
       Init();
     }
 
+    public void CompletedTurn(bool success) {
+      AdvanceToNextBlock(success);
+    }
+
     public void ReleaseFromPool() {
       InProgressScratchBlockPool.ReleaseInProgressScratchBlock(this);
     }

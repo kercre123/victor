@@ -467,6 +467,21 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
+    private void TurnInPlace(float turnAngle, RobotCallback callback) {
+      float finalTurnAngle = turnAngle;
+      const float kExtraAngle = 4.0f * Mathf.Deg2Rad; // All turns seem to, on average, be this short
+      if (finalTurnAngle < 0.0f) {
+        finalTurnAngle -= kExtraAngle;
+      }
+      else {
+        finalTurnAngle += kExtraAngle;
+      }
+
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      //DAS.Info("CodeLab.TurnInPlace.Start", "Turn " + (finalTurnAngle * Mathf.Rad2Deg) + "d from " + (robot.PoseAngle * Mathf.Rad2Deg) + "d");
+      robot.TurnInPlace(finalTurnAngle, 0.0f, 0.0f, kToleranceAngle, callback);
+    }
+
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
@@ -497,11 +512,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left
-        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(kTurnAngle, 0.0f, 0.0f, kToleranceAngle, inProgressScratchBlock.AdvanceToNextBlock);
+        TurnInPlace(kTurnAngle, inProgressScratchBlock.CompletedTurn);
       }
       else if (scratchRequest.command == "cozmoTurnRight") {
         // Turn 90 degrees to the right
-        RobotEngineManager.Instance.CurrentRobot.TurnInPlace(-kTurnAngle, 0.0f, 0.0f, kToleranceAngle, inProgressScratchBlock.AdvanceToNextBlock);
+        TurnInPlace(-kTurnAngle, inProgressScratchBlock.CompletedTurn);
       }
       else if (scratchRequest.command == "cozmoSays") {
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(scratchRequest.argString);
