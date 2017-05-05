@@ -6,7 +6,7 @@
 
     <!-- CSS Styles -->
     <link rel="stylesheet" href="../css/normalize.css">
-    <link rel="stylesheet" href="tutorial.css">
+    <link rel="stylesheet" href="modal-slideshow.css">
   </head>
   <body>
 
@@ -38,19 +38,24 @@
           </ol>
         </div>
         <div class="ft">
-          <button id="btn-back" class="nav-button nav-button-back" data-type="btn-back">
+          <button id="btn-back" class="nav-button nav-button-back" disabled="true" data-type="btn-back">
             <img class="arrow arrow-left" src="images/img_buttonArrow_tutorial.svg"/>
             <span class="button-label"></span>
           </button>
           <span class="progress"></span>
-          <button id="btn-next" class="nav-button nav-button-next" data-type="btn-next">
+          <button id="btn-next" class="nav-button nav-button-next" disabled="true" data-type="btn-next">
             <span class="button-label"></span>
             <img class="arrow arrow-right" src="images/img_buttonArrow_tutorial.svg"/>
           </button>
         </div>
       </div>
     </div>
-    <script src="tutorial.js"></script>
+    <script src="./extra-common.js"></script>
+    <script src="./modal-slideshow.js"></script>
+    <script src="./tutorial.js"></script>
+
+    <script>
+    </script>
   </body>
 </html>
 

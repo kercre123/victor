@@ -74,8 +74,8 @@ button:active {
   justify-content: space-between;
   align-items: center;
   position: relative;
-  height: 15%;
-  padding: 0 3vh 0 1.5vh;
+  height: 13%;
+  padding: 0 3vh 0 1vh;
 }
 
 .modal-slides .hd .btn-close {
@@ -84,7 +84,7 @@ button:active {
   border: 0;
 }
 
-.btn-close img {
+.modal-slides .btn-close img {
   width: auto;
   height: 10vh;
   padding: 1.5vh;
@@ -100,7 +100,7 @@ button:active {
 
 .modal-slides .bd {
   position: relative;
-  height: 70%;
+  height: 72%;
   width: 100%;
   overflow: hidden;
 }
@@ -147,29 +147,29 @@ button:active {
   height: .9em;
   width: auto;
 }
-.nav-button.nav-button-back {
+.modal-slides .nav-button.nav-button-back {
   text-align: right;
   padding-right: 1.4em;
 }
-.nav-button.nav-button-next {
+.modal-slides .nav-button.nav-button-next {
   padding-left: 1.4em;
 }
-.nav-button .arrow.arrow-right {
+.modal-slides .nav-button .arrow.arrow-right {
+  -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
   right: 8px;
   margin-right: .4em;
   margin-left: 1.4em;
 }
-.nav-button .arrow.arrow-left {
+.modal-slides .nav-button .arrow.arrow-left {
   left: 8px;
   margin-left: .4em;
   margin-right: 1.4em;
 }
 
-.slideshow .btn-next {float: right;}
+.modal-slides .slideshow .btn-next {float: right;}
 
-
-.slide-strip {
+.modal-slides .slide-strip {
   position: relative;
   list-style-type: none;
   height: 100%;
@@ -178,8 +178,11 @@ button:active {
   white-space: nowrap;
   transition: left .5s;
 }
+.modal-slides.disable-slide-animation .slide-strip {
+  transition: none;
+}
 
-.slide {
+.modal-slides .slide {
   display: inline-block;
   width: 100%;
   height: 100%;
@@ -189,12 +192,12 @@ button:active {
   font-size: 5vh;
 }
 
-.slide .slide-image {
+#tutorial-modal .slide .slide-image {
   display: inline-block;
   height: 78%;
 }
 
-.slide .slide-label {
+#tutorial-modal .slide .slide-label {
   position: relative;
   top: -1%;
   margin: 0;

@@ -162,7 +162,7 @@
 
     // add a style to color the puzzle piece SVG after it loads
     var block = project.querySelector('.block');
-    var type = getSampleProjectType(icon);
+    var type = getBlockIconColor(icon);
     block.setAttribute('src', 'images/icon_block_' + type + '.svg');
     block.addEventListener('load', function(elem) {
       project.style.visibility = 'visible';
@@ -215,77 +215,6 @@
   }
 
 
-  /**
-   * Returns background color for a sample project icon category
-   * @param {String} icon - name of the icon
-   * @returns {String} hex color background for the icon
-   */
-  function getSampleProjectType(icon) {
-    switch (icon) {
-
-      // motion blocks
-      case 'cozmo-backward':
-      case 'cozmo-backward-fast':
-      case 'cozmo-forward':
-      case 'cozmo-forward-fast':
-      case 'cozmo-turn-left':
-      case 'cozmo-turn-right':
-      case 'cozmo-dock-with-cube':
-        return 'blue';
-
-      // looks blocks
-      case 'cozmo-forklift-high':
-      case 'cozmo-forklift-low':
-      case 'cozmo-forklift-medium':
-      case 'cozmo-head-angle-high':
-      case 'cozmo-head-angle-medium':
-      case 'cozmo-head-angle-low':
-      case 'set-led_black':
-      case 'set-led_blue':
-      case 'set-led_coral':
-      case 'set-led_green':
-      case 'set-led_mystery':
-      case 'set-led_orange':
-      case 'set-led_purple':
-      case 'set-led_white':
-      case 'set-led_yellow':
-      case 'cozmo_says':
-        return 'purple';
-
-      // event blocks
-      case 'cozmo-face':
-      case 'cozmo-face-happy':
-      case 'cozmo-face-sad':
-      case 'cozmo-cube':
-      case 'cozmo-cube-tap':
-        return 'yellow';
-
-      // control blocks
-      case 'control_forever':
-      case 'control_repeat':
-        return 'orange';
-
-      // actions blocks
-      case 'cozmo-anim-bored':
-      case 'cozmo_anim-cat':
-      case 'cozmo_anim-chatty':
-      case 'cozmo-anim-dejected':
-      case 'cozmo-anim-dog':
-      case 'cozmo-anim-excited':
-      case 'cozmo-anim-frustrated':
-      case 'cozmo-anim-happy':
-      case 'cozmo-anim-mystery':
-      case 'cozmo-anim-sleep':
-      case 'cozmo-anim-sneeze':
-      case 'cozmo-anim-surprise':
-      case 'cozmo-anim-thinking':
-      case 'cozmo-anim-unhappy':
-      case 'cozmo-anim-victory':
-        return 'pink';
-
-      // no default to make mistakes more obvious
-    }
-  }
 
 
   // *********************************
@@ -331,7 +260,6 @@
   var CozmoAPI = function(){
 
     function getProjects(callbackName) {
-
       window.getCozmoUserAndSampleProjectLists(callbackName);
     }
 
@@ -378,60 +306,11 @@
   // *****************
 
   /**
-   * Returns localized strings for display.  Accepts optional parameters
-   *  to substitue into localized string.
-   *
-   * Example:  $t("{0} Unicorns", 5)  returns  "5 Unicorns"
-   *
-   * @param {String} str - localized string with possible substitution flags
-   * @param
-   */
-  function $t(str) {
-    // $$$$$ TODO: look up localized strings
-
-    // subsitute values into the translated string if params are passed
-    if (arguments.length > 1) {
-      var numSubs = arguments.length - 1;
-      for (var i=0; i<numSubs; i++) {
-        // substitute the values in the string like "{0}"
-        str = str.replace('{'+i+'}', arguments[i+1]);
-      }
-    }
-    return str;
-  }
-
-  /**
-   * Sets text inside an element described by a CSS selector
-   * @param {String} selector - CSS selector of element to set text for
-   * @param {String} text - text to apply to element
-   * @returns {void}
-   */
-  function setText(selector, text) {
-    document.querySelector(selector).textContent = text;
-  }
-
-
-
-  /**
    * DEVELOPMENT ONLY
    * Used to render projects into page when run from outside the Unity application.
    * @returns {void}
    */
   function _devLoadProjects() {
-
-    function getJSON(url, callback) {
-      var request = new XMLHttpRequest();
-      request.open('GET', url, true);
-
-      request.onload = function() {
-        if (this.status >= 200 && this.status < 400) {
-          // Success!
-          var data = JSON.parse(this.response);
-          callback(data);
-        }
-      };
-      request.send();
-    }
 
     getJSON('../sample-projects.json', function(sampleProjects) {
       // copy 3 of the sample projects and render them as user projects

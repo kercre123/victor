@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="../css/normalize.css">
+    <link rel="stylesheet" href="modal-slideshow.css">
+    <link rel="stylesheet" href="challenges.css">
+  </head>
+  <body>
+
+    <div id="challenges-modal" class="modal-slides">
+      <div class="modal-bg"></div>
+      <div class="modal-inner slideshow">
+        <div class="hd">
+          <span class="modal-title"></span>
+        </div>
+        <div class="bd">
+          <ol class="slide-strip">
+          </ol>
+        </div>
+        <div class="ft">
+          <button id="btn-back" class="nav-button nav-button-back" disabled="true" data-type="btn-back">
+            <img class="arrow arrow-left" src="images/img_buttonArrow_tutorial.svg"/>
+            <span class="button-label"></span>
+          </button>
+          <span class="progress"></span>
+          <button id="btn-next" class="nav-button nav-button-next" disabled="true" data-type="btn-next">
+            <span class="button-label"></span>
+            <img class="arrow arrow-right" src="images/img_buttonArrow_tutorial.svg"/>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- template for a challenge question slide -->
+    <script id="template-challenge-question" type="text/template">
+      <div class="slide challenge challenge-question">
+        <div class="top">
+          <div class="block-def">
+            <div class="block block-{{BlockCategory}}">
+              <img class="block-icon" src="../lib/blocks/media/icons/{{BlockIcon}}.svg"/>
+            </div>
+            <p class="block-text">{{PrimaryTextKey}}</p>
+          </div>
+        </div>
+        <div class="bottom secondary-text">{{SecondaryTextKey}}</div>
+      </div>
+    </script>
+
+    <!-- template for a challenge answer slide -->
+    <script id="template-challenge-answer" type="text/template">
+      <div class="slide challenge challenge-answer">
+        <div class="top answer-image">
+          <img src="./challenge_data/challenge_images/{{ImageFile}}.jpg"/>
+        </div>
+        <div class="bottom">
+          <div class="block-def">
+            <div class="block block-{{BlockCategory}}">
+              <img class="block-icon" src="../lib/blocks/media/icons/{{BlockIcon}}.svg"/>
+            </div>
+            <div class="block-text">{{PrimaryTextKey}}</div>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script src="./challenge_data/CodeLabChallenges.js"></script>
+    <script src="./challenge_data/CodeLabStrings.js"></script>
+    <script src="./extra-common.js"></script>
+    <script src="./modal-slideshow.js"></script>
+    <script src="./challenges.js"></script>
+
+  </body>
+</html>
+
+

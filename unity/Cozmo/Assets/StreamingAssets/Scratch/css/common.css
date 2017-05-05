@@ -62,7 +62,7 @@ button:focus {
     fill: #817e7e;
 }
 
-.blocklyTooltipDiv { 
+.blocklyTooltipDiv {
     background-color: #ffffff;
     border: 1px solid #000000;
     border-radius: 3px;
@@ -186,7 +186,7 @@ button:focus {
     color: #1fadda;
 }
 
-#projecttext .primary #app-title-subtext {    
+#projecttext .primary #app-title-subtext {
     color: #c0bfbf;
     font-size: 3.5vh;
     background-color: #525253;
@@ -261,6 +261,61 @@ button:focus {
     margin: 0px 0 0 1px;
 }
 
+/* Challenges */
+
+#challenges-frame-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+#challenges-frame-container #challenges-frame-modal-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .5;
+  background-color: #000;
+  z-index: 99;
+}
+
+#challenges-frame-container #challenges-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 2.0vh 2.0vw;
+  width: 95vw;
+  height: 94vh;
+
+  background-color: #525252;
+  border: 2px solid #1fadda;
+  border-radius: 10px;
+  z-index: 100;
+  overflow: hidden;
+  padding: 2px;
+}
+
+#challenges-frame-container #btn-close-challenges {
+  z-index: 101;
+  position: absolute;
+  top: 3.5vh;
+  left: 3vw;
+  border: none;
+  background-color: #535252;
+  padding: .5vw;
+}
+
+#challenges-frame-container #btn-close-challenges img {
+  width: 4.5vw;
+  height: auto;
+}
+
+
+
 
 @media only screen and (max-width: 799px) {
     #navigation {
@@ -324,7 +379,7 @@ button:focus {
         height:44px;
     }
 
-    .blocklyTooltipDiv { 
+    .blocklyTooltipDiv {
         font-size: 10pt;
     }
 }

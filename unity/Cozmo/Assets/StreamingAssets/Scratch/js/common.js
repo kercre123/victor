@@ -17,7 +17,7 @@
         var ua = navigator.userAgent;
         if( ua.indexOf("Android") >= 0 ) {
             // Web Audio API is on Android 5.0 and higher, not on Android 4.4 and lower.
-            var androidversion = parseFloat(ua.slice(ua.indexOf("Android")+8)); 
+            var androidversion = parseFloat(ua.slice(ua.indexOf("Android")+8));
             if (androidversion < 5.0)
             {
                 useWebAudioAPI = false;
@@ -35,7 +35,7 @@
             window.player.load({name: "click", src: click_wav});
             window.player.load({name: "delete", src: delete_wav});
         }
- 
+
         // Get XML toolbox definition
         var toolbox = document.getElementById('toolbox');
         window.toolbox = toolbox;
@@ -72,12 +72,12 @@
         // and C# code to know when the robot is done with his work and the vm
         // should proceed to the next block.
         window.resolveCommands = [];
- 
+
         // Attach blocks to the VM
         workspace.addChangeListener(vm.blockListener);
         var flyoutWorkspace = workspace.getFlyout().getWorkspace();
         flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
- 
+
         // Handle VM events
         vm.on('STACK_GLOW_ON', function(data) {
             workspace.glowStack(data.id, true);
@@ -97,7 +97,7 @@
 
         // Run threads
         vm.start();
- 
+
         // DOM event handlers
         var closeButton = document.querySelector('#closebutton');
         var challengesButton = document.querySelector('#challengesbutton');
@@ -111,7 +111,8 @@
             e.preventDefault();
         });
         challengesButton.addEventListener('click', function () {
-            // TODO Load challengs here
+          // show challenges dialog
+          Challenges.show();
         });
         challengesButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
@@ -165,7 +166,7 @@
         if (typeof webkit.messageHandlers.extensions === 'undefined') return;
         window.extensions = webkit.messageHandlers.extensions;
     }
-  
+
     /**
      * Bind event handlers.
      */

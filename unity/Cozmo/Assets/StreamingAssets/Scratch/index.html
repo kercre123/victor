@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-            
+
         <!-- Blockly -->
         <script src="./lib/blocks/blockly_uncompressed_horizontal.js"></script>
         <script src="./lib/blocks/msg/messages.js"></script>
@@ -13,7 +13,7 @@
         <script src="./lib/blocks/blocks_horizontal/event.js"></script>
         <script src="./lib/blocks/blocks_horizontal/cozmo.js"></script>
         <script src="./lib/blocks/blocks_horizontal/default_toolbox.js"></script>
-        
+
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css">
         <link rel="stylesheet" href="./css/common.css">
@@ -31,6 +31,7 @@
 	</head>
 
 	<body>
+
         <!-- Toolbox -->
         <xml id="toolbox">
             <category name="Drive" colour="#0898c4" secondaryColour="0">
@@ -132,7 +133,7 @@
             <block type="control_forever"></block>
             </category>
         </xml>
-        
+
         <!-- Blocks -->
         <div id="blocks"></div>
 
@@ -161,18 +162,19 @@
         <!-- Navigation -->
         <div id="navigation">
             <div class="greenflag">
-                <button id="greenflag" />                
+                <button id="greenflag" />
             </div>
             <div class="stop">
                 <button id="stop" />
             </div>
         </div>
-        
+
         <!-- Scripts -->
         <script src="./lib/vm/vm.js"></script>
         <script src="./lib/blocks/media/sounds.js"></script>
         <script src="./js/common.js"></script>
         <script src="./js/cozmoUserProjectCommands.js"></script>
         <script src="./js/webAudioPlayer.js"></script>
+        <script src="./extra/challenges-frame.js"></script>
 	</body>
 </html>
