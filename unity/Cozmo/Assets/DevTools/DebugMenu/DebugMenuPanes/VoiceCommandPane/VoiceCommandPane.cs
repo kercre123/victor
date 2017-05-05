@@ -4,10 +4,7 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
-
-#if VOICE_COMMAND_ENABLED
 using Anki.Cozmo.VoiceCommand;
-#endif
 
 public class VoiceCommandPane : MonoBehaviour {
 
@@ -30,7 +27,6 @@ public class VoiceCommandPane : MonoBehaviour {
   private Button _LetsPlayButton;
 
 
-  #if VOICE_COMMAND_ENABLED
   // Local variable defaults to false until it gets updated by a message from the engine, which is requested in Start()
   private bool _IsEnabled = false;
 
@@ -69,7 +65,9 @@ public class VoiceCommandPane : MonoBehaviour {
   }
 
   private void OnToggleButton() {
+  #if VOICE_COMMAND_ENABLED
     SendVoiceCommandEvent<ChangeEnabledStatus>(Singleton<ChangeEnabledStatus>.Instance.Initialize(!_IsEnabled));
+  #endif // VOICE_COMMAND_ENABLED
   }
 
   private void SendVoiceCommandEvent<T>(T eventSubType) {
@@ -134,5 +132,4 @@ public class VoiceCommandPane : MonoBehaviour {
       }
     }
   }
-  #endif // VOICE_COMMAND_ENABLED
 }

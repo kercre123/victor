@@ -11,7 +11,6 @@
 *
 **/
 
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
@@ -118,4 +117,3 @@ Vision::FaceID_t ReactionTriggerStrategyVoiceCommand::GetDesiredFace(const Robot
 
 } // namespace Cozmo
 } // namespace Anki
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

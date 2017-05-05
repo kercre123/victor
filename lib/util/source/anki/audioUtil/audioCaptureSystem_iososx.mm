@@ -210,9 +210,15 @@ void AudioCaptureSystem::StartRecording()
     }
     else
     {
+      auto currentOptions = [session categoryOptions];
+      // This option needs to be set explicitly for the PlayAndRecord category we're switching to below.
+      // If that doesn't happen, audio reverts to default playback through phone speaker only, instead of
+      // speakerphone mode.
+      currentOptions |= AVAudioSessionCategoryOptionDefaultToSpeaker;
       NSError* nsError;
-      [session setCategory:AVAudioSessionCategoryPlayAndRecord error:&nsError];
-      
+      [session setCategory:AVAudioSessionCategoryPlayAndRecord
+               withOptions:currentOptions
+                     error:&nsError];
       if (nsError)
       {
         PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setCategory.Error", "Code %ld %s",

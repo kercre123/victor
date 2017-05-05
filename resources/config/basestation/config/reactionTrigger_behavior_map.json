@@ -206,6 +206,10 @@
         "shouldResumeLast": true,
         "debugStrategyName": "Trigger Strategy Unexpected Movement"
       }
+    },
+    {
+      "reactionTrigger": "VC",
+      "behaviorName": "ReactToVoiceCommand"
     }
   ]
 }

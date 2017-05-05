@@ -10,6 +10,7 @@ enum uint_8 BehaviorChooserType {
   Freeplay,
   Selection,
   MeetCozmoFindFaces,
+  VoiceCommand,
   Count
 }
 

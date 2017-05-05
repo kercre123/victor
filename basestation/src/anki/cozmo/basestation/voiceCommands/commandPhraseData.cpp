@@ -9,7 +9,6 @@
 * Copyright: Anki, Inc. 2017
 *
 **/
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandTypeHelpers.h"
@@ -289,4 +288,3 @@ const char* CommandPhraseData::GetFirstPhraseForCommand(VoiceCommandType command
 } // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

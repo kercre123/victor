@@ -1,0 +1,83 @@
+// Voice Commands message definition file
+//  for the C-Like Abstract Data language
+// Author: Lee Crippen
+// Copyright: Anki Inc (c) 2017
+
+namespace Anki {
+namespace Cozmo {
+namespace VoiceCommand {
+
+
+// ------------  Enum types used across messages  ------------ //
+enum uint_8 VoiceCommandType {
+  HeyCozmo,
+  LetsPlay,
+  YesPlease,
+  NoThankYou,
+
+  Count
+}
+
+enum uint_8 VoiceCommandListenContext {
+  Keyphrase,
+  Freeplay,
+  SimplePrompt,
+
+  Count
+}
+
+// NOTE: This mirrors the types in AudioUtil::AudioCaptureSystem
+enum uint_8 AudioCapturePermissionState {
+  Unknown,
+  Granted,
+  DeniedAllowRetry,
+  DeniedNoRetry,
+
+  Count
+}
+
+
+
+// ------------  Structures sent Engine -> Game  ------------ //
+structure CommandHeardEvent {
+  VoiceCommandType            voiceCommandType,
+}
+
+structure StateData {
+  bool                            isVCEnabled,
+  AudioCapturePermissionState     capturePermissionState
+}
+
+
+
+// ------------  Structures sent Game -> Engine  ------------ //
+structure RequestStatusUpdate {
+
+}
+
+structure ChangeEnabledStatus {
+  bool  isVCEnabled
+}
+
+
+
+// ------------  Message organization definitions  ------------ //
+// NOTE this clad file is included in both messageEngineToGame and messageGameToEngine.
+// Therefore the below message can be sent in either direction, but will only be responded
+// to depending on the type of the eventUnion.
+
+// Use tag to determine what struct to use
+union VoiceCommandEventUnion {
+  CommandHeardEvent           commandHeardEvent,
+  StateData                   stateData,
+  RequestStatusUpdate         requestStatusUpdate,
+  ChangeEnabledStatus         changeEnabledStatus
+}
+
+message VoiceCommandEvent {
+  VoiceCommandEventUnion      voiceCommandEvent
+}
+
+} // namespace VoiceCommand
+} // namespace Cozmo
+} // namespace Anki

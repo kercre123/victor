@@ -24,7 +24,6 @@ namespace Anki {
 namespace Cozmo {
 
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 class ReactionTriggerStrategyVoiceCommand : public IReactionTriggerStrategy {
 public:
   ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config);
@@ -43,7 +42,6 @@ private:
   
   Vision::FaceID_t GetDesiredFace(const Robot& robot) const;
 };
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 
 } // namespace Cozmo

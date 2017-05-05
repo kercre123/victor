@@ -215,9 +215,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::VC:
     {
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
       strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
       break;
     }
     case ReactionTrigger::Count:

@@ -27,7 +27,6 @@ namespace Cozmo {
 
 VoiceCommandBehaviorChooser::~VoiceCommandBehaviorChooser() = default;
 
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   
 #include "clad/types/voiceCommandTypes.h"
 
@@ -92,24 +91,6 @@ IBehavior* VoiceCommandBehaviorChooser::ChooseNextBehavior(Robot& robot, const I
     }
   }
 }
-
-// TODO This stub implementation intentionally returns no behavior when there is no voice recognition enabled.
-#else // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
-
-VoiceCommandBehaviorChooser::VoiceCommandBehaviorChooser(Robot& robot, const Json::Value& config)
-:IBehaviorChooser(robot, config)
-, _context(robot.GetContext())
-{
-  (void) _voiceCommandBehavior;
-  (void) _pounceOnMotionBehavior;
-}
-
-IBehavior* VoiceCommandBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
-{
-  return _behaviorNone;
-}
-
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 } // namespace Cozmo
 } // namespace Anki

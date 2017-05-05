@@ -346,9 +346,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   _context->GetVoiceCommandComponent()->Update();
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   
   // Handle UI
   Result lastResult = _uiMsgHandler->Update();

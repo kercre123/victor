@@ -46,7 +46,8 @@
       { "channel": "Loading",              "enabled": false },
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false }
+      { "channel": "NeedsSystem",          "enabled": false },
+      { "channel": "VoiceCommands",        "enabled": false }
     ],
     "levels":
     [
@@ -93,7 +94,8 @@
       { "channel": "ReactionTriggers",     "enabled": false },
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false }
+      { "channel": "NeedsSystem",          "enabled": false },
+      { "channel": "VoiceCommands",        "enabled": false }
     ],
     "levels":
     [
@@ -140,7 +142,8 @@
       { "channel": "ReactionTriggers",     "enabled": false },
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false }
+      { "channel": "NeedsSystem",          "enabled": false },
+      { "channel": "VoiceCommands",        "enabled": false }
     ],
     "levels":
     [

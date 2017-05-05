@@ -12,7 +12,6 @@
 
 #ifndef __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_
 #define __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "clad/types/voiceCommandTypes.h"
 
@@ -68,5 +67,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 #endif // __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_

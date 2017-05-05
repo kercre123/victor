@@ -10,7 +10,6 @@
 *
 **/
 
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandTypeHelpers.h"
 #include "util/enums/stringToEnumMapper.hpp"
@@ -45,4 +44,3 @@ VoiceCommandListenContext VoiceCommandListenContextFromString(const char* inStri
 } // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

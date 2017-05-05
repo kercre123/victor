@@ -56,10 +56,8 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 }
   
 

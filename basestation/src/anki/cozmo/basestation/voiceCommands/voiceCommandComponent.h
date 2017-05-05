@@ -13,7 +13,6 @@
 
 #ifndef __Cozmo_Basestation_VoiceCommands_VoiceCommandComponent_H_
 #define __Cozmo_Basestation_VoiceCommands_VoiceCommandComponent_H_
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
 #include "audioUtil/audioCaptureSystem.h"
@@ -108,5 +107,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 #endif // __Cozmo_Basestation_VoiceCommands_VoiceCommandComponent_H_

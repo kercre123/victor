@@ -646,7 +646,6 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
   // Voice Command config
   {
     std::string jsonFilename = "config/basestation/config/voiceCommand_config.json";
@@ -659,7 +658,6 @@ void RobotDataLoader::LoadRobotConfigs()
       _voiceCommandConfig.clear();
     }
   }
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
   // needs system config
   {

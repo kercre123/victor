@@ -26,7 +26,6 @@
 namespace Anki {
 namespace Cozmo {
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -98,6 +97,5 @@ void BehaviorReactToVoiceCommand::StopInternal(Robot& robot)
   robot.GetContext()->GetVoiceCommandComponent()->SetListenContext(VoiceCommand::VoiceCommandListenContext::Keyphrase);
 }
 
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 } // namespace Cozmo
 } // namespace Anki

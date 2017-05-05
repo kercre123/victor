@@ -1,0 +1,10 @@
+heycozmo0 = Hey Cozmo;
+heycozmo1 = HeyCozmo;
+heycozmo2 = HeyCuzmo;
+g = $heycozmo0 | $heycozmo1 | $heycozmo2;
+ paramA:$heycozmo0 -1100;
+ paramB:$heycozmo0 500;
+ paramA:$heycozmo1 -1100;
+ paramB:$heycozmo1 500;
+ paramA:$heycozmo2 -1100;
+ paramB:$heycozmo2 500;

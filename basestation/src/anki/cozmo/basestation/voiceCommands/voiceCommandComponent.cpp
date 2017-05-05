@@ -11,7 +11,6 @@
 *
 */
 
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 
@@ -545,4 +544,3 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)

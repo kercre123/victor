@@ -12,7 +12,6 @@
 
 #ifndef __Cozmo_Basestation_VoiceCommands_VoiceCommandTypeHelpers_H__
 #define __Cozmo_Basestation_VoiceCommands_VoiceCommandTypeHelpers_H__
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 #include "clad/types/voiceCommandTypes.h"
 #include "util/enums/enumOperators.h"
@@ -37,5 +36,4 @@ VoiceCommandListenContext VoiceCommandListenContextFromString(const char* inStri
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 #endif // __Cozmo_Basestation_VoiceCommands_VoiceCommandTypeHelpers_H__

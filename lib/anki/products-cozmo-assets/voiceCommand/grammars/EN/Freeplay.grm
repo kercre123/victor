@@ -1,0 +1,12 @@
+letsplay = Lets Play;
+comehere = Come Here;
+doatrick = Do A Trick;
+gotosleep = Go To Sleep;
+doadance = Do A Dance;
+peekaboo = Peekaboo;
+fistbump = Fist Bump;
+iloveyou = I Love You;
+singasong = Sing A Song;
+howareyoudoing = How Are You Doing;
+commandlist = $letsplay | $comehere | $doatrick | $gotosleep | $doadance | $peekaboo | $fistbump | $iloveyou | $singasong | $howareyoudoing;
+command = *sil%% (*nota%% | $commandlist) *sil%%;

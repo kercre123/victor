@@ -21,7 +21,6 @@ namespace Cozmo {
 
 class Robot;
   
-#if (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 class BehaviorReactToVoiceCommand : public IBehavior
 {
 private:
@@ -42,7 +41,6 @@ private:
   mutable Vision::FaceID_t _desiredFace = Vision::UnknownFaceID;
   
 }; // class BehaviorReactToVoiceCommand
-#endif // (VOICE_RECOG_PROVIDER != VOICE_RECOG_NONE)
 
 } // namespace Cozmo
 } // namespace Anki

@@ -1,0 +1,57 @@
+{
+  "phraseCommandsMap": [
+    {
+      "phrase": "Hey Cozmo",
+      "commandType": "HeyCozmo"
+    },
+    {
+      "phrase": "HeyCozmo",
+      "commandType": "HeyCozmo"
+    },
+    {
+      "phrase": "HeyCuzmo",
+      "commandType": "HeyCozmo"
+    },
+    {
+      "phrase": "Lets Play",
+      "commandType": "LetsPlay"
+    },
+    {
+      "phrase": "Yes Please",
+      "commandType": "YesPlease"
+    },
+    {
+      "phrase": "No Thank You",
+      "commandType": "NoThankYou"
+    }
+  ],
+
+  "contextDataMap": [
+    {
+      "contextType": "Keyphrase",
+      "contextIsPhraseSpotted": true,
+      "contextAllowsFollowup": true,
+      "contextCommandList": [
+        "HeyCozmo"
+      ]
+    },
+    {
+      "contextType": "Freeplay",
+      "contextIsPhraseSpotted": false,
+      "contextAllowsFollowup": false,
+      "contextCommandList": [
+        "LetsPlay"
+      ]
+    },
+    {
+      "contextType": "SimplePrompt",
+      "contextIsPhraseSpotted": true,
+      "contextAllowsFollowup": false,
+      "contextCommandList": [
+        "YesPlease",
+        "NoThankYou"
+      ]
+    }
+  ]
+
+}

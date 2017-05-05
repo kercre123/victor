@@ -43,6 +43,8 @@ enum uint_8 BehaviorGroup {
 
     ObjectTapInteraction,
 
+    VoiceCommand,
+
     Count
 }
 

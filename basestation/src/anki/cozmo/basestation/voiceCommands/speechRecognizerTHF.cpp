@@ -53,14 +53,13 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   // Not bothering to make these const since the API expects them NON const for some reason
   sdata_t* const precog_data = &thf_static_recog_data;
   sdata_t* const ppronun_data = &thf_static_pronun_data;
-  
+#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
   IndexType                          _thfCurrentRecog = InvalidIndex;
   IndexType                          _thfFollowupRecog = InvalidIndex;
   std::map<IndexType, RecogDataSP>   _thfAllRecogs;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 };
   
 SpeechRecognizerTHF::SpeechRecognizerTHF()
@@ -92,6 +91,48 @@ void SpeechRecognizerTHF::SwapAllData(SpeechRecognizerTHF& other)
   auto temp = std::move(other._impl);
   other._impl = std::move(this->_impl);
   this->_impl = std::move(temp);
+}
+
+const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForIndex(IndexType index) const
+{
+  if (index == InvalidIndex)
+  {
+    return RecogDataSP();
+  }
+  
+  // We can only use recognizers that actually exist
+  auto indexIter = _thfAllRecogs.find(index);
+  if (indexIter == _thfAllRecogs.end())
+  {
+    return RecogDataSP();
+  }
+  
+  // Intentionally make a local copy of the shared ptr with the current recog data
+  return indexIter->second;
+}
+
+void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index)
+{
+  _impl->_thfCurrentRecog = index;
+}
+  
+void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index)
+{
+  _impl->_thfFollowupRecog = index;
+}
+
+SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const
+{
+  return _impl->_thfCurrentRecog;
+}
+
+void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index)
+{
+  auto indexIter = _impl->_thfAllRecogs.find(index);
+  if (indexIter != _impl->_thfAllRecogs.end())
+  {
+    _impl->_thfAllRecogs.erase(indexIter);
+  }
 }
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
@@ -283,15 +324,6 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   return true;
 }
 
-void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index)
-{
-  auto indexIter = _impl->_thfAllRecogs.find(index);
-  if (indexIter != _impl->_thfAllRecogs.end())
-  {
-    _impl->_thfAllRecogs.erase(indexIter);
-  }
-}
-
 void SpeechRecognizerTHF::Cleanup()
 {
   _impl->_thfAllRecogs.clear();
@@ -408,39 +440,6 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   }
 }
 
-const RecogDataSP SpeechRecognizerTHF::SpeechRecognizerTHFData::RetrieveDataForIndex(IndexType index) const
-{
-  if (index == InvalidIndex)
-  {
-    return RecogDataSP();
-  }
-  
-  // We can only use recognizers that actually exist
-  auto indexIter = _thfAllRecogs.find(index);
-  if (indexIter == _thfAllRecogs.end())
-  {
-    return RecogDataSP();
-  }
-  
-  // Intentionally make a local copy of the shared ptr with the current recog data
-  return indexIter->second;
-}
-
-void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index)
-{
-  _impl->_thfCurrentRecog = index;
-}
-  
-void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index)
-{
-  _impl->_thfFollowupRecog = index;
-}
-
-SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const
-{
-  return _impl->_thfCurrentRecog;
-}
-
 #else // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
 bool SpeechRecognizerTHF::Init() { return true; }
@@ -451,15 +450,50 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
                                                      const std::string& nnFilePath,
                                                      const std::string& searchFilePath,
                                                      bool isPhraseSpotted,
-                                                     bool allowsFollowupRecog) { return true; }
-void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index) { }
+                                                     bool allowsFollowupRecog)
+{
+  _impl->_thfAllRecogs[index] = MakeRecogDataSP(isPhraseSpotted, allowsFollowupRecog);
+  return true;
+}
 void SpeechRecognizerTHF::HandleInitFail(const std::string& failMessage) { }
 void SpeechRecognizerTHF::Cleanup() { }
 bool SpeechRecognizerTHF::RecogStatusIsEndCondition(uint16_t status) { return false; }
-void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen) { }
-void SpeechRecognizerTHF::SetRecognizerIndex(IndexType index) { }
-void SpeechRecognizerTHF::SetRecognizerFollowupIndex(IndexType index) { }
-SpeechRecognizerTHF::IndexType SpeechRecognizerTHF::GetRecognizerIndex() const { return InvalidIndex; }
+
+void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen)
+{
+  // Intentionally make a local copy of the shared ptr with the current recog data
+  const RecogDataSP currentRecogSP = _impl->RetrieveDataForIndex(_impl->_thfCurrentRecog);
+  if (!currentRecogSP)
+  {
+    return;
+  }
+  
+  if (!sPhraseForceHeard.empty())
+  {
+    float score = 0;
+    const char* foundString = sPhraseForceHeard.c_str();
+    
+    if (foundString != nullptr && foundString[0] != '\0')
+    {
+      DoCallback(foundString, score);
+      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString);
+    }
+    
+    // If the current recognizer allows a followup recognizer to immediately take over
+    if (currentRecogSP->AllowsFollowupRecog())
+    {
+      // Verify whether we actually have a followup recognizer set
+      const RecogDataSP nextRecogSP = _impl->RetrieveDataForIndex(_impl->_thfFollowupRecog);
+      if (nextRecogSP)
+      {
+        _impl->_thfCurrentRecog = _impl->_thfFollowupRecog;
+        _impl->_thfFollowupRecog = InvalidIndex;
+      }
+    }
+    
+    sPhraseForceHeard = "";
+  }
+}
   
 #endif
   
