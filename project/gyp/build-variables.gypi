@@ -5,6 +5,13 @@
       '-DALLOW_DEBUG_LOGGING=1'
     ]
   },
+  'conditions': [
+    ['OS=="mac"', {
+      'xcode_settings': {
+        'MACOSX_DEPLOYMENT_TARGET': '<(macosx_deployment_target)'
+      }
+    }],
+  ],
   'target_defaults': {
     'target_conditions': [
       ['OS=="ios"', {
