@@ -600,8 +600,7 @@ void Recharge(void)
 //@param vbat_overvolt_v100x - battery too full voltage level. special failure handling above this threshold.
 void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 {
-  #warning "charge test debug"
-  #define CHARGE_TEST_DEBUG(x)    x
+  #define CHARGE_TEST_DEBUG(x)    //x
   const int NUM_SAMPLES = 32;
   
   EnableChargeComms(); //switch to comm mode
