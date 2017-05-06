@@ -15,10 +15,12 @@
 #define __Cozmo_Basestation_VoiceCommands_VoiceCommandComponent_H_
 
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "audioUtil/audioCaptureSystem.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
-#include "clad/types/voiceCommandTypes.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include <memory>
 #include <mutex>
@@ -38,7 +40,6 @@ namespace Data {
   
 namespace Cozmo {
 
-class CozmoContext;
 template <typename T> class AnkiEvent;
 namespace ExternalInterface {
   class MessageGameToEngine;
@@ -69,6 +70,9 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
+  template<typename T>
+  void BroadcastVoiceEvent(T&& event, bool useDeferred = false);
+  
 private:
   const CozmoContext&                                   _context;
   std::unique_ptr<AudioUtil::AudioRecognizerProcessor>  _recogProcessor;
@@ -85,9 +89,6 @@ private:
   bool                                                  _permRequestAlreadyDenied = false;
   std::recursive_mutex                                  _permissionCallbackLock;
   
-  template<typename T>
-  void BroadcastVoiceEvent(T&& event, bool useDeferred = false);
-  
   void Init();
   
   // Updates the status of the backpack light on Cozmo that indicates hearing a command
@@ -101,6 +102,24 @@ private:
   bool StateRequiresCallback(AudioUtil::AudioCaptureSystem::PermissionState permissionState) const;
   
 }; // class VoiceCommandComponent
+  
+
+template<typename T>
+void VoiceCommandComponent::BroadcastVoiceEvent(T&& event, bool useDeferred)
+{
+  auto* externalInterface = _context.GetExternalInterface();
+  if (externalInterface)
+  {
+    if (useDeferred)
+    {
+      externalInterface->BroadcastDeferred(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(VoiceCommandEventUnion(std::forward<T>(event)))));
+    }
+    else
+    {
+      externalInterface->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::forward<T>(event)));
+    }
+  }
+}
 
   
 } // namespace VoiceCommand

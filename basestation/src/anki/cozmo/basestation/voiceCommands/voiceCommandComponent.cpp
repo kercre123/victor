@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -248,23 +247,6 @@ bool VoiceCommandComponent::StateRequiresCallback(AudioCaptureSystem::Permission
     case AudioCaptureSystem::PermissionState::Unknown:
     {
       return true;
-    }
-  }
-}
-
-template<typename T>
-void VoiceCommandComponent::BroadcastVoiceEvent(T&& event, bool useDeferred)
-{
-  auto* externalInterface = _context.GetExternalInterface();
-  if (externalInterface)
-  {
-    if (useDeferred)
-    {
-      externalInterface->BroadcastDeferred(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(VoiceCommandEventUnion(std::forward<T>(event)))));
-    }
-    else
-    {
-      externalInterface->BroadcastToGame<VoiceCommandEvent>(VoiceCommandEventUnion(std::forward<T>(event)));
     }
   }
 }

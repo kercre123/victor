@@ -31,6 +31,7 @@ VoiceCommandBehaviorChooser::~VoiceCommandBehaviorChooser() = default;
 #include "clad/types/voiceCommandTypes.h"
 
 using namespace ExternalInterface;
+using namespace ::Anki::Cozmo::VoiceCommand;
 
 #define LOG_CHANNEL "VoiceCommands"
 #define LOG_INFO(...) PRINT_CH_INFO(LOG_CHANNEL, ##__VA_ARGS__)
@@ -64,18 +65,21 @@ IBehavior* VoiceCommandBehaviorChooser::ChooseNextBehavior(Robot& robot, const I
       return _voiceCommandBehavior;
     }
     
+    voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(_respondingToCommandType));
     // Otherwise this behavior isn't running anymore so clear it and potentially get a new one to use below
     _voiceCommandBehavior = nullptr;
   }
   
-  using namespace Anki::Cozmo::VoiceCommand;
-  const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
-  switch (currentCommand)
+  _respondingToCommandType = voiceCommandComponent->GetPendingCommand();
+  switch (_respondingToCommandType)
   {
     case VoiceCommandType::LetsPlay:
     {
       voiceCommandComponent->ClearHeardCommand();
       _voiceCommandBehavior = _pounceOnMotionBehavior;
+      
+      voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      
       return _voiceCommandBehavior;
     }
     // TODO: Handle these two commands appropriately

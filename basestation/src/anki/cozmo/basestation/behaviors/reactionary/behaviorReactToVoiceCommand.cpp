@@ -89,12 +89,18 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   
   StartActing(actionSeries);
   
+  using namespace ::Anki::Cozmo::VoiceCommand;
+  robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
+  
   return RESULT_OK;
 }
   
 void BehaviorReactToVoiceCommand::StopInternal(Robot& robot)
 {
   robot.GetContext()->GetVoiceCommandComponent()->SetListenContext(VoiceCommand::VoiceCommandListenContext::Keyphrase);
+  
+  using namespace ::Anki::Cozmo::VoiceCommand;
+  robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandEnd(VoiceCommandType::HeyCozmo));
 }
 
 } // namespace Cozmo

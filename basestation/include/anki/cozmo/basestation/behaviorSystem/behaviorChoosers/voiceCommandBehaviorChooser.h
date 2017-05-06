@@ -76,6 +76,7 @@ private:
   const CozmoContext*               _context;
   IBehavior*                        _voiceCommandBehavior = nullptr;
   IBehavior*                        _pounceOnMotionBehavior = nullptr;
+  VoiceCommand::VoiceCommandType    _respondingToCommandType = VoiceCommand::VoiceCommandType::Count;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
