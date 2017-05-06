@@ -59,6 +59,12 @@ namespace CodeLab {
       rEM.RemoveCallback<RobotObservedFace>(RobotObservedHappyFace);
       rEM.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
       rEM.RemoveCallback<RobotObservedObject>(RobotObservedObject);
+      var robot = rEM.CurrentRobot;
+      robot.CancelCallback(NeutralFaceThenAdvanceToNextBlock);
+      robot.CancelCallback(CompletedTurn);
+      robot.CancelCallback(AdvanceToNextBlock);
+      robot.CancelCallback(DockWithCube);
+      robot.CancelCallback(FinishDockWithCube);
     }
 
     public void RobotObservedFace(RobotObservedFace message) {

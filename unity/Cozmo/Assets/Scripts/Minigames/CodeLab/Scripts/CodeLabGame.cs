@@ -264,6 +264,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
       }
 
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, null, queuePos);
+
       if (_PendingResetToHomeActions > 0) {
         DAS.Info("CodeLab.ResetRobotToHomePos.Started", _PendingResetToHomeActions + " Pending Actions");
       }

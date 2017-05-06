@@ -109,10 +109,6 @@
       "AnimName": "ag_codelab_getin"
     },
     {
-      "CladEvent": "CodeLabExit",
-      "AnimName": "ag_codelab_getout"
-    },
-    {
       "CladEvent": "CodeLabExcited",
       "AnimName": "ag_codelab_excited"
     },
