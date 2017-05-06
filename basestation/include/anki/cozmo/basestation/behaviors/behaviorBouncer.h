@@ -26,13 +26,11 @@ protected:
   
   // IBehavior interface
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReq) const override;
-  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReq) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false; }
   
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void StopInternal(Robot& robot) override;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
 private:
   
@@ -49,8 +47,12 @@ private:
   // This must be mutable to retain state from trigger prerequisites
   mutable SmartFaceID _target;
   
-  // When did behavior start running?
-  float _startedAt_sec;
+  // Width and height of display, in pixels
+  u32 _displayWidth_px = 0;
+  u32 _displayHeight_px = 0;
+  
+  // Paddle position [0,1]
+  float _paddlePos = 0.f;
   
 };
   

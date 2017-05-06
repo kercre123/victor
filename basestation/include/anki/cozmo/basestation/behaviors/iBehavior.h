@@ -114,7 +114,11 @@ public:
   // OK, not counting calls to Resume)
   int GetNumTimesBehaviorStarted() const { return _startCount; }
   void ResetStartCount() { _startCount = 0; }
+  
+  // Time this behavior started running, in seconds, as measured by basestation time
   float GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
+  
+  // Time elapsed since start, in seconds, as measured by basestation time
   float GetRunningDuration() const;
     
   // Will be called upon first switching to a behavior before calling update.
@@ -154,7 +158,7 @@ public:
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
 
-  // Can be overridden to allow the behavior to run while the robot is not on it's treads (default is to not run)
+  // Can be overridden to allow the behavior to run while the robot is not on its treads (default is to not run)
   virtual bool ShouldRunWhileOffTreads() const { return false;}
 
   // Can be overridden to allow the behavior to run while the robot is on the charger platform
@@ -278,7 +282,7 @@ protected:
   // reference is const to prevent the behavior from modifying the robot when it
   // is not running. If the behavior is subscribed to multiple tags, the presumption
   // is that this will handle switching based on tag internally.
-  // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhielNotRunning!
+  // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhileNotRunning!
   virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) { }
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) { }
   virtual void AlwaysHandle(const RobotToEngineEvent& event, const Robot& robot) { }
@@ -295,7 +299,7 @@ protected:
     
   // Derived classes must override this method to handle events that come in
   // only while the behavior is NOT running. If it doesn't matter whether the
-  // the behavior is running or not, consider using AlwaysHandle above instead.
+  // behavior is running or not, consider using AlwaysHandle above instead.
   // If the behavior is subscribed to multiple tags, the presumption is that it
   // will handle switching based on tag internally.
   // NOTE: AlwaysHandle is called first!
@@ -331,7 +335,7 @@ protected:
   using ActionResultWithRobotCallback = BehaviorActionResultWithRobotCallback;
   bool StartActing(IActionRunner* action, ActionResultWithRobotCallback callback);
 
-  // If you want to do something when the action finishes, regardless of it's result, you can use the
+  // If you want to do something when the action finishes, regardless of its result, you can use the
   // following callbacks, with either a callback function taking no arguments or taking a single Robot&
   // argument. You can also use member functions. The callback will be called when action completes for any
   // reason (as long as the behavior is running)
@@ -418,7 +422,7 @@ protected:
   // Stop a helper delegated with SmartDelegateToHelper
   bool StopHelperWithoutCallback();
   
-  // Convenience function for seting behavior state lights in the behavior manager
+  // Convenience function for setting behavior state lights in the behavior manager
   void SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>& structToSet, bool persistOnReaction);
   
 
@@ -461,7 +465,7 @@ private:
   template<class EventType>
   void HandleEvent(const EventType& event);
 
-  // this is an internal handler just form StartActing
+  // this is an internal handler just for StartActing
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
     
   // ==================== Static Member Vars ====================
@@ -479,10 +483,10 @@ private:
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
   
-  
   // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only runnable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago
   float _requiredRecentDriveOffCharger_sec;
+  
   // if _requiredRecentSwitchToParent_sec is greater than 0, this behavior is only runnable if last time its parent behavior
   // chooser was activated happened less than this time ago. Eg: a value of 1 means 'if the parent got activated less
   // than 1 second ago'. This allows some behaviors to run only first time that their parent is activated (specially for activities)
@@ -524,7 +528,7 @@ private:
 ///////
   
 public:
-  // Stops the behavaior immediately but gives it a couple of tick window during which score
+  // Stops the behavior immediately but gives it a couple of tick window during which score
   // evaluation will not include its running penalty.  This allows behaviors to
   // stop themselves in hopes of being re-selected with new fast-forwarding and
   // block settings without knocking its score down so something else is selected
