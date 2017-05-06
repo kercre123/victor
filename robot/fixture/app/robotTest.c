@@ -604,12 +604,12 @@ void Recharge(void)
 }
 
 //Test body charging circuit by verifying current draw
-void ChargeTest(void)
+//@param i_done_ma - average current (min) to pass this test
+//@param vbat_overvolt_v100x - battery too full voltage level. special failure handling above this threshold.
+void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 {
   #define CHARGE_TEST_DEBUG(x)    //x
-  const int CHARGING_CURRENT_THRESHOLD_MA = 400;
   const int NUM_SAMPLES = 32;
-  const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
   
   EnableChargeComms(); //switch to comm mode
   uint16_t battVolt100x = robot_get_battVolt100x(10,0); //+POWERON extra time [s]
@@ -651,7 +651,7 @@ void ChargeTest(void)
     //==========================================================*/
     
     //finish when average rises above our threshold (after minimum sample cnt)
-    if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
+    if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
       break;
     
     //error out quickly if robot removed from charge base
@@ -664,18 +664,24 @@ void ChargeTest(void)
   
   CHARGE_TEST_DEBUG( ConsolePrintf("\r\n"); );
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
-  if( avgCnt >= NUM_SAMPLES && avg >= CHARGING_CURRENT_THRESHOLD_MA )
+  if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
     return; //OK
   
-  if( battVolt100x >= BAT_OVERVOLT_THRESHOLD ) {
+  if( battVolt100x >= vbat_overvolt_v100x ) {
     const int BURN_TIME_S = 120;  //time to hit the gym and burn off a few pounds
     ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
     robot_get_battVolt100x(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
-    //SendCommand(TEST_MOTORSLAM, 0, 0, 0);
     throw ERROR_BAT_OVERVOLT; //error prompts operator to put robot aside for a bit
   }
   
   throw ERROR_BAT_CHARGER;
+}
+
+static void ChargeTest(void)
+{
+  const int CHARGING_CURRENT_THRESHOLD_MA = 400;
+  const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
+  RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
 }
 
 //Verify battery voltage sufficient for assembly/packout

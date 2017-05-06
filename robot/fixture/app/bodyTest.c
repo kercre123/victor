@@ -321,6 +321,33 @@ static void TestTreadEncoders(void)
     throw ERROR_BODY_TREAD_ENC_RIGHT;
 }
 
+extern void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x );
+static void BodyChargeTest(void)
+{
+  try {
+    const int CHARGING_CURRENT_THRESHOLD_MA = 350; //lower than robot. no head sucking up extra power.
+    const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
+    RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
+  } catch(int e) {
+    if( e == ERROR_BAT_OVERVOLT ) {
+      const int BURN_TIME_S = 60;
+      ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
+      SendCommand(TEST_POWERON, BURN_TIME_S, 0, 0);
+      SendCommand(TEST_MOTORSLAM, 0, 0, 0); //spin tread motors on body board (no head to burn energy)
+      DisableVEXT();
+      
+      //gracefully detach pgm pins (or nRF51 will reset on detach)
+      PIN_RESET(GPIOB, PINB_SWC);
+      PIN_OUT(GPIOB, PINB_SWC);
+      MicroWait(1000);
+      PIN_IN(GPIOB, PINB_SWD);
+      PIN_PULL_NONE(GPIOB, PINB_SWD);
+      MicroWait(1000);
+    }
+    throw e;
+  }
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
@@ -358,6 +385,7 @@ TestFunction* GetBody3TestFunctions(void)
   {
     BodyNRF51,
     HeadlessBoot,
+    BodyChargeTest, //must be immediately after boot; measures beginning of charge cycle
     TestBackpackPullup,
     BodyMotor,
     //DropLeakage, //disable test for 1v5 PVT line changes
