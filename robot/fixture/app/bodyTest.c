@@ -330,11 +330,19 @@ static void BodyChargeTest(void)
     RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
   } catch(int e) {
     if( e == ERROR_BAT_OVERVOLT ) {
-      ConsolePrintf("motorslam!\r\n");
-      SendCommand(TEST_POWERON, 60, 0, 0);
+      const int BURN_TIME_S = 60;
+      ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
+      SendCommand(TEST_POWERON, BURN_TIME_S, 0, 0);
       SendCommand(TEST_MOTORSLAM, 0, 0, 0); //spin tread motors on body board (no head to burn energy)
-      //XXX: gracefully disconnect body debug signals? physical disconnect here causes body cpu to reset
       DisableVEXT();
+      
+      //gracefully detach pgm pins (or nRF51 will reset on detach)
+      PIN_RESET(GPIOB, PINB_SWC);
+      PIN_OUT(GPIOB, PINB_SWC);
+      MicroWait(1000);
+      PIN_IN(GPIOB, PINB_SWD);
+      PIN_PULL_NONE(GPIOB, PINB_SWD);
+      MicroWait(1000);
     }
     throw e;
   }
