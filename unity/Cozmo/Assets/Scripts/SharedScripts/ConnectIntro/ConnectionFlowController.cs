@@ -88,7 +88,8 @@ public class ConnectionFlowController : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
 
     Cleanup();
-    if (Cozmo.PauseManager.Instance != null) {
+
+    if (Cozmo.PauseManager.InstanceExists) {
       Cozmo.PauseManager.Instance.gameObject.SetActive(true);
     }
   }

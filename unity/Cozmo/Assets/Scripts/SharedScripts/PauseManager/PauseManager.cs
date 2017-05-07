@@ -50,6 +50,13 @@ namespace Cozmo {
     [SerializeField]
     private AlertModal _LowBatteryAlertPrefab;
 
+    // Does singleton instance exist?
+    public static bool InstanceExists {
+      get {
+        return (_Instance != null);
+      }
+    }
+
     public static PauseManager Instance {
       get {
         if (_Instance == null) {
