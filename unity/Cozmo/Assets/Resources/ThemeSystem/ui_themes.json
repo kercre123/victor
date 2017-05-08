@@ -69,14 +69,14 @@
                             "SkinButtonImageArray": true,
                             "ButtonImageArray": [
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_green_down.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/HomeHub/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_green_down.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_secondary_disabled.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/HomeHub/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_secondary_disabled.png",
                                     "DisabledSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
@@ -85,14 +85,14 @@
                                     }
                                 },
                                 {
-                                    "PressedSpriteResourceKey": "",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/HomeHub/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_green_up.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/HomeHub/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_green_up.png",
                                     "DisabledSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
@@ -208,7 +208,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_green_up.png",
+                            "ImageResourceKey": "Assets/AssetBundles/HomeHub/Art/BasicUISprites/basic_ui_sprites-UHD/Packed/ui_button_green_up.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,

@@ -26,7 +26,11 @@ MonoBehaviour:
   _Music:
     _Music: 713847863
   ChallengeConfig: {fileID: 11400000, guid: 3ab1c940b3e3841aaa96e62c5c1b24ff, type: 2}
-  IsMinigame: 0
+  _ChallengeType: 1
+  _ActivityData:
+    ActivityPriority: 1
+    HideInActivityView: 0
+    ActivityFrameColor: {r: 1, g: 0, b: 0.84827566, a: 1}
   InstructionVideoPath: 
   ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []

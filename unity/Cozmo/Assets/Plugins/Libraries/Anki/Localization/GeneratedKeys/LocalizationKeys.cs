@@ -90,6 +90,7 @@ public static class LocalizationKeys {
   public const string kCozmoSaysDescription = "cozmoSays.description";
   public const string kCodeLabTitle = "codeLab.title";
   public const string kCodeLabDescription = "codeLab.description";
+  public const string kActivityViewTitle = "activityView.title";
 
   #endregion
 

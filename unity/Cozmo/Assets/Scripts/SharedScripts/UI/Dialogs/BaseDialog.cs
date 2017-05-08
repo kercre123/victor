@@ -75,21 +75,14 @@ namespace Cozmo {
       public void Initialize() {
         CheckDASEventName();
 
-        // TODO: In the future, separate the initialize and open dialog steps 
-        // for ease of use
         _CurrentDialogState = DialogState.Initialized;
 
-        // TODO: This should be raised after open animation finished
-        // and raise initialize event here instead?
         RaiseDialogOpened();
-
         PlayOpenSound();
-
         PlayOpenAnimations();
       }
 
       protected virtual void CleanUp() {
-
       }
 
       protected virtual void ConstructOpenAnimation(Sequence openAnimation) {

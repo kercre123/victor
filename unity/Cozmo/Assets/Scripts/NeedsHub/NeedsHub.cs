@@ -1,5 +1,6 @@
 ﻿using Anki.Assets;
 using Anki.Cozmo;
+using Cozmo.Needs.Activities.UI;
 using Cozmo.Challenge;
 using Cozmo.Needs.UI;
 using Cozmo.Util;
@@ -17,6 +18,11 @@ namespace Cozmo.Hub {
     private GameObjectDataLink _NeedsHubViewPrefabData;
 
     private NeedsHubView _NeedsViewHubInstance;
+
+    [SerializeField]
+    private GameObjectDataLink _ActivitiesViewPrefabData;
+
+    private ActivitiesView _ActivitiesViewInstance;
 
     private AnimationTrigger _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
 
@@ -49,14 +55,17 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeFinishedLoading -= HandleChallengeFinishedLoading;
 
       // Deregister events
-      // Destroy dialog if it exists
       if (_NeedsViewHubInstance != null) {
-        DeregisterDialogEvents();
+        DeregisterNeedsViewEvents();
 
         // Since NeedsHubView is a BaseView, it will be closed the next time a view opens. 
         // This is only called during robot disconnect so it should be closed right away by
         // the opening of the NeedsUnconnectedView
         // _NeedsViewHubInstance.CloseDialogImmediately();
+      }
+
+      if (_ActivitiesViewInstance != null) {
+        DeregisterActivitiesViewEvents();
       }
 
       // Destroy self
@@ -76,12 +85,10 @@ namespace Cozmo.Hub {
       }
     }
 
-    private void StartLoadNeedsHubView() {
-      LoadNeedsHubViewAssetBundle(LoadNeedsHubView);
-    }
+    #region LoadNeedsHub
 
-    private void LoadNeedsHubViewAssetBundle(System.Action<bool> loadCallback) {
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_NeedsHubViewPrefabData.AssetBundle, loadCallback);
+    private void StartLoadNeedsHubView() {
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_NeedsHubViewPrefabData.AssetBundle, LoadNeedsHubView);
     }
 
     private void LoadNeedsHubView(bool assetBundleSuccess) {
@@ -114,6 +121,7 @@ namespace Cozmo.Hub {
       UIManager.OpenView(needsHubViewPrefab.GetComponent<NeedsHubView>(), (newNeedsHubView) => {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
         _NeedsViewHubInstance.OnStartChallengeClicked += HandleStartRandomChallenge;
+        _NeedsViewHubInstance.OnActivitiesButtonClicked += HandleActivitiesButtonClicked;
 
         ResetRobotToFreeplaySettings();
 
@@ -148,6 +156,10 @@ namespace Cozmo.Hub {
       }
     }
 
+    #endregion
+
+    #region StartChallenge
+
     private void HandleStartRandomChallenge() {
       string randomChallengeId = _ChallengeManager.GetRandomChallenge();
       PlayChallenge(randomChallengeId, false);
@@ -167,16 +179,38 @@ namespace Cozmo.Hub {
         }
       }
 
-      // Close dialog
-      CloseNeedsHubView();
+      // Close needs dialog if open
+      if (_NeedsViewHubInstance != null) {
+        DeregisterNeedsViewEvents();
+        _NeedsViewHubInstance.DialogCloseAnimationFinished += StartLoadChallenge;
+        _NeedsViewHubInstance.CloseDialog();
+      }
+
+      if (_ActivitiesViewInstance != null) {
+        DeregisterActivitiesViewEvents();
+        _ActivitiesViewInstance.DialogCloseAnimationFinished += StartLoadChallenge;
+        _ActivitiesViewInstance.CloseDialog();
+      }
     }
 
-    private void HandleNeedsHubViewCloseAnimationFinished() {
+    private void DeregisterNeedsViewEvents() {
+      _NeedsViewHubInstance.OnStartChallengeClicked -= HandleStartRandomChallenge;
+      _NeedsViewHubInstance.OnActivitiesButtonClicked -= HandleActivitiesButtonClicked;
+      _NeedsViewHubInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+    }
+
+    private void StartLoadChallenge() {
       if (_NeedsViewHubInstance != null) {
-        _NeedsViewHubInstance.DialogCloseAnimationFinished -= HandleNeedsHubViewCloseAnimationFinished;
+        DeregisterNeedsViewEvents();
         _NeedsViewHubInstance = null;
       }
       AssetBundleManager.Instance.UnloadAssetBundle(_NeedsHubViewPrefabData.AssetBundle);
+
+      if (_ActivitiesViewInstance != null) {
+        DeregisterActivitiesViewEvents();
+        _ActivitiesViewInstance = null;
+      }
+      AssetBundleManager.Instance.UnloadAssetBundle(_ActivitiesViewPrefabData.AssetBundle);
 
       if (!_ChallengeManager.LoadChallenge()) {
         StartLoadNeedsHubView();
@@ -187,6 +221,10 @@ namespace Cozmo.Hub {
       _ChallengeGetOutAnimTrigger = getOutAnim;
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
     }
+
+    #endregion
+
+    #region HandleChallengeEnd
 
     private void HandleEndGameDialog() {
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
@@ -218,19 +256,61 @@ namespace Cozmo.Hub {
       DataPersistenceManager.Instance.Save();
     }
 
-    private void CloseNeedsHubView() {
-      if (_NeedsViewHubInstance != null) {
-        DeregisterDialogEvents();
-        _NeedsViewHubInstance.DialogCloseAnimationFinished += HandleNeedsHubViewCloseAnimationFinished;
-        _NeedsViewHubInstance.CloseDialog();
+    #endregion
+
+    #region OpenActivitiesView
+
+    private void HandleActivitiesButtonClicked() {
+      DeregisterNeedsViewEvents();
+      // Start load activities view
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_ActivitiesViewPrefabData.AssetBundle, LoadActivitiesView);
+    }
+
+    private void LoadActivitiesView(bool assetBundleSuccess) {
+      if (assetBundleSuccess) {
+        _ActivitiesViewPrefabData.LoadAssetData((GameObject activitiesViewPrefab) => {
+          // this can be null if, by the time this callback is called, NeedsHub has been destroyed.
+          // This seems to be happening in some disconnection cases and a NRE is thrown
+          if (this != null) {
+            if (activitiesViewPrefab != null) {
+              ShowActivitiesView(activitiesViewPrefab);
+            }
+            else {
+              DAS.Error("NeedsHub.LoadActivitiesView", "activitiesViewPrefab is null");
+            }
+          }
+        });
+      }
+      else {
+        DAS.Error("NeedsHub.LoadActivitiesView", "Failed to load asset bundle " + _ActivitiesViewPrefabData.AssetBundle);
       }
     }
 
-    private void DeregisterDialogEvents() {
-      if (_NeedsViewHubInstance != null) {
-        _NeedsViewHubInstance.OnStartChallengeClicked -= HandleStartRandomChallenge;
-      }
+    private void ShowActivitiesView(GameObject activitiesViewPrefab) {
+      UIManager.OpenView(activitiesViewPrefab.GetComponent<ActivitiesView>(), (newActivitiesView) => {
+        _ActivitiesViewInstance = (ActivitiesView)newActivitiesView;
+        _ActivitiesViewInstance.OnBackButtonPressed += HandleBackToNeedsPressed;
+        _ActivitiesViewInstance.InitializeActivitiesView(_ChallengeManager.GetActivities());
+        _ActivitiesViewInstance.OnActivityButtonPressed += HandleStartActivityPressed;
+      });
     }
+
+    private void HandleBackToNeedsPressed() {
+      DeregisterActivitiesViewEvents();
+      StartLoadNeedsHubView();
+    }
+
+    private void HandleStartActivityPressed(string challengeId) {
+      PlayChallenge(challengeId, wasRequest: false);
+    }
+
+    private void DeregisterActivitiesViewEvents() {
+      _ActivitiesViewInstance.OnBackButtonPressed -= HandleBackToNeedsPressed;
+      _ActivitiesViewInstance.OnActivityButtonPressed -= HandleStartActivityPressed;
+      _ActivitiesViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+    }
+
+    #endregion
 
     // Every _kConnectedTimeIntervalCheck seconds, fire the OnConnectedInterval event for designer goals
     protected void Update() {

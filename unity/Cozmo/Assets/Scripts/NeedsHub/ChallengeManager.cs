@@ -20,7 +20,7 @@ namespace Cozmo.Challenge {
     public delegate void ChallengeCompletedHandler();
     public event ChallengeCompletedHandler OnChallengeCompleted;
 
-    private class ChallengeStatePacket {
+    public class ChallengeStatePacket {
       public ChallengeData Data;
       public bool IsChallengeUnlocked;
     }
@@ -49,6 +49,25 @@ namespace Cozmo.Challenge {
       CloseChallengeImmediately();
     }
 
+    public List<ChallengeStatePacket> GetActivities() {
+      List<ChallengeStatePacket> activitiesData = new List<ChallengeStatePacket>();
+      foreach (var kvp in _ChallengeStatesById) {
+        if (kvp.Value.Data.IsActivity) {
+          activitiesData.Add(kvp.Value);
+        }
+      }
+      activitiesData.Sort((x, y) => {
+        return x.Data.ActivityData.ActivityPriority.CompareTo(y.Data.ActivityData.ActivityPriority);
+      });
+      return activitiesData;
+    }
+
+    #region Unlock State Update
+
+    private void RefreshUnlockInfo(object message) {
+      LoadChallengeData(ChallengeDataList.Instance, out _ChallengeStatesById);
+    }
+
     private void LoadChallengeData(ChallengeDataList sourceChallenges,
                                    out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
       // Initial load of what's unlocked and completed from data
@@ -68,12 +87,9 @@ namespace Cozmo.Challenge {
       }
     }
 
-    public string GetRandomChallenge() {
-      int randomIndex = Random.Range(0, _ChallengeStatesById.Keys.Count);
-      string[] challengeIds = new string[_ChallengeStatesById.Keys.Count];
-      _ChallengeStatesById.Keys.CopyTo(challengeIds, 0);
-      return challengeIds[randomIndex];
-    }
+    #endregion
+
+    #region Challenge Enter
 
     public void SetCurrentChallenge(string challengeId, bool wasRequest) {
       // Keep track of the current challenge
@@ -148,14 +164,14 @@ namespace Cozmo.Challenge {
       });
     }
 
-    private void RefreshUnlockInfo(object message) {
-      LoadChallengeData(ChallengeDataList.Instance, out _ChallengeStatesById);
-    }
-
     private void HandleSharedMinigameViewInitialized(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _ChallengeInstance.OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
       newView.DialogCloseAnimationFinished += HandleChallengeFinishedClosing;
     }
+
+    #endregion
+
+    #region Challenge Exit 
 
     private void HandleEndGameDialog() {
       if (OnShowEndGameDialog != null) {
@@ -219,5 +235,17 @@ namespace Cozmo.Challenge {
     private void UnloadChallengeAssetBundle() {
       AssetBundleManager.Instance.UnloadAssetBundle(_ChallengeDataPrefabAssetBundle.Value.ToString());
     }
+    #endregion
+
+    #region Temp Game Selection
+
+    public string GetRandomChallenge() {
+      int randomIndex = Random.Range(0, _ChallengeStatesById.Keys.Count);
+      string[] challengeIds = new string[_ChallengeStatesById.Keys.Count];
+      _ChallengeStatesById.Keys.CopyTo(challengeIds, 0);
+      return challengeIds[randomIndex];
+    }
+
+    #endregion
   }
 }

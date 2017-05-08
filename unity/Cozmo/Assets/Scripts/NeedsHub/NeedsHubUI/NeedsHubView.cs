@@ -10,11 +10,17 @@ namespace Cozmo.Needs.UI {
   public class NeedsHubView : BaseView {
     private const int kCubesCount = 3;
 
+    public delegate void ActivitiesClickedHandler();
+    public event ActivitiesClickedHandler OnActivitiesButtonClicked;
+
     public delegate void StartChallengeClickedHandler();
     public event StartChallengeClickedHandler OnStartChallengeClicked;
 
     [SerializeField]
     private CozmoButton _PlayRandomChallengeButton;
+
+    [SerializeField]
+    private CozmoButton _ActivitiesButton;
 
     [SerializeField]
     private CozmoButton _SettingsButton;
@@ -43,6 +49,7 @@ namespace Cozmo.Needs.UI {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
                                                                       Color.gray);
       _PlayRandomChallengeButton.Initialize(HandlePlayChallengeButtonClicked, "play_random_Challenge_button", DASEventDialogName);
+      _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
 
       _MetersWidget.Initialize(enableButtonBasedOnNeeds: true, dasParentDialogName: DASEventDialogName, baseDialog: this);
@@ -79,16 +86,24 @@ namespace Cozmo.Needs.UI {
       }
     }
 
+    private void HandleActivitiesButtonClicked() {
+      if (OnActivitiesButtonClicked != null) {
+        OnActivitiesButtonClicked();
+      }
+    }
+
     private void HandleSettingsButton() {
       if (!_SettingsIsOpen) {
         _MetersWidget.gameObject.SetActive(false);
         _PlayRandomChallengeButton.gameObject.SetActive(false);
+        _ActivitiesButton.gameObject.SetActive(false);
         ShowSettings();
         _SettingsIsOpen = true;
       }
       else {
         _MetersWidget.gameObject.SetActive(true);
         _PlayRandomChallengeButton.gameObject.SetActive(true);
+        _ActivitiesButton.gameObject.SetActive(true);
         _SettingsWidget.HideSettings();
         _SettingsIsOpen = false;
       }
@@ -151,9 +166,11 @@ namespace Cozmo.Needs.UI {
       if (repairBracket == NeedBracketId.Critical || repairBracket == NeedBracketId.Warning
           || energyBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Warning) {
         _PlayRandomChallengeButton.Interactable = false;
+        _ActivitiesButton.Interactable = false;
       }
       else {
         _PlayRandomChallengeButton.Interactable = true;
+        _ActivitiesButton.Interactable = true;
       }
     }
   }
