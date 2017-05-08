@@ -11,12 +11,18 @@ static const int MAX_MODELS = 4;
 #define BODY_COLOR(i)  (((s32*) 0x1F018)[i])
 
 
+// NOTE: Make sure changes to this enum are reflected on the Unity side (SettingsVersionsPanel.cs)
+//       The actual value itself is written to robot by factory fixture and the values are
+//       "artisinally" hard-coded into the sys_boot assembly file.
+//       We should try to keep this enum in sync with whatever the fixtures write.
 enum BODY_VERS {
-  BODY_VER_EP = 0,
+  BODY_VER_EP    = 0,
   BODY_VER_PILOT = 1,   // 8T head encoder
-  BODY_VER_PROD = 2,    // Final hardware version, 4T head encoder
-  BODY_VER_SHIP = 3,    // First shipping firmware version
-  BODY_VER_1v5  = 5
+  BODY_VER_PROD  = 2,    // Final hardware version, 4T head encoder
+  BODY_VER_SHIP  = 3,    // First 1000 v1.0 shipping units
+  BODY_VER_1v0   = 4,    // Full production v1.0
+  BODY_VER_1v5   = 5,    // v1.5 EP2
+  BODY_VER_1v5c  = 6,    // v1.5 with glass-filled nylon lift gear and reduced ratio (149.7:1)
 };
 
 enum IRQ_Priority {
