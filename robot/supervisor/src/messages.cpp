@@ -44,7 +44,7 @@
 #include "anki/cozmo/robot/logging.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
-extern void GenerateTestTone(void);
+extern void GenerateTestTone(u8 tone_sel, u8 volume);
 
 namespace Anki {
   namespace Cozmo {
@@ -597,7 +597,7 @@ namespace Anki {
 
       void Process_generateTestTone(const RobotInterface::GenerateTestTone& msg) {
         #ifndef SIMULATOR
-        GenerateTestTone();
+        GenerateTestTone(msg.tone_sel, msg.volume);
         #endif
       }
 

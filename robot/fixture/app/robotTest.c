@@ -411,6 +411,12 @@ void RobotFixtureDropSensor(void)
     throw ERROR_DROP_TOO_DIM;
 }
 
+u8 tone_select = 2;
+void RobotSetSoundTestTone(u8 tone) { tone_select = tone; }
+
+u8 tone_volume = 192;
+void RobotSetSoundTestVolume(u8 volume) { tone_volume = volume; }
+
 void SpeakerTest(void)
 {
   //const int TEST_TIME_US = 1000000;
@@ -418,8 +424,16 @@ void SpeakerTest(void)
   // Speaker test not on robot1 (head not yet properly fixtured)
   if (g_fixtureType == FIXTURE_ROBOT1_TEST)
     return;
-  SendCommand(TEST_PLAYTONE, 0, 0, 0);
-
+  
+  //Encode tone_select & volume into single byte to send to syscon (limited 8-bit payload size)
+  //-limit tone select range 0-3
+  //-drop 2 LSbits of volume; lose a bit of granularity.
+  //syscon::tests.cpp:
+  //  msg.tone_sel = param & 0x03;
+  //  msg.volume   = param & 0xFC;
+  ConsolePrintf("Play Tone #%d, volume %d\r\n", tone_select & 0x3, tone_volume & 0xFC );
+  SendCommand(TEST_PLAYTONE, (tone_volume & 0xFC) | (tone_select & 0x03), 0, 0);
+  
   // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 

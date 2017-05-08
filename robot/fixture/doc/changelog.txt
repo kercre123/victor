@@ -2,8 +2,15 @@
 (UNRELEASED)
 ----------------
 
+Firmware:
+-syscon,robot changes to support parameterized test tone playback (3 tones, adjustable volume)
+
 BODY3:
 -added charge-current test.
+
+SOUND:
+-new audio sound (less harsh). Uses new test tone params for selection/volume.
+-console cmds to test different sounds/volume (volatile).
 
 ----------------
 Release v97
