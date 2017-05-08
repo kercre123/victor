@@ -28,57 +28,57 @@ Blockly.Colours = {
   "motion": {
     "primary": "#0898c4",
     "secondary": "#06799c",
-    "tertiary": "#056a89"
+    "tertiary": "#3f3f3f"
   },
   "looks": {
     "primary": "#5e3dfc",
     "secondary": "#4b30c9",
-    "tertiary": "#412ab0"
+    "tertiary": "#3f3f3f"
   },
   "sounds": {
     "primary": "#CF63CF",
     "secondary": "#C94FC9",
-    "tertiary": "#BD42BD"
+    "tertiary": "#3f3f3f"
   },
   "control": {
     "primary": "#e5580a",
     "secondary": "#b74608",
-    "tertiary": "#a03d07"
+    "tertiary": "#3f3f3f"
   },
   "event": {
     "primary": "#f4b606",
     "secondary": "#c39104",
-    "tertiary": "#aa7f04"
+    "tertiary": "#3f3f3f"
   },
   "actions": {
     "primary": "#a03c87",
     "secondary": "#80306c",
-    "tertiary": "#702a5e"
+    "tertiary": "#3f3f3f"
   },
   "sensing": {
     "primary": "#5CB1D6",
     "secondary": "#47A8D1",
-    "tertiary": "#2E8EB8"
+    "tertiary": "#3f3f3f"
   },
   "pen": {
     "primary": "#0fBD8C",
     "secondary": "#0DA57A",
-    "tertiary": "#0B8E69"
+    "tertiary": "#3f3f3f"
   },
   "operators": {
     "primary": "#59C059",
     "secondary": "#46B946",
-    "tertiary": "#389438"
+    "tertiary": "#3f3f3f"
   },
   "data": {
     "primary": "#FF8C1A",
     "secondary": "#FF8000",
-    "tertiary": "#DB6E00"
+    "tertiary": "#3f3f3f"
   },
   "more": {
     "primary": "#FF6680",
     "secondary": "#FF4D6A",
-    "tertiary": "#FF3355"
+    "tertiary": "#3f3f3f"
   },
   "text": "#575E75",
   "workspace": "#F5F8FF",
