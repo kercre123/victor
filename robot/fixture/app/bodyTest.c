@@ -330,7 +330,7 @@ static void BodyChargeTest(void)
     RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
   } catch(int e) {
     if( e == ERROR_BAT_OVERVOLT ) {
-      const int BURN_TIME_S = 60;
+      const int BURN_TIME_S = 90;
       ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
       SendCommand(TEST_POWERON, BURN_TIME_S, 0, 0);
       SendCommand(TEST_MOTORSLAM, 0, 0, 0); //spin tread motors on body board (no head to burn energy)
