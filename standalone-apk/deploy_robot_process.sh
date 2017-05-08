@@ -10,13 +10,25 @@
 # engine and robot processes.
 
 # Go to directory of this script
-cd "${0%/*}"
+SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+TOPLEVEL=`pushd ${SCRIPT_PATH}/.. >> /dev/null; pwd; popd >> /dev/null`
+
+cd "${SCRIPT_PATH}"
+
+ADB=adb
+if [ -e $TOPLEVEL/local.properties ]; then
+    ANDROID_HOME=`egrep sdk.dir $TOPLEVEL/local.properties | awk -F= '{print $2;}'`
+    ADB=$ANDROID_HOME/platform-tools/adb
+    if [ ! -x $ADB ]; then
+        ADB=adb
+    fi
+fi
 
 # List connect devices
-adb devices
+$ADB devices
 
 # Grab the IDs of all the connected devices / emulators
-IDS=($(adb devices | sed '1,1d' | sed '$d' | cut -f 1 | sort))
+IDS=($($ADB devices | sed '1,1d' | sed '$d' | cut -f 1 | sort))
 NUMIDS=${#IDS[@]}
 
 # Check for number of connected devices / emulators
@@ -32,7 +44,7 @@ if [ ! -f $ROBOT_EXEC ]; then
     echo "ERROR: " $ROBOT_EXEC " not found! Did you build it?"
     exit -2
 fi
-adb push $ROBOT_EXEC /data/local/tmp
+$ADB push $ROBOT_EXEC /data/local/tmp
 
 # Upload C++ lib
 CPP_LIB=../build/android/libs/armeabi-v7a/libc++_shared.so
@@ -40,10 +52,10 @@ if [ ! -f $CPP_LIB ]; then
     echo "ERROR: " $CPP_LIB " not found!"
     exit -2
 fi
-adb push $CPP_LIB /data/local/tmp
+$ADB push $CPP_LIB /data/local/tmp
 
 # Shell into android device and execute robot process
-adb shell "
+$ADB shell "
 export LD_LIBRARY_PATH=/data/local/tmp
 cd /data/local/tmp
 nice -n -20 ./cozmoRobot2

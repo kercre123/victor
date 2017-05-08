@@ -41,14 +41,20 @@ def parse_buckconfig_as_ini(path):
 
     return config
 
-def get_ndk_version_from_buckconfig(path):
+def get_property_from_buckconfig(path, section, key):
     if not path or not os.path.isfile(path):
         return None
     config = parse_buckconfig_as_ini(path)
     try:
-        return config.get('ndk', 'ndk_version')
+        return config.get(section, key)
     except ConfigParser.NoSectionError:
         return None
+
+def get_ndk_version_from_buckconfig(path):
+    return get_property_from_buckconfig(path, 'ndk', 'ndk_version')
+
+def get_sdk_version_from_buckconfig(path):
+    return get_property_from_buckconfig(path, 'anki', 'android_sdk_version')
 
 def read_properties_from_file(path):
     properties = {}
@@ -59,7 +65,7 @@ def read_properties_from_file(path):
                 properties[name.strip()] = str(var.strip())
     return properties
 
-def get_ndk_version_from_source_properties(path):
+def get_pkg_revision_from_source_properties(path):
     properties = read_properties_from_file(path)
     return properties["Pkg.Revision"]
 
@@ -73,9 +79,17 @@ def get_ndk_version_from_ndk_dir(path):
     source_properties_path = os.path.join(path, 'source.properties')
     release_txt_path = os.path.join(path, 'RELEASE.TXT')
     if os.path.isfile(source_properties_path):
-        return get_ndk_version_from_source_properties(source_properties_path)
+        return get_pkg_revision_from_source_properties(source_properties_path)
     elif os.path.isfile(release_txt_path):
         return get_ndk_version_from_release_text(release_txt_path)
+    return None
+
+def get_sdk_version_from_sdk_dir(path):
+    if not path:
+        return None
+    source_properties_path = os.path.join(path, 'anki', 'source.properties')
+    if os.path.isfile(source_properties_path):
+        return get_pkg_revision_from_source_properties(source_properties_path)
     return None
 
 def get_android_sdk_ndk_dir_from_local_properties():
@@ -106,6 +120,16 @@ def get_anki_android_ndk_downloads_directory():
     ndk_download_directory_path = os.path.join(get_anki_android_directory(), 'ndk-downloads')
     util.File.mkdir_p(ndk_download_directory_path)
     return ndk_download_directory_path
+
+def get_anki_android_sdk_repository_directory():
+    sdk_repo_directory_path = os.path.join(get_anki_android_directory(), 'sdk-repository')
+    util.File.mkdir_p(sdk_repo_directory_path)
+    return sdk_repo_directory_path
+
+def get_anki_android_sdk_downloads_directory():
+    sdk_download_directory_path = os.path.join(get_anki_android_directory(), 'sdk-downloads')
+    util.File.mkdir_p(sdk_download_directory_path)
+    return sdk_download_directory_path
 
 def find_ndk_root_for_ndk_version(version_arg):
     ndk_version_arg_to_version = {
@@ -162,6 +186,37 @@ def find_ndk_root_for_ndk_version(version_arg):
                     return full_path_for_d
     return None
 
+def find_android_home_for_sdk_version(version):
+    android_home_env_vars = [
+        'ANDROID_HOME',
+        'ANDROID_ROOT',
+    ]
+    for env_var in android_home_env_vars:
+        env_var_value = os.environ.get(env_var)
+        if env_var_value:
+            sdk_ver = get_sdk_version_from_sdk_dir(env_var_value)
+            if sdk_ver == version:
+                return env_var_value
+    local_properties = get_android_sdk_ndk_dir_from_local_properties()
+    sdk_dir = local_properties.get('sdk.dir')
+    if sdk_dir:
+        sdk_ver = get_sdk_version_from_sdk_dir(sdk_dir)
+        if sdk_ver == version:
+            return sdk_dir
+    sdk_repo_path = os.environ.get('ANDROID_SDK_REPOSITORY')
+    if not sdk_repo_path:
+        sdk_repo_path = get_anki_android_sdk_repository_directory()
+        os.environ['ANDROID_SDK_REPOSITORY'] = sdk_repo_path
+    if sdk_repo_path and os.path.isdir(sdk_repo_path):
+        for d in os.listdir(sdk_repo_path):
+            full_path_for_d = os.path.join(sdk_repo_path, d)
+            if os.path.isdir(full_path_for_d):
+                sdk_ver = get_sdk_version_from_sdk_dir(full_path_for_d)
+                if sdk_ver == version:
+                    return full_path_for_d
+
+    return None
+
 def sha1sum(filename):
     sha1 = hashlib.sha1()
     with open(filename, 'rb') as f:
@@ -173,6 +228,68 @@ def dlProgress(bytesWritten, totalSize):
     percent = int(bytesWritten*100/totalSize)
     sys.stdout.write("\r" + "  progress = %d%%" % percent)
     sys.stdout.flush()
+
+def safe_rmdir(path):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+
+def safe_rmfile(path):
+    if os.path.isfile(path):
+        os.remove(path)
+
+def download_and_install_zip(url,
+                             downloads_path,
+                             repo_path,
+                             base_name,
+                             info,
+                             version,
+                             title):
+    tmp_extract_path = os.path.join(downloads_path, base_name)
+    final_extract_path = os.path.join(repo_path, base_name)
+    safe_rmdir(tmp_extract_path)
+    safe_rmdir(final_extract_path)
+    final_path = tmp_extract_path + ".zip"
+    download_path = final_path + ".tmp"
+    safe_rmfile(final_path)
+    safe_rmfile(download_path)
+    download_size = info.get(version).get('size')
+    download_hash = info.get(version).get('sha1')
+    handle = urllib.urlopen(url)
+    code = handle.getcode()
+    if code >= 200 and code < 300:
+        download_file = open(download_path, 'w')
+        block_size = 1024 * 1024
+        sys.stdout.write("\nDownloading {0} {1}:\n  url = {2}\n  dst = {3}\n"
+                         .format(title, version, url, final_path))
+        for chunk in iter(lambda: handle.read(block_size), b''):
+            download_file.write(chunk)
+            dlProgress(download_file.tell(), download_size)
+
+        download_file.close()
+        sys.stdout.write("\n")
+        sys.stdout.write("Verifying that SHA1 hash matches {0}\n".format(download_hash))
+        if sha1sum(download_path) == download_hash:
+            os.rename(download_path, final_path)
+            zip_ref = zipfile.ZipFile(final_path, 'r')
+            sys.stdout.write("Extracting {0} from {1}.  This could take several minutes.\n"
+                             .format(title, final_path))
+            zip_ref.extractall(downloads_path)
+            zip_info_list = zip_ref.infolist()
+            # Fix permissions so we can execute the tools
+            for zip_info in zip_info_list:
+                extracted_path = os.path.join(downloads_path, zip_info.filename)
+                perms = zip_info.external_attr >> 16L
+                os.chmod(extracted_path, perms)
+            zip_ref.close()
+            os.rename(tmp_extract_path, final_extract_path)
+        else:
+            sys.stderr.write("Failed to validate {0} downloaded from {1}\n"
+                             .format(download_path, url))
+    else:
+        sys.stderr.write("Failed to download {0} {1} from {2} : {3}\n"
+                         .format(title, version, url, code))
+    safe_rmfile(final_path)
+    safe_rmfile(download_path)
 
 def install_ndk(revision):
     ndk_revision_to_version = {
@@ -221,97 +338,70 @@ def install_ndk(revision):
 
     ndk_tmp_extract_path = os.path.join(ndk_downloads_path, ndk_base_name)
     ndk_final_extract_path = os.path.join(ndk_repo_path, ndk_base_name)
-    if os.path.isdir(ndk_tmp_extract_path):
-        shutil.rmtree(ndk_tmp_extract_path)
-    if os.path.isdir(ndk_final_extract_path):
-        shutil.rmtree(ndk_final_extract_path)
-    ndk_final_path = ndk_tmp_extract_path + ".zip"
-    ndk_download_path = ndk_final_path + ".tmp"
-    if os.path.isfile(ndk_final_path):
-        os.remove(ndk_final_path)
-    if os.path.isfile(ndk_download_path):
-        os.remove(ndk_download_path)
-    ndk_download_size = ndk_info.get(version).get('size')
-    ndk_download_hash = ndk_info.get(version).get('sha1')
-    handle = urllib.urlopen(android_ndk_url)
-    code = handle.getcode()
-    if code >= 200 and code < 300:
-        ndk_download_file = open(ndk_download_path, 'w')
-        block_size = 1024 * 1024
-        sys.stdout.write("\nDownloading Android NDK {0}:\n  url = {1}\n  dst = {2}\n"
-                         .format(version, android_ndk_url, ndk_final_path))
-        for chunk in iter(lambda: handle.read(block_size), b''):
-            ndk_download_file.write(chunk)
-            dlProgress(ndk_download_file.tell(), ndk_download_size)
+    download_and_install_zip(android_ndk_url,
+                             ndk_downloads_path,
+                             ndk_repo_path,
+                             ndk_base_name,
+                             ndk_info,
+                             version,
+                             "Android NDK")
 
-        ndk_download_file.close()
-        sys.stdout.write("\n")
-        sys.stdout.write("Verifying that SHA1 hash matches {0}\n".format(ndk_download_hash))
-        if sha1sum(ndk_download_path) == ndk_download_hash:
-            os.rename(ndk_download_path, ndk_final_path)
-            zip_ref = zipfile.ZipFile(ndk_final_path, 'r')
-            sys.stdout.write("Extracting NDK from {0}.  This could take several minutes.\n"
-                             .format(ndk_final_path))
-            zip_ref.extractall(ndk_downloads_path)
-            zip_info_list = zip_ref.infolist()
-            # Fix permissions so we can execute the NDK tools
-            for zip_info in zip_info_list:
-                extracted_path = os.path.join(ndk_downloads_path, zip_info.filename)
-                perms = zip_info.external_attr >> 16L
-                os.chmod(extracted_path, perms)
-            zip_ref.close()
-            os.rename(ndk_tmp_extract_path, ndk_final_extract_path)
-        else:
-            sys.stderr.write("Failed to validate {0} downloaded from {1}\n"
-                             .format(ndk_download_path, android_ndk_url))
-            os.remove(ndk_download_path)
-            return -1
-    else:
-        sys.stderr.write("Failed to download Android NDK {0} from {1} : {2}\n"
-                         .format(version, android_ndk_url, code))
-        return -1
+def install_sdk(version):
+    sdk_info_darwin = {
+        'r1': {'size': 841831972, 'sha1': 'cff532765b5d4b9abd83e322359a5d59f36c5960'},
+        'r2': {'size': 916951631, 'sha1': '480d5d6006708c6a404bf4459d43edb59c932dcc'},
+    }
+
+    sdk_info_linux = {
+        'r1': {'size': 920378038, 'sha1': 'e4287400a8d15169e363b87a3c5c8656f2de6671'},
+    }
+
+    sdk_platform_info = {
+        'darwin': sdk_info_darwin,
+        'linux': sdk_info_linux,
+    }
+
+    platform_name = platform.system().lower()
+
+    sdk_info = sdk_platform_info.get(platform_name)
+
+    sdk_repo_path = os.environ.get('ANDROID_SDK_REPOSITORY')
+    if not sdk_repo_path:
+        sdk_repo_path = get_anki_android_sdk_repository_directory()
+    util.File.mkdir_p(sdk_repo_path)
+
+    sdk_downloads_path = get_anki_android_sdk_downloads_directory()
+
+    platform_name_to_os_name = {
+        'darwin': 'macosx',
+        'linux': 'linux',
+    }
+    os_name = platform_name_to_os_name.get(platform_name)
+    url_prefix = "https://sai-general.s3.amazonaws.com/build-assets/"
+    sdk_base_name = "android-sdk-{0}-anki-{1}".format(os_name, version)
+    android_sdk_url = "{0}{1}.zip".format(url_prefix, sdk_base_name)
+
+    download_and_install_zip(android_sdk_url,
+                             sdk_downloads_path,
+                             sdk_repo_path,
+                             sdk_base_name,
+                             sdk_info,
+                             version,
+                             "Android SDK")
 
 def get_required_ndk_version():
     buck_config_path = os.path.join(get_toplevel_directory(), '.buckconfig')
     required_ndk_ver = get_ndk_version_from_buckconfig(buck_config_path)
-    buck_config_override_path = os.path.join(get_toplevel_directory(), '.buckconfig.override')
-    override_required_ndk_ver = get_ndk_version_from_buckconfig(buck_config_override_path)
-    return override_required_ndk_ver or required_ndk_ver
+    return required_ndk_ver
+
+def get_required_sdk_version():
+    buck_config_path = os.path.join(get_toplevel_directory(), '.buckconfig')
+    required_sdk_ver = get_sdk_version_from_buckconfig(buck_config_path)
+    return required_sdk_ver
 
 def find_ndk_root_dir(required_ndk_ver):
     ndk_root_dir = find_ndk_root_for_ndk_version(required_ndk_ver)
     return ndk_root_dir
-
-def find_android_home():
-    env_vars = [
-        'ANDROID_HOME',
-        'ANDROID_ROOT'
-    ]
-    for env_var in env_vars:
-        path_from_env_var = os.environ.get(env_var)
-        if path_from_env_var:
-            path_to_android_tool = os.path.join(path_from_env_var, 'tools', 'android')
-            if os.path.isfile(path_to_android_tool):
-                return path_from_env_var
-    local_properties = get_android_sdk_ndk_dir_from_local_properties()
-    sdk_dir = local_properties.get('sdk.dir')
-    if sdk_dir:
-        path_to_android_tool = os.path.join(sdk_dir, 'tools', 'android')
-        if os.path.isfile(path_to_android_tool):
-            return sdk_dir
-
-    brew_path = os.path.join(os.sep, 'usr', 'local', 'opt', 'android-sdk')
-    path_to_android_tool = os.path.join(brew_path, 'tools', 'android')
-    if os.path.isfile(path_to_android_tool):
-        return brew_path
-
-    studio_path = os.path.join(os.path.expanduser("~"), 'Library', 'Android', 'sdk')
-    path_to_android_tool = os.path.join(studio_path, 'tools', 'android')
-    if os.path.isfile(path_to_android_tool):
-        return studio_path
-
-    raise RuntimeError("Could not find android home directory")
-    return None
 
 def find_or_install_ndk(required_ndk_ver):
     ndk_root_dir = find_ndk_root_dir(required_ndk_ver)
@@ -323,34 +413,80 @@ def find_or_install_ndk(required_ndk_ver):
                                .format(required_ndk_ver))
     return ndk_root_dir
 
-def setup_android_ndk_and_sdk():
-    required_ndk_ver = get_required_ndk_version()
-    ndk_root_dir = find_or_install_ndk(required_ndk_ver)
+def find_or_install_sdk(required_sdk_ver):
+    android_home = find_android_home_for_sdk_version(required_sdk_ver)
+    if not android_home:
+        install_sdk(required_sdk_ver)
+        android_home = find_android_home_for_sdk_version(required_sdk_ver)
+        if not android_home:
+            raise RuntimeError("Could not find Android HOME directory for version {0}"
+                               .format(required_sdk_ver))
+    return android_home
+
+def setup_android_ndk_and_sdk(override_ndk_dir, override_android_home_dir):
+    ndk_root_dir = override_ndk_dir
+    if not ndk_root_dir:
+        required_ndk_ver = get_required_ndk_version()
+        ndk_root_dir = find_or_install_ndk(required_ndk_ver)
 
     os.environ['ANDROID_NDK_ROOT'] = ndk_root_dir
     print("ANDROID_NDK_ROOT: %s" % ndk_root_dir)
-    android_home_dir = find_android_home()
+
+    android_home_dir = override_android_home_dir
+    if not android_home_dir:
+        required_sdk_ver = get_required_sdk_version()
+        android_home_dir = find_or_install_sdk(required_sdk_ver)
     os.environ['ANDROID_HOME'] = android_home_dir
     print("ANDROID_HOME: %s" % android_home_dir)
     write_local_properties()
 
+def get_path_to_unity_editor_plist():
+    return os.path.expanduser("~/Library/Preferences/com.unity3d.UnityEditor5.x.plist")
+
+def set_android_sdk_root_for_unity(override_android_home_dir):
+    android_home = override_android_home_dir
+    if not android_home:
+        android_home = find_android_home_for_sdk_version(get_required_sdk_version())
+    cmd = ["defaults",
+           "write",
+           get_path_to_unity_editor_plist(),
+           "AndroidSdkRoot",
+           android_home]
+    subprocess.call(cmd)
 
 def parseArgs(scriptArgs):
     version = '1.0'
-    parser = argparse.ArgumentParser(description='finds or installs android ndk', version=version)
-    parser.add_argument('--install-ndk', action='store', dest='required_ndk_version',
-                        default=get_required_ndk_version())
+    parser = argparse.ArgumentParser(description='finds or installs android ndk/sdk', version=version)
+    parser.add_argument('--install-ndk',
+                        action='store',
+                        dest='required_ndk_version',
+                        nargs='?',
+                        default=get_required_ndk_version(),
+                        const=get_required_ndk_version())
+    parser.add_argument('--install-sdk',
+                        action='store',
+                        dest='required_sdk_version',
+                        nargs='?',
+                        default=None,
+                        const=get_required_sdk_version())
     (options, args) = parser.parse_known_args(scriptArgs)
     return options
 
 
 def main(argv):
     options = parseArgs(argv)
-    ndk_path = find_or_install_ndk(options.required_ndk_version)
-    if not ndk_path:
-        return 1
-    print("%s" % ndk_path)
-    return 0
+    if options.required_sdk_version:
+        sdk_path = find_or_install_sdk(options.required_sdk_version)
+        if not sdk_path:
+            return 1
+        print("%s" % sdk_path)
+        return 0
+    if options.required_ndk_version:
+        ndk_path = find_or_install_ndk(options.required_ndk_version)
+        if not ndk_path:
+            return 1
+        print("%s" % ndk_path)
+        return 0
 
 if __name__ == '__main__':
     ret = main(sys.argv)

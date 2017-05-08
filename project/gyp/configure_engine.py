@@ -373,14 +373,7 @@ def main(scriptArgs):
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary
-    # TODO: We should only check for deps in configure.py, not actuall install anything
-    # TODO: We should not install any deps here, only check that valid depdendencies exist
     deps = ['ninja']
-    if not 'ANDROID_HOME' in os.environ:
-      deps.append('android-sdk')
-
-    if not 'ANDROID_NDK_ROOT' in os.environ:
-      deps.append('android-ndk')
 
     if len(deps) > 0:
       # Install Android build dependencies
@@ -390,11 +383,6 @@ def main(scriptArgs):
         UtilLog.error("Failed to verify build tool dependencies")
         return False
 
-    for dep in deps:
-      if dep == 'android-sdk':
-        os.environ['ANDROID_HOME'] = os.path.join('/', 'usr', 'local', 'opt', dep)
-      elif dep == 'android-ndk':
-        os.environ['ANDROID_NDK_ROOT'] = os.path.join('/', 'usr', 'local', 'opt', dep)
     ### android deps installed
 
     ndk_root = os.environ['ANDROID_NDK_ROOT']

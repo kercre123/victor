@@ -1,0 +1,8 @@
+{
+  "ignore_dirs": [
+    "buck-out",
+    ".idea",
+    ".buckd",
+    "build"
+  ]
+}

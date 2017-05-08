@@ -16,22 +16,19 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
     brew install cmake
     brew install python3
 
-### Android SDK
+### Android NDK and SDK
 
-The android SDK is required to build for Android. (You may find you need it even if you're not building for Android when you run configure.py below.)
+The Android NDK and SDK are required to build for Android.  They will be automatically installed for you when you run `./configure.py` for the Android platform.  You can also install them with:
+```
+./tools/build/tools/ankibuild/android.py --install-sdk
+./tools/build/tools/ankibuild/android.py --install-ndk
+```
 
-    brew install android-sdk
-
-Add the following to your .bash_profile in your home directory. Create it if it doesn't already exist.
-
-	export ANDROID_ROOT=/usr/local/opt/android-sdk
-	export ANDROID_HOME=/usr/local/opt/android-sdk
-
-Then run
- 
-    source ~/.bash_profile
-	
-to create the new environment variables.
+You don't need to, but you may want to add the Android SDK platform tools to your path in `~/.bash_profile` with:
+```
+export ANDROID_HOME=~/.anki/android/sdk-repository/android-sdk-macosx-anki-r2/platform-tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
 
 ### Unity
 
