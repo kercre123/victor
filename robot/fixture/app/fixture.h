@@ -45,6 +45,7 @@
 #define FIXTURE_PACKOUT_CE_TEST 34
 #define FIXTURE_LIFETEST_TEST  25
 #define FIXTURE_RECHARGE_TEST  26
+#define FIXTURE_RECHARGE2_TEST 35
 
 // 27 is reserved for the ill-fated JAM test
 
@@ -54,7 +55,7 @@
 
 #define FIXTURE_COZ187_TEST    32   // murder cozmo, kill code to fac-revert via charge-contact cmd
 
-#define FIXTURE_DEBUG          35   // Should be last ID
+#define FIXTURE_DEBUG          36   // Should be last ID
 
 //DEBUG must always be last entry!!!!!!!!!!!!!!!!!!1
 #define NUM_FIXTYPES  (FIXTURE_DEBUG+1)
@@ -65,7 +66,7 @@ typedef unsigned char FixtureType;
   /*8-15*/  "ROBOT1",   "BODY2",      "MOTOR1L",    "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",     "PLAYPEN",  \
   /*16-23*/ "FINISHC",  "FINISH1",    "FINISH2",    "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",   "ROBOT3",   \
   /*24-31*/ "PACKOUT",  "LIFETEST",   "RECHARGE",   "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",  "MOTOR3H",  \
-  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "DEBUG" }
+  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "RECHARGE2","DEBUG" }
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();

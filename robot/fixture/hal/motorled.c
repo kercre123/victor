@@ -73,7 +73,7 @@ static void m_motor_set_cfg( HBridgeHalfCfg MOTA, HBridgeHalfCfg MOTB )
 void MotorMV(int millivolts, bool reverse_nForward )
 {
   //v1.5 has motor driver IC. Need to configure additional control signals
-  if( g_fixtureRev >= BOARD_REV_1_5_0 )
+  if( g_fixtureRev >= BOARD_REV_1_5_1 )
   {
     if( millivolts < 0 )
       m_motor_set_cfg(HBC_GND, HBC_GND); //electrical motor brake

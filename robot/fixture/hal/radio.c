@@ -9,6 +9,7 @@
 #include "hal/cube.h"
 #include "hal/flash.h"
 #include "app/binaries.h"
+#include "radio.h"
 
 bool UpdateNRF(bool forceupdate);
 
@@ -103,6 +104,8 @@ static void PutChar(u8 c)
 }
 
 char g_mode = 'X';
+static int8_t m_rssidat[9];
+static bool rssi_valid = 0;
 
 // Process incoming bytes from the radio - must call at least 12,000 times/second
 void RadioProcess()
@@ -113,35 +116,58 @@ void RadioProcess()
     return;
   
   // Otherwise, process messages or grab arguments
-  static int argbytes = 0, arg = 0, msg = 0;
-  if (!argbytes)
+  static int msg = 0, argbytes = 0, argCnt = 0, cubeArg = 0;
+  
+  if (!argbytes) // Process messages
   {
-    // Process messages
     msg = c;
-    if (msg == 'C')   // Print cube ID
-    {
-      // Cube message has 4 bytes
-      argbytes = 4;
-      arg = 0;
+    switch( msg ) {
+      case 'C':       // Print cube ID
+        argbytes = 4; // Cube message has 4 bytes
+        cubeArg = 0;  // reset argument
+        break;
+      case 'R':       // Print RSSI data
+        argbytes = 9; // RSSI message size
+        argCnt = 0;   // reset counter
+        break;
+      case '1':
+        PutChar(g_mode);  // Watchdogged - restore mode
+        break;
     }
-    if (msg == '1')   // Watchdogged - restore mode
-      PutChar(g_mode);
-  } else {
-    // Grab arguments
-    argbytes--;
-    arg |= (c << (8*argbytes)); // XXX: This byteswaps because I'm used to IDs being byteswapped
-    
-    // If we have a whole argument, print it out
-    if (!argbytes)
-      ConsolePrintf("cube,%c,%08x\r\n", msg, arg);
+  } 
+  else // Grab arguments
+  {
+    switch( msg )
+    {
+      case 'C':
+        argbytes--;
+        cubeArg |= (c << (8*argbytes)); // XXX: This byteswaps because I'm used to IDs being byteswapped
+        if (!argbytes)  // If we have a whole argument, print it out
+          ConsolePrintf("cube,%c,%08x\r\n", msg, cubeArg);
+        break;
+      case 'R':
+        argbytes--;
+        m_rssidat[argCnt++] = (s8)c; //signed RSSI value
+        if( !argbytes ) {
+          rssi_valid = 1;
+          /*
+          ConsolePrintf("rssi");
+          for(int i=0; i<9; i++)
+            ConsolePrintf(",%02i", m_rssidat[i] );
+          ConsolePrintf("\r\n");
+          */
+        }
+        break;
+      default:
+        argbytes=0;
+        break;
+    }
   }
 }
 
 // Put the radio into a specific test mode
-void SetRadioMode(char mode)
+void SetRadioMode(char mode, bool forceupdate )
 {
-  bool forceupdate = (mode == 'U');
-  
   InitRadio();
   // Try 5 times, since a buggy ISR in the NRF clobbers the update attempt
   for (int i = 5; i >= 0; i--)
@@ -154,7 +180,7 @@ void SetRadioMode(char mode)
         c = GetCharWait(1000000);
         if (-1 == c)
           throw ERROR_RADIO_TIMEOUT;
-    } while ('!' != c);
+      } while ('!' != c);
       break;
     } catch (int e) {
       if (i == 0)
@@ -164,3 +190,25 @@ void SetRadioMode(char mode)
   g_mode = mode;
   PutChar(g_mode);
 }
+
+void RadioGetRssi( int8_t out_rssi[9] )
+{
+  //Must be in idle mode for rssi reading
+  if( g_mode != 'I' )
+    SetRadioMode('I');
+  
+  rssi_valid = 0;
+  PutChar('R'); //initiate an RSSI read (reverts to idle when complete)
+  
+  //Wait for response packet
+  u32 start = getMicroCounter();
+  while( !rssi_valid ) { //spin on rx
+    RadioProcess();
+    if( getMicroCounter() - start >= 1000*1000 )
+      throw ERROR_RADIO_TIMEOUT;
+  }
+
+  if( out_rssi != NULL )
+    memcpy( out_rssi, m_rssidat, sizeof(m_rssidat) );
+}
+

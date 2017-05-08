@@ -124,6 +124,7 @@ void HeadTest(void)
 
 // With 2.2K, we see most of them just under 550
 const int SAFE_THRESHOLD = 599;
+const int PULLUP_DETECT_THRESHOLD = 300; //if pull-up is populated, reading should never be below this
 
 // Put head in test mode
 void HeadQ1Test(void)
@@ -146,6 +147,8 @@ void HeadQ1Test(void)
   ConsolePrintf("q1-mv,%d\r\n", sum);
   if (sum > SAFE_THRESHOLD)
     throw ERROR_HEAD_Q1;
+  if( sum < PULLUP_DETECT_THRESHOLD ) //required pull-up (R82=2.2k) is missing
+    throw ERROR_OUT_OF_RANGE;
 }
 
 TestFunction* GetHeadTestFunctions(void)

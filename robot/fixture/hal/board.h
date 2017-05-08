@@ -105,10 +105,11 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led);
 
 //Fixture Hardware revisions
 typedef enum {
-  BOARD_REV_1_0_REV1  = 0,  //Fixture release 1.0 rev1
-  BOARD_REV_1_0_REV2  = 1,  //Fixture release 1.0 rev2
-  BOARD_REV_1_0_REV3  = 2,  //Fixture release 1.0 rev3
-  BOARD_REV_1_5_0     = 3,  //Fixture release 1.5.0
+  BOARD_REV_UNKNOWN   = 0,
+  BOARD_REV_1_0_REV1  = 1,  //Fixture release 1.0 rev1
+  BOARD_REV_1_0_REV2  = 2,  //Fixture release 1.0 rev2
+  BOARD_REV_1_0_REV3  = 3,  //Fixture release 1.0 rev3
+  BOARD_REV_1_5_1     = 4,  //Fixture release 1.5.1
 } board_rev_t;
 
 void InitBoard(void);

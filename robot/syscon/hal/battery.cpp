@@ -204,7 +204,7 @@ void Battery::updateOperatingMode() {
   using namespace Anki::Cozmo;
 
   #ifdef FACTORY
-  if (g_turnPowerOff && (int)(g_powerOffTime - GetCounter()) < 0 ) {
+  if (g_turnPowerOff && (int)(g_powerOffTime - GetCounter()) < 0) {
     Battery::powerOff();
     g_turnPowerOff = false;
   }
@@ -213,6 +213,10 @@ void Battery::updateOperatingMode() {
   if (active_operating_mode == current_operating_mode) {
     return ;
   }
+
+  #ifdef FACTORY
+  g_turnPowerOff = false;
+  #endif
 
   // Tear down existing mode
   switch (active_operating_mode) {
@@ -357,6 +361,7 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_BLUETOOTH_OPERATING_MODE:
+      g_turnPowerOff = true;
       Motors::disable(true);
 
       NVIC_DisableIRQ(UART0_IRQn);

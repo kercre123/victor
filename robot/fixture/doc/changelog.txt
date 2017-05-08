@@ -1,6 +1,55 @@
 ----------------
+(UNRELEASED)
+----------------
+
+BODY3:
+-added charge-current test.
+
+----------------
+Release v97
+----------------
+
+PLAYPEN:
+-revert v96 change. return to sending power_on cmds.
+
+BODY3:
+-disable DropLeakage test
+
+----------------
+Release v96
+----------------
+
+PLAYPEN:
+-remove power_on cmds keeping cozmo alive during test (caused too many problems).
+
+----------------
+Release v95
+----------------
+
+General:
+-revision check: change incompatible assert() to safe error state that allows bootloader (anti-brick)
+-updated radio.bin: add mode 'I'/'R', support for sampling channel RSSI
+
+HEAD1:
+-partial flash erase; improves pgm time
+
+RECHARGE,RECHARGE2:
+-RECHARGE change to 3.9V. Timeout increase for longer charge cycle
+-add RECHARGE2, full battery charge (required for life test)
+
+ROBOT1,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]:
+-relax charge-test threshold (avg 400mA) to improve detection with nearly full battery.
+-change 120s motor-slam to face display only for battery drain (if charge fail + vBat >= 4.05V)
+
+DEBUG:
+-test RSSI read
+
+----------------
 Release v94
 ----------------
+
+Firmware:
+-rebuild esp,robot,syscon + all bootloaders with latest codebase/features.
 
 General:
 -remove 0xf0 limit on serial# --> Cube fixtures will fail. Playpen Afix## may repeat!
@@ -12,6 +61,10 @@ PLAYPEN:
 SOUND,ROBOT2,ROBOT3[-CE],PACKOUT[-CE]
 -changed speaker test to louder frequency sweep audio
 ^Note: requires v94+ head firmware; modified sound generator
+
+HEAD1,HEAD2:
+-test if fixture pull-up (R82) is installed. Fail with E6 [ERROR_OUT_OF_RANGE] otherwise.
+
 
 ----------------
 Release v93

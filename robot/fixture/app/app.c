@@ -21,7 +21,7 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 94;
+u8 g_fixtureReleaseVersion = 98;
 #define BUILD_INFO "PVT v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
@@ -212,6 +212,7 @@ bool DetectDevice(void)
     case FIXTURE_PACKOUT_CE_TEST:
     case FIXTURE_LIFETEST_TEST:
     case FIXTURE_RECHARGE_TEST:
+    case FIXTURE_RECHARGE2_TEST:
     case FIXTURE_PLAYPEN_TEST:
     case FIXTURE_SOUND_TEST:
       return RobotDetect();
@@ -422,6 +423,7 @@ static void MainExecution()
       m_functions = GetLifetestTestFunctions();
       break; 
     case FIXTURE_RECHARGE_TEST:
+    case FIXTURE_RECHARGE2_TEST:
       m_functions = GetRechargeTestFunctions();
       break; 
     case FIXTURE_PLAYPEN_TEST:
@@ -526,7 +528,7 @@ int main(void)
     g_fixtureReleaseVersion = 0;
   else
   {
-    if( g_fixtureRev < BOARD_REV_1_5_0 )
+    if( g_fixtureRev < BOARD_REV_1_5_1 )
       g_fixtureType = GetBoardID();
     
     if (g_fixtureType == FIXTURE_NONE 
@@ -560,6 +562,20 @@ int main(void)
   ConsolePrintf("ConsoleMode=%u\r\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
   ConsolePrintf("Fixure Rev: %s\r\n", GetBoardRevStr() );
   ConsolePrintf("Mode: %s\r\n", FIXTYPES[g_fixtureType]);
+  
+  //lockout on bad hw (or old FW on newer hw rev)
+  if( g_fixtureRev == BOARD_REV_UNKNOWN ) {
+    SetErrorText( ERROR_INCOMPATIBLE_FIX_REV );
+    u32 start = getMicroCounter();
+    while(1) {
+      if( getMicroCounter() - start > 250*1000 ) {
+        start = getMicroCounter();
+        STM_EVAL_LEDToggle(LEDRED);
+      }
+      ConsoleUpdate();  // Keep the comm chanel open so we can bootload out of this corner
+      DisplayUpdate();  // While we wait, let screen saver kick in
+    }
+  }
   
   while (1)
   {  
