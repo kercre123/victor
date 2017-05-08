@@ -127,7 +127,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectPowerLevel,               &RobotToEngineImplMessaging::HandleObjectPowerLevel);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::objectAccel,                    &RobotToEngineImplMessaging::HandleObjectAccel);
   
   
   // lambda wrapper to call internal handler
@@ -1172,26 +1171,6 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const AnkiEvent<RobotInt
     robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, missedPackets, batteryLevel)));
   }
 
-}
-  
-void RobotToEngineImplMessaging::HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleObjectAccel");
-  
-  const auto& payload = message.GetData().Get_objectAccel();
-  const auto activeID = payload.objectID;
-  const auto& acc = payload.accel;
-  
-  //PRINT_NAMED_DEBUG("RobotToEngine.ObjectAccel.Values", "%f %f %f", acc.x, acc.y, acc.z);
-  
-  // Forward to game and viz
-  const BlockWorld & blockWorld = robot->GetBlockWorld();
-  const ActiveObject* object = blockWorld.GetConnectedActiveObjectByActiveID(activeID);
-  if (object != nullptr) {
-    const uint32_t objectID = object->GetID();
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(payload.timestamp, objectID, acc)));
-    robot->GetContext()->GetVizManager()->SendObjectAccelState(objectID, acc);
-  }
 }
   
 } // end namespace Cozmo

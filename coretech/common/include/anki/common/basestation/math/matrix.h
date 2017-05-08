@@ -199,6 +199,7 @@ namespace Anki {
     using SmallMatrix<DIM,DIM,T>::operator();
     using SmallMatrix<DIM,DIM,T>::operator*;
     using SmallMatrix<DIM,DIM,T>::operator*=;
+    using SmallMatrix<DIM,DIM,T>::operator+=;
     
     // Matrix multiplication in place...
     // ... this = this * other;

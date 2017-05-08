@@ -36,6 +36,7 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
@@ -197,6 +198,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
   , _bodyLightComponent(new BodyLightComponent(*this, _context))
+  , _cubeAccelComponent(new CubeAccelComponent(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")

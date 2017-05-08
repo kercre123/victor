@@ -68,6 +68,7 @@ class BlockFilter;
 class BlockTapFilterComponent;
 class BlockWorld;
 class CozmoContext;
+class CubeAccelComponent;
 class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
@@ -209,6 +210,15 @@ public:
   inline const BodyLightComponent& GetBodyLightComponent() const {
     assert(_bodyLightComponent);
     return *_bodyLightComponent;
+  }
+  
+  inline CubeAccelComponent& GetCubeAccelComponent() {
+    assert(_cubeAccelComponent);
+    return *_cubeAccelComponent;
+  }
+  inline const CubeAccelComponent& GetCubeAccelComponent() const {
+    assert(_cubeAccelComponent);
+    return *_cubeAccelComponent;
   }
 
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
@@ -866,15 +876,16 @@ protected:
   ///////// NEW Animation /////////
   std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
-  std::unique_ptr<ActionList>               _actionList;
-  std::unique_ptr<MovementComponent>        _movementComponent;
-  std::unique_ptr<VisionComponent>          _visionComponent;
-  std::unique_ptr<NVStorageComponent>       _nvStorageComponent;
-  std::unique_ptr<AIComponent>              _aiComponent;
-  std::unique_ptr<TextToSpeechComponent>    _textToSpeechComponent;
-  std::unique_ptr<ObjectPoseConfirmer>      _objectPoseConfirmerPtr;
-  std::unique_ptr<CubeLightComponent>       _cubeLightComponent;
-  std::unique_ptr<BodyLightComponent>       _bodyLightComponent;
+  std::unique_ptr<ActionList>            _actionList;
+  std::unique_ptr<MovementComponent>     _movementComponent;
+  std::unique_ptr<VisionComponent>       _visionComponent;
+  std::unique_ptr<NVStorageComponent>    _nvStorageComponent;
+  std::unique_ptr<AIComponent>           _aiComponent;
+  std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
+  std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
+  std::unique_ptr<CubeLightComponent>    _cubeLightComponent;
+  std::unique_ptr<BodyLightComponent>    _bodyLightComponent;
+  std::unique_ptr<CubeAccelComponent>    _cubeAccelComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
