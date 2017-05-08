@@ -114,7 +114,28 @@ return RESULT_FAIL; \
     
 #define GET_MEMBER_FROM_JSON(__JSON__, __NAME__) GET_MEMBER_FROM_JSON_AND_STORE_IN(__JSON__, __NAME__, __NAME__)
 
+namespace {
+  
+// Cast the value in fromVal to toVal, clamping to the numerical limits of the target type and printing a debug message if so
+template<typename FromType, typename ToType>
+void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugName = "InvalidCast")
+{
+  if (!Util::IsValidNumericCast<ToType>(fromVal)) {
+    toVal = Util::numeric_cast_clamped<ToType>(fromVal);
     
+    std::stringstream debugStr;
+    debugStr << "cast of " << fromVal << " would be invalid, clamping to " << toVal;
+    PRINT_NAMED_WARNING("IKeyFrame.SafeNumericCast.InvalidCast",
+                        "%s: %s",
+                        debugName,
+                        debugStr.str().c_str());
+  } else {
+    toVal = Util::numeric_cast<ToType>(fromVal);
+  }
+}
+  
+} // end anonymous namespace
+  
 #pragma mark -
 #pragma mark HeadAngleKeyFrame
 
@@ -148,16 +169,16 @@ return RESULT_FAIL; \
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(headAngleKeyframe != nullptr, "HeadAngleKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) headAngleKeyframe->triggerTime_ms();
+      SafeNumericCast(headAngleKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(headAngleKeyframe, animNameDebug);
       return lastResult;
     }
 
     Result HeadAngleKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
     {
-      this->_durationTime_ms = headAngleKeyframe->durationTime_ms();
-      this->_angle_deg = headAngleKeyframe->angle_deg();
-      this->_angleVariability_deg = headAngleKeyframe->angleVariability_deg();
+      SafeNumericCast(headAngleKeyframe->durationTime_ms(),      _durationTime_ms,      animNameDebug.c_str());
+      SafeNumericCast(headAngleKeyframe->angle_deg(),            _angle_deg,            animNameDebug.c_str());
+      SafeNumericCast(headAngleKeyframe->angleVariability_deg(), _angleVariability_deg, animNameDebug.c_str());
 
       return RESULT_OK;
     }
@@ -203,17 +224,17 @@ return RESULT_FAIL; \
     Result LiftHeightKeyFrame::DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(liftHeightKeyframe != nullptr, "LiftHeightKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) liftHeightKeyframe->triggerTime_ms();
+      SafeNumericCast(liftHeightKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(liftHeightKeyframe, animNameDebug);
       return lastResult;
     }
 
     Result LiftHeightKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
     {
-      this->_durationTime_ms = liftHeightKeyframe->durationTime_ms();
-      this->_height_mm = liftHeightKeyframe->height_mm();
-      this->_heightVariability_mm = liftHeightKeyframe->heightVariability_mm();
-
+      SafeNumericCast(liftHeightKeyframe->durationTime_ms(),      _durationTime_ms,      animNameDebug.c_str());
+      SafeNumericCast(liftHeightKeyframe->height_mm(),            _height_mm,            animNameDebug.c_str());
+      SafeNumericCast(liftHeightKeyframe->heightVariability_mm(), _heightVariability_mm, animNameDebug.c_str());
+               
       return RESULT_OK;
     }
     
@@ -303,6 +324,7 @@ return RESULT_FAIL; \
     Result FaceAnimationKeyFrame::DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "FaceAnimationKeyFrame.DefineFromFlatBuf.NullAnim");
+      SafeNumericCast(faceAnimKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       _triggerTime_ms = (uint) faceAnimKeyframe->triggerTime_ms();
       Result lastResult = SetMembersFromFlatBuf(faceAnimKeyframe, animNameDebug);
       return lastResult;
@@ -369,7 +391,7 @@ return RESULT_FAIL; \
     Result ProceduralFaceKeyFrame::DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(procFaceKeyframe != nullptr, "ProceduralFaceKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) procFaceKeyframe->triggerTime_ms();
+      SafeNumericCast(procFaceKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(procFaceKeyframe, animNameDebug);
       return lastResult;
     }
@@ -496,7 +518,7 @@ return RESULT_FAIL; \
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(audioKeyframe != nullptr, "RobotAudioKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) audioKeyframe->triggerTime_ms();
+      SafeNumericCast(audioKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(audioKeyframe, animNameDebug);
       return lastResult;
     }
@@ -611,7 +633,7 @@ return RESULT_FAIL; \
     Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(eventKeyframe != nullptr, "EventKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) eventKeyframe->triggerTime_ms();
+      SafeNumericCast(eventKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(eventKeyframe, animNameDebug);
       return lastResult;
     }
@@ -660,7 +682,7 @@ return RESULT_FAIL; \
     Result BackpackLightsKeyFrame::DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(backpackKeyframe != nullptr, "BackpackLightsKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) backpackKeyframe->triggerTime_ms();
+      SafeNumericCast(backpackKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(backpackKeyframe, animNameDebug);
       return lastResult;
     }
@@ -774,19 +796,19 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     Result BodyMotionKeyFrame::DefineFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(bodyKeyframe != nullptr, "BodyMotionKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) bodyKeyframe->triggerTime_ms();
+      SafeNumericCast(bodyKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(bodyKeyframe, animNameDebug);
       return lastResult;
     }
 
     Result BodyMotionKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::BodyMotion* bodyKeyframe, const std::string& animNameDebug)
     {
-      this->_durationTime_ms = bodyKeyframe->durationTime_ms();
-      this->_streamMsg.speed = bodyKeyframe->speed();
+      SafeNumericCast(bodyKeyframe->durationTime_ms(), _durationTime_ms, animNameDebug.c_str());
+      SafeNumericCast(bodyKeyframe->speed(),           _streamMsg.speed, animNameDebug.c_str());
 
       const std::string& radiusStr = bodyKeyframe->radius_mm()->str();
       if (has_any_digits(radiusStr)) {
-        _streamMsg.curvatureRadius_mm = std::atoi(radiusStr.c_str());
+        SafeNumericCast(std::atoi(radiusStr.c_str()), _streamMsg.curvatureRadius_mm, animNameDebug.c_str());
         CheckTurnSpeed(animNameDebug);
       } else {
         Result lastResult = ProcessRadiusString(radiusStr, animNameDebug);
@@ -815,7 +837,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
           return lastResult;
         }
       } else {
-        _streamMsg.curvatureRadius_mm = jsonRoot["radius_mm"].asInt();
+        GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, radius_mm, streamMsg.curvatureRadius_mm);
         CheckTurnSpeed(animNameDebug);
       }
       
@@ -880,7 +902,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     Result RecordHeadingKeyFrame::DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(recordHeadingKeyframe != nullptr, "RecordedHeadingKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) recordHeadingKeyframe->triggerTime_ms();
+      SafeNumericCast(recordHeadingKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(recordHeadingKeyframe, animNameDebug);
       return lastResult;
     }
@@ -973,21 +995,22 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     Result TurnToRecordedHeadingKeyFrame::DefineFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(turnToRecordedHeadingKeyframe != nullptr, "TurnToRecordedHeadingKeyFrame.DefineFromFlatBuf.NullAnim");
-      _triggerTime_ms = (uint) turnToRecordedHeadingKeyframe->triggerTime_ms();
+      SafeNumericCast(turnToRecordedHeadingKeyframe->triggerTime_ms(), _triggerTime_ms, animNameDebug.c_str());
       Result lastResult = SetMembersFromFlatBuf(turnToRecordedHeadingKeyframe, animNameDebug);
       return lastResult;
     }
     
     Result TurnToRecordedHeadingKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::TurnToRecordedHeading* turnToRecordedHeadingKeyframe, const std::string& animNameDebug)
     {
-      this->_durationTime_ms = turnToRecordedHeadingKeyframe->durationTime_ms();
-      this->_streamMsg.offset_deg = turnToRecordedHeadingKeyframe->offset_deg();
-      this->_streamMsg.speed_degPerSec = turnToRecordedHeadingKeyframe->speed_degPerSec();
-      this->_streamMsg.accel_degPerSec2 = turnToRecordedHeadingKeyframe->accel_degPerSec2();
-      this->_streamMsg.decel_degPerSec2 = turnToRecordedHeadingKeyframe->decel_degPerSec2();
-      this->_streamMsg.tolerance_deg = turnToRecordedHeadingKeyframe->tolerance_deg();
-      this->_streamMsg.numHalfRevs = turnToRecordedHeadingKeyframe->numHalfRevs();
-      this->_streamMsg.useShortestDir = turnToRecordedHeadingKeyframe->useShortestDir();
+      const char* const dbgName = animNameDebug.c_str();
+      SafeNumericCast(turnToRecordedHeadingKeyframe->durationTime_ms(),  _durationTime_ms,            dbgName);
+      SafeNumericCast(turnToRecordedHeadingKeyframe->offset_deg(),       _streamMsg.offset_deg,       dbgName);
+      SafeNumericCast(turnToRecordedHeadingKeyframe->speed_degPerSec(),  _streamMsg.speed_degPerSec,  dbgName);
+      SafeNumericCast(turnToRecordedHeadingKeyframe->accel_degPerSec2(), _streamMsg.accel_degPerSec2, dbgName);
+      SafeNumericCast(turnToRecordedHeadingKeyframe->decel_degPerSec2(), _streamMsg.decel_degPerSec2, dbgName);
+      SafeNumericCast(turnToRecordedHeadingKeyframe->tolerance_deg(),    _streamMsg.tolerance_deg,    dbgName);
+      SafeNumericCast(turnToRecordedHeadingKeyframe->numHalfRevs(),      _streamMsg.numHalfRevs,      dbgName);
+      _streamMsg.useShortestDir = turnToRecordedHeadingKeyframe->useShortestDir();
       
       CheckRotationSpeed(animNameDebug);
       
