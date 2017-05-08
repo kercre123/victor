@@ -174,10 +174,6 @@ void Battery::init()
   int temp = getADCsample(ANALOG_CLIFF_SENSE, VEXT_SCALE);
 
   startADCsample(ANALOG_CLIFF_SENSE);
-
-  #ifdef FACTORY
-  g_turnPowerOff = true;
-  #endif
 }
 
 void Battery::hookButton(bool button_pressed) {
@@ -300,8 +296,6 @@ void Battery::updateOperatingMode() {
       Backpack::useTimer();
       DTM::start();
 
-      g_turnPowerOff = false;
-
       #ifdef FACTORY
       Head::enableFixtureComms(false);
       #endif
@@ -361,7 +355,9 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_BLUETOOTH_OPERATING_MODE:
+      #ifdef FACTORY
       g_turnPowerOff = true;
+      #endif
       Motors::disable(true);
 
       NVIC_DisableIRQ(UART0_IRQn);
@@ -391,6 +387,7 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_ACCESSORY_OPERATING_MODE:
+      Battery::powerOn();
       Motors::disable(false);
 
       Backpack::clearLights(BPL_USER);
