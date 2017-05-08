@@ -425,6 +425,12 @@ void SpeakerTest(void)
   if (g_fixtureType == FIXTURE_ROBOT1_TEST)
     return;
   
+  //Encode tone_select & volume into single byte to send to syscon (limited 8-bit payload size)
+  //-limit tone select range 0-3
+  //-drop 2 LSbits of volume; lose a bit of granularity.
+  //syscon::tests.cpp:
+  //  msg.tone_sel = param & 0x03;
+  //  msg.volume   = param & 0xFC;
   ConsolePrintf("Play Tone #%d, volume %d\r\n", tone_select & 0x3, tone_volume & 0xFC );
   SendCommand(TEST_PLAYTONE, (tone_volume & 0xFC) | (tone_select & 0x03), 0, 0);
   
