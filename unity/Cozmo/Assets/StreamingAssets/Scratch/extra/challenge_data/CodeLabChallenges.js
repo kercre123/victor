@@ -15,7 +15,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-anim-sneeze", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_driveAndSneeze.questionSlide.primaryText", 
@@ -29,7 +29,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-turn-left", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_driveSquareSimple.questionSlide.primaryText", 
@@ -43,7 +43,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-turn-right", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText", 
@@ -57,7 +57,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_sayHi.questionSlide.secondaryText", 
         "BlockIcon": "cozmo_says", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_sayHi.questionSlide.primaryText", 
@@ -71,7 +71,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText", 
         "BlockIcon": "set-led_green", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText", 
@@ -85,7 +85,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText", 
         "BlockIcon": "set-led_white", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText", 
@@ -99,7 +99,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenFaceSay.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-face", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenFaceSay.questionSlide.primaryText", 
@@ -113,7 +113,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-forward", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText", 
@@ -127,7 +127,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText", 
         "BlockIcon": "set-led_mystery", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText", 
@@ -141,21 +141,21 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-cube", 
+        "SecondaryTextKey": "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText", 
+        "BlockIcon": "cozmo-cube-tap", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText", 
         "Template": "Question"
     }, 
     {
         "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-cube", 
+        "BlockIcon": "cozmo-cube-tap", 
         "ImageFile": "answer_whenCubeTappedMysteryBackpack", 
         "PrimaryTextKey": "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText", 
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-anim-mystery", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText", 
@@ -169,7 +169,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-anim-happy", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText", 
@@ -211,7 +211,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-forklift-high", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText", 
@@ -253,7 +253,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-forward-fast", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_DriveFastSquare.questionSlide.primaryText", 
@@ -281,7 +281,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-cube-tap", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText", 
@@ -295,7 +295,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-face-happy", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText", 
@@ -309,7 +309,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-forward", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText", 
@@ -323,29 +323,29 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-anim-excited", 
+        "SecondaryTextKey": "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText", 
+        "BlockIcon": "cozmo-anim-victory", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText", 
         "Template": "Question"
     }, 
     {
         "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-anim-excited", 
+        "BlockIcon": "cozmo-anim-victory", 
         "ImageFile": "answer_whenSmileActWinner", 
         "PrimaryTextKey": "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText", 
         "Template": "Answer"
     }, 
     {
         "SecondaryTextKey": "codeLabChallenge_peekaboo.questionSlide.secondaryText", 
-        "BlockIcon": "cozmo-forward", 
+        "BlockIcon": "cozmo-face", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_peekaboo.questionSlide.primaryText", 
         "Template": "Question"
     }, 
     {
         "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-forward", 
+        "BlockIcon": "cozmo-face", 
         "ImageFile": "answer_peekaboo", 
         "PrimaryTextKey": "codeLabChallenge_peekaboo.answerSlide.primaryText", 
         "Template": "Answer"
@@ -365,7 +365,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-forklift-high", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText", 
@@ -407,15 +407,15 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-anim-mystery", 
+        "SecondaryTextKey": "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText", 
+        "BlockIcon": "cozmo-anim-surprise", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText", 
         "Template": "Question"
     }, 
     {
         "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-anim-mystery", 
+        "BlockIcon": "cozmo-anim-surprise", 
         "ImageFile": "answer_whenFaceSeenActSurprisedTurnAround", 
         "PrimaryTextKey": "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText", 
         "Template": "Answer"
@@ -449,7 +449,7 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "", 
+        "SecondaryTextKey": "codeLabChallenge_intruder.questionSlide.secondaryText", 
         "BlockIcon": "set-led_coral", 
         "ImageFile": "", 
         "PrimaryTextKey": "codeLabChallenge_intruder.questionSlide.primaryText", 
