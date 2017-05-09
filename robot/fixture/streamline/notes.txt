@@ -1,0 +1,8 @@
+srec_cat.exe from:
+https://sourceforge.net/projects/srecord/files/srecord-win32
+
+Keil: usage notes for srec_cat.exe - "MERGING TWO APPLICATIONS INTO ONE INTEL HEX FILE":
+http://www.keil.com/support/docs/2666.htm
+
+Keil: create a µVision project for downloading a HEX file to Flash - "Flash Programming :: HEX Files"
+http://www.keil.com/support/man/docs/uv4/uv4_fl_hexdownload.htm
