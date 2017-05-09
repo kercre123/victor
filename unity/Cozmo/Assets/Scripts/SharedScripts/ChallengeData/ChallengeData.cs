@@ -103,7 +103,9 @@ namespace Cozmo.Challenge {
   public struct ActivityData {
     public int ActivityPriority;
     public bool HideInActivityView;
+    public Color ActivityTitleColor;
     public Color ActivityFrameColor;
+    public Sprite ActivityIcon;
   }
 }
 

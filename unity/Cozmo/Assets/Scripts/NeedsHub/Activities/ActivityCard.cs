@@ -15,9 +15,6 @@ namespace Cozmo.Needs.Activities.UI {
     private CozmoButton _StartActivityButton;
 
     [SerializeField]
-    private CozmoButton _FauxStartActivityButton;
-
-    [SerializeField]
     private CozmoText _ActivityTitleLabel;
 
     [SerializeField]
@@ -35,12 +32,14 @@ namespace Cozmo.Needs.Activities.UI {
       _ChallengeId = activityData.ChallengeID;
 
       _StartActivityButton.Initialize(HandleStartActivityButtonPressed, "large_start_activity_button", parentDialogName);
-      _FauxStartActivityButton.Initialize(HandleStartActivityButtonPressed, "small_start_activity_button", parentDialogName);
 
       _ActivityTitleLabel.text = Localization.Get(activityData.ChallengeTitleLocKey);
       _ActivityDescriptionLabel.text = Localization.Get(activityData.ChallengeDescriptionLocKey);
-      _ActivityIcon.sprite = activityData.ChallengeIcon;
+
+      _ActivityTitleLabel.color = activityData.ActivityData.ActivityTitleColor;
       _ActivityTintedFrame.color = activityData.ActivityData.ActivityFrameColor;
+
+      _ActivityIcon.sprite = activityData.ActivityData.ActivityIcon;
     }
 
     private void HandleStartActivityButtonPressed() {

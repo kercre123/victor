@@ -563,7 +563,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: CozmoText_CozmoButton_SecondaryText
+  _LinkedComponentId: LEGACY_CozmoText_CozmoButton_SecondaryText
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -774,7 +774,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: CozmoText_CozmoButton_SecondaryText
+  _LinkedComponentId: LEGACY_CozmoText_CozmoButton_SecondaryText
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -825,7 +825,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Primary
+  _LinkedComponentId: LEGACY_CozmoButton_Primary
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114099836526468180}
@@ -910,7 +910,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Image_CozmoButton_SecondaryBackground
+  _LinkedComponentId: LEGACY_Image_CozmoButton_SecondaryBackground
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114321310939228380
@@ -954,7 +954,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Primary
+  _LinkedComponentId: LEGACY_CozmoButton_Primary
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114486559869010292}
@@ -1191,7 +1191,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: CozmoText_CozmoButton_SecondaryText
+  _LinkedComponentId: LEGACY_CozmoText_CozmoButton_SecondaryText
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -1228,7 +1228,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Image_CozmoButton_SecondaryBackground
+  _LinkedComponentId: LEGACY_Image_CozmoButton_SecondaryBackground
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114539701539458542
@@ -1359,7 +1359,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Primary
+  _LinkedComponentId: LEGACY_CozmoButton_Primary
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114245870003401058}
@@ -1606,7 +1606,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Image_CozmoButton_SecondaryBackground
+  _LinkedComponentId: LEGACY_Image_CozmoButton_SecondaryBackground
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114859322553796558

@@ -30,13 +30,15 @@ MonoBehaviour:
   _ActivityData:
     ActivityPriority: 2
     HideInActivityView: 0
-    ActivityFrameColor: {r: 0, g: 0.04827571, b: 1, a: 1}
+    ActivityTitleColor: {r: 0.7137255, g: 0.23529413, b: 0.9450981, a: 1}
+    ActivityFrameColor: {r: 0.70980394, g: 0.29803923, b: 1, a: 1}
+    ActivityIcon: {fileID: 21300000, guid: 4e1458f6765c148438a628384373f7be, type: 3}
   InstructionVideoPath: 
   ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: CozmoSaysGetIn
-    _EnumValue: 37
+    _EnumValue: 38
   GetOutAnimTrigger:
     _EnumValueAsString: DroneModeGetOut
-    _EnumValue: 90
+    _EnumValue: 91
