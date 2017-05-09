@@ -104,7 +104,10 @@ static void readBodycolor(void)
   dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
   SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
   if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
-    throw ERROR_BODY_OUTOFDATE;
+    if (g_allowOutdated)
+      return;
+    else
+      throw ERROR_BODY_OUTOFDATE;
   
   ConsolePrintf("bodycolor,%d,%d,%d,%d\r\n", dat.bodycolor[0], dat.bodycolor[1], dat.bodycolor[2], dat.bodycolor[3] );
   
@@ -168,7 +171,7 @@ void InfoTest(void)
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
   dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
   SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
-  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
+  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD && !g_allowOutdated)
     throw ERROR_BODY_OUTOFDATE;
   
   // Mimic robot format for SMERP
@@ -681,7 +684,12 @@ static void ChargeTest(void)
 {
   const int CHARGING_CURRENT_THRESHOLD_MA = 400;
   const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
-  RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
+  try {
+    RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
+  } catch (int e) {
+    if (!g_allowOutdated || e != ERROR_BODY_OUTOFDATE)  // Optionally allow outdated robots
+      throw e;
+  }
 }
 
 //Set flashlight on/off and measure current
@@ -811,9 +819,14 @@ void FactoryRevert(void)
 //intercept button test function
 void mButtonTest(void)
 {
-  SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
-  ButtonTest();
-  SendCommand(TEST_POWERON, 4, 0, 0); //reset to default 4s power-off
+  try {
+    SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
+    ButtonTest();
+    SendCommand(TEST_POWERON, 4, 0, 0); //reset to default 4s power-off
+  } catch (int e) {
+    if (!g_allowOutdated || e != ERROR_BODY_OUTOFDATE)  // Optionally allow outdated robots
+      throw e;
+  }
 }
 
 // List of all functions invoked by the test, in order
