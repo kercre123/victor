@@ -20,6 +20,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
@@ -107,6 +108,21 @@ CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 // Whether or not to lower the cliff detection threshold on the robot
 // whenever a suspicious cliff is encountered.
 CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true);
+
+// Play an animation by name from the debug console.
+// Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
+//   on the Unity side), then this console func can be removed.
+static Robot* _thisRobot = nullptr;
+static void PlayAnimationByName(ConsoleFunctionContextRef context)
+{
+  if (_thisRobot != nullptr) {
+    const char* animName = ConsoleArg_Get_String(context, "animName");
+    _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
+                                            new PlayAnimationAction(*_thisRobot, animName));
+  }
+}
+CONSOLE_FUNC(PlayAnimationByName, "PlayAnimationByName", const char* animName);
+  
   
 ////////
 // Consts for robot offtreadsState
@@ -311,6 +327,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // initialize AI
   _aiComponent->Init();
+  
+  // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
+  _thisRobot = this;
       
 } // Constructor: Robot
     
