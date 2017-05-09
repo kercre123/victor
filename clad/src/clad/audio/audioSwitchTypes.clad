@@ -4,6 +4,34 @@ namespace Anki {
 namespace AudioMetaData {
 namespace SwitchState {
 
+enum uint_32 Cozmo_Sings_100Bpm
+{
+  Cozmo_Sings_Beethovens_5Th = 234196460,
+  Cozmo_Sings_Camptown_Races = 2068892721,
+  Cozmo_Sings_Itsy_Bitsy_Spider = 4216855774,
+  Cozmo_Sings_Pop_Goes_The_Weasel = 2629521585,
+  Cozmo_Sings_Row_Your_Boat = 468566904,
+  Invalid = 0,
+}
+
+enum uint_32 Cozmo_Sings_120Bpm
+{
+  Cozmo_Sings_Ode_To_Joy = 277478768,
+  Cozmo_Sings_Pachebel_Canon = 553164015,
+  Cozmo_Sings_Twinkle_Twinkle = 2925972690,
+  Invalid = 0,
+}
+
+enum uint_32 Cozmo_Sings_80Bpm
+{
+  Cozmo_Sings_Frere_Jacques = 1503161152,
+  Cozmo_Sings_Mary_Had_A_Little_Lamb = 4246470244,
+  Cozmo_Sings_Take_Me_Out_To_The_Ballgame = 330639210,
+  Cozmo_Sings_William_Tell = 2911111070,
+  Cozmo_Sings_Yankee_Doodle = 3906943052,
+  Invalid = 0,
+}
+
 enum uint_32 Cozmo_Voice_Processing
 {
   Invalid = 0,
@@ -84,6 +112,9 @@ enum uint_32 Sparked
 
 enum uint_32 SwitchGroupType
 {
+  Cozmo_Sings_100Bpm = 3759662965,
+  Cozmo_Sings_120Bpm = 2987768599,
+  Cozmo_Sings_80Bpm = 3366294904,
   Cozmo_Voice_Processing = 366280094,
   External = 1442075084,
   Freeplay_Mood = 2205807877,
