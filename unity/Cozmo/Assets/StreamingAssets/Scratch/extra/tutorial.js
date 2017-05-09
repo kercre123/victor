@@ -6,8 +6,8 @@ window.addEventListener('DOMContentLoaded', function() {
   setText('#tutorial-modal .modal-title', 'Code Lab Tutorial');
 
   setText('#tutorial-slide-1 .slide-label', 'Code Lab lets you code Cozmo.');
-  setText('#tutorial-slide-2 .slide-label', 'Tap to preview code blocks.\nTap to learn more.');
-  setText('#tutorial-slide-3 .slide-label', 'Drag code blocks together.');
-  setText('#tutorial-slide-4 .slide-label', 'Tap flag button to start flag block.');
+  setText('#tutorial-slide-2 .slide-label', 'You can tap a code block to see what it does.\nTo learn its name, tap and hold down.');
+  setText('#tutorial-slide-3 .slide-label', 'Drag code blocks together to make a program.');
+  setText('#tutorial-slide-4 .slide-label', 'Always place a green flag first.\nThat way, your program will start when you tap the green flag button!');
 
 });
