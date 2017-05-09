@@ -78,6 +78,7 @@ CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60
 CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 20.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
 CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  12.f,  5.f,  30.f);
 CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
+CONSOLE_VAR_RANGED(float, kMaxMovementBustedGracePeriod_s, "Behavior.GuardDog", 10.f, 0.f, 120.f); // amount of time to wait (after falling asleep) before 'Busted' can happen due to movement above 'max' threshold
   
 } // end anonymous namespace
   
@@ -532,13 +533,21 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
     block.movementScore = 0.f;
   }
   
+  // Clip movement score to the maximum:
+  block.movementScore = std::min(block.movementScore, kMovementScoreMax);
+  
   // Set behavior states based on cube movement and play the
   //  appropriate light cube anim if appropriate:
-  if (block.movementScore > kMovementScoreMax) {
+  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool hasStartedSleeping = (_firstSleepingStartTime_s > 0.f);
+  const bool pastMaxMovementGracePeriod = hasStartedSleeping && (now - _firstSleepingStartTime_s > kMaxMovementBustedGracePeriod_s);
+  // Play 'Busted' anim if cube is moved too much during game setup phase,
+  //   and during 'sleeping' if we're past the "grace period"
+  if (block.movementScore >= kMovementScoreMax &&
+      (!hasStartedSleeping || pastMaxMovementGracePeriod)) {
     StopActing();
     SET_STATE(Busted);
   } else if (block.movementScore > kMovementScoreDetectionThreshold) {
-    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (!block.hasBeenMoved) {
       block.hasBeenMoved = true;
       block.firstMovedTime_s = now;
