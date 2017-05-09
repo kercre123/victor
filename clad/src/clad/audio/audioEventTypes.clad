@@ -146,6 +146,9 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Srv_Surprised_Short = 4054065165,
   Play__Robot_Sfx__Wink = 3564343056,
   Play__Robot_Vo__Coz_Word_Cube_Neutral = 2117050142,
+  Play__Robot_Vo__Cozmo_Singing_100Bpm = 819632272,
+  Play__Robot_Vo__Cozmo_Singing_120Bpm = 3805821586,
+  Play__Robot_Vo__Cozmo_Singing_80Bpm = 3519620195,
   Play__Robot_Vo__Dizzy_Hard_1 = 3080967599,
   Play__Robot_Vo__Dizzy_Hard_2 = 3080967596,
   Play__Robot_Vo__Dizzy_Loop_Play = 777096763,
@@ -604,6 +607,9 @@ enum uint_32 Robot_Sfx
 enum uint_32 Robot_Vo
 {
   Coz_Word_Cube_Neutral = 2117050142,
+  Cozmo_Singing_100Bpm = 819632272,
+  Cozmo_Singing_120Bpm = 3805821586,
+  Cozmo_Singing_80Bpm = 3519620195,
   Dizzy_Hard_1 = 3080967599,
   Dizzy_Hard_2 = 3080967596,
   Dizzy_Loop_Play = 777096763,
