@@ -18,67 +18,9 @@
 namespace Anki {
 namespace Cozmo {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(BehaviorClass);
-
-// One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<BehaviorClass> gStringToBehaviorClassMapper;
-
-BehaviorClass BehaviorClassFromString(const char* inString)
-{
-  return gStringToBehaviorClassMapper.GetTypeFromString(inString, false);
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(ReactionTrigger);
-
-// One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<ReactionTrigger> gStringToReactionTriggerMapper;
-
-ReactionTrigger ReactionTriggerFromString(const char* inString)
-{
-  return gStringToReactionTriggerMapper.GetTypeFromString(inString, false);
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(ExecutableBehaviorType);
-  
-// One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<ExecutableBehaviorType> gStringToExecutableBehaviorTypeMapper;
-
-ExecutableBehaviorType ExecutableBehaviorTypeFromString(const char* inString)
-{
-  return gStringToExecutableBehaviorTypeMapper.GetTypeFromString(inString);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// BehaviorGameFlag
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorGameFlag BehaviorGameFlagFromString(const std::string& inString)
-{
-  // can't use StringToEnumMapper because the enum class is a flag enum (discontinuous)
-  // todo rsam Should clad generate stringToEnum as well?
-  if ( inString == "NoGame" )
-  {
-    return BehaviorGameFlag::NoGame;
-  }
-  else if ( inString == "SpeedTap" )
-  {
-    return BehaviorGameFlag::SpeedTap;
-  }
-  else if ( inString == "MemoryMatch" ) {
-    return BehaviorGameFlag::MemoryMatch;
-  }
-  else if ( inString == "All" ) {
-    return BehaviorGameFlag::All;
-  }
-  else if ( inString == "KeepAway"){
-    return BehaviorGameFlag::KeepAway;
-  }
-
-  DEV_ASSERT(false, "BehaviorGameFlagFromString.InvalidString");
-  return BehaviorGameFlag::NoGame;
-}
 
 } // namespace Cozmo
 } // namespace Anki
