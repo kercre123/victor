@@ -80,10 +80,13 @@ void EnableChargeComms(void)
 {
   //configure charge pins for communication mode and check for active pulses from robot
   //ConsolePrintf("enable charge comms\r\n");
-  int e=0, n = 0;
+  int e=ERROR_OK, n = 0;
   for (int i = 0; i < 4; i++) {
     try { SendTestChar(-1); }
-    catch (int e) { n++; e=e; }
+    catch (int err) { 
+      n++; 
+      e = err != ERROR_OK ? err : e;
+    }
   }
   if( n > 2 ) {
     ConsolePrintf("charge comm init: %d missed pulses\r\n", n);
