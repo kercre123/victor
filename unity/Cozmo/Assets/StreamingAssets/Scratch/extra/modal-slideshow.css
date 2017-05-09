@@ -157,6 +157,15 @@ button:focus {
 .modal-slides .nav-button.nav-button-next {
   padding-left: 1.4em;
 }
+.modal-slides #btn-done {
+  padding: .3em 1.6em;
+}
+.modal-slides #btn-done.hide {
+  display: none;
+}
+.modal-slides #btn-next[disabled="true"] {
+  display: none; !important;
+}
 .modal-slides .nav-button .arrow.arrow-right {
   -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
@@ -170,7 +179,6 @@ button:focus {
   margin-right: 1.4em;
 }
 
-.modal-slides .slideshow .btn-next {float: right;}
 
 .modal-slides .slide-strip {
   position: relative;

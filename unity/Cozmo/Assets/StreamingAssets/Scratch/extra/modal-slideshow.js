@@ -7,6 +7,7 @@
     window.addEventListener('DOMContentLoaded', function() {
       setText('.modal-slides #btn-back .button-label', 'Back');
       setText('.modal-slides #btn-next .button-label', 'Next');
+      setText('.modal-slides #btn-done .button-label', 'Done');
 
       Slides.init();
     });
@@ -38,11 +39,22 @@
       case 'btn-back':
         Slides.back();
         break;
+      case 'btn-done':
+        handleBtnDone();
+        break;
 
       // no default
     }
 
     event.preventDefault();  // prevent double taps to zoom
+  }
+
+  function handleBtnDone() {
+    // if the modal has an element with class 'btn-close', click it.
+    var closeLink = document.querySelector('.modal-slides .btn-close');
+    if (closeLink) {
+      closeLink.click();  // click the close button to close the dialog
+    }
   }
 
 
@@ -72,6 +84,7 @@
     var modal;
     var btnNext;
     var btnBack;
+    var btnDone;
     var numSlides;
 
     /**
@@ -85,6 +98,7 @@
       slides = strip.querySelectorAll('.slide');
       btnNext = modal.querySelector('#btn-next');
       btnBack = modal.querySelector('#btn-back');
+      btnDone = modal.querySelector('#btn-done');
 
       // cache values
       if (slides.length) {
@@ -197,11 +211,13 @@
         btnBack.removeAttribute('disabled');
       }
 
-      // disable Next button on last slide
+      // disable Next button and show Done button on last slide
       if (slideNum === numSlides) {
         btnNext.setAttribute('disabled', true);
+        btnDone.classList.remove('hide');
       } else {
         btnNext.removeAttribute('disabled');
+        btnDone.classList.add('hide');
       }
     }
 

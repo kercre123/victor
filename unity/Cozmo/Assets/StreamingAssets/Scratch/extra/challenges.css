@@ -47,6 +47,13 @@
   margin-left: auto;
 }
 
+#challenges-modal #btn-done {
+  /* Hiding done button for challenges because the modal
+   *  can't be closed from inside the iframe.
+   */
+  visibility:hidden !important;
+}
+
 
 .challenge .block-def {
   display: flex;
