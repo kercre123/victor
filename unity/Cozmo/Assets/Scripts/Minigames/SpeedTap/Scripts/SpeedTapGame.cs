@@ -394,7 +394,9 @@ namespace SpeedTap {
     }
 
     public void ShowPlayerTapNewRoundSlide() {
-      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapRoundBeginSlidePrefab, "PlayerTapNewRoundSlide");
+      if (SharedMinigameView != null) {
+        SharedMinigameView.ShowWideGameStateSlide(_PlayerTapRoundBeginSlidePrefab, "PlayerTapNewRoundSlide");
+      }
     }
 
     public void ShowWaitForCozmoSlide() {
