@@ -194,7 +194,8 @@ class HEnumEmitter(BaseEmitter):
         globals = dict(
             enum_name=node.name,
             enum_hash=node.hash_str,
-            enum_storage_type=cpp_value_type(node.storage_type.builtin_type())
+            enum_storage_type=cpp_value_type(node.storage_type.builtin_type()),
+            enum_member_count=0
         )
 
         self.emitHeader(node, globals)
@@ -219,6 +220,7 @@ class HEnumEmitter(BaseEmitter):
         self.output.write('};\n\n')
 
     def emitMembers(self, node, globals):
+        globals['enum_member_count'] = 0
         with self.output.indent(1):
             if node.members():
                 pieces = []
@@ -226,6 +228,7 @@ class HEnumEmitter(BaseEmitter):
                     start = '{member_name}'.format(member_name=member.name)
                     middle = ' = {initializer},'.format(initializer=str(member.value))
                     end = ''
+                    globals['enum_member_count'] += 1
             
                     pieces.append((start, middle, end))
 
@@ -240,6 +243,7 @@ class HEnumEmitter(BaseEmitter):
         self.output.write('inline const char* {enum_name}ToString(const {enum_name} m) {{ return EnumToString(m); }}\n\n'.format(**globals))
         self.output.write('extern const char* {enum_name}VersionHashStr;\n'.format(**globals))
         self.output.write('extern const uint8_t {enum_name}VersionHash[16];\n\n'.format(**globals))
+        self.output.write('constexpr {enum_storage_type} {enum_name}NumEntries = {enum_member_count};\n\n'.format(**globals))
 
 class CPPEnumEmitter(HEnumEmitter):
 
@@ -247,7 +251,8 @@ class CPPEnumEmitter(HEnumEmitter):
         globals = dict(
             enum_name=node.name,
             enum_hash=node.hash_str,
-            enum_storage_type=cpp_value_type(node.storage_type.builtin_type())
+            enum_storage_type=cpp_value_type(node.storage_type.builtin_type()),
+            enum_member_count=0
         )
 
         self.emitToStringHeader(node, globals)
@@ -274,8 +279,10 @@ class CPPEnumEmitter(HEnumEmitter):
             '''))
 
     def emitToStringMembers(self, node, globals):
+        globals['enum_member_count'] = 0
         with self.output.indent(2):
             for member in node.members():
+                globals['enum_member_count'] += 1
                 if not member.is_duplicate:
                     self.output.write(textwrap.dedent('''\
                         case {enum_name}::{member_name}:
@@ -343,8 +350,14 @@ class HStructEmitter(BaseEmitter):
             self.emitInvoke(node, globals)
             if node.object_type() == 'structure' and self.options.emitProperties:
                 self.emitProperties(node, globals)
-            if node.object_type() == 'structure' and self.options.emitJSON:
-                self.emitJSONSerializer(node, globals)
+
+            if node.object_type() == 'structure':
+                # emit if options are set and we have default constructors
+                if ( self.options.emitJSON and
+                     node.default_constructor and
+                     emitterutil._do_all_members_have_default_constructor(node) ):
+                    self.emitJSONSerializer(node, globals)
+                
         self.emitFooter(node, globals)
 
     def emitHeader(self, node, globals):
@@ -526,7 +539,9 @@ class CPPStructEmitter(HStructEmitter):
             if 'type_decl' in member_dict:
                 arg_list += ' ' + member_dict['type_decl'].name + self.__init_explicit_members(member_dict['type_decl']) + ','
             else:
-                if isinstance(member.type, ast.VariableArrayType) or isinstance(member.type, ast.FixedArrayType):
+                if isinstance(member.type, ast.PascalStringType):
+                    arg_list += ' "",'
+                elif isinstance(member.type, ast.VariableArrayType) or isinstance(member.type, ast.FixedArrayType):
                     arg_list += ' {},'
                 else:
                     arg_list += ' 0,'
@@ -793,7 +808,10 @@ class HUnionEmitter(BaseEmitter):
             self.emitPack(node, globals)
             self.emitSize(node, globals)
             self.emitEquality(node, globals)
-            if self.options.emitJSON:
+
+            # emit if option is set and default constrcutors exist for all members of the union (the union
+            # itself always has a default constructor)
+            if self.options.emitJSON and emitterutil._do_all_members_have_default_constructor(node):
                 self.emitJSONSerializer(node, globals)
 
         # private stuff
@@ -817,7 +835,7 @@ class HUnionEmitter(BaseEmitter):
         self.output.write('};\n')
         self.output.write('extern const char* {union_name}VersionHashStr;\n'.format(**globals))
         self.output.write('extern const uint8_t {union_name}VersionHash[16];\n\n'.format(**globals))
-
+                
     def emitUsingTag(self, node, globals):
         self.output.write('using Tag = {tag_name};\n'.format(**globals))
 
@@ -1015,7 +1033,11 @@ class CPPUnionEmitter(BaseEmitter):
         self.emitPack(node, globals)
         self.emitSize(node, globals)
         self.emitEquality(node, globals)
-        if self.options.emitJSON:
+
+
+        # emit if option is set and default constrcutors exist for all members of the union (the union
+        # itself always has a default constructor)
+        if self.options.emitJSON and emitterutil._do_all_members_have_default_constructor(node):
             self.emitJSONSerializer(node, globals)
 
         self.emitClearCurrent(node, globals)

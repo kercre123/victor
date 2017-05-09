@@ -93,10 +93,18 @@ namespace Constructor {
     int_32 bar
   }
 
+  no_default_constructor structure HasNoDefaultConstructorString {
+    string s
+  }
+
   no_default_constructor structure NoDefaultConstructorComplex {
     HasDefaultConstructor c,
     string s,
     uint_8 arr[20]
+  }
+
+  structure NestedString {
+    HasNoDefaultConstructorString x
   }
 
   message MessageWithStruct {
