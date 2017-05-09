@@ -25,7 +25,7 @@ u8 g_fixtureReleaseVersion = 98;
 #define BUILD_INFO "PVT v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 1
+#define NOT_FOR_FACTORY 0
 
 //other global dat
 app_reset_dat_t g_app_reset;

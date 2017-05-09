@@ -2,15 +2,30 @@
 (UNRELEASED)
 ----------------
 
+ROBOTx,PACKOUTx:
+-add flashlight test.
+-new error code 607 [BODY_FLASHLIGHT]
+
+----------------
+Release v98
+----------------
+
 Firmware:
 -syscon,robot changes to support parameterized test tone playback (3 tones, adjustable volume)
+-syscon bugfixes: correct accessory mode power states (solves PLAYPEN test issues), allow head calibration on PLAYPEN fixture.
+
+PLAYPEN:
+-remove power_on cmds keeping cozmo alive during test (solved by syscon bugfix)
 
 BODY3:
 -added charge-current test.
 
-SOUND:
+SOUND,ROBOTx,PACKOUTx:
 -new audio sound (less harsh). Uses new test tone params for selection/volume.
 -console cmds to test different sounds/volume (volatile).
+
+Other:
+-merge hw version bugfix for 1.5c (unreleased). Report color code to app.
 
 ----------------
 Release v97
