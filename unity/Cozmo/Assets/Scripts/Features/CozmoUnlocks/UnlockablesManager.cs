@@ -251,7 +251,7 @@ public class UnlockablesManager : MonoBehaviour {
       Version requiredReleaseVersion = new Version(requiredReleaseVersionString);
 
       var activity = CozmoBinding.GetCurrentActivity();
-      string releaseVersionString = activity.CallStatic<string>("getReleaseVersion");
+      string releaseVersionString = activity.Call<string>("getReleaseVersion");
       releaseVersionString = Regex.Replace(releaseVersionString, "[^0-9.]", "");
       Version releaseVersion = new Version(releaseVersionString);
 
