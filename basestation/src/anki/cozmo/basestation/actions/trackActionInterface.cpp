@@ -228,7 +228,8 @@ void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol,
-                                   f32 minDist_mm, f32 maxDist_mm, f32 time_sec)
+                                   f32 minDist_mm, f32 maxDist_mm, f32 time_sec,
+                                   bool interruptDrivingAnim)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetStopCriteria.ActionAlreadyStarted");
   _stopCriteria.panTol       = panTol;
@@ -236,6 +237,7 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.minDist_mm   = minDist_mm;
   _stopCriteria.maxDist_mm   = maxDist_mm;
   _stopCriteria.duration_sec = time_sec;
+  _stopCriteria.interruptDrivingAnim = interruptDrivingAnim;
   
   _stopCriteria.withinTolSince_sec = -1.f;
 }
@@ -245,25 +247,18 @@ void ITrackAction::SetMode(Mode newMode)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMode.ActionAlreadyStarted");
   _mode = newMode;
-  if(GetState() == ActionResult::NOT_STARTED)
+
+  switch(_mode)
   {
-    switch(_mode)
-    {
-      case Mode::HeadAndBody:
-        SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
-        break;
-      case Mode::HeadOnly:
-        SetTracksToLock((u8)AnimTrackFlag::HEAD_TRACK);
-        break;
-      case Mode::BodyOnly:
-        SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
-        break;
-    }
-  }
-  else {
-    PRINT_NAMED_WARNING("ITrackAction.SetMode.AlreadyRunning",
-                        "[%d] Trying to set tracking mode, but action is running so track locking will be wrong",
-                        GetTag());
+    case Mode::HeadAndBody:
+      SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
+      break;
+    case Mode::HeadOnly:
+      SetTracksToLock((u8)AnimTrackFlag::HEAD_TRACK);
+      break;
+    case Mode::BodyOnly:
+      SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
+      break;
   }
 }
   
@@ -309,6 +304,12 @@ ActionResult ITrackAction::Init()
                                              kLoopWithoutPathToFollow);
   }
   
+  if(HaveStopCriteria() && _stopCriteria.interruptDrivingAnim && !_shouldPlayDrivingAnimation)
+  {
+    PRINT_NAMED_WARNING("ITrackAction.Init.NoDrivingAnimToInterrupt",
+                        "Stop criteria set with interruptDrivingAnim=true, but driving animation not enabled");
+  }
+  
   // Store eye dart setting so we can restore after tracking
   _originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
@@ -342,10 +343,17 @@ bool ITrackAction::InterruptInternal()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result)
+ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result, bool stopCriteriaMet)
 {
   if(_shouldPlayDrivingAnimation)
   {
+    // Special case: stop criteria were met and it was requested to interrupt driving animations in that case.
+    // Immediately return result and don't play out the driving end animation.
+    if(stopCriteriaMet && _stopCriteria.interruptDrivingAnim)
+    {
+      return result;
+    }
+    
     _robot.GetDrivingAnimationHandler().PlayEndAnim();
     _finalActionResult = result; // This will get returned once the end anim completes
     return ActionResult::RUNNING;
@@ -380,7 +388,7 @@ ActionResult ITrackAction::CheckIfDone()
                   GetTag(),
                   GetName().c_str());
     
-    return CheckIfDoneReturnHelper(ActionResult::SUCCESS);
+    return CheckIfDoneReturnHelper(ActionResult::SUCCESS, false);
   }
   
   const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -433,7 +441,7 @@ ActionResult ITrackAction::CheckIfDone()
         
         if(RESULT_OK != _robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
         {
-          return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED);
+          return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
         }
         
         if(std::abs(relTiltAngle) > _minTiltAngleForSound) {
@@ -494,7 +502,7 @@ ActionResult ITrackAction::CheckIfDone()
           Result result = _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(wheelspeed_mmps, accel, radius);
           
           if(RESULT_OK != result) {
-            return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED);
+            return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
           }
           
         }
@@ -526,7 +534,7 @@ ActionResult ITrackAction::CheckIfDone()
                                                     true);                    // use_shortest_direction
           
           if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
-            return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED);
+            return CheckIfDoneReturnHelper(ActionResult::SEND_MESSAGE_TO_ROBOT_FAILED, false);
           }
         }
         
@@ -595,7 +603,7 @@ ActionResult ITrackAction::CheckIfDone()
         const bool shouldStop = StopCriteriaMetAndTimeToStop(relPanAngle, relTiltAngle, distance_mm, currentTime);
         if(shouldStop)
         {
-          return CheckIfDoneReturnHelper(ActionResult::SUCCESS);
+          return CheckIfDoneReturnHelper(ActionResult::SUCCESS, true);
         }
       }
       
@@ -642,9 +650,9 @@ ActionResult ITrackAction::CheckIfDone()
           // If we have stop criteria, then this is a timeout
           const bool haveStopCriteria = HaveStopCriteria();
           if(haveStopCriteria) {
-            return CheckIfDoneReturnHelper(ActionResult::TIMEOUT);
+            return CheckIfDoneReturnHelper(ActionResult::TIMEOUT, false);
           } else {
-            return CheckIfDoneReturnHelper(ActionResult::SUCCESS);
+            return CheckIfDoneReturnHelper(ActionResult::SUCCESS, false);
           }
         }
         else if(DEBUG_TRACKING_ACTIONS) {

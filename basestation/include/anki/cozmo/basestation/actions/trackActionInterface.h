@@ -17,8 +17,8 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 
 #include "clad/types/actionTypes.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -51,8 +51,12 @@ public:
   //
   
   // Stop this action after maintaining the target within tolerances for the given amount of time.
+  // If interruptDrivingAnim=true (and driving animations are enabled), then if stop criteria are met,
+  // SUCCESS is returned immediately and the end driving animation is not played. This presumes the caller
+  // wants to more quickly play their own final animation.
   // Set time to 0 to disable (default).
-  void SetStopCriteria(const Radians& panTol, const Radians& tiltTol, f32 minDist_mm, f32 maxDist_mm, f32 time_sec);
+  void SetStopCriteria(const Radians& panTol, const Radians& tiltTol, f32 minDist_mm, f32 maxDist_mm, f32 time_sec,
+                       bool interruptDrivingAnim = false);
   
   // Set how long the tracker will run without seeing whatever it is trying to track.
   // Set to 0 to disable timeout (default).
@@ -191,14 +195,14 @@ private:
     f32     maxDist_mm          = 0.f;
     f32     duration_sec        = 0.f; // _stopCriteria is ignored if this is 0
     f32     withinTolSince_sec  = 0.f;
+    bool    interruptDrivingAnim = false;
   } _stopCriteria;
   
   bool HaveStopCriteria() const { return Util::IsFltGTZero(_stopCriteria.duration_sec); }
   
   // Helper for storing the return result if we are using driving animations and just
   // returning result immediately if not
-  ActionResult CheckIfDoneReturnHelper(ActionResult result);
-  
+  ActionResult CheckIfDoneReturnHelper(ActionResult result, bool stopCriteriaMet);
   
 }; // class ITrackAction
     

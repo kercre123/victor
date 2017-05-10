@@ -495,10 +495,12 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
     trackAction->SetPanTolerance(DEG_TO_RAD(5));
     trackAction->SetClampSmallAnglesToTolerances(true);
     
+    const bool kInterruptDrivingAnimOnSuccess = true;
     trackAction->SetStopCriteria(DEG_TO_RAD(_params.pouncePanTol_deg),
                                  DEG_TO_RAD(_params.pounceTiltTol_deg),
                                  0.f, _params.pounceIfWithinDist_mm,
-                                 _params.pounceAfterTrackingFor_sec);
+                                 _params.pounceAfterTrackingFor_sec,
+                                 kInterruptDrivingAnimOnSuccess);
     
     // Vary the pan speed slightly each time
     DEV_ASSERT(_params.minPanDuration_sec <= _params.maxPanDuration_sec,
@@ -529,7 +531,8 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
                 const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
               
                 PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToTrackLaser.TrackingFinished",
-                               "Result: %s Time: %fsec", EnumToString(result), trackingTime_sec);
+                               "Result: %s Time: %fsec WillPounce: %s", EnumToString(result), trackingTime_sec,
+                               doPounce ? "Y" : "N");
                 
                 // Log DAS event indicating how long we tracked in seconds in s_val and whether we pounced in
                 // ddata (1 for pounce, 0 otherwise)
