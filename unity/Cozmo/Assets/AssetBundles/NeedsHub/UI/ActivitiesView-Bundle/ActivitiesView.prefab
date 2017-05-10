@@ -338,6 +338,50 @@ MonoBehaviour:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
   _AlphaController: {fileID: 225659591566240356}
+  _MoveTweenSettings:
+    staggerType: 0
+    uniformStagger_sec: 0
+    targets:
+    - target: {fileID: 224213127847768748}
+      originOffset: {x: 2700, y: 0}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+    - target: {fileID: 224370665542986168}
+      originOffset: {x: 0, y: 300}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+    - target: {fileID: 224005989750303750}
+      originOffset: {x: 0, y: 300}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+  _FadeTweenSettings:
+    staggerType: 0
+    uniformStagger_sec: 0
+    targets: []
   _BackButton: {fileID: 114826211279199424}
   _ActivityCardContainer: {fileID: 114905087169597034}
   _ActivityCardPrefab: {fileID: 114712853026632080, guid: de1e2cff12d0042cba28bd0540195e3a,

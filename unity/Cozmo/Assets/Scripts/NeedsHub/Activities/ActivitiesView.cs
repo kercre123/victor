@@ -15,7 +15,6 @@ namespace Cozmo.Needs.Activities.UI {
 
     [SerializeField]
     private CozmoButton _BackButton;
-
     [SerializeField]
     private HorizontalLayoutGroup _ActivityCardContainer;
 
@@ -52,14 +51,6 @@ namespace Cozmo.Needs.Activities.UI {
     }
 
     protected override void CleanUp() {
-    }
-
-    protected override void ConstructOpenAnimation(Sequence openAnimation) {
-      ConstructDefaultFadeOpenAnimation(openAnimation);
-    }
-
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-      ConstructDefaultFadeCloseAnimation(closeAnimation);
     }
 
     private void HandleBackButtonPressed() {

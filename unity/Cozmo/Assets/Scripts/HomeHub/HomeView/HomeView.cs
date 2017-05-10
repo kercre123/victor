@@ -987,7 +987,7 @@ namespace Cozmo.HomeHub {
         0,
         _TopBarAnimationYOriginOffset,
         _TopBarOpenEase)
-                         .SetDelay(defaultSettings.CascadeDelay));
+                         .SetDelay(defaultSettings.StartTimeStagger_sec));
 
       float contentContainerAnimDuration = defaultSettings.MoveOpenDurationSeconds;
       openAnimation.Join(defaultSettings.CreateOpenMoveTween(_TabContentContainer.transform,
@@ -995,7 +995,7 @@ namespace Cozmo.HomeHub {
         0,
         _TabContentOpenEase,
         contentContainerAnimDuration)
-                         .SetDelay(defaultSettings.CascadeDelay));
+                         .SetDelay(defaultSettings.StartTimeStagger_sec));
 
       _TabContentContainer.alpha = 0f;
       openAnimation.Join(defaultSettings.CreateFadeInTween(_TabContentContainer, Ease.Unset, contentContainerAnimDuration * 0.3f));
@@ -1016,12 +1016,12 @@ namespace Cozmo.HomeHub {
         0,
         _TopBarAnimationYOriginOffset,
         _TopBarCloseEase)
-                          .SetDelay(defaultSettings.CascadeDelay));
+                          .SetDelay(defaultSettings.StartTimeStagger_sec));
 
       closeAnimation.Join(defaultSettings.CreateCloseMoveTween(_TabButtonContainer,
         _TabButtonAnimationXOriginOffset,
         0)
-                          .SetDelay(defaultSettings.CascadeDelay));
+                          .SetDelay(defaultSettings.StartTimeStagger_sec));
     }
   }
 }
