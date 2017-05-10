@@ -75,8 +75,9 @@ Scratch3CozmoBlocks.prototype.setBackpackColor = function(args, util) {
     //
     // Pass -1 for requestId to indicate we don't need a Promise resolved.
     if (!util.stackFrame.timer) {
-        var colorHexValue = this._getColor(Cast.toString(args.CHOICE));
-        window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoSetBackpackColor","argUInt": "' + colorHexValue + '"}');
+        var choiceString = Cast.toString(args.CHOICE);
+        var colorHexValue = this._getColor(choiceString);
+        window.Unity.call('{"requestId": "' + -1 + '", "command": "cozmoSetBackpackColor","argString": "' + choiceString + '", "argUInt": "' + colorHexValue + '"}');
         
         // Yield
         util.stackFrame.timer = new Timer();
@@ -119,110 +120,73 @@ Scratch3CozmoBlocks.prototype.driveBlocksHelper = function(args, util, command) 
     return this._promiseForCommand(requestId);
 };
 
-Scratch3CozmoBlocks.prototype.playHappyAnimation = function(args, util) {
+Scratch3CozmoBlocks.prototype.playAnimationHelper = function(args, util, animName, isMystery) {
+    isMystery = isMystery || 0;  // if undefined force to 0 as a default value
     var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "happy"}');
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation", "argString": "' + animName + '", "argUInt": ' + isMystery + '}');
 
     return this._promiseForCommand(requestId);
+};
+
+Scratch3CozmoBlocks.prototype.playHappyAnimation = function(args, util) {
+    return this.playAnimationHelper(args, util, "happy");
 };
 
 Scratch3CozmoBlocks.prototype.playVictoryAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "victory"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "victory");
 };
 
 Scratch3CozmoBlocks.prototype.playUnhappyAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "unhappy"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "unhappy");
 };
 
 Scratch3CozmoBlocks.prototype.playSurpriseAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "surprise"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "surprise");
 };
 
 Scratch3CozmoBlocks.prototype.playDogAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "dog"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "dog");
 };
 
 Scratch3CozmoBlocks.prototype.playCatAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "cat"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "cat");
 };
 
 Scratch3CozmoBlocks.prototype.playSneezeAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "sneeze"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "sneeze");
 };
 
 Scratch3CozmoBlocks.prototype.playExcitedAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "excited"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "excited");
 };
 
 Scratch3CozmoBlocks.prototype.playThinkingAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "thinking"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "thinking");
 };
 
 Scratch3CozmoBlocks.prototype.playBoredAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "bored"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "bored");
 };
 
 Scratch3CozmoBlocks.prototype.playFrustratedAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "frustrated"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "frustrated");
 };
 
 Scratch3CozmoBlocks.prototype.playChattyAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "chatty"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "chatty");
 };
 
 Scratch3CozmoBlocks.prototype.playDejectedAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "dejected"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "dejected");
 };
 
 Scratch3CozmoBlocks.prototype.playSleepAnimation = function(args, util) {
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "sleep"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, "sleep");
 };
 
 Scratch3CozmoBlocks.prototype.playMysteryAnimation = function(args, util) {
     var animationName = this._getAnimation("mystery");
-    var requestId = this._getRequestId();
-    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozmoPlayAnimation","argString": "' + animationName + '"}');
-
-    return this._promiseForCommand(requestId);
+    return this.playAnimationHelper(args, util, animationName, 1);
 };
 
 Scratch3CozmoBlocks.prototype.setLiftHeight = function(args, util) {
