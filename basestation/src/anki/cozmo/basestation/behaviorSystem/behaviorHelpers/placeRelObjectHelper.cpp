@@ -129,6 +129,16 @@ void PlaceRelObjectHelper::StartPlaceRelObject(Robot& robot)
                                      _params.placementOffsetY_mm,
                                      false, _params.relativeCurrentMarker);
     
+    {
+      // set path motion profile if applicable
+      PathMotionProfile mp;
+      if(GetPathMotionProfile(robot, mp)){
+        placeObj->SetSpeedAndAccel(mp.dockSpeed_mmps,
+                                   mp.dockAccel_mmps2,
+                                   mp.dockDecel_mmps2);
+      }
+    }
+    
     StartActingWithResponseAnim(placeObj, &PlaceRelObjectHelper::RespondToPlaceRelResult);
   }
 }

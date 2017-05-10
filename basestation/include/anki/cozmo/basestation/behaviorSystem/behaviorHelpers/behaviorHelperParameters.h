@@ -42,7 +42,7 @@ struct PickupBlockParamaters{
   AnimationTrigger animBeforeDock = AnimationTrigger::Count;
 
   bool sayNameBeforePickup = false;
-  
+    
   // If true, allow this helper to try to approach the cube from different faces if the pickup fails. This
   // defaults to false so that the helper will fail and allow the behavior to decide what to do next (e.g. try
   // again with another block).
@@ -61,7 +61,23 @@ struct RollBlockParameters{
   AnimationTrigger noNameAnimationTrigger = AnimationTrigger::Count;
   Radians maxTurnToFaceAngle = 0;
 };
+
   
+enum class SearchIntensity {
+  QuickSearch, // Perform a quick search just to the left and right of where cozmo is
+  StandardSearch, // Performs a 180 degree search
+  ExhaustiveSearch // performs a 360 degree search
+};
+  
+struct SearchParameters{
+  // Set a searchID for a block to complete search when located
+  ObjectID searchingForID;
+  // Number of blocks to acquire - only ID or # should be specified - not both
+  uint32_t numberOfBlocksToLocate = 0;
+  
+  // Set the intensity of the search for the object
+  SearchIntensity searchIntensity = SearchIntensity::StandardSearch;
+};
   
 } // namespace Cozmo
 } // namespace Anki

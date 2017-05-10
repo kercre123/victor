@@ -309,7 +309,6 @@ enum int_32 AnimationTrigger
   ReactToPokeReaction,
   ReactToPokeStartled,
   ReactToUnexpectedMovement,
-  RequestGameDrivingFail,
   RequestGameKeepAwayAccept0,
   RequestGameKeepAwayAccept1,
   RequestGameKeepAwayDeny0,

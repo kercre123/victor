@@ -18,7 +18,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeRelObjectHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/rollBlockHelper.h"
-
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/searchForBlockHelper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -94,6 +94,15 @@ HelperHandle BehaviorHelperFactory::CreateRollBlockHelper(Robot& robot,
   return _helperComponent.AddHelperToComponent(helper);
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HelperHandle BehaviorHelperFactory::CreateSearchForBlockHelper(Robot& robot,
+                                                               IBehavior& behavior,
+                                                               const SearchParameters& params)
+{
+  IHelper* helper = new SearchForBlockHelper(robot, behavior, *this, params);
+  return _helperComponent.AddHelperToComponent(helper);
+}
   
 } // namespace Cozmo
 } // namespace Anki

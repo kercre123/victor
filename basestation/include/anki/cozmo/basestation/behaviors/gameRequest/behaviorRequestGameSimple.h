@@ -104,7 +104,6 @@ private:
   bool   _shouldUseBlocks;
   bool   _doSecondRequest;
   
-  int    _numRetriesPickingUpBlock;
   int    _numRetriesDrivingToFace;
   int    _numRetriesPlacingBlock;
   
@@ -121,7 +120,6 @@ private:
   void TransitionToPlayingRequstAnim(Robot& robot);
   void TransitionToIdle(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
-  void TransitionToSearchingForBlock(Robot& robot);
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);
   bool CheckRequestTimeout();

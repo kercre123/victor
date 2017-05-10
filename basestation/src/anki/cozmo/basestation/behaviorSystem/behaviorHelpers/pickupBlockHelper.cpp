@@ -136,6 +136,16 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
       PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetID);
       // no need to do an extra check in the action
       pickupAction->SetDoNearPredockPoseCheck(false);
+      {
+        // set path motion profile if applicable
+        PathMotionProfile mp;
+        if(GetPathMotionProfile(robot, mp)){
+          pickupAction->SetSpeedAndAccel(mp.dockSpeed_mmps,
+                                         mp.dockAccel_mmps2,
+                                         mp.dockDecel_mmps2);
+        }
+      }
+      
       action->AddAction(pickupAction);
     }
     
@@ -180,8 +190,18 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
-      IActionRunner* searchAction = new SearchForNearbyObjectAction(robot, _targetID);
-      StartActing(searchAction, &PickupBlockHelper::RespondToSearchResult);
+      SearchParameters params;
+      params.searchingForID = _targetID;
+      params.searchIntensity = SearchIntensity::QuickSearch;
+      DelegateProperties properties;
+      properties.SetDelegateToSet(CreateSearchForBlockHelper(robot, params));
+      properties.SetOnSuccessFunction([this](Robot& robot){
+        StartPickupAction(robot); return _status;
+      });
+      properties.SetOnFailureFunction([this](Robot& robot){
+        MarkTargetAsFailedToPickup(robot); return BehaviorStatus::Failure;
+      });
+      DelegateAfterUpdate(properties);
       break;
     }
     case ActionResult::NO_PREACTION_POSES:
@@ -249,26 +269,6 @@ void PickupBlockHelper::RespondToPickupResult(ActionResult result, Robot& robot)
         MarkTargetAsFailedToPickup(robot);
         _status = BehaviorStatus::Failure;
       }
-      break;
-    }
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PickupBlockHelper::RespondToSearchResult(ActionResult result, Robot& robot)
-{
-  switch(result){
-    case ActionResult::SUCCESS:
-    {
-      StartPickupAction(robot);
-      break;
-    }
-    case ActionResult::CANCELLED_WHILE_RUNNING:
-      // leave the helper running, since it's about to be canceled
-      break;
-    default:
-    {
-      _status = BehaviorStatus::Failure;
       break;
     }
   }

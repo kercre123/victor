@@ -38,7 +38,14 @@ public:
   BehaviorHelperFactory& GetBehaviorHelperFactory(){ assert(_helperFactory); return *_helperFactory;}
   
   // Conceptually relevant function which we currently don't support
-  //bool CanRunHelper(HelperHandle helper);
+  // bool CanRunHelper(HelperHandle helper);
+  
+  // Set a motion profile before delegating to the helper - this motion profile
+  // will persist through all actions the helper may perform and will be cleared
+  // when the helper completes
+  void SetMotionProfile(const PathMotionProfile& profile);
+  
+
   
   bool DelegateToHelper(Robot& robot,
                         HelperHandle handleToRun,
@@ -51,12 +58,20 @@ public:
 protected:
   friend class AIComponent;
   friend class BehaviorHelperFactory;
+  friend class IHelper;
   void Update(Robot& robot);
   HelperHandle AddHelperToComponent(IHelper*& helper);
   
+  // For helpers to retreieve the persistant path motion profile
+  // if a profile has been set it will be returned via the profile reference
+  // and the function will return true - if the function returns false there is
+  // currently no path motion profile
+  bool GetPathMotionProfile(PathMotionProfile& profile);
 
 private:
   std::unique_ptr<BehaviorHelperFactory> _helperFactory;
+  
+  PathMotionProfile  _motionProfile;
 
   using HelperStack = std::vector<HelperHandle>;
   using HelperIter = HelperStack::iterator;
@@ -74,7 +89,12 @@ private:
   void UpdateActiveHelper(Robot& robot);
   void PushHelperOntoStackAndUpdate(Robot& robot, HelperHandle helper);
 
-  void ClearStackVars();
+  // Variables which persist for the life of a stack but should be cleared
+  // when the stack fully empties or is cleared
+  void ClearStackLifetimeVars();
+  
+  // Clears variables which track the current stack state
+  void ClearStackMaintenanceVars();
 
   // clear helpers including iter, and everything higher on the stack
   void ClearStackFromTopToIter(HelperIter& iter);

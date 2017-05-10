@@ -57,6 +57,11 @@ public:
                                      bool rollToUpright = true,
                                      const RollBlockParameters& parameters = {});
   
+  HelperHandle CreateSearchForBlockHelper(Robot& robot,
+                                          IBehavior& behavior,
+                                          const SearchParameters& params = {});
+  
+  
 private:
   BehaviorHelperComponent& _helperComponent;
   
