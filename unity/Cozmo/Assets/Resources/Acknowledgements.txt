@@ -780,6 +780,7 @@ This software is provided by the copyright holders and contributors “as is” 
 the use of this software, even if advised of the possibility of such damage.
 
 --------------------------
+Scratch Blocks Library
 
                                  Apache License
                            Version 2.0, January 2011
@@ -959,6 +960,8 @@ the use of this software, even if advised of the possibility of such damage.
    END OF TERMS AND CONDITIONS
 
 --------------------------
+Scratch VM Library
+
 Copyright (c) 2016, Massachusetts Institute of Technology
 All rights reserved.
 
