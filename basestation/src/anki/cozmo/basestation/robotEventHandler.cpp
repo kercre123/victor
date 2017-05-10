@@ -33,7 +33,10 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/setFaceAction.h"
 #include "anki/cozmo/basestation/actions/trackGroundPointAction.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/trackFaceAction.h"
+#include "anki/cozmo/basestation/actions/trackMotionAction.h"
+#include "anki/cozmo/basestation/actions/trackObjectAction.h"
+#include "anki/cozmo/basestation/actions/trackPetFaceAction.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
 #include "anki/cozmo/basestation/components/visionComponent.h"

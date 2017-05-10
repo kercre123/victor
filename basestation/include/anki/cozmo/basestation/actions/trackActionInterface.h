@@ -1,37 +1,30 @@
 /**
- * File: trackingActions.h
+ * File: trackActionInterface.h
  *
  * Author: Andrew Stein
  * Date:   12/11/2015
  *
- * Description: Defines an interface and specific actions for tracking, derived 
- *              from the general IAction interface.
+ * Description: Defines a tracking action interface, derived from the general IAction interface.
  *
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef __Anki_Cozmo_Basestation_TrackingActions_H__
-#define __Anki_Cozmo_Basestation_TrackingActions_H__
+#ifndef __Anki_Cozmo_Basestation_TrackActionInterface_H__
+#define __Anki_Cozmo_Basestation_TrackActionInterface_H__
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "anki/vision/basestation/trackedFace.h"
 
 #include "clad/types/actionTypes.h"
-#include "clad/types/animationKeyFrames.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
-
-#include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
 // Forward Declarations:
 class Robot;
-class HistRobotState;
-class DriveStraightAction;
 
 template <typename Type>
 class AnkiEvent;
@@ -208,115 +201,8 @@ private:
   
   
 }; // class ITrackAction
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TrackObjectAction : public ITrackAction
-{
-public:
-  TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType = true);
-  virtual ~TrackObjectAction();
-
-protected:
-  
-  virtual ActionResult InitInternal() override;
-  
-  // Required by ITrackAction:
-  virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) override;
-  
-private:
-  
-  ObjectID             _objectID;
-  ObjectType           _objectType;
-  bool                 _trackByType;
-  Pose3d               _lastTrackToPose;
-  
-}; // class TrackObjectAction
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TrackFaceAction : public ITrackAction
-{
-public:
-  
-  using FaceID = Vision::FaceID_t;
-  
-  TrackFaceAction(Robot& robot, FaceID faceID);
-  virtual ~TrackFaceAction();
-
-  virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
-  
-protected:
-  
-  virtual ActionResult InitInternal() override;
-  
-  // Required by ITrackAction:
-  virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) override;
-  
-private:
-
-  FaceID               _faceID;
-  TimeStamp_t          _lastFaceUpdate = 0;
-
-  Signal::SmartHandle _signalHandle;
-
-}; // class TrackFaceAction
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TrackPetFaceAction : public ITrackAction
-{
-public:
-  
-  using FaceID = Vision::FaceID_t;
-  
-  // Track a specific pet ID
-  TrackPetFaceAction(Robot& robot, FaceID faceID);
-  
-  // Track first pet with the right type (or any pet at all if PetType set to Unknown).
-  // Note the pet being tracked could change during tracking as it is the first one
-  // found in PetWorld on each update tick.
-  TrackPetFaceAction(Robot& robot, Vision::PetType petType);
-  
-  virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
-  
-protected:
-  
-  virtual ActionResult InitInternal() override;
-  
-  // Required by ITrackAction:
-  virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) override;
-  
-private:
-  
-  FaceID               _faceID  = Vision::UnknownFaceID;
-  Vision::PetType      _petType = Vision::PetType::Unknown;
-  TimeStamp_t          _lastFaceUpdate = 0;
-  
-}; // class TrackPetFaceAction
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TrackMotionAction : public ITrackAction
-{
-public:
-  
-  TrackMotionAction(Robot& robot) : ITrackAction(robot, "TrackMotion", RobotActionType::TRACK_MOTION) { }
-  
-protected:
-  
-  virtual ActionResult InitInternal() override;
-  
-  // Required by ITrackAction:
-  virtual UpdateResult UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm) override;
-  
-private:
-  
-  bool _gotNewMotionObservation = false;
-  
-  ExternalInterface::RobotObservedMotion _motionObservation;
-  
-  Signal::SmartHandle _signalHandle;
-  
-}; // class TrackMotionAction
     
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Anki_Cozmo_Basestation_TrackingActions_H__
+#endif /* __Anki_Cozmo_Basestation_TrackActionInterface_H__ */

@@ -1,31 +1,28 @@
 /**
- * File: trackingActions.h
+ * File: trackActionInterface.cpp
  *
  * Author: Andrew Stein
  * Date:   12/11/2015
  *
- * Description: Defines an interface and specific actions for tracking, derived
- *              from the general IAction interface.
+ * Description: Defines an interface tracking, derived from the general IAction interface.
  *
  *
  * Copyright: Anki, Inc. 2015
  **/
 
+#include "anki/cozmo/basestation/actions/trackActionInterface.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -38,10 +35,7 @@ namespace Cozmo {
   
 static const char * const kLogChannelName = "Actions";
   
-  
-#pragma mark -
-#pragma mark ITrackAction
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActionType type)
 : IAction(robot,
           name,
@@ -53,6 +47,7 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::~ITrackAction()
 {
   if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
@@ -92,6 +87,7 @@ ITrackAction::~ITrackAction()
   _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TODO:(bn) if we implemented a parallel compound action function like "Stop on first action complete"
 // instead of the current behavior of "stop when all actions are complete", I don't think we'd need this
 // anymore
@@ -137,60 +133,70 @@ void ITrackAction::StopTrackingWhenOtherActionCompleted( u32 otherActionTag )
   }
 }
  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetPanDuration(f32 panDuration_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanDuration.ActionAlreadyStarted");
   _panDuration_sec = panDuration_sec;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetTiltDuration(f32 tiltDuration_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetTiltDuration.ActionAlreadyStarted");
   _tiltDuration_sec = tiltDuration_sec;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetUpdateTimeout(float timeout_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetUpdateTimeout.ActionAlreadyStarted");
   _updateTimeout_sec = timeout_sec;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetDesiredTimeToReachTarget(f32 time_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetDesiredTimeToReachTarget.ActionAlreadyStarted");
   _timeToReachTarget_sec = time_sec;
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::EnableDrivingAnimation(bool enable)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.EnableDrivingAnimation.ActionAlreadyStarted");
   _shouldPlayDrivingAnimation = enable;
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetSound(const AnimationTrigger animName)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetSound.ActionAlreadyStarted");
   _turningSoundAnimTrigger = animName;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMinPanAngleForSound(const Radians& angle)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMinPanAngleForSound.ActionAlreadyStarted");
   _minPanAngleForSound = angle.getAbsoluteVal();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMinTiltAngleForSound(const Radians& angle)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMinTiltAngleForSound.ActionAlreadyStarted");
   _minTiltAngleForSound = angle.getAbsoluteVal();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetClampSmallAnglesToTolerances(bool tf)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetClampSmallAnglesToTolerances.ActionAlreadyStarted");
   _clampSmallAngles = tf;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetClampSmallAnglesPeriod(float min_sec, float max_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetClampSmallAnglesPeriod.ActionAlreadyStarted");
@@ -198,18 +204,21 @@ void ITrackAction::SetClampSmallAnglesPeriod(float min_sec, float max_sec)
   _clampSmallAnglesMaxPeriod_s = max_sec;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMaxHeadAngle(const Radians& maxHeadAngle_rads)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMaxHeadAngle.ActionAlreadyStarted");
   _maxHeadAngle = maxHeadAngle_rads;
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMoveEyes(bool moveEyes)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMoveEyes.ActionAlreadyStarted");
   _moveEyes = moveEyes;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetSoundSpacing.ActionAlreadyStarted");
@@ -217,6 +226,7 @@ void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec)
   _soundSpacingMax_sec = spacingMax_sec;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol,
                                    f32 minDist_mm, f32 maxDist_mm, f32 time_sec)
 {
@@ -230,6 +240,7 @@ void ITrackAction::SetStopCriteria(const Radians& panTol, const Radians& tiltTol
   _stopCriteria.withinTolSince_sec = -1.f;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetMode(Mode newMode)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMode.ActionAlreadyStarted");
@@ -256,6 +267,7 @@ void ITrackAction::SetMode(Mode newMode)
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetPanTolerance.ActionAlreadyStarted");
@@ -271,7 +283,7 @@ void ITrackAction::SetPanTolerance(const Radians& panThreshold)
   }
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetTiltTolerance.ActionAlreadyStarted");
@@ -287,6 +299,7 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult ITrackAction::Init()
 {
   if(_shouldPlayDrivingAnimation)
@@ -321,12 +334,14 @@ ActionResult ITrackAction::Init()
   return result;
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::InterruptInternal()
 {
   _lastUpdateTime = 0.0f;
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result)
 {
   if(_shouldPlayDrivingAnimation)
@@ -341,6 +356,7 @@ ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result)
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult ITrackAction::CheckIfDone()
 {
   if(_shouldPlayDrivingAnimation)
@@ -644,6 +660,7 @@ ActionResult ITrackAction::CheckIfDone()
   return ActionResult::RUNNING;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::UpdateSmallAngleClamping()
 {
   if( _clampSmallAngles ) {
@@ -668,6 +685,7 @@ bool ITrackAction::UpdateSmallAngleClamping()
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32 relTiltAngle,
                                                 const f32 distance_mm, const f32 currentTime)
 {
@@ -733,423 +751,6 @@ bool ITrackAction::StopCriteriaMetAndTimeToStop(const f32 relPanAngle, const f32
   
   return false;
 }
-  
-//=======================================================================================================
-#pragma mark -
-#pragma mark TrackObjectAction
-
-TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, bool trackByType)
-: ITrackAction(robot,
-               "TrackObject",
-               RobotActionType::TRACK_OBJECT)
-, _objectID(objectID)
-, _trackByType(trackByType)
-{
-  SetName("TrackObject" + std::to_string(_objectID));
-}
-  
-TrackObjectAction::~TrackObjectAction()
-{
-  _robot.GetMoveComponent().UnSetTrackToObject();
-}
-
-ActionResult TrackObjectAction::InitInternal()
-{
-  if(!_objectID.IsSet()) {
-    PRINT_NAMED_ERROR("TrackObjectAction.Init.ObjectIdNotSet", "");
-    return ActionResult::BAD_OBJECT;
-  }
-  
-  const ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
-  if(nullptr == object) {
-    PRINT_NAMED_ERROR("TrackObjectAction.Init.InvalidObject",
-                      "Object %d does not exist in BlockWorld", _objectID.GetValue());
-    return ActionResult::BAD_OBJECT;
-  }
-  
-  _objectType = object->GetType();
-  if(_trackByType) {
-    SetName("TrackObject" + std::string(EnumToString(_objectType)));
-  }
-  
-  _lastTrackToPose = object->GetPose();
-  
-  _robot.GetMoveComponent().SetTrackToObject(_objectID);
-  
-  return ActionResult::SUCCESS;
-} // InitInternal()
-  
-ITrackAction::UpdateResult TrackObjectAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
-{
-  ObservableObject* matchingObject = nullptr;
-  
-  if(_trackByType) {
-    BlockWorldFilter filter;
-    filter.OnlyConsiderLatestUpdate(true);
-    
-    matchingObject = _robot.GetBlockWorld().FindLocatedClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
-    
-    if(nullptr == matchingObject) {
-      // Did not see an object of the right type during latest blockworld update
-#     if DEBUG_TRACKING_ACTIONS
-      PRINT_NAMED_INFO("TrackObjectAction.GetAngles.NoMatchingTypeFound",
-                       "Could not find matching %s object.",
-                       EnumToString(_objectType));
-#     endif
-      return UpdateResult::NoNewInfo;
-    } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
-      // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
-      _robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
-    }
-  } else {
-    matchingObject = _robot.GetBlockWorld().GetLocatedObjectByID(_objectID);
-    if(nullptr == matchingObject) {
-      PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.ObjectNoLongerExists",
-                          "Object %d no longer exists in BlockWorld",
-                          _objectID.GetValue());
-      return UpdateResult::NoNewInfo;
-    }
-  }
-  
-  assert(nullptr != matchingObject);
-  
-  _lastTrackToPose = matchingObject->GetPose();
-  
-  // Find the observed marker closest to the robot and use that as the one we
-  // track to
-  std::vector<const Vision::KnownMarker*> observedMarkers;
-  matchingObject->GetObservedMarkers(observedMarkers, matchingObject->GetLastObservedTime());
-  
-  if(observedMarkers.empty()) {
-    PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.NoObservedMarkers",
-                      "No markers on observed object %d marked as observed since time %d, "
-                      "expecting at least one.",
-                      matchingObject->GetID().GetValue(),
-                      matchingObject->GetLastObservedTime());
-    return UpdateResult::NoNewInfo;
-  }
-  
-  const Vision::KnownMarker* closestMarker = nullptr;
-  f32 minDistSq = std::numeric_limits<f32>::max();
-  f32 xDist = 0.f, yDist = 0.f, zDist = 0.f;
-  
-  for(auto marker : observedMarkers) {
-    Pose3d markerPoseWrtRobot;
-    if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
-      PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.PoseOriginError",
-                        "Could not get pose of observed marker w.r.t. robot");
-      return UpdateResult::NoNewInfo;
-    }
-    
-    const f32 xDist_crnt = markerPoseWrtRobot.GetTranslation().x();
-    const f32 yDist_crnt = markerPoseWrtRobot.GetTranslation().y();
-    
-    const f32 currentDistSq = xDist_crnt*xDist_crnt + yDist_crnt*yDist_crnt;
-    if(currentDistSq < minDistSq) {
-      closestMarker = marker;
-      minDistSq = currentDistSq;
-      xDist = xDist_crnt;
-      yDist = yDist_crnt;
-      
-      // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
-      // NOTE: This isn't perfectly accurate since it doesn't take into account the
-      // the head angle and is simply using the neck joint (which should also
-      // probably be queried from the robot instead of using the constant here)
-      zDist = markerPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-    }
-    
-  } // For all markers
-  
-  if(closestMarker == nullptr) {
-    PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.NoClosestMarker", "");
-    return UpdateResult::NoNewInfo;
-  }
-  
-  DEV_ASSERT(minDistSq > 0.f, "Distance to closest marker should be > 0");
-  
-  absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
-  
-  return UpdateResult::NewInfo;
-  
-} // UpdateTracking()
-  
-//=======================================================================================================
-#pragma mark -
-#pragma mark TrackFaceAction
-  
-TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
-  : ITrackAction(robot,
-                 "TrackFace",
-                 RobotActionType::TRACK_FACE)
-  , _faceID(faceID)
-{
-   SetName("TrackFace" + std::to_string(_faceID));
-}
-
-TrackFaceAction::~TrackFaceAction()
-{
-  _robot.GetMoveComponent().UnSetTrackToFace();
-}
-
-
-ActionResult TrackFaceAction::InitInternal()
-{
-  if(false == _robot.HasExternalInterface()) {
-    PRINT_NAMED_ERROR("TrackFaceAction.InitInternal.NoExternalInterface",
-                      "Robot must have an external interface so action can "
-                      "subscribe to face changed ID events.");
-    return ActionResult::ABORT;
-  }
-  
-  using namespace ExternalInterface;
-  auto HandleFaceChangedID = [this](const AnkiEvent<MessageEngineToGame>& event)
-  {
-    auto & msg = event.GetData().Get_RobotChangedObservedFaceID();
-    if(msg.oldID == _faceID)
-    {
-      PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.HandleFaceChangedID",
-                    "Updating tracked face ID from %d to %d",
-                    msg.oldID, msg.newID);
-      
-      _faceID = msg.newID;
-    }
-  };
-  
-  _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, HandleFaceChangedID);
-  
-  _robot.GetMoveComponent().SetTrackToFace(_faceID);
-  _lastFaceUpdate = 0;
-  
-  return ActionResult::SUCCESS;
-} // InitInternal()
-
-void TrackFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-{
-  TrackFaceCompleted completion;
-  completion.faceID = static_cast<s32>(_faceID);
-  completionUnion.Set_trackFaceCompleted(std::move(completion));
-}
-  
-ITrackAction::UpdateResult TrackFaceAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
-{
-  const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
-  distance_mm = 0.f;
-  
-  if(nullptr == face) {
-    // No such face
-    PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.GetAngles.BadFaceID", "No face %d in FaceWorld", _faceID);
-    return UpdateResult::NoNewInfo;
-  }
-  
-  // Only update pose if we've actually observed the face again since last update
-  if(face->GetTimeStamp() <= _lastFaceUpdate) {
-    return UpdateResult::NoNewInfo;
-  }
-  _lastFaceUpdate = face->GetTimeStamp();
-  
-  Pose3d headPoseWrtRobot;
-  if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headPoseWrtRobot)) {
-    PRINT_NAMED_ERROR("TrackFaceAction.GetAngles.PoseOriginError",
-                      "Could not get pose of face w.r.t. robot.");
-    return UpdateResult::NoNewInfo;
-  }
-  
-  const f32 xDist = headPoseWrtRobot.GetTranslation().x();
-  const f32 yDist = headPoseWrtRobot.GetTranslation().y();
-  
-  // NOTE: This isn't perfectly accurate since it doesn't take into account the
-  // the head angle and is simply using the neck joint (which should also
-  // probably be queried from the robot instead of using the constant here)
-  const f32 zDist = headPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-
-# if DEBUG_TRACKING_ACTIONS
-  PRINT_NAMED_INFO("TrackFaceAction.GetAngles.HeadPose",
-                   "Translation w.r.t. robot = (%.1f, %.1f, %.1f) [t=%d]",
-                   xDist, yDist, zDist, face->GetTimeStamp());
-# endif
-  
-  const f32 xyDistSq = xDist*xDist + yDist*yDist;
-  if (xyDistSq <= 0.f)
-  {
-    DEV_ASSERT(false, "TrackFaceAction.GetAngles.ZeroDistance");
-    return UpdateResult::NoNewInfo;
-  }
-  
-  absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
-  absPanAngle  = std::atan2(yDist, xDist) + _robot.GetPose().GetRotation().GetAngleAroundZaxis();
-
-  return UpdateResult::NewInfo;
-} // UpdateTracking()
-  
-//=======================================================================================================
-#pragma mark -
-#pragma mark TrackPetFaceAction
-  
-TrackPetFaceAction::TrackPetFaceAction(Robot& robot, FaceID faceID)
-: ITrackAction(robot,
-               "TrackPetFace" + std::to_string(faceID),
-               RobotActionType::TRACK_PET_FACE)
-, _faceID(faceID)
-{
-
-}
-
-TrackPetFaceAction::TrackPetFaceAction(Robot& robot, Vision::PetType petType)
-: ITrackAction(robot,
-               "TrackPetFace",
-               RobotActionType::TRACK_PET_FACE)
-, _petType(petType)
-{
-  switch(_petType)
-  {
-    case Vision::PetType::Cat:
-      SetName("TrackCatFace");
-      break;
-   
-    case Vision::PetType::Dog:
-      SetName("TrackDogFace");
-      break;
-      
-    case Vision::PetType::Unknown:
-      SetName("TrackAnyPetFace");
-      break;
-  }
-}
-
-ActionResult TrackPetFaceAction::InitInternal()
-{
-  _lastFaceUpdate = 0;
-  
-  return ActionResult::SUCCESS;
-} // InitInternal()
-
-void TrackPetFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
-{
-  TrackFaceCompleted completion;
-  completion.faceID = static_cast<s32>(_faceID);
-  completionUnion.Set_trackFaceCompleted(std::move(completion));
-}
-
-ITrackAction::UpdateResult TrackPetFaceAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
-{
-  const Vision::TrackedPet* petFace = nullptr;
-  
-  if(_faceID != Vision::UnknownFaceID)
-  {
-    petFace = _robot.GetPetWorld().GetPetByID(_faceID);
-    
-    if(nullptr == petFace)
-    {
-      // No such face
-      PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.BadFaceID", "No face %d in PetWorld", _faceID);
-      return UpdateResult::NoNewInfo;
-    }
-  }
-  else
-  {
-    auto petIDs = _robot.GetPetWorld().GetKnownPetsWithType(_petType);
-    if(!petIDs.empty())
-    {
-      petFace = _robot.GetPetWorld().GetPetByID(*petIDs.begin());
-    }
-    else
-    {
-      PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.NoPetsWithType", "Type=%s",
-                    EnumToString(_petType));
-      return UpdateResult::NoNewInfo;
-    }
-  }
-
-  // Only update pose if we've actually observed the face again since last update
-  if(petFace->GetTimeStamp() <= _lastFaceUpdate) {
-    return UpdateResult::NoNewInfo;
-  }
-  _lastFaceUpdate = petFace->GetTimeStamp();
-  
-  Result result = _robot.ComputeTurnTowardsImagePointAngles(petFace->GetRect().GetMidPoint(), petFace->GetTimeStamp(),
-                                                            absPanAngle, absTiltAngle);
-  if(RESULT_OK != result)
-  {
-    PRINT_NAMED_WARNING("TrackpetFaceAction.GetAngles.ComputeTurnTowardsImagePointAnglesFailed", "t=%u", petFace->GetTimeStamp());
-    return UpdateResult::NoNewInfo;
-  }
-  
-  return UpdateResult::NewInfo;
-} // UpdateTracking()
-  
-//=======================================================================================================
-#pragma mark -
-#pragma mark TrackMotionAction
-  
-ActionResult TrackMotionAction::InitInternal()
-{
-  if(false == _robot.HasExternalInterface()) {
-    PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
-                      "Robot must have an external interface so action can "
-                      "subscribe to motion observation events.");
-    return ActionResult::ABORT;
-  }
-  
-  _gotNewMotionObservation = false;
-  
-  using namespace ExternalInterface;
-  auto HandleObservedMotion = [this](const AnkiEvent<MessageEngineToGame>& event)
-  {
-    _gotNewMotionObservation = true;
-    this->_motionObservation = event.GetData().Get_RobotObservedMotion();
-  };
-  
-  _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
-  
-  return ActionResult::SUCCESS;
-} // InitInternal()
-
-  
-ITrackAction::UpdateResult TrackMotionAction::UpdateTracking(Radians& absPanAngle, Radians& absTiltAngle, f32& distance_mm)
-{
-  distance_mm = 0.f;
-  
-  if(_gotNewMotionObservation && _motionObservation.img_area > 0)
-  {
-    _gotNewMotionObservation = false;
-    
-    const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
-    
-    // Note: we start with relative angles here, but make them absolute below.
-    _robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
-    
-    // Find pose of robot at time motion was observed
-    HistRobotState* histStatePtr = nullptr;
-    TimeStamp_t junkTime;
-    if(RESULT_OK != _robot.GetStateHistory()->ComputeAndInsertStateAt(_motionObservation.timestamp, junkTime, &histStatePtr)) {
-      PRINT_NAMED_ERROR("TrackMotionAction.GetAngles.PoseHistoryError",
-                        "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
-                        _motionObservation.timestamp,
-                        _robot.GetLastMsgTimestamp());
-      return UpdateResult::NoNewInfo;
-    }
-    
-    assert(nullptr != histStatePtr);
-    
-    // Make absolute
-    absTiltAngle += histStatePtr->GetHeadAngle_rad();
-    absPanAngle  += histStatePtr->GetPose().GetRotation().GetAngleAroundZaxis();
-    
-#   if DEBUG_TRACKING_ACTIONS
-    PRINT_NAMED_INFO("TrackMotionAction.GetAngles.Motion",
-                     "Motion area=%.1f%%, centroid=(%.1f,%.1f)",
-                     _motionObservation.img_area * 100.f,
-                     motionCentroid.x(), motionCentroid.y());
-#   endif
-    
-    return UpdateResult::NewInfo;
-    
-  } // if(_gotNewMotionObservation && _motionObservation.img_area > 0)
-  
-  return UpdateResult::NoNewInfo;
-  
-} // UpdateTracking()
   
 } // namespace Cozmo
 } // namespace Anki
