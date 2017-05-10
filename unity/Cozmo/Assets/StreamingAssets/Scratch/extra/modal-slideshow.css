@@ -50,6 +50,7 @@ button:focus {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 12px;
 }
 
 .modal-slides .modal-bg {
@@ -66,8 +67,8 @@ button:focus {
   background-color: #5d5e5f;
   border: 1px solid #1fadda;
   border-radius: 10px;
-  height: calc(100vh - 25px);
-  width: calc(100vw - 25px);
+  width: 100%;
+  height: 100%;
   padding: 0;
 }
 
