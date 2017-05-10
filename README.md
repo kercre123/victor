@@ -18,16 +18,29 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
 
 ### Android NDK and SDK
 
-The Android NDK and SDK are required to build for Android.  They will be automatically installed for you when you run `./configure.py` for the Android platform.  You can also install them with:
+The Android NDK and SDK are required to build for Android.  The correct versions will be automatically installed for you when you run `./configure.py` for the Android platform.  You can also install them ahead of time with:
 ```
 ./tools/build/tools/ankibuild/android.py --install-sdk
 ./tools/build/tools/ankibuild/android.py --install-ndk
 ```
 
-You don't need to, but you may want to add the Android SDK platform tools to your path in `~/.bash_profile` with:
+You do NOT need to set any environment variables like `ANDROID_HOME` or `ANDROID_NDK_ROOT` in your `~/.bash_profile` for the build to work.  Same with your `PATH`.  The build scripts will find everything on their own.
+
+However, if you are actively working on Android development, it is very convenient to set these environment variables and update your PATH.  Below is an example of what you can add to your `~/.bash_profile`.
+
 ```
-export ANDROID_HOME=~/.anki/android/sdk-repository/android-sdk-macosx-anki-r2/platform-tools
-export PATH=$PATH:$ANDROID_HOME/platform-tools
+ANKI_ANDROID_ROOT=~/.anki/android
+ANDROID_SDK_REPOSITORY=${ANKI_ANDROID_ROOT}/sdk-repository
+export ANDROID_HOME=${ANDROID_SDK_REPOSITORY}/`ls $ANDROID_SDK_REPOSITORY/| tail -1`
+export ANDROID_ROOT=$ANDROID_HOME
+
+export ANDROID_NDK_REPOSITORY=${ANKI_ANDROID_ROOT}/ndk-repository
+export ANDROID_NDK_ROOT=${ANDROID_NDK_REPOSITORY}/`ls $ANDROID_NDK_REPOSITORY/| tail -1`
+export ANDROID_NDK_HOME=$ANDROID_NDK_ROOT
+export ANDROID_NDK=$ANDROID_NDK_ROOT
+export NDK_ROOT=$ANDROID_NDK_ROOT
+export PATH=${PATH}:${ANDROID_HOME}/platform-tools  # for adb
+export PATH=${PATH}:${ANDROID_HOME}/anki/bin # For tools like buck
 ```
 
 ### Unity
