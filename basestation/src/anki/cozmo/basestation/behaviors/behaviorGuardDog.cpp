@@ -49,7 +49,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -385,10 +385,6 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       // Timeout wake-up animation:
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
       
-      // Update the music stage after the wakeup animation has completed
-      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
-      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
-      
       // Ask blockworld for the closest cube and turn toward it.
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
       //  purely for aesthetics and we do not want failures to prevent the animations afterward from
@@ -399,6 +395,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       }
 
       action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
+      
+      // Update the music stage
+      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
+      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
       
       // Play the PlayerSuccess animation
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
