@@ -6,3 +6,6 @@ http://www.keil.com/support/docs/2666.htm
 
 Keil: create a µVision project for downloading a HEX file to Flash - "Flash Programming :: HEX Files"
 http://www.keil.com/support/man/docs/uv4/uv4_fl_hexdownload.htm
+
+setserial.ahk:
+'AutoHotkey' (windows) keyboard macro script for serialization
