@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="../css/normalize.css">
     <link rel="stylesheet" href="modal-slideshow.css">
     <link rel="stylesheet" href="challenges.css">
+    <script>
+      window.Unity = {
+        call: function(msg) {
+          var iframe = document.createElement('IFRAME');
+          iframe.setAttribute('src', 'unity:' + msg);
+          document.documentElement.appendChild(iframe);
+          iframe.parentNode.removeChild(iframe);
+          iframe = null;
+        }
+      }
+    </script>
   </head>
   <body>
 
@@ -75,6 +86,7 @@
     <script src="./extra-common.js"></script>
     <script src="./modal-slideshow.js"></script>
     <script src="./challenges.js"></script>
+    <script src="../js/CozmoSaveLoadAPI.js"></script>
 
   </body>
 </html>

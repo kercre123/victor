@@ -86,6 +86,7 @@
     var btnBack;
     var btnDone;
     var numSlides;
+    var isChallenges;
 
     /**
      * Initilizes slideshow
@@ -98,6 +99,7 @@
       slides = strip.querySelectorAll('.slide');
       btnNext = modal.querySelector('#btn-next');
       btnBack = modal.querySelector('#btn-back');
+      isChallenges = modal.getAttribute('id') === 'challenges-modal';
       btnDone = modal.querySelector('#btn-done');
 
       // cache values
@@ -155,7 +157,13 @@
 
       if (noAnimation) disableAnimation();
       strip.style.left = -slide.offsetLeft + 'px';
-      if (noAnimation) enableAnimation();
+
+      if (noAnimation) {
+        // restore page transition animations after this thread exits
+        setTimeout(function(){
+          enableAnimation();
+        }, 0);
+      }
 
       _updateDisplay();
     }
@@ -202,6 +210,13 @@
 
       var slideNum = _getCurrentSlideNum();
 
+      // for challenges, save the slide page number in Unity to possibly reopen to later
+      if (isChallenges) {
+        // Save the current challenge page last viewed.
+        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSetChallengeBookmark','argUInt': '" + slideNum + "'}");
+      }
+
+      // set the progress text
       setText('.progress', $t('{0} of {1}', slideNum, slides.length));
 
       // disable back button on first slide

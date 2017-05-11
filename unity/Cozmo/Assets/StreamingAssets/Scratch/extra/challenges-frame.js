@@ -8,6 +8,7 @@ window.Challenges = (function(){
   var _container = null;
   var _iframe = null;
 
+
   /**
    * Shows the challenges modal
    * @returns {void}
@@ -17,8 +18,17 @@ window.Challenges = (function(){
       _injectFrame();
     }
 
-    _container.style.display = 'block';
-    _iframe.setAttribute('src', 'extra/challenges.html');
+    // Request a slide number to open to from Unity, to restore the same place
+    // in the challenges if the user reopens challenges in this session. Retrieves
+    // the last viewed challenge page.
+    //
+    // callback method will receive a parameter that is an int set to the the last viewed challenge page.
+    // The callback has only been tested with a method on window.
+    // Example: window.myCallback(lastChallengePageViewed);
+    window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoGetChallengeBookmark','argString': 'window.callback_openToSlideNum'}");
+
+    // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
+    //window.callback_openToSlideNum(6);
   }
 
   /**
@@ -29,6 +39,23 @@ window.Challenges = (function(){
     document.querySelector('#challenges-frame-container').style.display = 'none';
     document.querySelector('#challenges-frame').setAttribute('src', '');
   }
+
+
+  /**
+   * ONLY INTENDED TO BE CALLED BY UNITY!
+   * Callback function passed to unity that gets called with the page number
+   *  in the challenges slides to display first.
+   * @returns {void}
+   */
+  function openToSlideNum(number) {
+    // put a hash fragement itentifier on the URL to tell the
+    //  challenges which page to start with
+    var iframeUrl = 'extra/challenges.html#' + (number || 1);
+
+    _container.style.display = 'block';
+    _iframe.setAttribute('src', iframeUrl);
+  }
+
 
   /**
    * Add elements to the page to create the challenges modal shell and iframe
@@ -60,6 +87,11 @@ window.Challenges = (function(){
 
   return {
     show: show,
-    hide: hide
+    hide: hide,
+    openToSlideNum: openToSlideNum
   };
 })();
+
+window.callback_openToSlideNum = function(number) {
+  window.Challenges.openToSlideNum(number);
+};

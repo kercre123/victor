@@ -51,6 +51,8 @@ namespace CodeLab {
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
 
+    private uint _ChallengeBookmark = 1;
+
     private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
     private const float kDriveDist_mm = 44.0f; // length of one light cube
@@ -355,6 +357,21 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
     }
 
+    private void OnSetChallengeBookmark(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnSetChallengeBookmark", "");
+
+      _ChallengeBookmark = scratchRequest.argUInt;
+    }
+
+    private void OnGetChallengeBookmark(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnGetChallengeBookmark", "");
+
+      // Provide js with current challenge bookmark location
+      string jsCallback = scratchRequest.argString;
+
+      _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + _ChallengeBookmark + "');");
+    }
+
     private void OnCozmoSaveUserProject(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnCozmoSaveUserProject", "UUID=" + scratchRequest.argUUID);
       // Save both new and existing user projects.
@@ -423,6 +440,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "getCozmoUserAndSampleProjectLists":
         OnGetCozmoUserAndSampleProjectLists(scratchRequest);
+        return true;
+      case "cozmoSetChallengeBookmark":
+        OnSetChallengeBookmark(scratchRequest);
+        return true;
+      case "cozmoGetChallengeBookmark":
+        OnGetChallengeBookmark(scratchRequest);
         return true;
       case "cozmoSaveUserProject":
         OnCozmoSaveUserProject(scratchRequest);
