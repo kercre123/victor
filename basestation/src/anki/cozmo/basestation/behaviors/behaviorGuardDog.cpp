@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
@@ -49,7 +50,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -107,6 +108,11 @@ bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
   
   // Is this feature enabled?
   if (!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::GuardDog)) {
+    return false;
+  }
+  
+  // Don't run if we currently have the hiccups:
+  if (robot.GetAIComponent().GetWhiteboard().HasHiccups()) {
     return false;
   }
   
