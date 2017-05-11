@@ -23,7 +23,12 @@ public class SerializableEnumDrawingHelper {
     SerializedProperty enumProperty = property.FindPropertyRelative("_EnumValue");
     SerializedProperty enumStringProperty = property.FindPropertyRelative("_EnumValueAsString");
 
-    enumProperty.enumValueIndex = enumStringToValueMap[enumStringProperty.stringValue];
+    if (enumStringToValueMap.ContainsKey(enumStringProperty.stringValue)) {
+      enumProperty.enumValueIndex = enumStringToValueMap[enumStringProperty.stringValue];
+    }
+    else {
+      enumProperty.enumValueIndex = 0;
+    }
 
     enumProperty.enumValueIndex = EditorGUI.Popup(position, enumProperty.enumValueIndex, enumProperty.enumNames);
     enumStringProperty.stringValue = enumProperty.enumNames[enumProperty.enumValueIndex];
