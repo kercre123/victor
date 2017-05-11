@@ -14,7 +14,7 @@ public class CozmoThemeSystemEditorWindow : Anki.Core.Editor.Components.ThemeSys
   protected static void InitializeWindowOverride() {
     _sWindow = EditorWindow.GetWindow<CozmoThemeSystemEditorWindow>();
     _sWindow.titleContent = new GUIContent("Theme System");
-    _sWindow.position = new Rect(_sWindow.position.x, _sWindow.position.y, 1500f, 1000f);
+    _sWindow.position = new Rect(_sWindow.position.x, _sWindow.position.y, 750f, 500f);
     _sWindow.minSize = new Vector2(750f, 500f);
     _sWindow.Show();
 
