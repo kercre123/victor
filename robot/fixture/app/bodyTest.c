@@ -348,27 +348,6 @@ static void BodyChargeTest(void)
   }
 }
 
-extern int FlashlightGetCurrent(bool on, int power_on_s); //robotTest.c
-static void BodyFlashlightTest(void)
-{
-  //nominal flashlight (IR LED) current is ~40mA -> ~20mA @ 50% duty cycle, less some measurement variation and part tolerance...
-  const int FLASHLIGHT_MA = 12;
-  
-  #warning "debug"
-  //ConsolePrintf("MicroWait(5s)\r\n");
-  //MicroWait(5*1000*1000); //let charger circuit transition to disabled. Make sure we have consistent power draw.
-  
-  int i_on  = FlashlightGetCurrent(1,0);
-  int i_off = FlashlightGetCurrent(0,0);
-  int i_delta = i_on - i_off;
-  
-  ConsolePrintf("flashlight-mA,on,%d,off,%d,delta,%d\r\n", i_on, i_off, i_delta);
-  if( i_delta < FLASHLIGHT_MA )
-    throw ERROR_BODY_FLASHLIGHT;
-  
-  SendTestChar(-1); //back to comms mode
-}
-
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
@@ -400,7 +379,6 @@ TestFunction* GetBody2TestFunctions(void)
 };
 
 extern void BatteryCheck(void);
-extern void DEBUG_FlashlightTest_Characterize(void);
 TestFunction* GetBody3TestFunctions(void)
 {
   static TestFunction functions[] =
@@ -408,17 +386,10 @@ TestFunction* GetBody3TestFunctions(void)
     BodyNRF51,
     HeadlessBoot,
     BodyChargeTest, //must be immediately after boot; measures beginning of charge cycle
-    
-    #warning "DEBUG"
-    BodyFlashlightTest,
-    //DEBUG_FlashlightTest_Characterize,
-    
     TestBackpackPullup,
-    /*
     BodyMotor,
     //DropLeakage, //disable test for 1v5 PVT line changes
     BatteryCheck,
-    */
     NULL
   };
 
