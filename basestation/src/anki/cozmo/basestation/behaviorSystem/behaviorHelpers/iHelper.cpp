@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorEventAnimResponseDirector.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -276,6 +277,14 @@ HelperHandle IHelper::CreatePlaceRelObjectHelper(Robot& robot,
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HelperHandle IHelper::CreateSearchForBlockHelper(Robot& robot,
+                                                 const SearchParameters& params)
+{
+  return _helperFactory.CreateSearchForBlockHelper(robot, _behaviorToCallActionsOn, params);
+}
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
                                                               const ObjectID& targetID,
                                                               PreActionPose::ActionType actionType,
@@ -340,7 +349,14 @@ ActionResult IHelper::IsAtPreActionPoseWithVisualVerification(Robot& robot,
 
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IHelper::GetPathMotionProfile(Robot& robot, PathMotionProfile& profile)
+{
+  return robot.GetAIComponent().GetBehaviorHelperComponent().GetPathMotionProfile(profile);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IHelper::RespondToResultWithAnim(ActionResult result, Robot& robot)
 {

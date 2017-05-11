@@ -2,4 +2,6 @@
   build_tools_version=23.0.3
   target=android-23
 [ndk]
-  ndk_version=13.1.3345770
+  ndk_version=14.1.3816874
+[anki]
+  android_sdk_version=r2

@@ -61,4 +61,24 @@ structure testStructure_PartialJson
   string unreadValue,
 }
 
+no_default_constructor structure testStructure_NoDefault
+{
+  string test
+}
+
+structure testStructure_NestedNoDefault
+{
+  bool testBool,
+  int_16 testInt,
+  testStructure_NoDefault testStruct,
+}
+
+union testUnion_NestedNoDefault
+{
+  testStruct1 t1,
+  testStructure_NoDefault a,
+  testStruct2 t2,
+  testStruct3 t3
+}
+
 }

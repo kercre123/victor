@@ -19,237 +19,300 @@ window._$translations = {
         ]
     }, 
     "codeLabChallenge_driveForwardFour.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='blue'>DRIVE FORWARD</span> 4."
+        "translation": "#1: <span class='blue'>DRIVE FORWARD</span> 4."
     }, 
     "codeLabChallenge_driveForwardFour.questionSlide.secondaryText": {
-        "translation": "Hint: Tap the number at bottom of code blocks to change the number."
+        "translation": "Wait! Try the challenge first, then tap NEXT to see if you're right!"
     }, 
     "codeLabChallenge_driveForwardFour.answerSlide.primaryText": {
-        "translation": "Answer: <span class='blue'>DRIVE FORWARD</span> 4."
+        "translation": "Answer #1"
     }, 
     "codeLabChallenge_driveAndSneeze.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='purple'>SNEEZE.</span>"
+        "translation": "#2: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='violet'>SNEEZE.</span>"
+    }, 
+    "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_driveAndSneeze.answerSlide.primaryText": {
-        "translation": "Answer: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='purple'>SNEEZE.</span>"
+        "translation": "Answer #2"
     }, 
     "codeLabChallenge_driveSquareSimple.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='blue'>DRIVE</span> in a square."
+        "translation": "#3: <span class='blue'>DRIVE</span> in a square."
+    }, 
+    "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_driveSquareSimple.answerSlide.primaryText": {
-        "translation": "Answer: <span class='blue'>DRIVE</span> in a square."
+        "translation": "Answer #3"
     }, 
     "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='blue'>DRIVE BACKWARD</span> in a square."
+        "translation": "#4: <span class='blue'>DRIVE BACKWARD</span> in a square."
+    }, 
+    "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText": {
-        "translation": "Answer: <span class='blue'>DRIVE BACKWARD</span> in a square."
+        "translation": "Answer #4"
     }, 
     "codeLabChallenge_sayHi.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='purple'>SAY</span> \"Hi.\""
+        "translation": "#5: <span class='purple'>SAY</span> \"Hi.\""
+    }, 
+    "codeLabChallenge_sayHi.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_sayHi.answerSlide.primaryText": {
-        "translation": "Answer: <span class='purple'>SAY</span> \"Hi.\""
+        "translation": "Answer #5"
     }, 
     "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='purple'>LIGHT BACKPACK</span> green."
+        "translation": "#6: <span class='purple'>LIGHT BACKPACK</span> green."
+    }, 
+    "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText": {
-        "translation": "Answer: <span class='purple'>LIGHT BACKPACK</span> green."
+        "translation": "Answer #6"
     }, 
     "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color."
+        "translation": "#7: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color."
+    }, 
+    "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText": {
-        "translation": "Answer: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color."
+        "translation": "Answer #7"
     }, 
     "codeLabChallenge_whenFaceSay.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> \"I see you.\""
+        "translation": "#8: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> \"I see you.\""
+    }, 
+    "codeLabChallenge_whenFaceSay.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenFaceSay.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> \"I see you.\""
+        "translation": "Answer #8"
     }, 
     "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>"
+        "translation": "#9: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>"
+    }, 
+    "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>"
+        "translation": "Answer #9"
     }, 
     "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>"
+        "translation": "#10: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>"
+    }, 
+    "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText": {
-        "translation": "Answer: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>"
+        "translation": "Answer #10"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color."
+        "translation": "#11: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color."
+    }, 
+    "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color."
+        "translation": "Answer #11"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='violet'>DO MYSTERY ANIMATION.</span>"
+        "translation": "#12: <span class='yellow'>WHEN CUBE IS TAPPED, </span>do <span class='violet'>MYSTERY ANIMATION.</span>"
+    }, 
+    "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='violet'>DO MYSTERY ANIMATION.</span>"
+        "translation": "Answer #12"
     }, 
     "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>"
+        "translation": "#13: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>"
+    }, 
+    "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>"
+        "translation": "Answer #13"
     }, 
     "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>"
+        "translation": "#14: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>"
     }, 
     "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText": {
-        "translation": "Hint: Whenever Cozmo interacts with a cube, it helps if he can see it first."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>"
+        "translation": "Answer #14"
     }, 
     "codeLabChallenge_PushCube.questionSlide.primaryText": {
-        "translation": "Challenge: Push a cube."
+        "translation": "#15: Push a cube."
     }, 
     "codeLabChallenge_PushCube.questionSlide.secondaryText": {
-        "translation": "Hint: See a cube, dock with a cube, then how would you move it forward?"
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_PushCube.answerSlide.primaryText": {
-        "translation": "Answer: Push a cube."
+        "translation": "Answer #15"
     }, 
     "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>"
+        "translation": "#16: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>"
+    }, 
+    "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText": {
-        "translation": "Answer: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>"
+        "translation": "Answer #16"
     }, 
     "codeLabChallenge_LiftCube.questionSlide.primaryText": {
-        "translation": "Challenge: Lift a cube."
+        "translation": "#17: <span class='purple'>LIFT</span> a cube."
     }, 
     "codeLabChallenge_LiftCube.questionSlide.secondaryText": {
-        "translation": "Hint: Dock with a cube first."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_LiftCube.answerSlide.primaryText": {
-        "translation": "Answer: Lift a cube."
+        "translation": "Answer #17"
     }, 
     "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText": {
-        "translation": "Challenge: Work out with a cube."
+        "translation": "#18: Workout with cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
     }, 
     "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText": {
-        "translation": "Hint: Drive to cube, lift cube up and halfway down 3 times, the set cube down."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText": {
-        "translation": "Answer: Work out with a cube."
+        "translation": "Answer #18"
     }, 
     "codeLabChallenge_DriveFastSquare.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='blue'>DRIVE FAST</span> in a square."
+        "translation": "#19: <span class='blue'>DRIVE FAST</span> in a square."
+    }, 
+    "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_DriveFastSquare.answerSlide.primaryText": {
-        "translation": "Answer: <span class='blue'>DRIVE FAST</span> in a square."
+        "translation": "Answer #19"
     }, 
     "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks."
+        "translation": "#20: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks."
     }, 
     "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText": {
-        "translation": "Hint: Try using one of the code blocks from the orange Control Category."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText": {
-        "translation": "Answer: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks."
+        "translation": "Answer #20"
     }, 
     "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText": {
-        "translation": "Challenge: Drive one side of a square then turn <span class='yellow'>WHEN CUBE IS TAPPED.</span>"
+        "translation": "#21: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
+    }, 
+    "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText": {
-        "translation": "Answer: Drive one side of a square then turn <span class='yellow'>WHEN CUBE IS TAPPED.</span>"
+        "translation": "Answer #21"
     }, 
     "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>"
+        "translation": "#22: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>"
+    }, 
+    "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>"
+        "translation": "Answer #22"
     }, 
     "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText": {
-        "translation": "Challenge: Drive one side of a square then turn <span class='yellow'>WHEN SMILE IS SEEN.</span>"
+        "translation": "#23: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
+    }, 
+    "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText": {
-        "translation": "Answer: Drive one side of a square then turn <span class='yellow'>WHEN SMILE IS SEEN.</span>"
+        "translation": "Answer #23"
     }, 
     "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='purple'>SAY,</span> \"Smile!\" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>"
+        "translation": "#24: <span class='purple'>SAY,</span> \"Smile!\" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>"
+    }, 
+    "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText": {
-        "translation": "Answer: <span class='purple'>SAY,</span> \"Smile!\" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>"
+        "translation": "Answer #24"
     }, 
     "codeLabChallenge_peekaboo.questionSlide.primaryText": {
-        "translation": "Challenge: Play Peekaboo."
+        "translation": "#25: Play Peekaboo. (<span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span> <span class='orange'>REPEAT FOREVER.</span>)"
     }, 
     "codeLabChallenge_peekaboo.questionSlide.secondaryText": {
-        "translation": "Hint: The rules should be that when Cozmo sees a face, he acts happy. Repeat forever."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_peekaboo.answerSlide.primaryText": {
-        "translation": "Answer: Play Peekaboo."
+        "translation": "Answer #25"
     }, 
     "codeLabChallenge_stackCubes.questionSlide.primaryText": {
-        "translation": "Challenge: Stack 2 cubes."
+        "translation": "#26: Stack 2 cubes."
     }, 
     "codeLabChallenge_stackCubes.questionSlide.secondaryText": {
-        "translation": "Hint: What happens when Cozmo docks with a cube, then changes his lift height?"
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_stackCubes.answerSlide.primaryText": {
-        "translation": "Answer: Stack 2 cubes."
+        "translation": "Answer #26"
     }, 
     "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText": {
-        "translation": "Challenge: Stack 2 cubes, then tip them over."
+        "translation": "#27: Stack 2 cubes, then tip them over."
+    }, 
+    "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText": {
-        "translation": "Answer: Stack 2 cubes, then tip them over."
+        "translation": "Answer #27"
     }, 
     "codeLabChallenge_rollCube.questionSlide.primaryText": {
-        "translation": "Challenge: Roll a cube."
+        "translation": "#28: Roll a cube backward."
     }, 
     "codeLabChallenge_rollCube.questionSlide.secondaryText": {
-        "translation": "Hint: With Cozmo's lift pressed down on the cube, drive backward."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_rollCube.answerSlide.primaryText": {
-        "translation": "Answer: Roll a cube."
+        "translation": "Answer #28"
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
+        "translation": "#29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText": {
-        "translation": "Hint: It takes 2 Turn Right or Turn Left code blocks to turn completely around."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
+        "translation": "Answer #29"
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+        "translation": "#30: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+    }, 
+    "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+        "translation": "Answer #30"
     }, 
     "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube."
+        "translation": "#31: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
     }, 
     "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText": {
-        "translation": "Hint: Start with cubes a couple feet behind Cozmo. When he sees a face, have him get a cube and and bring it back."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube."
+        "translation": "Answer #31"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo set the cube behind him."
+        "translation": "#32: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText": {
-        "translation": "Hint: When you put a cube in front of Cozmo, have him turn around, drive, set the cube down, and return."
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo set the cube behind him."
+        "translation": "Answer #32"
     }, 
     "codeLabChallenge_intruder.questionSlide.primaryText": {
-        "translation": "Challenge: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\", and blink <span class='purple'>BACKPACK</span> off."
+        "translation": "#33: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
+    }, 
+    "codeLabChallenge_intruder.questionSlide.secondaryText": {
+        "translation": "Try on your own, then tap NEXT when you're ready!"
     }, 
     "codeLabChallenge_intruder.answerSlide.primaryText": {
-        "translation": "Answer: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\", and blink <span class='purple'>BACKPACK</span> off."
+        "translation": "Answer #33"
     }
 }

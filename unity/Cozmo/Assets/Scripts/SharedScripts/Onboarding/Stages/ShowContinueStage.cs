@@ -42,9 +42,13 @@ namespace Onboarding {
     }
 
     public override void SkipPressed() {
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(_FreeplayEnabledOnExit);
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.SetEnableFreeplayBehaviorChooser(_FreeplayEnabledOnExit);
+      }
       OnboardingManager.Instance.GoToNextStage();
     }
+
     protected virtual void HandleContinueClicked() {
       SkipPressed();
     }

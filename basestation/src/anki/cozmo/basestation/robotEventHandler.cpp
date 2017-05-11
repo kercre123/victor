@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -32,7 +33,10 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/setFaceAction.h"
 #include "anki/cozmo/basestation/actions/trackGroundPointAction.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/trackFaceAction.h"
+#include "anki/cozmo/basestation/actions/trackMotionAction.h"
+#include "anki/cozmo/basestation/actions/trackObjectAction.h"
+#include "anki/cozmo/basestation/actions/trackPetFaceAction.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -1632,10 +1636,15 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel
   }
   else
   {
-    ActiveObject* obj = robot->GetBlockWorld().GetConnectedActiveObjectByID(msg.objectID);
-    if (obj != nullptr) {
-      PRINT_NAMED_INFO("RobotEventHandler.StreamObjectAccel", "ObjectID %d (activeID %d), enable %d", msg.objectID, obj->GetActiveID(), msg.enable);
-      robot->SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), msg.enable)));
+    static std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener(new CubeAccelListeners::DummyListener());
+ 
+    if(msg.enable)
+    {
+      robot->GetCubeAccelComponent().AddListener(msg.objectID, listener);
+    }
+    else
+    {
+      robot->GetCubeAccelComponent().RemoveListener(msg.objectID, listener);
     }
   }
 }

@@ -18,9 +18,10 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/trackFaceAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -121,10 +122,9 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::Value& config)
-  : IBehaviorRequestGame(robot, config)
-  , _numRetriesPickingUpBlock(0)
-  , _numRetriesDrivingToFace(0)
-  , _numRetriesPlacingBlock(0)
+: IBehaviorRequestGame(robot, config)
+, _numRetriesDrivingToFace(0)
+, _numRetriesPlacingBlock(0)
 {
   SetDefaultName("BehaviorRequestGameSimple");
 
@@ -213,7 +213,6 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   }
 
   _initialRequest = true;
-  _numRetriesPickingUpBlock = 0;
   _numRetriesDrivingToFace = 0;
   _numRetriesPlacingBlock = 0;
   
@@ -339,7 +338,13 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
   else {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransiitonToFacingBlock.NoBlock",
                      "block no longer exists (or has moved). Searching for block");
-    TransitionToSearchingForBlock(robot);
+    
+    SET_STATE(SearchingForBlock);
+    auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+    SearchParameters params;
+    params.numberOfBlocksToLocate = 1;
+    HelperHandle searchHelper = factory.CreateSearchForBlockHelper(robot, *this, params);
+    SmartDelegateToHelper(robot, searchHelper, &BehaviorRequestGameSimple::TransitionToFacingBlock);
   }
 }
 
@@ -356,131 +361,49 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
-  // Ensure we don't loop forever
-  if(_numRetriesPickingUpBlock > kMaxNumberOfRetries){
-    ComputeFaceInteractionPose(robot);
-    TransitionToDrivingToFace(robot);
-    return;
-  }
   
   ObjectID targetBlockID = GetRobotsBlockID(robot);
-  DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, targetBlockID);
-  action->SetMotionProfile(_driveToPickupProfile);
-  
-  StartActing(action,
-              [this, targetBlockID, &robot](const ExternalInterface::RobotCompletedAction& resultMsg) {
-                ActionResultCategory resCat = IActionRunner::GetActionResultCategory(resultMsg.result);
-                if ( resCat == ActionResultCategory::SUCCESS ) {
-                  ComputeFaceInteractionPose(robot);
-                  TransitionToDrivingToFace(robot);
-                }
-                else if ( resCat == ActionResultCategory::RETRY ) {
-                  _numRetriesPickingUpBlock++;
-                  // TODO:(bn) animation groups here?
-                  IActionRunner* animAction = nullptr;
-                  switch(resultMsg.result)
-                  {
-                    case ActionResult::NOT_CARRYING_OBJECT_RETRY:
-                    case ActionResult::LAST_PICK_AND_PLACE_FAILED:
-                    {
-                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail);
-                      break;
-                    }
-            
-                    default:
-                    {
-                      animAction = new TriggerAnimationAction(robot, AnimationTrigger::RequestGameDrivingFail);
-                      break;
-                    }
-                  }
-                  assert(nullptr != animAction);
 
-                  StartActing(animAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
-                }
-                else if(resCat == ActionResultCategory::ABORT) {
-                  // mark the block as unable to pickup
-                  const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(targetBlockID);
-                  if(failedObject){
-                    robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::PickUpObject);
-                  }
-                  
-                  // couldn't pick up this block. If we have another, try that. Otherwise, fail
-                  if( SwitchRobotsBlock(robot) ) {
-                    
-                    // Play failure animation
-                    if (resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
-                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail), &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
-                    } else {
-                      TransitionToPickingUpBlock(robot);
-                    }
-                  }
-                  else {
-                    // if its an abort failure, do nothing, which will cause the behavior to stop
-                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
-                                     "failed to pick up block with no retry, so ending the behavior");
-                    
-                    // Play failure animation
-                    if (resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || resultMsg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
-                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail));
-                    }
-
-                  }
-                }
-              } );
+  auto onPickupSuccess = [this](Robot& robot){
+    TransitionToDrivingToFace(robot);
+  };
   
+  auto onPickupFailure = [this](Robot& robot){
+    // couldn't pick up this block. If we have another, try that. Otherwise, fail
+    if( SwitchRobotsBlock(robot) ) {
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail),
+                              &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
+    }else {
+      // if its an abort failure, do nothing, which will cause the behavior to stop
+      PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
+                       "Helper failed to pick up block, so ending the behavior");
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail));
+    }
+  };
+  
+  
+  auto& helperComp = robot.GetAIComponent().GetBehaviorHelperComponent();
+  helperComp.SetMotionProfile(_driveToPickupProfile);
+  
+  auto& factory = helperComp.GetBehaviorHelperFactory();
+  PickupBlockParamaters params;
+  params.allowedToRetryFromDifferentPose = true;
+  HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this, targetBlockID, params);
+  SmartDelegateToHelper(robot, pickupHelper,
+                        onPickupSuccess,
+                        onPickupFailure);
+
   SET_STATE(PickingUpBlock);
 }
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
-{
-  // face the last known pose, then look around a bit (left and right). The Update loop will cancel this
-  // action if a block is found
-  Pose3d lastKnownPose;
-  if( GetLastBlockPose(lastKnownPose) ) {
-    SET_STATE(SearchingForBlock);
 
-    CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
-
-    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose);
-    turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
-    searchAction->AddAction(turnTowardsPoseAction);
-
-    // passes either the vaild id which will return as soon as its seen, or an invalid ID so
-    // the search will complete fully
-    const ObjectID blockID = GetRobotsBlockID(robot);
-    searchAction->AddAction(new SearchForNearbyObjectAction(robot, blockID));
-    
-    StartActing(searchAction,
-                [this, &robot](ActionResult result) {
-                  if( GetNumBlocks(robot) > 0 ) {
-                    // check one more time to see if we found a block
-                    TransitionToFacingBlock(robot);
-                  }
-                  else {
-                    // could fall back to the 0 block request here, but might not want to
-                    // TODO:(bn) shouldn't incur repetition penalty in this case?
-                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.SearchForBlock.Failed",
-                                     "block has disappeared! Giving up on behavior");
-                  }
-                });
-  }
-  else {
-    PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoLastBlockPose",
-                      "Trying to search, but never had a block pose. This is a bug");
-    StopActing(false);
-  }
-}
-
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::ComputeFaceInteractionPose(Robot& robot)
 {
   _hasFaceInteractionPose = GetFaceInteractionPose(robot, _faceInteractionPose);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
 {
@@ -490,6 +413,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
     return;
   }
   
+  ComputeFaceInteractionPose(robot);
   if( ! _hasFaceInteractionPose ) {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
                      "%s: No interaction pose set to drive to face!",

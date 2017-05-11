@@ -585,7 +585,7 @@ void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInt
                      "No backup, sending default unlock data");
   }
   
-  const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks();
+  const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks(context);
   
   // Send to game telling them this unlock data is from the backup not the actual robot
   context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));

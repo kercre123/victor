@@ -26,13 +26,19 @@ MonoBehaviour:
   _Music:
     _Music: 713847863
   ChallengeConfig: {fileID: 11400000, guid: 3ab1c940b3e3841aaa96e62c5c1b24ff, type: 2}
-  IsMinigame: 0
+  _ChallengeType: 1
+  _ActivityData:
+    ActivityPriority: 1
+    HideInActivityView: 0
+    ActivityTitleColor: {r: 0.13725491, g: 0.6666667, b: 0.74509805, a: 1}
+    ActivityFrameColor: {r: 0.627451, g: 0.84705883, b: 1, a: 1}
+    ActivityIcon: {fileID: 21300000, guid: 8775c45fba9754b5fb39571bc88fd9e2, type: 3}
   InstructionVideoPath: 
   ChallengeVideoSubtitles: {fileID: 0}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 387
+    _EnumValue: 394
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 387
+    _EnumValue: 394

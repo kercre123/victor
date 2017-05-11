@@ -274,11 +274,6 @@ namespace Cozmo.UI {
 
     protected override void OnEnable() {
       base.OnEnable();
-
-      // Grab the text label while in editor
-      if (_TextLabel == null) {
-        _TextLabel = GetComponentInChildren<CozmoText>();
-      }
     }
 
     private bool DisableInteraction() {

@@ -32,6 +32,7 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperComponent::BehaviorHelperComponent()
 : _helperFactory(new BehaviorHelperFactory(*this))
+, _motionProfile(DEFAULT_PATH_MOTION_PROFILE)
 {
   
   
@@ -61,7 +62,7 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
                                                BehaviorSimpleCallbackWithRobot successCallback,
                                                BehaviorSimpleCallbackWithRobot failureCallback)
 {
-  ClearStackVars();
+  ClearStackMaintenanceVars();
   _behaviorSuccessCallback = successCallback;
   _behaviorFailureCallback = failureCallback;
   
@@ -75,10 +76,20 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
   return true;
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorHelperComponent::SetMotionProfile(const PathMotionProfile& profile)
+{
+  DEV_ASSERT(_helperStack.empty(),
+             "BehaviorHelperComponent.SetMotionProfile.HelperAlreadyStarted");
+  _motionProfile = profile;
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorHelperComponent::StopHelperWithoutCallback(const HelperHandle& helperToStop)
 {
+  ClearStackLifetimeVars();
   auto stackBegin = _helperStack.begin();
   if(helperToStop == *stackBegin){
     ClearStackFromTopToIter(stackBegin);
@@ -212,9 +223,12 @@ void BehaviorHelperComponent::UpdateActiveHelper(Robot& robot)
       behaviorCallbackToRun = _behaviorFailureCallback;
     }
     
+    // Clear variables tied to the current stack's lifetime
+    ClearStackLifetimeVars();
+    
     // Clear the current callbacks and then call the local callback copy
     // in case the callback wants to set up helpers/callbacks of its own
-    ClearStackVars();
+    ClearStackMaintenanceVars();
     if(behaviorCallbackToRun != nullptr){
       behaviorCallbackToRun(robot);
     }
@@ -235,12 +249,31 @@ void BehaviorHelperComponent::PushHelperOntoStackAndUpdate(Robot& robot, HelperH
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::ClearStackVars()
+void BehaviorHelperComponent::ClearStackMaintenanceVars()
 {
   _behaviorSuccessCallback = nullptr;
   _behaviorFailureCallback = nullptr;
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorHelperComponent::ClearStackLifetimeVars()
+{
+  _motionProfile = DEFAULT_PATH_MOTION_PROFILE;
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorHelperComponent::GetPathMotionProfile(PathMotionProfile& profile)
+{
+  if(_motionProfile != DEFAULT_PATH_MOTION_PROFILE){
+    profile = _motionProfile;
+    return true;
+  }else{
+    return false;
+  }
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorHelperComponent::ClearStackFromTopToIter(HelperIter& iter_in)

@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using Anki.Assets;
 
 namespace Cozmo.Challenge {
+  public enum ChallengeType {
+    Minigame,
+    Activity
+  }
+
   public class ChallengeData : ScriptableObject {
 
     [System.Serializable]
@@ -70,9 +75,14 @@ namespace Cozmo.Challenge {
     // string path to ChallengeConfig
     public ChallengeConfigBase ChallengeConfig;
 
+    [SerializeField]
+    private ChallengeType _ChallengeType;
+    public bool IsMinigame { get { return _ChallengeType == ChallengeType.Minigame; } }
+    public bool IsActivity { get { return _ChallengeType == ChallengeType.Activity; } }
 
     [SerializeField]
-    public bool IsMinigame;
+    private ActivityData _ActivityData;
+    public ActivityData ActivityData { get { return _ActivityData; } }
 
     [SerializeField]
     public string InstructionVideoPath;
@@ -87,6 +97,15 @@ namespace Cozmo.Challenge {
 
     [SerializeField]
     public SerializableAnimationTrigger GetOutAnimTrigger;
+  }
+
+  [System.Serializable]
+  public struct ActivityData {
+    public int ActivityPriority;
+    public bool HideInActivityView;
+    public Color ActivityTitleColor;
+    public Color ActivityFrameColor;
+    public Sprite ActivityIcon;
   }
 }
 

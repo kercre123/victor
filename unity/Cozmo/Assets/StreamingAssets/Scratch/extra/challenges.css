@@ -8,7 +8,7 @@
 .block-blue { background-image: url(images/icon_block_blue.svg); }
 .block-purple { background-image: url(images/icon_block_purple.svg); }
 .block-yellow { background-image: url(images/icon_block_yellow.svg); }
-.block-organge { background-image: url(images/icon_block_orange.svg); }
+.block-orange { background-image: url(images/icon_block_orange.svg); }
 .block-pink { background-image: url(images/icon_block_pink.svg); }
 
 .block {
@@ -45,6 +45,13 @@
 
 #challenges-modal .modal-title {
   margin-left: auto;
+}
+
+#challenges-modal #btn-done {
+  /* Hiding done button for challenges because the modal
+   *  can't be closed from inside the iframe.
+   */
+  visibility:hidden !important;
 }
 
 

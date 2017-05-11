@@ -500,14 +500,19 @@ def _write_python_modify_path(output, output_file, additional_paths):
 
         '''))
 
-# Recursively traverses all members of an ast.Node and returns true if all of them
-# have a default constructor. Returns false if any members don't have a default constructor
 def _do_all_members_have_default_constructor(node):
+    '''Recursively traverses all members of an ast.Node and returns true if all of them have a default
+       constructor. Returns false if any members don't have a default constructor. NOTE: does not check 'node'
+       itself
+    '''
+
     for member in node.members():
-        member_dict = member.__dict__['type'].__dict__
-        if 'type_decl' in member_dict:
-            if (hasattr(member_dict['type_decl'], 'default_constructor') and
-                not member_dict['type_decl'].default_constructor):
-                  return False
-            return _do_all_members_have_default_constructor(member_dict['type_decl'])
+        if hasattr(member, 'type') and hasattr(member.type, 'type_decl'):
+            child = member.type.type_decl
+            if ( hasattr(child, 'default_constructor') and
+                 not child.default_constructor ):
+                return False
+            if not _do_all_members_have_default_constructor(child):
+                return False
+
     return True

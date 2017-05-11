@@ -25,6 +25,7 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
+class CozmoContext;
 
 class ProgressionUnlockComponent : private Util::noncopyable
 {
@@ -32,7 +33,7 @@ public:
 
   explicit ProgressionUnlockComponent(Robot& robot);
 
-  void Init(const Json::Value &config);
+  void Init();
 
   // By default, this checks if the given unlock is _actually_ unlocked. if forFreeplay=true, then first it
   // will check the freeplay overrides in json. If there is a corresponding entry there, this will return
@@ -51,9 +52,11 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  static const std::set<UnlockId>& GetDefaultUnlocks();
+  static const std::set<UnlockId>& GetDefaultUnlocks(const CozmoContext* context);
 
 private:
+  
+  static bool InitConfig(const CozmoContext* context, Json::Value &config);
 
   void WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked);
   

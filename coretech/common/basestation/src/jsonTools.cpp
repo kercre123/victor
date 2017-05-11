@@ -33,40 +33,28 @@ namespace JsonTools
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float ParseFloat(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
-  if (!val.isNumeric()) {
-    const std::string eventName = debugName + ".ParseFloat.NotValidFloat";
-    DEV_ASSERT_MSG(val.isNumeric(), eventName.c_str(), "%s", key);
-  }
+  DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseFloat.NotValidFloat").c_str(), "%s", key);
   return val.asFloat();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
-  if (!val.isNumeric()) {
-    const std::string eventName = debugName + ".ParseUint8.NotValidUint8";
-    DEV_ASSERT_MSG(val.isNumeric(), eventName.c_str(), "%s", key);
-  }
+  DEV_ASSERT_MSG(val.isNumeric(), (debugName + ".ParseUint8.NotValidUint8").c_str(), "%s", key);
   return Anki::Util::numeric_cast<uint8_t>(val.asInt());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
-  if (!val.isBool()) {
-    const std::string eventName = debugName + ".ParseBool.NotValidBool";
-    DEV_ASSERT_MSG(val.isBool(), eventName.c_str(), "%s", key);
-  }
+  DEV_ASSERT_MSG(val.isBool(), (debugName + ".ParseBool.NotValidBool").c_str(), "%s", key);
   return val.asBool();
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName) {
   const auto & val = config[key];
-  if (!val.isString()) {
-    const std::string eventName = debugName + ".ParseString.NotValidString";
-    DEV_ASSERT_MSG(val.isString(), eventName.c_str(), "%s", key);
-  }
+  DEV_ASSERT_MSG(val.isString(), (debugName + ".ParseString.NotValidString").c_str(), "%s", key);
   return val.asString();
 };
 

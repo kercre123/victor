@@ -49,7 +49,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       true},
+  {ReactionTrigger::Hiccup,                       false},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -78,6 +78,7 @@ CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60
 CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 20.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
 CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  12.f,  5.f,  30.f);
 CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
+CONSOLE_VAR_RANGED(float, kMaxMovementBustedGracePeriod_s, "Behavior.GuardDog", 10.f, 0.f, 120.f); // amount of time to wait (after falling asleep) before 'Busted' can happen due to movement above 'max' threshold
   
 } // end anonymous namespace
   
@@ -384,10 +385,6 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       // Timeout wake-up animation:
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogTimeout));
       
-      // Update the music stage after the wakeup animation has completed
-      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
-      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
-      
       // Ask blockworld for the closest cube and turn toward it.
       // Note: We ignore failures for the TurnTowardsPose and DriveStraight actions, since these are
       //  purely for aesthetics and we do not want failures to prevent the animations afterward from
@@ -398,6 +395,10 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       }
 
       action->AddAction(new DriveStraightAction(robot, -80.f, 150.f), true); // ignore failures (see note above)
+      
+      // Update the music stage
+      auto updateStageAllCubesGoneLambda = [this] (Robot& robot) { UpdatePublicBehaviorStage(robot, GuardDogStage::AllCubesGone); return true; };
+      action->AddAction(new WaitForLambdaAction(robot, updateStageAllCubesGoneLambda));
       
       // Play the PlayerSuccess animation
       action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GuardDogPlayerSuccess));
@@ -532,13 +533,21 @@ void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
     block.movementScore = 0.f;
   }
   
+  // Clip movement score to the maximum:
+  block.movementScore = std::min(block.movementScore, kMovementScoreMax);
+  
   // Set behavior states based on cube movement and play the
   //  appropriate light cube anim if appropriate:
-  if (block.movementScore > kMovementScoreMax) {
+  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool hasStartedSleeping = (_firstSleepingStartTime_s > 0.f);
+  const bool pastMaxMovementGracePeriod = hasStartedSleeping && (now - _firstSleepingStartTime_s > kMaxMovementBustedGracePeriod_s);
+  // Play 'Busted' anim if cube is moved too much during game setup phase,
+  //   and during 'sleeping' if we're past the "grace period"
+  if (block.movementScore >= kMovementScoreMax &&
+      (!hasStartedSleeping || pastMaxMovementGracePeriod)) {
     StopActing();
     SET_STATE(Busted);
   } else if (block.movementScore > kMovementScoreDetectionThreshold) {
-    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (!block.hasBeenMoved) {
       block.hasBeenMoved = true;
       block.firstMovedTime_s = now;

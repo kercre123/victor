@@ -47,6 +47,7 @@ namespace Params
   CONSOLE_VAR(f32, kLaser_maxRadius_pix, kConsoleGroupName, 25.f);
   
   CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction, kConsoleGroupName,  0.75f, 0.f, 1.f);
+  CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, kConsoleGroupName, 2.f);
   
   CONSOLE_VAR(u8, kLaser_lowThreshold_normalExposure,  kConsoleGroupName, 235);
   CONSOLE_VAR(u8, kLaser_highThreshold_normalExposure, kConsoleGroupName, 240);
@@ -330,7 +331,7 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
   
   {
     // Nove that we convert area to fraction of image area (to be resolution-independent)
-    ExternalInterface::RobotObservedLaserPoint laserPoint(imageColor.GetTimestamp(),
+    ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray.GetTimestamp(),
                                                           groundRegionArea / imgQuadArea,
                                                           std::round(groundPlaneCentroid.x()),
                                                           std::round(groundPlaneCentroid.y()));
@@ -422,7 +423,7 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
   const u8 centerPixel = std::round(Params::kLaser_darkThresholdFraction * (f32)image(std::round(stat.centroid.y()),
                                                                                std::round(stat.centroid.x())));
   
-  const f32 radius = 2.f*std::sqrtf((f32)stat.area / M_PI_F);
+  const f32 radius = Params::kLaser_darkSurroundRadiusFraction*std::sqrtf((f32)stat.area / M_PI_F);
   
   // sin/cos of [0 45 90 135 180 225 270 315] degrees. (cos is first, sin is second)
   const std::array<std::pair<f32,f32>,8> sinCosPairs{{

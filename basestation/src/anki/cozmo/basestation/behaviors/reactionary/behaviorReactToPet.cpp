@@ -10,7 +10,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPet.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/trackPetFaceAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iReactToPetListener.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgePet.h"
 #include "anki/cozmo/basestation/robot.h"

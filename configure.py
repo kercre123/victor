@@ -36,6 +36,11 @@ import ankibuild.xcode
 ####################
 # HELPER FUNCTIONS #
 ####################
+def path_to_buck():
+    return os.path.join(os.environ.get("ANDROID_HOME"), 'anki', 'bin', 'buck')
+
+def path_to_adb():
+    return os.path.join(os.environ.get("ANDROID_HOME"), 'platform-tools', 'adb')
 
 def check_unity_version():
     unity_project_dir = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME)
@@ -91,7 +96,8 @@ def copy_unity_classes(destination_dir, configuration):
 
 
 def get_android_device():
-    process = subprocess.Popen("adb devices -l", shell=True, stdout=subprocess.PIPE)
+    process = subprocess.Popen("{0} devices -l".format(path_to_adb()),
+                               shell=True, stdout=subprocess.PIPE)
     output = process.communicate()[0]
     device_list = output.splitlines()
     # get usb devices from strings that look like:
@@ -288,6 +294,19 @@ def parse_game_arguments():
         action='store_true',
         help='Skip build step, i.e. to install/run without building when no code has changed')
 
+    parser.add_argument('--with-android-ndk-dir',
+                        default=None,
+                        action='store',
+                        dest='override_ndk_dir',
+                        help='Override the Android NDK directory')
+
+    parser.add_argument('--with-android-sdk-dir',
+                        default=None,
+                        action='store',
+                        dest='override_sdk_dir',
+                        help='Override the Android SDK directory')
+
+
     return parser.parse_args()
 
 
@@ -353,7 +372,9 @@ class GamePlatformConfiguration(object):
             self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
 
         if platform == 'android':
-            ankibuild.android.setup_android_ndk_and_sdk()
+            ankibuild.android.setup_android_ndk_and_sdk(options.override_ndk_dir,
+                                                        options.override_sdk_dir)
+            ankibuild.android.set_android_sdk_root_for_unity(options.override_sdk_dir)
             if os.environ.get("ANDROID_NDK_ROOT"):
                 self.android_ndk_root = os.environ.get("ANDROID_NDK_ROOT")
             else:
@@ -634,7 +655,9 @@ class GamePlatformConfiguration(object):
                 if self.options.features is not None and 'standalone' in self.options.features[0]:
                     print("Building standalone-apk")
                     ankibuild.util.File.execute(['./standalone-apk/stage-assets.sh'])
-                    ankibuild.util.File.execute(['buck', 'build', ':cozmoengine_standalone_app'])
+                    ankibuild.util.File.execute([path_to_buck(),
+                                                 'build',
+                                                 ':cozmoengine_standalone_app'])
 
 
         elif not os.path.exists(self.workspace_path):
@@ -700,11 +723,12 @@ class GamePlatformConfiguration(object):
         unity_jar_dir = os.path.join(GAME_ROOT, 'project', 'android', 'cozmojava', 'lib')
         copy_unity_classes(unity_jar_dir, self.options.configuration)
 
-        buck_args = ['buck', 'build', ':cozmojava']
-        ankibuild.util.File.execute(buck_args)
-        built_lib_path = subprocess.Popen( \
-            'buck targets --show-output :cozmojava | awk \'{print $2;}\'', \
-            stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
+
+        buck_build_args = [path_to_buck(), 'build', ':cozmojava']
+        ankibuild.util.File.execute(buck_build_args)
+        buck_output_args = [path_to_buck(), 'targets', '--show-output', ':cozmojava']
+        buck_output_stdout = ankibuild.util.File.evaluate(buck_output_args)
+        built_lib_path = buck_output_stdout.split()[1]
 
         if not os.path.exists(self.android_unity_plugin_dir):
             os.makedirs(self.android_unity_plugin_dir)
@@ -772,9 +796,11 @@ class GamePlatformConfiguration(object):
             device = get_android_device()
             if len(device) > 0:
                 if self.options.features is not None and 'standalone' in self.options.features[0]:
-                    subprocess.call("buck install :cozmoengine_standalone_app", shell=True)
+                    subprocess.call("{0} install :cozmoengine_standalone_app"
+                                    .format(path_to_buck()), shell=True)
                 else:
-                    subprocess.call("adb install -r -d ./build/android/Cozmo.apk", shell=True)
+                    subprocess.call("{0} install -r -d ./build/android/Cozmo.apk"
+                                    .format(path_to_adb()), shell=True)
             else:
                 print('{0}: No attached devices found via adb'.format(self.options.command))
 
@@ -796,7 +822,7 @@ class GamePlatformConfiguration(object):
                     activity = "com.anki.cozmoengine/com.anki.cozmoengine.MainActivity"
                 else:
                     activity = "com.anki.cozmo/com.anki.cozmo.CozmoActivity"
-                cmd = "adb -s {0} shell am start -n {1}".format(device, activity)
+                cmd = "{0} -s {1} shell am start -n {2}".format(path_to_adb(), device, activity)
                 subprocess.call(cmd, shell=True)
             else:
                 print('{0}: No attached devices found via adb'.format(self.options.command))
@@ -813,10 +839,12 @@ class GamePlatformConfiguration(object):
         if self.platform == 'ios':
             ankibuild.ios_deploy.uninstall('com.anki.cozmo')  # Pass bundle ID, not path
         elif self.platform == 'android':
+            pkgname = 'com.anki.cozmo'
             if self.options.features is not None and 'standalone' in self.options.features[0]:
-                subprocess.call("adb shell pm uninstall -k com.anki.cozmoengine", shell=True)
-            else:
-                subprocess.call("adb shell pm uninstall -k com.anki.cozmo", shell=True)
+                pkgname = 'com.anki.cozmoengine'
+
+            subprocess.call("{0} shell pm uninstall -k {1}".format(path_to_adb(), pkgname),
+                            shell=True)
         else:
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 

@@ -45,7 +45,6 @@ private:
   
   void StartPickupAction(Robot& robot, bool ignoreCurrentPredockPose = false);
   void RespondToPickupResult(ActionResult result, Robot& robot);
-  void RespondToSearchResult(ActionResult result, Robot& robot);
 
   void MarkTargetAsFailedToPickup(Robot& robot);
   

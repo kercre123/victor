@@ -129,7 +129,7 @@ MonoBehaviour:
     JsonValue: 3
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Cozmo.Minigame.DroneMode.DroneModeCameraReticle:_ReticleLabel
+    FieldName: Cozmo.Challenge.DroneMode.DroneModeCameraReticle:_ReticleLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11429142

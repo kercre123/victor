@@ -37,7 +37,7 @@
     "translation": "You need to unlock the {0} {1} first!"
   },
   "unlockable.OSNotSupported.Description": {
-    "translation": "Upgrade your Android device to {0} or newer to access."    
+    "translation": "Code Lab requires Android {0} or newer."    
   },
   "unlockable.BitsRequired.Title": {
     "translation": "Not Enough Bits"

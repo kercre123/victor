@@ -191,7 +191,8 @@ namespace Vision {
     SetParamHelper(_config, "detectionThreshold", detectionThreshold);
     okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, detectionThreshold);
     if(OKAO_NORMAL != okaoResult) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetThresholdFailed", "");
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceLibSetThresholdFailed",
+                        "FaceLib Result Code=%d", okaoResult);
       return RESULT_FAIL_INVALID_PARAMETER;
     }
     
@@ -205,6 +206,13 @@ namespace Vision {
     if(NULL == _okaoPartDetectorHandle) {
       PRINT_NAMED_ERROR("FacetrackerImpl.Init.FaceLibPartDetectorHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
+    }
+    
+    okaoResult = OKAO_PT_SetConfMode(_okaoPartDetectorHandle, PT_CONF_NOUSE);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FacetrakerImpl.Init.FaceLibPartDetectorConfModeFail",
+                        "FaceLib Result Code=%d", okaoResult);
+      return RESULT_FAIL_INVALID_PARAMETER;
     }
     
     _okaoPartDetectionResultHandle = OKAO_PT_CreateResultHandle(_okaoCommonHandle);

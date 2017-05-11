@@ -10,6 +10,9 @@ public class RobotRestorePane : MonoBehaviour {
   private UnityEngine.UI.Button _WipeButton;
 
   [SerializeField]
+  private UnityEngine.UI.Button _WipeAndResetFirmwareButton;
+
+  [SerializeField]
   private UnityEngine.UI.Dropdown _BackupDropdown;
 
   [SerializeField]
@@ -22,6 +25,7 @@ public class RobotRestorePane : MonoBehaviour {
       rem.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
       _RestoreButton.onClick.AddListener(OnHandleRestoreButtonClicked);
       _WipeButton.onClick.AddListener(OnHandleWipeButtonClicked);
+      _WipeAndResetFirmwareButton.onClick.AddListener(OnHandleWipeAndResetFirmwareButtonClicked);
       if (rem.CurrentRobot != null) {
         rem.CurrentRobot.RequestRobotRestoreData();
         _LblStatus.text = "";
@@ -89,6 +93,13 @@ public class RobotRestorePane : MonoBehaviour {
     }
     else {
       SetStatusText("Error: Tried to wipe when disconnected, not cleared", Color.red);
+    }
+  }
+
+  private void OnHandleWipeAndResetFirmwareButtonClicked() {
+    OnHandleWipeButtonClicked();
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.ResetFirmware();
     }
   }
 }

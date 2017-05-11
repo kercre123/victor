@@ -42,15 +42,14 @@ namespace CodeLab {
     private string _ProjectUUIDToOpen;
     private List<CodeLabSampleProject> _CodeLabSampleProjects;
 
+    // SessionState tracks the entirety of the current CodeLab Game session, including any currently running program.
+    private SessionState _SessionState = new SessionState();
+
     // Any requests from Scratch that occur whilst Cozmo is resetting to home pose are queued
     private Queue<ScratchRequest> _queuedScratchRequests = new Queue<ScratchRequest>();
 
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
-
-    private bool _ReceivedGreenFlagEvent = false;
-    private bool _IsProgramRunning = false;
-    private bool _WasProgramAborted = false;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
@@ -99,6 +98,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel all current actions
         robot.PopDrivingAnimations();
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabExit);
+        _SessionState.EndSession();
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
       }
@@ -128,9 +128,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        _SessionState.StartSession();
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
+      }
+      else {
+        DAS.Error("Codelab.LoadWebView.NullRobot", "");
       }
 
       if (_WebViewObject == null) {
@@ -195,7 +199,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         ResetRobotToHomePos();
       }
       else {
-        DAS.Info("CodeLab.OnTimeoutForResetToHomeCompleted.WasCancelled", "success = " + success + ", wasQueued = " + _HasQueuedResetToHomePose);
+        DAS.Warn("CodeLab.OnTimeoutForResetToHomeCompleted.WasCancelled", "success = " + success + ", wasQueued = " + _HasQueuedResetToHomePose);
       }
     }
 
@@ -213,8 +217,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void CancelQueueResetRobotToHomePos() {
       if (_HasQueuedResetToHomePose) {
         _HasQueuedResetToHomePose = false;
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        robot.CancelCallback(OnTimeoutForResetToHomeCompleted);
         // Cancelling all wait actions will cause the handler to receive success=false on the next engine tick
-        RobotEngineManager.Instance.CurrentRobot.CancelAction(RobotActionType.WAIT);
+        robot.CancelAction(RobotActionType.WAIT);
       }
     }
 
@@ -274,33 +280,24 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
     }
 
-    private void OnGreenFlag() {
-      DAS.Info("Codelab.OnGreenFlag", "");
-      _ReceivedGreenFlagEvent = true;
+    private void OnGreenFlagClicked() {
+      DAS.Info("Codelab.OnGreenFlagClicked", "");
+      _SessionState.OnGreenFlagClicked();
     }
 
     private void OnScriptStart() {
       DAS.Info("Codelab.OnScriptStart", "");
-      if (_IsProgramRunning) {
-        DAS.Error("Codelab.OnScriptStart.AlreadyRunning", "");
-      }
-      _IsProgramRunning = true;
-      _WasProgramAborted = false;
+      _SessionState.StartProgram();
       _queuedScratchRequests.Clear();
       ResetRobotToHomePos();
     }
 
     private void OnScriptStopped() {
-      DAS.Info("Codelab.OnScriptStopped", "WasProgramAborted = " + _WasProgramAborted);
-      if (!_IsProgramRunning) {
-        DAS.Error("Codelab.OnScriptStopped.WasNotRunning", "");
-      }
-
+      _SessionState.EndProgram();
       // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
       InProgressScratchBlockPool.ReleaseAllInUse();
       // We enable the facial expressions when first needed, and disable when scripts end (rather than ref-counting need)
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, false);
-      _IsProgramRunning = false;
       _queuedScratchRequests.Clear();
       QueueResetRobotToHomePos();
     }
@@ -308,14 +305,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void OnStopAll() {
       DAS.Info("Codelab.OnStopAll", "");
 
-      if (_ReceivedGreenFlagEvent) {
-        // This was sent from the greenflag, and isn't a normal stop request
-        _ReceivedGreenFlagEvent = false;
-      }
-
-      if (_IsProgramRunning) {
-        _WasProgramAborted = true;
-      }
+      _SessionState.OnStopAll();
 
       _queuedScratchRequests.Clear();
 
@@ -386,12 +376,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
         // Inform workspace that the current work on workspace has been saved to a project.
         _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
+
+        _SessionState.OnCreatedProject(newProject);
       }
       else {
         // Project already has a guid. Locate the project then update it.
         CodeLabProject projectToUpdate = FindUserProjectWithUUID(projectUUID);
         projectToUpdate.ProjectXML = projectXML;
         projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+
+        _SessionState.OnUpdatedProject(projectToUpdate);
       }
     }
 
@@ -401,11 +395,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (projectToDelete != null) {
         PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
         defaultProfile.CodeLabProjects.Remove(projectToDelete);
+
+        SessionState.DAS_Event("robot.code_lab.deleted_user_project", defaultProfile.CodeLabProjects.Count.ToString());
       }
     }
 
     private void OnCozmoLoadProjectPage() {
       DAS.Info("Codelab.OnCozmoLoadProjectPage", "");
+      SessionState.DAS_Event("robot.code_lab.load_project_page", "");
       LoadURL("extra/projects.html");
     }
 
@@ -419,7 +416,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         OnScriptStopped();
         return true;
       case "cozmoGreenFlag":
-        OnGreenFlag();
+        OnGreenFlagClicked();
         return true;
       case "cozmoStopAll":
         OnStopAll();
@@ -431,12 +428,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         OnCozmoSaveUserProject(scratchRequest);
         return true;
       case "cozmoRequestToOpenUserProject":
+        SessionState.DAS_Event("robot.code_lab.open_user_project", "");
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplayUserProject, scratchRequest.argString);
         return true;
       case "cozmoRequestToOpenSampleProject":
+        SessionState.DAS_Event("robot.code_lab.open_sample_project", scratchRequest.argString);
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.DisplaySampleProject, scratchRequest.argString);
         return true;
       case "cozmoRequestToCreateProject":
+        SessionState.DAS_Event("robot.code_lab.create_project", "");
         OpenCodeLabProject(RequestToOpenProjectOnWorkspace.CreateNewProject, null);
         return true;
       case "cozmoDeleteUserProject":
@@ -495,37 +495,46 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
         RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveForwardFast") {
         // argFloat represents the number selected from the dropdown under the "drive forward fast" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
         RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kFastDriveSpeed_mmps, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveBackward") {
         // argFloat represents the number selected from the dropdown under the "drive backward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
         RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kNormalDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoDriveBackwardFast") {
         // argFloat represents the number selected from the dropdown under the "drive backward fast" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
         RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(kFastDriveSpeed_mmps, -dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoPlayAnimation") {
         Anki.Cozmo.AnimationTrigger animationTrigger = GetAnimationTriggerForScratchName(scratchRequest.argString);
+        bool wasMystery = (scratchRequest.argUInt != 0);
+        _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
         RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock);
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(kTurnAngle.ToString()));
         TurnInPlace(kTurnAngle, inProgressScratchBlock.CompletedTurn);
       }
       else if (scratchRequest.command == "cozmoTurnRight") {
         // Turn 90 degrees to the right
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData((-kTurnAngle).ToString()));
         TurnInPlace(-kTurnAngle, inProgressScratchBlock.CompletedTurn);
       }
       else if (scratchRequest.command == "cozmoSays") {
         bool hasBadWords = BadWordsFilterManager.Instance.Contains(scratchRequest.argString);
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
         if (hasBadWords) {
           RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock);
         }
@@ -544,12 +553,15 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // convert angle-factor to an actual angle
         desiredHeadAngle = CozmoUtil.HeadAngleFactorToRadians(desiredHeadAngle, false);
 
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData((desiredHeadAngle * Mathf.Rad2Deg).ToString()));
+
         if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.AdvanceToNextBlock)) {
           // Trigger a short wait action to ensure that our promise is met after this method exits
           RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoDockWithCube") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
         float desiredHeadAngle = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, false);
         if (!SetHeadAngleLazy(desiredHeadAngle, inProgressScratchBlock.DockWithCube)) {
           // Trigger a very short wait action first instead to ensure callbacks happen after this method exits
@@ -565,35 +577,42 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           liftHeight = 1.0f;
         }
 
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString()));
         if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock)) {
           // Trigger a short wait action to ensure that our promise is met after this method exits
           RobotEngineManager.Instance.CurrentRobot.WaitAction(0.01f, inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoSetBackpackColor") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(scratchRequest.argString));
         RobotEngineManager.Instance.CurrentRobot.SetAllBackpackBarLED(scratchRequest.argUInt);
         inProgressScratchBlock.AdvanceToNextBlock(true);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeFace") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedFace);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeHappyFace") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
         RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedHappyFace);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeSadFace") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
         RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, true);
         RobotEngineManager.Instance.AddCallback<RobotObservedFace>(inProgressScratchBlock.RobotObservedSadFace);
       }
       else if (scratchRequest.command == "cozmoWaitUntilSeeCube") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
         RobotEngineManager.Instance.AddCallback<RobotObservedObject>(inProgressScratchBlock.RobotObservedObject);
       }
       else if (scratchRequest.command == "cozmoWaitForCubeTap") {
+        _SessionState.ScratchBlockEvent(scratchRequest.command);
         LightCube.TappedAction += inProgressScratchBlock.CubeTapped;
       }
       else {
         inProgressScratchBlock.ReleaseFromPool();
-        Debug.LogError("Scratch: no match for command: '" + scratchRequest.command + "'");
+        DAS.Error("HandleBlockScratchRequest.UnknownCommand", "Command = '" + scratchRequest.command + "'");
       }
 
       return;
@@ -622,7 +641,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void LoadURL(string scratchPathToHTML) {
-      if (_IsProgramRunning) {
+      if (_SessionState.IsProgramRunning()) {
         // Program is currently running and we won't receive OnScriptStopped notification
         // when the active page and Javascript is nuked, so manually force an OnScriptStopped event
         DAS.Info("Codelab.ManualOnScriptStopped", "");

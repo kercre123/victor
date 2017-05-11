@@ -119,6 +119,9 @@ protected:
   
   void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
   
+  // Convenience accessor to the behaviorHelperComponent's motion profile ref
+  // returns true if a profile is set, false otherwise
+  bool GetPathMotionProfile(Robot& robot, PathMotionProfile& profile);
   
   
   // Use the set behavior's start acting to perform an action
@@ -152,6 +155,9 @@ protected:
                                           const ObjectID& targetID,
                                           const bool placingOnGround = false,
                                           const PlaceRelObjectParameters& parameters = {});
+  
+  HelperHandle CreateSearchForBlockHelper(Robot& robot,
+                                          const SearchParameters& params = {});
 
   
   BehaviorStatus _status;

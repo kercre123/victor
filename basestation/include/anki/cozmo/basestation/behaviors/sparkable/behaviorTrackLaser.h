@@ -48,6 +48,7 @@ private:
     InitialSearch,
     BringingHeadDown,
     RotateToWatchingNewArea,
+    WaitingForExposureChange,
     WaitingForLaser,
     TrackLaser,
     Pouncing,
@@ -64,6 +65,7 @@ private:
   // NOTE: All are stored as floats to make it easy to set them from Json via one simple macro
   struct {
     
+    // Behavior is runnable if a possible laser was seen within this long
     float    startIfLaserSeenWithin_sec; // E.g. 1.0sec
     
     // Must see possible laser within this distance to start to try to confirm.
@@ -75,7 +77,7 @@ private:
     // take effect.
     float    darkenedExposure_ms; // E.g. 1ms
     float    darkenedGain; // E.g. 0.1
-    float    timeToWaitForExposureChange_ms; // E.g. 100ms
+    float    numImagesToWaitForExposureChange; // E.g. 2
     
     // After changing exposure, we'll wait this long to confirm the laser
     float    maxTimeToConfirm_ms; // E.g. 65ms
@@ -83,8 +85,7 @@ private:
     float    searchAmplitude_deg; // E.g. 90deg
     
     // Various timeouts
-    float    maxTimeSinceNoLaser_running_sec; // Eg.g 3.5sec
-    float    maxTimeSinceNoLaser_notRunning_sec;  // E.g. 1.5sec
+    float    maxTimeSinceNoLaser_ms; // Eg.g 3000ms (3 sec)
     float    maxTimeBehaviorTimeout_sec;  // E.g. 30sec
     float    maxTimeBeforeRotate_sec;  // E.g. 4sec
     float    trackingTimeout_sec;  // E.g. 1.5fsec
@@ -130,14 +131,17 @@ private:
       Confirmed     // Seen while running (with reduced exposure)
     };
     
-    Type    type;
-    float   time_sec;
-    Point2f pointWrtRobot;
+    Type        type;
+    TimeStamp_t timestamp_ms;
+    TimeStamp_t timestamp_prev_ms;
+    Point2f     pointWrtRobot;
   };
   
   LaserObservation _lastLaserObservation;
-  bool  _haveConfirmedLaser = false;
-  TimeStamp_t _changedExposureTime_ms = 0;
+  bool  _haveEverConfirmedLaser = false;
+  bool  _haveAdjustedAnimations = false;
+  
+  TimeStamp_t _exposureChangedTime_ms = 0;
   
   float _lastTimeRotate = 0.f;
   float _startedTracking_sec = 0.f;
@@ -154,10 +158,15 @@ private:
   // reset everything for when the behavior is finished
   void Cleanup(Robot& robot);
   
+  // check if it's been too long since we saw a laser or we've been running too long
+  // if so, return true and transition to GetOutBored state
+  bool CheckForTimeout(Robot& robot);
+  
   void SetState_internal(State state, const std::string& stateName);
   void TransitionToInitialSearch(Robot& robot);
   void TransitionToBringingHeadDown(Robot& robot);
   void TransitionToRotateToWatchingNewArea(Robot& robot);
+  void TransitionToWaitForExposureChange(Robot& robot);
   void TransitionToWaitForLaser(Robot& robot);
   void TransitionToTrackLaser(Robot& robot);
   void TransitionToPounce(Robot& robot);

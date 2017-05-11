@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
@@ -40,32 +41,10 @@ ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProgressionUnlockComponent::Init(const Json::Value &config)
+void ProgressionUnlockComponent::Init()
 {
-  _defaultUnlocks.clear();
-  
-  // load default unlocks from json
-  if( !config.isNull() && config[kDefaultUnlockIdsConfigKey].isArray() ) {
-    for( const auto& unlockIdJson : config[kDefaultUnlockIdsConfigKey] ) {
-      if( ! unlockIdJson.isString() ) {
-        PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.InvalidDefaultData",
-                          "invalid element in unlock id's list (not a string)");
-        continue;
-      }
-      
-      UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
-      _defaultUnlocks.insert(uid);
-
-      PRINT_CH_INFO("UnlockComponent", "ProgressionUnlockComponent.DefaultValue",
-                    "%s defaults to true",
-                    UnlockIdToString(uid));
-    }
-  }
-  else {
-    PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.MissingDefaults",
-                      "missing key '%s'",
-                      kDefaultUnlockIdsConfigKey);
-  }
+  Json::Value config;
+  InitConfig(_robot.GetContext(), config);
 
   _freeplayOverrides.clear();
 
@@ -102,9 +81,60 @@ void ProgressionUnlockComponent::Init(const Json::Value &config)
   }
 }
 
-const std::set<UnlockId>& ProgressionUnlockComponent::GetDefaultUnlocks()
+const std::set<UnlockId>& ProgressionUnlockComponent::GetDefaultUnlocks(const CozmoContext* context)
 {
+  if( _defaultUnlocks.empty() )
+  {
+    Json::Value config;
+    InitConfig(context,config);
+  }
   return _defaultUnlocks;
+}
+  
+bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::Value &config)
+{
+  if( context == nullptr || context->GetDataPlatform() == nullptr)
+  {
+    return false;
+  }
+  std::string jsonFilename = "config/basestation/config/unlock_config.json";
+  bool success = context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                        jsonFilename,
+                                                        config);
+  if (!success)
+  {
+    PRINT_NAMED_ERROR("ProgressionUnlockComponent.InitDefaults.UnlockConfigJsonNotFound",
+                      "Unlock Json config file %s not found.",
+                      jsonFilename.c_str());
+  }
+  
+  if( _defaultUnlocks.empty() )
+  {
+    // load default unlocks from json
+    if( !config.isNull() && config[kDefaultUnlockIdsConfigKey].isArray() ) {
+      for( const auto& unlockIdJson : config[kDefaultUnlockIdsConfigKey] ) {
+        if( ! unlockIdJson.isString() ) {
+          PRINT_NAMED_ERROR("ProgressionUnlockComponent.InitDefaults.InvalidDefaultData",
+                            "invalid element in unlock id's list (not a string)");
+          continue;
+        }
+        
+        UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
+        _defaultUnlocks.insert(uid);
+        
+        PRINT_CH_INFO("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",
+                      "%s defaults to true",
+                      UnlockIdToString(uid));
+      }
+    }
+    else {
+      PRINT_NAMED_ERROR("ProgressionUnlockComponent.InitDefaults.MissingDefaults",
+                        "missing key '%s'",
+                        kDefaultUnlockIdsConfigKey);
+      return false;
+    }
+  }
+  return success;
 }
 
 bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)

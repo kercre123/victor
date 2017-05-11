@@ -18,20 +18,18 @@
   
   "darkenedExposure_ms": 1.0,
   "darkenedGain": 0.1,
-  "timeToWaitForExposureChange_ms": 100.0,
+  "numImagesToWaitForExposureChange": 2,
 
-  "maxTimeToConfirm_ms": 65.0,
-  
   "searchAmplitude_deg": 90.0,
   
-  "maxTimeSinceNoLaser_running_sec": 3.5,
-  "maxTimeSinceNoLaser_notRunning_sec": 1.5,
+  "maxTimeToConfirm_ms": 130.0,
+  "maxTimeSinceNoLaser_ms": 3000.0,
   "maxTimeBehaviorTimeout_sec": 60.0,
-  "maxTimeBeforeRotate_sec": 2.5,
+  "maxTimeBeforeRotate_sec": 1.25,
   "trackingTimeout_sec": 1.25,
   
-  "pounceAfterTrackingFor_sec": 0.8,
-  "pounceIfWithinDist_mm": 50.0,
+  "pounceAfterTrackingFor_sec": 0.6,
+  "pounceIfWithinDist_mm": 55.0,
   "pouncePanTol_deg": 10.0,
   "pounceTiltTol_deg": 15.0,
   "backupDistAfterPounce_mm": -15.0,

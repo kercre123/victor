@@ -40,26 +40,12 @@ private:
   ObjectID _targetID;
   DriveToParameters _params;
   
-  
-  
   u32 _tmpRetryCounter;
-  std::vector<Signal::SmartHandle> _eventHalders;
-  
-  // Variables for tracking search
-  u32 _searchLevel;
-  bool _searchStarted;
-  bool _searchShouldEnd;
   Pose3d _initialRobotPose;
-  Vision::Camera _robotCameraAtSearchStart;
-  std::set<ObjectID> _objectsSeenDuringSearch;
-  
+
   void DriveToPreActionPose(Robot& robot);
   void RespondToDriveResult(ActionResult result, Robot& robot);
-  void SearchForBlock(ActionResult result, Robot& robot);
-  
-  bool ShouldBeAbleToFindTarget(Robot& robot);
-  void ResetSearchVariables(Robot& robot);
-  
+    
 };
 
 } // namespace Cozmo

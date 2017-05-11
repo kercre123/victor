@@ -11,6 +11,14 @@ enum uint_32 Coz_App
   Invalid = 0,  // Use this to check for Invalid events
 }
 
+enum uint_32 Cue_World_Event
+{
+  Cubes_Stacked = 1000549318,
+  Invalid = 0,  // Use this to check for Invalid events
+  Lift_Cube = 3519020371,
+  Request_Game = 87707182,
+}
+
 enum uint_32 Dev_Device
 {
   External_Source = 3462246304,
@@ -35,6 +43,7 @@ enum uint_32 Dev_Robot
 enum uint_32 EventGroupType
 {
   Coz_App,
+  Cue_World_Event,
   Dev_Device,
   Dev_Robot,
   GenericEvent,
@@ -50,6 +59,9 @@ enum uint_32 GenericEvent
   Invalid = 0,  // Use this to check for Invalid events
   Play__Coz_App__Enter_Background = 2017190380,
   Play__Coz_App__Enter_Foreground = 1225777195,
+  Play__Cue_World_Event__Cubes_Stacked = 3962867948,
+  Play__Cue_World_Event__Lift_Cube = 3181878805,
+  Play__Cue_World_Event__Request_Game = 1823437100,
   Play__Dev_Device__External_Source = 3462246304,
   Play__Dev_Device__Tone_Generator = 2415524415,
   Play__Dev_Robot__External_Source = 2539447680,
@@ -75,6 +87,7 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Effort_Long = 668351040,
   Play__Robot_Sfx__Effort_Medium = 3696071919,
   Play__Robot_Sfx__Fist_Bump = 1216170354,
+  Play__Robot_Sfx__Guard_Dog_Fail = 2830692182,
   Play__Robot_Sfx__Mvt_Tread_Backward_Loop_Play = 2180021393,
   Play__Robot_Sfx__Mvt_Tread_Backward_Start = 2613090854,
   Play__Robot_Sfx__Mvt_Tread_Backward_Stop = 1888692326,
@@ -146,6 +159,9 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Srv_Surprised_Short = 4054065165,
   Play__Robot_Sfx__Wink = 3564343056,
   Play__Robot_Vo__Coz_Word_Cube_Neutral = 2117050142,
+  Play__Robot_Vo__Cozmo_Singing_100Bpm = 819632272,
+  Play__Robot_Vo__Cozmo_Singing_120Bpm = 3805821586,
+  Play__Robot_Vo__Cozmo_Singing_80Bpm = 3519620195,
   Play__Robot_Vo__Dizzy_Hard_1 = 3080967599,
   Play__Robot_Vo__Dizzy_Hard_2 = 3080967596,
   Play__Robot_Vo__Dizzy_Loop_Play = 777096763,
@@ -380,6 +396,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Sparked_Workout_Lift_Success_Strong = 1844409553,
   Play__Robot_Vo__Sparked_Workout_Lift_Success_Throw_Block = 3296787010,
   Play__Robot_Vo__Sparked_Workout_Lift_Success_Weak = 2216609612,
+  Play__Robot_Vo__Test4 = 2689347983,
   Play__Robot_Vo__Test_English_Nathan = 1093959669,
   Play__Robot_Vo__Test_French_Thomas = 675768851,
   Play__Robot_Vo__Test_German_Markus = 839828754,
@@ -460,6 +477,9 @@ enum uint_32 GenericEvent
   Play__Ui__Window_Close = 974187556,
   Play__Ui__Window_Open = 1763539616,
   Play__Ui__Window_Vertical_Wipe = 931790836,
+  Stop__Cue_World_Event__Cubes_Stacked = 1000549318,
+  Stop__Cue_World_Event__Lift_Cube = 3519020371,
+  Stop__Cue_World_Event__Request_Game = 87707182,
   Stop__Music__Stop = 148746486,
   Stop__Robot_Sfx__Bpk_Blue_Loop_Stop = 3465206791,
   Stop__Robot_Sfx__Bpk_Green_Loop_Stop = 1179892788,
@@ -517,6 +537,7 @@ enum uint_32 Robot_Sfx
   Effort_Long_Stop = 809545185,
   Effort_Medium = 3696071919,
   Fist_Bump = 1216170354,
+  Guard_Dog_Fail = 2830692182,
   Invalid = 0,  // Use this to check for Invalid events
   Mvt_Tread_Backward_Loop_Play = 2180021393,
   Mvt_Tread_Backward_Loop_Stop = 1804693497,
@@ -604,6 +625,9 @@ enum uint_32 Robot_Sfx
 enum uint_32 Robot_Vo
 {
   Coz_Word_Cube_Neutral = 2117050142,
+  Cozmo_Singing_100Bpm = 819632272,
+  Cozmo_Singing_120Bpm = 3805821586,
+  Cozmo_Singing_80Bpm = 3519620195,
   Dizzy_Hard_1 = 3080967599,
   Dizzy_Hard_2 = 3080967596,
   Dizzy_Loop_Play = 777096763,
@@ -848,6 +872,7 @@ enum uint_32 Robot_Vo
   Sparked_Workout_Lift_Success_Strong = 1844409553,
   Sparked_Workout_Lift_Success_Throw_Block = 3296787010,
   Sparked_Workout_Lift_Success_Weak = 2216609612,
+  Test4 = 2689347983,
   Test_English_Nathan = 1093959669,
   Test_French_Thomas = 675768851,
   Test_German_Markus = 839828754,

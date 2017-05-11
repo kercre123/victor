@@ -20,6 +20,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
@@ -36,6 +37,7 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
@@ -106,6 +108,21 @@ CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 // Whether or not to lower the cliff detection threshold on the robot
 // whenever a suspicious cliff is encountered.
 CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true);
+
+// Play an animation by name from the debug console.
+// Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
+//   on the Unity side), then this console func can be removed.
+static Robot* _thisRobot = nullptr;
+static void PlayAnimationByName(ConsoleFunctionContextRef context)
+{
+  if (_thisRobot != nullptr) {
+    const char* animName = ConsoleArg_Get_String(context, "animName");
+    _thisRobot->GetActionList().QueueAction(QueueActionPosition::NOW,
+                                            new PlayAnimationAction(*_thisRobot, animName));
+  }
+}
+CONSOLE_FUNC(PlayAnimationByName, "PlayAnimationByName", const char* animName);
+  
   
 ////////
 // Consts for robot offtreadsState
@@ -197,6 +214,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
   , _bodyLightComponent(new BodyLightComponent(*this, _context))
+  , _cubeAccelComponent(new CubeAccelComponent(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -265,26 +283,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   }
 
   // Initialize progression
-  if (nullptr != _context->GetDataPlatform())
-  {
-    Json::Value progressionUnlockConfig;
-    std::string jsonFilename = "config/basestation/config/unlock_config.json";
-    bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
-                                                           jsonFilename,
-                                                           progressionUnlockConfig);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("Robot.UnlockConfigJsonNotFound",
-                        "Unlock Json config file %s not found.",
-                        jsonFilename.c_str());
-    }
-        
-    _progressionUnlockComponent->Init(progressionUnlockConfig);
-  }
-  else {
-    Json::Value empty;
-    _progressionUnlockComponent->Init(empty);
-  }
+  _progressionUnlockComponent->Init();
       
   // load available behaviors into the behavior factory
   LoadBehaviors();
@@ -309,6 +308,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // initialize AI
   _aiComponent->Init();
+  
+  // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
+  _thisRobot = this;
       
 } // Constructor: Robot
     

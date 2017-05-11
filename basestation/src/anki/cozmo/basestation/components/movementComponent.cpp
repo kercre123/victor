@@ -12,7 +12,6 @@
 
 #include "anki/common/robot/utilities.h"
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
@@ -27,6 +26,7 @@
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotStateHistory.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"

@@ -1173,10 +1173,6 @@
       "AnimName": "ag_reactToStop"
     },
     {
-      "CladEvent": "RequestGameDrivingFail",
-      "AnimName": "ag_RequestGameDriveFail"
-    },
-    {
       "CladEvent": "RequestGameSpeedTapDeny0",
       "AnimName": "requestGame_speedTap_deny"
     },

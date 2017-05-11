@@ -265,75 +265,80 @@ public class NativeCrashManager {
     }
 
     private void uploadDumpFiles() {
-        final String[] filenames = searchForDumpFiles();
-        for (final String dumpFilename : filenames) {
-            final String logFilename = getLogFileName(dumpFilename);
-            final String descriptionFilename = getDescriptionFile(dumpFilename);
-            if (logFilename != null) {
-                uploadDumpAndLog(dumpFilename, logFilename, descriptionFilename);
+        new Thread() {
+            @Override
+            public void run() {
+                final String[] filenames = searchForDumpFiles();
+                for (final String dumpFilename : filenames) {
+                    final String logFilename = getLogFileName(dumpFilename);
+                    final String descriptionFilename = getDescriptionFile(dumpFilename);
+                    if (logFilename != null) {
+                        uploadDumpAndLog(dumpFilename, logFilename, descriptionFilename);
+                    }
+                }
             }
-        }
+        }.start();
     }
 
     private void uploadDumpAndLog(final String dumpFilename, final String logFilename,
                                   final String descriptionFilename) {
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    if (mListener != null) {
-                        final String appRunID = dumpFilename.split("\\.(?=[^\\.]+$)")[0];
-                        mListener.onUploadCrash(appRunID);
-                    }
-
-                    SimpleMultipartEntity entity = new SimpleMultipartEntity();
-                    entity.writeFirstBoundaryIfNeeds();
-
-                    entity.addPart("userID", mUser);
-                    final File dumpFile = new File(mDumpsDir, dumpFilename);
-                    entity.addPart("attachment0", dumpFile, false);
-                    final File logFile = new File(mDumpsDir, logFilename);
-
-                    final File descriptionFile = new File(mDumpsDir, descriptionFilename);
-                    boolean haveDescriptionFile =
-                        descriptionFile.exists() && descriptionFile.length() > 0;
-                    entity.addPart("log", logFile, !haveDescriptionFile);
-                    if (haveDescriptionFile) {
-                        entity.addPart("description", descriptionFile, true);
-                    }
-                    entity.writeLastBoundaryIfNeeds();
-
-                    HttpURLConnection urlConnection = new HttpURLConnectionBuilder(mUrlString)
-                        .setRequestMethod("POST")
-                        .setHeader("Content-Type", entity.getContentType())
-                        .build();
-                    urlConnection.setRequestProperty("Content-Length", String.valueOf(entity.getContentLength()));
-                    BufferedOutputStream outputStream = new BufferedOutputStream(urlConnection.getOutputStream());
-                    outputStream.write(entity.getOutputStream().toByteArray());
-                    outputStream.flush();
-                    outputStream.close();
-
-                    int statusCode = urlConnection.getResponseCode();
-                    boolean successful = (statusCode == HttpURLConnection.HTTP_ACCEPTED
-                                          || statusCode == HttpURLConnection.HTTP_CREATED);
-                    if (successful) {
-                        Log.v(HockeyLog.HOCKEY_TAG,
-                              "Successfully uploaded dump file: " + dumpFilename
-                              + ", statusCode = " + statusCode);
-                        deleteFile(logFilename);
-                        deleteFile(dumpFilename);
-                        deleteFile(descriptionFilename);
-                    } else {
-                        Log.d(HockeyLog.HOCKEY_TAG,
-                              "Error uploading dump file: " + dumpFilename
-                              + ", statusCode = " + statusCode);
-                    }
-                } catch (final Exception e) {
-                    Log.d(HockeyLog.HOCKEY_TAG, "Error uploading dump file: " + dumpFilename + ", e = " + e);
-                    e.printStackTrace();
-                }
+        try {
+            if (mListener != null) {
+                final String appRunID = dumpFilename.split("\\.(?=[^\\.]+$)")[0];
+                mListener.onUploadCrash(appRunID);
             }
-        }.start();
+
+            SimpleMultipartEntity entity = new SimpleMultipartEntity();
+            entity.writeFirstBoundaryIfNeeds();
+
+            entity.addPart("userID", mUser);
+            final File dumpFile = new File(mDumpsDir, dumpFilename);
+            entity.addPart("attachment0", dumpFile, false);
+            final File logFile = new File(mDumpsDir, logFilename);
+
+            final File descriptionFile = new File(mDumpsDir, descriptionFilename);
+            boolean haveDescriptionFile =
+                descriptionFile.exists() && descriptionFile.length() > 0;
+            entity.addPart("log", logFile, !haveDescriptionFile);
+            if (haveDescriptionFile) {
+                entity.addPart("description", descriptionFile, true);
+            }
+            entity.writeLastBoundaryIfNeeds();
+
+            HttpURLConnection urlConnection = new HttpURLConnectionBuilder(mUrlString)
+                .setRequestMethod("POST")
+                .setHeader("Content-Type", entity.getContentType())
+                .build();
+            urlConnection.setRequestProperty("Content-Length",
+                                             String.valueOf(entity.getContentLength()));
+
+            BufferedOutputStream outputStream =
+                new BufferedOutputStream(urlConnection.getOutputStream());
+
+            outputStream.write(entity.getOutputStream().toByteArray());
+            outputStream.flush();
+            outputStream.close();
+
+            int statusCode = urlConnection.getResponseCode();
+            boolean successful = (statusCode == HttpURLConnection.HTTP_ACCEPTED
+                                  || statusCode == HttpURLConnection.HTTP_CREATED);
+            if (successful) {
+                Log.v(HockeyLog.HOCKEY_TAG,
+                      "Successfully uploaded dump file: " + dumpFilename
+                      + ", statusCode = " + statusCode);
+                deleteFile(logFilename);
+                deleteFile(dumpFilename);
+                deleteFile(descriptionFilename);
+            } else {
+                Log.d(HockeyLog.HOCKEY_TAG,
+                      "Error uploading dump file: " + dumpFilename
+                      + ", statusCode = " + statusCode);
+            }
+        } catch (final Exception e) {
+            Log.d(HockeyLog.HOCKEY_TAG,
+                  "Error uploading dump file: " + dumpFilename + ", e = " + e);
+            e.printStackTrace();
+        }
     }
 
     private String[] searchForDumpFiles() {

@@ -60,6 +60,12 @@ namespace Cozmo {
       [SerializeField]
       protected CanvasGroup _AlphaController;
 
+      [SerializeField]
+      private MoveTweenSettings _MoveTweenSettings;
+
+      [SerializeField]
+      private FadeTweenSettings _FadeTweenSettings;
+
       void OnDestroy() {
         if (_CurrentDialogState != DialogState.Closed) {
           if (_CurrentDialogState != DialogState.IsClosing) {
@@ -75,41 +81,48 @@ namespace Cozmo {
       public void Initialize() {
         CheckDASEventName();
 
-        // TODO: In the future, separate the initialize and open dialog steps 
-        // for ease of use
         _CurrentDialogState = DialogState.Initialized;
 
-        // TODO: This should be raised after open animation finished
-        // and raise initialize event here instead?
         RaiseDialogOpened();
-
         PlayOpenSound();
-
         PlayOpenAnimations();
       }
 
       protected virtual void CleanUp() {
-
       }
 
       protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
+        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+        if (_MoveTweenSettings.targets.Length > 0) {
+          settings.ConstructOpenMoveTween(ref openAnimation, _MoveTweenSettings);
+        }
+        if (_FadeTweenSettings.targets.Length > 0) {
+          settings.ConstructOpenFadeTween(ref openAnimation, _FadeTweenSettings);
+        }
       }
 
       protected void ConstructDefaultFadeOpenAnimation(Sequence openAnimation) {
         UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
         CreateAlphaControllerIfNull();
         _AlphaController.alpha = 0;
-        openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(settings.FadeInEasing));
+        openAnimation.Join(settings.CreateFadeInTween(_AlphaController));
       }
 
       protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
+        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+        if (_MoveTweenSettings.targets.Length > 0) {
+          settings.ConstructCloseMoveTween(ref closeAnimation, _MoveTweenSettings);
+        }
+        if (_FadeTweenSettings.targets.Length > 0) {
+          settings.ConstructCloseFadeTween(ref closeAnimation, _FadeTweenSettings);
+        }
       }
 
       protected void ConstructDefaultFadeCloseAnimation(Sequence closeAnimation) {
         UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
         CreateAlphaControllerIfNull();
         _AlphaController.alpha = 1;
-        closeAnimation.Join(_AlphaController.DOFade(0, 0.25f).SetEase(settings.FadeOutEasing));
+        closeAnimation.Join(settings.CreateFadeOutTween(_AlphaController));
       }
 
       private void CreateAlphaControllerIfNull() {

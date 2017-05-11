@@ -52,6 +52,8 @@ TEST AnkiEnum_Basics()
   ASSERT_EQ("myReallySilly_EnumVal", AnkiTypes::AnkiEnumToString(ae::myReallySilly_EnumVal));
   ASSERT_EQ(nullptr, AnkiTypes::AnkiEnumToString((ae) (-1)));
 
+  ASSERT_EQ((int)AnkiTypes::AnkiEnumNumEntries, 7);
+
   PASS();
 }
 
@@ -70,6 +72,9 @@ TEST AnkiEnum_NoClass()
   ASSERT_EQ(isClassAnkiEnum, false);
   ASSERT_EQ(isClassAnkiNoClassEnum, true);
 
+  ASSERT_EQ((int)AnkiTypes::AnkiEnumNumEntries, 7);
+  ASSERT_EQ((int)AnkiTypes::AnkiNoClassEnumNumEntries, 7);
+  
   PASS();
 }
 
@@ -502,6 +507,40 @@ TEST Enum_VersionHash() {
   PASS();
 }
 
+TEST Enum_NumEntries() {
+  // This will break if you change the contents of the AnkiEnum.clad
+  
+  // NumEntries is really only useful if the entries are consecutive.
+  // AnkiEnum contains non-consecutive entries, so should NOT be looped over
+  // like we are here, but just for the sake of testing:
+
+  const int8_t start = static_cast<int8_t>(AnkiTypes::AnkiEnum::e1);
+  ASSERT_EQ(start, 15); 
+  const int8_t nonConsecIdx = 4;
+  const int8_t nonConsecVal = static_cast<int8_t>(AnkiTypes::AnkiEnum::d1);
+  ASSERT_EQ(nonConsecVal, 5); 
+  const int8_t numEntries = AnkiTypes::AnkiEnumNumEntries;
+  ASSERT_EQ(numEntries, 7);
+  const int8_t last = static_cast<int8_t>(AnkiTypes::AnkiEnum::d3);
+  ASSERT_EQ(numEntries, last); // because non-consecutive
+
+  AnkiTypes::AnkiEnum expected[7] = {AnkiTypes::AnkiEnum::e1, AnkiTypes::AnkiEnum::e2, AnkiTypes::AnkiEnum::e3,
+                                     AnkiTypes::AnkiEnum::myReallySilly_EnumVal,
+                                     AnkiTypes::AnkiEnum::d1, AnkiTypes::AnkiEnum::d2, AnkiTypes::AnkiEnum::d3};
+  int8_t intVal=start;
+  AnkiTypes::AnkiEnum val;
+  for (int8_t entryIdx=0; entryIdx<numEntries; ++entryIdx) {
+    if( nonConsecIdx==entryIdx ) { 
+      // nonconsecutive...jump to the new element
+      intVal = nonConsecVal;
+    } 
+    val = static_cast<AnkiTypes::AnkiEnum>(intVal);
+    ASSERT(val == expected[entryIdx]);
+    ++intVal;
+  }
+
+  PASS();
+}
 TEST Message_VersionHash() {
   // This will break if you change the contents of the ExplicitlyTaggedUnion.clad
   // Use the following to re-capture the hash value
@@ -681,6 +720,20 @@ TEST JsonSerialization_Nested() {
   testStructReserialized.SetFromJSON(testStruct.GetJSON());
   ASSERT(testStruct == testStructReserialized);
 
+  {
+    using namespace JsonSerialization;
+    // Ensure that no_default_constructor is working with JsonSerialization
+    ASSERT_EQ((std::is_constructible<testStructure_NoDefault>::value), false);
+    ASSERT_EQ((std::is_constructible<testStructure_NoDefault, std::string>::value), true);
+
+    ASSERT_EQ((std::is_constructible<testStructure_NestedNoDefault>::value), false);
+    ASSERT_EQ((std::is_constructible<testStructure_NestedNoDefault, bool, int, testStructure_NoDefault>::value), true);
+
+    // Unions are actually constructible even if they contain no_default_constructor members, because the
+    // default union constrcutor doesn't construct a member
+    ASSERT_EQ((std::is_constructible<testUnion_NestedNoDefault>::value), true);
+  }
+
   PASS();
 }
 
@@ -780,7 +833,14 @@ TEST DefaultConstructor() {
   // HasNoDefaultConstructor should NOT be constructible with no arguments but should be constructible with two arguments
   ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor>::value), false);
   ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructor, double, int>::value), true);
-  
+
+  ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructorString>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::HasNoDefaultConstructorString, std::string>::value), true);
+
+  ASSERT_EQ((std::is_constructible<Constructor::NestedString>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::NestedString, std::string>::value), false);
+  ASSERT_EQ((std::is_constructible<Constructor::NestedString, Constructor::HasNoDefaultConstructorString>::value), true);
+
   ASSERT_EQ((std::is_constructible<Constructor::NoDefaultConstructorComplex>::value), false);
   ASSERT_EQ((std::is_constructible<Constructor::NoDefaultConstructorComplex,
                                    Constructor::HasDefaultConstructor,
@@ -849,6 +909,7 @@ SUITE(CPP_Emitter) {
   RUN_TEST(AnkiEnum_NoClass);
   RUN_TEST(Enum_VersionHash);
   RUN_TEST(Enum_Complex);
+  RUN_TEST(Enum_NumEntries);
 
   // Message Tests
   RUN_TEST(Message_VersionHash);

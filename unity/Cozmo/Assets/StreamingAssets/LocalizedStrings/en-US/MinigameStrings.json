@@ -367,6 +367,6 @@
     "translation": "Cozmo Is Guarding His Cubes"
   },
   "minigame.GuardDog.Desc": {
-    "translation": "Try to flip all of Cozmo's cubes upside down without waking him up."
+    "translation": "Try to slowly and carefully flip all of Cozmo's cubes upside down without waking him up.\n\nCareful... Cozmo can sense when his cubes are moving!"
   }
 }

@@ -13,7 +13,7 @@
 #ifndef __Anki_Cozmo_Basestation_TrackGroundPointAction_H__
 #define __Anki_Cozmo_Basestation_TrackGroundPointAction_H__
 
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/trackActionInterface.h"
 
 #include "clad/types/visionModes.h"
 
