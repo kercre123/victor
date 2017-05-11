@@ -211,6 +211,25 @@ button:focus {
   height: 78%;
 }
 
+#tutorial-modal .slide .slide-image-label {
+  position: absolute;
+  width: 100%;
+  top: 44%;
+  text-align: center;
+}
+
+#tutorial-modal .slide .slide-image-label-text {
+  display: inline-block;
+  background: #fff;
+  color: #000;
+  padding: .4em .5em .2em .5em;
+  border-radius: 3px;
+  border: 1px solid black;
+  font-size: 3vh;
+  font-family: "Avenir Next";
+}
+
+
 #tutorial-modal .slide .slide-label {
   position: relative;
   top: -1%;
