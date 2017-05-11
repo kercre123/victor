@@ -40,11 +40,8 @@ TEST(VisionSystem, MarkerDetectionTests)
   
   using namespace Anki;
   
-  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                               Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
-  
   // Construct a vision system
-  Cozmo::VisionSystem visionSystem(dataPath, nullptr);
+  Cozmo::VisionSystem visionSystem(cozmoContext);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(RESULT_OK, result);
@@ -205,11 +202,8 @@ TEST(VisionSystem, ImageQuality)
 {
   using namespace Anki;
   
-  const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                               Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
-  
   // Construct a vision system
-  Cozmo::VisionSystem visionSystem(dataPath, nullptr);
+  Cozmo::VisionSystem visionSystem(cozmoContext);
 
   // Make sure we are running every frame so we don't skip test images!
   Json::Value config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();

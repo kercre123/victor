@@ -108,16 +108,7 @@ namespace Cozmo {
   , _vizManager(context->GetVizManager())
   , _camera(robot.GetID())
   {
-    std::string dataPath("");
-    if(context->GetDataPlatform() != nullptr) {
-      dataPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                            Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
-    } else {
-      PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
-                          "Instantiating VisionSystem with no context and/or data platform.");
-    }
-    
-    _visionSystem = new VisionSystem(dataPath, _vizManager);
+    _visionSystem = new VisionSystem(_context);
     
     // Set up event handlers
     if(nullptr != context && nullptr != context->GetExternalInterface())

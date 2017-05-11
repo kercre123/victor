@@ -20,11 +20,14 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/cozmo/basestation/vision/laserPointDetector.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"
 #include "anki/vision/basestation/faceTracker.h"
@@ -35,10 +38,12 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
+#include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/cleanupHelper.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
-#include "util/console/consoleInterface.h"
+
 
 //
 // Embedded implementation holdovers:
@@ -148,15 +153,15 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
+  VisionSystem::VisionSystem(const CozmoContext* context)
   : _rollingShutterCorrector()
-  , _dataPath(dataPath)
+  , _context(context)
   , _imagingPipeline(new Vision::ImagingPipeline())
-  , _vizManager(vizMan)
-  , _laserPointDetector(new LaserPointDetector(vizMan))
+  , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
+  , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _clahe(cv::createCLAHE())
   {
-    
+    DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
   } // VisionSystem()
   
   
@@ -174,7 +179,15 @@ namespace Cozmo {
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
     
-    VisionMarker::SetDataPath(_dataPath);
+    std::string dataPath("");
+    if(_context->GetDataPlatform() != nullptr) {
+      dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                             Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
+    } else {
+      PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
+                          "Initializing VisionSystem with no data platform.");
+    }
+    VisionMarker::SetDataPath(dataPath);
     
     if(!config.isMember("ImageQuality"))
     {
@@ -234,8 +247,8 @@ namespace Cozmo {
     }
     
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
-                  "With model path %s.", _dataPath.c_str());
-    _faceTracker = new Vision::FaceTracker(_dataPath, config);
+                  "With model path %s.", dataPath.c_str());
+    _faceTracker = new Vision::FaceTracker(dataPath, config);
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
     
     _petTracker = new Vision::PetTracker();
@@ -3395,13 +3408,18 @@ namespace Cozmo {
     
     if(ShouldProcessVisionMode(VisionMode::DetectingLaserPoints))
     {
-      Tic("TotalDetectingLaserPoints");
-      if((lastResult = DetectLaserPoints(inputImage, inputImageGray)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
-        return lastResult;
+      // Skip laser point detection if the Laser FeatureGate is disabled.
+      // TODO: Remove this once laser feature is enabled (COZMO-11185)
+      if(_context->GetFeatureGate()->IsFeatureEnabled(FeatureType::Laser))
+      {
+        Tic("TotalDetectingLaserPoints");
+        if((lastResult = DetectLaserPoints(inputImage, inputImageGray)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
+          return lastResult;
+        }
+        visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
+        Toc("TotalDetectingLaserPoints");
       }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
-      Toc("TotalDetectingLaserPoints");
     }
 
     // NOTE: This should come after any detectors that add things to "detectionRects"

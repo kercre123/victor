@@ -86,6 +86,7 @@ namespace Vision {
 namespace Cozmo {
     
   // Forward declaration:
+  class CozmoContext;
   class EncodedImage;
   class LaserPointDetector;
   class Robot;
@@ -124,7 +125,7 @@ namespace Cozmo {
   {
   public:
 
-    VisionSystem(const std::string& dataPath, VizManager* vizMan);
+    VisionSystem(const CozmoContext* context);
     ~VisionSystem();
     
     //
@@ -305,8 +306,6 @@ namespace Cozmo {
     
     s32 GetCurrentCameraExposureTime_ms() const;
     f32 GetCurrentCameraGain() const;
-
-    const std::string& GetDataPath() const { return _dataPath; }
   
     bool CheckMailbox(VisionProcessingResult& result);
     
@@ -358,7 +357,7 @@ namespace Cozmo {
     //
     
     bool _isInitialized = false;
-    const std::string _dataPath;
+    const CozmoContext* _context = nullptr;
     
     Vision::Camera _camera;
     
