@@ -15,7 +15,9 @@ MonoBehaviour:
     _EnumValueAsString: CodeLabGame
     _EnumValue: 36
   UnlockableType: 0
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: PounceOnMotionAction
+    _EnumValue: 12
   AnyPrereqUnlock: 0
   _ComingSoon: 0
   DescriptionKey: unlockable.CodeLab.Desciption
@@ -25,7 +27,7 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 1
+  UpgradeCostAmountNeeded: 0
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
