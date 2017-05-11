@@ -99,7 +99,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (robot != null) {
         robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel all current actions
         robot.PopDrivingAnimations();
-        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabExit);
         _SessionState.EndSession();
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);

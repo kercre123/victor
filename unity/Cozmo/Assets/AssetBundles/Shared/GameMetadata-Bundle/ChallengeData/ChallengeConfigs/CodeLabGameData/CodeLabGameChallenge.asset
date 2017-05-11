@@ -40,5 +40,5 @@ MonoBehaviour:
     _EnumValueAsString: Count
     _EnumValue: 394
   GetOutAnimTrigger:
-    _EnumValueAsString: Count
-    _EnumValue: 394
+    _EnumValueAsString: CodeLabExit
+    _EnumValue: 27
