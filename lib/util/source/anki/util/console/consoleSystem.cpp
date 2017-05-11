@@ -432,8 +432,8 @@ ConsoleSystem& ConsoleSystem::Instance()
 
 void CrashTheApp( ConsoleFunctionContextRef context )
 {
-  int* badPtr = nullptr;
-  *badPtr = 42;
+  volatile int* a = reinterpret_cast<volatile int*>(0);
+  *a = 42;
 }
 CONSOLE_FUNC( CrashTheApp, "Debug" );
   
