@@ -1,6 +1,6 @@
 
-.blue { color: #0898c4; }
-.purple { color: #5e3dfc; }
+.blue { color: #1faddb; }
+.purple { color: #b1549a; }
 .violet { color: #a03c87; }
 .yellow { color: #f4b606; }
 .orange { color: #e5580a; }
@@ -30,6 +30,7 @@
 
 #challenges-modal {
   display: block;
+  padding: 0;
 }
 
 #challenges-modal .modal-inner {
