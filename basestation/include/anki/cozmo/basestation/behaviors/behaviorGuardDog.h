@@ -20,6 +20,9 @@ namespace Cozmo {
   
 // forward declarations:
 class BlockWorldFilter;
+namespace CubeAccelListeners {
+  class MovementListener;
+}
   
 class BehaviorGuardDog : public IBehavior
 {
@@ -44,20 +47,17 @@ protected:
 private:
   
   // Message handlers:
-  void HandleObjectAccel(Robot& robot, const ObjectAccel& msg);
   void HandleObjectConnectionState(const Robot& robot, const ObjectConnectionState& msg);
   void HandleObjectMoved(const Robot& robot, const ObjectMoved& msg);
   void HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxisChanged& msg);
-  
+  void CubeMovementHandler(Robot& robot, const ObjectID& objId, const float movementScore);
+
   // Helpers:
   
   // Compute a goal starting pose near the blocks
   void ComputeStartingPose(const Robot& robot, Pose3d& startingPose);
   
-  // Send message to robot to start/stop streaming ObjectAccel messages from all cubes
-  Result EnableCubeAccelStreaming(const Robot& robot, const bool enable = true) const;
-  
-  // Start/stop monitoring for cube motion (calls EnableCubeAccelStreaming)
+  // Start/stop monitoring for cube motion
   void StartMonitoringCubeMotion(Robot& robot, const bool enable = true);
   
   // Start a light cube animation on the specified cube
@@ -96,30 +96,16 @@ private:
   
   // struct to hold data about the blocks in question
   struct sCubeData {
-    float accelMag          = 0.f;   // latest accelerometer magnitude
-    float prevAccelMag      = 0.f;   // previous accelerometer magnitude
-    float hpFiltAccelMag    = 0.f;   // high-pass filtered accel magnitude
-    float maxFiltAccelMag   = 0.f;   // maximum filtered accel magnitude encountered
     float movementScore     = 0.f;   // keeps track of how much the block is being moved (decays if block is not moving, capped at kMovementScoreMax)
-    bool filtInitialized    = false; // high-pass filter initialized?
+    float maxMovementScore  = 0.f;   // the maximum experienced movement score for this cube
     bool hasBeenMoved       = false; // has the block been moved at all?
     bool hasBeenFlipped     = false; // has the block been successfully flipped?
     float firstMovedTime_s  = 0.f;   // first time that the block was moved (in basestation timer seconds)
     float flippedTime_s     = 0.f;   // time that the block was successfully flipped by the player (in basestation timer seconds)
-    uint msgReceivedCnt     = 0;     // how many ObjectAccel messages have we received for this block?
-    uint badMsgCnt          = 0;     // how many weird ObjectAccel e.g. accel fields blank or really large) message have we received?
     CubeAnimationTrigger lastCubeAnimTrigger = CubeAnimationTrigger::Count;  // the last-played animation trigger for this cube.
     UpAxis upAxis           = UpAxis::ZPositive;  // The last reported UpAxis for the cube
     
-    // member functions:
-    void ResetAccelData() {
-      accelMag        = 0.f;
-      prevAccelMag    = 0.f;
-      hpFiltAccelMag  = 0.f;
-      maxFiltAccelMag = 0.f;
-      movementScore   = 0.f;
-      filtInitialized = false;
-    }
+    std::shared_ptr<CubeAccelListeners::MovementListener> cubeMovementListener; // CubeAccelComponent listener
   };
   
   // Stores relevant data for each of the cubes

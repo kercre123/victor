@@ -120,17 +120,12 @@ void CubeAccelComponent::HandleObjectAccel(const AnkiEvent<RobotInterface::Robot
   
   const uint32_t objectID = object->GetID();
   const auto& iter = _objectAccelHistory.find(objectID);
-  // TODO (Al) Switch to "if with ANKI_VERIFY" when all systems using streaming object accel data are updated
-  // to go through this component
+
   // We should have an entry in _objectAccelHistory for the object this accel data is coming from
-# if 0
   if(ANKI_VERIFY(iter != _objectAccelHistory.end(),
                  "CubeAccelComponent.HandleObjectAccel.NoObjectIDInHistory",
                  "No accel history for objectID %u",
                  objectID))
-# else
-  if(iter != _objectAccelHistory.end())
-# endif
   {
     // Add accel data to history
     iter->second.history[payload.timestamp] = payload.accel;
