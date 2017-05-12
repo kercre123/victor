@@ -104,6 +104,7 @@
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
         closeButton.addEventListener('click', function () {
+            workspace.playAudio('click');
             clearInterval(window.saveProjectTimerId);
             window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
         });
@@ -112,18 +113,21 @@
         });
         challengesButton.addEventListener('click', function () {
           // show challenges dialog
+          workspace.playAudio('click');
           Challenges.show();
         });
         challengesButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
         greenFlag.addEventListener('click', function () {
+            workspace.playAudio('click');
             vm.greenFlag();
         });
         greenFlag.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
         stop.addEventListener('click', function () {
+            workspace.playAudio('click');
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {

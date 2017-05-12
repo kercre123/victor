@@ -150,6 +150,7 @@ button:focus {
   display: inline-block;
   height: .9em;
   width: auto;
+  margin-top: .1em;
 }
 .modal-slides .nav-button.nav-button-back {
   text-align: right;
@@ -165,7 +166,8 @@ button:focus {
   display: none;
 }
 .modal-slides #btn-next[disabled="true"] {
-  display: none; !important;
+  position: absolute;
+  visibility: hidden;
 }
 .modal-slides .nav-button .arrow.arrow-right {
   -webkit-transform: rotate(180deg);
