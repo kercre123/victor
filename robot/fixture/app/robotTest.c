@@ -681,8 +681,8 @@ static void ChargeTest(void)
   RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
 }
 
-//Set flashlight and measure current
-static int mFlashlightTest(bool on, int power_on_s)
+//Set flashlight on/off and measure current
+static int FlashlightGetCurrent_(bool on, int power_on_s)
 {
   EnableChargeComms();
   if( power_on_s > 0 )
@@ -692,49 +692,57 @@ static int mFlashlightTest(bool on, int power_on_s)
   
   PIN_SET(GPIOC, PINC_CHGTX); //Turn on charging power
   PIN_OUT(GPIOC, PINC_CHGTX);
-  MicroWait(10000);
+  MicroWait(10*1000);
   
   return mGetCurrentMa();
 }
 
+//measure robot current delta with flashlight on/off
+//@param power_on_s - if > 0, send power_on command to keep robot alive for # more seconds
+int RobotFlashlightGetCurrentDelta(int power_on_s)
+{
+  int i_on  = FlashlightGetCurrent_(1,power_on_s);
+  int i_off = FlashlightGetCurrent_(0,0);
+  int i_delta = i_on - i_off;
+  ConsolePrintf("flashlight-mA,on,%d,off,%d,delta,%d\r\n", i_on, i_off, i_delta);
+  return i_delta;
+}
+
 static void FlashlightTest(void)
 {
-  const int FLASHLIGHT_MA = 15; //tested average 20mA, +/-20mA variation (0-40mA range)
+  //nominal flashlight (IR LED) current is ~40mA -> ~20mA @ 50% duty cycle, less some measurement variation and part tolerance...
+  const int FLASHLIGHT_MA = 12;
   
-  //flashlight is duty cycled by the body. sometimes our measurement differential falls into a current black-hole.
-  //allow some retries for robustness. functional flashlights will eventually return good result.
-  int retries = 0;
-  while(1)
-  {
-    int i_on  = mFlashlightTest(1,5);
-    int i_off = mFlashlightTest(0,0);
-    int i_delta = i_on - i_off;
-    
-    ConsolePrintf("flashlight-mA,on,%d,off,%d,delta,%d\r\n", i_on, i_off, i_delta);
-    if( i_delta >= FLASHLIGHT_MA )
-      break;
-    if( ++retries >= 8 )
-      throw ERROR_BODY_FLASHLIGHT;
+  //variable head current causes some measurement failures. Generally isolated/intermittent. Require a few consecutive successes to pass
+  const int SUCCESS_NUM = 3;
+  int cnt = 0;
+  for(int x=0; x < 8; x++) {
+    int i_delta = RobotFlashlightGetCurrentDelta(5);
+    if( (cnt = i_delta >= FLASHLIGHT_MA ? cnt + 1 : 0) >= SUCCESS_NUM ) {
+      EnableChargeComms();
+      return; //success
+    }
   }
-  
-  EnableChargeComms();
+  throw ERROR_BODY_FLASHLIGHT;
 }
 
 //DEBUG: collect averaged data for characterization
 void DEBUG_FlashlightTest_Characterize(void)
 {
-  int on_min = 999, off_min = 999, delta_min = 999;
-  int on_max = 0,   off_max = 0,   delta_max = 0,   delta_avg = 0;
+  int on_min = 999, off_min = 999, delta_min = 999, time_min = 999999;
+  int on_max = 0,   off_max = 0,   delta_max = 0,   delta_avg = 0, time_max = 0, time_avg = 0;
   
-  const int simulate_defective = 1;
-  const int num_samples = 128;
+  const int simulate_defective = 0;
+  const int num_samples = 256;
   for(int x=0; x < num_samples; x++)
   {
-    int i_on_ma  = mFlashlightTest( simulate_defective ? 0 : 1 ,5);
+    u32 diff_time = getMicroCounter();
+    
+    int i_on_ma  = FlashlightGetCurrent_( simulate_defective ? 0 : 1 ,5);
     on_min = i_on_ma < on_min ? i_on_ma : on_min;
     on_max = i_on_ma > on_max ? i_on_ma : on_max;
     
-    int i_off_ma = mFlashlightTest(0,0);
+    int i_off_ma = FlashlightGetCurrent_(0,0);
     off_min = i_off_ma < off_min ? i_off_ma : off_min;
     off_max = i_off_ma > off_max ? i_off_ma : off_max;
     
@@ -743,14 +751,23 @@ void DEBUG_FlashlightTest_Characterize(void)
     delta_max = delta > delta_max ? delta : delta_max;
     delta_avg += delta;
     
-    ConsolePrintf("flashlight-mA,on,%d,off,%d,delta,%d\r\n", i_on_ma, i_off_ma, delta);
+    diff_time = getMicroCounter() - diff_time;
+    time_min = diff_time < time_min ? diff_time : time_min;
+    time_max = diff_time > time_max ? diff_time : time_max;
+    time_avg += diff_time;
+    
+    ConsolePrintf("flashlight-mA,on,%03d,off,%03d,delta,%03d,time-us,%06d %s\r\n", i_on_ma, i_off_ma, delta, diff_time,
+      (simulate_defective && delta > 5) || (!simulate_defective && delta < 12) ? "<------" : "" ); //visual marker for bad measurements
   }
+  EnableChargeComms();
   
   delta_avg /= num_samples;
-  EnableChargeComms();
-  ConsolePrintf("flashlight-mA,on-min-max,%d,%d,off-min-max,%d,%d,delta-min-max-avg,%d,%d,%d\r\n", on_min, on_max, off_min, off_max, delta_min, delta_max, delta_avg);
-  
-  FlashlightTest();
+  time_avg  /= num_samples;
+  ConsolePrintf("flashlight-mA-debug-results:\r\n");
+  ConsolePrintf("  on    min,max     : %03d,%03d\r\n",      on_min,     on_max );
+  ConsolePrintf("  off   min,max     : %03d,%03d\r\n",      off_min,    off_max);
+  ConsolePrintf("  delta min,max,avg : %03d,%03d,%03d\r\n", delta_min,  delta_max,  delta_avg);
+  ConsolePrintf("  time  min,max,avg : %06d,%06d,%06d\r\n", time_min,   time_max,   time_avg );
 }
 
 //Verify battery voltage sufficient for assembly/packout
@@ -832,6 +849,7 @@ TestFunction* GetRobotTestFunctions(void)
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
+    FlashlightTest,
     BatteryCheck,
     WriteBodyColor,
     SpeakerTest,            // Must be last
@@ -874,6 +892,7 @@ TestFunction* GetPackoutTestFunctions(void)
     ChargeTest,             //run after mButtonTest (sets power modes)
     FastMotors,
     RobotFixtureDropSensor,
+    FlashlightTest,
     BatteryCheck,
     VerifyBodyColor,
     SpeakerTest,            // Must be last
