@@ -304,6 +304,7 @@ class CPPEnumEmitter(HEnumEmitter):
             self.output.write(textwrap.dedent('''\
                 auto it = stringToEnumMap.find(str);
                 if(it == stringToEnumMap.end()) {{
+                    std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
                     assert(false && "string must be a valid {enum_name} value");
                     return {enum_name}::{first_val};
                 }}
@@ -1778,7 +1779,7 @@ if __name__ == '__main__':
 
     cfile_system_headers = []
     if options.emitJSON:
-        cfile_system_headers += ['unordered_map', 'limits']
+        cfile_system_headers += ['unordered_map', 'limits', 'iostream']
 
     main_output_source = emitterutil.get_output_file(options, source_extension)
     emitterutil.write_c_file(options.output_directory, main_output_source,
