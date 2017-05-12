@@ -10,6 +10,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorBouncer.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/setFaceAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
@@ -47,6 +48,39 @@ namespace Cozmo {
   
 namespace {
   
+// Fixed display parameters. Why a signed thickness? Because opencv, that's why.
+constexpr u32 kBouncerPaddleRow_px = 0;
+constexpr u32 kBouncerPaddleHeight_px = 4;
+constexpr u32 kBouncerPaddleThickness_px = 2;
+  
+// Fixed speed parameters, per tick, measured from [0,1]. Note that ball has minimum speed
+// in both X and Y directions so it can't bounce straight up/down or straight left/right.
+constexpr float kBouncerMaxPaddleSpeed = 0.10;
+constexpr float kBouncerMinBallSpeed = 0.01;
+constexpr float kBouncerMaxBallSpeed = 0.05;
+
+  
+// Console parameters
+#define CONSOLE_GROUP "Behavior.Bouncer"
+
+// Max time allowed in this behavior, in seconds
+CONSOLE_VAR_RANGED(float, kBouncerTimeout_sec, CONSOLE_GROUP, 60.f, 0.f, 300.f);
+  
+// Max time allowed without seeing player, in seconds
+CONSOLE_VAR_RANGED(float, kBouncerMissingFace_sec, CONSOLE_GROUP, 5.f, 0.f, 30.f);
+  
+// How much tilt is needed to move paddle?  Note that for positional motion, range of
+// tilt is constrained by image recognition.  If head tilts past about 30deg, the
+// face is no longer recognized and pose readings are not updated.
+CONSOLE_VAR_RANGED(float, kBouncerTiltLeft_deg, CONSOLE_GROUP, -20.f, -30.f, -15.f);
+CONSOLE_VAR_RANGED(float, kBouncerTiltRight_deg, CONSOLE_GROUP, 20.f, 15.f, 30.f);
+
+// Width to draw on either side of paddle center
+CONSOLE_VAR_RANGED(u32, kBouncerPaddleWidth_px, CONSOLE_GROUP, 5, 0, 15);
+
+// Ball size, in pixels
+CONSOLE_VAR_RANGED(s32, kBouncerBallSize_px, CONSOLE_GROUP, 2, 1, 5);
+
 // Reaction triggers to disable
 constexpr ReactionTriggerHelpers::FullReactionArray kReactionArray = {
   {ReactionTrigger::CliffDetected,                false},
@@ -76,19 +110,10 @@ constexpr ReactionTriggerHelpers::FullReactionArray kReactionArray = {
 };
   
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kReactionArray), "Invalid reaction triggers");
-
-// Console parameters
-#define CONSOLE_GROUP "Behavior.Bouncer"
-
-// Max time allowed in this behavior
-CONSOLE_VAR_RANGED(float, kBouncerTimeout_sec, CONSOLE_GROUP, 60.f, 0.f, 300.f);
-  
-// How much tilt is needed to move paddle?
-CONSOLE_VAR_RANGED(float, kBouncerTiltLeft_deg, CONSOLE_GROUP, -10.f, -15.f, -5.f);
-CONSOLE_VAR_RANGED(float, kBouncerTiltRight_deg, CONSOLE_GROUP, 10.f, 5.f, 15.f);
   
 } // end anonymous namespace
-  
+
+// Check if feature gate is open
 static inline bool IsFeatureEnabled(const Robot & robot)
 {
   // Is this feature enabled?
@@ -97,12 +122,57 @@ static inline bool IsFeatureEnabled(const Robot & robot)
   return featureGate->IsFeatureEnabled(Anki::Cozmo::FeatureType::Bouncer);
 }
 
+// Get random value in range [minVal,maxVal]
+static float GetRandomFloat(Robot & robot, float minVal, float maxVal)
+{
+  auto & rng = robot.GetRNG();
+  double val = rng.RandDblInRange(minVal, maxVal);
+  return static_cast<float>(val);
+}
+
+static void DrawBackground(Vision::Image& image)
+{
+  constexpr u8 kBouncerBackgroundPixel = 0x00;
+  image.FillWith(kBouncerBackgroundPixel);
+}
+  
+static void DrawPaddle(Vision::Image& image, u32 paddleX)
+{
+  // How wide is paddle? Draw this many pixels left and right of center.
+  const u32 numRows = image.GetNumRows();
+  const u32 numCols = image.GetNumCols();
+  const u32 minX = (paddleX < kBouncerPaddleWidth_px) ? 0 : (paddleX - kBouncerPaddleWidth_px);
+  const u32 maxX = (paddleX + kBouncerPaddleWidth_px) > numCols ? numCols : (paddleX + kBouncerPaddleWidth_px);
+  const u32 minY = kBouncerPaddleRow_px;
+  const u32 maxY = (kBouncerPaddleRow_px + kBouncerPaddleHeight_px);
+    
+  Rectangle<f32> rect(minX, numRows-minY-1, (maxX-minX), maxY-minY);
+  image.DrawRect(rect, NamedColors::WHITE, kBouncerPaddleThickness_px);
+  
+}
+  
+static void DrawBall(Vision::Image& image, u32 ballX, u32 ballY)
+{
+  const u32 minX = 0;
+  const u32 maxX = image.GetNumCols()-1;
+  const u32 minY = 0;
+  const u32 maxY = image.GetNumRows()-1;
+    
+  ballX = Util::Clamp(ballX, minX, maxX);
+  ballY = Util::Clamp(ballY, minY, maxY);
+    
+  Point2f center(ballX, ballY);
+  image.DrawPoint(center, NamedColors::WHITE, kBouncerBallSize_px);
+}
+  
+
 BehaviorBouncer::BehaviorBouncer(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
   SetDefaultName("Bouncer");
 }
 
+// Check if behavior can run at this time
 bool BehaviorBouncer::IsRunnableInternal(const BehaviorPreReqRobot & preReq) const
 {
   const Robot & robot = preReq.GetRobot();
@@ -136,7 +206,10 @@ bool BehaviorBouncer::IsRunnableInternal(const BehaviorPreReqRobot & preReq) con
   return true;
   
 }
-  
+
+//
+// Behavior is starting. Reset behavior state.
+//
 Result BehaviorBouncer::InitInternal(Robot& robot)
 {
   // Reset behavior state
@@ -145,29 +218,182 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
   // Disable reactionary behaviors that we don't want interrupting this
   SmartDisableReactionsWithLock(GetName(), kReactionArray);
   
+  // Disable idle animation
+  auto & animationStreamer = robot.GetAnimationStreamer();
+  animationStreamer.PushIdleAnimation(AnimationTrigger::Count);
+  
   // Stash robot parameters
   _displayWidth_px = robot.GetDisplayWidthInPixels();
   _displayHeight_px = robot.GetDisplayHeightInPixels();
   
   // Paddle starts at center of bottom row
-  _paddlePos = 0.5f;
+  _paddlePosX = 0.5f;
+  _paddleSpeedX = kBouncerMaxPaddleSpeed;
+
+  // Ball starts at center top with small random velocity.
+  _ballPosX = 0.5f;
+  _ballPosY = 1.0f;
+  _ballSpeedX = GetRandomFloat(robot, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
+  _ballSpeedY = GetRandomFloat(robot, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
+  
+  // No pending bounce sounds
+  _paddleHitLeft = false;
+  _paddleHitRight = false;
   
   return Result::RESULT_OK;
 }
+
+void BehaviorBouncer::UpdatePaddle(const Vision::TrackedFace * face)
+{
+  // Fetch previous paddle state
+  float paddlePosX = _paddlePosX;
+  float paddleSpeedX = _paddleSpeedX;
   
+  // Did paddle start out against a wall?
+  const bool wasLeft = Util::IsNear(paddlePosX, 0.f);
+  const bool wasRight = Util::IsNear(paddlePosX, 1.f);
   
-BehaviorBouncer::Status BehaviorBouncer::UpdateInternal(Robot& robot)
+  // Get tilt of player's head, clamped to allowable range
+  float playerTilt = Util::Clamp(face->GetHeadRoll().getDegrees(), kBouncerTiltLeft_deg, kBouncerTiltRight_deg);
+    
+  // Scale tilt to [0,1]. Note that we are converting distance along a curve to distance along a line.
+  // It might make more sense to use cos(tilt) to isolate the horizontal component, or switch
+  // to "directional" control where player nudges paddle left or right.
+  float playerPosX = (playerTilt - kBouncerTiltLeft_deg)/(kBouncerTiltRight_deg-kBouncerTiltLeft_deg);
+  
+  // If paddle is close to player position, jump straight to it, else move one step closer
+  if (Util::IsNear(playerPosX, paddlePosX, paddleSpeedX)) {
+    paddlePosX = playerPosX;
+  } else if (playerPosX < paddlePosX) {
+    paddlePosX -= paddleSpeedX;
+  } else {
+    paddlePosX += paddleSpeedX;
+  }
+    
+  // Paddle must stay within bounds
+  paddlePosX = Util::Clamp(paddlePosX, 0.f, 1.f);
+    
+  // Did paddle end up against a wall?
+  const bool isLeft = Util::IsNear(paddlePosX, 0.f);
+  const bool isRight = Util::IsNear(paddlePosX, 1.f);
+    
+  if (isLeft && !wasLeft) {
+    LOG_INFO("BehaviorBouncer.UpdateInternal", "Paddle hits left wall");
+    _paddleHitLeft = true;
+  } else if (isRight && !wasRight) {
+    LOG_INFO("BehaviorBouncer.UpdateInternal", "Paddle hits right wall");
+    _paddleHitRight = true;
+  }
+    
+  // Save new paddle state
+  _paddlePosX = paddlePosX;
+
+}
+  
+void BehaviorBouncer::UpdateBall()
+{
+  // Fetch previous ball state
+  float ballSpeedX = _ballSpeedX;
+  float ballSpeedY = _ballSpeedY;
+  float ballPosX = _ballPosX;
+  float ballPosY = _ballPosY;
+  
+  // Move the ball
+  ballPosX += ballSpeedX;
+  ballPosY += ballSpeedY;
+  
+  // Bounce the ball
+  if (ballPosX <= 0.f) {
+    ballPosX = (0.f - ballPosX);
+    ballSpeedX *= -1.f;
+  } else if (ballPosX >= 1.0f) {
+    ballPosX = 1.0 - (ballPosX - 1.0);
+    ballSpeedX *= -1.f;
+  }
+  
+  if (ballPosY <= 0.f) {
+    ballPosY = (0.f - ballPosY);
+    ballSpeedY *= -1.f;
+  } else if (ballPosY >= 1.0f) {
+    ballPosY = 1.0 - (ballPosY - 1.0);
+    ballSpeedY *= -1.f;
+  }
+  
+  // Ensure that ball never leaves [0,1]
+  ballPosX = Util::Clamp(ballPosX, 0.f, 1.f);
+  ballPosY = Util::Clamp(ballPosY, 0.f, 1.f);
+  
+  // Save new ball state
+  _ballPosX = ballPosX;
+  _ballPosY = ballPosY;
+  _ballSpeedX = ballSpeedX;
+  _ballSpeedY = ballSpeedY;
+  
+}
+
+void BehaviorBouncer::UpdateSound(Robot& robot)
+{
+  // Do we need to play a bounce sound?
+  // TODO: Trigger on ball movement, not paddle movement
+  bool playBounceSound = false;
+  
+  if (!_isSoundActionInProgress && !_isFaceActionInProgress) {
+    if (_paddleHitLeft) {
+      _paddleHitLeft = false;
+      playBounceSound = true;
+    } else if (_paddleHitRight) {
+      _paddleHitRight = false;
+      playBounceSound = true;
+    }
+  }
+  
+  // TODO: Use arcade bounce sounds when available
+  if (playBounceSound) {
+    _isSoundActionInProgress = true;
+    IActionRunner * soundAction = new TriggerAnimationAction(robot, AnimationTrigger::SoundOnlyTurnSmall);
+    StartActing(soundAction, &BehaviorBouncer::SoundActionComplete);
+  }
+}
+  
+void BehaviorBouncer::UpdateDisplay(Robot& robot)
+{
+  // Scale positions from [0,1] to display position [0,DISPLAY_WIDTH]
+  const u32 paddleX = Util::numeric_cast<u32>(_paddlePosX * _displayWidth_px);
+  const u32 ballX = Util::numeric_cast<u32>(_ballPosX * _displayWidth_px);
+  const u32 ballY = Util::numeric_cast<u32>(_ballPosY * _displayHeight_px);
+  
+  LOG_INFO("BehaviorBouncer.UpdateInternal", "paddleX=%u ballX=%u ballY=%u", paddleX, ballX, ballY);
+  
+  // Do we need to draw a new face?
+  if (!_isSoundActionInProgress && !_isFaceActionInProgress) {
+    // Draw image
+    Vision::Image image(_displayHeight_px, _displayWidth_px);
+    
+    DrawBackground(image);
+    DrawPaddle(image, paddleX);
+    DrawBall(image, ballX, ballY);
+    
+    // Display image
+    _isFaceActionInProgress = true;
+    const u32 duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
+    IActionRunner * faceAction = new SetFaceAction(robot, image, duration_ms);
+    StartActing(faceAction, &BehaviorBouncer::FaceActionComplete);
+  }
+
+}
+
+BehaviorStatus BehaviorBouncer::UpdateInternal(Robot& robot)
 {
   // Check elapsed time
   if (GetRunningDuration() > kBouncerTimeout_sec) {
     LOG_WARNING("BehaviorBouncer.UpdateInternal", "Behavior has timed out");
-    return Status::Failure;
+    return BehaviorStatus::Complete;
   }
   
-  // Check target state
+  // Validate target state
   if (!_target.IsValid()) {
     LOG_WARNING("BehaviorBouncer.UpdateInternal", "Target face (%s) is not valid", _target.GetDebugStr().c_str());
-    return Status::Failure;
+    return BehaviorStatus::Complete;
   }
   
   // Get target face
@@ -175,68 +401,25 @@ BehaviorBouncer::Status BehaviorBouncer::UpdateInternal(Robot& robot)
   const auto * face = faceWorld.GetFace(_target);
   if (nullptr == face) {
     LOG_WARNING("BehaviorBouncer.UpdateInternal", "Target face (%s) has disappeared", _target.GetDebugStr().c_str());
-    return Status::Failure;
+    return BehaviorStatus::Complete;
   }
   
-  const float playerTilt = face->GetHeadRoll().getDegrees();
-  float paddlePos = _paddlePos;
-  
-  // Did paddle start out against a wall?
-  const bool wasLeft = Util::IsNear(paddlePos, 0.f);
-  const bool wasRight = Util::IsNear(paddlePos, 1.f);
-  
-  // Width of one pixel, scaled from [0,1]
-  const float width_px = (1.f / _displayWidth_px);
-  
-  // Slide paddle by 1-3 pixels in either direction
-  if (playerTilt <= (3 * kBouncerTiltLeft_deg)) {
-    // Paddle moves 3x left
-    paddlePos -=  (3 * width_px);
-  } else if (playerTilt <= (2 * kBouncerTiltLeft_deg)) {
-    // Paddle moves 2x left
-    paddlePos -= (2 * width_px);
-  } else if (playerTilt <= kBouncerTiltLeft_deg) {
-    // Paddle moves 1x left
-    paddlePos -= width_px;
-  } else if (playerTilt >= (3 * kBouncerTiltRight_deg)) {
-    // Paddle moves 3x right
-    paddlePos += (3 * width_px);
-  } else if (playerTilt >= (2 * kBouncerTiltRight_deg)) {
-    // Paddle moves 2x right
-    paddlePos += (2 * width_px);
-  } else if (playerTilt >= kBouncerTiltRight_deg) {
-     // Paddle moves 1x right
-    paddlePos += width_px;
-  }
- 
-  // Paddle must stay within bounds
-  paddlePos = Util::Clamp(paddlePos, 0.f, 1.f);
-  
-  // Did paddle end up against a wall?
-  const bool isLeft = Util::IsNear(paddlePos, 0.f);
-  const bool isRight = Util::IsNear(paddlePos, 1.f);
-  
-  // Did paddle hit a wall on this tick? Play an animation.
-  IActionRunner * action = nullptr;
-  if (isLeft && !wasLeft) {
-    LOG_INFO("BehaviorBouncer.UpdateInternal", "Paddle hits left wall");
-    action = new TriggerAnimationAction(robot, AnimationTrigger::SoundOnlyLiftEffortPickup);
-  } else if (isRight && !wasRight) {
-    LOG_INFO("BehaviorBouncer.UpdateInternal", "Paddle hits right wall");
-    action = new TriggerAnimationAction(robot, AnimationTrigger::SoundOnlyLiftEffortPlaceRoll);
+  // Validate face
+  TimeStamp_t lastObserved_ms = face->GetTimeStamp();
+  TimeStamp_t lastImage_ms = robot.GetLastImageTimeStamp();
+  if (lastImage_ms - lastObserved_ms > Util::SecToMilliSec(kBouncerMissingFace_sec)) {
+    LOG_WARNING("BehaviorBouncer.UpdateInternal", "Target face (%s) has gone stale",
+                _target.GetDebugStr().c_str());
+    return BehaviorStatus::Complete;
   }
   
-  if (nullptr != action) {
-    StartActing(action);
-  }
-
-  // Scale paddle position to display position [0,DISPLAY_WIDTH]
-  const u32 paddleX = Util::numeric_cast<u32>(paddlePos * _displayWidth_px);
+  UpdatePaddle(face);
   
-  LOG_INFO("BehaviorBouncer.UpdateInternal", "playerTilt=%.2f paddlePos=%.2f paddleX=%u", playerTilt, paddlePos, paddleX);
+  UpdateBall();
   
-  // Save state for next tick
-  _paddlePos = paddlePos;
+  UpdateSound(robot);
+  
+  UpdateDisplay(robot);
   
   // Game logic goes here
   switch (_state) {
@@ -250,20 +433,35 @@ BehaviorBouncer::Status BehaviorBouncer::UpdateInternal(Robot& robot)
     }
     case State::Complete:
     {
-      return Status::Complete;
+      return BehaviorStatus::Complete;
     }
   }
   
-  return Status::Running;
+  return BehaviorStatus::Running;
+  
 }
 
-
+void BehaviorBouncer::SoundActionComplete()
+{
+  LOG_INFO("BehaviorBouncer.SoundActionComplete", "Sound action complete");
+  _isSoundActionInProgress = false;
+}
+  
+void BehaviorBouncer::FaceActionComplete()
+{
+  LOG_INFO("BehaviorBouncer.FaceActionComplete", "Face action complete");
+  _isFaceActionInProgress = false;
+}
+  
 void BehaviorBouncer::StopInternal(Robot& robot)
 {
   LOG_DEBUG("BehaviorBouncer.StopInternal", "Stop behavior");
   
   // TODO: Record relevant DAS events here.
  
+  // Restore idle animation
+  auto & animationStreamer = robot.GetAnimationStreamer();
+  animationStreamer.PopIdleAnimation();
 }
   
 } // namespace Cozmo
