@@ -708,15 +708,15 @@ int RobotFlashlightGetCurrentDelta(int power_on_s)
   return i_delta;
 }
 
-static void FlashlightTest(void)
+void FlashlightTest(void)
 {
   //nominal flashlight (IR LED) current is ~40mA -> ~20mA @ 50% duty cycle, less some measurement variation and part tolerance...
   const int FLASHLIGHT_MA = 12;
   
   //variable head current causes some measurement failures. Generally isolated/intermittent. Require a few consecutive successes to pass
-  const int SUCCESS_NUM = 3;
+  int SUCCESS_NUM = g_fixtureType == FIXTURE_BODY3_TEST ? 2 : 4; //headless body is very deterministic
   int cnt = 0;
-  for(int x=0; x < 8; x++) {
+  for(int x=0; x < 12; x++) {
     int i_delta = RobotFlashlightGetCurrentDelta(5);
     if( (cnt = i_delta >= FLASHLIGHT_MA ? cnt + 1 : 0) >= SUCCESS_NUM ) {
       EnableChargeComms();
@@ -726,14 +726,14 @@ static void FlashlightTest(void)
   throw ERROR_BODY_FLASHLIGHT;
 }
 
-//DEBUG: collect averaged data for characterization
+/*/DEBUG: collect averaged data for characterization
 void DEBUG_FlashlightTest_Characterize(void)
 {
   int on_min = 999, off_min = 999, delta_min = 999, time_min = 999999;
   int on_max = 0,   off_max = 0,   delta_max = 0,   delta_avg = 0, time_max = 0, time_avg = 0;
   
   const int simulate_defective = 0;
-  const int num_samples = 256;
+  const int num_samples = 1024;
   for(int x=0; x < num_samples; x++)
   {
     u32 diff_time = getMicroCounter();
@@ -768,7 +768,7 @@ void DEBUG_FlashlightTest_Characterize(void)
   ConsolePrintf("  off   min,max     : %03d,%03d\r\n",      off_min,    off_max);
   ConsolePrintf("  delta min,max,avg : %03d,%03d,%03d\r\n", delta_min,  delta_max,  delta_avg);
   ConsolePrintf("  time  min,max,avg : %06d,%06d,%06d\r\n", time_min,   time_max,   time_avg );
-}
+}//-*/
 
 //Verify battery voltage sufficient for assembly/packout
 void BatteryCheck(void)
