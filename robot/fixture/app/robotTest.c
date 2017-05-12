@@ -92,9 +92,6 @@ void EnableChargeComms(void)
     ConsolePrintf("charge comm init: %d missed pulses\r\n", n);
     throw e;
   }
-  
-  // Let Espressif finish booting
-  MicroWait(300000);
 }
 
 static const int MAX_BODYCOLORS = 4;
@@ -165,6 +162,7 @@ void InfoTest(void)
   struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
   
   EnableChargeComms();
+  MicroWait(300*1000); // Let Espressif finish booting
   
   ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
@@ -186,6 +184,7 @@ void InfoTest(void)
 void PlaypenTest(void)
 {
   EnableChargeComms();
+  MicroWait(300*1000); // Let Espressif finish booting
   
   // Try to put robot into playpen mode
   SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);
@@ -609,6 +608,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   const int NUM_SAMPLES = 32;
   
   EnableChargeComms(); //switch to comm mode
+  MicroWait(300*1000); //let battery voltage settle
   uint16_t battVolt100x = robot_get_battVolt100x(10,0); //+POWERON extra time [s]
   
   //Turn on charging power
@@ -765,7 +765,7 @@ void BatteryCheck(void)
   
   EnableChargeComms();  //switch to comm mode
   chargeEnable(false);  //disable charger, which could interfere with valid battery measurement
-  MicroWait(100*1000);  //wait for battery voltage to stabilize
+  MicroWait(500*1000);  //wait for battery voltage to stabilize
   u16 vBat100x = robot_get_battVolt100x(0,0);
   chargeEnable(true);   //re-enable charger
   
@@ -827,13 +827,11 @@ TestFunction* GetRobotTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
-    //DEBUG_FlashlightTest_Characterize,
     mButtonTest,
     ChargeTest,             //run after mButtonTest (sets power modes)
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
-    //FlashlightTest,
     BatteryCheck,
     WriteBodyColor,
     SpeakerTest,            // Must be last
@@ -876,7 +874,6 @@ TestFunction* GetPackoutTestFunctions(void)
     ChargeTest,             //run after mButtonTest (sets power modes)
     FastMotors,
     RobotFixtureDropSensor,
-    //FlashlightTest,
     BatteryCheck,
     VerifyBodyColor,
     SpeakerTest,            // Must be last
