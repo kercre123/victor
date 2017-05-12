@@ -12,29 +12,6 @@
         window.vm = vm;
         window.vm.createEmptyProject();
 
-        // Create audio player and load sounds
-        var useWebAudioAPI = true;
-        var ua = navigator.userAgent;
-        if( ua.indexOf("Android") >= 0 ) {
-            // Web Audio API is on Android 5.0 and higher, not on Android 4.4 and lower.
-            var androidversion = parseFloat(ua.slice(ua.indexOf("Android")+8));
-            if (androidversion < 5.0)
-            {
-                useWebAudioAPI = false;
-            }
-        }
-        else if ( ua.indexOf("iPhone OS 7") >= 0 ) {
-            // Turn sound off for Unity Editor WebView, otherwise webview content
-            // will fail to load, as apparently the Unity Editor WebView
-            // doesn't support the sound code in our simpleWebAudioPlayer.
-            useWebAudioAPI = false;
-        }
-
-        if (useWebAudioAPI) {
-            window.player = simpleWebAudioPlayer();
-            window.player.load({name: "click", src: click_wav});
-            window.player.load({name: "delete", src: delete_wav});
-        }
 
         // Get XML toolbox definition
         var toolbox = document.getElementById('toolbox');

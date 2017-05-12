@@ -34,6 +34,9 @@
 
       // start rendering projects
       CozmoAPI.getProjects('window.renderProjects');
+
+      // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
+      // _devLoadProjects();
     });
 
     // register main click handler for the document
@@ -55,6 +58,8 @@
     if (!typeElem) return;
     var type = typeElem.getAttribute('data-type');
 
+    var playClickSound = true;
+
     switch(type) {
       case 'btn-create-new-project':
         CozmoAPI.createNewProject();
@@ -72,6 +77,11 @@
         hideConfirmDeleteProjectModal();
         break;
       case 'btn-delete-project':
+        // play a delete sound instead of a click
+        playClickSound = false;
+        if (window.player) {
+          window.player.play('delete');
+        }
         CozmoAPI.deleteProject(typeElem.dataset.uuid);
         break;
       case 'btn-close-page':
@@ -80,9 +90,44 @@
       case 'modal-background':
         hideConfirmDeleteProjectModal();
         break;
+      case 'tutorial-link':
+        playClickSound = false;
+        handleTutorialLinkClick(typeElem);
+        break;
+
       default:
+        playClickSound = false;
         console.log('unrecognized click data-type: ' + type);
     }
+
+    if (playClickSound && window.player) {
+      window.player.play('click');
+    }
+  }
+
+  /**
+   * Plays sound before opening the tutorial
+   * @param {HTMLElement} elem - tutorial link button element (assuming <a> (anchor) tag)
+   * @returns {void}
+   */
+  function handleTutorialLinkClick(elem) {
+    // if sound player is present, play a click sound before closing
+    if (window.player) {
+      window.player.play('click');
+    }
+
+    // to ensure the sound has time to play before navigating, intercept the
+    //  anchor navigation and wait until after the sound plays to change pages
+
+    // prevent the anchor tag from navigating to the next page until there is enough time for sound to play
+    event.preventDefault();
+
+    // save the URL of the anchor tag and navigate there after sound should finish playing
+    var url = elem.getAttribute('href');
+    setTimeout(function(){
+      // navigate to anchor tag's url after sound finishes
+      window.location.href = url;
+    }, 50);
   }
 
   /**

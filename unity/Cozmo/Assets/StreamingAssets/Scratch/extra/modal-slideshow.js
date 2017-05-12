@@ -32,6 +32,8 @@
     if (!typeElem) return;
     var type = typeElem.getAttribute('data-type');
 
+    var playClickSound = true;
+
     switch(type) {
       case 'btn-next':
         Slides.next();
@@ -40,20 +42,60 @@
         Slides.back();
         break;
       case 'btn-done':
+        playClickSound = false;  // prevents two click sounds: one for done button, and one for close button
         handleBtnDone();
         break;
+      case 'btn-close':
+        playClickSound = false;  // click sound is made in handleBtnClose
+        handleBtnClose(typeElem, event);
+        break;
 
-      // no default
+      default:
+        playClickSound = false;
+        break;
+    }
+
+    if (playClickSound && window.player) {
+      window.player.play('click');
     }
 
     event.preventDefault();  // prevent double taps to zoom
   }
 
+  /**
+   * Plays sound before closing the dialog
+   * @param {HTMLElement} elem - close button element (assuming <a> (anchor) tag)
+   * @returns {void}
+   */
+  function handleBtnClose(elem) {
+    // if sound player is present, play a click sound before closing
+    if (window.player) {
+      window.player.play('click');
+    }
+
+    // to ensure the sound has time to play before navigating, intercept the
+    //  anchor navigation and wait until after the sound plays to change pages
+
+    // prevent the anchor tag from navigating to the next page until there is enough time for sound to play
+    event.preventDefault();
+
+    // save the URL of the anchor tag and navigate there after sound should finish playing
+    var url = elem.getAttribute('href');
+    setTimeout(function(){
+      // navigate to anchor tag's url after sound finishes
+      window.location.href = url;
+    }, 50);
+  }
+
+  /**
+   * "Done" button click handler.  Finds the close button element and clicks it.
+   * @returns void
+   */
   function handleBtnDone() {
     // if the modal has an element with class 'btn-close', click it.
     var closeLink = document.querySelector('.modal-slides .btn-close');
     if (closeLink) {
-      closeLink.click();  // click the close button to close the dialog
+      handleBtnClose(closeLink);
     }
   }
 
