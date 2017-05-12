@@ -348,6 +348,17 @@ static void BodyChargeTest(void)
   }
 }
 
+extern int RobotFlashlightGetCurrentDelta(int power_on_s); //robotTest.c
+static void BodyFlashlightTest(void)
+{
+  //nominal flashlight (IR LED) current is ~40mA -> ~20mA @ 50% duty cycle, less some measurement variation and part tolerance...
+  const int FLASHLIGHT_MA = 12;
+  if( RobotFlashlightGetCurrentDelta(0) < FLASHLIGHT_MA )
+    throw ERROR_BODY_FLASHLIGHT;
+  
+  SendTestChar(-1); //back to comms mode
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetBody1TestFunctions(void)
 {
@@ -386,6 +397,7 @@ TestFunction* GetBody3TestFunctions(void)
     BodyNRF51,
     HeadlessBoot,
     BodyChargeTest, //must be immediately after boot; measures beginning of charge cycle
+    BodyFlashlightTest,
     TestBackpackPullup,
     BodyMotor,
     //DropLeakage, //disable test for 1v5 PVT line changes

@@ -2,7 +2,7 @@
 (UNRELEASED)
 ----------------
 
-ROBOTx,PACKOUTx:
+BODY3,ROBOTx,PACKOUTx:
 -add flashlight test.
 -new error code 607 [BODY_FLASHLIGHT]
 
