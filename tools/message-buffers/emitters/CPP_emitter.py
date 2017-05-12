@@ -304,7 +304,7 @@ class CPPEnumEmitter(HEnumEmitter):
             self.output.write(textwrap.dedent('''\
                 auto it = stringToEnumMap.find(str);
                 if(it == stringToEnumMap.end()) {{
-                    assert(false);
+                    assert(false && "string must be a valid {enum_name} value");
                     return {enum_name}::{first_val};
                 }}
 
