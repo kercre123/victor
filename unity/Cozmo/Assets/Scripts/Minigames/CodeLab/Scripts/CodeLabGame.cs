@@ -308,6 +308,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       _SessionState.OnStopAll();
 
+      // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
+      InProgressScratchBlockPool.ReleaseAllInUse();
+
       _queuedScratchRequests.Clear();
 
       // Cancel any in-progress actions (unless we're resetting to position)

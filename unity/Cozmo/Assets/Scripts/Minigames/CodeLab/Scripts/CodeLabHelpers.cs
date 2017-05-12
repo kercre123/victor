@@ -26,6 +26,7 @@ namespace CodeLab {
     }
 
     public void OnReleased() {
+      ResolveRequestPromise();
       RemoveAllCallbacks();
       Init();
     }
@@ -38,12 +39,16 @@ namespace CodeLab {
       InProgressScratchBlockPool.ReleaseInProgressScratchBlock(this);
     }
 
-    public void AdvanceToNextBlock(bool success) {
+    private void ResolveRequestPromise() {
       if (this._RequestId >= 0) {
         // Calls the JavaScript function resolving the Promise on the block
         _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
+        this._RequestId = -1;
       }
+    }
 
+    public void AdvanceToNextBlock(bool success) {
+      ResolveRequestPromise();
       ReleaseFromPool();
     }
 
