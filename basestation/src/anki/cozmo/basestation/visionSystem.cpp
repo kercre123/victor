@@ -139,6 +139,9 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kFaceTrackingMaxBodyAngleChange_deg, "Vision.FaceDetection", 8.f);
   CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
   
+  // Sample rate for estimating the mean of an image (increment in both X and Y)
+  CONSOLE_VAR_RANGED(s32, kImageMeanSampleInc, "VisionSystem.Statistics", 10, 1, 32);
+  
   namespace {
     // These are initialized from Json config:
     u8 kTooDarkValue   = 15;
@@ -306,12 +309,16 @@ namespace Cozmo {
         }
         else if(jsonSchedule.isInt())
         {
-          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule((jsonSchedule.asInt())));
+          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asInt()));
+        }
+        else if(jsonSchedule.isBool())
+        {
+          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asBool()));
         }
         else
         {
           PRINT_NAMED_ERROR("VisionSystem.Init.UnrecognizedModeScheduleValue",
-                            "Mode:%s Expecting int or array of bools", modeStr);
+                            "Mode:%s Expecting int, bool, or array of bools", modeStr);
           return RESULT_FAIL;
         }
       }
@@ -781,6 +788,26 @@ namespace Cozmo {
     retVal &= _matlab.ep != NULL;
 #   endif
     return retVal;
+  }
+  
+  u8 VisionSystem::ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc)
+  {
+    DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
+    
+    s32 sum=0;
+    s32 count=0;
+    for(s32 i=0; i<inputImageGray.GetNumRows(); i+=sampleInc)
+    {
+      const u8* image_i = inputImageGray.GetRow(i);
+      for(s32 j=0; j<inputImageGray.GetNumCols(); j+=sampleInc)
+      {
+        sum += image_i[j];
+        ++count;
+      }
+    }
+    
+    const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
+    return mean;
   }
   
   Result VisionSystem::DetectMarkers(const Vision::Image& inputImageGray,
@@ -2816,7 +2843,7 @@ namespace Cozmo {
     return VisionSystem::GetModeName(_mode);
   }
   
-  std::string VisionSystem::GetModeName(Util::BitFlags16<VisionMode> mode) const
+  std::string VisionSystem::GetModeName(Util::BitFlags32<VisionMode> mode) const
   {
     std::string retStr("");
     for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
@@ -3304,6 +3331,15 @@ namespace Cozmo {
     //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
     
     EndBenchmark("VisionSystem_CameraImagingPipeline");
+    
+    
+    if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
+    {
+      Tic("TotalComputingStatistics");
+      _currentResult.imageMean = ComputeMean(inputImageGray, kImageMeanSampleInc);
+      visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
+      Toc("TotalComputingStatistics");
+    }
     
     std::vector<Anki::Rectangle<s32>> detectionRects;
 

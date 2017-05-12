@@ -97,11 +97,12 @@ namespace Cozmo {
   struct VisionProcessingResult
   {
     TimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
-    Util::BitFlags16<VisionMode> modesProcessed;
+    Util::BitFlags32<VisionMode> modesProcessed;
     
     ImageQuality imageQuality;
     s32 exposureTime_ms;  // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
     f32 cameraGain;       // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
+    u8  imageMean;        // Only valid if VisionMode::ComputingStatistics enabled
     
     std::list<VizInterface::TrackerQuad>                        trackerQuads;
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
@@ -252,7 +253,7 @@ namespace Cozmo {
                                  Embedded::Point3<f32>&       translationWrtRobot);
     
     // VisionMode <-> String Lookups
-    std::string GetModeName(Util::BitFlags16<VisionMode> mode) const;
+    std::string GetModeName(Util::BitFlags32<VisionMode> mode) const;
     std::string GetCurrentModeName() const;
     VisionMode  GetModeFromString(const std::string& str) const;
     
@@ -382,8 +383,8 @@ namespace Cozmo {
     // TODO: Move this to visionParameters
     const s32 MAX_TRACKING_FAILURES = 1;
     
-    Util::BitFlags16<VisionMode> _mode;
-    Util::BitFlags16<VisionMode> _modeBeforeTracking;
+    Util::BitFlags32<VisionMode> _mode;
+    Util::BitFlags32<VisionMode> _modeBeforeTracking;
     std::queue<std::pair<VisionMode, bool>> _nextModes;
     
     using ModeScheduleStack = std::list<AllVisionModesSchedule>;
@@ -525,6 +526,8 @@ namespace Cozmo {
                                            const Embedded::Quadrilateral<f32>& quad,
                                            const f32 filterWidthFraction,
                                            Embedded::MemoryStack scratch);
+    
+    static u8 ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc);
     
     Result InitTemplate(Embedded::Array<u8> &grayscaleImage,
                         const Embedded::Quadrilateral<f32> &trackingQuad);

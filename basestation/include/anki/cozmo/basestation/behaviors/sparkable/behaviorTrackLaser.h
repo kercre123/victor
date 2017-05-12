@@ -74,10 +74,12 @@ private:
     
     // Once we see a possible laser (w/ camera at normal exposure), we darken the exposure
     // to confirm the laser. We wait a small amount of time to let the exposure settings
-    // take effect.
+    // take effect. If we observe the mean drop by the specified fraction, we immediately
+    // assume the change has taken effect.
     float    darkenedExposure_ms; // E.g. 1ms
     float    darkenedGain; // E.g. 0.1
     float    numImagesToWaitForExposureChange; // E.g. 2
+    float    imageMeanFractionForExposureChange; // E.g. 0.5
     
     // After changing exposure, we'll wait this long to confirm the laser
     float    maxTimeToConfirm_ms; // E.g. 65ms
@@ -141,6 +143,7 @@ private:
   bool  _haveEverConfirmedLaser = false;
   bool  _haveAdjustedAnimations = false;
   
+  s16 _imageMean = -1;
   TimeStamp_t _exposureChangedTime_ms = 0;
   
   float _lastTimeRotate = 0.f;

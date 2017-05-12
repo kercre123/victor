@@ -12,7 +12,8 @@
     "DetectingSmileAmount"       : false,
     "DetectingGaze"              : false,
     "DetectingBlinkAmount"       : false,
-    "DetectingLaserPoints"       : true
+    "DetectingLaserPoints"       : true,
+    "ComputingStatistics"        : true
   },
   
   "InitialModeSchedules" :
@@ -23,7 +24,8 @@
     "DetectingPets"          : [true, false],
     "DetectingOverheadEdges" : [false, true],
     "CheckingQuality"        : 15,
-    "DetectingLaserPoints"   : 2
+    "DetectingLaserPoints"   : 2,
+    "ComputingStatistics"    : false  // NOTE: enabled but not scheduled!
   },
   
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot

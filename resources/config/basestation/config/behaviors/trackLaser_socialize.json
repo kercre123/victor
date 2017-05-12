@@ -18,7 +18,8 @@
   
   "darkenedExposure_ms": 1.0,
   "darkenedGain": 0.1,
-  "numImagesToWaitForExposureChange": 2,
+  "numImagesToWaitForExposureChange": 5,
+  "imageMeanFractionForExposureChange": 0.5,
 
   "searchAmplitude_deg": 90.0,
   

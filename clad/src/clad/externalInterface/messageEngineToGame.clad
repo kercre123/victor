@@ -249,7 +249,8 @@ string    text
 //  image.
 message RobotProcessedImage {
    uint_32 timestamp,
-   VisionMode visionModes[uint_8]
+   VisionMode visionModes[uint_8],
+   uint_8 mean // Valid iff ComputingStatistics mode enabled
 }
 
 // RobotObservedObject for signaling that an object

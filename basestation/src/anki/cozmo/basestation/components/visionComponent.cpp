@@ -906,7 +906,19 @@ namespace Cozmo {
         }
         
         // Send the processed image message last
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp, std::move(visionModesList))));
+        {
+          using namespace ExternalInterface;
+          
+          u8 imageMean = 0;
+          if(result.modesProcessed.IsBitFlagSet(VisionMode::ComputingStatistics))
+          {
+            imageMean = result.imageMean;
+          }
+          
+          _robot.Broadcast(MessageEngineToGame(RobotProcessedImage(result.timestamp,
+                                                                   std::move(visionModesList),
+                                                                   imageMean)));
+        }
       }
     }
     

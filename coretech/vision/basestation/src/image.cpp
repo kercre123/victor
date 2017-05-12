@@ -332,7 +332,8 @@ namespace Vision {
   
   Image  Image::Threshold(u8 value) const
   {
-    Image thresholdedImage(*this);
+    Image thresholdedImage;
+    this->CopyTo(thresholdedImage);
     return thresholdedImage.Threshold(value);
   }
 
@@ -353,7 +354,8 @@ namespace Vision {
 
       ConnectedComponentStats stat{
         .area        = (size_t)compStats[cv::CC_STAT_AREA],
-        .centroid    = Point2f(compCentroid[0], compCentroid[1]),
+        .centroid    = Point2f(Util::Clamp(compCentroid[0], 0.0, (f64)(GetNumCols()-1)),
+                               Util::Clamp(compCentroid[1], 0.0, (f64)(GetNumRows()-1))),
         .boundingBox = Rectangle<s32>(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                       compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]),
       };

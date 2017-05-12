@@ -58,11 +58,13 @@ private:
   size_t FindLargestRegionCentroid(const Vision::ImageRGB& imgColor,
                                    const Vision::Image&    imgGray,
                                    const Quad2f&           groundQuadInImage,
+                                   const bool              isDarkExposure,
                                    Point2f& centroid);
   
   // TODO: Make static (and pass in vizManager?)
   bool IsOnGroundPlane(const Quad2f& groundQuadInImage, const Vision::Image::ConnectedComponentStats& stat);
-  bool IsSurroundedByDark(const Vision::Image& image, const Vision::Image::ConnectedComponentStats& stat);
+  bool IsSurroundedByDark(const Vision::Image& image, const Vision::Image::ConnectedComponentStats& stat,
+                          const f32 darkThresholdFraction);
   bool IsSaturated(const Vision::ImageRGB& image, const Vision::Image::ConnectedComponentStats& stat,
                    const f32 redThreshold, const f32 greenThreshold);
 
