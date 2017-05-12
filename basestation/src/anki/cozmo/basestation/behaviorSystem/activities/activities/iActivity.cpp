@@ -26,7 +26,6 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -112,7 +111,7 @@ bool IActivity::Init(Robot& robot, const Json::Value& config)
   std::string sparkString;
   if( JsonTools::GetValueOptional(config,kRequiresSparkKey,sparkString) )
   {
-    _requiredSpark = UnlockIdsFromString(sparkString.c_str());
+    _requiredSpark = UnlockIdFromString(sparkString.c_str());
   }
   
   // driving animation triggers

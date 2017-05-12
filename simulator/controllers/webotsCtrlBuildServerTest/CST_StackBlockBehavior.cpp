@@ -10,7 +10,6 @@
  *
  **/
 
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 
@@ -134,7 +133,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
       // make sure stacking is unlocked
-      UnlockId unlock = UnlockIdsFromString("StackTwoCubes");
+      UnlockId unlock = UnlockIdFromString("StackTwoCubes");
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
                      ExternalInterface::RequestSetUnlock(unlock, true)));

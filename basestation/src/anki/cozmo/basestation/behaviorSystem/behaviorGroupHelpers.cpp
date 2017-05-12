@@ -20,15 +20,6 @@ namespace Cozmo {
 
   
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(BehaviorGroup);
-
-
-// One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<BehaviorGroup> gStringToBehaviorGroupMapper;
-
-BehaviorGroup BehaviorGroupFromString(const char* inString)
-{
-  return gStringToBehaviorGroupMapper.GetTypeFromString(inString);
-}
   
 
 } // namespace Cozmo

@@ -14,7 +14,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"

@@ -13,7 +13,6 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
-#include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "json/json.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"

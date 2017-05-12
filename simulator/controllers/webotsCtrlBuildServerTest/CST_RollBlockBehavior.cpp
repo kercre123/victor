@@ -10,7 +10,6 @@
  *
  **/
 
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 
@@ -85,7 +84,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       // TakeScreenshotsAtInterval("RollBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
-      UnlockId unlock = UnlockIdsFromString("RollCube");
+      UnlockId unlock = UnlockIdFromString("RollCube");
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
                      ExternalInterface::RequestSetUnlock(unlock, true)));

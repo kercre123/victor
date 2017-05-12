@@ -18,18 +18,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(VisionMode);
-
-
-// One global instance, created at static initialization on app launch
-static Anki::Util::StringToEnumMapper<VisionMode> gStringToVisionModeMapper;
-
-VisionMode VisionModeFromString(const char* inString)
-{
-  return gStringToVisionModeMapper.GetTypeFromString(inString);
-}
-  
 
 } // namespace Cozmo
 } // namespace Anki

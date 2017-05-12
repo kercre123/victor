@@ -14,14 +14,11 @@
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/encodedImage.h"
-#include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -1231,7 +1228,7 @@ namespace Anki {
                       break;
                     }
 
-                    UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
+                    UnlockId unlock = UnlockIdFromString(unlockName.c_str());
                     if( unlock != UnlockId::Count ) {
                       ExternalInterface::ActivateSpark activate(unlock);
                       ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
@@ -2306,7 +2303,7 @@ namespace Anki {
                     break;
                   }
 
-                  UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
+                  UnlockId unlock = UnlockIdFromString(unlockName.c_str());
                   bool val = !shiftKeyPressed;
                   printf("%s %s\n", (val ? "Unlocking" : "Locking"), unlockName.c_str());
                   SendMessage( ExternalInterface::MessageGameToEngine(

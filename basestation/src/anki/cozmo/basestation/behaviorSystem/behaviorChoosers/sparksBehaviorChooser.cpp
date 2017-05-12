@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
-#include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"

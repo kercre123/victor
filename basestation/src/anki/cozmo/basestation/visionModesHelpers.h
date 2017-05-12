@@ -22,11 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  
 DECLARE_ENUM_INCREMENT_OPERATORS(VisionMode);
-
-VisionMode VisionModeFromString(const char* inString);
-
 
 } // namespace Cozmo
 } // namespace Anki

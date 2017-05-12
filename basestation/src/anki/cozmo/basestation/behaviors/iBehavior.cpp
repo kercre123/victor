@@ -24,11 +24,9 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
-#include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -188,7 +186,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     DEV_ASSERT(requiredUnlockJson.isString(), "IBehavior.ReadFromJson.NonStringUnlockId");
     
     // this is probably the only place where we need this, otherwise please refactor to proper header
-    const UnlockId requiredUnlock = UnlockIdsFromString(requiredUnlockJson.asString());
+    const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
     if ( requiredUnlock != UnlockId::Count ) {
       PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
                         GetName().c_str(), requiredUnlockJson.asString().c_str() );

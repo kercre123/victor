@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -350,7 +349,7 @@ void ReactionTriggerStrategyHiccup::ParseConfig(const Json::Value& config)
   
   std::string unlockId = "";
   res &= JsonTools::GetValueOptional(config, kHiccupUnlockId, unlockId);
-  _hiccupsUnlockId = UnlockIdsFromString(unlockId.c_str());
+  _hiccupsUnlockId = UnlockIdFromString(unlockId.c_str());
   DEV_ASSERT(_hiccupsUnlockId != UnlockId::Count, "ReactionTriggerStrategyHiccup.InvalidUnlock");
   
   DEV_ASSERT(res, "ReactionTriggerStrategyHiccup.MissingParamFromJson");

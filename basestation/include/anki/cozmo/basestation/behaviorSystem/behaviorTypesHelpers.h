@@ -24,9 +24,7 @@
 namespace Anki {
 namespace Cozmo {
 
-DECLARE_ENUM_INCREMENT_OPERATORS(BehaviorClass);
 DECLARE_ENUM_INCREMENT_OPERATORS(ReactionTrigger);
-DECLARE_ENUM_INCREMENT_OPERATORS(ExecutableBehaviorType);  
 
 } // namespace Cozmo
 } // namespace Anki

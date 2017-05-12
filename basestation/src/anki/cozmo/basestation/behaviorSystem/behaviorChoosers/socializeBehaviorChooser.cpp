@@ -15,11 +15,9 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/math/math.h"
 
@@ -35,7 +33,7 @@ PotentialObjectives::PotentialObjectives(const Json::Value& config)
 
   std::string unlockStr;
   if( JsonTools::GetValueOptional(config, "ignoreIfLocked", unlockStr) ) {
-    requiredUnlock = UnlockIdsFromString(unlockStr);
+    requiredUnlock = UnlockIdFromString(unlockStr);
   }
 
   probabilityToRequire = config.get("probabilityToRequireObjective", 1.0f).asFloat();

@@ -26,13 +26,6 @@ namespace Cozmo {
   
 DECLARE_ENUM_INCREMENT_OPERATORS(BehaviorGroup);
 
-BehaviorGroup BehaviorGroupFromString(const char* inString);
-
-inline BehaviorGroup BehaviorGroupFromString(const std::string& inString)
-{
-  return BehaviorGroupFromString(inString.c_str());
-}
-
 
 } // namespace Cozmo
 } // namespace Anki
