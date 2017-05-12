@@ -97,20 +97,40 @@ namespace CodeLab {
       AdvanceToNextBlock(true);
     }
 
+    private static LightCube GetMostRecentlySeenCube() {
+      LightCube lastCubeSeen = null;
+      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+        LightCube cube = kvp.Value;
+        if (cube.IsInFieldOfView) {
+          return cube;
+        }
+        else {
+          if ((lastCubeSeen == null) || (cube.NumVisionFramesSinceLastSeen < lastCubeSeen.NumVisionFramesSinceLastSeen)) {
+            lastCubeSeen = cube;
+          }
+        }
+      }
+
+      return lastCubeSeen;
+    }
+
     // If robot currently sees a cube, try to dock with it.
     public void DockWithCube(bool headAngleActionSucceeded) {
       bool success = false;
-      LightCube cube = null;
 
       if (headAngleActionSucceeded) {
-        foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-          if (kvp.Value.IsInFieldOfView) {
-            success = true;
-            cube = kvp.Value;
-            RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
-            return;
-          }
+        LightCube cube = GetMostRecentlySeenCube();
+        const int kMaxVisionFramesSinceSeeingCube = 30;
+        if ((cube != null) && (cube.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube)) {
+          success = true;
+          RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
         }
+        else {
+          DAS.Warn("DockWithCube.NoVisibleCube", "NumVisionFramesSinceLastSeen = " + ((cube != null) ? cube.NumVisionFramesSinceLastSeen : -1));
+        }
+      }
+      else {
+        DAS.Warn("DockWithCube.HeadAngleActionFailed", "");
       }
 
       if (!success) {
