@@ -80,6 +80,7 @@ private:
   
   enum class State {
     Init,                   // Initialize everything and play starting animations
+    SetupInterrupted,       // The game was interrupted before Cozmo fell asleep for the first time (e.g. blocks moved)
     DriveToBlocks,          // Drive to a pose near the blocks
     SettleIn,               // Play animation for 'settling in' before sleeping
     StartSleeping,

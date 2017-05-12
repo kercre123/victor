@@ -78,7 +78,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogA
 CONSOLE_VAR_RANGED(float, kSleepingMinDuration_s, "Behavior.GuardDog",  60.f, 20.f, 120.f); // minimum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60.f, 300.f); // maximum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 20.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
-CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  12.f,  5.f,  30.f);
+CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  18.f,  5.f,  30.f);
 CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
 CONSOLE_VAR_RANGED(float, kMaxMovementBustedGracePeriod_s, "Behavior.GuardDog", 10.f, 0.f, 120.f); // amount of time to wait (after falling asleep) before 'Busted' can happen due to movement above 'max' threshold
   
@@ -259,6 +259,11 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogSetup);
       
       break;
+    }
+    case State::SetupInterrupted:
+    {
+      RecordResult("SetupInterrupted");
+      return Status::Complete;
     }
     case State::DriveToBlocks:
     {
@@ -485,15 +490,14 @@ void BehaviorGuardDog::HandleObjectConnectionState(const Robot& robot, const Obj
 void BehaviorGuardDog::HandleObjectMoved(const Robot& robot, const ObjectMoved& msg)
 {
   // If an object has been moved before we start monitoring for motion
-  //  and before we fall asleep, jump right to 'Busted' reaction.
+  //  and before we fall asleep, jump right to 'SetupInterrupted'.
   if (!_monitoringCubeMotion &&
-      (_firstSleepingStartTime_s == 0.f) &&
-      (_state != State::Busted)) {
+      (_firstSleepingStartTime_s == 0.f)) {
     PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectMoved.UnexpectedBlockMovement",
                      "Received ObjectMoved message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                      msg.objectID);
     StopActing();
-    SET_STATE(Busted);
+    SET_STATE(SetupInterrupted);
   }
 }
 
@@ -502,13 +506,12 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
   // If an object has a new UpAxis, it must have been moved. If this happens before
   //  monitoring for motion and before we fall asleep, jump right to 'Busted' reaction.
   if (!_monitoringCubeMotion) {
-    if ((_firstSleepingStartTime_s == 0.f) &&
-        (_state != State::Busted)) {
+    if (_firstSleepingStartTime_s == 0.f) {
       PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectUpAxisChanged.UnexpectedBlockMovement",
                        "Received ObjectUpAxisChanged message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                        msg.objectID);
       StopActing();
-      SET_STATE(Busted);
+      SET_STATE(SetupInterrupted);
     }
     return;
   }
@@ -573,10 +576,10 @@ void BehaviorGuardDog::CubeMovementHandler(Robot& robot, const ObjectID& objId, 
   const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasStartedSleeping = (_firstSleepingStartTime_s > 0.f);
   const bool pastMaxMovementGracePeriod = hasStartedSleeping && (now - _firstSleepingStartTime_s > kMaxMovementBustedGracePeriod_s);
-  // Play 'Busted' anim if cube is moved too much during game setup phase,
-  //   and during 'sleeping' if we're past the "grace period"
+  // Play 'Busted' reaction if cube is moved too much while
+  //   sleeping (if we're past the "grace period")
   if (block.movementScore >= kMovementScoreMax &&
-      (!hasStartedSleeping || pastMaxMovementGracePeriod)) {
+      pastMaxMovementGracePeriod) {
     StopActing();
     SET_STATE(Busted);
   } else if (block.movementScore > kMovementScoreDetectionThreshold) {
@@ -827,6 +830,7 @@ void BehaviorGuardDog::RecordResult(std::string&& result)
   }
   
   PRINT_CH_INFO("Behaviors",
+                "GuardDog.RecordResult",
                 "GuardDog result = %s, sleepingDuration = %.2f",
                 _result.c_str(),
                 _sleepingDuration_s);
