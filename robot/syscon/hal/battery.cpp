@@ -345,13 +345,13 @@ void Battery::updateOperatingMode() {
       Head::enterLowPowerMode();
       Motors::disable(true);
 
-      // Simply disable hardware, do not boot bluetooth on 1.0 hardware
-      // it doesn't always come back and reverts to factory
-      if (BODY_VER < BODY_VER_1v5) {
-        Battery::powerOff();
-        break ;
-      }
+      // Simply disable hardware, do not boot bluetooth on ANY hardware
+      // otherwise it doesn't always come back and reverts to factory
+      Battery::powerOff();
 
+      /*  1.5 code to permit power-on from button while off charger.
+          -- seems to be contributing to revert problems.
+           
       NVIC_DisableIRQ(UART0_IRQn);
       NVIC_DisableIRQ(GPIOTE_IRQn);
       NVIC_DisableIRQ(RTC1_IRQn);
@@ -361,6 +361,7 @@ void Battery::updateOperatingMode() {
       NVIC_EnableIRQ(UART0_IRQn);
       NVIC_EnableIRQ(GPIOTE_IRQn);
       NVIC_EnableIRQ(RTC1_IRQn);
+      */
       break ;
 
     case BODY_BLUETOOTH_OPERATING_MODE:

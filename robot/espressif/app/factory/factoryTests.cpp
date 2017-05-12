@@ -632,7 +632,10 @@ void Update()
       {
         if (IdleTimeExceeds(now, 5*IDLE_SECONDS) && i2spiMessageQueueIsEmpty())
         {
-          system_deep_sleep(0);
+          int i;
+          for (i=0;true;i++) {
+            if (!i) { os_printf("waiting_for_shutdown"); }
+          }
         }
         break;
       }
