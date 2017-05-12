@@ -199,11 +199,15 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseModal(BaseModal modalObject) {
-    modalObject.CloseDialog();
+    if (modalObject != null) {
+      modalObject.CloseDialog();
+    }
   }
 
   public static void CloseModalImmediately(BaseModal modalObject) {
-    modalObject.CloseDialogImmediately();
+    if (modalObject != null) {
+      modalObject.CloseDialogImmediately();
+    }
   }
 
   public static void CloseAllModals() {
