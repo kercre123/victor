@@ -1,11 +1,13 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="CLOSEBUTTON_x5F_On" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
 	 y="0px" viewBox="0 0 88 88" style="enable-background:new 0 0 88 88;" xml:space="preserve">
-<path style="opacity:0.5;fill:none;stroke:#CECECE;stroke-width:4;stroke-miterlimit:10;enable-background:new    ;" d="
-	M43.835,83.386c-35.054,0-37.383,1.748-37.383-43.944c0-26.809,0-33.337,37.383-33.337c38.664,0,38.548,6.527,38.548,33.57
-	C82.383,85.367,79.472,83.386,43.835,83.386z"/>
-<path style="fill:#E5E5E5;fill-opacity:0.2;stroke:#D3D3D3;stroke-width:2;stroke-miterlimit:10;" d="M57.191,59.036l-9.774-9.782
-	c-1.71-1.712-1.71-4.524,0-6.114l9.652-9.66c1.833-1.834,1.833-4.891,0-6.725l-2.688-2.69c-1.833-1.834-4.887-1.834-6.719,0
-	L25.549,46.197l22.357,22.377c1.833,1.834,4.887,1.834,6.719,0l2.688-2.69C59.024,63.927,59.024,60.87,57.191,59.036z"/>
+<style type="text/css">
+	.st0{fill:#535252;stroke:#CECECE;stroke-width:4;stroke-miterlimit:10;enable-background:new    ;}
+	.st1{fill:#E5E5E5;fill-opacity:0.2;stroke:#D3D3D3;stroke-width:2;stroke-miterlimit:10;}
+</style>
+<path class="st0" d="M43.8,83.4c-35.1,0-37.4,1.7-37.4-43.9c0-26.8,0-33.3,37.4-33.3c38.7,0,38.5,6.5,38.5,33.6
+	C82.4,85.4,79.5,83.4,43.8,83.4z"/>
+<path class="st1" d="M57.2,59l-9.8-9.8c-1.7-1.7-1.7-4.5,0-6.1l9.7-9.7c1.8-1.8,1.8-4.9,0-6.7l-2.7-2.7c-1.8-1.8-4.9-1.8-6.7,0
+	L25.5,46.2l22.4,22.4c1.8,1.8,4.9,1.8,6.7,0l2.7-2.7C59,63.9,59,60.9,57.2,59z"/>
 </svg>

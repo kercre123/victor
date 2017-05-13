@@ -137,7 +137,7 @@ button:focus {
   position: relative;
   color: #fff;
   border: 1px solid #1fadda;
-  border-radius: 5px;
+  border-radius: 10px;
   background-image: linear-gradient(to bottom, #7d7b78, #6b6b6c);
   text-transform: uppercase;
   padding: .3em 0;
@@ -152,7 +152,6 @@ button:focus {
   display: inline-block;
   height: .9em;
   width: auto;
-  margin-top: .1em;
 }
 .modal-slides .nav-button.nav-button-back {
   text-align: right;
@@ -174,7 +173,6 @@ button:focus {
 .modal-slides .nav-button .arrow.arrow-right {
   -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
-  right: 8px;
   margin-right: .4em;
   margin-left: 1.4em;
 }
@@ -246,6 +244,12 @@ button:focus {
   justify-content: center;
   text-align: center;
   white-space: pre-line;
+}
+
+@media only screen and (max-width: 799px) {
+  .modal-slides .nav-button {
+    border-radius: 5px;
+  }
 }
 
 @font-face {

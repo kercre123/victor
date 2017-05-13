@@ -185,11 +185,6 @@ button:focus {
   border-top: 1px solid #989899;
 }
 
-#projects .ft #tutorial-icon {
-  width: 7vh;
-  margin-left: .9em;
-}
-
 #tutorial-link {
   display: flex;
   flex-direction: row;
@@ -198,11 +193,23 @@ button:focus {
   text-decoration: none;
   font-weight: bold;
   text-transform: uppercase;
-  font-size: 4vh;
   padding-top: .1em;
   height: 100%;
   color: #1fadda;
 }
+
+#tutorial-link #tutorial-label {
+  display: inline-block;
+  font-size: 5vh;
+  margin-top: .2em;
+}
+
+#tutorial-link #tutorial-icon {
+  width: 7vh;
+  height: 7vh;
+  margin-left: .9em;
+}
+
 
 
 .button-plain {border: 0; background-color: transparent;}

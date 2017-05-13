@@ -87,6 +87,7 @@ button:focus {
   * Close button
   */
 
+
 #close {
     display: block;
     position: absolute;
@@ -102,15 +103,15 @@ button:focus {
     display: block;
     position: absolute;
     top: 10px;
-    left: 10px;
+    left: 15px;
 }
 
 #close .primary button {
-    width: 100px;
-    height: 100px;
-    border: 1px solid #535252;
+    width: 72px;
+    height: 72px;
+    border: 0;
     margin-left: -1px;
-    background-color: #535252;
+    background-color: transparent;
     background-image: url('../images/ui/ui_icon_close_up.svg');
     background-repeat: no-repeat;
     background-position: 50% 50%;
@@ -142,15 +143,15 @@ button:focus {
     display: block;
     position: absolute;
     top: 10px;
-    left: 100px;
+    left: 90px;
 }
 
 #challenges .primary button {
-    width: 100px;
-    height: 100px;
-    border: 1px solid #535252;
+    width: 72px;
+    height: 72px;
+    border: 0;
     margin-left: -1px;
-    background-color: #535252;
+    background-color: transparent;
     background-image: url('../images/ui/challenges_up.svg');
     background-repeat: no-repeat;
     background-position: 50% 50%;
@@ -225,10 +226,10 @@ button:focus {
     position: relative;
     width: 72px;
     height: 72px;
-    background-color: #535252;
+    background-color: transparent;
     background-image: url('../images/ui/greenflag-up.svg');
-    border: 1px solid #535252;
     pointer-events: auto;
+    border: 0;
 }
 
 #navigation .greenflag button:active {
@@ -253,9 +254,9 @@ button:focus {
     position: relative;
     width: 72px;
     height: 72px;
-    background-color: #535252;
+    background-color: transparent;
     background-image: url('../images/ui/stop-up.svg');
-    border: 1px solid #535252;
+    border: 0;
     pointer-events: auto;
 }
 
