@@ -932,26 +932,6 @@ namespace Anki {
         // Handled directly in spi to bypass main execution.
       }
 
-      void Process_wifiState(const WiFiState& state)
-      {
-#ifndef COZMO_V2
-#ifndef SIMULATOR
-        if (state.rtCount == 0)
-        {
-          HAL::SetImageSendMode(Off, QVGA);
-          ResetMissedLogCount();
-          // Put body into bluetooth mode when the engine is connected
-          SetBodyRadioMode bMsg;
-          bMsg.wifiChannel = 0;
-          bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-          while (RobotInterface::SendMessage(bMsg) == false);
-        }
-#endif
-#endif
-        HAL::RadioUpdateState(state.rtCount);
-      }
-
-
 #ifndef TARGET_K02
       void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
       {

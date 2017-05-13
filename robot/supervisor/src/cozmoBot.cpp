@@ -5,6 +5,7 @@
 #include "timeProfiler.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "liftController.h"
 #include "headController.h"
 #include "imuFilter.h"
@@ -219,6 +220,15 @@ namespace Anki {
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
           #ifndef COZMO_V2
           HAL::CameraSetColorEnabled(false);
+          #ifndef SIMULATOR
+          HAL::SetImageSendMode(Off, QVGA);
+          Messages::ResetMissedLogCount();
+          // Put body into bluetooth mode when the engine is connected
+          SetBodyRadioMode bMsg;
+          bMsg.wifiChannel = 0;
+          bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
+          while (RobotInterface::SendMessage(bMsg) == false) {}
+          #endif
           #endif
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;

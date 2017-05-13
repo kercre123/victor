@@ -106,6 +106,7 @@ typedef enum
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
   screenRectData    = 1<<2,    ///< Bytes in the iscochronous screen field are bounding data
+  appConnected      = 1<<3,    ///< App (reliable transport) is currently connected
 } Droplet;
 
 #define JPEG_LENGTH(i) (((i+3) >> 2)&jpegLenMask)

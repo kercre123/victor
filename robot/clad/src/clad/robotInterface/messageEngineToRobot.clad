@@ -463,7 +463,7 @@ union EngineToRobot
 
   // 0x30 to 0x7f: To RTIP
   OTA::EnterRecoveryMode        enterRecoveryMode           = 0x30,
-  WiFiState                     wifiState                   = 0x31,
+  //          FREE SLOT!!!                                  = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
   MoveLift                      moveLift                    = 0x34,

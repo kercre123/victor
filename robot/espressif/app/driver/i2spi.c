@@ -98,6 +98,7 @@ typedef struct {
   int16_t   bootloaderCommandPhase; ///< Operational phase for bootloader commands
   uint8_t   dropRxCounter; ///< Counter for drops received
   uint8_t   lastRxDroplet; ///< Keep track of the last rx droplet for flow control
+  uint8_t   persistentRTIPDropletFlags; ///< Any flags to the RTIP that should be persistent
   I2SPIMode mode; ///< The current mode of the driver
   I2SPIError errorCode; ///< Any pending errors
 } I2SpiDriver;
@@ -169,6 +170,18 @@ static ImageDataBuffer imageBuffers[NUM_IMAGE_DATA_BUFFERS];
  * K02 and experimentally determined fudge factor.
  */
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-12-(6*DMA_BUF_COUNT))/2)
+
+void ICACHE_FLASH_ATTR i2spiSetAppConnected(const bool connected)
+{
+  if (connected)
+  {
+    self.persistentRTIPDropletFlags |= appConnected;
+  }
+  else
+  {
+    self.persistentRTIPDropletFlags &= ~appConnected;
+  }
+}
 
 inline void    i2spiSetAudioSilenceSamples(const int16_t silence) { audio.silenceSamples = silence; }
 inline int16_t i2spiGetAudioSilenceSamples(void) { return audio.silenceSamples; }
@@ -509,7 +522,8 @@ ALWAYS_INLINE bool makeDrop(uint16_t* txBuf)
     drop.payloadLen = 0;
     
     // Fill in the drop itself
-    drop.droplet = PumpAudioData(drop.audioData) |
+    drop.droplet = self.persistentRTIPDropletFlags |
+                   PumpAudioData(drop.audioData) |
                    PumpScreenData(drop.screenData);
     
     if (self.messageBufferRind != self.messageBufferWind) // Have CLAD payload to send
