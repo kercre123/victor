@@ -153,7 +153,6 @@
       if (slides.length) {
         numSlides = slides.length;
       }
-      strip.style.left = 0; // allows transition animation to second page
 
       // set the slide count text and disable the back button
       _updateDisplay();
@@ -203,7 +202,7 @@
       if (!slide) { return; } // exit if slide does not exist
 
       if (noAnimation) disableAnimation();
-      strip.style.left = -slide.offsetLeft + 'px';
+      strip.style.webkitTransform = 'translate3d(-' + slide.offsetLeft + 'px, 0, 0)';
 
       if (noAnimation) {
         // restore page transition animations after this thread exits
@@ -236,7 +235,11 @@
      * @param {Number}
      */
     function _getCurrentSlideNum() {
-      var left = parseInt(strip.style.left, 10) || 0;
+      // parse xyz int values out of string 'translate3d(0,0,0)'
+      var parsedXYZ = strip.style.webkitTransform.replace('translate3d(','').replace(')','').split(',');
+
+      var left = parseInt(parsedXYZ[0], 10) || 0;
+
       var slideWidth = strip.offsetWidth;
       var slideNum = Math.round(-left / slideWidth) + 1;
 

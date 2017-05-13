@@ -190,9 +190,8 @@ button:focus {
   padding: 0;
   margin: 0;
   white-space: nowrap;
-  transition: left .5s;
+  transition: -webkit-transform .5s ease;
   -webkit-transform: translate3d(0,0,0);
-  transform: translate3d(0,0,0);
 }
 .modal-slides.disable-slide-animation .slide-strip {
   transition: none;
