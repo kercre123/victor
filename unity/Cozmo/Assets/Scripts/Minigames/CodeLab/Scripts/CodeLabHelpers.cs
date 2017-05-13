@@ -22,7 +22,14 @@ namespace CodeLab {
     }
 
     public void NeutralFaceThenAdvanceToNextBlock(bool success) {
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
+      // Failure is usually because another action (e.g. animation) was requested by user clicking in Scratch
+      // Therefore don't queue the neutral face animation in that case, as it will clobber the just requested animation
+      if (success) {
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
+      }
+      else {
+        AdvanceToNextBlock(success);
+      }
     }
 
     public void OnReleased() {
@@ -146,7 +153,9 @@ namespace CodeLab {
     private void FinishDockWithCube(bool success) {
       if (!success) {
         // Play angry animation since Cozmo wasn't able to complete the task
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock);
+        // As this is on failure, queue anim in parallel - failure here could be because another block was clicked, and we don't want to interrupt that one
+        Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock, queueActionPosition: queuePos);
       }
       else {
         AdvanceToNextBlock(true);

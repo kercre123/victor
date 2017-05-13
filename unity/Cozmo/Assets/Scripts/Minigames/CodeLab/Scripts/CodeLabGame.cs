@@ -50,6 +50,7 @@ namespace CodeLab {
 
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
+    private bool _RequiresResetToNeutralFace = false;
 
     private uint _ChallengeBookmark = 1;
 
@@ -271,7 +272,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
       }
 
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, null, queuePos);
+      // Only wait for the neutral face animation if already waiting for something, or there's definitely a face animation to clear
+      if ((_PendingResetToHomeActions > 0) || _RequiresResetToNeutralFace) {
+        _RequiresResetToNeutralFace = false;
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.OnResetToHomeCompleted, queuePos);
+        ++_PendingResetToHomeActions;
+      }
 
       if (_PendingResetToHomeActions > 0) {
         DAS.Info("CodeLab.ResetRobotToHomePos.Started", _PendingResetToHomeActions + " Pending Actions");
@@ -546,6 +552,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         bool wasMystery = (scratchRequest.argUInt != 0);
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
         RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock);
+        _RequiresResetToNeutralFace = true;
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left
