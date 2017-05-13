@@ -70,6 +70,7 @@ button:focus {
   width: 100%;
   height: 100%;
   padding: 0;
+  overflow: hidden;
 }
 
 .modal-slides .hd {
@@ -125,6 +126,7 @@ button:focus {
   border-top: 1px solid;
   border-image: linear-gradient(to right, #5d5e5f, #868788 25%, #868788 75%, #5d5e5f);
   border-image-slice: 1;
+  border-width: 1px 0 0 0;
 }
 
 .modal-slides .progress {

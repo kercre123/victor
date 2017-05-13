@@ -44,6 +44,16 @@
 
     // activate CSS for taps by registering a touchstart event
     document.addEventListener("touchstart", function(){}, true);
+
+    // prevent page from elastic scrolling to reveal whitespace, but
+    //  allow the project list to scroll
+    document.addEventListener('touchmove', function(event){
+      event.preventDefault();
+    });
+    document.querySelector('#projects-list').addEventListener('touchmove', function(event){
+      // allow the project list to scroll by touch
+      event.stopPropagation();
+    });
   }
 
   /**

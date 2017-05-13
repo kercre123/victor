@@ -17,6 +17,11 @@
 
     // activate CSS for taps by registering a touchstart event
     document.addEventListener("touchstart", function(){}, true);
+
+    // prevent elastic scrolling on the page that reveals whitespace and bounces back
+    document.addEventListener('touchmove', function(event){
+      event.preventDefault();
+    });
   }
 
 

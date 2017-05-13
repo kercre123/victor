@@ -310,11 +310,12 @@ button:focus {
 #challenges-frame-container #btn-close-challenges {
   z-index: 101;
   position: absolute;
-  top: 3.5vh;
-  left: 3vw;
+  top: 0;
+  left: 0;
   border: none;
-  background-color: #535252;
-  padding: .5vw;
+  background-color: transparent;
+  padding: 3vw 3vw 3vw 4vw;
+  z-index: 999;
 }
 
 #challenges-frame-container #btn-close-challenges img {
