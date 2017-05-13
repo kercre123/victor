@@ -303,6 +303,7 @@ namespace Anki {
                 break;
               case DA_ALIGN:
               case DA_ALIGN_SPECIAL:
+                dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
@@ -327,6 +328,7 @@ namespace Anki {
           }
 
           case MOVING_LIFT_PREDOCK:
+          {
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
 
               if (action_ == DA_PLACE_LOW_BLIND) {
@@ -385,9 +387,9 @@ namespace Anki {
               //}
             }
             break;
-
+          }
           case DOCKING:
-
+          {
             if (!DockingController::IsBusy()) {
 
               //DockingController::TrackCamWithLift(false);
@@ -448,6 +450,7 @@ namespace Anki {
                 AnkiDebug( 363, "PAP.DOCKING.DockingFailed", 305, "", 0);
 
                 // Send failed pickup or place message
+                bool doBackup = true;
                 switch(action_)
                 {
                   case DA_PICKUP_LOW:
@@ -472,6 +475,8 @@ namespace Anki {
                   case DA_FACE_PLANT:
                   {
                     SendPickAndPlaceResultMessage(false, NO_BLOCK);
+                    Reset();
+                    doBackup = false;
                     break;
                   }
                   default:
@@ -480,7 +485,9 @@ namespace Anki {
 
 
                 // Switch to BACKOUT mode:
-                StartBackingOut();
+                if (doBackup) {
+                  StartBackingOut();
+                }
               }
             }
             else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
@@ -491,7 +498,7 @@ namespace Anki {
               Localization::SetOnRamp(true);
             }
             break;
-
+          }
           case SET_LIFT_POSTDOCK:
           {
 #if(DEBUG_PAP_CONTROLLER)
@@ -635,13 +642,16 @@ namespace Anki {
             break;
           }
           case POPPING_A_WHEELIE:
+          {
             // Either the robot has pitched up, or timeout
             if (IMUFilter::GetPitch() > 1.2f || HAL::GetTimeStamp() > transitionTime_) {
               SendPickAndPlaceResultMessage(true, NO_BLOCK);
               Reset();
             }
             break;
+          }
           case MOVING_LIFT_POSTDOCK:
+          {
             if (LiftController::IsInPosition() ||
                 (transitionTime_ > 0 && transitionTime_ < HAL::GetTimeStamp())) {
 
@@ -686,8 +696,9 @@ namespace Anki {
               
             } // if (LiftController::IsInPosition())
             break;
-
+          }
           case BACKOUT:
+          {
             if (HAL::GetTimeStamp() > transitionTime_)
             {
               SteeringController::ExecuteDirectDrive(0,0);
@@ -697,8 +708,9 @@ namespace Anki {
               }
             }
             break;
-
+          }
           case TRAVERSE_RAMP_DOWN:
+          {
             if(IMUFilter::GetPitch() < -ON_RAMP_ANGLE_THRESH) {
 #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 134, "Switching out of TRAVERSE_RAMP_DOWN to TRAVERSE_RAMP (angle = %f)\n", 1, IMUFilter::GetPitch());
@@ -707,8 +719,9 @@ namespace Anki {
               mode_ = TRAVERSE_RAMP;
             }
             break;
-
+          }
           case TRAVERSE_RAMP:
+          {
             if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
               #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 135, "IDLE (from TRAVERSE_RAMP)\n", 0);
@@ -717,8 +730,9 @@ namespace Anki {
               Localization::SetOnRamp(false);
             }
             break;
-
+          }
           case ENTER_BRIDGE:
+          {
             // Keep driving until the marker on the other side of the bridge is seen.
             if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > BRIDGE_ALIGNED_MARKER_DISTANCE) {
               // Set vision marker to look for marker
@@ -731,7 +745,9 @@ namespace Anki {
               Localization::SetOnBridge(true);
             }
             break;
+          }
           case TRAVERSE_BRIDGE:
+          {
             if (DockingController::IsBusy()) {
               lastMarkerDist_ = DockingController::GetDistToLastDockMarker();
               if (lastMarkerDist_ < 100.f) {
@@ -751,7 +767,9 @@ namespace Anki {
               #endif
             }
             break;
+          }
           case LEAVE_BRIDGE:
+          {
             if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > lastMarkerDist_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
               #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 139, "IDLE (from TRAVERSE_BRIDGE)\n", 0);
@@ -760,7 +778,9 @@ namespace Anki {
               Localization::SetOnBridge(false);
             }
             break;
+          }
           case ROTATE_FOR_CHARGER_APPROACH:
+          {
             if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
               // Move lift up, otherwise it drags on the ground when the robot gets on the ramp
               LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK + 15, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
@@ -772,7 +792,9 @@ namespace Anki {
               mode_ = BACKUP_ON_CHARGER;
             }
             break;
+          }
           case BACKUP_ON_CHARGER:
+          {
             if (HAL::GetTimeStamp() > transitionTime_) {
               AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
               SendChargerMountCompleteMessage(false);
@@ -798,13 +820,16 @@ namespace Anki {
               tiltedOnChargerStartTime_ = 0;
             }
             break;
+          }
           case DRIVE_FORWARD:
+          {
             // For failed charger mounting recovery only
             if (HAL::GetTimeStamp() > transitionTime_) {
               SendChargerMountCompleteMessage(false);
               Reset();
             }
             break;
+          }
           case PICKUP_ANIM:
           {
             switch(pickupAnimMode_)
@@ -846,9 +871,11 @@ namespace Anki {
             break;
           }
           default:
+          {
             Reset();
             AnkiError( 295, "PAP.Update.InvalidAction", 347, "%d", 1, action_);
             break;
+          }
         }
 
         return retVal;

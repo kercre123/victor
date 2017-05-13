@@ -377,17 +377,9 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
                 }
                 else
                 {
-                  // Play failure animation
-                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING)
-                  {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail));
-                  }
-                  // During an interrupt behavior is cancelled only for a max_num_retries do we assume that the
-                  // pickup is just not working for some other reason than them messing with the robot.
-                  if( msg.result == ActionResult::REACHED_MAX_NUM_RETRIES )
-                  {
-                    SET_STATE(ErrorFinal,robot);
-                  }
+                  // We've either unsuccessfully retried pickup _maxErrorsPickup times or
+                  // pickup failed with a non-abort or retry failure. In both cases, something went really wrong.
+                  SET_STATE(ErrorFinal,robot);
                 }
               });
 }

@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/actions/driveOffChargerContactsAction.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/setFaceAction.h"
 #include "anki/cozmo/basestation/actions/trackGroundPointAction.h"
@@ -1177,11 +1178,29 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
     return;
   }
   
-  IActionRunner* action = handlerIter->second(*robot, msg.action);
+  // If numRetries > 0, wrap in retry action
+  IActionRunner* action = nullptr;
+  if (msg.numRetries > 0) {
+    IActionRunner* actionRunnerPtr = handlerIter->second(*robot, msg.action);
+    IAction* actionPtr = dynamic_cast<IAction*>(actionRunnerPtr);
+    if (actionPtr != nullptr) {
+      action = new RetryWrapperAction(*robot, actionPtr, AnimationTrigger::Count, msg.numRetries);
+    } else {
+      ICompoundAction* compoundActionPtr = dynamic_cast<ICompoundAction*>(actionRunnerPtr);
+      if (compoundActionPtr != nullptr) {
+        action = new RetryWrapperAction(*robot, compoundActionPtr, AnimationTrigger::Count, msg.numRetries);
+      } else {
+        PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueSingleAction.InvalidActionForRetries", "%s", actionRunnerPtr->GetName().c_str());
+        return;
+      }
+    }
+  } else {
+    action = handlerIter->second(*robot, msg.action);
+  }
   action->SetTag(msg.idTag);
 
   // Put the action in the given position of the specified queue
-  robot->GetActionList().QueueAction(msg.position, action, msg.numRetries);
+  robot->GetActionList().QueueAction(msg.position, action, 0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1225,11 +1244,18 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
     compoundAction->AddAction(action);
     
   } // for each action/actionType
-  
-  compoundAction->SetTag(msg.idTag);
 
+  // If numRetries > 0, wrap in retry action
+  IActionRunner* action = nullptr;
+  if (msg.numRetries > 0) {
+    action = new RetryWrapperAction(*robot, compoundAction, AnimationTrigger::Count, msg.numRetries);
+  } else {
+    action = compoundAction;
+  }
+  action->SetTag(msg.idTag);
+  
   // Put the action in the given position of the specified queue
-  robot->GetActionList().QueueAction(msg.position, compoundAction, msg.numRetries);
+  robot->GetActionList().QueueAction(msg.position, action, 0);
 }
 
   

@@ -339,7 +339,7 @@ namespace AnimationController {
     
     if (_animCtrlState != ENABLED) 
     {
-      AnkiDebug( 378, "AnimationController.buffer_key_frame.not_animCtrlState", 477, "BufferKeyFrame called while disabled", 0);
+      AnkiWarn( 378, "AnimationController.buffer_key_frame.not_animCtrlState", 477, "BufferKeyFrame called while disabled", 0);
       return RESULT_FAIL;
     }
     
@@ -347,7 +347,7 @@ namespace AnimationController {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
       if(!_bufferFullMessagePrintedThisTick) {
-        AnkiDebug( 379, "AnimationController.BufferKeyFrame.BufferFull", 6, "BufferKeyFrame.BufferFull %d bytes available, %d needed.", 2,
+        AnkiWarn( 379, "AnimationController.BufferKeyFrame.BufferFull", 6, "BufferKeyFrame.BufferFull %d bytes available, %d needed.", 2,
                   numBytesAvailable, numBytesNeeded);
         _bufferFullMessagePrintedThisTick = true;
       }

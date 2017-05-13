@@ -1235,7 +1235,7 @@ namespace Anki {
                                                                const bool sayName)
     : IDriveToInteractWithObject(robot,
                                  objectID,
-                                 PreActionPose::PLACE_RELATIVE,
+                                 AlignWithObjectAction::GetPreActionTypeFromAlignmentType(alignmentType),
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,

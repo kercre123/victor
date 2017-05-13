@@ -291,6 +291,9 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()
     new TurnTowardsPoseAction(_robot, _pose),
     new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::OUT_OF_FOV)
   }));
+  if (_waitForImagesAction != nullptr) {
+    _waitForImagesAction->PrepForCompletion();
+  }
   _waitForImagesAction.reset(new WaitForImagesAction(_robot, _numImagesToWaitFor, VisionMode::DetectingMarkers));
   
   _turnTowardsPoseAction->ShouldEmitCompletionSignal(false);

@@ -38,7 +38,12 @@
 
 
 namespace{
-static const float kMaxNegativeXPlacementOffset = 1.f;
+// This max negative offset is limited mainly by kBodyDistanceOffset_mm used in
+// AlignWithObject which defines the closest that a block can be approached (with lift raised).
+// Doesn't make much sense for PlaceRelObject but it doesn't really hurt except that
+// the robot would bump into the block it was docking to.
+static const float kMaxNegativeXPlacementOffset = 16.f;
+  
 static const char* kDisableReactionsID = "dockActions";
 static const char* kReactionsToSuppressID = "reactionsToSuppress";
 static const char* kPlaceOnGroundDisableID = "placeOnGroundAction";
@@ -1134,6 +1139,28 @@ namespace Anki {
     
 #pragma mark ---- AlignWithObjectAction ----
     
+    PreActionPose::ActionType AlignWithObjectAction::GetPreActionTypeFromAlignmentType(AlignmentType alignmentType) {
+      switch (alignmentType) {
+        case AlignmentType::LIFT_FINGER:
+          return PreActionPose::ActionType::PLACE_RELATIVE;
+        case AlignmentType::LIFT_PLATE:
+          // Assumption is that robot is setting up for pickup so only dockable
+          // sides should be considered
+          return PreActionPose::ActionType::DOCKING;
+        case AlignmentType::BODY:
+          return PreActionPose::ActionType::PLACE_RELATIVE;
+        case AlignmentType::CUSTOM:
+          // Normally this action uses the DOCKING preAction poses but if we are aligning
+          // to a custom distance then the DOCKING poses could be too close so use the PLACE_RELATIVE
+          // preAction poses. Plus, we want to be able to align with non-pickupable sides.
+          return PreActionPose::ActionType::PLACE_RELATIVE;
+        default:
+          PRINT_NAMED_ERROR("AlignWithObjectAction.GetPreActionTypeByAlignmentType.InvalidAlignmentType", "%s", EnumToString(alignmentType));
+          return PreActionPose::ActionType::PLACE_RELATIVE;
+      }
+    }
+    
+    
     AlignWithObjectAction::AlignWithObjectAction(Robot& robot,
                                                  ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
@@ -1153,12 +1180,12 @@ namespace Anki {
       {
         case(AlignmentType::LIFT_FINGER):
         {
-          distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM;
+          distance = kLiftFingerDistanceOffset_mm;
           break;
         }
         case(AlignmentType::LIFT_PLATE):
         {
-          distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - LIFT_FRONT_WRT_WRIST_JOINT;
+          distance = 0;
           
           // If we are aligning to the LIFT_PLATE then assume that we want the lift fingers in the
           // object grooves (as if to pickup the object) so use the same docking method as pickup
@@ -1167,20 +1194,16 @@ namespace Anki {
         }
         case(AlignmentType::BODY):
         {
-          distance = WHEEL_RAD_TO_MM;
+          distance = kBodyDistanceOffset_mm;
           break;
         }
         case(AlignmentType::CUSTOM):
         {
-          distance = distanceFromMarker_mm;
-          
-          // Normally this action uses the DOCKING preAction poses but if we are aligning
-          // to a custom distance then the DOCKING poses could be too close so use the PLACE_RELATIVE
-          // preAction poses
-          _preActionPoseActionType = PreActionPose::ActionType::PLACE_RELATIVE;
+          distance = distanceFromMarker_mm - kCustomDistanceOffset_mm;
           break;
         }
       }
+      _preActionPoseActionType = GetPreActionTypeFromAlignmentType(alignmentType);
       SetPlacementOffset(distance, 0, 0);
     }
     

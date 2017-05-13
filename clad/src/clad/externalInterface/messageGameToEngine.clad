@@ -277,7 +277,7 @@ message CancelActionByIdTag {
   message QueueSingleAction {
   uint_8  robotID,
   uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
-  uint_8  numRetries,
+  uint_8  numRetries = 0,
   QueueActionPosition    position,
   RobotActionUnion       action
 }
@@ -286,7 +286,7 @@ message CancelActionByIdTag {
 message QueueCompoundAction {
   uint_8  robotID,
   uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
-  uint_8  numRetries,
+  uint_8  numRetries = 0,
   bool  parallel,  // false means sequential
   QueueActionPosition    position,
   RobotActionUnion       actions[uint_8]
