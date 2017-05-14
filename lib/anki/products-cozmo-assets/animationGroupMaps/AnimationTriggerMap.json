@@ -414,7 +414,7 @@
     },
     {
       "CladEvent": "FlipDownFromBack",
-      "AnimName": "FlipDownFromBack"
+      "AnimName": "ag_reacttocliff_turtleroll_01"
     },
     {
       "CladEvent": "FrustratedByFailure",
