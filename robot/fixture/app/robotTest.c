@@ -605,7 +605,7 @@ void Recharge(void)
 void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 {
   #define CHARGE_TEST_DEBUG(x)    //x
-  const int NUM_SAMPLES = 32;
+  const int NUM_SAMPLES = 16;
   
   EnableChargeComms(); //switch to comm mode
   MicroWait(300*1000); //let battery voltage settle
@@ -616,8 +616,8 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   PIN_OUT(GPIOC, PINC_CHGTX);
   
   CHARGE_TEST_DEBUG( int print_len = 0; u32 displayLatch = 0; );
-  int avg=0, avgCnt=0, offContact = 0;
-  u32 waitTime = getMicroCounter();
+  int avg=0, avgCnt=0, avgMax = 0, iMax = 0, offContact = 0;
+  u32 avgMaxTime = 0, iMaxTime = 0, waitTime = getMicroCounter();
   while( getMicroCounter() - waitTime < (5*1000*1000) )
   {
     int current_ma = mGetCurrentMa();
@@ -647,6 +647,16 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
     } );
     //==========================================================*/
     
+    //save some metrics for debug
+    if( current_ma > iMax ) {
+      iMax = current_ma;
+      iMaxTime = getMicroCounter() - waitTime;
+    }
+    if( avg > avgMax ) {
+      avgMax = avg;
+      avgMaxTime = getMicroCounter() - waitTime;
+    }
+    
     //finish when average rises above our threshold (after minimum sample cnt)
     if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
       break;
@@ -661,6 +671,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   
   CHARGE_TEST_DEBUG( ConsolePrintf("\r\n"); );
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
+  ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
   if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
     return; //OK
   
