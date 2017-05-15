@@ -4,15 +4,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 
-        <!-- Blockly -->
-        <script src="./lib/blocks/blockly_uncompressed_horizontal.js"></script>
+        <script src="./lib/blocks/blockly_compressed_horizontal.js"></script>
+        <script src="./lib/blocks/blocks_compressed.js"></script>
+        <script src="./lib/blocks/blocks_compressed_horizontal.js"></script>
+        <script src="./lib/blocks/media/sounds.js"></script>
         <script src="./lib/blocks/msg/messages.js"></script>
-        <script src="./lib/blocks/blocks_common/math.js"></script>
-        <script src="./lib/blocks/blocks_common/text.js"></script>
-        <script src="./lib/blocks/blocks_horizontal/control.js"></script>
-        <script src="./lib/blocks/blocks_horizontal/event.js"></script>
-        <script src="./lib/blocks/blocks_horizontal/cozmo.js"></script>
-        <script src="./lib/blocks/blocks_horizontal/default_toolbox.js"></script>
+        <script src="./js/common.js"></script>
+        <script src="./js/CozmoSaveLoadAPI.js"></script>
+        <script src="./js/cozmoUserProjectCommands.js"></script>
+        <script src="./js/webAudioPlayer.js"></script>
+        <script src="./lib/vm/vm.min.js"></script>
+        <script src="./extra/challenges-frame.js"></script>
 
         <!-- CSS Styles -->
         <link rel="stylesheet" href="./css/normalize.css">
@@ -168,14 +170,5 @@
                 <button id="stop" />
             </div>
         </div>
-
-        <!-- Scripts -->
-        <script src="./lib/vm/vm.js"></script>
-        <script src="./lib/blocks/media/sounds.js"></script>
-        <script src="./js/common.js"></script>
-        <script src="./js/cozmoUserProjectCommands.js"></script>
-        <script src="./js/webAudioPlayer.js"></script>
-        <script src="./js/CozmoSaveLoadAPI.js"></script>
-        <script src="./extra/challenges-frame.js"></script>
 	</body>
 </html>
