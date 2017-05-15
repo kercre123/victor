@@ -48,7 +48,7 @@ static void softdevice_assertion_handler(uint32_t pc, uint16_t line_num, const u
 void Bluetooth::disconnect(uint32_t reason) {
   Anki::Cozmo::BLE::ConnectionState msg;
 
-  msg.state = reason;  
+  msg.state = reason;
   RobotInterface::SendMessage(msg);
 
   // This should be logged
@@ -76,7 +76,7 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
 {
   static ble_gap_master_id_t  p_master_id;
   static ble_gap_sec_keyset_t keys_exchanged;
-  
+
   uint32_t                    err_code;
 
   switch (p_ble_evt->header.evt_id)
@@ -84,10 +84,10 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
     case BLE_GAP_EVT_CONNECTED:
       // Make sure we pull out of low power mode
       Battery::setOperatingMode(BODY_BLUETOOTH_OPERATING_MODE);
-      
+
       Bluetooth::conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 
-      {  
+      {
         BLE::ConnectionState msg;
         msg.state = BLE::BLE_CONNECTED;
         RobotInterface::SendMessage(msg);
@@ -98,15 +98,15 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       RobotInterface::EnterFactoryTestMode ftm;
       ftm.mode = RobotInterface::FTM_None;
       RobotInterface::SendMessage(ftm);
-  
+
       break;
 
     case BLE_GAP_EVT_DISCONNECTED:
       Bluetooth::conn_handle = BLE_CONN_HANDLE_INVALID;
 
-      {  
+      {
         BLE::ConnectionState msg;
-        msg.state = BLE::BLE_DISCONNECTED_NORMALLY;  
+        msg.state = BLE::BLE_DISCONNECTED_NORMALLY;
         RobotInterface::SendMessage(msg);
       }
 
@@ -145,7 +145,7 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
     case BLE_GAP_EVT_TIMEOUT:
       if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING)
       {
-        // XXX: Go into low power mode        
+        // XXX: Go into low power mode
       }
       break;
 
@@ -157,14 +157,14 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       if ((p_evt_write->handle == Bluetooth::receive_handles.value_handle)) {
         if (p_evt_write->len == sizeof(BLE::Frame)) {
           Anki::Cozmo::BLE::DataReceived msg;
-          
+
           memcpy(&msg.frame, &p_evt_write->data, sizeof(BLE::Frame));
           RobotInterface::SendMessage(msg);
         }
       }
       break;
     }
-    
+
     default:
       // No implementation needed.
       break;
@@ -193,7 +193,7 @@ static uint32_t receive_char_add(uint8_t uuid_type)
   ble_gatts_attr_md_t attr_md;
 
   memset(&char_md, 0, sizeof(char_md));
-  
+
   char_md.char_props.read   = 1;
   char_md.char_props.write  = 1;
   char_md.p_char_user_desc  = NULL;
@@ -201,10 +201,10 @@ static uint32_t receive_char_add(uint8_t uuid_type)
   char_md.p_user_desc_md    = NULL;
   char_md.p_cccd_md         = NULL;
   char_md.p_sccd_md         = NULL;
-  
+
   ble_uuid.type = uuid_type;
   ble_uuid.uuid = COZMO_UUID_RECEIVE_CHAR;
-  
+
   memset(&attr_md, 0, sizeof(attr_md));
 
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
@@ -213,7 +213,7 @@ static uint32_t receive_char_add(uint8_t uuid_type)
   attr_md.rd_auth    = 0;
   attr_md.wr_auth    = 0;
   attr_md.vlen       = 0;
-  
+
   memset(&attr_char_value, 0, sizeof(attr_char_value));
 
   attr_char_value.p_uuid       = &ble_uuid;
@@ -222,7 +222,7 @@ static uint32_t receive_char_add(uint8_t uuid_type)
   attr_char_value.init_offs    = 0;
   attr_char_value.max_len      = sizeof(BLE::Frame);
   attr_char_value.p_value      = (uint8_t*)&value;
-  
+
   return sd_ble_gatts_characteristic_add(Bluetooth::service_handle, &char_md,
                                             &attr_char_value,
                                             &Bluetooth::receive_handles);
@@ -242,9 +242,9 @@ static uint32_t transmit_char_add(uint8_t uuid_type)
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
   cccd_md.vloc = BLE_GATTS_VLOC_STACK;
-  
+
   memset(&char_md, 0, sizeof(char_md));
-  
+
   char_md.char_props.read   = 1;
   char_md.char_props.notify = 1;
   char_md.p_char_user_desc  = NULL;
@@ -252,10 +252,10 @@ static uint32_t transmit_char_add(uint8_t uuid_type)
   char_md.p_user_desc_md    = NULL;
   char_md.p_cccd_md         = &cccd_md;
   char_md.p_sccd_md         = NULL;
-  
+
   ble_uuid.type = uuid_type;
   ble_uuid.uuid = COZMO_UUID_TRANSMIT_CHAR;
-  
+
   memset(&attr_md, 0, sizeof(attr_md));
 
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
@@ -264,16 +264,16 @@ static uint32_t transmit_char_add(uint8_t uuid_type)
   attr_md.rd_auth    = 0;
   attr_md.wr_auth    = 0;
   attr_md.vlen       = 0;
-  
+
   memset(&attr_char_value, 0, sizeof(attr_char_value));
-  
+
   attr_char_value.p_uuid       = &ble_uuid;
   attr_char_value.p_attr_md    = &attr_md;
   attr_char_value.init_len     = sizeof(BLE::Frame);
   attr_char_value.init_offs    = 0;
   attr_char_value.max_len      = sizeof(BLE::Frame);
   attr_char_value.p_value      = (uint8_t*)&value;
-  
+
   return sd_ble_gatts_characteristic_add(Bluetooth::service_handle, &char_md,
                                           &attr_char_value,
                                           &Bluetooth::transmit_handles);
@@ -309,7 +309,8 @@ void Bluetooth::advertise(void) {
     m_sd_enabled      = true;
   }
 
-  // Enable BLE stack 
+  #ifdef BLE_ENABLE
+  // Enable BLE stack
   ble_enable_params_t ble_enable_params;
   memset(&ble_enable_params, 0, sizeof(ble_enable_params));
   ble_enable_params.gatts_enable_params.service_changed = IS_SRVC_CHANGED_CHARACT_PRESENT;
@@ -317,7 +318,7 @@ void Bluetooth::advertise(void) {
   APP_ERROR_CHECK(err_code);
 
   ble_gap_addr_t addr;
-  
+
   err_code = sd_ble_gap_address_get(&addr);
   APP_ERROR_CHECK(err_code);
   err_code = sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE, &addr);
@@ -339,7 +340,7 @@ void Bluetooth::advertise(void) {
 
   err_code = sd_ble_uuid_vs_add(&COZMO_UUID_BASE, &uuid_type);
   APP_ERROR_CHECK(err_code);
-  
+
   // Setup our service
   ble_uuid_t adv_uuids[] = {
     { COZMO_UUID_SERVICE, uuid_type }
@@ -347,32 +348,33 @@ void Bluetooth::advertise(void) {
 
   err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &adv_uuids[0], &Bluetooth::service_handle);
   APP_ERROR_CHECK(err_code);
-  
+
   err_code = receive_char_add(uuid_type);
   APP_ERROR_CHECK(err_code);
-  
+
   err_code = transmit_char_add(uuid_type);
   APP_ERROR_CHECK(err_code);
 
-  // Initialize advertising 
+  // Initialize advertising
   ble_advdata_t scanrsp;
   memset(&scanrsp, 0, sizeof(scanrsp));
   scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(ble_uuid_t);
   scanrsp.uuids_complete.p_uuids  = adv_uuids;
-  
+
   err_code = ble_advdata_set(&m_advdata, &scanrsp);
   APP_ERROR_CHECK(err_code);
 
   // Initialize connection parameters
   err_code = ble_conn_params_init(&cp_init);
   APP_ERROR_CHECK(err_code);
-  
+
   // Set BLE power to +0db
   sd_ble_gap_tx_power_set(-4);
-  
+
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);
   APP_ERROR_CHECK(err_code);
+  #endif
 }
 
 void Bluetooth::shutdown(void) {
@@ -390,20 +392,20 @@ extern "C" void SWI2_IRQHandler(void)
   // Pull event from SOC.
   for (;;) {
     err_code = sd_evt_get(&evt_id);
-    
+
     if (err_code == NRF_ERROR_NOT_FOUND) {
       break ;
     } else if (err_code != NRF_SUCCESS) {
       APP_ERROR_HANDLER(err_code);
     }
   }
-  
+
   // Pull event from stack
   for (;;) {
     uint8_t ble_buffer[BLE_STACK_EVT_MSG_BUF_SIZE] __attribute__ ((aligned (4)));
     uint16_t evt_len = sizeof(ble_buffer);
     err_code = sd_ble_evt_get(ble_buffer, &evt_len);
-    
+
     switch (err_code) {
       case NRF_SUCCESS:
         ble_conn_params_on_ble_evt((ble_evt_t *)ble_buffer);
@@ -413,7 +415,7 @@ extern "C" void SWI2_IRQHandler(void)
        return ;
       default:
         APP_ERROR_HANDLER(err_code);
-        break ; 
+        break ;
     }
   }
 }
