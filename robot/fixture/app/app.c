@@ -22,7 +22,7 @@
 #include "nvReset.h"
 
 u8 g_fixtureReleaseVersion = 99;
-#define BUILD_INFO "PVT v1.5"
+#define BUILD_INFO "PVT2 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
 #define NOT_FOR_FACTORY 0
