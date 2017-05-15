@@ -2,9 +2,13 @@
 (UNRELEASED)
 ----------------
 
+General:
+-print fixture hw/fw rev info in test log header
+
 BODY3,ROBOTx,PACKOUTx:
 -add flashlight test.
 -new error code 607 [BODY_FLASHLIGHT]
+-improve chargeTest speed + log more debug data
 
 BODY3:
 -bugfix in chargeTest E623 (overvoltage) handling. Would get E400 or never stop motorslam.
