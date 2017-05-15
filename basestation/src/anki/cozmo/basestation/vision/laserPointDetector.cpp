@@ -99,8 +99,6 @@ static void ConnCompValidityHelper(const Array2d<s32>& labelImage,
   
   DEV_ASSERT(!isConnCompValid.empty(), "LaserPointDetector.ConnCompValidityHelper.EmptyValidityVector");
   
-  const s32 kBackgroundLabel = 0;
-  
   // Skip background label by starting iStat=1
   for(s32 iStat=1; iStat<ccStats.size(); ++iStat)
   {
@@ -122,7 +120,7 @@ static void ConnCompValidityHelper(const Array2d<s32>& labelImage,
       {
         const s32 label = labelROI_i[j];
         
-        if((label != kBackgroundLabel) && (GetValue(imgROI_i[j]) > highThreshold) )
+        if((label == iStat) && (GetValue(imgROI_i[j]) > highThreshold) )
         {
           markedValid = true;
           
