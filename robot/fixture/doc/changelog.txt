@@ -13,8 +13,9 @@ BODY3,ROBOTx,PACKOUTx:
 -new error code 607 [BODY_FLASHLIGHT]
 -improve chargeTest speed + log more debug data
 
-BODY3:
--bugfix in chargeTest E623 (overvoltage) handling. Would get E400 or never stop motorslam.
+Bugfix:
+-ROBOTx/PLAYPEN could throw error 0 (success) on charge comm failure
+-BODY3 chargeTest E623 (overvoltage) handling. Would get E400 or never stop motorslam.
 
 ----------------
 Release v98
