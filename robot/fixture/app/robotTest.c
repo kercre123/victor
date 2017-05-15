@@ -604,7 +604,7 @@ void Recharge(void)
 //@param vbat_overvolt_v100x - battery too full voltage level. special failure handling above this threshold.
 void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 {
-  #define CHARGE_TEST_DEBUG(x)    //x
+  #define CHARGE_TEST_DEBUG(x)    x
   const int NUM_SAMPLES = 16;
   
   EnableChargeComms(); //switch to comm mode
@@ -615,7 +615,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
   
-  CHARGE_TEST_DEBUG( int print_len = 0; u32 displayLatch = 0; );
+  CHARGE_TEST_DEBUG( int ibase_ma = 0; u32 print_time = 0;  );
   int avg=0, avgCnt=0, avgMax = 0, iMax = 0, offContact = 0;
   u32 avgMaxTime = 0, iMaxTime = 0, waitTime = getMicroCounter();
   while( getMicroCounter() - waitTime < (5*1000*1000) )
@@ -624,28 +624,21 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
     avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
     avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
     
-    //========================DEBUG===============================
+    //DEBUG: log charge current as bar graph
     CHARGE_TEST_DEBUG( {
-      for(int x=0; x < print_len; x++ ) { //erase previous line
-        ConsolePutChar(0x08); //backspace
-        ConsolePutChar(0x20); //space
-        ConsolePutChar(0x08); //backspace
-      }
-      
-      //Display real-time averaged current
       const int DISP_MA_PER_CHAR = 15;
-      print_len = ConsolePrintf("%03d ", avg);
-      for(int x=avg; x>0; x -= DISP_MA_PER_CHAR)
-        print_len += ConsolePrintf("=");
-      
-      //preserve a current history in the console window
-      if( getMicroCounter() - displayLatch > 500*1000 ) {
-        displayLatch = getMicroCounter();
+      const int IDIFF_MA = 25;
+      if( ABS(current_ma - ibase_ma) >= IDIFF_MA || ABS(avg - ibase_ma) >= IDIFF_MA || 
+          getMicroCounter() - print_time > 500*1000 || avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
+      {
+        ibase_ma = current_ma;
+        print_time = getMicroCounter();
+        ConsolePrintf("%03d/%03d ", avg, current_ma );
+        for(int x=1; x <= (avg > current_ma ? avg : current_ma); x += DISP_MA_PER_CHAR )
+          ConsolePrintf( x <= avg && x <= current_ma ? "=" : x > avg ? "+" : "-" );
         ConsolePrintf("\r\n");
-        print_len = 0;
       }
     } );
-    //==========================================================*/
     
     //save some metrics for debug
     if( current_ma > iMax ) {
@@ -669,7 +662,6 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
     }
   }
   
-  CHARGE_TEST_DEBUG( ConsolePrintf("\r\n"); );
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
   if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
