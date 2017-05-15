@@ -11,6 +11,10 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#ifndef __Cozmo_Basestation_Actions_ActionWatcher_H__
+#define __Cozmo_Basestation_Actions_ActionWatcher_H__
+
+#include "anki/cozmo/basestation/actions/actionDefinitions.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 
@@ -30,6 +34,18 @@ class ActionWatcher
 public:
   ActionWatcher();
   ~ActionWatcher();
+
+  // Register a callback. This callback will be called when _any_ action ends (including sub-actions or actions
+  // inside compound actions). It will be called after the action completed message is broadcast, and after
+  // the action itself has been fully deleted. Returns a unique integer id for the callback (so it can later
+  // be removed). Eventually this will move to the action container (see COZMO-11465 )
+  ActionEndedCallbackID RegisterActionEndedCallbackForAllActions(ActionEndedCallback callback);
+
+  // Remove a registered callback. Returns true if the callback was found, false otherwise
+  bool UnregisterCallback(ActionEndedCallbackID callbackID);
+  
+  // Called every tick of basestation after the action list has updated its actions
+  void Update();
   
   // Called when a parent action in the actionQueue is being updated
   void ParentActionUpdating(const IActionRunner* action);
@@ -95,7 +111,18 @@ private:
   
   // Maps a parent action's tag to a stack of subActions that are in the process of updating
   std::map<ActionTag, std::list<ActionTag>> _parentToUpdatingActions;
+
+  // Map of callbacks
+  std::map<int, ActionEndedCallback> _actionEndingCallbacks;
+
+  // the next available handle for an action ending callback
+  int _nextActionEndingCallbackID = 1;
+
+  // A queue of completed event info to call callbacks on during the next update
+  std::deque< ExternalInterface::RobotCompletedAction > _callbackQueue;
 };
   
 }
 }
+
+#endif

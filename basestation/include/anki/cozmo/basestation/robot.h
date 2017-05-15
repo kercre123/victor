@@ -618,7 +618,9 @@ public:
   // Return a reference to the robot's action list for directly adding things
   // to do, either "now" or in queues.
   // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
-  ActionList& GetActionList() { assert(_actionList); return *_actionList; }    
+  ActionList& GetActionList() { assert(_actionList); return *_actionList; }
+
+  bool HasActionList() const { return _actionList != nullptr; }
     
   // =========== Animation Commands =============
   

@@ -32,6 +32,37 @@ ActionWatcher::~ActionWatcher()
   }
 }
 
+ActionEndedCallbackID ActionWatcher::RegisterActionEndedCallbackForAllActions(ActionEndedCallback callback)
+{
+  _actionEndingCallbacks[ _nextActionEndingCallbackID ] = callback;
+  return _nextActionEndingCallbackID++;
+}  
+  
+bool ActionWatcher::UnregisterCallback(ActionEndedCallbackID callbackID)
+{
+  auto it = _actionEndingCallbacks.find(callbackID);
+  if( it != _actionEndingCallbacks.end() ) {
+    _actionEndingCallbacks.erase(it);
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+void ActionWatcher::Update()
+{
+  while( !_callbackQueue.empty() ) {
+    const auto& args = _callbackQueue.front();
+
+    for( auto& callback : _actionEndingCallbacks ) {
+      callback.second( args );
+    }
+
+    _callbackQueue.pop_front();
+  }
+}
+
 void ActionWatcher::ParentActionUpdating(const IActionRunner* action)
 {
   DEV_ASSERT(action != nullptr, "ActionWatcher.ParentActionUpdating.NullAction");
@@ -115,7 +146,7 @@ void ActionWatcher::ActionEndUpdating(const IActionRunner* action)
 }
 
 void ActionWatcher::ActionEnding(const IActionRunner* action)
-{
+{  
   // Populate a RobotCompletedAction for this action
   ExternalInterface::RobotCompletedAction r;
   r.idTag = action->GetTag();
@@ -123,6 +154,9 @@ void ActionWatcher::ActionEnding(const IActionRunner* action)
   r.result = action->GetState();
   action->GetCompletionUnion(r.completionInfo);
   GetSubActionResults(action->GetTag(), r.subActionResults);
+
+  // queue a copy now for callbacks that will be called in Update
+  _callbackQueue.push_back( r );
   
   // If this action is not in the tree then it was never updated so add it
   if(_actionTrees.find(action->GetTag()) == _actionTrees.end())
