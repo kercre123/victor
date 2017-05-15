@@ -21,11 +21,11 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 98;
+u8 g_fixtureReleaseVersion = 99;
 #define BUILD_INFO "PVT v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -300,6 +300,7 @@ static void RunTests()
   
   ConsolePrintf("fixtureSerial,%i\r\n", FIXTURE_SERIAL);
   ConsolePrintf("fixtureVersion,%i\r\n", FIXTURE_VERSION);
+  ConsolePrintf("fixtureRev,%s,v%d,%s\r\n", GetBoardRevStr(), g_fixtureReleaseVersion, NOT_FOR_FACTORY > 0 ? "debug" : "release");
   
   error_t error = ERROR_OK;
   try
