@@ -5,6 +5,9 @@
 General:
 -print fixture hw/fw rev info in test log header
 
+Firmware:
+-syscon, disabled BLE
+
 BODY3,ROBOTx,PACKOUTx:
 -add flashlight test.
 -new error code 607 [BODY_FLASHLIGHT]
