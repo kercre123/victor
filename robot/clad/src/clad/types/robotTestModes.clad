@@ -36,15 +36,9 @@ enum uint_8 TestMode {
   // Prints gyro/accel data
   TM_IMU,
 
-  // Cycles through all known animations
-  TM_ANIMATION,
-
   // Cycle through all LEDs with different colors
   TM_LIGHTS,
 
-  // Draw and blink a test face
-  TM_FACE_DISPLAY,
-  
   // Drives slow and then stops.
   // Drives fast and then stops.
   // Reports stopping distance and time (in tics).
@@ -52,9 +46,6 @@ enum uint_8 TestMode {
 
   // Drives all motors at max power simultaneously.
   TM_MAX_POWER_TEST,
-
-  // Turns on face tracking
-  TM_FACE_TRACKING,
 
   // TM_UPDATE_CLAD = testMode.clad
 
