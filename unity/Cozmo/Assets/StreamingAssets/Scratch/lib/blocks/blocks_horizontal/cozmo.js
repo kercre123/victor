@@ -288,7 +288,7 @@ Blockly.Blocks['cozmo_victory_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Winner");
+    this.setTooltip("Act Like a Winner");
   }
 };
 
@@ -375,7 +375,7 @@ Blockly.Blocks['cozmo_dog_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Dog");
+    this.setTooltip("Act Like a Dog");
   }
 };
 
@@ -404,7 +404,7 @@ Blockly.Blocks['cozmo_cat_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Cat");
+    this.setTooltip("Act Like a Cat");
   }
 };
 
