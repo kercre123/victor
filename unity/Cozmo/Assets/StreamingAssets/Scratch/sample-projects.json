@@ -63,22 +63,13 @@
     "DisplayOrder": "7"
   },
     {
-    "ProjectUUID": "3a30450f-3ec8-431c-b03c-61bbddfa0d65",
-    "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_liftheight\" id=\"n[e,^d\/1}c]EQte=l(!I\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"%;rVPVRU.Z*JCC`ah-:i\"><field name=\"CHOICE\">high<\/field><\/shadow><\/value><next><block type=\"cozmo_wait_until_see_cube\" id=\"NH62F.n,nCw(GUeDsiV%\"><next><block type=\"cozmo_dock_with_cube\" id=\")nDMdiWHm*np;},8OQY6\"><next><block type=\"cozmo_drive_forward\" id=\"xnU2{X6{*l`ApC^^sVy;\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"{W4hoRoOWn^=]n:Z`DR^\"><field name=\"NUM\">1<\/field><\/shadow><\/value><next><block type=\"cozmo_liftheight\" id=\"*K=J$]aMO9K `ZkUYum}\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"=U_!as!cfQTa6RZU4S9g\"><field name=\"CHOICE\">medium<\/field><\/shadow><\/value><next><block type=\"cozmo_drive_backward\" id=\"lcj$mn~[ezjlbnYOwkBK\"><value name=\"DISTANCE\"><shadow type=\"math_whole_number_with_validator\" id=\"nE@.Eecl4#!rhPIAM$LG\"><field name=\"NUM\">1<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
-    "ProjectName": "Roll Cube",
-    "ProjectIconName" : "cozmo-backward",
-    "VersionNum" : "1",
-    "IsVertical" : "false",
-    "DisplayOrder": "8"
-  },
-    {
     "ProjectUUID": "344f6715-d9c8-4b4f-b05e-22fe79d6484f",
     "ProjectXML": "<xml xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\"><block type=\"event_whenflagclicked\" id=\"FeOP~:vvt;08E!I7P8y0\" x=\"REPLACE_X_COORD\" y=\"REPLACE_Y_COORD\"><next><block type=\"cozmo_wait_until_see_cube\" id=\"19mJy@4Dy2(j4,,G0!]j\"><next><block type=\"cozmo_dock_with_cube\" id=\"ncYyvj(7R^i#5dJf0GP]\"><next><block type=\"control_repeat\" id=\"q-tzf1u?!%(G{=Lqo#RD\"><statement name=\"SUBSTACK\"><block type=\"cozmo_liftheight\" id=\"46W#I3JY13LY0-!0B`nD\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\"y;~A?yj3kssQ@U)L}9Qz\"><field name=\"CHOICE\">low<\/field><\/shadow><\/value><next><block type=\"cozmo_liftheight\" id=\"x8i7\/~hpRpm2dxOETx\/4\"><value name=\"CHOICE\"><shadow type=\"dropdown_cozmo_liftheight\" id=\")G;UTd032=n@7cq:NEE[\"><field name=\"CHOICE\">high<\/field><\/shadow><\/value><\/block><\/next><\/block><\/statement><value name=\"TIMES\"><shadow type=\"math_whole_number_with_validator\" id=\"rJ1j6,q|6#DKx|66g;.(\"><field name=\"NUM\">4<\/field><\/shadow><\/value><\/block><\/next><\/block><\/next><\/block><\/next><\/block><\/xml>",
     "ProjectName": "Workout with Cube",
     "ProjectIconName" : "cozmo-forklift-high",
     "VersionNum" : "1",
     "IsVertical" : "false",
-    "DisplayOrder": "9"
+    "DisplayOrder": "8"
   },
     {
     "ProjectUUID": "4bb7eb61-99c4-44a2-8295-f0f94ddeaf62",
@@ -87,6 +78,6 @@
     "ProjectIconName" : "cozmo_says",
     "VersionNum" : "1",
     "IsVertical" : "false",
-    "DisplayOrder": "10"
+    "DisplayOrder": "9"
   }
 ]

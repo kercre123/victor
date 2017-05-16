@@ -261,58 +261,49 @@ window._$translations = {
     "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText": {
         "translation": "Answer #27"
     }, 
-    "codeLabChallenge_rollCube.questionSlide.primaryText": {
-        "translation": "#28: Roll a cube backward."
-    }, 
-    "codeLabChallenge_rollCube.questionSlide.secondaryText": {
-        "translation": "Try the challenge first, then tap NEXT to check your answer!"
-    }, 
-    "codeLabChallenge_rollCube.answerSlide.primaryText": {
-        "translation": "Answer #28"
-    }, 
     "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText": {
-        "translation": "#29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
+        "translation": "#28: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText": {
         "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText": {
-        "translation": "Answer #29"
+        "translation": "Answer #28"
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText": {
-        "translation": "#30: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+        "translation": "#29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText": {
         "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText": {
-        "translation": "Answer #30"
+        "translation": "Answer #29"
     }, 
     "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText": {
-        "translation": "#31: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
+        "translation": "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
     }, 
     "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText": {
         "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText": {
-        "translation": "Answer #31"
+        "translation": "Answer #30"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText": {
-        "translation": "#32: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
+        "translation": "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText": {
         "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText": {
-        "translation": "Answer #32"
+        "translation": "Answer #31"
     }, 
     "codeLabChallenge_intruder.questionSlide.primaryText": {
-        "translation": "#33: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
+        "translation": "#32: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
     }, 
     "codeLabChallenge_intruder.questionSlide.secondaryText": {
         "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_intruder.answerSlide.primaryText": {
-        "translation": "Answer #33"
+        "translation": "Answer #32"
     }
 }
