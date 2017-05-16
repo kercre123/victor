@@ -2101,6 +2101,9 @@
         'COZMO_V2',
         '_DEBUG'
       ],
+      'defines!': [
+        'RELEASE'
+      ],
       'conditions': [
         [
           'OS=="ios" or OS=="mac"',

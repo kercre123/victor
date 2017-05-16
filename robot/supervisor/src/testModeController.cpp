@@ -583,6 +583,10 @@ namespace Anki {
           }
 
           ticCnt_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out 
+          (void)lSpeed;
+          (void)rSpeed;
         }
 
 
@@ -786,6 +790,10 @@ namespace Anki {
 
           AnkiInfo( 79, "TestModeController.LiftToggleTestUpdate", 325, "Lift speed %f rad/s, height %f mm", 2, lSpeed, lPos);
           ticCnt2_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out
+          (void)lSpeed;
+          (void)lPos;
         }
 
         return RESULT_OK;
@@ -901,6 +909,9 @@ namespace Anki {
             AnkiInfo( 81, "TestModeController.HeadTestUpdate", 331, "Head speed %f rad/s (filt %f rad/s), angle %f rad", 3, hSpeed, hSpeed_filt, hPos);
           }
           ticCnt2_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out
+          (void)hPos;
         }
 
         return RESULT_OK;
@@ -951,6 +962,10 @@ namespace Anki {
                 );
 
           ticCnt_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out
+          (void)data; 
+          (void)rot_imu;
         }
 
         return RESULT_OK;
@@ -989,6 +1004,7 @@ namespace Anki {
         if (ticCnt_++ > 2000 / TIME_STEP) {
           AnkiInfo( 85, "TestModeController.LightTestUpdate", 337, "LED channel %d, color 0x%x", 2, ledID_, LEDColorList_[ledColorIdx_]);
           //HAL::SetLED(ledID_, LEDColorList_[ledColorIdx_]);
+          (void)LEDColorList_; // Prevent compiler error. Don't need this when SetLED call restored.
 
           // Increment led
           ledID_ = (LEDId)((u8)ledID_+1);
