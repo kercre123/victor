@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
@@ -194,6 +195,10 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::TransitionToRollSuccess(Robot& robot)
 {
+  // The mood manager listens for actions to succeed to modify mood, but we may have just canceled the
+  // action, so manually send the mood event here
+  robot.GetMoodManager().TriggerEmotionEvent("RollSucceeded", MoodManager::GetCurrentTimeInSeconds());
+
   if(!_shouldStreamline){
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
   }

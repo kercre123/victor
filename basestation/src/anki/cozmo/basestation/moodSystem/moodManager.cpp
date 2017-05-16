@@ -12,6 +12,8 @@
 
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -65,6 +67,15 @@ MoodManager::MoodManager(Robot* inRobot)
 {
 }
 
+MoodManager::~MoodManager()
+{
+  // if the robot is destructing, it might not have an action list, so check that here
+  if( _actionCallbackID != 0 && _robot != nullptr && _robot->HasActionList() ) {
+    _robot->GetActionList().UnregisterCallback(_actionCallbackID);
+    _actionCallbackID = 0;
+  }
+}
+
 
 void MoodManager::Init(const Json::Value& inJson)
 {
@@ -72,13 +83,16 @@ void MoodManager::Init(const Json::Value& inJson)
 
   LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);
 
-  if (nullptr != _robot && _robot->HasExternalInterface() )
-  {
-    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
-    using namespace ExternalInterface;
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::MoodMessage>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
-  }      
+  if (nullptr != _robot) {
+    if( _robot->HasExternalInterface() ) {
+      auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
+      using namespace ExternalInterface;
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::MoodMessage>();
+    }
+
+    _actionCallbackID = _robot->GetActionList().RegisterActionEndedCallbackForAllActions(
+      std::bind(&MoodManager::HandleActionEnded, this, std::placeholders::_1));
+  }
 }
   
 bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
@@ -89,23 +103,25 @@ bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
 void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
 {
   if( ! inJson.isNull() ) {
+
     for(auto actionIt = inJson.begin(); actionIt != inJson.end(); ++actionIt) {
       if( ! actionIt->isNull() ) {
-        std::map< std::string, std::string > actionMap;
+
+        RobotActionType actionType = RobotActionTypeFromString(actionIt.key().asCString());
+
         for(auto resultIt = actionIt->begin(); resultIt != actionIt->end(); ++resultIt) {
           if( ! resultIt->isNull() ) {
-            actionMap.insert( std::make_pair( resultIt.key().asString(), resultIt->asString() ) );
+            
+            ActionResultCategory resultCategory = ActionResultCategoryFromString(resultIt.key().asCString());
+            _actionCompletedEventMap.insert( { {actionType, resultCategory}, resultIt->asString() } );
           }
-        }
-        if( ! actionMap.empty() ) {
-          _actionCompletedEventMap.insert( std::make_pair( actionIt.key().asString(), std::move( actionMap ) ) );
         }
       }
     }
   }
 
   PRINT_CH_INFO("Mood", "MoodManager.LoadedEventMap",
-                "Loaded mood reactions for %zu action types",
+                "Loaded mood reactions for %zu (actionType, resultCategory) pairs",
                 _actionCompletedEventMap.size());
 
   // PrintActionCompletedEventMap();
@@ -115,14 +131,12 @@ void MoodManager::PrintActionCompletedEventMap() const
 {
   PRINT_CH_INFO("Mood", "MoodManager.PrintActionCompletedEventMap", "action result event map follows:");
 
-  for( const auto& actionIt : _actionCompletedEventMap ) {
-    for( const auto& resultIt : actionIt.second ) {
-      PRINT_CH_INFO("Mood", "MoodManager.PrintActionCompletedEventMap",
-                    "%20s %15s %s",
-                    actionIt.first.c_str(),
-                    resultIt.first.c_str(),
-                    resultIt.second.c_str());
-    }
+  for( const auto& it : _actionCompletedEventMap ) {
+    PRINT_CH_INFO("Mood", "MoodManager.PrintActionCompletedEventMap",
+                  "%20s %15s %s",
+                  RobotActionTypeToString(it.first.first),
+                  ActionResultCategoryToString(it.first.second),
+                  it.second.c_str());
   }
 }
 
@@ -177,30 +191,26 @@ void MoodManager::Update(const float currentTime)
   #endif //SEND_MOOD_TO_VIZ_DEBUG
 }
 
-template<>
-void MoodManager::HandleMessage(const ExternalInterface::RobotCompletedAction& msg)
+void MoodManager::HandleActionEnded(const ExternalInterface::RobotCompletedAction& completion)
 {
-  auto ignoreIt = _actionsTagsToIgnore.find(msg.idTag);
+  auto ignoreIt = _actionsTagsToIgnore.find(completion.idTag);
   if( ignoreIt != _actionsTagsToIgnore.end() ) {
     _actionsTagsToIgnore.erase(ignoreIt);
     return;
   }
-  // Prevent Cozmo from crashing when receiving a message with an invalid action Type
-  const char* actionTypeString = RobotActionTypeToString(msg.actionType);
-  if (actionTypeString == nullptr) {
-    return;
-  }
-  const auto& actionIt = _actionCompletedEventMap.find( actionTypeString );
-  if( actionIt != _actionCompletedEventMap.end() ) {
-    const auto& resultIt = actionIt->second.find( ActionResultToString(msg.result) );
-    if( resultIt != actionIt->second.end() ) {
-      PRINT_CH_DEBUG("Mood", "MoodManager.ActionCompleted.Reaction",
-                     "Reacting to action '%s' completion with '%s' by triggering event '%s'",
-                     RobotActionTypeToString(msg.actionType),
-                     ActionResultToString(msg.result),
-                     resultIt->second.c_str());
-      TriggerEmotionEvent(resultIt->second, GetCurrentTimeInSeconds());
-    }
+
+
+  ActionResultCategory resultCategory = IActionRunner::GetActionResultCategory(completion.result);
+
+  auto it = _actionCompletedEventMap.find( {completion.actionType, resultCategory} );
+  if( it != _actionCompletedEventMap.end() ) {
+    PRINT_CH_DEBUG("Mood", "MoodManager.ActionCompleted.Reaction",
+                   "Reacting to action of type '%s' completion with category '%s' by triggering event '%s'",
+                   RobotActionTypeToString(completion.actionType),
+                   ActionResultCategoryToString(resultCategory),
+                   it->second.c_str());
+    
+    TriggerEmotionEvent(it->second, GetCurrentTimeInSeconds());
   }
 }
 
