@@ -1371,7 +1371,6 @@ public abstract class GameBase : MonoBehaviour {
       System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
         alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleInterruptionQuitGameViewClosed;
         alertModal.ModalForceClosedAnimationFinished += () => {
-          Debug.LogError(dasAlertName + " force closed");
           _InterruptedAlertView = null;
           CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
         };
