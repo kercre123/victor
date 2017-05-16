@@ -402,28 +402,45 @@ namespace Util {
     NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
     [urlRequest setTimeoutInterval:(request.timeOutMSec/1000)];
 
-    NSMutableData* bodyData;
-
-    if (request.body.empty()){
-      // Generate & Set Parameter Data
-      NSMutableString *bodyString = [NSMutableString string];
-      ConvertParamsToBodyString(request, bodyString);
-      bodyData = [[bodyString dataUsingEncoding:NSUTF8StringEncoding] copy];
+    const bool emptyBody = request.body.empty();
+    const bool isFileRequest = emptyBody && !request.storageFilePath.empty();
+    
+    if (isFileRequest){
+      NSString* filePath = [NSString stringWithCString:request.storageFilePath.c_str()
+                                              encoding:NSUTF8StringEncoding];
+      NSURL* url = [[NSURL alloc] initFileURLWithPath:filePath];
+      
+      __block HttpRequest blockRequest = std::move(request);
+      auto completionHandler = ^(NSData* data, NSURLResponse* response, NSError* error) {
+        DoCallback(queue, callback, std::move(blockRequest), data, response, error);
+      };
+      
+      NSURLSessionDataTask *task = [_urlSession uploadTaskWithRequest:urlRequest
+                                                             fromFile:url
+                                                    completionHandler:completionHandler];
+      [task resume];
     }else{
-      bodyData = [[NSMutableData alloc] initWithCapacity:request.body.size()];
-      [bodyData appendBytes:request.body.data() length:request.body.size()];
+      NSMutableData* bodyData;
+      if (emptyBody){
+        // Generate & Set Parameter Data
+        NSMutableString *bodyString = [NSMutableString string];
+        ConvertParamsToBodyString(request, bodyString);
+        bodyData = [[bodyString dataUsingEncoding:NSUTF8StringEncoding] copy];
+      }else{
+        bodyData = [[NSMutableData alloc] initWithCapacity:request.body.size()];
+        [bodyData appendBytes:request.body.data() length:request.body.size()];
+      }
+      
+      __block HttpRequest blockRequest = std::move(request);
+      auto completionHandler = ^(NSData* data, NSURLResponse* response, NSError* error) {
+        DoCallback(queue, callback, std::move(blockRequest), data, response, error);
+      };
+      
+      NSURLSessionDataTask *task = [_urlSession uploadTaskWithRequest:urlRequest
+                                                             fromData:bodyData
+                                                    completionHandler:completionHandler];
+      [task resume];
     }
-
-    __block HttpRequest blockRequest = std::move(request);
-
-    NSURLSessionDataTask *task = [_urlSession uploadTaskWithRequest:urlRequest
-                                                           fromData:bodyData
-                                                  completionHandler:^(NSData* data,
-                                                                      NSURLResponse* response,
-                                                                      NSError* error) {
-      DoCallback(queue, callback, std::move(blockRequest), data, response, error);
-    }];
-    [task resume];
   }
 
   NSMutableURLRequest* HttpAdapter::CreateURLRequest(const HttpRequest& request,

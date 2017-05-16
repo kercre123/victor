@@ -11,6 +11,7 @@
 */
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/util/file/archiveUtil.h"
+#include "anki/common/basestation/jsonTools.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -36,7 +37,6 @@ CONSOLE_VAR_RANGED(uint8_t, kSaveImageFrequency, "DevLogging", 0, 0, 75);
   
 DevLoggingSystem* DevLoggingSystem::sInstance                                   = nullptr;
 const DevLoggingClock::time_point DevLoggingSystem::kAppRunStartTime            = DevLoggingClock::now();
-const std::string DevLoggingSystem::kWaitingForUploadDirName                    = "waiting_for_upload";
 const std::string DevLoggingSystem::kArchiveExtensionString                     = ".tar.gz";
   
 const std::string DevLoggingSystem::kPrintName = "print";
@@ -49,6 +49,8 @@ const std::string DevLoggingSystem::kAppRunExtension = ".apprun";
 const std::string DevLoggingSystem::kAppRunKey = "apprun";
 const std::string DevLoggingSystem::kDeviceIdKey = "deviceID";
 const std::string DevLoggingSystem::kTimeSinceEpochKey = "timeSinceEpoch";
+const std::string DevLoggingSystem::kReadyForUploadKey = "readyForUpload";
+const std::string DevLoggingSystem::kHasBeenUploadedKey = "hasBeenUploaded";
 
 void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory, const std::string& appRunId)
 {
@@ -71,7 +73,7 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory, const std::
 
   // TODO:(lc) For the playtest we don't want to delete any log files, since they could be very valuable
   //DeleteFiles(_allLogsBaseDirectory, kArchiveExtensionString);
-  ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
+  ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString} );
   
   _devLoggingBaseDirectory = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, appRunTimeString});
   _gameToEngineLog.reset(new Util::RollingFileLogger(_queue, Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, kGameToEngineName})));
@@ -170,32 +172,50 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
     }
   }
 
-  // Now move all existing archives to the upload directory
-  auto filesToMove = Util::FileUtils::FilesInDirectory(_allLogsBaseDirectory, false, {kArchiveExtensionString.c_str(), kAppRunExtension.c_str()});
-  
-  // If we had nothing to move, we have nothing left to do
-  if (filesToMove.empty())
+  // Now update archive and apprun names with prefix, and mark apprun data as ready for upload
+  auto allArchives = Util::FileUtils::FilesInDirectory(_allLogsBaseDirectory, false, kArchiveExtensionString.c_str());
+  std::vector<std::string> filesToRename;
+  for (const auto& filename : allArchives)
   {
-    return;
-  }
-  
-  std::string waitingDir = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, kWaitingForUploadDirName});
-  Util::FileUtils::CreateDirectory(waitingDir);
-  for (auto& filename : filesToMove)
-  {
-    std::string newFilename = Util::FileUtils::FullFilePath({waitingDir, namePrefix + filename});
-    Util::FileUtils::DeleteFile(newFilename);
-    std::rename(Util::FileUtils::FullFilePath({_allLogsBaseDirectory, filename}).c_str(), newFilename.c_str());
+    auto appRunFilename = GetAppRunFilename(filename);
+    auto appRunFilepath = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, appRunFilename});
+    Json::Value appRunData = Cozmo::DevLoggingSystem::GetAppRunData(appRunFilepath);
+    bool readyForUpload = false;
+    
+    // If the apprun data for this archive either doesn't exist or hasn't been marked ready for upload, mark and move it
+    if (!JsonTools::GetValueOptional(appRunData, kReadyForUploadKey, readyForUpload) || !readyForUpload)
+    {
+      // Do a simple rename of the archive file with the prefix
+      std::string newArchiveFilename = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, namePrefix + filename});
+      Util::FileUtils::DeleteFile(newArchiveFilename);
+      std::rename(Util::FileUtils::FullFilePath({_allLogsBaseDirectory, filename}).c_str(), newArchiveFilename.c_str());
+      
+      // Save out the updated apprun data with the prefix (with ReadyForUpload marked as true) and delete the old apprun data
+      std::string newAppRunFilepath = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, namePrefix + appRunFilename});
+      appRunData[Cozmo::DevLoggingSystem::kReadyForUploadKey] = true;
+      Util::FileUtils::WriteFile(newAppRunFilepath, appRunData.toStyledString());
+      Util::FileUtils::DeleteFile(appRunFilepath);
+    }
   }
 }
 
 std::vector<std::string> DevLoggingSystem::GetLogFilenamesForUpload() const
 {
-  std::string waitingDir = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, kWaitingForUploadDirName});
-  return Util::FileUtils::FilesInDirectory(waitingDir, true, kArchiveExtensionString.c_str());
+  auto allArchives = Util::FileUtils::FilesInDirectory(_allLogsBaseDirectory, true, kArchiveExtensionString.c_str());
+  std::vector<std::string> filesToUpload;
+  for (auto& filename : allArchives)
+  {
+    Json::Value appRunData = GetAppRunData(GetAppRunFilename(filename));
+    bool hasBeenUploaded = false;
+    if (!JsonTools::GetValueOptional(appRunData, kHasBeenUploadedKey, hasBeenUploaded) || !hasBeenUploaded)
+    {
+      filesToUpload.push_back(std::move(filename));
+    }
+  }
+  return filesToUpload;
 }
 
-Json::Value DevLoggingSystem::GetAppRunData(const std::string& appRunFilename) const
+Json::Value DevLoggingSystem::GetAppRunData(const std::string& appRunFilename)
 {
   Json::Value data{};
   Json::Reader dataReader{};
