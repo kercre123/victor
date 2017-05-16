@@ -94,7 +94,7 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Set color on Cozmo's backpack");
+    this.setTooltip("Light Backpack");
   }
 };
 
@@ -128,7 +128,7 @@ Blockly.Blocks['cozmo_drive_forward'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive forward");
+    this.setTooltip("Drive Forward");
   }
 };
 
@@ -162,7 +162,7 @@ Blockly.Blocks['cozmo_drive_forward_fast'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive forward fast");
+    this.setTooltip("Drive Forward Fast");
   }
 };
 
@@ -196,7 +196,7 @@ Blockly.Blocks['cozmo_drive_backward'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive backward");
+    this.setTooltip("Drive Backward");
   }
 };
 
@@ -230,7 +230,7 @@ Blockly.Blocks['cozmo_drive_backward_fast'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive backward fast");
+    this.setTooltip("Drive Backward Fast");
   }
 };
 
@@ -259,7 +259,7 @@ Blockly.Blocks['cozmo_happy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be happy");
+    this.setTooltip("Act Happy");
   }
 };
 
@@ -288,7 +288,7 @@ Blockly.Blocks['cozmo_victory_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Celebrate");
+    this.setTooltip("Act Like Winner");
   }
 };
 
@@ -317,7 +317,7 @@ Blockly.Blocks['cozmo_unhappy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be sad");
+    this.setTooltip("Act Sad");
   }
 };
 
@@ -346,7 +346,7 @@ Blockly.Blocks['cozmo_surprise_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be surprised");
+    this.setTooltip("Act Surprised");
   }
 };
 
@@ -375,7 +375,7 @@ Blockly.Blocks['cozmo_dog_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Think about dog");
+    this.setTooltip("Act Like Dog");
   }
 };
 
@@ -404,7 +404,7 @@ Blockly.Blocks['cozmo_cat_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Think about cat");
+    this.setTooltip("Act Like Cat");
   }
 };
 
@@ -462,7 +462,7 @@ Blockly.Blocks['cozmo_excited_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be excited");
+    this.setTooltip("Act Excited");
   }
 };
 
@@ -491,7 +491,7 @@ Blockly.Blocks['cozmo_thinking_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Think hard");
+    this.setTooltip("Think Hard");
   }
 };
 
@@ -520,7 +520,7 @@ Blockly.Blocks['cozmo_bored_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be bored");
+    this.setTooltip("Act Bored");
   }
 };
 
@@ -549,7 +549,7 @@ Blockly.Blocks['cozmo_frustrated_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be frustrated");
+    this.setTooltip("Act Frustrated");
   }
 };
 
@@ -578,7 +578,7 @@ Blockly.Blocks['cozmo_chatty_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be chatty");
+    this.setTooltip("Act Chatty");
   }
 };
 
@@ -607,7 +607,7 @@ Blockly.Blocks['cozmo_dejected_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Be disappointed");
+    this.setTooltip("Act Disappointed");
   }
 };
 
@@ -665,7 +665,7 @@ Blockly.Blocks['cozmo_mystery_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Mystery animation");
+    this.setTooltip("Mystery Animation");
   }
 };
 
@@ -721,7 +721,7 @@ Blockly.Blocks['cozmo_liftheight'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Move lift");
+    this.setTooltip("Move Lift");
   }
 };
 
@@ -777,7 +777,7 @@ Blockly.Blocks['cozmo_headangle'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Move head");
+    this.setTooltip("Move Head");
   }
 };
 
@@ -806,7 +806,7 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Dock with cube");
+    this.setTooltip("Drive to Cube");
   }
 };
 
@@ -840,7 +840,7 @@ init: function() {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Make Cozmo speak");
+    this.setTooltip("Say");
   }
 };
 
@@ -869,7 +869,7 @@ Blockly.Blocks['cozmo_turn_left'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Turn left");
+    this.setTooltip("Turn Left");
   }
 };
 
@@ -898,7 +898,7 @@ Blockly.Blocks['cozmo_turn_right'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Turn right");
+    this.setTooltip("Turn Right");
   }
 };
 
@@ -926,7 +926,7 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait until Cozmo sees a face");
+    this.setTooltip("Wait Until Face Seen");
   }
 };
 
@@ -954,7 +954,7 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait until Cozmo sees a happy face");
+    this.setTooltip("Wait Until Smile Seen");
   }
 };
 
@@ -982,7 +982,7 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait until Cozmo sees a sad face");
+    this.setTooltip("Wait Until Frown Seen");
   }
 };
 
@@ -1010,7 +1010,7 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait until Cozmo sees a cube");
+    this.setTooltip("Wait Until Cube Seen");
   }
 };
 
@@ -1038,6 +1038,6 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait for cube tap");
+    this.setTooltip("Wait Until Cube Tapped");
   }
 };
