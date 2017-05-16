@@ -537,11 +537,13 @@ message ActivateBehaviorChooser {
 
 // ExecuteBehavior
 message ExecuteBehaviorByExecutableType {
-  ExecutableBehaviorType behaviorType
+  ExecutableBehaviorType behaviorType,
+  int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
 message ExecuteBehaviorByName {
-  string behaviorName
+  string behaviorName,
+  int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
 // Special message to make BehaviorLiftLoadTest runnable.

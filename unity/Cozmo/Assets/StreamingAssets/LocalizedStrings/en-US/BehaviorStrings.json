@@ -152,5 +152,44 @@
   },
   "button.clearThisSlot": {
     "translation": "Clear This Slot"
+  },
+  "behavior.singing.Camptown": {
+    "translation": "Cozmo is singing Camptown"
+  },
+  "behavior.singing.ItsyBitsySpider": {
+    "translation": "Cozmo is singing Itsy Bitsy Spider"
+  },
+  "behavior.singing.Beethovens5th": {
+    "translation": "Cozmo is singing Beethovens 5th"
+  },
+  "behavior.singing.PopGoesTheWeasel": {
+    "translation": "Cozmo is singing Pop Goes The Weasel"
+  },
+  "behavior.singing.RowYourBoat": {
+    "translation": "Cozmo is singing Row Your Boat"
+  },
+  "behavior.singing.PachebelCanon": {
+    "translation": "Cozmo is singing Pachelbel Canon"
+  },
+  "behavior.singing.OdeToJoy": {
+    "translation": "Cozmo is singing Ode To Joy"
+  },
+  "behavior.singing.TwinkleTwinkle": {
+    "translation": "Cozmo is singing Twinkle Twinkle"
+  },
+  "behavior.singing.FrereJacques": {
+    "translation": "Cozmo is singing Frere Jacques"
+  },
+  "behavior.singing.MaryHadALittleLamb": {
+    "translation": "Cozmo is singing Mary Had a Little Lamb"
+  },
+  "behavior.singing.TakeMeOutToTheBallgame": {
+    "translation": "Cozmo is singing Take Me Out to the Ballgame"
+  },
+  "behavior.singing.WilliamTell": {
+    "translation": "Cozmo is singing William Tell"
+  },
+  "behavior.singing.YankeeDoodle": {
+    "translation": "Cozmo is singing Yankee Doodle"
   }
 }

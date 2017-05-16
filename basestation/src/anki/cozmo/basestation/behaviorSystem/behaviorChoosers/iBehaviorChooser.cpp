@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 
+#include "anki/messaging/basestation/IComms.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -61,8 +63,44 @@ void IBehaviorChooser::HandleMessage(const ExternalInterface::RequestChooserBeha
   {
     auto behaviorMap = GetChooserBehaviors();
     
-    ExternalInterface::RespondChooserBehaviorList message(std::move(behaviorMap));
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    // Break behaviorMap up into multiple message since it is a vector of strings
+    // and the max message size is MsgPacket::MAX_SIZE (2048)
+    auto iter = behaviorMap.begin();
+    std::vector<std::string> behaviorNames;
+    u32 byteCount = 0;
+    const u32 kMaxMessageSize = Comms::MsgPacket::MAX_SIZE;
+    while(iter != behaviorMap.end())
+    {
+      const size_t size = iter->size();
+      if(byteCount + size > kMaxMessageSize)
+      {
+        ExternalInterface::RespondChooserBehaviorList message(std::move(behaviorNames), false);
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+        
+        // Safe to call after move since clear() has no preconditions
+        // Also puts temp back to a valid state since move leaves it in an
+        // invalid state
+        behaviorNames.clear();
+        byteCount = 0;
+      }
+      else
+      {
+        behaviorNames.push_back(*iter);
+        byteCount += size + 1; // Plus one for one byte for string length
+        ++iter;
+      }
+    }
+    
+    if(!behaviorNames.empty())
+    {
+      ExternalInterface::RespondChooserBehaviorList message(std::move(behaviorNames), true);
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    }
+    else
+    {
+      // We should always have one final message to send after exiting the above while loop
+      PRINT_NAMED_WARNING("IBehaviorChooser.HandleRequestChooserBehaviorList.NotSendingFinalMessage", "");
+    }
   }
 }
 

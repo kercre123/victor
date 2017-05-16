@@ -771,8 +771,14 @@ message ReactionTriggerTransition{
   ReactionTrigger newTrigger
 }
 
+// Sends the names of all behaviors that are a part of the chooser
+// that was in the GameToEngine RequestChooserBehaviorList message
+// Potentially has to be sent multiple times if the size of the
+// list of strings exceeds the message size
 message RespondChooserBehaviorList{
-  string behaviors[uint_8]
+  string behaviors[uint_8],
+  bool lastMessage = 0 // False if another one of these message will be sent
+                       // with more behavior names
 }
 
 message RespondEnabledBehaviorList{

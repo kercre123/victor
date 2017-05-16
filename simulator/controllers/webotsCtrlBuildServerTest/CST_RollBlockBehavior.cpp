@@ -129,7 +129,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
         SendMessage(ExternalInterface::MessageGameToEngine(
                       ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ExecuteBehaviorByName(kBehaviorName)));
+                      ExternalInterface::ExecuteBehaviorByName(kBehaviorName, -1)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
         SET_STATE(DontStartBehavior);

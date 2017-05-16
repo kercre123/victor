@@ -194,7 +194,7 @@ public class BehaviorPane : MonoBehaviour {
 
   private void OnBehaviorByNameButton() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName(_BehaviorNameInput.text);
+      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName(_BehaviorNameInput.text, 1);
     }
   }
 

@@ -1,0 +1,8 @@
+{
+  "behaviorClass":"Singing",
+  "name":"Singing_TwinkleTwinkle",
+  "displayNameKey":"behavior.singing.TwinkleTwinkle",
+  "requiredUnlockId":"Singing_TwinkleTwinkle",
+  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
+  "audioSwitch":"Cozmo_Sings_Twinkle_Twinkle"
+}

@@ -587,11 +587,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type, int numTimesToExecute = -1) {
     // Do nothing
   }
 
-  public void ExecuteBehaviorByName(string behaviorName) {
+  public void ExecuteBehaviorByName(string behaviorName, int numTimesToExecute = -1) {
     // Do nothing
   }
 

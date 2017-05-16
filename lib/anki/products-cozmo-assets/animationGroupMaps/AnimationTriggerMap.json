@@ -1365,6 +1365,26 @@
       "AnimName": "ag_shocked"
     },
     {
+      "CladEvent": "Singing_80bpm",
+      "AnimName": "ag_cozmosings_80bpm"
+    },
+    {
+      "CladEvent": "Singing_100bpm",
+      "AnimName": "ag_cozmosings_100bpm"
+    },
+    {
+      "CladEvent": "Singing_120bpm",
+      "AnimName": "ag_cozmosings_120bpm"
+    },
+    {
+      "CladEvent": "Singing_GetIn",
+      "AnimName": "ag_cozmosings_getin"
+    },
+    {
+      "CladEvent": "Singing_GetOut",
+      "AnimName": "ag_cozmosings_getout"
+    },
+    {
       "CladEvent": "Sleeping",
       "AnimName": "ag_sleeping"
     },

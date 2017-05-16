@@ -58,6 +58,14 @@ protected:
   // requests enabling processes required by behaviors when they are the selected one
   void SetProcessEnabled(const IBehavior* behavior, bool newValue);
   
+private:
+  // Number of times to run the selected behavior
+  // -1 for infinite
+  int _numRuns = -1;
+  
+  // Whether or not the selected behavior is running
+  bool _selectedBehaviorIsRunning = false;
+  
 }; // class SelectionBehaviorChooser
   
 } // namespace Cozmo

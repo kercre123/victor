@@ -58,6 +58,27 @@ enum int_32 UnlockId
   PeekABoo                = 37,
   SparksGatherCubes       = 38,
 
+  Singing_Camptown        = 39,
+  Singing_ItsyBitsySpider = 40,
+  Singing_Beethovens5th   = 41,
+  Singing_PopGoesTheWeasel = 42,
+  Singing_RowYourBoat     = 43,
+  Singing_PachebelCanon   = 44,
+  Singing_OdeToJoy        = 45,
+  Singing_TwinkleTwinkle  = 46,
+  Singing_FrereJacques    = 47,
+  Singing_MaryHadALittleLamb = 48,
+  Singing_TakeMeOutToTheBallgame = 49,
+  Singing_WilliamTell     = 50,
+  Singing_YankeeDoodle    = 51,
+  Singing_Reserved_14     = 52,
+  Singing_Reserved_15     = 53,
+  Singing_Reserved_16     = 54,
+  Singing_Reserved_17     = 55,
+  Singing_Reserved_18     = 56,
+  Singing_Reserved_19     = 57,
+  Singing_Reserved_20     = 58,
+
   // ADD NEW UNLOCKS HERE
 
   Count

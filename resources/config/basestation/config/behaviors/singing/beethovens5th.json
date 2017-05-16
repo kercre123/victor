@@ -1,0 +1,8 @@
+{
+  "behaviorClass":"Singing",
+  "name":"Singing_Beethovens5th",
+  "displayNameKey":"behavior.singing.Beethovens5th",
+  "requiredUnlockId":"Singing_Beethovens5th",
+  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
+  "audioSwitch":"Cozmo_Sings_Beethovens_5Th"
+}

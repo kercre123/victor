@@ -43,7 +43,7 @@ public:
                                        const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid,
                                        const AudioEngine::Multiplexer::AudioMuxClient::CallbackFunc& callback = nullptr ) override;
   
-  virtual void StopAllEvents( const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )  override;
+  virtual void StopAllEvents( const AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid ) override;
   
   virtual void PostGameState( const AudioMetaData::GameState::StateGroupType gameStateGroup,
                               const AudioMetaData::GameState::GenericState gameState ) override;

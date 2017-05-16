@@ -1,0 +1,8 @@
+{
+  "behaviorClass":"Singing",
+  "name":"Singing_PopGoesTheWeasel",
+  "displayNameKey":"behavior.singing.PopGoesTheWeasel",
+  "requiredUnlockId":"Singing_PopGoesTheWeasel",
+  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
+  "audioSwitch":"Cozmo_Sings_Pop_Goes_The_Weasel"
+}

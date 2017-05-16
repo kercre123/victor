@@ -114,7 +114,7 @@ void CST_EnrollFace::StartEnrollment(Vision::FaceID_t saveID, const std::string&
   
   SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
   
-  SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace")));
+  SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace", -1)));
 }
   
 void CST_EnrollFace::WaitToSetNewFacePose(double waitTime_sec, webots::Node* face, const Pose3d& newPose, TestState newState)

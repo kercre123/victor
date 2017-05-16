@@ -1915,7 +1915,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type, int numTimesToExecute = -1) {
     DAS.Debug(this, "Execute Behavior " + type);
 
     if (type == ExecutableBehaviorType.LiftLoadTest) {
@@ -1924,11 +1924,11 @@ public class Robot : IRobot {
     }
 
     RobotEngineManager.Instance.Message.ExecuteBehaviorByExecutableType =
-             Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type);
+             Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type, numTimesToExecute);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExecuteBehaviorByName(string behaviorName) {
+  public void ExecuteBehaviorByName(string behaviorName, int numTimesToExecute = -1) {
     DAS.Debug(this, "Execute Behavior By Name" + behaviorName);
 
     if (behaviorName == "LiftLoadTest") {
@@ -1936,7 +1936,7 @@ public class Robot : IRobot {
       RobotEngineManager.Instance.SendMessage();
     }
 
-    RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName, numTimesToExecute);
     RobotEngineManager.Instance.SendMessage();
   }
 

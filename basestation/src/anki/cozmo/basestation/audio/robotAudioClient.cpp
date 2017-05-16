@@ -170,6 +170,18 @@ RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( AudioMetaData::G
   return _audioController->PostAudioEvent( audioEventId, audioGameObjId, audioCallbackContext );
 }
 
+void RobotAudioClient::PostRobotParameter(const AudioMetaData::GameParameter::ParameterType parameter,
+                                          const float parameterValue) const
+{
+  PostParameter(parameter, parameterValue, GetGameObjectType());
+}
+
+void RobotAudioClient::PostRobotSwitchState(const AudioMetaData::SwitchState::SwitchGroupType switchGroup,
+                                            const AudioMetaData::SwitchState::GenericSwitch switchState)
+{
+  PostSwitchState(switchGroup, switchState, GetGameObjectType());
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::SetCozmoEventParameter( CozmoPlayId playId, AudioMetaData::GameParameter::ParameterType parameter, float value ) const
 {
@@ -506,6 +518,17 @@ void RobotAudioClient::UnregisterRobotAudioBuffer( AudioMetaData::GameObjectType
     const AudioGameObject aGameObject = static_cast<const AudioGameObject>( gameObject );
     _audioController->UnregisterRobotAudioBuffer( aGameObject, pluginId );
   }
+}
+
+AudioMetaData::GameObjectType RobotAudioClient::GetGameObjectType() const
+{
+  // Figure out which audio buffer we should be posting the parameter to
+  using AudioSource = Audio::RobotAudioClient::RobotAudioOutputSource;
+  const AudioSource source = GetOutputSource();
+  const AudioMetaData::GameObjectType gameObject = (source == AudioSource::PlayOnRobot ?
+                                                    AudioMetaData::GameObjectType::CozmoBus_1 :
+                                                    AudioMetaData::GameObjectType::Cozmo_OnDevice);
+  return gameObject;
 }
 
 } // Audio

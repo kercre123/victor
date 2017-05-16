@@ -146,7 +146,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       SendMessage(ExternalInterface::MessageGameToEngine(
                     ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ExecuteBehaviorByName(kBehaviorName)));
+                    ExternalInterface::ExecuteBehaviorByName(kBehaviorName, -1)));
 
           
       SendMoveHeadToAngle(0, 100, 100);
@@ -371,7 +371,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             // difference between z's is about a block height
                                             NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior")));
+        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior", -1)));
         // Now attempt to pick up the top block:
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_topCube);

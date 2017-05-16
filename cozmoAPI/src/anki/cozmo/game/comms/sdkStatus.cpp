@@ -75,7 +75,8 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     
     // Clear Behaviors
     _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
-    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior)) );
+
+    _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior, -1)) );
       
       ReactionTriggerToBehavior noneTrigger;
       noneTrigger.trigger = ReactionTrigger::NoneTrigger;

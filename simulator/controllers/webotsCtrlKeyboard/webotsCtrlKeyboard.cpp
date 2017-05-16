@@ -1175,8 +1175,9 @@ namespace Anki {
                   if (behaviorName == "LiftLoadTest") {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
                   }
+                  const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByName(behaviorName)));
+                                ExternalInterface::ExecuteBehaviorByName(behaviorName, numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -2233,7 +2234,7 @@ namespace Anki {
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
                       SendMessage(MessageGameToEngine(ActivateBehaviorChooser(BehaviorChooserType::Selection)));
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace")));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace", -1)));
                     }
                     
                   } else {

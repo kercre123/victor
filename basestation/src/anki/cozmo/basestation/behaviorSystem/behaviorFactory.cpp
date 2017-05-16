@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondToRenameFace.h"
+#include "anki/cozmo/basestation/behaviors/behaviorSinging.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
@@ -359,6 +360,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::PyramidThankYou:
     {
       newBehavior = new BehaviorPyramidThankYou(robot, config);
+      break;
+    }
+    case BehaviorClass::Singing:
+    {
+      newBehavior = new BehaviorSinging(robot, config);
       break;
     }
     case BehaviorClass::TrackLaser:
