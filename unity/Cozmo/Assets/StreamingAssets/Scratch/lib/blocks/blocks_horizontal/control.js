@@ -101,7 +101,7 @@ Blockly.Blocks['control_forever'] = {
       "colourSecondary": Blockly.Colours.control.secondary,
       "colourTertiary": Blockly.Colours.control.tertiary
     });
-    this.setTooltip("Repeat forever");
+    this.setTooltip("Repeat Forever");
   }
 };
 
@@ -171,7 +171,7 @@ Blockly.Blocks['control_stop'] = {
       "colourSecondary": Blockly.Colours.control.secondary,
       "colourTertiary": Blockly.Colours.control.tertiary
     });
-    this.setTooltip("Stop script");
+    this.setTooltip("Stop Program");
   }
 };
 
