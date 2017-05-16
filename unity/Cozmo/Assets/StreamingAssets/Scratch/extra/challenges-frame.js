@@ -18,6 +18,8 @@ window.Challenges = (function(){
       _injectFrame();
     }
 
+    window.Unity.call("{'requestId': '-1', 'command': 'cozmoChallengesOpen'}");
+
     // Request a slide number to open to from Unity, to restore the same place
     // in the challenges if the user reopens challenges in this session. Retrieves
     // the last viewed challenge page.
@@ -36,6 +38,7 @@ window.Challenges = (function(){
    * @returns {void}
    */
   function hide() {
+    window.Unity.call("{'requestId': '-1', 'command': 'cozmoChallengesClose'}");
     document.querySelector('#challenges-frame-container').style.display = 'none';
     document.querySelector('#challenges-frame').setAttribute('src', '');
   }

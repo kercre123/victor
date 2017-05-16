@@ -367,7 +367,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void OnSetChallengeBookmark(ScratchRequest scratchRequest) {
       DAS.Info("Codelab.OnSetChallengeBookmark", "");
-
+      _SessionState.OnChallengesSetSlideNumber(scratchRequest.argUInt);
       _ChallengeBookmark = scratchRequest.argUInt;
     }
 
@@ -479,6 +479,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       case "cozmoCloseCodeLab":
         DAS.Info("Codelab.cozmoCloseCodeLab", "");
         RaiseChallengeQuit();
+        return true;
+      case "cozmoChallengesOpen":
+        _SessionState.OnChallengesOpen();
+        return true;
+      case "cozmoChallengesClose":
+        _SessionState.OnChallengesClose();
         return true;
       default:
         return false;
