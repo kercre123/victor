@@ -41,4 +41,5 @@ MonoBehaviour:
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 5a17a17c602924356a56e3152bae81a7,
     type: 3}
   CubesRequired: 1
-  SortOrder: 300
+  SortOrder: 400
+  AndroidReleaseVersion: 
