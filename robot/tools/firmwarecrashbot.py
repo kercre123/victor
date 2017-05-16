@@ -1,50 +1,26 @@
 #!/usr/bin/env python3
 
-import base64
+import codecs
 import crashdump
+import csv
 from distutils.version import StrictVersion
 import jira
 import modecsvparse
 import os
-import psycopg2
-import psycopg2.extras
+import requests
 import sys
+import time
 import traceback
 
 jirauser = os.environ.get("JIRA_USER")
 jirapass = os.environ.get("JIRA_PASS")
-dbuser = os.environ.get("REDSHIFT_DB_USER")
-dbpass = os.environ.get("REDSHIFT_DB_PASS")
-dbdays = os.environ.get("DB_DAYS_INTERVAL")
+mode_user = os.environ.get("MODE_USER")
+mode_pass = os.environ.get("MODE_PASS")
+mode_run_now_url = os.environ.get("MODE_RUN_NOW_URL")
+mode_timeout = int(os.environ.get("MODE_TIMEOUT"))
+db_days = os.environ.get("DB_DAYS_INTERVAL")
 cozmo_table = os.environ.get("COZMO_TABLE")
 production_version = os.environ.get("PROD_VERSION") # e.g. "1.0.1"
-
-def db_connect(dbname="anki", ):
-  try:
-    conn = psycopg2.connect("dbname='anki' host='127.0.0.1' port='5439' user='%s' password='%s'" % (dbuser,dbpass))
-
-  except:
-    print("I am unable to connect to the database")
-    return None
-
-  cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-  return cursor
-
-
-def run_sql(sql):
-  cursor = db_connect()
-  if cursor:
-    try:
-      cursor.execute(sql)
-    except:
-      print("I am unable to access the schema for das")
-      return None
-
-    rows = cursor.fetchall()
-
-    return rows
-  else:
-    return None
 
 
 def jira_connect(url, username, password):
@@ -52,13 +28,35 @@ def jira_connect(url, username, password):
 
 
 def parse_query(jconn):
-  sql = "SELECT * FROM das.{} " \
-        "WHERE event = 'RobotFirmware.CrashReport.Data' " \
-        "AND written_at_ms >= (GETDATE() - INTERVAL '{} days')" \
-        "ORDER BY ts DESC".format(cozmo_table, dbdays)
+  '''
+  "curl -D- -u token:pass -X GET https://modeanalytics.com/anki/reports/94fe9480af0a?run=now"
+  'from GET --> https://modeanalytics.com/anki/reports/94fe9480af0a/runs/???'
+  "curl -D- -u token:pass -X GET https://modeanalytics.com/api/anki/reports/94fe9480af0a/runs/???/results/content.csv"
+  '''
 
-  rows = run_sql(sql)
+  print(">> Querying das.{} for firmware crashes - ".format(cozmo_table) + time.strftime("%c"))
+  run_now_url = mode_run_now_url.replace("DAYS", db_days) \
+                                .replace("MESSAGE_TABLE", cozmo_table)
+  response = requests.get(run_now_url, auth=(mode_user, mode_pass))
+  data = response.text
+  report_url = data[data.find('https://modeanalytics.com/anki/reports'):data.find('">\n    <meta name="og:title')]
+  report_csv = '{}/results/content.csv'.format(report_url.replace('anki', 'api/anki'))
 
+  timeout_counter = 0
+  while timeout_counter < mode_timeout:
+    response = requests.get(report_csv, stream=True, auth=(mode_user, mode_pass))
+
+    if 'run has not completed' in response.text:
+      time.sleep(1)
+      timeout_counter += 1
+    else:
+      break
+
+  if timeout_counter == mode_timeout:
+    print('>>> ERROR - mode report timeout reached:\n{}'.format(sys.stderr))
+    sys.exit(1)
+
+  rows = csv.DictReader(codecs.iterdecode(response.iter_lines(), 'utf-8'), delimiter=',')
   crashes_dict = {}
   affects_versions_dict = {}
   for row in rows:
@@ -119,9 +117,16 @@ def parse_query(jconn):
       description = build_jira_description(apprun_typestr_registers)
       affects_versions = build_affects_verions_list(affects_versions_dict, crash)
 
-      new_issue = jconn.create_issue(project='COZMO', summary='Fix firmware crash {}'.format(crash),
-                                     description='{}'.format(description), issuetype={'name': 'Bug'},
-                                     components=[{"name": "triage"},{"name": "crashes"}],versions=affects_versions)
+      new_issue = jconn.create_issue(project='COZMO',
+                                     summary='Fix firmware crash {}'.format(crash),
+                                     description='{}'.format(description),
+                                     issuetype={'name': 'Bug'},
+                                     components=[{"name": "triage"},{"name": "crashes"}])
+      try:
+        new_issue.update(fields={'versions': affects_versions})
+      except:
+        print("Unable to add Affects Version to {}".format(new_issue.key))
+
       print("Created new issue: {}".format(new_issue.key))
 
 def build_comment(apprun_typestr_registers):
