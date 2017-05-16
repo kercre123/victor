@@ -39,55 +39,45 @@ protected:
 
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
-
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const override { BehaviorStackBlocks::UpdateTargetBlocks(robot); }
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
           return {(_stackInAnyOrientation ?
-                   ObjectInteractionIntention::PickUpAnyObject :
-                   ObjectInteractionIntention::PickUpObjectWithAxisCheck)};
+                   ObjectInteractionIntention::PickUpObjectNoAxisCheck :
+                   ObjectInteractionIntention::PickUpObjectAxisCheck)};
         }
   
 private:
-  const f32   _distToBackupOnStackFailure_mm = 40;
-
+  enum class State {
+    PickingUpBlock,
+    StackingBlock,
+    PlayingFinalAnim
+  };
+  const Robot& _robot;
+  State _behaviorState;
+  
   mutable ObjectID _targetBlockTop;
   mutable ObjectID _targetBlockBottom;
 
-  std::unique_ptr<BlockWorldFilter>  _blockworldFilterForBottom;
-
-  const Robot& _robot;
-  
-  enum class DebugState {
-    PickingUpBlock,
-    StackingBlock,
-    PlayingFinalAnim,
-    WaitForBlocksToBeValid
-  };
-
-  float _waitForBlocksToBeValidUntilTime_s = -1.0f;
-  
-  bool _stackInAnyOrientation = false;
-  
-  // Whether or not the top block was set via a double tap
-  mutable bool _topBlockSetFromTapIntent = false;
+  bool _stackInAnyOrientation;
+  bool _hasBottomTargetSwitched;
 
   void TransitionToPickingUpBlock(Robot& robot);
   void TransitionToStackingBlock(Robot& robot);
+  void TransitionToFailedToStack(Robot& robot);
   void TransitionToPlayingFinalAnim(Robot& robot);
-  void TransitionToWaitForBlocksToBeValid(Robot& robot);
 
-  void ResetBehavior(const Robot& robot);
-
-  bool FilterBlocksForBottom(const ObservableObject* obj) const;
-  bool FilterBlocksHelper(const ObservableObject* obj) const;
-
-  bool AreBlocksStillValid(const Robot& robot);
   
+  
+  
+  // Utility functions
+  ObjectID GetClosestValidBottom(Robot& robot, ObjectInteractionIntention bottomIntention) const;
   void UpdateTargetBlocks(const Robot& robot) const;
+  bool CanUseNonUprightBlocks(const Robot& robot) const;
+  void ResetBehavior(const Robot& robot);
+  void SetState_internal(State state, const std::string& stateName);
 
   // prints some useful stuff about the block
   void PrintCubeDebug(const char* event, const ObservableObject* obj) const;

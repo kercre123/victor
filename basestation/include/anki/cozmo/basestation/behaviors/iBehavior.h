@@ -59,6 +59,7 @@ namespace Cozmo {
 class Robot;
 class ActionableObject;
 class DriveToObjectAction;
+class BehaviorHelperFactory;
 class IHelper;
 enum class ObjectInteractionIntention;
   
@@ -433,11 +434,6 @@ protected:
   // If on == false will clear double tapped lights
   void UpdateTappedObjectLights(const bool on) const;
   
-  
-  // this process might be enabled/disabled automatically by a behavior chooser based
-  // behavior specify it in code because it's a code requirement (not data driven)
-  AIInformationAnalysis::EProcess _requiredProcess;
-  
   bool RequiresObjectTapped() const { return _requireObjectTapped; }
   
   // Override if a behavior that uses double tapped objects needs to do something different when it stops
@@ -446,6 +442,14 @@ protected:
   
   inline void SetBehaviorClass(BehaviorClass classID) {if(_behaviorClassID == BehaviorClass::NoneBehavior){ _behaviorClassID = classID;}};
 
+  // Convenience Method for accessing the behavior helper factory
+  BehaviorHelperFactory& GetBehaviorHelperFactory();
+  
+  // If a behavior requires that an AIInformationProcess is running for the behavior
+  // to operate properly, the behavior should set this variable directly so that
+  // it's checked in IsRunnableBase
+  AIInformationAnalysis::EProcess _requiredProcess;
+  
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;

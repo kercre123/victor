@@ -32,7 +32,7 @@ BehaviorPickUpAndPutDownCube::BehaviorPickUpAndPutDownCube(Robot& robot, const J
 bool BehaviorPickUpAndPutDownCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   auto& objInfoCache = preReqData.GetRobot().GetAIComponent().GetObjectInteractionInfoCache();
-  const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpAnyObject;
+  const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   _targetBlockID = objInfoCache.GetBestObjectForIntention(intent);
   return _targetBlockID.IsSet();
 }

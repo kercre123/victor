@@ -1049,6 +1049,14 @@
       "AnimName": "ag_petdetection_misc"
     },
     {
+      "CladEvent":"PickupHelperPreActionNamedFace",
+      "AnimName": "ag_freeplay_reacttoface_identified"
+    },
+    {
+      "CladEvent":"PickupHelperPreActionUnnamedFace",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
+    },
+    {
       "CladEvent": "PlacedOnCharger",
       "AnimName": "ag_reactToCharger"
     },
@@ -1443,18 +1451,6 @@
     {
       "CladEvent": "SpeedTapDrivingStart",
       "AnimName": "ag_speedTap_startDriving"
-    },
-    {
-      "CladEvent": "StackBlocksPreActionNamedFace",
-      "AnimName": "ag_freeplay_reacttoface_identified"
-    },
-    {
-      "CladEvent": "StackBlocksPreActionUnnamedFace",
-      "AnimName": "ag_freeplay_reacttoface_unidentified"
-    },
-    {
-      "CladEvent": "StackBlocksRetry",
-      "AnimName": "rollCube_retry"
     },
     {
       "CladEvent": "StackBlocksSuccess",

@@ -145,7 +145,7 @@ void RollBlockHelper::UnableToRollDelegate(Robot& robot)
     auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
 
     const bool canPickup = objInfoCache.IsObjectValidForInteraction(
-                             ObjectInteractionIntention::PickUpAnyObject,
+                             ObjectInteractionIntention::PickUpObjectNoAxisCheck,
                              obj->GetID());
     
     // See if any blocks are on top of the one we want to roll

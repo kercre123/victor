@@ -915,6 +915,13 @@ void IBehavior::SetBehaviorStateLights(const std::vector<BehaviorStateLightInfo>
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorHelperFactory& IBehavior::GetBehaviorHelperFactory()
+{
+  return _robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::StopHelperWithoutCallback()
 {
   bool handleStopped = false;

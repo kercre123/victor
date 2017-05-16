@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -28,6 +29,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
+
+#define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
@@ -39,437 +42,199 @@ CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 2);
 CONSOLE_VAR(bool, kCanHiccupWhileStacking, "Hiccups", true);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
-static const float kWaitForValidTimeout_s = 0.4f;
-static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
+  static const f32   kDistToBackupOnStackFailure_mm = 40;
+
+static constexpr ReactionTriggerHelpers::FullReactionArray kHiccupDisableTriggers = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::PyramidInitialDetection,      false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::StackOfCubesInitialDetection, false},
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           false}
+};
+  
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _blockworldFilterForBottom( new BlockWorldFilter )
 , _robot(robot)
+, _stackInAnyOrientation(false)
+, _hasBottomTargetSwitched(false)
 {
   SetDefaultName("StackBlocks");
   
   _stackInAnyOrientation = config.get(kStackInAnyOrientationKey, false).asBool();
-
-  // set up the filter we will use for finding blocks we care about
-  _blockworldFilterForBottom->OnlyConsiderLatestUpdate(false);
-  _blockworldFilterForBottom->SetFilterFcn( std::bind( &BehaviorStackBlocks::FilterBlocksForBottom,
-                                                       this,
-                                                       std::placeholders::_1) );
-  
-  SubscribeToTags({
-    EngineToGameTag::RobotOffTreadsStateChanged
-  });
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorStackBlocks::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  const Robot& robot = preReqData.GetRobot();
-  // don't change blocks while we're running
-  if( !IsRunning() ) {
-    UpdateTargetBlocks(robot);
-  }
-  
+  UpdateTargetBlocks(preReqData.GetRobot());
   return _targetBlockBottom.IsSet() && _targetBlockTop.IsSet();
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorStackBlocks::InitInternal(Robot& robot)
 {
-  _topBlockSetFromTapIntent = false;
-  
-  if(robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    UpdateTargetBlocks(robot);
+  if(robot.GetCarryingObject() == _targetBlockTop){
+    TransitionToStackingBlock(robot);
+  }else{
+    TransitionToPickingUpBlock(robot);
   }
-
-  _waitForBlocksToBeValidUntilTime_s = -1.0f;
-  TransitionToPickingUpBlock(robot);
   return Result::RESULT_OK;
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::StopInternal(Robot& robot)
 {
   ResetBehavior(robot);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::StopInternalFromDoubleTap(Robot& robot)
 {
   ResetBehavior(robot);
 }
 
-void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
-{
-  // if we've got a cube in our lift, use that for top
-  const ObjectID lastTopID = _targetBlockTop;
-  _targetBlockTop.UnSet();
-  if( robot.IsCarryingObject() ) {
-    const ObservableObject* carriedObject = robot.GetBlockWorld().GetLocatedObjectByID( robot.GetCarryingObject() );
 
-    if( nullptr != carriedObject ) {
-      const bool forFreeplay = true;
-      const bool isRollingUnlocked = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube, forFreeplay);
-      const bool upAxisOk = ! isRollingUnlocked ||
-        carriedObject->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
-
-      if( upAxisOk || _stackInAnyOrientation ) {
-        _targetBlockTop = carriedObject->GetID();
-      }
-    }
-  }
-
-  if( ! _targetBlockTop.IsSet() ) {
-    const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
-    const ObjectInteractionIntention intention =
-      _stackInAnyOrientation ?
-      ObjectInteractionIntention::PickUpAnyObject :
-      ObjectInteractionIntention::PickUpObjectWithAxisCheck;
-    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
-    _targetBlockTop = objInfoCache.GetBestObjectForIntention(intention);
-    _topBlockSetFromTapIntent = whiteboard.HasTapIntent();
-  }
-
-  if( lastTopID.IsSet() && ! _targetBlockTop.IsSet() ) {
-    const ObservableObject* lastTop = robot.GetBlockWorld().GetLocatedObjectByID(lastTopID);
-    if( nullptr == lastTop ) {
-      PRINT_NAMED_DEBUG("BehaviorStackBlocks.UpdateTargets.LostTopBlock.null",
-                        "last top (%d) must have been deleted",
-                        lastTopID.GetValue());
-    }
-    else {
-      PrintCubeDebug("BehaviorStackBlocks.UpdateTargets.LostTopBlock", lastTop);
-    }
-  }
-
-  const ObservableObject* bottomObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(),
-                                                                             *_blockworldFilterForBottom);
-  if( nullptr != bottomObject ) {
-    _targetBlockBottom = bottomObject->GetID();
-  }
-  else {
-    if( _targetBlockBottom.IsSet() ) {
-      const ObservableObject* oldBottom = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
-      if( nullptr == oldBottom ) {
-        PRINT_NAMED_DEBUG("BehaviorStackBlocks.UpdateTargets.LostBottomBlock.null",
-                          "last bottom (%d) must have been deleted",
-                          _targetBlockBottom.GetValue());
-      }
-      else {
-        PrintCubeDebug("BehaviorStackBlocks.UpdateTargets.LostBottomBlock", oldBottom);
-      }
-    }
-    _targetBlockBottom.UnSet();
-  }
-}
-
-bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorStackBlocks::CanUseNonUprightBlocks(const Robot& robot) const
 {
   const bool forFreeplay = true;
-  const bool isRollingUnlocked = _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube, forFreeplay);
-  const bool upAxisOk = ! isRollingUnlocked ||
-    obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
-  
-  return (obj->GetFamily() == ObjectFamily::LightCube &&          
-          (upAxisOk || _stackInAnyOrientation));
+  const bool isRollingUnlocked = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube, forFreeplay);
+  return isRollingUnlocked || _stackInAnyOrientation;
 }
 
-bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) const
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 {
-  const bool hasFailedRecently = _robot.GetAIComponent().GetWhiteboard().
-  DidFailToUse(obj->GetID(),
-               AIWhiteboard::ObjectActionFailure::StackOnObject,
-               kTimeObjectInvalidAfterStackFailure_sec,
-               obj->GetPose(),
-               DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
-               DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
   
-  // top gets picked first, so can't pick top here
-  bool ret = (obj->GetID() != _targetBlockTop &&
-              FilterBlocksHelper(obj) &&
-              !hasFailedRecently &&
-              _robot.CanStackOnTopOfObject( *obj ));
-  
-  // If the top block wasn't set via a double tap and we have a tap intention then
-  // the double tapped block should be the bottom block
-  if(ret &&
-     !_topBlockSetFromTapIntent &&
-     _robot.GetAIComponent().GetWhiteboard().HasTapIntent())
-  {
-    using Intent = ObjectInteractionIntention;
-    Intent intent = _stackInAnyOrientation ? Intent::PickUpAnyObject : Intent::PickUpObjectWithAxisCheck;
-    
-    const ObjectID id = _robot.GetAIComponent().GetObjectInteractionInfoCache()
-                                 .GetBestObjectForIntention(intent);
-    ret = (id == obj->GetID());
+  if(CanUseNonUprightBlocks(robot)){
+    _targetBlockTop = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectNoAxisCheck);
+    _targetBlockBottom = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectNoAxisCheck);
+  }else{
+    _targetBlockTop = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackTopObjectAxisCheck);
+    _targetBlockBottom = objInfoCache.GetBestObjectForIntention(ObjectInteractionIntention::StackBottomObjectAxisCheck);
   }
-  
-  return ret;
 }
 
-bool BehaviorStackBlocks::AreBlocksStillValid(const Robot& robot)
-{
-  if( !_targetBlockTop.IsSet() || !_targetBlockBottom.IsSet() ) {
 
-    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const bool waitingForValid = currTime_s <= _waitForBlocksToBeValidUntilTime_s;
-    if( !waitingForValid ) {
-      PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlocksNoLongerSet",
-                       "one of the blocks isn't set");
-    }
-    
-    return false;
-  }
-
-  // if the top block is being carried, assume it's valid (if it matches what top should be). Otherwise check it
-  if( robot.IsCarryingObject() && robot.GetCarryingObject() != _targetBlockTop ) {
-    PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.CarryingWrongObject",
-                     "robot is carrying object %d, but %d is supposed to be the top",
-                     robot.GetCarryingObject().GetValue(),
-                     _targetBlockTop.GetValue());
-    return false;
-  }
-      
-  if( !robot.IsCarryingObject() ) {
-    const ObservableObject* topObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
-    if( topObject == nullptr ) {
-      PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlockDeleted",
-                       "target block %d has no pointer in blockworld",
-                       _targetBlockTop.GetValue());
-      _targetBlockTop.UnSet();
-      return false;
-    }
-
-    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
-    const ObjectInteractionIntention intention =
-      _stackInAnyOrientation ?
-        ObjectInteractionIntention::PickUpAnyObject :
-        ObjectInteractionIntention::PickUpObjectWithAxisCheck;
-    
-    if( ! objInfoCache.IsObjectValidForInteraction(intention, _targetBlockTop ) ) {
-      PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.TopFailedFilter",
-                       "top block failed it's filter");
-      _targetBlockTop.UnSet();
-      PrintCubeDebug("BehaviorStackBlocks.InvalidBlock.TopFailedFilter.Debug", topObject);
-      return false;
-    }
-  }
-  
-  const ObservableObject* bottomObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
-  if( bottomObject == nullptr ) {
-    PRINT_NAMED_INFO("BehaviorStackBlocks.BlockDeleted",
-                     "target block %d has no pointer in blockworld",
-                     _targetBlockBottom.GetValue());
-    _targetBlockBottom.UnSet();
-    return false;
-  }
-
-  if( ! FilterBlocksForBottom( bottomObject ) ) {
-    PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BottomFailedFilter",
-                     "bottom block failed it's filter");
-    PrintCubeDebug("BehaviorStackBlocks.InvalidBlock.BottomFailedFilter.Debug", bottomObject);
-    return false;
-  }
-
-  return true;
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
 {
-  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool waitingForValid = currTime_s <= _waitForBlocksToBeValidUntilTime_s;
-  if( waitingForValid ) {
-    UpdateTargetBlocks(robot);
-    if( AreBlocksStillValid(robot) ) {
-      PRINT_NAMED_DEBUG("BehaviorStackBlocks.WaitForValid",
-                        "Got valid blocks! resuming behavior");
-      _waitForBlocksToBeValidUntilTime_s = -1.0f;
-      TransitionToPickingUpBlock(robot);
+  auto topBlockIntention  = ObjectInteractionIntention::StackTopObjectAxisCheck;
+  auto bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectAxisCheck;
+
+  if(CanUseNonUprightBlocks(robot)){
+    topBlockIntention  = ObjectInteractionIntention::StackTopObjectNoAxisCheck;
+    bottomBlockIntention  = ObjectInteractionIntention::StackBottomObjectNoAxisCheck;
+  }
+  
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+
+  // Verify that blocks are still valid
+  auto validTopObjs = objInfoCache.GetValidObjectsForIntention(topBlockIntention);
+  const bool topValid = validTopObjs.find(_targetBlockTop) != validTopObjs.end();
+  
+  // Bottom block validity doesn't matter if we haven't picked up the top block yet
+  // this prevents stopping when the top block has just been placed
+  auto validBottomObjs = objInfoCache.GetValidObjectsForIntention(bottomBlockIntention);
+  const bool bottomValid = validBottomObjs.find(_targetBlockBottom) != validBottomObjs.end();
+  
+  if(!(topValid && bottomValid)){
+    // if the bottom block is the one that's not valid, check if that's because
+    // the top block is now on top of it - in which case don't cancel the behavior
+    bool shouldStop = true;
+    if(!bottomValid){
+      const ObservableObject* bottomObj = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
+      const ObservableObject* topObj    = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
+      
+      if((bottomObj != nullptr)  &&
+         (topObj != nullptr)){
+        auto objOnTop = robot.GetBlockWorld().FindLocatedObjectOnTopOf(*bottomObj,
+                                                                       STACKED_HEIGHT_TOL_MM);
+        if(objOnTop == topObj){
+          shouldStop = false;
+        }
+      }
+    }
+    
+    if(shouldStop){
+      StopWithoutImmediateRepetitionPenalty();
+      return BehaviorStatus::Complete;
     }
   }
   
-  // Check to see if better bottom block identified for stacking on
-  // New bottom must be closer to cozmo and currently visible while the old target base is not
-  if(robot.IsCarryingObject()){
-    const ObservableObject* newBottomObject = robot.GetBlockWorld().FindLocatedObjectClosestTo(robot.GetPose(),
-                                                                                     *_blockworldFilterForBottom);
-    const ObservableObject* currentTarget = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
+  // Check to see if a better base block has become available for stacking on top of
+  // only do this once per behavior run so that we don't throttle between blocks
+  // when aligning - this is to catch cases where kids shove blocks to cozmo
+  if((_behaviorState == State::StackingBlock)  &&
+     !_hasBottomTargetSwitched){
     
-    if( nullptr != newBottomObject && newBottomObject->GetID() != _targetBlockBottom) {
-      const bool currentTargetSeenThisFrame = currentTarget != nullptr &&
-                         currentTarget->GetLastObservedTime() ==robot.GetLastImageTimeStamp();
-      const bool newBottomSeenThisFrame = newBottomObject->GetLastObservedTime() == robot.GetLastImageTimeStamp();
-
-      if(!currentTargetSeenThisFrame && newBottomSeenThisFrame){
-        StopWithoutImmediateRepetitionPenalty();
-        return Status::Complete;
-      }
+    
+    auto bestBottom = GetClosestValidBottom(robot, bottomBlockIntention);
+    if(bestBottom != _targetBlockBottom){
+      StopActing(false);
+      _targetBlockBottom = bestBottom;
+      _hasBottomTargetSwitched = true;
+      TransitionToStackingBlock(robot);
     }
   }
+  
 
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
   
   return ret;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
 {
-  DEBUG_SET_STATE(PickingUpBlock);
-  // check that blocks are still good
-  if( ! AreBlocksStillValid(robot) ) {
-    // uh oh, blocks are no good, see if we can pick new ones
-    UpdateTargetBlocks(robot);
-    const bool allowWhileRunning = true;
-    BehaviorPreReqRobot preReqData(robot);
-    if( IsRunnable(preReqData, allowWhileRunning) ) {
-      DEV_ASSERT( AreBlocksStillValid(robot), "BehaviorStackBlocks.TransitionToPickingUp.InvalidReset");
-      // ok, found some new blocks, use those
-      PRINT_NAMED_INFO("BehaviorStackBlocks.Picking.RestartWithNewBlocks",
-                       "had to change blocks, re-starting behavior");
-      // fall through to the function, which will now operate with the new blocks
-    }
-    else {
-      TransitionToWaitForBlocksToBeValid(robot);
-      return;
-    }
-  }
+  SET_STATE(PickingUpBlock);
 
-  // if we are already holding the block, skip
-  const bool holdingTopBlock = robot.IsCarryingObject() && robot.GetCarryingObject() == _targetBlockTop;
-  if( holdingTopBlock ) {
-    PRINT_NAMED_DEBUG("BehaviorStackBlocks.SkipPickup",
-                      "Already holding top block, so no need to pick it up");
-    TransitionToStackingBlock(robot);
-    return;
-  }
-
-  //skips turning towards face if this action is streamlined
-  const f32 angleTurnTowardsFace = _shouldStreamline ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
-  DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _targetBlockTop,
-                                                                    false, 0, false,
-                                                                    angleTurnTowardsFace,
-                                                                    false);
-  action->SetSayNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionNamedFace);
-  action->SetNoNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionUnnamedFace);
   
-  RetryWrapperAction::RetryCallback retryCallback =
-    [this, action, &robot](const ExternalInterface::RobotCompletedAction& completion,
-                           const u8 retryCount,
-                           AnimationTrigger& animTrigger)
-  {
-    animTrigger = AnimationTrigger::Count;
-    
-    auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
-    const ObjectInteractionIntention intention =
-      _stackInAnyOrientation ?
-        ObjectInteractionIntention::PickUpAnyObject :
-        ObjectInteractionIntention::PickUpObjectWithAxisCheck;
-
-    const bool blockStillValid = objInfoCache.IsObjectValidForInteraction(intention, _targetBlockTop);
-    if( ! blockStillValid ) {
-      return false;
-    }
-    
-    // Don't turn towards face if retrying
-    action->DontTurnTowardsFace();
-    
-    animTrigger = AnimationTrigger::StackBlocksRetry;
-    
-    if(completion.result == ActionResult::VISUAL_OBSERVATION_FAILED)
-    {
-      // Use a different preAction pose if we failed because we couldn't see the block
-      DriveToObjectAction* driveToObjectAction = action->GetDriveToObjectAction();
-      if(driveToObjectAction != nullptr)
-      {
-        driveToObjectAction->SetGetPossiblePosesFunc([this, action](ActionableObject* object,
-                                                                    std::vector<Pose3d>& possiblePoses,
-                                                                    bool& alreadyInPosition)
-        {
-          return IBehavior::UseSecondClosestPreActionPose(action->GetDriveToObjectAction(),
-                                                          object,
-                                                          possiblePoses,
-                                                          alreadyInPosition);
-        });
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("BehaviorStackBlocks.TransitionToPickingUpBlock.RetryCallback.NullDriveAction",
-                          "DriveToObjectAction in DriveToPickupObjectAction is null");
-      }
-      return true;
-    }
-    
-    const bool isRetryResult = (IActionRunner::GetActionResultCategory(completion.result) == ActionResultCategory::RETRY);
-    
-    if(isRetryResult &&
-       completion.result != ActionResult::LAST_PICK_AND_PLACE_FAILED &&
-       completion.result != ActionResult::NOT_CARRYING_OBJECT_RETRY)
-    {
-        // Smaller reaction if we didn't fail docking
-        // This is the intended animation trigger for now - don't change without consulting Mooly
-        animTrigger = AnimationTrigger::RollBlockRealign;
-    }
-
-    // we want to retry if the action says we should
-    return isRetryResult;
-  };
+  PickupBlockParamaters params;
+  params.maxTurnTowardsFaceAngle_rad = _shouldStreamline ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
+  HelperHandle pickupHelper = GetBehaviorHelperFactory().
+                                      CreatePickupBlockHelper(robot, *this,
+                                                              _targetBlockTop, params);
   
-  RetryWrapperAction* retryWrapperAction = new RetryWrapperAction(robot, action, retryCallback, kBSB_MaxNumPickupRetries);
-  
-  StartActing(retryWrapperAction,
-              [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
-              {
-                if(msg.result == ActionResult::SUCCESS)
-                {
-                  TransitionToStackingBlock(robot);
-                }
-                else
-                {
-                  const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(msg.result);
-                  if(resCat == ActionResultCategory::ABORT ||
-                     resCat == ActionResultCategory::RETRY)
-                  {
-                    // mark the block as inaccessible if we've retried the appropriate number of times
-                    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockTop);
-                    if(failedObject){
-                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
-                                                                            AIWhiteboard::ObjectActionFailure::PickUpObject);
-                    }
-                  }
-                 
-                  // Play failure animation
-                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING) {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry), &BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid);
-                  } else {
-                    TransitionToWaitForBlocksToBeValid(robot);
-                  }
-                }
-              });
-    
+  SmartDelegateToHelper(robot, pickupHelper, &BehaviorStackBlocks::TransitionToStackingBlock);
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
 {
-  DEBUG_SET_STATE(StackingBlock);
-  // check that blocks are still good
-  if( ! AreBlocksStillValid(robot) ) {
-    // uh oh, blocks are no good, see if we can pick new ones
-    UpdateTargetBlocks(robot);
-    const bool allowWhileRunning = true;
-    BehaviorPreReqRobot preReqData(robot);
-    if( IsRunnable(preReqData, allowWhileRunning) ) {
-      DEV_ASSERT( AreBlocksStillValid(robot), "BehaviorStackBlocks.TransitionToStacking.InvalidReset");
-      // ok, found some new blocks, use those
-      PRINT_NAMED_INFO("BehaviorStackBlocks.Stacking.RestartWithNewBlocks.",
-                       "had to change blocks, re-starting behavior");
-      // fall through to the main function body here
-    }
-    else {
-      TransitionToWaitForBlocksToBeValid(robot);
-      return;
-    }
-  }
+  SET_STATE(StackingBlock);
   
   // if we aren't carrying the top block, fail back to pick up
   const bool holdingTopBlock = robot.IsCarryingObject() && robot.GetCarryingObject() == _targetBlockTop;
@@ -477,113 +242,116 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.FailBackToPickup",
                       "wanted to stack, but we aren't carrying a block");
     TransitionToPickingUpBlock(robot);
+    return;
   }
-  else {
-    // Disable hiccup so it can't interrupt the stack
-    if(!kCanHiccupWhileStacking)
-    {
-      static constexpr ReactionTriggerHelpers::FullReactionArray kTriggers = {
-        {ReactionTrigger::CliffDetected,                false},
-        {ReactionTrigger::CubeMoved,                    false},
-        {ReactionTrigger::DoubleTapDetected,            false},
-        {ReactionTrigger::FacePositionUpdated,          false},
-        {ReactionTrigger::FistBump,                     false},
-        {ReactionTrigger::Frustration,                  false},
-        {ReactionTrigger::Hiccup,                       true},
-        {ReactionTrigger::MotorCalibration,             false},
-        {ReactionTrigger::NoPreDockPoses,               false},
-        {ReactionTrigger::ObjectPositionUpdated,        false},
-        {ReactionTrigger::PlacedOnCharger,              false},
-        {ReactionTrigger::PetInitialDetection,          false},
-        {ReactionTrigger::PyramidInitialDetection,      false},
-        {ReactionTrigger::RobotPickedUp,                false},
-        {ReactionTrigger::RobotPlacedOnSlope,           false},
-        {ReactionTrigger::ReturnedToTreads,             false},
-        {ReactionTrigger::RobotOnBack,                  false},
-        {ReactionTrigger::RobotOnFace,                  false},
-        {ReactionTrigger::RobotOnSide,                  false},
-        {ReactionTrigger::RobotShaken,                  false},
-        {ReactionTrigger::Sparked,                      false},
-        {ReactionTrigger::StackOfCubesInitialDetection, false},
-        {ReactionTrigger::UnexpectedMovement,           false},
-        {ReactionTrigger::VC,                           false}
-      };
-      SmartDisableReactionsWithLock(GetName(), kTriggers);
-    }
+  // Disable hiccup so it can't interrupt the stack
+  if(!kCanHiccupWhileStacking)
+  {
+    SmartDisableReactionsWithLock(GetName(), kHiccupDisableTriggers);
+  }
   
-    StartActing(new DriveToPlaceOnObjectAction(robot, _targetBlockBottom),
-                [this, &robot](const ExternalInterface::RobotCompletedAction& completion) {
-                  ActionResultCategory resCat = IActionRunner::GetActionResultCategory(completion.result);
-                  
-                  if( resCat == ActionResultCategory::SUCCESS ) {
-                    if(!_shouldStreamline){
-                      TransitionToPlayingFinalAnim(robot);
-                    }
-                    BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
-                  }
-                  else if( resCat == ActionResultCategory::RETRY ) {
-                    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
-                                &BehaviorStackBlocks::TransitionToStackingBlock);
-                  }
-                  else if( resCat == ActionResultCategory::ABORT ) {
-                    // mark the block as failed to stack on
-                    const ObservableObject* failedObject = robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
-                    if(failedObject){
-                      robot.GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject,
-                                                                                AIWhiteboard::ObjectActionFailure::StackOnObject);
-                    }
-                    
-                    if( completion.result == ActionResult::STILL_CARRYING_OBJECT ) {
-                      // robot thinks it should have stacked, but also thinks it is still carrying. This
-                      // likely means it never was carrying in the first place, so go ahead and do a "put
-                      // down" action, which will likely just verify that we don't have the cube in our lift
-                      // anymore (someone removed it or we never had it in the first place)
+  
+  const bool placingOnGround = false;
+  HelperHandle placeHelper = GetBehaviorHelperFactory().
+                      CreatePlaceRelObjectHelper(robot, *this,
+                                                 _targetBlockBottom,
+                                                 placingOnGround);
 
-                      CompoundActionSequential* placeAction = new CompoundActionSequential(robot, {
-                          new DriveStraightAction(robot,
-                                                  -_distToBackupOnStackFailure_mm,
-                                                  DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-                            new PlaceObjectOnGroundAction(robot)});
-                      StartActing(placeAction);
-                    }
-                    else {
-                      // some other abort failure, give the cubes a little time to settle and then bail out of
-                      // the behavior
-                      TransitionToWaitForBlocksToBeValid(robot);
-                    }
-                  }
-                  // else end the behavior (other failure type)
-                });
+  SmartDelegateToHelper(robot, placeHelper,
+                        &BehaviorStackBlocks::TransitionToPlayingFinalAnim,
+                        &BehaviorStackBlocks::TransitionToFailedToStack);
+  IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
+{
+  SET_STATE(PlayingFinalAnim);
+  
+  BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
+  if(!_shouldStreamline){
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
     IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   }
 }
 
-void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
-{
-  _waitForBlocksToBeValidUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kWaitForValidTimeout_s;
-  DEBUG_SET_STATE(WaitForBlocksToBeValid);
   
-  // wait a bit to see if things settle and the cubes become valid (e.g. they were moving, so give them some
-  // time to settle). If they become stable, Update will transition us out
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::TransitionToFailedToStack(Robot& robot)
+{
+  auto retryIfPossible = [this](Robot& robot){
+    UpdateTargetBlocks(robot);
+    if(_targetBlockTop.IsSet() && _targetBlockBottom.IsSet()){
+      TransitionToPickingUpBlock(robot);
+    }
+  };
+  
+  // If cozmo thinks he's still carrying the cube, try placing it on the ground to
+  // see if it's really there - then see if we can try again
+  if(robot.IsCarryingObject()){
+    CompoundActionSequential* placeAction = new CompoundActionSequential(robot, {
+      new DriveStraightAction(robot,
+                              -kDistToBackupOnStackFailure_mm,
+                              DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
+      new PlaceObjectOnGroundAction(robot)});
+    StartActing(placeAction, retryIfPossible);
+  }else{
+    retryIfPossible(robot);
+  }
 }
 
 
-void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID BehaviorStackBlocks::GetClosestValidBottom(Robot& robot, ObjectInteractionIntention bottomIntention) const
 {
-  DEBUG_SET_STATE(PlayingFinalAnim);
+  DEV_ASSERT(_targetBlockBottom.IsSet(),
+             "BehaviorStackBlocks.GetClosestValidBottom.TargetBlockNotValid");
   
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
-  IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
+  auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
+
+  ObjectID bestBottom = _targetBlockBottom;
+  const ObservableObject* currentTarget =  robot.GetBlockWorld().GetLocatedObjectByID(_targetBlockBottom);
+  f32 distToClosestBottom_mm_sq;
   
+  if((currentTarget != nullptr) &&
+     ComputeDistanceSQBetween(robot.GetPose(), currentTarget->GetPose(), distToClosestBottom_mm_sq)){
+    auto validObjs = objInfoCache.GetValidObjectsForIntention(bottomIntention);
+    for(const auto& objID : validObjs){
+      const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(objID);
+      f32 distanceToValid;
+      if((obj != nullptr) &&
+         ComputeDistanceSQBetween(robot.GetPose(), obj->GetPose(), distanceToValid)){
+        if(distanceToValid < distToClosestBottom_mm_sq){
+          bestBottom = objID;
+          distToClosestBottom_mm_sq = distanceToValid;
+        }
+      }
+    }
+  }
+  
+  return bestBottom;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::ResetBehavior(const Robot& robot)
 {
+  _hasBottomTargetSwitched = false;
   _targetBlockTop.UnSet();
   _targetBlockBottom.UnSet();
-  _topBlockSetFromTapIntent = false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::SetState_internal(State state, const std::string& stateName)
+{
+  _behaviorState = state;
+  SetDebugStateName(stateName);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObject* obj) const
 {
   // this should be helper so that it can be reused
@@ -605,23 +373,6 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
                     obj->IsRestingFlat());
 }
 
-void BehaviorStackBlocks::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
-{
-  switch (event.GetData().GetTag())
-  {
-    case EngineToGameTag::RobotOffTreadsStateChanged:
-    {
-      if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads){
-        ResetBehavior(robot);
-      }
-      break;
-    }
-    default:
-    {
-      break;
-    }
-  }
-}
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki

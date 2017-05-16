@@ -34,7 +34,7 @@ namespace Cozmo {
 
 namespace {
 static const ObjectInteractionIntention kObjectIntention =
-                   ObjectInteractionIntention::PickUpAnyObject;
+                   ObjectInteractionIntention::PickUpObjectNoAxisCheck;
 
 static const f32 kPostLiftDriveBackwardDist_mm = 20.f;
 static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;  
