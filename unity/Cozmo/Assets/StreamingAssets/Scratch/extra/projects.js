@@ -73,13 +73,19 @@
 
     switch(type) {
       case 'btn-create-new-project':
-        CozmoAPI.createNewProject();
+        // we play the click sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleCreateNewProjectClick();
         break;
       case 'load-sample-project':
-        CozmoAPI.openSampleProject(typeElem.dataset.uuid);
+        // we play the click sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleSampleProjectClick(typeElem.dataset.uuid);
         break;
       case 'load-user-project':
-        CozmoAPI.openUserProject(typeElem.dataset.uuid);
+        // we play click the sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleUserProjectClick(typeElem.dataset.uuid);
         break;
       case 'btn-confirm-delete-project':
         showConfirmDeleteProjectModal(typeElem.parentNode);
@@ -114,6 +120,42 @@
     if (playClickSound && window.player) {
       window.player.play('click');
     }
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to create a new project
+   * @returns {void}
+   */
+  function handleCreateNewProjectClick() {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.createNewProject();
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to load a sample project
+   * @returns {void}
+   */
+  function handleSampleProjectClick(uuid) {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.openSampleProject(uuid);
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to load a user's personal project
+   * @returns {void}
+   */
+  function handleUserProjectClick(uuid) {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.openUserProject(uuid);
   }
 
   /**
