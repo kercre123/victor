@@ -142,15 +142,13 @@ button:focus {
   text-transform: uppercase;
   padding: .3em 0;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
-  align-content: flex-end;
+  line-height: 1em;
 }
 
 .modal-slides .nav-button .arrow {
   display: inline-block;
-  height: .9em;
+  height: 1em;
   width: auto;
 }
 .modal-slides .nav-button.nav-button-back {
@@ -174,12 +172,12 @@ button:focus {
   -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
   margin-right: .4em;
-  margin-left: 1.4em;
+  margin-left: 1.1em;
 }
 .modal-slides .nav-button .arrow.arrow-left {
   left: 8px;
   margin-left: .4em;
-  margin-right: 1.4em;
+  margin-right: 1.1em;
 }
 
 

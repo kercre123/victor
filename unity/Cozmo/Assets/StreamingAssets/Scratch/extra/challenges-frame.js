@@ -38,6 +38,7 @@ window.Challenges = (function(){
    * @returns {void}
    */
   function hide() {
+    workspace.playAudio('click');
     window.Unity.call("{'requestId': '-1', 'command': 'cozmoChallengesClose'}");
     document.querySelector('#challenges-frame-container').style.display = 'none';
     document.querySelector('#challenges-frame').setAttribute('src', '');

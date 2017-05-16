@@ -11,8 +11,8 @@
    */
   function setLocalizedText() {
     setText('#app-title', $t('Code Lab'));
-    setText('#app-title-subtext', $t('based on'));
-    // setText('.project-new .project-title', $t('Start A New Project'));
+    setText('#app-title-subtext', $t('based on Scratch Blocks'));
+
     setText('#tutorial-label', $t('Tutorial'));
     setText('#new-project-label', $t('New Project'));
     setText('#confirm-delete-label', $t('Are you sure you want to delete\nthis project?'));
