@@ -49,24 +49,29 @@ button:focus {
   justify-content: flex-end;
   align-items: center;
   height: 11vh;
-  padding: 0 2.5vw 0 1.5vh;
-  margin-bottom: 2vh;
-  margin-top: 2vh;
+  padding: 0 1.5vw;
+  margin-bottom: 1vh;
+  margin-top: 3vh;
+  line-height: 7vh;
 }
 #projects .hd #app-title {
   font-weight: bold;
   text-transform: uppercase;
   font-size: 7vh;
   padding: 0 .3em 0 0;
-  align-self: flex-end;
 }
-#projects .hd #app-title-subtext {
-  font-size: 4vh;
-  line-height: 7vh;
-  align-self: flex-end;
+#projects .hd #based-on-subtext {
+  font-family: 'Avenir Next';
+  font-weight: normal;
+  margin-right: .3em;
+  font-size:  3vh;
+}
+#projects .hd #scratch-blocks-subtext {
+  font-weight: bold;
+  font-size:  4vh;
 }
 #projects .hd #scratch-watermark {height: 50%; margin-right: 3vw;}
-#projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 3vh 1.5vh 1.5vh 1.5vh; width: 10vh;}
+#projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 2vh 1.5vh 1.5vh 1.5vh; width: 10vh;}
 #projects .hd #btn-close-page img {width: 100%; height: 100%;}
 
 

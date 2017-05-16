@@ -11,7 +11,8 @@
    */
   function setLocalizedText() {
     setText('#app-title', $t('Code Lab'));
-    setText('#app-title-subtext', $t('based on Scratch Blocks'));
+    setText('#based-on-subtext', $t('based on'));
+    setText('#scratch-blocks-subtext', $t('Scratch Blocks'));
 
     setText('#tutorial-label', $t('Tutorial'));
     setText('#new-project-label', $t('New Project'));
