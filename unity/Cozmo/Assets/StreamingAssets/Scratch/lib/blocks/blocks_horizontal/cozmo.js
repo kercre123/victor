@@ -926,7 +926,7 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait Until Face Seen");
+    this.setTooltip("Wait to See Face");
   }
 };
 
@@ -954,7 +954,7 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait Until Smile Seen");
+    this.setTooltip("Wait to See Smile");
   }
 };
 
@@ -982,7 +982,7 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait Until Frown Seen");
+    this.setTooltip("Wait to See Frown");
   }
 };
 
@@ -1010,7 +1010,7 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait Until Cube Seen");
+    this.setTooltip("Wait to See Cube");
   }
 };
 
@@ -1038,6 +1038,6 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait Until Cube Tapped");
+    this.setTooltip("Wait for Cube Tap");
   }
 };
