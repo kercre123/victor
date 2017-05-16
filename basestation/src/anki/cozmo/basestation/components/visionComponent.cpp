@@ -1842,7 +1842,7 @@ namespace Cozmo {
     {
       Vision::ImageRGB debugDisp(image);
       for(s32 iDot=0; iDot<4; ++iDot) {
-        debugDisp.DrawPoint(Point2f(msg.dotCenX_pix[iDot], msg.dotCenY_pix[iDot]), NamedColors::RED, 3);
+        debugDisp.DrawCircle(Point2f(msg.dotCenX_pix[iDot], msg.dotCenY_pix[iDot]), NamedColors::RED, 3);
         
         Rectangle<f32> roiRect(kExpectedDotCenters_pix[iDot].x()-kSearchSize_pix/2,
                                kExpectedDotCenters_pix[iDot].y()-kSearchSize_pix/2,

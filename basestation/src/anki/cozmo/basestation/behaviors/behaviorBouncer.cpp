@@ -48,10 +48,9 @@ namespace Cozmo {
   
 namespace {
   
-// Fixed display parameters. Why a signed thickness? Because opencv, that's why.
+// Fixed display parameters.
 constexpr u32 kBouncerPaddleRow_px = 0;
 constexpr u32 kBouncerPaddleHeight_px = 4;
-constexpr u32 kBouncerPaddleThickness_px = 2;
   
 // Fixed speed parameters, per tick, measured from [0,1]. Note that ball has minimum speed
 // in both X and Y directions so it can't bounce straight up/down or straight left/right.
@@ -76,10 +75,10 @@ CONSOLE_VAR_RANGED(float, kBouncerTiltLeft_deg, CONSOLE_GROUP, -20.f, -30.f, -15
 CONSOLE_VAR_RANGED(float, kBouncerTiltRight_deg, CONSOLE_GROUP, 20.f, 15.f, 30.f);
 
 // Width to draw on either side of paddle center
-CONSOLE_VAR_RANGED(u32, kBouncerPaddleWidth_px, CONSOLE_GROUP, 5, 0, 15);
+CONSOLE_VAR_RANGED(u32, kBouncerPaddleWidth_px, CONSOLE_GROUP, 10, 0, 15);
 
-// Ball size, in pixels
-CONSOLE_VAR_RANGED(s32, kBouncerBallSize_px, CONSOLE_GROUP, 2, 1, 5);
+// Ball radius, in pixels
+CONSOLE_VAR_RANGED(s32, kBouncerBallRadius_px, CONSOLE_GROUP, 3, 1, 5);
 
 // Reaction triggers to disable
 constexpr ReactionTriggerHelpers::FullReactionArray kReactionArray = {
@@ -129,12 +128,6 @@ static float GetRandomFloat(Robot & robot, float minVal, float maxVal)
   double val = rng.RandDblInRange(minVal, maxVal);
   return static_cast<float>(val);
 }
-
-static void DrawBackground(Vision::Image& image)
-{
-  constexpr u8 kBouncerBackgroundPixel = 0x00;
-  image.FillWith(kBouncerBackgroundPixel);
-}
   
 static void DrawPaddle(Vision::Image& image, u32 paddleX)
 {
@@ -145,9 +138,10 @@ static void DrawPaddle(Vision::Image& image, u32 paddleX)
   const u32 maxX = (paddleX + kBouncerPaddleWidth_px) > numCols ? numCols : (paddleX + kBouncerPaddleWidth_px);
   const u32 minY = kBouncerPaddleRow_px;
   const u32 maxY = (kBouncerPaddleRow_px + kBouncerPaddleHeight_px);
-    
-  Rectangle<f32> rect(minX, numRows-minY-1, (maxX-minX), maxY-minY);
-  image.DrawRect(rect, NamedColors::WHITE, kBouncerPaddleThickness_px);
+  
+  // Draw from upper left <x,y> to lower right <x+w,y+h>
+  Rectangle<f32> rect(minX, numRows-maxY-1, (maxX-minX), maxY-minY);
+  image.DrawFilledRect(rect, NamedColors::WHITE);
   
 }
   
@@ -162,7 +156,7 @@ static void DrawBall(Vision::Image& image, u32 ballX, u32 ballY)
   ballY = Util::Clamp(ballY, minY, maxY);
     
   Point2f center(ballX, ballY);
-  image.DrawPoint(center, NamedColors::WHITE, kBouncerBallSize_px);
+  image.DrawFilledCircle(center, NamedColors::WHITE, kBouncerBallRadius_px);
 }
   
 
@@ -366,10 +360,10 @@ void BehaviorBouncer::UpdateDisplay(Robot& robot)
   
   // Do we need to draw a new face?
   if (!_isSoundActionInProgress && !_isFaceActionInProgress) {
-    // Draw image
-    Vision::Image image(_displayHeight_px, _displayWidth_px);
     
-    DrawBackground(image);
+    // Init background
+    Vision::Image image(_displayHeight_px, _displayWidth_px, NamedColors::BLACK);
+    
     DrawPaddle(image, paddleX);
     DrawBall(image, ballX, ballY);
     

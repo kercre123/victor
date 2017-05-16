@@ -125,8 +125,8 @@ static void Recognize(Robot& robot, TimeStamp_t timestamp, RobotState& stateMsg,
       dispImg.DrawRect(face.GetRect(), drawColor, 2);
       Point2f leftEye, rightEye;
       if(face.GetEyeCenters(leftEye, rightEye)) {
-        dispImg.DrawPoint(leftEye,  drawColor, 2);
-        dispImg.DrawPoint(rightEye, drawColor, 2);
+        dispImg.DrawCircle(leftEye,  drawColor, 2);
+        dispImg.DrawCircle(rightEye, drawColor, 2);
       }
       
       std::string label = face.GetName();

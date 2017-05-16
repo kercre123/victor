@@ -2269,7 +2269,8 @@ namespace Cozmo {
         {
           char tempText[128];
           Vision::ImageRGB ratioImgDisp(foregroundMotion);
-          ratioImgDisp.DrawPoint(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)), NamedColors::RED, 4);
+          ratioImgDisp.DrawCircle(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)),
+                                  NamedColors::RED, 4);
           snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
           cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
                       cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
@@ -2285,7 +2286,8 @@ namespace Cozmo {
                                                                                         _poseData.groundPlaneHomography));
           if(groundRegionArea > 0.f) {
             Anki::Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-            ratioImgDispGround.DrawPoint(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 2);
+            ratioImgDispGround.DrawCircle(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(),
+                                          NamedColors::RED, 2);
             snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
             cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
                         cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
@@ -2741,7 +2743,7 @@ namespace Cozmo {
           Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
           DEV_ASSERT(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
           const f32 divisor = 1.f / temp.z();
-          dispEdgeImg.DrawPoint({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
+          dispEdgeImg.DrawCircle({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
         }
       }
       dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
@@ -3911,7 +3913,7 @@ namespace Cozmo {
         labels.ApplyScalarFunction(fcn, roiImgDisp);
         if(dotLabel != -1) {
           const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
-          roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
+          roiImgDisp.DrawCircle(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
           
           const s32* compStats = stats.ptr<s32>(dotLabel);
           Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
@@ -4059,10 +4061,10 @@ namespace Cozmo {
               if(DRAW_TOOL_CODE_DEBUG)
               {
                 Vision::ImageRGB dispImg(image);
-                dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
-                dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
-                dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
-                dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
+                dispImg.DrawCircle(sanityCheckPoints[0], NamedColors::RED, 1);
+                dispImg.DrawCircle(sanityCheckPoints[1], NamedColors::RED, 1);
+                dispImg.DrawCircle(observedPoints[0], NamedColors::GREEN, 1);
+                dispImg.DrawCircle(observedPoints[1], NamedColors::GREEN, 1);
                 _currentResult.debugImageRGBs.push_back({"SanityCheck", dispImg});
               }
               PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
