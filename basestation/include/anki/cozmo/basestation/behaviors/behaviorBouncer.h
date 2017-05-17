@@ -14,6 +14,7 @@
 // Forward declarations
 namespace Anki {
   namespace Vision {
+    class Image;
     class TrackedFace;
   }
 }
@@ -55,24 +56,29 @@ private:
   mutable SmartFaceID _target;
   
   // Width and height of display, in pixels
-  u32 _displayWidth_px = 0;
-  u32 _displayHeight_px = 0;
+  float _displayWidth_px = 0;
+  float _displayHeight_px = 0;
   
-  // Paddle position [0,1]
+  // Player stats
+  u32 _playerHits = 0;
+  u32 _playerMisses = 0;
+  
+  // Paddle position, in screen coordinates
   float _paddlePosX = 0.f;
+  float _paddlePosY = 0.f;
   float _paddleSpeedX = 0.f;
   
-  // Ball position [0,1]
+  // Ball position, in screen coordinates
   float _ballPosX = 0.f;
   float _ballPosY = 0.f;
   
-  // Ball speed [0,1]
+  // Ball speed, in screen coordinates per tick
   float _ballSpeedX = 0.f;
   float _ballSpeedY = 0.f;
   
-  // Has paddle hit a wall?
-  bool _paddleHitLeft = false;
-  bool _paddleHitRight = false;
+  // Did ball hit paddle or floor?
+  bool _ballHitPaddle = false;
+  bool _ballHitFloor = false;
   
   bool _isSoundActionInProgress = false;
   bool _isFaceActionInProgress = false;
@@ -82,6 +88,11 @@ private:
   void UpdateBall();
   void UpdateSound(Robot& robot);
   void UpdateDisplay(Robot& robot);
+  
+  // Draw helpers
+  void DrawPaddle(Vision::Image& image);
+  void DrawBall(Vision::Image& image);
+  void DrawScore(Vision::Image& image);
   
   // Action callbacks
   void SoundActionComplete();

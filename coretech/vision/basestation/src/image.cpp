@@ -133,7 +133,7 @@ namespace Vision {
         break;
       }
       default:
-        PRINT_NAMED_ERROR("ImageBase.Display.InvaludNumChannels",
+        PRINT_NAMED_ERROR("ImageBase.Display.InvalidNumChannels",
                           "Cannot display image with %d channels.", GetNumChannels());
         return;
     }
