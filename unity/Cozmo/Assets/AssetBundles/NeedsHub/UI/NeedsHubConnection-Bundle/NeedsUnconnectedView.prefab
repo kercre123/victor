@@ -624,6 +624,14 @@ MonoBehaviour:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
   _AlphaController: {fileID: 225538496009147026}
+  _MoveTweenSettings:
+    staggerType: 0
+    uniformStagger_sec: 0
+    targets: []
+  _FadeTweenSettings:
+    staggerType: 0
+    uniformStagger_sec: 0
+    targets: []
   _ConnectButton: {fileID: 114459834961287368}
   _MetersWidget: {fileID: 114722735892360126}
 --- !u!114 &114141800307841422
@@ -2160,7 +2168,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -345, y: 0}
+  m_AnchoredPosition: {x: -433.8, y: 0}
   m_SizeDelta: {x: 1222, y: 1222}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &225538496009147026
