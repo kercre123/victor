@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animation/faceLayerManager.h"
 #include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
@@ -54,7 +55,7 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
-  CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, "AnimationStreamer", 30000);
+  
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context,
                                        Audio::RobotAudioClient& audioClient)
@@ -62,6 +63,7 @@ namespace Cozmo {
   , _context(context)
   , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
   , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
+  , _faceLayerMgr(new FaceLayerManager(context))
   , _rng(*_context->GetRandom())
   , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
   , _audioClient( audioClient )
@@ -252,23 +254,9 @@ namespace Cozmo {
     // values used to indicate "not animating" or "idle animation" or any existing
     // tag in use
     ++_tagCtr;
-    while(_tagCtr == AnimationStreamer::NotAnimatingTag ||
-          _tagCtr == AnimationStreamer::IdleAnimationTag)
+    while( (_tagCtr == NotAnimatingTag) || (_tagCtr == IdleAnimationTag) )
     {
       ++_tagCtr;
-    }
-  }
-  
-  void AnimationStreamer::IncrementLayerTagCtr()
-  {
-    // Increment the tag counter and keep it from being the "special"
-    // value used to indicate "not animating" or any existing
-    // layer tag in use
-    ++_layerTagCtr;
-    while(_layerTagCtr == AnimationStreamer::NotAnimatingTag ||
-          _faceLayers.find(_layerTagCtr) != _faceLayers.end())
-    {
-      ++_layerTagCtr;
     }
   }
   
@@ -454,103 +442,22 @@ namespace Cozmo {
   
   Result AnimationStreamer::AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms)
   {
-    Result lastResult = RESULT_OK;
-    
-    faceTrack.SetIsLive(true);
-    
-    IncrementLayerTagCtr();
-    
-    FaceLayer newLayer;
-    newLayer.tag = _layerTagCtr;
-    newLayer.track = faceTrack; // COPY the track in
-    newLayer.track.Init();
-    newLayer.startTime_ms = delay_ms;
-    newLayer.streamTime_ms = 0;
-    newLayer.isPersistent = false;
-    newLayer.sentOnce = false;
-    newLayer.name = name;
-    
-    if(DEBUG_ANIMATION_STREAMING) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.AddFaceLayer",
-                        "%s, Tag = %d (Total layers=%lu)",
-                        newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size()+1);
-    }
-    
-    _faceLayers[_layerTagCtr] = std::move(newLayer);
-    
-    return lastResult;
+    return _faceLayerMgr->AddLayer(name, std::move(faceTrack));
   }
   
   AnimationStreamer::Tag AnimationStreamer::AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack)
   {
-    faceTrack.SetIsLive(false); // don't want keyframes to delete as they play
-    
-    IncrementLayerTagCtr();
-    
-    FaceLayer newLayer;
-    newLayer.tag = _layerTagCtr;
-    newLayer.track = faceTrack;
-    newLayer.track.Init();
-    newLayer.startTime_ms = 0;
-    newLayer.streamTime_ms = 0;
-    newLayer.isPersistent = true;
-    newLayer.sentOnce = false;
-    newLayer.name = name;
-
-    if(DEBUG_ANIMATION_STREAMING){
-      PRINT_NAMED_DEBUG("AnimationStreamer.AddPersistentFaceLayer",
-                        "%s, Tag = %d (Total layers=%lu)",
-                        newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size());
-    }
-    
-    _faceLayers[_layerTagCtr] = std::move(newLayer);
-    
-    return _layerTagCtr;
+    return _faceLayerMgr->AddPersistentLayer(name, std::move(faceTrack));
   }
-  
+
   void AnimationStreamer::RemovePersistentFaceLayer(Tag tag, s32 duration_ms)
   {
-    auto layerIter = _faceLayers.find(tag);
-    if(layerIter != _faceLayers.end()) {
-      PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
-                       "%s, Tag = %d (Layers remaining=%lu)",
-                       layerIter->second.name.c_str(), layerIter->first, (unsigned long)_faceLayers.size()-1);
-      
-
-      // Add a layer that takes us back from where this persistent frame leaves
-      // off to no adjustment at all.
-      FaceTrack faceTrack;
-      faceTrack.SetIsLive(true);
-      if(duration_ms > 0)
-      {
-        ProceduralFaceKeyFrame firstFrame(layerIter->second.track.GetCurrentKeyFrame());
-        firstFrame.SetTriggerTime(0);
-        faceTrack.AddKeyFrameToBack(std::move(firstFrame));
-      }
-      ProceduralFaceKeyFrame lastFrame;
-      lastFrame.SetTriggerTime(duration_ms);
-      faceTrack.AddKeyFrameToBack(std::move(lastFrame));
-      
-      AddFaceLayer("Remove" + layerIter->second.name, std::move(faceTrack));
-      
-      _faceLayers.erase(layerIter);
-    }
+    _faceLayerMgr->RemovePersistentLayer(tag, duration_ms);
   }
   
   void AnimationStreamer::AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe)
   {
-    auto layerIter = _faceLayers.find(tag);
-    if(layerIter != _faceLayers.end()) {
-      auto & track = layerIter->second.track;
-      assert(nullptr != track.GetLastKeyFrame());
-      // Make keyframe trigger one sample length (plus any internal delay) past
-      // the last keyframe's trigger time
-      keyframe.SetTriggerTime(track.GetLastKeyFrame()->GetTriggerTime() +
-                              IKeyFrame::SAMPLE_LENGTH_MS +
-                              keyframe.GetTriggerTime());
-      track.AddKeyFrameToBack(keyframe);
-      layerIter->second.sentOnce = false;
-    }
+    _faceLayerMgr->AddToPersistentLayer(tag, std::move(keyframe));
   }
   
   bool AnimationStreamer::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
@@ -690,214 +597,30 @@ namespace Cozmo {
     }
     _sendBuffer.clear();
   }
-
-  bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
-                                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                                        ProceduralFace& procFace,
-                                        bool shouldReplace)
-  {
-    bool paramsSet = false;
-    
-    const TimeStamp_t currStreamTime = currTime_ms - startTime_ms;
-    if(track.HasFramesLeft()) {
-      ProceduralFaceKeyFrame& currentKeyFrame = track.GetCurrentKeyFrame();
-      if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
-      {
-        ProceduralFace interpolatedFace;
-        
-        const ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
-        if (nextFrame != nullptr) {
-          if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms)) {
-            // If it's time to play the next frame and the current frame at the same time, something's wrong!
-            PRINT_NAMED_WARNING("AnimationStreamer.GetFaceHelper.FramesTooClose",
-                                "currentFrameTriggerTime: %d ms, nextFrameTriggerTime: %d, StreamTime: %d",
-                                currentKeyFrame.GetTriggerTime(), nextFrame->GetTriggerTime(), currStreamTime);
-            
-            // Something is wrong. Just move to next frame...
-            track.MoveToNextKeyFrame();
-            
-          } else {
-            /*
-            // If we're within one sample period following the currFrame, just play the current frame
-            if (currStreamTime - currentKeyFrame.GetTriggerTime() < IKeyFrame::SAMPLE_LENGTH_MS) {
-              interpolatedParams = currentKeyFrame.GetFace().GetParams();
-              paramsSet = true;
-            }
-            // We're on the way to the next frame, but not too close to it: interpolate.
-            else if (nextFrame->GetTriggerTime() - currStreamTime >= IKeyFrame::SAMPLE_LENGTH_MS) {
-             */
-              interpolatedFace = currentKeyFrame.GetInterpolatedFace(*nextFrame, currTime_ms - startTime_ms);
-              paramsSet = true;
-            //}
-            
-            if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms + IKeyFrame::SAMPLE_LENGTH_MS)) {
-              track.MoveToNextKeyFrame();
-            }
-            
-          }
-        } else {
-          // There's no next frame to interpolate towards: just send this keyframe
-          // and move forward
-          interpolatedFace = currentKeyFrame.GetFace();
-          track.MoveToNextKeyFrame();
-          paramsSet = true;
-        }
-        
-        if(paramsSet) {
-          if(DEBUG_ANIMATION_STREAMING) {
-            const Point2f& facePosition = interpolatedFace.GetFacePosition();
-            PRINT_NAMED_DEBUG("AnimationStreamer.GetFaceHelper.EyeShift",
-                              "Applying eye shift from face layer of (%.1f,%.1f)",
-                              facePosition.x(), facePosition.y());
-          }
-          
-          if (shouldReplace)
-          {
-            procFace = interpolatedFace;
-          }
-          else
-          {
-            procFace.Combine(interpolatedFace);
-          }
-        }
-      } // if(nextFrame != nullptr
-    } // if(track.HasFramesLeft())
-    
-    return paramsSet;
-  } // GetFaceHelper()
   
   void AnimationStreamer::RemoveKeepAliveEyeDart(s32 duration_ms)
   {
-    if(NotAnimatingTag != _eyeDartTag) {
-      RemovePersistentFaceLayer(_eyeDartTag, duration_ms);
-      _eyeDartTag = NotAnimatingTag;
-    }
+    _faceLayerMgr->RemoveKeepAliveEyeDart(duration_ms);
   }
   
   void AnimationStreamer::SetParam(LiveIdleAnimationParameter whichParam, float newValue)
   {
     if(LiveIdleAnimationParameter::BlinkSpacingMaxTime_ms == whichParam)
     {
-      if( newValue > kMaxBlinkSpacingTimeForScreenProtection_ms)
+      const auto maxSpacing_ms = _faceLayerMgr->GetMaxBlinkSpacingTimeForScreenProtection_ms();
+      if( newValue > maxSpacing_ms)
       {
         PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
-                            "Clamping max blink spacing to %.1fms to avoid screen burn-in",
-                            kMaxBlinkSpacingTimeForScreenProtection_ms);
+                            "Clamping max blink spacing to %dms to avoid screen burn-in",
+                            maxSpacing_ms);
         
-        newValue = kMaxBlinkSpacingTimeForScreenProtection_ms;
+        newValue = maxSpacing_ms;
       }
     }
     
     // Call base class SetParam()
     HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>::SetParam(whichParam, newValue);
   }
-  
-  void AnimationStreamer::KeepFaceAlive(Robot& robot)
-  {
-    using Param = LiveIdleAnimationParameter;
-    
-    // If we were interrupted from streaming an animation and we've met all the
-    // conditions to even be in this function, then we should make sure we've
-    // got neutral face back on the screen
-    if(_wasAnimationInterruptedWithNothing) {
-      SetStreamingAnimation(_neutralFaceAnimation);
-      _wasAnimationInterruptedWithNothing = false;
-    }
-    
-    _nextBlink_ms   -= BS_TIME_STEP;
-    _nextEyeDart_ms -= BS_TIME_STEP;
-    
-    // Eye darts
-    const f32 MaxDist = GetParam<f32>(Param::EyeDartMaxDistance_pix);
-    if(_nextEyeDart_ms <= 0 && MaxDist > 0.f)
-    {
-      const bool noOtherFaceLayers = (_faceLayers.empty() ||
-                                      (_faceLayers.size()==1 && _faceLayers.find(_eyeDartTag) != _faceLayers.end()));
-      
-      // If there's no other face layer active right now, do the dart. Otherwise,
-      // skip it
-      if(noOtherFaceLayers)
-      {
-        const f32 xDart = _rng.RandIntInRange(-MaxDist, MaxDist);
-        const f32 yDart = _rng.RandIntInRange(-MaxDist, MaxDist);
-        
-        // Randomly choose how long the shift should take
-        const s32 duration = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartMinDuration_ms),
-                                                 GetParam<s32>(Param::EyeDartMaxDuration_ms));
-        
-        //PRINT_NAMED_DEBUG("AnimationStreamer.KeepFaceAlive.EyeDart",
-        //                  "shift=(%.1f,%.1f)", xDart, yDart);
-        
-        const f32 normDist = 5.f;
-        ProceduralFace procFace;
-        procFace.LookAt(xDart, yDart, normDist, normDist,
-                        GetParam<f32>(Param::EyeDartUpMaxScale),
-                        GetParam<f32>(Param::EyeDartDownMinScale),
-                        GetParam<f32>(Param::EyeDartOuterEyeScaleIncrease));
-        
-        if(_eyeDartTag == NotAnimatingTag) {
-          FaceTrack faceTrack;
-          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, duration));
-          _eyeDartTag = AddPersistentFaceLayer("KeepAliveEyeDart", std::move(faceTrack));
-        } else {
-          AddToPersistentFaceLayer(_eyeDartTag, ProceduralFaceKeyFrame(procFace, duration));
-        }
-        
-        _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
-                                              GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
-      }
-    }
-    
-    // Blinks
-    if(_nextBlink_ms <= 0)
-    {
-      ProceduralFace blinkFace;
-      
-      FaceTrack faceTrack;
-      TimeStamp_t totalOffset = 0;
-      bool moreBlinkFrames = false;
-      do {
-        TimeStamp_t timeInc;
-        moreBlinkFrames = ProceduralFaceDrawer::GetNextBlinkFrame(blinkFace, timeInc);
-        totalOffset += timeInc;
-        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
-      } while(moreBlinkFrames);
-
-      if(DEBUG_ANIMATION_STREAMING)
-      {
-        // Sanity checkt: we should never command two blinks at the same time
-        bool alreadyBlinking = false;
-        for(auto & layer : _faceLayers) {
-          if(layer.second.name == "Blink") {
-            PRINT_NAMED_WARNING("AnimationStreamer.KeepFaceAlive.DuplicateBlink",
-                                "Seems like there's already a blink layer. Skipping this blink.");
-            alreadyBlinking = true;
-          }
-        }
-        
-        if(!alreadyBlinking) {
-          AddFaceLayer("Blink", std::move(faceTrack));
-        }
-      } else {
-        AddFaceLayer("Blink", std::move(faceTrack));
-      } // DEBUG_ANIMATION_STREAMING
-      
-      s32 blinkSpaceMin_ms = GetParam<s32>(Param::BlinkSpacingMinTime_ms);
-      s32 blinkSpaceMax_ms = GetParam<s32>(Param::BlinkSpacingMaxTime_ms);
-      if(blinkSpaceMax_ms <= blinkSpaceMin_ms)
-      {
-        PRINT_NAMED_WARNING("AnimationStreamer.KeepFaceAlive.BadBlinkSpacingParams",
-                            "Max (%d) must be greater than min (%d)",
-                            blinkSpaceMax_ms, blinkSpaceMin_ms);
-        blinkSpaceMin_ms = kMaxBlinkSpacingTimeForScreenProtection_ms * .25f;
-        blinkSpaceMax_ms = kMaxBlinkSpacingTimeForScreenProtection_ms;
-      }
-      _nextBlink_ms = _rng.RandIntInRange(blinkSpaceMin_ms, blinkSpaceMax_ms);
-      
-    }
-    
-  } // KeepFaceAlive()
-  
   
   void AnimationStreamer::UpdateFace(Robot& robot, Animation* anim, bool storeFace)
   {
@@ -910,7 +633,8 @@ namespace Cozmo {
     if(nullptr != anim) {
       // Note that shouldReplace==true in this case because the animation frames
       // actually replace what's on the face.
-      faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, procFace, true);
+      faceUpdated = _faceLayerMgr->GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(),
+                                                 _startTime_ms, _streamingTime_ms, procFace, true);
       
       if (faceUpdated && storeFace)
       {
@@ -918,73 +642,7 @@ namespace Cozmo {
       }
     }
     
-    if(DEBUG_ANIMATION_STREAMING) {
-      if(!_faceLayers.empty()) {
-        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
-                          "NumLayers=%lu", (unsigned long)_faceLayers.size());
-      }
-    }
-    
-    std::list<Tag> tagsToErase;
-    
-    for(auto faceLayerIter = _faceLayers.begin(); faceLayerIter != _faceLayers.end(); ++faceLayerIter)
-    {
-      auto & faceLayer = faceLayerIter->second;
-      
-      if(DEBUG_ANIMATION_STREAMING) {
-        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.ApplyFaceLayer",
-                          "%slayer %s with tag %d",
-                          faceLayer.isPersistent ? "Persistent" : "",
-                          faceLayer.name.c_str(), faceLayer.tag);
-      }
-      
-      // Note that shouldReplace==false here because face layers do not replace
-      // what's on the face, by definition, they layer on top of what's already there.
-      faceUpdated |= GetFaceHelper(faceLayer.track, faceLayer.startTime_ms,
-                                   faceLayer.streamTime_ms, procFace, false);
-
-      faceLayer.streamTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-      
-      if(!faceLayer.track.HasFramesLeft()) {
-        
-        // This layer is done...
-        if(faceLayer.isPersistent) {
-          if(faceLayer.track.IsEmpty()) {
-            PRINT_NAMED_WARNING("AnimationStreamer.UpdateFace.EmptyPersistentLayer",
-                                "Persistent face layer is empty - perhaps live frames were "
-                                "used? (tag=%d)", faceLayer.tag);
-            faceLayer.isPersistent = false;
-          } else {
-            //...but is marked persistent, so keep applying last frame
-            faceLayer.track.MoveToPrevKeyFrame(); // so we're not at end() anymore
-            faceLayer.streamTime_ms -= RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-            if(DEBUG_ANIMATION_STREAMING) {
-              PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.HoldingLayer",
-                                "Holding last frame of face layer %s with tag %d",
-                                faceLayer.name.c_str(), faceLayer.tag);
-            }
-            faceLayer.sentOnce = true; // mark that it has been sent at least once
-            
-            // We no longer need anything but the last frame (which should now be
-            // "current")
-            faceLayer.track.ClearUpToCurrent();
-          }
-        } else {
-          //...and is not persistent, so delete it
-          if(DEBUG_ANIMATION_STREAMING) {
-            PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.RemovingFaceLayer",
-                              "%s, Tag = %d (Layers remaining=%lu)",
-                              faceLayer.name.c_str(), faceLayer.tag, (unsigned long)_faceLayers.size()-1);
-          }
-          tagsToErase.push_back(faceLayerIter->first);
-        }
-      }
-    }
-    
-    // Actually erase elements from the map
-    for(auto tag : tagsToErase) {
-      _faceLayers.erase(tag);
-    }
+    faceUpdated |= _faceLayerMgr->UpdateFace(procFace);
     
     // If we actually made changes to the face...
     if(faceUpdated) {
@@ -1085,35 +743,13 @@ namespace Cozmo {
     return lastResult;
   } // SendEndOfAnimation()
   
-  bool AnimationStreamer::HaveFaceLayersToSend()
-  {
-    if(_faceLayers.empty()) {
-      return false;
-    } else {
-      // There are face layers, but we want to ignore any that are persistent that
-      // have already been sent once
-      for(auto & layer : _faceLayers) {
-        if(!layer.second.isPersistent || !layer.second.sentOnce) {
-          // There's at least one non-persistent face layer, or a persistent face layer
-          // that has not been sent in its entirety at least once: return that there
-          // are still face layers to send
-          return true;
-        }
-      }
-      // All face layers are persistent ones that have been sent, so no need to keep sending them
-      // by themselves. They only need to be re-applied while there's something
-      // else being sent
-      return false;
-    }
-  }
-  
   Result AnimationStreamer::StreamFaceLayers(Robot& robot)
   {
     Result lastResult = RESULT_OK;
     
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_NAMED_DEBUG("AnimationStreamer.StreamFaceLayers",
-                        "Have %lu face layers to stream", (unsigned long)_faceLayers.size());
+                        "Have %lu face layers to stream", (unsigned long)_faceLayerMgr->GetNumLayers());
     }
     
     // There is no idle/streaming animation playing, but we haven't finished
@@ -1128,7 +764,7 @@ namespace Cozmo {
     }
     
     // Add more stuff to send buffer from face layers
-    while(_sendBuffer.empty() && HaveFaceLayersToSend())
+    while(_sendBuffer.empty() && _faceLayerMgr->HaveFaceLayersToSend())
     {
       // If we have face layers to send with silent audio frames
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
@@ -1156,7 +792,7 @@ namespace Cozmo {
     
     // If we just finished buffering all the face layers, send an end of animation message
     if(_startOfAnimationSent &&
-       !HaveFaceLayersToSend() &&
+       !_faceLayerMgr->HaveFaceLayersToSend() &&
        _sendBuffer.empty() &&
        !_endOfAnimationSent) {
       lastResult = SendEndOfAnimation(robot);
@@ -1436,7 +1072,15 @@ namespace Cozmo {
        haveStreamedAnything &&
        (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
     {
-      KeepFaceAlive(robot);
+      // If we were interrupted from streaming an animation and we've met all the
+      // conditions to even be in this function, then we should make sure we've
+      // got neutral face back on the screen
+      if(_wasAnimationInterruptedWithNothing) {
+        SetStreamingAnimation(_neutralFaceAnimation);
+        _wasAnimationInterruptedWithNothing = false;
+      }
+      
+      _faceLayerMgr->KeepFaceAlive(robot, GetAllParams());
     }
     
     if(_streamingAnimation != nullptr) {
@@ -1563,7 +1207,7 @@ namespace Cozmo {
     // If we didn't do any streaming above, but we've still got face layers to stream
     if(!streamUpdated)
     {
-      if(HaveFaceLayersToSend()) {
+      if(_faceLayerMgr->HaveFaceLayersToSend()) {
         lastResult = StreamFaceLayers(robot);
       } else if(!_sendBuffer.empty()) {
         PRINT_NAMED_WARNING("AnimationStreamer.Update.SendBufferNotEmpty",

@@ -13,8 +13,8 @@
  *
  **/
 
-#ifndef ANKI_COZMO_ANIMATION_STREAMER_H
-#define ANKI_COZMO_ANIMATION_STREAMER_H
+#ifndef __Anki_Cozmo_AnimationStreamer_H__
+#define __Anki_Cozmo_AnimationStreamer_H__
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/animation/animation.h"
@@ -35,6 +35,7 @@ namespace Cozmo {
   class CannedAnimationContainer;
   class CozmoContext;
   class AnimationGroupContainer;
+  class FaceLayerManager;
   
   class IExternalInterface;
   namespace ExternalInterface {
@@ -53,7 +54,8 @@ namespace Cozmo {
     public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
   public:
-    using Tag = u8;
+    
+    using Tag = AnimationTag;
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     
     IAnimationStreamer(IExternalInterface * interface) :
@@ -118,10 +120,11 @@ namespace Cozmo {
   class AnimationStreamer : public IAnimationStreamer
   {
   public:
+    
     static const AnimationTrigger NeutralFaceTrigger;
     
-    static const Tag  NotAnimatingTag  = 0;
-    static const Tag  IdleAnimationTag = 255;
+    // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
+    static const Tag NotAnimatingTag = ::Anki::Cozmo::NotAnimatingTag;
     
     AnimationStreamer(const CozmoContext* context, Audio::RobotAudioClient& audioClient);
     
@@ -248,46 +251,22 @@ namespace Cozmo {
 
     std::string _lastPlayedAnimationId;
     
-    // For layering procedural face animations on top of whatever is currently
-    // playing:
-    struct FaceLayer {
-      FaceTrack   track;
-      TimeStamp_t startTime_ms;
-      TimeStamp_t streamTime_ms;
-      bool        isPersistent;
-      bool        sentOnce;
-      Tag         tag;
-      std::string name;
-    };
-    std::map<Tag, FaceLayer> _faceLayers;
-    
-    // Helper to fold the next procedural face from the given track (if one is
-    // ready to play) into the passed-in procedural face params.
-    bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
-                       TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                       ProceduralFace& procFace,
-                       bool shouldReplace);
-    
-    bool HaveFaceLayersToSend();
+    std::unique_ptr<FaceLayerManager> _faceLayerMgr;
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
     
     void BufferFaceToSend(const ProceduralFace& procFace);
     
-    void KeepFaceAlive(Robot& robot);
-    
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayers(Robot& robot);
     
     void IncrementTagCtr();
-    void IncrementLayerTagCtr();
     
     bool _isIdling = false;
     
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
     Tag _tagCtr   = 0;
-    Tag _layerTagCtr = 0;
     
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
@@ -341,10 +320,6 @@ namespace Cozmo {
     // For live animation
     Animation      _liveAnimation;
     bool           _isLiveTwitchEnabled  = false;
-    s32            _nextBlink_ms         = 0;
-    s32            _nextEyeDart_ms       = 0;
-    Tag            _eyeDartTag           = NotAnimatingTag;
-    //s32            _nextLookAround_ms    = 0;
     s32            _bodyMoveDuration_ms  = 0;
     s32            _liftMoveDuration_ms  = 0;
     s32            _headMoveDuration_ms  = 0;
@@ -365,9 +340,8 @@ namespace Cozmo {
     f32 _longEnoughSinceLastStreamTimeout_s;
 
   }; // class AnimationStreamer
-
-
+  
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_COZMO_ANIMATION_STREAMER_H
+#endif /* __Anki_Cozmo_AnimationStreamer_H__ */
