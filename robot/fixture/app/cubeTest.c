@@ -8,6 +8,7 @@
 #include "hal/uart.h"
 #include "hal/cube.h"
 #include "hal/monitor.h"
+#include "hal/radio.h"
 #include "app/app.h"
 #include "app/fixture.h"
 #include "binaries.h"
@@ -15,12 +16,36 @@
 #define CUBE_TEST_SKIP_BURN   0   /*don't try to pgm the cube*/
 #define CUBE_TEST_DEBUG       0   /*turns on debug logging*/
 #define CUBE_TEST_CSV_OUT     0   /*formats output as CSV. Slow printing for sluggish console loggers.*/
+#define CUBE_TEST_SCAN_EXTEND 0   /*performs extended cubescan*/
+
+static bool radio_initialized = false;
+static cubeid_t cube;
 
 // Return true if device is detected on contacts
 bool CubeDetect(void)
 {
   DisableBAT();
   DisableVEXT();
+  memset(&cube,0,sizeof(cube));
+  
+  if( !radio_initialized )
+  {
+    //Put radio into cube scan mode
+    switch( g_fixtureType )
+    {
+      //case FIXTURE_CHARGER_TEST:  //4
+      case FIXTURE_CUBE1_TEST:      //5
+      case FIXTURE_CUBE2_TEST:      //6
+      case FIXTURE_CUBE3_TEST:      //7
+        SetRadioMode('S' + (g_fixtureType-FIXTURE_CHARGER_TEST) ); //filter for cube 1,2,3 only
+        break;
+      //case FIXTURE_CUBEX_TEST:    //21
+      default:
+        SetRadioMode('S'); //allow all cube types
+        break;
+    }
+    radio_initialized = true;
+  }
   
   // Set VDD high (probably was already) 
   PIN_SET(GPIOB, PINB_VDD);
@@ -51,9 +76,13 @@ void CubeBurn(void)
 #if CUBE_TEST_SKIP_BURN > 0
   #warning "DEBUG: SKIP CUBE BURN"
   ConsolePrintf("DEBUG: SKIP CUBE BURN\r\n");
+  cube = ProgramCubeWithSerial( true ); //read s/n only (skips pgm)
 #else
-  ProgramCubeWithSerial();    // Normal bootloader (or cert firmware in FCC build)
+  cube = ProgramCubeWithSerial();    // Normal bootloader (or cert firmware in FCC build)
 #endif
+  ConsolePrintf("cubeid,%u,%08x\r\n", cube.type, cube.serial );
+  if( !cube.serial || cube.serial == 0xFFFFffff )
+    throw ERROR_CUBE_CANNOT_READ;
 }
 
 static int g_deltaMA = 0;
@@ -161,7 +190,7 @@ void CubePOST(void)
   
   // Calculate how many LEDs we saw light
   int leds = (blinks + 32) >> 6;  // Each LED blinks 64 times
-  int expected = (g_fixtureType - FIXTURE_CHARGER_TEST);
+  int expected = g_fixtureType == FIXTURE_CUBEX_TEST ? cube.type : (g_fixtureType - FIXTURE_CHARGER_TEST);
   if (0 == expected)
     expected = 11;    // Charger has 11 LEDs
   else
@@ -169,12 +198,14 @@ void CubePOST(void)
   
   // Shut down and print results
   avgpeak = blinks > 0 ? avgpeak/blinks : 0;
+/*
 #if CUBE_TEST_DEBUG > 0
   ConsolePrintf("disabling power\r\n");
 #endif
   DisableVEXT();
   DisableBAT();
-  
+*/
+
 #if CUBE_TEST_DEBUG > 0
   {
     int num_samples = sample > HISTORY_LEN ? HISTORY_LEN : sample;
@@ -227,6 +258,50 @@ void CubePOST(void)
     throw ERROR_CUBE_STANDBY;
 }
 
+void CubeScan(void)
+{
+#if CUBE_TEST_SCAN_EXTEND > 0
+  #warning "DEBUG: Extended cube scanning"
+  ConsolePrintf("Debug: extended cubescan\r\n");
+  const int cubescan_time_s = 15;
+#else
+  const int cubescan_time_s = 8;
+#endif
+  
+  int cube_detected = 0;
+  RadioPurgeBuffer(); //clear radio rx; likely overflowed by now and out of sync
+  
+  u32 start = getMicroCounter();
+  while( getMicroCounter() - start < cubescan_time_s*1000*1000 )
+  {
+    RadioProcess();
+    
+    u32 id; u8 type;
+    if( RadioGetCubeScan(&id,&type) )
+    {
+      #if CUBE_TEST_SCAN_EXTEND > 0
+        ConsolePrintf("cubescan,%u,%08x%s\r\n", type, id, id == cube.serial && type == cube.type ? " <---" : "" ); //identify our cube
+      #else
+        ConsolePrintf("cubescan,%u,%08x\r\n", type, id );
+      #endif
+      
+      if( id == cube.serial && type == cube.type ) { //found our cube!
+        cube_detected = 1;
+        #if !(CUBE_TEST_SCAN_EXTEND > 0)
+          break; //exit immediately on regular scan
+        #endif
+      }
+    }
+  }
+  
+  //turn off the cube
+  DisableVEXT();
+  DisableBAT();
+  
+  if( !cube_detected )
+    throw ERROR_CUBE_SCAN_FAILED;
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetCubeTestFunctions(void)
 {
@@ -234,6 +309,7 @@ TestFunction* GetCubeTestFunctions(void)
   {
     CubeBurn,
     CubePOST,
+    CubeScan,
     NULL
   };
 

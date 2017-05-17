@@ -199,6 +199,7 @@ u32 GetSerial();
 #define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
 #define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 #define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
+#define ERROR_CUBE_SCAN_FAILED      707   // Did not detect advertising packets from the cube's radio
 
 // Errors 710-713 for cube/charger types 0-3
 #define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1 2 3) does not match fixture type (1 2 3)
