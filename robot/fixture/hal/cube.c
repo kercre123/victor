@@ -352,7 +352,7 @@ static void Patch(u8* where, u32 before, u32 after)
 }
 
 // Handle all the boot loader serial patching stuff
-u32 ProgramCubeWithSerial(bool read_serial_only)
+cubeid_t ProgramCubeWithSerial(bool read_serial_only)
 {
   // Drive every output into the cube
   PIN_OUT(GPIOA, PINA_DUTCS);
@@ -363,6 +363,9 @@ u32 ProgramCubeWithSerial(bool read_serial_only)
   PIN_OUT(GPIOC, PINC_RESET);
   
   u32 serial = 0;
+  cubeid_t cubeid;
+  memset(&cubeid, 0, sizeof(cubeid));
+  
   try {  
     // Make a copy of the cube bootloader for patching
     u8* cubeboot = GetGlobalBuffer();
@@ -388,7 +391,7 @@ u32 ProgramCubeWithSerial(bool read_serial_only)
     CubeRead(0x3ff0, (u8*)&id, 8);    
     serial = *(u32*)id;
     serial = __REV(serial);   // Vandiver had it stored backward here
-          
+    
     if (!serial || id[6] != 0xff)   // id[6] is the LSB of the patch byte
       throw ERROR_CUBE_CANNOT_READ;
     
@@ -396,7 +399,9 @@ u32 ProgramCubeWithSerial(bool read_serial_only)
     if( read_serial_only ) {
       GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
       GPIO_SetBits(GPIOA, GPIO_Pin_9);    // Turn off high-voltage PROG
-      return serial;
+      cubeid.serial = serial;
+      cubeid.type = id[4];
+      return cubeid;
     }
     
     // Generate a radio-safe serial number
@@ -413,6 +418,7 @@ u32 ProgramCubeWithSerial(bool read_serial_only)
     // If we're allowing any cube type, just make sure it's a valid one
     if (FIXTURE_CUBEX_TEST == g_fixtureType) 
     {
+      cubeid.type = id[4];
       if (id[4] < 1 && id[4] > 3)
         throw ERROR_CUBEX_NOT_SET;
     
@@ -422,6 +428,7 @@ u32 ProgramCubeWithSerial(bool read_serial_only)
       if (id[4] != 0xff && type != id[4])
         throw ERROR_CUBE_TYPE_CHANGE + (id[4]&7);
       cubeboot[0x3ff4] = type; 
+      cubeid.type = type;
     }
     // Remember how many patches we've already had (to retest finished board)
     cubeboot[0x3ff7] = id[7];   
@@ -446,5 +453,7 @@ u32 ProgramCubeWithSerial(bool read_serial_only)
     GPIO_SetBits(GPIOA, GPIO_Pin_9);    // Turn off high-voltage PROG
     throw e;
   }
-  return serial;
+  
+  cubeid.serial = serial;
+  return cubeid;
 }
