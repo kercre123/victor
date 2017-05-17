@@ -53,7 +53,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooser
   {ReactionTrigger::CubeMoved,                    true},
   {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
-  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
   {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
