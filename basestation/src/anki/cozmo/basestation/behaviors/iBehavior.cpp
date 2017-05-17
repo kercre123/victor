@@ -19,9 +19,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
@@ -39,21 +37,17 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
+#include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
 
 
 namespace Anki {
 namespace Cozmo {
 
-  
-// Static initializations
-const char* IBehavior::kBaseDefaultName = "no_name";
-
 namespace {
-  
-static const char* kNameKey                          = "name";
+static const char* kBehaviorIDConfigKey              = "behaviorID";
 static const char* kDisplayNameKey                   = "displayNameKey";
-static const char* kBehaviorGroupsKey                = "behaviorGroups";
+
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
@@ -131,18 +125,56 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kSparkBehaviorDisablesAr
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Json::Value IBehavior::CreateDefaultBehaviorConfig(BehaviorID behaviorID)
+{
+  Json::Value config;
+  config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);
+  return config;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorID IBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
+                                                  const std::string& fileName)
+{
+  const std::string debugName = "IBeh.NoBehaviorIdSpecified";
+  const std::string behaviorID_str = JsonTools::ParseString(config, kBehaviorIDConfigKey, debugName);
+  
+  // To make it easy to find behaviors, assert that the file name and behaviorID match
+  if(ANKI_DEV_CHEATS && !fileName.empty()){
+    std::string jsonFileName = Util::FileUtils::GetFileName(fileName);
+    auto dotIndex = jsonFileName.find_last_of(".");
+    std::string lowerFileName = dotIndex == std::string::npos ? jsonFileName : jsonFileName.substr(0, dotIndex);
+    std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
+    
+    std::string behaviorIDLower = behaviorID_str;
+    std::transform(behaviorIDLower.begin(), behaviorIDLower.end(), behaviorIDLower.begin(), ::tolower);
+    DEV_ASSERT_MSG(behaviorIDLower == lowerFileName,
+                   "RobotDataLoader.LoadBehaviors.BehaviorIDFileNameMismatch",
+                   "File name %s does not match BehaviorID %s",
+                   fileName.c_str(),
+                   behaviorID_str.c_str());
+  }
+  
+  return BehaviorIDFromString(behaviorID_str);
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
-  , _robot(robot)
-  , _lastRunTime_s(0.0f)
-  , _startedRunningTime_s(0.0f)
-  , _executableType(ExecutableBehaviorType::Count)
-  , _requiredUnlockId( UnlockId::Count )
-  , _requiredRecentDriveOffCharger_sec(-1.0f)
-  , _requiredRecentSwitchToParent_sec(-1.0f)
-  , _isRunning(false)
-  , _isResuming(false)
-  , _isOwnedByFactory(false)
+: _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
+, _robot(robot)
+, _lastRunTime_s(0.0f)
+, _startedRunningTime_s(0.0f)
+, _id(ExtractBehaviorIDFromConfig(config))
+, _idString(BehaviorIDToString(_id))
+, _executableType(ExecutableBehaviorType::Count)
+, _requiredUnlockId( UnlockId::Count )
+, _requiredRecentDriveOffCharger_sec(-1.0f)
+, _requiredRecentSwitchToParent_sec(-1.0f)
+, _isRunning(false)
+, _isResuming(false)
+, _isOwnedByFactory(false)
 {
   if(!ReadFromJson(config)){
     PRINT_NAMED_WARNING("IBehavior.ReadFromJson.Failed",
@@ -173,8 +205,6 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::ReadFromJson(const Json::Value& config)
 {
-  const Json::Value& nameJson = config[kNameKey];
-  _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
   JsonTools::GetValueOptional(config, kDisplayNameKey, _displayNameKey);
 
   // - - - - - - - - - -
@@ -189,7 +219,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
     if ( requiredUnlock != UnlockId::Count ) {
       PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
-                        GetName().c_str(), requiredUnlockJson.asString().c_str() );
+                        GetIDStr().c_str(), requiredUnlockJson.asString().c_str() );
       _requiredUnlockId = requiredUnlock;
     } else {
       PRINT_NAMED_ERROR("IBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
@@ -215,37 +245,6 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
                    kRequiredParentSwitchKey);
     _requiredRecentSwitchToParent_sec = requiredSwitchToParentJson.asFloat();
   }
-
-  // - - - - - - - - - -
-  // Behavior Groups
-  // - - - - - - - - - -
-  
-  ClearBehaviorGroups();
-    
-  const Json::Value& behaviorGroupsJson = config[kBehaviorGroupsKey];
-  if (behaviorGroupsJson.isArray())
-  {
-    const uint32_t numBehaviorGroups = behaviorGroupsJson.size();
-      
-    const Json::Value kNullValue;
-      
-    for (uint32_t i = 0; i < numBehaviorGroups; ++i)
-    {
-      const Json::Value& behaviorGroupJson = behaviorGroupsJson.get(i, kNullValue);
-        
-      const char* behaviorGroupString = behaviorGroupJson.isString() ? behaviorGroupJson.asCString() : "";
-      const BehaviorGroup behaviorGroup = BehaviorGroupFromString(behaviorGroupString);
-        
-      if (behaviorGroup != BehaviorGroup::Count)
-      {
-        SetBehaviorGroup(behaviorGroup, true);
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("IBehavior.BadBehaviorGroup", "Failed to read group %u '%s'", i, behaviorGroupString);
-      }
-    }
-  }
     
   const Json::Value& executableBehaviorTypeJson = config[kExecutableBehaviorTypeKey];
   if (executableBehaviorTypeJson.isString())
@@ -255,7 +254,9 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   
   JsonTools::GetValueOptional(config, kRequireObjectTappedKey, _requireObjectTapped);
   
-  return ReadFromScoredJson(config);
+  // Doesn't actually read anything from behavior config, but sets defaults
+  // for certain scoring metrics in case no score json is loaded
+  return ReadFromScoredJson(config, false);
 }
   
   
@@ -311,7 +312,7 @@ void IBehavior::SubscribeToTags(const uint32_t robotId, std::set<RobotInterface:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result IBehavior::Init()
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".Init").c_str(), "Starting...");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Init").c_str(), "Starting...");
 
   // Check if there are any engine-generated actions in the action list, because there shouldn't be!
   // If there is, a behavior probably didn't use StartActing() where it should have.
@@ -342,7 +343,7 @@ Result IBehavior::Init()
   if (engineActionStillRunning) {
     PRINT_NAMED_WARNING("IBehavior.Init.ActionsInQueue",
                         "Initializing %s: %zu actions already in queue",
-                        GetName().c_str(), _robot.GetActionList().GetQueueLength(0));
+                        GetIDStr().c_str(), _robot.GetActionList().GetQueueLength(0));
   }
 
   
@@ -383,7 +384,7 @@ Result IBehavior::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result IBehavior::Resume(ReactionTrigger resumingFromType)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".Resume").c_str(), "Resuming...");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Resume").c_str(), "Resuming...");
   DEV_ASSERT(!_isRunning, "IBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
   
   // Check and update the number of times we've resumed from cliff or unexpected movement
@@ -441,7 +442,7 @@ IBehavior::Status IBehavior::Update()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::Stop()
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".Stop").c_str(), "Stopping...");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Stop").c_str(), "Stopping...");
 
   // If the behavior delegated off to a helper, stop that first
   if(!_currentHelperHandle.expired()){
@@ -478,7 +479,7 @@ void IBehavior::Stop()
 void IBehavior::StopOnNextActionComplete()
 {
   if( !_stopRequestedAfterAction ) {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".StopOnNextActionComplete").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StopOnNextActionComplete").c_str(),
                   "Behavior has been asked to stop on the next complete action");
   }
   
@@ -494,7 +495,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
   // Some reaction trigger strategies allow behaviors to interrupt themselves.
   DEV_ASSERT(allowWhileRunning || !IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
   if (!allowWhileRunning && IsRunning()) {
-    PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetName().c_str());
+    PRINT_CH_DEBUG("Behaviors", "IBehavior.IsRunnableBase", "Behavior %s is already running", GetIDStr().c_str());
     return true;
   }
   
@@ -506,7 +507,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
       PRINT_NAMED_ERROR("IBehavior.IsRunnable.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
         AIInformationAnalysis::StringFromEProcess(_requiredProcess),
-        GetName().c_str());
+        GetIDStr().c_str());
       return false;
     }
   }
@@ -595,13 +596,6 @@ Util::RandomGenerator& IBehavior::GetRNG() const {
   return _robot.GetRNG();
 }
 
-void IBehavior::SetDefaultName(const char* inName)
-{
-  if (_name == kBaseDefaultName) {
-    _name = inName;
-  }
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status IBehavior::UpdateInternal(Robot& robot)
@@ -661,14 +655,14 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
   if( !IsResuming() && !IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
                         "Behavior '%s' can't start %s action because it is not running",
-                        GetName().c_str(), action->GetName().c_str());
+                        GetIDStr().c_str(), action->GetName().c_str());
     return false;
   }
 
   if( IsActing() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.AlreadyActing",
                         "Behavior '%s' can't start %s action because it is already running an action in state %s",
-                        GetName().c_str(), action->GetName().c_str(),
+                        GetIDStr().c_str(), action->GetName().c_str(),
                         GetDebugStateName().c_str());
     return false;
   }
@@ -737,7 +731,7 @@ bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
     // stop the helper first. This is generally what we want, because if someone else is stopping an action,
     // the helper likely won't know how to respond. Note that helpers can't call StopActing
     if( !_currentHelperHandle.expired() ) {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".StopActing.WithoutCallback.StopHelper").c_str(),
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StopActing.WithoutCallback.StopHelper").c_str(),
                     "Stopping behavior helper because action stopped without callback");
     }
     StopHelperWithoutCallback();
@@ -776,9 +770,9 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
   if(broadcastToGame && _robot.HasExternalInterface()){
     _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }
-  PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));
+  PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetIDStr().c_str(), EnumToString(objectiveAchieved));
   // send das event
-  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetName().c_str());
+  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetIDStr().c_str());
 
   UpdateTappedObjectLights(false);
 
@@ -881,7 +875,7 @@ bool IBehavior::SmartDelegateToHelper(Robot& robot,
                                       SimpleCallbackWithRobot successCallback,
                                       SimpleCallbackWithRobot failureCallback)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".SmartDelegateToHelper").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartDelegateToHelper").c_str(),
                 "Behavior requesting to delegate to helper %s", handleToRun->GetName().c_str());
 
   if(!_currentHelperHandle.expired()){
@@ -899,7 +893,7 @@ bool IBehavior::SmartDelegateToHelper(Robot& robot,
     _currentHelperHandle = handleToRun;
   }
   else {
-    PRINT_CH_INFO("Behaviors", (GetName() + "SmartDelegateToHelper.Failed").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + "SmartDelegateToHelper.Failed").c_str(),
                   "Failed to delegate to helper");
   }
   
@@ -927,7 +921,7 @@ bool IBehavior::StopHelperWithoutCallback()
   bool handleStopped = false;
   auto handle = _currentHelperHandle.lock();
   if( handle ) {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".SmartStopHelper").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".SmartStopHelper").c_str(),
                   "Behavior stopping its helper");
 
     handleStopped = _robot.GetAIComponent().GetBehaviorHelperComponent().StopHelperWithoutCallback(handle);
@@ -1091,6 +1085,10 @@ float IBehavior::EvaluateRunningPenalty() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float IBehavior::EvaluateScore(const Robot& robot) const
 {
+  DEV_ASSERT_MSG(!_scoringValuesCached.isNull(),
+                 "IBehavior.EvaluateScore.ScoreNotSet",
+                 "No score was loaded in for behavior name %s",
+                 GetIDStr().c_str());
   BehaviorPreReqRobot preReqData(robot);
   if (IsRunning() || IsRunnable(preReqData))
   {
@@ -1153,8 +1151,22 @@ void IBehavior::IncreaseScoreWhileActing(float extraScore)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::ReadFromScoredJson(const Json::Value& config)
+bool IBehavior::ReadFromScoredJson(const Json::Value& config, const bool fromScoredChooser)
 {
+  
+  #if ANKI_DEV_CHEATS
+    if(_scoringValuesCached.isNull() && fromScoredChooser){
+      _scoringValuesCached = config;
+    }else if(fromScoredChooser){
+      DEV_ASSERT_MSG(_scoringValuesCached == config,
+                     "IBehavior.ReadFromScoredJson.Scoring config Mismatch",
+                     "Behavior named %s has two differenc scoring configs",
+                     GetIDStr().c_str());
+      // we've already loaded in scores, don't need to do it again
+      return true;
+    }
+  #endif
+  
   // - - - - - - - - - -
   // Mood scorer
   // - - - - - - - - - -
@@ -1191,7 +1203,7 @@ bool IBehavior::ReadFromScoredJson(const Json::Value& config)
     {
       PRINT_NAMED_WARNING("IScoredBehavior.BadRepetitionPenalty",
                           "Behavior '%s': %s failed to read",
-                          GetName().c_str(),
+                          GetIDStr().c_str(),
                           kRepetitionPenaltyKey);
     }
   }
@@ -1232,7 +1244,7 @@ bool IBehavior::ReadFromScoredJson(const Json::Value& config)
     {
       PRINT_NAMED_WARNING("IBehavior.BadRunningPenalty",
                           "Behavior '%s': %s failed to read",
-                          GetName().c_str(),
+                          GetIDStr().c_str(),
                           kRunningPenaltyKey);
     }
   }

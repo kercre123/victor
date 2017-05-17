@@ -16,7 +16,6 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
@@ -105,6 +104,9 @@ protected:
     
 public:
   using Status = BehaviorStatus;
+  
+  static Json::Value CreateDefaultBehaviorConfig(BehaviorID behaviorID);
+  static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
 
   bool IsRunning() const { return _isRunning; }
   // returns true if any action from StartAction is currently running, indicating that the behavior is
@@ -152,8 +154,9 @@ public:
   template<typename T>
   bool IsRunnable(const T& preReqData, bool allowWhileRunning = false) const;
 
-  
-  const std::string& GetName() const { return _name; }
+  BehaviorID         GetID()      const { return _id; }
+  const std::string& GetIDStr()   const { return _idString; }
+
   const std::string& GetDisplayNameKey() const { return _displayNameKey; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
@@ -170,14 +173,6 @@ public:
   virtual bool CarryingObjectHandledInternally() const = 0;
 
   bool IsOwnedByFactory() const { return _isOwnedByFactory; }
-  
-  bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
-  bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags::StorageType& flags) const {
-    return _behaviorGroups.AreAnyBitsInMaskSet(flags);
-  }
-  bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags& groupFlags) const {
-    return MatchesAnyBehaviorGroups(groupFlags.GetFlags());
-  }
 
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
   // is being retried or the action failed due to visualVerification
@@ -220,16 +215,9 @@ public:
 protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
 
-  void ClearBehaviorGroups() { _behaviorGroups.ClearFlags(); }
-  void SetBehaviorGroup(BehaviorGroup behaviorGroup, bool newVal = true) {
-    _behaviorGroups.SetBitFlag(behaviorGroup, newVal);
-  }
-    
-  // Only sets the name if it's currently the base default name
-  void SetDefaultName(const char* inName);
   inline void SetDebugStateName(const std::string& inName) {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
-                  GetName().c_str(), _debugStateName.c_str(), inName.c_str());
+                  BehaviorIDToString(GetID()), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
   }
   
@@ -471,14 +459,13 @@ private:
 
   // this is an internal handler just for StartActing
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
-    
-  // ==================== Static Member Vars ====================
-            
-  static const char* kBaseDefaultName;
                 
   // ==================== Member Vars ====================
-    
-  std::string _name;
+  
+  // The ID and a convenience cast of the ID to a string
+  const BehaviorID  _id;
+  const std::string _idString;
+  
   std::string _displayNameKey = "";
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID = BehaviorClass::NoneBehavior;
@@ -503,9 +490,7 @@ private:
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   RobotCompletedActionCallback  _actingCallback;
   bool _stopRequestedAfterAction = false;
-    
-  BehaviorGroupFlags  _behaviorGroups;
-
+  
   bool _isRunning;
   // should only be used to allow StartActing to start while a behavior is resuming
   bool _isResuming;
@@ -532,7 +517,10 @@ private:
 ///////
   
 public:
-  // Stops the behavior immediately but gives it a couple of tick window during which score
+  // Allow us to load scored JSON in seperately from the rest of parameters
+  bool ReadFromScoredJson(const Json::Value& config, const bool fromScoredChooser = true);
+  
+  // Stops the behavaior immediately but gives it a couple of tick window during which score
   // evaluation will not include its running penalty.  This allows behaviors to
   // stop themselves in hopes of being re-selected with new fast-forwarding and
   // block settings without knocking its score down so something else is selected
@@ -583,8 +571,6 @@ private:
   void ScoredConstructor(Robot& robot);
   void InitScored(Robot& robot);
   
-  bool ReadFromScoredJson(const Json::Value& config);
-  
   void HandleBehaviorObjective(const ExternalInterface::BehaviorObjectiveAchieved& msg);
   
   // ==================== Member Vars ====================
@@ -593,7 +579,10 @@ private:
   Util::GraphEvaluator2d  _runningPenalty;
   float                   _flatScore = 0;
   float                   _extraRunningScore = 0;
-  
+  #if ANKI_DEV_CHEATS
+    // Used to verify that all scoring configs loaded in are equal
+    Json::Value             _scoringValuesCached;
+  #endif
   // used to allow short times during which repetitionPenalties don't apply
   float                   _nextTimeRepetitionPenaltyApplies_s = 0;
   

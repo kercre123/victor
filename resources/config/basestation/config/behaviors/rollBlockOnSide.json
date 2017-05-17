@@ -1,14 +1,6 @@
 {
   "behaviorClass": "RollBlock",
-  "name": "RollBlockOnSide",
+  "behaviorID": "RollBlockOnSide",
   "displayNameKey":"behavior.RollBlock",
-  "requiredUnlockId": "RollCube",
-  "behaviorGroups": [
-    "FP_PlayWithHumans",
-    "FP_Socialize",
-    "FP_PlayAlone"
-
-  ],
-  
-  "flatScore": 1.0
+  "requiredUnlockId": "RollCube"
 }

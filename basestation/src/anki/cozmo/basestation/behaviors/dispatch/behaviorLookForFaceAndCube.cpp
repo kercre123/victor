@@ -42,9 +42,7 @@ BehaviorLookForFaceAndCube::BehaviorLookForFaceAndCube(Robot& robot, const Json:
 , _configParams{}
 , _currentSidePicksDone(0)
 , _currentState(State::Done)
-{
-  SetDefaultName("BehaviorLookForFaceAndCube");
-  
+{  
   // parse all parameters now
   LoadConfig(config["params"]);
 
@@ -72,7 +70,7 @@ bool BehaviorLookForFaceAndCube::IsRunnableInternal(const BehaviorPreReqNone& pr
 void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorLookForFaceAndCube.LoadConfig";
+  const std::string& debugName = GetIDStr() + ".BehaviorLookForFaceAndCube.LoadConfig";
 
   // shared
   _configParams.bodyTurnSpeed_radPerSec = DEG_TO_RAD( ParseFloat(config, "bodyTurnSpeed_degPerSec", debugName) );
@@ -102,7 +100,7 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
   {
     PRINT_NAMED_ERROR("BehaviorLookForFaceAndCube.LoadConfig.Invalid.lookInPlaceAnimTrigger",
       "[%s] Invalid animation trigger '%s'",
-      GetName().c_str(), lookInPlaceAnimTriggerStr.c_str());
+      GetIDStr().c_str(), lookInPlaceAnimTriggerStr.c_str());
   }
   
 }
@@ -110,7 +108,7 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorLookForFaceAndCube::InitInternal(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(), "Starting to look for face at center");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting to look for face at center");
 
   _startingBodyFacing_rad = robot.GetPose().GetWithRespectToOrigin().GetRotationAngle<'Z'>();
   _currentSidePicksDone = 0;
@@ -257,7 +255,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(Robot& robot, FaceID
     // need to handle that here. We never kill the behavior on a tracking only face
 
     if( _configParams.stopBehaviorOnAnyFace ) {
-      PRINT_CH_INFO("Behavior", (GetName() + ".SawFace.End").c_str(),
+      PRINT_CH_INFO("Behavior", (GetIDStr() + ".SawFace.End").c_str(),
                     "Stopping behavior because we saw (any) face id %d",
                     observedID);
         
@@ -276,7 +274,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(Robot& robot, FaceID
                       observedID) ) {
         
         if( facePtr->HasName() ) {
-          PRINT_CH_INFO("Behavior", (GetName() + ".SawFace.End").c_str(),
+          PRINT_CH_INFO("Behavior", (GetIDStr() + ".SawFace.End").c_str(),
                         "Stopping behavior because we saw (any) face id %d",
                         observedID);
         
@@ -292,7 +290,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(Robot& robot, FaceID
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookForFaceAndCube::CancelActionAndVerifyFace(Robot& robot, FaceID_t observedFace)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".VerifyFace").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".VerifyFace").c_str(),
                 "Stopping current action to verify face %d",
                 observedFace);
 
@@ -340,7 +338,7 @@ void BehaviorLookForFaceAndCube::TransitionToS1_FaceOnLeft(Robot& robot)
 {
   _currentState = State::S1FaceOnLeft;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S1FaceOnLeft").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S1FaceOnLeft").c_str(),
     "Looking for face to my left (%u out of %u)", _currentSidePicksDone, _configParams.face_sidePicks);
   
   // create head move action
@@ -367,7 +365,7 @@ void BehaviorLookForFaceAndCube::TransitionToS2_FaceOnRight(Robot& robot)
 {
   _currentState = State::S2FaceOnRight;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S2FaceOnRight").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S2FaceOnRight").c_str(),
     "Looking for face to my right (%u out of %u)", _currentSidePicksDone, _configParams.face_sidePicks);
   
   // create head move action
@@ -393,7 +391,7 @@ void BehaviorLookForFaceAndCube::TransitionToS3_CubeOnRight(Robot& robot)
 {
   _currentState = State::S3CubeOnRight;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S3CubeOnRight").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S3CubeOnRight").c_str(),
     "Looking for cube to my right (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
@@ -420,7 +418,7 @@ void BehaviorLookForFaceAndCube::TransitionToS4_CubeOnLeft(Robot& robot)
 {
   _currentState = State::S4CubeOnLeft;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S4CubeOnLeft").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4CubeOnLeft").c_str(),
     "Looking for cube to my left (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
@@ -448,7 +446,7 @@ void BehaviorLookForFaceAndCube::TransitionToS5_Center(Robot& robot)
 {
   _currentState = State::S5Center;
   ++_currentSidePicksDone;
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S4CubeOnLeft").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4CubeOnLeft").c_str(),
     "Looking for cube to my left (%u out of %u)", _currentSidePicksDone, _configParams.cube_sidePicks);
 
   // create head move action
@@ -476,9 +474,10 @@ void BehaviorLookForFaceAndCube::TransitionToS6_Done(Robot& robot)
   // that case. We could also json config it, but I don't have a reason for it atm
 
   // ask behavior manager to trigger an activity based on what has happened
-  robot.GetBehaviorManager().CalculateFreeplayActivityFromObjects();
+  robot.GetBehaviorManager().CalculateActivityFreeplayFromObjects();
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAction* BehaviorLookForFaceAndCube::CreateBodyAndHeadTurnAction(Robot& robot,
   const Radians& bodyRelativeMin_rad, const Radians& bodyRelativeMax_rad,

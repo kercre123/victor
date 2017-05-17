@@ -71,7 +71,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDriveOffC
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("DriveOffCharger");
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
   _distToDrive_mm = Charger::GetLength() + extraDist_mm;
   
@@ -105,7 +104,7 @@ bool BehaviorDriveOffCharger::IsRunnableInternal(const BehaviorPreReqRobot& preR
 Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   //Disable Cliff Reaction during behavior
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersDriveOffChargerArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersDriveOffChargerArray);
 
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
                                                             AnimationTrigger::DriveLoopLaunch,

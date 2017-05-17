@@ -38,7 +38,6 @@ CONSOLE_VAR(f32, kRepeatAnimMultIncrease, "Behavior.ReactToPickup", 0.33f);
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToPickup");
 }
 
   

@@ -73,7 +73,7 @@ PathMotionProfile motionProfile (defaultPathSpeed_mmps,
                      defaultReverseSpeed_mmps,
                      true);
 
-static const char* kBehaviorName = "StackBlocks";
+static const BehaviorID kBehaviorID = BehaviorID::StackBlocks;
 
 namespace {
   static const Pose3d kidnapCubePose(M_PI_F, Z_AXIS_3D(), {40.0, -150.0, 22.0});
@@ -144,10 +144,9 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
       // try to start the behavior now, it shouldn't start for a while
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                    ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ExecuteBehaviorByName(kBehaviorName, -1)));
-
+                    ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
           
       SendMoveHeadToAngle(0, 100, 100);
       SET_STATE(WaitForCubeConnections);
@@ -371,7 +370,8 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             // difference between z's is about a block height
                                             NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior", -1)));
+        SendMessage(ExternalInterface::MessageGameToEngine(
+                       ExternalInterface::ExecuteBehaviorByID(BehaviorID::NoneBehavior, -1)));
         // Now attempt to pick up the top block:
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_topCube);
@@ -600,13 +600,13 @@ void CST_StackBlockBehavior::HandleRobotCompletedAction(const ExternalInterface:
 void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
   PRINT_NAMED_INFO("CST_StackBlockBehavior.transition", "%s -> %s",
-                   msg.oldBehaviorName.c_str(),
-                   msg.newBehaviorName.c_str());
+                   BehaviorIDToString(msg.oldBehaviorID),
+                   BehaviorIDToString(msg.newBehaviorID));
   
-  if(msg.oldBehaviorName == kBehaviorName) {
+  if(msg.oldBehaviorID == kBehaviorID) {
     _stoppedBehavior++;
   }
-  if(msg.newBehaviorName == kBehaviorName) {
+  if(msg.newBehaviorID == kBehaviorID) {
     _startedBehavior++;
   }
 }

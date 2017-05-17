@@ -35,7 +35,6 @@ CONSOLE_VAR(f32, kHeadUpHeadTurnSpeed_degPerSec, "Behavior.FindFaces", 90.0f);
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   : BaseClass(robot, config)
 {
-  SetDefaultName("FindFaces");
 
   JsonTools::GetValueOptional(config, "maxFaceAgeToLook_ms", _maxFaceAgeToLook_ms);
 
@@ -109,8 +108,9 @@ void BehaviorFindFaces::TransitionToLookAtLastFace(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::TransitionToBaseClass(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToBaseClass").c_str(),
-                "transitioning to base class, setting initial body direction");
+  PRINT_CH_INFO("Behaviors", "BehaviorFindFaces.TransitionToBaseClass",
+                " %s is transitioning to base class, setting initial body direction",
+                GetIDStr().c_str());
 
   SetInitialBodyDirection( robot.GetPose().GetRotationAngle<'Z'>() );
   BaseClass::BeginStateMachine(robot);

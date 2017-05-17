@@ -44,8 +44,7 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(Robot& robot, const Jso
 : IBehavior(robot, config)
 , _isLastReactionPoseValid(false)
 {
-  SetDefaultName("CantHandleTallStack");
-  
+    
   SubscribeToTags({
     EngineToGameTag::RobotDelocalized
   });

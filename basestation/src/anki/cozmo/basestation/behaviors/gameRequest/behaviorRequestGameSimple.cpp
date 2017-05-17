@@ -126,8 +126,6 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
 , _numRetriesDrivingToFace(0)
 , _numRetriesPlacingBlock(0)
 {
-  SetDefaultName("BehaviorRequestGameSimple");
-
   if( config.isNull() ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.Config.Error",
                         "Empty json config! This behavior will not function correctly");
@@ -169,7 +167,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
           PRINT_NAMED_WARNING("BehaviorRequestGameSimple.InvalidKey",
                               "Behavior '%s' specifies that it should not use block, but specifies key '%s' "
                               "which will be ignored",
-                              GetName().c_str(),
+                              GetIDStr().c_str(),
                               blockKey);
         }
       }
@@ -177,7 +175,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
       if( ! FLT_NEAR( _zeroBlockConfig.scoreFactor, 1.0f ) ) {
         PRINT_NAMED_WARNING("BehaviorRequestGameSimple.PossibleScoreError",
                             "Behavior '%s' is not using blocks, but the zero block config discounts score by %f",
-                            GetName().c_str(),
+                            GetIDStr().c_str(),
                             _zeroBlockConfig.scoreFactor);
       }
     }
@@ -417,7 +415,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
   if( ! _hasFaceInteractionPose ) {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
                      "%s: No interaction pose set to drive to face!",
-                     GetName().c_str());
+                     GetIDStr().c_str());
     return;
   }
   else {
@@ -534,7 +532,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersRequestGameArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
 
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {

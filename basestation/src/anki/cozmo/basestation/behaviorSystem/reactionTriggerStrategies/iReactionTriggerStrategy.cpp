@@ -81,7 +81,7 @@ void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, cons
     {
       Anki::Cozmo::ExternalInterface::ExecuteReactionTrigger queuedTrigger = event.GetData().Get_ExecuteReactionTrigger();
       if ( (_triggerID == queuedTrigger.reactionTriggerToBehaviorEntry.trigger) &&
-          (_DebugBehaviorName == queuedTrigger.reactionTriggerToBehaviorEntry.BehaviorName) )
+          (_DebugBehaviorID == queuedTrigger.reactionTriggerToBehaviorEntry.behaviorID) )
       {
         _userForcingTrigger = true;
       }
@@ -102,7 +102,7 @@ void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, cons
 
 void IReactionTriggerStrategy::BehaviorThatStrategyWillTrigger(IBehavior *behavior)
 {
-  _DebugBehaviorName = behavior->GetName();
+  _DebugBehaviorID = behavior->GetID();
   BehaviorThatStrategyWillTriggerInternal(behavior);
 }
   

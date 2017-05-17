@@ -81,8 +81,6 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
 , _stackInAnyOrientation(false)
 , _hasBottomTargetSwitched(false)
 {
-  SetDefaultName("StackBlocks");
-  
   _stackInAnyOrientation = config.get(kStackInAnyOrientationKey, false).asBool();
 }
 
@@ -247,9 +245,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   // Disable hiccup so it can't interrupt the stack
   if(!kCanHiccupWhileStacking)
   {
-    SmartDisableReactionsWithLock(GetName(), kHiccupDisableTriggers);
+    SmartDisableReactionsWithLock(GetIDStr(), kHiccupDisableTriggers);
   }
-  
   
   const bool placingOnGround = false;
   HelperHandle placeHelper = GetBehaviorHelperFactory().

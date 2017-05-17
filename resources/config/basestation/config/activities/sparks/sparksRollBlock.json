@@ -1,20 +1,44 @@
 {
-  "name" : "sparksRollBlock",
+  "activityID" : "SparksRollBlock",
+  "activityType" : "Sparked",
   "requireSpark":"RollCube",
-
-  "behaviorChooser" :
-  {
-    "type" : "sparks",
-    "minTimeSecs": 0,
-    "maxTimeSecs": 80,
-    "numberOfRepetitions": 1,
-    "behaviorObjective": "BlockRolled",
-    "softSparkTrigger": "SoftSparkUpgradeLift",
-    // these groups are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "SparksRollBlock" ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
-  }
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "SparksRollBlock",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      },
+      { "behaviorID" : "SparksPutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 3.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 80,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "BlockRolled",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
 }

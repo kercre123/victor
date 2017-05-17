@@ -38,10 +38,11 @@ void CreateStackBehavior(Robot& robot, IBehavior*& stackBehavior)
 
   auto& factory = robot.GetBehaviorManager().GetBehaviorFactory();
 
+  // Arbitrarily using the NoneBehavior ID - no effect on implementation details
   const std::string& configStr =
     R"({
          "behaviorClass": "StackBlocks",
-         "name": "TEST_StackBlocks",
+         "behaviorID": "NoneBehavior",
          "flatScore": 0.8
        })";
 

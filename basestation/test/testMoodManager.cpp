@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -393,7 +393,7 @@ TEST(MoodManager, DecayResetFromAwards)
 static const char* kTestBehavior1Json =
 "{"
 "   \"behaviorClass\" : \"NoneBehavior\","
-"   \"name\" : \"TestHappy\","
+"   \"behaviorID\" : \"NoneBehavior\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"
@@ -411,10 +411,12 @@ static const char* kTestBehavior1Json =
 "}";
 
 
+// Stealing behaviorID AcknowledegeFace arbitrarily - just need something which
+// doesn't conflict score configs with kTestBehavior1Json
 static const char* kTestBehavior2Json =
 "{"
 "   \"behaviorClass\" : \"NoneBehavior\","
-"   \"name\" : \"TestCalm\","
+"   \"behaviorID\" : \"AcknowledgeFace\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"
@@ -454,12 +456,16 @@ TEST(MoodManager, BehaviorScoring)
   
   // have to alloc the behaviors - they're freed by the chooser
   IBehavior* testBehaviorReqHappy = behaviorFactory.CreateBehavior(testBehavior1Json, testRobot);
+  testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
+
   IBehavior* testBehaviorReqCalm  = behaviorFactory.CreateBehavior(testBehavior2Json, testRobot);
+  testBehaviorReqCalm->ReadFromScoredJson(testBehavior2Json);
   ASSERT_NE(testBehaviorReqHappy, nullptr);
   ASSERT_NE(testBehaviorReqCalm,  nullptr);
   
   Json::Value chooserConfig;
-  SimpleBehaviorChooser behaviorChooser(testRobot, chooserConfig);
+  chooserConfig["behaviors"] = "";
+  ScoringBehaviorChooser behaviorChooser(testRobot, chooserConfig);
   
   behaviorChooser.TryAddBehavior(testBehaviorReqHappy);
   behaviorChooser.TryAddBehavior(testBehaviorReqCalm);

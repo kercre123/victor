@@ -1,14 +1,10 @@
 {
   "behaviorClass": "PickUpCube",
-  "name": "sparksPickupSingleCubeForPyramid",
+  "behaviorID": "SparksPickupSingleCubeForPyramid",
   "requiredUnlockId": "PickupCube",
   "displayNameKey":"behavior.BuildPyramid",
-  "behaviorGroups": [
-    "BuildPyramid"
-  ],
   "ignoreCubesInBlockConfigTypes": [
       "Pyramid",
       "PyramidBase"
-  ],
-  "flatScore": 4.0
+  ]
 }

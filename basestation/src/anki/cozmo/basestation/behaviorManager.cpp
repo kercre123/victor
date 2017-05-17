@@ -15,10 +15,11 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/activities/activities/freeplayActivity.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
@@ -26,7 +27,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
@@ -38,13 +38,13 @@
 #include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
-#include "clad/types/behaviorChooserType.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/reactionTriggers.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -68,15 +68,12 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-static const char* kSelectionActivityConfigKey    = "selectionActivityConfig";
-static const char* kFreeplayActivityConfigKey     = "freeplayActivityConfig";
-static const char* kMeetCozmoActivityConfigKey    = "meetCozmoActivityConfig";
-static const char* kVoiceCommandActivityConfigKey = "vcActivityConfig";
+// For creating activities and accessing them
+static const char* kHighLevelActivityTypeConfigKey    = "highLevelID";
   
 // reaction trigger behavior map
 static const char* kReactionTriggerBehaviorMapKey = "reactionTriggerBehaviorMap";
-static const char* kReactionTriggerKey = "reactionTrigger";
-static const char* kReactionBehaviorKey = "behaviorName";
+static const char* kReactionTriggerKey            = "reactionTrigger";
 
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
@@ -231,7 +228,8 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _defaultHeadAngle(kIgnoreDefaultHeadAndLiftState)
 , _defaultLiftHeight(kIgnoreDefaultHeadAndLiftState)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
-, _behaviorFactory(new BehaviorFactory())
+, _currentHighLevelActivity(HighLevelActivity::Count)
+, _behaviorFactory(new BehaviorFactory(robot))
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 , _behaviorThatSetLights(BehaviorClass::NoneBehavior)
@@ -239,6 +237,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 {
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::~BehaviorManager()
 {
@@ -246,17 +245,18 @@ BehaviorManager::~BehaviorManager()
   // the reactionTriggers are unique ptrs, so they will be deleted by the clear
   _reactionTriggerMap.clear();
   
-  // destroy choosers before factory
-  Util::SafeDelete(_freeplayChooser);
-  Util::SafeDelete(_selectionChooser);
-  Util::SafeDelete(_meetCozmoChooser);
-  Util::SafeDelete(_voiceCommandChooser);
+  
+  // clear out high level choosers before destroying the factory
+  for(auto& entry: _highLevelActivityMap){
+    entry.second.reset();
+  }
   
   Util::SafeDelete(_behaviorFactory);
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorManager::InitConfiguration(const Json::Value &config)
+Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
 {
   BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
   
@@ -264,28 +264,37 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
   // potentially double Init was never supported
   DEV_ASSERT(!_isInitialized, "BehaviorManager.InitConfiguration.AlreadyInitialized");
+  
+  // Load all behavior files into the factory
+  LoadBehaviorsIntoFactory();
 
-  // create choosers
-  if ( !config.isNull() )
+  // create activities
+  if ( !activitiesConfig.isNull() )
   {
-    // selection chooser - to force one specific behavior
-    const Json::Value& selectionChooserConfigJson = config[kSelectionActivityConfigKey];
-    _selectionChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, selectionChooserConfigJson);
-    
-    // freeplay chooser - AI controls cozmo
-    const Json::Value& freeplayChooserConfigJson = config[kFreeplayActivityConfigKey];
-    _freeplayChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, freeplayChooserConfigJson);
+    const uint32_t numActivities = activitiesConfig.size();
+    DEV_ASSERT(numActivities == static_cast<int>(HighLevelActivity::Count),
+               "BehaviorManager.InitConfiguration.HighLevelActivityEnumerationMismatch");
+    const Json::Value kNullValue;
 
-    // meetCozmo chooser
-    const Json::Value& meetCozmoChooserConfigJson = config[kMeetCozmoActivityConfigKey];
-    _meetCozmoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, meetCozmoChooserConfigJson);
-    
-    // voice command chooser
-    const Json::Value& voiceCommandChooserConfigJson = config[kVoiceCommandActivityConfigKey];
-    _voiceCommandChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, voiceCommandChooserConfigJson);
+    for (uint32_t i = 0; i < numActivities; ++i){
+      const Json::Value& activityJson = activitiesConfig.get(i, kNullValue);
+      
+      std::string highLevelActivityStr;
+      JsonTools::GetValueOptional(activityJson, kHighLevelActivityTypeConfigKey, highLevelActivityStr);
+      HighLevelActivity highLevelID = HighLevelActivityFromString(highLevelActivityStr);
+      
+      ActivityType activityType = IActivity::ExtractActivityTypeFromConfig(activityJson);
+      
+      _highLevelActivityMap.insert(
+        std::make_pair(highLevelID,
+                       std::shared_ptr<IActivity>(
+                              ActivityFactory::CreateActivity(_robot,
+                                                              activityType,
+                                                              activityJson))));
+    }
     
     // start with selection that defaults to NoneBehavior
-    SetBehaviorChooser( _selectionChooser );
+    SetCurrentActivity(HighLevelActivity::Selection, true);
 
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     
@@ -299,7 +308,8 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
       {
         DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
                        "Multiple behaviors marked as %s including '%s'",
-                       EnumToString(executableBehaviorType), it.first.c_str());
+                       EnumToString(executableBehaviorType),
+                       BehaviorIDToString(it.first));
         ++numEntriesOfExecutableType[eBT];
       }
     }
@@ -316,121 +326,124 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     
   }
   
-  // Populate our list of tapInteraction behaviors which should exist in the factory as
-  // InitConfiguration() is called after all behaviors have been loaded
-  const auto& behaviorMap = GetBehaviorFactory().GetBehaviorMap();
-  for(const auto& pair : behaviorMap)
-  {
-    if(pair.second->IsBehaviorGroup(BehaviorGroup::ObjectTapInteraction))
-    {
-      _tapInteractionBehaviors.push_back(pair.second);
-    }
-  }
-  
   if (_robot.HasExternalInterface())
   {
-    IExternalInterface* externalInterface = _robot.GetExternalInterface();
-    
-    // Disable reaction triggers by locking the specified triggers with the given lockID
-    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
-                            ExternalInterface::MessageGameToEngineTag::DisableReactionsWithLock,
-                          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                          {
-                            const auto& msg = event.GetData().Get_DisableReactionsWithLock();
-                            DisableReactionsWithLock(
-                                  msg.lockID,
-                                  ALL_TRIGGERS_CONSIDERED_TO_FULL_ARRAY(msg.triggersAffected),
-                                  true);
-                          }));
-    
-    // Remove a specified lockID from all reaction triggers
-    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
-                            ExternalInterface::MessageGameToEngineTag::RemoveDisableReactionsLock,
-                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                            {
-                              const auto& msg = event.GetData().Get_RemoveDisableReactionsLock();
-                              RemoveDisableReactionsLock(msg.lockID);
-                            }));
-    
-    // Listen for a lock to disable all reactions with - only used by SDK
-    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
-                            ExternalInterface::MessageGameToEngineTag::DisableAllReactionsWithLock,
-                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                            {
-                              const auto& msg = event.GetData().Get_DisableAllReactionsWithLock();
-                              DisableReactionsWithLock(
-                                     msg.lockID,
-                                     ReactionTriggerHelpers::kAffectAllArray,
-                                     true);
-                            }));
-    
-    _eventHandlers.push_back(externalInterface->Subscribe(
-                               ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
-                               [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                               {
-                                 const BehaviorChooserType chooserType =
-                                   event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
-                                 switch (chooserType)
-                                 {
-                                   case BehaviorChooserType::Freeplay:
-                                   {
-                                     if( _firstTimeFreeplayStarted < 0.0f ) {
-                                       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-                                       _firstTimeFreeplayStarted = currTime_s;
-                                     }
-                                     SetBehaviorChooser( _freeplayChooser );
-                                     break;
-                                   }
-                                   case BehaviorChooserType::Selection:
-                                   {
-                                     SetBehaviorChooser( _selectionChooser );
-                                     break;
-                                   }
-                                   case BehaviorChooserType::MeetCozmoFindFaces:
-                                   {
-                                     SetBehaviorChooser(_meetCozmoChooser);
-                                     break;
-                                   }
-                                   default:
-                                   {
-                                     PRINT_NAMED_WARNING("BehaviorManager.ActivateBehaviorChooser.InvalidChooser",
-                                                         "don't know how to create a chooser of type '%s'",
-                                                         BehaviorChooserTypeToString(chooserType));
-                                     break;
-                                   }
-                                 }
-                                 
-                                 // If we are leaving freeplay, ensure that sparks
-                                 // have been cleared out
-                                 if(chooserType != BehaviorChooserType::Freeplay){
-                                   _activeSpark = UnlockId::Count;
-                                   _lastRequestedSpark = UnlockId::Count;
-                                }
-                                 
-                               }));
-    
-    _eventHandlers.push_back(externalInterface->Subscribe(
-                                ExternalInterface::MessageGameToEngineTag::SetDefaultHeadAndLiftState,
-                                [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                                {
-                                  bool enable = event.GetData().Get_SetDefaultHeadAndLiftState().enable;
-                                  float headAngle = event.GetData().Get_SetDefaultHeadAndLiftState().headAngle;
-                                  float liftHeight = event.GetData().Get_SetDefaultHeadAndLiftState().liftHeight;
-                                  SetDefaultHeadAndLiftState(enable, headAngle, liftHeight);
-                                }));
-      
-    _eventHandlers.push_back(externalInterface->Subscribe(
-                                ExternalInterface::MessageGameToEngineTag::RequestReactionTriggerMap,
-                                [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
-                                {
-                                  BroadcastReactionTriggerMap();
-                                }));
+    InitializeEventHandlers();
   }
   _isInitialized = true;
     
   return RESULT_OK;
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::LoadBehaviorsIntoFactory()
+{
+  // Load Scored Behaviors
+  const auto& behaviorData = _robot.GetContext()->GetDataLoader()->GetBehaviorJsons();
+  for( const auto& behaviorIDJsonPair : behaviorData )
+  {
+    const auto& behaviorID = behaviorIDJsonPair.first;
+    const auto& behaviorJson = behaviorIDJsonPair.second;
+    if (!behaviorJson.empty())
+    {
+      // PRINT_NAMED_DEBUG("BehaviorManager.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+      const Result ret = CreateBehaviorFromConfiguration(behaviorJson);
+      if ( ret != RESULT_OK ) {
+        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed",
+                          "Failed to create a behavior for behavior id '%s'",
+                          BehaviorIDToString(behaviorID));
+      }
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("Robot.LoadBehavior",
+                          "Failed to read behavior file for behavior id '%s'",
+                          BehaviorIDToString(behaviorID));
+    }
+    // don't print anything if we read an empty json
+  }
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::InitializeEventHandlers()
+{
+  IExternalInterface* externalInterface = _robot.GetExternalInterface();
+  
+  // Disable reaction triggers by locking the specified triggers with the given lockID
+  _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                              ExternalInterface::MessageGameToEngineTag::DisableReactionsWithLock,
+                              [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                              {
+                                const auto& msg = event.GetData().Get_DisableReactionsWithLock();
+                                DisableReactionsWithLock(
+                                                         msg.lockID,
+                                                         ALL_TRIGGERS_CONSIDERED_TO_FULL_ARRAY(msg.triggersAffected),
+                                                         true);
+                              }));
+  
+  // Remove a specified lockID from all reaction triggers
+  _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                              ExternalInterface::MessageGameToEngineTag::RemoveDisableReactionsLock,
+                              [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                              {
+                                const auto& msg = event.GetData().Get_RemoveDisableReactionsLock();
+                                RemoveDisableReactionsLock(msg.lockID);
+                              }));
+
+  // Listen for a lock to disable all reactions with - only used by SDK
+  _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                              ExternalInterface::MessageGameToEngineTag::DisableAllReactionsWithLock,
+                              [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                              {
+                                const auto& msg = event.GetData().Get_DisableAllReactionsWithLock();
+                                DisableReactionsWithLock(
+                                                         msg.lockID,
+                                                         ReactionTriggerHelpers::kAffectAllArray,
+                                                         true);
+                              }));
+  
+  _eventHandlers.push_back(externalInterface->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::ActivateHighLevelActivity,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                            {
+                              const HighLevelActivity activityType =
+                              event.GetData().Get_ActivateHighLevelActivity().activityType;
+                              SetCurrentActivity(activityType);
+                              if((activityType == HighLevelActivity::Freeplay) &&
+                                 (_firstTimeFreeplayStarted < 0.0f)){
+                                const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+                                _firstTimeFreeplayStarted = currTime_s;
+                              }
+                              
+                              // If we are leaving freeplay, ensure that sparks
+                              // have been cleared out
+                              if(activityType != HighLevelActivity::Freeplay){
+                                _activeSpark = UnlockId::Count;
+                                _lastRequestedSpark = UnlockId::Count;
+                              }
+                              
+                            }));
+  
+  _eventHandlers.push_back(externalInterface->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::SetDefaultHeadAndLiftState,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                            {
+                              bool enable = event.GetData().Get_SetDefaultHeadAndLiftState().enable;
+                              float headAngle = event.GetData().Get_SetDefaultHeadAndLiftState().headAngle;
+                              float liftHeight = event.GetData().Get_SetDefaultHeadAndLiftState().liftHeight;
+                              SetDefaultHeadAndLiftState(enable, headAngle, liftHeight);
+                            }));
+      
+  _eventHandlers.push_back(externalInterface->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::RequestReactionTriggerMap,
+                            [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine> &event)
+                            {
+                              BroadcastReactionTriggerMap();
+                            }));
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
@@ -442,23 +455,24 @@ Result BehaviorManager::InitReactionTriggerMap(const Json::Value& config)
     for(const auto& triggerMap: reactionTriggerArray){
       const std::string& reactionTriggerString = triggerMap.get(kReactionTriggerKey,
                                                             EnumToString(ReactionTrigger::Count)).asString();
-      const std::string& behaviorName = triggerMap.get(kReactionBehaviorKey,"").asString();
+      BehaviorID behaviorID = IBehavior::ExtractBehaviorIDFromConfig(triggerMap);
       
       ReactionTrigger trigger = ReactionTriggerFromString(reactionTriggerString);
       IReactionTriggerStrategy* strategy = ReactionTriggerStrategyFactory::CreateReactionTriggerStrategy(_robot, triggerMap, trigger);
-      IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
+      IBehavior* behavior = _behaviorFactory->FindBehaviorByID(behaviorID);
       
       {
         DEV_ASSERT_MSG(behavior != nullptr, "BehaviorManager.InitReactionTriggerMap.BehaviorNullptr Behavior name",
-                       "Behavior name %s returned nullptr from factory", behaviorName.c_str());
+                       "Behavior name %s returned nullptr from factory", BehaviorIDToString(behaviorID));
         DEV_ASSERT_MSG(strategy != nullptr, "BehaviorManager.InitReactionTriggerMap.StrategyNullptr",
                        "Reaction trigger string %s returned nullptr", reactionTriggerString.c_str());
       }
         
       if(strategy != nullptr && behavior != nullptr){
         PRINT_CH_INFO("ReactionTriggers","BehaviorManager.InitReactionTriggerMap.AddingReactionTrigger",
-                         "Strategy %s maps to behavior %s",
-                         strategy->GetName().c_str(), behavior->GetName().c_str());
+                      "Strategy %s maps to behavior %s",
+                      strategy->GetName().c_str(),
+                      BehaviorIDToString(behavior->GetID()));
         
         // Add the strategy to the trigger
         _reactionTriggerMap[trigger].AddStrategyMapping(strategy, behavior);
@@ -491,7 +505,7 @@ Result BehaviorManager::CreateBehaviorFromConfiguration(const Json::Value& behav
   return ret;
 }
   
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehavior* BehaviorManager::GetCurrentBehavior() const{
   return GetRunningAndResumeInfo().GetCurrentBehavior();
@@ -521,7 +535,7 @@ void BehaviorManager::BroadcastReactionTriggerMap() const {
       
     for(const auto& strategy: strategyMap)
     {
-        newEntry.BehaviorName = strategy.second->GetName();
+        newEntry.behaviorID = strategy.second->GetID();
         reactionTriggerToBehaviors.push_back(newEntry);
     }
   }
@@ -564,7 +578,7 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBeh
       // the previous behavior has been told to stop, but no new behavior has been started
       PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
                         "Failed to initialize %s behavior.",
-                        nextBehavior->GetName().c_str());
+                        BehaviorIDToString(nextBehavior->GetID()));
       nextBehaviorInfo.SetCurrentBehavior(nullptr);
       initSuccess = false;
     }
@@ -573,7 +587,7 @@ bool BehaviorManager::SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBeh
   if( nullptr != nextBehavior ) {
     VIZ_BEHAVIOR_SELECTION_ONLY(
       _robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(
-           VizInterface::NewBehaviorSelected( nextBehavior->GetName() )));
+           VizInterface::NewBehaviorSelected( nextBehavior->GetID() )));
   }
   
   SetRunningAndResumeInfo(nextBehaviorInfo);
@@ -596,19 +610,20 @@ void BehaviorManager::SendDasTransitionMessage(const BehaviorRunningAndResumeInf
   const IBehavior* newBehavior = newBehaviorInfo.GetCurrentBehavior();
   
   
-  const std::string& oldBehaviorName = nullptr != oldBehavior ? oldBehavior->GetName() : "NULL";
-  const std::string& newBehaviorName = nullptr != newBehavior ? newBehavior->GetName() : "NULL";
+  BehaviorID oldBehaviorID = nullptr != oldBehavior ? oldBehavior->GetID()  : BehaviorID::NoneBehavior;
+  BehaviorID newBehaviorID = nullptr != newBehavior ? newBehavior->GetID()  : BehaviorID::NoneBehavior;
   
   
   Anki::Util::sEvent("robot.behavior_transition",
-                     {{DDATA, oldBehaviorName.c_str()}},
-                     newBehaviorName.c_str());
+                     {{DDATA,
+                       BehaviorIDToString(oldBehaviorID)}},
+                       BehaviorIDToString(newBehaviorID));
   
   ExternalInterface::BehaviorTransition msg;
-  msg.oldBehaviorName = oldBehaviorName;
+  msg.oldBehaviorID = oldBehaviorID;
   msg.oldBehaviorClass = nullptr != oldBehavior ? oldBehavior->GetClass() : BehaviorClass::NoneBehavior;
   msg.oldBehaviorExecType = nullptr != oldBehavior ? oldBehavior->GetExecutableType() : ExecutableBehaviorType::NoneBehavior;
-  msg.newBehaviorName = newBehaviorName;
+  msg.newBehaviorID = newBehaviorID;
   msg.newBehaviorClass = nullptr != newBehavior ? newBehavior->GetClass() : BehaviorClass::NoneBehavior;
   msg.newBehaviorExecType = nullptr != newBehavior ? newBehavior->GetExecutableType() : ExecutableBehaviorType::NoneBehavior;
   msg.newBehaviorDisplayKey = newBehavior ? newBehavior->GetDisplayNameKey() : "";
@@ -689,8 +704,9 @@ void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
              GetRunningAndResumeInfo().GetCurrentBehavior()->IsRunning(),
     "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
  
-  // ask the current chooser for the next behavior
-  IBehavior* nextBehavior = _currentChooserPtr->ChooseNextBehavior(_robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+  // ask the current activity for the next behavior
+  IBehavior* nextBehavior = GetCurrentActivity()->
+        ChooseNextBehavior(_robot, GetRunningAndResumeInfo().GetCurrentBehavior());
   if(nextBehavior != GetRunningAndResumeInfo().GetCurrentBehavior()){
     BehaviorRunningAndResumeInfo scoredInfo;
     scoredInfo.SetCurrentBehavior(nextBehavior);
@@ -727,7 +743,7 @@ void BehaviorManager::TryToResumeBehavior()
     if( resumeResult == RESULT_OK )
     {
       PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeBehavior", "Successfully resumed '%s'",
-        behaviorToResume->GetName().c_str());
+        BehaviorIDToString(behaviorToResume->GetID()));
       // the behavior can resume, set as current again
       BehaviorRunningAndResumeInfo newBehaviorInfo;
       newBehaviorInfo.SetCurrentBehavior(behaviorToResume);
@@ -739,7 +755,7 @@ void BehaviorManager::TryToResumeBehavior()
     else {
       PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeFailed",
         "Tried to resume behavior '%s', but failed. Clearing current behavior",
-        behaviorToResume->GetName().c_str() );
+        BehaviorIDToString(behaviorToResume->GetID()));
     }
   }
   
@@ -813,15 +829,18 @@ Result BehaviorManager::Update(Robot& robot)
     PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "");
     return RESULT_FAIL;
   }
-    
-  _currentChooserPtr->Update(robot);
-  _voiceCommandChooser->Update(robot);
-
+  
+  // Update the currently running activity
+  GetCurrentActivity()->Update(robot);
+  
   UpdateTappedObject();
   
+  // check for voice commands
+  _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update(robot);
   // Identify whether there is a voice command-response behavior we want to be running
-  IBehavior* voiceCommandBehavior = _voiceCommandChooser->ChooseNextBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
-  
+  IBehavior* voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
+                 ChooseNextBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+
   if (!voiceCommandBehavior)
   {
     // Update the current behavior if a new object was double tapped
@@ -877,8 +896,8 @@ Result BehaviorManager::Update(Robot& robot)
         // behavior is complete, switch to null (will also handle stopping current). If it was reactionary,
         // switch now to give the last behavior a chance to resume (if appropriate)
         PRINT_CH_DEBUG("Behaviors", "BehaviorManager.Update.BehaviorComplete",
-                          "Behavior '%s' returned  Status::Complete",
-                          activeBehavior->GetName().c_str());
+                       "Behavior '%s' returned  Status::Complete",
+                       BehaviorIDToString(activeBehavior->GetID()));
         if (shouldAttemptResume) {
           TryToResumeBehavior();
         }
@@ -891,7 +910,7 @@ Result BehaviorManager::Update(Robot& robot)
       case IBehavior::Status::Failure:
         PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                           "Behavior '%s' failed to Update().",
-                          activeBehavior->GetName().c_str());
+                          BehaviorIDToString(activeBehavior->GetID()));
         // same as the Complete case
         if(shouldAttemptResume) {
           TryToResumeBehavior();
@@ -908,26 +927,37 @@ Result BehaviorManager::Update(Robot& robot)
 } // Update()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
+void BehaviorManager::SetCurrentActivity(HighLevelActivity newActivity, const bool ignorePreviousActivity)
 {
-  if( _currentChooserPtr == newChooser) {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.SetBehaviorChooser",
-      "BehaviorChooser '%s' already set",
-      newChooser ? newChooser->GetName() : "null");
+  if( _currentHighLevelActivity == newActivity) {
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.SetCurrentActivity",
+                  "Activity '%s' already set", EnumToString(newActivity));
     return;
   }
   
-  // notify all chooser it's no longer selected
-  if ( _currentChooserPtr ) {
-    _currentChooserPtr->OnDeselected();
+  if(!ignorePreviousActivity){
+    // notify all chooser it's no longer selected
+    GetCurrentActivity()->OnDeselected(_robot);
+    
+    // channeled log and event - legacy event from when activites were just choosers
+    // PLEASE DO NOT CHANGE or you will break analytics queries
+    LOG_EVENT("BehaviorManager.SetBehaviorChooser",
+              "Switching behavior chooser from '%s' to '%s'",
+              ActivityIDToString(GetCurrentActivity()->GetID()),
+              EnumToString(newActivity));
+    
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorManager.SetCurrentActivity",
+                  "Switching behavior chooser from '%s' to '%s'",
+                  ActivityIDToString(GetCurrentActivity()->GetID()),
+                  EnumToString(newActivity));
   }
   
   // default head and lift states should not be preserved between choosers
   DEV_ASSERT(!AreDefaultHeadAndLiftStateSet(),
              "BehaviorManager.ChooseNextBehaviorAndSwitch.DefaultHeadAndLiftStatesStillSet");
 
-  const bool currentIsReactionary = false;
-         //_currentBehaviorInfo->currentBehaviorCategory == BehaviorCategory::Reactionary;
+  const bool currentIsReactionary = CurrentBehaviorTriggeredAsReaction();
   
   // The behavior pointers may no longer be valid, so clear them
   if(!currentIsReactionary){
@@ -937,19 +967,9 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   
   GetRunningAndResumeInfo().SetBehaviorToResume(nullptr);
 
-  // channeled log and event
-  LOG_EVENT("BehaviorManager.SetBehaviorChooser", "Switching behavior chooser from '%s' to '%s'",
-            _currentChooserPtr ? _currentChooserPtr->GetName() : "null",
-            newChooser->GetName());
+  _currentHighLevelActivity = newActivity;
   
-  PRINT_CH_INFO("Behaviors",
-                "BehaviorManager.SetBehaviorChooser",
-                "Switching behavior chooser from '%s' to '%s'",
-                _currentChooserPtr ? _currentChooserPtr->GetName() : "null",
-                newChooser->GetName());
-
-  _currentChooserPtr = newChooser;
-  _currentChooserPtr->OnSelected();
+  GetCurrentActivity()->OnSelected(_robot);
   
   // mark the time at which the change happened (this is checked by behaviors)
   _lastChooserSwitchTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -959,6 +979,16 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
     ChooseNextScoredBehaviorAndSwitch();
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::shared_ptr<IActivity> BehaviorManager::GetCurrentActivity()
+{
+  DEV_ASSERT(_currentHighLevelActivity < HighLevelActivity::Count,
+             "BehaviorManager.GetCurrentActivity.InvalidHighLevelActivity");
+  return _highLevelActivityMap[_currentHighLevelActivity];
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom)
@@ -1038,12 +1068,12 @@ bool BehaviorManager::CheckReactionTriggerStrategies()
             PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.SwitchingToReaction",
                           "Trigger strategy %s triggering behavior %s",
                           strategy.GetName().c_str(),
-                          rBehavior.GetName().c_str());
+                          BehaviorIDToString(rBehavior.GetID()));
           }else{
             PRINT_CH_INFO("ReactionTriggers", "BehaviorManager.CheckReactionTriggerStrategies.FailedToSwitch",
                           "Trigger strategy %s tried to trigger behavior %s, but init failed",
                           strategy.GetName().c_str(),
-                          rBehavior.GetName().c_str());
+                          BehaviorIDToString(rBehavior.GetID()));
           }
       
           if(hasAlreadySwitchedThisTick){
@@ -1113,21 +1143,24 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::CalculateFreeplayActivityFromObjects()
+void BehaviorManager::CalculateActivityFreeplayFromObjects()
 {
   // TODO: this will no longer be necessary after COZMO-10658
-  // design: the choosers are generic, but this only makes sense if the freeplay chooser is an FreeplayActivity. I
+  // design: the choosers are generic, but this only makes sense if the freeplay chooser is an ActivityFreeplay. I
   // think that we should not be able to data-drive it, but there may be a case for it, and this method
   // should just not work in that case. Right now I feel like using dynamic_cast, but we could provide default
   // implementation in chooser interface that asserts to not be used.
-  FreeplayActivity* freeplayActivityEvaluator = dynamic_cast<FreeplayActivity*>(_freeplayChooser);
-  if ( nullptr != freeplayActivityEvaluator )
+  std::shared_ptr<IActivity> freeplayActivity = _highLevelActivityMap[HighLevelActivity::Freeplay];
+
+  IActivity* freeplayActivityRaw = freeplayActivity.get();
+  ActivityFreeplay* ActivityFreeplayEvaluator = dynamic_cast<ActivityFreeplay*>(freeplayActivityRaw);
+  if ( nullptr != ActivityFreeplayEvaluator )
   {
-    freeplayActivityEvaluator->CalculateDesiredActivityFromObjects();
+    ActivityFreeplayEvaluator->CalculateDesiredActivityFromObjects();
   }
   else
   {
-    PRINT_NAMED_ERROR("BehaviorManager.CalculateFreeplayActivityFromObjects.NotUsingFreeplayActivity",
+    PRINT_NAMED_ERROR("BehaviorManager.CalculateActivityFreeplayFromObjects.NotUsingActivityFreeplay",
       "The current freeplay chooser is not a freeplay activity.");
   }
 }
@@ -1189,7 +1222,7 @@ void BehaviorManager::DisableReactionsWithLock(
   const bool sdkDifferentParadigmLock = (lockID == "sdk");
   /// Iterate over all reaction triggers to see if they're affected by this request
   for(auto& entry: _reactionTriggerMap){
-    ReactionTrigger triggerEnum = entry.first;
+    const ReactionTrigger triggerEnum = entry.first;
     auto& allStrategyMaps = entry.second;
     
     const bool lockNotAlreadyInUse = !allStrategyMaps.IsTriggerLockedByID(lockID);
@@ -1238,9 +1271,7 @@ void BehaviorManager::DisableReactionsWithLock(
         BehaviorRunningAndResumeInfo nullInfo;
         SwitchToBehaviorBase(nullInfo);
       }
-      
     }
-    triggerEnum++;
   }
 }
 
@@ -1253,7 +1284,7 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
   /// Iterate over all reaction triggers to see if they're affected by this request
   for(auto& entry: _reactionTriggerMap)
   {
-    ReactionTrigger triggerEnum = entry.first;
+    const ReactionTrigger triggerEnum = entry.first;
     auto& allStrategyMaps = entry.second;
     
     if(allStrategyMaps.IsReactionEnabled())
@@ -1279,8 +1310,6 @@ void BehaviorManager::DisableReactionWithLock(const std::string& lockID,
         currentBehavior->Stop();
       }
     }
-    
-    triggerEnum++;
   }
 }
 #endif
@@ -1291,7 +1320,7 @@ void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
 {
   /// Iterate over all reaction triggers to see if they're affected by this request
   for(auto& entry: _reactionTriggerMap){
-    ReactionTrigger triggerEnum = entry.first;
+    const ReactionTrigger triggerEnum = entry.first;
     auto& allStrategyMaps = entry.second;
     
     if(allStrategyMaps.IsTriggerLockedByID(lockID)){
@@ -1316,7 +1345,6 @@ void BehaviorManager::RemoveDisableReactionsLock(const std::string& lockID)
         }
       }
     }
-    triggerEnum++;
   }
 }
 
@@ -1397,9 +1425,9 @@ void BehaviorManager::SetBehaviorStateLights(BehaviorClass classSettingLights,
 void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
 {
   // Have to be in freeplay and not picking or placing and flat on the ground
-  if(_currentChooserPtr != _freeplayChooser ||
+  if((_currentHighLevelActivity != HighLevelActivity::Freeplay) ||
      _robot.IsPickingOrPlacing() ||
-     _robot.GetOffTreadsState() != OffTreadsState::OnTreads)
+     (_robot.GetOffTreadsState() != OffTreadsState::OnTreads))
   {
     PRINT_CH_INFO("Behaviors", "HandleObjectTapInteraction.CantRun",
                   "Robot is not in freeplay chooser or is picking and placing or not on treads");
@@ -1452,12 +1480,12 @@ void BehaviorManager::LeaveObjectTapInteraction()
     return;
   }
   
-  if(_currentChooserPtr != nullptr &&
-    _currentChooserPtr->SupportsObjectTapInteractions())
+  std::shared_ptr<IActivity> currentActivity = GetCurrentActivity();
+  if(currentActivity->SupportsObjectTapInteractions())
   {
     PRINT_CH_INFO("Behaviors", "LeaveObjectTapInteration", "");
     
-    auto* chooser = dynamic_cast<FreeplayActivity*>(_currentChooserPtr);
+    auto* chooser = dynamic_cast<ActivityFreeplay*>(currentActivity.get());
     
     // It is possible that we have requested the ObjectTapInteraction activity but it hasn't actually
     // been selected so we need to clear the requested activity
@@ -1468,9 +1496,10 @@ void BehaviorManager::LeaveObjectTapInteraction()
     else
     {
       PRINT_NAMED_ERROR("BehaviorManager.LeaveObjectTapInteraction.NullChooser",
-                        "Current activity is not an FreeplayActivity but supports object tap interactions");
+                        "Current activity is not an ActivityFreeplay but supports object tap interactions");
     }
   }
+
   
   _robot.GetAIComponent().GetWhiteboard().ClearObjectTapInteraction();
   
@@ -1509,9 +1538,11 @@ void BehaviorManager::UpdateTappedObject()
     {
       bool canAnyTapBehaviorUseObject = false;
       
-      // For each tapInteraction behavior check if its ObjectUseIntention(s) can still use the tapped object
+      std::shared_ptr<IActivity> freeplayGeneric = _highLevelActivityMap[HighLevelActivity::Freeplay];
+      ActivityFreeplay* activityFreeplay = dynamic_cast<ActivityFreeplay*>(freeplayGeneric.get());
+      
       const ObjectID& tappedObject = GetCurrTappedObject();
-      for(const auto& behavior : _tapInteractionBehaviors)
+      for(const auto& behavior : activityFreeplay->GetObjectTapBehaviors())
       {
         const auto& intentions = behavior->GetBehaviorObjectInteractionIntentions();
         for(const auto& intent : intentions)
@@ -1542,20 +1573,22 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
 {
   // Copy pending object to be assigned to current double tapped object
   const ObjectID objectID = _pendingDoubleTappedObject;
-
-  if(!_currentChooserPtr->SupportsObjectTapInteractions())
+  
+  std::shared_ptr<IActivity> currentActivity = GetCurrentActivity();
+    
+  if(!currentActivity->SupportsObjectTapInteractions())
   {
     PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.SupportTapInteraction",
                   "Current chooser does not support object tap interactions");
     return;
   }
   
-  auto* chooser = dynamic_cast<FreeplayActivity*>(_currentChooserPtr);
+  auto* chooser = dynamic_cast<ActivityFreeplay*>(currentActivity.get());
   
   if(chooser == nullptr)
   {
     PRINT_NAMED_ERROR("BehaviorManager.HandleObjectTapInteraction.NullChooser",
-                      "Current activity is not an FreeplayActivity or is null");
+                      "Current activity is not an ActivityFreeplay or is null");
     return;
   }
   
@@ -1599,7 +1632,7 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
       {
         PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.BehaviorNotRunnable",
                       "%s is no longer runnable after updating target blocks",
-                      activeBehavior->GetName().c_str());
+                      BehaviorIDToString(activeBehavior->GetID()));
         
         // If the current behavior is a reactionary behavior (ReactToDoubleTap) then
         // make sure to update _runningReactionaryBehavior and try to resume the last behavior
@@ -1623,7 +1656,7 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
             {
               PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.ResumeFailed",
                             "%s can't run after being resumed",
-                            activeBehavior->GetName().c_str());
+                            BehaviorIDToString(activeBehavior->GetID()));
               LeaveObjectTapInteraction();
             }
           }
@@ -1667,7 +1700,7 @@ void BehaviorManager::UpdateBehaviorWithObjectTapInteraction()
           {
             PRINT_CH_INFO("Behaviors", "BehaviorManager.HandleObjectTapInteraction.StartingReactToDoubleTap",
                           "Forcing ReactToDoubleTap to run because %s can't run with newly double tapped object",
-                          activeBehavior->GetName().c_str());
+                          BehaviorIDToString(activeBehavior->GetID()));
             
             
             BehaviorRunningAndResumeInfo reactionaryInfo;

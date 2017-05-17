@@ -9,9 +9,8 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/types/actionTypes.clad"
-#include "clad/types/behaviorGroup.clad"
+#include "clad/types/activityTypes.clad"
 #include "clad/types/behaviorTypes.clad"
-#include "clad/types/behaviorChooserType.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -530,9 +529,9 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// ActivateBehaviorChooser
-message ActivateBehaviorChooser {
-  BehaviorChooserType behaviorChooserType
+// ActivateHighLevelActivity
+message ActivateHighLevelActivity {
+  HighLevelActivity activityType
 }
 
 // ExecuteBehavior
@@ -541,8 +540,8 @@ message ExecuteBehaviorByExecutableType {
   int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
-message ExecuteBehaviorByName {
-  string behaviorName,
+message ExecuteBehaviorByID {
+  BehaviorID behaviorID,
   int_32 numRuns = -1 // Number of times to run the behavior (-1 is infinite)
 }
 
@@ -576,8 +575,7 @@ message StartTestMode {
 }
 
 // request behaviors for chooser
-message RequestChooserBehaviorList {
-  BehaviorChooserType behaviorChooserType
+message RequestAllBehaviorsList {
 }
 
 // request reaction trigger map
@@ -585,10 +583,6 @@ message RequestReactionTriggerMap {
 
 }
 
-//request currently enabled behavior list
-message RequestEnabledBehaviorList{
-
-}
 
 // Execute Reaction
 message ExecuteReactionTrigger {

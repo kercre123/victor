@@ -16,8 +16,8 @@
 
 
 #include "clad/types/behaviorTypes.h"
-#include "clad/types/behaviorGroup.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include <map>
 
 
@@ -40,7 +40,7 @@ class BehaviorFactory : private Util::noncopyable
 {
 public:
   
-  using NameToBehaviorMap = std::map<std::string, IBehavior*>;
+  using BehaviorIDToBehaviorMap = std::map<BehaviorID, IBehavior*>;
   
   // NameCollisionRule dictates how to handle name collision on creation - reuse existing entry, replace it, or error and return null
   enum class NameCollisionRule : uint8_t
@@ -50,7 +50,7 @@ public:
     Fail
   };
   
-  BehaviorFactory();
+  BehaviorFactory(Robot& robot);
   ~BehaviorFactory();
   
   IBehavior* CreateBehavior(BehaviorClass behaviorType, Robot& robot, const Json::Value& config, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld);
@@ -60,11 +60,18 @@ public:
   void DestroyBehavior(IBehavior* behavior);
   void SafeDestroyBehavior(IBehavior*& behaviorPtrRef); // destroy and null out the pointer
   
-  IBehavior* FindBehaviorByName(const std::string& inName) const;
+  IBehavior* FindBehaviorByID(BehaviorID behaviorID) const;
   IBehavior* FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
   
-  const NameToBehaviorMap& GetBehaviorMap() const { return _nameToBehaviorMap; }
+  const BehaviorIDToBehaviorMap& GetBehaviorMap() const { return _idToBehaviorMap; }
 
+  
+  
+  // ==================== Event/Message Handling ====================
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
 private:
 
   // ============================== Private Member Funcs ==============================
@@ -77,8 +84,10 @@ private:
   void DeleteBehaviorInternal(IBehavior* behavior);
   
   // ============================== Private Member Vars ==============================
-  
-  NameToBehaviorMap _nameToBehaviorMap;
+  Robot& _robot;
+  BehaviorIDToBehaviorMap _idToBehaviorMap;
+  std::vector<Signal::SmartHandle> _signalHandles;
+
 
 };
   

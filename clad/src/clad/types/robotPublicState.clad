@@ -3,6 +3,7 @@
 // Created: 4/5/2017
 // Copyright: Anki, inc. 2017
 
+#include "clad/types/activityTypes.clad"
 #include "clad/types/behaviorTypes.clad"
 #include "clad/types/reactionTriggers.clad"
 #include "clad/types/unlockTypes.clad"
@@ -33,7 +34,7 @@ structure BehaviorStageStruct{
 no_default_constructor structure RobotPublicState{
   UnlockId currentSpark,
   bool isCubeInLift,
-  string currentAiGoal,
+  ActivityID currentActivity,
   ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct
 }

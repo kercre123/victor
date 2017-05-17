@@ -14,13 +14,11 @@
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
 #include "util/random/randomGenerator.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <string>
 #include <set>
@@ -56,18 +54,12 @@ public:
   virtual void OnSelected() {};
   virtual void OnDeselected() {};
 
-  // read which groups/behaviors are enabled/disabled from json configuration
-  virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) { };
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Logic
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) = 0;
-
-  // update internal state of the chooser
-  virtual Result Update(Robot& robot) { return Result::RESULT_OK; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -76,26 +68,8 @@ public:
   // name (for debug/identification)
   virtual const char* GetName() const = 0;
   
-  bool SupportsObjectTapInteractions() const { return _supportsObjectTapInteractions; }
-  
-  // ==================== Event/Message Handling ====================
-  // Handle various message types
-  template<typename T>
-  void HandleMessage(const T& msg);
-  
-protected:
-  virtual std::vector<std::string> GetEnabledBehaviorList() { return std::vector<std::string>{}; }
-  std::vector<std::string> GetChooserBehaviors();
-  Util::RandomGenerator& GetRNG() const;
-  Robot& _robot;
-
-private:
-  std::vector<Signal::SmartHandle> _signalHandles;
-  
-  bool _supportsObjectTapInteractions = false;
-
-  
-
+  // Used to access objectTapInteraction behaviors
+  std::vector<IBehavior*> GetObjectTapBehaviors(){ return {};}
   
 }; // class IBehaviorChooser
   

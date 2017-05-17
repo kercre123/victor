@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "RollBlock",
+  "behaviorID": "Hiking_RollCube",
+  "displayNameKey":"behavior.RollBlock",
+  "requiredUnlockId": "RollCube"
+}

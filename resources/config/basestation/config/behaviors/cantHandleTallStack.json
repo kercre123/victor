@@ -1,14 +1,6 @@
 {
   "behaviorClass": "CantHandleTallStack",
-  "name": "cantHandleTallStack",
-  "flatScore": 20,
-  "behaviorGroups": [
-    "FP_PlayWithHumans",
-    "FP_Socialize",
-    "FP_PlayAlone",
-    "FP_Hiking",
-    "FP_NothingToDo"
-  ],
+  "behaviorID": "CantHandleTallStack",
   "minimumStackHeight": 3,
   "lookingInitialWait_s": 1.0,
   "lookingDownWait_s": 1.0,

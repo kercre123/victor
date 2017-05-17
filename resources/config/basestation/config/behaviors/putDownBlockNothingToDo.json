@@ -1,8 +1,4 @@
 {
   "behaviorClass": "PutDownBlock",
-  "name": "PutDownBlockNothingToDo",
-  "flatScore": 1.1,
-  "behaviorGroups": [
-    "FP_NothingToDo"
-  ]
+  "behaviorID": "PutDownBlockNothingToDo"
 }

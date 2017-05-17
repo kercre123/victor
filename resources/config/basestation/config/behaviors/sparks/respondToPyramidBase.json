@@ -1,0 +1,11 @@
+{
+  "behaviorClass": "OnConfigSeen",
+  "behaviorID": "RespondToPyramidBase",
+  "requiredUnlockId": "BuildPyramid",
+  "configTriggers":[
+    "PyramidBase"
+  ],
+  "animTriggers": [
+      "BuildPyramidReactToBase"
+  ]
+}

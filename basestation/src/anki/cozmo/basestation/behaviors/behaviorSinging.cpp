@@ -80,14 +80,14 @@ BehaviorSinging::BehaviorSinging(Robot& robot, const Json::Value& config)
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.DisplayNameKeyRequired",
                  "No displayName for singing behavior %s",
-                 GetName().c_str());
+                 GetIDStr().c_str());
 
   // We have to have a audioSwitchGroup otherwise this behavior is useless
   res = JsonTools::GetValueOptional(config, kAudioSwitchGroup, value);
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.NoAudioSwitchGroup",
                  "No audioSwitchGroup for singing behavior %s",
-                 GetName().c_str());
+                 GetIDStr().c_str());
   _audioSwitchGroup = AudioMetaData::SwitchState::SwitchGroupTypeFromString(value);
   
   // We have to have a audioSwitch otherwise this behavior is useless
@@ -95,7 +95,7 @@ BehaviorSinging::BehaviorSinging(Robot& robot, const Json::Value& config)
   DEV_ASSERT_MSG(res,
                  "BehaviorSinging.NoAudioSwitch",
                  "No audioSwitch for singing behavior %s",
-                 GetName().c_str());
+                 GetIDStr().c_str());
 
   // Depending on which SwitchGroup we are using, figure out which
   // specific switch and animation to use
@@ -125,7 +125,7 @@ BehaviorSinging::BehaviorSinging(Robot& robot, const Json::Value& config)
       DEV_ASSERT_MSG(false,
                      "BehaviorSinging.NoAudioSwitch",
                      "No audioSwitch for singing behavior %s",
-                     GetName().c_str());
+                     GetIDStr().c_str());
       
       // Default to a 80Bpm fallback song
       _audioSwitch = GenericSwitch::Invalid;
@@ -155,7 +155,7 @@ Result BehaviorSinging::InitInternal(Robot& robot)
                                                     _audioSwitch);
 
   // Disable reactions
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersSinging);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersSinging);
 
   // Clear listeners and averages
   _cubeAccelListeners.clear();

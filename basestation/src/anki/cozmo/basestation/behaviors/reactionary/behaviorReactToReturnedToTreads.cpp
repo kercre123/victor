@@ -24,7 +24,6 @@ namespace Cozmo {
 BehaviorReactToReturnedToTreads::BehaviorReactToReturnedToTreads(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToReturnedToTreads");
 
 }
 

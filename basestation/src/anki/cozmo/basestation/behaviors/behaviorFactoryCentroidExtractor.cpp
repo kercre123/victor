@@ -71,7 +71,6 @@ static const char* kBehaviorTestName = "Factory centroid extractor";
   BehaviorFactoryCentroidExtractor::BehaviorFactoryCentroidExtractor(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   {
-    SetDefaultName("FactoryCentroidExtractor");
     
     SubscribeToTags({{
       EngineToGameTag::MotorCalibration,

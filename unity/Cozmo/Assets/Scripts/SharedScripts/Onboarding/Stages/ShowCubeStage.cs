@@ -54,7 +54,7 @@ namespace Onboarding {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Onboarding__Show_Cube);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("OnboardingShowCube");
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(BehaviorID.OnboardingShowCube);
         // In this behavior we allow some interuptions, but ReactToPet can interrupt from those reactions. Repress it here, instead of the C++ behavior
         // so it will be off throughout the whole thing.
         RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId, ReactionaryBehaviorEnableGroups.kOnboardingShowCubeStageTriggers);
@@ -71,7 +71,7 @@ namespace Onboarding {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Onboarding__Play_Tab);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(BehaviorID.NoneBehavior);
         // re-enable reactionary behaviors.
         RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId);
       }

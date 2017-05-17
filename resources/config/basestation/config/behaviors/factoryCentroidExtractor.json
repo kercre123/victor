@@ -1,6 +1,4 @@
 {
   "behaviorClass": "FactoryCentroidExtractor",
-  "name": "FactoryCentroidExtractor",
-  "behaviorGroups": [
-  ]
+  "behaviorID": "FactoryCentroidExtractor"
 }

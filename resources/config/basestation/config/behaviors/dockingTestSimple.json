@@ -1,6 +1,4 @@
 {
   "behaviorClass": "DockingTestSimple",
-  "name": "DockingTestSimple",
-  "behaviorGroups": [
-  ]
+  "behaviorID": "DockingTestSimple"
 }

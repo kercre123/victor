@@ -94,7 +94,6 @@ BehaviorGuardDog::BehaviorGuardDog(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _connectedCubesOnlyFilter(std::make_unique<BlockWorldFilter>())
 {
-  SetDefaultName("GuardDog");
   
   // subscribe to some E2G messages:
   SubscribeToTags({EngineToGameTag::ObjectConnectionState,
@@ -165,7 +164,7 @@ bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
 Result BehaviorGuardDog::InitInternal(Robot& robot)
 {
   // Disable reactionary behaviors that we don't want interrupting this:
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersGuardDogArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersGuardDogArray);
   
   // Disable idle animation (TODO: needed?)
   //robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);

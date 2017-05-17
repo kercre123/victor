@@ -18,7 +18,9 @@ enum uint_8 BehaviorGameFlag {
   All = 0xff
 }
 
-// Types of scored behaviors
+// BehaviorClass identifies the iBehavior child class
+// which the behavior is an instance of
+// PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorClass {
   NoneBehavior, // Named differently to not conflict with the Python keyword
 
@@ -90,9 +92,134 @@ enum uint_8 BehaviorClass {
   ReactToSparked,
   ReactToStackOfCubes,
   ReactToUnexpectedMovement,
+  ReactToVoiceCommand
+
+}
+
+
+// BehaviorID is a unique identifier for each instance of a behavior
+// so that they can be referenced by other parts of the behavior system
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 BehaviorID {
+  NoneBehavior,
+
+  AcknowledgeFace,
+  AcknowledgeObject,
+  Bouncer,
+  BuildPyramid,
+  BuildPyramidBase,
+  CantHandleTallStack,
+  CubeLiftWorkout,
+  DockingTestSimple,
+  DriveOffCharger,
+  EnrollFace,
+  FactoryCentroidExtractor,
+  FactoryTest,
+  FindFaces_socialize,
+  FistBump,
+  FPPeekABoo,
+  GuardDog,
+  Hiccup,
+  Hiking_BringCubeToBeacon,
+  Hiking_DriveOffCharger,
+  Hiking_FirstLookIntro,
+  Hiking_FirstLookWakeUp,
+  Hiking_LookInPlace360,
+  Hiking_LookInPlaceForUnknown,
+  Hiking_PounceOnMotion,
+  Hiking_RollCube,
+  Hiking_ThinkAboutBeacons,
+  Hiking_VisitInterestingEdge,
+
+  InteractWithFaces,
+  KnockOverCubes,
+  LiftLoadTest,
+  MeetCozmo_FindFaces_Socialize,
+  MeetCozmo_InteractWithFaces,
+  NothingToDo_BoredAnim,
+  NothingToDo_Idle,
+  OnboardingShowCube,
+  PlayArbitraryAnim,
+  PopAWheelie,
+  PounceOnMotion_Socialize,
+  PounceOnMotion_VoiceCommand,
+  PutDownBlock,
+  PutDownBlockNothingToDo,
+  PutDownDispatch_LookForFaceAndCube,
+  PyramidPutDownBlock,
+  PyramidRespondPossiblyRoll,
+  PyramidThankYou,
+  RamIntoBlock,
+
+  ReactToCliff,
+  ReactToCubeMoved,
+  ReactToDoubleTap,
+  ReactToFrustrationMajor,
+  ReactToFrustrationMinor,
+  ReactToMotorCalibration,
+  ReactToOnCharger,
+  ReactToPet,
+  ReactToPickup,
+  ReactToPlacedOnSlope,
+  ReactToPyramid,
+  ReactToReturnedToTreads,
+  ReactToRobotOnBack,
+  ReactToRobotOnFace,
+  ReactToRobotOnSide,
+  ReactToRobotShaken,
+  ReactToSparked,
+  ReactToStackOfCubes,
+  ReactToUnexpectedMovement,
   ReactToVoiceCommand,
 
-  Count
+  RespondToPyramidBase,
+  RequestKeepAway,
+  RequestMemoryMatch,
+  RequestSpeedTap,
+  RespondToRenameFace,
+  RollBlockOnSide,
+  RollBlockOnSideLowScore,
+
+  Singing_Beethovens5th,
+  Singing_Camptown,
+  Singing_FrereJacques,
+  Singing_ItsyBitsySpider,
+  Singing_MaryHadALittleLamb,
+  Singing_OdeToJoy,
+  Singing_PachebelCanon,
+  Singing_PopGoesTheWeasel,
+  Singing_RowYourBoat,
+  Singing_TakeMeOutToTheBallgame,
+  Singing_TwinkleTwinkle,
+  Singing_WilliamTell,
+  Singing_YankeeDoodle,
+
+  SparksBringCubeToBeacon,
+  SparksCheckForStackAtInterval,
+  SparksCubeLiftWorkout,
+  SparksFindFaces,
+  SparksFistBump,
+  SparksKnockOverCubes,
+  SparksLookInPlace,
+  SparksPeekABoo,
+  SparksPickUpCube,
+  SparksPickupSingleCubeForPyramid,
+  SparksPickupSingleCubeToStack,
+  SparksPopAWheelie,
+  SparksPounceOnMotion,
+  SparksPutDownBlock,
+  SparksRollBlock,
+  SparksStackBlock,
+  SparksThinkAboutBeacons,
+  SparksVisitPossibleMarker,
+
+  StackBlocks,
+  TapInteractionPickUpCube,
+  TapInteractionPopAWheelie,
+  TapInteractionRollCube,
+  TapInteractionStackCubes,
+  TrackLaser,
+  VisitPossibleMarker
 }
 
 // Each of these should map to exactly 1 instance of a behavior at runtime

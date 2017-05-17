@@ -21,11 +21,11 @@ namespace Onboarding {
       UnlockablesManager.Instance.OnSparkStarted -= HandleSparkStarted;
       BaseModal.BaseModalClosed -= HandleModalClosed;
       // turn off regardless sine we're going back to freeplay
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
     }
     // Sparks are a part of freeplay so we need to turn them on
     private void HandleSparkStarted(Anki.Cozmo.UnlockId unlock) {
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(true);
     }
     private void HandleSparkComplete(CoreUpgradeDetailsModal modal) {
       modal.CloseDialog();

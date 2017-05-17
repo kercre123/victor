@@ -119,7 +119,6 @@ BehaviorEnrollFace::BehaviorEnrollFace(Robot &robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _settings(new ExternalInterface::SetFaceToEnroll())
 {
-  SetDefaultName("EnrollFace");
   
   SubscribeToTags({{
     EngineToGameTag::UnexpectedMovement,
@@ -260,7 +259,7 @@ Result BehaviorEnrollFace::InitInternal(Robot& robot)
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()), _saveID);
   
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersEnrollFaceArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersEnrollFaceArray);
   
   // Start with this timeout (may increase as the behavior runs)
   _timeout_sec = kEnrollFace_Timeout_sec;

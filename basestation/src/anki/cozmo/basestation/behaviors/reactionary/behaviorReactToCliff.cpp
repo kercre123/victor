@@ -75,8 +75,6 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
 : IBehavior(robot, config)
 , _shouldStopDueToCharger(false)
 {
-  SetDefaultName("ReactToCliff");
-
   SubscribeToTags({{
     EngineToGameTag::CliffEvent,
     EngineToGameTag::RobotStopped,
@@ -96,7 +94,7 @@ bool BehaviorReactToCliff::IsRunnableInternal(const BehaviorPreReqNone& preReqDa
 Result BehaviorReactToCliff::InitInternal(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());  
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersReactToCliffArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersReactToCliffArray);
   
   switch( _state ) {
     case State::PlayingStopReaction:

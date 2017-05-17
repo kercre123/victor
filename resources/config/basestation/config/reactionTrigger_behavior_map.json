@@ -2,11 +2,11 @@
   [
     {
       "reactionTrigger": "FacePositionUpdated",
-      "behaviorName": "AcknowledgeFace"
+      "behaviorID": "AcknowledgeFace"
     },
     {
       "reactionTrigger": "FistBump",
-      "behaviorName": "FistBump",
+      "behaviorID": "FistBump",
       "behaviorObjectiveTriggerParams": [
         {
           // The behavior objective that can trigger a fist bump
@@ -57,7 +57,7 @@
     },
     {
       "reactionTrigger": "Hiccup",
-      "behaviorName": "Hiccup",
+      "behaviorID": "Hiccup",
       "hiccupParams": {
         // How often Cozmo should get the hiccups
         "minHiccupOccurrenceFrequency_s": 300,
@@ -80,11 +80,11 @@
     },
     {
       "reactionTrigger": "ObjectPositionUpdated",
-      "behaviorName": "AcknowledgeObject"
+      "behaviorID": "AcknowledgeObject"
     },
     {
       "reactionTrigger": "CliffDetected",
-      "behaviorName": "reactToCliff",
+      "behaviorID": "ReactToCliff",
       "genericStrategyParams": {
         "shouldResumeLast": true,
         "debugStrategyName": "Trigger Strategy React To Cliff"
@@ -92,11 +92,11 @@
     },
     {
       "reactionTrigger": "CubeMoved",
-      "behaviorName": "reactToCubeMoved"
+      "behaviorID": "ReactToCubeMoved"
     },
     {
       "reactionTrigger": "DoubleTapDetected",
-      "behaviorName": "reactToDoubleTap",
+      "behaviorID": "ReactToDoubleTap",
       "genericStrategyParams": {
         "shouldResumeLast": true,
         "canInterruptOtherTriggeredBehavior": false,
@@ -106,7 +106,7 @@
     },
     {
       "reactionTrigger": "Frustration",
-      "behaviorName": "ReactToFrustrationMinor",
+      "behaviorID": "ReactToFrustrationMinor",
       "frustrationParams": {
         "maxConfidence": -0.6,
         "cooldownTime_s": 60.0
@@ -114,14 +114,14 @@
     },
     {
       "reactionTrigger": "Frustration",
-      "behaviorName": "ReactToFrustrationMajor",
+      "behaviorID": "ReactToFrustrationMajor",
       "frustrationParams": {
         "maxConfidence": -0.9
       } 
     },
     {
       "reactionTrigger": "MotorCalibration",
-      "behaviorName": "reactToMotorCalibration",
+      "behaviorID": "ReactToMotorCalibration",
       "genericStrategyParams": {
         "shouldResumeLast": true,
         "debugStrategyName": "Trigger Strategy Motor Calibration"
@@ -129,19 +129,19 @@
     },
     {
       "reactionTrigger": "NoPreDockPoses",
-      "behaviorName": "pyramidRamIntoBlock"
+      "behaviorID": "RamIntoBlock"
     },
     {
       "reactionTrigger": "PlacedOnCharger",
-      "behaviorName": "reactToOnCharger"
+      "behaviorID": "ReactToOnCharger"
     },
     {
       "reactionTrigger": "PetInitialDetection",
-      "behaviorName": "ReactToPet"
+      "behaviorID": "ReactToPet"
     },
     {
       "reactionTrigger": "RobotPickedUp",
-      "behaviorName": "reactToPickup",
+      "behaviorID": "ReactToPickup",
       "genericStrategyParams": {
         "shouldResumeLast": false,
         "debugStrategyName": "Trigger Strategy Pickup"
@@ -149,15 +149,15 @@
     },
     {
       "reactionTrigger": "RobotPlacedOnSlope",
-      "behaviorName": "reactToPlacedOnSlope"
+      "behaviorID": "ReactToPlacedOnSlope"
     },
     {
       "reactionTrigger": "PyramidInitialDetection",
-      "behaviorName": "reactToPyramid"
+      "behaviorID": "ReactToPyramid"
     },
     {
       "reactionTrigger": "ReturnedToTreads",
-      "behaviorName": "ReactToReturnedToTreads",
+      "behaviorID": "ReactToReturnedToTreads",
       "genericStrategyParams": {
         "shouldResumeLast": false,
         "debugStrategyName": "Trigger Strategy Returned to Treads"
@@ -165,7 +165,7 @@
     },
     {
       "reactionTrigger": "RobotOnBack",
-      "behaviorName": "reactToRobotOnBack",
+      "behaviorID": "ReactToRobotOnBack",
       "genericStrategyParams": {
         "shouldResumeLast": false,
         "debugStrategyName": "Trigger Strategy Robot On Back"
@@ -173,7 +173,7 @@
     },
     {
       "reactionTrigger": "RobotOnFace",
-      "behaviorName": "reactToRobotOnFace",
+      "behaviorID": "ReactToRobotOnFace",
       "genericStrategyParams": {
         "shouldResumeLast": false,
         "debugStrategyName": "Trigger Strategy Robot On Face"
@@ -181,7 +181,7 @@
     },
     {
       "reactionTrigger": "RobotOnSide",
-      "behaviorName": "reactToRobotOnSide",
+      "behaviorID": "ReactToRobotOnSide",
       "genericStrategyParams": {
         "shouldResumeLast": false,
         "debugStrategyName": "Trigger Strategy Robot On Side"
@@ -189,19 +189,19 @@
     },
     {
       "reactionTrigger": "RobotShaken",
-      "behaviorName": "reactToRobotShaken"
+      "behaviorID": "ReactToRobotShaken"
     },
     {
       "reactionTrigger": "Sparked",
-      "behaviorName": "reactToSparked"
+      "behaviorID": "ReactToSparked"
     },
     {
       "reactionTrigger": "StackOfCubesInitialDetection",
-      "behaviorName": "reactToStackOfCubes"
+      "behaviorID": "ReactToStackOfCubes"
     },
     {
       "reactionTrigger": "UnexpectedMovement",
-      "behaviorName": "reactToUnexpectedMovement",
+      "behaviorID": "ReactToUnexpectedMovement",
       "genericStrategyParams": {
         "shouldResumeLast": true,
         "debugStrategyName": "Trigger Strategy Unexpected Movement"
@@ -209,7 +209,7 @@
     },
     {
       "reactionTrigger": "VC",
-      "behaviorName": "ReactToVoiceCommand"
+      "behaviorID": "ReactToVoiceCommand"
     }
   ]
 }

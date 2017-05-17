@@ -125,9 +125,10 @@ TEST(BehaviorInterface, Create)
 {
   CozmoContext context{};
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
+  b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b.IsRunning() );
   EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
@@ -142,9 +143,10 @@ TEST(BehaviorInterface, Init)
 {
   CozmoContext context{};
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
+  b.ReadFromScoredJson(empty);
 
   EXPECT_FALSE( b._inited );
   EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
@@ -160,7 +162,7 @@ TEST(BehaviorInterface, InitWithInterface)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -176,9 +178,10 @@ TEST(BehaviorInterface, Run)
 {
   CozmoContext context{};
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
+  b.ReadFromScoredJson(empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
 
@@ -221,9 +224,10 @@ TEST(BehaviorInterface, ScoreWhileRunning)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
+  b.ReadFromScoredJson(empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
 
@@ -290,7 +294,7 @@ TEST(BehaviorInterface, HandleMessages)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -332,7 +336,7 @@ TEST(BehaviorInterface, OutsideAction)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -417,7 +421,7 @@ TEST(BehaviorInterface, StartActingSimple)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -452,7 +456,7 @@ TEST(BehaviorInterface, StartActingFailures)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -516,7 +520,7 @@ TEST(BehaviorInterface, StartActingCallbacks)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
   
@@ -582,7 +586,7 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -646,7 +650,7 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestBehavior b(robot, empty);
 
@@ -743,7 +747,7 @@ TEST(BehaviorInterface, StartActingInsideInit)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty;
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
 
   TestInitBehavior b(robot, empty);
 

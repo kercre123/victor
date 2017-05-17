@@ -109,7 +109,7 @@ BehaviorPeekABoo::BehaviorPeekABoo(Robot& robot, const Json::Value& config)
   if( ! ANKI_VERIFY(_params.noUserInteractionTimeout_numIdles > _params.numReRequestsPerTimeout,
                     "BehaviorPeekABoo.Config.InvalidTimeouts",
                     "Behavior '%s' specified invalid values. timeout in %d idles, but re-request %d times",
-                    GetName().c_str(),
+                    GetIDStr().c_str(),
                     _params.noUserInteractionTimeout_numIdles,
                     _params.numReRequestsPerTimeout) ) {
     // in prod, just update to hardcoded reasonable values
@@ -162,7 +162,7 @@ Result BehaviorPeekABoo::InitInternal(Robot& robot)
   _numPeeksTotal = _numPeeksRemaining = robot.GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
   // Disable idle so it doesn't move the head down
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersPeekABooArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPeekABooArray);
   
   
   if( _params.playGetIn )
@@ -363,7 +363,7 @@ IActionRunner* BehaviorPeekABoo::GetIdleAndReRequestAction(Robot& robot, bool lo
 
   const u8 lockTracks = headLock | liftLock;
 
-  PRINT_CH_INFO("Behaviors", (GetName() + ".BuildAnims").c_str(),
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".BuildAnims").c_str(),
                 "Playing idle with %d re-requests. Head angle = %fdeg Locking: %s",
                 _params.numReRequestsPerTimeout,
                 RAD_TO_DEG(robot.GetHeadAngle()),

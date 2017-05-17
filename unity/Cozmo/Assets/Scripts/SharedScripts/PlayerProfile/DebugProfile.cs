@@ -62,7 +62,7 @@ namespace DataPersistence {
       case "NoFreeplayOnStart":
         DataPersistence.DataPersistenceManager.Instance.Save();
         if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
-          RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(!NoFreeplayOnStart);
+          RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(!NoFreeplayOnStart);
         }
         break;
       case "UseFastConnectivityFlow":

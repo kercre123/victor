@@ -1,0 +1,7 @@
+{
+  "behaviorClass": "CubeLiftWorkout",
+  "behaviorID": "CubeLiftWorkout",
+  "displayNameKey":"behavior.Workout",
+  "requiredUnlockId": "Workout",
+  "considerThisHasRunForBehaviorObjective": "PerformedWorkout"
+}

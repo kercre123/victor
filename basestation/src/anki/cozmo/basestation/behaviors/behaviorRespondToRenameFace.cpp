@@ -31,7 +31,6 @@ BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(Robot& robot, const Jso
 , _name("")
 , _faceID(Vision::UnknownFaceID)
 {
-  SetDefaultName("RespondToRenameFace");
   SubscribeToTags({GameToEngineTag::UpdateEnrolledFaceByID});
   
   const std::string& animTriggerString = config.get(JsonKeys::AnimationTriggerKey, "MeetCozmoRenameFaceSayName").asString();

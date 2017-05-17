@@ -45,9 +45,7 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 , _isBlockRotationImportant(true)
 , _didCozmoAttemptDock(false)
 , _upAxisOnBehaviorStart(AxisName::X_POS)
-{
-  SetDefaultName("RollBlock");
-  
+{  
   _isBlockRotationImportant = config.get(kIsBlockRotationImportant, true).asBool();
 }
 
@@ -137,7 +135,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   if( ! _targetID.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorRollBlock.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
-                        GetName().c_str());
+                        GetIDStr().c_str());
     return;
   }
 

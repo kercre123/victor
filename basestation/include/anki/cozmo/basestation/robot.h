@@ -686,9 +686,6 @@ public:
   
   // =========== Mood =============
 
-  // Load in all data-driven behaviors
-  void LoadBehaviors();
-
   // Load in all data-driven emotion events // TODO: move to mood manager?
   void LoadEmotionEvents();      
 

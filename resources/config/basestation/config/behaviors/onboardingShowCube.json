@@ -1,8 +1,6 @@
 {
   "behaviorClass": "OnboardingShowCube",
-  "name": "OnboardingShowCube",
-  "behaviorGroups": [
-  ],
+  "behaviorID": "OnboardingShowCube",
   "MaxErrorsTotal": 3,
   "MaxErrorsPickup": 3,
   "Timeout_Sec": 300,

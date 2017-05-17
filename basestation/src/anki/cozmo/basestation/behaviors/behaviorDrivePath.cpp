@@ -26,7 +26,6 @@ namespace Cozmo {
 BehaviorDrivePath::BehaviorDrivePath(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("DrivePath");
 }
 
   

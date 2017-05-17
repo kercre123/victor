@@ -29,7 +29,6 @@ BehaviorPlayArbitraryAnim::BehaviorPlayArbitraryAnim(Robot& robot, const Json::V
   : BehaviorPlayAnimSequence(robot, config, false)
   , _animationAlreadySet(false)
 {
-  SetDefaultName("PlayArbitraryAnim");
   _numLoops = -1;
 }
   

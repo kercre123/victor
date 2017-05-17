@@ -1,13 +1,7 @@
 {
   "behaviorClass": "FindFaces",
-  "name": "SparkedLookAroundInPlaceForFaces",
+  "behaviorID": "SparksFindFaces",
   "displayNameKey":"behavior.LookingForFaces",
-
-  "behaviorGroups": [
-    "SparksPeekABoo"
-  ],
-
-  "flatScore" : 2.0,
   
   "maxFaceAgeToLook_ms": 120000,
 

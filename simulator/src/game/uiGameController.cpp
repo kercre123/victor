@@ -10,7 +10,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -390,16 +389,11 @@ namespace Anki {
     
     void UiGameController::HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg)
     {
-      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s", msg.oldBehaviorName.c_str(), msg.newBehaviorName.c_str());
+      PRINT_NAMED_INFO("HandleBehaviorTransition", "Received message that behavior changed from %s to %s",
+                       BehaviorIDToString(msg.oldBehaviorID),
+                       BehaviorIDToString(msg.newBehaviorID));
       
       HandleBehaviorTransition(msg);
-    }
-    
-    void UiGameController::HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg)
-    {
-      PRINT_NAMED_INFO("HandleFreeplayBehaviorList", "Received message that freeplay list was requested");
-      
-      HandleEnabledBehaviorList(msg);
     }
 
     void UiGameController::HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg)
@@ -597,9 +591,6 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::BehaviorTransition:
             HandleBehaviorTransitionBase(message.Get_BehaviorTransition());
-            break;
-          case ExternalInterface::MessageEngineToGameTag::RespondEnabledBehaviorList:
-            HandleEnabledBehaviorListBase(message.Get_RespondEnabledBehaviorList());
             break;
           case ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged:
             HandleRobotOffTreadsStateChangedBase(message.Get_RobotOffTreadsStateChanged());
@@ -1461,20 +1452,10 @@ namespace Anki {
     {
       SendMountCharger(-1, motionProf, usePreDockPose, useManualSpeed);
     }
-    
-    void UiGameController::SendRequestEnabledBehaviorList()
-    {
-      ExternalInterface::RequestEnabledBehaviorList m;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_RequestEnabledBehaviorList(m);
-      SendMessage(message);
-    }
 
-    
-    BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorName) const
+    BehaviorClass UiGameController::GetBehaviorClass(const std::string& behaviorClass) const
     {
-      const BehaviorClass behaviorClass = BehaviorClassFromString(behaviorName);
-      return (behaviorClass != BehaviorClass::Count) ? behaviorClass : BehaviorClass::NoneBehavior;
+      return BehaviorClassFromString(behaviorClass);
     }
     
     void UiGameController::SendAbortPath()

@@ -51,8 +51,6 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _moveAreaCenter(robot.GetPose())
 {
-  SetDefaultName("LookAround");
-
   _shouldHandleConfirmedObjectOverved = config.get(kShouldHandleConfirmedKey, true).asBool();
   _shouldHandlePossibleObjectOverved = config.get(kShouldHandlePossibleKey, true).asBool();
   

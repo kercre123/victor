@@ -30,7 +30,6 @@ static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToRobotOnBack");
 }
 
 

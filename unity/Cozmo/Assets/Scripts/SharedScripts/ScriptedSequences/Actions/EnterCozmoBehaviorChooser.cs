@@ -8,7 +8,7 @@ namespace ScriptedSequences.Actions {
   public class EnterCozmoBehaviorChooser : ScriptedSequenceAction {
 
     [Description("The Behavior Chooser you want Cozmo to be in")]
-    public BehaviorChooserType BehaviorChooser;
+    public HighLevelActivity Activity;
 
     public override ISimpleAsyncToken Act() {
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -20,7 +20,7 @@ namespace ScriptedSequences.Actions {
         return token;
       }
 
-      robot.ActivateBehaviorChooser(BehaviorChooser);
+      robot.ActivateHighLevelActivity(Activity);
       token.Succeed();
       return token;
     }

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -51,14 +52,14 @@ public class BehaviorPane : MonoBehaviour {
 
 
     _ChooserDropdown.ClearOptions();
-    for (int i = 0; i < (int)BehaviorChooserType.Count; ++i) {
+    for (int i = 0; i < (int)HighLevelActivity.Count; ++i) {
       Dropdown.OptionData optionData = new Dropdown.OptionData();
-      optionData.text = ((BehaviorChooserType)i).ToString();
+      optionData.text = ((HighLevelActivity)i).ToString();
       _ChooserDropdown.options.Add(optionData);
     }
     _ChooserDropdown.captionText.text = _ChooserDropdown.options[0].text;
 
-    RobotEngineManager.Instance.AddCallback<G2U.RespondChooserBehaviorList>(HandleRespondChooserBehaviorList);
+    RobotEngineManager.Instance.AddCallback<G2U.RespondAllBehaviorsList>(HandleRespondAllBehaviorsList);
     RobotEngineManager.Instance.AddCallback<G2U.RespondReactionTriggerMap>(HandleRespondReactionTriggerMap);
 
     _ReactionTriggerBehaviorDropdown.interactable = false;
@@ -72,7 +73,7 @@ public class BehaviorPane : MonoBehaviour {
 
   void OnDestroy() {
     Viz.VizManager.Enabled = false;
-    RobotEngineManager.Instance.RemoveCallback<G2U.RespondChooserBehaviorList>(HandleRespondChooserBehaviorList);
+    RobotEngineManager.Instance.RemoveCallback<G2U.RespondAllBehaviorsList>(HandleRespondAllBehaviorsList);
     RobotEngineManager.Instance.RemoveCallback<G2U.RespondReactionTriggerMap>(HandleRespondReactionTriggerMap);
   }
 
@@ -80,29 +81,29 @@ public class BehaviorPane : MonoBehaviour {
     _InfoLabel.text = string.Format("Current Behavior: {0}\n" +
     "Recent Mood Events: {1}\n" +
     "Last Reaction Trigger: {2}\n",
-      Viz.VizManager.Instance.Behavior,
+      Viz.VizManager.Instance.BehaviorID.ToString(),
       Viz.VizManager.Instance.RecentMoodEvents != null ?
                                     string.Join(", ", Viz.VizManager.Instance.RecentMoodEvents) : "",
       Viz.VizManager.Instance.Reaction);
   }
 
-  private void HandleRespondChooserBehaviorList(G2U.RespondChooserBehaviorList message) {
-    List<string> behaviorList = new List<string>(message.behaviors);
-    behaviorList.Sort(delegate (string s1, string s2) {
-      if (s1 == "NoneBehavior") {
-        if (s2 == "NoneBehavior") {
+  private void HandleRespondAllBehaviorsList(G2U.RespondAllBehaviorsList message) {
+    List<BehaviorID> behaviorList = new List<BehaviorID>(message.behaviors);
+    behaviorList.Sort(delegate (BehaviorID s1, BehaviorID s2) {
+      if (s1 == BehaviorID.NoneBehavior) {
+        if (s2 == BehaviorID.NoneBehavior) {
           return 0;
         }
         return -1;
       }
-      if (s2 == "NoneBehavior") {
+      if (s2 == BehaviorID.NoneBehavior) {
         return 1;
       }
       return s1.CompareTo(s2);
     });
-    foreach (string behaviorName in behaviorList) {
+    foreach (BehaviorID behaviorID in behaviorList) {
       Dropdown.OptionData optionData = new Dropdown.OptionData();
-      optionData.text = behaviorName;
+      optionData.text = behaviorID.ToString();
       _BehaviorDropdown.options.Add(optionData);
     }
 
@@ -141,7 +142,7 @@ public class BehaviorPane : MonoBehaviour {
 
     //  set our trigger behavior map values
     foreach (ReactionTriggerToBehavior reactionTriggerEntry in message.reactionTriggerEntries) {
-      _ReactionTriggerBehaviorMap[(int)reactionTriggerEntry.trigger].Add(reactionTriggerEntry.BehaviorName);
+      _ReactionTriggerBehaviorMap[(int)reactionTriggerEntry.trigger].Add(reactionTriggerEntry.behaviorID.ToString());
     }
 
     _ReactionTriggerDropdown.value = 0;
@@ -159,9 +160,9 @@ public class BehaviorPane : MonoBehaviour {
 
   private void OnChooserButton() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      BehaviorChooserType chooserType = (BehaviorChooserType)_ChooserDropdown.value;
-      if (chooserType == BehaviorChooserType.Selection) {
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(chooserType);
+      HighLevelActivity activityType  = (HighLevelActivity)_ChooserDropdown.value;
+      if (activityType == HighLevelActivity.Selection) {
+        RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(activityType);
       }
       if (_ReactionTriggerBehaviorMap.Count == 0) {
         RobotEngineManager.Instance.CurrentRobot.RequestReactionTriggerMap();
@@ -177,9 +178,10 @@ public class BehaviorPane : MonoBehaviour {
     _BehaviorNameInput.interactable = false;
 
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      BehaviorChooserType chooserType = (BehaviorChooserType)_ChooserDropdown.value;
-      if (chooserType == BehaviorChooserType.Selection) {
-        RobotEngineManager.Instance.CurrentRobot.RequestChooserBehaviorList(chooserType);
+      // We only allow unity to set behaviors when in selection activity
+      HighLevelActivity activityType  = (HighLevelActivity)_ChooserDropdown.value;
+      if (activityType == HighLevelActivity.Selection) {
+        RobotEngineManager.Instance.CurrentRobot.RequestAllBehaviorsList();
       }
     }
 
@@ -188,13 +190,15 @@ public class BehaviorPane : MonoBehaviour {
 
   private void OnBehaviorButton() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName(_BehaviorDropdown.captionText.text);
+      BehaviorID behaviorID = (BehaviorID)Enum.Parse(typeof(BehaviorID), _BehaviorDropdown.captionText.text);
+      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(behaviorID);
     }
   }
 
   private void OnBehaviorByNameButton() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName(_BehaviorNameInput.text, 1);
+      BehaviorID behaviorID = (BehaviorID)Enum.Parse(typeof(BehaviorID), _BehaviorNameInput.text);
+      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(behaviorID, 1);
     }
   }
 
@@ -228,8 +232,10 @@ public class BehaviorPane : MonoBehaviour {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         int dropdownIndex = _ReactionTriggerBehaviorDropdown.value;
         ReactionTriggerToBehavior toExecuteTrigger = new ReactionTriggerToBehavior();
-        toExecuteTrigger.Initialize((ReactionTrigger)_ReactionTriggerDropdown.value,
-                                       _ReactionTriggerBehaviorDropdown.options[dropdownIndex].text);
+
+        BehaviorID behaviorID = (BehaviorID)Enum.Parse(typeof(BehaviorID), 
+                          _ReactionTriggerBehaviorDropdown.options[dropdownIndex].text);
+        toExecuteTrigger.Initialize((ReactionTrigger)_ReactionTriggerDropdown.value, behaviorID);
 
         RobotEngineManager.Instance.CurrentRobot.ExecuteReactionTrigger(toExecuteTrigger);
       }

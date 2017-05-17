@@ -1,0 +1,17 @@
+//
+// NothingToDo_Idle
+// This behavior triggers when Cozmo has nothing to do. Play animations set up for bored status (breakout, pendulum, ..)
+//
+//
+//
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "NothingToDo_BoredAnim",
+  "displayNameKey":"behavior.Bored",
+  // sequence of anims
+  "animTriggers": [
+    "NothingToDoBoredIntro",
+    "NothingToDoBoredEvent",
+    "NothingToDoBoredOutro"
+  ]
+}

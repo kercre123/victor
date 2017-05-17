@@ -1,0 +1,5 @@
+{
+  "behaviorClass": "PutDownBlock",
+  "behaviorID": "PyramidPutDownBlock",
+  "displayNameKey":"behavior.PrepareCubes"
+}

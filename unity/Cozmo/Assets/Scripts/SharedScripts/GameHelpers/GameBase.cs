@@ -174,7 +174,7 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.CancelAllCallbacks();
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
 
-      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+      CurrentRobot.SetEnableFreeplayActivity(false);
       CurrentRobot.SetEnableFreeplayLightStates(false);
 
       if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {

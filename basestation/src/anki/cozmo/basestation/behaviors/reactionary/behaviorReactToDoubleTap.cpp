@@ -66,7 +66,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDoubleTap
 BehaviorReactToDoubleTap::BehaviorReactToDoubleTap(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToDoubleTap");
 }
   
   
@@ -196,7 +195,7 @@ Result BehaviorReactToDoubleTap::InitInternal(Robot& robot)
                 });
     } // nullptr != action
     
-    SmartDisableReactionsWithLock(GetName(), kAffectTriggersDoubleTapArray);
+    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersDoubleTapArray);
     
     return RESULT_OK;
   }

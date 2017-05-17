@@ -81,8 +81,6 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   , _lastCliffEvent_sec(0.0f)
   , _motionObservedNoPounceCount(0)
 {
-  SetDefaultName("PounceOnMotion");
-
   SubscribeToTags({{
     EngineToGameTag::RobotObservedMotion,
     EngineToGameTag::CliffEvent,

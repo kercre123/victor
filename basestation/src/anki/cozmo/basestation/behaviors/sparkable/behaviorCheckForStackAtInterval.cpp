@@ -38,7 +38,6 @@ BehaviorCheckForStackAtInterval::BehaviorCheckForStackAtInterval(Robot& robot, c
 , _knownBlockIndex(-1)
 , _ghostStackedObject(new Block_Cube1x1(ObjectType::Block_LIGHTCUBE_GHOST))
 {
-  SetDefaultName("CheckForStackAtInterval");
   
   _delayBetweenChecks_s = config.get(kDelayBetweenChecksKey_s, kDefaultDelayBetweenChecks_s).asFloat();
 

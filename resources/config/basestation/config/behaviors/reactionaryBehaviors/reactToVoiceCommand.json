@@ -1,0 +1,5 @@
+{
+  "behaviorClass": "ReactToVoiceCommand",
+  "behaviorID": "ReactToVoiceCommand",
+  "displayNameKey":"behavior.ReactToVoiceCommand"
+}

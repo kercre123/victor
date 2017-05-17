@@ -152,7 +152,7 @@ namespace Cozmo.Hub {
         robot != null) {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         robot.SetEnableFreeplayLightStates(true);
-        robot.SetEnableFreeplayBehaviorChooser(true);
+        robot.SetEnableFreeplayActivity(true);
       }
     }
 
@@ -170,7 +170,7 @@ namespace Cozmo.Hub {
 
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
         RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();
@@ -227,7 +227,7 @@ namespace Cozmo.Hub {
     #region HandleChallengeEnd
 
     private void HandleEndGameDialog() {
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(true);
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(true);
       ResetRobotToFreeplaySettings();
     }

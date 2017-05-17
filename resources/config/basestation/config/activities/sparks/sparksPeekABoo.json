@@ -1,21 +1,46 @@
 {
- "name" : "sparksPeekABoo",
- "requireSpark":"PeekABoo",
- "behaviorChooser" :
- {
-   "type" : "sparks",
-   "minTimeSecs": 0,
-   "maxTimeSecs": 30,
-   "numberOfRepetitions": 1,
-   "behaviorObjective": "PeekABooComplete",
-   "softSparkTrigger": "SoftSparkUpgradeLift",
-   "sparksSuccessTrigger": "", // don't play any animation
-   "sparksFailTrigger": "", // don't play any animation
-   // these groups are the behaviors that are allowed in this behavior chooser
-   "behaviorGroups" : [ "SparksPeekABoo" ]
- },
- "activityStrategy":
- {
- "type" : "Spark"
- }
+  "activityID" : "SparksPeekABoo",
+  "activityType" : "Sparked",
+  "requireSpark":"PeekABoo",
+  "activityStrategy":
+  {
+    "type" : "Spark"
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "SparksPutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 3.0
+        }
+      },
+      { "behaviorID" : "SparksPeekABoo",
+        "scoring"      :
+        {
+          "flatScore": 2.5
+        }
+      },
+      { "behaviorID" : "SparksFindFaces",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 30,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "PeekABooComplete",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  "sparksSuccessTrigger": "", // don't play any animation
+  "sparksFailTrigger": "" // don't play any animation
 }

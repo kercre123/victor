@@ -57,8 +57,6 @@ BehaviorTrackLaser::BehaviorTrackLaser(Robot& robot, const Json::Value& config)
 , _cumulativeTurn_rad(0)
 , _lastTimeRotate(0.0f)
 {
-  SetDefaultName("TrackLaser");
-
   SubscribeToTags({{
     EngineToGameTag::RobotObservedLaserPoint,
     EngineToGameTag::RobotProcessedImage

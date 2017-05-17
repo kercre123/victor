@@ -127,11 +127,11 @@ private:
   };
   using BehaviorScoreBuffer = Util::CircularBuffer<BehaviorScoreEntry>;
   
-  using BehaviorScoreBufferMap = std::map<std::string, BehaviorScoreBuffer>;
-  using BehaviorEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
+  using BehaviorScoreBufferMap = std::map<BehaviorID, BehaviorScoreBuffer>;
+  using BehaviorEventBuffer = Util::CircularBuffer< std::vector<BehaviorID> >;
   using ReactionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   
-  BehaviorScoreBuffer& FindOrAddScoreBuffer(const std::string& inName);
+  BehaviorScoreBuffer& FindOrAddScoreBuffer(BehaviorID behaviorID);
 
   void Subscribe(const VizInterface::MessageVizTag& tagType, std::function<void(const AnkiEvent<VizInterface::MessageViz>&)> messageHandler) {
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);

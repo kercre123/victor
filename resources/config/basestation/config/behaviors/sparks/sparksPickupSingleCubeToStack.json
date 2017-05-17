@@ -1,10 +1,6 @@
 {
   "behaviorClass": "PickUpCube",
-  "name": "sparksPickupSingleCubeToStack",
+  "behaviorID": "SparksPickupSingleCubeToStack",
   "displayNameKey":"behavior.PickupCube",
-  "requiredUnlockId": "PickupCube",
-  "behaviorGroups": [
-      "SparksStackBlock"
-  ],
-  "flatScore": 4.0
+  "requiredUnlockId": "PickupCube"
 }

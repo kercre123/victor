@@ -32,7 +32,6 @@ static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToRobotOnFace");
 }
 
 

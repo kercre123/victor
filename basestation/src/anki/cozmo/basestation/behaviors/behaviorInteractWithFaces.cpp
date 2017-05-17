@@ -94,8 +94,6 @@ static_assert(NavMemoryMapTypes::IsSequentialArray(typesToBlockDriving),
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("InteractWithFaces");
-
   LoadConfig(config["params"]);
 
   SubscribeToTags({ EngineToGameTag::RobotChangedObservedFaceID });
@@ -105,7 +103,7 @@ BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::V
 void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorInteractWithFaces.LoadConfig";
+  const std::string& debugName = "BehaviorInteractWithFaces.BehaviorInteractWithFaces.LoadConfig";
 
   _configParams.minTimeToTrackFace_s = ParseFloat(config, "minTimeToTrackFace_s", debugName);
   _configParams.maxTimeToTrackFace_s = ParseFloat(config, "maxTimeToTrackFace_s", debugName);
@@ -113,7 +111,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   if( ! ANKI_VERIFY(_configParams.maxTimeToTrackFace_s >= _configParams.minTimeToTrackFace_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
                     "%s: minTrackTime = %f, maxTrackTime = %f",
-                    GetName().c_str(),
+                    GetIDStr().c_str(),
                     _configParams.minTimeToTrackFace_s,
                     _configParams.maxTimeToTrackFace_s) ) {
     _configParams.maxTimeToTrackFace_s = _configParams.minTimeToTrackFace_s;
@@ -127,7 +125,7 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
     if( ! ANKI_VERIFY(_configParams.maxClampPeriod_s >= _configParams.minClampPeriod_s,
                       "BehaviorInteractWithFaces.LoadConfig.InvalidClampPeriod",
                       "%s: minPeriod = %f, maxPeriod = %f",
-                      GetName().c_str(),
+                      GetIDStr().c_str(),
                       _configParams.minClampPeriod_s,
                       _configParams.maxClampPeriod_s) ) {
       _configParams.maxClampPeriod_s = _configParams.minClampPeriod_s;
@@ -147,8 +145,8 @@ Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
     return RESULT_OK;
   }
   else {
-    PRINT_NAMED_WARNING( (GetName() + ".Init.NoValidTarget").c_str(),
-                         "Decided to run, but don't have valid target when Init is called. This shouldn't happen");
+    PRINT_NAMED_WARNING("BehaviorInteractWithFaces.Init.NoValidTarget",
+                        "Decided to run, but don't have valid target when Init is called. This shouldn't happen");
     return RESULT_FAIL;
   }
 }
@@ -254,7 +252,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(Robot& robot)
         SelectFaceToTrack(robot);
         if( _targetFace != oldTargetFace ) {
           // only retry a max of one time to avoid loops
-          PRINT_CH_INFO("Behaviors", (GetName() + ".InitialReactionFailed.TryAgain").c_str(),
+          PRINT_CH_INFO("Behaviors","BehaviorInteractWithFaces.InitialReactionFailed.TryAgain",
                         "tracking face %d failed, but will try again with face %d",
                         oldTargetFace,
                         _targetFace);
@@ -262,7 +260,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction(Robot& robot)
           TransitionToInitialReaction(robot);
         }
         else {
-          PRINT_CH_INFO("Behaviors", (GetName() + ".InitialReactionFailed").c_str(),
+          PRINT_CH_INFO("Behaviors","BehaviorInteractWithFaces.InitialReactionFailed",
                         "compound action failed with result '%s', not retrying",
                         ActionResultToString(ret));
         }

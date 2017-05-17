@@ -134,7 +134,7 @@ public interface IRobot : IDisposable {
   BehaviorClass CurrentBehaviorClass { get; set; }
   ReactionTrigger CurrentReactionTrigger { get; set; }
 
-  string CurrentBehaviorName { get; set; }
+  BehaviorID CurrentBehaviorID { get; set; }
 
   string CurrentBehaviorDisplayNameKey { get; set; }
 
@@ -316,15 +316,15 @@ public interface IRobot : IDisposable {
 
   void ExecuteReactionTrigger(Anki.Cozmo.ReactionTriggerToBehavior reactionTrigger);
 
-  void ExecuteBehaviorByName(string behaviorName, int numTimesToExecute = -1);
+  void ExecuteBehaviorByID(BehaviorID behaviorID, int numTimesToExecute = -1);
 
-  void SetEnableFreeplayBehaviorChooser(bool enable);
+  void SetEnableFreeplayActivity(bool enable);
 
   void RequestReactionTriggerMap();
 
-  void RequestChooserBehaviorList(BehaviorChooserType behaviorChooserType);
+  void RequestAllBehaviorsList();
 
-  void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType);
+  void ActivateHighLevelActivity(HighLevelActivity activityType);
 
   void TurnOffBackpackLED(LEDId ledToChange);
 

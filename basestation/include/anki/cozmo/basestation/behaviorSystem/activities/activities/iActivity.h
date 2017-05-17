@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 
 #include "anki/common/types.h"
+#include "clad/types/activityTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/unlockTypes.h"
 #include "json/json-forwards.h"
@@ -32,6 +33,7 @@ class IActivityStrategy;
 class IBehaviorChooser;
 class IBehavior;
 class Robot;
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // IActivity
@@ -48,30 +50,30 @@ public:
   // Initialization/destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  IActivity();
-  ~IActivity();
+  IActivity(Robot& robot, const Json::Value& config);
+  virtual ~IActivity();
 
-  // initialize an activity with the given config. Return true on success, false if config is not valids
-  bool Init(Robot& robot, const Json::Value& config);
+  static ActivityID ExtractActivityIDFromConfig(const Json::Value& config,
+                                                const std::string& fileName = "");
+  static ActivityType ExtractActivityTypeFromConfig(const Json::Value& config);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Activity switch
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // when activity is selected
-  void Enter(Robot& robot);
-  
-  // when activity is kicked out or finishes
-  void Exit(Robot& robot);
+  void OnSelected(Robot& robot);
+  void OnDeselected(Robot& robot);
+  bool SupportsObjectTapInteractions() { return _supportsObjectTapInteractions;}
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behaviors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // choose next behavior for this activity
-  IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
   
-  Result Update(Robot& robot);
+  virtual Result Update(Robot& robot) { return Result::RESULT_OK;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -84,11 +86,21 @@ public:
   const IActivityStrategy& GetStrategy() const { assert(_strategy); return *_strategy.get(); }
   
   // returns the activity name set from config
-  const std::string& GetName() const { return _name; }
+  ActivityID  GetID() const { return _id; }
+  const char* GetIDStr() const { return ActivityIDToString(_id); }
   
   float GetLastTimeStartedSecs() const { return _lastTimeActivityStartedSecs; }
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
-
+  
+  // Used to access objectTapInteraction behaviors
+  std::vector<IBehavior*> GetObjectTapBehaviors();
+  
+protected:
+  virtual void OnSelectedInternal() {};
+  virtual void OnDeselectedInternal() {};
+  // Allows activities to pass up a display name from sub activities
+  void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
+  
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Constants and types
@@ -100,19 +112,23 @@ private:
   
   // returns true if driving animation triggers have been defined for this activity
   bool HasDrivingAnimTriggers() const { return _driveStartAnimTrigger != AnimationTrigger::Count; } // checking one is checking all
+  
+  void ReadConfig(Robot& robot, const Json::Value& config);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // behavior chooser associated with this activity
-  std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
+
   
   // strategy to run this activity
   std::unique_ptr<IActivityStrategy> _strategy;
   
-  // activity name (from config)
-  std::string _name;
+  // behavior chooser for activity (if one is passed in)
+  std::unique_ptr<IBehaviorChooser> _behaviorChooserPtr;
+  
+  // activity name - defined in config or passed up from sub-activity
+  ActivityID _id;
   
   // optional driving animations associated to this activity
   AnimationTrigger _driveStartAnimTrigger;
@@ -126,6 +142,8 @@ private:
   UnlockId _requiredSpark;
   
   bool _requireObjectTapped = false;
+
+  bool _supportsObjectTapInteractions = false;
   
   // last time the activity started running
   float _lastTimeActivityStartedSecs;

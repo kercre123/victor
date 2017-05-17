@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -33,65 +33,36 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 
-#include "util/logging/logging.h"
+
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 #include "json/json.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
+static const char* kActivityIDConfigKey      = "activityID";
+static const char* kActivityTypeConfigKey    = "activityType";
 static const char* kBehaviorChooserConfigKey = "behaviorChooser";
-static const char* kStrategyConfigKey = "activityStrategy";
-static const char* kRequiresSparkKey = "requireSpark";
-static const char* kRequiresObjectTapped = "requireObjectTapped";
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersIActivityArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::PyramidInitialDetection,      false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  false},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersIActivityArray),
-              "Reaction triggers duplicate or non-sequential");
-  
-static const char* kObjectTapInteractionLock = "ObjectTapInteraction";
-
+static const char* kStrategyConfigKey        = "activityStrategy";
+static const char* kRequiresSparkKey         = "requireSpark";
+static const char* kRequiresObjectTapped     = "requireObjectTapped";
+static const char* kSupportsObjectTapInteractionKey = "supportsObjectTapInteractions";
 } // end namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActivity::IActivity()
+IActivity::IActivity(Robot& robot, const Json::Value& config)
 : _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
+, _infoAnalysisProcess(AIInformationAnalysis::EProcess::Invalid)
 , _requiredSpark(UnlockId::Count)
 , _lastTimeActivityStartedSecs(-1.0f)
 , _lastTimeActivityStoppedSecs(-1.0f)
 {
-
+  ReadConfig(robot, config);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -99,11 +70,49 @@ IActivity::~IActivity()
 {
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IActivity::Init(Robot& robot, const Json::Value& config)
+ActivityID IActivity::ExtractActivityIDFromConfig(const Json::Value& config,
+                                                  const std::string& fileName)
+{
+  const std::string debugName = "ActivityID.NoActivityIdSpecified";
+  const std::string activityID_str = JsonTools::ParseString(config, kActivityIDConfigKey, debugName);
+  
+  // To make it easy to find activities, assert that the file name and activityID match
+  if(ANKI_DEV_CHEATS && !fileName.empty()){
+    std::string jsonFileName = Util::FileUtils::GetFileName(fileName);
+    // remove extension
+    auto dotIndex = jsonFileName.find_last_of(".");
+    std::string lowerFileName = dotIndex == std::string::npos ? jsonFileName : jsonFileName.substr(0, dotIndex);
+    std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), ::tolower);
+    
+    std::string activityIDLower = activityID_str;
+    std::transform(activityIDLower.begin(), activityIDLower.end(), activityIDLower.begin(), ::tolower);
+    DEV_ASSERT_MSG(activityIDLower == lowerFileName,
+                   "RobotDataLoader.LoadActivities.ActivityIDFileNameMismatch",
+                   "File name %s does not match BehaviorID %s",
+                   fileName.c_str(),
+                   activityID_str.c_str());
+  }
+  
+  return ActivityIDFromString(activityID_str);
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ActivityType IActivity::ExtractActivityTypeFromConfig(const Json::Value& config)
+{
+  std::string activityTypeJSON;
+  JsonTools::GetValueOptional(config, kActivityTypeConfigKey, activityTypeJSON);
+  return ActivityTypeFromString(activityTypeJSON);
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
 {
   // read info from config
-
+  
   // - - - - - - - - - -
   // Needs Sparks
   // - - - - - - - - - -
@@ -125,54 +134,59 @@ bool IActivity::Init(Robot& robot, const Json::Value& config)
   if ( JsonTools::GetValueOptional(config, "driveEndAnimTrigger", animTriggerStr) ) {
     _driveEndAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
   }
-
+  
   #if (DEV_ASSERT_ENABLED)
-  {
-    // check that triggers are all or nothing
-    const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
-                                 (_driveLoopAnimTrigger  != AnimationTrigger::Count) ||
-                                 (_driveEndAnimTrigger   != AnimationTrigger::Count);
-    const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
-                                 (_driveLoopAnimTrigger  != AnimationTrigger::Count) &&
-                                 (_driveEndAnimTrigger   != AnimationTrigger::Count);
-    DEV_ASSERT(hasAllDrivingAnim || !hasAnyDrivingAnim, "IActivity.Init.InvalidDrivingAnimTriggers_AllOrNothing");
-  }
+    {
+      // check that triggers are all or nothing
+      const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
+      (_driveLoopAnimTrigger  != AnimationTrigger::Count) ||
+      (_driveEndAnimTrigger   != AnimationTrigger::Count);
+      const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
+      (_driveLoopAnimTrigger  != AnimationTrigger::Count) &&
+      (_driveEndAnimTrigger   != AnimationTrigger::Count);
+      DEV_ASSERT(hasAllDrivingAnim || !hasAnyDrivingAnim, "IActivity.Init.InvalidDrivingAnimTriggers_AllOrNothing");
+    }
   #endif
   
   // information analyzer process
   std::string inanProcessStr;
   JsonTools::GetValueOptional(config, "infoAnalyzerProcess", inanProcessStr);
   _infoAnalysisProcess = inanProcessStr.empty() ?
-    AIInformationAnalysis::EProcess::Invalid :
-    AIInformationAnalysis::EProcessFromString(inanProcessStr.c_str());
+  AIInformationAnalysis::EProcess::Invalid :
+  AIInformationAnalysis::EProcessFromString(inanProcessStr.c_str());
   
-  // configure chooser and set in out pointer
+  // configure chooser and set in pointer if specified
+  // otherwise if ChooseNextBehavior hasn't been overridden assert should hit below
+  _behaviorChooserPtr.reset();
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
-  IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
-  _behaviorChooserPtr.reset( newChooser );
+  if(!chooserConfig.isNull()){
+    IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
+    _behaviorChooserPtr.reset( newChooser );
+  }
   
   // strategy
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
   IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(robot, strategyConfig);
   _strategy.reset( newStrategy );
   
-  _name = JsonTools::ParseString(config, "name", "IActivity.Init");
+  _id = ExtractActivityIDFromConfig(config);
   
   JsonTools::GetValueOptional(config, kRequiresObjectTapped, _requireObjectTapped);
-
-  const bool success = (nullptr != _behaviorChooserPtr);
-  return success;
+  JsonTools::GetValueOptional(config, kSupportsObjectTapInteractionKey, _supportsObjectTapInteractions);
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::Enter(Robot& robot)
+void IActivity::OnSelected(Robot& robot)
 {
   _lastTimeActivityStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _behaviorChooserPtr->OnSelected();
+  if(_behaviorChooserPtr.get() != nullptr){
+    _behaviorChooserPtr->OnSelected();
+  }
   
   // Update Activity state for the PublicStateBroadcaster
   // Note: This only applies to freeplay goals, spark goals do nothing
-  robot.GetPublicStateBroadcaster().UpdateActivity(_name);
+  robot.GetPublicStateBroadcaster().UpdateActivity(_id);
   
   // set driving animations for this activity if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
@@ -184,19 +198,22 @@ void IActivity::Enter(Robot& robot)
   
   // request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
-    robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
+    robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetIDStr());
   }
   
   // log event to das - note freeplay_goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
-  Util::sEventF("robot.freeplay_goal_started", {}, "%s", _name.c_str());
+  Util::sEventF("robot.freeplay_goal_started", {}, "%s", GetIDStr());
+  OnSelectedInternal();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IActivity::Exit(Robot& robot)
+void IActivity::OnDeselected(Robot& robot)
 {
   _lastTimeActivityStoppedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _behaviorChooserPtr->OnDeselected();
+  if(_behaviorChooserPtr.get() != nullptr){
+    _behaviorChooserPtr->OnDeselected();
+  }
   
   // clear driving animations for this activity if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
@@ -206,7 +223,7 @@ void IActivity::Exit(Robot& robot)
   
   // (un)request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
-    robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
+    robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetIDStr());
   }
   
   // log event to das
@@ -222,7 +239,7 @@ void IActivity::Exit(Robot& robot)
   // in place so that data is queriable - please do not change
   Util::sEventF("robot.freeplay_goal_ended",
                 {{DDATA, std::to_string(nSecs).c_str()}},
-                "%s", _name.c_str());
+                "%s", GetIDStr());
   
   // If the activity requires a tapped object make sure to unset the tapped object when the activity exits
   if(_requireObjectTapped)
@@ -231,33 +248,35 @@ void IActivity::Exit(Robot& robot)
     robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
     robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
     
-    
-    robot.GetBehaviorManager().RemoveDisableReactionsLock(kObjectTapInteractionLock);
-    
     robot.GetBehaviorManager().LeaveObjectTapInteraction();
   }
+  OnDeselectedInternal();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result IActivity::Update(Robot& robot)
-{
-  auto result = Result::RESULT_OK;
-  if(_behaviorChooserPtr != nullptr){
-    result = _behaviorChooserPtr->Update(robot);
-  }
-  
-  return result;
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
-  // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
-  // note we pass
-  IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
-  return ret;
+  if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
+                 "IActivity.ChooseNextBehavior.ChooserNotOverwritten",
+                 "ChooseNextBehavior called without behavior chooser overwritten")){
+    // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
+    // note we pass
+    IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+    return ret;
+  }
+  return nullptr;
 }
 
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<IBehavior*> IActivity::GetObjectTapBehaviors(){
+  if(_behaviorChooserPtr != nullptr){
+    return _behaviorChooserPtr->GetObjectTapBehaviors();
+  }
+  return {};
+}
 
 } // namespace Cozmo
 } // namespace Anki

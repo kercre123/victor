@@ -1,20 +1,8 @@
 {
   "behaviorClass": "RollBlock",
-  "name": "tapInteractionRollCube",
+  "behaviorID": "TapInteractionRollCube",
   "displayNameKey":"behavior.RollBlock",
   "requireObjectTapped" : true,
   "requiredUnlockId": "RollCube",
-  "behaviorGroups": [
-                     "ObjectTapInteraction"
-                     ],
-  "flatScore" : 5.0,
-  "isBlockRotationImportant" : true,
-  "runningPenalty": {
-    "nodes": [
-      {
-        "x": 0.0,
-        "y": 2.0
-      }
-    ]
-  }
+  "isBlockRotationImportant" : true
 }

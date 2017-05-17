@@ -1,36 +1,64 @@
 {
-  "name" : "sparksGatherCubes",
+  "activityID" : "SparksGatherCubes",
+  "activityType" : "Sparked",
   "requireSpark":"SparksGatherCubes",
   "driveStartAnimTrigger" : "HikingDrivingStart",
   "driveLoopAnimTrigger" : "HikingDrivingLoop",
   "driveEndAnimTrigger" : "HikingDrivingEnd",
-  "behaviorChooser" :
-  {
-    "type" : "sparks",
-    "minTimeSecs": 0,
-    "maxTimeSecs": 240,
-    "numberOfRepetitions": 1,
-    "behaviorObjective": "GatheredCubes",
-    "softSparkTrigger": "SoftSparkUpgradeLift",
-    // delegate out chooser logic to gather cubes chooser
-    "simpleChooserDelegate":
-    {
-      "type":"gather_cubes",
-      "behaviorGroups" : [ "SparksGatherCubes" ]
-    },
-    // these are the behaviors that are allowed in this behavior chooser
-    // no behavior groups are set here since this chooser delegates to the pyramid
-    // chooser for simple behavior purposes
-    "behaviorGroups" : [ ],
-    "scoreBonusForCurrentBehavior" : {
-      "nodes" : [
-        { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
-      ]
-    }
-
-  },
   "activityStrategy":
   {
     "type" : "Spark"
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 240,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "GatheredCubes",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  // delegate out chooser logic to gather cubes chooser
+  "subActivityDelegate":
+  {
+    "activityID":"GatherCubes",
+    "activityType" : "GatherCubes",
+    "name" : "sparksGatherCubes",
+    "activityStrategy": // not actually used, but required
+    {
+      "type" : "Simple"
+    },
+    "behaviorChooser" :
+    {
+      "type" : "scoring",
+      "behaviors" : [
+        { "behaviorID" : "Hiking_RollCube",
+          "scoring"      :
+          {
+            "flatScore": 8.5
+          }
+        },
+        { "behaviorID" : "SparksThinkAboutBeacons",
+          "scoring"      :
+          {
+            "flatScore": 8.0
+          }
+        },
+
+        { "behaviorID" : "SparksBringCubeToBeacon",
+          "scoring"      :
+          {
+            "flatScore": 4.0 // intended to interrupt lookInPlace behaviors
+          }
+        },
+        { "behaviorID" : "SparksLookInPlace",
+          "scoring"      :
+          {
+            "flatScore": 2.0
+          }
+        }
+      ]
+    }
+  },
+  "scoreBonusForCurrentBehavior" : {
+    "nodes" : [
+               { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
+               ]
   }
 }

@@ -78,9 +78,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kOnboardingTriggerAffect
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("OnboardingShowCubes");
-  
+{  
   SubscribeToTags({
     MessageGameToEngineTag::TransitionToNextOnboardingState
   });
@@ -109,7 +107,7 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd});
-  SmartDisableReactionsWithLock(GetName(), kOnboardingTriggerAffectedArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kOnboardingTriggerAffectedArray);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::InitInternal", " %hhu ",_state);

@@ -36,7 +36,7 @@ enum class TestState {
   TestDone
 };
 
-static const char* kBehaviorName = "RollBlockOnSide";
+static BehaviorID kBehaviorID = BehaviorID::RollBlockOnSide;
 
 class CST_RollBlockBehavior : public CozmoSimTestController {
 private:
@@ -127,9 +127,9 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsLocalizedToObject(), 2) {
         // once we are deloc'd, try to start the behavior (which shouldn't start)
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                      ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(
-                      ExternalInterface::ExecuteBehaviorByName(kBehaviorName, -1)));
+                      ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
         
         _behaviorStartedTime = GetSupervisor()->getTime();
         SET_STATE(DontStartBehavior);
@@ -268,13 +268,13 @@ void CST_RollBlockBehavior::HandleRobotCompletedAction(const ExternalInterface::
 void CST_RollBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
   PRINT_NAMED_INFO("CST_RollBlockBehavior.transition", "%s -> %s",
-                   msg.oldBehaviorName.c_str(),
-                   msg.newBehaviorName.c_str());
+                   BehaviorIDToString(msg.oldBehaviorID),
+                   BehaviorIDToString(msg.newBehaviorID));
   
-  if(msg.oldBehaviorName == kBehaviorName) {
+  if(msg.oldBehaviorID == kBehaviorID) {
     _stoppedBehavior = true;
   }
-  if(msg.newBehaviorName == kBehaviorName) {
+  if(msg.newBehaviorID == kBehaviorID) {
     _startedBehavior = true;
   }
 }

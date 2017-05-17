@@ -89,7 +89,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersBuildPyra
 BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& config)
 : BehaviorBuildPyramidBase(robot, config)
 {
-  SetDefaultName("BuildPyramid");
   _continuePastBaseCallback =  std::bind(&BehaviorBuildPyramid::TransitionToDrivingToTopBlock, (this), std::placeholders::_1);
   
 }
@@ -166,10 +165,10 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
   
   if(!kCanHiccupWhilePlacingPyramid)
   {
-    SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+    SMART_DISABLE_REACTION_DEV_ONLY(GetIDStr(), ReactionTrigger::Hiccup);
   }
   
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersBuildPyramidArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersBuildPyramidArray);
   
   const ObservableObject* staticBlock = robot.GetBlockWorld().GetLocatedObjectByID(_staticBlockID);
   const ObservableObject* baseBlock = robot.GetBlockWorld().GetLocatedObjectByID(_baseBlockID);

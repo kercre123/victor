@@ -1,6 +1,6 @@
 {
   "behaviorClass": "PounceOnMotion",
-  "name": "pounceOnMotion_voiceCommand",
+  "behaviorID": "PounceOnMotion_VoiceCommand",
   "displayNameKey":"behavior.PounceOnMotion",
   "requiredUnlockId": "PounceOnMotionAction",
   "behaviorGroups": [

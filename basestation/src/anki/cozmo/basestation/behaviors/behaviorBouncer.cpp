@@ -161,9 +161,8 @@ static void DrawBall(Vision::Image& image, u32 ballX, u32 ballY)
   
 
 BehaviorBouncer::BehaviorBouncer(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
+: IBehavior(robot, config)
 {
-  SetDefaultName("Bouncer");
 }
 
 // Check if behavior can run at this time
@@ -210,7 +209,7 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
   SET_STATE(Init);
   
   // Disable reactionary behaviors that we don't want interrupting this
-  SmartDisableReactionsWithLock(GetName(), kReactionArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kReactionArray);
   
   // Disable idle animation
   auto & animationStreamer = robot.GetAnimationStreamer();

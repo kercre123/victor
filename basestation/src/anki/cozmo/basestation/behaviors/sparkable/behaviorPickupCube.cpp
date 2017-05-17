@@ -44,8 +44,6 @@ static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("BehaviorPickUpCube");
-
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });

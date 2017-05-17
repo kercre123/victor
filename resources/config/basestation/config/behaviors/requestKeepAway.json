@@ -1,0 +1,81 @@
+{
+  "behaviorClass" : "RequestGameSimple",
+  "behaviorID" : "RequestKeepAway",
+  "displayNameKey":"behavior.RequestToPlay",
+  "requiredGameFlags" : "KeepAway",
+  
+  "zero_block_config": {
+    "initial_animName" : "RequestGameKeepAwayInitial0",
+    "preDrive_animName" : "RequestGameKeepAwayPreDrive0",
+    "request_animName" : "RequestGameKeepAwayRequest0",
+    "idle_animName" : "RequestGameKeepAwayIdle0",
+    "deny_animName" : "RequestGameKeepAwayDeny0",
+    "minRequestDelay_s" : 20.0,
+    "score_factor": 0.5
+  },
+
+  "one_block_config": {
+    "initial_animName" : "RequestGameKeepAwayInitial1",
+    "preDrive_animName" : "RequestGameKeepAwayPreDrive1",
+    "request_animName" : "RequestGameKeepAwayRequest1",
+    "idle_animName" : "RequestGameKeepAwayIdle1",
+    "deny_animName" : "RequestGameKeepAwayDeny1",
+    "minRequestDelay_s" : 20.0
+  },
+
+  "after_place_backup_dist_mm": 60.0,
+  "after_place_backup_speed_mmps": 80.0,
+
+  "pickup_motion_profile": {
+    "speed_mmps": 80.0
+  },
+
+  "place_motion_profile": {
+    "speed_mmps": 120.0,
+    "pointTurnSpeed_rad_per_sec": 2.5,
+    "reverseSpeed_mmps": 80.0
+  },
+
+  "place_position_threshold_mm": 20.0,
+  "place_position_threshold_rads": 0.261799387799,
+
+  "emotionScorers" :
+  [
+    {
+      "emotionType" : "WantToPlay",
+      "scoreGraph" :
+      {
+        "nodes" :
+        [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 1.0,
+            "y" : 0.8
+          }
+        ]
+      },
+      "trackDelta" : false
+    }
+  ],
+  "repetitionPenalty" :
+  {
+    "nodes" :
+    [
+      {
+        "x" : 5.0,
+        "y" : 0.0
+      },
+      {
+        "x" : 10.0,
+        "y" : 0.1
+      },
+      {
+        "x" : 20.0,
+        "y" : 1.0
+      }
+    ]
+  }
+}

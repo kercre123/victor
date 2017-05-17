@@ -37,7 +37,7 @@ protected:
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
   
 private:
-  BehaviorClass _classTriggerMapsTo = BehaviorClass::Count;
+  BehaviorClass _classTriggerMapsTo = BehaviorClass::NoneBehavior;
                   
 };
 

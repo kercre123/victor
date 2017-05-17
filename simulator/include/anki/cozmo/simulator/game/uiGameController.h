@@ -122,7 +122,6 @@ protected:
   virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) {};
   
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
-  virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
@@ -499,7 +498,6 @@ private:
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
   void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
-  void HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg);
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);

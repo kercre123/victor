@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
@@ -271,9 +272,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // Initialize progression
   _progressionUnlockComponent->Init();
-      
-  // load available behaviors into the behavior factory
-  LoadBehaviors();
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
@@ -1392,7 +1390,7 @@ Result Robot::Update()
   // Update AI component before behaviors so that behaviors can use the latest information
   _aiComponent->Update();
       
-  const char* behaviorChooserName = "";
+  const char* currentActivityName = "";
   std::string behaviorDebugStr("<disabled>");
 
   // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
@@ -1409,19 +1407,15 @@ Result Robot::Update()
       else {
         behaviorDebugStr = "  ";
       }
-      behaviorDebugStr += behavior->GetName();
+      behaviorDebugStr += BehaviorIDToString(behavior->GetID());
       const std::string& stateName = behavior->GetDebugStateName();
       if (!stateName.empty())
       {
         behaviorDebugStr += "-" + stateName;
       }
     }
-        
-    const IBehaviorChooser* behaviorChooser = _behaviorMgr->GetBehaviorChooser();
-    if (behaviorChooser)
-    {
-      behaviorChooserName = behaviorChooser->GetName();
-    }
+
+    currentActivityName = ActivityIDToString(_behaviorMgr->GetCurrentActivity()->GetID());
   } else {
     --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
   }
@@ -1430,7 +1424,7 @@ Result Robot::Update()
                                          "%s", behaviorDebugStr.c_str());
   
   GetContext()->SetSdkStatus(SdkStatusType::Behavior,
-                                 std::string(behaviorChooserName) + std::string(":") + behaviorDebugStr);
+                                 std::string(currentActivityName) + std::string(":") + behaviorDebugStr);
   
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
@@ -1567,7 +1561,7 @@ Result Robot::Update()
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
            (u8)MIN(((u8)imageProcRate), std::numeric_limits<u8>::max()),
-           behaviorChooserName,
+           currentActivityName,
            behaviorDebugStr.c_str());
       
   std::hash<std::string> hasher;
@@ -1820,29 +1814,7 @@ void Robot::LoadEmotionEvents()
   }
 }
 
-void Robot::LoadBehaviors()
-{
-  // Load Scored Behaviors
-  const auto& behaviorData = _context->GetDataLoader()->GetBehaviorJsons();
-  for( const auto& fileJsonPair : behaviorData )
-  {
-    const auto& filename = fileJsonPair.first;
-    const auto& behaviorJson = fileJsonPair.second;
-    if (!behaviorJson.empty())
-    {
-      // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
-      const Result ret = _behaviorMgr->CreateBehaviorFromConfiguration(behaviorJson);
-      if ( ret != RESULT_OK ) {
-        PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create scored behavior from '%s'", filename.c_str());
-      }
-    }
-    else
-    {
-      PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read scored behavior file '%s'", filename.c_str());
-    }
-    // don't print anything if we read an empty json
-  }
-}
+
 
 Result Robot::SyncTime()
 {

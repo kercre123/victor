@@ -35,8 +35,6 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
 : IBehavior(robot, config)
 , _onChargerCanceled(false)
 {
-  SetDefaultName("ReactToOnCharger");
-
   SubscribeToTags({
     EngineToGameTag::ChargerEvent,
   });

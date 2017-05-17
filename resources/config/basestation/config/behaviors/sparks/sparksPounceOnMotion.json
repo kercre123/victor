@@ -1,13 +1,8 @@
 {
   "behaviorClass": "PounceOnMotion",
+  "behaviorID": "SparksPounceOnMotion",
   "executableBehaviorType": "PounceOnMotion",
-  "name": "sparksPounceOnMotion",
   "displayNameKey":"behavior.PounceOnMotion",
-  "behaviorGroups": [
-    "SparksPounceOnMotion"
-  ],
-  "flatScore" : 3.0,
-  
   "maxNoGroundMotionBeforeBored_running_Sec": 60.0,
   "maxNoGroundMotionBeforeBored_notRunning_Sec": 60.0,
   "maxTimeBehaviorTimeout_Sec": 60.0,

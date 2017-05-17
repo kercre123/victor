@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -92,7 +91,7 @@ bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
   {
     if ( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
       PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable", "'%s': GameFlag not available (%s). Behavior not runnable",
-                        GetName().c_str(), BehaviorGameFlagToString(_requiredGameFlags) );
+                        GetIDStr().c_str(), BehaviorGameFlagToString(_requiredGameFlags) );
     }
     return false;
   }
@@ -102,7 +101,7 @@ bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
     PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable",
                       "'%s': hasFace?%d (numBlocks=%d)",
-                      GetName().c_str(),
+                      GetIDStr().c_str(),
                       hasFace,
                       GetNumBlocks(robot));
   }

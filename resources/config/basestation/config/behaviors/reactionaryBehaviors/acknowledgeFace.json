@@ -1,6 +1,6 @@
 {
   "behaviorClass": "AcknowledgeFace",
-  "name": "AcknowledgeFace",
+  "behaviorID": "AcknowledgeFace",
   "displayNameKey":"behavior.AcknowledgeFace",
   "ReactionAnimGroup": "ReactToNewBlockSmall"
 

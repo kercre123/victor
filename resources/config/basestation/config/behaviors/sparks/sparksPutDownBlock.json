@@ -1,13 +1,4 @@
 {
   "behaviorClass": "PutDownBlock",
-  "name": "SparksPutDownBlock",
-  "flatScore": 3.0,
-  "behaviorGroups": [
-    "SparksRollBlock",
-    "SparksPopAWheelie",
-    "SparksPounceOnMotion",
-    "SparksKnockOverCubes",
-    "SparksPickUpCube",
-    "SparksPeekABoo"
-  ]
+  "behaviorID": "SparksPutDownBlock"
 }

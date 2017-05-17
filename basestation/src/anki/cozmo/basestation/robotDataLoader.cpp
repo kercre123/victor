@@ -20,6 +20,8 @@
 #include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
+#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -48,6 +50,7 @@ CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false)
 static Anki::Cozmo::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
+  
 }
 
 namespace Anki {
@@ -520,7 +523,16 @@ void RobotDataLoader::LoadBehaviors()
     const bool success = _platform->readAsJson(filename, behaviorJson);
     if (success && !behaviorJson.empty())
     {
-      _behaviors.emplace(std::piecewise_construct, std::forward_as_tuple(filename), std::forward_as_tuple(std::move(behaviorJson)));
+      BehaviorID behaviorID = IBehavior::ExtractBehaviorIDFromConfig(behaviorJson, filename);
+      auto result = _behaviors.emplace(std::piecewise_construct,
+                                       std::forward_as_tuple(behaviorID),
+                                       std::forward_as_tuple(std::move(behaviorJson)));
+      
+      DEV_ASSERT_MSG(result.second,
+                     "RobotDataLoader.LoadBehaviors.FailedEmplace",
+                     "Failed to insert BehaviorID %s - make sure all behaviors have unique IDs",
+                     BehaviorIDToString(behaviorID));
+      
     }
     else if (!success)
     {
@@ -541,14 +553,15 @@ void RobotDataLoader::LoadActivities()
     const bool success = _platform->readAsJson(filename, activityJson);
     if (success && !activityJson.empty())
     {
-      // remove path
-      auto slashIndex = filename.find_last_of("/");
-      std::string jsonName = slashIndex == std::string::npos ? filename : filename.substr(slashIndex + 1);
-      // remove extension
-      auto dotIndex = jsonName.find_last_of(".");
-      std::string activityName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+      ActivityID activityID = IActivity::ExtractActivityIDFromConfig(activityJson);
       
-      _activities.emplace(std::piecewise_construct, std::forward_as_tuple(activityName), std::forward_as_tuple(std::move(activityJson)));
+      auto result = _activities.emplace(std::piecewise_construct,
+                                        std::forward_as_tuple(activityID),
+                                        std::forward_as_tuple(std::move(activityJson)));
+      DEV_ASSERT_MSG(result.second,
+                     "RobotDataLoader.LoadActivity.FailedEmplace",
+                     "Failed to insert ActivityID %s - make sure all activities have unique IDs",
+                     ActivityIDToString(activityID));
     }
     else if (!success)
     {
@@ -608,7 +621,7 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
-  // behavior config
+  // activities config
   {
     std::string jsonFilename = "config/basestation/config/activities_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);

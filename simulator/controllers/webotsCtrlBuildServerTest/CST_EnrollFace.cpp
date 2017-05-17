@@ -113,8 +113,7 @@ void CST_EnrollFace::StartEnrollment(Vision::FaceID_t saveID, const std::string&
   _faceEnrollmentCompleted = false;
   
   SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
-  
-  SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace", -1)));
+  SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
 }
   
 void CST_EnrollFace::WaitToSetNewFacePose(double waitTime_sec, webots::Node* face, const Pose3d& newPose, TestState newState)
@@ -157,7 +156,7 @@ s32 CST_EnrollFace::UpdateSimInternal()
       {
         using namespace ExternalInterface;
         // Enable selection chooser so we can specify EnrollFace
-        SendMessage(MessageGameToEngine(ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+        SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
       }
       
       PRINT_NAMED_INFO("CST_EnrollFace.Init",

@@ -1,0 +1,8 @@
+{
+  "behaviorClass": "ReactToFrustration",
+  "behaviorID": "ReactToFrustrationMinor",
+  "displayNameKey":"behavior.ReactToFrustration",
+  
+  "anim": "FrustratedByFailure",
+  "finalEmotionEvent": "FinishedMinorFrustration"
+}

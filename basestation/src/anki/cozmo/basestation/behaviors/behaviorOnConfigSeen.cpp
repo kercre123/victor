@@ -39,7 +39,6 @@ BehaviorOnConfigSeen::BehaviorOnConfigSeen(Robot& robot, const Json::Value& conf
 , _animTriggerIndex(0)
 , _lastRunnableCheck_s(0)
 {
-  SetDefaultName("OnConfigSeen");
   ReadJson(config);
 }
 

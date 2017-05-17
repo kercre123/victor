@@ -36,7 +36,6 @@ BehaviorPyramidThankYou::BehaviorPyramidThankYou(Robot& robot, const Json::Value
 : IBehavior(robot, config)
 , _robot(robot)
 {
-  SetDefaultName("PyramidThankYou");
 }
 
   

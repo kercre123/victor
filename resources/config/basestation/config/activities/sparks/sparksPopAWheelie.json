@@ -1,19 +1,44 @@
 {
-  "name" : "sparksPopAWheelie",
+  "activityID" : "SparksPopAWheelie",
+  "activityType" : "Sparked",
   "requireSpark":"PopAWheelieAction",
-  "behaviorChooser" :
-  {
-   "type" : "sparks",
-   "minTimeSecs": 0,
-   "maxTimeSecs": 60,
-   "numberOfRepetitions": 1,
-   "behaviorObjective": "PoppedWheelie",
-   "softSparkTrigger": "SoftSparkUpgradeTracks",
-    // these groups are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "SparksPopAWheelie" ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
-  }
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "SparksPutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 3.0
+        }
+      },
+      { "behaviorID" : "SparksPopAWheelie",
+        "scoring"      :
+        {
+          "flatScore": 2.5
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 60,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "PoppedWheelie",
+  "softSparkTrigger": "SoftSparkUpgradeTracks"
 }

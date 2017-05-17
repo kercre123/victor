@@ -64,7 +64,7 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     _externalInterface->Broadcast(GToE(std::move(reEnableAll)));
     
     // Return to freeplay
-    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Freeplay)) );
+    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Freeplay)) );
   }
   else {
     // Disable reactionary behaviors
@@ -74,8 +74,7 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     
     
     // Clear Behaviors
-    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
-
+    _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)) );
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::NoneBehavior, -1)) );
       
       ReactionTriggerToBehavior noneTrigger;

@@ -117,7 +117,7 @@ private:
   const std::string _strategyName;
   ReactionTrigger _triggerID = ReactionTrigger::NoneTrigger;
   std::vector<::Signal::SmartHandle> _eventHandles;
-  std::string _DebugBehaviorName;
+  BehaviorID _DebugBehaviorID;
 
   void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot);
   void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot);

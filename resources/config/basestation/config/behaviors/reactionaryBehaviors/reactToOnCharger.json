@@ -1,0 +1,7 @@
+{
+  "behaviorClass": "ReactToOnCharger",
+  "behaviorID": "ReactToOnCharger",
+  "displayNameKey":"behavior.ReactToOnCharger",
+  "timeTilSleepAnimation_s": 300.0,
+  "timeTilDisconnection_s": 330.0
+}
