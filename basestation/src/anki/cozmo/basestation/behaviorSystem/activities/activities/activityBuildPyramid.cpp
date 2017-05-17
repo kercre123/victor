@@ -576,7 +576,9 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
   
   IBehavior* scoredBehavior = nullptr;
-  
+  // indicates whether a scored behavior was chosen
+  // if not, we don't want to evaluate the score
+  bool isScoredBehavior = false;
   switch(_chooserPhase){
     case ChooserPhase::SetupBlocks:
     {
@@ -585,7 +587,7 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
     }
     case ChooserPhase::BuildingPyramid:
     {
-      scoredBehavior = ChooseNextBehaviorBuilding(robot, currentRunningBehavior);
+      scoredBehavior = ChooseNextBehaviorBuilding(robot, currentRunningBehavior, isScoredBehavior);
       break;
     }
     case ChooserPhase::None:
@@ -598,6 +600,7 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
   // If the scored behavior has a high enough score, allow it to run no matter
   // runability of custom behaviors
   if(scoredBehavior != nullptr &&
+     isScoredBehavior &&
      FLT_GT(scoredBehavior->EvaluateScore(robot), kMinScoreToEnsureBehaviorRuns)){
     return scoredBehavior;
   }
@@ -620,7 +623,7 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
-                                                                 const IBehavior* currentRunningBehavior)
+                                                          const IBehavior* currentRunningBehavior)
 {
   return _activeBehaviorChooser->ChooseNextBehavior(robot, currentRunningBehavior);
 }
@@ -628,7 +631,8 @@ IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
-                                                                    const IBehavior* currentRunningBehavior)
+                                                             const IBehavior* currentRunningBehavior,
+                                                             bool& isScoredBehavior)
 {
   //  Priority of functions:
   //    Build full pyramid -> Build pyramid base -> Search/fast forward behaviors
@@ -660,7 +664,7 @@ IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
     
   }else{
     UpdatePyramidAssignments(nullptr);
-    
+    isScoredBehavior = true;
     bestBehavior = _buildSimpleChooser->ChooseNextBehavior(robot, currentRunningBehavior);
   }
   

@@ -96,6 +96,14 @@ Result BehaviorPyramidThankYou::InitInternal(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorPyramidThankYou::ResumeInternal(Robot& robot)
+{
+  // don't resume - if the animation was interrupted the moment is gone
+  return Result::RESULT_FAIL;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPyramidThankYou::StopInternal(Robot& robot)
 {
   

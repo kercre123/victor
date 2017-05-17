@@ -15,7 +15,7 @@
   "subActivityDelegate":
   {
     "activityID" : "BuildPyramid",
-    "activityType" : "BehaviorsOnly",
+    "activityType" : "BuildPyramid",
     "name" : "sparksBuildPyramid",
     "activityStrategy": // not actually used, but required
     {

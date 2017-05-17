@@ -116,6 +116,7 @@ CONSOLE_FUNC( ActivityClearSetting, "ActivityFreeplay" );
 ActivityFreeplay::ActivityFreeplay(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
 , _currentActivityPtr(nullptr)
+, _debugConsoleRequestedActivity(ActivityID::Invalid)
 , _robot(robot)
 {
   CreateFromConfig(robot, config);
