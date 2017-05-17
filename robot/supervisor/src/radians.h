@@ -76,9 +76,6 @@ public:
   void operator=(float b);
 
 
-  // Operator to cast the radian to a double
-  double ToDouble() const { return (double)radians_; };
-
   // Operator to cast the radian to a float
   float ToFloat() const { return radians_;};
 

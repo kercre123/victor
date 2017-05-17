@@ -693,7 +693,7 @@ namespace Anki {
         f32 headAngle = HeadController::GetAngleRad();
 
         if (prevHeadAngle_ != UNINIT_HEAD_ANGLE) {
-          const f32 accelBasedPitch = atan2(imu_data_.acc_x, imu_data_.acc_z) - headAngle;
+          const f32 accelBasedPitch = atan2f(imu_data_.acc_x, imu_data_.acc_z) - headAngle;
           const f32 gyroBasedPitch = pitch_ - (gyro_robot_frame[1] * CONTROL_DT) - (headAngle - prevHeadAngle_);
           
           // Complementary filter to mostly trust gyro integration for current pitch in the short term

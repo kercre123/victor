@@ -27,7 +27,7 @@ namespace Anki {
     doRescaling_ = true;
   }
 
-  // Constructs Radians object from input double (rescales accordingly)
+  // Constructs Radians object from input float (rescales accordingly)
   Radians::Radians(float initRad)
   {
     doRescaling_ = true;
