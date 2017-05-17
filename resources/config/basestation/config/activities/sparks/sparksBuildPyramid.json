@@ -25,11 +25,11 @@
     {
       "type" : "scoring",
       "behaviors" : [
-        { "behaviorID" : "DriveOffCharger",
-          "scoring"      :
-          {
-            "flatScore": 1000
-          }
+       { "behaviorID" : "DriveOffCharger",
+         "scoring"      :
+         {
+           "flatScore": 1000
+         }
        },
        { "behaviorID" : "KnockOverCubes",
          "scoring"      :

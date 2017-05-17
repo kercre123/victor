@@ -16,6 +16,18 @@
           "flatScore": 1000
         }
       },
+      { "behaviorID" : "CantHandleTallStack",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
       { "behaviorID" : "SparksPutDownBlock",
         "scoring"      :
         {
