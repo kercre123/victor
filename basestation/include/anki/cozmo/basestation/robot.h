@@ -79,6 +79,7 @@ class NVStorageComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
 class ProgressionUnlockComponent;
+class RobotGyroDriftDetector;
 class RobotIdleTimeoutComponent;
 class RobotStateHistory;
 class HistRobotState;
@@ -396,8 +397,8 @@ public:
   void SetHeadCalibrated(bool isCalibrated);
   void SetLiftCalibrated(bool isCalibrated);
 
-  bool IsHeadCalibrated();
-  bool IsLiftCalibrated();
+  bool IsHeadCalibrated() const;
+  bool IsLiftCalibrated() const;
   
   // #notImplemented
   //    // Get 3D bounding box of the robot at its current pose or a given pose
@@ -876,16 +877,17 @@ protected:
   ///////// NEW Animation /////////
   std::unique_ptr<RobotAnimation::EngineAnimationController>  _animationController;
   
-  std::unique_ptr<ActionList>            _actionList;
-  std::unique_ptr<MovementComponent>     _movementComponent;
-  std::unique_ptr<VisionComponent>       _visionComponent;
-  std::unique_ptr<NVStorageComponent>    _nvStorageComponent;
-  std::unique_ptr<AIComponent>           _aiComponent;
-  std::unique_ptr<TextToSpeechComponent> _textToSpeechComponent;
-  std::unique_ptr<ObjectPoseConfirmer>   _objectPoseConfirmerPtr;
-  std::unique_ptr<CubeLightComponent>    _cubeLightComponent;
-  std::unique_ptr<BodyLightComponent>    _bodyLightComponent;
-  std::unique_ptr<CubeAccelComponent>    _cubeAccelComponent;
+  std::unique_ptr<ActionList>             _actionList;
+  std::unique_ptr<MovementComponent>      _movementComponent;
+  std::unique_ptr<VisionComponent>        _visionComponent;
+  std::unique_ptr<NVStorageComponent>     _nvStorageComponent;
+  std::unique_ptr<AIComponent>            _aiComponent;
+  std::unique_ptr<TextToSpeechComponent>  _textToSpeechComponent;
+  std::unique_ptr<ObjectPoseConfirmer>    _objectPoseConfirmerPtr;
+  std::unique_ptr<CubeLightComponent>     _cubeLightComponent;
+  std::unique_ptr<BodyLightComponent>     _bodyLightComponent;
+  std::unique_ptr<CubeAccelComponent>     _cubeAccelComponent;
+  std::unique_ptr<RobotGyroDriftDetector> _gyroDriftDetector;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
@@ -998,20 +1000,6 @@ protected:
   GyroData         _robotGyro;
   float            _robotAccelMagnitude = 0.0f; // current magnitude of accelerometer data (norm of all three axes)
   float            _robotAccelMagnitudeFiltered = 0.0f; // low-pass filtered accelerometer magnitude
-  
-  // Gyro drift check
-  bool          _gyroDriftReported;
-  PoseFrameID_t _driftCheckStartPoseFrameId;
-  Radians       _driftCheckStartAngle_rad;
-  f32           _driftCheckStartGyroZ_rad_per_sec;
-  TimeStamp_t   _driftCheckStartTime_ms;
-  f32           _driftCheckCumSumGyroZ_rad_per_sec;
-  f32           _driftCheckMinGyroZ_rad_per_sec;
-  f32           _driftCheckMaxGyroZ_rad_per_sec;
-  u32           _driftCheckNumReadings;
-  
-  void DetectGyroDrift(const RobotState& msg);
-  
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use

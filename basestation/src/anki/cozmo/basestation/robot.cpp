@@ -56,6 +56,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/robotGyroDriftDetector.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -153,12 +154,6 @@ static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-80.f);
 static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
-// For gyro drift check
-static const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD(10.f);
-static const float kDriftCheckPeriod_ms = 5000.f;
-static const float kDriftCheckGyroZMotionThresh_rad_per_sec = DEG_TO_RAD(1.f);
-static const float kDriftCheckMaxAngleChangeRate_rad_per_sec = DEG_TO_RAD(0.1f);
-
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
 const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
@@ -215,6 +210,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _cubeLightComponent(new CubeLightComponent(*this, _context))
   , _bodyLightComponent(new BodyLightComponent(*this, _context))
   , _cubeAccelComponent(new CubeAccelComponent(*this))
+  , _gyroDriftDetector(std::make_unique<RobotGyroDriftDetector>(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -225,15 +221,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
   , _cliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL)
-  , _gyroDriftReported(false)
-  , _driftCheckStartPoseFrameId(0)
-  , _driftCheckStartAngle_rad(0)
-  , _driftCheckStartGyroZ_rad_per_sec(0)
-  , _driftCheckStartTime_ms(0)
-  , _driftCheckCumSumGyroZ_rad_per_sec(0)
-  , _driftCheckMinGyroZ_rad_per_sec(0)
-  , _driftCheckMaxGyroZ_rad_per_sec(0)
-  , _driftCheckNumReadings(0)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
   , _needsManager(new NeedsManager(*this))
@@ -878,79 +865,6 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   return RESULT_OK;
       
 } // SetLocalizedTo()
-    
-
-void Robot::DetectGyroDrift(const RobotState& msg)
-{
-  f32 gyroZ = msg.gyro.z;
-  
-  if (!_gyroDriftReported) {
-    
-    // Reset gyro drift detector if
-    // 1) Wheels are moving
-    // 2) Raw gyro reading exceeds possible drift value
-    // 3) Cliff is detected
-    // 4) Head isn't calibrated
-    // 5) Drift detector started but the raw gyro reading deviated too much from starting values, indicating motion.
-    if (GetMoveComponent().IsMoving() ||
-        (std::fabsf(gyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
-        IsCliffDetected() ||
-        !_isHeadCalibrated ||
-        
-        ((_driftCheckStartTime_ms != 0) &&
-         ((std::fabsf(_driftCheckStartGyroZ_rad_per_sec - gyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
-          (_driftCheckStartPoseFrameId != GetPoseFrameID())))
-        
-        ) {
-      _driftCheckStartTime_ms = 0;
-    }
-    
-    // Robot's not moving. Initialize drift detection.
-    else if (_driftCheckStartTime_ms == 0) {
-      _driftCheckStartPoseFrameId        = GetPoseFrameID();
-      _driftCheckStartAngle_rad          = GetPose().GetRotation().GetAngleAroundZaxis();
-      _driftCheckStartGyroZ_rad_per_sec  = gyroZ;
-      _driftCheckStartTime_ms            = msg.timestamp;
-      _driftCheckCumSumGyroZ_rad_per_sec = gyroZ;
-      _driftCheckMinGyroZ_rad_per_sec    = gyroZ;
-      _driftCheckMaxGyroZ_rad_per_sec    = gyroZ;
-      _driftCheckNumReadings             = 1;
-    }
-    
-    // If gyro readings have been accumulating for long enough...
-    else if (msg.timestamp - _driftCheckStartTime_ms > kDriftCheckPeriod_ms) {
-      
-      // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
-      const f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-      const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * Util::MilliSecToSec(kDriftCheckPeriod_ms);
-      
-      if (headingAngleChange > angleChangeThresh) {
-        // Report drift detected just one time during a session
-        Util::sWarningF("robot.detect_gyro_drift.drift_detected",
-                        {{DDATA, std::to_string(RAD_TO_DEG(headingAngleChange)).c_str()}},
-                        "mean: %f, min: %f, max: %f",
-                        RAD_TO_DEG(_driftCheckCumSumGyroZ_rad_per_sec / _driftCheckNumReadings),
-                        RAD_TO_DEG(_driftCheckMinGyroZ_rad_per_sec),
-                        RAD_TO_DEG(_driftCheckMaxGyroZ_rad_per_sec));
-        _gyroDriftReported = true;
-      }
-
-      _driftCheckStartTime_ms = 0;
-    }
-    
-    // Record min and max observed gyro readings and cumulative sum for later mean computation
-    else {
-      if (gyroZ > _driftCheckMaxGyroZ_rad_per_sec) {
-        _driftCheckMaxGyroZ_rad_per_sec = gyroZ;
-      }
-      if (gyroZ < _driftCheckMinGyroZ_rad_per_sec) {
-        _driftCheckMinGyroZ_rad_per_sec = gyroZ;
-      }
-      _driftCheckCumSumGyroZ_rad_per_sec += gyroZ;
-      ++_driftCheckNumReadings;
-    }
-  }
-}
   
   
 Result Robot::UpdateFullRobotState(const RobotState& msg)
@@ -1201,7 +1115,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
   }
   
-  DetectGyroDrift(msg);
+  _gyroDriftDetector->DetectGyroDrift(msg);
+  _gyroDriftDetector->DetectBias(msg);
   
   UpdateCliffRunningStats(msg);
   UpdateCliffDetectThreshold();
@@ -1802,12 +1717,12 @@ void Robot::SetLiftCalibrated(bool isCalibrated)
   _isLiftCalibrated = isCalibrated;
 }
   
-bool Robot::IsHeadCalibrated()
+bool Robot::IsHeadCalibrated() const
 {
   return _isHeadCalibrated;
 }
 
-bool Robot::IsLiftCalibrated()
+bool Robot::IsLiftCalibrated() const
 {
   return _isLiftCalibrated;
 }
