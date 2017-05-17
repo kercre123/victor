@@ -199,9 +199,10 @@ def main(json_files, bin_name, flatc_dir, schema_file=SCHEMA_FILE, bin_file_ext=
         anim_clip, keyframes = read_anim_file(json_file)
         anim_dict = prep_json_for_binary_conversion(anim_clip, keyframes)
         anim_clips.append(anim_dict)
-    tmp_json_file = tempfile.mkstemp(suffix=".json")[1]
+    fd, tmp_json_file = tempfile.mkstemp(suffix=".json")
     write_json_file(tmp_json_file, {CLIPS_ATTR:anim_clips})
     bin_file = convert_json_to_binary(tmp_json_file, flatc_dir, schema_file, bin_file_ext)
+    os.close(fd)
     renamed_bin_file = os.path.join(os.path.dirname(bin_file), bin_name)
     os.rename(bin_file, renamed_bin_file)
     if not os.path.isfile(renamed_bin_file):
