@@ -97,6 +97,20 @@ namespace Cozmo.Challenge {
 
     [SerializeField]
     public SerializableAnimationTrigger GetOutAnimTrigger;
+
+    [SerializeField]
+    private Needs.NeedsStateManager.SerializableNeedsActionIds _NeedsActionIdWin;
+
+    [SerializeField]
+    private Needs.NeedsStateManager.SerializableNeedsActionIds _NeedsActionIdLose;
+
+    public Needs.NeedsStateManager.SerializableNeedsActionIds NeedsActionIdWin {
+      get { return _NeedsActionIdWin; }
+    }
+
+    public Needs.NeedsStateManager.SerializableNeedsActionIds NeedsActionIdLose {
+      get { return _NeedsActionIdLose; }
+    }
   }
 
   [System.Serializable]

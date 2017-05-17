@@ -960,9 +960,15 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void UpdatePlayNeed() {
-    // COZMO-10938: IVY TODO: Need to swap out stub Play NeedActionId with real ones (win/lose/tie/quit) for each game
     if (Cozmo.Needs.NeedsStateManager.Instance != null) {
-      Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(NeedsActionId.Play);
+      if (_ChallengeData.IsMinigame) {
+        if (DidHumanWin()) {
+          Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(_ChallengeData.NeedsActionIdWin.Value);
+        }
+        else {
+          Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(_ChallengeData.NeedsActionIdLose.Value);
+        }
+      }
     }
   }
 

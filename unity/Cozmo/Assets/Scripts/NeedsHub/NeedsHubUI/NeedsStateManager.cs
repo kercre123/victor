@@ -6,6 +6,10 @@ using UnityEngine;
 namespace Cozmo.Needs {
   public class NeedsStateManager : MonoBehaviour {
 
+    [System.Serializable]
+    public class SerializableNeedsActionIds : SerializableEnum<Anki.Cozmo.NeedsActionId> {
+    }
+
     public delegate void LatestNeedLevelChangedHandler(NeedsActionId actionThatCausedChange);
     public event LatestNeedLevelChangedHandler OnNeedsLevelChanged;
 

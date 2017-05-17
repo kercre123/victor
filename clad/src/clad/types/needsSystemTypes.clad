@@ -49,10 +49,37 @@ enum int_32 NeedsActionId
   FeedGreen,
 
   // Other actions (this will be a big and ever-growing list)
-  //PyramidCompleted,
-  // etc.
+  Play, // Generic prototypes
+  KeepAwayWin,
+  KeepAwayLose,
+  MemoryMatchWin,
+  MemoryMatchLose,
+  QuickTapWin,
+  QuickTapLose,
 
-  Play,
+  // Behaviors
+  CozmoSings,
+  DizzyHard,
+  DizzyMedium,
+  DizzySoft,
+  Fall,
+  FistBump,
+  GatherCubes,
+  GuardDogLose,
+  GuardDogWin,
+  HiccupsEndBad,
+  HiccupsEndGood,
+  KnockDownCubes,
+  PeekAboo,
+  PickupCube,
+  PopAWheelie,
+  Pounce,
+  PyramidCompleted,
+  RollACube,
+  SayName,
+  StackCube,
+  Workout,
+  SeeFace,
 
   Count
 }

@@ -26,7 +26,13 @@ MonoBehaviour:
   _Music:
     _Music: 1317044071
   ChallengeConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}
-  IsMinigame: 1
+  _ChallengeType: 0
+  _ActivityData:
+    ActivityPriority: 0
+    HideInActivityView: 0
+    ActivityTitleColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityFrameColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityIcon: {fileID: 0}
   InstructionVideoPath: Videos/MemoryMatch.mp4
   ChallengeVideoSubtitles: {fileID: 11400000, guid: 9834485999bf04cd2a806b46c70637bd,
     type: 2}
@@ -57,7 +63,13 @@ MonoBehaviour:
       _AssetDataName: MemoryMatchHowToPlayAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 387
+    _EnumValue: 397
   GetOutAnimTrigger:
     _EnumValueAsString: MemoryMatchCozmoGetOut
-    _EnumValue: 191
+    _EnumValue: 198
+  _NeedsActionIdWin:
+    _EnumValueAsString: MemoryMatchWin
+    _EnumValue: 11
+  _NeedsActionIdLose:
+    _EnumValueAsString: MemoryMatchLose
+    _EnumValue: 12
