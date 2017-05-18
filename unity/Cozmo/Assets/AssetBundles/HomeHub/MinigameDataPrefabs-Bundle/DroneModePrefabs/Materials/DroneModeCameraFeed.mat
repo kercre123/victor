@@ -15,7 +15,7 @@ Material:
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
-    serializedVersion: 3
+    serializedVersion: 2
     m_TexEnvs:
     - _BumpMap:
         m_Texture: {fileID: 0}
