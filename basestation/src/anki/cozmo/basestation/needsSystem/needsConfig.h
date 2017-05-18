@@ -94,6 +94,18 @@ private:
 
 };
   
+class StarRewardsConfig
+{
+public:
+  void Init(const Json::Value& json);
+  
+  int GetMaxStarsForLevel(int level);
+  
+  void GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards);
+private:
+  std::vector<UnlockLevel> _UnlockLevels;
+};
+  
 
 } // namespace Cozmo
 } // namespace Anki

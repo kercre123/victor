@@ -540,10 +540,16 @@ message NeedsPauseStates {
   bool actionPause[uint_8]
 }
 
-message AllNeedsMet {
+message StarLevelCompleted {
   int_32      unlockLevelCompleted,
   int_32      starsRequiredForNextUnlock,
   NeedsReward rewards[uint_8]
+}
+
+message StarUnlocked {
+  int_32      unlockLevel,
+  int_32      maxStarsForLevel,
+  int_32      currentStars,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

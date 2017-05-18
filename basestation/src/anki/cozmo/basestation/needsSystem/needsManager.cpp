@@ -16,17 +16,21 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -48,6 +52,7 @@ static const std::string kPartIsDamagedKey = "PartIsDamaged";
 static const std::string kCurNeedsUnlockLevelKey = "CurNeedsUnlockLevel";
 static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
+static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 
 static const float kNeedLevelStorageMultiplier = 100000.0f;
 
@@ -59,7 +64,46 @@ using namespace std::chrono;
 using Time = time_point<system_clock>;
 
 
+using Time = std::chrono::time_point<std::chrono::system_clock>;
 
+#if ANKI_DEV_CHEATS
+  NeedsManager* g_DebugNeedsManager = nullptr;
+  void DebugFillNeedMeters( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      g_DebugNeedsManager->DebugFillNeedMeters();
+    }
+  }
+  // give stars, push back day
+  void DebugGiveStar( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      g_DebugNeedsManager->DebugGiveStar();
+    }
+  }
+  void DebugCompleteDay( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      g_DebugNeedsManager->DebugCompleteDay();
+    }
+  }
+  void DebugResetNeeds( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      g_DebugNeedsManager->DebugResetNeeds();
+    }
+  }
+  CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
+  CONSOLE_FUNC( DebugGiveStar, "Needs" );
+  CONSOLE_FUNC( DebugCompleteDay, "Needs" );
+  CONSOLE_FUNC( DebugResetNeeds, "Needs" );
+  CONSOLE_VAR(bool, kUseNeedManager, "Needs",true);
+#endif
+  
 NeedsManager::NeedsManager(Robot& robot)
 : _robot(robot)
 , _needsState()
@@ -89,16 +133,21 @@ NeedsManager::NeedsManager(Robot& robot)
 NeedsManager::~NeedsManager()
 {
   _signalHandles.clear();
+#if ANKI_DEV_CHEATS
+  g_DebugNeedsManager = nullptr;
+#endif
 }
 
 
-void NeedsManager::Init(const Json::Value& inJson)
+void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
   _needsConfig.Init(inJson);
-
+  
+  _starRewardsConfig = std::make_shared<StarRewardsConfig>();
+  _starRewardsConfig->Init(inStarsJson);
   const u32 uninitializedSerialNumber = 0;
-  _needsState.Init(_needsConfig, uninitializedSerialNumber);
+  _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig);
 
   // We want to pause the whole system until we've finished reading from robot
   _isPaused = true;
@@ -129,6 +178,11 @@ void NeedsManager::Init(const Json::Value& inJson)
   _signalHandles.push_back(messageHandler->Subscribe(_robot.GetID(),
                                                      RobotInterface::RobotToEngineTag::mfgId,
                                                      std::bind(&NeedsManager::HandleMfgID, this, std::placeholders::_1)));
+  
+#if ANKI_DEV_CHEATS
+  g_DebugNeedsManager = this;
+#endif
+  
 }
 
 void NeedsManager::InitAfterConnection()
@@ -159,9 +213,11 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 {
   // First, we can finally un-pause the system now that we've read data from the robot
   _isPaused = false;
+  
+  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig);
 
   bool needToWriteToDevice = false;
-  bool needToWriteToRobot = false;
+  bool needToWriteToRobot = _robotNeedsVersionUpdate;
 
   if (!_robotHadValidNeedsData && !_deviceHadValidNeedsData)
   {
@@ -410,7 +466,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     if (_robotStorageState == RobotStorageState::Inactive)
     {
-      const Time now = system_clock::now();
       _timeLastWrittenToRobot = now;
       _needsState._timeLastWritten = now;
       StartWriteToRobot(_needsState);
@@ -446,12 +501,13 @@ void NeedsManager::SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate)
     bool isDamaged = _needsState.GetPartIsDamagedByIndex(i);
     partIsDamaged.push_back(isDamaged);
   }
-  
+
   ExternalInterface::NeedsState message(std::move(needLevels), std::move(needBrackets),
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,
                                         _needsState._numStarsAwarded, _needsState._numStarsForNextUnlock,
                                         actionCausingTheUpdate);
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  UpdateStarsState();
 }
 
 void NeedsManager::SendNeedsPauseStateToGame()
@@ -459,7 +515,7 @@ void NeedsManager::SendNeedsPauseStateToGame()
   ExternalInterface::NeedsPauseState message(_isPaused);
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
-
+  
 void NeedsManager::SendNeedsPauseStatesToGame()
 {
   std::vector<bool> decayPause;
@@ -475,26 +531,99 @@ void NeedsManager::SendNeedsPauseStatesToGame()
   {
     actionPause.push_back(_isActionsPausedForNeed[i]);
   }
-
   ExternalInterface::NeedsPauseStates message(decayPause, actionPause);
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
-void NeedsManager::SendAllNeedsMetToGame()
+void NeedsManager::UpdateStarsState()
 {
-  // todo
-//  message AllNeedsMet {
-//    int_32 unlockLevelCompleted,
-//    int_32 starsRequiredForNextUnlock,
-//    // TODO:  List of rewards unlocked
-//  }
-  std::vector<NeedsReward> rewards;
-  
-  ExternalInterface::AllNeedsMet message(0, 1, std::move(rewards)); // todo fill in
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  // TODO: this only needs to be called when the NeedBracket changes.
+  // Right now called everytime we send a needs state update
+  // If "play stat" is now full, and they haven't gotten a star "today" send the star ready message
+  if( _needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full )
+  {
+    Time nowTime = std::chrono::system_clock::now();
+    // Has it past midnight our time...
+    std::time_t lastStarTime = std::chrono::system_clock::to_time_t( _needsState._timeLastStarAwarded );
+    std::tm lastLocalTime;
+    localtime_r(&lastStarTime, &lastLocalTime);
+    std::time_t nowTimeT = std::chrono::system_clock::to_time_t( nowTime );
+    std::tm nowLocalTime;
+    localtime_r(&nowTimeT, &nowLocalTime);
+    
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
+                  "Local time gmt offset %ld",
+                  nowLocalTime.tm_gmtoff);
+    
+    // Past midnight from lasttime
+    if( nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
+    {
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
+                    "now: %d, lastsave: %d",
+                    nowLocalTime.tm_yday, lastLocalTime.tm_yday);
+      
+      _needsState._timeLastStarAwarded = nowTime;
+      _needsState._numStarsAwarded++;
+      // StarUnlocked message
+      SendSingleStarAddedToGame();
+      
+      // Completed a set
+      if( _needsState._numStarsAwarded >= _needsState._numStarsForNextUnlock )
+      {
+        // resets the stars
+        SendStarLevelCompletedToGame();
+      }
+      // Save that we've issued a star today.
+      PossiblyStartWriteToRobot(_needsState, true);
+      
+    }
+  }
 }
 
+void NeedsManager::SendStarLevelCompletedToGame()
+{
+  // Get rewards for current level first
+  std::vector<NeedsReward> rewards;
+  _starRewardsConfig->GetRewardsForLevel(_needsState._curNeedsUnlockLevel, rewards);
+  // level up
+  _needsState.SetStarLevel(_needsState._curNeedsUnlockLevel + 1);
+  
+  ExternalInterface::StarLevelCompleted message(_needsState._curNeedsUnlockLevel,
+                                                _needsState._numStarsForNextUnlock,
+                                                std::move(rewards));
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  
+  // Issue rewards in inventory
+  for( int i = 0; i < rewards.size(); ++i )
+  {
+    switch(rewards[i].rewardType)
+    {
+      case NeedsRewardType::Unlock:
+      {
+        UnlockId id = UnlockIdFromString(rewards[i].data);
+        _robot.GetProgressionUnlockComponent().SetUnlock(id, true);
+        break;
+      }
+      default:
+        // TODO: support songs and memories, sparks
+        break;
+    }
+  }
+  
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendStarLevelCompletedToGame","CurrUnlockLevel: %d, stars for next: %d, currStars: %d",
+                      _needsState._curNeedsUnlockLevel,_needsState._numStarsForNextUnlock, _needsState._numStarsAwarded);
+  
+  // Save is forced after this function is called.
+}
 
+void NeedsManager::SendSingleStarAddedToGame()
+{
+  ExternalInterface::StarUnlocked message(_needsState._curNeedsUnlockLevel,
+                                          _needsState._numStarsForNextUnlock,
+                                          _needsState._numStarsAwarded);
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+  
 bool NeedsManager::DeviceHasNeedsState()
 {
   return Util::FileUtils::FileExists(kPathToSavedStateFile + kNeedsStateFile);
@@ -517,7 +646,7 @@ void NeedsManager::WriteToDevice(const NeedsState& needsState)
   const auto startTime = std::chrono::system_clock::now();
   Json::Value state;
 
-  state[kStateFileVersionKey] = needsState.kDeviceStorageVersion;
+  state[kStateFileVersionKey] = NeedsState::kDeviceStorageVersion;
 
   const auto time_s = duration_cast<seconds>(needsState._timeLastWritten.time_since_epoch()).count();
   state[kDateTimeKey] = Util::numeric_cast<Json::LargestInt>(time_s);
@@ -537,6 +666,9 @@ void NeedsManager::WriteToDevice(const NeedsState& needsState)
   {
     state[kPartIsDamagedKey][EnumToString(part.first)] = part.second;
   }
+
+  const auto timeStarAwarded_s = duration_cast<seconds>(needsState._timeLastStarAwarded.time_since_epoch()).count();
+  state[kTimeLastStarAwardedKey] = Util::numeric_cast<Json::LargestInt>(timeStarAwarded_s);
 
   const auto midTime = std::chrono::system_clock::now();
   if (!_robot.GetContextDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
@@ -563,11 +695,11 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
   }
 
   int versionLoaded = state[kStateFileVersionKey].asInt();
-  if (versionLoaded > needsState.kDeviceStorageVersion)
+  if (versionLoaded > NeedsState::kDeviceStorageVersion)
   {
-    ANKI_VERIFY(versionLoaded <= needsState.kDeviceStorageVersion, "NeedsManager.ReadFromDevice.StateFileVersionIsFuture",
+    ANKI_VERIFY(versionLoaded <= NeedsState::kDeviceStorageVersion, "NeedsManager.ReadFromDevice.StateFileVersionIsFuture",
                 "Needs state file version read was %d but app thinks latest version is %d",
-                versionLoaded, needsState.kDeviceStorageVersion);
+                versionLoaded, NeedsState::kDeviceStorageVersion);
     return false;
   }
 
@@ -590,9 +722,19 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
     part.second = state[kPartIsDamagedKey][EnumToString(part.first)].asBool();
   }
 
-  if (versionLoaded < needsState.kDeviceStorageVersion) {
+  if (versionLoaded >= 2)
+  {
+    const seconds durationSinceEpochLastStar_s(state[kTimeLastStarAwardedKey].asLargestInt());
+    needsState._timeLastStarAwarded = time_point<system_clock>(durationSinceEpochLastStar_s);
+  }
+  else
+  {
+    needsState._timeLastStarAwarded = Time(); // For older versions, a sensible default
+  }
+
+  if (versionLoaded < NeedsState::kDeviceStorageVersion)
+  {
     versionUpdated = true;
-    // Sensible defaults go here for new stuff, as needed, when the format changes
   }
 
   _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
@@ -601,7 +743,7 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
 }
 
 
-void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState)
+void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState, bool ignoreCooldown)
 {
   if (_robotStorageState != RobotStorageState::Inactive)
     return;
@@ -609,7 +751,7 @@ void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState)
   const Time now = system_clock::now();
   const auto elapsed = now - _timeLastWrittenToRobot;
   const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
-  if (secsSinceLastSave > kMinimumTimeBetweenPeriodicRobotSaves_sec)
+  if (ignoreCooldown || secsSinceLastSave > kMinimumTimeBetweenPeriodicRobotSaves_sec)
   {
     _timeLastWrittenToRobot = now;
     needsState._timeLastWritten = now;
@@ -643,8 +785,9 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
     partIsDamaged[(int)part.first] = part.second;
   }
 
+  //TODO: get last start assigned time last
   NeedsStateOnRobot stateForRobot(NeedsState::kRobotStorageVersion, timeLastWritten, curNeedLevels,
-                                  needsState._curNeedsUnlockLevel, needsState._numStarsAwarded, partIsDamaged);
+                                  needsState._curNeedsUnlockLevel, needsState._numStarsAwarded, partIsDamaged, timeLastWritten);
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
@@ -731,16 +874,56 @@ bool NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResul
     return false;
   }
 
-  NeedsStateOnRobot stateOnRobot;
-  stateOnRobot.Unpack(data, size);
+  // Read first 4 bytes of data as int32_t; this is the save format version
+  const int32_t versionLoaded = static_cast<int32_t>(*data);
 
-  int versionLoaded = stateOnRobot.version;
-  if (versionLoaded > _needsStateFromRobot.kRobotStorageVersion)
+  if (versionLoaded > NeedsState::kRobotStorageVersion)
   {
-    ANKI_VERIFY(versionLoaded <= _needsStateFromRobot.kRobotStorageVersion, "NeedsManager.FinishReadFromRobot.StateFileVersionIsFuture",
+    ANKI_VERIFY(versionLoaded <= NeedsState::kRobotStorageVersion, "NeedsManager.FinishReadFromRobot.StateFileVersionIsFuture",
                 "Needs state robot storage version read was %d but app thinks latest version is %d",
-                versionLoaded, _needsStateFromRobot.kRobotStorageVersion);
+                versionLoaded, NeedsState::kRobotStorageVersion);
     return false;
+  }
+
+  NeedsStateOnRobot stateOnRobot;
+
+  if (versionLoaded == NeedsState::kRobotStorageVersion)
+  {
+    stateOnRobot.Unpack(data, size);
+  }
+  else
+  {
+    // This is an older version of the robot storage, so the data must be
+    // migrated to the new format
+    _robotNeedsVersionUpdate = true;
+
+    switch (versionLoaded)
+    {
+      case 1:
+      {
+        NeedsStateOnRobot_v01 stateOnRobot_v01;
+        stateOnRobot_v01.Unpack(data, size);
+
+        stateOnRobot.version = NeedsState::kRobotStorageVersion;
+        stateOnRobot.timeLastWritten = stateOnRobot_v01.timeLastWritten;
+        for (int i = 0; i < MAX_NEEDS; i++)
+          stateOnRobot.curNeedLevel[i] = stateOnRobot_v01.curNeedLevel[i];
+        stateOnRobot.curNeedsUnlockLevel = stateOnRobot_v01.curNeedsUnlockLevel;
+        stateOnRobot.numStarsAwarded = stateOnRobot_v01.numStarsAwarded;
+        for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
+          stateOnRobot.partIsDamaged[i] = stateOnRobot_v01.partIsDamaged[i];
+
+        // Version 2 added this variable:
+        stateOnRobot.timeLastStarAwarded = 0;
+        break;
+      }
+      default:
+      {
+        PRINT_CH_DEBUG(kLogChannelName, "NeedsManager.FinishReadFromRobot.UnsupportedOldRobotStorageVersion",
+                       "Version %d found on robot but not supported", versionLoaded);
+        break;
+      }
+    }
   }
 
   // Now initialize _needsStateFromRobot from the loaded NeedsStateOnRobot:
@@ -752,7 +935,7 @@ bool NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResul
 
   _needsStateFromRobot._curNeedsUnlockLevel = stateOnRobot.curNeedsUnlockLevel;
   _needsStateFromRobot._numStarsAwarded = stateOnRobot.numStarsAwarded;
-  _needsStateFromRobot._numStarsForNextUnlock = 3;  // todo fill in from config data and curNeedsUnlockLevel
+  _needsStateFromRobot._numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(stateOnRobot.curNeedsUnlockLevel);
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -767,19 +950,53 @@ bool NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResul
   }
 
   _needsStateFromRobot._needsConfig = &_needsConfig;
-
-  if (versionLoaded < _needsStateFromRobot.kRobotStorageVersion)
-  {
-    _robotNeedsVersionUpdate = true;
-    // Sensible defaults go here for new stuff, as needed, when the format changes
-  }
+  _needsStateFromRobot._starRewardsConfig = _starRewardsConfig;
 
   _needsStateFromRobot.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
 
   return true;
 }
 
+#if ANKI_DEV_CHEATS
+void NeedsManager::DebugFillNeedMeters()
+{
+  _needsState.DebugFillNeedMeters();
+  SendNeedsStateToGame(NeedsActionId::NoAction);
+}
+  
+void NeedsManager::DebugGiveStar()
+{
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
+  DebugCompleteDay();
+  DebugFillNeedMeters();
+}
+  
+void NeedsManager::DebugCompleteDay()
+{
+  // Push the last given star back 24 hours
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+  std::time_t yesterdayTime = std::chrono::system_clock::to_time_t(now - std::chrono::hours(25));
+  
+  
+  std::tm yesterdayTimeLocal;
+  localtime_r(&yesterdayTime, &yesterdayTimeLocal);
+  std::time_t nowTime = std::chrono::system_clock::to_time_t( now );
+  std::tm nowLocalTime;
+  localtime_r(&nowTime, &nowLocalTime);
+  
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugCompleteDay","");
+  _needsState._timeLastStarAwarded = std::chrono::system_clock::from_time_t(yesterdayTime);
 
+}
+  
+void NeedsManager::DebugResetNeeds()
+{
+  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig);
+  _robotHadValidNeedsData = false;
+  _deviceHadValidNeedsData = false;
+  InitAfterReadFromRobotAttempt();
+}
+#endif
 
 } // namespace Cozmo
 } // namespace Anki

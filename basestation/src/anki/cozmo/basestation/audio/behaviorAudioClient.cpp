@@ -194,7 +194,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
     if(sparkID == UnlockId::Count){
       DeactivateSparkedMusic();
     }else if(_sparkedMusicState == AudioMetaData::SwitchState::Sparked::Invalid){
-      PRINT_NAMED_ERROR("BehaviorAudioClient.HandleRobotPublicStateChange.InvalidMusicState",
+      PRINT_NAMED_INFO("BehaviorAudioClient.HandleRobotPublicStateChange.InvalidMusicState",
                         "Attempted to activate sparked music state with invalid music state");
     }else{
       // Special handling for Workout (blergghhhhbleghgh... ahemm, excuse me)

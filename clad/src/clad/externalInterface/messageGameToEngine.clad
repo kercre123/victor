@@ -915,24 +915,6 @@ message RegisterNeedsActionCompleted {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-structure SetFriendshipPoints {
-  int_32 newVal
-}
-
-structure SetFriendshipLevel {
-  int_32 newVal
-}
-
-union ProgressionMessageUnion {
-  SetFriendshipPoints  SetFriendshipPoints,
-  SetFriendshipLevel   SetFriendshipLevel
-}
-
-message ProgressionMessage {
-  uint_8  robotID,
-  ProgressionMessageUnion  ProgressionMessageUnion
-}
-
 // Progression unlocks
 message RequestSetUnlock {
   UnlockId unlockID,

@@ -683,6 +683,18 @@ void RobotDataLoader::LoadRobotConfigs()
                         jsonFilename.c_str());
     }
   }
+  
+  // star rewards config
+  {
+    std::string jsonFilename = "config/basestation/config/star_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
+                        "Star Rewards Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+    }
+  }
 
   // feature gate
   {

@@ -412,7 +412,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::PlannerRunMode:                   return true;
         case GameToEngineTag::StartTestMode:                    return true;
         case GameToEngineTag::TransitionToNextOnboardingState:  return true;
-        case GameToEngineTag::ProgressionMessage:               return true; // (SetFriendshipPoints + Level)
         case GameToEngineTag::RequestSetUnlock:                 return true;
         case GameToEngineTag::GetJsonDasLogsMessage:            return true;
         case GameToEngineTag::SaveCalibrationImage:             return true;

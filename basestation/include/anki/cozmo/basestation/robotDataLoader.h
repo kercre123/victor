@@ -87,7 +87,8 @@ public:
   const Json::Value& GetRobotVisionConfig() const   { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const  { return _reactionTriggerMap; }
   const Json::Value& GetVoiceCommandConfig() const  { return _voiceCommandConfig; }
-  const Json::Value& GetRobotNeedsConfig() const { return _needsSystemConfig; }
+  const Json::Value& GetRobotNeedsConfig() const    { return _needsSystemConfig; }
+  const Json::Value& GetStarRewardsConfig() const   { return _starRewardsConfig; }
 
   bool IsCustomAnimLoadEnabled() const;
   
@@ -157,6 +158,7 @@ private:
   Json::Value _robotWorkoutConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;
+  Json::Value _starRewardsConfig;
   
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;

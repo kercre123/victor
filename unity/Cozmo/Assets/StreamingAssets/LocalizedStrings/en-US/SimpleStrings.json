@@ -209,5 +209,8 @@
   },
   "label.simpleCount": {
     "translation": "{0} {1}"
+  },
+  "button.temp": {
+    "translation": "Temp"
   }
 }

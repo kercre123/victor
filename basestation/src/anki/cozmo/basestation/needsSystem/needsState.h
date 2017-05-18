@@ -17,6 +17,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "clad/types/needsSystemTypes.h"
+#include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
 
 #include <json/json.h>
 
@@ -33,6 +34,7 @@ namespace ExternalInterface {
 }
 
 class NeedsConfig;
+class StarRewardsConfig;
 struct DecayConfig;
 
 using BracketThresholds = std::vector<float>;
@@ -47,7 +49,7 @@ public:
   NeedsState();
   ~NeedsState();
   
-  void Init(NeedsConfig& needsConfig, u32 serialNumber);
+  void Init(NeedsConfig& needsConfig, u32 serialNumber, std::shared_ptr<StarRewardsConfig> starRewardsConfig);
   
   void Reset();
   
@@ -66,8 +68,8 @@ public:
   // Note that changing format of robot storage serialization will be more difficult,
   // because it serializes a CLAD structure, so for backward compatibility we'd have
   // to preserve older versions of that CLAD structure.
-  static const int kDeviceStorageVersion = 1;
-  static const int kRobotStorageVersion = 1;
+  static const int kDeviceStorageVersion = 2;
+  static const int kRobotStorageVersion = 2;
 
   Time _timeLastWritten;
 
@@ -87,8 +89,18 @@ public:
   int _curNeedsUnlockLevel;
   int _numStarsAwarded;
   int _numStarsForNextUnlock;
+  Time _timeLastStarAwarded;
+  
+  void SetStarLevel(int newLevel);
 
   const NeedsConfig* _needsConfig;
+  
+  std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
+  
+#if ANKI_DEV_CHEATS
+  void DebugFillNeedMeters();
+  // TODO: more granular settings
+#endif
 };
 
 

@@ -110,6 +110,3 @@
 //   each contains:  float needLevelDelta[NeedId] (signed delta); float uniformVarianceDelta (unsigned value)
 // (Put in a separate json file)
 
-// Unlock levels:  Array, in order.
-//   For each:  int numStarsToUnlock; Rewards array (for each: RewardTypeEnum, secondary data)
-// (Put in a separate json file)

@@ -41,7 +41,9 @@ NeedsState::NeedsState()
 , _curNeedsUnlockLevel(0)
 , _numStarsAwarded(0)
 , _numStarsForNextUnlock(1)
+, _timeLastStarAwarded(Time())
 , _needsConfig(nullptr)
+, _starRewardsConfig(nullptr)
 {
 }
 
@@ -51,7 +53,7 @@ NeedsState::~NeedsState()
 }
 
 
-void NeedsState::Init(NeedsConfig& needsConfig, u32 serialNumber)
+void NeedsState::Init(NeedsConfig& needsConfig, u32 serialNumber, std::shared_ptr<StarRewardsConfig> starRewardsConfig)
 {
   Reset();
 
@@ -75,9 +77,11 @@ void NeedsState::Init(NeedsConfig& needsConfig, u32 serialNumber)
     _partIsDamaged[repairablePartId] = false;
   }
 
+  _starRewardsConfig = starRewardsConfig;
+  
   _curNeedsUnlockLevel = 0;
   _numStarsAwarded = 0;
-  _numStarsForNextUnlock = 3; // todo set this from config data
+  _numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(0);
 }
 
 
@@ -194,6 +198,12 @@ void NeedsState::ApplyDecay(const float timeElasped_s, const DecayConfig& decayC
   }
 }
 
+void NeedsState::SetStarLevel(int newLevel)
+{
+  _curNeedsUnlockLevel = newLevel;
+  _numStarsAwarded = 0;
+  _numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(_curNeedsUnlockLevel);
+}
 
 void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
 {
@@ -220,6 +230,26 @@ void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
     _curNeedsBracketsCache[needId] = static_cast<NeedBracketId>(bracketIndex);
   }
 }
+  
+#if ANKI_DEV_CHEATS
+void NeedsState::DebugFillNeedMeters()
+{
+  Reset();
+
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    _curNeedsLevels[static_cast<NeedId>(i)] = 1.0f;
+  }
+  
+  UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
+  
+  for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
+  {
+    const auto& repairablePartId = static_cast<RepairablePartId>(i);
+    _partIsDamaged[repairablePartId] = false;
+  }
+}
+#endif
 
 
 } // namespace Cozmo
