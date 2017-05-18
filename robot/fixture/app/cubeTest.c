@@ -26,26 +26,6 @@ bool CubeDetect(void)
 {
   DisableBAT();
   DisableVEXT();
-  memset(&cube,0,sizeof(cube));
-  
-  if( !radio_initialized )
-  {
-    //Put radio into cube scan mode
-    switch( g_fixtureType )
-    {
-      //case FIXTURE_CHARGER_TEST:  //4
-      case FIXTURE_CUBE1_TEST:      //5
-      case FIXTURE_CUBE2_TEST:      //6
-      case FIXTURE_CUBE3_TEST:      //7
-        SetRadioMode('S' + (g_fixtureType-FIXTURE_CHARGER_TEST) ); //filter for cube 1,2,3 only
-        break;
-      //case FIXTURE_CUBEX_TEST:    //21
-      default:
-        SetRadioMode('S'); //allow all cube types
-        break;
-    }
-    radio_initialized = true;
-  }
   
   // Set VDD high (probably was already) 
   PIN_SET(GPIOB, PINB_VDD);
@@ -68,6 +48,33 @@ bool CubeDetect(void)
   MicroWait(1000);
   
   return detect;
+}
+
+void CubeInit(void)
+{
+  memset(&cube,0,sizeof(cube));
+  
+  if( !radio_initialized )
+  {
+    //Put radio into cube scan mode
+    char mode;
+    switch( g_fixtureType )
+    {
+      //case FIXTURE_CHARGER_TEST:  //4
+      case FIXTURE_CUBE1_TEST:      //5
+      case FIXTURE_CUBE2_TEST:      //6
+      case FIXTURE_CUBE3_TEST:      //7
+        mode = 'S' + (g_fixtureType-FIXTURE_CHARGER_TEST); //filter for cube 1,2,3 only
+        break;
+      //case FIXTURE_CUBEX_TEST:    //21
+      default:
+        mode = 'S'; //allow all cube types
+        break;
+    }
+    ConsolePrintf("Set Radio Mode '%c'\r\n", mode);
+    SetRadioMode(mode);
+    radio_initialized = true;
+  }
 }
 
 // Connect to and burn the program into the cube or charger
@@ -307,6 +314,7 @@ TestFunction* GetCubeTestFunctions(void)
 {
   static TestFunction functions[] =
   {
+    CubeInit,
     CubeBurn,
     CubePOST,
     CubeScan,
