@@ -1,4 +1,19 @@
 ----------------
+Release v100
+----------------
+
+General:
+-updated radio.bin, rev10. New modes 'S','T','U','V' for passive cube advertisement scanning.
+
+CUBEx:
+-init radio mode at boot
+-after pgm and LED test, verify advertising packets received from cube (matches serial#/id just written).
+-new error code 707 [CUBE_SCAN_FAILED]
+
+DEBUG:
+-test cube scan modes
+
+----------------
 Release v99
 ----------------
 
