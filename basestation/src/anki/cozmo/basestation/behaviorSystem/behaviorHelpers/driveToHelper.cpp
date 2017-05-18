@@ -190,16 +190,22 @@ void DriveToHelper::RespondToDriveResult(ActionResult result, Robot& robot)
     }
     case ActionResult::VISUAL_OBSERVATION_FAILED:
     {
-      SearchParameters searchParams;
-      searchParams.searchingForID = _targetID;
-      DelegateProperties delegateProperties;
-      delegateProperties.SetDelegateToSet(CreateSearchForBlockHelper(robot, searchParams));
-      delegateProperties.SetOnSuccessFunction([this](Robot& robot){
-        DriveToPreActionPose(robot);
-        return _status;
-      });
-      delegateProperties.FailImmediatelyOnDelegateFailure();
-      DelegateAfterUpdate(delegateProperties);
+      // If the object is still located search for it
+      const auto locatedObj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+      if(locatedObj != nullptr){        
+        SearchParameters searchParams;
+        searchParams.searchingForID = _targetID;
+        DelegateProperties delegateProperties;
+        delegateProperties.SetDelegateToSet(CreateSearchForBlockHelper(robot, searchParams));
+        delegateProperties.SetOnSuccessFunction([this](Robot& robot){
+          DriveToPreActionPose(robot);
+          return _status;
+        });
+        delegateProperties.FailImmediatelyOnDelegateFailure();
+        DelegateAfterUpdate(delegateProperties);
+      }else{
+        _status = BehaviorStatus::Failure;
+      }
       break;
     }
     case ActionResult::CANCELLED_WHILE_RUNNING:
