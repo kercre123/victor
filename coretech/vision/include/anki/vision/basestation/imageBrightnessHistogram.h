@@ -15,6 +15,9 @@
 
 #include "anki/vision/basestation/image.h"
 
+#include <array>
+#include <set>
+
 namespace Anki {
 namespace Vision {
  
@@ -35,7 +38,7 @@ namespace Vision {
     Result FillFromImage(const Image& img, s32 subSample=1, TransformFcn transformFcn = {});
     
     // Populate histogram using weights. Each pixel from the image contributes its corresponding
-    // weight to the histogram. Thus, zero-weighted pixels to not contribute. Use a binary
+    // weight to the histogram. Thus, zero-weighted pixels do not contribute. Use a binary
     // weight image to effectively do simple masking. Image and Mask must be same size.
     Result FillFromImage(const Image& img, const Image& weights, s32 subSample=1, TransformFcn transformFcn = {});
     

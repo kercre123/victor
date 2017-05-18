@@ -25,7 +25,6 @@ namespace Cozmo {
 
 namespace{
 static const int kMaxDockRetries = 2;
-static const Radians kMaxAngleTurnToFaceBeforePickup_rad = M_PI_2_F;
 }
 
   
@@ -42,6 +41,10 @@ PickupBlockHelper::PickupBlockHelper(Robot& robot,
 , _hasTriedOtherPose(false)
 {
   
+  if(_params.sayNameBeforePickup){
+    DEV_ASSERT(!NEAR_ZERO(_params.maxTurnTowardsFaceAngle_rad.ToFloat()),
+               "PickupBlockHelper.SayNameButNoTurnAngle");
+  }
 }
 
 
@@ -119,11 +122,14 @@ void PickupBlockHelper::StartPickupAction(Robot& robot, bool ignoreCurrentPredoc
     }
     
     if((_dockAttemptCount == 0) &&
-       _params.sayNameBeforePickup){
+       !NEAR_ZERO(_params.maxTurnTowardsFaceAngle_rad.ToFloat())){
+      auto turnTowrdsFaceAction = new TurnTowardsLastFacePoseAction(robot,
+                                                                    _params.maxTurnTowardsFaceAngle_rad,
+                                                                    _params.sayNameBeforePickup);
+      turnTowrdsFaceAction->SetSayNameAnimationTrigger(AnimationTrigger::PickupHelperPreActionNamedFace);
+      turnTowrdsFaceAction->SetNoNameAnimationTrigger(AnimationTrigger::PickupHelperPreActionUnnamedFace);
       static const bool ignoreFailure = true;
-      action->AddAction(new TurnTowardsLastFacePoseAction(robot,
-                                                          kMaxAngleTurnToFaceBeforePickup_rad,
-                                                          true),
+      action->AddAction(turnTowrdsFaceAction,
                         ignoreFailure);
       
       action->AddAction(new TurnTowardsObjectAction(robot,

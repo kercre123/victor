@@ -1,5 +1,5 @@
 {
   "behaviorClass": "ReactToPlacedOnSlope",
-  "name": "reactToPlacedOnSlope",
+  "behaviorID": "ReactToPlacedOnSlope",
   "displayNameKey":"behavior.ReactToPlacedOnSlope"
 }

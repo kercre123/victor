@@ -87,6 +87,60 @@ namespace CodeLab {
 
   public class SessionState {
 
+    public class ChallengesState {
+      private System.DateTime _OpenDateTime;
+      private System.DateTime _OpenSlideDateTime;
+      private uint _CurrentSlide = 0;
+      private uint _NumSlidesViewed = 0;
+      private bool _IsOpen = false;
+
+      public bool IsOpen() {
+        return _IsOpen;
+      }
+
+      public void Open() {
+        if (_IsOpen) {
+          DAS.Error("Codelab.Challenges.Open.AlreadyOpen", "");
+        }
+        DAS_Event("robot.code_lab.start_challenge_ui", "");
+        _IsOpen = true;
+        _OpenDateTime = System.DateTime.UtcNow;
+        _CurrentSlide = 0;
+        _NumSlidesViewed = 0;
+      }
+
+      private void EndViewingSlide() {
+        if (_CurrentSlide > 0) {
+          double timeOnSlide_s = (System.DateTime.UtcNow - _OpenSlideDateTime).TotalSeconds;
+          DAS_Event("robot.code_lab.end_challenge_slide_view", _CurrentSlide.ToString(), DASUtil.FormatExtraData(timeOnSlide_s.ToString()));
+          if (timeOnSlide_s > 1.0) {
+            _NumSlidesViewed += 1;
+          }
+        }
+      }
+
+      public void Close() {
+        if (_IsOpen) {
+          EndViewingSlide();
+          double timeOpen_s = (System.DateTime.UtcNow - _OpenDateTime).TotalSeconds;
+          DAS_Event("robot.code_lab.end_challenge_ui", _NumSlidesViewed.ToString(), DASUtil.FormatExtraData(timeOpen_s.ToString()));
+          _IsOpen = false;
+        }
+        else {
+          DAS.Error("Codelab.Challenges.Close.NotOpen", "");
+        }
+      }
+
+      public void SetSlideNumber(uint slideNum) {
+        if (_CurrentSlide != slideNum) {
+          EndViewingSlide();
+          _CurrentSlide = slideNum;
+          _OpenSlideDateTime = System.DateTime.UtcNow;
+          DAS_Event("robot.code_lab.start_challenge_slide_view", _CurrentSlide.ToString());
+        }
+      }
+    }
+
     public class ProgramState {
       private System.DateTime _StartDateTime;
       private int _NumBlocksExecuted = 0;
@@ -167,6 +221,7 @@ namespace CodeLab {
 
     private ProjectStats _ProjectStats = new ProjectStats();
     private ProgramState _ProgramState = new ProgramState();
+    private ChallengesState _ChallengesState = new ChallengesState();
     private System.DateTime _EnterCodeLabDateTime;
     private System.DateTime _EnterCurrentGrammarModeDateTime;
     private GrammarMode _CurrentGrammar = GrammarMode.None;
@@ -305,6 +360,18 @@ namespace CodeLab {
     public void OnCreatedProject(CodeLabProject project) {
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
       DAS_Event("robot.code_lab.created_project", defaultProfile.CodeLabProjects.Count.ToString());
+    }
+
+    public void OnChallengesOpen() {
+      _ChallengesState.Open();
+    }
+
+    public void OnChallengesClose() {
+      _ChallengesState.Close();
+    }
+
+    public void OnChallengesSetSlideNumber(uint slideNum) {
+      _ChallengesState.SetSlideNumber(slideNum);
     }
   }
 }

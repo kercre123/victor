@@ -23,7 +23,12 @@ public class SerializableEnumDrawingHelper {
     SerializedProperty enumProperty = property.FindPropertyRelative("_EnumValue");
     SerializedProperty enumStringProperty = property.FindPropertyRelative("_EnumValueAsString");
 
-    enumProperty.enumValueIndex = enumStringToValueMap[enumStringProperty.stringValue];
+    if (enumStringToValueMap.ContainsKey(enumStringProperty.stringValue)) {
+      enumProperty.enumValueIndex = enumStringToValueMap[enumStringProperty.stringValue];
+    }
+    else {
+      enumProperty.enumValueIndex = 0;
+    }
 
     enumProperty.enumValueIndex = EditorGUI.Popup(position, enumProperty.enumValueIndex, enumProperty.enumNames);
     enumStringProperty.stringValue = enumProperty.enumNames[enumProperty.enumValueIndex];
@@ -57,6 +62,18 @@ public class SerializableGameEventEnumEditor : PropertyDrawer {
 
 [CustomPropertyDrawer(typeof(SerializableAnimationTrigger))]
 public class SerializableAnimationTriggerEnumEditor : PropertyDrawer {
+
+  private Dictionary<string, int> _EnumStringToValueMap = new Dictionary<string, int>();
+  private bool _EnumStringToValueMapPopulated = false;
+
+  public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+    SerializableEnumDrawingHelper.OnGUIHelper(position, property, label, _EnumStringToValueMap, _EnumStringToValueMapPopulated);
+    _EnumStringToValueMapPopulated = true;
+  }
+}
+
+[CustomPropertyDrawer(typeof(Cozmo.Needs.NeedsStateManager.SerializableNeedsActionIds))]
+public class SerializableNeedsActionIdsEnumEditor : PropertyDrawer {
 
   private Dictionary<string, int> _EnumStringToValueMap = new Dictionary<string, int>();
   private bool _EnumStringToValueMapPopulated = false;

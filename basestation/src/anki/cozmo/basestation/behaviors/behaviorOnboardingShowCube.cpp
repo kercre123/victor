@@ -78,9 +78,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kOnboardingTriggerAffect
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("OnboardingShowCubes");
-  
+{  
   SubscribeToTags({
     MessageGameToEngineTag::TransitionToNextOnboardingState
   });
@@ -109,7 +107,7 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd});
-  SmartDisableReactionsWithLock(GetName(), kOnboardingTriggerAffectedArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kOnboardingTriggerAffectedArray);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::InitInternal", " %hhu ",_state);
@@ -377,17 +375,9 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
                 }
                 else
                 {
-                  // Play failure animation
-                  if (msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING || msg.result == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_NOT_MOVING)
-                  {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingCubeDockFail));
-                  }
-                  // During an interrupt behavior is cancelled only for a max_num_retries do we assume that the
-                  // pickup is just not working for some other reason than them messing with the robot.
-                  if( msg.result == ActionResult::REACHED_MAX_NUM_RETRIES )
-                  {
-                    SET_STATE(ErrorFinal,robot);
-                  }
+                  // We've either unsuccessfully retried pickup _maxErrorsPickup times or
+                  // pickup failed with a non-abort or retry failure. In both cases, something went really wrong.
+                  SET_STATE(ErrorFinal,robot);
                 }
               });
 }

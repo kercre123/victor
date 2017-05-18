@@ -274,18 +274,12 @@ ActionResult SayTextAction::Init()
       DEV_ASSERT(it != processingStateMap.end(), "SayTextAction.Init.processingStateMap.StyleNotFound");
       const SwitchState::GenericSwitch processingState = static_cast<const SwitchState::GenericSwitch>( it->second );
       // Set voice Pitch
-      // FIXME: This is a temp fix, we are asuming the TtS animation is using the CozmoBus_1 or Cozmo_OnDevice game object.
-      // We need to add the ability to set rtpc in animations so they are posted with the animation audio events.
-      GameObjectType gameObj = (_robot.GetRobotAudioClient()->GetOutputSource() == Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot) ?
-      GameObjectType::CozmoBus_1 : GameObjectType::Cozmo_OnDevice;
       // Set Cozmo Says Switch State
-      _robot.GetRobotAudioClient()->PostSwitchState(SwitchState::SwitchGroupType::Cozmo_Voice_Processing,
-                                                    processingState,
-                                                    gameObj);
+      _robot.GetRobotAudioClient()->PostRobotSwitchState(SwitchState::SwitchGroupType::Cozmo_Voice_Processing,
+                                                    processingState);
       // Set Cozmo Says Pitch RTPC Parameter
-      _robot.GetRobotAudioClient()->PostParameter(GameParameter::ParameterType::External_Process_Pitch,
-                                                  _voicePitch,
-                                                  gameObj);
+      _robot.GetRobotAudioClient()->PostRobotParameter(GameParameter::ParameterType::External_Process_Pitch,
+                                                  _voicePitch);
       
       _isAudioReady = true;
       

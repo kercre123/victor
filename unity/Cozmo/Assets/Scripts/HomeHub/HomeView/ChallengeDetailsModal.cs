@@ -170,7 +170,8 @@ public class ChallengeDetailsModal : BaseModal {
           else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {
             OpenCozmoNotOnTreadsAlert();
           }
-          else if (robot.HasHiccups) {
+          // If robot has hiccups and this is not CodeLab then open hiccup alert modal
+          else if (robot.HasHiccups && _ChallengeData.UnlockId.Value != Anki.Cozmo.UnlockId.CodeLabGame) {
             _HasHiccupModal.OpenCozmoHasHiccupsAlert(this.PriorityData, HandleEdgeCaseAlertClosed);
           }
           else {

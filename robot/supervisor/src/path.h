@@ -8,7 +8,14 @@
 // time on the robot. The basestation will dole out the path bit by
 // bit
 //NOTE: these need to be even!!
+#ifdef TARGET_K02
 #define MAX_NUM_PATH_SEGMENTS_ROBOT 6
+#else
+// TODO: Increased this primarily for TestModeController purposes in V2,
+//       but eventually we could increase it further to eliminate PathDolerOuter
+#define MAX_NUM_PATH_SEGMENTS_ROBOT 10
+#endif
+
 #define MAX_NUM_PATH_SEGMENTS_BASESTATION 128
 
 

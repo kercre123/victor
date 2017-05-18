@@ -25,7 +25,7 @@ namespace Onboarding {
 
     public override void Start() {
       base.Start();
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(_FreeplayEnabledOnEnter);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(_FreeplayEnabledOnEnter);
 
       if (_TransitionBGColorYellow) {
         UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
@@ -44,7 +44,7 @@ namespace Onboarding {
     public override void SkipPressed() {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        robot.SetEnableFreeplayBehaviorChooser(_FreeplayEnabledOnExit);
+        robot.SetEnableFreeplayActivity(_FreeplayEnabledOnExit);
       }
       OnboardingManager.Instance.GoToNextStage();
     }

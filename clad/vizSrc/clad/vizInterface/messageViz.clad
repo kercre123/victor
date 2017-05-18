@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/behaviorTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/vizTypes.clad"
@@ -336,9 +337,9 @@ message RobotMood
 
 structure BehaviorScoreData
 {
-  float_32 behaviorScore,
-  float_32 totalScore,
-  string   name
+  float_32   behaviorScore,
+  float_32   totalScore,
+  BehaviorID behaviorID
 }
 
 message RobotBehaviorSelectData
@@ -348,12 +349,12 @@ message RobotBehaviorSelectData
 
 message NewBehaviorSelected
 {
-  string  newCurrentBehavior
+  BehaviorID  newCurrentBehavior
 }
 
 message NewReactionTriggered
 {
-  string  newReactionTriggered
+  string  reactionStrategyTriggered
 }
 
 message StartRobotUpdate

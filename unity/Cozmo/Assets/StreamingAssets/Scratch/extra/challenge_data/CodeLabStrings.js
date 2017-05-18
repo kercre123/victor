@@ -22,7 +22,7 @@ window._$translations = {
         "translation": "#1: <span class='blue'>DRIVE FORWARD</span> 4."
     }, 
     "codeLabChallenge_driveForwardFour.questionSlide.secondaryText": {
-        "translation": "Wait! Try the challenge first, then tap NEXT to see if you're right!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_driveForwardFour.answerSlide.primaryText": {
         "translation": "Answer #1"
@@ -31,7 +31,7 @@ window._$translations = {
         "translation": "#2: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='violet'>SNEEZE.</span>"
     }, 
     "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_driveAndSneeze.answerSlide.primaryText": {
         "translation": "Answer #2"
@@ -40,7 +40,7 @@ window._$translations = {
         "translation": "#3: <span class='blue'>DRIVE</span> in a square."
     }, 
     "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_driveSquareSimple.answerSlide.primaryText": {
         "translation": "Answer #3"
@@ -49,7 +49,7 @@ window._$translations = {
         "translation": "#4: <span class='blue'>DRIVE BACKWARD</span> in a square."
     }, 
     "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText": {
         "translation": "Answer #4"
@@ -58,7 +58,7 @@ window._$translations = {
         "translation": "#5: <span class='purple'>SAY</span> \"Hi.\""
     }, 
     "codeLabChallenge_sayHi.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_sayHi.answerSlide.primaryText": {
         "translation": "Answer #5"
@@ -67,7 +67,7 @@ window._$translations = {
         "translation": "#6: <span class='purple'>LIGHT BACKPACK</span> green."
     }, 
     "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText": {
         "translation": "Answer #6"
@@ -76,7 +76,7 @@ window._$translations = {
         "translation": "#7: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color."
     }, 
     "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText": {
         "translation": "Answer #7"
@@ -85,7 +85,7 @@ window._$translations = {
         "translation": "#8: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> \"I see you.\""
     }, 
     "codeLabChallenge_whenFaceSay.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceSay.answerSlide.primaryText": {
         "translation": "Answer #8"
@@ -94,7 +94,7 @@ window._$translations = {
         "translation": "#9: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>"
     }, 
     "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText": {
         "translation": "Answer #9"
@@ -103,7 +103,7 @@ window._$translations = {
         "translation": "#10: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>"
     }, 
     "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText": {
         "translation": "Answer #10"
@@ -112,7 +112,7 @@ window._$translations = {
         "translation": "#11: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color."
     }, 
     "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText": {
         "translation": "Answer #11"
@@ -121,7 +121,7 @@ window._$translations = {
         "translation": "#12: <span class='yellow'>WHEN CUBE IS TAPPED, </span>do <span class='violet'>MYSTERY ANIMATION.</span>"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText": {
         "translation": "Answer #12"
@@ -130,7 +130,7 @@ window._$translations = {
         "translation": "#13: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>"
     }, 
     "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText": {
         "translation": "Answer #13"
@@ -139,7 +139,7 @@ window._$translations = {
         "translation": "#14: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>"
     }, 
     "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText": {
         "translation": "Answer #14"
@@ -148,7 +148,7 @@ window._$translations = {
         "translation": "#15: Push a cube."
     }, 
     "codeLabChallenge_PushCube.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_PushCube.answerSlide.primaryText": {
         "translation": "Answer #15"
@@ -157,7 +157,7 @@ window._$translations = {
         "translation": "#16: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>"
     }, 
     "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText": {
         "translation": "Answer #16"
@@ -166,7 +166,7 @@ window._$translations = {
         "translation": "#17: <span class='purple'>LIFT</span> a cube."
     }, 
     "codeLabChallenge_LiftCube.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_LiftCube.answerSlide.primaryText": {
         "translation": "Answer #17"
@@ -175,7 +175,7 @@ window._$translations = {
         "translation": "#18: Workout with cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
     }, 
     "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText": {
         "translation": "Answer #18"
@@ -184,7 +184,7 @@ window._$translations = {
         "translation": "#19: <span class='blue'>DRIVE FAST</span> in a square."
     }, 
     "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_DriveFastSquare.answerSlide.primaryText": {
         "translation": "Answer #19"
@@ -193,7 +193,7 @@ window._$translations = {
         "translation": "#20: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks."
     }, 
     "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText": {
         "translation": "Answer #20"
@@ -202,7 +202,7 @@ window._$translations = {
         "translation": "#21: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
     }, 
     "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText": {
         "translation": "Answer #21"
@@ -211,7 +211,7 @@ window._$translations = {
         "translation": "#22: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>"
     }, 
     "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText": {
         "translation": "Answer #22"
@@ -220,7 +220,7 @@ window._$translations = {
         "translation": "#23: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
     }, 
     "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText": {
         "translation": "Answer #23"
@@ -229,7 +229,7 @@ window._$translations = {
         "translation": "#24: <span class='purple'>SAY,</span> \"Smile!\" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>"
     }, 
     "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText": {
         "translation": "Answer #24"
@@ -238,7 +238,7 @@ window._$translations = {
         "translation": "#25: Play Peekaboo. (<span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span> <span class='orange'>REPEAT FOREVER.</span>)"
     }, 
     "codeLabChallenge_peekaboo.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_peekaboo.answerSlide.primaryText": {
         "translation": "Answer #25"
@@ -247,7 +247,7 @@ window._$translations = {
         "translation": "#26: Stack 2 cubes."
     }, 
     "codeLabChallenge_stackCubes.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_stackCubes.answerSlide.primaryText": {
         "translation": "Answer #26"
@@ -256,63 +256,54 @@ window._$translations = {
         "translation": "#27: Stack 2 cubes, then tip them over."
     }, 
     "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText": {
         "translation": "Answer #27"
     }, 
-    "codeLabChallenge_rollCube.questionSlide.primaryText": {
-        "translation": "#28: Roll a cube backward."
-    }, 
-    "codeLabChallenge_rollCube.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
-    }, 
-    "codeLabChallenge_rollCube.answerSlide.primaryText": {
-        "translation": "Answer #28"
-    }, 
     "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText": {
-        "translation": "#29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
+        "translation": "#28: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText": {
-        "translation": "Answer #29"
+        "translation": "Answer #28"
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText": {
-        "translation": "#30: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+        "translation": "#29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText": {
-        "translation": "Answer #30"
+        "translation": "Answer #29"
     }, 
     "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText": {
-        "translation": "#31: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
+        "translation": "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
     }, 
     "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText": {
-        "translation": "Answer #31"
+        "translation": "Answer #30"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText": {
-        "translation": "#32: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
+        "translation": "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText": {
-        "translation": "Answer #32"
+        "translation": "Answer #31"
     }, 
     "codeLabChallenge_intruder.questionSlide.primaryText": {
-        "translation": "#33: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
+        "translation": "#32: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
     }, 
     "codeLabChallenge_intruder.questionSlide.secondaryText": {
-        "translation": "Try on your own, then tap NEXT when you're ready!"
+        "translation": "Try the challenge first, then tap NEXT to check your answer!"
     }, 
     "codeLabChallenge_intruder.answerSlide.primaryText": {
-        "translation": "Answer #33"
+        "translation": "Answer #32"
     }
 }

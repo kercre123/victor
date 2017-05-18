@@ -1,28 +1,7 @@
 {
   "behaviorClass": "InteractWithFaces",
-  "name": "meetCozmo_interactWithFaces",
+  "behaviorID": "MeetCozmo_InteractWithFaces",
   "displayNameKey":"behavior.InteractWithFaces",
-  "behaviorGroups": [
-    "MeetCozmo_Socialize"
-  ],
-
-  "repetitionPenalty" :
-  {
-    "nodes" :
-    [
-      {
-        "x" : 8.0,
-        "y" : 0.0
-      },
-      {
-        "x" : 8.0,
-        "y" : 1.0
-      }
-    ]
-  },
-
-  "flatScore": 1.0,
-
   "params": {
     "minTimeToTrackFace_s": 8.0,
     "maxTimeToTrackFace_s": 15.0,

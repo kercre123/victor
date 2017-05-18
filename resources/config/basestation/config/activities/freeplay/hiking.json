@@ -1,19 +1,124 @@
 {
-  "name" : "hiking",
+  "activityID" : "Hiking",
+  "activityType" : "BehaviorsOnly",
   "driveStartAnimTrigger" : "HikingDrivingStart",
   "driveLoopAnimTrigger" : "HikingDrivingLoop",
   "driveEndAnimTrigger" : "HikingDrivingEnd",
   "infoAnalyzerProcess": "CalculateInterestingRegions", // update interesting regions during hiking
   "behaviorChooser" :
   {
-    "type" : "simple",
-    "behaviorGroups" : [ "FP_Hiking" ],
-
+    "type" : "scoring",
     "scoreBonusForCurrentBehavior" : {
       "nodes" : [
         { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
       ]
-    }
+    },
+    
+    "behaviors" : [
+      { "behaviorID" : "CantHandleTallStack",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "Hiking_DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 10.0
+        }
+      },
+      { "behaviorID" : "TrackLaser",
+        "scoring"      :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Hiking_FirstLookIntro",
+        "scoring"      :
+        {
+          "flatScore": 9.0
+        }
+      },
+      { "behaviorID" : "Hiking_FirstLookWakeUp",
+        "scoring"      :
+        {
+          "flatScore": 9.0
+        }
+      },
+      { "behaviorID" : "Hiking_RollCube",
+        "scoring"      :
+        {
+          "flatScore": 8.5
+        }
+      },
+      { "behaviorID" : "Hiking_ThinkAboutBeacons",
+        "scoring"      :
+        {
+          "flatScore": 8.0
+        }
+      },
+      { "behaviorID" : "Hiking_BringCubeToBeacon",
+        "scoring"      :
+        {
+          "flatScore": 4.0
+        }
+      },
+      { "behaviorID" : "Hiking_PounceOnMotion",
+        "scoring"      :
+        {
+          "flatScore": 3.1,  // intended to interrupt lookInPlace behaviors but not be interrupted by bringCubeToBeacon
+          "boredomMultiplier": 0.0, // never run in hiking unless we see motion
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 10.0,
+                "y": 0.0
+              },
+              {
+                "x": 60.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "Hiking_VisitInterestingEdge",
+        "scoring"      :
+        {
+          "flatScore": 1.25,
+          "runningPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 2.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "Hiking_LookInPlaceForUnknown",
+        "scoring"      :
+        {
+          "flatScore": 1.1
+        }
+      },
+      { "behaviorID" : "PutDownBlock", // if no beacons are available we want Cozmo to put cubes down
+        "scoring"      :
+        {
+          "flatScore": 0.1
+        }
+      }
+    ] // end behaviors []
   },
   "activityStrategy":
   {

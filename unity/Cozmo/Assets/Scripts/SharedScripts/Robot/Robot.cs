@@ -298,7 +298,7 @@ public class Robot : IRobot {
   public BehaviorClass CurrentBehaviorClass { get; set; }
   public ReactionTrigger CurrentReactionTrigger { get; set; }
 
-  public string CurrentBehaviorName { get; set; }
+  public BehaviorID CurrentBehaviorID { get; set; }
 
   public string CurrentBehaviorDisplayNameKey { get; set; }
 
@@ -477,7 +477,7 @@ public class Robot : IRobot {
 
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
     CurrentBehaviorClass = message.newBehaviorClass;
-    CurrentBehaviorName = message.newBehaviorName;
+    CurrentBehaviorID = message.newBehaviorID;
     CurrentBehaviorDisplayNameKey = message.newBehaviorDisplayKey;
   }
 
@@ -602,7 +602,7 @@ public class Robot : IRobot {
   }
 
   public void RobotStartIdle() {
-    SetEnableFreeplayBehaviorChooser(false);
+    SetEnableFreeplayActivity(false);
     SetIdleAnimation(AnimationTrigger.Count);
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
     float[] paramValues = { };
@@ -611,7 +611,7 @@ public class Robot : IRobot {
   }
 
   public void RobotResumeFromIdle(bool freePlay) {
-    SetEnableFreeplayBehaviorChooser(freePlay);
+    SetEnableFreeplayActivity(freePlay);
     // TODO: any additional functionality that we want for Cozmo resuming from a
     // Cozmo Hold Context Switch
   }
@@ -665,7 +665,7 @@ public class Robot : IRobot {
     CurrentBehaviorClass = BehaviorClass.NoneBehavior;
     CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
     // usually this is unique
-    CurrentBehaviorName = "NoneBehavior";
+    CurrentBehaviorID = BehaviorID.NoneBehavior;
     CurrentBehaviorDisplayNameKey = "";
     HasHiccups = false;
 
@@ -1915,7 +1915,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(ExecutableBehaviorType type, int numTimesToExecute = -1) {
     DAS.Debug(this, "Execute Behavior " + type);
 
     if (type == ExecutableBehaviorType.LiftLoadTest) {
@@ -1924,32 +1924,40 @@ public class Robot : IRobot {
     }
 
     RobotEngineManager.Instance.Message.ExecuteBehaviorByExecutableType =
-             Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type);
+             Singleton<ExecuteBehaviorByExecutableType>.Instance.Initialize(type, numTimesToExecute);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void ExecuteBehaviorByName(string behaviorName) {
-    DAS.Debug(this, "Execute Behavior By Name" + behaviorName);
+  public void ExecuteBehaviorByID(BehaviorID behaviorID, int numTimesToExecute = -1) {
+    DAS.Debug(this, "Execute Behavior By Name" + behaviorID.ToString());
 
-    if (behaviorName == "LiftLoadTest") {
+    if (behaviorID == BehaviorID.LiftLoadTest) {
       RobotEngineManager.Instance.Message.SetLiftLoadTestAsRunnable = Singleton<SetLiftLoadTestAsRunnable>.Instance;
       RobotEngineManager.Instance.SendMessage();
     }
 
-    RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByID = Singleton<ExecuteBehaviorByID>.Instance.Initialize(behaviorID, numTimesToExecute);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetEnableFreeplayBehaviorChooser(bool enable) {
+  public void SetEnableFreeplayActivity(bool enable) {
     if (enable) {
-      ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Freeplay);
+        ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
     }
     else {
-      ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+        ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
       ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
     }
   }
 
+  public void ActivateHighLevelActivity(HighLevelActivity activityType) {
+    DAS.Debug(this, "ActivateBehaviorChooser: " + activityType);
+
+    RobotEngineManager.Instance.Message.ActivateHighLevelActivity =
+      Singleton<ActivateHighLevelActivity>.Instance.Initialize(activityType);
+
+    RobotEngineManager.Instance.SendMessage();
+  }
   public void RequestReactionTriggerMap() {
     DAS.Debug(this, "Requested Reaction Trigger Map");
 
@@ -1957,19 +1965,11 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void RequestChooserBehaviorList(Anki.Cozmo.BehaviorChooserType behaviorChooserType) {
+  public void RequestAllBehaviorsList() {
     DAS.Debug(this, "Requested Chooser Behavior List");
 
-    RobotEngineManager.Instance.Message.RequestChooserBehaviorList =
-                        Singleton<RequestChooserBehaviorList>.Instance.Initialize(behaviorChooserType);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
-    DAS.Debug(this, "ActivateBehaviorChooser: " + behaviorChooserType);
-
-    RobotEngineManager.Instance.Message.ActivateBehaviorChooser =
-                        Singleton<ActivateBehaviorChooser>.Instance.Initialize(behaviorChooserType);
+    RobotEngineManager.Instance.Message.RequestAllBehaviorsList =
+                                     Singleton<RequestAllBehaviorsList>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
 

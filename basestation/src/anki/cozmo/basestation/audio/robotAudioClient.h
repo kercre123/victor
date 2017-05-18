@@ -78,6 +78,12 @@ public:
   // Perform all callbacks in queue
   void FlushAudioCallbackQueue();
   
+  void PostRobotSwitchState(const AudioMetaData::SwitchState::SwitchGroupType switchGroup,
+                            const AudioMetaData::SwitchState::GenericSwitch switchState);
+  
+  void PostRobotParameter(const AudioMetaData::GameParameter::ParameterType parameter,
+                          const float parameterValue) const;
+  
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,6 +180,8 @@ private:
                                               AudioMetaData::Bus::BusType bus = AudioMetaData::Bus::BusType::Invalid );
   
   void UnregisterRobotAudioBuffer( AudioMetaData::GameObjectType gameObject );
+  
+  AudioMetaData::GameObjectType GetGameObjectType() const;
   
   // Keep current robot volume
   float _robotVolume = 0.0f;

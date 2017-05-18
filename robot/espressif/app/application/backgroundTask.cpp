@@ -42,42 +42,26 @@ namespace BackgroundTask {
 
 void RadioConnectionStateMachineUpdate()
 {
-  static u8 lastStaCount = 0;
   static u8 lastConCount = 0;
   static s8 doRTConnectPhase = 0;
   static s8 doRTDisconnectPhase = 0;
-  static bool sendRadioState = true; // Need to send once just to say enabled
 
-  const u8 currentStaCount = wifi_softap_get_station_num();
   const u8 currentConCount = clientConnected();
 
-  if ((lastStaCount == 0) && (currentStaCount  > 0)) // First station connected
+  if ((lastConCount == 0) && (currentConCount  > 0))  // First reliable transport connection
   {
-    sendRadioState = true;
-  }
-
-  if ((lastConCount == 0) && (currentConCount  > 0)) // First reliable transport connection
-  {
-    sendRadioState = true;
     doRTConnectPhase    = 1;
     doRTDisconnectPhase = 0;
   }
-  else if ((lastConCount  > 0) && (currentConCount == 0)) // Last reliable transport disconnection
+  else if ((lastConCount  > 0) && (currentConCount == 0))  // Last reliable transport disconnection
   {
-    sendRadioState = true;
     doRTConnectPhase    = 0;
     doRTDisconnectPhase = 1;
   }
+  
+  i2spiSetAppConnected(currentConCount > 0);
 
-  if (sendRadioState)
-  {
-    WiFiState rws;
-    rws.enabled = true;
-    rws.staCount = currentStaCount;
-    rws.rtCount  = currentConCount;
-    if (RobotInterface::SendMessage(rws)) sendRadioState = false;
-  }
-  else if (doRTConnectPhase)
+  if (doRTConnectPhase)
   {
     switch (doRTConnectPhase)
     {
@@ -183,14 +167,12 @@ void RadioConnectionStateMachineUpdate()
       }
       case 3:
       {
-        sendRadioState = true;
         doRTDisconnectPhase = 0;
         break;
       }
     }
   }
 
-  lastStaCount = currentStaCount;
   lastConCount = currentConCount;
 }
 

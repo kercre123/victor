@@ -1,19 +1,7 @@
 {
   "behaviorClass": "PickUpCube",
-  "name": "tapInteractionPickUpCube",
+  "behaviorID": "TapInteractionPickUpCube",
   "displayNameKey":"behavior.PickupCube",
   "requireObjectTapped" : true,
-  "requiredUnlockId": "PickupCube",
-  "behaviorGroups": [
-                     "ObjectTapInteraction"
-                     ],
-  "flatScore": 5.0,
-  "runningPenalty": {
-    "nodes": [
-      {
-       "x": 0.0,
-       "y": 2.0
-      }
-    ]
-  }
+  "requiredUnlockId": "PickupCube"
 }

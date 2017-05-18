@@ -26,14 +26,15 @@
 namespace Anki {
 namespace Cozmo {
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Value& config)
-  : SimpleBehaviorChooser(robot, config)
-  , _robot(robot)  
+: IBehaviorChooser(robot, config)
+, _robot(robot)  
 {
   if (_robot.HasExternalInterface())
   {
     _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
-                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByName,
+                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID,
                                std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
                                          this, std::placeholders::_1)));
     
@@ -44,21 +45,42 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
   }
   
   // Setup None Behavior now since it's always the fallback
-  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, config);
-  Result addResult = TryAddBehavior(_behaviorNone);
-  if (Result::RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("SelectionBehaviorChooser.SelectionBehaviorChooser", "BehaviorNone was not created properly.");
-  }
+  Json::Value noneConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
+  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, noneConfig);
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
-
-  auto runnable = [&robot](const IBehavior* behavior)
+  auto runnable = [this, &robot](const IBehavior* behavior)
   {
     BehaviorPreReqRobot preReqData(robot);
-    return (nullptr != behavior && (behavior->IsRunning() || behavior->IsRunnable(preReqData)));
+    const bool behaviorIsRunning = nullptr != behavior && behavior->IsRunning();
+    bool ret = (nullptr != behavior && (behaviorIsRunning || behavior->IsRunnable(preReqData)));
+    
+    // If this is the selected behavior
+    if(behavior == _selectedBehavior)
+    {
+      // If there are no more runs to do then the selected behavior is not runnable
+      if(_numRuns == 0)
+      {
+        return false;
+      }
+      
+      // If there are runs left and the selected behavior was running (bool set from last tick)
+      // but the behavior is currently not running (it just ended)
+      if(_numRuns > 0 && _selectedBehaviorIsRunning && !behaviorIsRunning)
+      {
+        // Decrememnt numRuns since the behavior just finished running
+        if(--_numRuns == 0)
+        {
+          ret = false;
+        }
+      }
+      _selectedBehaviorIsRunning = behaviorIsRunning;
+    }
+    return ret;
   };
   
   if (runnable(_selectedBehavior))
@@ -73,23 +95,26 @@ IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBeh
   return nullptr;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
 
   IBehavior* selectedBehavior = nullptr;
 
   switch( event.GetData().GetTag() ) {
-    case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByName: {
-      const ExternalInterface::ExecuteBehaviorByName& msg = event.GetData().Get_ExecuteBehaviorByName();
-      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByName( msg.behaviorName );
+    case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID: {
+      const ExternalInterface::ExecuteBehaviorByID& msg = event.GetData().Get_ExecuteBehaviorByID();
+      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByID( msg.behaviorID );
+      _numRuns = msg.numRuns;
 
       if( selectedBehavior != nullptr ) {
         PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehaviorByName.SelectBehavior",
-                         "selecting behavior name '%s'", msg.behaviorName.c_str() );
+                         "selecting behavior name '%s'", BehaviorIDToString(msg.behaviorID));
       } else {
         PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByName.UnknownBehavior",
                             "Unknown behavior %s",
-                            msg.behaviorName.c_str());
+                            BehaviorIDToString(msg.behaviorID));
       }
 
       break;
@@ -99,10 +124,11 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
     {
       const ExternalInterface::ExecuteBehaviorByExecutableType& msg = event.GetData().Get_ExecuteBehaviorByExecutableType();
       selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByExecutableType( msg.behaviorType );
+      _numRuns = msg.numRuns;
       
       if( selectedBehavior != nullptr ) {
         PRINT_NAMED_INFO("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.SelectBehavior",
-                         "selecting behavior '%s' exec type '%s'", selectedBehavior->GetName().c_str(), EnumToString(msg.behaviorType) );
+                         "selecting behavior '%s' exec type '%s'", selectedBehavior->GetIDStr().c_str(), EnumToString(msg.behaviorType) );
       } else {
         PRINT_NAMED_WARNING("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.NoBehavior",
                             "No behavior for exec type %s",
@@ -128,24 +154,6 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   _selectedBehavior = selectedBehavior;
 }
   
- // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorClass newType)
-{
-  Json::Value nullConfig;
-  BehaviorFactory& behaviorFactory = _robot.GetBehaviorFactory();
-  IBehavior* newBehavior = behaviorFactory.CreateBehavior(newType, _robot, nullConfig);
-  
-  if (newBehavior)
-  {
-    TryAddBehavior(newBehavior);
-  }
-  else
-  {
-    PRINT_NAMED_ERROR("SelectionBehaviorChooser.AddNewBehavior", "Behavior %s was not created properly.", EnumToString(newType));
-  }
-  
-  return newBehavior;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SelectionBehaviorChooser::OnSelected()

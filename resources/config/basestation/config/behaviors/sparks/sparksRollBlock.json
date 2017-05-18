@@ -1,12 +1,8 @@
 {
   "behaviorClass": "RollBlock",
+  "behaviorID": "SparksRollBlock",
   "executableBehaviorType": "RollBlock",
-  "name": "sparksRollBlock",
   "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube",
-  "behaviorGroups": [
-      "SparksRollBlock"
-  ],
-  "flatScore" : 5.0,
   "isBlockRotationImportant" : false
 }

@@ -20,11 +20,14 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/cozmo/basestation/vision/laserPointDetector.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"
 #include "anki/vision/basestation/faceTracker.h"
@@ -35,10 +38,12 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
+#include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/cleanupHelper.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
-#include "util/console/consoleInterface.h"
+
 
 //
 // Embedded implementation holdovers:
@@ -134,6 +139,9 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kFaceTrackingMaxBodyAngleChange_deg, "Vision.FaceDetection", 8.f);
   CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
   
+  // Sample rate for estimating the mean of an image (increment in both X and Y)
+  CONSOLE_VAR_RANGED(s32, kImageMeanSampleInc, "VisionSystem.Statistics", 10, 1, 32);
+  
   namespace {
     // These are initialized from Json config:
     u8 kTooDarkValue   = 15;
@@ -148,15 +156,15 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
+  VisionSystem::VisionSystem(const CozmoContext* context)
   : _rollingShutterCorrector()
-  , _dataPath(dataPath)
+  , _context(context)
   , _imagingPipeline(new Vision::ImagingPipeline())
-  , _vizManager(vizMan)
-  , _laserPointDetector(new LaserPointDetector(vizMan))
+  , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
+  , _laserPointDetector(new LaserPointDetector(_vizManager))
   , _clahe(cv::createCLAHE())
   {
-    
+    DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
   } // VisionSystem()
   
   
@@ -174,7 +182,15 @@ namespace Cozmo {
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
     
-    VisionMarker::SetDataPath(_dataPath);
+    std::string dataPath("");
+    if(_context->GetDataPlatform() != nullptr) {
+      dataPath = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                             Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
+    } else {
+      PRINT_NAMED_WARNING("VisionSystem.Init.NullDataPlatform",
+                          "Initializing VisionSystem with no data platform.");
+    }
+    VisionMarker::SetDataPath(dataPath);
     
     if(!config.isMember("ImageQuality"))
     {
@@ -234,8 +250,8 @@ namespace Cozmo {
     }
     
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
-                  "With model path %s.", _dataPath.c_str());
-    _faceTracker = new Vision::FaceTracker(_dataPath, config);
+                  "With model path %s.", dataPath.c_str());
+    _faceTracker = new Vision::FaceTracker(dataPath, config);
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
     
     _petTracker = new Vision::PetTracker();
@@ -293,12 +309,16 @@ namespace Cozmo {
         }
         else if(jsonSchedule.isInt())
         {
-          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule((jsonSchedule.asInt())));
+          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asInt()));
+        }
+        else if(jsonSchedule.isBool())
+        {
+          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(jsonSchedule.asBool()));
         }
         else
         {
           PRINT_NAMED_ERROR("VisionSystem.Init.UnrecognizedModeScheduleValue",
-                            "Mode:%s Expecting int or array of bools", modeStr);
+                            "Mode:%s Expecting int, bool, or array of bools", modeStr);
           return RESULT_FAIL;
         }
       }
@@ -768,6 +788,26 @@ namespace Cozmo {
     retVal &= _matlab.ep != NULL;
 #   endif
     return retVal;
+  }
+  
+  u8 VisionSystem::ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc)
+  {
+    DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
+    
+    s32 sum=0;
+    s32 count=0;
+    for(s32 i=0; i<inputImageGray.GetNumRows(); i+=sampleInc)
+    {
+      const u8* image_i = inputImageGray.GetRow(i);
+      for(s32 j=0; j<inputImageGray.GetNumCols(); j+=sampleInc)
+      {
+        sum += image_i[j];
+        ++count;
+      }
+    }
+    
+    const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
+    return mean;
   }
   
   Result VisionSystem::DetectMarkers(const Vision::Image& inputImageGray,
@@ -2229,7 +2269,8 @@ namespace Cozmo {
         {
           char tempText[128];
           Vision::ImageRGB ratioImgDisp(foregroundMotion);
-          ratioImgDisp.DrawPoint(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)), NamedColors::RED, 4);
+          ratioImgDisp.DrawCircle(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)),
+                                  NamedColors::RED, 4);
           snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
           cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
                       cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
@@ -2245,7 +2286,8 @@ namespace Cozmo {
                                                                                         _poseData.groundPlaneHomography));
           if(groundRegionArea > 0.f) {
             Anki::Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-            ratioImgDispGround.DrawPoint(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 2);
+            ratioImgDispGround.DrawCircle(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(),
+                                          NamedColors::RED, 2);
             snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
             cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
                         cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
@@ -2701,7 +2743,7 @@ namespace Cozmo {
           Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
           DEV_ASSERT(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
           const f32 divisor = 1.f / temp.z();
-          dispEdgeImg.DrawPoint({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
+          dispEdgeImg.DrawCircle({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
         }
       }
       dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
@@ -2803,7 +2845,7 @@ namespace Cozmo {
     return VisionSystem::GetModeName(_mode);
   }
   
-  std::string VisionSystem::GetModeName(Util::BitFlags16<VisionMode> mode) const
+  std::string VisionSystem::GetModeName(Util::BitFlags32<VisionMode> mode) const
   {
     std::string retStr("");
     for (auto modeIter = VisionMode::Idle; modeIter < VisionMode::Count; ++modeIter)
@@ -3292,6 +3334,15 @@ namespace Cozmo {
     
     EndBenchmark("VisionSystem_CameraImagingPipeline");
     
+    
+    if(ShouldProcessVisionMode(VisionMode::ComputingStatistics))
+    {
+      Tic("TotalComputingStatistics");
+      _currentResult.imageMean = ComputeMean(inputImageGray, kImageMeanSampleInc);
+      visionModesProcessed.SetBitFlag(VisionMode::ComputingStatistics, true);
+      Toc("TotalComputingStatistics");
+    }
+    
     std::vector<Anki::Rectangle<s32>> detectionRects;
 
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
@@ -3395,13 +3446,18 @@ namespace Cozmo {
     
     if(ShouldProcessVisionMode(VisionMode::DetectingLaserPoints))
     {
-      Tic("TotalDetectingLaserPoints");
-      if((lastResult = DetectLaserPoints(inputImage, inputImageGray)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
-        return lastResult;
+      // Skip laser point detection if the Laser FeatureGate is disabled.
+      // TODO: Remove this once laser feature is enabled (COZMO-11185)
+      if(_context->GetFeatureGate()->IsFeatureEnabled(FeatureType::Laser))
+      {
+        Tic("TotalDetectingLaserPoints");
+        if((lastResult = DetectLaserPoints(inputImage, inputImageGray)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
+          return lastResult;
+        }
+        visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
+        Toc("TotalDetectingLaserPoints");
       }
-      visionModesProcessed.SetBitFlag(VisionMode::DetectingLaserPoints, true);
-      Toc("TotalDetectingLaserPoints");
     }
 
     // NOTE: This should come after any detectors that add things to "detectionRects"
@@ -3857,7 +3913,7 @@ namespace Cozmo {
         labels.ApplyScalarFunction(fcn, roiImgDisp);
         if(dotLabel != -1) {
           const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
-          roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
+          roiImgDisp.DrawCircle(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
           
           const s32* compStats = stats.ptr<s32>(dotLabel);
           Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
@@ -4005,10 +4061,10 @@ namespace Cozmo {
               if(DRAW_TOOL_CODE_DEBUG)
               {
                 Vision::ImageRGB dispImg(image);
-                dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
-                dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
-                dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
-                dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
+                dispImg.DrawCircle(sanityCheckPoints[0], NamedColors::RED, 1);
+                dispImg.DrawCircle(sanityCheckPoints[1], NamedColors::RED, 1);
+                dispImg.DrawCircle(observedPoints[0], NamedColors::GREEN, 1);
+                dispImg.DrawCircle(observedPoints[1], NamedColors::GREEN, 1);
                 _currentResult.debugImageRGBs.push_back({"SanityCheck", dispImg});
               }
               PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",

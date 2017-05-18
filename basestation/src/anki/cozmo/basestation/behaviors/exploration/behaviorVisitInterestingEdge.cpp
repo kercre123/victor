@@ -123,9 +123,7 @@ BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(Robot& robot, const J
 , _waitForImagesActionTag(ActionConstants::INVALID_TAG)
 , _squintLoopAnimActionTag(ActionConstants::INVALID_TAG)
 , _operatingState(EOperatingState::Invalid)
-{
-  SetDefaultName("BehaviorVisitInterestingEdge");
-  
+{  
   // load parameters from json
   LoadConfig(config["params"]);
   
@@ -219,7 +217,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
   DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
   
   // make sure we are not updating borders while running the behavior (useless)
-  robot.GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
+  robot.GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
@@ -234,7 +232,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
 void BehaviorVisitInterestingEdge::StopInternal(Robot& robot)
 {
   // remove our request to disable the analysis process
-  robot.GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetName());
+  robot.GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetIDStr());
 
   // clear debug render
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo");
@@ -620,7 +618,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
   // change operating state
   _operatingState = EOperatingState::MovingToVantagePoint;
   SetDebugStateName("ToS1_MoveToVantagePoint");
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S1").c_str(), "Moving to vantage point");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S1").c_str(), "Moving to vantage point");
   
   // there have to be vantage points. If it's impossible to generate vantage points from the memory map,
   // we should change those borders/quads to "not visitable" to prevent failing multiple times
@@ -679,7 +677,7 @@ void BehaviorVisitInterestingEdge::TransitionToS2_GatherAccurateEdge(Robot& robo
   // change operating state
   _operatingState = EOperatingState::GatheringAccurateEdge;
   SetDebugStateName("S2_GatherBorderPrecision");
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S2").c_str(), "At vantage point, trying to grab more accurate borders");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S2").c_str(), "At vantage point, trying to grab more accurate borders");
   
   // start squint loop
   DEV_ASSERT(!IsPlayingSquintLoop(), "BehaviorVisitInterestingEdge.TransitionToS2_GatherAccurateEdge.AlreadySquintLooping");
@@ -707,7 +705,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose(Robot& robot)
   DEV_ASSERT(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S3").c_str(), "Observing edges from close distance (moving closer %.2fmm)", distanceToMoveForward_mm);
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S3").c_str(), "Observing edges from close distance (moving closer %.2fmm)", distanceToMoveForward_mm);
 
   // This should be done when the move action finishes, but it's not big deal and that way I can have the
   // compound action be easier. It just basically means we clear from observationPose-distanceToMoveForward_mm.
@@ -839,7 +837,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
       // eventually we might want to review this and stop searching for borders (play NotFoundAnim), or flag the
       // memory map as "possibleBorderNoise"
       // Todo: make a decision about how to handle this (waiting to see what people think)
-      PRINT_CH_INFO("Behaviors", (GetName() + ".GatheringAccurateEdge.RegionTooSmall").c_str(),
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.RegionTooSmall").c_str(),
         "Detected edges, but the region is too small (changed from %.8f to %.8f = %.8f, required %.8f at least). Is this a reflection or noise?",
         _interestingEdgesArea_m2,
         newArea_m2,
@@ -853,14 +851,14 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
     // we have new edges
     if ( isCloseToEdge )
     {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".GatheringAccurateEdge.Close").c_str(), "Got a close edge, observe from here");
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Close").c_str(), "Got a close edge, observe from here");
       
       // we can observe from here
       TransitionToS3_ObserveFromClose(robot);
     }
     else
     {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".GatheringAccurateEdge.Far").c_str(), "Got a far edge, continuing forward fetch");
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Far").c_str(), "Got a far edge, continuing forward fetch");
       
       // not close enough, keep moving forward
       const bool isActing = IsActing();
@@ -881,7 +879,7 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::St
   else
   {
     // there are no borders in front of us, we can't see it anymore or it was never here
-    PRINT_CH_INFO("Behaviors", (GetName() + ".GatheringAccurateEdge.Done").c_str(), "Processed edges and did not find any.");
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".GatheringAccurateEdge.Done").c_str(), "Processed edges and did not find any.");
     
     // stop moving
     StopActing();
@@ -971,7 +969,7 @@ void BehaviorVisitInterestingEdge::RenderChosenGoal(const Robot& robot, const Bo
 void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorVisitInterestingEdge.LoadConfig";
+  const std::string& debugName = GetIDStr() + ".BehaviorVisitInterestingEdge.LoadConfig";
 
   // anim triggers
   {

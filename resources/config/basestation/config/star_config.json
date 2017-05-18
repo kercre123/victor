@@ -1,0 +1,180 @@
+{
+    "UnlockLevels":
+    [
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "20"
+                },
+                {
+                    "rewardType": "Unlock",
+                    "data": "PounceOnMotionAction"
+                }
+            ],
+            "numStarsToUnlock":1
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Unlock",
+                    "data": "PopAWheelieAction"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "30"
+                },
+                {
+                    "rewardType": "Unlock",
+                    "data": "Workout"
+                },
+                {
+                    "rewardType": "MemoryBadge",
+                    "data": "NamedBadge"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Unlock",
+                    "data": "FistBump"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Unlock",
+                    "data": "BuildPyramid"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Song",
+                    "data": "5"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Song",
+                    "data": "7"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Unlock",
+                    "data": "PeekABoo"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Song",
+                    "data": "8"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Song",
+                    "data": "9"
+                }
+            ],
+            "numStarsToUnlock":3
+        },
+        {
+            "rewards":
+            [
+                {
+                    "rewardType": "Sparks",
+                    "data": "50"
+                },
+                {
+                    "rewardType": "Song",
+                    "data": "10"
+                }
+            ],
+            "numStarsToUnlock":3
+        }
+    ]
+}
+
+// Final one in array will always just repeat...
+
+// Unlock levels:  Array, in order.
+//   For each:  int numStarsToUnlock; Rewards array (for each: RewardTypeEnum, secondary data)
+
+/*structure NeedsReward
+{
+  NeedsRewardType rewardType,
+  string          data
+}*/
+/*structure UnlockLevel
+{
+  NeedsReward rewards[];
+  int32 numStarsToUnlock;
+}
+*/

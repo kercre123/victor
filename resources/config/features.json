@@ -29,7 +29,7 @@
   },
   {
     "feature": "GuardDog",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "Bouncer",

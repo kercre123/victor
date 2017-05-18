@@ -112,6 +112,11 @@ public class UIManager : MonoBehaviour {
 
   void Start() {
     BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
+    // Adjust pixel drag threshold based on screen resolution and size.  COZMO-9751
+    // The "160" below is the accepted DPI value for medium sized screen devices
+    // https://developer.android.com/guide/practices/screens_support.html
+    int defaultValue = EventSystem.current.pixelDragThreshold;
+    EventSystem.current.pixelDragThreshold = Mathf.Max(defaultValue, (int)(defaultValue * Screen.dpi / 160.0f));
   }
 
   private void OnDestroy() {
@@ -199,11 +204,15 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseModal(BaseModal modalObject) {
-    modalObject.CloseDialog();
+    if (modalObject != null) {
+      modalObject.CloseDialog();
+    }
   }
 
   public static void CloseModalImmediately(BaseModal modalObject) {
-    modalObject.CloseDialogImmediately();
+    if (modalObject != null) {
+      modalObject.CloseDialogImmediately();
+    }
   }
 
   public static void CloseAllModals() {

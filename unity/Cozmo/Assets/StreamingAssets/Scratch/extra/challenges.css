@@ -1,7 +1,7 @@
 
-.blue { color: #0898c4; }
-.purple { color: #5e3dfc; }
-.violet { color: #a03c87; }
+.blue { color: #1faddb; }
+.purple { color: #856cf9; }
+.violet { color: #b45d9e; }
 .yellow { color: #f4b606; }
 .orange { color: #e5580a; }
 
@@ -30,6 +30,7 @@
 
 #challenges-modal {
   display: block;
+  padding: 0;
 }
 
 #challenges-modal .modal-inner {
@@ -53,7 +54,6 @@
    */
   visibility:hidden !important;
 }
-
 
 .challenge .block-def {
   display: flex;
@@ -92,7 +92,44 @@
   padding: 0 5%;
 }
 
+.challenge-question .block-def {
+  align-items: flex-start;
+  max-width: 95%;
+}
+
+.challenge-question .block-def .block {
+  margin-left: 20px;
+  display: inline-flex;
+  zoom: .8;
+  float: left;
+}
+
+.challenge-question .block-def .block-text {
+  padding-top: 20px;
+  text-align: left;
+  display: inline-block;
+  line-height: 125%;
+  word-wrap: break-word;
+  max-width: 90%;
+}
+
 .challenge-answer .answer-image img {
   max-height: 60%;
   max-width: 95%;
+}
+
+
+@media only screen and (min-width: 800px) {
+  .modal-slides .slide {
+    font-size: 5vh;
+  }
+  .challenge .block-def {
+    font-size: 5vh;
+  }
+  .challenge-question .block-def .block {
+    zoom: 1;
+  }
+  .challenge-question .secondary-text {
+    font-size: 4.5vh;
+  }
 }

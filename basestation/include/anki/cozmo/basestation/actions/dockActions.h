@@ -319,6 +319,9 @@ namespace Anki {
                             const bool useManualSpeed = false);
       
       virtual ~AlignWithObjectAction();
+
+      // Returns the preActionPose ActionType given the desired alignmentType
+      static PreActionPose::ActionType GetPreActionTypeFromAlignmentType(AlignmentType alignmentType);
       
     protected:
       
@@ -331,6 +334,14 @@ namespace Anki {
       virtual ActionResult Verify() override;
       
     private:
+      
+      // These offsets were determined empirically such that the
+      // actions resulted in expected alignments.
+      // Note that they depend heavily on the dockOffsetDistX_ used
+      // in PickAndPlaceController on the robot.
+      static constexpr f32 kLiftFingerDistanceOffset_mm = 6.f;
+      static constexpr f32 kBodyDistanceOffset_mm = -15.f;
+      static constexpr f32 kCustomDistanceOffset_mm = 27.f;
       
       AlignmentType _alignmentType;
       PreActionPose::ActionType _preActionPoseActionType = PreActionPose::ActionType::DOCKING;

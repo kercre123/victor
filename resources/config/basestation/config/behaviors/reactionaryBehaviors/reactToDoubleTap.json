@@ -1,5 +1,5 @@
 {
   "behaviorClass": "ReactToDoubleTap",
-  "name": "reactToDoubleTap",
+  "behaviorID": "ReactToDoubleTap",
   "requireObjectTapped" : true
 }

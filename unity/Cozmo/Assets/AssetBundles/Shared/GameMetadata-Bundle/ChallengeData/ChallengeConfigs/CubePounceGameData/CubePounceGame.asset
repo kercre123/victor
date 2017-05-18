@@ -26,14 +26,26 @@ MonoBehaviour:
   _Music:
     _Music: 1317044071
   ChallengeConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}
-  IsMinigame: 1
+  _ChallengeType: 0
+  _ActivityData:
+    ActivityPriority: 0
+    HideInActivityView: 0
+    ActivityTitleColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityFrameColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityIcon: {fileID: 0}
   InstructionVideoPath: Videos/Keepaway.mp4
   ChallengeVideoSubtitles: {fileID: 11400000, guid: 5e38548ef581b4a30b1cadaabda9f4b1,
     type: 2}
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 387
+    _EnumValue: 397
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 387
+    _EnumValue: 397
+  _NeedsActionIdWin:
+    _EnumValueAsString: KeepAwayWin
+    _EnumValue: 9
+  _NeedsActionIdLose:
+    _EnumValueAsString: KeepAwayLose
+    _EnumValue: 10

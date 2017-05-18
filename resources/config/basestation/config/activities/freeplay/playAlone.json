@@ -1,17 +1,143 @@
 {
   // we want this play alone to be higher priority than exploring, but its activation is more
   // restrictive than PlayingAlone when there's nothing else to do
-  "name" : "playAlone",
-  "behaviorChooser" :
-  {
-    "type" : "simple",
-    "behaviorGroups" : [ "FP_PlayAlone" ]
-  },
-  "activityStrategy":
+  "activityID" : "PlayAlone",
+  "activityType" : "BehaviorsOnly",
+    "activityStrategy":
   {
     "type" : "Simple",
     // future: it might be a good idea to check how many behaviors are available to tune the duration based on that
     "activityShouldEndDurationSecs" : 25.0,
     "cooldownSecs" : 30.0
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "CantHandleTallStack",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "TrackLaser",
+        "scoring"      :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "GuardDog",
+        "scoring"      :
+        {
+          "flatScore": 1.0,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 300.0,
+                "y": 0.0
+              },
+              {
+                "x": 900.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "RollBlockOnSide",
+        "scoring"      :
+        {
+          "flatScore": 1.0
+        }
+      },
+      { "behaviorID" : "StackBlocks",
+        "scoring"      :
+        {
+          "flatScore": 0.8,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 5.0,
+                "y": 0.0
+              },
+              {
+                "x": 30.0,
+                "y": 0.5
+              },
+              {
+                "x": 100.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "CubeLiftWorkout",
+        "scoring"      :
+        {
+          "flatScore": 0.8,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 0.0
+              },
+              {
+                "x": 300.0,
+                "y": 0.0
+              },
+              {
+                "x": 400.0,
+                "y": 0.3
+              },
+              {
+                "x": 430.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "PopAWheelie",
+        "scoring"      :
+        {
+          "flatScore": 0.8,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 5.0,
+                "y": 0.0
+              },
+              {
+                "x": 30.0,
+                "y": 0.5
+              },
+              {
+                "x": 100.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "PutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 0.1
+        }
+      }
+    ]
   }
 }

@@ -59,7 +59,6 @@
 //: IBehavior(robot, config)
 //, _currentActionTag(ActionConstants::INVALID_TAG)
 //{
-//  SetDefaultName("BehaviorExploreMarkedCube");
 //
 //  SubscribeToTags({
 //    EngineToGameTag::RobotCompletedAction

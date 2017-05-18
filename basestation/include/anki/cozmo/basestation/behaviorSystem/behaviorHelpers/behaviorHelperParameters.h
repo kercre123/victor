@@ -41,6 +41,10 @@ struct DriveToParameters{
 struct PickupBlockParamaters{
   AnimationTrigger animBeforeDock = AnimationTrigger::Count;
 
+  // Specify distance willing to turn to look at face before pickup, and whether
+  // cozmo should say the user's name when looking at them.  Note: a turn of 0
+  // means that cozmo won't look at the user regardless of if sayName is specified
+  Radians maxTurnTowardsFaceAngle_rad = 0.f;
   bool sayNameBeforePickup = false;
     
   // If true, allow this helper to try to approach the cube from different faces if the pickup fails. This

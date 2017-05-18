@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
-#include "anki/cozmo/basestation/voiceCommands/voiceCommandTypeHelpers.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "audioUtil/audioRecognizerProcessor.h"

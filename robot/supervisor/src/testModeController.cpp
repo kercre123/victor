@@ -1,34 +1,37 @@
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
-#include "pickAndPlaceController.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "dockingController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "imuFilter.h"
-#include "testModeController.h"
 #include "localization.h"
 #include "messages.h"
 #include "pathFollower.h"
+#include "pickAndPlaceController.h"
+#include "proxSensors.h"
 #include "speedController.h"
 #include "steeringController.h"
-#include "wheelController.h"
-#include "proxSensors.h"
-#include <math.h>
+#include "testModeController.h"
 #include "trig_fast.h"
+#include "wheelController.h"
 
-#define ENABLE_TEST_MODES 0
+#include <math.h>
+
 
 
 namespace Anki {
   namespace Cozmo {
     namespace TestModeController {
 
+// Only enable TestModeController for V2 because the resulting binary is too big for V1
+#ifdef COZMO_V2
+      
       // "Private Member Variables"
       namespace {
 
-#if(ENABLE_TEST_MODES)
         // Some common vars that can be used across multiple tests
         u32 ticCnt_, ticCnt2_;   // Multi-purpose tic counters
         
@@ -40,7 +43,6 @@ namespace Anki {
         // use set power level
         bool increasePower_ = true;
 
-//#if(ENABLE_TEST_MODES)
         //////// DriveTest /////////
         bool enableToggleDir_ = false;   // false: Only drive forward
                                          // true: Switch between driving forward and reverse
@@ -122,7 +124,6 @@ namespace Anki {
 
         ////// End of DriveTest ////////
 
-//#endif  //#if(ENABLE_TEST_MODES)
         /////// LiftTest /////////
         // 0: Set power directly with MotorSetPower
         // 1: Command a desired lift height (i.e. use LiftController)
@@ -189,7 +190,7 @@ namespace Anki {
         f32 maxHeadSpeed_radPerSec_ = 0;
         
         //// End of HeadTest //////
-//#if(ENABLE_TEST_MODES)
+
         
         //////// DockPathTest /////////
         enum {
@@ -257,7 +258,6 @@ namespace Anki {
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
 
-#endif
         // Current test mode
         TestMode testMode_ = TM_NONE;
 
@@ -295,16 +295,12 @@ namespace Anki {
         HeadController::Enable();
         HeadController::SetAngularVelocity(0);
 
-        // Backpack lights
-        //BackpackLightController::Enable();
-        
         // Re-enable prox sensors
         ProxSensors::EnableCliffDetector(true);
 
         return RESULT_OK;
       }
 
-#if(ENABLE_TEST_MODES)
       Result PlaceOnGroundTestInit(s32 x_offset_mm, s32 y_offset_mm, s32 angle_offset_degrees)
       {
         AnkiInfo( 64, "TestModeController.PlaceOnGroundTestInit", 309, "xOffset %d mm, yOffset %d mm, angleOffset %d degrees", 3,
@@ -419,7 +415,7 @@ namespace Anki {
           float arc1_radius = sqrt((float)5000);  // Radius of sqrt(50^2 + 50^2)
           f32 sweepAng = atan_fast((350-arc1_radius)/250);
 
-          PathFollower::AppendPathSegment_Arc(arc1_radius, 0, arc1_radius, -PI, sweepAng,
+          PathFollower::AppendPathSegment_Arc(arc1_radius, 0, arc1_radius, -M_PI_F, sweepAng,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
           f32 firstConnectionPt_x = arc1_radius - arc1_radius*cos(sweepAng);
@@ -430,7 +426,7 @@ namespace Anki {
           PathFollower::AppendPathSegment_Line(firstConnectionPt_x, firstConnectionPt_y, secondConnectionPt_x, secondConnectionPt_y,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
-          PathFollower::AppendPathSegment_Arc(350, -250, arc1_radius, -PI + sweepAng, PI - sweepAng,
+          PathFollower::AppendPathSegment_Arc(350, -250, arc1_radius, -M_PI_F + sweepAng, M_PI_F - sweepAng,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 #else
           PathFollower::AppendPathSegment_Line(0.0, 0.0, 300, -300,
@@ -442,10 +438,10 @@ namespace Anki {
           PathFollower::AppendPathSegment_Line(350 + arc1_radius, -250, 350 + arc1_radius, 200,
                                                PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
           float arc2_radius = sqrt((float)20000); // Radius of sqrt(100^2 + 100^2)
-          //PathFollower::AppendPathSegment_Arc(0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, PIDIV2);
-          PathFollower::AppendPathSegment_Arc(350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*PIDIV2,
+          //PathFollower::AppendPathSegment_Arc(0.35 + arc1_radius - arc2_radius, 0.2, arc2_radius, 0, M_PI_2_F);
+          PathFollower::AppendPathSegment_Arc(350 + arc1_radius - arc2_radius, 200, arc2_radius, 0, 3*M_PI_2_F,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
-          PathFollower::AppendPathSegment_Arc(350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, PIDIV2, -3*PIDIV2,
+          PathFollower::AppendPathSegment_Arc(350 + arc1_radius - arc2_radius, 200 - 2*arc2_radius, arc2_radius, M_PI_2_F, -3*M_PI_2_F,
                                               PF_TARGET_SPEED_MMPS, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
 
           PathFollower::AppendPathSegment_Line(350 + arc1_radius - 2*arc2_radius, 200 - 2*arc2_radius, 350 + arc1_radius - 2*arc2_radius, 0,
@@ -587,6 +583,10 @@ namespace Anki {
           }
 
           ticCnt_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out 
+          (void)lSpeed;
+          (void)rSpeed;
         }
 
 
@@ -620,7 +620,7 @@ namespace Anki {
 
        return RESULT_OK;
       }
-//#endif // #if(ENABLE_TEST_MODES)
+
 
       Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 powerPercent)
       {
@@ -790,6 +790,10 @@ namespace Anki {
 
           AnkiInfo( 79, "TestModeController.LiftToggleTestUpdate", 325, "Lift speed %f rad/s, height %f mm", 2, lSpeed, lPos);
           ticCnt2_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out
+          (void)lSpeed;
+          (void)lPos;
         }
 
         return RESULT_OK;
@@ -905,11 +909,14 @@ namespace Anki {
             AnkiInfo( 81, "TestModeController.HeadTestUpdate", 331, "Head speed %f rad/s (filt %f rad/s), angle %f rad", 3, hSpeed, hSpeed_filt, hPos);
           }
           ticCnt2_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out
+          (void)hPos;
         }
 
         return RESULT_OK;
       }
-//#if(ENABLE_TEST_MODES)
+
 
       Result IMUTestInit(s32 flags)
       {
@@ -955,44 +962,14 @@ namespace Anki {
                 );
 
           ticCnt_ = 0;
+
+          // To prevent compiler error if AnkiInfo compiled out
+          (void)data; 
+          (void)rot_imu;
         }
 
         return RESULT_OK;
       }
-
-//      Result AnimTestInit()
-//      {
-//        PRINT("\n==== Starting AnimationTest =====\n");
-//        AT_currAnim = 0;
-//        AnimationController::Play(AT_currAnim, 0);
-//        ticCnt_ = 0;
-//        return RESULT_OK;
-//      }
-
-//      Result AnimTestUpdate()
-//      {
-//        if (ticCnt_++ > AT_periodTics) {
-//          ticCnt_ = 0;
-//
-//          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-//
-//          // Skip undefined animIDs
-//          while(!AnimationController::IsDefined(AT_currAnim)) {
-//            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
-//              // Go back to start
-//              AT_currAnim = 0;
-//            } else {
-//              // otherwise just incrememnt
-//              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-//            }
-//          }
-//
-//          PRINT("Playing animation %d\n", AT_currAnim);
-//          AnimationController::Play(AT_currAnim, 0);
-//        }
-//
-//        return RESULT_OK;
-//      }
 
 
       // flags: See LightTestFlags
@@ -1001,7 +978,6 @@ namespace Anki {
       Result LightTestInit(s32 flags, s32 ledID, s32 color)
       {
         AnkiInfo( 84, "TestModeController.LightTestInit", 336, "flags = %x, ledID = %d, color = %x", 3, flags, ledID, color);
-        BackpackLightController::Disable();
 
         ledCycleTest_ = flags & LTF_CYCLE_ALL;
 
@@ -1009,7 +985,7 @@ namespace Anki {
           ledID_ = (LEDId)0;
           ledColorIdx_ = 0;
         } else {
-          HAL::SetLED((LEDId)ledID, color);
+          //HAL::SetLED((LEDId)ledID, color);
         }
 
         ticCnt_ = 0;
@@ -1027,7 +1003,8 @@ namespace Anki {
         // Cycle through all channels
         if (ticCnt_++ > 2000 / TIME_STEP) {
           AnkiInfo( 85, "TestModeController.LightTestUpdate", 337, "LED channel %d, color 0x%x", 2, ledID_, LEDColorList_[ledColorIdx_]);
-          HAL::SetLED(ledID_, LEDColorList_[ledColorIdx_]);
+          //HAL::SetLED(ledID_, LEDColorList_[ledColorIdx_]);
+          (void)LEDColorList_; // Prevent compiler error. Don't need this when SetLED call restored.
 
           // Increment led
           ledID_ = (LEDId)((u8)ledID_+1);
@@ -1045,30 +1022,6 @@ namespace Anki {
 
         return RESULT_OK;
       }
-
-
-//      Result FaceDisplayTestInit()
-//      {
-//        AnkiInfo( 86, "TestModeController.FaceDisplayTestInit", 305, "", 0);
-//        ticCnt_ = 0;
-//
-//        // Draw "programmer art" face until we get real assets
-//        u8 faceFrame[] = { 24, 64+24,      // Start 24 lines down and 24 pixels right
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-//          0 };
-//
-//        // Draw face
-//        HAL::FaceAnimate(faceFrame, sizeof(faceFrame));
-//        Reset();
-//        return RESULT_OK;
-//      }
 
 
       Result StopTestInit(s32 slowSpeed_mmps, s32 fastSpeed_mmps, s32 period_ms)
@@ -1155,13 +1108,11 @@ namespace Anki {
         }
         return RESULT_OK;
       }
-#endif
 
       Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         Result ret = RESULT_OK;
         
-
         testMode_ = mode;
 
         switch(testMode_) {
@@ -1169,7 +1120,6 @@ namespace Anki {
             ret = Reset();
             updateFunc = NULL;
             break;
-#if(ENABLE_TEST_MODES)
           case TM_PLACE_BLOCK_ON_GROUND:
             ret = PlaceOnGroundTestInit(p1,p2,p3);
             updateFunc = PlaceOnGroundTestUpdate;
@@ -1190,7 +1140,6 @@ namespace Anki {
             ret = DriveTestInit(p1,p2,p3);
             updateFunc = DriveTestUpdate;
             break;
-//#endif
           case TM_LIFT:
             ret = LiftTestInit(p1,p2,p3);
             updateFunc = LiftTestUpdate;
@@ -1203,24 +1152,13 @@ namespace Anki {
             ret = HeadTestInit(p1,p2,p3);
             updateFunc = HeadTestUpdate;
             break;
-//#if(ENABLE_TEST_MODES)
           case TM_IMU:
             ret = IMUTestInit(p1);
             updateFunc = IMUTestUpdate;
             break;
-          case TM_ANIMATION:
-            AnkiWarn( 92, "TestModeController.Start", 343, "Animation test mode needs updating!", 0);
-            ret = RESULT_FAIL; // AnimTestInit();
-            updateFunc = NULL; // AnimTestUpdate;
-            break;
           case TM_LIGHTS:
             ret = LightTestInit(p1,p2,p3);
             updateFunc = LightTestUpdate;
-            break;
-          case TM_FACE_DISPLAY:
-            AnkiWarn( 92, "TestModeController.Start", 345, "Face test mode needs updating!", 0);
-            ret = RESULT_FAIL; // FaceDisplayTestInit();
-            updateFunc = NULL;
             break;
           case TM_STOP_TEST:
             ret = StopTestInit(p1,p2,p3);
@@ -1230,7 +1168,6 @@ namespace Anki {
             ret = MaxPowerTestInit();
             updateFunc = MaxPowerTestUpdate;
             break;
-#endif
           default:
             AnkiWarn( 92, "TestModeController.Start", 344, "Undefined test mode %d\n", 1, testMode_);
             Reset();
@@ -1253,6 +1190,26 @@ namespace Anki {
         return RESULT_OK;
       }
 
+#else // #ifdef COZMO_V2
+      
+      TestMode GetMode() {
+        return TM_NONE;
+      }
+      
+      Result Reset() {
+        return RESULT_OK;
+      }
+      
+      Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3) {
+        return RESULT_FAIL;
+      }
+      
+      Result Update() {
+        return RESULT_OK;
+      }
+      
+#endif // #ifdef COZMO_V2
+      
 
     } // namespace TestModeController
   } // namespace Cozmo

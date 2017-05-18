@@ -1,0 +1,76 @@
+// File: activityTypes
+// Author: Kevin M. Karol
+// Created: 4/27/2017
+// Copyright: Anki, inc. 2017
+
+namespace Anki {
+namespace Cozmo {
+
+// Identifies the iActivity child class which the activity is an instance of
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 ActivityType {
+  BehaviorsOnly,
+  BuildPyramid,
+  Freeplay,
+  GatherCubes,
+  Socialize,
+  Sparked,
+  VoiceCommand,
+  Count
+}
+
+// Unique identifier for referencing an activity instance
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 ActivityID {
+  Invalid,
+
+  BuildPyramid,
+  Freeplay,
+  GatherCubes,
+  Hiking,
+  MeetCozmo,
+  NothingToDo,
+  ObjectTapInteraction,
+  PlayAlone,
+  PlayWithHumans,
+  PutDownDispatch,
+  Selection,
+  Socialize,
+  SparksBuildPyramid,
+  SparksFistBump,
+  SparksGatherCubes,
+  SparksKnockOverCubes,
+  SparksPeekABoo,
+  SparksPickUpCube,
+  SparksPopAWheelie,
+  SparksPounceOnMotion,
+  SparksRollBlock,
+  SparksStackBlock,
+  SparksWorkout,
+  VisitPossibleMarker,
+  VoiceCommand
+}
+
+// The strategies that determine when an activity wants to start/stop
+enum uint_8 ActivityStrategy {
+  ObjectTapInteraction,
+  PlayWithHumans,
+  Pyramid,
+  Simple,
+  Spark,
+  Count
+}
+
+// The high level activities BehaviorManager manages
+enum uint_8 HighLevelActivity {
+  Freeplay,
+  Selection,
+  MeetCozmoFindFaces,
+  VoiceCommand,
+  Count
+}
+
+
+
+} // namespace Cozmo
+} // namespace Anki

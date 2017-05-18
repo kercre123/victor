@@ -167,7 +167,6 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 BehaviorExploreBringCubeToBeacon::BehaviorExploreBringCubeToBeacon(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("BehaviorExploreBringCubeToBeacon");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -179,7 +178,7 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorExploreBringCubeToBeacon";
+  const std::string& debugName = GetIDStr() + ".BehaviorExploreBringCubeToBeacon";
 
   _configParams.recentFailureCooldown_sec = ParseFloat(config, "recentFailureCooldown_sec", debugName);
 }
@@ -328,7 +327,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       const bool foundCandidate = FLT_LT(bestDistSQ, FLT_MAX);
       if ( foundCandidate ) {
         _selectedObjectID = _candidateObjects[bestIndex].id;
-        PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToPickUpObject.Selected").c_str(), "Going to pick up '%d'", _selectedObjectID.GetValue());
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToPickUpObject.Selected").c_str(), "Going to pick up '%d'", _selectedObjectID.GetValue());
       } else {
         PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.InvalidCandidates", "Could not pick candidate");
         return;
@@ -336,7 +335,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
     }
     else
     {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToPickUpObject.Retry").c_str(), "Trying to pick up '%d' again", _selectedObjectID.GetValue());
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToPickUpObject.Retry").c_str(), "Trying to pick up '%d' again", _selectedObjectID.GetValue());
     }
 
     // fire action with proper callback
@@ -349,7 +348,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
       if ( resCat == ActionResultCategory::SUCCESS ) {
         // object was picked up
-        PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.Done").c_str(), "Picked up '%d'", _selectedObjectID.GetValue());
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.Done").c_str(), "Picked up '%d'", _selectedObjectID.GetValue());
         TransitionToObjectPickedUp(robot);
       }
       else if (resCat == ActionResultCategory::RETRY)
@@ -358,25 +357,25 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
         const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
         if ( isCarrying )
         {
-          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.RetryOk").c_str(), "We do have '%d' picked up, so pretend we are fine", _selectedObjectID.GetValue());
+          PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.RetryOk").c_str(), "We do have '%d' picked up, so pretend we are fine", _selectedObjectID.GetValue());
           // not sure what failed on pick up, but we are carrying the object, so continue to next state
           TransitionToObjectPickedUp( robot );
         }
         else if ( attempt < kMaxAttempts )
         {
-          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.RetryMaybe").c_str(), "Let's try to pick up '%d' again (%d tries out of %d)",
+          PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.RetryMaybe").c_str(), "Let's try to pick up '%d' again (%d tries out of %d)",
             _selectedObjectID.GetValue(), attempt, kMaxAttempts);
           // something else failed, maybe we failed to align with the cube, try to pick up the cube again
           TransitionToPickUpObject( robot, attempt+1 );
         }
         else
         {
-          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.Fail").c_str(), "Not trying to pick up '%d' again. Failing", _selectedObjectID.GetValue());
+          PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.Fail").c_str(), "Not trying to pick up '%d' again. Failing", _selectedObjectID.GetValue());
           // do not queue more actions here so that we get kicked out, flag as fail
           pickUpFinalFail = true;
         }
       } else if(resCat == ActionResultCategory::ABORT) {
-        PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.NoRetry").c_str(), "Failed to pick up '%d', action does not retry.", _selectedObjectID.GetValue());
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.NoRetry").c_str(), "Failed to pick up '%d', action does not retry.", _selectedObjectID.GetValue());
         // do not queue more actions here so that we get kicked out, flag as fail
         pickUpFinalFail = true;
       }
@@ -413,7 +412,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
     if (resCat == ActionResultCategory::SUCCESS)
     {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
       
       // emotions and behavior objective check
       FireEmotionEvents(robot);
@@ -424,7 +423,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
       const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
       if ( canRetry && isCarrying )
       {
-        PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.CanRetry").c_str(),
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.CanRetry").c_str(),
           "Failed to stack '%d' on top of '%d', but can retry",
           _selectedObjectID.GetValue(), bottomCubeID.GetValue());
 
@@ -433,7 +432,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
       }
       else
       {
-        PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.CannotRetry").c_str(),
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.CannotRetry").c_str(),
           "Failed to stack '%d' on top of '%d' (attempt=%d/%d) (carrying=%s)",
           _selectedObjectID.GetValue(), bottomCubeID.GetValue(),
           attempt, kMaxAttempts,
@@ -445,7 +444,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
         stackOnCubeFinalFail = true;
       }
     } else if(resCat == ActionResultCategory::ABORT) {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.NoRetryAllowed").c_str(), "Failed to stack (no retry allowed by action)");
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.NoRetryAllowed").c_str(), "Failed to stack (no retry allowed by action)");
       stackOnCubeFinalFail = true;
     }
     
@@ -478,7 +477,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(actionRet.result);
     if (resCat == ActionResultCategory::SUCCESS)
     {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done").c_str(), "Successfully placed cube");
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPlaceActionResult.Done").c_str(), "Successfully placed cube");
       
       // emotions and behavior objective check
       FireEmotionEvents(robot);
@@ -489,7 +488,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
       const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
       if ( canRetry && isCarrying )
       {
-        PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done.CanRetry").c_str(),
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPlaceActionResult.Done.CanRetry").c_str(),
           "Failed to place '%d' at pose [%.2f,%.2f,%.2f], but can retry",
           _selectedObjectID.GetValue(), pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z() );
 
@@ -498,7 +497,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
       }
       else
       {
-        PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.CannotRetry").c_str(),
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPlaceActionResult.CannotRetry").c_str(),
           "Failed to place '%d' at pose [%.2f,%.2f,%.2f] (attempt=%d/%d) (carrying=%s)",
           _selectedObjectID.GetValue(),
           pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z(),
@@ -510,7 +509,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
         placeAtCubeFinalFail = true;
       }
     } else {
-      PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.NoRetryAllowed").c_str(), "Failed to place (no retry allowed by action)");
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPlaceActionResult.NoRetryAllowed").c_str(), "Failed to place (no retry allowed by action)");
       placeAtCubeFinalFail = true;
     }
     
@@ -579,7 +578,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     if ( nullptr != bottomCube )
     {
       // log
-      PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToObjectPickedUp").c_str(), "Decided to place '%d' on top of '%d'",
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToObjectPickedUp").c_str(), "Decided to place '%d' on top of '%d'",
         _selectedObjectID.GetValue(),
         bottomCube->GetID().GetValue());
       
@@ -597,7 +596,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
       if ( foundPose )
       {
         // log
-        PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToObjectPickedUp").c_str(),
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToObjectPickedUp").c_str(),
           "Decided to place '%d' on the floor at [%.2f,%.2f,%.2f]",
           _selectedObjectID.GetValue(), dropPose.GetTranslation().x(), dropPose.GetTranslation().y(), dropPose.GetTranslation().z());
         
@@ -612,7 +611,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
         whiteboard.FailedToFindLocationInBeacon(selectedBeacon);
       
         // log
-        PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToObjectPickedUp.NoFreePoses").c_str(),
+        PRINT_CH_INFO("Behaviors", (GetIDStr() + ".TransitionToObjectPickedUp.NoFreePoses").c_str(),
           "Could not decide where to drop the cube in the beacon (all poses failed)");
 
         // fire emotion event, Cozmo is sad he could not put down the cube in the beacon

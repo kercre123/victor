@@ -1,19 +1,50 @@
 {
-  "name" : "sparksWorkout",
+  "activityID" : "SparksWorkout",
+  "activityType" : "Sparked",
   "requireSpark":"Workout",
-  "behaviorChooser" :
-  {
-    "type" : "sparks",
-    "minTimeSecs": 0,
-    "maxTimeSecs": 60,
-    "numberOfRepetitions": 1,
-    "behaviorObjective": "PerformedWorkout",
-    "softSparkTrigger": "SoftSparkUpgradeLift",
-    // these are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "SparksWorkout" ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
-  }
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "CantHandleTallStack",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "SparksCubeLiftWorkout",
+        "scoring"      :
+        {
+          "flatScore": 7.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 60,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "PerformedWorkout",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
 }

@@ -1,28 +1,91 @@
 {
-  "name" : "sparksBuildPyramid",
+  "activityID" : "SparksBuildPyramid",
+  "activityType" : "Sparked",
   "requireSpark":"BuildPyramid",
-  "behaviorChooser" :
-  {
-    "type" : "sparks",
-    "minTimeSecs": 0,
-    "maxTimeSecs": 300,
-    "numberOfRepetitions": 1,
-    "behaviorObjective": "BuiltPyramid",
-    "softSparkTrigger": "SoftSparkUpgradeLift",
-    "sparksSuccessTrigger": "", // don't play any animation
-    "simpleChooserDelegate":
-    {
-      "type":"pyramid",
-      "behaviorGroups" : [ "SetupBuildPyramid", "BuildPyramid" ]
-    },
-    // these are the behaviors that are allowed in this behavior chooser
-    // no behavior groups are set here since this chooser delegates to the pyramid
-    // chooser for simple behavior purposes
-    "behaviorGroups" : [ ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
   },
-  "persistentComponentID" : "pyramidSparkUpdate"
+  "minTimeSecs": 0,
+  "maxTimeSecs": 300,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "BuiltPyramid",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  "sparksSuccessTrigger": "", // don't play any animation
+  "subActivityDelegate":
+  {
+    "activityID" : "BuildPyramid",
+    "activityType" : "BuildPyramid",
+    "name" : "sparksBuildPyramid",
+    "activityStrategy": // not actually used, but required
+    {
+      "type" : "Simple"
+    },
+    "setupChooser" :
+    {
+      "type" : "scoring",
+      "behaviors" : [
+       { "behaviorID" : "DriveOffCharger",
+         "scoring"      :
+         {
+           "flatScore": 1000
+         }
+       },
+       { "behaviorID" : "KnockOverCubes",
+         "scoring"      :
+         {
+           "flatScore": 20
+         }
+       },
+       { "behaviorID" : "PyramidPutDownBlock",
+         "scoring"      :
+         {
+           "flatScore": 5.0
+         }
+       },
+       { "behaviorID" : "SparksLookInPlace",
+         "scoring"      :
+         {
+           "flatScore": 2.0
+         }
+       }
+       ]
+    },
+    "buildChooser" :
+    {
+      "type" : "scoring",
+      "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "RespondToPyramidBase",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      },
+      { "behaviorID" : "SparksPickupSingleCubeForPyramid",
+        "scoring"      :
+        {
+          "flatScore": 4.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+      ]
+    }
+  }
 }

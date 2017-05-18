@@ -127,7 +127,6 @@ BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& 
 : IBehavior(robot, config)
 , _numRetries(0)
 {
-  SetDefaultName("KnockOverCubes");
   LoadConfig(config);
   
   SubscribeToTags({
@@ -290,6 +289,10 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(Robot& robot)
     flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
   }
   
+  // Unlock the reactions b/c we're about to re-lock them
+  // It's possible they might not have been locked - it's safe to remove an invalid lock
+  // but locking twice due to a retry will cause a crash
+  SmartRemoveDisableReactionsLock(kPreparingToKnockOverStackLock);
   PrepareForKnockOverAttempt();
   StartActing(flipAndWaitAction, &BehaviorKnockOverCubes::TransitionToPlayingReaction);
 }
@@ -322,7 +325,7 @@ bool BehaviorKnockOverCubes::InitializeMemberVars()
 {
   if(auto tallestStack = _currentTallestStack.lock()){
   // clear for success state check
-    SmartDisableReactionsWithLock(GetName(), kKnockOverCubesAffectedArray);
+    SmartDisableReactionsWithLock(GetIDStr(), kKnockOverCubesAffectedArray);
     _objectsFlipped.clear();
     _numRetries = 0;
     _bottomBlockID = tallestStack->GetBottomBlockID();

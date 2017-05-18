@@ -1,20 +1,8 @@
 {
   "behaviorClass": "ExploreLookAroundInPlace",
+  "behaviorID": "SparksLookInPlace",
   "executableBehaviorType": "LookAroundInPlace",
-  "name": "SparkedLookAroundInPlace",
   "displayNameKey":"behavior.LookInPlaceForCube",
-  "flatScore" : 2.0,
-  "behaviorGroups": [
-      "BuildPyramid",
-      "SetupBuildPyramid",
-      "SparksRollBlock",
-      "SparksStackBlock",
-      "SparksPickUpCube",
-      "SparksPopAWheelie",
-      "SparksKnockOverCubes",
-      "SparksWorkout",
-      "SparksGatherCubes"
-  ],
   "params":
   {
     "behavior_ShouldResetTurnDirection": true,

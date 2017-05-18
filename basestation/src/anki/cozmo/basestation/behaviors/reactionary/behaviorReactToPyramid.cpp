@@ -30,7 +30,6 @@ BehaviorReactToPyramid::BehaviorReactToPyramid(Robot& robot, const Json::Value& 
 : IBehavior(robot, config)
 , _nextValidReactionTime_s(0)
 {
-  SetDefaultName("ReactToPyramid");
 }
   
 bool BehaviorReactToPyramid::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const

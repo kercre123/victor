@@ -46,7 +46,6 @@ using namespace AcknowledgeFaceConsoleVars;
 BehaviorAcknowledgeFace::BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config)
 : super(robot, config)
 {
-  SetDefaultName("AcknowledgeFace");
 }
   
   

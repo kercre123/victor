@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -393,7 +393,7 @@ TEST(MoodManager, DecayResetFromAwards)
 static const char* kTestBehavior1Json =
 "{"
 "   \"behaviorClass\" : \"NoneBehavior\","
-"   \"name\" : \"TestHappy\","
+"   \"behaviorID\" : \"NoneBehavior\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"
@@ -411,10 +411,12 @@ static const char* kTestBehavior1Json =
 "}";
 
 
+// Stealing behaviorID AcknowledegeFace arbitrarily - just need something which
+// doesn't conflict score configs with kTestBehavior1Json
 static const char* kTestBehavior2Json =
 "{"
 "   \"behaviorClass\" : \"NoneBehavior\","
-"   \"name\" : \"TestCalm\","
+"   \"behaviorID\" : \"AcknowledgeFace\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"
@@ -454,12 +456,16 @@ TEST(MoodManager, BehaviorScoring)
   
   // have to alloc the behaviors - they're freed by the chooser
   IBehavior* testBehaviorReqHappy = behaviorFactory.CreateBehavior(testBehavior1Json, testRobot);
+  testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
+
   IBehavior* testBehaviorReqCalm  = behaviorFactory.CreateBehavior(testBehavior2Json, testRobot);
+  testBehaviorReqCalm->ReadFromScoredJson(testBehavior2Json);
   ASSERT_NE(testBehaviorReqHappy, nullptr);
   ASSERT_NE(testBehaviorReqCalm,  nullptr);
   
   Json::Value chooserConfig;
-  SimpleBehaviorChooser behaviorChooser(testRobot, chooserConfig);
+  chooserConfig["behaviors"] = "";
+  ScoringBehaviorChooser behaviorChooser(testRobot, chooserConfig);
   
   behaviorChooser.TryAddBehavior(testBehaviorReqHappy);
   behaviorChooser.TryAddBehavior(testBehaviorReqCalm);
@@ -692,75 +698,6 @@ TEST(MoodManager, EmotionScorerReadJson)
   EXPECT_EQ(testScorer.GetScoreGraph().GetNode(1)._y,  1.5f);
   EXPECT_EQ(testScorer.TrackDeltaScore(), true);
 }
-
-
-// Bad emotionType
-static const char* kBadTestEmotionScorerJson =
-"{"
-"   \"emotionType\" : \"Welsh\","
-"   \"scoreGraph\" : {"
-"      \"nodes\" : ["
-"         {"
-"            \"x\" : -1,"
-"            \"y\" : -0.5"
-"         }"
-"      ]"
-"   },"
-"   \"trackDelta\" : false"
-"}";
-
-
-// Unknown EmotionType entry
-TEST(MoodManager, EmotionScorerReadBadJson)
-{
-  Json::Value  emotionScorerJson;
-  Json::Reader reader;
-  const bool parsedOK = reader.parse(kBadTestEmotionScorerJson, emotionScorerJson, false);
-  ASSERT_TRUE(parsedOK);
-
-  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
-  const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
-  
-  EXPECT_FALSE( readRes );
-  
-  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Count);
-  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 0);
-  EXPECT_EQ(testScorer.TrackDeltaScore(), false);
-}
-
-
-// Missing emotionType entry
-static const char* kBad2TestEmotionScorerJson =
-"{"
-"   \"scoreGraph\" : {"
-"      \"nodes\" : ["
-"         {"
-"            \"x\" : -1,"
-"            \"y\" : -0.5"
-"         }"
-"      ]"
-"   },"
-"   \"trackDelta\" : false"
-"}";
-
-
-TEST(MoodManager, EmotionScorerReadBadJson2)
-{
-  Json::Value  emotionScorerJson;
-  Json::Reader reader;
-  const bool parsedOK = reader.parse(kBad2TestEmotionScorerJson, emotionScorerJson, false);
-  ASSERT_TRUE(parsedOK);
-  
-  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
-  const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
-  
-  EXPECT_FALSE( readRes );
-  
-  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Count);
-  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 0);
-  EXPECT_EQ(testScorer.TrackDeltaScore(), false);
-}
-
 
 // Missing scoreGraph entry
 static const char* kBad3TestEmotionScorerJson =

@@ -109,7 +109,7 @@ namespace Anki
           GPIO_SET(CAM_PWDN);
           GPIO_RESET(CAM_RESET_N);
           GPIO_RESET(OLED_RESET_N);
-
+          
           // Configure pins as outputs
           GPIO_OUT(POWEREN);
           SOURCE_SETUP(POWEREN, SourceGPIO);
@@ -120,6 +120,8 @@ namespace Anki
           GPIO_OUT(OLED_RESET_N);
           SOURCE_SETUP(OLED_RESET_N, SourceGPIO);
           MicroWait(100000);
+          
+         
 
           // Pull-up MISO during ESP8266 boot
           GPIO_IN(MISO);
@@ -147,7 +149,7 @@ namespace Anki
 
           GPIO_SET(POWEREN);
           MicroWait(1000);
-
+          
           GPIO_RESET(CAM_PWDN);
           MicroWait(1000);
 
@@ -175,10 +177,12 @@ namespace Anki
           #endif
 
           SOURCE_SETUP(MISO, SourceGPIO);
+          
         }
 
         void enterSleepMode(void)
         {
+          UART::DebugPutc('B');
           __disable_irq();
           Watchdog::suspend();
 
@@ -209,9 +213,6 @@ namespace Anki
 
           GPIO_IN(BODY_UART_RX);
           SOURCE_SETUP(BODY_UART_RX, SourceGPIO);
-
-          // Wait to see the line pulled low
-          while (!GPIO_READ(BODY_UART_RX)) ;
 
           NVIC_SystemReset();
         }

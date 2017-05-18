@@ -108,7 +108,6 @@ BehaviorPopAWheelie::BehaviorPopAWheelie(Robot& robot, const Json::Value& config
 : IBehavior(robot, config)
 , _robot(robot)
 {
-  SetDefaultName("PopAWheelie");
 }
 
   
@@ -190,7 +189,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   if( ! _targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
-                        GetName().c_str());
+                        GetIDStr().c_str());
     return;
   }
   
@@ -219,10 +218,10 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
     // disable reactions we don't want
     if(!kCanHiccupWhilePopWheelie)
     {
-      SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+      SMART_DISABLE_REACTION_DEV_ONLY(GetIDStr(), ReactionTrigger::Hiccup);
     }
 
-    SmartDisableReactionsWithLock(GetName(), kAffectTriggersPopAWheelieArray);
+    SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPopAWheelieArray);
     
     // tell the robot not to stop the current action / animation if the cliff sensor fires
     _hasDisabledcliff = true;
@@ -242,7 +241,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 if(msg.result != ActionResult::SUCCESS){
                   // Release the on back lock directly instead of going through smart disable
                   // so that other triggers aren't kicked out too.
-                  this->_robot.GetBehaviorManager().RemoveDisableReactionsLock(GetName());
+                  this->_robot.GetBehaviorManager().RemoveDisableReactionsLock(GetIDStr());
                 }
                 
                 switch(IActionRunner::GetActionResultCategory(msg.result))

@@ -652,6 +652,7 @@ Blockly.Flyout.prototype.blockMouseDown_ = function(block) {
     if (Blockly.utils.isRightButton(e)) {
       Blockly.Flyout.blockRightClick_(e, block);
     } else {
+      flyout.workspace_.playAudio("click");
       flyout.dragMode_ = Blockly.DRAG_NONE;
       Blockly.terminateDrag_();
       Blockly.WidgetDiv.hide(true);

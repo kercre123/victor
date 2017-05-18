@@ -1,11 +1,6 @@
 {
   "behaviorClass": "PickUpAndPutDownCube",
-  "name": "sparksPickUpCube",
+  "behaviorID": "SparksPickUpCube",
   "displayNameKey":"behavior.PickupCube",
-  "requiredUnlockId": "PickupCube",
-  "behaviorGroups": [
-    "SparksPickUpCube"
-  ],
-  "flatScore": 5.0
-
+  "requiredUnlockId": "PickupCube"
 }

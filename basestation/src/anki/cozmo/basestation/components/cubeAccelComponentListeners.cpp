@@ -93,7 +93,7 @@ void HighPassFilterListener::InitInternal(const ActiveAccel& accel)
   }
   
   _prevInput = accel;
-  *output = accel;
+  *output = ActiveAccel(0.f, 0.f, 0.f);
 }
 
 void HighPassFilterListener::UpdateInternal(const ActiveAccel& accel)
@@ -175,11 +175,12 @@ void MovementListener::UpdateInternal(const ActiveAccel& accel)
 {
   _highPassFilter->Update(accel);
   
-  const float magSq = _highPassOutput->x * _highPassOutput->x +
-                      _highPassOutput->y * _highPassOutput->y +
-                      _highPassOutput->z * _highPassOutput->z;
+  const float magSq = (_highPassOutput->x * _highPassOutput->x) +
+                      (_highPassOutput->y * _highPassOutput->y) +
+                      (_highPassOutput->z * _highPassOutput->z);
+  const float mag = std::sqrt(magSq);
   
-  _movementScore += std::min(_maxMovementScoreToAdd, magSq);
+  _movementScore += std::min(_maxMovementScoreToAdd, mag);
   
   if(_movementScore > _movementScoreDecay)
   {

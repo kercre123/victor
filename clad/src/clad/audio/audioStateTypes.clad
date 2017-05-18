@@ -28,6 +28,7 @@ enum uint_32 Mood
 enum uint_32 Music
 {
   Alarm_Clock = 3653788539,
+  Codelab = 730889831,
   Connectivity = 1264085260,
   Cozmo_Says = 2338198982,
   Cozmo_Says_Speaking = 739906331,

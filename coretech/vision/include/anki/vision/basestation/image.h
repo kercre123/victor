@@ -23,7 +23,8 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/colorPixelTypes.h"
 
-#include <set>
+#include <string>
+#include <vector>
 
 namespace Anki {
 namespace Vision {
@@ -41,6 +42,8 @@ namespace Vision {
   public:
     ImageBase() : Array2d<T>() { }
     ImageBase(s32 nrows, s32 ncols) : Array2d<T>(nrows, ncols) { }
+    ImageBase(s32 nrows, s32 ncols, const T& pixel) : Array2d<T>(nrows, ncols, pixel) { }
+    ImageBase(s32 nrows, s32 ncols, const ColorRGBA& color);
     ImageBase(s32 nrows, s32 ncols, T* data) : Array2d<T>(nrows, ncols, data) { }
     ImageBase(const Array2d<T>& array) : Array2d<T>(array) { }
     
@@ -77,13 +80,28 @@ namespace Vision {
     // Resize into the new image (which is already the desired size)
     void Resize(ImageBase<T>& resizedImage, ResizeMethod method = ResizeMethod::Linear) const;
     
-    void DrawLine(const Point2f& start, const Point2f& end,
-                  const ColorRGBA& color, const s32 thickness);
+    //
+    // Draw operations expect image coordinates in pixels as <X,Y> NOT <row,col>.
+    // Note <0,0> is top left corner, NOT bottom left corner.
+    //
     
-    void DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size);
-
-    void DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness);
-    void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness);
+    // Draw line segment from start <X,Y> to end <X,Y>
+    void DrawLine(const Point2f& start, const Point2f& end, const ColorRGBA& color, const s32 thickness = 1);
+    
+    // Draw circle at center <X,Y> with given radius and line thickness
+    void DrawCircle(const Point2f& center, const ColorRGBA& color, const s32 radius, const s32 thickness = 1);
+    
+    // Draw filled circle at center <X,Y> with given radius
+    void DrawFilledCircle(const Point2f& center, const ColorRGBA& color, const s32 radius);
+    
+    // Draw rectangle from top left <X,Y> to bottom right <X+width,Y+height>
+    void DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness = 1);
+    
+    // Draw filled rectangle from top left <X,Y> to bottom right <X+width,Y+height>
+    void DrawFilledRect(const Rectangle<f32>& rect, const ColorRGBA& color);
+    
+    // Draw quadrangle defined by four given points
+    void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness = 1);
     
     // TODO: Expose font?
     void DrawText(const Point2f& position, const std::string& str, const ColorRGBA& color, f32 scale = 1.f, bool dropShadow = false);
@@ -118,14 +136,13 @@ namespace Vision {
     
     // Allocate a new image
     Image(s32 nrows, s32 ncols);
+    Image(s32 nrows, s32 ncols, const u8& pixel);
+    Image(s32 nrows, s32 ncols, const ColorRGBA& color);
     
     // Wrap image "header" around given data pointer: no allocation.
     Image(s32 nrows, s32 ncols, u8* data);
     
-    Image(const Array2d<u8>& array2d) : ImageBase<u8>(array2d) { }
-    
-    Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
-    const Image GetROI(Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    Image(const Array2d<u8>& array2d);
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<u8>
@@ -133,6 +150,9 @@ namespace Vision {
     using Array2d<u8>::get_CvMat_;
 #   endif
 
+    Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    const Image GetROI(Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    
     // Reference counting assignment (does not copy):
     Image& operator= (const ImageBase<u8> &other);
     
@@ -148,6 +168,7 @@ namespace Vision {
       Point2f         centroid;
       Rectangle<s32>  boundingBox;
     };
+    
     s32 GetConnectedComponents(Array2d<s32>& labelImage, std::vector<ConnectedComponentStats>& stats) const;
     
     // Get image negatives (i.e. invert black-on-white to white-on-black)
@@ -228,15 +249,27 @@ namespace Vision {
 
   
   //
-  // Inlined implemenations
+  // Inlined implementations
   //
   template<typename T>
-  inline void ImageBase<T>::SetTimestamp(TimeStamp_t ts) {
+  inline ImageBase<T>::ImageBase(s32 nrows, s32 ncols, const ColorRGBA& color) : Array2d<T>(nrows, ncols)
+  {
+    // We can't set elements of Array2d<T> directly because OpenCV does not expose an operator to convert from
+    // ColorRGBA or cvScalar to arbitrary pixel type <T>.  Workaround is to draw a filled rectangle that
+    // covers the entire image.
+    const Rectangle<f32> rect(0, 0, ncols, nrows);
+    DrawFilledRect(rect, color);
+  }
+  
+  template<typename T>
+  inline void ImageBase<T>::SetTimestamp(TimeStamp_t ts)
+  {
     _timeStamp = ts;
   }
   
   template<typename T>
-  inline TimeStamp_t ImageBase<T>::GetTimestamp() const {
+  inline TimeStamp_t ImageBase<T>::GetTimestamp() const
+  {
     return _timeStamp;
   }
   

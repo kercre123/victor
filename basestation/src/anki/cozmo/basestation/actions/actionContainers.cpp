@@ -250,6 +250,8 @@ namespace Anki {
           ++queueIter;
         }
       } // for each actionMemberPair
+
+      GetActionWatcher().Update();
       
       return lastResult;
     } // Update()
@@ -350,7 +352,17 @@ namespace Anki {
       }
       return false;
     }
-    
+
+    ActionEndedCallbackID ActionList::RegisterActionEndedCallbackForAllActions(ActionEndedCallback callback)
+    {
+      return GetActionWatcher().RegisterActionEndedCallbackForAllActions(callback);
+    }
+
+    bool ActionList::UnregisterCallback(ActionEndedCallbackID callbackID)
+    {
+      return GetActionWatcher().UnregisterCallback(callbackID);
+    }
+
 
 #pragma mark ---- ActionQueue ----
     

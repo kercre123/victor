@@ -20,7 +20,6 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/cozmo/basestation/moodSystem/simpleMoodTypesHelpers.h"
 
 namespace Anki {
   namespace Cozmo {

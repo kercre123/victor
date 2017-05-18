@@ -11,8 +11,7 @@
    */
   function setLocalizedText() {
     setText('#app-title', $t('Code Lab'));
-    setText('#app-title-subtext', $t('based on'));
-    // setText('.project-new .project-title', $t('Start A New Project'));
+
     setText('#tutorial-label', $t('Tutorial'));
     setText('#new-project-label', $t('New Project'));
     setText('#confirm-delete-label', $t('Are you sure you want to delete\nthis project?'));
@@ -34,6 +33,9 @@
 
       // start rendering projects
       CozmoAPI.getProjects('window.renderProjects');
+
+      // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
+      // _devLoadProjects();
     });
 
     // register main click handler for the document
@@ -41,6 +43,16 @@
 
     // activate CSS for taps by registering a touchstart event
     document.addEventListener("touchstart", function(){}, true);
+
+    // prevent page from elastic scrolling to reveal whitespace, but
+    //  allow the project list to scroll
+    document.addEventListener('touchmove', function(event){
+      event.preventDefault();
+    });
+    document.querySelector('#projects-list').addEventListener('touchmove', function(event){
+      // allow the project list to scroll by touch
+      event.stopPropagation();
+    });
   }
 
   /**
@@ -55,15 +67,23 @@
     if (!typeElem) return;
     var type = typeElem.getAttribute('data-type');
 
+    var playClickSound = true;
+
     switch(type) {
       case 'btn-create-new-project':
-        CozmoAPI.createNewProject();
+        // we play the click sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleCreateNewProjectClick();
         break;
       case 'load-sample-project':
-        CozmoAPI.openSampleProject(typeElem.dataset.uuid);
+        // we play the click sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleSampleProjectClick(typeElem.dataset.uuid);
         break;
       case 'load-user-project':
-        CozmoAPI.openUserProject(typeElem.dataset.uuid);
+        // we play click the sound before calling unity to make sure sound plays on android
+        playClickSound = false;
+        handleUserProjectClick(typeElem.dataset.uuid);
         break;
       case 'btn-confirm-delete-project':
         showConfirmDeleteProjectModal(typeElem.parentNode);
@@ -72,6 +92,11 @@
         hideConfirmDeleteProjectModal();
         break;
       case 'btn-delete-project':
+        // play a delete sound instead of a click
+        playClickSound = false;
+        if (window.player) {
+          window.player.play('delete');
+        }
         CozmoAPI.deleteProject(typeElem.dataset.uuid);
         break;
       case 'btn-close-page':
@@ -80,9 +105,80 @@
       case 'modal-background':
         hideConfirmDeleteProjectModal();
         break;
+      case 'tutorial-link':
+        playClickSound = false;
+        handleTutorialLinkClick(typeElem);
+        break;
+
       default:
+        playClickSound = false;
         console.log('unrecognized click data-type: ' + type);
     }
+
+    if (playClickSound && window.player) {
+      window.player.play('click');
+    }
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to create a new project
+   * @returns {void}
+   */
+  function handleCreateNewProjectClick() {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.createNewProject();
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to load a sample project
+   * @returns {void}
+   */
+  function handleSampleProjectClick(uuid) {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.openSampleProject(uuid);
+  }
+
+  /**
+   * Handles notifying Unity that the user wants to load a user's personal project
+   * @returns {void}
+   */
+  function handleUserProjectClick(uuid) {
+    // Play the click sound before calling unity to insure it is played on Android
+    if (window.player) {
+      window.player.play('click');
+    }
+    CozmoAPI.openUserProject(uuid);
+  }
+
+  /**
+   * Plays sound before opening the tutorial
+   * @param {HTMLElement} elem - tutorial link button element (assuming <a> (anchor) tag)
+   * @returns {void}
+   */
+  function handleTutorialLinkClick(elem) {
+    // if sound player is present, play a click sound before closing
+    if (window.player) {
+      window.player.play('click');
+    }
+
+    // to ensure the sound has time to play before navigating, intercept the
+    //  anchor navigation and wait until after the sound plays to change pages
+
+    // prevent the anchor tag from navigating to the next page until there is enough time for sound to play
+    event.preventDefault();
+
+    // save the URL of the anchor tag and navigate there after sound should finish playing
+    var url = elem.getAttribute('href');
+    setTimeout(function(){
+      // navigate to anchor tag's url after sound finishes
+      window.location.href = url;
+    }, 50);
   }
 
   /**

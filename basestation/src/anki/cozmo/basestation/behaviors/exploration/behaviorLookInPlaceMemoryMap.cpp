@@ -67,9 +67,7 @@ static_assert(NavMemoryMapTypes::IsSequentialArray(typesWeWantToVisit),
 BehaviorLookInPlaceMemoryMap::BehaviorLookInPlaceMemoryMap(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _configParams{}
-{
-  SetDefaultName("BehaviorLookInPlaceMemoryMap");
-  
+{  
   // set the proper size of sectors only once
   _sectors.resize( kSectorsPerLocation, SectorStatus::NeedsChecking );
 
@@ -119,7 +117,7 @@ bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const BehaviorPreReqRobot&
 void BehaviorLookInPlaceMemoryMap::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorLookInPlaceMemoryMap.LoadConfig";
+  const std::string& debugName = GetIDStr() + ".BehaviorLookInPlaceMemoryMap.LoadConfig";
   
   _configParams.bodyTurnSpeed_degPerSec = ParseFloat(config, "bodyTurnSpeed_degPerSec", debugName);
   _configParams.headTurnSpeed_degPerSec = ParseFloat(config, "headTurnSpeed_degPerSec", debugName);
@@ -141,7 +139,7 @@ void BehaviorLookInPlaceMemoryMap::LoadConfig(const Json::Value& config)
   {
     PRINT_NAMED_ERROR("BehaviorLookInPlaceMemoryMap.VisitSector",
     "[%s] Invalid animation trigger '%s'",
-    GetName().c_str(),
+    GetIDStr().c_str(),
     lookInPlaceAnimTriggerStr.c_str());
   }
   
@@ -151,7 +149,7 @@ void BehaviorLookInPlaceMemoryMap::LoadConfig(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorLookInPlaceMemoryMap::InitInternal(Robot& robot)
 {
-  // PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(), "Starting first iteration");
+  // PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
   
   // raul: there are several options here. After lengthy discussion with Andrew we decided simplifying was good, so
   // the best solutions we came up with were:
@@ -349,7 +347,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   _sectors[index] = needsVisit ? SectorStatus::Yes_NeedToVisit : SectorStatus::No_NeedToVisit;
   
   // log result
-  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Checked sector %d (at %.2fdeg from %.2f = abs %.2f) [%s]",
+  PRINT_CH_INFO("Behaviors", (GetIDStr()).c_str(), "Checked sector %d (at %.2fdeg from %.2f = abs %.2f) [%s]",
     index, relativeAngle_deg, _startingBodyFacing_rad.getDegrees(), centerAngle_deg,
     needsVisit ? "YES VISIT" : "NO VISIT" );
 
@@ -368,7 +366,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
   {
     // What should we do on failure? Should we bail? Currently we just pretend we visited the sector.
     // It's not the worst thing, unless we have actually become stuck, eval in the future
-    PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Done visiting sector %d (priority=%s)",
+    PRINT_CH_INFO("Behaviors", (GetIDStr()).c_str(), "Done visiting sector %d (priority=%s)",
       index, ( _visitedSectorCount < _configParams.prioritySectorCount ) ? "regular" : "low" ); // print priority before updating count
     
     // flag sector as finally visited
@@ -397,7 +395,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
   const float bodyTargetAngle_deg = _startingBodyFacing_rad.getDegrees() + relativeAngle_deg;
 
   // log visit
-  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Going to visit sector %d (at %.2fdeg from %.2f = abs %.2f)",
+  PRINT_CH_INFO("Behaviors", (GetIDStr()).c_str(), "Going to visit sector %d (at %.2fdeg from %.2f = abs %.2f)",
     index, relativeAngle_deg, _startingBodyFacing_rad.getDegrees(), bodyTargetAngle_deg );
   
   // create action and run
@@ -448,7 +446,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookInPlaceMemoryMap::FinishedAllSectorsAtLocation(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Finished all sectors without interruption. Flagging location");
+  PRINT_CH_INFO("Behaviors", (GetIDStr()).c_str(), "Finished all sectors without interruption. Flagging location");
   
   // if we completed the loop ourselves, flag this location so that we don't try again soon
   if ( _configParams.maxPreviousLocationCount > 0 )

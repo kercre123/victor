@@ -1,10 +1,6 @@
 {
   "behaviorClass": "CheckForStackAtInterval",
-  "name": "sparksCheckForStackAtInterval",
+  "behaviorID": "SparksCheckForStackAtInterval",
   "displayNameKey":"behavior.CheckForStackAtInterval",
-  "behaviorGroups": [
-    "SparksKnockOverCubes"
-  ],
-  "flatScore": 4.0,
   "delayBetweenChecks": 15.0
 }

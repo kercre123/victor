@@ -35,7 +35,7 @@ PublicStateBroadcaster::PublicStateBroadcaster()
   const bool isCubeInLift = false;
   _currentState.reset(new RobotPublicState(UnlockId::Count,
                                            isCubeInLift,
-                                           "",
+                                           ActivityID::Invalid,
                                            ReactionTrigger::NoneTrigger,
                                            empty));
 }
@@ -108,10 +108,10 @@ void PublicStateBroadcaster::Update(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void PublicStateBroadcaster::UpdateActivity(const std::string& aiGoalName)
+void PublicStateBroadcaster::UpdateActivity(ActivityID activityID)
 {
   // update internal struct with new AI Goal name and send it out.
-  _currentState->currentAiGoal = aiGoalName;
+  _currentState->currentActivity = activityID;
   SendUpdatedState();
 }
   

@@ -26,7 +26,13 @@ MonoBehaviour:
   _Music:
     _Music: 1317044071
   ChallengeConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
-  IsMinigame: 1
+  _ChallengeType: 0
+  _ActivityData:
+    ActivityPriority: 0
+    HideInActivityView: 0
+    ActivityTitleColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityFrameColor: {r: 0, g: 0, b: 0, a: 0}
+    ActivityIcon: {fileID: 0}
   InstructionVideoPath: Videos/QuickTap.mp4
   ChallengeVideoSubtitles: {fileID: 11400000, guid: de5036924b35d49a6963224e96ffadba,
     type: 2}
@@ -81,7 +87,13 @@ MonoBehaviour:
       _AssetDataName: SpeedTapHowToPlayExpertAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 387
+    _EnumValue: 397
   GetOutAnimTrigger:
     _EnumValueAsString: OnSpeedtapGetOut
-    _EnumValue: 210
+    _EnumValue: 217
+  _NeedsActionIdWin:
+    _EnumValueAsString: QuickTapWin
+    _EnumValue: 13
+  _NeedsActionIdLose:
+    _EnumValueAsString: QuickTapLose
+    _EnumValue: 14

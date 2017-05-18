@@ -12,7 +12,7 @@
 // See also:
 // https://developer.apple.com/library/prerelease/content/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/PlayingandSynthesizingSounds/PlayingandSynthesizingSounds.html
 
-var simpleWebAudioPlayer = function () {    
+var simpleWebAudioPlayer = function () {
     "use strict";
 
     var player = {},
@@ -27,7 +27,7 @@ var simpleWebAudioPlayer = function () {
     // typed array represents an array of 8-bit unsigned integers, and we are working with ASCII representation
     // of the data (which is also an 8-bit table)
     function _base64ToArrayBuffer(base64) {
-        // First we decode the base64 string (atob)        
+        // First we decode the base64 string (atob)
         var binary_string =  window.atob(base64);
 
         // Create new array of 8-bit unsigned integers with the same length as the decoded string
@@ -54,11 +54,11 @@ var simpleWebAudioPlayer = function () {
             }
         });
     };
-    
+
     player.play = function (name) {
         var inst = {};
-        
-        if (sounds[name]) { 
+
+        if (sounds[name]) {
             // Create a new source for this sound instance
 
             // Create an AudioBufferSourceNode to play audio data contained within an AudioBuffer object.
@@ -67,12 +67,12 @@ var simpleWebAudioPlayer = function () {
 
             // Connect the AudioBufferSourceNode to the destination so we can hear the sound
             inst.source.connect(masterGain);
-                        
+
             // Play the sound
             inst.source.start(0);
         }
     };
-    
+
     // Create audio context
     if (typeof AudioContext !== "undefined") {
         audioContext = new window.AudioContext();
@@ -88,3 +88,34 @@ var simpleWebAudioPlayer = function () {
 
     return player;
 };
+
+(function(){
+  "use strict";
+
+  var useWebAudioAPI = (function(){
+      var useWebAudioAPI = true;
+      var ua = navigator.userAgent;
+      if( ua.indexOf("Android") >= 0 ) {
+          // Web Audio API is on Android 5.0 and higher, not on Android 4.4 and lower.
+          var androidversion = parseFloat(ua.slice(ua.indexOf("Android")+8));
+          if (androidversion < 5.0)
+          {
+            return false;
+          }
+      }
+      else if ( ua.indexOf("iPhone OS 7") >= 0 ) {
+          // Turn sound off for Unity Editor WebView, otherwise webview content
+          // will fail to load, as apparently the Unity Editor WebView
+          // doesn't support the sound code in our simpleWebAudioPlayer.
+          return false;
+      }
+      return true;
+  })();
+
+  if (useWebAudioAPI) {
+      window.player = simpleWebAudioPlayer();
+      window.player.load({name: "click", src: click_wav});
+      window.player.load({name: "delete", src: delete_wav});
+  }
+})();
+

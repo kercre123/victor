@@ -61,7 +61,6 @@ namespace Anki {
     : IBehavior(robot, config)
     , _logger(nullptr, robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"))
     {
-      SetDefaultName("LiftLoadTest");
       
       SubscribeToTags({
         EngineToGameTag::RobotOffTreadsStateChanged

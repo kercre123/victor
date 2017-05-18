@@ -1,26 +1,6 @@
 {
   "behaviorClass": "DriveOffCharger",
-  "name": "DriveOffCharger",
+  "behaviorID": "DriveOffCharger",
   "displayNameKey":"behavior.DriveOffCharger",
-  "flatScore" : 1000.0,
-  "extraDistanceToDrive_mm": 60.0,
-  "behaviorGroups": [
-    "BuildPyramid",
-    "FP_NothingToDo",
-    "FP_PlayWithHumans",
-    "FP_PlayAlone",
-    "FP_PutDownDispatch",
-    "FP_Socialize",
-    "SetupBuildPyramid",
-    "SparksFistBump",
-    "SparksKnockOverCubes",
-    "SparksPeekABoo",
-    "SparksPickUpCube",
-    "SparksPopAWheelie",
-    "SparksPounceOnMotion",
-    "SparksRollBlock",
-    "SparksStackBlock",
-    "SparksWorkout",
-    "MeetCozmo_Socialize"
-  ]
+  "extraDistanceToDrive_mm": 60.0
 }

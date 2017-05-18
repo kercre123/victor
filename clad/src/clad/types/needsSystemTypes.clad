@@ -49,10 +49,37 @@ enum int_32 NeedsActionId
   FeedGreen,
 
   // Other actions (this will be a big and ever-growing list)
-  //PyramidCompleted,
-  // etc.
+  Play, // Generic prototypes
+  KeepAwayWin,
+  KeepAwayLose,
+  MemoryMatchWin,
+  MemoryMatchLose,
+  QuickTapWin,
+  QuickTapLose,
 
-  Play,
+  // Behaviors
+  CozmoSings,
+  DizzyHard,
+  DizzyMedium,
+  DizzySoft,
+  Fall,
+  FistBump,
+  GatherCubes,
+  GuardDogLose,
+  GuardDogWin,
+  HiccupsEndBad,
+  HiccupsEndGood,
+  KnockDownCubes,
+  PeekAboo,
+  PickupCube,
+  PopAWheelie,
+  Pounce,
+  PyramidCompleted,
+  RollACube,
+  SayName,
+  StackCube,
+  Workout,
+  SeeFace,
 
   Count
 }
@@ -71,15 +98,17 @@ enum int_32 NeedsRewardType
 structure NeedsReward
 {
   NeedsRewardType rewardType,
-  int_32          data
+  string          data
 }
 
 
-// Needs state stored on robot is different from state sent to game
-// NOTE:  Changing the format of this structure will be difficult.
-// Make sure to increment the version here, only add data to the
-// end of the structure, and add backwards-compatibility code as
-// needed.
+// Needs state stored on robot is different from state sent to game.
+// NOTE:  Changing the format of this structure is tricky.  Be sure to
+// increment the version constant in the code.  This version must be
+// the first field of this structure.  You must also add backwards-
+// compatibility code to read prior versions of this structure, and
+// prior versions of the structure need to remain defined here.
+
 structure NeedsStateOnRobot
 {
   int_32  version,
@@ -87,7 +116,26 @@ structure NeedsStateOnRobot
   int_32  curNeedLevel[10],   // MAX_NEEDS
   int_32  curNeedsUnlockLevel,
   int_32  numStarsAwarded,
+  bool    partIsDamaged[32],  // MAX_REPAIRABLE_PARTS
+  uint_64 timeLastStarAwarded
+}
+
+// Prior versions here:
+structure NeedsStateOnRobot_v01
+{
+  int_32  version,
+  uint_64 timeLastWritten,
+  int_32  curNeedLevel[10],   // MAX_NEEDS
+  int_32  curNeedsUnlockLevel,
+  int_32  numStarsAwarded,
   bool    partIsDamaged[32]   // MAX_REPAIRABLE_PARTS
+}
+
+// Final one will just repeat...
+structure UnlockLevel
+{
+  NeedsReward rewards[uint_8],
+  int_32      numStarsToUnlock,
 }
 
 } // namespace Cozmo

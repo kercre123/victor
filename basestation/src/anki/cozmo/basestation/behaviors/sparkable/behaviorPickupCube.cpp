@@ -44,8 +44,6 @@ static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("BehaviorPickUpCube");
-
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });
@@ -112,7 +110,7 @@ void BehaviorPickUpCube::UpdateTargetBlocksInternal(const Robot& robot) const
   _targetBlockID.UnSet();
   
   auto& objInfoCache = robot.GetAIComponent().GetObjectInteractionInfoCache();
-  const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpAnyObject;
+  const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   const ObjectID& possiblyBestObjID = objInfoCache.GetBestObjectForIntention(intent);
   
   if(_configurationsToIgnore.empty())
@@ -179,6 +177,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
   params.sayNameBeforePickup = !_shouldStreamline;
+  params.maxTurnTowardsFaceAngle_rad = _shouldStreamline ? 0 : M_PI_2;
   params.allowedToRetryFromDifferentPose = true;
   HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this, _targetBlockID, params);
   SmartDelegateToHelper(robot, pickupHelper, &BehaviorPickUpCube::TransitionToSuccessReaction);

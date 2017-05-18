@@ -60,7 +60,6 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
 , _ghostStackedObject(new Block_Cube1x1(ObjectType::Block_LIGHTCUBE_GHOST))
 , _shouldCheckBelowTarget(true)
 {
-  SetDefaultName("AcknowledgeObject");
   LoadConfig(config);
 
   // give the ghost object and ID so we can visualize it

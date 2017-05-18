@@ -98,50 +98,58 @@
     ]
   },
   "actionResultEmotionEvents": {
-    "DRIVE_TO_POSE": {      
-      "FAILURE_RETRY": "DrivingActionFailedWithRetry",
-      "FAILURE_ABORT": "DrivingActionFailedWithAbort"
+    "DRIVE_TO_POSE": {
+      "RETRY": "DrivingActionFailedWithRetry",
+      "ABORT": "DrivingActionFailedWithAbort"
     },
     "DRIVE_TO_OBJECT": {
-      "FAILURE_RETRY": "DrivingActionFailedWithRetry",
-      "FAILURE_ABORT": "DrivingActionFailedWithAbort"
+      "RETRY": "DrivingActionFailedWithRetry",
+      "ABORT": "DrivingActionFailedWithAbort"
+    },
+    "DRIVE_STRAIGHT": {
+      "RETRY": "DrivingActionFailedWithRetry",
+      "ABORT": "DrivingActionFailedWithAbort"
+    },
+    "DRIVE_TO_PLACE_CARRIED_OBJECT": {
+      "RETRY": "DrivingActionFailedWithRetry",
+      "ABORT": "DrivingActionFailedWithAbort"
     },
     "PICK_AND_PLACE_INCOMPLETE": {
       "SUCCESS": "PickupSucceeded", // NOTE: this really shouldn't happen
-      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
     "PICKUP_OBJECT_LOW": {
       "SUCCESS": "PickupSucceeded",
-      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
     "PICKUP_OBJECT_HIGH": {
       "SUCCESS": "PickupSucceeded",
-      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
     "PLACE_OBJECT_HIGH": {
       "SUCCESS": "StackSucceeded",
-      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
     "ROLL_OBJECT_LOW": {
-      "SUCCESS": "RollSucceeded",
-      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+      // No success anim here because the helper handles it manually
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
     "POP_A_WHEELIE": {
       "SUCCESS": "RollSucceeded",
-      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
     "FLIP_BLOCK": {
       "SUCCESS": "FlipBlockSucceeded"
     },
     "DRIVE_TO_FLIP_BLOCK_POSE": {
-      "FAILURE_RETRY": "DrivingActionFailedWithRetry",
-      "FAILURE_ABORT": "DrivingActionFailedWithAbort"
+      "RETRY": "DrivingActionFailedWithRetry",
+      "ABORT": "DrivingActionFailedWithAbort"
     }
   }
 }

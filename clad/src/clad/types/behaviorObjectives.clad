@@ -47,6 +47,7 @@ enum int_32 BehaviorObjective {
   ReactedToRobotShaken,
   ReactedToUnexpectedMovement,
   RequestedGame,
+  Singing,
   StackedBlock,
 
   // Count can specify "none" or "unspecified"

@@ -27,9 +27,7 @@ static const char* kConfigParamsKey = "params";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorThinkAboutBeacons::BehaviorThinkAboutBeacons(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("BehaviorThinkAboutBeacons");
-  
+{  
   // load parameters from json
   LoadConfig(config[kConfigParamsKey]);
 }
@@ -61,7 +59,7 @@ bool BehaviorThinkAboutBeacons::IsRunnableInternal(const BehaviorPreReqRobot& pr
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorThinkAboutBeacons::InitInternal(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(), "Selecting new beacon");
+  PRINT_CH_INFO("Behaviors", (std::string(GetIDStr()) + ".InitInternal").c_str(), "Selecting new beacon");
   
   // select new beacon
   SelectNewBeacon(robot);
@@ -82,7 +80,7 @@ Result BehaviorThinkAboutBeacons::InitInternal(Robot& robot)
 void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorThinkAboutBeacons.LoadConfig";
+  const std::string& debugName = std::string(GetIDStr()) + ".BehaviorThinkAboutBeacons.LoadConfig";
 
   _configParams.newAreaAnimTrigger = ParseString(config, "newAreaAnimTrigger", debugName);
   _configParams.beaconRadius_mm = ParseFloat(config, "beaconRadius_mm", debugName);

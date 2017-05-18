@@ -376,8 +376,6 @@ public class BehaviorEditor : EditorWindow {
 
     entry.RepetitionPenalty = EditorGUILayout.CurveField("Repetition Penalty", entry.RepetitionPenalty);
 
-    EditorDrawingUtility.DrawList("Behavior Groups", entry.BehaviorGroups, bg => (BehaviorGroup)EditorGUILayout.EnumPopup(bg), () => (BehaviorGroup)0);
-
     EditorGUILayout.EndVertical();
     return entry;
   }

@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
+#include "clad/types/activityTypes.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
@@ -46,10 +47,9 @@ namespace Cozmo {
   
 // Forward declaration
 class BehaviorFactory;
-class FreeplayActivity;
+class IActivity;
 class IBehavior;
 class IReactionTriggerStrategy;
-class IBehaviorChooser;
 class Robot;
 struct BehaviorRunningAndResumeInfo;
 struct TriggerBehaviorInfo;
@@ -105,7 +105,8 @@ public:
   ~BehaviorManager();
 
   // initialize this behavior manager from the given Json config
-  Result InitConfiguration(const Json::Value& config);
+  Result InitConfiguration(const Json::Value& activitiesConfig);
+  void LoadBehaviorsIntoFactory();
   Result InitReactionTriggerMap(const Json::Value& config);
   
   // create a behavior from the given config and add to the factory. Can fail if the configuration is not valid
@@ -139,9 +140,11 @@ public:
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
   Result Update(Robot& robot);
         
-  // Set the current IBehaviorChooser. Note this results in the destruction of the current IBehaviorChooser
+  // Set the current Activity. Note this results in the destruction of the current Activity
   // (if there is one) and the IBehaviors it contains
-  void SetBehaviorChooser(IBehaviorChooser* newChooser);
+  // ignorePreviousActivity is used during behaviorManager setup to indicate that there
+  // is no previous high level activity that needs to be stopped - aviods a crash
+  void SetCurrentActivity(HighLevelActivity newActivity, const bool ignorePreviousActivity = false);
   
   // returns last time we changed behavior chooser
   float GetLastBehaviorChooserSwitchTime() const { return _lastChooserSwitchTime; }
@@ -153,10 +156,11 @@ public:
   
   // returns nullptr if there is no current behavior
   const IBehavior* GetCurrentBehavior() const;
-  const IBehaviorChooser* GetBehaviorChooser() const { return _currentChooserPtr; }
   bool CurrentBehaviorTriggeredAsReaction() const;
   ReactionTrigger GetCurrentReactionTrigger() const;
-  
+
+  // returns true if the current activity is not null
+  std::shared_ptr<IActivity> GetCurrentActivity();
   
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
   
@@ -206,7 +210,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // calculates (and sets in the freeplay chooser) the desired activity due to objects recently seen
-  void CalculateFreeplayActivityFromObjects();
+  void CalculateActivityFreeplayFromObjects();
 
   // return the basestation time that freeplay first started (often useful as a notion of "session"). This
   // will be -1 until freeplay has started, and then will always be set to the time (in seconds) that freeplay
@@ -217,8 +221,8 @@ public:
   // Sparks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // Allows FreeplayActivity to know if it should kick out the current activity and transition into a spark
-  // FreeplayActivity only switches from non-sparked to sparked.  Otherwise the sparkBehaviorChooser will kill itself
+  // Allows ActivityFreeplay to know if it should kick out the current activity and transition into a spark
+  // ActivityFreeplay only switches from non-sparked to sparked.  Otherwise the sparkBehaviorChooser will kill itself
   bool ShouldSwitchToSpark() const { return _activeSpark == UnlockId::Count && _activeSpark != _lastRequestedSpark;}
   
   // Actually switches out the LastRequestedSpark from the game with the active spark
@@ -253,6 +257,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void InitializeEventHandlers();
   
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
@@ -316,8 +321,11 @@ private:
   // PLEASE DO NOT ACCESS OR ASSIGN TO DIRECTLY - use functions above
   std::unique_ptr<BehaviorRunningAndResumeInfo> _runningAndResumeInfo;
 
-  // current behavior chooser (weak_ptr pointing to one of the others)
-  IBehaviorChooser* _currentChooserPtr = nullptr;
+  // name of activity in _highLevelActivityMap which is currently active
+  HighLevelActivity _currentHighLevelActivity;
+  
+  // Maps activity types
+  std::map<HighLevelActivity, std::shared_ptr<IActivity>> _highLevelActivityMap;
   
   // - - - - - - - - - - - - - - -
   // factory & choosers
@@ -325,19 +333,6 @@ private:
   
   // Factory creates and tracks data-driven behaviors etc
   BehaviorFactory* _behaviorFactory = nullptr;
-    
-  // This is a chooser which manually runs specific behaviors. The manager starts out using this chooser to
-  // avoid immediately executing a behavior when the engine starts
-  IBehaviorChooser* _selectionChooser = nullptr;
-
-  // Behavior chooser for freeplay mode, it also includes games and sparks if needed
-  IBehaviorChooser* _freeplayChooser = nullptr;
-  
-  // behavior chooser for meet cozmo activity
-  IBehaviorChooser* _meetCozmoChooser = nullptr;
-  
-  // behavior chooser for voice commands
-  IBehaviorChooser* _voiceCommandChooser = nullptr;
   
   // map of reactionTriggers to the associated strategies/behaviors
   // that fire as reactions to events
@@ -364,7 +359,7 @@ private:
   bool _isSoftSpark = false;
   
   // holding variables to keep track of most recent spark messages from game
-  // until freeplayActivity switches out the active spark
+  // until ActivityFreeplay switches out the active spark
   UnlockId _lastRequestedSpark = UnlockId::Count;
   bool _isRequestedSparkSoft = false;
   bool _didGameRequestSparkEnd = false;
@@ -384,9 +379,6 @@ private:
   
   // Whether or not we need to handle an object being tapped in Update()
   bool _needToHandleObjectTapped = false;
-  
-  // List of all behaviors belonging to the tap interaction behavior group
-  std::list<IBehavior*> _tapInteractionBehaviors;
   
   std::vector<BehaviorStateLightInfo> _behaviorStateLights;
   BehaviorClass _behaviorThatSetLights;

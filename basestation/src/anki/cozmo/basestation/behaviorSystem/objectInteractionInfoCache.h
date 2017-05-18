@@ -35,9 +35,14 @@ class Robot;
 // intention of what to do with an object. Add things here to centralize logic for the best object to use
 enum class ObjectInteractionIntention {
   // any object which can be picked up
-  PickUpAnyObject = 0,
+  PickUpObjectNoAxisCheck = 0,
   // only pick up upright objects, unless rolling is locked (in which case, pick up any object)
-  PickUpObjectWithAxisCheck,
+  PickUpObjectAxisCheck,
+  
+  StackBottomObjectAxisCheck,
+  StackBottomObjectNoAxisCheck,
+  StackTopObjectAxisCheck,
+  StackTopObjectNoAxisCheck,
   
   RollObjectWithDelegateNoAxisCheck,
   RollObjectWithDelegateAxisCheck,
@@ -100,11 +105,17 @@ private:
   static const char* ObjectUseIntentionToString(ObjectInteractionIntention intention);
   
   // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll Interactions
-  bool CanPickupHelper(const ObservableObject* object) const;
-  bool CanPickupWithAxisHelper(const ObservableObject* object) const;
-  bool CanPopAWheelieHelper(const ObservableObject* object) const;
-  bool CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const;
-  bool CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const;
+  bool CanPickupNoAxisCheck(const ObservableObject* object) const;
+  bool CanPickupAxisCheck(const ObservableObject* object) const;
+  bool CanUseAsStackTopNoAxisCheck(const ObservableObject* object) const;
+  bool CanUseAsStackTopAxisCheck(const ObservableObject* object) const;
+  bool CanUseAsStackBottomNoAxisCheck(const ObservableObject* object);
+  bool CanUseAsStackBottomAxisCheck(const ObservableObject* object);
+  bool CanUseAsStackBottomHelper(const ObservableObject* object,
+                                 ObjectInteractionIntention intention);
+  bool CanUseForPopAWheelie(const ObservableObject* object) const;
+  bool CanRollObjectDelegateNoAxisCheck(const ObservableObject* object) const;
+  bool CanRollObjectDelegateAxisCheck(const ObservableObject* object) const;
   bool CanUseAsBuildPyramidBaseBlock(const ObservableObject* object) const;
   bool CanUseAsBuildPyramidStaticBlock(const ObservableObject* object);
   bool CanUseAsBuildPyramidTopBlock(const ObservableObject* object);

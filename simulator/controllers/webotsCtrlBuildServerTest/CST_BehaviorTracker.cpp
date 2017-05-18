@@ -35,8 +35,8 @@ public:
 
 private:
   struct BehaviorStateChange {
-    std::string oldBehaviorName = "";
-    std::string newBehaviorName = "";
+    BehaviorID oldBehaviorID = BehaviorID::NoneBehavior;
+    BehaviorID newBehaviorID = BehaviorID::NoneBehavior;
     float elapsedTime = 0.f;
   };
   
@@ -48,13 +48,12 @@ private:
   //Tracking Data
   time_t _startTime;
   
-  std::vector<std::string> _freeplayBehaviorList;
+  std::vector<BehaviorID> _freeplayBehaviorList;
   TestState _testState = TestState::StartUpFreeplayMode;
   std::vector<BehaviorStateChange> _stateChangeList;
   
   // Message handlers
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg) override;
-  virtual void HandleEnabledBehaviorList(const ExternalInterface::RespondEnabledBehaviorList& msg) override;
 };
 
 // Register class with factory
@@ -78,17 +77,13 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       TakeScreenshotsAtInterval("BehaviorTracker", 1.f);
 
       //Send message to start Cozmo in freeplay mode
-      ExternalInterface::ActivateBehaviorChooser behavior;
-      behavior.behaviorChooserType = BehaviorChooserType::Freeplay;
+      ExternalInterface::ActivateHighLevelActivity highLevelActivityMsg;
+      highLevelActivityMsg.activityType = HighLevelActivity::Freeplay;
 
       ExternalInterface::MessageGameToEngine message;
-      message.Set_ActivateBehaviorChooser(behavior);
+      message.Set_ActivateHighLevelActivity(highLevelActivityMsg);
 
       SendMessage(message);
-      
-      //Request the list of freeplay bahivors from the behavior chooser class
-      //this will be stored to ensure cozmo enters all freeplay behavior types
-      SendRequestEnabledBehaviorList();
 
       _testState = TestState::FreePlay;
       break;
@@ -103,8 +98,8 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       if(totalElapsed > kFreeplayLengthSeconds){
         //Final state
         BehaviorStateChange change;
-        change.newBehaviorName = "END";
-        change.oldBehaviorName = _stateChangeList.back().newBehaviorName;
+        change.newBehaviorID = BehaviorID::NoneBehavior;
+        change.oldBehaviorID = _stateChangeList.back().newBehaviorID;
         change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);
         
@@ -116,10 +111,10 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
     {
       
       //Print info for graphs
-      std::map<std::string, float> timeMap;
-      std::map<std::string, int> countMap;
-      std::map<std::string, int>::iterator countMapIter;
-      std::map<std::string, float>::iterator timeMapIter;
+      std::map<BehaviorID, float> timeMap;
+      std::map<BehaviorID, int> countMap;
+      std::map<BehaviorID, int>::iterator countMapIter;
+      std::map<BehaviorID, float>::iterator timeMapIter;
       std::vector<BehaviorStateChange>::iterator stateChangeIter;
       float fullTime = 0.f;
       float timeDiff = 0.f;
@@ -140,20 +135,20 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
           fullTime = elapsedTime;
           
           //time per behavior increment
-          timeMapIter = timeMap.find(prev->newBehaviorName);
+          timeMapIter = timeMap.find(prev->newBehaviorID);
           
           if(timeMapIter != timeMap.end()){
             timeMapIter->second += timeDiff;
           }else{
-            timeMap.insert(std::make_pair(prev->newBehaviorName, timeDiff));
+            timeMap.insert(std::make_pair(prev->newBehaviorID, timeDiff));
           }
           
           //count encountered increment
-          countMapIter = countMap.find(prev->newBehaviorName);
+          countMapIter = countMap.find(prev->newBehaviorID);
           if(countMapIter != countMap.end()){
             countMapIter->second += 1;
           }else{
-            countMap.insert(std::make_pair(prev->newBehaviorName, 1));
+            countMap.insert(std::make_pair(prev->newBehaviorID, 1));
           }
           
         }
@@ -173,11 +168,11 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       }**/
       
       for(timeMapIter = timeMap.begin(); timeMapIter != timeMap.end(); ++timeMapIter){
-        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%f']", "wbtsBehavior_", timeMapIter->first.c_str(), timeMapIter->second);
+        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%f']", "wbtsBehavior_", BehaviorIDToString(timeMapIter->first), timeMapIter->second);
       }
       
       for(countMapIter = countMap.begin(); countMapIter != countMap.end(); ++countMapIter){
-        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%d']", "wbtsBehavior_count_", countMapIter->first.c_str(), countMapIter->second);
+        PRINT_NAMED_INFO("Webots.BehaviorTracker.TestData", "##teamcity[buildStatisticValue key='%s%s' value='%d']", "wbtsBehavior_count_", BehaviorIDToString(countMapIter->first), countMapIter->second);
       }
       
       
@@ -195,18 +190,13 @@ void CST_BehaviorTracker::HandleBehaviorTransition(const ExternalInterface::Beha
   time_t currentTime;
   time(&currentTime);
   BehaviorStateChange change;
-  change.newBehaviorName = msg.newBehaviorName;
-  change.oldBehaviorName = msg.oldBehaviorName;
+  change.newBehaviorID = msg.newBehaviorID;
+  change.oldBehaviorID = msg.oldBehaviorID;
   change.elapsedTime = difftime(currentTime, _startTime);
   
   _stateChangeList.push_back(change);
 }
 
-void CST_BehaviorTracker::HandleEnabledBehaviorList(const ExternalInterface::RespondEnabledBehaviorList& msg)
-{
-  //what is persistence of clad?  copy or reference?
-  _freeplayBehaviorList = msg.behaviors;
-}
 
 // ================ End of message handler callbacks ==================
   

@@ -26,7 +26,6 @@ private:
   friend class BehaviorFactory;
   BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
   {
-    SetDefaultName("NoneBehavior");
     SetExecutableType(ExecutableBehaviorType::NoneBehavior);
   }
   

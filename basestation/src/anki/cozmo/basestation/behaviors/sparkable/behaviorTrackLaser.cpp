@@ -57,16 +57,17 @@ BehaviorTrackLaser::BehaviorTrackLaser(Robot& robot, const Json::Value& config)
 , _cumulativeTurn_rad(0)
 , _lastTimeRotate(0.0f)
 {
-  SetDefaultName("TrackLaser");
-
-  SubscribeToTags({EngineToGameTag::RobotObservedLaserPoint});
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedLaserPoint,
+    EngineToGameTag::RobotProcessedImage
+  }});
 
   SetParamsFromConfig(config);
 
   SET_STATE(Inactive);
   
   _lastLaserObservation.type         = LaserObservation::Type::None;
-  _lastLaserObservation.timestamp_ms = 0;
+  _lastLaserObservation.timestamp_ms      = 0;
   _lastLaserObservation.timestamp_prev_ms = 0;
 }
 
@@ -84,6 +85,7 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
   SET_FLOAT_HELPER(darkenedExposure_ms);
   SET_FLOAT_HELPER(darkenedGain);
   SET_FLOAT_HELPER(numImagesToWaitForExposureChange);
+  SET_FLOAT_HELPER(imageMeanFractionForExposureChange);
   
   SET_FLOAT_HELPER(maxTimeToConfirm_ms);
   SET_FLOAT_HELPER(searchAmplitude_deg);
@@ -188,13 +190,18 @@ void BehaviorTrackLaser::InitHelper(Robot& robot)
   _originalCameraSettings.exposureTime_ms = robot.GetVisionComponent().GetCurrentCameraExposureTime_ms();
   _originalCameraSettings.gain = robot.GetVisionComponent().GetCurrentCameraGain();
   
-  const bool kUseDefaultsForUnspecified = false; // disable all vision except laser point detection
-  AllVisionModesSchedule schedule({{VisionMode::DetectingLaserPoints, VisionModeSchedule(true)}}, kUseDefaultsForUnspecified);
+  // disable all vision except what's needed laser point detection and confirmation
+  const bool kUseDefaultsForUnspecified = false;
+  AllVisionModesSchedule schedule({
+    {VisionMode::DetectingLaserPoints, VisionModeSchedule(true)},
+    {VisionMode::ComputingStatistics,  VisionModeSchedule(true)},
+  }, kUseDefaultsForUnspecified);
   robot.GetVisionComponent().PushNextModeSchedule(std::move(schedule));
   robot.GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
   robot.GetVisionComponent().EnableColorImages(true);
   
   _exposureChangedTime_ms = 0;
+  _imageMean = -1;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -207,6 +214,23 @@ IBehavior::Status BehaviorTrackLaser::UpdateInternal(Robot& robot)
       return Status::Complete;
     }
   
+    case State::WaitingForExposureChange:
+    {
+      if(_exposureChangedTime_ms == 0)
+      {
+        // Still waiting.
+        break;
+      }
+      
+      // We observed the mean change in a RobotProcessedImage message, so go ahead and
+      // transition to WaitingForLaser. Immediately fall through to the case below
+      // to avoid waiting a tick to check if we also saw a confirmed laser in the same image.
+      StopActing(false); // Stop the WaitForImages action
+      TransitionToWaitForLaser(robot);
+      
+      // NOTE: Deliberate fallthrough!!
+    }
+      
     case State::WaitingForLaser:
     {
       if(LaserObservation::Type::Confirmed == _lastLaserObservation.type)
@@ -434,6 +458,11 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(Robot& robot)
     // Once this is true, observed lasers will be considered "confirmed".
     _exposureChangedTime_ms = robot.GetLastImageTimeStamp();
     TransitionToWaitForLaser(robot);
+    
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToWaitForExposureChange.AssumingChanged",
+                   "%d images have passed. Assuming exposure change has taken effect at t=%dms",
+                   (s32)_params.numImagesToWaitForExposureChange,
+                   _exposureChangedTime_ms);
   });
 }
 
@@ -590,6 +619,58 @@ void BehaviorTrackLaser::AlwaysHandle(const EngineToGameEvent& event, const Robo
       break;
     }
       
+    case MessageEngineToGameTag::RobotProcessedImage:
+    {
+      // If we see the image mean drop significantly while waiting for the exposure change,
+      // assume the change has happened so we can more immediately confirm a possible laser
+      // and start tracking.
+      const bool exposureChangeAlreadyObserved = (_exposureChangedTime_ms > 0);
+      if(State::WaitingForExposureChange == _state && !exposureChangeAlreadyObserved)
+      {
+        auto const& robotProcessedImage = event.GetData().Get_RobotProcessedImage();
+        
+        auto visionModeIter = robotProcessedImage.visionModes.begin();
+        while(visionModeIter != robotProcessedImage.visionModes.end())
+        {
+          if(VisionMode::ComputingStatistics == (*visionModeIter))
+          {
+            const u8 crntImgMean = robotProcessedImage.mean;
+            
+            PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.AlwaysHandle.ImageMean",
+                           "Waiting for exposure change. Current mean: %d", crntImgMean);
+            
+            if(_imageMean < 0)
+            {
+              _imageMean = Util::numeric_cast<s16>(crntImgMean);
+            }
+            else if(crntImgMean < Util::numeric_cast<u8>((f32)_imageMean * _params.imageMeanFractionForExposureChange))
+            {
+              PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.AlwaysHandle.ObservedExposureChange",
+                             "Image mean dropped from %d to %d. Assuming exposure changed at t=%dms.",
+                             _imageMean, crntImgMean, robotProcessedImage.timestamp);
+              
+              _exposureChangedTime_ms = robotProcessedImage.timestamp;
+              
+              // RobotProcessedImage messages come _after_ RobotObservedLaserPoint messages from that image.
+              // Check to see if we saw a (possible) laser in this image and if so, mark it as confirmed, now
+              // that we know the exposure had already dropped.
+              if(_lastLaserObservation.timestamp_ms == _exposureChangedTime_ms)
+              {
+                _lastLaserObservation.type = LaserObservation::Type::Confirmed;
+                _haveEverConfirmedLaser |= true;
+              }
+            }
+            
+            break;
+          }
+          
+          ++visionModeIter;
+        }
+        
+      }
+      break;
+    }
+ 
     default: {
       PRINT_NAMED_ERROR("BehaviorTrackLaser.AlwaysHandle.InvalidEvent",
                         "%s", MessageEngineToGameTagToString(tag));

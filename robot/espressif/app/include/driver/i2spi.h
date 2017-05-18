@@ -90,6 +90,10 @@ int16_t i2spiGetAudioBufferAvailable(void);
  */
 void i2spiBufferAudio(uint8_t* buffer, const int16_t length);
 
+/** Set the app connected flag in outgoing drops
+ */
+void i2spiSetAppConnected(const bool connected);
+
 typedef enum
 {
   I2SPI_SYNC = 0,

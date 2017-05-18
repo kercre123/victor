@@ -1,6 +1,6 @@
 {
   "behaviorClass": "AcknowledgeObject",
-  "name": "AcknowledgeObject",
+  "behaviorID": "AcknowledgeObject",
   "displayNameKey":"behavior.AcknowledgeObject",
   "ReactionAnimGroup": "AcknowledgeObject",
   "NumImagesToWaitFor": 2

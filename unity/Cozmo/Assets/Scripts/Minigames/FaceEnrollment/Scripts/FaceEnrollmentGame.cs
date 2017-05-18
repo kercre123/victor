@@ -78,7 +78,7 @@ namespace FaceEnrollment {
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
 
-      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.MeetCozmoFindFaces);
+      RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.MeetCozmoFindFaces);
 
       // if we have no faces enrolled let's skip the face list UI and go directly to enroll a new face
       // with the default profile name pre-populated.

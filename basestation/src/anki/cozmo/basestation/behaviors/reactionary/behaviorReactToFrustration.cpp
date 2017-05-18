@@ -48,7 +48,6 @@ static const char* kRandomDriveMaxAngleKey_deg = "randomDriveMaxAngle_deg";
 BehaviorReactToFrustration::BehaviorReactToFrustration(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToFrustration");
   LoadJson(config);
 }
 

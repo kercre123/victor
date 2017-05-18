@@ -16,22 +16,10 @@
 
 
 #include "clad/types/animationTrigger.h"
-#include "util/enums/enumOperators.h"
 #include "json/json-forwards.h"
 
 
 namespace Anki {
-namespace Cozmo {
-
-  
-DECLARE_ENUM_INCREMENT_OPERATORS(AnimationTrigger);
-
-AnimationTrigger AnimationTriggerFromString(const char* inString, bool assertOnInvalidEnum = true);
-  
-bool IsAnimationTrigger(const char* inString);
-
-
-} // namespace Cozmo
   
 namespace JsonTools
 {

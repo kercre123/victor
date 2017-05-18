@@ -36,7 +36,8 @@
 
     // if there is a slide number in the URL hash, load that slide
     if (window.location.hash) {
-      Slides.showSlideNum(parseInt(window.location.hash.substring(1), 10), true);
+      var slideNum = parseInt(window.location.hash.substring(1), 10) || 1;
+      Slides.showSlideNum(slideNum, true);
     }
   }
 

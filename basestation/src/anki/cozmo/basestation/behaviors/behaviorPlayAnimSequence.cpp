@@ -29,8 +29,6 @@ BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(Robot& robot, const Json::Val
 , _numLoops(0)
 , _sequenceLoopsDone(0)
 {
-  SetDefaultName("PlayAnimSequence");
-
   // load anim triggers
   for (const auto& trigger : config[kAnimTriggerKey])
   {
@@ -44,7 +42,7 @@ BehaviorPlayAnimSequence::BehaviorPlayAnimSequence(Robot& robot, const Json::Val
   }
   // make sure we loaded at least one trigger
   DEV_ASSERT_MSG(!triggerRequired || !_animTriggers.empty(), "BehaviorPlayAnimSequence.NoTriggers",
-                 "Behavior '%s'", GetName().c_str());
+                 "Behavior '%s'", GetIDStr().c_str());
  
   // load loop count
   _numLoops = config.get(kLoopsKey, 1).asInt();

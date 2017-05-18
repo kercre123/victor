@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/graphEvaluator/graphEvaluator2d.h" // For json; todo find a better way to get it
+#include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
 #include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
 #include <chrono>
@@ -50,7 +51,7 @@ public:
   explicit NeedsManager(Robot& inRobot);
   ~NeedsManager();
   
-  void Init(const Json::Value& inJson);
+  void Init(const Json::Value& inJson, const Json::Value& inStarsJson);
   void InitAfterConnection();
   
   void Update(const float currentTime_s);
@@ -67,6 +68,13 @@ public:
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
+  
+#if ANKI_DEV_CHEATS
+  void DebugFillNeedMeters();
+  void DebugGiveStar();
+  void DebugCompleteDay();
+  void DebugResetNeeds();
+#endif
 
 private:
 
@@ -79,7 +87,7 @@ private:
 
   static inline const std::string GetNurtureFolder() { return "nurture/"; }
 
-  void PossiblyStartWriteToRobot(NeedsState& needsState);
+  void PossiblyStartWriteToRobot(NeedsState& needsState, bool ignoreCooldown = false);
   void StartWriteToRobot(const NeedsState& needsState);
   void FinishWriteToRobot(NVStorage::NVResult res, const Time startTime);
   bool StartReadFromRobot();
@@ -87,16 +95,23 @@ private:
 
   void InitAfterReadFromRobotAttempt();
 
+private:
+  
+  void UpdateStarsState();
+
   void SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate);
   void SendNeedsPauseStateToGame();
   void SendNeedsPauseStatesToGame();
-  void SendAllNeedsMetToGame();
+  void SendStarLevelCompletedToGame();
+  void SendSingleStarAddedToGame();
   
   Robot&      _robot;
 
   NeedsState  _needsState;
   NeedsConfig _needsConfig;
   NeedsState  _needsStateFromRobot;
+  
+  std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
 
   Time        _timeLastWrittenToRobot;
   bool        _robotHadValidNeedsData;

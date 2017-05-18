@@ -28,9 +28,7 @@ const constexpr float kTimeBetweenReactions_s = 100.f;
   
 BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("ReactToStackOfCubes");
-  
+{  
 }
   
 bool BehaviorReactToStackOfCubes::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const

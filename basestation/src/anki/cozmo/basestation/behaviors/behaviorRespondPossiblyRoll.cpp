@@ -49,9 +49,7 @@ using namespace ExternalInterface;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRespondPossiblyRoll::BehaviorRespondPossiblyRoll(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("RespondPossiblyRoll");
-  
+{  
   // Listen for up-axis changes to update response scenarios
   auto upAxisChangedCallback = [this](const EngineToGameEvent& event) {
     _upAxisChangedIDs.insert(std::make_pair(

@@ -53,7 +53,6 @@ BehaviorReactToPet::BehaviorReactToPet(Robot& robot, const Json::Value& config)
   : super(robot, config)
 {
   PRINT_TRACE("ReactToPet.Constructor", "Constructor");
-  SetDefaultName("ReactToPet");
 }
 
 

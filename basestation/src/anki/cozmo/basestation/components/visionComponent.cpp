@@ -108,16 +108,7 @@ namespace Cozmo {
   , _vizManager(context->GetVizManager())
   , _camera(robot.GetID())
   {
-    std::string dataPath("");
-    if(context->GetDataPlatform() != nullptr) {
-      dataPath = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                            Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
-    } else {
-      PRINT_NAMED_WARNING("VisionComponent.Constructor.NullDataPlatform",
-                          "Instantiating VisionSystem with no context and/or data platform.");
-    }
-    
-    _visionSystem = new VisionSystem(dataPath, _vizManager);
+    _visionSystem = new VisionSystem(_context);
     
     // Set up event handlers
     if(nullptr != context && nullptr != context->GetExternalInterface())
@@ -915,7 +906,19 @@ namespace Cozmo {
         }
         
         // Send the processed image message last
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp, std::move(visionModesList))));
+        {
+          using namespace ExternalInterface;
+          
+          u8 imageMean = 0;
+          if(result.modesProcessed.IsBitFlagSet(VisionMode::ComputingStatistics))
+          {
+            imageMean = result.imageMean;
+          }
+          
+          _robot.Broadcast(MessageEngineToGame(RobotProcessedImage(result.timestamp,
+                                                                   std::move(visionModesList),
+                                                                   imageMean)));
+        }
       }
     }
     
@@ -1839,7 +1842,7 @@ namespace Cozmo {
     {
       Vision::ImageRGB debugDisp(image);
       for(s32 iDot=0; iDot<4; ++iDot) {
-        debugDisp.DrawPoint(Point2f(msg.dotCenX_pix[iDot], msg.dotCenY_pix[iDot]), NamedColors::RED, 3);
+        debugDisp.DrawCircle(Point2f(msg.dotCenX_pix[iDot], msg.dotCenY_pix[iDot]), NamedColors::RED, 3);
         
         Rectangle<f32> roiRect(kExpectedDotCenters_pix[iDot].x()-kSearchSize_pix/2,
                                kExpectedDotCenters_pix[iDot].y()-kSearchSize_pix/2,

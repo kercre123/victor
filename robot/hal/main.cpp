@@ -130,6 +130,7 @@ int main (void)
   SOURCE_SETUP(BODY_UART_TX, SourceGPIO | SourcePullDown);
 
   UART::DebugInit();
+  UART::DebugPutc('\xAA');  
   Watchdog::init();
   Power::enableExternal();
   Watchdog::kickAll();

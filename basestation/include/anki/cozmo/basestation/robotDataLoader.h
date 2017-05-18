@@ -13,6 +13,10 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
+
+#include "clad/types/activityTypes.h"
+#include "clad/types/behaviorTypes.h"
+
 #include "util/helpers/noncopyable.h"
 #include <json/json.h>
 #include <atomic>
@@ -61,10 +65,13 @@ public:
   void LoadFaceAnimations();
   void LoadRobotConfigs();
 
-  using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
-  const FileJsonMap& GetEmotionEventJsons() const { return _emotionEvents; }
-  const FileJsonMap& GetBehaviorJsons() const { return _behaviors; }
-  const FileJsonMap& GetActivityJsons() const { return _activities; }
+  using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
+  using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
+  using ActivityIDJsonMap = std::unordered_map<ActivityID,  const Json::Value>;
+
+  const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
+  const BehaviorIDJsonMap& GetBehaviorJsons() const { return _behaviors; }
+  const ActivityIDJsonMap& GetActivityJsons() const { return _activities; }
   
   CannedAnimationContainer* GetCannedAnimations() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
@@ -80,7 +87,8 @@ public:
   const Json::Value& GetRobotVisionConfig() const   { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const  { return _reactionTriggerMap; }
   const Json::Value& GetVoiceCommandConfig() const  { return _voiceCommandConfig; }
-  const Json::Value& GetRobotNeedsConfig() const { return _needsSystemConfig; }
+  const Json::Value& GetRobotNeedsConfig() const    { return _needsSystemConfig; }
+  const Json::Value& GetStarRewardsConfig() const   { return _starRewardsConfig; }
 
   bool IsCustomAnimLoadEnabled() const;
   
@@ -117,8 +125,8 @@ private:
   const Util::Data::DataPlatform* _platform;
 
   FileJsonMap _emotionEvents;
-  FileJsonMap _behaviors;
-  FileJsonMap _activities;
+  BehaviorIDJsonMap _behaviors;
+  ActivityIDJsonMap _activities;
 
   enum FileType {
       Animation,
@@ -150,6 +158,7 @@ private:
   Json::Value _robotWorkoutConfig;
   Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;
+  Json::Value _starRewardsConfig;
   
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;

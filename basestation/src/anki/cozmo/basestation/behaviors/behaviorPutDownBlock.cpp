@@ -80,7 +80,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 {
   // Disable double tap so we don't try to turn to a tapped object while in the middle of putting the block
   // down
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersPutDownBlockArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPutDownBlockArray);
 
   // Choose where to put the block down
   // TODO: Make this smarter and find a place away from other known objects
@@ -115,6 +115,8 @@ void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
               });
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bool doLookAtFaceAfter)
 {
   CompoundActionSequential* action = new CompoundActionSequential(robot);

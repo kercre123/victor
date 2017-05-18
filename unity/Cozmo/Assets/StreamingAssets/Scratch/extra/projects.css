@@ -48,17 +48,24 @@ button:focus {
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
-  height: 15vh;
-  padding-left: 1.5vw;
+  height: 11vh;
+  padding: 0 1.5vw;
+  margin-bottom: 1vh;
+  margin-top: 3vh;
+  line-height: 7vh;
 }
-#projects .hd #app-title {font-weight: bold; text-transform: uppercase; font-size: 7vh; padding: .1em .3em 0 0;}
-#projects .hd #app-title-subtext {color: #707173; font-size: 3.5vh;}
+#projects .hd #app-title {
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 7vh;
+  padding: 0 .3em 0 0;
+}
 #projects .hd #scratch-watermark {height: 50%; margin-right: 3vw;}
-#projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 1.5vh; width: 10vh;}
+#projects .hd #btn-close-page {margin: 0 auto 0 0; padding: 2vh 1.5vh 1.5vh 1.5vh; width: 10vh;}
 #projects .hd #btn-close-page img {width: 100%; height: 100%;}
 
 
-#projects .bd {height: 70vh; padding: 5vh 0 0 0;}
+#projects .bd {height: 72vh; padding: 3vh 0 0 0;}
 #projects #projects-list {
   height: 100%; list-style-type: none; padding: 0 0 9vh 7vw; margin: 0; text-align: left;
   overflow-x: scroll; overflow-y: hidden; white-space: nowrap;
@@ -179,15 +186,10 @@ button:focus {
   bottom: 0;
   width: 100%;
   height: 15vh;
-  padding: 0 3vw;
+  padding: 0 3vw 2.5vh 3vw;
   text-align: right;
   background-color: #575a5b;
   border-top: 1px solid #989899;
-}
-
-#projects .ft #tutorial-icon {
-  width: 7vh;
-  margin-left: .9em;
 }
 
 #tutorial-link {
@@ -198,23 +200,52 @@ button:focus {
   text-decoration: none;
   font-weight: bold;
   text-transform: uppercase;
-  font-size: 4vh;
   padding-top: .1em;
   height: 100%;
   color: #1fadda;
 }
 
+#tutorial-link #tutorial-label {
+  display: inline-block;
+  font-size: 5vh;
+  margin-top: .2em;
+}
+
+#tutorial-link #tutorial-icon {
+  width: 7vh;
+  height: 7vh;
+  margin-left: .9em;
+}
+
+
 
 .button-plain {border: 0; background-color: transparent;}
-.button-blue-pill {
+.button-pill {
   border: 0;
-  background-image: linear-gradient(to bottom, #7bc2ea, #598fd4);
   border-radius: 5px;
   color: #fff;
   padding: .7em 2em .5em 2em;
   margin: 0 1em;
   text-transform: uppercase;
+  border: 2px solid #fefefc;
 }
+.button-pill:active {
+  opacity: 1;
+}
+.button-blue-pill {
+  background-image: linear-gradient(to bottom, #3cbfe4, #2a9ad4);
+}
+.button-blue-pill:active {
+  background-image: linear-gradient(to bottom, #2c8da8, #1d6d93);
+}
+.button-red-pill {
+  background-image: linear-gradient(to bottom, #c73719, #ed5023);
+}
+.button-red-pill:active {
+  background-image: linear-gradient(to bottom, #c74921, #9d2d13);
+}
+
+
 
 
 
@@ -230,13 +261,16 @@ button:focus {
 }
 #delete-project-modal .modal-inner {
   position: relative;
-  background-color: #fff; opacity: 1; text-align: center;
+  background-image: linear-gradient(to bottom, #dfdfdf, #cfcfcf);
+  opacity: 1;
+  text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-content: center;
   padding: 1em 1em 1.5em 1em;
   border-radius: 10px;
+  border: 1px solid #2baacf;
 }
 #delete-project-modal #confirm-delete-title {
   margin: .5em;
@@ -250,15 +284,6 @@ button:focus {
 #delete-project-modal .ft button {
   font-family: 'Avenir Next';
 }
-#btn-cancel-delete-project {
-  background-image: linear-gradient(to bottom, #da6b30, #bc4613);
-}
-
-
-
-
-
-
 
 
 

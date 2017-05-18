@@ -49,9 +49,24 @@ public class AnkiInfiniteScrollView : MonoBehaviour {
           scrollTextCell.text = longString.Substring(subStringStartIndex, remainingCharacters);
         }
         else {
-          // Avoid breaking in the middle of a word
+          // Grab as much text as we can
           int subStringLength = _kCharactersPerString;
-          while (!char.IsWhiteSpace(longString[subStringStartIndex + subStringLength - 1]) && (subStringLength > 0)) {
+
+          // Back up until we find whitespace, to avoid breaking in the middle of a word
+          while (subStringLength > 0) {
+            char c = longString[subStringStartIndex + subStringLength - 1];
+            if (char.IsWhiteSpace(c)) {
+              break;
+            }
+            subStringLength--;
+          }
+
+          // Keep backing up until we find end-of-line or non-whitespace, to preserve leading indentation
+          while (subStringLength > 0) {
+            char c = longString[subStringStartIndex + subStringLength - 1];
+            if (c == '\n' || !char.IsWhiteSpace(c)) {
+              break;
+            }
             subStringLength--;
           }
 

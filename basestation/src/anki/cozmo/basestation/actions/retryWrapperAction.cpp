@@ -34,7 +34,7 @@ namespace Cozmo {
   {
     if(action == nullptr)
     {
-      PRINT_NAMED_WARNING("RetryWrapperAction.Constructor", "Null action passed to constructor");
+      PRINT_NAMED_WARNING("RetryWrapperAction.Constructor.NullArg_0", "");
       return;
     }
     
@@ -56,7 +56,7 @@ namespace Cozmo {
   {
     if(action == nullptr)
     {
-      PRINT_NAMED_WARNING("RetryWrapperAction.Constructor", "Null action passed to constructor");
+      PRINT_NAMED_WARNING("RetryWrapperAction.Constructor.NullArg_1", "");
       return;
     }
     
@@ -156,8 +156,8 @@ namespace Cozmo {
         // things that would be reset by reset (ie action's state)
         _subAction->Reset(true);
         
-        PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone", "Calling retry callback");
-        AnimationTrigger animTrigger;
+        PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.CallingRetryCallback", "");
+        AnimationTrigger animTrigger = AnimationTrigger::Count;
         bool shouldRetry = _retryCallback(robotCompletedAction, _retryCount, animTrigger);
         
         // If the action shouldn't retry return whatever its update returned
@@ -174,9 +174,8 @@ namespace Cozmo {
                             "RetryCallback returned AnimationTrigger::Count so not playing animation");
           if(_retryCount++ >= _numRetries)
           {
-            PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone",
-                             "Reached max num retries returning failure");
-            return ActionResult::REACHED_MAX_NUM_RETRIES;
+            PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone.MaxRetriesReached","");
+            return res;
           }
           return ActionResult::RUNNING;
         }
@@ -199,7 +198,7 @@ namespace Cozmo {
       ActionResult res = _animationAction->Update();
       if(res != ActionResult::RUNNING)
       {
-        PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone", "Retry animation finished");
+        PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.RetryAnimFinished", "");
         _animationAction->PrepForCompletion();
         _animationAction.reset();
         
@@ -207,16 +206,15 @@ namespace Cozmo {
         // this action ends when the animation does
         if(_retryCount++ >= _numRetries)
         {
-          PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone",
-                           "Reached max num retries returning failure");
-          return ActionResult::REACHED_MAX_NUM_RETRIES;
+          PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone.MaxAnimRetriesReached","");
+          return res;
         }
       }
       return ActionResult::RUNNING;
     }
     
     // Should not be possible to get here
-    PRINT_NAMED_WARNING("RetryWrapperAction.CheckIfDone", "Reached supposedly unreachable code");
+    PRINT_NAMED_WARNING("RetryWrapperAction.CheckIfDone.ReachedUnreachableCode", "");
     return ActionResult::ABORT;
   }
   

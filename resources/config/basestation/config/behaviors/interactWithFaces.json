@@ -1,12 +1,8 @@
+// chosen directly by chooser
 {
   "behaviorClass": "InteractWithFaces",
-  "name": "interactWithFaces",
+  "behaviorID": "InteractWithFaces",
   "displayNameKey":"behavior.InteractWithFaces",
-  "behaviorGroups": [
-    "FP_Socialize"
-  ],
-
-  "flatScore": 0.0, // chosen directly by chooser
 
   "params": {
     "minTimeToTrackFace_s": 8.0,

@@ -117,7 +117,6 @@ namespace Anki {
     , _cubePlacementPose(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin())
     , _logger(nullptr, robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
     {
-      SetDefaultName("DockingTestSimple");
       
       _motionProfile = PathMotionProfile();
       _motionProfile.isCustom = true;

@@ -68,6 +68,20 @@ bool checkInternetAvailable()
   return (responseData && !error);
 }
 
+void tryExecuteBackgroundTransfers()
+{
+  // check for internet connectivity
+  // the internet has all kinds of terrible looking advice for how to do this, I chose to refer to apple's documentation here:
+  // https://developer.apple.com/library/ios/documentation/NetworkingInternetWeb/Conceptual/NetworkingOverview/WhyNetworkingIsHard/WhyNetworkingIsHard.html#//apple_ref/doc/uid/TP40010220-CH13-SW3
+  if (checkInternetAvailable()) {
+    NSLog(@"CozmoAppController.BackgroundFetch: executing transfers");
+    cozmo_execute_background_transfers();
+  }
+  else {
+    NSLog(@"CozmoAppController.BackgroundFetch: no internet");
+  }
+}
+
 @implementation CozmoAppController
 
 - (id)init
@@ -88,6 +102,11 @@ bool checkInternetAvailable()
   [super application:application didFinishLaunchingWithOptions:launchOptions];
   
   [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
+  
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+    [NSThread sleepForTimeInterval:2.0f];
+    tryExecuteBackgroundTransfers();
+  });
   
   REMOTE_CONSOLE_ENABLED_ONLY( Anki::Util::kDemoMode = false );
   
@@ -141,16 +160,7 @@ bool checkInternetAvailable()
 // This handles the fetch when the OS says we should do one. Needs to call the passed in completionHandler with the appropriate result
 -(void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler{
   
-  // check for internet connectivity
-  // the internet has all kinds of terrible looking advice for how to do this, I chose to refer to apple's documentation here:
-  // https://developer.apple.com/library/ios/documentation/NetworkingInternetWeb/Conceptual/NetworkingOverview/WhyNetworkingIsHard/WhyNetworkingIsHard.html#//apple_ref/doc/uid/TP40010220-CH13-SW3
-  if (checkInternetAvailable()) {
-    NSLog(@"CozmoAppController.BackgroundFetch: executing transfers");
-    cozmo_execute_background_transfers();
-  }
-  else {
-    NSLog(@"CozmoAppController.BackgroundFetch: no internet");
-  }
+  tryExecuteBackgroundTransfers();
   
   // We always report that there's new data so that the OS will allow us to run as often as possible
   completionHandler(UIBackgroundFetchResultNewData);

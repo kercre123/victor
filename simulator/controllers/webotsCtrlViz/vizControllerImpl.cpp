@@ -875,13 +875,13 @@ void VizControllerImpl::PreUpdateBehaviorDisplay()
     }
   }
   
-  _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
+  _behaviorEventBuffer.push_back(std::vector<BehaviorID>()); // empty entry, expanded in other message
 }
 
   
-VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(const std::string& inName)
+VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(BehaviorID behaviorID)
 {
-  BehaviorScoreBufferMap::iterator it = _behaviorScoreBuffers.find(inName);
+  BehaviorScoreBufferMap::iterator it = _behaviorScoreBuffers.find(behaviorID);
   if (it != _behaviorScoreBuffers.end())
   {
     return it->second;
@@ -889,7 +889,9 @@ VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(
   
   // Not found - add one and return that
   
-  it = _behaviorScoreBuffers.insert(BehaviorScoreBufferMap::value_type(inName, BehaviorScoreBuffer(kBehaviorBuffersCapacity))).first;
+  it = _behaviorScoreBuffers.insert(BehaviorScoreBufferMap::value_type(
+                                       behaviorID,
+                                       BehaviorScoreBuffer(kBehaviorBuffersCapacity))).first;
   return it->second;
 }
 
@@ -905,12 +907,8 @@ void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<Viz
   
   if (_behaviorEventBuffer.size() > 0)
   {
-    std::vector<std::string>& latestEvents =_behaviorEventBuffer.back();
-    
-    if (!selectData.newCurrentBehavior.empty())
-    {
-      latestEvents.push_back(selectData.newCurrentBehavior);
-    }
+    std::vector<BehaviorID>& latestEvents =_behaviorEventBuffer.back();
+    latestEvents.push_back(selectData.newCurrentBehavior);
   }
 }
 
@@ -927,9 +925,9 @@ void VizControllerImpl::ProcessVizNewReactionTriggeredMessage(const AnkiEvent<Vi
   {
     std::vector<std::string>& latestEvents = _reactionEventBuffer.back();
     
-    if (!selectData.newReactionTriggered.empty())
+    if (!selectData.reactionStrategyTriggered.empty())
     {
-      latestEvents.push_back(selectData.newReactionTriggered);
+      latestEvents.push_back(selectData.reactionStrategyTriggered);
     }
   }
 }
@@ -948,7 +946,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   
   for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
   {
-    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.name);
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.behaviorID);
     if (!scoreBuffer.empty())
     {
       // Remove the dummy entry we added during preUpdate
@@ -972,7 +970,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
   struct NamedScoreBuffer
   {
     BehaviorScoreBuffer*  _scoreBuffer;
-    const char*           _name;
+    BehaviorID            _id;
     uint32_t              _color;
   };
   
@@ -989,7 +987,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
       
       maxBufferValues = MAX(maxBufferValues, behaviorScoreBuffer.size());
       activeScoreBuffers.push_back({&behaviorScoreBuffer,
-                                    kv.first.c_str(),
+                                    kv.first,
                                     ColorRGBA::CreateFromColorIndex(colorIndex).As0RGB()});
       ++colorIndex;
     }
@@ -1052,16 +1050,16 @@ void VizControllerImpl::DrawBehaviorDisplay()
     size_t bufferSize = std::min( maxBufferValues, _behaviorEventBuffer.size());
     for (size_t j=0; j < bufferSize; ++j)
     {
-      const std::vector<std::string>& eventsThisTick = _behaviorEventBuffer[j];
+      const std::vector<BehaviorID>& eventsThisTick = _behaviorEventBuffer[j];
       
       if (eventsThisTick.size() > 0)
       {
         const int xVal = (int)(xValF);
         
-        for (const std::string& eventText : eventsThisTick)
+        for (BehaviorID eventID : eventsThisTick)
         {
           _behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
-          _behaviorDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
+          _behaviorDisp->drawText(BehaviorIDToString(eventID), xVal, eventY + kTextOffsetY);
           
           eventY += kTextSpacingY;
           if (eventY > kBottomTextY)
@@ -1153,7 +1151,7 @@ void VizControllerImpl::DrawBehaviorDisplay()
       
       char valueString[32];
       snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
-      std::string text = std::string(valueString) + namedScoreBuffer._name;
+      std::string text = std::string(valueString) + BehaviorIDToString(namedScoreBuffer._id);
       
       _behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
     }

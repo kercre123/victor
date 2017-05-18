@@ -66,6 +66,8 @@ static inline bool ProcessDrop(void) {
       I2C::FeedFace(drop->droplet & screenRectData, drop->screenData);
     }
 
+    RadioUpdateState((drop->droplet & appConnected) ? true : false);
+
     uint8_t *payload_data = (uint8_t*) drop->payload;
     if (drop->payloadLen)
     {

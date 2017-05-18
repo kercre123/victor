@@ -66,7 +66,6 @@ BehaviorBuildPyramidBase::BehaviorBuildPyramidBase(Robot& robot, const Json::Val
 , _checkForFullPyramidVisualVerifyFailure(false)
 , _robot(robot)
 {
-  SetDefaultName("BuildPyramidBase");
   
 }
 

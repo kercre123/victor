@@ -1,13 +1,7 @@
 {
   "behaviorClass": "FindFaces",
-  "name": "meetCozmo_findFaces_socialize",
+  "behaviorID": "MeetCozmo_FindFaces_Socialize",
   "displayNameKey":"behavior.LookingForFaces",
-
-  "behaviorGroups": [
-    "MeetCozmo_Socialize"
-  ],
-
-  "flatScore": 0.5,
   
   "maxFaceAgeToLook_ms": 10000,
 

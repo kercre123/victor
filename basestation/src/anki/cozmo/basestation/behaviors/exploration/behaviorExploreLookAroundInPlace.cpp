@@ -49,7 +49,6 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
 , _s4HeadMovesRolled(0)
 , _s4HeadMovesLeft(0)
 {
-  SetDefaultName("BehaviorExploreLookAroundInPlace");
 
   SubscribeToTags({
     EngineToGameTag::RobotOffTreadsStateChanged
@@ -109,7 +108,7 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const BehaviorPreReqRo
 void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
-  const std::string& debugName = GetName() + ".BehaviorExploreLookAroundInPlace.LoadConfig";
+  const std::string& debugName = GetIDStr() + ".BehaviorExploreLookAroundInPlace.LoadConfig";
 
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
   _configParams.behavior_CanCarryCube = ParseBool(config, "behavior_CanCarryCube", debugName);
@@ -170,7 +169,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(), "Starting first iteration");
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".InitInternal").c_str(), "Starting first iteration");
   
   // grab run values
   _behaviorBodyFacingDone_rad = 0;
@@ -361,7 +360,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
   // this is the lambda that will run after the wait action finishes
   auto runAfterPause = [this, &robot, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
   {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".S4.AfterPause").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4.AfterPause").c_str(),
       "Previous action finished with code [%s]. Creating HeadTurnAction:",
       EnumToString(actionRet.result)
     );
@@ -395,7 +394,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
     pauseAction = new WaitAction( robot, waitTime_sec );
   }
   
-  PRINT_CH_INFO("Behaviors", (GetName() + ".S4.StartingPauseAnimAction").c_str(), "Triggering %s",
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".S4.StartingPauseAnimAction").c_str(), "Triggering %s",
     (trigger != AnimationTrigger::Count) ? animGroupName.c_str() : "pause" );
   
   // request action with transition to proper state
@@ -472,7 +471,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
     {
       // we did reach a side, note it down
       ++_coneSidesReached; // can overflow in infinite loops, but should not be an issue
-      PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Reached cone side %d", _coneSidesReached);
+      PRINT_CH_INFO("Behaviors", (GetIDStr() + ".IterationEnd").c_str(), "Reached cone side %d", _coneSidesReached);
       
       // bounce if we are asked infinite scans or if we have not reached the desired number
       const bool bounce = (_configParams.behavior_NumberOfScansBeforeStop == 0) ||
@@ -488,7 +487,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   }
   else
   {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".IterationEnd").c_str(),
       "Done %.2f deg so far",
       fabsf(RAD_TO_DEG(_behaviorBodyFacingDone_rad)));
     
@@ -501,12 +500,12 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   // act depending on whether we have to do another iteration or not
   if ( startAnotherIteration )
   {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Starting another iteration");
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".IterationEnd").c_str(), "Starting another iteration");
     TransitionToS1_OppositeTurn(robot);
   }
   else
   {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Done (reached max iterations)");
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".IterationEnd").c_str(), "Done (reached max iterations)");
 
     if( _configParams.behavior_RecentLocationsMax > 0 ) {
       // we have finished at this location, note down as recent location (make room if necessary)
@@ -589,7 +588,7 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
   turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
   turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
-  PRINT_CH_INFO("Behaviors", (GetName() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, BSpeed %.2f, HSpeed %.2f",
+  PRINT_CH_INFO("Behaviors", (GetIDStr() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, BSpeed %.2f, HSpeed %.2f",
     bodyTargetAngleAbs_rad.getDegrees(),
     headTargetAngleAbs_rad.getDegrees(),
     bodyTurnSpeed_degPerSec,

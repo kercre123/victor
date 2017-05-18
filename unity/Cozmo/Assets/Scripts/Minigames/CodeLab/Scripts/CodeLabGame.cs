@@ -50,6 +50,9 @@ namespace CodeLab {
 
     private int _PendingResetToHomeActions = 0;
     private bool _HasQueuedResetToHomePose = false;
+    private bool _RequiresResetToNeutralFace = false;
+
+    private uint _ChallengeBookmark = 1;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
     private const float kFastDriveSpeed_mmps = 200.0f;
@@ -97,7 +100,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (robot != null) {
         robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel all current actions
         robot.PopDrivingAnimations();
-        robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabExit);
         _SessionState.EndSession();
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
@@ -270,7 +272,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
       }
 
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, null, queuePos);
+      // Only wait for the neutral face animation if already waiting for something, or there's definitely a face animation to clear
+      if ((_PendingResetToHomeActions > 0) || _RequiresResetToNeutralFace) {
+        _RequiresResetToNeutralFace = false;
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.OnResetToHomeCompleted, queuePos);
+        ++_PendingResetToHomeActions;
+      }
 
       if (_PendingResetToHomeActions > 0) {
         DAS.Info("CodeLab.ResetRobotToHomePos.Started", _PendingResetToHomeActions + " Pending Actions");
@@ -306,6 +313,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       DAS.Info("Codelab.OnStopAll", "");
 
       _SessionState.OnStopAll();
+
+      // Release any remaining in-progress scratch blocks (otherwise any waiting on observation will stay alive)
+      InProgressScratchBlockPool.ReleaseAllInUse();
 
       _queuedScratchRequests.Clear();
 
@@ -353,6 +363,21 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       // Call jsCallback with list of serialized Code Lab user projects and sample projects
       _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
+    }
+
+    private void OnSetChallengeBookmark(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnSetChallengeBookmark", "");
+      _SessionState.OnChallengesSetSlideNumber(scratchRequest.argUInt);
+      _ChallengeBookmark = scratchRequest.argUInt;
+    }
+
+    private void OnGetChallengeBookmark(ScratchRequest scratchRequest) {
+      DAS.Info("Codelab.OnGetChallengeBookmark", "");
+
+      // Provide js with current challenge bookmark location
+      string jsCallback = scratchRequest.argString;
+
+      _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + _ChallengeBookmark + "');");
     }
 
     private void OnCozmoSaveUserProject(ScratchRequest scratchRequest) {
@@ -424,6 +449,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       case "getCozmoUserAndSampleProjectLists":
         OnGetCozmoUserAndSampleProjectLists(scratchRequest);
         return true;
+      case "cozmoSetChallengeBookmark":
+        OnSetChallengeBookmark(scratchRequest);
+        return true;
+      case "cozmoGetChallengeBookmark":
+        OnGetChallengeBookmark(scratchRequest);
+        return true;
       case "cozmoSaveUserProject":
         OnCozmoSaveUserProject(scratchRequest);
         return true;
@@ -448,6 +479,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       case "cozmoCloseCodeLab":
         DAS.Info("Codelab.cozmoCloseCodeLab", "");
         RaiseChallengeQuit();
+        return true;
+      case "cozmoChallengesOpen":
+        _SessionState.OnChallengesOpen();
+        return true;
+      case "cozmoChallengesClose":
+        _SessionState.OnChallengesClose();
         return true;
       default:
         return false;
@@ -521,6 +558,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         bool wasMystery = (scratchRequest.argUInt != 0);
         _SessionState.ScratchBlockEvent(scratchRequest.command + (wasMystery ? "Mystery" : ""), DASUtil.FormatExtraData(scratchRequest.argString));
         RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(animationTrigger, inProgressScratchBlock.NeutralFaceThenAdvanceToNextBlock);
+        _RequiresResetToNeutralFace = true;
       }
       else if (scratchRequest.command == "cozmoTurnLeft") {
         // Turn 90 degrees to the left

@@ -87,8 +87,8 @@ Blockly.longStart_ = function(e, uiObject) {
     Blockly.Tooltip.onMouseMove_(e);
   }, Blockly.LONGPRESS);
 
-  // Start 5 timer to dismiss tooltip
-  var clearTooltipMillis = 5000;
+  // Start 3 timer to dismiss tooltip
+  var clearTooltipMillis = 3000;
   Blockly.clearTooltipPid_ = setTimeout(function() {
     Blockly.Tooltip.hide();
   }, clearTooltipMillis);

@@ -12,7 +12,6 @@
 
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 
 // Behaviors:
 #include "../behaviors/dispatch/behaviorLookForFaceAndCube.h"
@@ -43,6 +42,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondToRenameFace.h"
+#include "anki/cozmo/basestation/behaviors/behaviorSinging.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
@@ -81,6 +81,7 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorTrackLaser.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -91,8 +92,14 @@ static const char* kBehaviorClassKey = "behaviorClass";
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorFactory::BehaviorFactory()
+BehaviorFactory::BehaviorFactory(Robot& robot)
+: _robot(robot)
 {
+  if(robot.HasExternalInterface()) {
+    auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAllBehaviorsList>();
+  }
 }
 
 
@@ -101,7 +108,7 @@ BehaviorFactory::~BehaviorFactory()
 {
   // Delete all behaviors owned by the factory
   
-  for (auto& it : _nameToBehaviorMap)
+  for (auto& it : _idToBehaviorMap)
   {
     IBehavior* behavior = it.second;
     // we delete rather than destroy to avoid invalidating the map - it's emptied at the end anyway
@@ -109,7 +116,7 @@ BehaviorFactory::~BehaviorFactory()
     DeleteBehaviorInternal(behavior);
   }
     
-  _nameToBehaviorMap.clear();
+  _idToBehaviorMap.clear();
 }
 
 
@@ -120,15 +127,10 @@ IBehavior* BehaviorFactory::CreateBehavior(const Json::Value& behaviorJson, Robo
   
   const Json::Value& behaviorTypeJson = behaviorJson[kBehaviorClassKey];
   const char* behaviorTypeString = behaviorTypeJson.isString() ? behaviorTypeJson.asCString() : "";
-  
-  // Check to see if it's a scored behavior type
   const BehaviorClass behaviorClass = BehaviorClassFromString(behaviorTypeString);
-  
-  if (behaviorClass != BehaviorClass::Count)
-  {
-    IBehavior* newBehavior = CreateBehavior(behaviorClass, robot, behaviorJson, nameCollisionRule);
-    return newBehavior;
-  }
+
+  IBehavior* newBehavior = CreateBehavior(behaviorClass, robot, behaviorJson, nameCollisionRule);
+  return newBehavior;
   
   return nullptr;
 }
@@ -361,6 +363,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorPyramidThankYou(robot, config);
       break;
     }
+    case BehaviorClass::Singing:
+    {
+      newBehavior = new BehaviorSinging(robot, config);
+      break;
+    }
     case BehaviorClass::TrackLaser:
     {
       newBehavior = new BehaviorTrackLaser(robot, config);
@@ -476,11 +483,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorReactToVoiceCommand(robot, config);
       break;
     }
-    case BehaviorClass::Count:
-    {
-      PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));
-      break;
-    }
   }
   
   
@@ -507,14 +509,15 @@ IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRu
   assert(!newBehavior->_isOwnedByFactory);
   newBehavior->_isOwnedByFactory = true;
   
-  const std::string& newBehaviorName = newBehavior->GetName();
-  auto newEntry = _nameToBehaviorMap.insert( NameToBehaviorMap::value_type(newBehaviorName, newBehavior) );
+  BehaviorID behaviorID = newBehavior->GetID();
+  auto newEntry = _idToBehaviorMap.insert( BehaviorIDToBehaviorMap::value_type(behaviorID, newBehavior) );
   
   const bool addedNewEntry = newEntry.second;
 
   if (addedNewEntry)
   {
-    PRINT_NAMED_INFO("BehaviorFactory::AddToFactory", "Added new behavior '%s' %p", newBehaviorName.c_str(), newBehavior);
+    PRINT_NAMED_INFO("BehaviorFactory::AddToFactory", "Added new behavior '%s' %p",
+                     BehaviorIDToString(behaviorID), newBehavior);
   }
   else
   {
@@ -526,7 +529,8 @@ IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRu
       case NameCollisionRule::ReuseOld:
       {
         PRINT_NAMED_INFO("BehaviorFactory.AddToFactory.ReuseOld",
-                         "Behavior '%s' already exists (%p) - reusing!", newBehaviorName.c_str(), oldBehavior);
+                         "Behavior '%s' already exists (%p) - reusing!",
+                         BehaviorIDToString(behaviorID), oldBehavior);
         
         // use DeleteBehaviorInternal instead of Destroy - we never added newBehavior to the map
         DeleteBehaviorInternal(newBehavior);
@@ -536,7 +540,8 @@ IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRu
       case NameCollisionRule::OverwriteWithNew:
       {
         PRINT_NAMED_INFO("BehaviorFactory.AddToFactory.Overwrite",
-                         "Behavior '%s' already exists (%p) - overwriting with %p", newBehaviorName.c_str(), oldBehavior, newBehavior);
+                         "Behavior '%s' already exists (%p) - overwriting with %p",
+                         BehaviorIDToString(behaviorID), oldBehavior, newBehavior);
         
         // use DeleteBehaviorInternal instead of Destroy - we are replacing oldBehavior's map entry
         DeleteBehaviorInternal(oldBehavior);
@@ -546,7 +551,8 @@ IBehavior* BehaviorFactory::AddToFactory(IBehavior* newBehavior, NameCollisionRu
       case NameCollisionRule::Fail:
       {
         PRINT_NAMED_ERROR("BehaviorFactory.AddToFactory.NameClashFail",
-                          "Behavior '%s' already exists (%p) - fail!", newBehaviorName.c_str(), oldBehavior);
+                          "Behavior '%s' already exists (%p) - fail!",
+                          BehaviorIDToString(behaviorID), oldBehavior);
         
         // use DeleteBehaviorInternal instead of Destroy - we never added newBehavior to the map
         DeleteBehaviorInternal(newBehavior);
@@ -591,14 +597,14 @@ void BehaviorFactory::DeleteBehaviorInternal(IBehavior* behavior)
 bool BehaviorFactory::RemoveBehaviorFromMap(IBehavior* behavior)
 {
   // check the scored behavior map
-  const auto& scoredIt = _nameToBehaviorMap.find(behavior->GetName());
-  if (scoredIt != _nameToBehaviorMap.end())
+  const auto& scoredIt = _idToBehaviorMap.find(behavior->GetID());
+  if (scoredIt != _idToBehaviorMap.end())
   {
     // check it's the same pointer
     IBehavior* existingBehavior = scoredIt->second;
     if (existingBehavior == behavior)
     {
-      _nameToBehaviorMap.erase(scoredIt);
+      _idToBehaviorMap.erase(scoredIt);
       return true;
     }
   }
@@ -608,12 +614,12 @@ bool BehaviorFactory::RemoveBehaviorFromMap(IBehavior* behavior)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName) const
+IBehavior* BehaviorFactory::FindBehaviorByID(BehaviorID behaviorID) const
 {
   IBehavior* foundBehavior = nullptr;
-  
-  auto scoredIt = _nameToBehaviorMap.find(inName);
-  if (scoredIt != _nameToBehaviorMap.end())
+
+  auto scoredIt = _idToBehaviorMap.find(behaviorID);
+  if (scoredIt != _idToBehaviorMap.end())
   {
     foundBehavior = scoredIt->second;
     return foundBehavior;
@@ -626,7 +632,7 @@ IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType type) const
 {
-  for(const auto behavior : _nameToBehaviorMap)
+  for(const auto behavior : _idToBehaviorMap)
   {
     if(behavior.second->GetExecutableType() == type)
     {
@@ -635,6 +641,20 @@ IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType 
   }
   
   return nullptr;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void BehaviorFactory::HandleMessage(const ExternalInterface::RequestAllBehaviorsList& msg)
+{
+  std::vector<BehaviorID> behaviorList;
+  for(const auto& entry : GetBehaviorMap()){
+    behaviorList.push_back(entry.first);
+  }
+  
+  ExternalInterface::RespondAllBehaviorsList message(std::move(behaviorList));
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
   

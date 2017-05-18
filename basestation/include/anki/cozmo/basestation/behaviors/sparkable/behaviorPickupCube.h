@@ -53,7 +53,7 @@ protected:
   
   virtual std::set<ObjectInteractionIntention>
         GetBehaviorObjectInteractionIntentions() const override {
-           return {ObjectInteractionIntention::PickUpAnyObject};
+           return {ObjectInteractionIntention::PickUpObjectNoAxisCheck};
         }
   
 private:

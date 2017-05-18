@@ -17,6 +17,11 @@
 
     // activate CSS for taps by registering a touchstart event
     document.addEventListener("touchstart", function(){}, true);
+
+    // prevent elastic scrolling on the page that reveals whitespace and bounces back
+    document.addEventListener('touchmove', function(event){
+      event.preventDefault();
+    });
   }
 
 
@@ -32,6 +37,8 @@
     if (!typeElem) return;
     var type = typeElem.getAttribute('data-type');
 
+    var playClickSound = true;
+
     switch(type) {
       case 'btn-next':
         Slides.next();
@@ -40,20 +47,60 @@
         Slides.back();
         break;
       case 'btn-done':
+        playClickSound = false;  // prevents two click sounds: one for done button, and one for close button
         handleBtnDone();
         break;
+      case 'btn-close':
+        playClickSound = false;  // click sound is made in handleBtnClose
+        handleBtnClose(typeElem, event);
+        break;
 
-      // no default
+      default:
+        playClickSound = false;
+        break;
+    }
+
+    if (playClickSound && window.player) {
+      window.player.play('click');
     }
 
     event.preventDefault();  // prevent double taps to zoom
   }
 
+  /**
+   * Plays sound before closing the dialog
+   * @param {HTMLElement} elem - close button element (assuming <a> (anchor) tag)
+   * @returns {void}
+   */
+  function handleBtnClose(elem) {
+    // if sound player is present, play a click sound before closing
+    if (window.player) {
+      window.player.play('click');
+    }
+
+    // to ensure the sound has time to play before navigating, intercept the
+    //  anchor navigation and wait until after the sound plays to change pages
+
+    // prevent the anchor tag from navigating to the next page until there is enough time for sound to play
+    event.preventDefault();
+
+    // save the URL of the anchor tag and navigate there after sound should finish playing
+    var url = elem.getAttribute('href');
+    setTimeout(function(){
+      // navigate to anchor tag's url after sound finishes
+      window.location.href = url;
+    }, 50);
+  }
+
+  /**
+   * "Done" button click handler.  Finds the close button element and clicks it.
+   * @returns void
+   */
   function handleBtnDone() {
     // if the modal has an element with class 'btn-close', click it.
     var closeLink = document.querySelector('.modal-slides .btn-close');
     if (closeLink) {
-      closeLink.click();  // click the close button to close the dialog
+      handleBtnClose(closeLink);
     }
   }
 
@@ -86,6 +133,7 @@
     var btnBack;
     var btnDone;
     var numSlides;
+    var isChallenges;
 
     /**
      * Initilizes slideshow
@@ -98,13 +146,13 @@
       slides = strip.querySelectorAll('.slide');
       btnNext = modal.querySelector('#btn-next');
       btnBack = modal.querySelector('#btn-back');
+      isChallenges = modal.getAttribute('id') === 'challenges-modal';
       btnDone = modal.querySelector('#btn-done');
 
       // cache values
       if (slides.length) {
         numSlides = slides.length;
       }
-      strip.style.left = 0; // allows transition animation to second page
 
       // set the slide count text and disable the back button
       _updateDisplay();
@@ -154,8 +202,14 @@
       if (!slide) { return; } // exit if slide does not exist
 
       if (noAnimation) disableAnimation();
-      strip.style.left = -slide.offsetLeft + 'px';
-      if (noAnimation) enableAnimation();
+      strip.style.webkitTransform = 'translate3d(-' + slide.offsetLeft + 'px, 0, 0)';
+
+      if (noAnimation) {
+        // restore page transition animations after this thread exits
+        setTimeout(function(){
+          enableAnimation();
+        }, 0);
+      }
 
       _updateDisplay();
     }
@@ -181,7 +235,11 @@
      * @param {Number}
      */
     function _getCurrentSlideNum() {
-      var left = parseInt(strip.style.left, 10) || 0;
+      // parse xyz int values out of string 'translate3d(0,0,0)'
+      var parsedXYZ = strip.style.webkitTransform.replace('translate3d(','').replace(')','').split(',');
+
+      var left = parseInt(parsedXYZ[0], 10) || 0;
+
       var slideWidth = strip.offsetWidth;
       var slideNum = Math.round(-left / slideWidth) + 1;
 
@@ -202,6 +260,13 @@
 
       var slideNum = _getCurrentSlideNum();
 
+      // for challenges, save the slide page number in Unity to possibly reopen to later
+      if (isChallenges) {
+        // Save the current challenge page last viewed.
+        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSetChallengeBookmark','argUInt': '" + slideNum + "'}");
+      }
+
+      // set the progress text
       setText('.progress', $t('{0} of {1}', slideNum, slides.length));
 
       // disable back button on first slide

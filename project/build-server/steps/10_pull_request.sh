@@ -40,7 +40,7 @@ if [ "$BRANCH_NAME" != "refs/heads/master" ]; then
   # github appears to call the create(asynchronous) for */head & */merge at the same time.
   # So a margin of error needs to be added.
   # Typically there is a 200~300 milisecond delta.
-  let TIME_AND_MARGIN_OF_ERROR=$PR_TIME-600
+  let TIME_AND_MARGIN_OF_ERROR=$PR_TIME-1000
 
   while [ "$MR_BRANCH_TIME" -lt "$TIME_AND_MARGIN_OF_ERROR" ]; do
     echo "Github merge branch is stale. Assume MERGE CONFLICTS" 1>&2

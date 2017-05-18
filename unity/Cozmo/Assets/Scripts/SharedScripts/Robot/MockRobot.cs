@@ -587,15 +587,15 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type) {
+  public void ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType type, int numTimesToExecute = -1) {
     // Do nothing
   }
 
-  public void ExecuteBehaviorByName(string behaviorName) {
+  public void ExecuteBehaviorByID(BehaviorID behaviorID, int numTimesToExecute = -1) {
     // Do nothing
   }
 
-  public void SetEnableFreeplayBehaviorChooser(bool enable) {
+  public void SetEnableFreeplayActivity(bool enable) {
     // Do nothing
   }
 
@@ -603,11 +603,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void RequestChooserBehaviorList(Anki.Cozmo.BehaviorChooserType behaviorChooserType) {
+  public void RequestAllBehaviorsList() {
     // Do nothing
   }
 
-  public void ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType behaviorChooserType) {
+  public void ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity activityType) {
     // Do nothing
   }
 
@@ -922,7 +922,7 @@ public class MockRobot : IRobot {
   public ReactionTrigger CurrentReactionTrigger { get; set; }
 
 
-  public string CurrentBehaviorName { get; set; }
+  public BehaviorID CurrentBehaviorID { get; set; }
 
   public string CurrentDebugAnimationString {
     get;

@@ -36,7 +36,7 @@ public class TagConfig : ScriptableObject {
 
 #if UNITY_EDITOR
 
-  public static string kTagConfigLocation = "Assets/AssetBundles/GameMetadata-Bundle/TagListConfig.asset";
+  public static string kTagConfigLocation = "Assets/AssetBundles/Shared/GameMetadata-Bundle/TagListConfig.asset";
 
 #endif
 }

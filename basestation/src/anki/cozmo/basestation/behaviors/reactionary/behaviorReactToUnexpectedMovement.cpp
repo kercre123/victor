@@ -22,9 +22,7 @@ namespace Cozmo {
   
 BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("ReactToUnexpectedMovement");
-  
+{  
   SubscribeToTags({
     EngineToGameTag::UnexpectedMovement
   });

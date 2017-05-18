@@ -16,7 +16,6 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -57,7 +56,7 @@ void ProgressionUnlockComponent::Init()
         continue;
       }
       
-      UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
+      UnlockId uid = UnlockIdFromString(unlockIdJson.asString());
       _freeplayOverrides.insert(uid);
 
       PRINT_CH_INFO("UnlockComponent", "ProgressionUnlockComponent.Override",
@@ -119,7 +118,7 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
           continue;
         }
         
-        UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
+        UnlockId uid = UnlockIdFromString(unlockIdJson.asString());
         _defaultUnlocks.insert(uid);
         
         PRINT_CH_INFO("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",

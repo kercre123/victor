@@ -1,30 +1,34 @@
 #include "anki/cozmo/robot/cozmoBot.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/robot/hal.h" // simulated or real!
-#include "clad/types/imageTypes.h"
-#include "timeProfiler.h"
-#include "messages.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "liftController.h"
-#include "headController.h"
-#include "imuFilter.h"
-#include "proxSensors.h"
-#include "speedController.h"
-#include "steeringController.h"
-#include "wheelController.h"
-#include "localization.h"
-#include "pickAndPlaceController.h"
-#include "dockingController.h"
-#include "pathFollower.h"
-#include "testModeController.h"
+#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #ifndef TARGET_K02
 #include "animationController.h"
 #endif
+#include "dockingController.h"
+#include "liftController.h"
+#include "localization.h"
+#include "headController.h"
+#include "imuFilter.h"
+#include "messages.h"
+#include "pathFollower.h"
+#include "pickAndPlaceController.h"
+#include "proxSensors.h"
+#include "speedController.h"
+#include "steeringController.h"
+#include "testModeController.h"
+#include "timeProfiler.h"
+#include "wheelController.h"
 
 #ifdef SIMULATOR
 #include "anki/common/shared/utilities_shared.h"
+#include "clad/types/imageTypes.h"
 #include "blockLightController.h"
 #endif
 
@@ -36,13 +40,6 @@
 #endif // COZMO_V2
 #endif // SIMULATOR
 
-///////// TESTING //////////
-
-#if ANKICORETECH_EMBEDDED_USE_MATLAB && USING_MATLAB_VISION
-#include "anki/embeddedCommon/matlabConverters.h"
-#endif
-
-///////// END TESTING //////
 
 namespace Anki {
   namespace Cozmo {
@@ -219,6 +216,15 @@ namespace Anki {
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
           #ifndef COZMO_V2
           HAL::CameraSetColorEnabled(false);
+          #ifndef SIMULATOR
+          HAL::SetImageSendMode(Off, QVGA);
+          Messages::ResetMissedLogCount();
+          // Put body into bluetooth mode when the engine is connected
+          SetBodyRadioMode bMsg;
+          bMsg.wifiChannel = 0;
+          bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
+          while (RobotInterface::SendMessage(bMsg) == false) {}
+          #endif
           #endif
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;

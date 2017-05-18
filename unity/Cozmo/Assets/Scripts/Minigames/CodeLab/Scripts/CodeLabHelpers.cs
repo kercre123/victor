@@ -22,10 +22,18 @@ namespace CodeLab {
     }
 
     public void NeutralFaceThenAdvanceToNextBlock(bool success) {
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
+      // Failure is usually because another action (e.g. animation) was requested by user clicking in Scratch
+      // Therefore don't queue the neutral face animation in that case, as it will clobber the just requested animation
+      if (success) {
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.NeutralFace, this.AdvanceToNextBlock);
+      }
+      else {
+        AdvanceToNextBlock(success);
+      }
     }
 
     public void OnReleased() {
+      ResolveRequestPromise();
       RemoveAllCallbacks();
       Init();
     }
@@ -38,12 +46,16 @@ namespace CodeLab {
       InProgressScratchBlockPool.ReleaseInProgressScratchBlock(this);
     }
 
-    public void AdvanceToNextBlock(bool success) {
+    private void ResolveRequestPromise() {
       if (this._RequestId >= 0) {
         // Calls the JavaScript function resolving the Promise on the block
         _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
+        this._RequestId = -1;
       }
+    }
 
+    public void AdvanceToNextBlock(bool success) {
+      ResolveRequestPromise();
       ReleaseFromPool();
     }
 
@@ -97,20 +109,40 @@ namespace CodeLab {
       AdvanceToNextBlock(true);
     }
 
+    private static LightCube GetMostRecentlySeenCube() {
+      LightCube lastCubeSeen = null;
+      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+        LightCube cube = kvp.Value;
+        if (cube.IsInFieldOfView) {
+          return cube;
+        }
+        else {
+          if ((lastCubeSeen == null) || (cube.NumVisionFramesSinceLastSeen < lastCubeSeen.NumVisionFramesSinceLastSeen)) {
+            lastCubeSeen = cube;
+          }
+        }
+      }
+
+      return lastCubeSeen;
+    }
+
     // If robot currently sees a cube, try to dock with it.
     public void DockWithCube(bool headAngleActionSucceeded) {
       bool success = false;
-      LightCube cube = null;
 
       if (headAngleActionSucceeded) {
-        foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-          if (kvp.Value.IsInFieldOfView) {
-            success = true;
-            cube = kvp.Value;
-            RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
-            return;
-          }
+        LightCube cube = GetMostRecentlySeenCube();
+        const int kMaxVisionFramesSinceSeeingCube = 30;
+        if ((cube != null) && (cube.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube)) {
+          success = true;
+          RobotEngineManager.Instance.CurrentRobot.AlignWithObject(cube, 0.0f, callback: FinishDockWithCube, usePreDockPose: true, alignmentType: Anki.Cozmo.AlignmentType.LIFT_PLATE, numRetries: 2);
         }
+        else {
+          DAS.Warn("DockWithCube.NoVisibleCube", "NumVisionFramesSinceLastSeen = " + ((cube != null) ? cube.NumVisionFramesSinceLastSeen : -1));
+        }
+      }
+      else {
+        DAS.Warn("DockWithCube.HeadAngleActionFailed", "");
       }
 
       if (!success) {
@@ -121,7 +153,9 @@ namespace CodeLab {
     private void FinishDockWithCube(bool success) {
       if (!success) {
         // Play angry animation since Cozmo wasn't able to complete the task
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock);
+        // As this is on failure, queue anim in parallel - failure here could be because another block was clicked, and we don't want to interrupt that one
+        Anki.Cozmo.QueueActionPosition queuePos = Anki.Cozmo.QueueActionPosition.IN_PARALLEL;
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.FrustratedByFailureMajor, callback: AdvanceToNextBlock, queueActionPosition: queuePos);
       }
       else {
         AdvanceToNextBlock(true);

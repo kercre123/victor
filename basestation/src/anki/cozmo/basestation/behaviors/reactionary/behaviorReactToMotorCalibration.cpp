@@ -57,9 +57,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersMotorCali
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-{
-  SetDefaultName("ReactToMotorCalibration");
-  
+{  
   SubscribeToTags({
     EngineToGameTag::MotorCalibration
   });
@@ -77,7 +75,7 @@ bool BehaviorReactToMotorCalibration::IsRunnableInternal(const BehaviorPreReqNon
 Result BehaviorReactToMotorCalibration::InitInternal(Robot& robot)
 {
   LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersMotorCalibrationArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersMotorCalibrationArray);
   
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   StartActing(new WaitAction(robot, _kTimeout_sec), [this, &robot](ActionResult res)

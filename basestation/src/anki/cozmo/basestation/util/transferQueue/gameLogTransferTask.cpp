@@ -62,8 +62,8 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
       // add headers
       request.headers.emplace("Anki-App-Key", "toh5awu3kee1ahfaikeeGh");
       
-      // get apprun
-      Json::Value appRunData = devLoggingSystem->GetAppRunData(Cozmo::DevLoggingSystem::GetAppRunFilename(filename));
+      // get apprun data
+      Json::Value appRunData = Cozmo::DevLoggingSystem::GetAppRunData(Cozmo::DevLoggingSystem::GetAppRunFilename(filename));
       if (!appRunData.empty()) {
         std::string fileAppRun;
         if (JsonTools::GetValueOptional(appRunData, Cozmo::DevLoggingSystem::kAppRunKey, fileAppRun))
@@ -97,13 +97,11 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
                                      const std::map<std::string, std::string>&,
                                      const std::vector<uint8_t>&) {
       if (isHttpSuccessCode(responseCode)) {
-        auto* loggingSystem = Cozmo::DevLoggingSystem::GetInstance();
-        if (loggingSystem != nullptr) {
-          loggingSystem->DeleteLog(filename);
-        }
-        else {
-          FileUtils::DeleteFile(filename);
-        }
+        std::string appRunFilename = Cozmo::DevLoggingSystem::GetAppRunFilename(filename);
+        Json::Value appRunData = Cozmo::DevLoggingSystem::GetAppRunData(appRunFilename);
+        appRunData[Cozmo::DevLoggingSystem::kHasBeenUploadedKey] = true;
+        Util::FileUtils::WriteFile(appRunFilename, appRunData.toStyledString());
+
         auto it = innerRequest.headers.find("Usr-apprun");
         const char* appRunId = (it == innerRequest.headers.end()) ? "" : it->second.c_str();
         PRINT_NAMED_INFO("GameLogTransferTask", "uploaded %s, apprun %s", innerRequest.uri.c_str(), appRunId);

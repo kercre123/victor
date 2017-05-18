@@ -46,8 +46,12 @@ namespace Params
   CONSOLE_VAR(f32, kLaser_minRadius_pix, kConsoleGroupName, 2.f);
   CONSOLE_VAR(f32, kLaser_maxRadius_pix, kConsoleGroupName, 25.f);
   
-  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction, kConsoleGroupName,  0.75f, 0.f, 1.f);
-  CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, kConsoleGroupName, 2.f);
+  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_darkExposure, kConsoleGroupName,  0.7f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_normalExposure, kConsoleGroupName,  0.9f, 0.f, 1.f);
+  
+  CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, kConsoleGroupName, 2.5f);
+  
+  CONSOLE_VAR(s32, kLaser_MaxSurroundStdDev, kConsoleGroupName, 25);
   
   CONSOLE_VAR(u8, kLaser_lowThreshold_normalExposure,  kConsoleGroupName, 235);
   CONSOLE_VAR(u8, kLaser_highThreshold_normalExposure, kConsoleGroupName, 240);
@@ -80,9 +84,10 @@ inline static u8 GetValue(const Vision::PixelRGB& p) {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<class PixelType>
+template<class ImageType>
 static void ConnCompValidityHelper(const Array2d<s32>& labelImage,
-                                   const Vision::ImageBase<PixelType>& img,
+                                   const std::vector<Vision::Image::ConnectedComponentStats>& ccStats,
+                                   const ImageType& img,
                                    const u8 highThreshold,
                                    std::vector<bool> &isConnCompValid)
 {
@@ -94,21 +99,46 @@ static void ConnCompValidityHelper(const Array2d<s32>& labelImage,
   
   DEV_ASSERT(!isConnCompValid.empty(), "LaserPointDetector.ConnCompValidityHelper.EmptyValidityVector");
   
-  const s32 kBackgroundLabel = 0;
-  
-  for(s32 i=0; i<labelImage.GetNumRows(); ++i)
+  // Skip background label by starting iStat=1
+  for(s32 iStat=1; iStat<ccStats.size(); ++iStat)
   {
-    const s32* labelImage_i = labelImage.GetRow(i);
-    const PixelType* img_i = img.GetRow(i);
+    const Vision::Image::ConnectedComponentStats& stat = ccStats[iStat];
     
-    for(s32 j=0; j<labelImage.GetNumCols(); ++j)
+    // Get ROI around this connected component in the label image and the color/gray image
+    Rectangle<s32> bbox(stat.boundingBox);
+    Array2d<s32> labelROI  = labelImage.GetROI(bbox);
+    const ImageType imgROI = img.GetROI(bbox);
+    
+    // Check if any pixel in the connected component is above high threshold
+    bool markedValid = false;
+    for(s32 i=0; i<labelROI.GetNumRows(); ++i)
     {
-      const s32 label = labelImage_i[j];
+      const s32* labelROI_i = labelROI.GetRow(i);
+      const auto* imgROI_i = imgROI.GetRow(i);
       
-      if( (label != kBackgroundLabel) && (GetValue(img_i[j]) > highThreshold) )
+      for(s32 j=0; j<labelROI.GetNumCols(); ++j)
       {
-        isConnCompValid[label] = true;
+        const s32 label = labelROI_i[j];
+        
+        if((label == iStat) && (GetValue(imgROI_i[j]) > highThreshold) )
+        {
+          markedValid = true;
+          
+          // As soon as any pixel is above high threshold, we can quit
+          // looking at this connected component
+          break;
+        }
       }
+      
+      if(markedValid)
+      {
+        break;
+      }
+    }
+    
+    if(markedValid)
+    {
+      isConnCompValid[iStat] = true;
     }
   }
 }
@@ -159,11 +189,11 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
   std::vector<bool> isConnCompValid(numRegions,false);
   if(isColorAvailable)
   {
-    ConnCompValidityHelper(labelImage, imgColor, highThreshold, isConnCompValid);
+    ConnCompValidityHelper(labelImage, allConnCompStats, imgColor, highThreshold, isConnCompValid);
   }
   else
   {
-    ConnCompValidityHelper(labelImage, imgGray, highThreshold, isConnCompValid);
+    ConnCompValidityHelper(labelImage, allConnCompStats, imgGray, highThreshold, isConnCompValid);
   }
   
   // Keep only connected components we selected above that are also within area limits
@@ -271,7 +301,8 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
   
   // Find centroid(s) of saliency inside the ground plane
   const f32 imgQuadArea = imgQuad.ComputeArea();
-  f32 groundRegionArea = FindLargestRegionCentroid(imageColor, imageGray, imgQuad, groundCentroidInImage);
+  f32 groundRegionArea = FindLargestRegionCentroid(imageColor, imageGray, imgQuad, isDarkExposure,
+                                                   groundCentroidInImage);
 
   if(Util::IsNearZero(groundRegionArea))
   {
@@ -353,7 +384,7 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
         _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
       }
       
-      _debugImage.DrawPoint(groundCentroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
+      _debugImage.DrawCircle(groundCentroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
       char tempText[128];
       //snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, salientPoint.img_x, salientPoint.img_y);
       //cv::putText(saliencyImgDisp.get_CvMat_(), std::string(tempText),
@@ -364,7 +395,8 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
                                                                                         poseData.groundPlaneHomography));
       if(groundRegionArea > 0.f) {
         Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-        saliencyImageDispGround.DrawPoint(dispCentroid - poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 3);
+        saliencyImageDispGround.DrawCircle(dispCentroid - poseData.groundPlaneROI.GetOverheadImageOrigin(),
+                                           NamedColors::RED, 3);
         Quad2f groundQuad(poseData.groundPlaneROI.GetGroundQuad());
         groundQuad -= poseData.groundPlaneROI.GetOverheadImageOrigin();
         saliencyImageDispGround.DrawQuad(groundQuad, NamedColors::YELLOW, 1.f);
@@ -386,9 +418,14 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
 size_t LaserPointDetector::FindLargestRegionCentroid(const Vision::ImageRGB& imgColor,
                                                      const Vision::Image&    imgGray,
                                                      const Quad2f&           groundQuadInImage,
+                                                     const bool              isDarkExposure,
                                                      Point2f& centroid)
 {
   const bool isColorAvailable = !imgColor.IsEmpty();
+  
+  const f32 darkThresholdFraction = (isDarkExposure ?
+                                     Params::kLaser_darkThresholdFraction_darkExposure :
+                                     Params::kLaser_darkThresholdFraction_normalExposure);
   
   // Find largest connected component that passes the filter
   size_t largestArea = 0;
@@ -396,7 +433,7 @@ size_t LaserPointDetector::FindLargestRegionCentroid(const Vision::ImageRGB& img
   {
     if(stat.area > largestArea &&
        IsOnGroundPlane(groundQuadInImage, stat) &&
-       IsSurroundedByDark(imgGray, stat) &&
+       IsSurroundedByDark(imgGray, stat, darkThresholdFraction) &&
        (!isColorAvailable || IsSaturated(imgColor, stat, Params::kLaser_saturationThreshold_red, Params::kLaser_saturationThreshold_green)))
     {
       // All checks passed: keep this as largest
@@ -418,18 +455,23 @@ inline bool LaserPointDetector::IsOnGroundPlane(const Quad2f& groundQuadInImage,
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
-                                            const Vision::Image::ConnectedComponentStats& stat)
+                                            const Vision::Image::ConnectedComponentStats& stat,
+                                            const f32 darkThresholdFraction)
 {
-  const u8 centerPixel = std::round(Params::kLaser_darkThresholdFraction * (f32)image(std::round(stat.centroid.y()),
-                                                                               std::round(stat.centroid.x())));
+  const u8 centerPixel = std::round(darkThresholdFraction * (f32)image(std::round(stat.centroid.y()),
+                                                                       std::round(stat.centroid.x())));
   
   const f32 radius = Params::kLaser_darkSurroundRadiusFraction*std::sqrtf((f32)stat.area / M_PI_F);
   
   // sin/cos of [0 45 90 135 180 225 270 315] degrees. (cos is first, sin is second)
-  const std::array<std::pair<f32,f32>,8> sinCosPairs{{
+  const s32 kNumSurroundPoints = 8;
+  const std::array<std::pair<f32,f32>,kNumSurroundPoints> sinCosPairs{{
     { 1.f, 0.f}, { 0.7071f,  0.7071f}, {0.f, 1.f}, {-0.7071f,  0.7071f},
     {-1.f, 0.f}, {-0.7071f, -0.7071f}, {0.f,-1.f}, { 0.7071f, -0.7071f}
   }};
+  
+  s32 surroundSum   = 0;
+  s32 surroundSumSq = 0;
   
   for(auto &sinCosPair : sinCosPairs)
   {
@@ -455,7 +497,23 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
         }
         return false; // once a single point is off, no reason to continue
       }
+      
+      surroundSum += pixVal;
+      surroundSumSq += pixVal*pixVal;
     }
+  }
+  
+  // Are surround points sufficiently similar?
+  const s32 surroundMean = surroundSum / kNumSurroundPoints;
+  const s32 surroundVar = (surroundSumSq / kNumSurroundPoints) - (surroundMean*surroundMean);
+  if(surroundVar > (Params::kLaser_MaxSurroundStdDev*Params::kLaser_MaxSurroundStdDev))
+  {
+    if(DEBUG_LASER_DETECTION > 1)
+    {
+      PRINT_NAMED_WARNING("LaserPointDetector.IsSurroundedByDark.VarianceTooHigh",
+                          "Variance=%d", surroundVar);
+    }
+    return false;
   }
   
   // All points passed

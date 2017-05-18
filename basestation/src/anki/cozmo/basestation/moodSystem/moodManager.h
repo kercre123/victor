@@ -17,6 +17,8 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
+#include "clad/types/actionResults.h"
+#include "clad/types/actionTypes.h"
 #include "clad/types/emotionTypes.h"
 #include "clad/types/simpleMoodTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
@@ -44,6 +46,7 @@ class AnkiEvent;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
+  struct RobotCompletedAction;
 }
   
   
@@ -58,6 +61,7 @@ public:
   using MoodEventTimes = std::map<std::string, float>;
   
   explicit MoodManager(Robot* inRobot = nullptr);
+  ~MoodManager();
   
   void Init(const Json::Value& inJson);
   
@@ -112,6 +116,8 @@ public:
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
+
+  void HandleActionEnded(const ExternalInterface::RobotCompletedAction& completion);
   
   void SendEmotionsToGame();
 
@@ -160,13 +166,15 @@ private:
   Robot*          _robot;
   float           _lastUpdateTime;
 
-  // maps from action type -> action result -> emotion event
-  using ActionCompletedEventMap = std::map< std::string, std::map< std::string, std::string > >;
+  // maps from (action type, action result category) -> emotion event
+  using ActionCompletedEventMap = std::map< std::pair< RobotActionType, ActionResultCategory >, std::string >;
   ActionCompletedEventMap _actionCompletedEventMap;
 
   std::set< u32 > _actionsTagsToIgnore;
   
   std::vector<Signal::SmartHandle> _signalHandles;
+
+  int _actionCallbackID = 0;
 };
   
 

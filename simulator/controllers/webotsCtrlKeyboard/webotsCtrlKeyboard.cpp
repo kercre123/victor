@@ -14,21 +14,16 @@
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/encodedImage.h"
-#include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/behaviorChooserType.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
@@ -1172,14 +1167,16 @@ namespace Anki {
                   }
                   
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                                ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
 
                   printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                   if (behaviorName == "LiftLoadTest") {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsRunnable()));
                   }
+                  const int numRuns = root_->getField("numBehaviorRuns")->getSFInt32();
+                  BehaviorID behaviorID = BehaviorIDFromString(behaviorName);
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ExecuteBehaviorByName(behaviorName)));
+                                ExternalInterface::ExecuteBehaviorByID(behaviorID, numRuns)));
                 }
                 else if(altKeyPressed)
                 {
@@ -1208,13 +1205,13 @@ namespace Anki {
                 {
 
                   if( shiftKeyPressed && altKeyPressed ) {
-                    BehaviorChooserType chooser = BehaviorChooserTypeFromString("Selection");
-                    if( chooser == BehaviorChooserType::Count ) {
-                    break;
-                  }
+                    HighLevelActivity activity = HighLevelActivityFromString("Selection");
+                    if( activity == HighLevelActivity::Count ) {
+                      break;
+                    }
 
                     SendMessage(ExternalInterface::MessageGameToEngine(
-                                                                       ExternalInterface::ActivateBehaviorChooser(chooser)));
+                                    ExternalInterface::ActivateHighLevelActivity(activity)));
                     break;
                   }
 
@@ -1231,7 +1228,7 @@ namespace Anki {
                       break;
                     }
 
-                    UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
+                    UnlockId unlock = UnlockIdFromString(unlockName.c_str());
                     if( unlock != UnlockId::Count ) {
                       ExternalInterface::ActivateSpark activate(unlock);
                       ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
@@ -1260,29 +1257,29 @@ namespace Anki {
                 }
                 else {
                   // select behavior chooser
-                  webots::Field* behaviorChooserNameField = root_->getField("behaviorChooserName");
-                  if (behaviorChooserNameField == nullptr) {
+                  webots::Field* activityNameField = root_->getField("highLevelActivityName");
+                  if (activityNameField == nullptr) {
                     printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
                     break;
                   }
                   
-                  std::string behaviorChooserName = behaviorChooserNameField->getSFString();
-                  if (behaviorChooserName.empty()) {
+                  std::string activityName = activityNameField->getSFString();
+                  if (activityName.empty()) {
                     printf("ERROR: behaviorChooserName field is empty\n");
                     break;
                   }
                   
-                  BehaviorChooserType chooser = BehaviorChooserTypeFromString(behaviorChooserName);
-                  if( chooser == BehaviorChooserType::Count ) {
+                  HighLevelActivity activity = HighLevelActivityFromString(activityName);
+                  if( activity == HighLevelActivity::Count ) {
                     printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
-                           behaviorChooserName.c_str());
+                           activityName.c_str());
                     break;
                   }
                   
-                  printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
+                  printf("sending high level activity  '%s'\n", activityName.c_str());
                 
                   SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::ActivateBehaviorChooser(chooser)));
+                                ExternalInterface::ActivateHighLevelActivity(activity)));
                 }
                 
                 break;
@@ -2235,8 +2232,8 @@ namespace Anki {
                       SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
                       
                       // Enable selection chooser and specify EnrollFace now that settings are sent
-                      SendMessage(MessageGameToEngine(ActivateBehaviorChooser(BehaviorChooserType::Selection)));
-                      SendMessage(MessageGameToEngine(ExecuteBehaviorByName("EnrollFace")));
+                      SendMessage(MessageGameToEngine(ActivateHighLevelActivity(HighLevelActivity::Selection)));
+                      SendMessage(MessageGameToEngine(ExecuteBehaviorByID(BehaviorID::EnrollFace, -1)));
                     }
                     
                   } else {
@@ -2306,7 +2303,7 @@ namespace Anki {
                     break;
                   }
 
-                  UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
+                  UnlockId unlock = UnlockIdFromString(unlockName.c_str());
                   bool val = !shiftKeyPressed;
                   printf("%s %s\n", (val ? "Unlocking" : "Locking"), unlockName.c_str());
                   SendMessage( ExternalInterface::MessageGameToEngine(

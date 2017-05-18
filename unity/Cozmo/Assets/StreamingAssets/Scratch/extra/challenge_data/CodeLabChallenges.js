@@ -379,20 +379,6 @@ window._CodeLabChallengesData =
         "Template": "Answer"
     }, 
     {
-        "SecondaryTextKey": "codeLabChallenge_rollCube.questionSlide.secondaryText", 
-        "BlockIcon": "cozmo-backward", 
-        "ImageFile": "", 
-        "PrimaryTextKey": "codeLabChallenge_rollCube.questionSlide.primaryText", 
-        "Template": "Question"
-    }, 
-    {
-        "SecondaryTextKey": "", 
-        "BlockIcon": "cozmo-backward", 
-        "ImageFile": "answer_rollCube", 
-        "PrimaryTextKey": "codeLabChallenge_rollCube.answerSlide.primaryText", 
-        "Template": "Answer"
-    }, 
-    {
         "SecondaryTextKey": "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText", 
         "BlockIcon": "cozmo-face", 
         "ImageFile": "", 

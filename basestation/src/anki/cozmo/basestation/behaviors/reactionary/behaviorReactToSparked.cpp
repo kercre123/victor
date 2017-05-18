@@ -21,7 +21,6 @@ namespace Cozmo {
 BehaviorReactToSparked::BehaviorReactToSparked(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToSparked");
   
   
 }

@@ -24,7 +24,5 @@ namespace Anki.Cozmo {
     [JsonProperty("repetitionPenalty")]
     public GraphEvaluator2d RepetitionPenalty = new GraphEvaluator2d();
 
-    [JsonProperty("behaviorGroups")]
-    public List<BehaviorGroup> BehaviorGroups = new List<BehaviorGroup>();
   }
 }

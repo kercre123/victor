@@ -76,9 +76,7 @@ BehaviorAcknowledgeCubeMoved::BehaviorAcknowledgeCubeMoved(Robot& robot, const J
 , _robot(robot)
 , _state(State::PlayingSenseReaction)
 , _activeObjectSeen(false)
-{
-  SetDefaultName("ReactToCubeMoved");
-  
+{  
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });
@@ -103,7 +101,7 @@ bool BehaviorAcknowledgeCubeMoved::IsRunnableInternal(const BehaviorPreReqAcknow
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorAcknowledgeCubeMoved::InitInternal(Robot& robot)
 {
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersAcknowledgeCubeArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersAcknowledgeCubeArray);
   _activeObjectSeen = false;
   switch(_state){
     case State::TurningToLastLocationOfBlock:

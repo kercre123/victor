@@ -133,7 +133,7 @@ namespace Vision {
         break;
       }
       default:
-        PRINT_NAMED_ERROR("ImageBase.Display.InvaludNumChannels",
+        PRINT_NAMED_ERROR("ImageBase.Display.InvalidNumChannels",
                           "Cannot display image with %d channels.", GetNumChannels());
         return;
     }
@@ -179,16 +179,33 @@ namespace Vision {
   void ImageBase<T>::DrawLine(const Point2f& start, const Point2f& end,
                               const ColorRGBA& color, const s32 thickness)
   {
-    cv::line(this->get_CvMat_(), start.get_CvPoint_(), end.get_CvPoint_(),
-             GetCvColor(color), thickness);
+    cv::line(this->get_CvMat_(), start.get_CvPoint_(), end.get_CvPoint_(), GetCvColor(color), thickness);
   }
   
   template<typename T>
-  void ImageBase<T>::DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size)
+  void ImageBase<T>::DrawCircle(const Point2f& center, const ColorRGBA& color, const s32 radius, const s32 thickness)
   {
-    cv::circle(this->get_CvMat_(), point.get_CvPoint_(), size, GetCvColor(color));
+    cv::circle(this->get_CvMat_(), center.get_CvPoint_(), radius, GetCvColor(color), thickness);
   }
   
+  template<typename T>
+  void ImageBase<T>::DrawFilledCircle(const Point2f& center, const ColorRGBA& color, const s32 radius)
+  {
+    cv::circle(this->get_CvMat_(), center.get_CvPoint_(), radius, GetCvColor(color), CV_FILLED);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness)
+  {
+    cv::rectangle(this->get_CvMat_(), rect.get_CvRect_(), GetCvColor(color), thickness);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawFilledRect(const Rectangle<f32>& rect, const ColorRGBA& color)
+  {
+    cv::rectangle(this->get_CvMat_(), rect.get_CvRect_(), GetCvColor(color), CV_FILLED);
+  }
+
   template<typename T>
   void ImageBase<T>::DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness)
   {
@@ -218,15 +235,6 @@ namespace Vision {
     }
   }
   
-  
-  template<typename T>
-  void ImageBase<T>::DrawRect(const Rectangle<f32>& rect, const ColorRGBA& color, const s32 thickness)
-  {
-    DrawLine(rect.GetTopLeft(), rect.GetTopRight(), color, thickness);
-    DrawLine(rect.GetTopLeft(), rect.GetBottomLeft(), color, thickness);
-    DrawLine(rect.GetTopRight(), rect.GetBottomRight(), color, thickness);
-    DrawLine(rect.GetBottomLeft(), rect.GetBottomRight(), color, thickness);
-  }
   
   template<typename T>
   void ImageBase<T>::DrawText(const Point2f& position, const std::string& str,
@@ -297,19 +305,37 @@ namespace Vision {
     
   }
   
-  Image::Image(s32 nrows, s32 ncols, u8* data)
-  : ImageBase<u8>(nrows,ncols,data)
+  Image::Image(s32 nrows, s32 ncols, const u8& pixel)
+  : ImageBase<u8>(nrows, ncols, pixel)
   {
     
   }
   
-#if ANKICORETECH_USE_OPENCV
+  Image::Image(s32 nrows, s32 ncols, const ColorRGBA& color)
+  : ImageBase<u8>(nrows, ncols, color)
+  {
+    
+  }
+
+  Image::Image(s32 nrows, s32 ncols, u8* data)
+  : ImageBase<u8>(nrows, ncols, data)
+  {
+    
+  }
+  
+  Image::Image(const Array2d<u8>& array2d)
+  : ImageBase<u8>(array2d)
+  {
+    
+  }
+
+# if ANKICORETECH_USE_OPENCV
   Image::Image(cv::Mat_<u8>& cvMat)
   : ImageBase<u8>(cvMat)
   {
     
   }
-#endif
+# endif
   
   Image& Image::Negate()
   {
@@ -332,7 +358,8 @@ namespace Vision {
   
   Image  Image::Threshold(u8 value) const
   {
-    Image thresholdedImage(*this);
+    Image thresholdedImage;
+    this->CopyTo(thresholdedImage);
     return thresholdedImage.Threshold(value);
   }
 
@@ -353,7 +380,8 @@ namespace Vision {
 
       ConnectedComponentStats stat{
         .area        = (size_t)compStats[cv::CC_STAT_AREA],
-        .centroid    = Point2f(compCentroid[0], compCentroid[1]),
+        .centroid    = Point2f(Util::Clamp(compCentroid[0], 0.0, (f64)(GetNumCols()-1)),
+                               Util::Clamp(compCentroid[1], 0.0, (f64)(GetNumRows()-1))),
         .boundingBox = Rectangle<s32>(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                       compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]),
       };

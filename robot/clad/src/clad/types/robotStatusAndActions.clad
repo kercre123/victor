@@ -123,13 +123,6 @@ structure PowerState
   bool          chargerOOS
 }
 
-structure WiFiState
-{
-  bool  enabled,
-  int_8 staCount,
-  int_8 rtCount
-}
-
 // These enum values should match the body color
 // enum in robot/fixture/app/robotTest.c (factory-1.5 branch)
 enum int_8 BodyColor

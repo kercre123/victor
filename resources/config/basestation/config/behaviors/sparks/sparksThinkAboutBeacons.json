@@ -6,15 +6,9 @@
 // thinking (in the case that it ever took some time to figure out what we want to do.)
 //
 {
-  "name": "sparksThinkAboutBeacons",
-  
   "behaviorClass": "ThinkAboutBeacons",
+  "behaviorID": "SparksThinkAboutBeacons",
   "displayNameKey":"behavior.ThinkAboutBeacons",
-  "flatScore": 8.0,
-  "behaviorGroups": [
-    "SparksGatherCubes"
-  ],
-  
   "params": {
     "newAreaAnimTrigger" : "HikingReactToNewArea",
     "beaconRadius_mm" : 75

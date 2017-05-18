@@ -1,19 +1,63 @@
 {
-  "name" : "sparksPickUpCube",
+  "activityID" : "SparksPickUpCube",
+  "activityType" : "Sparked",
   "requireSpark":"PickupCube",
-  "behaviorChooser" :
-  {
-   "type" : "sparks",
-   "minTimeSecs": 0,
-   "maxTimeSecs": 60,
-   "numberOfRepetitions": 1,
-   "behaviorObjective": "PickedUpAndPutDownBlock",
-   "softSparkTrigger": "SoftSparkUpgradeLift",
-    // these groups are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "SparksPickUpCube" ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
-  }
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "CantHandleTallStack",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "SparksPickUpCube",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      },
+      { "behaviorID" : "SparksVisitPossibleMarker",
+        "scoring"      :
+        {
+          "flatScore": 4.0
+        }
+      },
+      { "behaviorID" : "SparksPutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 3.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+    ]
+  },
+  
+  "minTimeSecs": 0,
+  "maxTimeSecs": 60,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "PickedUpAndPutDownBlock",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
 }

@@ -178,7 +178,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
   , _testResult(FactoryTestResultCode::UNKNOWN)
   , _robot(robot)
   {
-    SetDefaultName("FactoryTest");
 
     // start with defaults
     _motionProfile = DEFAULT_PATH_MOTION_PROFILE;

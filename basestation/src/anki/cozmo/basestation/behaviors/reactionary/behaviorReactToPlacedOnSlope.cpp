@@ -59,8 +59,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPlacedOnS
 BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToPlacedOnSlope");
-
 }
 
   
@@ -74,7 +72,7 @@ bool BehaviorReactToPlacedOnSlope::IsRunnableInternal(const BehaviorPreReqNone& 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToPlacedOnSlope::InitInternal(Robot& robot)
 {
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersPlacedOnSlopeArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPlacedOnSlopeArray);
 
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);

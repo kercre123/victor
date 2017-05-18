@@ -7,14 +7,9 @@
 //
 //
 {
-  "name": "sparksBringCubeToBeacon",
-
   "behaviorClass": "BringCubeToBeacon",
+  "behaviorID": "SparksBringCubeToBeacon",
   "displayNameKey":"behavior.BringCubeToBeacon",
-  "flatScore": 4, // intended to interrupt lookInPlace behaviors
-  "behaviorGroups": [
-    "SparksGatherCubes"
-  ],
   "params":
   {
     "recentFailureCooldown_sec": 5.0

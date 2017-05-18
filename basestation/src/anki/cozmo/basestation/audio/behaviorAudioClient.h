@@ -20,6 +20,7 @@
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
+#include "clad/types/activityTypes.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
@@ -47,7 +48,7 @@ public:
   int GetRound() const { return _round; }
   
   // Change music switch state for Ai Goals in freeplay
-  void UpdateAiGoalMusicState(const std::string& aiGoalName);
+  void UpdateActivityMusicState(ActivityID activityID);
   
 protected:
   // Activate to allow behavior to update audio engine
@@ -80,7 +81,7 @@ private:
   
   // Keep track of the last AI goal name sent from the PublicStateBroadcaster so we
   //  can properly handle AI goal transitions.
-  std::string _prevAiGoal {"Invalid"};
+  ActivityID _prevActivity;
   
   // True if the GuardDog behavior is active (uses its own music state)
   bool _guardDogActive = false;

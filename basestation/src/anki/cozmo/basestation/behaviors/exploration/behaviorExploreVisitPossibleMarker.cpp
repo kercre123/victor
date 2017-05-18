@@ -44,7 +44,6 @@ CONSOLE_VAR(float, kBEVPM_backupSpeed_mmps, "BehaviorExploreLookAroundInPlace", 
 BehaviorExploreVisitPossibleMarker::BehaviorExploreVisitPossibleMarker(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("BehaviorExploreVisitPossibleMarker");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

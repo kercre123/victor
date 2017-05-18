@@ -220,6 +220,12 @@ public class DailyGoalManager : MonoBehaviour {
     int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals + 1));
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
     goalList = GetGeneratableGoalEntries();
+    // in very early cases if nothing is unlocked there arent enough goals
+    // so just regen with no category collision
+    if (goalList.Count < goalCount) {
+      goalList = GetGeneratableGoalEntries(false);
+      DAS.Warn("DailyGoalManager.GenerateDailyGoals", "Repeating tags only " + goalList.Count + " were generated");
+    }
     goalCount = Mathf.Min(goalCount, goalList.Count);
     // Wipe previous tags as we are generating new goals
     DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags.Clear();

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
 
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "clad/types/behaviorTypes.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -32,7 +32,7 @@ namespace ExternalInterface {
 }
 template<typename T>class AnkiEvent;
   
-class SelectionBehaviorChooser : public SimpleBehaviorChooser
+class SelectionBehaviorChooser : public IBehaviorChooser
 {
 public:
   SelectionBehaviorChooser(Robot& robot, const Json::Value& config);
@@ -52,11 +52,17 @@ protected:
   IBehavior* _behaviorNone = nullptr;
   
   void HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  
-  IBehavior* AddNewBehavior(BehaviorClass newType);
-  
+    
   // requests enabling processes required by behaviors when they are the selected one
   void SetProcessEnabled(const IBehavior* behavior, bool newValue);
+  
+private:
+  // Number of times to run the selected behavior
+  // -1 for infinite
+  int _numRuns = -1;
+  
+  // Whether or not the selected behavior is running
+  bool _selectedBehaviorIsRunning = false;
   
 }; // class SelectionBehaviorChooser
   

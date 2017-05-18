@@ -30,6 +30,8 @@ namespace Cozmo {
 
 namespace{
 const int kMaxStackHeightReach = 2;
+static const float kInvalidObjectCacheUpdateTime_s = -1.0f;
+static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
 }
   
 using ObjectActionFailure = AIWhiteboard::ObjectActionFailure;
@@ -44,15 +46,28 @@ using DependentIntentionArray = Util::FullEnumToValueArrayChecker::FullEnumToVal
 using Util::FullEnumToValueArrayChecker::IsSequentialArray;
   
 static const std::set<ObjectInteractionIntention> empty;
+  
+// stack dependencies
+static const std::set<ObjectInteractionIntention> stackBottomDependentAxis =
+                                {ObjectInteractionIntention::StackTopObjectAxisCheck};
+static const std::set<ObjectInteractionIntention> stackBottomDependentNoAxis =
+                                {ObjectInteractionIntention::StackTopObjectNoAxisCheck};
+  
+// pyramid dependencies
 static const std::set<ObjectInteractionIntention> pyramidStaticDependent =
                                 {ObjectInteractionIntention::PyramidBaseObject};
 static const std::set<ObjectInteractionIntention> pyramidTopDependent =
                                 {ObjectInteractionIntention::PyramidBaseObject,
                                  ObjectInteractionIntention::PyramidStaticObject};
 
+  
 constexpr DependentIntentionArray kDependentIntentionMap = {
-  {ObjectInteractionIntention::PickUpAnyObject,                   &empty},
-  {ObjectInteractionIntention::PickUpObjectWithAxisCheck,         &empty},
+  {ObjectInteractionIntention::PickUpObjectNoAxisCheck,           &empty},
+  {ObjectInteractionIntention::PickUpObjectAxisCheck,             &empty},
+  {ObjectInteractionIntention::StackBottomObjectAxisCheck,        &stackBottomDependentAxis},
+  {ObjectInteractionIntention::StackBottomObjectNoAxisCheck,      &stackBottomDependentNoAxis},
+  {ObjectInteractionIntention::StackTopObjectAxisCheck,           &empty},
+  {ObjectInteractionIntention::StackTopObjectNoAxisCheck,         &empty},
   {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, &empty},
   {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   &empty},
   {ObjectInteractionIntention::PopAWheelieOnObject,               &empty},
@@ -64,7 +79,7 @@ constexpr DependentIntentionArray kDependentIntentionMap = {
 static_assert(IsSequentialArray(kDependentIntentionMap),
                 "DependentIntentionMap missing missing entry or not ordered");
   
-static const float kInvalidObjectCacheUpdateTime_s = -1.0f;
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ObjectInteractionCache
@@ -78,25 +93,51 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   // Pickup no axis check
   BlockWorldFilter *pickupAnyFilter = new BlockWorldFilter;
   pickupAnyFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  pickupAnyFilter->AddFilterFcn( std::bind(&ObjectInteractionInfoCache::CanPickupHelper,
+  pickupAnyFilter->AddFilterFcn( std::bind(&ObjectInteractionInfoCache::CanPickupNoAxisCheck,
                                            this, std::placeholders::_1));
   
   // Pickup with axis check
   BlockWorldFilter *pickupWithAxisFilter = new BlockWorldFilter;
   pickupWithAxisFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  pickupWithAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanPickupWithAxisHelper,
+  pickupWithAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanPickupAxisCheck,
                                                this, std::placeholders::_1));
+  
+  
+  // Stack top no axis check
+  BlockWorldFilter *stackTopFilter = new BlockWorldFilter;
+  stackTopFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+  stackTopFilter->AddFilterFcn( std::bind(&ObjectInteractionInfoCache::CanUseAsStackTopNoAxisCheck,
+                                          this, std::placeholders::_1));
+  
+  // Stack top with axis check
+  BlockWorldFilter *stackTopWithAxisFilter = new BlockWorldFilter;
+  stackTopWithAxisFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+  stackTopWithAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseAsStackTopAxisCheck,
+                                                 this, std::placeholders::_1));
+  
+  // stack bottom no axis check
+  BlockWorldFilter *stackBottomFilter = new BlockWorldFilter;
+  stackBottomFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+  stackBottomFilter->AddFilterFcn( std::bind(&ObjectInteractionInfoCache::CanUseAsStackBottomNoAxisCheck,
+                                             this, std::placeholders::_1));
+  
+  // stack bottom axis check
+  BlockWorldFilter *stackBottomWithAxis = new BlockWorldFilter;
+  stackBottomWithAxis->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+  stackBottomWithAxis->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseAsStackBottomAxisCheck,
+                                              this, std::placeholders::_1));
+  
   
   // Roll object with delegate - no axis check
   BlockWorldFilter *rollNoAxisFilter = new BlockWorldFilter;
   rollNoAxisFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  rollNoAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisHelper,
+  rollNoAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck,
                                            this, std::placeholders::_1));
   
   // Roll object with delegate - axis check
   BlockWorldFilter *rollWithAxisFilter = new BlockWorldFilter;
   rollWithAxisFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  rollWithAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanRollObjectDelegateWithAxisHelper,
+  rollWithAxisFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanRollObjectDelegateAxisCheck,
                                              this, std::placeholders::_1));
   
   // Function for selecting the best object for rolling
@@ -106,7 +147,7 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   // Pop A Wheelie check
   BlockWorldFilter *popFilter = new BlockWorldFilter;
   popFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  popFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanPopAWheelieHelper,
+  popFilter->AddFilterFcn(std::bind(&ObjectInteractionInfoCache::CanUseForPopAWheelie,
                                     this, std::placeholders::_1));
   
   // Pyramid Base object
@@ -129,8 +170,12 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
   
   
   FullValidInteractionArray validInteractionFilters = {
-    {ObjectInteractionIntention::PickUpAnyObject,                   pickupAnyFilter},
-    {ObjectInteractionIntention::PickUpObjectWithAxisCheck,         pickupWithAxisFilter},
+    {ObjectInteractionIntention::PickUpObjectNoAxisCheck,           pickupAnyFilter},
+    {ObjectInteractionIntention::PickUpObjectAxisCheck,             pickupWithAxisFilter},
+    {ObjectInteractionIntention::StackBottomObjectAxisCheck,        stackBottomWithAxis},
+    {ObjectInteractionIntention::StackBottomObjectNoAxisCheck,      stackBottomFilter},
+    {ObjectInteractionIntention::StackTopObjectAxisCheck,           stackTopWithAxisFilter},
+    {ObjectInteractionIntention::StackTopObjectNoAxisCheck,         stackTopFilter},
     {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, rollNoAxisFilter},
     {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   rollWithAxisFilter},
     {ObjectInteractionIntention::PopAWheelieOnObject,               popFilter},
@@ -145,8 +190,12 @@ ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
 
   
   FullBestInteractionArray findBestObjectFunctions = {
-    {ObjectInteractionIntention::PickUpAnyObject,                   defaultBestObjectFunc},
-    {ObjectInteractionIntention::PickUpObjectWithAxisCheck,         defaultBestObjectFunc},
+    {ObjectInteractionIntention::PickUpObjectNoAxisCheck,           defaultBestObjectFunc},
+    {ObjectInteractionIntention::PickUpObjectAxisCheck,             defaultBestObjectFunc},
+    {ObjectInteractionIntention::StackBottomObjectAxisCheck,        defaultBestObjectFunc},
+    {ObjectInteractionIntention::StackBottomObjectNoAxisCheck,      defaultBestObjectFunc},
+    {ObjectInteractionIntention::StackTopObjectAxisCheck,           defaultBestObjectFunc},
+    {ObjectInteractionIntention::StackTopObjectNoAxisCheck,         defaultBestObjectFunc},
     {ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck, rollObjectBestObjectFunc},
     {ObjectInteractionIntention::RollObjectWithDelegateAxisCheck,   rollObjectBestObjectFunc},
     {ObjectInteractionIntention::PopAWheelieOnObject,               defaultBestObjectFunc},
@@ -245,7 +294,7 @@ void ObjectInteractionInfoCache::ObjectTapInteractionOccurred(const ObjectID& ob
   // determine if we can actually use the the tapped object
   if(!filterCanUseObject)
   {
-    PRINT_CH_INFO("AIWhiteBoard", "SetObjectTapInteration.NoFilter",
+    PRINT_CH_INFO("ObjectInteractionInfoCache", "SetObjectTapInteration.NoFilter",
                   "No actionIntent filter can currently use object %u",
                   objectID.GetValue());
   }
@@ -265,8 +314,12 @@ void  ObjectInteractionInfoCache::InvalidateAllIntents()
 const char* ObjectInteractionInfoCache::ObjectUseIntentionToString(ObjectInteractionIntention intention)
 {
   switch(intention) {
-    case ObjectInteractionIntention::PickUpAnyObject: { return "PickUpAnyObject"; }
-    case ObjectInteractionIntention::PickUpObjectWithAxisCheck: { return "PickUpObjectWithAxisCheck"; }
+    case ObjectInteractionIntention::PickUpObjectNoAxisCheck:    { return "PickUpObjectNoAxisCheck"; }
+    case ObjectInteractionIntention::PickUpObjectAxisCheck:      { return "PickUpObjectAxisCheck"; }
+    case ObjectInteractionIntention::StackBottomObjectAxisCheck:   { return "StackBottomObjectAxisCheck";}
+    case ObjectInteractionIntention::StackBottomObjectNoAxisCheck: { return "StackBottomObjectNoAxisCheck";}
+    case ObjectInteractionIntention::StackTopObjectAxisCheck:    { return "StackTopObjectAxisCheck";}
+    case ObjectInteractionIntention::StackTopObjectNoAxisCheck:  { return "StackTopObjectNoAxisCheck";}
     case ObjectInteractionIntention::RollObjectWithDelegateAxisCheck: { return "RollObjectWithDelegateAxisCheck"; }
     case ObjectInteractionIntention::RollObjectWithDelegateNoAxisCheck: { return "RollObjectWithDelegateNoAxisCheck"; }
     case ObjectInteractionIntention::PopAWheelieOnObject: { return "PopAWheelieOnObject"; }
@@ -278,16 +331,16 @@ const char* ObjectInteractionInfoCache::ObjectUseIntentionToString(ObjectInterac
   };
   
   // should never get here, assert if it does (programmer error specifying intention enum class)
-  DEV_ASSERT(false, "AIWhiteboard.ObjectUseIntentionToString.InvalidIntention");
+  DEV_ASSERT(false, "ObjectInteractionInfoCache.ObjectUseIntentionToString.InvalidIntention");
   return "UNDEFINED_ERROR";
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanPickupHelper(const ObservableObject* object) const
+bool ObjectInteractionInfoCache::CanPickupNoAxisCheck(const ObservableObject* object) const
 {
   if( nullptr == object ) {
-    PRINT_NAMED_ERROR("AIWhiteboard.CanPickupHelper.NullObject", "object was null");
+    PRINT_NAMED_ERROR("ObjectInteractionInfoCache.CanPickupNoAxisCheck.NullObject", "object was null");
     return false;
   }
   
@@ -305,9 +358,9 @@ bool ObjectInteractionInfoCache::CanPickupHelper(const ObservableObject* object)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanPickupWithAxisHelper(const ObservableObject* object) const
+bool ObjectInteractionInfoCache::CanPickupAxisCheck(const ObservableObject* object) const
 {
-  if( ! CanPickupHelper(object) ) {
+  if( ! CanPickupNoAxisCheck(object) ) {
     return false;
   }
   
@@ -322,12 +375,78 @@ bool ObjectInteractionInfoCache::CanPickupWithAxisHelper(const ObservableObject*
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanPopAWheelieHelper(const ObservableObject* object) const
+bool ObjectInteractionInfoCache::CanUseAsStackTopNoAxisCheck(const ObservableObject* object) const
+{
+  if(_robot.IsCarryingObject()) {
+    return object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingObject());
+  }else{
+    return CanPickupNoAxisCheck(object);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObjectInteractionInfoCache::CanUseAsStackTopAxisCheck(const ObservableObject* object) const
+{
+  if(_robot.IsCarryingObject()) {
+    const bool isCarriedObj = (object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingObject()));
+    const bool isCarriedUpright = (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
+    return isCarriedObj && isCarriedUpright;
+  }else{
+    return CanPickupAxisCheck(object);
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObjectInteractionInfoCache::CanUseAsStackBottomHelper(const ObservableObject* object, ObjectInteractionIntention intention)
+{
+  // already in use as the top object
+  if(object->GetID() == GetBestObjectForIntention(intention)){
+    return false;
+  }
+  
+  const bool hasFailedRecently = _robot.GetAIComponent().GetWhiteboard().
+  DidFailToUse(object->GetID(),
+               ObjectActionFailure::StackOnObject,
+               kTimeObjectInvalidAfterStackFailure_sec,
+               object->GetPose(),
+               DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+               DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
+  
+  
+  bool ret = (!hasFailedRecently &&
+              (object->GetFamily() == ObjectFamily::LightCube) &&
+              _robot.CanStackOnTopOfObject( *object ));
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObjectInteractionInfoCache::CanUseAsStackBottomNoAxisCheck(const ObservableObject* object)
+{
+  return CanUseAsStackBottomHelper(object, ObjectInteractionIntention::StackTopObjectNoAxisCheck);
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObjectInteractionInfoCache::CanUseAsStackBottomAxisCheck(const ObservableObject* object)
+{
+  if(CanUseAsStackBottomHelper(object, ObjectInteractionIntention::StackTopObjectAxisCheck)){
+    const bool isUpright = (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
+    return isUpright;
+  }
+
+  return false;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ObjectInteractionInfoCache::CanUseForPopAWheelie(const ObservableObject* object) const
 {
   auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
 
   const bool hasFailedToPopAWheelie = whiteboard.DidFailToUse(object->GetID(),
-                                                   AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie,
+                                                   ObjectActionFailure::RollOrPopAWheelie,
                                                    DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                                    object->GetPose(),
                                                    DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
@@ -338,12 +457,12 @@ bool ObjectInteractionInfoCache::CanPopAWheelieHelper(const ObservableObject* ob
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisHelper(const ObservableObject* object) const
+bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const ObservableObject* object) const
 {
   auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
   
   const bool hasFailedToRoll = whiteboard.DidFailToUse(object->GetID(),
-                                            AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie,
+                                            ObjectActionFailure::RollOrPopAWheelie,
                                             DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
                                             object->GetPose(),
                                             DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
@@ -377,10 +496,10 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisHelper(const Observa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ObjectInteractionInfoCache::CanRollObjectDelegateWithAxisHelper(const ObservableObject* object) const
+bool ObjectInteractionInfoCache::CanRollObjectDelegateAxisCheck(const ObservableObject* object) const
 {
   const Pose3d p = object->GetPose().GetWithRespectToOrigin();
-  return (CanRollObjectDelegateNoAxisHelper(object) &&
+  return (CanRollObjectDelegateNoAxisCheck(object) &&
           (p.GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
@@ -639,39 +758,18 @@ void ObjectInteractionCacheEntry::EnsureInformationValid()
     
     const auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
     const bool haveTapIntentionObject = whiteboard.HasTapIntent();
-    const bool bestIsStillValid = _validObjects.find(_bestObject) != _validObjects.end();
     
-    // Only update _bestObjectForAction if we don't have a tap object,
-    // or if the tap object became invalid
-    if(!haveTapIntentionObject || !bestIsStillValid)
+    
+    // The best object for a tap intention has been set already in ObjectTapInteraction Occurred
+    if(haveTapIntentionObject && _bestObject.IsSet()){
+      return;
+    }
+    
+    const bool bestIsStillValid = _validObjects.find(_bestObject) != _validObjects.end();
+    // Only update _bestObject if the old best object is no longer valid
+    if(!bestIsStillValid)
     {
-      // select best object
-      const ObjectID bestObjID = _bestObjFunc(_validObjects);
-      if( bestObjID.IsSet() ) {
-        
-        if( haveTapIntentionObject && _bestObject.IsSet() ) {
-          PRINT_CH_INFO("AIWhiteboard", "EnsureInformationValid.ResetBestTapped",
-                        "We have a tap intent, but object id %d is no longer valid \
-                        for action %s, selecting object %d instead",
-                        _bestObject.GetValue(),
-                        _debugName.c_str(),
-                        bestObjID.GetValue());
-        }
-        
-        _bestObject = bestObjID;
-      }
-      else {
-        
-        if( haveTapIntentionObject && _bestObject.IsSet() ) {
-          PRINT_CH_INFO("AIWhiteboard", "EnsureInformationValid.ClearBestTapped",
-                        "We have a tap intent, but object id %d is no longer valid, \
-                        clearing best for action %s",
-                        _bestObject.GetValue(),
-                        _debugName.c_str());
-        }
-        
-        _bestObject.UnSet();
-      }
+      _bestObject = _bestObjFunc(_validObjects);
     }
     
   }
@@ -709,7 +807,7 @@ std::set< ObjectID > ObjectInteractionCacheEntry::GetValidObjects() const
 bool ObjectInteractionCacheEntry::ObjectTapInteractionOccurred(const ObjectID& objectID)
 {
   const ObservableObject* locatedObject =
-  _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
+                  _robot.GetBlockWorld().GetLocatedObjectByID(objectID);
   
   const ObjectID oldBest = _bestObject;
   _bestObject.UnSet();
@@ -720,7 +818,7 @@ bool ObjectInteractionCacheEntry::ObjectTapInteractionOccurred(const ObjectID& o
   {
     
     if( oldBest != objectID ) {
-      PRINT_CH_INFO("AIWhiteboard", "SetBestObjectForTap",
+      PRINT_CH_INFO("ObjectInteractionInfoCache", "SetBestObjectForTap",
                     "Setting tapped object %d as best for intention %s",
                     objectID.GetValue(),
                     _debugName.c_str());

@@ -1,6 +1,4 @@
 {
   "behaviorClass": "FactoryTest",
-  "name": "FactoryTest",
-  "behaviorGroups": [
-  ]
+  "behaviorID": "FactoryTest"
 }

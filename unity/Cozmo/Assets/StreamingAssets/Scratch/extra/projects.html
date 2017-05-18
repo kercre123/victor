@@ -11,11 +11,11 @@
     <link rel="prefetch" href="images/framing_widgetBackground_player1.svg"/>
     <link rel="prefetch" href="images/framing_widgetBackground_player2.svg"/>
     <link rel="prefetch" href="images/framing_widgetBackground_player3.svg"/>
-    <link rel="prefetch" href="images/icon_block_action.svg"/>
-    <link rel="prefetch" href="images/icon_block_control.svg"/>
-    <link rel="prefetch" href="images/icon_block_event.svg"/>
-    <link rel="prefetch" href="images/icon_block_looks.svg"/>
-    <link rel="prefetch" href="images/icon_block_motion.svg"/>
+    <link rel="prefetch" href="images/icon_block_blue.svg"/>
+    <link rel="prefetch" href="images/icon_block_orange.svg"/>
+    <link rel="prefetch" href="images/icon_block_pink.svg"/>
+    <link rel="prefetch" href="images/icon_block_purple.svg"/>
+    <link rel="prefetch" href="images/icon_block_yellow.svg"/>
     <script>
     window.Unity = {
       call: function(msg) {
@@ -35,8 +35,6 @@
       <div class="hd">
         <button id="btn-close-page" class="button-plain" data-type="btn-close-page"><img src="images/icon_closeButton.svg"/></button>
         <span id="app-title"></span>
-        <span id="app-title-subtext"></span>
-        <img id="scratch-watermark" src="images/icon_scratchWatermark.svg"/>
       </div>
       <div class="bd">
         <ol id="projects-list">
@@ -50,7 +48,7 @@
         </ol>
       </div>
       <div class="ft">
-        <a id="tutorial-link" href="tutorial.html">
+        <a id="tutorial-link" href="tutorial.html" data-type="tutorial-link">
           <span id="tutorial-label"></span>
           <img id="tutorial-icon" src="images/icon_infoButton_on.svg"/>
         </a>
@@ -63,8 +61,8 @@
         <h2 id="confirm-delete-title" class="hd"></h2>
         <p id="confirm-delete-label" class="bd"></p>
         <div class="ft">
-          <button id="btn-delete-project" class="button-blue-pill" data-type="btn-delete-project"></button>
-          <button id="btn-cancel-delete-project" class="button-blue-pill" data-type="btn-cancel-delete-project"></button>
+          <button id="btn-delete-project" class="button-pill button-red-pill" data-type="btn-delete-project"></button>
+          <button id="btn-cancel-delete-project" class="button-pill button-blue-pill" data-type="btn-cancel-delete-project"></button>
         </div>
       </div>
     </div>
@@ -95,6 +93,8 @@
 
 
     <script src="../js/cozmoSaveLoadAPI.js"></script>
+    <script src="../lib/blocks/media/sounds.js"></script>
+    <script src="../js/webAudioPlayer.js"></script>
     <script src="./extra-common.js"></script>
     <script src="./projects.js"></script>
   </body>

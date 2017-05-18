@@ -29,7 +29,6 @@ static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToRobotOnSide");
 }
 
 

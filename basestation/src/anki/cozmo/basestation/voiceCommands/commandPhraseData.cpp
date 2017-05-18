@@ -11,7 +11,6 @@
 **/
 
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
-#include "anki/cozmo/basestation/voiceCommands/voiceCommandTypeHelpers.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
 

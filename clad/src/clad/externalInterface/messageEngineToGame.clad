@@ -249,7 +249,8 @@ string    text
 //  image.
 message RobotProcessedImage {
    uint_32 timestamp,
-   VisionMode visionModes[uint_8]
+   VisionMode visionModes[uint_8],
+   uint_8 mean // Valid iff ComputingStatistics mode enabled
 }
 
 // RobotObservedObject for signaling that an object
@@ -539,10 +540,16 @@ message NeedsPauseStates {
   bool actionPause[uint_8]
 }
 
-message AllNeedsMet {
+message StarLevelCompleted {
   int_32      unlockLevelCompleted,
   int_32      starsRequiredForNextUnlock,
   NeedsReward rewards[uint_8]
+}
+
+message StarUnlocked {
+  int_32      unlockLevel,
+  int_32      maxStarsForLevel,
+  int_32      currentStars,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -755,8 +762,8 @@ message SdkStatus {
 
 //notify the game that behavior has transitioned
 message BehaviorTransition{
-  string oldBehaviorName,
-  string newBehaviorName,
+  BehaviorID oldBehaviorID,
+  BehaviorID newBehaviorID,
   BehaviorClass oldBehaviorClass,
   ExecutableBehaviorType oldBehaviorExecType,
   BehaviorClass newBehaviorClass,
@@ -770,13 +777,10 @@ message ReactionTriggerTransition{
   ReactionTrigger newTrigger
 }
 
-message RespondChooserBehaviorList{
-  string behaviors[uint_8]
+message RespondAllBehaviorsList{
+  BehaviorID behaviors[uint_8]
 }
 
-message RespondEnabledBehaviorList{
-  string behaviors[uint_8]
-}
 
 message RespondReactionTriggerMap{
   ReactionTriggerToBehavior reactionTriggerEntries[uint_8]

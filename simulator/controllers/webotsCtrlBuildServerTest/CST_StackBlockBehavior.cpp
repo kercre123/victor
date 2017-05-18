@@ -10,7 +10,6 @@
  *
  **/
 
-#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 
@@ -74,7 +73,7 @@ PathMotionProfile motionProfile (defaultPathSpeed_mmps,
                      defaultReverseSpeed_mmps,
                      true);
 
-static const char* kBehaviorName = "StackBlocks";
+static const BehaviorID kBehaviorID = BehaviorID::StackBlocks;
 
 namespace {
   static const Pose3d kidnapCubePose(M_PI_F, Z_AXIS_3D(), {40.0, -150.0, 22.0});
@@ -100,7 +99,11 @@ private:
   // Parameters:
   const float _kRobotNearBlockThreshold_mm = 65.f;
   const float _kRobotNearBlockThresholdHigh_mm = 95.f;
-  ObjectType _cubeToMove = ObjectType::InvalidObject;
+  ObjectType  _baseCube    = ObjectType::InvalidObject;
+  std::string _baseCubeStr = "";
+  int         _topCubeID  = -1;
+  ObjectType  _topCube     = ObjectType::InvalidObject;
+  std::string _topCubeStr  = "";
   
   // Status flags:
   int _startedBehavior = 0;
@@ -134,17 +137,16 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       // TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
       // make sure stacking is unlocked
-      UnlockId unlock = UnlockIdsFromString("StackTwoCubes");
+      UnlockId unlock = UnlockIdFromString("StackTwoCubes");
       CST_ASSERT(unlock != UnlockId::Count, "couldn't get valid unlock id");
       SendMessage( ExternalInterface::MessageGameToEngine(
                      ExternalInterface::RequestSetUnlock(unlock, true)));
 
       // try to start the behavior now, it shouldn't start for a while
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                    ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)));
       SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ExecuteBehaviorByName(kBehaviorName)));
-
+                    ExternalInterface::ExecuteBehaviorByID(kBehaviorID, -1)));
           
       SendMoveHeadToAngle(0, 100, 100);
       SET_STATE(WaitForCubeConnections);
@@ -263,12 +265,19 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         ObjectType carryingCube;
         CST_ASSERT(GetObjectType(GetCarryingObjectID(), carryingCube) == Result::RESULT_OK,
                    "Could not get object type for cube being carried");
-        _cubeToMove = (carryingCube == ObjectType::Block_LIGHTCUBE1) ?
+        _baseCube = (carryingCube == ObjectType::Block_LIGHTCUBE1) ?
                       ObjectType::Block_LIGHTCUBE2 :
                       ObjectType::Block_LIGHTCUBE1;
+        _topCube = carryingCube;
+        
+        _baseCubeStr = (_baseCube == ObjectType::Block_LIGHTCUBE1) ? "cube0" : "cube1";
+        _topCubeStr  = (_topCube == ObjectType::Block_LIGHTCUBE1)  ? "cube0" : "cube1";
+        
+        _topCubeID  = GetCarryingObjectID();
+
 
         // raise it off the ground so we trigger a moved event, and send it somewhere we know the robot won't see it
-        SetLightCubePose(_cubeToMove, hideCubePose);
+        SetLightCubePose(_baseCube, hideCubePose);
         SET_STATE(BehaviorShouldFail);
         // at this point, robot should be trying to do stacking action. It picked up the first cube, then will
         // go try to stack it, but should fail because the bottom cube isn't there
@@ -294,7 +303,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         if(currTime_s - _behaviorCheckTime >= timeToHold_s ) {
           
           // now send the cube to a place where the robot will be able to see / interact with it
-          SetLightCubePose(_cubeToMove, kidnapCubePose);
+          SetLightCubePose(_baseCube, kidnapCubePose);
 
           // first move the head down
           SendMoveHeadToAngle(0, 100, 100);
@@ -347,8 +356,8 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     {
       // Verify robot has stacked the blocks
       // NOTE: actual poses are in meters
-      Pose3d pose1 = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
-      Pose3d pose2 = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE2);
+      Pose3d pose1 = GetLightCubePoseActual(_baseCube);
+      Pose3d pose2 = GetLightCubePoseActual(_topCube);
 
       const float stackingTolerance_mm = 40.0f;
       
@@ -361,10 +370,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             // difference between z's is about a block height
                                             NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
-        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("NoneBehavior")));
+        SendMessage(ExternalInterface::MessageGameToEngine(
+                       ExternalInterface::ExecuteBehaviorByID(BehaviorID::NoneBehavior, -1)));
         // Now attempt to pick up the top block:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE1);
+        SendPickupObjectByType(_topCube);
         SET_STATE(AttemptPickupHigh)
       }
       break;
@@ -374,11 +384,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::AttemptPickupHigh:
     {
       const Pose3d robotPose = GetRobotPoseActual();
-      const Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE1);
+      const Pose3d cubePose = GetLightCubePoseActual(_topCube);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThresholdHigh_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view so that the pickup will fail.
-        SendApplyForce("cube0", -20, -5, 5);
+        SendApplyForce(_topCubeStr, -20, -5, 5);
         SET_STATE(PickupHighShouldFail)
       }
       
@@ -392,13 +402,13 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       //  fail with PICKUP_OBJECT_UNEXPECTEDLY_MOVING.
       static int cnt = 1;
       if ((++cnt % 5) == 0) {
-        SendApplyForce("cube0", -5, 0, 0);
+        SendApplyForce(_topCubeStr, -5, 0, 0);
       }
       
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::PICKUP_OBJECT_UNEXPECTEDLY_MOVING, 15) {
         // Pick up object 1:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE2);
+        SendPickupObjectByType(_baseCube);
         SET_STATE(AttemptPickupLowOutOfView)
       }
       
@@ -409,11 +419,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::AttemptPickupLowOutOfView:
     {
       Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE2);
+      Pose3d cubePose = GetLightCubePoseActual(_baseCube);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view:
-        SendApplyForce("cube1", 20, -7, 10);
+        SendApplyForce(_baseCubeStr, 20, -7, 10);
         SET_STATE(PickupLowOutOfViewShouldFail)
       }
       
@@ -428,7 +438,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         Pose3d cubePose = GetRobotPoseActual();
         Vec3f T = cubePose.GetTranslation();
         cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 25));
-        SetLightCubePose(ObjectType::Block_LIGHTCUBE2, cubePose);
+        SetLightCubePose(_baseCube, cubePose);
         // move head up to see the cube:
         _moveHeadToAngleResult = ActionResult::RUNNING;
         SendMoveHeadToAngle(0, 100, 100);
@@ -444,7 +454,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_moveHeadToAngleResult == ActionResult::SUCCESS, 5) {
         // pick up object 1:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE2);
+        SendPickupObjectByType(_baseCube);
         SET_STATE(AttemptPickupLowInView)
       }
       
@@ -455,11 +465,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::AttemptPickupLowInView:
     {
       Pose3d robotPose = GetRobotPoseActual();
-      Pose3d cubePose = GetLightCubePoseActual(ObjectType::Block_LIGHTCUBE2);
+      Pose3d cubePose = GetLightCubePoseActual(_baseCube);
       const bool nearBlock = ComputeDistanceBetween(robotPose, cubePose) < _kRobotNearBlockThreshold_mm;
       IF_CONDITION_WITH_TIMEOUT_ASSERT(nearBlock, 15) {
         // Push the block out of view:
-        SendApplyForce("cube1", 20, -7, 10);
+        SendApplyForce(_baseCubeStr, 20, -7, 10);
         // Keep track of where the robot was when the cube was first pushed.
         _robotPoseWhenBlockShoved = GetRobotPoseActual();
         SET_STATE(TeleportBlockInView)
@@ -475,7 +485,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       //  to trick Cozmo into thinking it's moving as expected.
       static int cnt = 0;
       if ((++cnt % 5) == 0) {
-        SendApplyForce("cube1", -5, 0, 0);
+        SendApplyForce(_baseCubeStr, -5, 0, 0);
       }
       
       Pose3d robotPoseNow = GetRobotPoseActual();
@@ -485,7 +495,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         Pose3d cubePose = GetRobotPoseActual();
         Vec3f T = cubePose.GetTranslation();
         cubePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
-        SetLightCubePose(ObjectType::Block_LIGHTCUBE2, cubePose);
+        SetLightCubePose(_baseCube, cubePose);
         SET_STATE(PickupLowInViewShouldFail)
       }
       
@@ -499,7 +509,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::NOT_CARRYING_OBJECT_RETRY, DEFAULT_TIMEOUT) {
         // Pick up the cube again:
         _pickupObjectResult = ActionResult::RUNNING;
-        SendPickupObjectByType(ObjectType::Block_LIGHTCUBE2);
+        SendPickupObjectByType(_baseCube);
         
         SET_STATE(RemoveCube)
       }
@@ -511,10 +521,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     case TestState::RemoveCube:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_pickupObjectResult == ActionResult::SUCCESS, DEFAULT_TIMEOUT) {
-        CST_ASSERT(GetCarryingObjectID() == 1, "robot should be carrying object at this point");
+        CST_ASSERT(GetCarryingObjectID() != _topCubeID &&
+                   GetCarryingObjectID() != -1, "robot should be carrying object at this point");
         
         // Remove the light cube from the world (as it someone has taken it off the lift)
-        CST_ASSERT(RemoveLightCubeByType(ObjectType::Block_LIGHTCUBE2), "LightCube removal failed");
+        CST_ASSERT(RemoveLightCubeByType(_baseCube), "LightCube removal failed");
         
         // Attempt to place the now-removed block:
         Pose3d placePose = GetRobotPoseActual();
@@ -577,7 +588,8 @@ void CST_StackBlockBehavior::HandleRobotCompletedAction(const ExternalInterface:
   } else if(msg.actionType == RobotActionType::TURN_IN_PLACE) {
     _turnInPlaceResult = msg.result;
   } else if (msg.actionType == RobotActionType::PICKUP_OBJECT_HIGH
-             || msg.actionType == RobotActionType::PICKUP_OBJECT_LOW) {
+             || msg.actionType == RobotActionType::PICKUP_OBJECT_LOW
+             || msg.actionType == RobotActionType::COMPOUND) {
     _pickupObjectResult = msg.result;
   } else if (msg.actionType == RobotActionType::PLACE_OBJECT_HIGH
              || msg.actionType == RobotActionType::PLACE_OBJECT_LOW) {
@@ -588,13 +600,13 @@ void CST_StackBlockBehavior::HandleRobotCompletedAction(const ExternalInterface:
 void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg)
 {
   PRINT_NAMED_INFO("CST_StackBlockBehavior.transition", "%s -> %s",
-                   msg.oldBehaviorName.c_str(),
-                   msg.newBehaviorName.c_str());
+                   BehaviorIDToString(msg.oldBehaviorID),
+                   BehaviorIDToString(msg.newBehaviorID));
   
-  if(msg.oldBehaviorName == kBehaviorName) {
+  if(msg.oldBehaviorID == kBehaviorID) {
     _stoppedBehavior++;
   }
-  if(msg.newBehaviorName == kBehaviorName) {
+  if(msg.newBehaviorID == kBehaviorID) {
     _startedBehavior++;
   }
 }

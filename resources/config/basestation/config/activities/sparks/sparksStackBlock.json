@@ -1,19 +1,56 @@
 {
-  "name" : "sparksStackBlock",
+  "activityID" : "SparksStackBlock",
+  "activityType" : "Sparked",
   "requireSpark":"StackTwoCubes",
-  "behaviorChooser" :
-  {
-   "type" : "sparks",
-   "minTimeSecs": 0,
-   "maxTimeSecs": 80,
-   "numberOfRepetitions": 1,
-   "behaviorObjective": "StackedBlock",
-   "softSparkTrigger": "SoftSparkUpgradeLift",
-    // these groups are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "SparksStackBlock" ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
-  }
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "CantHandleTallStack",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "SparksStackBlock",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      },
+      { "behaviorID" : "SparksPickupSingleCubeToStack",
+        "scoring"      :
+        {
+          "flatScore": 4.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 80,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "StackedBlock",
+  "softSparkTrigger": "SoftSparkUpgradeLift"
 }

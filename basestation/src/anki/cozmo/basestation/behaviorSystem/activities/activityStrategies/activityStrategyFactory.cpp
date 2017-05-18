@@ -19,15 +19,21 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySimple.h"
 
 #include "anki/common/basestation/jsonTools.h"
+#include "clad/types/activityTypes.h"
+#include "json/json.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
-#include "json/json.h"
 
 #include <string>
 
 namespace Anki {
 namespace Cozmo {
+
+namespace{
+static const char* kStrategyTypeConfigKey = "type";
+}
+  
 namespace ActivityStrategyFactory {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -36,31 +42,42 @@ IActivityStrategy* CreateActivityStrategy(Robot& robot, const Json::Value& confi
   IActivityStrategy* newStrategy = nullptr;
 
   // extract type
-  const Json::Value& type = config["type"];
-  std::string typeStr = type.isNull() ? "" : type.asString();
-  std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), ::tolower);
+  const std::string type = JsonTools::ParseString(config, kStrategyTypeConfigKey,
+                                                  "IActivityStrategy.CreateActivity.MissingType");
+  
+  ActivityStrategy strategyType = ActivityStrategyFromString(type);
 
-  // should this be more sophisticated than string compare?
-  if ( typeStr == "simple" )
-  {
-    newStrategy = new ActivityStrategySimple(robot, config);
-  }
-  else if ( typeStr == "fp_playwithhumans" ) {
-    newStrategy = new ActivityStrategyFPPlayWithHumans(robot, config);
-  }
-  else if ( typeStr == "spark" ) {
-    newStrategy = new ActivityStrategySpark(robot, config);
-  }
-  else if ( typeStr == "object_tap_interaction" ) {
-    newStrategy = new ActivityStrategyObjectTapInteraction(robot, config);
-  }
-  else if ( typeStr == "pyramid"){
-    newStrategy = new ActivityStrategyPyramid(robot, config);
-  }
-  else
-  {
-    JsonTools::PrintJsonError(config, "ActivityStrategyFactory.CreateActivityStrategy.InvalidType");
-    DEV_ASSERT(false, "ActivityStrategyFactory.CreateActivityStrategy.InvalidType");
+  switch(strategyType){
+    case ActivityStrategy::ObjectTapInteraction:
+    {
+      newStrategy = new ActivityStrategyObjectTapInteraction(robot, config);
+      break;
+    }
+    case ActivityStrategy::PlayWithHumans:
+    {
+      newStrategy = new ActivityStrategyFPPlayWithHumans(robot, config);
+      break;
+    }
+    case ActivityStrategy::Pyramid:
+    {
+      newStrategy = new ActivityStrategyPyramid(robot, config);
+      break;
+    }
+    case ActivityStrategy::Simple:
+    {
+      newStrategy = new ActivityStrategySimple(robot, config);
+      break;
+    }
+    case ActivityStrategy::Spark:
+    {
+      newStrategy = new ActivityStrategySpark(robot, config);
+      break;
+    }
+    case ActivityStrategy::Count:
+    {
+      DEV_ASSERT(false,
+                 "IActivityStrategy.CreateActivityStrategy.InvalidStrategyType");
+    }
   }
   
   // if failed print information to debug
@@ -68,7 +85,7 @@ IActivityStrategy* CreateActivityStrategy(Robot& robot, const Json::Value& confi
   if ( failed )
   {
     PRINT_NAMED_ERROR("ActivityStrategyFactory.CreateActivityStrategy.Fail",
-      "Failed to create behavior chooser '%s'. Check log for config.", typeStr.c_str() );
+      "Failed to create behavior chooser '%s'. Check log for config.", type.c_str() );
     JsonTools::PrintJsonError(config, "ActivityStrategyFactory.CreateActivityStrategy.Fail");
   }
   

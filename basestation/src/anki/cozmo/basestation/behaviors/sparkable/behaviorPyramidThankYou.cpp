@@ -36,7 +36,6 @@ BehaviorPyramidThankYou::BehaviorPyramidThankYou(Robot& robot, const Json::Value
 : IBehavior(robot, config)
 , _robot(robot)
 {
-  SetDefaultName("PyramidThankYou");
 }
 
   
@@ -93,6 +92,14 @@ Result BehaviorPyramidThankYou::InitInternal(Robot& robot)
   
   StartActing(turnVerifyThank);
   return Result::RESULT_OK;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorPyramidThankYou::ResumeInternal(Robot& robot)
+{
+  // don't resume - if the animation was interrupted the moment is gone
+  return Result::RESULT_FAIL;
 }
 
   

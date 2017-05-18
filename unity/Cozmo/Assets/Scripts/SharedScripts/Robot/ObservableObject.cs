@@ -180,6 +180,8 @@ public class ObservableObject : IVisibleInCamera {
 
   private int _ConsecutiveVisionFramesNotSeen = 0;
 
+  public int NumVisionFramesSinceLastSeen { get { return _ConsecutiveVisionFramesNotSeen; } }
+
   private float lastRelativeToX;
   public float relativeToX;
   private float lastRelativeToY;

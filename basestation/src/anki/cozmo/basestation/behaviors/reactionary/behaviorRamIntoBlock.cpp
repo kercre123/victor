@@ -70,8 +70,6 @@ using namespace ExternalInterface;
 BehaviorRamIntoBlock::BehaviorRamIntoBlock(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("BehaviorRamIntoBlock");
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -153,7 +151,7 @@ void BehaviorRamIntoBlock::TransitionToTurningToBlock(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRamIntoBlock::TransitionToRammingIntoBlock(Robot& robot)
 {
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersRamIntoBlockArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRamIntoBlockArray);
   
   const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(obj != nullptr){

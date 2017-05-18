@@ -34,7 +34,7 @@ namespace Cozmo {
 
 namespace {
 static const ObjectInteractionIntention kObjectIntention =
-                   ObjectInteractionIntention::PickUpAnyObject;
+                   ObjectInteractionIntention::PickUpObjectNoAxisCheck;
 
 static const f32 kPostLiftDriveBackwardDist_mm = 20.f;
 static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;  
@@ -96,7 +96,7 @@ bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preR
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 {
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersWorkoutArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersWorkoutArray);
 
   // disable idle
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
@@ -140,7 +140,7 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
 {
   if( _shouldBeCarrying && ! robot.IsCarryingObject() ) {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".Update.NotCarryingWhenShould").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Update.NotCarryingWhenShould").c_str(),
                   "behavior thinks we should be carrying an object but we aren't, so it must have been detected on "
                   "the ground. Exit the behavior");
     // let the current animation finish, but then don't continue with the behavior
@@ -210,7 +210,7 @@ void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(Robot& robot)
 void BehaviorCubeLiftWorkout::TransitionToStrongLifts(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToStrongLifts", "%s: %d strong lifts remain",
-                GetName().c_str(),
+                GetIDStr().c_str(),
                 _numStrongLiftsToDo);
   
   if( _numStrongLiftsToDo == 0 ) {
@@ -242,7 +242,7 @@ void BehaviorCubeLiftWorkout::TransitionToWeakPose(Robot& robot)
 void BehaviorCubeLiftWorkout::TransitionToWeakLifts(Robot& robot)
 {
   PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToWeakLifts", "%s: %d weak lifts remain",
-                GetName().c_str(),
+                GetIDStr().c_str(),
                 _numWeakLiftsToDo);
 
   if( _numWeakLiftsToDo == 0 ) {
@@ -281,7 +281,7 @@ void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
   // if we still think we are carrying the object, see if we can find it
   if( robot.IsCarryingObject() ) {
 
-    PRINT_CH_INFO("Behaviors", (GetName() + ".StillCarryingCheck").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StillCarryingCheck").c_str(),
                   "Robot still thinks it's carrying object, do a quick search for it");
 
     CompoundActionSequential* action = new CompoundActionSequential(robot);
@@ -304,7 +304,7 @@ void BehaviorCubeLiftWorkout::TransitionToManualPutDown(Robot& robot)
 {
   // in case the put down didn't work, do it manually
   if( robot.IsCarryingObject() ) {
-    PRINT_CH_INFO("Behaviors", (GetName() + ".ManualPutDown").c_str(),
+    PRINT_CH_INFO("Behaviors", (GetIDStr() + ".ManualPutDown").c_str(),
                   "Manually putting down object because animation (may have) failed to do it");
     StartActing(new PlaceObjectOnGroundAction(robot), &BehaviorCubeLiftWorkout::EndIteration);
   }

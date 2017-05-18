@@ -1,13 +1,71 @@
 {
-  "name" : "ObjectTapInteraction",
+  "activityID" : "ObjectTapInteraction",
   "requireObjectTapped": true,
+  "activityType" : "BehaviorsOnly",
   "behaviorChooser" :
   {
-    "type" : "simple",
-    "behaviorGroups" : [ "ObjectTapInteraction" ]
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "TapInteractionPickUpCube",
+        "scoring"      :
+        {
+          "flatScore": 5.0,
+          "runningPenalty": {
+            "nodes": [
+              {
+               "x": 0.0,
+               "y": 2.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "TapInteractionPopAWheelie",
+        "scoring"      :
+        {
+          "flatScore": 5.0,
+          "runningPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 2.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "TapInteractionRollCube",
+        "scoring"      :
+        {
+          "flatScore": 5.0,
+          "runningPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 2.0
+              }
+            ]
+          }
+        }
+      },
+      { "behaviorID" : "TapInteractionStackCubes",
+        "scoring"      :
+        {
+          "flatScore": 5.0,
+          "runningPenalty": {
+            "nodes": [
+              {
+                "x": 0.0,
+                "y": 2.0
+              }
+            ]
+          }
+        }
+      }
+    ]
   },
   "activityStrategy":
   {
-    "type" : "Object_Tap_Interaction"
+    "type" : "ObjectTapInteraction"
   }
 }

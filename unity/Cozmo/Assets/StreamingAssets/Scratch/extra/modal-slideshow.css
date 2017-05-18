@@ -70,6 +70,7 @@ button:focus {
   width: 100%;
   height: 100%;
   padding: 0;
+  overflow: hidden;
 }
 
 .modal-slides .hd {
@@ -125,6 +126,7 @@ button:focus {
   border-top: 1px solid;
   border-image: linear-gradient(to right, #5d5e5f, #868788 25%, #868788 75%, #5d5e5f);
   border-image-slice: 1;
+  border-width: 1px 0 0 0;
 }
 
 .modal-slides .progress {
@@ -135,20 +137,18 @@ button:focus {
   position: relative;
   color: #fff;
   border: 1px solid #1fadda;
-  border-radius: 5px;
+  border-radius: 10px;
   background-image: linear-gradient(to bottom, #7d7b78, #6b6b6c);
   text-transform: uppercase;
   padding: .3em 0;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
-  align-content: flex-end;
+  line-height: 1em;
 }
 
 .modal-slides .nav-button .arrow {
   display: inline-block;
-  height: .9em;
+  height: 1em;
   width: auto;
 }
 .modal-slides .nav-button.nav-button-back {
@@ -165,19 +165,19 @@ button:focus {
   display: none;
 }
 .modal-slides #btn-next[disabled="true"] {
-  display: none; !important;
+  position: absolute;
+  visibility: hidden;
 }
 .modal-slides .nav-button .arrow.arrow-right {
   -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
-  right: 8px;
   margin-right: .4em;
-  margin-left: 1.4em;
+  margin-left: 1.1em;
 }
 .modal-slides .nav-button .arrow.arrow-left {
   left: 8px;
   margin-left: .4em;
-  margin-right: 1.4em;
+  margin-right: 1.1em;
 }
 
 
@@ -188,9 +188,8 @@ button:focus {
   padding: 0;
   margin: 0;
   white-space: nowrap;
-  transition: left .5s;
+  transition: -webkit-transform .5s ease;
   -webkit-transform: translate3d(0,0,0);
-  transform: translate3d(0,0,0);
 }
 .modal-slides.disable-slide-animation .slide-strip {
   transition: none;
@@ -242,6 +241,12 @@ button:focus {
   justify-content: center;
   text-align: center;
   white-space: pre-line;
+}
+
+@media only screen and (max-width: 799px) {
+  .modal-slides .nav-button {
+    border-radius: 5px;
+  }
 }
 
 @font-face {

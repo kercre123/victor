@@ -1,31 +1,9 @@
 {
   "behaviorClass": "PopAWheelie",
-  "name": "popAWheelie",
+  "behaviorID": "PopAWheelie",
   "displayNameKey":"behavior.PopAWheelie",
   "requiredUnlockId": "PopAWheelieAction",
-  "behaviorGroups": [
-    "FP_PlayAlone"    
-  ],
-  
-  "flatScore":  0.8,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,
-  "repetitionPenalty": {
-    "nodes": [
-      {
-        "x": 5.0,
-        "y": 0.0
-      },
-      {
-        "x": 30.0,
-        "y": 0.5
-      },
-      {
-        "x": 100.0,
-        "y": 1.0
-      }
-    ]
-  },
-
   "considerThisHasRunForBehaviorObjective": "PoppedWheelie"
 }

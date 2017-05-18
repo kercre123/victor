@@ -1,12 +1,8 @@
 {
   "behaviorClass": "PeekABoo",
-  "name": "sparksPeekABoo",
+  "behaviorID": "SparksPeekABoo",
   "displayNameKey":"behavior.PeekAboo",
   "requiredUnlockId": "PeekABoo",
-  "behaviorGroups": [
-    "SparksPeekABoo"
-  ],
-  "flatScore" : 2.5,
   "minTimesPeekBeforeQuit" : 3,
   "maxTimesPeekBeforeQuit" : 3,
   "noUserInteractionTimeout_numIdles": 3,

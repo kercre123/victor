@@ -305,12 +305,14 @@ Blockly.Toolbox.prototype.getSelectedItem = function() {
  * @param {Blockly.Toolbox.Category} item The category to select.
  */
 Blockly.Toolbox.prototype.setSelectedItem = function(item) {
+
   if (this.selectedItem_) {
     // Don't do anything if they selected the already-open category.
     if (this.selectedItem_ == item) {
       return;
     }
     // They selected a different category but one was already open.  Close it.
+    this.workspace_.playAudio("click");
     this.selectedItem_.setSelected(false);
   }
   this.selectedItem_ = item;

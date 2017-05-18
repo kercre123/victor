@@ -62,7 +62,6 @@
 //: IBehavior(robot, config)
 //, _currentActionTag(ActionConstants::INVALID_TAG)
 //{
-//  SetDefaultName("BehaviorExploreCliff");
 //
 //  SubscribeToTags({
 //    EngineToGameTag::RobotCompletedAction

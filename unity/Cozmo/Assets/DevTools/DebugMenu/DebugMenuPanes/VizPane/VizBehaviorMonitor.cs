@@ -19,8 +19,8 @@ namespace Anki.Cozmo.Viz {
 
     const int _kMaxBars = 5;
 
-    private Color GetColorForBehavior(string name) {
-      var c = ((uint)name.GetHashCode()).ToColor();
+    private Color GetColorForBehavior(BehaviorID behaviorID) {
+      var c = ((uint)name.ToString().GetHashCode()).ToColor();
       c.a = 1f;
       return c;
     }
@@ -60,7 +60,7 @@ namespace Anki.Cozmo.Viz {
 
       // secondary sort by name alphabetical
       if (sortVal == 0) {
-        return behaviors[a].name.CompareTo(behaviors[b].name);
+        return behaviors[a].behaviorID.ToString().CompareTo(behaviors[b].behaviorID.ToString());
       }
       return sortVal;
     }
@@ -77,9 +77,9 @@ namespace Anki.Cozmo.Viz {
             var index = _Order[i];
             if (index < behaviors.Length) {
               var behavior = behaviors[index];
-              _BehaviorBars[i].SetLabel(behavior.name);
+              _BehaviorBars[i].SetLabel(behavior.behaviorID.ToString());
               _BehaviorBars[i].SetValue(behavior.behaviorScore, behavior.totalScore);
-              var color = GetColorForBehavior(behavior.name);
+              var color = GetColorForBehavior(behavior.behaviorID);
 
               _BehaviorBars[i].SetColor(color, color - new Color(0.1f, 0.1f, 0.1f, 0f));
             }

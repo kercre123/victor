@@ -414,7 +414,7 @@
     },
     {
       "CladEvent": "FlipDownFromBack",
-      "AnimName": "FlipDownFromBack"
+      "AnimName": "ag_reacttocliff_turtleroll_01"
     },
     {
       "CladEvent": "FrustratedByFailure",
@@ -1049,6 +1049,14 @@
       "AnimName": "ag_petdetection_misc"
     },
     {
+      "CladEvent":"PickupHelperPreActionNamedFace",
+      "AnimName": "ag_freeplay_reacttoface_identified"
+    },
+    {
+      "CladEvent":"PickupHelperPreActionUnnamedFace",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
+    },
+    {
       "CladEvent": "PlacedOnCharger",
       "AnimName": "ag_reactToCharger"
     },
@@ -1357,6 +1365,26 @@
       "AnimName": "ag_shocked"
     },
     {
+      "CladEvent": "Singing_80bpm",
+      "AnimName": "ag_cozmosings_80bpm"
+    },
+    {
+      "CladEvent": "Singing_100bpm",
+      "AnimName": "ag_cozmosings_100bpm"
+    },
+    {
+      "CladEvent": "Singing_120bpm",
+      "AnimName": "ag_cozmosings_120bpm"
+    },
+    {
+      "CladEvent": "Singing_GetIn",
+      "AnimName": "ag_cozmosings_getin"
+    },
+    {
+      "CladEvent": "Singing_GetOut",
+      "AnimName": "ag_cozmosings_getout"
+    },
+    {
       "CladEvent": "Sleeping",
       "AnimName": "ag_sleeping"
     },
@@ -1443,18 +1471,6 @@
     {
       "CladEvent": "SpeedTapDrivingStart",
       "AnimName": "ag_speedTap_startDriving"
-    },
-    {
-      "CladEvent": "StackBlocksPreActionNamedFace",
-      "AnimName": "ag_freeplay_reacttoface_identified"
-    },
-    {
-      "CladEvent": "StackBlocksPreActionUnnamedFace",
-      "AnimName": "ag_freeplay_reacttoface_unidentified"
-    },
-    {
-      "CladEvent": "StackBlocksRetry",
-      "AnimName": "rollCube_retry"
     },
     {
       "CladEvent": "StackBlocksSuccess",

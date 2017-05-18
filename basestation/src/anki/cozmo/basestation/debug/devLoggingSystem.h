@@ -44,10 +44,10 @@ public:
   void PrepareForUpload(const std::string& namePrefix) const;
   void DeleteLog(const std::string& archiveFilename) const;
   std::vector<std::string> GetLogFilenamesForUpload() const;
-  Json::Value GetAppRunData(const std::string& appRunFilename) const;
 
   Util::Dispatch::Queue* GetQueue() { return _queue; }
   
+  static Json::Value GetAppRunData(const std::string& appRunFilename);
   static std::string GetAppRunFilename(const std::string& archiveFilename);
   const std::string& GetCurrentAppRunFilename() const;
   void UpdateDeviceId(const std::string&);
@@ -61,11 +61,12 @@ public:
   static const std::string kAppRunKey;
   static const std::string kDeviceIdKey;
   static const std::string kTimeSinceEpochKey;
+  static const std::string kReadyForUploadKey;
+  static const std::string kHasBeenUploadedKey;
 
 private:
   static DevLoggingSystem* sInstance;
   static const DevLoggingClock::time_point kAppRunStartTime;
-  static const std::string kWaitingForUploadDirName;
   static const std::string kArchiveExtensionString;
   static const std::string kAppRunExtension;
 

@@ -14,6 +14,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/actionWatcher.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -608,6 +609,20 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
+
+  u32 tag1 = testAction1->GetTag();
+  u32 tag2 = testAction2->GetTag();
+  u32 tag3 = testAction3->GetTag();
+  u32 tagCompound = compoundAction->GetTag();
+  
+  // Make sure the action watcher callacks are tracking everything
+  std::set<u32> completedTags;
+  auto& watcher = r.GetActionList().GetActionWatcher();
+  watcher.RegisterActionEndedCallbackForAllActions(
+    [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
+      const bool inserted = completedTags.insert(completion.idTag).second;
+      EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
+    });
   
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
@@ -632,6 +647,12 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   r.GetActionList().Update();
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_TRUE(completedTags.find(tag1) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tag2) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tag3) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tagCompound) != completedTags.end());
+  
   CheckActionDestroyed({"Test1", "Test2", "Test3", "Comp1"});
 }
 
@@ -648,6 +669,20 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
+
+  u32 tag1 = testAction1->GetTag();
+  u32 tag2 = testAction2->GetTag();
+  u32 tag3 = testAction3->GetTag();
+  u32 tagCompound = compoundAction->GetTag();
+  
+  // Make sure the action watcher callacks are tracking everything
+  std::set<u32> completedTags;
+  auto& watcher = r.GetActionList().GetActionWatcher();
+  watcher.RegisterActionEndedCallbackForAllActions(
+    [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
+      const bool inserted = completedTags.insert(completion.idTag).second;
+      EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
+    });
   
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
@@ -673,6 +708,12 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   CheckTracksUnlocked(r, track1 | track2 | track3);
   
   r.GetActionList().Update();
+
+  EXPECT_TRUE(completedTags.find(tag1) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tag2) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tag3) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tagCompound) != completedTags.end());
+  
   CheckActionDestroyed({"Test1", "Test2", "Test3", "Comp1"});
 }
 
@@ -687,6 +728,19 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
+
+  u32 tag1 = testAction1->GetTag();
+  u32 tag2 = testAction2->GetTag();
+  u32 tagCompound = compoundAction->GetTag();
+  
+  // Make sure the action watcher callacks are tracking everything
+  std::set<u32> completedTags;
+  auto& watcher = r.GetActionList().GetActionWatcher();
+  watcher.RegisterActionEndedCallbackForAllActions(
+    [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
+      const bool inserted = completedTags.insert(completion.idTag).second;
+      EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
+    });
   
   r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
   
@@ -701,6 +755,11 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   CheckTracksUnlocked(r, track1 | track2);
   
   EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_TRUE(completedTags.find(tag1) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tag2) != completedTags.end());
+  EXPECT_TRUE(completedTags.find(tagCompound) != completedTags.end());
+
   CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
@@ -1176,6 +1235,72 @@ TEST(QueueAction, CancelAlreadyCancelledFromDestructor)
 }
 
 
+TEST(QueueAction, ComplexNestedAction)
+{
+  Robot r(0, cozmoContext);
+  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track1);
+  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
+  TestAction* testAction4 = new TestAction(r, "Test4", RobotActionType::WAIT, track1);
+  TestAction* testAction5 = new TestAction(r, "Test5", RobotActionType::WAIT, track2);
+  TestCompoundActionSequential* compoundAction1 = new TestCompoundActionSequential(r, {}, "Comp1");
+  TestCompoundActionSequential* compoundAction2 = new TestCompoundActionSequential(r, {}, "Comp2");
+  TestCompoundActionParallel* compoundAction3 = new TestCompoundActionParallel(r, {}, "Comp3");
+  TestCompoundActionParallel* compoundAction4 = new TestCompoundActionParallel(r, {}, "Comp4");
+
+  compoundAction4->AddAction(testAction5);
+  compoundAction2->AddAction(testAction4);
+  compoundAction2->AddAction(compoundAction4);
+  compoundAction2->AddAction(testAction3);
+  compoundAction3->AddAction(compoundAction2);
+  compoundAction3->AddAction(testAction2);
+  compoundAction1->AddAction(testAction1);
+  compoundAction1->AddAction(compoundAction3);
+  
+  std::set<u32> allTags = {testAction1->GetTag(),
+                           testAction2->GetTag(),
+                           testAction3->GetTag(),
+                           testAction4->GetTag(),
+                           testAction5->GetTag(),
+                           compoundAction1->GetTag(),
+                           compoundAction2->GetTag(),
+                           compoundAction3->GetTag(),
+                           compoundAction4->GetTag()};
+  std::set<u32> completedTags;
+  auto& watcher = r.GetActionList().GetActionWatcher();
+  watcher.RegisterActionEndedCallbackForAllActions(
+    [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
+      const bool inserted = completedTags.insert(completion.idTag).second;
+      EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
+    });
+
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction1);
+
+  r.GetActionList().Update();
+
+  testAction1->_complete = true;
+  r.GetActionList().Update();
+
+  testAction2->_complete = true;
+  r.GetActionList().Update();
+
+  testAction3->_complete = true;
+  r.GetActionList().Update();
+
+  testAction4->_complete = true;
+  testAction5->_complete = true;
+  r.GetActionList().Update();
+
+  CheckTracksUnlocked(r, track1 | track2 | track3);
+
+  EXPECT_EQ(allTags, completedTags);
+
+  // TODO: should test this, but I'm too lazy to figure out which order they are being destroyed in
+  // CheckActionDestroyed({"Test1", "Test2", "Test3", "Test4", "Test5", "Comp1", "Comp2", "Comp3", "Comp4"});
+
+}
+
+
 // Tests setting two unique tags
 TEST(ActionTag, UniqueUnityTags)
 {
@@ -1263,4 +1388,116 @@ TEST(ActionTag, ConflictAutoGeneratedTag)
   
   delete testAction1;
   delete testAction2;
+}
+
+TEST(ActionWatcher, AddAndRemoveCallbacks)
+{
+  Robot robot(0, cozmoContext);
+
+  using ActionTag = uint32_t;
+  
+  struct CallbackResult {
+    ActionTag tag;
+    RobotActionType type;
+    ActionResult result;
+  };
+
+  // map callback int id to result
+  std::map< int, CallbackResult > callbackResults;
+
+  ActionEndedCallback cb1 = [&callbackResults](const ExternalInterface::RobotCompletedAction& completion) {
+    callbackResults[1] = {completion.idTag, completion.actionType, completion.result};
+  };
+
+  ActionEndedCallback cb2 = [&callbackResults](const ExternalInterface::RobotCompletedAction& completion) {
+    callbackResults[2] = {completion.idTag, completion.actionType, completion.result};
+  };
+
+  auto& watcher = robot.GetActionList().GetActionWatcher();
+  
+  ActionEndedCallbackID cbID1 = watcher.RegisterActionEndedCallbackForAllActions( cb1 );
+
+  robot.GetActionList().Update();
+  robot.GetActionList().Update();
+
+  EXPECT_TRUE( callbackResults.empty() );
+  
+  TestAction* testAction1 = new TestAction(robot, "Test1", RobotActionType::WAIT, track1);
+  auto action1Tag = testAction1->GetTag();
+  
+  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1);  
+  robot.GetActionList().Update();
+
+  EXPECT_TRUE( callbackResults.empty() );
+  
+  testAction1->_complete = true;
+
+  EXPECT_TRUE( callbackResults.empty() );
+
+  robot.GetActionList().Update();
+
+  EXPECT_FALSE( callbackResults.empty() );
+  EXPECT_FALSE( callbackResults.find(1) == callbackResults.end() );
+  EXPECT_EQ( callbackResults.size(), 1 );
+  EXPECT_EQ( callbackResults[1].tag, action1Tag );
+  EXPECT_EQ( callbackResults[1].type, RobotActionType::WAIT );
+  EXPECT_EQ( callbackResults[1].result, ActionResult::SUCCESS );
+
+  // add another watcher callback
+  ActionEndedCallbackID cbID2 = watcher.RegisterActionEndedCallbackForAllActions( cb2 );
+  EXPECT_NE(cbID1, cbID2) << "ids should be unique";
+  callbackResults.clear();
+
+  TestAction* testAction2 = new TestAction(robot, "Test2", RobotActionType::WAIT, track1);
+  auto action2Tag = testAction2->GetTag();
+  
+  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction2);
+  robot.GetActionList().Update();
+  testAction2->_complete = true;
+  robot.GetActionList().Update();
+
+  EXPECT_FALSE( callbackResults.empty() );
+  EXPECT_FALSE( callbackResults.find(1) == callbackResults.end() );
+  EXPECT_FALSE( callbackResults.find(2) == callbackResults.end() );
+  EXPECT_EQ( callbackResults.size(), 2 );
+  EXPECT_EQ( callbackResults[1].tag, action2Tag );
+  EXPECT_EQ( callbackResults[1].type, RobotActionType::WAIT );
+  EXPECT_EQ( callbackResults[1].result, ActionResult::SUCCESS );
+  EXPECT_EQ( callbackResults[2].tag, action2Tag );
+  EXPECT_EQ( callbackResults[2].type, RobotActionType::WAIT );
+  EXPECT_EQ( callbackResults[2].result, ActionResult::SUCCESS );
+
+  // Remove one callback
+  EXPECT_TRUE( watcher.UnregisterCallback(cbID1) );
+  EXPECT_FALSE( watcher.UnregisterCallback(cbID1) ) << "already removed";
+  callbackResults.clear();
+
+  TestAction* testAction3 = new TestAction(robot, "Test3", RobotActionType::WAIT, track1);
+  auto action3Tag = testAction3->GetTag();
+  
+  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction3);
+  robot.GetActionList().Update();
+  testAction3->_complete = true;
+  robot.GetActionList().Update();
+
+  EXPECT_FALSE( callbackResults.empty() );
+  EXPECT_TRUE( callbackResults.find(1) == callbackResults.end() );
+  EXPECT_FALSE( callbackResults.find(2) == callbackResults.end() );
+  EXPECT_EQ( callbackResults.size(), 1 );
+  EXPECT_EQ( callbackResults[2].tag, action3Tag );
+  EXPECT_EQ( callbackResults[2].type, RobotActionType::WAIT );
+  EXPECT_EQ( callbackResults[2].result, ActionResult::SUCCESS );
+
+  // Remove the final callback
+  EXPECT_TRUE( watcher.UnregisterCallback(cbID2) );
+  EXPECT_FALSE( watcher.UnregisterCallback(cbID2) ) << "already removed";
+  callbackResults.clear();
+
+  TestAction* testAction4 = new TestAction(robot, "Test4", RobotActionType::WAIT, track1);  
+  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction4);
+  robot.GetActionList().Update();
+  testAction4->_complete = true;
+  robot.GetActionList().Update();
+
+  EXPECT_TRUE( callbackResults.empty() );  
 }

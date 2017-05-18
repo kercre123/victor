@@ -66,7 +66,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersRobotShak
 BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToRobotShaken");
 }
 
 
@@ -74,7 +73,7 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(Robot& robot, const Json:
 Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
 {
   // Disable some IMU-related behaviors
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersRobotShakenArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRobotShakenArray);
   
   // Reset variables:
   _maxShakingAccelMag = 0.f;

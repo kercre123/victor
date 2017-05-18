@@ -93,7 +93,6 @@ BehaviorFistBump::BehaviorFistBump(Robot& robot, const Json::Value& config)
   , _lastTimeOffTreads_s(0.f)
   , _updateLastCompletionTime(false)
 {
-  SetDefaultName("FistBump");
   
   JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,     _maxTimeToLookForFace_s);
   JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,       _abortIfNoFaceFound);
@@ -111,10 +110,10 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
   // (Sometimes when he gets fist bumped too hard it can be interpreted as pickup.)
   if(!kCanHiccupWhileFistBumping)
   {
-    SMART_DISABLE_REACTION_DEV_ONLY(GetName(), ReactionTrigger::Hiccup);
+    SMART_DISABLE_REACTION_DEV_ONLY(GetIDStr(), ReactionTrigger::Hiccup);
   }
 
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersFistBumpArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersFistBumpArray);
 
   // Disable idle animation
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);

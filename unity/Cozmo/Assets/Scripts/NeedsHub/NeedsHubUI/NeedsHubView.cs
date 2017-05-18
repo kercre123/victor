@@ -26,6 +26,9 @@ namespace Cozmo.Needs.UI {
     private CozmoButton _SettingsButton;
 
     [SerializeField]
+    private StarBar _StarBar;
+
+    [SerializeField]
     private NeedsSettingsWidget _SettingsWidget;
 
     private bool _SettingsIsOpen = false;

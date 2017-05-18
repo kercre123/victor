@@ -1,20 +1,33 @@
 {
-  "name" : "sparksFistBump",
+  "activityID" : "SparksFistBump",
+  "activityType" : "Sparked",
   "requireSpark":"FistBump",
-  "behaviorChooser" :
-  {
-    "type" : "sparks",
-    "minTimeSecs": 0,
-    "maxTimeSecs": 30,
-    "numberOfRepetitions": 1,
-    "behaviorObjective": "FistBumpComplete",
-    "softSparkTrigger": "SoftSparkUpgradeLift",
-    "sparksSuccessTrigger": "", // don't play any animation
-    // these are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "SparksFistBump" ]
-  },
   "activityStrategy":
   {
     "type" : "Spark"
-  }
+  },
+  "behaviorChooser" :
+  {
+    "type" : "scoring",
+    "behaviors" : [
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "SparksFistBump",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      }
+    ]
+  },
+  "minTimeSecs": 0,
+  "maxTimeSecs": 30,
+  "numberOfRepetitions": 1,
+  "behaviorObjective": "FistBumpComplete",
+  "softSparkTrigger": "SoftSparkUpgradeLift",
+  "sparksSuccessTrigger": "" // don't play any animation
 }

@@ -15,6 +15,7 @@
 #define ANKI_COZMO_ACTION_CONTAINERS_H
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/actions/actionDefinitions.h"
 
 #include "clad/types/actionTypes.h"
 
@@ -168,6 +169,18 @@ namespace Anki {
       
       // Returns true if the action has a game or sdk tag
       bool       IsExternalAction(const IActionRunner* action);
+
+      // NOTE: Currently these callback functions (below) are wrappers for the ActionWatcher functions, but
+      // eventually they may be implemented here (see COZMO-11465), so prefer using these
+
+      // Register a callback. This callback will be called when _any_ action ends (including sub-actions or actions
+      // inside compound actions). It will be called after the action completed message is broadcast, and after
+      // the action itself has been fully deleted. Returns a unique integer id for the callback (so it can later
+      // be removed).
+      ActionEndedCallbackID RegisterActionEndedCallbackForAllActions(ActionEndedCallback callback);
+
+      // Remove a registered callback. Returns true if the callback was found, false otherwise
+      bool UnregisterCallback(ActionEndedCallbackID callbackID);
       
       ActionWatcher& GetActionWatcher() { return *_actionWatcher.get(); }
       

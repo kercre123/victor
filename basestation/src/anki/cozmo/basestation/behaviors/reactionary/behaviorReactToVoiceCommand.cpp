@@ -29,7 +29,6 @@ namespace Cozmo {
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  SetDefaultName("ReactToVoiceCommand");
 }
 
 

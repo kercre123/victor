@@ -38,10 +38,11 @@ void CreateStackBehavior(Robot& robot, IBehavior*& stackBehavior)
 
   auto& factory = robot.GetBehaviorManager().GetBehaviorFactory();
 
+  // Arbitrarily using the NoneBehavior ID - no effect on implementation details
   const std::string& configStr =
     R"({
          "behaviorClass": "StackBlocks",
-         "name": "TEST_StackBlocks",
+         "behaviorID": "NoneBehavior",
          "flatScore": 0.8
        })";
 
@@ -150,9 +151,9 @@ void SetupStackTest(Robot& robot, IBehavior*& stackBehavior, ObjectID& objID1, O
     ASSERT_EQ(RESULT_OK, result);
   }
 
-  static float incrementEngineTime = 0.0f;
-  incrementEngineTime += 100000000.0f;
-  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime);
+  static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+  incrementEngineTime_ns += 100000000.0f;
+  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
   ASSERT_TRUE(stackBehavior->IsRunnable(prereq)) << "now behavior should be runnable";
 
 }
@@ -215,7 +216,10 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   auto result = stackBehavior->Init();
   EXPECT_EQ(RESULT_OK, result);
 
-  aiComponent.Update();
+  static float incrementEngineTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+  incrementEngineTime_ns += 100000000.0f;
+  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
+  
   auto status = stackBehavior->Update();
   EXPECT_NE(BehaviorStatus::Running, status) << "should have stopped running";
 }

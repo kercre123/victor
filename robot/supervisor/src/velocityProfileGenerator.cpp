@@ -44,8 +44,8 @@ namespace Anki {
     currPos_ = startPos;
     endVel_ = endVel;
     maxReachableVel_ = endVel;
-    accel_ = fabs(accel);
-    timeStep_ = fabs(timeStep);
+    accel_ = fabsf(accel);
+    timeStep_ = fabsf(timeStep);
 
     // Compute change in velocity per timestep
     deltaVelPerTimeStepStart_ = accel_ * timeStep_ * (endVel_ - startVel_ > 0 ? 1.f : -1.f);
@@ -70,11 +70,11 @@ namespace Anki {
 
     startVel_ = startVel;
     startPos_ = startPos;
-    maxVel_ = fabs(maxSpeed);
-    accel_ = fabs(accel);
-    endVel_ = fabs(endVel);
+    maxVel_ = fabsf(maxSpeed);
+    accel_ = fabsf(accel);
+    endVel_ = fabsf(endVel);
     endPos_ = endPos;
-    timeStep_ = fabs(timeStep);
+    timeStep_ = fabsf(timeStep);
 
     AnkiAssert(maxVel_ >= endVel_, 283);
     AnkiAssert(accel_ > 0, 284);
@@ -110,12 +110,12 @@ namespace Anki {
     // Compute the max speed that actually can be reached.
     // By manipulating the formula above we get:
     //
-    // V_max' = sqrt( (2 * a * d' + (V_f)^2 + (V_s)^2) / 2 )
+    // V_max' = sqrtf( (2 * a * d' + (V_f)^2 + (V_s)^2) / 2 )
     // where d' = ABS(laneChangePixelsRequired)
     // and V_max' = max speed that can be reached
     totalDistToTarget_ = endPos_ - startPos_;
-    if (fabs(d) > fabs(totalDistToTarget_)) {
-      maxReachableVel_ = sqrt( ((2*accel*fabs(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
+    if (fabsf(d) > fabsf(totalDistToTarget_)) {
+      maxReachableVel_ = sqrtf( ((2*accel*fabsf(totalDistToTarget_)) + (endVel_*endVel_) + (startVel_*startVel_)) * 0.5f );
       maxReachableVel_ *= direction;
 #if(DEBUG_VPG)
       AnkiDebug( 31, "VPG", 200, "new V_max: %f (d = %f)", 2, maxReachableVel_, d);
@@ -128,7 +128,7 @@ namespace Anki {
     // d = 1/2 * -a * ((Vs - Vf)/a)^2 + Vs * (Vs - Vf)/a
     // d = (Vs*Vs - Vf*Vf)/(2a)
     decelDistToTarget_ = 0;
-    if (fabs(maxReachableVel_) > fabs(endVel_)) {
+    if (fabsf(maxReachableVel_) > fabsf(endVel_)) {
       decelDistToTarget_ = (maxReachableVel_*maxReachableVel_ - endVel_*endVel_) / (2*accel_);
     }
 
@@ -261,7 +261,7 @@ namespace Anki {
     maxVel_ = fabsf(vel_max);
     endVel_ = 0;
     endPos_ = pos_end;
-    timeStep_ = fabs(timeStep);
+    timeStep_ = fabsf(timeStep);
 
     acc_max = fabsf(acc_max);
     vel_max = fabsf(vel_max);
@@ -443,7 +443,7 @@ namespace Anki {
     float currDistToTarget = endPos_ - currPos_;
 
     // Check whether or not deceleration should begin
-    if (fabs(currDistToTarget) < decelDistToTarget_) {
+    if (fabsf(currDistToTarget) < decelDistToTarget_) {
       isDecel_ = true;
     }
 

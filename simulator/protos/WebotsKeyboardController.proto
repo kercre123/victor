@@ -15,9 +15,10 @@ PROTO WebotsKeyboardController [
   # Behavior to send
   #  Use "DISABLED" to disable behaviors
   field SFString behaviorName "DISABLED"
+  field SFInt32  numBehaviorRuns 1
 
   # BehaviorChooser to send
-  field SFString behaviorChooserName "Freeplay"
+  field SFString highLevelActivityName "Freeplay"
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0

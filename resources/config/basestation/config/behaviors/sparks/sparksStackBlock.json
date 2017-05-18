@@ -1,11 +1,7 @@
 {
   "behaviorClass": "StackBlocks",
-  "name": "sparksStackBlock",
+  "behaviorID": "SparksStackBlock",
   "displayNameKey":"behavior.StackCube",
   "requiredUnlockId": "StackTwoCubes",
-  "behaviorGroups": [
-    "SparksStackBlock"
-  ],
-  "flatScore" : 5.0,
   "stackInAnyOrientation" : true
 }

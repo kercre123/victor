@@ -1,12 +1,4 @@
 {
   "behaviorClass": "PutDownBlock",
-  "name": "PutDownBlock",
-  "flatScore": 0.1,
-  "behaviorGroups": [
-    "FP_PlayAlone",
-    "FP_PlayWithHumans",
-    "FP_Socialize",
-    "FP_Hiking", // if no beacons are available we want Cozmo to put cubes down
-    "MeetCozmo_Socialize"
-  ]
+  "behaviorID": "PutDownBlock"
 }

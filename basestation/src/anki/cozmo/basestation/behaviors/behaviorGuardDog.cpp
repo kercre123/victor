@@ -17,8 +17,10 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -49,7 +51,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
-  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::Hiccup,                       true},
   {ReactionTrigger::MotorCalibration,             false},
   {ReactionTrigger::NoPreDockPoses,               false},
   {ReactionTrigger::ObjectPositionUpdated,        true},
@@ -76,22 +78,25 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogA
 CONSOLE_VAR_RANGED(float, kSleepingMinDuration_s, "Behavior.GuardDog",  60.f, 20.f, 120.f); // minimum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingMaxDuration_s, "Behavior.GuardDog", 120.f, 60.f, 300.f); // maximum time Cozmo will stay asleep before waking up
 CONSOLE_VAR_RANGED(float, kSleepingTimeoutAfterCubeMotion_s, "Behavior.GuardDog", 20.f, 0.f, 60.f); // minimum time Cozmo will stay asleep after last cube motion was detected (if SleepingMaxDuration not exceeded)
-CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  12.f,  5.f,  30.f);
+CONSOLE_VAR_RANGED(float, kMovementScoreDetectionThreshold, "Behavior.GuardDog",  18.f,  5.f,  30.f);
 CONSOLE_VAR_RANGED(float, kMovementScoreMax, "Behavior.GuardDog", 50.f, 30.f, 200.f);
 CONSOLE_VAR_RANGED(float, kMaxMovementBustedGracePeriod_s, "Behavior.GuardDog", 10.f, 0.f, 120.f); // amount of time to wait (after falling asleep) before 'Busted' can happen due to movement above 'max' threshold
+  
+// Constants for the CubeAccelComponent MovementListener:
+const float kHighPassFiltCoef = 0.4f;      // high-pass filter coeff
+const float kMaxMovementScoreToAdd = 5.f;  // max movement score to add
+const float kMovementScoreDecay = 0.5f;    // movement score decay
   
 } // end anonymous namespace
   
   
 BehaviorGuardDog::BehaviorGuardDog(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _connectedCubesOnlyFilter(new BlockWorldFilter)
+  , _connectedCubesOnlyFilter(std::make_unique<BlockWorldFilter>())
 {
-  SetDefaultName("GuardDog");
   
   // subscribe to some E2G messages:
-  SubscribeToTags({EngineToGameTag::ObjectAccel,
-                   EngineToGameTag::ObjectConnectionState,
+  SubscribeToTags({EngineToGameTag::ObjectConnectionState,
                    EngineToGameTag::ObjectMoved,
                    EngineToGameTag::ObjectUpAxisChanged
                    });
@@ -107,6 +112,11 @@ bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
   
   // Is this feature enabled?
   if (!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(Anki::Cozmo::FeatureType::GuardDog)) {
+    return false;
+  }
+  
+  // Don't run if we currently have the hiccups:
+  if (robot.GetAIComponent().GetWhiteboard().HasHiccups()) {
     return false;
   }
   
@@ -154,7 +164,7 @@ bool BehaviorGuardDog::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
 Result BehaviorGuardDog::InitInternal(Robot& robot)
 {
   // Disable reactionary behaviors that we don't want interrupting this:
-  SmartDisableReactionsWithLock(GetName(), kAffectTriggersGuardDogArray);
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersGuardDogArray);
   
   // Disable idle animation (TODO: needed?)
   //robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
@@ -248,6 +258,11 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       StartLightCubeAnims(robot, CubeAnimationTrigger::GuardDogSetup);
       
       break;
+    }
+    case State::SetupInterrupted:
+    {
+      RecordResult("SetupInterrupted");
+      return Status::Complete;
     }
     case State::DriveToBlocks:
     {
@@ -422,7 +437,7 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
 void BehaviorGuardDog::StopInternal(Robot& robot)
 {
   // Stop streaming accelerometer data from each block:
-  EnableCubeAccelStreaming(robot, false);
+  StartMonitoringCubeMotion(robot, false);
   
   // Stop light cube animations:
   robot.GetCubeLightComponent().StopAllAnims();
@@ -440,9 +455,6 @@ void BehaviorGuardDog::HandleWhileRunning(const EngineToGameEvent& event, Robot&
 {
   // Handle messages:
   switch( event.GetData().GetTag() ) {
-    case EngineToGameTag::ObjectAccel:
-      HandleObjectAccel(robot, event.GetData().Get_ObjectAccel());
-      break;
     case EngineToGameTag::ObjectConnectionState:
       HandleObjectConnectionState(robot, event.GetData().Get_ObjectConnectionState());
       break;
@@ -457,112 +469,6 @@ void BehaviorGuardDog::HandleWhileRunning(const EngineToGameEvent& event, Robot&
                           "Received an unhandled E2G event: %s",
                           MessageEngineToGameTagToString(event.GetData().GetTag()));
       break;
-  }
-}
-
-
-void BehaviorGuardDog::HandleObjectAccel(Robot& robot, const ObjectAccel& msg)
-{
-  // Ignore if we're not monitoring for cube motion right now (sometimes we send the message to stop
-  //  ObjectAccel streaming, but still receive some stray packets from the robot in the brief time afterward)
-  if (!_monitoringCubeMotion) {
-    return;
-  }
-  
-  // Retrieve a reference to the cubeData struct corresponding to this message's object ID:
-  const ObjectID objId = msg.objectID; // convert raw u32 to ObjectID
-  auto it = _cubesDataMap.find(objId);
-  if (it == _cubesDataMap.end()) {
-    ANKI_VERIFY(false,
-                "BehaviorGuardDog.HandleObjectAccel.UnknownObject",
-                "Received an ObjectAccel message from an unknown object (objectId = %d)",
-                msg.objectID);
-    return;
-  }
-  sCubeData& block = it->second;
-  
-  // No need to continue monitoring cube accel if the cube
-  //  has been successfully flipped over, so just bail out:
-  if (block.hasBeenFlipped) {
-    block.movementScore = 0.f; // clear this since this block should no longer be considered 'moving'
-    return;
-  }
-  
-  ++block.msgReceivedCnt;
-  
-  // compute magnitude of accelerometer readings:
-  const float aMag = std::sqrt(msg.accel.x * msg.accel.x +
-                               msg.accel.y * msg.accel.y +
-                               msg.accel.z * msg.accel.z);
-  
-  // Sometimes the accel data is blank (i.e. 0.0f) or extremely high, either
-  //  of which would eff up the highpass filter
-  const float maxValidAccelMag = 100.f;
-  if (!FLT_NEAR(aMag, 0.f) && aMag < maxValidAccelMag) {
-    block.prevAccelMag = block.accelMag;
-    block.accelMag = aMag;
-    
-    if (!block.filtInitialized) {
-      // Initialize prev to current to avoid spikes when starting.
-      block.prevAccelMag = block.accelMag;
-      block.filtInitialized = true;
-    }
-    
-    const float kFilt = 0.8;
-    block.hpFiltAccelMag = kFilt * (block.accelMag - block.prevAccelMag + block.hpFiltAccelMag);
-  } else {
-    PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectAccel.BadMessage",
-                     "Received a bad ObjectAccel message from objId = %d, accel = {%.1f, %.1f, %1.f}, timestamp = %d",
-                     objId.GetValue(),
-                     msg.accel.x, msg.accel.y, msg.accel.z,
-                     msg.timestamp);
-    ++block.badMsgCnt;
-  }
-  
-  block.maxFiltAccelMag = std::max(block.maxFiltAccelMag, std::abs(block.hpFiltAccelMag));
-  
-  // Update the 'movement score' indicating how much movement is detected (limit amount to add in case of large spikes):
-  const float maxAmountToAddToMovementScore = 5.0f;
-  block.movementScore += std::min(maxAmountToAddToMovementScore, std::abs(block.hpFiltAccelMag));
-
-  // Decay the movement score:
-  const float amountToDecay = 0.5f;
-  if (block.movementScore > amountToDecay) {
-    block.movementScore -= amountToDecay;
-  } else {
-    block.movementScore = 0.f;
-  }
-  
-  // Clip movement score to the maximum:
-  block.movementScore = std::min(block.movementScore, kMovementScoreMax);
-  
-  // Set behavior states based on cube movement and play the
-  //  appropriate light cube anim if appropriate:
-  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  const bool hasStartedSleeping = (_firstSleepingStartTime_s > 0.f);
-  const bool pastMaxMovementGracePeriod = hasStartedSleeping && (now - _firstSleepingStartTime_s > kMaxMovementBustedGracePeriod_s);
-  // Play 'Busted' anim if cube is moved too much during game setup phase,
-  //   and during 'sleeping' if we're past the "grace period"
-  if (block.movementScore >= kMovementScoreMax &&
-      (!hasStartedSleeping || pastMaxMovementGracePeriod)) {
-    StopActing();
-    SET_STATE(Busted);
-  } else if (block.movementScore > kMovementScoreDetectionThreshold) {
-    if (!block.hasBeenMoved) {
-      block.hasBeenMoved = true;
-      block.firstMovedTime_s = now;
-      ++_nCubesMoved;
-      StopActing();
-      SET_STATE(Fakeout);
-    }
-    // Play the "being moved" light cube anim:
-    if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
-      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogBeingMoved);
-    }
-    // Record that a block was moved at this time
-    _lastCubeMovementTime_s = now;
-  } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
-      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSleeping);
   }
 }
   
@@ -583,15 +489,14 @@ void BehaviorGuardDog::HandleObjectConnectionState(const Robot& robot, const Obj
 void BehaviorGuardDog::HandleObjectMoved(const Robot& robot, const ObjectMoved& msg)
 {
   // If an object has been moved before we start monitoring for motion
-  //  and before we fall asleep, jump right to 'Busted' reaction.
+  //  and before we fall asleep, jump right to 'SetupInterrupted'.
   if (!_monitoringCubeMotion &&
-      (_firstSleepingStartTime_s == 0.f) &&
-      (_state != State::Busted)) {
+      (_firstSleepingStartTime_s == 0.f)) {
     PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectMoved.UnexpectedBlockMovement",
                      "Received ObjectMoved message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                      msg.objectID);
     StopActing();
-    SET_STATE(Busted);
+    SET_STATE(SetupInterrupted);
   }
 }
 
@@ -600,13 +505,12 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
   // If an object has a new UpAxis, it must have been moved. If this happens before
   //  monitoring for motion and before we fall asleep, jump right to 'Busted' reaction.
   if (!_monitoringCubeMotion) {
-    if ((_firstSleepingStartTime_s == 0.f) &&
-        (_state != State::Busted)) {
+    if (_firstSleepingStartTime_s == 0.f) {
       PRINT_NAMED_INFO("BehaviorGuardDog.HandleObjectUpAxisChanged.UnexpectedBlockMovement",
                        "Received ObjectUpAxisChanged message for Object with ID %d even though we're not currently monitoring for movement and not yet sleeping!",
                        msg.objectID);
       StopActing();
-      SET_STATE(Busted);
+      SET_STATE(SetupInterrupted);
     }
     return;
   }
@@ -637,6 +541,65 @@ void BehaviorGuardDog::HandleObjectUpAxisChanged(Robot& robot, const ObjectUpAxi
   }
 }
 
+void BehaviorGuardDog::CubeMovementHandler(Robot& robot, const ObjectID& objId, const float movementScore)
+{
+  // Ignore if we're not monitoring for cube motion right now
+  if (!_monitoringCubeMotion) {
+    return;
+  }
+  
+  // Retrieve a reference to the cubeData struct corresponding to this message's object ID:
+  auto it = _cubesDataMap.find(objId);
+  if (it == _cubesDataMap.end()) {
+    ANKI_VERIFY(false,
+                "BehaviorGuardDog.HandleObjectAccel.UnknownObject",
+                "Received an ObjectAccel message from an unknown object (objectId = %d)",
+                objId.GetValue());
+    return;
+  }
+  sCubeData& block = it->second;
+  
+  // No need to continue monitoring cube accel if the cube
+  //  has been successfully flipped over, so just bail out:
+  if (block.hasBeenFlipped) {
+    block.movementScore = 0.f; // clear this since this block should no longer be considered 'moving'
+    return;
+  }
+  
+  block.movementScore = movementScore;
+  
+  block.maxMovementScore = std::max(block.maxMovementScore, block.movementScore);
+  
+  // Set behavior states based on cube movement and play the
+  //  appropriate light cube anim:
+  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool hasStartedSleeping = (_firstSleepingStartTime_s > 0.f);
+  const bool pastMaxMovementGracePeriod = hasStartedSleeping && (now - _firstSleepingStartTime_s > kMaxMovementBustedGracePeriod_s);
+  // Play 'Busted' reaction if cube is moved too much while
+  //   sleeping (if we're past the "grace period")
+  if (block.movementScore >= kMovementScoreMax &&
+      pastMaxMovementGracePeriod) {
+    StopActing();
+    SET_STATE(Busted);
+  } else if (block.movementScore > kMovementScoreDetectionThreshold) {
+    if (!block.hasBeenMoved) {
+      block.hasBeenMoved = true;
+      block.firstMovedTime_s = now;
+      ++_nCubesMoved;
+      StopActing();
+      SET_STATE(Fakeout);
+    }
+    // Play the "being moved" light cube anim:
+    if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogBeingMoved) {
+      StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogBeingMoved);
+    }
+    // Record that a block was moved at this time
+    _lastCubeMovementTime_s = now;
+  } else if (block.lastCubeAnimTrigger != CubeAnimationTrigger::GuardDogSleeping) {
+    StartLightCubeAnim(robot, objId, CubeAnimationTrigger::GuardDogSleeping);
+  }
+}
+  
   
 void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& startingPose)
 {
@@ -753,32 +716,6 @@ void BehaviorGuardDog::ComputeStartingPose(const Robot& robot,  Pose3d& starting
                    startingPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
 }
   
-Result BehaviorGuardDog::EnableCubeAccelStreaming(const Robot& robot, const bool enable) const
-{
-  // Should have all three cubes in the cubesData container if this function is being called:
-  DEV_ASSERT(_cubesDataMap.size() == 3, "BehaviorGuardDog.EnableCubeAccelStreaming.WrongNumCubesDataEntries");
-  
-  for (const auto& mapEntry : _cubesDataMap) {
-    const ObjectID objId = mapEntry.first;
-    const auto activeBlock = robot.GetBlockWorld().GetConnectedActiveObjectByID(objId);
-    if (ANKI_VERIFY(activeBlock,
-                    "BehaviorGuardDog.EnableCubeAccelStreaming.NullActiveBlock",
-                    "Null pointer returned from blockworld for block with ID %d",
-                    objId.GetValue())) {
-      const Result res = robot.SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(activeBlock->GetActiveID(), enable)));
-      if (!ANKI_VERIFY(res == Result::RESULT_OK,
-                       "BehaviorGuardDog.EnableCubeAccelStreaming.SendMsgFailed",
-                       "Failed to send StreamObjectAccel message (result = 0x%0X) to robot for cube with activeID = %d",
-                       res,
-                       activeBlock->GetActiveID())) {
-        return res;
-      }
-    }
-  }
-  
-  return Result::RESULT_OK;
-}
-  
 void BehaviorGuardDog::StartMonitoringCubeMotion(Robot& robot, const bool enable)
 {
   if (enable == _monitoringCubeMotion) {
@@ -789,14 +726,29 @@ void BehaviorGuardDog::StartMonitoringCubeMotion(Robot& robot, const bool enable
                    "%s monitoring of cube accelerometer data.",
                    enable ? "Enabling" : "Disabling");
   
-  // Clear out stale data for each cube:
-  if (enable) {
-    for (auto& mapEntry : _cubesDataMap) {
-      mapEntry.second.ResetAccelData();
+  // Register/de-register cube accel listeners
+  for (auto& mapEntry : _cubesDataMap) {
+    auto objId = mapEntry.first;
+    if (enable) {
+      // generic lambda closure for cube accel listeners
+      auto movementDetectedCallback = [this, objId, &robot] (const float movementScore) {
+        CubeMovementHandler(robot, objId, movementScore);
+      };
+
+      auto listener = std::make_shared<CubeAccelListeners::MovementListener>(kHighPassFiltCoef,
+                                                                             kMaxMovementScoreToAdd,
+                                                                             kMovementScoreDecay,
+                                                                             kMovementScoreMax, // max allowed movement score
+                                                                             movementDetectedCallback);
+      robot.GetCubeAccelComponent().AddListener(objId, listener);
+      // keep a pointer to this listener around so that we can remove it later:
+      mapEntry.second.cubeMovementListener = listener;
+    } else {
+      const bool res = robot.GetCubeAccelComponent().RemoveListener(objId, mapEntry.second.cubeMovementListener);
+      DEV_ASSERT(res, "BehaviorGuardDog.StartMonitoringCubeMotion.FailedRemovingListener");
     }
   }
-  
-  EnableCubeAccelStreaming(robot, enable);
+
   _monitoringCubeMotion = enable;
 }
   
@@ -877,6 +829,7 @@ void BehaviorGuardDog::RecordResult(std::string&& result)
   }
   
   PRINT_CH_INFO("Behaviors",
+                "GuardDog.RecordResult",
                 "GuardDog result = %s, sleepingDuration = %.2f",
                 _result.c_str(),
                 _sleepingDuration_s);
@@ -902,7 +855,7 @@ void BehaviorGuardDog::LogDasEvents() const
   
   // Loop over the cube data map to gather cube-specific data
   //   for the DAS events that follow
-  std::string cubeMovedTimes, cubeFlippedTimes, cubeMaxAccels, cubeTotalMsgs, cubeBadMsgs;
+  std::string cubeMovedTimes, cubeFlippedTimes, cubeMaxMovementScores;
   for (auto it = _cubesDataMap.begin() ; it != _cubesDataMap.end() ; ++it) {
     const auto& block = it->second;
     
@@ -916,21 +869,17 @@ void BehaviorGuardDog::LogDasEvents() const
       cubeFlippedTime_ms = std::round((block.flippedTime_s - _firstSleepingStartTime_s) * 1000.f);
     }
     
-    const int maxFiltAccel_int = std::round(block.maxFiltAccelMag);
+    const int maxMovementScore_int = std::round(block.maxMovementScore);
     
     // Append to strings and comma-separate if appropriate
-    cubeMovedTimes   += std::to_string(cubeMovedTime_ms);
-    cubeFlippedTimes += std::to_string(cubeFlippedTime_ms);
-    cubeMaxAccels    += std::to_string(maxFiltAccel_int);
-    cubeTotalMsgs    += std::to_string(block.msgReceivedCnt);
-    cubeBadMsgs      += std::to_string(block.badMsgCnt);
+    cubeMovedTimes        += std::to_string(cubeMovedTime_ms);
+    cubeFlippedTimes      += std::to_string(cubeFlippedTime_ms);
+    cubeMaxMovementScores += std::to_string(maxMovementScore_int);
     
     if (std::next(it) != _cubesDataMap.end()) {
-      cubeMovedTimes   += ",";
-      cubeFlippedTimes += ",";
-      cubeMaxAccels    += ",";
-      cubeTotalMsgs    += ",";
-      cubeBadMsgs      += ",";
+      cubeMovedTimes        += ",";
+      cubeFlippedTimes      += ",";
+      cubeMaxMovementScores += ",";
     }
   }
   
@@ -943,19 +892,12 @@ void BehaviorGuardDog::LogDasEvents() const
                      {{DDATA, cubeFlippedTimes.c_str()}},
                      cubeMovedTimes.c_str());
   
-  // DAS Event: "robot.guarddog.cube_max_accels"
-  // s_val: Max high-pass filtered accelerometer values for each of the cubes
+  // DAS Event: "robot.guarddog.cube_movement_scores"
+  // s_val: Max "movement score" encountered for each of the cubes
   // data: (empty - available for future use)
-  Anki::Util::sEvent("robot.guarddog.cube_max_accels",
+  Anki::Util::sEvent("robot.guarddog.cube_movement_scores",
                      {{DDATA, ""}},
-                     cubeMaxAccels.c_str());
-  
-  // DAS Event: "robot.guarddog.object_accel_messages"
-  // s_val: Total number of ObjectAccel messages received for each cube
-  // data: Total number of 'bad'/'corrupt' ObjectAccel messages received for each cube
-  Anki::Util::sEvent("robot.guarddog.object_accel_messages",
-                     {{DDATA, cubeBadMsgs.c_str()}},
-                     cubeTotalMsgs.c_str());
+                     cubeMaxMovementScores.c_str());
 }
 
   

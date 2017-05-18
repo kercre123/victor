@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: CodeLabGame
     _EnumValue: 36
   _Music:
-    _Music: 713847863
+    _Music: 730889831
   ChallengeConfig: {fileID: 11400000, guid: 3ab1c940b3e3841aaa96e62c5c1b24ff, type: 2}
   _ChallengeType: 1
   _ActivityData:
@@ -38,7 +38,7 @@ MonoBehaviour:
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 394
+    _EnumValue: 393
   GetOutAnimTrigger:
-    _EnumValueAsString: Count
-    _EnumValue: 394
+    _EnumValueAsString: CodeLabExit
+    _EnumValue: 28

@@ -1,18 +1,8 @@
 {
   "behaviorClass": "KnockOverCubes",
-  "name": "knockOverCubes",
+  "behaviorID": "KnockOverCubes",
   "displayNameKey":"behavior.KnockOverCubes",
-  "flatScore": 20,
   "requiredUnlockId": "KnockOverThreeCubeStack",
-  "behaviorGroups": [
-    "FP_PlayWithHumans",
-    "FP_Socialize",
-    "FP_PlayAlone",
-    "FP_Hiking",
-    "FP_NothingToDo",
-    "SetupBuildPyramid",
-    "BuildPyramid"
-  ],
   "minimumStackHeight": 3,
   "reachForBlockTrigger" : "KnockOverGrabAttempt",
   "knockOverEyesTrigger" : "KnockOverEyes",

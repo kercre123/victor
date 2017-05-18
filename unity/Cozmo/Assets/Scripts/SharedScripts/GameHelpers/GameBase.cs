@@ -174,7 +174,7 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.CancelAllCallbacks();
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
 
-      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+      CurrentRobot.SetEnableFreeplayActivity(false);
       CurrentRobot.SetEnableFreeplayLightStates(false);
 
       if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
@@ -960,9 +960,15 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void UpdatePlayNeed() {
-    // COZMO-10938: IVY TODO: Need to swap out stub Play NeedActionId with real ones (win/lose/tie/quit) for each game
     if (Cozmo.Needs.NeedsStateManager.Instance != null) {
-      Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(NeedsActionId.Play);
+      if (_ChallengeData.IsMinigame) {
+        if (DidHumanWin()) {
+          Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(_ChallengeData.NeedsActionIdWin.Value);
+        }
+        else {
+          Cozmo.Needs.NeedsStateManager.Instance.RegisterNeedActionCompleted(_ChallengeData.NeedsActionIdLose.Value);
+        }
+      }
     }
   }
 
@@ -1371,7 +1377,6 @@ public abstract class GameBase : MonoBehaviour {
       System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
         alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleInterruptionQuitGameViewClosed;
         alertModal.ModalForceClosedAnimationFinished += () => {
-          Debug.LogError(dasAlertName + " force closed");
           _InterruptedAlertView = null;
           CreateInterruptionQuitGameView(dasAlertName, titleKey, descriptionKey);
         };

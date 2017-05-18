@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "clad/types/needsSystemTypes.h"
 #include "util/enums/stringToEnumMapper.hpp"
 #include <assert.h>
 
@@ -39,7 +40,7 @@ static const std::string kOtherNeedsAffectedKey = "OtherNeedsAffected";
 static const std::string kOtherNeedIDKey = "OtherNeedID";
 static const std::string kMultiplierKey = "Multiplier";
 
-
+static const std::string kInitialUnlockLevelsArrayKey = "UnlockLevels";
 
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(NeedId);
 
@@ -60,6 +61,53 @@ NeedsConfig::NeedsConfig()
 , _decayConnected()
 , _decayUnconnected()
 {
+}
+
+void StarRewardsConfig::Init(const Json::Value& json)
+{
+  _UnlockLevels.clear();
+  const auto& jsonInitialUnlockLevels = json[kInitialUnlockLevelsArrayKey];
+  if( jsonInitialUnlockLevels.isArray())
+  {
+    const s32 numEntries = jsonInitialUnlockLevels.size();
+    _UnlockLevels.reserve(numEntries);
+    
+    for(int i = 0; i < numEntries; ++i)
+    {
+      const Json::Value& jsonEntry = jsonInitialUnlockLevels[i];
+      UnlockLevel level;
+      level.SetFromJSON(jsonEntry);
+      _UnlockLevels.emplace_back(level);
+    }
+  }
+}
+  
+int StarRewardsConfig::GetMaxStarsForLevel(int level)
+{
+  if( level < _UnlockLevels.size() )
+  {
+    return _UnlockLevels[level].numStarsToUnlock;
+  }
+  // return the last one repeatedly if player has hit max level.
+  // But the stars keep going up.
+  if( _UnlockLevels.size() >= 1 )
+  {
+    unsigned int maxRewardedLevel = (unsigned int)(_UnlockLevels.size() - 1);
+    return _UnlockLevels[maxRewardedLevel].numStarsToUnlock;
+  }
+  return 0;
+}
+  
+void StarRewardsConfig::GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards)
+{
+  if( level < _UnlockLevels.size() )
+  {
+    rewards = _UnlockLevels[level].rewards;
+  }
+  else if( _UnlockLevels.size() > 0 )
+  {
+    rewards = _UnlockLevels[_UnlockLevels.size() - 1].rewards;
+  }
 }
 
 void NeedsConfig::Init(const Json::Value& json)
