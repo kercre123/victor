@@ -1,69 +1,107 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+"""Command line tool for parsing recorded packet logs."""
 
 import sys
+import os
 import struct
+import argparse
 
-def main(filename, types):
-    with open(filename, 'rb') as f:
-        while readMessage(f, types):
-            pass
+def error(msg):
+    "Writes a message out to stderr with newline (os.linesep)"
+    sys.stderr.write(msg)
+    sys.stderr.write(os.linesep)
 
 # take byte chunk and format it into printed hex bytes
-def getDataString(chunk):
-    return ' '.join(map((lambda x: "%0.2x" % ord(x)), chunk))
+def format_data_string(chunk):
+    "Format bytes as compact hex string"
+    return ' '.join(map("{0:02x}".format, chunk))
 
-# read one message, return true if successful & should keep reading
-def readMessage(f, types):
-    size = f.read(4)
-    if (len(size) == 0):
-        # eof
-        return False
+def main():
+    "Main function for command line tool"
+    parser = argparse.ArgumentParser("Dev Log Printer")
+    parser.add_argument('log_file', type=argparse.FileType('rb'),
+                        help="Packet log file to parse and print")
+    parser.add_argument('types', nargs='*', type=lambda x: int(x, 0),
+                        help="packet IDs to print, default all")
+    parser.add_argument('-i', '--interval', action='store_true',
+                        help="Print the interval between packets rather than packet content")
+    parser.add_argument('-p', '--plot', action='store_true',
+                        help="Plot the result of certain functions instead of printing")
+    args = parser.parse_args()
 
-    timestamp = f.read(4)
-    if (len(size) != 4 or len(timestamp) != 4):
-        print "bad size of size/time"
-        return False
+    if args.plot:
+        try:
+            from matplotlib import pyplot
+        except ImportError:
+            sys.exit("matplotlib.pyplot not available")
 
-    # message format is: 4 byte size, 4 byte timestamp, message data
-    # message size is little endian
-    size = struct.unpack('<1I', size)[0]
-    if (size <= 8):
-        print "invalid size %d for message" % size
-        return False
+    messages = parse_log_file(args.log_file, args.types)
 
-    timestamp = struct.unpack('<1I', timestamp)[0]
+    if args.interval:
+        last_time = 0
+        deltas = []
+        for timestamp, size, msg_type, data in messages:
+            delta = timestamp - last_time
+            if args.plot:
+                deltas.append(delta)
+            elif not args.types:
+                print("{0:>8d} type {1:02X}".format(delta, msg_type))
+            else:
+                print(delta)
+            last_time = timestamp
+        if args.plot:
+            pyplot.plot(deltas)
+            pyplot.show()
+    else:
+        for timestamp, size, msg_type, data in messages:
+            # split data into groups of 16 for pretty formatting
+            data_chunks = (data[i:i+16] for i in range(0, len(data), 16))
 
-    # read remaining message data
-    size = size - 8
-    data = f.read(size)
-    if (len(data) != size):
-        print "read %d but wanted %d" % (len(data), size)
-        return False
+            # print message time, type
+            print('{0:08d} sz {1:<5d} type {2:02X}'.format(timestamp, size, msg_type))
+            for chunk in data_chunks:
+                #      12345678 sz 12345 type 00 data
+                print('                               ', format_data_string(chunk))
 
-    # first byte is the type (tag) of CLAD message, rest is the message data
-    msgType = ord(data[0])
-    data = data[1:]
+def parse_log_file(log_file, types):
+    "A generator for dev packet log file packets"
+    while True:
+        size = log_file.read(4)
+        if not size:
+            # eof
+            break
 
-    # check if this message type was filtered out and we should skip printing it
-    if (len(types) != 0 and ('%0.2x' % msgType) not in types):
-        return True
+        timestamp = log_file.read(4)
+        if len(size) != 4 or len(timestamp) != 4:
+            error("bad size of size/time")
+            break
 
-    # split data into groups of 16 for pretty formatting
-    dataChunks = [data[i:i+16] for i in range(0,len(data),16)]
+        # message format is: 4 byte size, 4 byte timestamp, message data
+        # message size is little endian
+        size = struct.unpack('<1I', size)[0]
+        if size <= 8:
+            error("invalid size {} for message".format(size))
+            break
 
-    # print message time, type and first line of data, then subsequent lines if there's >1 chunk
-    print '%0.8d sz %.5d type %0.2x data %s' \
-      %  (timestamp, size, msgType, getDataString(dataChunks[0]) if len(dataChunks) > 0 else '')
-    for chunk in dataChunks[1:]:
-        #      12345678 sz 12345 type 00 data
-        print '                               %s' % getDataString(chunk)
+        timestamp = struct.unpack('<1I', timestamp)[0]
 
-    return True
+        # read remaining message data
+        size = size - 8
+        data = log_file.read(size)
+        if len(data) != size:
+            error("read {} but wanted {}".format(len(data), size))
+            break
+
+        # first byte is the type (tag) of CLAD message, rest is the message data
+        msg_type = data[0]
+        data = data[1:]
+
+        # check if this message type was filtered out and we should skip printing it
+        if types and msg_type not in types:
+            continue
+
+        yield (timestamp, size, msg_type, data)
 
 
 if __name__ == '__main__':
-    if (len(sys.argv) < 2):
-        print 'usage: %s filename [types]' % sys.argv[0]
-        print '  [types] is optional list of message types, only these will be printed'
-    else:
-        main(sys.argv[1], sys.argv[2:])
+    main()
