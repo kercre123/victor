@@ -1,8 +1,18 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Anki.Cozmo;
+using UnityEngine.EventSystems;// Required when using Event data.
 
 namespace Anki.Debug {
+
+  // unity pointer up is a function that needs to be directly on the UI object, not a callback event.
+  public class SliderEventListenerHelper : MonoBehaviour, IPointerUpHandler {
+    public VarUISlider consoleWrapper;
+    public void OnPointerUp(PointerEventData eventData) {
+      consoleWrapper.SendUpdateToEngine();
+    }
+  }
+
   public class VarUISlider : ConsoleVarLine {
 
     [SerializeField]
@@ -17,7 +27,10 @@ namespace Anki.Debug {
       _Slider.minValue = (float)singleVar.MinValue;
       _Slider.maxValue = (float)singleVar.MaxValue;
       OnValueRefreshed();
-
+      // Just set when no longer touching, but visually update.
+      // if we update every set it causes a lot of engine spamming and jumping around
+      SliderEventListenerHelper helper = _Slider.gameObject.AddComponent<SliderEventListenerHelper>();
+      helper.consoleWrapper = this;
       _Slider.onValueChanged.AddListener(HandleValueChanged);
     }
 
@@ -38,7 +51,8 @@ namespace Anki.Debug {
       SetSliderVal(_Slider.value);
     }
 
-    private void HandleValueChanged(float val) {
+    public void SendUpdateToEngine() {
+      float val = _Slider.value;
       // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
       // otherwise it will send another Set to a valid value.
       if (_VarData.UnityObject != null) {
@@ -47,6 +61,10 @@ namespace Anki.Debug {
       else {
         RobotEngineManager.Instance.SetDebugConsoleVar(_VarData.VarName, val.ToString());
       }
+      SetSliderVal(val);
+    }
+
+    private void HandleValueChanged(float val) {
       SetSliderVal(val);
     }
 
