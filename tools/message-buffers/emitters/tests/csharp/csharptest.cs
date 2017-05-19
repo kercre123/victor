@@ -543,6 +543,56 @@ public class HelloWorld {
     return true;
   }
 
+  public static bool Test_EnumConcept() {
+
+    if (EnumConcept.IsFooOdd(FooEnum.foo1, false) == false) return false;
+    if (EnumConcept.IsFooOdd(FooEnum.foo2, false) == true) return false;
+    if (EnumConcept.IsFooOdd(FooEnum.foo3, false) == false) return false;
+    if (EnumConcept.IsFooOdd(FooEnum.foo4, false) == true) return false;
+    if (EnumConcept.IsFooOdd(FooEnum.foo5, false) == false) return false;
+    if (EnumConcept.IsFooOdd(FooEnum.foo6, false) == true) return false;
+    if (EnumConcept.IsFooOdd(FooEnum.foo7, false) == false) return false;
+
+    if (EnumConcept.IsFoo4(FooEnum.foo1, false) == true) return false;
+    if (EnumConcept.IsFoo4(FooEnum.foo2, false) == true) return false;
+    if (EnumConcept.IsFoo4(FooEnum.foo3, false) == true) return false;
+    if (EnumConcept.IsFoo4(FooEnum.foo4, false) == false) return false;
+    if (EnumConcept.IsFoo4(FooEnum.foo5, false) == true) return false;
+    if (EnumConcept.IsFoo4(FooEnum.foo6, false) == true) return false;
+    if (EnumConcept.IsFoo4(FooEnum.foo7, false) == true) return false;
+
+    if (EnumConcept.BarEnumToFooEnum(BarEnum.bar1, FooEnum.foo7) != FooEnum.foo1) return false;
+    if (EnumConcept.BarEnumToFooEnum(BarEnum.bar2, FooEnum.foo7) != FooEnum.foo2) return false;
+    if (EnumConcept.BarEnumToFooEnum(BarEnum.bar3, FooEnum.foo7) != FooEnum.foo3) return false;
+    if (EnumConcept.BarEnumToFooEnum(BarEnum.bar4, FooEnum.foo7) != FooEnum.foo4) return false;
+    if (EnumConcept.BarEnumToFooEnum(BarEnum.bar5, FooEnum.foo7) != FooEnum.foo5) return false;
+    if (EnumConcept.BarEnumToFooEnum(BarEnum.bar6, FooEnum.foo7) != FooEnum.foo6) return false;
+
+    if (EnumConcept.BarToString(BarEnum.bar1, "") != "bar1") return false;
+    if (EnumConcept.BarToString(BarEnum.bar2, "") != "bar2") return false;
+    if (EnumConcept.BarToString(BarEnum.bar3, "") != "bar3") return false;
+    if (EnumConcept.BarToString(BarEnum.bar4, "") != "bar4") return false;
+    if (EnumConcept.BarToString(BarEnum.bar5, "") != "bar5") return false;
+    if (EnumConcept.BarToString(BarEnum.bar6, "") != "bar6") return false;
+
+    if (EnumConcept.DoubleFoo(FooEnum.foo1, 0) != ((uint)FooEnum.foo1 * 2)) return false;
+    if (EnumConcept.DoubleFoo(FooEnum.foo2, 0) != ((uint)FooEnum.foo2 * 2)) return false;
+    if (EnumConcept.DoubleFoo(FooEnum.foo3, 0) != ((uint)FooEnum.foo3 * 2)) return false;
+    if (EnumConcept.DoubleFoo(FooEnum.foo4, 0) != ((uint)FooEnum.foo4 * 2)) return false;
+    if (EnumConcept.DoubleFoo(FooEnum.foo5, 0) != ((uint)FooEnum.foo5 * 2)) return false;
+    if (EnumConcept.DoubleFoo(FooEnum.foo6, 0) != ((uint)FooEnum.foo6 * 2)) return false;
+    if (EnumConcept.DoubleFoo(FooEnum.foo7, 0) != ((uint)FooEnum.foo7 * 2)) return false;
+
+    if (EnumConcept.IsValid(FooEnum.foo1, false) == false) return false;
+    if (EnumConcept.IsValid(FooEnum.foo2, false) == true) return false;
+    if (EnumConcept.IsValid(BarEnum.bar1, false) == false) return false;
+    if (EnumConcept.IsValid(BarEnum.bar2, false) == true) return false;
+
+    if (EnumConcept.IsValid((FooEnum)(100000000), true) == false) return false;
+
+    return true;
+  }
+
   public static void Main() {
     System.Console.Write("Test_Foo: ");
     System.Console.WriteLine(Test_Foo() ? "PASS" : "FAIL");
@@ -597,5 +647,8 @@ public class HelloWorld {
 
     System.Console.Write("Test_FixedArray: ");
     System.Console.WriteLine(Test_FixedArray() ? "PASS" : "FAIL");
+
+    System.Console.Write("Test_EnumConcept: ");
+    System.Console.WriteLine(Test_EnumConcept() ? "PASS" : "FAIL");
   }
 }

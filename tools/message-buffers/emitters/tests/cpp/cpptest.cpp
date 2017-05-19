@@ -902,6 +902,60 @@ TEST FixedArray() {
   PASS();
 }
 
+TEST EnumConcept() {
+
+  ASSERT_EQ(IsFooOdd(FooEnum::foo1, false), true);
+  ASSERT_EQ(IsFooOdd(FooEnum::foo2, false), false);
+  ASSERT_EQ(IsFooOdd(FooEnum::foo3, false), true);
+  ASSERT_EQ(IsFooOdd(FooEnum::foo4, false), false);
+  ASSERT_EQ(IsFooOdd(FooEnum::foo5, false), true);
+  ASSERT_EQ(IsFooOdd(FooEnum::foo6, false), false);
+  ASSERT_EQ(IsFooOdd(FooEnum::foo7, false), true);
+
+  ASSERT_EQ(IsFoo4(FooEnum::foo1, false), false);
+  ASSERT_EQ(IsFoo4(FooEnum::foo2, false), false);
+  ASSERT_EQ(IsFoo4(FooEnum::foo3, false), false);
+  ASSERT_EQ(IsFoo4(FooEnum::foo4, false), true);
+  ASSERT_EQ(IsFoo4(FooEnum::foo5, false), false);
+  ASSERT_EQ(IsFoo4(FooEnum::foo6, false), false);
+  ASSERT_EQ(IsFoo4(FooEnum::foo7, false), false);
+
+  ASSERT_EQ(BarEnumToFooEnum(BarEnum::bar1, FooEnum::foo7), FooEnum::foo1);
+  ASSERT_EQ(BarEnumToFooEnum(BarEnum::bar2, FooEnum::foo7), FooEnum::foo2);
+  ASSERT_EQ(BarEnumToFooEnum(BarEnum::bar3, FooEnum::foo7), FooEnum::foo3);
+  ASSERT_EQ(BarEnumToFooEnum(BarEnum::bar4, FooEnum::foo7), FooEnum::foo4);
+  ASSERT_EQ(BarEnumToFooEnum(BarEnum::bar5, FooEnum::foo7), FooEnum::foo5);
+  ASSERT_EQ(BarEnumToFooEnum(BarEnum::bar6, FooEnum::foo7), FooEnum::foo6);
+
+  ASSERT_EQ(BarToString(BarEnum::bar1, ""), "bar1");
+  ASSERT_EQ(BarToString(BarEnum::bar2, ""), "bar2");
+  ASSERT_EQ(BarToString(BarEnum::bar3, ""), "bar3");
+  ASSERT_EQ(BarToString(BarEnum::bar4, ""), "bar4");
+  ASSERT_EQ(BarToString(BarEnum::bar5, ""), "bar5");
+  ASSERT_EQ(BarToString(BarEnum::bar6, ""), "bar6");
+
+  // Check DoubleFoo returns a float
+  ASSERT_EQ(typeid(DoubleFoo(FooEnum::foo1, 0)).name(), typeid(1.f).name());
+  ASSERT_EQ(DoubleFoo(FooEnum::foo1, 0), FooEnum::foo1 * 2.f);
+  ASSERT_EQ(DoubleFoo(FooEnum::foo2, 0), FooEnum::foo2 * 2.f);
+  ASSERT_EQ(DoubleFoo(FooEnum::foo3, 0), FooEnum::foo3 * 2.f);
+  ASSERT_EQ(DoubleFoo(FooEnum::foo4, 0), FooEnum::foo4 * 2.f);
+  ASSERT_EQ(DoubleFoo(FooEnum::foo5, 0), FooEnum::foo5 * 2.f);
+  ASSERT_EQ(DoubleFoo(FooEnum::foo6, 0), FooEnum::foo6 * 2.f);
+  ASSERT_EQ(DoubleFoo(FooEnum::foo7, 0), FooEnum::foo7 * 2.f);
+
+  // Make sure we call two enum concepts with the same name
+  ASSERT_EQ(IsValid(FooEnum::foo1, false), true);
+  ASSERT_EQ(IsValid(FooEnum::foo2, false), false);
+  ASSERT_EQ(IsValid(BarEnum::bar1, false), true);
+  ASSERT_EQ(IsValid(BarEnum::bar2, false), false);
+
+  // Check default value is returned
+  ASSERT_EQ(IsValid(static_cast<FooEnum>(100000000), true), true);
+
+  PASS();
+}
+
 SUITE(CPP_Emitter) {
 
   // Enum Tests
@@ -956,6 +1010,9 @@ SUITE(CPP_Emitter) {
   RUN_TEST(JsonSerialization_Nested);
   RUN_TEST(JsonSerialization_Unions);
   RUN_TEST(JsonSerialization_PartialJson);
+
+  // Enum Concept
+  RUN_TEST(EnumConcept);
 }
 
 /* Add definitions that need to be in the test runner's main file. */

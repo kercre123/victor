@@ -154,6 +154,7 @@ class CLADParser(PLYParser):
         self._message_types = []
         self._union_decls = []
         self._all_members = []
+        self._enum_concepts = []
 
         self._included_files = []
         self._lines_to_coords = []
@@ -168,6 +169,7 @@ class CLADParser(PLYParser):
 
         self._postprocess_enums()
         self._postprocess_unions()
+        self._postprocess_enum_concepts()
         self._postprocess_versioning_hashes(self._syntax_tree)
         self._note_ambiguity()
 
@@ -299,6 +301,66 @@ class CLADParser(PLYParser):
 
                 member.tag = value
                 value += 1
+
+    def _postprocess_enum_concepts(self):
+        # For every enum concept check that 
+        # 1) It is using a valid Enum
+        # 2) There is a 1 - 1 mapping for all entries in both the EnumConcept and the Enum it is working on
+        for enum_concept in self._enum_concepts:
+
+            # Find the matching enum decl
+            matching_enum_decl = None
+            for enum_decl in self._enum_decls:
+                if enum_decl.name == enum_concept.enum:
+                    matching_enum_decl = enum_decl
+                    break
+            if matching_enum_decl is None:
+                raise ParseError(
+                    enum_concept.coord,
+                    "Enum '{0}' in EnumConcept '{1}' does not exist".format(
+                        enum_concept.enum,
+                        enum_concept.name))
+
+            # Figure out if there are either extra or missing entries in the enum concept
+            concept_member_names = set(x.name for x in enum_concept.members())
+            enum_member_names = set(x.name for x in matching_enum_decl.members())
+
+            extra_concept_names = list(concept_member_names - enum_member_names)
+            extra_enum_names = list(enum_member_names - concept_member_names)
+
+            # There are entries in the EnumConcept that do not exist in the Enum it is working on
+            if len(extra_concept_names) > 0:
+                raise ParseError(
+                    enum_concept.coord,
+                    "Entries '{0}' in EnumConcept '{1}' do not exist in Enum '{2}'".format(
+                        extra_concept_names,
+                        enum_concept.name,
+                        matching_enum_decl.name))
+
+            # The EnumConcept is missing entries for some Enum values
+            if len(extra_enum_names) > 0:
+                raise ParseError(
+                    enum_concept.coord,
+                    "EnumConcept '{0}' missing entries for EnumValues '{1}' in Enum '{2}'".format(
+                        enum_concept.name,
+                        extra_enum_names,
+                        matching_enum_decl.name))
+
+            # If the return type of the EnumConcept is a builtin type check return values are valid
+            if isinstance(enum_concept.return_type.type, ast.BuiltinType):
+                for member in enum_concept.members():
+                    if isinstance(member.value, ast.StringConst):
+                        continue
+                    if (member.value.value < enum_concept.return_type.type.min) or (member.value.value > enum_concept.return_type.type.max):
+                        raise ParseError(
+                            enum_concept.coord,
+                            "Entry '{0}' in EnumConcept '{1}' contains invalid value '{2}'".format(
+                                member.name,
+                                enum_concept.name,
+                                member.value.value))
+
+
+
 
     def _note_ambiguity(self):
         for member in self._all_members:
@@ -448,6 +510,11 @@ class CLADParser(PLYParser):
         if (member_type_ref.type.max is not None) and (member_type_ref.type.max < initializer.value):
             self._parse_error("{0} is larger than the maximum value ({1}) for type {2}".format(initializer.value, member_type_ref.type.max, member_type_ref.type.name),
                               member_coord)
+        if (member_type_ref.type.name is 'bool'):
+            if (((member_type_ref.type.min is not None) and (initializer.value != member_type_ref.type.min)) and 
+                ((member_type_ref.type.max is not None) and (initializer.value != member_type_ref.type.max))):
+                self._parse_error("bool initializer value must be 0 or 1".format(member_type_ref.type.name),
+                                  member_coord)
 
     #################################
     ###### Parser Productions #######
@@ -477,6 +544,7 @@ class CLADParser(PLYParser):
                  | enum_decl
                  | union_decl
                  | include_decl
+                 | enum_concept_decl
         """
         p[0] = p[1]
 
@@ -742,6 +810,33 @@ class CLADParser(PLYParser):
         type = ast.FixedArrayType(p[1].type, p[4].value, self.production_to_coord(p, 1))
         p[0] = ast.MessageMemberDecl(p[2], type, self.get_union_initializer(p, 6), self.production_to_coord(p, 1))
         self._all_members.append(p[0])
+
+    def p_enum_concept_decl(self, p):
+        """ enum_concept_decl : ENUM_CONCEPT type ID LSQ ID RSQ LBRACE enum_concept_decl_list RBRACE
+        """
+        
+        decl = ast.EnumConceptDecl(p[3], p[2], p[5], p[8],
+                                    self.production_to_coord(p, 1),
+                                    self._get_current_namespace())
+        p[0] = decl
+
+        self._check_duplicates(p[0], 'enum_concept')
+
+        self._enum_concepts.append(decl)
+
+    def p_enum_concept_decl_list(self, p):
+        """ enum_concept_decl_list : enum_concept_member
+                                   | enum_concept_decl_list COMMA enum_concept_member
+        """
+        if len(p) == 2:
+            p[0] = ast.EnumConceptMemberList([p[1]], p[1].coord)
+        else:
+            p[0] = p[1].append(p[3])
+
+    def p_enum_concept_member(self, p):
+        """ enum_concept_member : ID EQ constant
+        """
+        p[0] = ast.EnumConceptMember(p[1], p[3], self.production_to_coord(p, 1))
 
     def p_type(self, p):
         """ type : string_type

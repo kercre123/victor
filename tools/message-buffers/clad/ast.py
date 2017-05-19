@@ -483,6 +483,53 @@ class UnionDecl(Decl):
 
     attr_names = tuple(["name", "fully_qualified_name", "alignment", "hash_str"])
 
+class EnumConceptDecl(Decl):
+    def __init__(self, name, return_type, enum, member_list, coord, namespace=None):
+        super(EnumConceptDecl, self).__init__(name, coord=coord, namespace=namespace)
+        self.return_type = return_type
+        self.enum = enum
+        self.member_list = member_list or []
+        self.hash_str = "None"
+
+    def children(self):
+        nodelist = [("member_list", self.member_list)]
+        return tuple(nodelist)
+
+    def members(self):
+        return self.member_list.members
+
+    attr_names = tuple(['name', 'fully_qualified_name', 'return_type', 'enum', 'hash_str'])
+
+class EnumConceptMemberList(Node):
+    def __init__(self, members, coord):
+        super(EnumConceptMemberList, self).__init__(coord)
+        self.members = members
+
+    def children(self):
+        nodelist = []
+        for i, child in enumerate(self.members):
+            nodelist.append(("member[%d]" % i, child))
+        return tuple(nodelist)
+
+    def append(self, member):
+        self.members.append(member)
+        return self
+
+    attr_names = ()
+
+class EnumConceptMember(Node):
+    def __init__(self, name, value, coord):
+        super(EnumConceptMember, self).__init__(coord)
+        self.name = name
+        self.value = value
+
+    def children(self):
+        nodelist = []
+        nodelist.append(("value", self.value))
+        return tuple(nodelist)
+
+    attr_names = tuple(["name"])
+
 ##### Types #####
 class Type(Node):
     def __init__(self, name, coord):

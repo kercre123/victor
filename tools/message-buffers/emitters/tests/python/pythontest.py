@@ -33,6 +33,7 @@ from SimpleTest import ExplicitlyTaggedAutoUnion, AnIntMessage, AFloatMessage, A
 from aligned.AutoUnionTest import FunkyMessage, Funky, Monkey, Music
 from DefaultValues import IntsWithDefaultValue, FloatsWithDefaultValue
 from SimpleTest import FooEnum, BarEnum
+from SimpleTest import BarEnumToFooEnum, BarToString, DoubleFoo, IsFoo4, IsFooOdd, IsValid
 
 class TestSimpleMessage(unittest.TestCase):
 
@@ -324,6 +325,53 @@ class TestFixedArray(unittest.TestCase):
       self.assertEqual(len(m.arr8) == Arrays.ArrSize.sizeTen, True)
       self.assertEqual(len(m.arr16) == Arrays.ArrSize.sizeTwenty, True)
       self.assertEqual(len(m) == Arrays.ArrSize.sizeTen*1 + Arrays.ArrSize.sizeTwenty*2, True)
+
+class TestEnumConcept(unittest.TestCase):
+    def test_enumConcept(self):
+      self.assertEqual(IsFooOdd(FooEnum.foo1, False), True)
+      self.assertEqual(IsFooOdd(FooEnum.foo2, False), False)
+      self.assertEqual(IsFooOdd(FooEnum.foo3, False), True)
+      self.assertEqual(IsFooOdd(FooEnum.foo4, False), False)
+      self.assertEqual(IsFooOdd(FooEnum.foo5, False), True)
+      self.assertEqual(IsFooOdd(FooEnum.foo6, False), False)
+      self.assertEqual(IsFooOdd(FooEnum.foo7, False), True)
+
+      self.assertEqual(IsFoo4(FooEnum.foo1, False), False)
+      self.assertEqual(IsFoo4(FooEnum.foo2, False), False)
+      self.assertEqual(IsFoo4(FooEnum.foo3, False), False)
+      self.assertEqual(IsFoo4(FooEnum.foo4, False), True)
+      self.assertEqual(IsFoo4(FooEnum.foo5, False), False)
+      self.assertEqual(IsFoo4(FooEnum.foo6, False), False)
+      self.assertEqual(IsFoo4(FooEnum.foo7, False), False)
+
+      self.assertEqual(BarEnumToFooEnum(BarEnum.bar1, FooEnum.foo7), FooEnum.foo1)
+      self.assertEqual(BarEnumToFooEnum(BarEnum.bar2, FooEnum.foo7), FooEnum.foo2)
+      self.assertEqual(BarEnumToFooEnum(BarEnum.bar3, FooEnum.foo7), FooEnum.foo3)
+      self.assertEqual(BarEnumToFooEnum(BarEnum.bar4, FooEnum.foo7), FooEnum.foo4)
+      self.assertEqual(BarEnumToFooEnum(BarEnum.bar5, FooEnum.foo7), FooEnum.foo5)
+      self.assertEqual(BarEnumToFooEnum(BarEnum.bar6, FooEnum.foo7), FooEnum.foo6)
+
+      self.assertEqual(BarToString(BarEnum.bar1, ""), "bar1")
+      self.assertEqual(BarToString(BarEnum.bar2, ""), "bar2")
+      self.assertEqual(BarToString(BarEnum.bar3, ""), "bar3")
+      self.assertEqual(BarToString(BarEnum.bar4, ""), "bar4")
+      self.assertEqual(BarToString(BarEnum.bar5, ""), "bar5")
+      self.assertEqual(BarToString(BarEnum.bar6, ""), "bar6")
+
+      self.assertEqual(DoubleFoo(FooEnum.foo1, 0), FooEnum.foo1 * 2)
+      self.assertEqual(DoubleFoo(FooEnum.foo2, 0), FooEnum.foo2 * 2)
+      self.assertEqual(DoubleFoo(FooEnum.foo3, 0), FooEnum.foo3 * 2)
+      self.assertEqual(DoubleFoo(FooEnum.foo4, 0), FooEnum.foo4 * 2)
+      self.assertEqual(DoubleFoo(FooEnum.foo5, 0), FooEnum.foo5 * 2)
+      self.assertEqual(DoubleFoo(FooEnum.foo6, 0), FooEnum.foo6 * 2)
+      self.assertEqual(DoubleFoo(FooEnum.foo7, 0), FooEnum.foo7 * 2)
+
+      self.assertEqual(IsValid(FooEnum.foo1, False), True)
+      self.assertEqual(IsValid(FooEnum.foo2, False), False)
+      self.assertEqual(IsValid(BarEnum.bar1, False), True)
+      self.assertEqual(IsValid(BarEnum.bar2, False), False)
+
+      self.assertEqual(IsValid(100000000, True), True)
 
 # Required unittest.main
 if __name__ == '__main__':

@@ -174,6 +174,9 @@ class HNamespaceEmitter(BaseEmitter):
     def visit_UnionDecl(self, node, *args, **kwargs):
         HUnionEmitter(self.output, self.options).visit(node, *args, **kwargs)
 
+    def visit_EnumConceptDecl(self, node, *args, **kargs):
+        HEnumConceptEmitter(self.output, self.options).visit(node, *args, **kargs)
+
 class CPPNamespaceEmitter(HNamespaceEmitter):
 
     def visit_IncludeDecl(self, node, *args, **kwargs):
@@ -187,6 +190,9 @@ class CPPNamespaceEmitter(HNamespaceEmitter):
 
     def visit_UnionDecl(self, node, *args, **kwargs):
         CPPUnionEmitter(self.output, self.options).visit(node, *args, **kwargs)
+
+    def visit_EnumConceptDecl(self, node, *args, **kargs):
+        CPPEnumConceptEmitter(self.output, self.options).visit(node, *args, **kargs)
 
 class HEnumEmitter(BaseEmitter):
 
@@ -1714,6 +1720,49 @@ class CPPSizeStatementEmitter(BaseEmitter):
                 parameter_type=cpp_parameter_type(node.member_type),
                 member_name=member_name,
                 size_method=size_method))
+
+class HEnumConceptEmitter(BaseEmitter):
+
+    def visit_EnumConceptDecl(self, node):
+        globals = dict(
+            enum_concept_name=node.name,
+            enum_concept_hash=node.hash_str,
+            enum_concept_return_type=cpp_value_type(node.return_type.type),
+            enum_concept_type=node.enum
+        )
+
+        self.emitHeader(node, globals)
+
+    def emitHeader(self, node, globals):
+        argument_name = emitterutil._lower_first_char_of_string(globals['enum_concept_type'])
+        self.output.write('{enum_concept_return_type} {enum_concept_name}(const {enum_concept_type}& {argument_name}, const {enum_concept_return_type}& defaultValue);\n\n'.format(argument_name=argument_name, **globals))
+
+
+class CPPEnumConceptEmitter(HEnumEmitter):
+
+    def visit_EnumConceptDecl(self, node):
+        globals = dict(
+            enum_concept_name=node.name,
+            enum_concept_hash=node.hash_str,
+            enum_concept_return_type=cpp_value_type(node.return_type.type),
+            enum_concept_type=node.enum
+        )
+        self.emit(node, globals)
+
+    def emit(self, node, globals):
+        argument_name = emitterutil._lower_first_char_of_string(globals['enum_concept_type'])
+        self.output.write('{enum_concept_return_type} {enum_concept_name}(const {enum_concept_type}& {argument_name}, const {enum_concept_return_type}& defaultValue)\n{{\n'.format(argument_name=argument_name, **globals))
+        self.output.write('\tswitch({argument_name}) {{\n'.format(argument_name=argument_name))
+
+        for member in node.members():
+            self.output.write('\t\tcase {enum_concept_type}::{member_name}:\n'.format(member_name=member.name, **globals))
+            self.output.write('\t\t\treturn {member_value};\n'.format(member_value=member.value.value))
+
+        self.output.write('\t\tdefault:\n')
+        self.output.write('\t\t\treturn defaultValue;\n')
+
+        self.output.write('\t}\n')
+        self.output.write('}\n\n')
 
 if __name__ == '__main__':
     from clad import emitterutil

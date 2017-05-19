@@ -516,3 +516,14 @@ def _do_all_members_have_default_constructor(node):
                 return False
 
     return True
+
+def _split_string_on_operators(string):
+    '''Splits the string on the characters '*', '/', '+', '-', ' '
+    '''
+    split = set(re.split("[*+/ -]", string))
+    if '' in split:
+        split.remove('')
+    return split
+
+def _lower_first_char_of_string(string):
+    return string[:1].lower() + string[1:] if string else ''

@@ -143,6 +143,9 @@ class DeclEmitter(BaseEmitter):
         def visit_UnionDecl(self, node, *args, **kwargs):
             UnionEmitter(self.output, *args, **kwargs).visit(node, *args, **kwargs)
 
+        def visit_EnumConceptDecl(self, node, *args, **kargs):
+            EnumConceptEmitter(self.output, *args, **kargs).visit(node, *args, **kargs)
+
     def __init__(self, output, module):
         super(DeclEmitter, self).__init__(output)
         self.module = module
@@ -727,6 +730,41 @@ class UnionEmitter(BaseEmitter):
             self.output.write('\t\n\n')
         else:
             self.output.write('\t{dict_name} = ()\n\n'.format(dict_name=dict_name))
+
+class EnumConceptEmitter(BaseEmitter):
+
+    def visit_EnumConceptDecl(self, node):
+
+        globals = dict(
+            support_module=support_module,
+            enum_concept_name=node.name,
+            enum_concept_hash=node.hash_str,
+            enum_concept_type=node.enum
+        )
+
+        self.emitConcept(node, globals)
+
+    def emitConcept(self, node, globals):
+        argument_name = emitterutil._lower_first_char_of_string(node.enum)
+        self.output.write('def {enum_concept_name}({argument_name}, defaultValue):\n'.format(argument_name=argument_name, **globals))
+        self.output.write('\treturn {\n')
+
+        for member in node.members():
+
+            member_value = member.value.value
+
+            # If this is a string and it contains "::" meaning it is likely a verbatim value
+            if type(member_value) is str and "::" in member_value:
+                # Replace '::' with '.'
+                member_value = member_value.replace("::", ".")
+
+            self.output.write('\t\t{enum_concept_type}.{member_name}: {member_value},\n'.format(
+                argument_name=argument_name,
+                member_name=member.name,
+                member_value=member_value,
+                **globals))
+
+        self.output.write('\t\t}}.get({argument_name}, defaultValue)\n'.format(argument_name=argument_name))
 
 class PythonMemberVisitor(BaseEmitter):
 

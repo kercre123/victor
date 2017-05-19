@@ -108,6 +108,9 @@ class NamespaceEmitter(ast.NodeVisitor):
     def visit_UnionDecl(self, node, *args, **kwargs):
         UnionEmitter(self.output).visit(node, *args, **kwargs)
 
+    def visit_EnumConceptDecl(self, node, *args, **kwargs):
+        EnumConceptEmitter(self.output).visit(node, *args, **kwargs)
+
 class EnumEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout):
         self.output = output
@@ -1232,6 +1235,59 @@ class Union_AccessorEmitter(ast.NodeVisitor):
 
     def visit_PascalStringType(self, node):
         self.output.write('string')
+
+class EnumConceptEmitter(ast.NodeVisitor):
+    def __init__(self, output=sys.stdout):
+        self.output = output
+
+    def visit_EnumConceptDecl(self, node):
+        argument_name = emitterutil._lower_first_char_of_string(node.enum)
+
+        return_type = cast_type(node.return_type.type)
+
+        self.output.write('public partial class EnumConcept\n{\n')
+
+        self.output.write('\tpublic static {enum_concept_return_type} {enum_concept_name}({enum_concept_type} {argument_name}, {enum_concept_return_type} defaultValue)\n\t{{\n'.format(
+            enum_concept_return_type=return_type,
+            enum_concept_name=node.name,
+            enum_concept_type=node.enum,
+            argument_name=argument_name))
+
+        self.output.write('\t\tswitch({argument_name}) {{\n'.format(argument_name=argument_name))
+
+        for member in node.members():
+            member_value = member.value.value
+
+            # If this is a string and it contains "::" meaning it is likely a verbatim value
+            if type(member_value) is str and "::" in member_value:
+                # Split the value on operators in order to cast all parts of the verbatim statement
+                # C# does not like to implicitly convert between types so we have to cast to the enum concepts return type
+                split = emitterutil._split_string_on_operators(member_value)
+                for token in split:
+                    cast_token = "({enum_concept_return_type})".format(enum_concept_return_type=return_type) + token;
+                    member_value = member_value.replace(token, cast_token)
+
+                # Finally replace all occurences of '::' with '.'
+                member_value = member_value.replace("::", ".")
+
+            # C# won't implicitly cast ints to bools so we need to replace the int with a bool should
+            # the EnumConcept's return type be a bool
+            if node.return_type.type.name == "bool":
+                member_value = "true" if member_value == 1 else "false" 
+
+            self.output.write('\t\t\tcase {enum_concept_type}.{member_name}: return {member_value};\n'.format(
+                enum_concept_type=node.enum,
+                member_name=member.name,
+                member_value=member_value))
+
+        # Default case of the swich throws an ArgumentException because we shouldn't be able to get here unless someone is
+        # doing some odd casting
+        self.output.write('\t\t\tdefault:\n')
+        self.output.write('\t\t\t\treturn defaultValue;\n')
+
+        self.output.write('\t\t}\n')
+
+        self.output.write('\t}\n}\n\n')
 
 if __name__ == '__main__':
     from clad import emitterutil
