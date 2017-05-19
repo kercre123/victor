@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_IActivity_H__
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
-
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/common/types.h"
 #include "clad/types/activityTypes.h"
 #include "clad/types/animationTrigger.h"
@@ -25,6 +25,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -96,10 +97,26 @@ public:
   std::vector<IBehavior*> GetObjectTapBehaviors();
   
 protected:
+  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
+  
   virtual void OnSelectedInternal() {};
   virtual void OnDeselectedInternal() {};
   // Allows activities to pass up a display name from sub activities
   void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
+  
+  void SmartDisableReactionsWithLock(Robot& robot,
+                                     const std::string& lockID,
+                                     const TriggersArray& triggers);
+  void SmartRemoveDisableReactionsLock(Robot& robot,
+                                       const std::string& lockID);
+  
+  // Avoid calling this function directly, use the SMART_DISABLE_REACTION_DEV_ONLY macro instead
+  // Locks a single reaction trigger instead of a full TriggersArray
+#if ANKI_DEV_CHEATS
+  void SmartDisableReactionWithLock(Robot& robot,
+                                    const std::string& lockID,
+                                    const ReactionTrigger& trigger);
+#endif
   
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -149,6 +166,10 @@ private:
   float _lastTimeActivityStartedSecs;
   // last time the activity stopped running
   float _lastTimeActivityStoppedSecs;
+  
+  // Track the locks which have been set through SmartDisableReactions
+  std::set<std::string> _smartLockIDs;
+
 };
   
 

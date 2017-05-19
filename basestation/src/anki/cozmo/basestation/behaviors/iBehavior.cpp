@@ -55,6 +55,7 @@ static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kRequireObjectTappedKey           = "requireObjectTapped";
 static const char* kObjectTapInteractionDisableLock  = "ObjectTapInteraction";
 static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
+static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 
 static const int kMaxResumesFromCliff                = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
@@ -783,7 +784,7 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
 void IBehavior::SmartDisableReactionsWithLock(const std::string& lockID,
                                               const TriggersArray& triggers)
 {
-  _robot.GetBehaviorManager().DisableReactionsWithLock(lockID, triggers);
+  _robot.GetBehaviorManager().DisableReactionsWithLock(lockID + kSmartReactionLockSuffix, triggers);
   _smartLockIDs.insert(lockID);
 }
 
@@ -791,14 +792,14 @@ void IBehavior::SmartDisableReactionsWithLock(const std::string& lockID,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SmartRemoveDisableReactionsLock(const std::string& lockID)
 {
-  _robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID);
+  _robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID + kSmartReactionLockSuffix);
   _smartLockIDs.erase(lockID);
 }
 
 #if ANKI_DEV_CHEATS
 void IBehavior::SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger)
 {
-  _robot.GetBehaviorManager().DisableReactionWithLock(lockID, trigger);
+  _robot.GetBehaviorManager().DisableReactionWithLock(lockID + kSmartReactionLockSuffix, trigger);
   _smartLockIDs.insert(lockID);
 }
 #endif

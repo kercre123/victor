@@ -23,8 +23,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
-  CONSOLE_VAR(bool, kCanHiccupWhileFistBumping, "Hiccups", true);
   
 namespace{
 // Json parameter keys
@@ -106,13 +104,6 @@ bool BehaviorFistBump::IsRunnableInternal(const BehaviorPreReqNone& preReqData) 
   
 Result BehaviorFistBump::InitInternal(Robot& robot)
 {
-  // Disable reactionary behaviors that we don't want interrupting this.
-  // (Sometimes when he gets fist bumped too hard it can be interpreted as pickup.)
-  if(!kCanHiccupWhileFistBumping)
-  {
-    SMART_DISABLE_REACTION_DEV_ONLY(GetIDStr(), ReactionTrigger::Hiccup);
-  }
-
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersFistBumpArray);
 
   // Disable idle animation

@@ -16,11 +16,10 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
 #include "clad/types/behaviorObjectives.h"
 #include "util/signals/simpleSignal.hpp"
-#include <set>
 
 namespace Json {
 class Value;
@@ -61,22 +60,11 @@ protected:
   Result ReloadFromConfig(Robot& robot, const Json::Value& config);
   
 private:
-  using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
   
   void CheckIfSparkShouldEnd();
   void CompleteSparkLogic();
   void ResetLightsAndAnimations();
-  void SmartDisableReactionsWithLock(const std::string& lockID,
-                                     const TriggersArray& triggers);
-  void SmartRemoveDisableReactionsLock(const std::string& lockID,
-                                       const TriggersArray& triggers);
-  
-  // Avoid calling this function directly, use the SMART_DISABLE_REACTION_DEV_ONLY macro instead
-  // Locks a single reaction trigger instead of a full TriggersArray
-#if ANKI_DEV_CHEATS
-  void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
-#endif
-  
+
   enum class ChooserState{
     ChooserSelected,
     PlayingSparksIntro,
@@ -90,7 +78,6 @@ private:
   
   ChooserState _state;
   std::vector<Signal::SmartHandle> _signalHandles;
-  std::set<std::string> _smartLockIDs;
   
   // Created with factory
   BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;

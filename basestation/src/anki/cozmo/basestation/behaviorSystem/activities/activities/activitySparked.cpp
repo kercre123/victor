@@ -199,7 +199,8 @@ void ActivitySparked::OnSelectedInternal()
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  SmartDisableReactionsWithLock(GetIDStr(),
+  SmartDisableReactionsWithLock(_robot,
+                                GetIDStr(),
                                 kAffectTriggersSparksChooserArray);
   
   // Notify the delegate chooser if it exists
@@ -219,10 +220,7 @@ void ActivitySparked::OnDeselectedInternal()
 {
   ResetLightsAndAnimations();
   
-  for(const auto& entry: _smartLockIDs){
-    _robot.GetBehaviorManager().RemoveDisableReactionsLock(entry);
-  }
-  _smartLockIDs.clear();
+
   
   // clear any custom light events set during the spark
   
@@ -308,35 +306,6 @@ void ActivitySparked::ResetLightsAndAnimations()
   }
   
 }
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::SmartDisableReactionsWithLock(const std::string& lockID,
-                                                      const TriggersArray& triggers)
-{
-  _robot.GetBehaviorManager().DisableReactionsWithLock(lockID, triggers);
-  _smartLockIDs.insert(lockID);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::SmartRemoveDisableReactionsLock(const std::string& lockID,
-                                                            const TriggersArray& triggers)
-{
-  _robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID);
-  _smartLockIDs.erase(lockID);
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if ANKI_DEV_CHEATS
-void ActivitySparked::SmartDisableReactionWithLock(const std::string& lockID,
-                                                         const ReactionTrigger& trigger)
-{
-  _robot.GetBehaviorManager().DisableReactionWithLock(lockID, trigger);
-  _smartLockIDs.insert(lockID);
-}
-#endif
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -613,7 +582,8 @@ void ActivitySparked::CheckIfSparkShouldEnd()
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
     
     // Make sure we don't interrupt the final stage animation if we see a cube
-    SmartDisableReactionsWithLock(kPlayingFinalAnimationLock,
+    SmartDisableReactionsWithLock(_robot,
+                                  kPlayingFinalAnimationLock,
                                   kAffectTriggersFinalAnimationArray);
   }else{
     // Transitioning directly between sparks - end current spark immediately

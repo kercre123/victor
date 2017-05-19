@@ -50,6 +50,8 @@ static const char* kStrategyConfigKey        = "activityStrategy";
 static const char* kRequiresSparkKey         = "requireSpark";
 static const char* kRequiresObjectTapped     = "requireObjectTapped";
 static const char* kSupportsObjectTapInteractionKey = "supportsObjectTapInteractions";
+static const char* kSmartReactionLockSuffix = "_activityLock";
+
 } // end namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -226,6 +228,12 @@ void IActivity::OnDeselected(Robot& robot)
     robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetIDStr());
   }
   
+  // remove any locks set through SmartDisable
+  while(!_smartLockIDs.empty()){
+    SmartRemoveDisableReactionsLock(robot, *_smartLockIDs.begin());
+  }
+  _smartLockIDs.clear();
+  
   // log event to das
   int nSecs = Util::numeric_cast<int>(_lastTimeActivityStoppedSecs - _lastTimeActivityStartedSecs);
   if (nSecs < 0) { // Attempt to fix COZMO-7862
@@ -267,6 +275,36 @@ IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentR
   }
   return nullptr;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::SmartDisableReactionsWithLock(Robot& robot,
+                                              const std::string& lockID,
+                                              const TriggersArray& triggers)
+{
+  robot.GetBehaviorManager().DisableReactionsWithLock(lockID + kSmartReactionLockSuffix, triggers);
+  _smartLockIDs.insert(lockID);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IActivity::SmartRemoveDisableReactionsLock(Robot& robot,
+                                                const std::string& lockID)
+{
+  robot.GetBehaviorManager().RemoveDisableReactionsLock(lockID + kSmartReactionLockSuffix);
+  _smartLockIDs.erase(lockID);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#if ANKI_DEV_CHEATS
+void IActivity::SmartDisableReactionWithLock(Robot& robot,
+                                             const std::string& lockID,
+                                             const ReactionTrigger& trigger)
+{
+  robot.GetBehaviorManager().DisableReactionWithLock(lockID + kSmartReactionLockSuffix, trigger);
+  _smartLockIDs.insert(lockID);
+}
+#endif
 
   
   
