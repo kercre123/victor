@@ -114,6 +114,7 @@ CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true)
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
 //   on the Unity side), then this console func can be removed.
+#if REMOTE_CONSOLE_ENABLED
 static Robot* _thisRobot = nullptr;
 static void PlayAnimationByName(ConsoleFunctionContextRef context)
 {
@@ -124,7 +125,7 @@ static void PlayAnimationByName(ConsoleFunctionContextRef context)
   }
 }
 CONSOLE_FUNC(PlayAnimationByName, "PlayAnimationByName", const char* animName);
-  
+#endif
   
 ////////
 // Consts for robot offtreadsState
@@ -295,8 +296,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _aiComponent->Init();
   
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
+#if REMOTE_CONSOLE_ENABLED
   _thisRobot = this;
-      
+#endif
+  
 } // Constructor: Robot
     
 Robot::~Robot()

@@ -1086,10 +1086,12 @@ float IBehavior::EvaluateRunningPenalty() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float IBehavior::EvaluateScore(const Robot& robot) const
 {
+#if ANKI_DEV_CHEATS
   DEV_ASSERT_MSG(!_scoringValuesCached.isNull(),
                  "IBehavior.EvaluateScore.ScoreNotSet",
                  "No score was loaded in for behavior name %s",
                  GetIDStr().c_str());
+#endif
   BehaviorPreReqRobot preReqData(robot);
   if (IsRunning() || IsRunnable(preReqData))
   {

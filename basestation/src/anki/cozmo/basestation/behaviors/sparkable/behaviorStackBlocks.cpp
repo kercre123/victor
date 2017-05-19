@@ -38,7 +38,6 @@ namespace Cozmo {
 namespace {
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
 CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBlocks", 90.f);
-CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 2);
 CONSOLE_VAR(bool, kCanHiccupWhileStacking, "Hiccups", true);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";

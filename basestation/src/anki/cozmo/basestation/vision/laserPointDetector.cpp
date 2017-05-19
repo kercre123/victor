@@ -36,7 +36,9 @@ namespace Cozmo {
   
 namespace Params
 {
+#if REMOTE_CONSOLE_ENABLED
   static const char * const kConsoleGroupName = "Vision.LaserPointDetector";
+#endif
   
   // Set > 1 to process at lower resolution for speed
   CONSOLE_VAR_RANGED(s32, kLaser_scaleMultiplier, kConsoleGroupName, 2, 1, 8);
