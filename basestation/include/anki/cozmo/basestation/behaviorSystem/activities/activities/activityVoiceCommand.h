@@ -31,6 +31,7 @@ class IBehavior;
 class MoodManager;
 class Robot;
 class CozmoContext;
+class RequestGameSelector;
 
 template <typename Type> class AnkiEvent;
 
@@ -63,7 +64,7 @@ private:
   
   const CozmoContext*               _context;
   IBehavior*                        _voiceCommandBehavior = nullptr;
-  IBehavior*                        _pounceOnMotionBehavior = nullptr;
+  std::unique_ptr<RequestGameSelector> _requestGameSelector;
   VoiceCommand::VoiceCommandType    _respondingToCommandType = VoiceCommand::VoiceCommandType::Count;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
