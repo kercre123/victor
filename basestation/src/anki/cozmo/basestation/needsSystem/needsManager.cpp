@@ -551,10 +551,6 @@ void NeedsManager::UpdateStarsState()
     std::tm nowLocalTime;
     localtime_r(&nowTimeT, &nowLocalTime);
     
-    PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
-                  "Local time gmt offset %ld",
-                  nowLocalTime.tm_gmtoff);
-    
     // Past midnight from lasttime
     if( nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
     {

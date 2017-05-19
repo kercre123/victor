@@ -1,6 +1,7 @@
 ﻿using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cozmo.Needs {
@@ -30,19 +31,28 @@ namespace Cozmo.Needs {
       else {
         Instance = this;
       }
-      _SetNeedsRandomlyCoroutine = DecayNeedsOverTime();
-      StartCoroutine(_SetNeedsRandomlyCoroutine);
     }
 
     private void OnDisable() {
       StopAllCoroutines();
     }
 
-    // COZMO-10916: IVY TODO: Replace with request to engine for current state after engine is connected
     private void Awake() {
+      RobotEngineManager.Instance.ConnectedToClient += (s) => RequestNeedsState();
+      RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
-      BreakPartsIfNeeded();
+    }
+
+    private void OnDestroy() {
+      if (RobotEngineManager.Instance != null) {
+        RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
+      }
+    }
+
+    private void RequestNeedsState() {
+      RobotEngineManager.Instance.Message.GetNeedsState = new GetNeedsState();
+      RobotEngineManager.Instance.SendMessage();
     }
 
     public float GetCurrentDisplayValue(NeedId needId) {
@@ -77,21 +87,53 @@ namespace Cozmo.Needs {
     }
 
     public void RegisterNeedActionCompleted(NeedsActionId actionIdToComplete) {
-      StartCoroutine(DelayedActionCompleted(actionIdToComplete));
+      RobotEngineManager.Instance.Message.RegisterNeedsActionCompleted =
+                          Singleton<RegisterNeedsActionCompleted>.Instance.Initialize(actionIdToComplete);
+      RobotEngineManager.Instance.SendMessage();
     }
 
-    #region Stub Methods
+    public void PauseDecay() {
+      RobotEngineManager.Instance.Message.SetNeedsPauseState =
+                          Singleton<SetNeedsPauseState>.Instance.Initialize(true);
+      RobotEngineManager.Instance.SendMessage();
+    }
 
-    private const float _kStubDecayPerSec = 0.01f;
-    private bool _ShouldDecay = true;
-    private float _CachedDecay = 0f;
-    private IEnumerator _SetNeedsRandomlyCoroutine;
+    public void ResumeDecay() {
+      RobotEngineManager.Instance.Message.SetNeedsPauseState =
+                          Singleton<SetNeedsPauseState>.Instance.Initialize(false);
+      RobotEngineManager.Instance.SendMessage();
+    }
 
-    private const float _kStubNeedValueStart = 0.5f;
-    private const NeedBracketId _kStubNeedBracketStart = NeedBracketId.Normal;
-    private const float _kStubNeedValueBoost = 0.2f;
+    private void HandleNeedsStateFromEngine(NeedsState newNeedsState) {
+      bool needsValueChanged = false;
+      for (int needIndex = 0; needIndex < (int)NeedId.Count; needIndex++) {
+        if (!_LatestStateFromEngine.curNeedLevel[needIndex].IsNear(newNeedsState.curNeedLevel[needIndex], float.Epsilon)) {
+          needsValueChanged = true;
+          break;
+        }
+      }
 
-    private const float _kFakeEngineResponseLag_sec = 0.1f;
+      bool needsBracketChanged = false;
+      List<int> needsThatChanged = new List<int>();
+      for (int needIndex = 0; needIndex < (int)NeedId.Count; needIndex++) {
+        if (_LatestStateFromEngine.curNeedBracket[needIndex] != newNeedsState.curNeedBracket[needIndex]) {
+          needsBracketChanged = true;
+          needsThatChanged.Add(needIndex);
+        }
+      }
+
+      _LatestStateFromEngine = newNeedsState;
+
+      if (needsValueChanged && OnNeedsLevelChanged != null) {
+        OnNeedsLevelChanged(newNeedsState.actionCausingTheUpdate);
+      }
+
+      if (needsBracketChanged && OnNeedsBracketChanged != null) {
+        foreach (int need in needsThatChanged) {
+          OnNeedsBracketChanged(newNeedsState.actionCausingTheUpdate, (NeedId)need);
+        }
+      }
+    }
 
     private NeedsState CreateNewNeedsState() {
       NeedsState needsState = new NeedsState();
@@ -100,10 +142,11 @@ namespace Cozmo.Needs {
       needsState.curNeedLevel = new float[numNeedsId];
       needsState.curNeedBracket = new NeedBracketId[numNeedsId];
       for (int i = 0; i < numNeedsId; i++) {
-        needsState.curNeedLevel[i] = _kStubNeedValueStart;
-        needsState.curNeedBracket[i] = _kStubNeedBracketStart;
+        needsState.curNeedLevel[i] = 0f;
+        needsState.curNeedBracket[i] = NeedBracketId.Critical;
       }
 
+      // Don't let them repair until they can fix on a connected robot
       int numParts = (int)RepairablePartId.Count;
       needsState.partIsDamaged = new bool[numParts];
       for (int i = 0; i < numParts; i++) {
@@ -116,139 +159,5 @@ namespace Cozmo.Needs {
 
       return needsState;
     }
-
-    // Fake recieving an event over the wire from engine
-    private IEnumerator DelayedActionCompleted(NeedsActionId actionIdToComplete) {
-      yield return new WaitForSeconds(_kFakeEngineResponseLag_sec);
-      // COZMO-10916 IVY TODO: Use real clad messages to send event
-      if (actionIdToComplete == NeedsActionId.RepairHead
-          || actionIdToComplete == NeedsActionId.RepairLift
-          || actionIdToComplete == NeedsActionId.RepairTreads) {
-        int partIndex = -1;
-        switch (actionIdToComplete) {
-        case NeedsActionId.RepairHead:
-          partIndex = (int)RepairablePartId.Head;
-          break;
-        case NeedsActionId.RepairLift:
-          partIndex = (int)RepairablePartId.Lift;
-          break;
-        case NeedsActionId.RepairTreads:
-          partIndex = (int)RepairablePartId.Treads;
-          break;
-        default:
-          break;
-        }
-        _LatestStateFromEngine.partIsDamaged[partIndex] = false;
-
-        ApplyBoost(NeedId.Repair, actionIdToComplete);
-      }
-      else if (actionIdToComplete == NeedsActionId.FeedRed
-               || actionIdToComplete == NeedsActionId.FeedBlue
-               || actionIdToComplete == NeedsActionId.FeedGreen) {
-        ApplyBoost(NeedId.Energy, actionIdToComplete);
-      }
-      else if (actionIdToComplete == NeedsActionId.Play) {
-        ApplyBoost(NeedId.Play, actionIdToComplete);
-      }
-    }
-
-    private void ApplyBoost(NeedId needId, NeedsActionId actionId) {
-      int index = (int)needId;
-      if (needId == NeedId.Repair) {
-        AddValue(index, 1f / (float)RepairablePartId.Count, actionId);
-      }
-      else {
-        AddValue(index, _kStubNeedValueBoost, actionId);
-      }
-
-      if (OnNeedsLevelChanged != null) {
-        OnNeedsLevelChanged(actionId);
-      }
-    }
-
-    public void PauseDecay() {
-      _ShouldDecay = false;
-      _CachedDecay = 0f;
-    }
-
-    public void ResumeDecay() {
-      _ShouldDecay = true;
-      ApplyDecay(_CachedDecay);
-    }
-
-    // COZMO-10916 IVY TODO: Use real clad messages to change values
-    private IEnumerator DecayNeedsOverTime() {
-      while (true) {
-        if (_ShouldDecay) {
-          ApplyDecay(_kStubDecayPerSec);
-        }
-        else {
-          _CachedDecay += _kStubDecayPerSec;
-        }
-
-        yield return new WaitForSeconds(1f);
-      }
-    }
-
-    private void ApplyDecay(float decayToApply) {
-      int numNeedsId = (int)NeedId.Count;
-      for (int i = 0; i < numNeedsId; i++) {
-        AddValue(i, -decayToApply, NeedsActionId.Decay);
-
-        if (i == (int)NeedId.Repair) {
-          BreakPartsIfNeeded();
-        }
-      }
-
-      if (OnNeedsLevelChanged != null) {
-        OnNeedsLevelChanged(NeedsActionId.Decay);
-      }
-    }
-
-    private void AddValue(int needIndex, float delta, NeedsActionId actionId) {
-      _LatestStateFromEngine.curNeedLevel[needIndex] += delta;
-      _LatestStateFromEngine.curNeedLevel[needIndex] = Mathf.Clamp(_LatestStateFromEngine.curNeedLevel[needIndex],
-                                                                   0f, 1f);
-      int numBrackets = (int)NeedBracketId.Count;
-      float pointsPerLevel = 1f / numBrackets;
-      for (int i = 1; i <= numBrackets; i++) {
-        if (_LatestStateFromEngine.curNeedLevel[needIndex] < pointsPerLevel * i) {
-          NeedBracketId oldBracket = _LatestStateFromEngine.curNeedBracket[needIndex];
-          NeedBracketId newBracket = (NeedBracketId)(numBrackets - i);
-          if (oldBracket != newBracket) {
-            _LatestStateFromEngine.curNeedBracket[needIndex] = newBracket;
-            if (OnNeedsBracketChanged != null) {
-              OnNeedsBracketChanged(actionId, (NeedId)needIndex);
-            }
-          }
-          break;
-        }
-      }
-    }
-
-    private void BreakPartsIfNeeded() {
-      int numParts = (int)RepairablePartId.Count;
-      float pointsPerPart = 1f / numParts;
-      int numPartsBroken = numParts - Mathf.CeilToInt(_LatestStateFromEngine.curNeedLevel[(int)NeedId.Repair] / pointsPerPart);
-      int currentNumPartsBroken = 0;
-      for (int i = 0; i < numParts; i++) {
-        if (_LatestStateFromEngine.partIsDamaged[i]) {
-          currentNumPartsBroken++;
-        }
-      }
-
-      if (currentNumPartsBroken < numPartsBroken) {
-        int numPartsToBreak = numPartsBroken - currentNumPartsBroken;
-        int partIndex = 0;
-        while (numPartsToBreak > 0 && partIndex < numParts) {
-          if (!_LatestStateFromEngine.partIsDamaged[partIndex]) {
-            _LatestStateFromEngine.partIsDamaged[partIndex] = true;
-            numPartsToBreak--;
-          }
-          partIndex++;
-        }
-      }
-    }
-    #endregion
   }
 }
