@@ -39,7 +39,6 @@ namespace Cozmo.UI {
       if (!string.IsNullOrEmpty(_ScriptTarget.LinkedComponentId)) {
         //Force load the json that is on disk
         ThemesJson.LoadJson();
-        ThemeSystemConfigJson.LoadJson();
 
         DrawRuntimeSkinningOptions();
 

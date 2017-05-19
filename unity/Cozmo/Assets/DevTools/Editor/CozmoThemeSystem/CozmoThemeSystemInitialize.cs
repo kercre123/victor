@@ -9,6 +9,5 @@ public class CozmoThemeSystemInitialize : MonoBehaviour {
     CozmoThemeSystemEditorUtils.Initialize();
 
     ThemesJson.LoadJson();
-    ThemeSystemConfigJson.LoadJson();
   }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using System.Collections;
 using Anki.Core.Editor.Components;
@@ -12,11 +12,12 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
     ThemeSystemEditorUtils.RegisterPreviewForAllChildrenAddOnDelegate(PreviewForAllChildrenTMP);
     ThemeSystemEditorUtils.RegisterResetPreviewForAllChildrenAddOnDelegate(ResetPreviewForAllChildrenTMP);
     ThemeSystemEditorUtils.RegisterFinishCreateNewThemeComponentForAllChildrenAddOnDelegate(FinishCreateNewThemeComponentForAllChildrenTMP);
+    ThemeSystemEditorUtils.RegisterUpdateAllPrefabsForRenamedThemeComponentDelegates(UpdateAllPrefabsForRenamedThemeComponentDelegatesTMP);
+    Debug.Log("ThemeSystemEditorUtilsTMP.Constructor: Registered all override methods");
   }
   #endregion
 
   #region Static Properties
-  // new keyword avoids warning of overwriting base class with same name
   protected static new ThemeSystemEditorUtilsTMP _sInstance = null;
   public static new ThemeSystemEditorUtilsTMP sInstance {
     get {
@@ -32,8 +33,8 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
   #region Static AddOn Methods
   public static void PreviewForAllChildrenTMP() {
     if (Selection.activeTransform != null) {
-      PreviewThemeIndex = ThemesJson.GetAllThemeIds().IndexOf(ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentThemeId);
-      PreviewSkinIndex = ThemesJson.GetAllSkinIds().IndexOf(ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentSkinId);
+      PreviewThemeIndex = ThemesJson.GetAllThemeIds().IndexOf(ThemeSystemUtils.sInstance.GetCurrentThemeId());
+      PreviewSkinIndex = ThemesJson.GetAllSkinIds().IndexOf(ThemeSystemUtils.sInstance.GetCurrentSkinId());
 
       //Find all children of selection that contain TextMeshPro
       List<AnkiTextMeshPro> textComponents = new List<AnkiTextMeshPro>();
@@ -91,7 +92,7 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
       }
 
       //Save
-      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance, ThemeSystemConfigJson.CurrentlyLoadedInstance);
+      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance);
 
       int totalComponentCount = textComponents.Count;
       EditorUtility.DisplayDialog("Success", "Created " + totalComponentCount + " components succesfully for id: " + baseComponentId, "OK");
@@ -100,6 +101,10 @@ public class ThemeSystemEditorUtilsTMP : ThemeSystemEditorUtils {
       //Show error and quit
       EditorUtility.DisplayDialog("Error", "Failed, [" + offenderID + "] is already in use.", "OK");
     }
+  }
+
+  public static void UpdateAllPrefabsForRenamedThemeComponentDelegatesTMP(string oldId, string newId) {
+    ThemeSystemEditorUtils.sInstance.UpdateAllPrefabsForRenamedThemeComponent<AnkiTextMeshPro>(oldId, newId);
   }
   #endregion
 

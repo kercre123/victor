@@ -28,15 +28,21 @@ namespace Anki.Core.Editor.Components {
 
       base.OnInspectorGUI();
 
+      //Get Target Script
+      if (_ScriptTarget == null) {
+        _ScriptTarget = (AnkiTextMeshPro)target;
+      }
+
+      //Force load the json that is on disk
+      ThemesJson.LoadJson();
+
+      ThemeSystemEditorUtilsTMP.sInstance.CheckIfLinkedComponentIdExists(_ScriptTarget);
+
       //Reset our ui to use default values
       EditorGUIUtility.labelWidth = labelWidth;
       EditorGUIUtility.fieldWidth = fieldWidth;
       EditorGUI.indentLevel = indentLevel;
 
-      //Get Target Script
-      if (_ScriptTarget == null) {
-        _ScriptTarget = (AnkiTextMeshPro)target;
-      }
 
       ThemeSystemEditorUtilsTMP.sInstance.DrawSkinningOptionsHeader();
 
@@ -47,10 +53,6 @@ namespace Anki.Core.Editor.Components {
       }
 
       if (!string.IsNullOrEmpty(_ScriptTarget.LinkedComponentId)) {
-        //Force load the json that is on disk
-        ThemesJson.LoadJson();
-        ThemeSystemConfigJson.LoadJson();
-
         DrawRuntimeSkinningOptions();
 
         DrawEditorSkinningOptions();
@@ -187,7 +189,7 @@ namespace Anki.Core.Editor.Components {
       }
 
       //Save the JSON
-      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance, ThemeSystemConfigJson.CurrentlyLoadedInstance);
+      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance);
 
       //Clear our save id
       ThemeSystemEditorUtilsTMP.NewSaveId = string.Empty;
@@ -199,7 +201,7 @@ namespace Anki.Core.Editor.Components {
 
       UpdateSkinnableElementsForSaving(ref themeComponentObj);
 
-      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance, ThemeSystemConfigJson.CurrentlyLoadedInstance);
+      ThemeSystemEditorUtilsTMP.sInstance.SaveJsonFromEditor(ThemesJson.CurrentlyLoadedInstance);
     }
 
     public virtual void UpdateSkinnableElementsForSaving(ref ThemesJson.ThemeComponentObj themeComponentObj) {

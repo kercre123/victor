@@ -415,8 +415,8 @@ namespace Anki.Core.UI.Components {
     protected override void Start() {
       base.Start();
 
-      if (Application.isPlaying && !string.IsNullOrEmpty(ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentThemeId) &&
-          !string.IsNullOrEmpty(ThemeSystemConfigJson.CurrentlyLoadedInstance.CurrentSkinId)) {
+      if (Application.isPlaying && !string.IsNullOrEmpty(ThemeSystemUtils.sInstance.GetCurrentThemeId()) &&
+          !string.IsNullOrEmpty(ThemeSystemUtils.sInstance.GetCurrentSkinId())) {
         UpdateSkinnableElements(ThemesJson.GetCurrentTheme().Id, ThemesJson.GetCurrentThemeSkin().Id);
       }
 

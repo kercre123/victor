@@ -334,6 +334,7 @@ robot/cube/lst/block.m51
 resources/config/basestation/AnkiLogStringTables.json
 coretech/generated
 lib/anki/products-cozmo-assets/voiceCommand/exports/base/
+unity/Cozmo/Assets/Resources/ThemeSystem/ThemesScriptableObj.asset
 
 # Buck
 **.buckd
