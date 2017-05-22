@@ -16,8 +16,6 @@ namespace Cozmo.ConnectionFlow.UI {
     [SerializeField]
     private NeedsMetersWidget _MetersWidget;
 
-    // COZMO-10941 IVY TODO: Add NeedConnectModal prefab
-
     // Use this for initialization
     void Start() {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
@@ -29,12 +27,16 @@ namespace Cozmo.ConnectionFlow.UI {
         _ConnectButton.Initialize(HandleConnectButtonPressed, "connect_button", "needs_unconnected_view");
       }
 
-      // COZMO-10941 IVY TODO: Listen to button events from NeedsMeterWidget in order to open NeedConnect modal 
       _MetersWidget.Initialize(enableButtonBasedOnNeeds: false, dasParentDialogName: DASEventDialogName, baseDialog: this);
+      _MetersWidget.OnPlayPressed += HandleMeterPressed;
+      _MetersWidget.OnEnergyPressed += HandleMeterPressed;
+      _MetersWidget.OnRepairPressed += HandleMeterPressed;
     }
 
     protected override void CleanUp() {
-
+      _MetersWidget.OnPlayPressed -= HandleMeterPressed;
+      _MetersWidget.OnEnergyPressed -= HandleMeterPressed;
+      _MetersWidget.OnRepairPressed -= HandleMeterPressed;
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -55,6 +57,19 @@ namespace Cozmo.ConnectionFlow.UI {
       if (OnMockConnectButtonPressed != null) {
         OnMockConnectButtonPressed();
       }
+    }
+
+    private void HandleMeterPressed() {
+      AlertModalButtonData okayButtonData = new AlertModalButtonData("okay_button",
+                                                                     LocalizationKeys.kButtonOkay);
+
+      AlertModalData needToConnectData = new AlertModalData("need_to_connect_alert",
+                                                            LocalizationKeys.kNeedsUnconnectedNeedToConnectTitle,
+                                                            LocalizationKeys.kNeedsUnconnectedNeedToConnectDescription,
+                                                            okayButtonData,
+                                                            showCloseButton: true);
+
+      UIManager.OpenAlert(needToConnectData, new ModalPriorityData());
     }
   }
 }

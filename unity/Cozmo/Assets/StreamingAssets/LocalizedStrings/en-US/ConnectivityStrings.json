@@ -101,5 +101,11 @@
   },
   "connectivity.connectionRejected.title": {
     "translation": "Another Device is connected to Cozmo\nPlease disconnect that Device and try again"
+  },
+  "needs.unconnected.needToConnect.title":{
+    "translation": "Cozmo Is Not Connected"
+  },
+  "needs.unconnected.needToConnect.description":{
+    "translation": "In order to care for Cozmo and check on his needs, you must first connect to him. "
   }
 }

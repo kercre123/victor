@@ -124,6 +124,8 @@ public static class LocalizationKeys {
   public const string kLabelGetHelp = "label.getHelp";
   public const string kLabelCubesNotWorking = "label.cubesNotWorking";
   public const string kConnectivityConnectionRejectedTitle = "connectivity.connectionRejected.title";
+  public const string kNeedsUnconnectedNeedToConnectTitle = "needs.unconnected.needToConnect.title";
+  public const string kNeedsUnconnectedNeedToConnectDescription = "needs.unconnected.needToConnect.description";
 
   #endregion
 
