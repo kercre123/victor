@@ -29,7 +29,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-const int kMaxStackHeightReach = 2;
+static const int kMaxStackHeightReach = 2;
 static const float kInvalidObjectCacheUpdateTime_s = -1.0f;
 static const float kTimeObjectInvalidAfterStackFailure_sec = 3.0f;
 }
@@ -486,6 +486,18 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const Observab
     // check if we can transform to robot space
     if ( !object->GetPose().GetWithRespectTo(_robot.GetPose(), wasted) ) {
       return false;
+    }
+    
+    // If there is a stack of 3, none of the blocks in that stack can be used
+    const auto& stacks = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
+    for(const auto& stack: stacks){
+      if(stack->GetStackHeight() > kMaxStackHeightReach){
+        for(const auto& objID: stack->GetAllBlockIDsOrdered()){
+          if(objID == object->GetID()){
+            return false;
+          }
+        }
+      }
     }
     
     return true;

@@ -52,6 +52,8 @@ class StackOfCubes: public BlockConfiguration{
     // A stack of 2 that becomes a stack of 3 is not "equal" but may
     // be identified as such using this function
     bool IsASubstack(const StackOfCubes& potentialSuperStack) const;
+  
+    virtual std::vector<ObjectID> GetAllBlockIDsOrdered() const override;
 
   protected:
     // Returns the largest stack the object is a part of
@@ -59,7 +61,6 @@ class StackOfCubes: public BlockConfiguration{
     // of a block at the same time
     static const StackOfCubes* BuildTallestStackForObject(const Robot& robot, const ObservableObject* object);
   
-    virtual std::vector<ObjectID> GetAllBlockIDsOrdered() const override;
   
     // Utility functions
     virtual void ClearStack();
