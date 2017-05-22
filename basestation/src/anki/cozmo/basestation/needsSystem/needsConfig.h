@@ -22,10 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-DECLARE_ENUM_INCREMENT_OPERATORS(NeedId);
-
-NeedId NeedIdFromString(const char* inString);
-
 
 struct DecayRate
 {
@@ -93,7 +89,8 @@ private:
   void InitDecay(const Json::Value& json, const std::string& decayKey, DecayConfig& decayConfig);
 
 };
-  
+
+
 class StarRewardsConfig
 {
 public:
@@ -105,7 +102,34 @@ public:
 private:
   std::vector<UnlockLevel> _UnlockLevels;
 };
-  
+
+
+struct NeedDelta
+{
+  NeedDelta(float delta, float randomRange) { _delta = delta; _randomRange = randomRange; };
+  NeedDelta() { _delta = 0.0f; _randomRange = 0.0f; }
+
+  float _delta;
+  float _randomRange;
+};
+
+struct ActionDelta
+{
+  std::array<NeedDelta, static_cast<size_t>(NeedId::Count)> _needDeltas;
+};
+
+class ActionsConfig
+{
+public:
+  ActionsConfig();
+
+  void Init(const Json::Value& json);
+
+  std::vector<ActionDelta> _actionDeltas;
+
+private:
+};
+
 
 } // namespace Cozmo
 } // namespace Anki

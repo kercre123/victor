@@ -42,15 +42,13 @@ static const std::string kMultiplierKey = "Multiplier";
 
 static const std::string kInitialUnlockLevelsArrayKey = "UnlockLevels";
 
-IMPLEMENT_ENUM_INCREMENT_OPERATORS(NeedId);
+static const std::string kActionDeltasKey = "ActionDeltas";
+static const std::string kActionIDKey = "ActionID";
+static const std::string kDeltasKey = "Deltas";
+static const std::string kNeedIDKey = "NeedID";
+static const std::string kDeltaKey = "Delta";
+static const std::string kRandomRangeKey = "RandomRange";
 
-// One global instance, created at static initialization on app launch
-static Util::StringToEnumMapperI<NeedId> gStringToNeedIdMapper;
-
-NeedId NeedIdFromString(const char* inString)
-{
-  return gStringToNeedIdMapper.GetTypeFromString(inString);
-}
 
 NeedsConfig::NeedsConfig()
 : _minNeedLevel(0.0f)
@@ -223,6 +221,45 @@ void NeedsConfig::InitDecay(const Json::Value& json, const std::string& decayKey
   decayInfo._decayRatesByNeed = std::move(decayRatesByNeed);
   decayInfo._decayModifiersByNeed = std::move(decayModifiersByNeed);
 }
+
+
+ActionsConfig::ActionsConfig()
+: _actionDeltas()
+{
+}
+
+void ActionsConfig::Init(const Json::Value& json)
+{
+  _actionDeltas.clear();
+  _actionDeltas.resize(static_cast<size_t>(NeedsActionId::Count));
+
+  const auto& jsonActionDeltas = json[kActionDeltasKey];
+
+  for (const auto& item : jsonActionDeltas)
+  {
+    const auto& actionIdStr = JsonTools::ParseString(item, kActionIDKey.c_str(),
+                                                     "Failed to parse an action ID");
+    const NeedsActionId actionId = NeedsActionIdFromString(actionIdStr.c_str());
+    ActionDelta& actionDelta = _actionDeltas[static_cast<int>(actionId)];
+
+    const auto& jsonDeltas = item[kDeltasKey];
+    for (const auto& deltaItem : jsonDeltas)
+    {
+      const auto& needIdStr = JsonTools::ParseString(deltaItem, kNeedIDKey.c_str(),
+                                                     "Failed to parse a need ID");
+      const auto& needId = NeedIdFromString(needIdStr.c_str());
+      const int needIdIndex = static_cast<int>(needId);
+
+      const float deltaValue = JsonTools::ParseFloat(deltaItem, kDeltaKey.c_str(),
+                                                     "Failed to parse a delta");
+      const float randomRangeValue = JsonTools::ParseFloat(deltaItem, kRandomRangeKey.c_str(),
+                                                           "Failed to parse a random range");
+      actionDelta._needDeltas[needIdIndex]._delta = deltaValue;
+      actionDelta._needDeltas[needIdIndex]._randomRange = randomRangeValue;
+    }
+  }
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

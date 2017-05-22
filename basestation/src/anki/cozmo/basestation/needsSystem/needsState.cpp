@@ -53,7 +53,7 @@ NeedsState::~NeedsState()
 }
 
 
-void NeedsState::Init(NeedsConfig& needsConfig, u32 serialNumber, std::shared_ptr<StarRewardsConfig> starRewardsConfig)
+void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber, const std::shared_ptr<StarRewardsConfig> starRewardsConfig)
 {
   Reset();
 
@@ -93,19 +93,18 @@ void NeedsState::Reset()
 }
 
 
-void NeedsState::ApplyDecay(const float timeElasped_s, const DecayConfig& decayConfig)
+void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers)
 {
-  PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.ApplyDecay",
-                "Decaying needs with elapsed time of %f seconds", timeElasped_s);
+  PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.SetDecayMultipliers",
+                "Setting needs decay multipliers");
 
-  // First, set up some decay rate multipliers, based on config data, and the CURRENT needs levels:
+  // Set some decay rate multipliers, based on config data, and the CURRENT needs levels:
 
   // Note that for long time periods (i.e. unconnected), we won't handle the progression across
   // multiple tiers of brackets FOR MULTIPLIER PURPOSES, but design doesn't want any multipliers
   // for unconnected decay anyway.  We do, however handle multiple tiers properly when we apply
-  // decay below.
+  // decay in ApplyDecay.
 
-  std::array<float, (size_t)NeedId::Count> multipliers;
   multipliers.fill(1.0f);
 
   for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
@@ -138,64 +137,80 @@ void NeedsState::ApplyDecay(const float timeElasped_s, const DecayConfig& decayC
       }
     }
   }
+}
 
-  // Second, now apply decay:
+void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers)
+{
+  PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.ApplyDecay",
+                "Decaying needs with elapsed time of %f seconds", timeElasped_s);
+  
   // This handles any time elapsed passed in
-  for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+  const NeedId needId = static_cast<NeedId>(needIndex);
+  float curNeedLevel = _curNeedsLevels[needId];
+  const DecayRates& rates = decayConfig._decayRatesByNeed[needIndex];
+
+  // Find the decay 'bracket' the level is currently in
+  // Note that the rates are assumed to be in descending order by threshold
+  int rateIndex = 0;
+  for ( ; rateIndex < rates.size(); rateIndex++)
   {
-    float curNeedLevel = _curNeedsLevels[static_cast<NeedId>(needIndex)];
-    const DecayRates& rates = decayConfig._decayRatesByNeed[needIndex];
-
-    // Find the decay 'bracket' the level is currently in
-    // Note that the rates are assumed to be in descending order by threshold
-    int rateIndex = 0;
-    for ( ; rateIndex < rates.size(); rateIndex++)
+    if (curNeedLevel >= rates[rateIndex]._threshold)
     {
-      if (curNeedLevel >= rates[rateIndex]._threshold)
-      {
-        break;
-      }
+      break;
     }
-    if (rateIndex >= rates.size())
-    {
-      // Can happen if bottom bracket is non-zero threshold, or there are
-      // no brackets at all; in those cases, just don't decay
-      continue;
-    }
-
-    float timeRemaining_min = (timeElasped_s / 60.0f);
-    while (timeRemaining_min > 0.0f)
-    {
-      const DecayRate& rate = rates[rateIndex];
-      const float bottomThreshold = rate._threshold;
-      const float decayRatePerMin = rate._decayPerMinute * multipliers[needIndex];
-
-      if (decayRatePerMin <= 0.0f)
-      {
-        break;  // Done if no decay (and avoid divide by zero below)
-      }
-
-      const float timeToBottomThreshold_min = (curNeedLevel - bottomThreshold) / decayRatePerMin;
-      if (timeRemaining_min > timeToBottomThreshold_min)
-      {
-        timeRemaining_min -= timeToBottomThreshold_min;
-        curNeedLevel = bottomThreshold;
-        if (++rateIndex >= rates.size())
-          break;
-      }
-      else
-      {
-        curNeedLevel -= (timeRemaining_min * decayRatePerMin);
-        break;
-      }
-    }
-
-    if (curNeedLevel < _needsConfig->_minNeedLevel)
-    {
-      curNeedLevel = _needsConfig->_minNeedLevel;
-    }
-    _curNeedsLevels[static_cast<NeedId>(needIndex)] = curNeedLevel;
   }
+  if (rateIndex >= rates.size())
+  {
+    // Can happen if bottom bracket is non-zero threshold, or there are
+    // no brackets at all; in those cases, just don't decay
+    return;
+  }
+
+  float timeRemaining_min = (timeElasped_s / 60.0f);
+  while (timeRemaining_min > 0.0f)
+  {
+    const DecayRate& rate = rates[rateIndex];
+    const float bottomThreshold = rate._threshold;
+    const float decayRatePerMin = rate._decayPerMinute * multipliers[needIndex];
+
+    if (decayRatePerMin <= 0.0f)
+    {
+      break;  // Done if no decay (and avoid divide by zero below)
+    }
+
+    const float timeToBottomThreshold_min = (curNeedLevel - bottomThreshold) / decayRatePerMin;
+    if (timeRemaining_min > timeToBottomThreshold_min)
+    {
+      timeRemaining_min -= timeToBottomThreshold_min;
+      curNeedLevel = bottomThreshold;
+      if (++rateIndex >= rates.size())
+        break;
+    }
+    else
+    {
+      curNeedLevel -= (timeRemaining_min * decayRatePerMin);
+      break;
+    }
+  }
+
+  if (curNeedLevel < _needsConfig->_minNeedLevel)
+  {
+    curNeedLevel = _needsConfig->_minNeedLevel;
+  }
+
+  _curNeedsLevels[needId] = curNeedLevel;
+}
+
+
+void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const Util::RandomGenerator& rng)
+{
+  float needLevel = _curNeedsLevels[needId];
+
+  const float randDist = rng.RandDbl(needDelta._randomRange * 2.0f) - needDelta._randomRange;
+  needLevel += (needDelta._delta + randDist);
+  needLevel = Util::Clamp(needLevel, _needsConfig->_minNeedLevel, _needsConfig->_maxNeedLevel);
+  
+  _curNeedsLevels[needId] = needLevel;
 }
 
 void NeedsState::SetStarLevel(int newLevel)

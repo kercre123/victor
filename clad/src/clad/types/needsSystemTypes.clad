@@ -35,7 +35,7 @@ enum int_32 NeedsActionId
   // No action (for example, in a state update not triggered by any action)
   NoAction,
 
-  // Decay action
+  // Decay action (sent from engine only; really as part of the 'reason for change')
   Decay,
 
   // Repair actions

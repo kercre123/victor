@@ -901,6 +901,7 @@ message GetNeedsPauseState {
 
 message SetNeedsPauseStates {
   bool decayPause[uint_8],
+  bool decayDiscardAfterUnpause[uint_8],
   bool actionPause[uint_8]
 }
 

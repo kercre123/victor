@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "clad/types/needsSystemTypes.h"
 #include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
+#include "util/random/randomGenerator.h"
 
 #include <json/json.h>
 
@@ -34,6 +35,8 @@ namespace ExternalInterface {
 }
 
 class NeedsConfig;
+struct NeedDelta;
+
 class StarRewardsConfig;
 struct DecayConfig;
 
@@ -41,6 +44,7 @@ using BracketThresholds = std::vector<float>;
 using NeedsBrackets = std::map<NeedId, BracketThresholds>;
 
 using Time = std::chrono::time_point<std::chrono::system_clock>;
+using NeedsMultipliers = std::array<float, (size_t)NeedId::Count>;
 
 class NeedsState
 {
@@ -49,13 +53,19 @@ public:
   NeedsState();
   ~NeedsState();
   
-  void Init(NeedsConfig& needsConfig, u32 serialNumber, std::shared_ptr<StarRewardsConfig> starRewardsConfig);
+  void Init(NeedsConfig& needsConfig, const u32 serialNumber, const std::shared_ptr<StarRewardsConfig> starRewardsConfig);
   
   void Reset();
+
+  // Set up decay multipliers (we do this prior to calling ApplyDecay)
+  void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers);
   
-  // Decay the needs values, according to how much time has passed since last decay, and config data
-  void ApplyDecay(const float timeElasped_s, const DecayConfig& decayConfig);
-  
+  // Decay a need's level, according to how much time has passed since last decay, and config data
+  void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
+
+  // Apply a given delta to a given need
+  void ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const Util::RandomGenerator& rng);
+
   float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
   NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBracketsCache[static_cast<NeedId>(i)]; };
   bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };

@@ -97,29 +97,82 @@ using Time = std::chrono::time_point<std::chrono::system_clock>;
       g_DebugNeedsManager->DebugResetNeeds();
     }
   }
+  void DebugCompleteAction( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const char* actionName = ConsoleArg_Get_String(context, "actionName");
+      g_DebugNeedsManager->DebugCompleteAction(actionName);
+    }
+  }
+  void DebugPauseDecayForNeed( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const char* needName = ConsoleArg_Get_String(context, "needName");
+      g_DebugNeedsManager->DebugPauseDecayForNeed(needName);
+    }
+  }
+  void DebugPauseActionsForNeed( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const char* needName = ConsoleArg_Get_String(context, "needName");
+      g_DebugNeedsManager->DebugPauseActionsForNeed(needName);
+    }
+  }
+  void DebugUnpauseDecayForNeed( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const char* needName = ConsoleArg_Get_String(context, "needName");
+      g_DebugNeedsManager->DebugUnpauseDecayForNeed(needName);
+    }
+  }
+  void DebugUnpauseActionsForNeed( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const char* needName = ConsoleArg_Get_String(context, "needName");
+      g_DebugNeedsManager->DebugUnpauseActionsForNeed(needName);
+    }
+  }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
   CONSOLE_FUNC( DebugCompleteDay, "Needs" );
   CONSOLE_FUNC( DebugResetNeeds, "Needs" );
-  CONSOLE_VAR(bool, kUseNeedManager, "Needs",true);
+  CONSOLE_FUNC( DebugCompleteAction, "Needs", const char* actionName );
+  CONSOLE_FUNC( DebugPauseDecayForNeed, "Needs", const char* needName );
+  CONSOLE_FUNC( DebugPauseActionsForNeed, "Needs", const char* needName );
+  CONSOLE_FUNC( DebugUnpauseDecayForNeed, "Needs", const char* needName );
+  CONSOLE_FUNC( DebugUnpauseActionsForNeed, "Needs", const char* needName );
+  CONSOLE_VAR(bool, kUseNeedManager, "Needs", true);
 #endif
-  
+
+
 NeedsManager::NeedsManager(Robot& robot)
 : _robot(robot)
 , _needsState()
-, _needsConfig()
 , _needsStateFromRobot()
+, _needsConfig()
+, _actionsConfig()
+, _starRewardsConfig()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
 , _deviceHadValidNeedsData(false)
 , _robotNeedsVersionUpdate(false)
 , _deviceNeedsVersionUpdate(false)
-, _isPaused(false)
+, _isPausedOverall(false)
+, _timeWhenPausedOverall_s(0.0f)
 , _isDecayPausedForNeed()
 , _isActionsPausedForNeed()
+, _lastDecayUpdateTime_s()
+, _timeWhenPaused_s()
+, _queuedNeedDeltas()
 , _currentTime_s(0.0f)
 , _timeForNextPeriodicDecay_s(0.0f)
 , _pausedDurRemainingPeriodicDecay(0.0f)
+, _signalHandles()
 , kPathToSavedStateFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
 {
@@ -127,6 +180,11 @@ NeedsManager::NeedsManager(Robot& robot)
   {
     _isDecayPausedForNeed[i] = false;
     _isActionsPausedForNeed[i] = false;
+
+    _lastDecayUpdateTime_s[i] = 0.0f;
+    _timeWhenPaused_s[i] = 0.0f;
+
+    _queuedNeedDeltas[i].clear();
   }
 }
 
@@ -139,18 +197,22 @@ NeedsManager::~NeedsManager()
 }
 
 
-void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJson)
+void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJson, const Json::Value& inActionsJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
+
   _needsConfig.Init(inJson);
   
   _starRewardsConfig = std::make_shared<StarRewardsConfig>();
   _starRewardsConfig->Init(inStarsJson);
+
+  _actionsConfig.Init(inActionsJson);
+
   const u32 uninitializedSerialNumber = 0;
   _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig);
 
   // We want to pause the whole system until we've finished reading from robot
-  _isPaused = true;
+  _isPausedOverall = true;
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -212,8 +274,13 @@ void NeedsManager::InitAfterConnection()
 void NeedsManager::InitAfterReadFromRobotAttempt()
 {
   // First, we can finally un-pause the system now that we've read data from the robot
-  _isPaused = false;
-  
+  _isPausedOverall = false;
+
+  for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+  {
+    _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+  }
+
   _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig);
 
   bool needToWriteToDevice = false;
@@ -324,7 +391,7 @@ void NeedsManager::Update(const float currentTime_s)
 
   _currentTime_s = currentTime_s;
 
-  if (_isPaused)
+  if (_isPausedOverall)
     return;
 
   // Don't do anything while reading/writing robot data
@@ -336,11 +403,23 @@ void NeedsManager::Update(const float currentTime_s)
     _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
   }
 
+  // Handle periodic decay:
   if (currentTime_s >= _timeForNextPeriodicDecay_s)
   {
     _timeForNextPeriodicDecay_s += _needsConfig._decayPeriod;
 
-    _needsState.ApplyDecay(_needsConfig._decayPeriod, _needsConfig._decayConnected);
+    NeedsMultipliers multipliers;
+    _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+
+    for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+    {
+      if (!_isDecayPausedForNeed[needIndex])
+      {
+        const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
+        _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
+        _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+      }
+    }
 
     SendNeedsStateToGame(NeedsActionId::Decay);
 
@@ -353,47 +432,67 @@ void NeedsManager::Update(const float currentTime_s)
 }
 
 
-void NeedsManager::SetPaused(bool paused)
+void NeedsManager::SetPaused(const bool paused)
 {
-  if (paused == _isPaused)
+  if (paused == _isPausedOverall)
   {
-    DEV_ASSERT_MSG(paused != _isPaused, "NeedsManager.SetPaused.Redundant",
+    DEV_ASSERT_MSG(paused != _isPausedOverall, "NeedsManager.SetPaused.Redundant",
                    "Setting paused to %s but already in that state",
                    paused ? "true" : "false");
     return;
   }
 
-  _isPaused = paused;
+  _isPausedOverall = paused;
 
-  if (_isPaused)
+  if (_isPausedOverall)
   {
     // Calculate and record how much time was left until the next decay
     _pausedDurRemainingPeriodicDecay = _timeForNextPeriodicDecay_s - _currentTime_s;
 
-    // Should we send the current needs state to the game as soon as we pause?
+    _timeWhenPausedOverall_s = _currentTime_s;
+
+    // Send the current needs state to the game as soon as we pause
     //  (because the periodic decay won't happen during pause)
+    SendNeedsStateToGame(NeedsActionId::NoAction);
   }
   else
   {
     // When unpausing, set the next 'time for periodic decay'
     _timeForNextPeriodicDecay_s = _currentTime_s + _pausedDurRemainingPeriodicDecay;
+
+    // Then calculate how long we were paused, and adjust certain timers accordingly
+    const float timePaused = _currentTime_s - _timeWhenPausedOverall_s;
+    for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+    {
+      _lastDecayUpdateTime_s[i] += timePaused;
+      _timeWhenPaused_s[i] += timePaused;
+    }
   }
 
   SendNeedsPauseStateToGame();
 }
 
 
-void NeedsManager::RegisterNeedsActionCompleted(NeedsActionId actionCompleted)
+void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
-  if (_isPaused)
+  if (_isPausedOverall)
     return;
 
-  // todo implement this
-  
-  // todo: Adjust zero or more needs levels based on config data for the completed action
+  const int actionIndex = static_cast<int>(actionCompleted);
+  const auto& actionDelta = _actionsConfig._actionDeltas[actionIndex];
 
-  // todo: Clamp any changed need level with _needsConfig._minNeedLevel and _maxNeedLevel
-  
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    if (_isActionsPausedForNeed[i])
+    {
+      _queuedNeedDeltas[i].push_back(actionDelta._needDeltas[i]);
+    }
+    else
+    {
+      _needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i], _robot.GetRNG());
+    }
+  }
+
   SendNeedsStateToGame(actionCompleted);
 
   PossiblyWriteToDevice(_needsState);
@@ -422,17 +521,72 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseState& ms
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& msg)
 {
-  // TODO:  For each flag, detect when the flag goes from true to false
-  // (meaning becoming un-paused), and for decay, apply delayed decay, and
-  // for actions, apply decayed actions (for the given need).
-  for (int i = 0; i < _isDecayPausedForNeed.size(); i++)
+  if (_isPausedOverall)
   {
-    _isDecayPausedForNeed[i] = msg.decayPause[i];
+    PRINT_CH_DEBUG(kLogChannelName, "NeedsManager.HandleSetNeedsPauseStates",
+                  "SetNeedsPauseStates message received but ignored because overall needs manager is paused");
+    return;
   }
 
-  for (int i = 0; i < _isActionsPausedForNeed.size(); i++)
+  // Pause/unpause for decay
+  NeedsMultipliers multipliers;
+  bool multipliersSet = false;
+  for (int needIndex = 0; needIndex < _isDecayPausedForNeed.size(); needIndex++)
   {
-    _isActionsPausedForNeed[i] = msg.actionPause[i];
+    if (!_isDecayPausedForNeed[needIndex] && msg.decayPause[needIndex])
+    {
+      // If pausing this need for decay, record the time we are pausing
+      _timeWhenPaused_s[needIndex] = _currentTime_s;
+    }
+    else if (_isDecayPausedForNeed[needIndex] && !msg.decayPause[needIndex])
+    {
+      // If un-pausing this need for decay, OPTIONALLY apply queued decay for this need
+      if (msg.decayDiscardAfterUnpause[needIndex])
+      {
+        // Throw away the decay for the period the need was paused
+        // But we don't want to throw away (a) the time between the last decay and when
+        // the pause started, and (b) the time between now and when the next periodic
+        // decay will occur.  So set the 'time of last decay' to account for this:
+        // (A key point here is that we want the periodic decay for needs to happen all
+        // at the same time.)
+        const float durationA_s = _timeWhenPaused_s[needIndex] - _lastDecayUpdateTime_s[needIndex];
+        const float durationB_s = _timeForNextPeriodicDecay_s - _currentTime_s;
+        _lastDecayUpdateTime_s[needIndex] = _timeForNextPeriodicDecay_s - (durationA_s + durationB_s);
+      }
+      else
+      {
+        // Apply the decay for the period the need was paused
+        if (!multipliersSet)
+        {
+          // Set the multipliers only once even if we're applying decay to mulitiple needs at
+          // once.  This is to make it "fair", as multipliers are set according to need levels
+          multipliersSet = true;
+          _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+        }
+        const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
+        _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
+        _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+      }
+    }
+
+    _isDecayPausedForNeed[needIndex] = msg.decayPause[needIndex];
+  }
+
+  // Pause/unpause for actions
+  for (int needIndex = 0; needIndex < _isActionsPausedForNeed.size(); needIndex++)
+  {
+    if (_isActionsPausedForNeed[needIndex] && !msg.actionPause[needIndex])
+    {
+      // If un-pausing this need for actions, apply all queued actions for this need
+      auto& queuedDeltas = _queuedNeedDeltas[needIndex];
+      for (int j = 0; j < queuedDeltas.size(); j++)
+      {
+        _needsState.ApplyDelta(static_cast<NeedId>(needIndex), queuedDeltas[j], _robot.GetRNG());
+      }
+      queuedDeltas.clear();
+    }
+
+    _isActionsPausedForNeed[needIndex] = msg.actionPause[needIndex];
   }
 }
 
@@ -474,7 +628,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 }
 
 
-void NeedsManager::SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate)
+void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate)
 {
   _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
   
@@ -512,7 +666,7 @@ void NeedsManager::SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate)
 
 void NeedsManager::SendNeedsPauseStateToGame()
 {
-  ExternalInterface::NeedsPauseState message(_isPaused);
+  ExternalInterface::NeedsPauseState message(_isPausedOverall);
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
   
@@ -550,6 +704,10 @@ void NeedsManager::UpdateStarsState()
     std::time_t nowTimeT = std::chrono::system_clock::to_time_t( nowTime );
     std::tm nowLocalTime;
     localtime_r(&nowTimeT, &nowLocalTime);
+    
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
+                  "Local time gmt offset %ld",
+                  nowLocalTime.tm_gmtoff);
     
     // Past midnight from lasttime
     if( nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
@@ -801,7 +959,7 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Write to robot START took %lld microseconds", microsecs.count());
 }
 
-void NeedsManager::FinishWriteToRobot(NVStorage::NVResult res, const Time startTime)
+void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime)
 {
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Writing, "NeedsManager.FinishWriteToRobot.RobotStorageConflict",
               "Robot storage state should be Writing but instead is %d", _robotStorageState);
@@ -849,7 +1007,7 @@ bool NeedsManager::StartReadFromRobot()
   return true;
 }
 
-bool NeedsManager::FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res)
+bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res)
 {
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Reading, "NeedsManager.FinishReadFromRobot.RobotStorageConflict",
               "Robot storage state should be Reading but instead is %d", _robotStorageState);
@@ -959,14 +1117,14 @@ void NeedsManager::DebugFillNeedMeters()
   _needsState.DebugFillNeedMeters();
   SendNeedsStateToGame(NeedsActionId::NoAction);
 }
-  
+
 void NeedsManager::DebugGiveStar()
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
   DebugCompleteDay();
   DebugFillNeedMeters();
 }
-  
+
 void NeedsManager::DebugCompleteDay()
 {
   // Push the last given star back 24 hours
@@ -984,13 +1142,80 @@ void NeedsManager::DebugCompleteDay()
   _needsState._timeLastStarAwarded = std::chrono::system_clock::from_time_t(yesterdayTime);
 
 }
-  
+
 void NeedsManager::DebugResetNeeds()
 {
   _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig);
   _robotHadValidNeedsData = false;
   _deviceHadValidNeedsData = false;
   InitAfterReadFromRobotAttempt();
+}
+
+void NeedsManager::DebugCompleteAction(const char* actionName)
+{
+  const NeedsActionId actionId = NeedsActionIdFromString(actionName);
+  RegisterNeedsActionCompleted(actionId);
+}
+
+void NeedsManager::DebugPauseDecayForNeed(const char* needName)
+{
+  DebugImplPausing(needName, true, true);
+}
+
+void NeedsManager::DebugPauseActionsForNeed(const char *needName)
+{
+  DebugImplPausing(needName, false, true);
+}
+
+void NeedsManager::DebugUnpauseDecayForNeed(const char *needName)
+{
+  DebugImplPausing(needName, true, false);
+}
+
+void NeedsManager::DebugUnpauseActionsForNeed(const char *needName)
+{
+  DebugImplPausing(needName, false, false);
+}
+
+void NeedsManager::DebugImplPausing(const char* needName, const bool isDecay, const bool isPaused)
+{
+  // First, make a copy of all the current pause flags
+  std::vector<bool> decayPause;
+  decayPause.reserve(_isDecayPausedForNeed.size());
+  for (int i = 0; i < _isDecayPausedForNeed.size(); i++)
+  {
+    decayPause.push_back(_isDecayPausedForNeed[i]);
+  }
+
+  std::vector<bool> actionPause;
+  actionPause.reserve(_isActionsPausedForNeed.size());
+  for (int i = 0; i < _isActionsPausedForNeed.size(); i++)
+  {
+    actionPause.push_back(_isActionsPausedForNeed[i]);
+  }
+
+  // Now set or clear the single flag in question
+  const NeedId needId = NeedIdFromString(needName);
+  const int needIndex = static_cast<int>(needId);
+  if (isDecay)
+    decayPause[needIndex] = isPaused;
+  else
+    actionPause[needIndex] = isPaused;
+
+  // Finally, set the flags for whether to discard decay
+  // Note:  Just hard coding for now
+  std::vector<bool> decayDiscardAfterUnpause;
+  const auto numNeeds = static_cast<size_t>(NeedId::Count);
+  decayDiscardAfterUnpause.reserve(numNeeds);
+  for (int i = 0; i < numNeeds; i++)
+  {
+    decayDiscardAfterUnpause.push_back(true);
+  }
+
+  ExternalInterface::SetNeedsPauseStates m(std::move(decayPause),
+                                           std::move(decayDiscardAfterUnpause),
+                                           std::move(actionPause));
+  HandleMessage(m);
 }
 #endif
 

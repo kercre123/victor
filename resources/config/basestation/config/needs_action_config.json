@@ -1,0 +1,24 @@
+{
+  "ActionDeltas":
+  [
+    { "ActionID": "RepairHead", "Deltas" : [
+       { "NeedID": "Repair", "Delta": 0.400, "RandomRange": 0.035 },
+       { "NeedID": "Energy", "Delta": 0.390, "RandomRange": 0.034 },
+       { "NeedID": "Play",   "Delta": 0.380, "RandomRange": 0.033 }
+      ]
+    },
+    { "ActionID": "RepairLift", "Deltas" : [
+       { "NeedID": "Repair", "Delta": 0.370, "RandomRange": 0.032 },
+       { "NeedID": "Energy", "Delta": 0.360, "RandomRange": 0.031 },
+       { "NeedID": "Play",   "Delta": 0.350, "RandomRange": 0.030 }
+      ]
+    },
+    { "ActionID": "RepairTreads", "Deltas" : [
+       { "NeedID": "Repair", "Delta": 0.340, "RandomRange": 0.039 },
+       { "NeedID": "Energy", "Delta": 0.330, "RandomRange": 0.038 },
+       { "NeedID": "Play",   "Delta": 0.320, "RandomRange": 0.037 }
+      ]
+    }
+  ]
+}
+

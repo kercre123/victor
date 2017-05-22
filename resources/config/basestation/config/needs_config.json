@@ -1,13 +1,13 @@
 {
-  "MinimumNeedLevel": 0.01,
-  "MaximumNeedLevel": 0.98,
+  "MinimumNeedLevel": 0.00,
+  "MaximumNeedLevel": 1.00,
   "DecayPeriodSeconds": 3.0, // How frequently to decay needs while connected (3 for testing; soon to be 60)
 
   // Starting values for each need (when cozmo is born)
   "InitialNeedsLevels": {
-    "Repair" : 0.4876,
+    "Repair" : 1.0000,
     "Energy" : 1.0000,
-    "Play"   : 0.8765
+    "Play"   : 1.0000
   },
 
   // Bracket levels:  For each bracket level, if the need level is AT OR ABOVE
@@ -103,10 +103,4 @@
     }
   }
 }
-
-// TODO
-
-// ActionNeedChange:  One for each 'actionId' (fed, repair, etc.)
-//   each contains:  float needLevelDelta[NeedId] (signed delta); float uniformVarianceDelta (unsigned value)
-// (Put in a separate json file)
 

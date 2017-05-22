@@ -19,7 +19,6 @@
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "util/graphEvaluator/graphEvaluator2d.h" // For json; todo find a better way to get it
 #include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
 #include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
@@ -51,17 +50,17 @@ public:
   explicit NeedsManager(Robot& inRobot);
   ~NeedsManager();
   
-  void Init(const Json::Value& inJson, const Json::Value& inStarsJson);
+  void Init(const Json::Value& inJson, const Json::Value& inStarsJson, const Json::Value& inActionsJson);
   void InitAfterConnection();
   
   void Update(const float currentTime_s);
   
-  void SetPaused(bool paused);
-  bool GetPaused() const { return _isPaused; };
+  void SetPaused(const bool paused);
+  bool GetPaused() const { return _isPausedOverall; };
   
   const NeedsState& GetCurNeedsState() const { return _needsState; };
   
-  void RegisterNeedsActionCompleted(NeedsActionId actionCompleted);
+  void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
 
   static const char* kLogChannelName;
 
@@ -74,6 +73,12 @@ public:
   void DebugGiveStar();
   void DebugCompleteDay();
   void DebugResetNeeds();
+  void DebugCompleteAction(const char* actionName);
+  void DebugPauseDecayForNeed(const char* needName);
+  void DebugPauseActionsForNeed(const char* needName);
+  void DebugUnpauseDecayForNeed(const char* needName);
+  void DebugUnpauseActionsForNeed(const char* needName);
+  void DebugImplPausing(const char* needName, const bool isDecay, const bool isPaused);
 #endif
 
 private:
@@ -89,44 +94,51 @@ private:
 
   void PossiblyStartWriteToRobot(NeedsState& needsState, bool ignoreCooldown = false);
   void StartWriteToRobot(const NeedsState& needsState);
-  void FinishWriteToRobot(NVStorage::NVResult res, const Time startTime);
+  void FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime);
   bool StartReadFromRobot();
-  bool FinishReadFromRobot(u8* data, size_t size, NVStorage::NVResult res);
+  bool FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res);
 
   void InitAfterReadFromRobotAttempt();
 
 private:
-  
+
   void UpdateStarsState();
 
-  void SendNeedsStateToGame(NeedsActionId actionCausingTheUpdate);
+  void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate);
   void SendNeedsPauseStateToGame();
   void SendNeedsPauseStatesToGame();
   void SendStarLevelCompletedToGame();
   void SendSingleStarAddedToGame();
   
-  Robot&      _robot;
+  Robot&        _robot;
 
-  NeedsState  _needsState;
-  NeedsConfig _needsConfig;
-  NeedsState  _needsStateFromRobot;
+  NeedsState    _needsState;
+  NeedsState    _needsStateFromRobot;
   
+  NeedsConfig   _needsConfig;
+  ActionsConfig _actionsConfig;
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
 
-  Time        _timeLastWrittenToRobot;
-  bool        _robotHadValidNeedsData;
-  bool        _deviceHadValidNeedsData;
-  bool        _robotNeedsVersionUpdate;
-  bool        _deviceNeedsVersionUpdate;
+  Time          _timeLastWrittenToRobot;
+  bool          _robotHadValidNeedsData;
+  bool          _deviceHadValidNeedsData;
+  bool          _robotNeedsVersionUpdate;
+  bool          _deviceNeedsVersionUpdate;
 
-  bool        _isPaused;
+  bool          _isPausedOverall;
+  float         _timeWhenPausedOverall_s;
 
   std::array<bool, static_cast<size_t>(NeedId::Count)> _isDecayPausedForNeed;
   std::array<bool, static_cast<size_t>(NeedId::Count)> _isActionsPausedForNeed;
 
-  float       _currentTime_s;
-  float       _timeForNextPeriodicDecay_s;
-  float       _pausedDurRemainingPeriodicDecay;
+  std::array<float, static_cast<size_t>(NeedId::Count)> _lastDecayUpdateTime_s;
+  std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenPaused_s;
+
+  std::array<std::vector<NeedDelta>, static_cast<size_t>(NeedId::Count)> _queuedNeedDeltas;
+
+  float         _currentTime_s;
+  float         _timeForNextPeriodicDecay_s;
+  float         _pausedDurRemainingPeriodicDecay;
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
