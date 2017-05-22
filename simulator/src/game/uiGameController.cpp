@@ -711,7 +711,8 @@ namespace Anki {
             
             PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
             // TODO: don't hardcode ID here
-            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine(_randomSeed)));
+            auto msg = ExternalInterface::StartEngine(_randomSeed, _locale);
+            _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(std::move(msg)));
             
             _uiState = UI_WAITING_FOR_ENGINE_LOAD;
           }

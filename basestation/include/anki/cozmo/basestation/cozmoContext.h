@@ -100,6 +100,8 @@ public:
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
   
   void SetRandomSeed(uint32_t seed);
+  
+  void SetLocale(const std::string& locale);
 
   // Tell the context that this is the main thread
   void SetMainThread();

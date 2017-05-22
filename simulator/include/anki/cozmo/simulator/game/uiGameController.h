@@ -572,6 +572,8 @@ private:
   // Seed used to start engine
   uint32_t _randomSeed = 0;
   
+  std::string _locale = "en-US";
+  
 }; // class UiGameController
   
   

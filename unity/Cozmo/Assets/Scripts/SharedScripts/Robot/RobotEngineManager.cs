@@ -425,8 +425,11 @@ public class RobotEngineManager : MonoBehaviour {
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayBehaviorSuccess, message.behaviorObjective));
   }
 
-  public void StartEngine() {
+  public void StartEngine(string locale) {
     Message.StartEngine = StartEngineMessage;
+    if (locale != null) {
+      Message.StartEngine.locale = locale;
+    }
     SendMessage();
   }
 

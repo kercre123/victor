@@ -94,6 +94,16 @@ void CozmoContext::SetRandomSeed(uint32_t seed)
 {
   _random->SetSeed("CozmoContext", seed);
 }
+  
+  
+void CozmoContext::SetLocale(const std::string& localeString)
+{
+  if (!localeString.empty()) {
+    Anki::Util::Locale locale = Anki::Util::Locale::LocaleFromString(localeString);
+    _locale.reset(new Anki::Util::Locale(locale));
+  }
+}
+
 
 void CozmoContext::SetMainThread()
 {

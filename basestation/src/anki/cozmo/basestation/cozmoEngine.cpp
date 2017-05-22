@@ -240,6 +240,7 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::StartEngine& msg)
 {
   _context->SetRandomSeed(msg.random_seed);
+  _context->SetLocale(msg.locale);
   
   if (EngineState::Running == _engineState) {
     PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.StartEngine.AlreadyStarted", "");

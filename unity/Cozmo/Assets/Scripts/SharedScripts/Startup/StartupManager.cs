@@ -247,7 +247,7 @@ public class StartupManager : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       yield return CheckForEngineConnection();
-      SetupEngine();
+      SetupEngine(localeVariant);
     }
 
     // As soon as we're done connecting to the engine, start up some music
@@ -341,8 +341,8 @@ public class StartupManager : MonoBehaviour {
     return shortData;
   }
 
-  private void SetupEngine() {
-    RobotEngineManager.Instance.StartEngine();
+  private void SetupEngine(string locale) {
+    RobotEngineManager.Instance.StartEngine(locale);
     // Set initial volumes
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }

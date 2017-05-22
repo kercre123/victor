@@ -88,7 +88,8 @@ message DisconnectFromUiDevice {
 // StartEngine
 // Tell the engine to start running.
 message StartEngine {
-    uint_32 random_seed = 0   // Use 0 for randomly generated seed, or a specific value for repeatability
+    uint_32 random_seed = 0,   // Use 0 for randomly generated seed, or a specific value for repeatability
+    string locale              // Application locale, if different from default locale
 }
 
 message ReliableTransportRunMode {
