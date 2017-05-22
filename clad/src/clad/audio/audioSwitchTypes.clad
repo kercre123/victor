@@ -6,18 +6,23 @@ namespace SwitchState {
 
 enum uint_32 Cozmo_Sings_100Bpm
 {
+  Cozmo_Sings_Beautiful_Dreamer = 366264019,
   Cozmo_Sings_Beethovens_5Th = 234196460,
   Cozmo_Sings_Camptown_Races = 2068892721,
   Cozmo_Sings_Itsy_Bitsy_Spider = 4216855774,
+  Cozmo_Sings_Mountain_King = 2556694018,
   Cozmo_Sings_Pop_Goes_The_Weasel = 2629521585,
   Cozmo_Sings_Row_Your_Boat = 468566904,
+  Cozmo_Sings_Ta_Ra_Ra_Boom = 2367266190,
   Invalid = 0,
 }
 
 enum uint_32 Cozmo_Sings_120Bpm
 {
+  Cozmo_Sings_Entry_Of_The_Gladiators = 2101741982,
+  Cozmo_Sings_Hello_My_Baby = 1653598059,
   Cozmo_Sings_Ode_To_Joy = 277478768,
-  Cozmo_Sings_Pachebel_Canon = 553164015,
+  Cozmo_Sings_Turkey_In_The_Straw = 222542119,
   Cozmo_Sings_Twinkle_Twinkle = 2925972690,
   Invalid = 0,
 }
@@ -25,7 +30,9 @@ enum uint_32 Cozmo_Sings_120Bpm
 enum uint_32 Cozmo_Sings_80Bpm
 {
   Cozmo_Sings_Frere_Jacques = 1503161152,
+  Cozmo_Sings_Habanera = 2657364191,
   Cozmo_Sings_Mary_Had_A_Little_Lamb = 4246470244,
+  Cozmo_Sings_Pachebel_Canon = 553164015,
   Cozmo_Sings_Take_Me_Out_To_The_Ballgame = 330639210,
   Cozmo_Sings_William_Tell = 2911111070,
   Cozmo_Sings_Yankee_Doodle = 3906943052,
