@@ -25,10 +25,6 @@ class ActiveObject;
 // ObjectType cannot be mapped to a known active object type.
 ActiveObject* CreateActiveObjectByType(ObjectType objType, ActiveID activeID, FactoryID factoryID);
   
-// ObjectType helpers:
-bool IsLightCube(ObjectType objType);
-bool IsCharger(ObjectType objType);
-  
 } // namespace Cozmo
 } // namespace Anki
 

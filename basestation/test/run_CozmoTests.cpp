@@ -554,7 +554,7 @@ namespace {
 using namespace Anki::Cozmo;
 void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ObjectType objectType, bool connected)
 {
-  DEV_ASSERT(IsLightCube(objectType), "FaceRecvConnectionMessage.UnsupportedObjectType");
+  DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
   
   using namespace RobotInterface;
   RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(

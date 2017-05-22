@@ -1823,34 +1823,28 @@ static const char* kBehaviorTestName = "Behavior factory test";
     if (oObject->GetFamily() == ObjectFamily::MarkerlessObject) {
     }
     
+    const auto& objType = oObject->GetType();
     
-    switch(oObject->GetType()) {
-      case ObjectType::ProxObstacle:
-        if (!_cliffObjectID.IsSet() || _cliffObjectID == objectID) {
-          _cliffObjectID = objectID;
-          return RESULT_OK;
-        } else {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedProxObstacle", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-          END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
-        }
-        break;
-        
-      case ObjectType::Block_LIGHTCUBE1:
-      case ObjectType::Block_LIGHTCUBE2:
-      case ObjectType::Block_LIGHTCUBE3:
-        if (!_blockObjectID.IsSet() || _blockObjectID == objectID) {
-          _blockObjectID = objectID;
-          return RESULT_OK;
-        } else {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-          END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
-          return RESULT_OK;
-        }
-        break;
-        
-      default:
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedObjectType", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
+    if (objType == ObjectType::ProxObstacle) {
+      if (!_cliffObjectID.IsSet() || _cliffObjectID == objectID) {
+        _cliffObjectID = objectID;
+        return RESULT_OK;
+      } else {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedProxObstacle", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
         END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
+      }
+    } else if (IsValidLightCube(objType, false)) {
+      if (!_blockObjectID.IsSet() || _blockObjectID == objectID) {
+        _blockObjectID = objectID;
+        return RESULT_OK;
+      } else {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), objType);
+        END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
+        return RESULT_OK;
+      }
+    } else {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedObjectType", "ID: %d, Type: %d", objectID.GetValue(), objType);
+      END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
     }
     
     return RESULT_OK;
@@ -2043,7 +2037,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
   void BehaviorFactoryTest::HandleActiveObjectAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
   {
     const ObjectAvailable payload = msg.GetData().Get_activeObjectAvailable();
-    if (IsLightCube(payload.objectType) || IsCharger(payload.objectType)) {
+    if (IsValidLightCube(payload.objectType, false) || IsCharger(payload.objectType, false)) {
       _activeObjectAvailable = true;
     }
   }

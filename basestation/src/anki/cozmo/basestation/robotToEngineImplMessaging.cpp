@@ -471,12 +471,12 @@ void RobotToEngineImplMessaging::HandleActiveObjectAvailable(const AnkiEvent<Rob
   
   const auto& payload = message.GetData().Get_activeObjectAvailable();
   
-  if ( !IsLightCube(payload.objectType) && !IsCharger(payload.objectType)) {
+  if ( !IsValidLightCube(payload.objectType, false) && !IsCharger(payload.objectType, false)) {
     PRINT_NAMED_WARNING("Robot.HandleActiveObjectAvailable.UnknownType",
                         "FactoryID: 0x%x, ObjectType: '%s'",
                         payload.factory_id, EnumToString(payload.objectType));
     return;
-  } else if (IsCharger(payload.objectType) && IGNORE_CHARGER_DISCOVERY) {
+  } else if (IsCharger(payload.objectType, false) && IGNORE_CHARGER_DISCOVERY) {
     return;
   }
   

@@ -51,9 +51,7 @@ namespace Anki {
     ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ObjectType objType)
     : ActiveCube(objType)
     {
-      DEV_ASSERT(objType == ObjectType::Block_LIGHTCUBE1 ||
-                 objType == ObjectType::Block_LIGHTCUBE2 ||
-                 objType == ObjectType::Block_LIGHTCUBE3 ||
+      DEV_ASSERT(IsValidLightCube(objType, false) ||
                  objType == ObjectType::Block_LIGHTCUBE_GHOST,
                  "ActiveCube.InvalidFactoryID");
       
