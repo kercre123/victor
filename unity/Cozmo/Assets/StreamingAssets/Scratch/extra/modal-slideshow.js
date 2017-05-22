@@ -241,7 +241,7 @@
       var left = parseInt(parsedXYZ[0], 10) || 0;
 
       var slideWidth = strip.offsetWidth;
-      var slideNum = Math.round(-left / slideWidth) + 1;
+      var slideNum = Math.floor(-left / slideWidth) + 1;
 
       if (isNaN(slideNum)) {
         // on older android devices, slideWidth might be null early in page life
