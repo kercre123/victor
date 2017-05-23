@@ -33,6 +33,7 @@ static const char* kDefaultUnlockIdsConfigKey = "defaultUnlocks";
 static const char* kFreeplayOverridesKey = "freeplayOverrides";
 
 CONSOLE_VAR(u32, kNumAttemptsToWrite, "ProgressionUnlockComponent", 5);
+CONSOLE_VAR(bool, kUseNeedsDefaultUnlocks, "Needs", false);
 
 ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
   : _robot(robot)
@@ -96,7 +97,9 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
   {
     return false;
   }
-  std::string jsonFilename = "config/basestation/config/unlock_config.json";
+  std::string jsonFilename = kUseNeedsDefaultUnlocks ?
+                            "config/basestation/config/unlock_config_nurture.json":
+                            "config/basestation/config/unlock_config.json";
   bool success = context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
                                                         jsonFilename,
                                                         config);

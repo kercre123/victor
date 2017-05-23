@@ -1,0 +1,17 @@
+{
+  "defaultUnlocks": [
+    "MeetCozmoGame",
+    "DroneModeGame",
+    "CodeLabGame",
+    "QuickTapGame",
+    "KeepawayGame",
+    "MemoryMatchGame",
+    "PickupCube",
+    "RollCube",
+    "StackTwoCubes",
+    "KnockOverThreeCubeStack"
+  ],
+
+  "freeplayOverrides": [
+  ]
+}

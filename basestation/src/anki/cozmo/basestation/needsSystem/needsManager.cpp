@@ -146,7 +146,6 @@ using Time = std::chrono::time_point<std::chrono::system_clock>;
   CONSOLE_FUNC( DebugPauseActionsForNeed, "Needs", const char* needName );
   CONSOLE_FUNC( DebugUnpauseDecayForNeed, "Needs", const char* needName );
   CONSOLE_FUNC( DebugUnpauseActionsForNeed, "Needs", const char* needName );
-  CONSOLE_VAR(bool, kUseNeedManager, "Needs", true);
 #endif
 
 
