@@ -849,6 +849,10 @@
       "AnimName" : "ag_greeting_happy"
     },
     {
+      "CladEvent": "NeedsLowEnergyCritGetIn",
+      "AnimName" : "ag_energy_getin"
+    },
+    {
       "CladEvent": "NeutralFace",
       "AnimName" : "ag_neutral_face"
     },

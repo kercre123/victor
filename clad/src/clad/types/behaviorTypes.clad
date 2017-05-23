@@ -56,6 +56,7 @@ enum uint_8 BehaviorClass {
   PeekABoo,
   PickUpAndPutDownCube,
   PickUpCube,
+  PlanAnimWithFace,
   PlayAnim,
   PlayArbitraryAnim,
   PopAWheelie,
@@ -140,6 +141,9 @@ enum uint_8 BehaviorID {
   LiftLoadTest,
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
+
+  Needs_LowEnergyCritGetIn,
+
   NothingToDo_BoredAnim,
   NothingToDo_Idle,
   OnboardingShowCube,

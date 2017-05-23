@@ -83,7 +83,6 @@ struct BehaviorStateLightInfo;
 namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
-struct RobotCompletedAction;
 struct BehaviorObjectiveAchieved;
 }
 template<typename TYPE> class AnkiEvent;
