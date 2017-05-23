@@ -3,7 +3,7 @@
   "activityType" : "BehaviorsOnly",
   "behaviorChooser" :
   {
-    "type" : "scoring",
+    "type" : "Scoring",
     "behaviors" : [
       { "behaviorID" : "DriveOffCharger",
         "scoring"      :
