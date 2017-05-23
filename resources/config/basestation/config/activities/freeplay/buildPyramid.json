@@ -14,23 +14,68 @@
   },
   "setupChooser" :
   {
-    "type" : "StrictPriority",
+    "type" : "scoring",
     "behaviors" : [
-      "DriveOffCharger",
-      "KnockOverCubes",
-      "PyramidPutDownBlock",
-      "SparksLookInPlace"
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "PyramidPutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
     ]
   },
   "buildChooser" :
   {
-    "type" : "StrictPriority",
+    "type" : "scoring",
     "behaviors" : [
-      "DriveOffCharger",
-      "KnockOverCubes",
-      "RespondToPyramidBase",
-      "SparksPickupSingleCubeForPyramid",
-      "SparksLookInPlace"
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "KnockOverCubes",
+        "scoring"      :
+        {
+          "flatScore": 20
+        }
+      },
+      { "behaviorID" : "RespondToPyramidBase",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      },
+      { "behaviorID" : "SparksPickupSingleCubeForPyramid",
+        "scoring"      :
+        {
+          "flatScore": 4.0
+        }
+      },
+      { "behaviorID" : "SparksLookInPlace",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
     ]
   }
 }

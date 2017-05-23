@@ -7,7 +7,7 @@
   "infoAnalyzerProcess": "CalculateInterestingRegions", // update interesting regions during hiking
   "behaviorChooser" :
   {
-    "type" : "Scoring",
+    "type" : "scoring",
     "scoreBonusForCurrentBehavior" : {
       "nodes" : [
         { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much

@@ -26,15 +26,51 @@
     },
     "behaviorChooser" :
     {
-      "type" : "StrictPriority",
+      "type" : "scoring",
       "behaviors" : [
-        "DriveOffCharger",
-        "CantHandleTallStack",
-        "KnockOverCubes",
-        "Hiking_RollCube",
-        "SparksThinkAboutBeacons",
-        "SparksBringCubeToBeacon",
-        "SparksLookInPlace"
+        { "behaviorID" : "DriveOffCharger",
+          "scoring"      :
+          {
+            "flatScore": 1000
+          }
+        },
+        { "behaviorID" : "CantHandleTallStack",
+          "scoring"      :
+          {
+            "flatScore": 20
+          }
+        },
+        { "behaviorID" : "KnockOverCubes",
+          "scoring"      :
+          {
+            "flatScore": 20
+          }
+        },
+        { "behaviorID" : "Hiking_RollCube",
+          "scoring"      :
+          {
+            "flatScore": 8.5
+          }
+        },
+        { "behaviorID" : "SparksThinkAboutBeacons",
+          "scoring"      :
+          {
+            "flatScore": 8.0
+          }
+        },
+
+        { "behaviorID" : "SparksBringCubeToBeacon",
+          "scoring"      :
+          {
+            "flatScore": 4.0 // intended to interrupt lookInPlace behaviors
+          }
+        },
+        { "behaviorID" : "SparksLookInPlace",
+          "scoring"      :
+          {
+            "flatScore": 2.0
+          }
+        }
       ]
     }
   },

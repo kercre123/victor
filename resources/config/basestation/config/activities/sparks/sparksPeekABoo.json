@@ -8,12 +8,32 @@
   },
   "behaviorChooser" :
   {
-    "type" : "StrictPriority",
+    "type" : "scoring",
     "behaviors" : [
-      "DriveOffCharger",
-      "SparksPutDownBlock",
-      "SparksPeekABoo",
-      "SparksFindFaces"
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "SparksPutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 3.0
+        }
+      },
+      { "behaviorID" : "SparksPeekABoo",
+        "scoring"      :
+        {
+          "flatScore": 2.5
+        }
+      },
+      { "behaviorID" : "SparksFindFaces",
+        "scoring"      :
+        {
+          "flatScore": 2.0
+        }
+      }
     ]
   },
   "minTimeSecs": 0,

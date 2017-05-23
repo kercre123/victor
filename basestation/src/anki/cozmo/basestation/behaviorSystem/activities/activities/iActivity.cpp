@@ -114,7 +114,6 @@ ActivityType IActivity::ExtractActivityTypeFromConfig(const Json::Value& config)
 void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
 {
   // read info from config
-  _id = ExtractActivityIDFromConfig(config);
   
   // - - - - - - - - - -
   // Needs Sparks
@@ -172,6 +171,7 @@ void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
   IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(robot, strategyConfig);
   _strategy.reset( newStrategy );
   
+  _id = ExtractActivityIDFromConfig(config);
   
   JsonTools::GetValueOptional(config, kRequiresObjectTapped, _requireObjectTapped);
   JsonTools::GetValueOptional(config, kSupportsObjectTapInteractionKey, _supportsObjectTapInteractions);

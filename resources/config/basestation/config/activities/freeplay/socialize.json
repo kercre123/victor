@@ -3,7 +3,7 @@
   "activityType" : "Socialize",
   "behaviorChooser" :
   {
-    "type" : "Scoring",
+    "type" : "scoring",
     "behaviors" : [
       { "behaviorID" : "DriveOffCharger",
         "scoring"      :

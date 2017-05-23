@@ -26,11 +26,6 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace{
-static const char* const kAIInformationAnalyzerLock = "SelectionBehaviorChooser";
-
-}
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Value& config)
 : IBehaviorChooser(robot, config)
@@ -183,11 +178,10 @@ void SelectionBehaviorChooser::SetProcessEnabled(const IBehavior* behavior, bool
     AIInformationAnalysis::EProcess process = behavior->GetRequiredProcess();
     if ( process != AIInformationAnalysis::EProcess::Invalid )
     {
-      auto& infoAnalyzer = _robot.GetAIComponent().GetAIInformationAnalyzer();
       if( newValue ) {
-        infoAnalyzer.AddEnableRequest(process, kAIInformationAnalyzerLock);
+        _robot.GetAIComponent().GetAIInformationAnalyzer().AddEnableRequest(process, GetName());
       } else {
-        infoAnalyzer.RemoveEnableRequest(process, kAIInformationAnalyzerLock);
+        _robot.GetAIComponent().GetAIInformationAnalyzer().RemoveEnableRequest(process, GetName());
       }
     }
   }

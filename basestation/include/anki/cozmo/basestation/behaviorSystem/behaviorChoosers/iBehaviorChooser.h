@@ -14,8 +14,16 @@
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
 #include "anki/common/types.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/helpers/noncopyable.h"
+#include "util/random/randomGenerator.h"
+#include <map>
+#include <string>
+#include <set>
 #include <vector>
+#include <functional>
 
 
 namespace Json {
@@ -39,7 +47,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // constructor/destructor
-  IBehaviorChooser(Robot& robot, const Json::Value& config){};
+  IBehaviorChooser(Robot& robot, const Json::Value& config);
   virtual ~IBehaviorChooser() {}
   
   // events to notify the chooser when it becomes (in)active
@@ -56,6 +64,9 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // name (for debug/identification)
+  virtual const char* GetName() const = 0;
   
   // Used to access objectTapInteraction behaviors
   std::vector<IBehavior*> GetObjectTapBehaviors(){ return {};}

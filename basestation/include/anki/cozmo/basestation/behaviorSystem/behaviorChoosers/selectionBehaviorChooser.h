@@ -39,6 +39,8 @@ public:
   
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
+  virtual const char* GetName() const override { return "Selection"; }
+
   // events to notify the chooser when it becomes (in)active
   virtual void OnSelected() override;
   virtual void OnDeselected() override;

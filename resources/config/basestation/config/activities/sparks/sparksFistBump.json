@@ -8,10 +8,20 @@
   },
   "behaviorChooser" :
   {
-    "type" : "StrictPriority",
+    "type" : "scoring",
     "behaviors" : [
-      "DriveOffCharger",
-      "SparksFistBump"
+      { "behaviorID" : "DriveOffCharger",
+        "scoring"      :
+        {
+          "flatScore": 1000
+        }
+      },
+      { "behaviorID" : "SparksFistBump",
+        "scoring"      :
+        {
+          "flatScore": 5.0
+        }
+      }
     ]
   },
   "minTimeSecs": 0,

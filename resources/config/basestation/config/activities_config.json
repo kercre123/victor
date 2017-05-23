@@ -6,7 +6,7 @@
     "activityType" : "BehaviorsOnly",
     "supportsObjectTapInteractions": false,
     "behaviorChooser" : {
-      "type": "Selection"
+      "type": "selection"
     },
     // Activity will be kicked out by behaviorManager
     "activityStrategy":
@@ -21,7 +21,7 @@
     "activityType" : "BehaviorsOnly",
     "supportsObjectTapInteractions": false,
     "behaviorChooser" : {
-      "type": "Scoring",
+      "type": "scoring",
       "behaviors" : [
         { "behaviorID" : "DriveOffCharger",
           "scoring"      :
