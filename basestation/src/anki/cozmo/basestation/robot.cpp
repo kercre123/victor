@@ -270,7 +270,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _needsManager->Init(_context->GetDataLoader()->GetRobotNeedsConfig(),
                         _context->GetDataLoader()->GetStarRewardsConfig(),
-                        _context->GetDataLoader()->GetRobotActionsConfig());
+                        _context->GetDataLoader()->GetRobotNeedsActionsConfig());
   }
 
   // Initialize progression

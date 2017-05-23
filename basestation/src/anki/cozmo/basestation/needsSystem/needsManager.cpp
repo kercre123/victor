@@ -56,8 +56,8 @@ static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 
 static const float kNeedLevelStorageMultiplier = 100000.0f;
 
-static const int kMinimumTimeBetweenPeriodicDeviceSaves_sec = 20; // 20 for testing; probably make this 60
-static const int kMinimumTimeBetweenPeriodicRobotSaves_sec = (60 * 1);  // 60 secs for testing; probably make this 10 minutes
+static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
+static const int kMinimumTimeBetweenRobotSaves_sec = (60 * 10);  // Less frequently than device saves
 
 
 using namespace std::chrono;
@@ -137,6 +137,38 @@ using Time = std::chrono::time_point<std::chrono::system_clock>;
       g_DebugNeedsManager->DebugUnpauseActionsForNeed(needName);
     }
   }
+  void DebugSetRepairLevel( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const float level = ConsoleArg_Get_Float(context, "level");
+      g_DebugNeedsManager->DebugSetNeedLevel(NeedId::Repair, level);
+    }
+  }
+  void DebugSetEnergyLevel( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const float level = ConsoleArg_Get_Float(context, "level");
+      g_DebugNeedsManager->DebugSetNeedLevel(NeedId::Energy, level);
+    }
+  }
+  void DebugSetPlayLevel( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const float level = ConsoleArg_Get_Float(context, "level");
+      g_DebugNeedsManager->DebugSetNeedLevel(NeedId::Play, level);
+    }
+  }
+  void DebugPassTimeMinutes( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const float minutes = ConsoleArg_Get_Float(context, "minutes");
+      g_DebugNeedsManager->DebugPassTimeMinutes(minutes);
+    }
+  }
   CONSOLE_FUNC( DebugFillNeedMeters, "Needs" );
   CONSOLE_FUNC( DebugGiveStar, "Needs" );
   CONSOLE_FUNC( DebugCompleteDay, "Needs" );
@@ -146,6 +178,11 @@ using Time = std::chrono::time_point<std::chrono::system_clock>;
   CONSOLE_FUNC( DebugPauseActionsForNeed, "Needs", const char* needName );
   CONSOLE_FUNC( DebugUnpauseDecayForNeed, "Needs", const char* needName );
   CONSOLE_FUNC( DebugUnpauseActionsForNeed, "Needs", const char* needName );
+  CONSOLE_FUNC( DebugSetRepairLevel, "Needs", float level );
+  CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
+  CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
+  CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
+  CONSOLE_VAR(bool, kUseNeedManager, "Needs", true);
 #endif
 
 
@@ -280,7 +317,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
   }
 
-  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig);
+  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig, &_robot.GetRNG());
 
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
@@ -337,6 +374,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _needsState = _needsStateFromRobot;
     }
   }
+
+  _needsState._rng = &_robot.GetRNG();
 
   const Time now = system_clock::now();
 
@@ -407,26 +446,7 @@ void NeedsManager::Update(const float currentTime_s)
   {
     _timeForNextPeriodicDecay_s += _needsConfig._decayPeriod;
 
-    NeedsMultipliers multipliers;
-    _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
-
-    for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
-    {
-      if (!_isDecayPausedForNeed[needIndex])
-      {
-        const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
-        _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
-        _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
-      }
-    }
-
-    SendNeedsStateToGame(NeedsActionId::Decay);
-
-    // Note that we don't want to write to robot at this point, as that
-    // can take a long time (300 ms) and can interfere with animations.
-    // So we generally only write to robot on actions completed.
-    // However, it's quick to write to device, so we [possibly] do that here:
-    PossiblyWriteToDevice(_needsState);
+    ApplyDecayAllNeeds();
   }
 }
 
@@ -452,19 +472,22 @@ void NeedsManager::SetPaused(const bool paused)
 
     // Send the current needs state to the game as soon as we pause
     //  (because the periodic decay won't happen during pause)
-    SendNeedsStateToGame(NeedsActionId::NoAction);
+    SendNeedsStateToGame();
   }
   else
   {
     // When unpausing, set the next 'time for periodic decay'
     _timeForNextPeriodicDecay_s = _currentTime_s + _pausedDurRemainingPeriodicDecay;
 
-    // Then calculate how long we were paused, and adjust certain timers accordingly
-    const float timePaused = _currentTime_s - _timeWhenPausedOverall_s;
+    // Then calculate how long we were paused
+    const float durationOfPause = _currentTime_s - _timeWhenPausedOverall_s;
+
+    // Adjust some timers accordingly, so that the overall pause is excluded from
+    // things like decay time, and individual needs pausing
     for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
     {
-      _lastDecayUpdateTime_s[i] += timePaused;
-      _timeWhenPaused_s[i] += timePaused;
+      _lastDecayUpdateTime_s[i] += durationOfPause;
+      _timeWhenPaused_s[i] += durationOfPause;
     }
   }
 
@@ -488,8 +511,29 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
     }
     else
     {
-      _needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i], _robot.GetRNG());
+      _needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i]);
     }
+  }
+
+  switch (actionCompleted)
+  {
+    case NeedsActionId::RepairHead:
+    {
+      _needsState._partIsDamaged[RepairablePartId::Head] = false;
+      break;
+    }
+    case NeedsActionId::RepairLift:
+    {
+      _needsState._partIsDamaged[RepairablePartId::Lift] = false;
+      break;
+    }
+    case NeedsActionId::RepairTreads:
+    {
+      _needsState._partIsDamaged[RepairablePartId::Treads] = false;
+      break;
+    }
+    default:
+      break;
   }
 
   SendNeedsStateToGame(actionCompleted);
@@ -502,9 +546,9 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
-  SendNeedsStateToGame(NeedsActionId::NoAction);
+  SendNeedsStateToGame();
 }
-  
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseState& msg)
 {
@@ -530,6 +574,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
   // Pause/unpause for decay
   NeedsMultipliers multipliers;
   bool multipliersSet = false;
+  bool needToSendNeedsStateToGame = false;
+
   for (int needIndex = 0; needIndex < _isDecayPausedForNeed.size(); needIndex++)
   {
     if (!_isDecayPausedForNeed[needIndex] && msg.decayPause[needIndex])
@@ -565,6 +611,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
         const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
         _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
         _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+        needToSendNeedsStateToGame = true;
       }
     }
 
@@ -580,12 +627,18 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
       auto& queuedDeltas = _queuedNeedDeltas[needIndex];
       for (int j = 0; j < queuedDeltas.size(); j++)
       {
-        _needsState.ApplyDelta(static_cast<NeedId>(needIndex), queuedDeltas[j], _robot.GetRNG());
+        _needsState.ApplyDelta(static_cast<NeedId>(needIndex), queuedDeltas[j]);
+        needToSendNeedsStateToGame = true;
       }
       queuedDeltas.clear();
     }
 
     _isActionsPausedForNeed[needIndex] = msg.actionPause[needIndex];
+  }
+
+  if (needToSendNeedsStateToGame)
+  {
+    SendNeedsStateToGame();
   }
 }
 
@@ -627,7 +680,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 }
 
 
-void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate)
+void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate /* = NeedsActionId::NoAction */)
 {
   _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
   
@@ -687,6 +740,32 @@ void NeedsManager::SendNeedsPauseStatesToGame()
   ExternalInterface::NeedsPauseStates message(decayPause, actionPause);
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
+
+
+void NeedsManager::ApplyDecayAllNeeds()
+{
+  NeedsMultipliers multipliers;
+  _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+
+  for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+  {
+    if (!_isDecayPausedForNeed[needIndex])
+    {
+      const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
+      _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
+      _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+    }
+  }
+
+  SendNeedsStateToGame(NeedsActionId::Decay);
+
+  // Note that we don't want to write to robot at this point, as that
+  // can take a long time (300 ms) and can interfere with animations.
+  // So we generally only write to robot on actions completed.
+  // However, it's quick to write to device, so we [possibly] do that here:
+  PossiblyWriteToDevice(_needsState);
+}
+
 
 void NeedsManager::UpdateStarsState()
 {
@@ -787,7 +866,7 @@ void NeedsManager::PossiblyWriteToDevice(NeedsState& needsState)
   const Time now = system_clock::now();
   const auto elapsed = now - needsState._timeLastWritten;
   const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
-  if (secsSinceLastSave > kMinimumTimeBetweenPeriodicDeviceSaves_sec)
+  if (secsSinceLastSave > kMinimumTimeBetweenDeviceSaves_sec)
   {
     needsState._timeLastWritten = now;
     WriteToDevice(needsState);
@@ -904,7 +983,7 @@ void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState, bool ignore
   const Time now = system_clock::now();
   const auto elapsed = now - _timeLastWrittenToRobot;
   const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
-  if (ignoreCooldown || secsSinceLastSave > kMinimumTimeBetweenPeriodicRobotSaves_sec)
+  if (ignoreCooldown || secsSinceLastSave > kMinimumTimeBetweenRobotSaves_sec)
   {
     _timeLastWrittenToRobot = now;
     needsState._timeLastWritten = now;
@@ -1114,7 +1193,7 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
 void NeedsManager::DebugFillNeedMeters()
 {
   _needsState.DebugFillNeedMeters();
-  SendNeedsStateToGame(NeedsActionId::NoAction);
+  SendNeedsStateToGame();
 }
 
 void NeedsManager::DebugGiveStar()
@@ -1144,7 +1223,7 @@ void NeedsManager::DebugCompleteDay()
 
 void NeedsManager::DebugResetNeeds()
 {
-  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig);
+  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig, &_robot.GetRNG());
   _robotHadValidNeedsData = false;
   _deviceHadValidNeedsData = false;
   InitAfterReadFromRobotAttempt();
@@ -1215,6 +1294,32 @@ void NeedsManager::DebugImplPausing(const char* needName, const bool isDecay, co
                                            std::move(decayDiscardAfterUnpause),
                                            std::move(actionPause));
   HandleMessage(m);
+}
+
+void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
+{
+  const float delta = level - _needsState._curNeedsLevels[needId];
+  NeedDelta needDelta(delta, 0.0f);
+  _needsState.ApplyDelta(needId, needDelta);
+
+  SendNeedsStateToGame();
+
+  PossiblyWriteToDevice(_needsState);
+  PossiblyStartWriteToRobot(_needsState);
+}
+
+void NeedsManager::DebugPassTimeMinutes(const float minutes)
+{
+  const float timeElaspsed_s = minutes * 60.0f;
+  for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+  {
+    if (!_isDecayPausedForNeed[needIndex])
+    {
+      _lastDecayUpdateTime_s[needIndex] -= timeElaspsed_s;
+    }
+  }
+
+  ApplyDecayAllNeeds();
 }
 #endif
 

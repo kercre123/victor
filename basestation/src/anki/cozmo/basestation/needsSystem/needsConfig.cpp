@@ -14,7 +14,6 @@
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "clad/types/needsSystemTypes.h"
-#include "util/enums/stringToEnumMapper.hpp"
 #include <assert.h>
 
 
@@ -27,6 +26,8 @@ static const std::string kDecayPeriodSecondsKey = "DecayPeriodSeconds";
 
 static const std::string kInitialNeedsLevelsArrayKey = "InitialNeedsLevels";
 static const std::string kBracketLevelsArrayKey = "BracketLevels";
+
+static const std::string kBrokenPartThresholds = "BrokenPartThresholds";
 
 static const std::string kDecayConnectedKey = "DecayConnected";
 static const std::string kDecayUnconnectedKey = "DecayUnconnected";
@@ -56,6 +57,7 @@ NeedsConfig::NeedsConfig()
 , _decayPeriod(60.0f)
 , _initialNeedsLevels()
 , _needsBrackets()
+, _brokenPartThresholds()
 , _decayConnected()
 , _decayUnconnected()
 {
@@ -145,6 +147,13 @@ void NeedsConfig::Init(const Json::Value& json)
                    "NeedsConfig.Init",
                    "Last threshold in bracket list should be zero but is %f", thresholds.back());
     _needsBrackets[static_cast<NeedId>(i)] = std::move(thresholds);
+  }
+
+  _brokenPartThresholds.clear();
+  const Json::Value& bpt = json[kBrokenPartThresholds];
+  for (int i = 0; i < bpt.size(); i++)
+  {
+    _brokenPartThresholds.push_back(bpt[i].asFloat());
   }
 
   InitDecay(json, kDecayConnectedKey, _decayConnected);

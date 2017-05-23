@@ -35,6 +35,7 @@ namespace Cozmo {
 NeedsState::NeedsState()
 : _timeLastWritten(Time())
 , _robotSerialNumber(0)
+, _rng(nullptr)
 , _curNeedsLevels()
 , _curNeedsBracketsCache()
 , _partIsDamaged()
@@ -53,7 +54,8 @@ NeedsState::~NeedsState()
 }
 
 
-void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber, const std::shared_ptr<StarRewardsConfig> starRewardsConfig)
+void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
+                      const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng)
 {
   Reset();
 
@@ -62,6 +64,8 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber, const st
   _needsConfig = &needsConfig;
 
   _robotSerialNumber = serialNumber;
+
+  _rng = rng;
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -199,18 +203,29 @@ void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex,
   }
 
   _curNeedsLevels[needId] = curNeedLevel;
+
+  if (needId == NeedId::Repair)
+  {
+    PossiblyDamageParts();
+  }
 }
 
 
-void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const Util::RandomGenerator& rng)
+void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta)
 {
   float needLevel = _curNeedsLevels[needId];
 
-  const float randDist = rng.RandDbl(needDelta._randomRange * 2.0f) - needDelta._randomRange;
-  needLevel += (needDelta._delta + randDist);
+  const float randDist = _rng->RandDbl(needDelta._randomRange * 2.0f) - needDelta._randomRange;
+  const float delta = (needDelta._delta + randDist);
+  needLevel += delta;
   needLevel = Util::Clamp(needLevel, _needsConfig->_minNeedLevel, _needsConfig->_maxNeedLevel);
   
   _curNeedsLevels[needId] = needLevel;
+
+  if ((needId == NeedId::Repair) && (delta < 0.0f))
+  {
+    PossiblyDamageParts();
+  }
 }
 
 void NeedsState::SetStarLevel(int newLevel)
@@ -245,7 +260,72 @@ void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
     _curNeedsBracketsCache[needId] = static_cast<NeedBracketId>(bracketIndex);
   }
 }
-  
+
+int NeedsState::NumDamagedParts() const
+{
+  int numDamagedParts = 0;
+  for (const auto& part : _partIsDamaged)
+  {
+    if (part.second)
+    {
+      numDamagedParts++;
+    }
+  }
+  return numDamagedParts;
+}
+
+void NeedsState::PossiblyDamageParts()
+{
+  const int numDamagedParts = NumDamagedParts();
+  const int numPartsTotal = static_cast<int>(_partIsDamaged.size());
+  if (numDamagedParts >= numPartsTotal)
+    return;
+
+  const float curRepairLevel = _curNeedsLevels[NeedId::Repair];
+  int newNumDamagedParts = 0;
+  for ( ; newNumDamagedParts < _needsConfig->_brokenPartThresholds.size(); newNumDamagedParts++)
+  {
+    if (curRepairLevel > _needsConfig->_brokenPartThresholds[newNumDamagedParts])
+    {
+      break;
+    }
+  }
+  if (newNumDamagedParts > numPartsTotal)
+  {
+    newNumDamagedParts = numPartsTotal;
+  }
+
+  const int partsToDamage = newNumDamagedParts - numDamagedParts;
+  if (partsToDamage <= 0)
+    return;
+
+  for (int i = 0; i < partsToDamage; i++)
+  {
+    _partIsDamaged[PickPartToDamage()] = true;
+  }
+}
+
+RepairablePartId NeedsState::PickPartToDamage() const
+{
+  const int numUndamagedParts = static_cast<int>(_partIsDamaged.size()) - NumDamagedParts();
+  int undamagedPartIndex = _rng->RandInt(numUndamagedParts);
+  int i = 0;
+  for (const auto& part : _partIsDamaged)
+  {
+    if (!part.second)
+    {
+      if (undamagedPartIndex == 0)
+      {
+        break;
+      }
+      undamagedPartIndex--;
+    }
+    i++;
+  }
+  return static_cast<RepairablePartId>(i);
+}
+
+
 #if ANKI_DEV_CHEATS
 void NeedsState::DebugFillNeedMeters()
 {

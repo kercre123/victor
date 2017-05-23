@@ -82,6 +82,9 @@ public:
   using NeedsBrackets = std::map<NeedId, BracketThresholds>;
   NeedsBrackets _needsBrackets;
 
+  using BrokenPartThresholds = std::vector<float>;
+  BrokenPartThresholds _brokenPartThresholds;
+
   DecayConfig _decayConnected;
   DecayConfig _decayUnconnected;
 

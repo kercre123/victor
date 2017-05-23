@@ -49,17 +49,17 @@ class NeedsManager
 public:
   explicit NeedsManager(Robot& inRobot);
   ~NeedsManager();
-  
+
   void Init(const Json::Value& inJson, const Json::Value& inStarsJson, const Json::Value& inActionsJson);
   void InitAfterConnection();
-  
+
   void Update(const float currentTime_s);
-  
+
   void SetPaused(const bool paused);
   bool GetPaused() const { return _isPausedOverall; };
-  
+
   const NeedsState& GetCurNeedsState() const { return _needsState; };
-  
+
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
 
   static const char* kLogChannelName;
@@ -67,7 +67,7 @@ public:
   // Handle various message types
   template<typename T>
   void HandleMessage(const T& msg);
-  
+
 #if ANKI_DEV_CHEATS
   void DebugFillNeedMeters();
   void DebugGiveStar();
@@ -79,6 +79,8 @@ public:
   void DebugUnpauseDecayForNeed(const char* needName);
   void DebugUnpauseActionsForNeed(const char* needName);
   void DebugImplPausing(const char* needName, const bool isDecay, const bool isPaused);
+  void DebugSetNeedLevel(const NeedId needId, const float level);
+  void DebugPassTimeMinutes(const float minutes);
 #endif
 
 private:
@@ -100,11 +102,11 @@ private:
 
   void InitAfterReadFromRobotAttempt();
 
-private:
+  void ApplyDecayAllNeeds();
 
   void UpdateStarsState();
 
-  void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate);
+  void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate = NeedsActionId::NoAction);
   void SendNeedsPauseStateToGame();
   void SendNeedsPauseStatesToGame();
   void SendStarLevelCompletedToGame();

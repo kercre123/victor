@@ -699,7 +699,7 @@ void RobotDataLoader::LoadRobotConfigs()
   // needs system actions config
   {
     std::string jsonFilename = "config/basestation/config/needs_action_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _actionConfig);
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.ActionConfigJsonNotFound",

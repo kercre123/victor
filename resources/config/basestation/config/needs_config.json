@@ -34,6 +34,14 @@
     }
   },
 
+  // These are the Repair need levels at which parts become broken
+  "BrokenPartThresholds":
+    [
+      0.7500,
+      0.5000,
+      0.2500
+    ],
+
   // Decay (when connected)
   "DecayConnected": {
     "Repair": {

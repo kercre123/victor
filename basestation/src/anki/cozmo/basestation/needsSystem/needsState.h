@@ -53,7 +53,8 @@ public:
   NeedsState();
   ~NeedsState();
   
-  void Init(NeedsConfig& needsConfig, const u32 serialNumber, const std::shared_ptr<StarRewardsConfig> starRewardsConfig);
+  void Init(NeedsConfig& needsConfig, const u32 serialNumber,
+            const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng = 0);
   
   void Reset();
 
@@ -64,7 +65,7 @@ public:
   void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
 
   // Apply a given delta to a given need
-  void ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const Util::RandomGenerator& rng);
+  void ApplyDelta(const NeedId needId, const NeedDelta& needDelta);
 
   float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
   NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBracketsCache[static_cast<NeedId>(i)]; };
@@ -72,6 +73,10 @@ public:
   
   // Set current needs bracket levels from current levels
   void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);
+
+  int NumDamagedParts() const;
+  void PossiblyDamageParts();
+  RepairablePartId PickPartToDamage() const;
 
   // Serialization versions; increment this when the format of the serialization changes
   // This is stored in the serialized file
@@ -84,6 +89,8 @@ public:
   Time _timeLastWritten;
 
   u32 _robotSerialNumber;
+
+  Util::RandomGenerator* _rng;
 
   using CurNeedsMap = std::map<NeedId, float>;
   CurNeedsMap _curNeedsLevels;
