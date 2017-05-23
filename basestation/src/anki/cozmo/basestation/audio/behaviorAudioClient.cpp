@@ -48,6 +48,21 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
   Gameplay_Round::Round_09,
   Gameplay_Round::Round_10
 }};
+
+// Mapping from ActivityId to FreeplayMood for music states
+// 'hiking'          - when Cozmo is exploring its surroundings on his own
+// 'playWithHumans'  - when Cozmo requests games to play with the player
+// 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+// 'socialize'       - when Cozmo wants to interact with faces and players, but without playing games
+// 'nothingToDo'     - fallback when Cozmo can't do anything else
+const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
+{
+  { ActivityID::Hiking,          AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
+  { ActivityID::PlayWithHumans,  AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::PlayAlone,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::Socialize,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::NothingToDo,     AudioMetaData::SwitchState::Freeplay_Mood::Bored }
+};
   
 } // end anonymous namespace
   
@@ -110,24 +125,9 @@ bool BehaviorAudioClient::UpdateBehaviorRound(const UnlockId behaviorUnlockId, c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::UpdateActivityMusicState(ActivityID activityID)
 {
-  // Ai Goals from behavior_config.json
-  // 'hiking'          - when Cozmo is exploring its surroundings on his own
-  // 'playWithHumans'  - when Cozmo requests games to play with the player
-  // 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
-  // 'socialize'       - when Cozmo wants to interact with faces and players, but without playing games
-  // 'nothingToDo'     - fallback when Cozmo can't do anything else
-  
   PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                 "RobotAudioClient.SetFreeplayMusic",
-                "AiGoalName '%s'", ActivityIDToString(activityID));
-  static const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
-  {
-    { ActivityID::Hiking,          AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
-    { ActivityID::PlayWithHumans,  AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-    { ActivityID::PlayAlone,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-    { ActivityID::Socialize,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-    { ActivityID::NothingToDo,     AudioMetaData::SwitchState::Freeplay_Mood::Bored }
-  };
+                "ActivityName '%s'", ActivityIDToString(activityID));
   
   // Search for freeplay goal state
   const auto it = freeplayStateMap.find(activityID);
@@ -225,7 +225,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   }
   
   
-  // Handle AI goal transitions and Guard Dog behavior transitions
+  // Handle AI Activity transitions and Guard Dog behavior transitions
   const auto& currActivity = stateEvent.currentActivity;
   if (currActivity != _prevActivity) {
     UpdateActivityMusicState(currActivity);
@@ -233,9 +233,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   } else {
     // Update the Guard Dog music mood/round if appropriate
     const auto& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
-    if (currActivity == ActivityID::PlayAlone &&
-        currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog)
-    {
+    if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
       // Change the freeplay mood to GuardDog if not already active
       if (!_guardDogActive) {
         _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
@@ -261,7 +259,7 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
       // reset GuardDog stuff
       _guardDogActive = false;
       _prevGuardDogStage = GuardDogStage::Count;
-      // Update the AI goal state to current AI goal
+      // Update the Activity state to current Activity
       //  (this will stop the GuardDog-specific music)
       UpdateActivityMusicState(currActivity);
     }
