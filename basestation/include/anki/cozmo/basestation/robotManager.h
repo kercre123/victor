@@ -150,6 +150,7 @@ protected:
 
 private:
   void ParseFirmwareHeader(const Json::Value& header);
+  bool MakeRobotFirmwareUntrusted(RobotID_t robotId);
 
 }; // class RobotManager
   

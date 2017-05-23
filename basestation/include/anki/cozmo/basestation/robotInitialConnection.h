@@ -46,6 +46,8 @@ public:
   // if firmware doesn't match, we'll do this to almost every message
   bool ShouldFilterMessage(RobotInterface::RobotToEngineTag messageTag) const;
   bool ShouldFilterMessage(RobotInterface::EngineToRobotTag messageTag) const;
+  
+  void MakeFirmwareUntrusted() { _validFirmware = false; }
 
 private:
   void HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&);

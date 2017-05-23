@@ -25,6 +25,7 @@
 #include "json/json.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/time/stepTimers.h"
 #include <vector>
@@ -220,7 +221,23 @@ namespace Anki {
     
     bool RobotManager::InitUpdateFirmware(FirmwareType type, int version)
     {
-      return _firmwareUpdater->InitUpdate(_robots, type, version);
+      bool success = _firmwareUpdater->InitUpdate(_robots, type, version);
+      
+      if (success)
+      {
+        for (const auto& kv : _robots)
+        {
+          const auto robotID = kv.second->GetID();
+          if (!ANKI_VERIFY(MakeRobotFirmwareUntrusted(robotID),
+                           "RobotManager.InitUpdateFirmware",
+                           "Error making firmware untrusted for robotID: %d", robotID))
+          {
+            success = false;
+          }
+        }
+      }
+      
+      return success;
     }
     
     
@@ -367,6 +384,16 @@ namespace Anki {
         return false;
       }
       return iter->second.ShouldFilterMessage(msgType);
+    }
+    
+    bool RobotManager::MakeRobotFirmwareUntrusted(RobotID_t robotId)
+    {
+      auto iter = _initialConnections.find(robotId);
+      if (iter == _initialConnections.end()) {
+        return false;
+      }
+      iter->second.MakeFirmwareUntrusted();
+      return true;
     }
     
   } // namespace Cozmo
