@@ -123,8 +123,8 @@ namespace SpeedTap {
       if (player.playerType == PlayerType.Cozmo) {
         if (completedCode != PlayerGoalBase.SUCCESS) {
           _SpeedTapGame.ShowInterruptionQuitGameView("speed_tap_cube_lost_alert",
-                                                             LocalizationKeys.kMinigameLostTrackOfBlockTitle,
-                                                             LocalizationKeys.kMinigameLostTrackOfBlockDescription);
+                                                     LocalizationKeys.kSpeedTapDriveToCubeFailTitle,
+                                                     LocalizationKeys.kSpeedTapDriveToCubeFailDescription);
         }
         else {
           LightCubeForPlayer(player);

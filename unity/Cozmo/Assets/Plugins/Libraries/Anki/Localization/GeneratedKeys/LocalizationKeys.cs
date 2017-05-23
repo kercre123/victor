@@ -47,6 +47,19 @@ public static class LocalizationKeys {
   public const string kBehaviorLookInPlaceForCube = "behavior.LookInPlaceForCube";
   public const string kBehaviorHiccup = "behavior.Hiccup";
   public const string kButtonClearThisSlot = "button.clearThisSlot";
+  public const string kBehaviorSingingCamptown = "behavior.singing.Camptown";
+  public const string kBehaviorSingingItsyBitsySpider = "behavior.singing.ItsyBitsySpider";
+  public const string kBehaviorSingingBeethovens5th = "behavior.singing.Beethovens5th";
+  public const string kBehaviorSingingPopGoesTheWeasel = "behavior.singing.PopGoesTheWeasel";
+  public const string kBehaviorSingingRowYourBoat = "behavior.singing.RowYourBoat";
+  public const string kBehaviorSingingPachebelCanon = "behavior.singing.PachebelCanon";
+  public const string kBehaviorSingingOdeToJoy = "behavior.singing.OdeToJoy";
+  public const string kBehaviorSingingTwinkleTwinkle = "behavior.singing.TwinkleTwinkle";
+  public const string kBehaviorSingingFrereJacques = "behavior.singing.FrereJacques";
+  public const string kBehaviorSingingMaryHadALittleLamb = "behavior.singing.MaryHadALittleLamb";
+  public const string kBehaviorSingingTakeMeOutToTheBallgame = "behavior.singing.TakeMeOutToTheBallgame";
+  public const string kBehaviorSingingWilliamTell = "behavior.singing.WilliamTell";
+  public const string kBehaviorSingingYankeeDoodle = "behavior.singing.YankeeDoodle";
 
   #endregion
 
@@ -400,6 +413,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapTapBlock2 = "speedTap.tapBlock2";
   public const string kMinigameGuardDogTitle = "minigame.GuardDog.Title";
   public const string kMinigameGuardDogDesc = "minigame.GuardDog.Desc";
+  public const string kSpeedTapDriveToCubeFailTitle = "speedTap.driveToCubeFail.title";
+  public const string kSpeedTapDriveToCubeFailDescription = "speedTap.driveToCubeFail.description";
 
   #endregion
 
@@ -636,6 +651,7 @@ public static class LocalizationKeys {
   public const string kLabelTotalSparks = "label.totalSparks";
   public const string kLabelTermsInstructions = "label.termsInstructions";
   public const string kLabelSimpleCount = "label.simpleCount";
+  public const string kButtonTemp = "button.temp";
 
   #endregion
 

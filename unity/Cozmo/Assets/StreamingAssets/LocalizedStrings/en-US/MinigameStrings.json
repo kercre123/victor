@@ -368,5 +368,11 @@
   },
   "minigame.GuardDog.Desc": {
     "translation": "Try to slowly and carefully turn all of Cozmo's cubes upside down without waking him up.\n\nCareful... Cozmo can sense when his cubes are moving!"
+  },
+  "speedTap.driveToCubeFail.title": {
+    "translation": "Cozmo Can't Find His Cube!"
+  },
+  "speedTap.driveToCubeFail.description": {
+    "translation": "Cozmo is having trouble finding his cube. Please make sure Cozmo can see it."
   }
 }
