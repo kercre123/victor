@@ -151,9 +151,15 @@ void NeedsConfig::Init(const Json::Value& json)
 
   _brokenPartThresholds.clear();
   const Json::Value& bpt = json[kBrokenPartThresholds];
+  float prevValue = 1.0f;
   for (int i = 0; i < bpt.size(); i++)
   {
-    _brokenPartThresholds.push_back(bpt[i].asFloat());
+    const float value = bpt[i].asFloat();
+    DEV_ASSERT_MSG(value <= prevValue,
+                   "NeedsConfig.Init",
+                   "Broken part thresholds not in descending order (%f vs %f)", value, prevValue);
+    prevValue = value;
+    _brokenPartThresholds.push_back(value);
   }
 
   InitDecay(json, kDecayConnectedKey, _decayConnected);

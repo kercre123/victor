@@ -536,6 +536,27 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
       break;
   }
 
+  switch (actionCompleted)
+  {
+    case NeedsActionId::RepairHead:
+    {
+      _needsState._partIsDamaged[RepairablePartId::Head] = false;
+      break;
+    }
+    case NeedsActionId::RepairLift:
+    {
+      _needsState._partIsDamaged[RepairablePartId::Lift] = false;
+      break;
+    }
+    case NeedsActionId::RepairTreads:
+    {
+      _needsState._partIsDamaged[RepairablePartId::Treads] = false;
+      break;
+    }
+    default:
+      break;
+  }
+
   SendNeedsStateToGame(actionCompleted);
 
   PossiblyWriteToDevice(_needsState);
