@@ -26,7 +26,7 @@ PROTO WebotsKeyboardController [
   # Name to assign to current faceID
   field SFString userName ""
   
-  # ID to Store Enollment as (0 just uses the ID of the face being enrolled)
+  # ID to Store Enrollment as (0 just uses the ID of the face being enrolled)
   field SFInt32 enrollToID 0
 
   # ID to turn towards by pressing alt+f. If 0, turn towards the last face pose
@@ -212,6 +212,9 @@ PROTO WebotsKeyboardController [
   
   # Cozmo engine location
   field SFString engineIP "127.0.0.1"
+
+  # Cozmo engine locale
+  field SFString locale "en-US"
 
   # UI device ID 
   # TODO: Get rid of this. The UI should not be assigning it's own ID.

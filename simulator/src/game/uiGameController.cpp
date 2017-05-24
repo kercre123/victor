@@ -479,23 +479,29 @@ namespace Anki {
       // TODO: Get rid of this. The UI should not be assigning its own ID.
       int deviceID = 1;
       webots::Field* deviceIDField = _root->getField("deviceID");
-      if (deviceIDField) {
+      if (nullptr != deviceIDField) {
         deviceID = deviceIDField->getSFInt32();
       }
       
       // Get engine IP
       std::string engineIP = "127.0.0.1";
       webots::Field* engineIPField = _root->getField("engineIP");
-      if (engineIPField) {
+      if (nullptr != engineIPField) {
         engineIP = engineIPField->getSFString();
       }
       
       // Get random seed
       webots::Field* randomSeedField = _root->getField("randomSeed");
-      if (randomSeedField) {
+      if (nullptr != randomSeedField) {
         _randomSeed = randomSeedField->getSFInt32();
       }
-        
+      
+      // Get locale
+      webots::Field* localeField = _root->getField("locale");
+      if (nullptr != localeField) {
+        _locale = localeField->getSFString();
+      }
+      
       // Startup comms with engine
       if (!_gameComms) {
         PRINT_NAMED_INFO("UiGameController.Init",
@@ -647,7 +653,7 @@ namespace Anki {
         if(doForceAddRobot) {
           webots::Field *forcedRobotIsSimField = _root->getField("forcedRobotIsSimulated");
           if(forcedRobotIsSimField == nullptr) {
-            PRINT_NAMED_ERROR("KeyboardController.Update",
+            PRINT_NAMED_ERROR("UiGameController.Update",
                               "Could not find 'forcedRobotIsSimulated' field.");
             doForceAddRobot = false;
           } else {
@@ -656,7 +662,7 @@ namespace Anki {
           
           webots::Field* forcedRobotIpField = _root->getField("forcedRobotIP");
           if(forcedRobotIpField == nullptr) {
-            PRINT_NAMED_ERROR("KeyboardController.Update",
+            PRINT_NAMED_ERROR("UiGameController.Update",
                               "Could not find 'forcedRobotIP' field.");
             doForceAddRobot = false;
           } else {
@@ -708,12 +714,14 @@ namespace Anki {
           } else {
             // Once gameComms has a client, tell the engine to start, force-add
             // robot if necessary, and switch states in the UI
+            const uint32_t seed = _randomSeed;
+            const std::string& locale = _locale;
+            auto msg = ExternalInterface::StartEngine(seed, locale);
             
-            PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
+            PRINT_NAMED_INFO("UiGameController.Update", "Sending StartEngine(seed=%d,locale=%s)", seed, locale.c_str());
+          
             // TODO: don't hardcode ID here
-            auto msg = ExternalInterface::StartEngine(_randomSeed, _locale);
             _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(std::move(msg)));
-            
             _uiState = UI_WAITING_FOR_ENGINE_LOAD;
           }
           break;
@@ -728,7 +736,7 @@ namespace Anki {
             bool didForceAdd = ForceAddRobotIfSpecified();
             
             if(didForceAdd) {
-              PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.");
+              PRINT_NAMED_INFO("UiGameController.Update", "Sent force-add robot message.");
             }
             
             _uiState = UI_RUNNING;
@@ -762,7 +770,7 @@ namespace Anki {
         }
           
         default:
-          PRINT_NAMED_ERROR("KeyboardController.Update", "Reached default switch case.");
+          PRINT_NAMED_ERROR("UiGameController.Update", "Reached default switch case.");
           
       } // switch(_uiState)
       
