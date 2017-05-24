@@ -56,9 +56,6 @@ public:
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
-  // name (for debug/identification)
-  virtual const char* GetName() const override { return "Scoring"; }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

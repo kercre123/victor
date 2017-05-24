@@ -78,7 +78,7 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
   const Json::Value& behaviorsConfig = config[kBehaviorsInChooserConfigKey];
   DEV_ASSERT_MSG(!behaviorsConfig.isNull(),
                  "ScoringBehaviorChooser.ReloadFromConfig.BehaviorsNotSpecified",
-                 "No Behaviors key found for chooser %s", GetName());
+                 "No Behaviors key found");
   if(!behaviorsConfig.isNull()){
     const BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
     
@@ -89,9 +89,8 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
       const Json::Value& scoringConfig = (behavior)[kScoringConfigKey];
       DEV_ASSERT_MSG(!scoringConfig.isNull(),
                      "ScoringBehaviorChooser.ReloadFromConfig.ScoringNotSpecified",
-                     "Scoring Information Not Provided For %s in chooser %s",
-                     BehaviorIDToString(behaviorID),
-                     GetName());
+                     "Scoring Information Not Provided For %s",
+                     BehaviorIDToString(behaviorID));
       // Find the behavior name in the factory
       IBehavior* scoredBehavior =  behaviorFactory.FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(scoredBehavior != nullptr,
