@@ -11,10 +11,11 @@ and follow [Unity Best Practices](https://github.com/anki/cozmo-one/wiki/Eng-Uni
 
 ### Brew
 
-First install [brew](http://brew.sh/). Then use brew to install the following dependencies:
+First install [brew](http://brew.sh/). Then use brew to install the following dependencies. Note that Apple's included Python can cause problems, so it's recommended to install through brew:
 
     brew install cmake
     brew install python3
+    brew install python
 
 ### Android NDK and SDK
 
@@ -60,6 +61,14 @@ We are using XCode Version 8.1. Install from the OS X App Store. Make sure you o
 To run the configure python scripts you'll need xcpretty.
 
     sudo gem install xcpretty
+    
+You will also need to install the python yaml module, `pyyaml`.
+    
+    pip install pyyaml
+    
+Java is needed for Buck, so if you don't already have that, you can run:
+
+    brew cask install java
 
 Build everything from the cozmo-game folder.
 
