@@ -142,7 +142,10 @@ enum uint_8 BehaviorID {
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
 
-  Needs_LowEnergyCritGetIn,
+  Needs_SevereLowEnergyGetIn,
+  Needs_SevereLowEnergyRequest,
+  Needs_SevereLowRepairGetIn,
+  Needs_SevereLowRepairRequest,
 
   NothingToDo_BoredAnim,
   NothingToDo_Idle,

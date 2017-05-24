@@ -1,0 +1,61 @@
+{
+  "activityID": "NeedsSevereLowRepair",
+  "activityType": "BehaviorsOnly",
+
+  "driveStartAnimTrigger": "NeedsSevereLowRepairDrivingStart",
+  "driveLoopAnimTrigger": "NeedsSevereLowRepairDrivingLoop",
+  "driveEndAnimTrigger": "NeedsSevereLowRepairDrivingEnd",
+
+  "idleAnimTrigger": "NeedsSevereLowRepairIdle",
+
+  "activityStrategy":
+  {
+    "type" : "Simple",  // TODO:(bn) we'll likely need a special strategy here, but it's debug only for now...
+    "activityShouldEndDurationSecs" : 60.0, // TEMP
+    "cooldownSecs" : 15.0
+  },
+  
+  "behaviorChooser" :
+  {
+    "type" : "Scoring",
+    "scoreBonusForCurrentBehavior" : {
+      "nodes" : [
+        { "x" :   0.0, "y" :  1.0 } // give this bonus to continue the same behavior unless score changes by that much
+      ]
+    },
+    
+    "behaviors" : [
+      {
+        "behaviorID": "Needs_SevereLowRepairGetIn",
+        "scoring": { "flatScore": 1.0 }
+      },
+      {
+        "behaviorID": "Needs_SevereLowRepairRequest",
+        "scoring": {
+          "flatScore": 0.5,
+          "repetitionPenalty": {
+            "nodes": [
+              {
+                "x": 3.0,
+                "y": 0.0
+              },
+              {
+                "x": 5.0,
+                "y": 0.1
+              },
+              {
+                "x": 10.0,
+                "y": 0.1
+              },
+              {
+                "x": 30.0,
+                "y": 1.0
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+

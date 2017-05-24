@@ -849,8 +849,52 @@
       "AnimName" : "ag_greeting_happy"
     },
     {
-      "CladEvent": "NeedsLowEnergyCritGetIn",
+      "CladEvent": "NeedsSevereLowEnergyDrivingEnd",
+      "AnimName": "ag_energy_drivegetout"
+    },
+    {
+      "CladEvent": "NeedsSevereLowEnergyDrivingLoop",
+      "AnimName": "ag_energy_driveloop"
+    },
+    {
+      "CladEvent": "NeedsSevereLowEnergyDrivingStart",
+      "AnimName": "ag_energy_drivegetin"
+    },
+    {
+      "CladEvent": "NeedsSevereLowEnergyGetIn",
       "AnimName" : "ag_energy_getin"
+    },
+    {
+      "CladEvent": "NeedsSevereLowEnergyIdle",
+      "AnimName": "ag_energy_idle_02"
+    },
+    {
+      "CladEvent": "NeedsSevereLowEnergyRequest",
+      "AnimName": "ag_energy_requestsevere"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairDrivingEnd",
+      "AnimName": "ag_repair_severe_driving_end_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairDrivingLoop",
+      "AnimName": "ag_repair_severe_driving_loop_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairDrivingStart",
+      "AnimName": "ag_repair_severe_driving_start_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairGetIn",
+      "AnimName" : "ag_repair_severe_getin_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairIdle",
+      "AnimName": "ag_repair_severe_idle_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairRequest",
+      "AnimName": "ag_repair_severe_reaction_01"
     },
     {
       "CladEvent": "NeutralFace",

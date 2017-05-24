@@ -66,12 +66,24 @@ ActivityFreeplay* defaultFeeplayActivity = nullptr;
 void ActivityFreeplaySetDebugActivity(ActivityID activityID)
 {
   if ( nullptr != defaultFeeplayActivity ) {
+    const char* activityIDString = ActivityIDToString(activityID);
+    PRINT_CH_INFO("Behaviors", "ActivityFreeplay.DebugSetActivity", "Setting activity to '%s'",
+                  activityIDString != nullptr ? activityIDString : "<INVALID>");
+
     defaultFeeplayActivity->SetConsoleRequestedActivity(activityID);
   } else {
     PRINT_NAMED_WARNING("ActivityFreeplayCycleActivity", "No default ActivityFreeplay. Can't cycle activities.");
   }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// TODO:(bn) We could remove the other functions... but QA may be using them
+void ActivitySetDebug( ConsoleFunctionContextRef context ) {
+  const char* activityIdString = ConsoleArg_Get_String(context, "activityID");
+  ActivityFreeplaySetDebugActivity(ActivityIDFromString(activityIdString));
+}
+CONSOLE_FUNC( ActivitySetDebug, "ActivityFreeplay", const char* activityID );
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivitySetFPNothingToDo( ConsoleFunctionContextRef context ) {
   ActivityFreeplaySetDebugActivity(ActivityID::NothingToDo);

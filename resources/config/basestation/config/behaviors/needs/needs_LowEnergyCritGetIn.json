@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlanAnimWithFace",
-  "behaviorID": "Needs_LowEnergyCritGetIn",
-  "displayNameKey":"behavior.Needs_LowEnergyCritGetIn",
-  "animTriggers": ["NeedsLowEnergyCritGetIn"]
-}

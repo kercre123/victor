@@ -29,6 +29,8 @@ enum uint_8 ActivityID {
   GatherCubes,
   Hiking,
   MeetCozmo,
+  NeedsSevereLowEnergy,
+  NeedsSevereLowRepair,
   NothingToDo,
   ObjectTapInteraction,
   PlayAlone,

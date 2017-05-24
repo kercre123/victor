@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "PlanAnimWithFace",
+  "behaviorID": "Needs_SevereLowRepairRequest",
+  "displayNameKey":"behavior.Needs_SevereLowRepairRequest",
+  "animTriggers": ["NeedsSevereLowRepairRequest"]
+}
