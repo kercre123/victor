@@ -39,23 +39,6 @@ namespace {
   Anki::Cozmo::VoiceCommand::VoiceCommandComponent* sThis = nullptr;
 }
 
-void HearHeyCozmo(ConsoleFunctionContextRef context)
-{
-  if (sThis != nullptr)
-  {
-    sThis->DoForceHeardPhrase(Anki::Cozmo::VoiceCommand::VoiceCommandType::HeyCozmo);
-  }
-}
-CONSOLE_FUNC(HearHeyCozmo, "VoiceCommand");
-
-void HearLetsPlay(ConsoleFunctionContextRef context)
-{
-  if (sThis != nullptr)
-  {
-    sThis->DoForceHeardPhrase(Anki::Cozmo::VoiceCommand::VoiceCommandType::LetsPlay);
-  }
-}
-CONSOLE_FUNC(HearLetsPlay, "VoiceCommand");
 
 
 using namespace Anki::AudioUtil;
@@ -64,6 +47,20 @@ using namespace Anki::Cozmo::ExternalInterface;
 namespace Anki {
 namespace Cozmo {
 namespace VoiceCommand {
+  
+namespace{
+void HearVoiceCommand(ConsoleFunctionContextRef context)
+{
+  VoiceCommandType command = static_cast<VoiceCommandType>(ConsoleArg_Get_Int(context, "command"));
+  
+  if (sThis != nullptr)
+  {
+    sThis->DoForceHeardPhrase(command);
+  }
+}
+CONSOLE_FUNC(HearVoiceCommand, "VoiceCommand", int command);
+}
+  
   
 VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
 : _context(context)

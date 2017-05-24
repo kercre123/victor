@@ -26,7 +26,10 @@ namespace Cozmo {
     private Button _HeyCozmoButton;
 
     [SerializeField]
-    private Button _LetsPlayButton;
+    private UnityEngine.UI.Dropdown _VoiceCommandSelection;
+
+    [SerializeField]
+    private Button _IssueVoiceCommandButton;
 
 
     // Local variable defaults to false until it gets updated by a message from the engine, which is requested in Start()
@@ -38,15 +41,14 @@ namespace Cozmo {
     private const string _DeniedAllowRetryExplanation = "Microphone access denied. Try again and allow access to use Voice Commands. If no prompt appears check Settings.";
 
     private const string _kIgnoreMicKey = "IgnoreMicInput";
-    private const string _kHeyCozmoFuncKey = "HearHeyCozmo";
-    private const string _kLetsPlayFuncKey = "HearLetsPlay";
+    private const string _kIssueCommandFuncKey = "HearVoiceCommand";
 
     // Use this for initialization
     void Start() {
       _ToggleEnabledButton.onClick.AddListener(OnToggleButton);
       _ToggleMicIgnored.onValueChanged.AddListener(OnMicIgnoredToggle);
       _HeyCozmoButton.onClick.AddListener(OnHeyCozmoButton);
-      _LetsPlayButton.onClick.AddListener(OnLetsPlayButton);
+      _IssueVoiceCommandButton.onClick.AddListener(OnHearVoiceCommandButton);
 
       VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
       VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
@@ -55,16 +57,27 @@ namespace Cozmo {
       GetDebugConsoleVarMessage initializedGetMessage = Singleton<GetDebugConsoleVarMessage>.Instance.Initialize(_kIgnoreMicKey);
       RobotEngineManager.Instance.Message.Initialize(initializedGetMessage);
       RobotEngineManager.Instance.SendMessage();
+      PopulateOptions();
     }
 
     void OnDestroy() {
       VoiceCommandManager.Instance.StateDataCallback -= UpdateStateData;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleIgnoreMicInput);
 
-      _LetsPlayButton.onClick.RemoveListener(OnLetsPlayButton);
+      _IssueVoiceCommandButton.onClick.RemoveListener(OnHearVoiceCommandButton);
       _HeyCozmoButton.onClick.RemoveListener(OnHeyCozmoButton);
       _ToggleMicIgnored.onValueChanged.RemoveListener(OnMicIgnoredToggle);
       _ToggleEnabledButton.onClick.RemoveListener(OnToggleButton);
+    }
+
+    private void PopulateOptions() {
+      List<UnityEngine.UI.Dropdown.OptionData> options = new List<UnityEngine.UI.Dropdown.OptionData>();
+      for (int i = 0; i < (System.Enum.GetValues(typeof(VoiceCommandType)).Length - 1); ++i) {
+        UnityEngine.UI.Dropdown.OptionData option = new UnityEngine.UI.Dropdown.OptionData();
+        option.text = System.Enum.GetValues(typeof(VoiceCommandType)).GetValue(i).ToString();
+        options.Add(option);
+      }
+      _VoiceCommandSelection.AddOptions(options);
     }
 
     private void OnToggleButton() {
@@ -77,12 +90,20 @@ namespace Cozmo {
       RobotEngineManager.Instance.SetDebugConsoleVar(_kIgnoreMicKey, newValue.ToString());
     }
 
-    private void OnHeyCozmoButton() {
-      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kHeyCozmoFuncKey, "");
+    private void OnHearVoiceCommandButton() {
+      IssueVoiceCommand(GetSelectedVoiceCommand ());
     }
 
-    private void OnLetsPlayButton() {
-      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kLetsPlayFuncKey, "");
+    private void OnHeyCozmoButton() {
+      IssueVoiceCommand(VoiceCommandType.HeyCozmo);
+    }
+
+    private void IssueVoiceCommand(VoiceCommandType commandType) {
+      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kIssueCommandFuncKey, ((int)commandType).ToString());
+    }
+
+    private VoiceCommandType GetSelectedVoiceCommand() {
+      return (VoiceCommandType)System.Enum.Parse(typeof(VoiceCommandType), _VoiceCommandSelection.options[_VoiceCommandSelection.value].text);
     }
       
     private void HandleIgnoreMicInput(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage message) {
