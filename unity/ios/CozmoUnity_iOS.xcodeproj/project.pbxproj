@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		02B586D964836D51B9590340 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3C08AD7227A21E355150ADE6 /* Images.xcassets */; };
-		04352771EE7ADBBF547557A4 /* UnityReplayKit_Scripting.mm in Sources */ = {isa = PBXBuildFile; fileRef = E0B19BBE8C4604940C707625 /* UnityReplayKit_Scripting.mm */; };
 		0744B8C1A40FE842EAFBC0F3 /* EAGLContextHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7DFBA0F8CB1070730F39FE86 /* EAGLContextHelper.mm */; };
 		08B24F76137BFDFA00FBA309 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B24F75137BFDFA00FBA309 /* iAd.framework */; settings = {ATTRIBUTES = (Required, ); }; };
 		0955A7781F53E5F104DD220F /* UnityViewControllerBaseiOS.mm in Sources */ = {isa = PBXBuildFile; fileRef = 585A62B76424ABC68F839B79 /* UnityViewControllerBaseiOS.mm */; };
@@ -85,6 +84,7 @@
 		8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = D553E3C3AE3E9F95BAEFE9A7 /* LaunchScreen-iPhonePortrait.png */; };
 		93A4C14B1647E6526C7EB60B /* RegisterMonoModules.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 02F7B3D102B6D56E3AED8FBD /* RegisterMonoModules.cpp */; };
 		9E0E70EAF487F837F2030006 /* OrientationSupport.mm in Sources */ = {isa = PBXBuildFile; fileRef = C413CECCC25579DB5CF75DDD /* OrientationSupport.mm */; };
+		A02EBD06F237C207E12CED19 /* iAD.h in Sources */ = {isa = PBXBuildFile; fileRef = 7D078966B66411EAF3E0FA3F /* iAD.h */; };
 		A1075F60357CDCE4BF4D02B6 /* UnityViewControllerListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 50C487894F530BC620776E29 /* UnityViewControllerListener.mm */; };
 		A275A8CA1AF27D7AB35B25DC /* CMVideoSampling.mm in Sources */ = {isa = PBXBuildFile; fileRef = 480295F402FF93083FED53F2 /* CMVideoSampling.mm */; };
 		AEECFFC6A184AD0E15EFE8BA /* ObjCRuntime.mm in Sources */ = {isa = PBXBuildFile; fileRef = DC814581D953FDA1AB4D78E8 /* ObjCRuntime.mm */; };
@@ -250,7 +250,6 @@
 		E01678637E413DC8C038A613 /* UnityAppController+ViewHandling.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = "UnityAppController+ViewHandling.mm"; path = "UnityBuild/Classes/UI/UnityAppController+ViewHandling.mm"; sourceTree = "<group>"; };
 		E0B19BBE8C4604940C707625 /* UnityReplayKit_Scripting.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = UnityReplayKit_Scripting.mm; path = UnityBuild/Classes/Unity/UnityReplayKit_Scripting.mm; sourceTree = "<group>"; };
 		E2DAAF7D57FCEC6F77219781 /* UnityView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnityView.h; path = UnityBuild/Classes/UI/UnityView.h; sourceTree = "<group>"; };
-		E372EEEBA2FE97E906B1FFD5 /* UnityReplayKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnityReplayKit.h; path = UnityBuild/Classes/Unity/UnityReplayKit.h; sourceTree = "<group>"; };
 		E42E274EA44A59C0030BBA5C /* InternalProfiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InternalProfiler.cpp; path = UnityBuild/Classes/Unity/InternalProfiler.cpp; sourceTree = "<group>"; };
 		E66BAFC65644B7D9C12932F8 /* ActivityIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ActivityIndicator.h; path = UnityBuild/Classes/UI/ActivityIndicator.h; sourceTree = "<group>"; };
 		E88AB6447D8653D8C585BFC9 /* AVCapture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = AVCapture.mm; path = UnityBuild/Classes/Unity/AVCapture.mm; sourceTree = "<group>"; };
@@ -260,7 +259,6 @@
 		F0A4E509436FBFB63F42A329 /* VideoPlayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = VideoPlayer.mm; path = UnityBuild/Classes/Unity/VideoPlayer.mm; sourceTree = "<group>"; };
 		F380AA58FF9ED04651070A08 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = main.mm; path = UnityBuild/Classes/main.mm; sourceTree = "<group>"; };
 		F3E61363A4DBDE2EFC124787 /* VideoPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VideoPlayer.h; path = UnityBuild/Classes/Unity/VideoPlayer.h; sourceTree = "<group>"; };
-		F5115C8987E6365C0D647749 /* IUnityGraphics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IUnityGraphics.h; path = UnityBuild/Classes/Unity/IUnityGraphics.h; sourceTree = "<group>"; };
 		F5BC2F8353B95DFD13FEB1D9 /* RegisterFeatures.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterFeatures.cpp; path = UnityBuild/Libraries/RegisterFeatures.cpp; sourceTree = "<group>"; };
 		F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = ios.xcconfig; path = generated/ios.xcconfig; sourceTree = "<group>"; };
 		F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
@@ -397,6 +395,9 @@
 				0589866AA94061F2E148E399 /* UnityViewControllerBaseTV.mm */,
 				C533A279880DB6A84750979F /* UnityViewControllerBaseiOS.h */,
 				585A62B76424ABC68F839B79 /* UnityViewControllerBaseiOS.mm */,
+				7D078966B66411EAF3E0FA3F /* iAD.h */,
+				6191E0E7276E6E65DE82A228 /* iAD.mm */,
+				DEEFAC7EF2342596541B73D3 /* iAD_Scripting.mm */,
 			);
 			name = UI;
 			sourceTree = "<group>";
@@ -497,6 +498,7 @@
 			isa = PBXGroup;
 			children = (
 				0B7DDD377CEE0F081F1DE12E /* UnityAdsConfig.h */,
+				0E406243E41A4F8C7258B8C3 /* UnityAdsUnityWrapper.h */,
 				DE853B150001873BCA2B52A4 /* UnityAdsUnityWrapper.mm */,
 			);
 			name = UnityAds;
@@ -517,6 +519,7 @@
 			name = PluginBase;
 			sourceTree = "<group>";
 		};
+
 		ADB3F99821160CF9C7AB93F5 /* Unity */ = {
 			isa = PBXGroup;
 			children = (
@@ -537,9 +540,6 @@
 				FE19262FE604627F75DD2149 /* FullScreenVideoPlayer.mm */,
 				4362874A55BD2944BDEEDC57 /* GlesHelper.h */,
 				657037EBA4B2A40C8B51CEC0 /* GlesHelper.mm */,
-				F5115C8987E6365C0D647749 /* IUnityGraphics.h */,
-				2B17DB8090B090FCA8D40B33 /* IUnityGraphicsMetal.h */,
-				01289A54A95A8D904086C2A0 /* IUnityInterface.h */,
 				E42E274EA44A59C0030BBA5C /* InternalProfiler.cpp */,
 				4C218432EC4CF649E54E45E5 /* InternalProfiler.h */,
 				498AE69526A42134628B874A /* MetalHelper.mm */,
@@ -550,10 +550,6 @@
 				2ED3A23019D52321994584D4 /* UnityInterface.h */,
 				9B1736CCB3C0D2DBFF7E5DC8 /* UnityMetalSupport.h */,
 				6B7BDDAF2EDF505368474983 /* UnityRendering.h */,
-				E372EEEBA2FE97E906B1FFD5 /* UnityReplayKit.h */,
-				3AEA98CAE9876CED034B3932 /* UnityReplayKit.mm */,
-				E0B19BBE8C4604940C707625 /* UnityReplayKit_Scripting.mm */,
-				8EC83E37FEBBFB2EDD172497 /* UnityTrampolineCompatibility.h */,
 				F3E61363A4DBDE2EFC124787 /* VideoPlayer.h */,
 				F0A4E509436FBFB63F42A329 /* VideoPlayer.mm */,
 				B9774ABD9C22A7918C80D42F /* WWWConnection.h */,
@@ -756,6 +752,8 @@
 				4916CEA9DB9FC7D2C14E0D6F /* UnityView.mm in Sources */,
 				89DF4310C616D94918EAA3DE /* UnityViewControllerBaseTV.mm in Sources */,
 				0955A7781F53E5F104DD220F /* UnityViewControllerBaseiOS.mm in Sources */,
+				88289F763E18C6692F0BD7DC /* iAD.mm in Sources */,
+				8A19EF260266ACC7F11CB6F3 /* iAD_Scripting.mm in Sources */,
 				1C38ED4D3AADCF7A4BE21CDB /* AVCapture.mm in Sources */,
 				A275A8CA1AF27D7AB35B25DC /* CMVideoSampling.mm in Sources */,
 				6E5962D7AAE351C7B344D0FE /* CVTextureCache.mm in Sources */,
@@ -770,8 +768,6 @@
 				1BBB49FE51053934A7D3C145 /* MetalHelper.mm in Sources */,
 				AEECFFC6A184AD0E15EFE8BA /* ObjCRuntime.mm in Sources */,
 				4AE3DECF81894DFB43446A54 /* OnDemandResources.mm in Sources */,
-				604B762AFB5CB3E928C3755E /* UnityReplayKit.mm in Sources */,
-				04352771EE7ADBBF547557A4 /* UnityReplayKit_Scripting.mm in Sources */,
 				B4BE576FA29A1C771F875973 /* VideoPlayer.mm in Sources */,
 				58B873D3DA9D60002D35F635 /* WWWConnection.mm in Sources */,
 				DB69BDC882CA17962DF3C327 /* UnityAdsUnityWrapper.mm in Sources */,

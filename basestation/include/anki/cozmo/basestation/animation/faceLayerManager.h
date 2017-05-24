@@ -41,6 +41,8 @@ public:
   
   FaceLayerManager(const CozmoContext* context);
   
+  Result Update(const Robot& robot);
+  
   // Add a procedural face "layer" to be combined with whatever is streaming
   Result AddLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms = 0);
   
@@ -97,6 +99,9 @@ private:
   s32            _nextBlink_ms         = 0;
   s32            _nextEyeDart_ms       = 0;
   Tag            _eyeDartTag           = NotAnimatingTag;
+  
+  // Face Glitches
+  f32 _nextFaceRepair_sec = 0.f;
   
   Util::RandomGenerator& _rng;
   

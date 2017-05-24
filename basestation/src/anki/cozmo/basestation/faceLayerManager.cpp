@@ -20,8 +20,10 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/scanlineDistorter.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 
 #include "clad/externalInterface/messageGameToEngineTag.h"
@@ -35,8 +37,24 @@
 
 namespace Anki {
 namespace Cozmo {
+
+namespace {
   
-CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, "AnimationStreamer", 30000);
+  static const char * const kConsoleGroupName = "FaceLayers";
+  
+  CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, kConsoleGroupName, 30000);
+  
+  CONSOLE_VAR(bool, kNeeds_ShowFaceRepairGlitches, kConsoleGroupName, false);
+  
+  // Face repair degree chosen randomly b/w these two values
+  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMin, kConsoleGroupName, 0.75f);
+  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMax, kConsoleGroupName, 3.00f);
+  
+  // Face repair frequence chosen randomly between these two values
+  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMin_sec, kConsoleGroupName, 0.5f);
+  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMax_sec, kConsoleGroupName, 1.5f);
+  
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 FaceLayerManager::FaceLayerManager(const CozmoContext* context)
@@ -354,6 +372,47 @@ void FaceLayerManager::KeepFaceAlive(Robot& robot, const std::map<LiveIdleAnimat
   
 } // KeepFaceAlive()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result FaceLayerManager::Update(const Robot& robot)
+{
+  // For prototyping. Eventually driven by actual needs system, not console var
+  // E.g. something like if(robot.GetNeedsManager().GetCurNeedsState().DoesFaceNeedRepair())
+  // Alternatively, just add a setter to FaceLayerManager for letting an external component
+  // specify the next glitch time and its "degree" (and move the Rand() calls to that
+  // component. The advantage of the latter is that it doesn't need to know about the Needs
+  // system at all.
+  if(kNeeds_ShowFaceRepairGlitches)
+  {
+    const f32 currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
+    if(currentTime_s > _nextFaceRepair_sec)
+    {
+      // TODO: Perhaps tie degree to current amount of repair need instead of being random
+      const f32 distortionDegree = _rng.RandDblInRange(kNeeds_FaceRepairDegreeMin, kNeeds_FaceRepairDegreeMax);
+      
+      ProceduralFace repairFace;
+      
+      AnimationStreamer::FaceTrack faceTrack;
+      TimeStamp_t totalOffset = 0;
+      bool moreDistortionFrames = false;
+      do {
+        TimeStamp_t timeInc;
+        moreDistortionFrames = ScanlineDistorter::GetNextDistortionFrame(distortionDegree, repairFace, timeInc);
+        totalOffset += timeInc;
+        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(repairFace, totalOffset));
+      } while(moreDistortionFrames);
+      
+      AddLayer("ScanlineDistortion", std::move(faceTrack));
+      
+      // TODO: Perhaps tie frequency of showing this to amount of repair need instead of being random
+      _nextFaceRepair_sec = currentTime_s + _rng.RandDblInRange(kNeeds_FaceRepairSpacingMin_sec,
+                                                                kNeeds_FaceRepairSpacingMax_sec);
+    }
+  }
+  
+  return RESULT_OK;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool FaceLayerManager::UpdateFace(ProceduralFace& procFace)
 {

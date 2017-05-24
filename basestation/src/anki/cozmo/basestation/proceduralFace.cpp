@@ -9,11 +9,15 @@
  * Copyright: Anki, Inc. 2015
  *
  **/
+
 #include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/scanlineDistorter.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/templateHelpers.h"
+
 #include "cozmo_anim_generated.h"
 
 namespace Anki {
@@ -50,6 +54,43 @@ ProceduralFace::ProceduralFace()
   }
   _eyeParams[WhichEye::Right] = _eyeParams[WhichEye::Left];
 }
+  
+ProceduralFace::ProceduralFace(const ProceduralFace& other)
+: _eyeParams(other._eyeParams)
+, _faceAngle_deg(other._faceAngle_deg)
+, _faceScale(other._faceScale)
+, _faceCenter(other._faceCenter)
+{
+  if(nullptr != other._scanlineDistorter)
+  {
+    _scanlineDistorter.reset(new ScanlineDistorter(*other._scanlineDistorter));
+  }
+}
+  
+ProceduralFace& ProceduralFace::operator=(const ProceduralFace &other)
+{
+  if(this != &other)
+  {
+    _eyeParams     = other._eyeParams;
+    _faceAngle_deg = other._faceAngle_deg;
+    _faceScale     = other._faceScale;
+    _faceCenter    = other._faceCenter;
+    
+    if(nullptr != other._scanlineDistorter)
+    {
+      // Deep copy other's ScanlineDistorter (since they are unique)
+      _scanlineDistorter.reset(new ScanlineDistorter(*other._scanlineDistorter));
+    }
+    else if(nullptr != _scanlineDistorter)
+    {
+      // Other does not have a ScanlineDistorter, but this does. Get rid of this's.
+      _scanlineDistorter.reset();
+    }
+  }
+  return *this;
+}
+  
+ProceduralFace::~ProceduralFace() = default;
   
 static const char* kFaceAngleKey = "faceAngle";
 static const char* kFaceCenterXKey = "faceCenterX";
@@ -227,7 +268,7 @@ inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value
 
 
 void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
-                                     float blendFraction, bool usePupilSaccades)
+                                 float blendFraction, bool usePupilSaccades)
 {
   assert(blendFraction >= 0.f && blendFraction <= 1.f);
   
@@ -266,6 +307,7 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
     LinearBlendHelper(face1.GetFacePosition().y(), face2.GetFacePosition().y(), blendFraction)});
   SetFaceScale({LinearBlendHelper(face1.GetFaceScale().x(), face2.GetFaceScale().x(), blendFraction),
     LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
+  
   
 } // Interpolate()
   
@@ -346,6 +388,27 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   _faceScale *= otherFace.GetFaceScale();
   _faceCenter += otherFace.GetFacePosition();
 
+  const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
+  const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
+  
+  if(thisHasScanlineDistortion && otherHasScanlineDistortion)
+  {
+    // Need to pick one. Convention, for whatever reason, will be to choose the one that distorts the
+    // midpoint of the eyes the most (in either direction)
+    const s32 thisMidPointShift  = std::abs(_scanlineDistorter->GetEyeDistortionAmount(0.5f));
+    const s32 otherMidPointShift = std::abs(otherFace._scanlineDistorter->GetEyeDistortionAmount(0.5f));
+    if(otherMidPointShift > thisMidPointShift)
+    {
+      // Other distorts more. Use it.
+      _scanlineDistorter.reset(new ScanlineDistorter(*otherFace._scanlineDistorter));
+    }
+  }
+  else if(otherHasScanlineDistortion)
+  {
+    DEV_ASSERT(!thisHasScanlineDistortion, "ProceduralFace.Combine.LogicError");
+    _scanlineDistorter.reset(new ScanlineDistorter(*otherFace._scanlineDistorter));
+  }
+  
   return *this;
 }
 
@@ -433,6 +496,16 @@ void ProceduralFace::EnableClippingWarning(bool enable)
     ClipWarnFcn = NoClipWarning;
   }
 }
-
+    
+void ProceduralFace::InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb)
+{
+  _scanlineDistorter.reset(new ScanlineDistorter(maxAmount_pix, noiseProb));
+}
+  
+void ProceduralFace::RemoveScanlineDistorter()
+{
+  _scanlineDistorter.reset();
+}
+  
 } // namespace Cozmo
 } // namespace Anki

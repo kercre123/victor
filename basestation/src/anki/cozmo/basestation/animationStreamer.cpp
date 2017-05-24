@@ -1056,6 +1056,13 @@ namespace Cozmo {
       cozmoContext->SetSdkStatus(SdkStatusType::Anim, std::string("Idle:") + _idleAnimation->GetName());
     }
     
+    // Update the face layers
+    lastResult = _faceLayerMgr->Update(robot);
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_ERROR("AnimationStreamer.Update.FaceLayerUpdateFailed", "");
+      // This shouldn't happen, but it's likely possible to continue streaming animation just fine...
+    }
+    
     // Always keep face alive, unless we have a streaming animation, since we rely on it
     // to do all face updating and we don't want to step on it's hand-designed toes.
     // Wait a 1/2 second before running after we finish the last streaming animation

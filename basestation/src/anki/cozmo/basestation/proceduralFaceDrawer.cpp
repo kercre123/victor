@@ -1,5 +1,8 @@
 #include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 
+#include "anki/cozmo/basestation/keyframe.h"
+#include "anki/cozmo/basestation/scanlineDistorter.h"
+
 #include "anki/vision/basestation/trackedFace.h"
 
 #include <opencv2/highgui/highgui.hpp>
@@ -46,25 +49,30 @@ namespace Cozmo {
   } // GetTransformationMatrix()
 
   
-  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& _faceData, WhichEye whichEye, Vision::Image& faceImg)
+  void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye, Vision::Image& faceImg,
+                                     Rectangle<f32>& eyeBoundingBox)
   {
-    assert(faceImg.GetNumRows() == ProceduralFace::HEIGHT &&
-           faceImg.GetNumCols() == ProceduralFace::WIDTH);
+    DEV_ASSERT_MSG(faceImg.GetNumRows() == ProceduralFace::HEIGHT &&
+                   faceImg.GetNumCols() == ProceduralFace::WIDTH,
+                   "ProceduralFaceDrawer.DrawEye.ImageWrongSize",
+                   "Face image should be %dx%d not %dx%d",
+                   ProceduralFace::WIDTH, ProceduralFace::HEIGHT,
+                   faceImg.GetNumCols(), faceImg.GetNumRows());
     
     const s32 eyeWidth  = ProceduralFace::NominalEyeWidth;
     const s32 eyeHeight = ProceduralFace::NominalEyeHeight;
     
     // Left/right here will be in terms of the left eye. We will mirror to get
     // the right eye. So
-    const s32 upLeftRadX  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 upLeftRadY  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
-    const s32 lowLeftRadX = std::round(_faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 lowLeftRadY = std::round(_faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const s32 upLeftRadX  = std::round(faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 upLeftRadY  = std::round(faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const s32 lowLeftRadX = std::round(faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 lowLeftRadY = std::round(faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
 
-    const s32 upRightRadX  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 upRightRadY  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
-    const s32 lowRightRadX = std::round(_faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
-    const s32 lowRightRadY = std::round(_faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const s32 upRightRadX  = std::round(faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 upRightRadY  = std::round(faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const s32 lowRightRadX = std::round(faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 lowRightRadY = std::round(faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
 
     
     //
@@ -114,8 +122,8 @@ namespace Cozmo {
     
     // 2. Lower lid poly
     {
-      const s32 lowerLidY = std::round(_faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight));
-      const f32 angleDeg = _faceData.GetParameter(whichEye, Parameter::LowerLidAngle);
+      const s32 lowerLidY = std::round(faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight));
+      const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::LowerLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
       const s32 yAngleAdj = -std::round(static_cast<f32>(eyeWidth)*.5f * std::tan(angleRad));
       lowerLidPoly = {
@@ -125,7 +133,7 @@ namespace Cozmo {
         {-eyeWidth/2 - 1, eyeHeight/2 - lowerLidY + yAngleAdj}, // Upper left corner
       };
       // Add bend:
-      const f32 yRad = std::round(_faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight));
+      const f32 yRad = std::round(faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight));
       if(yRad != 0) {
         const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, eyeHeight/2 - lowerLidY),
@@ -142,8 +150,8 @@ namespace Cozmo {
     
     // 3. Upper lid poly
     {
-      const s32 upperLidY = std::round(_faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight));
-      const f32 angleDeg = _faceData.GetParameter(whichEye, Parameter::UpperLidAngle);
+      const s32 upperLidY = std::round(faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight));
+      const f32 angleDeg = faceData.GetParameter(whichEye, Parameter::UpperLidAngle);
       const f32 angleRad = DEG_TO_RAD(angleDeg);
       const s32 yAngleAdj = -std::round(static_cast<f32>(eyeWidth)*.5f * std::tan(angleRad));
       upperLidPoly = {
@@ -153,7 +161,7 @@ namespace Cozmo {
         { eyeWidth/2 + 1, -eyeHeight/2 + upperLidY - yAngleAdj}, // Lower right corner
       };
       // Add bend:
-      const f32 yRad = std::round(_faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight));
+      const f32 yRad = std::round(faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight));
       if(yRad != 0) {
         const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, -eyeHeight/2 + upperLidY),
@@ -171,15 +179,18 @@ namespace Cozmo {
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
                                 Point<2, Value>(ProceduralFace::NominalLeftEyeX, ProceduralFace::NominalEyeY) :
                                 Point<2, Value>(ProceduralFace::NominalRightEyeX, ProceduralFace::NominalEyeY);
-    eyeCenter.x() += _faceData.GetParameter(whichEye, Parameter::EyeCenterX);
-    eyeCenter.y() += _faceData.GetParameter(whichEye, Parameter::EyeCenterY);
+    eyeCenter.x() += faceData.GetParameter(whichEye, Parameter::EyeCenterX);
+    eyeCenter.y() += faceData.GetParameter(whichEye, Parameter::EyeCenterY);
     
     // Apply rotation, translation, and scaling to the eye and lid polygons:
-    SmallMatrix<2, 3, f32> W = GetTransformationMatrix(_faceData.GetParameter(whichEye, Parameter::EyeAngle),
-                                                       _faceData.GetParameter(whichEye, Parameter::EyeScaleX),
-                                                       _faceData.GetParameter(whichEye, Parameter::EyeScaleY),
+    SmallMatrix<2, 3, f32> W = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
+                                                       faceData.GetParameter(whichEye, Parameter::EyeScaleX),
+                                                       faceData.GetParameter(whichEye, Parameter::EyeScaleY),
                                                        eyeCenter.x(),
                                                        eyeCenter.y());
+    
+    Point2f upperLeft(ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
+    Point2f bottomRight(0.f,0.f);
     
     for(auto poly : {&eyePoly, &lowerLidPoly, &upperLidPoly})
     {
@@ -189,11 +200,25 @@ namespace Cozmo {
           static_cast<f32>(whichEye == WhichEye::Left ? point.x : -point.x), static_cast<f32>(point.y), 1.f};
         point.x = std::round(temp.x());
         point.y = std::round(temp.y()) + _firstScanLine; // Move _with_ the scanlines
+        
+        upperLeft.x()   = std::min(upperLeft.x(),   (f32)std::floor(point.x));
+        bottomRight.x() = std::max(bottomRight.x(), (f32)std::ceil(point.x));
+        upperLeft.y()   = std::min(upperLeft.y(),   (f32)std::floor(point.y));
+        bottomRight.y() = std::max(bottomRight.y(), (f32)std::ceil(point.y));
       }
     }
+    
+    eyeBoundingBox = Rectangle<f32>(upperLeft, bottomRight);
 
     // Draw eye
     cv::fillConvexPoly(faceImg.get_CvMat_(), eyePoly, 255, 4);
+
+    // Add distortion noise
+    auto scanlineDistorter = faceData.GetScanlineDistorter();
+    if(nullptr != scanlineDistorter)
+    {
+      scanlineDistorter->AddOffNoise(W, eyeHeight, eyeWidth, faceImg);
+    }
     
     // Black out lids
     if(!upperLidPoly.empty()) {
@@ -205,37 +230,91 @@ namespace Cozmo {
     
   } // DrawEye()
   
-  Vision::Image ProceduralFaceDrawer::DrawFace(const ProceduralFace& _faceData)
+  Vision::Image ProceduralFaceDrawer::DrawFace(const ProceduralFace& faceData)
   {
     Vision::Image faceImg(ProceduralFace::HEIGHT, ProceduralFace::WIDTH);
     
     faceImg.FillWith(0);
     
-    DrawEye(_faceData, WhichEye::Left, faceImg);
-    DrawEye(_faceData, WhichEye::Right, faceImg);
+    Rectangle<f32> leftBBox, rightBBox;
+    DrawEye(faceData, WhichEye::Left,  faceImg, leftBBox);
+    DrawEye(faceData, WhichEye::Right, faceImg, rightBBox);
+    
+    s32 rowMin = ProceduralFace::HEIGHT-1, rowMax = 0;
     
     // Apply whole-face params
-    if(_faceData.GetFaceAngle() != 0 || !(_faceData.GetFacePosition() == 0) || !(_faceData.GetFaceScale() == 1.f)) {
+    if(faceData.GetFaceAngle() != 0 || !(faceData.GetFacePosition() == 0) || !(faceData.GetFaceScale() == 1.f)) {
       
-      SmallMatrix<2, 3, float> W = GetTransformationMatrix(_faceData.GetFaceAngle(),
-                                                           _faceData.GetFaceScale() .x(), _faceData.GetFaceScale() .y(),
-                                                           _faceData.GetFacePosition().x(), _faceData.GetFacePosition().y(),
+      SmallMatrix<2, 3, float> W = GetTransformationMatrix(faceData.GetFaceAngle(),
+                                                           faceData.GetFaceScale() .x(), faceData.GetFaceScale() .y(),
+                                                           faceData.GetFacePosition().x(), faceData.GetFacePosition().y(),
                                                            static_cast<f32>(ProceduralFace::WIDTH)*0.5f,
                                                            static_cast<f32>(ProceduralFace::HEIGHT)*0.5f);
       
       cv::warpAffine(faceImg.get_CvMat_(), faceImg.get_CvMat_(), W.get_CvMatx_(),
                      cv::Size(ProceduralFace::WIDTH, ProceduralFace::HEIGHT), cv::INTER_NEAREST);
+      
+      std::array<Quad2f,2> leftRightQuads;
+      leftBBox.GetQuad(leftRightQuads[0]);
+      rightBBox.GetQuad(leftRightQuads[1]);
+      
+      for(const auto& quad : leftRightQuads)
+      {
+        for(const auto& pt : quad) {
+          const Point2f& warpedPoint = W * Point3f(pt.x(), pt.y(), 1.f);
+          rowMin = std::min(rowMin, (s32)std::floor(warpedPoint.y()));
+          rowMax = std::max(rowMax, (s32)std::ceil(warpedPoint.y()));
+        }
+      }
+      
     }
+    else
+    {
+      rowMin = std::min(leftBBox.GetY(), rightBBox.GetY());
+      rowMax = std::max(leftBBox.GetYmax(), rightBBox.GetYmax());
+    }
+    
+    // Just to be safe:
+    rowMin = Util::Clamp(rowMin, 0, ProceduralFace::HEIGHT-1);
+    rowMax = Util::Clamp(rowMax, 0, ProceduralFace::HEIGHT-1);
 
     // Apply interlacing / scanlines at the end
     for(s32 i=_firstScanLine; i<ProceduralFace::HEIGHT; i+=2) {
       memset(faceImg.GetRow(i), 0, ProceduralFace::WIDTH);
     }
-
+    
+    // Distort the scanlines
+    auto scanlineDistorter = faceData.GetScanlineDistorter();
+    if(nullptr != scanlineDistorter)
+    {
+      if(rowMax > rowMin)
+      {
+        const f32 scale = 1.f / (rowMax - rowMin);
+        for(s32 row=rowMin; row < rowMax; ++row)
+        {
+          const f32 eyeFrac = (row - rowMin) * scale;
+          const s32 shift = scanlineDistorter->GetEyeDistortionAmount(eyeFrac);
+          
+          if(shift < 0)
+          {
+            u8* faceImg_row = faceImg.GetRow(row);
+            memmove(faceImg_row, faceImg_row-shift, ProceduralFace::WIDTH+shift);
+            memset(faceImg_row+ProceduralFace::WIDTH+shift, 0, -shift);
+          }
+          else if(shift > 0)
+          {
+            u8* faceImg_row = faceImg.GetRow(row);
+            memmove(faceImg_row+shift, faceImg_row, ProceduralFace::WIDTH-shift);
+            memset(faceImg_row, 0, shift);
+          }
+        }
+      }
+    }
+    
     return faceImg;
   } // DrawFace()
 
-  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& _faceData, TimeStamp_t& offset)
+  bool ProceduralFaceDrawer::GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset)
   {
     static ProceduralFace originalFace;
     
@@ -271,7 +350,7 @@ namespace Cozmo {
     
     if(paramIter == blinkParams.end()) {
       // Set everything back to original params
-      _faceData = originalFace;
+      faceData = originalFace;
       offset = 33;
       
       // Reset for next time
@@ -283,13 +362,13 @@ namespace Cozmo {
       if(paramIter == blinkParams.begin())
       {
         // Store the current pre-blink parameters before we muck with them
-        originalFace = _faceData;
+        originalFace = faceData;
       }
       
       for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
-        _faceData.SetParameter(whichEye, Parameter::EyeScaleX,
+        faceData.SetParameter(whichEye, Parameter::EyeScaleX,
                      originalFace.GetParameter(whichEye, Parameter::EyeScaleX) * paramIter->width);
-        _faceData.SetParameter(whichEye, Parameter::EyeScaleY,
+        faceData.SetParameter(whichEye, Parameter::EyeScaleY,
                      originalFace.GetParameter(whichEye, Parameter::EyeScaleY) * paramIter->height);
       }
       offset = paramIter->t;
@@ -307,9 +386,9 @@ namespace Cozmo {
           
           // Zero out the lids so they don't interfere with the "closed" line
           for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
-            _faceData.SetParameter(whichEye, Parameter::EyeCenterY, blinkHeight);
+            faceData.SetParameter(whichEye, Parameter::EyeCenterY, blinkHeight);
             for(auto lidParam : lidParams) {
-              _faceData.SetParameter(whichEye, lidParam, 0);
+              faceData.SetParameter(whichEye, lidParam, 0);
             }
           }
           break;
@@ -318,10 +397,10 @@ namespace Cozmo {
         {
           // Restore eye heights and lids
           for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
-            _faceData.SetParameter(whichEye, Parameter::EyeCenterY,
+            faceData.SetParameter(whichEye, Parameter::EyeCenterY,
                          originalFace.GetParameter(whichEye, Parameter::EyeCenterY));
             for(auto lidParam : lidParams) {
-              _faceData.SetParameter(whichEye, lidParam, originalFace.GetParameter(whichEye, lidParam));
+              faceData.SetParameter(whichEye, lidParam, originalFace.GetParameter(whichEye, lidParam));
             }
           }
           break;

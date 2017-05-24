@@ -5,7 +5,7 @@ PROTO WebotsKeyboardController [
   field SFFloat robotVolume 1.0
 
   # Animation to send
-  field SFString animationToSendName "ANIM_TEST"
+  field SFString animationToSendName "anim_neutral_eyes_01"
   field SFInt32  animationNumLoops 1
   field SFString idleAnimationName "ProceduralLive"
 

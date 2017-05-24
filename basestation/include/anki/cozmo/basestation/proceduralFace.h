@@ -36,6 +36,8 @@ namespace Cozmo {
 namespace ExternalInterface {
   struct DisplayProceduralFace;
 }
+
+class ScanlineDistorter;
   
 class ProceduralFace
 {
@@ -64,7 +66,11 @@ public:
   };
   
   ProceduralFace();
+  ProceduralFace(const ProceduralFace& other);
+  ProceduralFace& operator=(const ProceduralFace& other);
   
+  ~ProceduralFace();
+
   // Allows setting an instance of ProceduralFace to be used as reset values
   static void SetResetData(const ProceduralFace& newResetData);
   
@@ -96,6 +102,17 @@ public:
   // Get/Set the overall face scale
   void SetFaceScale(Point<2,Value> scale);
   Point<2,Value> const& GetFaceScale() const;
+  
+  // Initialize scanline distortion
+  void InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb);
+  
+  // Get rid of any scanline distortion
+  void RemoveScanlineDistorter();
+  
+  // Get ScanlineDistortion component. Returns nullptr if there is no scanline distortion
+  // (i.e. if InitScanlineDistortion has not been called)
+  ScanlineDistorter* GetScanlineDistorter()             { return _scanlineDistorter.get(); }
+  const ScanlineDistorter* GetScanlineDistorter() const { return _scanlineDistorter.get(); }
   
   // Set this face's parameters to values interpolated from two other faces.
   //   When BlendFraction == 0.0, the parameters will be equal to face1's.
@@ -135,6 +152,8 @@ public:
 private:
   
   std::array<EyeParamArray, 2> _eyeParams{{}};
+  
+  std::unique_ptr<ScanlineDistorter> _scanlineDistorter;
   
   Value           _faceAngle_deg = 0.0f;
   Point<2,Value>  _faceScale = 1.0f;
