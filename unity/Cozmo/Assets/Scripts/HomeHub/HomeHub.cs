@@ -197,13 +197,11 @@ namespace Cozmo.HomeHub {
         if (unlockInfo.ComingSoon) {
           OpenComingSoonAlert();
         }
+        else if (!UnlockablesManager.Instance.IsOSSupported(unlockInfo)) {
+          OpenOSUnsupportedDialog(unlockInfo, challenge);
+        }
         else if (!available) {
-          if (!UnlockablesManager.Instance.IsOSSupported(unlockInfo)) {
-            OpenOSUnsupportedDialog(unlockInfo, challenge);
-          }
-          else {
-            OpenNotAvailableDialog(unlockInfo, challenge);
-          }
+          OpenNotAvailableDialog(unlockInfo, challenge);
         }
         else {
           OpenAvailableDialog(challenge);
