@@ -1294,13 +1294,7 @@ MonoBehaviour:
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  ButtonGraphics:
-  - targetImage: {fileID: 0}
-    ignoreSprite: 1
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0, g: 0, b: 0, a: 0}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 0, g: 0, b: 0, a: 0}
+  ButtonGraphics: []
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
@@ -1371,19 +1365,7 @@ MonoBehaviour:
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  ButtonGraphics:
-  - targetImage: {fileID: 0}
-    ignoreSprite: 0
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0, g: 0, b: 0, a: 0}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 0, g: 0, b: 0, a: 0}
-  - targetImage: {fileID: 114311776715296418}
-    ignoreSprite: 0
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0, g: 0, b: 0, a: 0}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 0, g: 0, b: 0, a: 0}
+  ButtonGraphics: []
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
@@ -1745,8 +1727,8 @@ RectTransform:
   m_Children:
   - {fileID: 224622631222699834}
   - {fileID: 224746128540597848}
-  - {fileID: 224465189629536584}
   - {fileID: 224265449135886490}
+  - {fileID: 224465189629536584}
   m_Father: {fileID: 224784924605631254}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1822,7 +1804,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 224679180256894632}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1859,7 +1841,7 @@ RectTransform:
   m_LocalScale: {x: 1.0005642, y: 1.0005642, z: 1.0005642}
   m_Children: []
   m_Father: {fileID: 224124084837790662}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1877,8 +1859,8 @@ RectTransform:
   m_LocalScale: {x: 0.999936, y: 0.999936, z: 0.999936}
   m_Children:
   - {fileID: 224135127541417348}
-  - {fileID: 224311874722571076}
   - {fileID: 224637181138131494}
+  - {fileID: 224311874722571076}
   m_Father: {fileID: 224784924605631254}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1898,7 +1880,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 224299513423083114}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1974,7 +1956,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 224124084837790662}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -2066,7 +2048,7 @@ RectTransform:
   m_LocalScale: {x: 1.0005642, y: 1.0005642, z: 1.0005642}
   m_Children: []
   m_Father: {fileID: 224299513423083114}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -2085,8 +2067,8 @@ RectTransform:
   m_Children:
   - {fileID: 224478630852072514}
   - {fileID: 224398699614766076}
-  - {fileID: 224763488985695304}
   - {fileID: 224245506481812058}
+  - {fileID: 224763488985695304}
   m_Father: {fileID: 224784924605631254}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2143,7 +2125,7 @@ RectTransform:
   m_LocalScale: {x: 0.999936, y: 0.999936, z: 0.999936}
   m_Children: []
   m_Father: {fileID: 224679180256894632}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

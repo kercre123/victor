@@ -142,8 +142,8 @@ namespace Cozmo.Needs {
       needsState.curNeedLevel = new float[numNeedsId];
       needsState.curNeedBracket = new NeedBracketId[numNeedsId];
       for (int i = 0; i < numNeedsId; i++) {
-        needsState.curNeedLevel[i] = 0f;
-        needsState.curNeedBracket[i] = NeedBracketId.Critical;
+        needsState.curNeedLevel[i] = 100f;
+        needsState.curNeedBracket[i] = NeedBracketId.Full;
       }
 
       // Don't let them repair until they can fix on a connected robot

@@ -39,6 +39,13 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Color _GeneralBackgroundColor;
+
+      public static Color GeneralBackgroundColor {
+        get { return Instance._GeneralBackgroundColor; }
+      }
+
+      [SerializeField]
       private Color _CompleteTextColor;
 
       public static Color CompleteTextColor {

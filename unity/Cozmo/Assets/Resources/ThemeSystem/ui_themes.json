@@ -3373,8 +3373,8 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 48.0,
-                            "AutoSizingMax": 48.0,
+                            "AutoSizingMin": 55.0,
+                            "AutoSizingMax": 55.0,
                             "RectTF": {
                                 "AnchoredPosition": {
                                     "x": 0.0,
@@ -3966,6 +3966,157 @@
                             },
                             "SkinImage": true,
                             "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": false,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": false,
+                            "ButtonImageArray": [],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "App_Background",
+                            "Type": 1,
+                            "SkinImageColor": true,
+                            "ImageColor": {
+                                "r": 0.3686274588108063,
+                                "g": 0.3686274588108063,
+                                "b": 0.3686274588108063,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": false,
+                            "ImageResourceKey": "",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,

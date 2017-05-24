@@ -146,10 +146,6 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _BottomBarContainer;
 
-
-    [SerializeField]
-    private Anki.UI.AnkiTextLegacy _HexLabel;
-
     [SerializeField]
     private float _TopBarAnimationYOriginOffset;
 
@@ -254,7 +250,6 @@ namespace Cozmo.HomeHub {
       else {
         SwitchToTab(HomeTab.Play);
       }
-      UpdatePuzzlePieceCount();
 
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
@@ -319,16 +314,6 @@ namespace Cozmo.HomeHub {
       else {
         _EmotionChipTag.overrideSprite = _EmotionChipSprite_Mid;
       }
-    }
-
-    private void UpdatePuzzlePieceCount() {
-      IEnumerable<string> puzzlePieceIds = Cozmo.HexItemList.GetPuzzlePieceIds();
-      int totalNumberHexes = 0;
-      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      foreach (string puzzlePieceId in puzzlePieceIds) {
-        totalNumberHexes += playerInventory.GetItemAmount(puzzlePieceId);
-      }
-      _HexLabel.FormattingArgs = new object[] { totalNumberHexes };
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -493,10 +478,6 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-      HexItemList hexList = Cozmo.HexItemList.Instance;
-      if (hexList != null && HexItemList.IsPuzzlePiece(itemId)) {
-        UpdatePuzzlePieceCount();
-      }
       CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 

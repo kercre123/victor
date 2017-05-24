@@ -64,3 +64,8 @@ MonoBehaviour:
       _EnumValueAsString: activities_view
       _EnumValue: 22
     _AssetDataName: ActivitiesView
+  _SparksViewPrefabData:
+    _AssetBundle:
+      _EnumValueAsString: sparks_view
+      _EnumValue: 23
+    _AssetDataName: SparksView

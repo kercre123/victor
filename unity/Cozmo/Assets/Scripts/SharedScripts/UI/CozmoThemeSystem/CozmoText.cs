@@ -79,6 +79,12 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
   }
 
   protected override void GenerateTextMesh() {
+    // don't do any extra work if m_text is not a loc key
+    if (!Localization.IsLocalizationKey(m_text)) {
+      base.GenerateTextMesh();
+      return;
+    }
+
 #if UNITY_EDITOR
     if (m_text != DisplayText && !UnityEditor.EditorApplication.isPlaying) {
       if (!sLocStringsLoaded) {

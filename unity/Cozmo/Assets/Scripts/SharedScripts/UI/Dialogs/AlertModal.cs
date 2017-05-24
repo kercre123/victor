@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using UnityEngine.UI;
 using Anki.UI;
@@ -36,6 +36,10 @@ namespace Cozmo {
       private void Awake() {
         if (_OptionalCloseDialogButton != null) {
           _OptionalCloseDialogButton.gameObject.SetActive(false);
+        }
+
+        if (_OptionalCloseDialogCozmoButton != null) {
+          _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
         }
 
         if (_Icon != null) {
@@ -110,6 +114,14 @@ namespace Cozmo {
         if (_OptionalCloseDialogButton != null) {
           _OptionalCloseDialogButton.gameObject.SetActive(showCloseButton);
           _OptionalCloseDialogButton.DASEventViewController = DASEventDialogName;
+        }
+        else {
+          DAS.Warn("AlertModal.InitializeCloseButton.OptionalCloseDialogButtonNull", "Tried to set up a button that doesn't exist in this AlertModal! " + gameObject.name);
+        }
+
+        if (_OptionalCloseDialogCozmoButton != null) {
+          _OptionalCloseDialogCozmoButton.gameObject.SetActive(showCloseButton);
+          _OptionalCloseDialogCozmoButton.DASEventViewController = DASEventDialogName;
         }
         else {
           DAS.Warn("AlertModal.InitializeCloseButton.OptionalCloseDialogButtonNull", "Tried to set up a button that doesn't exist in this AlertModal! " + gameObject.name);

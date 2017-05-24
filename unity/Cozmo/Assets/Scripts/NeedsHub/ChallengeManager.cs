@@ -62,6 +62,16 @@ namespace Cozmo.Challenge {
       return activitiesData;
     }
 
+    public List<ChallengeStatePacket> GetMinigames() {
+      List<ChallengeStatePacket> minigamesData = new List<ChallengeStatePacket>();
+      foreach (var kvp in _ChallengeStatesById) {
+        if (kvp.Value.Data.IsMinigame) {
+          minigamesData.Add(kvp.Value);
+        }
+      }
+      return minigamesData;
+    }
+
     #region Unlock State Update
 
     private void RefreshUnlockInfo(object message) {

@@ -1,6 +1,7 @@
 ﻿using Anki.Assets;
 using Anki.Cozmo;
 using Cozmo.Needs.Activities.UI;
+using Cozmo.Needs.Sparks.UI;
 using Cozmo.Challenge;
 using Cozmo.Needs.UI;
 using Cozmo.Util;
@@ -22,7 +23,11 @@ namespace Cozmo.Hub {
     [SerializeField]
     private GameObjectDataLink _ActivitiesViewPrefabData;
 
+    [SerializeField]
+    private GameObjectDataLink _SparksViewPrefabData;
+
     private ActivitiesView _ActivitiesViewInstance;
+    private SparksView _SparksViewInstance;
 
     private AnimationTrigger _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
 
@@ -66,6 +71,10 @@ namespace Cozmo.Hub {
 
       if (_ActivitiesViewInstance != null) {
         DeregisterActivitiesViewEvents();
+      }
+
+      if (_SparksViewInstance != null) {
+        DeregisterSparksViewEvents();
       }
 
       // Destroy self
@@ -122,6 +131,7 @@ namespace Cozmo.Hub {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
         _NeedsViewHubInstance.OnStartChallengeClicked += HandleStartRandomChallenge;
         _NeedsViewHubInstance.OnActivitiesButtonClicked += HandleActivitiesButtonClicked;
+        _NeedsViewHubInstance.OnSparksButtonClicked += HandleSparksButtonClicked;
 
         ResetRobotToFreeplaySettings();
 
@@ -191,11 +201,17 @@ namespace Cozmo.Hub {
         _ActivitiesViewInstance.DialogCloseAnimationFinished += StartLoadChallenge;
         _ActivitiesViewInstance.CloseDialog();
       }
+
+      if (_SparksViewInstance != null) {
+        DeregisterSparksViewEvents();
+        _SparksViewInstance.DialogCloseAnimationFinished += StartLoadChallenge;
+      }
     }
 
     private void DeregisterNeedsViewEvents() {
       _NeedsViewHubInstance.OnStartChallengeClicked -= HandleStartRandomChallenge;
       _NeedsViewHubInstance.OnActivitiesButtonClicked -= HandleActivitiesButtonClicked;
+      _NeedsViewHubInstance.OnSparksButtonClicked -= HandleSparksButtonClicked;
       _NeedsViewHubInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
     }
 
@@ -211,6 +227,12 @@ namespace Cozmo.Hub {
         _ActivitiesViewInstance = null;
       }
       AssetBundleManager.Instance.UnloadAssetBundle(_ActivitiesViewPrefabData.AssetBundle);
+
+      if (_SparksViewInstance != null) {
+        DeregisterSparksViewEvents();
+        _SparksViewInstance = null;
+      }
+      AssetBundleManager.Instance.UnloadAssetBundle(_SparksViewPrefabData.AssetBundle);
 
       if (!_ChallengeManager.LoadChallenge()) {
         StartLoadNeedsHubView();
@@ -289,13 +311,19 @@ namespace Cozmo.Hub {
     private void ShowActivitiesView(GameObject activitiesViewPrefab) {
       UIManager.OpenView(activitiesViewPrefab.GetComponent<ActivitiesView>(), (newActivitiesView) => {
         _ActivitiesViewInstance = (ActivitiesView)newActivitiesView;
-        _ActivitiesViewInstance.OnBackButtonPressed += HandleBackToNeedsPressed;
+        _ActivitiesViewInstance.OnBackButtonPressed += HandleBackToNeedsFromActivitiesPressed;
         _ActivitiesViewInstance.InitializeActivitiesView(_ChallengeManager.GetActivities());
         _ActivitiesViewInstance.OnActivityButtonPressed += HandleStartActivityPressed;
       });
     }
 
-    private void HandleBackToNeedsPressed() {
+    private void DeregisterActivitiesViewEvents() {
+      _ActivitiesViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromActivitiesPressed;
+      _ActivitiesViewInstance.OnActivityButtonPressed -= HandleStartActivityPressed;
+      _ActivitiesViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+    }
+
+    private void HandleBackToNeedsFromActivitiesPressed() {
       DeregisterActivitiesViewEvents();
       StartLoadNeedsHubView();
     }
@@ -304,10 +332,53 @@ namespace Cozmo.Hub {
       PlayChallenge(challengeId, wasRequest: false);
     }
 
-    private void DeregisterActivitiesViewEvents() {
-      _ActivitiesViewInstance.OnBackButtonPressed -= HandleBackToNeedsPressed;
-      _ActivitiesViewInstance.OnActivityButtonPressed -= HandleStartActivityPressed;
-      _ActivitiesViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+    #endregion
+
+    #region OpenSparksView
+
+
+    private void HandleSparksButtonClicked() {
+      DeregisterNeedsViewEvents();
+      // Start load sparks view
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_SparksViewPrefabData.AssetBundle, LoadSparksView);
+    }
+
+    private void LoadSparksView(bool assetBundleSuccess) {
+      if (assetBundleSuccess) {
+        _SparksViewPrefabData.LoadAssetData((GameObject sparksViewPrefab) => {
+          // this can be null if, by the time this callback is called, NeedsHub has been destroyed.
+          // This seems to be happening in some disconnection cases and a NRE is thrown
+          if (this != null) {
+            if (sparksViewPrefab != null) {
+              ShowSparksView(sparksViewPrefab);
+            }
+            else {
+              DAS.Error("NeedsHub.LoadSparksView", "sparksViewPrefab is null");
+            }
+          }
+        });
+      }
+      else {
+        DAS.Error("NeedsHub.LoadSparksView", "Failed to load asset bundle " + _SparksViewPrefabData.AssetBundle);
+      }
+    }
+
+    private void ShowSparksView(GameObject sparksViewPrefab) {
+      UIManager.OpenView(sparksViewPrefab.GetComponent<SparksView>(), (newSparksView) => {
+        _SparksViewInstance = (SparksView)newSparksView;
+        _SparksViewInstance.OnBackButtonPressed += HandleBackToNeedsFromSparksPressed;
+        _SparksViewInstance.InitializeSparksView(_ChallengeManager.GetMinigames());
+      });
+    }
+
+    private void DeregisterSparksViewEvents() {
+      _SparksViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromSparksPressed;
+      _SparksViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
+    }
+
+    private void HandleBackToNeedsFromSparksPressed() {
+      DeregisterSparksViewEvents();
+      StartLoadNeedsHubView();
     }
 
     #endregion

@@ -655,6 +655,17 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region SparkViewStrings
+
+  public const string kSparksViewTitle = "sparksView.title";
+  public const string kSparksViewAskForGameCardTitle = "sparksView.askForGameCard.title";
+  public const string kSparksViewAskForTrickCardTitle = "sparksView.askForTrickCard.title";
+  public const string kSparksViewListAbilitiesCardTitle = "sparksView.listAbilitiesCard.title";
+  public const string kSparksViewListAbilitiesCardDescription = "sparksView.listAbilitiesCard.description";
+  public const string kSparksViewSparkCountLabel = "sparksView.sparkCount.label";
+
+  #endregion
+
   #region StatStrings
 
   public const string kProgStatBond = "progStat.Bond";

@@ -1,0 +1,39 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "sparksView.title": {
+    "translation": "Play"
+  },
+  "sparksView.askForGameCard.title": {
+    "translation": "ASK COZMO FOR A GAME"
+  },
+  "sparksView.askForTrickCard.title": {
+    "translation": "ASK COZMO FOR A TRICK"
+  },
+  "sparksView.listAbilitiesCard.title": {
+    "translation": "LIST ABILITIES"
+  },
+  "sparksView.listAbilitiesCard.description": {
+    "translation": "List abilities description FPO"
+  },
+  "sparksView.sparkCount.label": {
+    "translation": "Sparks Available"
+  }
+}

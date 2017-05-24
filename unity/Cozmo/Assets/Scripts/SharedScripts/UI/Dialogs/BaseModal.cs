@@ -27,6 +27,11 @@ namespace Cozmo {
       [SerializeField]
       protected CozmoButtonLegacy _OptionalCloseDialogButton;
 
+      // so we can make modals with new buttons in new skin without
+      // breaking legacy modals.
+      [SerializeField]
+      protected CozmoButton _OptionalCloseDialogCozmoButton;
+
       [SerializeField]
       private bool _PreventForceClose = false;
       public bool PreventForceClose { get { return _PreventForceClose; } }
@@ -72,6 +77,10 @@ namespace Cozmo {
       private void SetupCloseButton() {
         if (_OptionalCloseDialogButton != null) {
           _OptionalCloseDialogButton.Initialize(HandleUserClose, "default_close_view_button", DASEventDialogName);
+        }
+
+        if (_OptionalCloseDialogCozmoButton != null) {
+          _OptionalCloseDialogCozmoButton.Initialize(HandleUserClose, "defualt_close_view_button", DASEventDialogName);
         }
       }
 

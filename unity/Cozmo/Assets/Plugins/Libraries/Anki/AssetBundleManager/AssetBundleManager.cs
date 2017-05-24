@@ -657,7 +657,8 @@ namespace Anki {
       platform_specific_start_view_sprites,
       needs_hub_connection,
       needs_hub_view,
-      activities_view
+      activities_view,
+      sparks_view
     }
 
     [Serializable]

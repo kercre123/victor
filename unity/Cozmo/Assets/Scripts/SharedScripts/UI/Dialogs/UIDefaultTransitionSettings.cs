@@ -114,6 +114,7 @@ namespace Cozmo {
         if (easing == Ease.Unset) {
           easing = _FadeInEasing;
         }
+        targetCanvas.alpha = 0f;
         return CreateFadeTween(targetCanvas, 1f, easing, duration);
       }
 
