@@ -196,7 +196,7 @@
 		6F54323A1C8928C4006D3724 /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 		6FC123551E9328B0008DDC49 /* libiPhone-lib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libiPhone-lib.a"; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/libiPhone-lib.a"; sourceTree = "<group>"; };
 		6FC123571E932B6F008DDC49 /* MediaToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaToolbox.framework; path = System/Library/Frameworks/MediaToolbox.framework; sourceTree = SDKROOT; };
-		70CFC6121ED500CE001C0FAA /* libunity-generated.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libunity-generated.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		70CFC6121ED500CE001C0FAA /* libunity-generated.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libunity-generated.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		70F9A413DE33B396BAF2C57A /* DisplayManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DisplayManager.h; path = UnityBuild/Classes/Unity/DisplayManager.h; sourceTree = "<group>"; };
 		7DFBA0F8CB1070730F39FE86 /* EAGLContextHelper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = EAGLContextHelper.mm; path = UnityBuild/Classes/Unity/EAGLContextHelper.mm; sourceTree = "<group>"; };
 		7E0A6A38E5B5664A84454B0B /* LaunchScreen-iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "LaunchScreen-iPhone.xib"; path = "UnityBuild/LaunchScreen-iPhone.xib"; sourceTree = "<group>"; };
@@ -836,6 +836,8 @@
 					"-weak-lSystem",
 					"-force_load",
 					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
+					"-force_load",
+					"${BUILT_PRODUCTS_DIR}/libunity-generated.a",
 				);
 				PRODUCT_NAME = cozmo;
 				SDKROOT = iphoneos;
@@ -862,6 +864,7 @@
 				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -896,9 +899,12 @@
 					"-weak-lSystem",
 					"-force_load",
 					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
+					"-force_load",
+					"${BUILT_PRODUCTS_DIR}/libunity-generated.a",
 				);
 				PRODUCT_NAME = cozmo;
 				SDKROOT = iphoneos;
+				SEPARATE_STRIP = YES;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				UNITY_RUNTIME_VERSION = 5.2.2f1;
@@ -942,6 +948,7 @@
 				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -974,9 +981,12 @@
 					"-weak_framework",
 					CoreMotion,
 					"-weak-lSystem",
+					"-force_load",
+					"${BUILT_PRODUCTS_DIR}/libunity-generated.a",
 				);
 				PRODUCT_NAME = cozmo;
 				SDKROOT = iphoneos;
+				SEPARATE_STRIP = YES;
 				SUPPORTED_PLATFORMS = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				UNITY_RUNTIME_VERSION = 5.2.2f1;

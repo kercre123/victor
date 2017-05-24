@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.6)
 project(unitygenerated-il2cpp)
 
-set(CXX_FLAGS "-std=c++11 -stdlib=libc++")
+set(CXX_FLAGS "-Os -std=c++11 -stdlib=libc++")
 set(CXX_FLAGS_IL2CPP "-Wno-return-type -Wno-extern-initializer")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -miphoneos-version-min=8.0")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -miphoneos-version-min=8.0")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${CXX_FLAGS} ${CXX_FLAGS_IL2CPP}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
