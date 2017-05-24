@@ -41,7 +41,9 @@ public class UnlockablesManager : MonoBehaviour {
   private int[] _FaceSlotUnlockMap;
 
   public bool IsNewUnlock(Anki.Cozmo.UnlockId uID) {
-    return DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Contains(uID);
+    // In the case that you're connected to a cozmo that unlocked something and then connect to another cozmo with same device.
+    // only show the new arrow if it's a known unlock
+    return IsUnlocked(uID) && DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Contains(uID);
   }
 
   private void OnDestroy() {
