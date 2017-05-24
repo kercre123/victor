@@ -85,10 +85,12 @@ namespace Cozmo.Challenge.DroneMode {
           _HowToPlaySlideAnimators[_CurrentSlideIndex].enabled = false;
         }
 
+        int priorMostProgressedSlide = _MostProgressedSlide;
+
         SetCurrentSlide(_CurrentSlideIndex + 1);
 
         if (_IsPlayingAnimations) {
-          if (_CurrentSlideIndex == _MostProgressedSlide) {
+          if (_CurrentSlideIndex == _MostProgressedSlide && priorMostProgressedSlide != _MostProgressedSlide) {
             _HowToPlaySlideAnimators[_CurrentSlideIndex].ListenForAnimationEnd(HandleSlideAnimationEnd);
             _NextSlideButton.Interactable = false;
             _PreviousSlideButton.Interactable = false;
