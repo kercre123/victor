@@ -27,6 +27,7 @@ from configure_engine import ArgumentParser, generate_gyp, configure
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.android
+import ankibuild.cmake
 import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.unity
@@ -306,6 +307,11 @@ def parse_game_arguments():
                         dest='override_sdk_dir',
                         help='Override the Android SDK directory')
 
+    parser.add_argument('--with-cmake',
+                        default=None,
+                        action='store',
+                        dest='cmake_bin',
+                        help='path to cmake binary')
 
     return parser.parse_args()
 
@@ -385,6 +391,9 @@ class GamePlatformConfiguration(object):
                                                       'OpenCV-android-sdk', 'sdk', 'native', 'libs')
 
         if platform == 'ios':
+            if not options.cmake_bin:
+                options.cmake_bin = ankibuild.cmake.setup_cmake("3.8.1")
+
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             if options.selected_script_engine == 'il2cpp':
                 proj_name = '{0}Unity_{1}.xcodeproj'
@@ -513,11 +522,18 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
 
         elif self.platform == 'ios':
+            unity_generated_xcode_proj = os.path.join(self.unity_xcode_project_dir,
+                                                      'unity-generated',  'unity-generated.xcodeproj')
+            rel_unity_generated_xcode_proj = os.path.relpath(unity_generated_xcode_proj, self.platform_output_dir)
+            workspace.add_project(rel_unity_generated_xcode_proj)
+
             relative_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.platform_output_dir)
             workspace.add_project(relative_unity_xcode_project)
 
             workspace.add_scheme_ios(self.scheme, relative_unity_xcode_project)
 
+            unity_home = os.path.join(os.path.dirname(self.options.unity_binary_path), '..', '..', '..')
+            unity_home = os.path.abspath(unity_home)
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',  # {0}'.format(PRODUCT_NAME),
@@ -525,6 +541,8 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'CORETECH_EXTERNAL_DIR={0}'.format(CTE_ROOT),
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
+                'ANKI_BUILD_UNITY_HOME={0}'.format(unity_home),
+                'ANKI_BUILD_CMAKE_BIN={0}'.format(self.options.cmake_bin),
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_dir),
