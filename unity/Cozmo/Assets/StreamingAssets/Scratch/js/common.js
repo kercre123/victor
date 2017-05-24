@@ -83,6 +83,7 @@
         closeButton.addEventListener('click', function () {
             workspace.playAudio('click');
             clearInterval(window.saveProjectTimerId);
+            window.saveCozmoUserProject();
             window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
         });
         closeButton.addEventListener('touchmove', function (e) {

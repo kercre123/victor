@@ -57,8 +57,6 @@
 
     /* Save all scripts currently on the workspace into a Cozmo Code Lab user project in the Unity user profile.
      * Call this method to save both new and existing projects.
-     *
-     * @param projectUUID If the project already has a projectUUID created by Unity, pass it to this method. If not, one will be created if appropriate.
      */
     window.saveCozmoUserProject = function() {
         if (window.isSampleProject) {
