@@ -754,6 +754,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void WebViewLoaded(string text) {
       Debug.Log(string.Format("CallOnLoaded[{0}]", text));
+      RequestToOpenProjectOnWorkspace cachedRequestToOpenProject = _RequestToOpenProjectOnWorkspace;
 
       switch (_RequestToOpenProjectOnWorkspace) {
       case RequestToOpenProjectOnWorkspace.CreateNewProject:
@@ -804,16 +805,27 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
+      // If we are displaying workspace, give the webview a little time to get ready.
+      uint delayInSeconds = 0;
+      if (cachedRequestToOpenProject != RequestToOpenProjectOnWorkspace.DisplayNoProject) {
+#if UNITY_EDITOR || UNITY_IOS
+        delayInSeconds = 1;
+#elif UNITY_ANDROID
+        delayInSeconds = 2;
+#endif
+      }
+      Invoke("UnhideWebView", delayInSeconds);
+    }
+
+    void UnhideWebView() {
       SharedMinigameView.HideMiddleBackground();
 
       // Add in black screen, so it looks like less of a pop.
       SharedMinigameView.ShowFullScreenGameStateSlide(_BlackScreenPrefab, "BlackScreen");
       SharedMinigameView.HideSpinnerWidget();
 
-      // TODO Need to pause before setting this?
       _WebViewObjectComponent.SetVisibility(true);
+
     }
-
   }
-
 }
