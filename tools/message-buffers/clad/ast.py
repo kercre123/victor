@@ -498,7 +498,10 @@ class EnumConceptDecl(Decl):
     def members(self):
         return self.member_list.members
 
-    attr_names = tuple(['name', 'fully_qualified_name', 'return_type', 'enum', 'hash_str'])
+    def return_type_as_string(self):
+        return self.return_type.type
+
+    attr_names = tuple(['name', 'fully_qualified_name', 'return_type_as_string', 'enum', 'hash_str'])
 
 class EnumConceptMemberList(Node):
     def __init__(self, members, coord):
