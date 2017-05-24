@@ -62,6 +62,7 @@ enum uint_32 Freeplay_Mood
   Busy = 1427625958,
   Chill = 4294400669,
   Cubeinteract = 889740396,
+  Dancing = 386094975,
   Frustrated = 1309079467,
   Guard_Dog = 1030326287,
   Happy = 1427264549,
