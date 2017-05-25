@@ -667,7 +667,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: 
+  _LinkedComponentId: Spark_Count_Text
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -1685,7 +1685,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: 
+  _LinkedComponentId: General_Description_Text
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -2624,8 +2624,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 439.99884, y: 83.01414}
-  m_SizeDelta: {x: 767, y: 123}
+  m_AnchoredPosition: {x: 439.99884, y: 92}
+  m_SizeDelta: {x: 767, y: 105}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224956042342972012
 RectTransform:

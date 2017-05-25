@@ -88,6 +88,7 @@ namespace Anki.Core.Editor.Components {
         _ScriptTarget.OverrideOutlineColor = EditorGUILayout.Toggle("Use Prefab Outline Tint", _ScriptTarget.OverrideOutlineColor);
         _ScriptTarget.OverrideOutlineThickness = EditorGUILayout.Toggle("Use Prefab Outline Thickness", _ScriptTarget.OverrideOutlineThickness);
         _ScriptTarget.OverrideSkinFontSize = EditorGUILayout.Toggle("Use Prefab Font Size", _ScriptTarget.OverrideSkinFontSize);
+        _ScriptTarget.OverrideSkinAutoSizing = EditorGUILayout.Toggle("Use Prefab Auto Sizing", _ScriptTarget.OverrideSkinAutoSizing);
         _ScriptTarget.OverrideSkinFontStyle = EditorGUILayout.Toggle("Use Prefab Font Style", _ScriptTarget.OverrideSkinFontStyle);
         _ScriptTarget.OverrideSkinTextAlignment = EditorGUILayout.Toggle("Use Prefab Text Alignment", _ScriptTarget.OverrideSkinTextAlignment);
         _ScriptTarget.OverrideSkinTextOverflow = EditorGUILayout.Toggle("Use Prefab Text Overflow", _ScriptTarget.OverrideSkinTextOverflow);

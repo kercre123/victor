@@ -8,13 +8,19 @@ namespace Cozmo.Needs.Sparks.UI {
     private const float kLockedAlpha = 0.5f;
 
     [SerializeField]
-    private CozmoImage _SparkIcon;
+    private CozmoImage _TrickIcon;
 
     [SerializeField]
-    private CozmoText _SparkTitleText;
+    private CozmoText _TrickTitleText;
 
     [SerializeField]
     private CozmoButton _SparksButton;
+
+    [SerializeField]
+    private CozmoText _SparkCountText;
+
+    [SerializeField]
+    private GameObject _SparkCostContainer;
 
     [SerializeField]
     private SparksDetailModal _SparksDetailModalPrefab;
@@ -30,20 +36,23 @@ namespace Cozmo.Needs.Sparks.UI {
 
       if (unlockInfo.ComingSoon) {
         _SparksButton.onClick.AddListener(HandleTappedComingSoon);
-        _SparkIcon.color = new Color(_SparkIcon.color.r, _SparkIcon.color.g, _SparkIcon.color.b, kLockedAlpha);
+        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kLockedAlpha);
+        _SparkCostContainer.gameObject.SetActive(false);
       }
       else if (UnlockablesManager.Instance.IsUnlocked(unlockInfo.Id.Value)) {
         _SparksButton.onClick.AddListener(HandleTappedUnlocked);
       }
       else {
         _SparksButton.onClick.AddListener(HandleTappedLocked);
-        _SparkIcon.color = new Color(_SparkIcon.color.r, _SparkIcon.color.g, _SparkIcon.color.b, kLockedAlpha);
+        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kLockedAlpha);
       }
 
-      _SparkIcon.sprite = unlockInfo.CoreUpgradeIcon;
-      _SparkTitleText.text = Localization.Get(unlockInfo.TitleKey);
+      _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
+      _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
       _UnlockInfo = unlockInfo;
 
+      // Always request a flat cost for performing a trick
+      _SparkCountText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeededMin);
     }
 
     private void HandleTappedComingSoon() {
