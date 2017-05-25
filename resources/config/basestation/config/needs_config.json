@@ -1,7 +1,7 @@
 {
   "MinimumNeedLevel": 0.00,
   "MaximumNeedLevel": 1.00,
-  "DecayPeriodSeconds": 3.0, // How frequently to decay needs while connected (3 for testing; soon to be 60)
+  "DecayPeriodSeconds": 60.0, // How frequently to decay needs while connected
 
   // Starting values for each need (when cozmo is born)
   "InitialNeedsLevels": {
