@@ -38,6 +38,10 @@
   {
     "feature": "Laser",
     "enabled": false
+  },
+  {
+    "feature": "Singing",
+    "enabled": false
   }
 ]
 

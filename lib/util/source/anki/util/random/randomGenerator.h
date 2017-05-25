@@ -37,17 +37,17 @@ public:
   double RandDbl(double maxVal = 1.0) const;
 
   // Returns a random floating point number in the range [minVal, maxVal]
-  double RandDblInRange(double minVal, double maxVal);
+  double RandDblInRange(double minVal, double maxVal) const;
 
   // Returns a random integer in the range [0,numVals-1]
-  int RandInt(int numVals);
+  int RandInt(int numVals) const;
 
   // Generates number in the whole range of give type
   template <typename T>
   T RandT();
   
   // Generate a random integer in range [minVal, maxVal]
-  int RandIntInRange(int minVal, int maxVal);
+  int RandIntInRange(int minVal, int maxVal) const;
 
 private:
 

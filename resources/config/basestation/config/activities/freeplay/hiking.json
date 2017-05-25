@@ -124,6 +124,6 @@
   {
     "type" : "Simple",
     "activityShouldEndDurationSecs" : 60.0, // hiking will automatically finish when it completes, so a higher max time is ok
-    "cooldownSecs" : 15.0
+    "cooldownBaseSecs" : 15.0
   }
 }

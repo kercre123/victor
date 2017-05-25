@@ -143,13 +143,14 @@
       { "activityID" : "ObjectTapInteraction", "activityPriority" : 0},
       { "activityID" : "PutDownDispatch", "activityPriority"      : 1},
       { "activityID" : "Socialize", "activityPriority"            : 2},
-      { "activityID" : "PlayWithHumans", "activityPriority"       : 3},
+      { "activityID" : "Singing", "activityPriority"              : 3},
+      { "activityID" : "PlayWithHumans", "activityPriority"       : 4},
       // pyramid is "cooler" than playing alone or hiking for the user, but it
       // has fairly restrictive runnability and a high cooldown
-      { "activityID" : "BuildPyramid", "activityPriority"         : 4},
-      { "activityID" : "PlayAlone", "activityPriority"            : 5},
-      { "activityID" : "Hiking", "activityPriority"               : 6},
-      { "activityID" : "NothingToDo", "activityPriority"          : 7}
+      { "activityID" : "BuildPyramid", "activityPriority"         : 5},
+      { "activityID" : "PlayAlone", "activityPriority"            : 6},
+      { "activityID" : "Hiking", "activityPriority"               : 7},
+      { "activityID" : "NothingToDo", "activityPriority"          : 8}
     ]
   }
 ]

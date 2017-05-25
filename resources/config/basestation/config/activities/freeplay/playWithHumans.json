@@ -202,7 +202,7 @@
     "type" : "PlayWithHumans",
     // do not go back immediately even if still feels playful
     // (it should be possible to fire with other triggers, like pick up)
-    "cooldownSecs" : 30.0,
+    "cooldownBaseSecs" : 30.0,
     // require a minimum playful score
     "requiredMinStartMoodScore" : 0.5,
     "startMoodScorer" :

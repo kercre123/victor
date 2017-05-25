@@ -10,7 +10,7 @@
     // stop running after this time (want to stop, don't actually stop until behavior is done)
     // NOTE: this should never really be hit, only if a bunch of new behaviors get added
     "activityShouldEndDurationSecs": 300.0,
-    "cooldownSecs" : 300.0
+    "cooldownBaseSecs" : 300.0
   },
   "setupChooser" :
   {

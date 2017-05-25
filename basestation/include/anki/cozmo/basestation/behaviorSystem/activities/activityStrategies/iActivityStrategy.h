@@ -12,6 +12,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Activities_ActivityStrategies_IActivityStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_Activities_ActivityStrategies_IActivityStrategy_H__
 
+#include "clad/types/featureGateTypes.h"
+
 #include "util/signals/simpleSignal_fwd.h"
 
 #include "json/json-forwards.h"
@@ -35,7 +37,9 @@ public:
   virtual ~IActivityStrategy();
 
   // true when this activity would be happy to start, false if it doens't want to be fired now
-  bool WantsToStart(const Robot& robot, float lastTimeActivityRanSec, float lastTimeActivityStartedSec) const;
+  bool WantsToStart(const Robot& robot,
+                    float lastTimeActivityRanSec,
+                    float lastTimeActivityStartedSec) const;
 
   // true when this activity wants to finish, false if it would rather continue
   bool WantsToEnd(const Robot& robot, float lastTimeActivityStartedSec) const;
@@ -70,8 +74,22 @@ private:
   // activity runs for at most this much
   float _activityShouldEndSecs;
 
-  // after finishing, the activity will not run again for this long
-  float _cooldownSecs;
+  // after finishing, the activity will not run again for this long plus a random value between 0 and
+  // _cooldownRandomnessSecs
+  float _baseCooldownSecs;
+  
+  // actual cooldown time calculated from base cooldown plus randomness
+  // this is mutable because it gets calculated in WantsToStart when we are not in cooldown
+  // TODO: Could add a OnSelected/OnDeselected to know when the activity this strategy belongs to
+  // is actually started and stopped and calculate the next cooldown then
+  mutable float _cooldownSecs;
+  
+  // a random value between 0 and this is added to _baseCooldownSecs to calculate _cooldownSecs
+  float _cooldownVarianceSecs;
+  
+  // whether or not this strategy should start in cooldown
+  // used to prevent the strategy from wanting to immediately start on startup
+  bool _startInCooldown;
   
   // mood scoring to start the strategy. Only initialized if _requiredMinStartMoodScore is specified in json
   std::unique_ptr<MoodScorer> _startMoodScorer;
@@ -83,6 +101,11 @@ private:
   // if set, a recent OnTreads event is required, this being the number of seconds considered recent.
   // if the activity already started after the last event, it won't start unless a new event is fired
   float _requiredRecentOnTreadsEvent_secs;
+
+  // optional feature gate to lock activity behind
+  FeatureType _featureGate;
+  
+  void RandomizeCooldown(const Robot& robot) const;
 };
   
 } // namespace

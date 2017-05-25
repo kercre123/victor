@@ -8,7 +8,7 @@
     "type" : "Simple",
     // future: it might be a good idea to check how many behaviors are available to tune the duration based on that
     "activityShouldEndDurationSecs" : 25.0,
-    "cooldownSecs" : 30.0
+    "cooldownBaseSecs" : 30.0
   },
   "behaviorChooser" :
   {

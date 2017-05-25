@@ -13,8 +13,10 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -29,10 +31,13 @@ namespace Cozmo {
 namespace {
 CONSOLE_VAR(float, kDefaultActivityMaxDurationSecs, "IActivityStrategy", 60.0f);
 CONSOLE_VAR(float, kShortFailureCooldownSecs, "IActivityStrategy", 3.0f);
-static const char* kStartMoodScorerConfigKey = "startMoodScorer";
-static const char* kActivityCanEndConfigKey = "activityCanEndDurationSecs";
-static const char* kActivityShouldEndConfigKey = "activityShouldEndDurationSecs";
-static const char* kActivityCooldownConfigKey = "cooldownSecs";
+static const char* kStartMoodScorerConfigKey      = "startMoodScorer";
+static const char* kActivityCanEndConfigKey       = "activityCanEndDurationSecs";
+static const char* kActivityShouldEndConfigKey    = "activityShouldEndDurationSecs";
+static const char* kActivityCooldownBaseConfigKey = "cooldownBaseSecs";
+static const char* kActivityCooldownVarianceKey   = "cooldownVarianceSecs";
+static const char* kActivityStartInCooldown       = "startInCooldown";
+static const char* kActivityFeatureGate           = "featureGate";
 
 };
 
@@ -40,10 +45,14 @@ static const char* kActivityCooldownConfigKey = "cooldownSecs";
 IActivityStrategy::IActivityStrategy(const Json::Value& config)
 : _activityCanEndSecs(-1.0f)
 , _activityShouldEndSecs(-1.0f)
+, _baseCooldownSecs(-1.0f)
 , _cooldownSecs(-1.0f)
+, _cooldownVarianceSecs(0.f)
+, _startInCooldown(false)
 , _startMoodScorer(nullptr)
 , _requiredMinStartMoodScore(-1.0f)
 , _requiredRecentOnTreadsEvent_secs(-1.0f)
+, _featureGate(FeatureType::Invalid)
 {
   using namespace JsonTools;
   
@@ -51,9 +60,13 @@ IActivityStrategy::IActivityStrategy(const Json::Value& config)
   _activityShouldEndSecs = kDefaultActivityMaxDurationSecs;
   
   // timers
-  GetValueOptional(config, kActivityCanEndConfigKey, _activityCanEndSecs);
-  GetValueOptional(config, kActivityShouldEndConfigKey, _activityShouldEndSecs);
-  GetValueOptional(config, kActivityCooldownConfigKey, _cooldownSecs);
+  GetValueOptional(config, kActivityCanEndConfigKey,       _activityCanEndSecs);
+  GetValueOptional(config, kActivityShouldEndConfigKey,    _activityShouldEndSecs);
+  GetValueOptional(config, kActivityCooldownBaseConfigKey, _baseCooldownSecs);
+  GetValueOptional(config, kActivityCooldownVarianceKey,   _cooldownVarianceSecs);
+  GetValueOptional(config, kActivityStartInCooldown,       _startInCooldown);
+  
+  _cooldownSecs = _baseCooldownSecs;
   
   // recent onTreads event
   GetValueOptional(config, "requiredRecentOnTreadsEventSecs", _requiredRecentOnTreadsEvent_secs);
@@ -81,6 +94,12 @@ IActivityStrategy::IActivityStrategy(const Json::Value& config)
       "Strategy does not specify requiredMinStartMoodScore, but does have %s (which would be ignored)",
       kStartMoodScorerConfigKey);
   }
+  
+  std::string featureGate = "";
+  if(GetValueOptional(config, kActivityFeatureGate, featureGate))
+  {
+    _featureGate = FeatureTypeFromString(featureGate);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -90,10 +109,21 @@ IActivityStrategy::~IActivityStrategy()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IActivityStrategy::WantsToStart(const Robot& robot, float lastTimeActivityRanSec, float lastTimeActivityStartedSec) const
+bool IActivityStrategy::WantsToStart(const Robot& robot,
+                                     float lastTimeActivityRanSec,
+                                     float lastTimeActivityStartedSec) const
 {
+  // If the strategy has a corresponding feature gate and it is not enabled
+  // we don't want to start
+  if(_featureGate != FeatureType::Invalid &&
+     !robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(_featureGate))
+  {
+    return false;
+  }
+
   // check cooldown if set, and if the activity ever ran
-  if ( FLT_GT(_cooldownSecs, 0.0f) && FLT_GT(lastTimeActivityRanSec, 0.0f) )
+  // or if it has never ran but wants to start in cooldown
+  if ( FLT_GT(_cooldownSecs, 0.0f) && (FLT_GT(lastTimeActivityRanSec, 0.0f) || _startInCooldown) )
   {
 
     // if the last time the activity ran it only lasted a couple ticks, give it a short cooldown. This will
@@ -101,7 +131,8 @@ bool IActivityStrategy::WantsToStart(const Robot& robot, float lastTimeActivityR
     // but also won't trigger the potentially much longer normal cooldown for when the activity actually runs
     const float lastActivityRanDurationSecs = lastTimeActivityRanSec - lastTimeActivityStartedSec;
     const float twoTicsSecs = 2.0f * BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds();
-    const bool lastRunWasVeryShort = lastActivityRanDurationSecs <= twoTicsSecs;
+    const bool lastRunWasVeryShort = (lastActivityRanDurationSecs <= twoTicsSecs) &&
+                                     (lastActivityRanDurationSecs > 0);
     
     const float cooldownSecs = lastRunWasVeryShort ? kShortFailureCooldownSecs : _cooldownSecs;
     
@@ -112,6 +143,9 @@ bool IActivityStrategy::WantsToStart(const Robot& robot, float lastTimeActivityR
     if ( isCoolingDown ) {
       return false;
     }
+    
+    // Keep randomizing the cooldown until we are actually in cool down
+    RandomizeCooldown(robot);
   }
   
   // check if we created a start scorer
@@ -188,6 +222,11 @@ bool IActivityStrategy::WantsToEnd(const Robot& robot, float lastTimeActivitySta
   // not in min duration anymore (or any set), delegate
   const bool ret = WantsToEndInternal(robot, lastTimeActivityStartedSec);
   return ret;
+}
+
+void IActivityStrategy::RandomizeCooldown(const Robot& robot) const
+{
+  _cooldownSecs = _baseCooldownSecs + robot.GetRNG().RandDbl(_cooldownVarianceSecs);
 }
   
 } // namespace

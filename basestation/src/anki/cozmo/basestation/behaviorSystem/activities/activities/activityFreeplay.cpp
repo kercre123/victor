@@ -107,6 +107,11 @@ void ActivityClearSetting( ConsoleFunctionContextRef context ) {
   ActivityFreeplaySetDebugActivity(ActivityID::Invalid);
 }
 CONSOLE_FUNC( ActivityClearSetting, "ActivityFreeplay" );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivitySetSinging( ConsoleFunctionContextRef context ) {
+  ActivityFreeplaySetDebugActivity(ActivityID::Singing);
+}
+CONSOLE_FUNC( ActivitySetSinging, "ActivityFreeplay" );
   
 #endif // REMOTE_CONSOLE_ENABLED
 
