@@ -124,7 +124,7 @@ class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
   TestCompoundActionParallel(Robot& robot, std::initializer_list<IActionRunner*> actions, std::string name);
-  virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(GetName()); }
+  virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(_name); }
   virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
@@ -244,6 +244,27 @@ void CheckActionDestroyed(std::vector<std::string> actualNames)
   for(int i = 0; i < actionsDestroyed.size(); i++)
   {
     EXPECT_TRUE(actionsDestroyed[i] == actualNames[i]);
+  }
+  actionsDestroyed.clear();
+}
+
+
+void CheckActionDestroyedUnordered(std::vector<std::string> actualNames)
+{
+  ASSERT_EQ(actionsDestroyed.size(), actualNames.size());
+  
+  for (const auto& actualName : actualNames)
+  {
+    bool hasBeenDestroyed = false;
+    for(int i = 0; i < actionsDestroyed.size(); i++)
+    {
+      if (actionsDestroyed[i] == actualName)
+      {
+        hasBeenDestroyed = true;
+        break;
+      }
+    }
+    EXPECT_TRUE(hasBeenDestroyed);
   }
   actionsDestroyed.clear();
 }
@@ -1238,34 +1259,53 @@ TEST(QueueAction, CancelAlreadyCancelledFromDestructor)
 TEST(QueueAction, ComplexNestedAction)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track1);
-  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  TestAction* testAction4 = new TestAction(r, "Test4", RobotActionType::WAIT, track1);
-  TestAction* testAction5 = new TestAction(r, "Test5", RobotActionType::WAIT, track2);
-  TestCompoundActionSequential* compoundAction1 = new TestCompoundActionSequential(r, {}, "Comp1");
-  TestCompoundActionSequential* compoundAction2 = new TestCompoundActionSequential(r, {}, "Comp2");
-  TestCompoundActionParallel* compoundAction3 = new TestCompoundActionParallel(r, {}, "Comp3");
-  TestCompoundActionParallel* compoundAction4 = new TestCompoundActionParallel(r, {}, "Comp4");
-
-  compoundAction4->AddAction(testAction5);
-  compoundAction2->AddAction(testAction4);
-  compoundAction2->AddAction(compoundAction4);
-  compoundAction2->AddAction(testAction3);
-  compoundAction3->AddAction(compoundAction2);
-  compoundAction3->AddAction(testAction2);
-  compoundAction1->AddAction(testAction1);
-  compoundAction1->AddAction(compoundAction3);
   
-  std::set<u32> allTags = {testAction1->GetTag(),
-                           testAction2->GetTag(),
-                           testAction3->GetTag(),
-                           testAction4->GetTag(),
-                           testAction5->GetTag(),
-                           compoundAction1->GetTag(),
-                           compoundAction2->GetTag(),
-                           compoundAction3->GetTag(),
-                           compoundAction4->GetTag()};
+  using WeakAction = std::weak_ptr<IActionRunner>;
+  
+  WeakAction testRef1;
+  WeakAction testRef2;
+  WeakAction testRef3;
+  WeakAction testRef4;
+  WeakAction testRef5;
+  IActionRunner* compRef1;
+  WeakAction compRef2;
+  WeakAction compRef3;
+  WeakAction compRef4;
+  
+  {
+    // This Test1 Track locking intentionally results in Test2 not being able to begin due to Test1 locking all tracks, which is verified below
+    TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+    TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track1);
+    TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
+    TestAction* testAction4 = new TestAction(r, "Test4", RobotActionType::WAIT, track1);
+    TestAction* testAction5 = new TestAction(r, "Test5", RobotActionType::WAIT, track2);
+    TestCompoundActionSequential* compoundAction1 = new TestCompoundActionSequential(r, {}, "Comp1");
+    TestCompoundActionSequential* compoundAction2 = new TestCompoundActionSequential(r, {}, "Comp2");
+    TestCompoundActionParallel* compoundAction3 = new TestCompoundActionParallel(r, {}, "Comp3");
+    TestCompoundActionParallel* compoundAction4 = new TestCompoundActionParallel(r, {}, "Comp4");
+    
+    constexpr bool ignoreThisActionSuccessResult = true;
+    testRef5 = compoundAction4->AddAction(testAction5);
+    testRef4 = compoundAction2->AddAction(testAction4);
+    compRef4 = compoundAction2->AddAction(compoundAction4);
+    testRef3 = compoundAction2->AddAction(testAction3);
+    compRef2 = compoundAction3->AddAction(compoundAction2);
+    testRef2 = compoundAction3->AddAction(testAction2, ignoreThisActionSuccessResult);
+    testRef1 = compoundAction1->AddAction(testAction1);
+    compRef3 = compoundAction1->AddAction(compoundAction3);
+    
+    compRef1 = compoundAction1;
+  }
+  
+  std::set<u32> allTags = {testRef1.lock()->GetTag(),
+                           testRef2.lock()->GetTag(),
+                           testRef3.lock()->GetTag(),
+                           testRef4.lock()->GetTag(),
+                           testRef5.lock()->GetTag(),
+                           compRef1->GetTag(),
+                           compRef2.lock()->GetTag(),
+                           compRef3.lock()->GetTag(),
+                           compRef4.lock()->GetTag()};
   std::set<u32> completedTags;
   auto& watcher = r.GetActionList().GetActionWatcher();
   watcher.RegisterActionEndedCallbackForAllActions(
@@ -1274,30 +1314,49 @@ TEST(QueueAction, ComplexNestedAction)
       EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
     });
 
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction1);
+  actionsDestroyed.clear();
+  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compRef1);
 
   r.GetActionList().Update();
 
-  testAction1->_complete = true;
+  // Tries to complete a TestAction, returning success
+  auto completeIfExists = [] (WeakAction& weakActionRef) -> bool {
+    if (weakActionRef.expired())
+    {
+      return false;
+    }
+    
+    auto strongActionRef = weakActionRef.lock();
+    auto* testActionPtr = dynamic_cast<TestAction*>(strongActionRef.get());
+    if (testActionPtr)
+    {
+      testActionPtr->_complete = true;
+      return true;
+    }
+    return false;
+  };
+
+  ASSERT_EQ(true, completeIfExists(testRef1));
   r.GetActionList().Update();
 
-  testAction2->_complete = true;
+  ASSERT_EQ(false, completeIfExists(testRef2));
   r.GetActionList().Update();
 
-  testAction3->_complete = true;
+  ASSERT_EQ(true, completeIfExists(testRef3));
+  r.GetActionList().Update();
+  
+  ASSERT_EQ(true, completeIfExists(testRef4));
+  ASSERT_EQ(true, completeIfExists(testRef5));
   r.GetActionList().Update();
 
-  testAction4->_complete = true;
-  testAction5->_complete = true;
+  // One extra update to account for highest-level compound action
   r.GetActionList().Update();
 
   CheckTracksUnlocked(r, track1 | track2 | track3);
 
   EXPECT_EQ(allTags, completedTags);
 
-  // TODO: should test this, but I'm too lazy to figure out which order they are being destroyed in
-  // CheckActionDestroyed({"Test1", "Test2", "Test3", "Test4", "Test5", "Comp1", "Comp2", "Comp3", "Comp4"});
-
+  CheckActionDestroyedUnordered({"Test1", "Test2", "Test3", "Test4", "Test5", "Comp1", "Comp2", "Comp3", "Comp4"});
 }
 
 
