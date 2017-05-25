@@ -8,7 +8,7 @@ namespace Anki {
 namespace Cozmo {
 
 // Because of a bug in unity editor custom drawers
-// they only properly draw our serielized enums as int32s or bytes.
+// they only properly draw our serialized enums as int32s or bytes.
 // ideally this would be a uint16.
 enum int_32 AnimationTrigger
 {
@@ -21,6 +21,15 @@ enum int_32 AnimationTrigger
   AskToBeRightedRight,
   AudioTestAnim,
   BlockReact,
+  BouncerGetIn,
+  BouncerGetOut,
+  BouncerIdeaToPlay,
+  BouncerIntoScore1,
+  BouncerIntoScore2,
+  BouncerIntoScore3,
+  BouncerRequestToPlay,
+  BouncerTimeout,
+  BouncerWait,
   BuildPyramidFirstBlockOnSide,
   BuildPyramidFirstBlockUpright,
   BuildPyramidLookForFace,

@@ -42,9 +42,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
-// Transition to a new state and update the debug name for logging/debugging
-#define SET_STATE(s) do{ _state = State::s; DEBUG_SET_STATE(s); } while(0)
   
 namespace {
   
@@ -135,7 +132,8 @@ static float GetRandomFloat(Robot & robot, float minVal, float maxVal)
   double val = rng.RandDblInRange(minVal, maxVal);
   return static_cast<float>(val);
 }
-  
+
+// Draw paddle onto image
 void BehaviorBouncer::DrawPaddle(Vision::Image& image)
 {
   // How wide is paddle? Draw this many pixels left and right of center.
@@ -150,6 +148,7 @@ void BehaviorBouncer::DrawPaddle(Vision::Image& image)
   
 }
 
+// Draw ball onto image
 void BehaviorBouncer::DrawBall(Vision::Image& image)
 {
   const float centerX = Util::Clamp(_ballPosX, 0.f, _displayWidth_px);
@@ -159,7 +158,7 @@ void BehaviorBouncer::DrawBall(Vision::Image& image)
   image.DrawFilledCircle(center, NamedColors::WHITE, kBouncerBallRadius_px);
 }
 
-
+// Draw score onto image
 void BehaviorBouncer::DrawScore(Vision::Image& image)
 {
   // What are we going to draw?
@@ -187,6 +186,75 @@ void BehaviorBouncer::DrawScore(Vision::Image& image)
 
 }
 
+// Convert BouncerState to string
+const char * BehaviorBouncer::EnumToString(const BouncerState& state)
+{
+  switch (state) {
+    case BouncerState::Init:
+      return "Init";
+    case BouncerState::GetIn:
+      return "GetIn";
+    case BouncerState::IdeaToPlay:
+      return "IdeaToPlay";
+    case BouncerState::RequestToPlay:
+      return "RequestToPlay";
+    case BouncerState::WaitToPlay:
+      return "WaitToPlay";
+    case BouncerState::Play:
+      return "Play";
+    case BouncerState::Timeout:
+      return "Timeout";
+    case BouncerState::ShowScore:
+      return "ShowScore";
+    case BouncerState::GetOut:
+      return "GetOut";
+    case BouncerState::Complete:
+      return "Complete";
+    default:
+      DEV_ASSERT(false, "BehaviorBouncer.EnumToString.InvalidState");
+      return "Invalid";
+  }
+  
+}
+
+// Transition to given state
+void BehaviorBouncer::TransitionToState(const BouncerState& state)
+{
+  if (_state != state) {
+    LOG_TRACE("BehaviorBouncer.TransitionToState", "%s to %s", EnumToString(_state), EnumToString(state));
+    SetDebugStateName(EnumToString(state));
+    _state = state;
+  }
+}
+  
+void BehaviorBouncer::StartAnimation(Robot& robot,
+                                     const AnimationTrigger& animationTrigger,
+                                     const BouncerState& nextState)
+{
+  LOG_TRACE("BehaviorBouncer.StartAnimation", "Start animation %s, nextState %s",
+            AnimationTriggerToString(animationTrigger), EnumToString(nextState));
+  
+  // This should never be called when action is already in progress
+  DEV_ASSERT(!IsActing(), "BehaviorBouncer.StartAnimation.ShouldNotBeActing");
+    
+  auto callback = [this, animationTrigger, nextState] {
+    LOG_TRACE("BehaviorBouncer.StartAnimation.Callback", "Finish animation %s, nextState %s",
+              AnimationTriggerToString(animationTrigger), EnumToString(nextState));
+    TransitionToState(nextState);
+  };
+    
+  IActionRunner* action = new TriggerAnimationAction(robot, animationTrigger);
+  StartActing(action, callback);
+  
+  // StartActing shouldn't fail
+  DEV_ASSERT(IsActing(), "BehaviorBouncer.StartAnimation.ShouldBeActing");
+}
+  
+void BehaviorBouncer::StartAnimation(Robot& robot, const AnimationTrigger& animationTrigger)
+{
+  StartAnimation(robot, animationTrigger, _state);
+}
+  
 BehaviorBouncer::BehaviorBouncer(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -234,9 +302,6 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
 {
   LOG_TRACE("BehaviorBouncer.InitInternal", "Init behavior");
   
-  // Reset behavior state
-  SET_STATE(Init);
-  
   // Disable reactionary behaviors that we don't want interrupting this
   SmartDisableReactionsWithLock(GetIDStr(), kReactionArray);
   
@@ -264,12 +329,9 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
   _ballSpeedY = -1 * GetRandomFloat(robot, kBouncerMinBallSpeed, kBouncerMaxBallSpeed);
   
   // No pending hits
-  _ballHitPaddle = false;
   _ballHitFloor = false;
   
-  // No actions in progress
-  _isSoundActionInProgress = false;
-  _isFaceActionInProgress = false;
+  TransitionToState(BouncerState::GetIn);
   
   return Result::RESULT_OK;
 }
@@ -290,8 +352,8 @@ void BehaviorBouncer::UpdatePaddle(const Vision::TrackedFace * face)
   // to "directional" control where player nudges paddle left or right.
   playerTilt = (playerTilt - kBouncerTiltLeft_deg)/(kBouncerTiltRight_deg-kBouncerTiltLeft_deg);
   
-  // Scale tilt to screen coordinates [0,width]
-  float playerPosX = (playerTilt * _displayWidth_px);
+  // Scale tilt to screen coordinates [0,width].
+  float playerPosX = (1.0f - playerTilt) * _displayWidth_px;
   
   // If paddle is close to player position, jump straight to it, else move one step closer
   if (Util::IsNear(playerPosX, paddlePosX, paddleSpeedX)) {
@@ -343,11 +405,10 @@ void BehaviorBouncer::UpdateBall()
     // TO DO: Ball should increase speed after each bounce
     // TO DO: Ball should get random change in direction after each bounce
     if (Util::IsNear(ballPosX, _paddlePosX, kBouncerPaddleWidth_px)) {
-      LOG_INFO("BehaviorBouncer.UpdateBall", "Player hit the ball");
-      _ballHitPaddle = true;
+      LOG_TRACE("BehaviorBouncer.UpdateBall", "Player hit the ball");
       ++_playerHits;
     } else {
-      LOG_INFO("BehaviorBouncer.UpdateBall", "Player missed the ball");
+      LOG_TRACE("BehaviorBouncer.UpdateBall", "Player missed the ball");
       _ballHitFloor = true;
       ++_playerMisses;
     }
@@ -375,28 +436,25 @@ void BehaviorBouncer::UpdateSound(Robot& robot)
   // Do we need to play a bounce sound?
   bool playBounceSound = false;
   
-  if (!_isSoundActionInProgress && !_isFaceActionInProgress) {
-    if (_ballHitPaddle || _ballHitFloor) {
+  if (!IsActing()) {
+    if (_ballHitFloor) {
       playBounceSound = true;
-      _ballHitPaddle = false;
       _ballHitFloor = false;
     }
   }
   
   if (playBounceSound) {
     LOG_TRACE("BehaviorBouncer.UpdateSound", "Start sound action");
-    _isSoundActionInProgress = true;
-    IActionRunner * soundAction = new TriggerAnimationAction(robot, animationTrigger);
-    StartActing(soundAction, &BehaviorBouncer::SoundActionComplete);
+    StartAnimation(robot, animationTrigger);
   }
 }
   
 void BehaviorBouncer::UpdateDisplay(Robot& robot)
 {
-  LOG_INFO("BehaviorBouncer.UpdateInternal", "paddleX=%.2f ballX=%.2f ballY=%.2f", _paddlePosX, _ballPosX, _ballPosY);
+  LOG_TRACE("BehaviorBouncer.UpdateInternal", "paddleX=%.2f ballX=%.2f ballY=%.2f", _paddlePosX, _ballPosX, _ballPosY);
   
   // Do we need to draw a new face?
-  if (!_isSoundActionInProgress && !_isFaceActionInProgress) {
+  if (!IsActing()) {
     
     // Init background
     Vision::Image image(_displayHeight_px, _displayWidth_px, NamedColors::BLACK);
@@ -407,18 +465,20 @@ void BehaviorBouncer::UpdateDisplay(Robot& robot)
     
     // Display image
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
-    _isFaceActionInProgress = true;
     const u32 duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
-    IActionRunner * faceAction = new SetFaceAction(robot, image, duration_ms);
-    StartActing(faceAction, &BehaviorBouncer::FaceActionComplete);
+    IActionRunner * setFaceAction = new SetFaceAction(robot, image, duration_ms);
+    SimpleCallback callback = [this]() {
+      LOG_TRACE("BehaviorBouncer.UpdateDisplay.Callback", "Face action complete");
+    };
+    StartActing(setFaceAction, callback);
   }
 
 }
 
 BehaviorStatus BehaviorBouncer::UpdateInternal(Robot& robot)
 {
-  LOG_TRACE("BehaviorBouncer.UpdateInternal", "Update behavior");
-  
+  LOG_TRACE("BehaviorBouncer.UpdateInternal", "Update behavior with state=%s", EnumToString(_state));
+
   // Check elapsed time
   if (GetRunningDuration() > kBouncerTimeout_sec) {
     LOG_WARNING("BehaviorBouncer.UpdateInternal", "Behavior has timed out");
@@ -448,33 +508,88 @@ BehaviorStatus BehaviorBouncer::UpdateInternal(Robot& robot)
     return BehaviorStatus::Complete;
   }
   
-  UpdatePaddle(face);
-  
-  UpdateBall();
-  
-  UpdateSound(robot);
-  
-  UpdateDisplay(robot);
-  
+  switch (_state) {
+    case BouncerState::Init:
+    {
+      // This should never happen. InitInternal (above) sets state to GetIn.
+      DEV_ASSERT(_state != BouncerState::Init, "BehaviorBouncer.Update.InvalidState");
+      break;
+    }
+    case BouncerState::GetIn:
+    {
+      if (!IsActing()) {
+        StartAnimation(robot, AnimationTrigger::BouncerGetIn, BouncerState::IdeaToPlay);
+      }
+      break;
+    }
+    case BouncerState::IdeaToPlay:
+    {
+      if (!IsActing()) {
+        StartAnimation(robot, AnimationTrigger::BouncerIdeaToPlay, BouncerState::RequestToPlay);
+      }
+      break;
+    }
+    case BouncerState::RequestToPlay:
+    {
+      if (!IsActing()) {
+        StartAnimation(robot, AnimationTrigger::BouncerRequestToPlay, BouncerState::WaitToPlay);
+      }
+      break;
+    }
+    case BouncerState::WaitToPlay:
+    {
+      if (!IsActing()) {
+        StartAnimation(robot, AnimationTrigger::BouncerWait, BouncerState::Play);
+      }
+      break;
+    }
+    case BouncerState::Play:
+    {
+      // This is the actual game loop
+      UpdatePaddle(face);
+      UpdateBall();
+      UpdateSound(robot);
+      UpdateDisplay(robot);
+      break;
+    }
+    case BouncerState::Timeout:
+    {
+      if (!IsActing()) {
+        StartAnimation(robot, AnimationTrigger::BouncerTimeout, BouncerState::ShowScore);
+      }
+      break;
+    }
+    case BouncerState::ShowScore:
+    {
+      if (!IsActing()) {
+        // TO DO: Choose between BouncerIntoScore1, BouncerIntoScore2, BouncerIntoScore3
+        StartAnimation(robot, AnimationTrigger::BouncerIntoScore1, BouncerState::GetOut);
+      }
+      break;
+    }
+    case BouncerState::GetOut:
+    {
+      if (!IsActing()) {
+        StartAnimation(robot, AnimationTrigger::BouncerGetOut, BouncerState::Complete);
+      }
+      break;
+    }
+    case BouncerState::Complete:
+    {
+      if (!IsActing()) {
+        LOG_TRACE("BehaviorBouncer.Update.Complete", "Behavior complete");
+        return BehaviorStatus::Complete;
+      }
+    }
+  }
+    
   return BehaviorStatus::Running;
   
-}
-
-void BehaviorBouncer::SoundActionComplete()
-{
-  LOG_TRACE("BehaviorBouncer.SoundActionComplete", "Sound action complete");
-  _isSoundActionInProgress = false;
-}
-  
-void BehaviorBouncer::FaceActionComplete()
-{
-  LOG_TRACE("BehaviorBouncer.FaceActionComplete", "Face action complete");
-  _isFaceActionInProgress = false;
 }
   
 void BehaviorBouncer::StopInternal(Robot& robot)
 {
-  LOG_INFO("BehaviorBouncer.StopInternal", "Stop behavior");
+  LOG_TRACE("BehaviorBouncer.StopInternal", "Stop behavior");
   
   // TODO: Record relevant DAS events here.
  

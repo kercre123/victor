@@ -43,14 +43,21 @@ protected:
 private:
 
   // Helper types
-  enum class State {
-    Init,                   // Initialize everything and play starting animations
+  enum class BouncerState {
+    Init,                   // Initialize everything
+    GetIn,
+    IdeaToPlay,
+    RequestToPlay,
+    WaitToPlay,
+    Play,
     Timeout,                // Timeout expired
+    ShowScore,
+    GetOut,
     Complete
   };
   
   // Member variables
-  State _state = State::Init;
+  BouncerState _state = BouncerState::Init;
   
   // This must be mutable to retain state from trigger prerequisites
   mutable SmartFaceID _target;
@@ -76,12 +83,12 @@ private:
   float _ballSpeedX = 0.f;
   float _ballSpeedY = 0.f;
   
-  // Did ball hit paddle or floor?
-  bool _ballHitPaddle = false;
+  // Did ball hit the floor?
   bool _ballHitFloor = false;
   
-  bool _isSoundActionInProgress = false;
-  bool _isFaceActionInProgress = false;
+  // State management
+  const char * EnumToString(const BouncerState& state);
+  void TransitionToState(const BouncerState& state);
   
   // Update helpers
   void UpdatePaddle(const Vision::TrackedFace * face);
@@ -94,10 +101,9 @@ private:
   void DrawBall(Vision::Image& image);
   void DrawScore(Vision::Image& image);
   
-  // Action callbacks
-  void SoundActionComplete();
-  void FaceActionComplete();
-  
+  // Action helpers
+  void StartAnimation(Robot& robot, const AnimationTrigger& animationTrigger);
+  void StartAnimation(Robot& robot, const AnimationTrigger& animationTrigger, const BouncerState& nextState);
 };
   
 

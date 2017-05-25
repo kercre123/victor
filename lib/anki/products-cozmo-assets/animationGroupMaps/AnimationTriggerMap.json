@@ -73,6 +73,42 @@
       "AnimName": "ag_pyramid_reacttocube_happy_high"
     },
     {
+      "CladEvent": "BouncerGetIn",
+      "AnimName": "ag_bouncer_getin_01"
+    },
+    {
+      "CladEvent": "BouncerGetOut",
+      "AnimName": "ag_bouncer_getout_01"
+    },
+    {
+       "CladEvent": "BouncerIdeaToPlay",
+       "AnimName": "ag_bouncer_ideatoplay_01"
+    },
+    {
+      "CladEvent": "BouncerIntoScore1",
+      "AnimName": "ag_bouncer_intoscore_01"
+    },
+    {
+      "CladEvent": "BouncerIntoScore2",
+      "AnimName": "ag_bouncer_intoscore_02"
+    },
+    {
+      "CladEvent": "BouncerIntoScore3",
+      "AnimName": "ag_bouncer_intoscore_03"
+    },
+    {
+      "CladEvent": "BouncerRequestToPlay",
+      "AnimName": "ag_bouncer_requesttoplay_01"
+    },
+    {
+      "CladEvent": "BouncerTimeout",
+      "AnimName": "ag_bouncer_timeout_01"
+    },
+    {
+      "CladEvent": "BouncerWait",
+      "AnimName": "ag_bouncer_wait_01"
+    },
+    {
       "CladEvent": "CantHandleTallStack",
       "AnimName": "ag_reacttoblock_3blocktower_upset"
     },
