@@ -146,7 +146,7 @@ void NeedsState::SetDecayMultipliers(const DecayConfig& decayConfig, std::array<
 void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers)
 {
   PRINT_CH_INFO(NeedsManager::kLogChannelName, "NeedsState.ApplyDecay",
-                "Decaying needs with elapsed time of %f seconds", timeElasped_s);
+                "Decaying need index %d with elapsed time of %f seconds", needIndex, timeElasped_s);
   
   // This handles any time elapsed passed in
   const NeedId needId = static_cast<NeedId>(needIndex);

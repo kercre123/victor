@@ -43,12 +43,14 @@ static const std::string kMultiplierKey = "Multiplier";
 
 static const std::string kInitialUnlockLevelsArrayKey = "UnlockLevels";
 
-static const std::string kActionDeltasKey = "ActionDeltas";
-static const std::string kActionIDKey = "ActionID";
-static const std::string kDeltasKey = "Deltas";
-static const std::string kNeedIDKey = "NeedID";
-static const std::string kDeltaKey = "Delta";
-static const std::string kRandomRangeKey = "RandomRange";
+static const std::string kActionDeltasKey = "actionDeltas";
+static const std::string kActionIDKey = "actionId";
+static const std::string kRepairDeltaKey = "repairDelta";
+static const std::string kRepairRangeKey = "repairRange";
+static const std::string kEnergyDeltaKey = "energyDelta";
+static const std::string kEnergyRangeKey = "energyRange";
+static const std::string kPlayDeltaKey = "playDelta";
+static const std::string kPlayRangeKey = "playRange";
 
 
 NeedsConfig::NeedsConfig()
@@ -255,23 +257,27 @@ void ActionsConfig::Init(const Json::Value& json)
     const auto& actionIdStr = JsonTools::ParseString(item, kActionIDKey.c_str(),
                                                      "Failed to parse an action ID");
     const NeedsActionId actionId = NeedsActionIdFromString(actionIdStr.c_str());
+
+    const float repairDelta = JsonTools::ParseFloat(item, kRepairDeltaKey.c_str(),
+                                                    "Failed to parse a repair delta");
+    const float repairRange = JsonTools::ParseFloat(item, kRepairRangeKey.c_str(),
+                                                    "Failed to parse a repair range");
+    const float energyDelta = JsonTools::ParseFloat(item, kEnergyDeltaKey.c_str(),
+                                                    "Failed to parse a energy delta");
+    const float energyRange = JsonTools::ParseFloat(item, kEnergyRangeKey.c_str(),
+                                                    "Failed to parse a energy range");
+    const float playDelta = JsonTools::ParseFloat(item, kPlayDeltaKey.c_str(),
+                                                    "Failed to parse a play delta");
+    const float playRange = JsonTools::ParseFloat(item, kPlayRangeKey.c_str(),
+                                                    "Failed to parse a play range");
+
     ActionDelta& actionDelta = _actionDeltas[static_cast<int>(actionId)];
-
-    const auto& jsonDeltas = item[kDeltasKey];
-    for (const auto& deltaItem : jsonDeltas)
-    {
-      const auto& needIdStr = JsonTools::ParseString(deltaItem, kNeedIDKey.c_str(),
-                                                     "Failed to parse a need ID");
-      const auto& needId = NeedIdFromString(needIdStr.c_str());
-      const int needIdIndex = static_cast<int>(needId);
-
-      const float deltaValue = JsonTools::ParseFloat(deltaItem, kDeltaKey.c_str(),
-                                                     "Failed to parse a delta");
-      const float randomRangeValue = JsonTools::ParseFloat(deltaItem, kRandomRangeKey.c_str(),
-                                                           "Failed to parse a random range");
-      actionDelta._needDeltas[needIdIndex]._delta = deltaValue;
-      actionDelta._needDeltas[needIdIndex]._randomRange = randomRangeValue;
-    }
+    actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._delta = repairDelta;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._randomRange = repairRange;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Energy)]._delta = energyDelta;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Energy)]._randomRange = energyRange;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._delta = playDelta;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._randomRange = playRange;
   }
 }
 

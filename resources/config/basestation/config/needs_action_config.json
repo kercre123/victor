@@ -1,24 +1,317 @@
-{
-  "ActionDeltas":
-  [
-    { "ActionID": "RepairHead", "Deltas" : [
-       { "NeedID": "Repair", "Delta": 0.400, "RandomRange": 0.035 },
-       { "NeedID": "Energy", "Delta": 0.390, "RandomRange": 0.034 },
-       { "NeedID": "Play",   "Delta": 0.380, "RandomRange": 0.033 }
-      ]
-    },
-    { "ActionID": "RepairLift", "Deltas" : [
-       { "NeedID": "Repair", "Delta": 0.370, "RandomRange": 0.032 },
-       { "NeedID": "Energy", "Delta": 0.360, "RandomRange": 0.031 },
-       { "NeedID": "Play",   "Delta": 0.350, "RandomRange": 0.030 }
-      ]
-    },
-    { "ActionID": "RepairTreads", "Deltas" : [
-       { "NeedID": "Repair", "Delta": 0.340, "RandomRange": 0.039 },
-       { "NeedID": "Energy", "Delta": 0.330, "RandomRange": 0.038 },
-       { "NeedID": "Play",   "Delta": 0.320, "RandomRange": 0.037 }
-      ]
-    }
-  ]
-}
-
+{ "actionDeltas":[
+  {
+    "actionId": "RepairHead",
+    "repairDelta": 0.4,
+    "repairRange": 0,
+    "energyDelta": -0.02,
+    "energyRange": 0.005,
+    "playDelta": -0.1,
+    "playRange": 0.005
+  },
+  {
+    "actionId": "RepairLift",
+    "repairDelta": 0.4,
+    "repairRange": 0,
+    "energyDelta": -0.02,
+    "energyRange": 0.005,
+    "playDelta": -0.1,
+    "playRange": 0.005
+  },
+  {
+    "actionId": "RepairTreads",
+    "repairDelta": 0.4,
+    "repairRange": 0,
+    "energyDelta": -0.02,
+    "energyRange": 0.005,
+    "playDelta": -0.1,
+    "playRange": 0.005
+  },
+  {
+    "actionId": "FeedRed",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": 0.1,
+    "energyRange": 0.005,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "FeedBlue",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": 0.2,
+    "energyRange": 0.005,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "FeedGreen",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": 0.3,
+    "energyRange": 0.005,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "Play",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "KeepAwayWin",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "KeepAwayLose",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.05,
+    "playRange": 0
+  },
+  {
+    "actionId": "MemoryMatchWin",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "MemoryMatchLose",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.05,
+    "playRange": 0
+  },
+  {
+    "actionId": "QuickTapWin",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "QuickTapLose",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.05,
+    "playRange": 0
+  },
+  {
+    "actionId": "CozmoSings",
+    "repairDelta": -0.002,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "DizzyHard",
+    "repairDelta": -0.15,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "DizzyMedium",
+    "repairDelta": -0.1,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "DizzySoft",
+    "repairDelta": -0.05,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "Fall",
+    "repairDelta": -0.5,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0,
+    "playRange": 0
+  },
+  {
+    "actionId": "FistBump",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "GatherCubes",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "GuardDogLose",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "GuardDogWin",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "HiccupsEndBad",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "HiccupsEndGood",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "KnockDownCubes",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "PeekAboo",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "PickupCube",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "PopAWheelie",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "Pounce",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "PyramidCompleted",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "RollACube",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "SayName",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "StackCube",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "Workout",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.2,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  },
+  {
+    "actionId": "SeeFace",
+    "repairDelta": 0,
+    "repairRange": 0,
+    "energyDelta": -0.01,
+    "energyRange": 0,
+    "playDelta": 0.1,
+    "playRange": 0
+  }
+] }
