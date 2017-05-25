@@ -39,6 +39,7 @@ static const Fixed one = TO_FIXED(1.0);
 static const Fixed filter_coeff = TO_FIXED(0.1);
 
 // Motion computation thresholds and vars
+static const int MAX_ERROR = 0x200;
 static const u8 START_MOVING_COUNT_THRESH = 5;    // Determines number of motion tics that much be observed before Moving msg is sent
 static const u8 STOP_MOVING_COUNT_THRESH = 5;     // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
 static const u8 ACC_MOVE_THRESH = 3;              // If current value differs from filtered value by this much, block is considered to be moving.
@@ -142,8 +143,8 @@ void Radio::advertise(void) {
   NRF_RADIO->POWER = 1;
 
   // Framing
-  NRF_RADIO->PCNF0 =  (0 << RADIO_PCNF0_S0LEN_Pos) | 
-                      (0 << RADIO_PCNF0_LFLEN_Pos) | 
+  NRF_RADIO->PCNF0 =  (0 << RADIO_PCNF0_S0LEN_Pos) |
+                      (0 << RADIO_PCNF0_LFLEN_Pos) |
                       (0 << RADIO_PCNF0_S1LEN_Pos);
 
   // TX power
@@ -156,13 +157,13 @@ void Radio::advertise(void) {
   NRF_RADIO->CRCCNF  = RADIO_CRCCNF_LEN_Two << RADIO_CRCCNF_LEN_Pos;
   NRF_RADIO->CRCINIT = 0xFFFFUL;      // Initial value
   NRF_RADIO->CRCPOLY = 0x11021UL;     // CRC poly: x^16+x^12^x^5+1
-  
+
   // Address configuration
   NRF_RADIO->TXADDRESS   = 0;
   NRF_RADIO->RXADDRESSES = 1;
 
   NRF_RADIO->INTENCLR    = 0xFFFFFFFF;
-  NRF_RADIO->SHORTS      = RADIO_SHORTS_READY_START_Msk | 
+  NRF_RADIO->SHORTS      = RADIO_SHORTS_READY_START_Msk |
                            RADIO_SHORTS_END_DISABLE_Msk |
                            RADIO_SHORTS_ADDRESS_RSSISTART_Msk |
                            RADIO_SHORTS_DISABLED_RSSISTOP_Msk;
@@ -210,9 +211,12 @@ static void configure_rf(void* packet, uint32_t address, uint8_t channel, uint32
   NRF_RADIO->PACKETPTR   = (uint32_t)packet;
 }
 
-static void resume() {
+static void resume(bool allowed) {
   NVIC_ClearPendingIRQ(RADIO_IRQn);
   NVIC_EnableIRQ(RADIO_IRQn);
+
+  // Filter out poor timing
+  tx_queued = tx_queued && allowed;
 
   if (tx_queued) {
     // Dequeue fifo
@@ -239,9 +243,9 @@ void Radio::shutdown(void) {
   NRF_RADIO->EVENTS_BCMATCH = 0;;
 
   NRF_RADIO->SHORTS = 0;
-  
+
   NRF_RADIO->INTENCLR = 0xFFFFFFFF;
-  
+
   NVIC_SetPriority(RADIO_IRQn, 0);
 }
 
@@ -275,7 +279,7 @@ static int AllocateAccessory(uint32_t id) {
     accessories[i].id = id;
     return i;
   }
-  
+
   return -1;
 }
 #endif
@@ -291,7 +295,7 @@ static void onAdvertisePacket() {
   if (advertisePacket.hwVersion != CurrentCubeFirmware.hwVersion) {
     return ;
   }
-  
+
   // Attempt to locate existing accessory and repair
   const uint32_t advertId = bytewise_bit_swap(advertisePacket.id);
   int slot = LocateAccessory(advertId);
@@ -324,7 +328,7 @@ static void onAdvertisePacket() {
   }
 
   // We are loading the slot
-  AccessorySlot* acc = &accessories[slot]; 
+  AccessorySlot* acc = &accessories[slot];
 
   acc->id = advertId;
   acc->last_received = 0;
@@ -344,7 +348,7 @@ static void onAdvertisePacket() {
     acc->prevUpAxis = UnknownAxis;
     acc->nextUpAxis = UnknownAxis;
     acc->nextUpAxisCount = 0;
-    
+
     SendObjectConnectionState(slot);
   }
 
@@ -355,7 +359,7 @@ static void onAdvertisePacket() {
     // Reset our block count
     acc->ota_block_index = 0;
     acc->updating = true;
-    
+
     // Select a random channel to perform OTA on
     acc->rf_channel = (random() & 0x3F) + 4;
 
@@ -442,9 +446,9 @@ static void processHandshakePacket() {
 
 static bool onHandshakePacket() {
   const uint32_t source_address = (NRF_RADIO->PREFIX0 << 24) | (NRF_RADIO->BASE0 >> 8);
-  
+
   int slot = LocateAccessory(source_address);
-  
+
   if (slot < 0) {
     return false;
   }
@@ -465,12 +469,12 @@ static bool onHandshakePacket() {
   } else {
     handshakeSlot = slot;
     handshakeReceived = true;
-    
+
     processHandshakePacket();
-    
+
     acc->messages_received++;
   }
-  
+
   return true;
 }
 
@@ -483,7 +487,7 @@ static void transmitOTA() {
       target->allocated = false;
       target->active = false;
       target->model = OBJECT_OTA_FAIL;
-      
+
       SendObjectConnectionState(currentAccessory);
     }
 
@@ -507,7 +511,7 @@ static void transmitHandshake(void) {
     SendObjectConnectionState(currentAccessory);
     return ;
   }
-  
+
   #ifdef CUBE_HOP
   if (target->hopSkip) {
     target->hopSkip = false;
@@ -515,7 +519,7 @@ static void transmitHandshake(void) {
   }
   #endif
 
-  // We send the previous LED state (so we don't get jitter on radio)    
+  // We send the previous LED state (so we don't get jitter on radio)
   robotHandshake.msg_id = 0;
   robotHandshake.tapTime = _tapTime;
 
@@ -630,13 +634,13 @@ extern "C" void RADIO_IRQHandler()
   }
 
   // Start receiving
-  resume();
+  resume(true);
 }
 
 void Radio::rotate() {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
     AccessorySlot* target = &accessories[i];
-    
+
     // Not rotating
     if (target->rotationPeriod <= 0) {
       continue ;
@@ -660,10 +664,11 @@ extern "C" void RTC0_IRQHandler(void) {
   }
 
   if (NRF_RTC0->EVENTS_COMPARE[RESUME_COMPARE]) {
+    int error = (NRF_RTC0->COUNTER << 8) - (NRF_RTC0->CC[RESUME_COMPARE] << 8);
+    resume(error <= MAX_ERROR);
+
     NRF_RTC0->EVENTS_COMPARE[RESUME_COMPARE] = 0;
     NRF_RTC0->CC[RESUME_COMPARE] += SCHEDULE_PERIOD;
-
-    resume();
   }
 }
 
@@ -695,7 +700,7 @@ static void SendObjectConnectionState(int slot) {
 // Tap detection
 static void UpdatePropTaps(uint8_t id, int shocks, uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
   AccessorySlot* target = &accessories[id];
-  
+
   uint8_t count = shocks - target->shockCount;
   target->shockCount = shocks;
 
@@ -725,7 +730,7 @@ static void UpdatePropTaps(uint8_t id, int shocks, uint8_t tapTime, int8_t tapNe
         for (int i = 0; i < MAX_ACCESSORIES; i++) {
           accessories[i].dataReceived = false;
         }
-        
+
         wasTapped = true;
       }
 
@@ -748,8 +753,8 @@ static void UpdatePropTaps(uint8_t id, int shocks, uint8_t tapTime, int8_t tapNe
         AccessorySlot *target = &accessories[i];
 
         // Break when we've not heard from all active cubes
-        if (target->active && 
-            target->model != OBJECT_CHARGER && 
+        if (target->active &&
+            target->model != OBJECT_CHARGER &&
             !target->dataReceived) {
           return ;
         }
@@ -773,11 +778,11 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
 
   bool skipFilterStep = false;
   if (isMovingNow) {
-    
+
     // Skip filter accumulation if this is the first few frames of evidence of motion from a non-moving state.
     // This prevents fast high intensity events like taps from influencing the filter.
     skipFilterStep = !target->isMoving && (target->movingTimeoutCtr <= 1);
-    
+
     // Incremenent counter if block is not yet considered moving, or
     // if it is already considered moving and the moving count is less than STOP_MOVING_COUNT_THRESH
     // so that it doesn't need to decrement so much before it's considered to have stopped moving again.
@@ -787,7 +792,7 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
   } else if (target->movingTimeoutCtr > 0) {
     --target->movingTimeoutCtr;
   }
-  
+
   // Accumulate IIR filter for each axis
   if (!skipFilterStep) {
     target->accFilt[0] = (filter_coeff * ax) + FIXED_MUL(one - filter_coeff, target->accFilt[0]);
@@ -850,7 +855,7 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
       ReportUpAxisChanged(id, target->nextUpAxis);
       target->prevUpAxis = target->nextUpAxis;
     }
-    
+
     // Send stopped message
     ObjectStoppedMoving m;
     m.timestamp = g_dataToHead.timestamp;
@@ -859,8 +864,8 @@ static void UpdatePropMotion(uint8_t id, int ax, int ay, int az) {
     RobotInterface::SendMessage(m);
     target->isMoving = false;
   }
-  
-  
+
+
   // Stream accelerometer data
   if (target->shouldStreamAccel) {
     ObjectAccel m;
@@ -892,11 +897,11 @@ void Radio::setPropLightsID(unsigned int slot, uint8_t period)
   if (slot >= MAX_ACCESSORIES) {
     return ;
   }
-  
+
   lastSlot = slot;
 
   AccessorySlot* target = &accessories[slot];
-  
+
   target->rotationPeriod = period;
   target->rotationNext = period;
   target->rotationOffset = 0;
@@ -906,11 +911,11 @@ void Radio::setPropLights(const LightState *state) {
   if (lastSlot >= MAX_ACCESSORIES) {
     return ;
   }
-  
+
   for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
     Lights::update(lightController.cube[lastSlot][c], &state[c]);
   }
-  
+
   lastSlot = MAX_ACCESSORIES;
 }
 
@@ -918,7 +923,7 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   if (slot >= MAX_ACCESSORIES) {
     return ;
   }
-  
+
   AccessorySlot* acc = &accessories[slot];
   if (accessory != 0)
   {
