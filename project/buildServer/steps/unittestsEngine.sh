@@ -20,13 +20,17 @@ BUILD_TYPE="Debug"
 GTEST=$TOPLEVEL/lib/util/libs/framework/
 BUILDTOOLS=$TOPLEVEL/tools/build
 
-# build
-xcodebuild \
--workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
--scheme BUILD_WORKSPACE \
--sdk macosx \
--configuration $BUILD_TYPE \
-build
+: ${NO_BUILD:=0}
+
+if [ $NO_BUILD -eq 0 ]; then
+    # build
+    xcodebuild \
+    -workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+    -scheme BUILD_WORKSPACE \
+    -sdk macosx \
+    -configuration $BUILD_TYPE \
+    build
+fi
 
 BUILD_DIR=`xcodebuild \
 -workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
