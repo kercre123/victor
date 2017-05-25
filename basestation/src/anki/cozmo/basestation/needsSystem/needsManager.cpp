@@ -182,7 +182,7 @@ using Time = std::chrono::time_point<std::chrono::system_clock>;
   CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
-  CONSOLE_VAR(bool, kUseNeedManager, "Needs", true);
+  CONSOLE_VAR(bool, kUseNeedManager, "Needs", false);
 #endif
 
 
@@ -249,6 +249,9 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
 
   // We want to pause the whole system until we've finished reading from robot
   _isPausedOverall = true;
+  
+  if( !kUseNeedManager )
+    return;
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -285,6 +288,9 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
 
 void NeedsManager::InitAfterConnection()
 {
+  if( !kUseNeedManager )
+    return;
+  
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection",
                       "Starting MAIN Init of NeedsManager, with serial number %d", _robot.GetBodySerialNumber());
 
@@ -428,6 +434,9 @@ void NeedsManager::Update(const float currentTime_s)
 //    return;
 
   _currentTime_s = currentTime_s;
+  
+  if( !kUseNeedManager )
+    return;
 
   if (_isPausedOverall)
     return;
