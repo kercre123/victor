@@ -218,6 +218,8 @@ namespace Anki {
                                                    assetFolder + "/assets/DailyGoals");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/voiceCommand/exports",
+                                                   assetFolder + "/assets/voiceCommand");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
 
         // Delete compressed animation files that we don't need

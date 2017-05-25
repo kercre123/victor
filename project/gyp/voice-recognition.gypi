@@ -4,7 +4,7 @@
   # Here we pick which library to use and set its path/includes/libs
   # initially to empty. They will be filled in below in the 'conditions' as
   # needed:
-  'voice_recog_library': 'none', # one of: 'none' or 'thf'
+  'voice_recog_library': 'thf', # one of: 'none' or 'thf'
   'voice_recog_library_path':         [ ],
   'voice_recog_library_includes':     [ ],
   'voice_recog_library_libs':         [ ],
@@ -16,13 +16,13 @@
     # THF:
     ['voice_recog_library=="thf"', {
       'voice_recog_library_includes': [
-        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.4/ios/include',
+        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.23/ios/include',
       ]
     }],
       
     ['OS=="mac" and voice_recog_library=="thf"', {
       'voice_recog_library_lib_path': [
-        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.4/x86_64-darwin/lib',
+        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.23_noexpire/x86_64-darwin/lib',
       ],
       'voice_recog_library_libs': [
         'libthf.a',
@@ -31,7 +31,7 @@
     
     ['OS=="ios" and voice_recog_library=="thf"', {
       'voice_recog_library_lib_path': [
-        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.4/ios/lib',
+        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.23_noexpire/ios/lib',
       ],
       'voice_recog_library_libs': [
         'libthf.a',
@@ -40,10 +40,10 @@
     
     ['OS=="android" and voice_recog_library=="thf"', {
       'voice_recog_library_lib_path': [
-        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.4/android/lib'
+        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.23_noexpire/android/lib'
       ],
       'voice_recog_library_libs': [
-        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.4/android/lib/libthf_armeabi-v7a.a' # android special case wants full path of lib
+        '<(coretech_external_path)/sensory/TrulyHandsfreeSDK/4.4.23_noexpire/android/lib/libthf_armeabi-v7a.a' # android special case wants full path of lib
       ]
     }],
 

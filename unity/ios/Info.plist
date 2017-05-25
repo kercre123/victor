@@ -75,6 +75,8 @@
 	<string>Required for crash reporting</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Enable microphone access to talk to Cozmo.</string>
 	<key>UIApplicationExitsOnSuspend</key>
 	<false/>
 	<key>UIBackgroundModes</key>

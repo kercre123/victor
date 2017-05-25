@@ -1,5 +1,3 @@
-//#define VOICE_COMMAND_ENABLED
-
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
@@ -81,9 +79,7 @@ namespace Cozmo {
     }
 
     private void OnToggleButton() {
-    #if VOICE_COMMAND_ENABLED
       VoiceCommandManager.SendVoiceCommandEvent<ChangeEnabledStatus>(Singleton<ChangeEnabledStatus>.Instance.Initialize(!_IsEnabled));
-    #endif // VOICE_COMMAND_ENABLED
     }
 
     private void OnMicIgnoredToggle(bool newValue) {

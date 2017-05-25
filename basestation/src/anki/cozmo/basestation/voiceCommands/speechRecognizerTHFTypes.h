@@ -13,7 +13,19 @@
 #define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypes_H_
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
+extern "C" {
+  
+#ifndef bool
+#define bool_needsreset
+#define bool
+#endif
+  
 #include "trulyhandsfree.h"
+  
+#ifdef bool_needsreset
+#undef bool
+#endif
+}
 #endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
 #include <memory>

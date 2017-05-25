@@ -610,6 +610,8 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.cp(DASSource, DASTargetTemp)
         DASTarget = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json')
         ankibuild.util.File.update_if_changed(DASTarget, DASTargetTemp)
+        if self.options.verbose:
+            print_status('Moved {0} to {1}'.format(DASSource, DASTarget))
 
         # Write a dummy file with config if any key things have changed since last build
         # This is needed to trigger a rebuild when something like script engine changes
@@ -625,8 +627,22 @@ class GamePlatformConfiguration(object):
 
         ankibuild.util.File.update_if_changed(build_config_final_path, build_config_temp_path)
 
-        if self.options.verbose:
-            print_status('Moved {0} to {1}'.format(DASSource, DASTarget))
+        # Copy sensory voice recognition language data files from CTE to local folders to be used at runtime
+        voiceCommandLocalDir = os.path.join(GAME_ROOT, 'lib', 'anki', 'products-cozmo-assets', 'voiceCommand')
+        voiceRecogDataList = open(os.path.join(voiceCommandLocalDir, 'voice-recognition-data.txt')).read().splitlines()
+
+        voiceCommandDataBaseDirSrc = os.path.join(CTE_ROOT, 'sensory', 'TrulyHandsfreeSDK', '4.4.23_noexpire', 'Data')
+        voiceCommandDataBaseDirDest = os.path.join(voiceCommandLocalDir, 'exports', 'base')
+
+        for dataLine in voiceRecogDataList:
+            copy_srcFile = os.path.join(voiceCommandDataBaseDirSrc, dataLine)
+            copy_destFile = os.path.join(voiceCommandDataBaseDirDest, dataLine)
+            if not os.path.exists(copy_srcFile):
+                print_status('Cannot find voice data source file {0}'.format(copy_srcFile))
+                continue
+            else:
+                ankibuild.util.File.mkdir_p(os.path.dirname(copy_destFile))
+                ankibuild.util.File.cp(copy_srcFile, copy_destFile)
 
     def build(self):
         if self.options.command == 'clean':

@@ -547,6 +547,16 @@
                 ],
             },
             {
+              'action_name': 'create_symlink_resources_voice_command_data',
+              'inputs': [],
+              'outputs': [],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(cozmo_asset_path)/voiceCommand/exports',
+                '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/voiceCommand'
+              ],
+            },
+            {
                 'action_name': 'create_symlink_resources_sound',
                 'inputs': [],
                 'outputs': [],
@@ -611,6 +621,16 @@
                   '--link_target', '<(cozmo_asset_path)/animationGroupMaps',
                   '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animationGroupMaps'
                 ],
+            },
+            {
+              'action_name': 'create_symlink_resources_voice_command_data2',
+              'inputs': [],
+              'outputs': [],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(cozmo_asset_path)/voiceCommand/exports',
+                '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/voiceCommand'
+              ],
             },
             {
                 'action_name': 'create_symlink_resources_cube_anim_group_maps2',
