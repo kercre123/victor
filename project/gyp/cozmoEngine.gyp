@@ -1472,6 +1472,14 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
+            'copies': [
+              {
+                'files': [
+                  '<(ce-util_gyp_path)/../../../libs/framework/gtest.framework',
+                ],
+                'destination': '<(PRODUCT_DIR)',
+              },
+            ],
 
             'conditions': [
               [
