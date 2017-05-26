@@ -190,6 +190,33 @@ namespace Anki {
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
     
+      // Stop motion on any movement tracks that are locked by this action
+      // and that are currently moving.
+      const auto& mc = _robot.GetMoveComponent();
+      const auto& lockStr = std::to_string(GetTag());
+      std::string debugStr;
+      if (mc.IsHeadMoving() &&
+          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::HEAD_TRACK, lockStr)) {
+        _robot.GetMoveComponent().StopHead();
+        debugStr += "HEAD_TRACK, ";
+      }
+      if (mc.IsLiftMoving() &&
+          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::LIFT_TRACK, lockStr)) {
+        _robot.GetMoveComponent().StopLift();
+        debugStr += "LIFT_TRACK, ";
+      }
+      if (mc.AreWheelsMoving() &&
+          mc.AreAllTracksLockedBy((u8) AnimTrackFlag::BODY_TRACK, lockStr)) {
+        _robot.GetMoveComponent().StopBody();
+        debugStr += "BODY_TRACK, ";
+      }
+      // Log if we've stopped movement on any tracks
+      if (!debugStr.empty()) {
+        PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destroy.StopMovement",
+                      "Stopping movement on the following tracks since they were locked and are still moving: %s[%s][%d]",
+                      debugStr.c_str(), _name.c_str(), _idTag);
+      }
+      
       if(!_suppressTrackLocking && _state != ActionResult::NOT_STARTED)
       {
         if(DEBUG_ANIM_TRACK_LOCKING)

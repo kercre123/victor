@@ -61,11 +61,6 @@ namespace Anki {
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
       }
-
-      if( IsRunning() ) {
-        // stop the robot turning if the action is destroyed while running
-        _robot.GetMoveComponent().StopAllMotors();
-      }
     }
     
     void TurnInPlaceAction::SetMaxSpeed(f32 maxSpeed_radPerSec)
