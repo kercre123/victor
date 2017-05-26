@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: d4e755263f24e45adb2b4f29f582bf08
-timeCreated: 1495837241
+guid: 3cacede1bab5c4d3e9e336ad87f041b0
+timeCreated: 1495837813
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -70,7 +70,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: common_frame_spritesUHDAtlas
+  spritePackingTag: repair_view_button_spritesUHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
