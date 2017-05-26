@@ -35,24 +35,24 @@
 
 #define DEBUG_FACE_LAYERING 0
 
+#define CONSOLE_GROUP_NAME "FaceLayers"
+
 namespace Anki {
 namespace Cozmo {
 
 namespace {
   
-  static const char * const kConsoleGroupName = "FaceLayers";
+  CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, CONSOLE_GROUP_NAME, 30000);
   
-  CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, kConsoleGroupName, 30000);
-  
-  CONSOLE_VAR(bool, kNeeds_ShowFaceRepairGlitches, kConsoleGroupName, false);
+  CONSOLE_VAR(bool, kNeeds_ShowFaceRepairGlitches, CONSOLE_GROUP_NAME, false);
   
   // Face repair degree chosen randomly b/w these two values
-  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMin, kConsoleGroupName, 0.75f);
-  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMax, kConsoleGroupName, 3.00f);
+  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMin, CONSOLE_GROUP_NAME, 0.75f);
+  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMax, CONSOLE_GROUP_NAME, 3.00f);
   
   // Face repair frequence chosen randomly between these two values
-  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMin_sec, kConsoleGroupName, 0.5f);
-  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMax_sec, kConsoleGroupName, 1.5f);
+  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMin_sec, CONSOLE_GROUP_NAME, 0.5f);
+  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMax_sec, CONSOLE_GROUP_NAME, 1.5f);
   
 }
 

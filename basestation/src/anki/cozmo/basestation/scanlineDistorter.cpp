@@ -23,20 +23,21 @@
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
+#define CONSOLE_GROUP_NAME "ScanlineDistortion"
+
 namespace Anki {
 namespace Cozmo {
   
 namespace {
-  static const char * const kConsoleGroupName = "ScanlineDistortion";
   
   // Fraction of (nominal) eye area to be off (note: does not consider "Width" parameter below)
-  CONSOLE_VAR_RANGED(f32, kProcFaceScanline_OffNoiseProb, kConsoleGroupName, 0.1f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kProcFaceScanline_OffNoiseProb, CONSOLE_GROUP_NAME, 0.1f, 0.f, 1.f);
   
   // Max width of each "off" noise bar
-  CONSOLE_VAR(s32, kProcFaceScanline_OffNoiseMaxWidth, kConsoleGroupName, 3);
+  CONSOLE_VAR(s32, kProcFaceScanline_OffNoiseMaxWidth, CONSOLE_GROUP_NAME, 3);
   
   // Max amount to randomly shift control-point distortion shifts left and right, per scanline
-  CONSOLE_VAR(s32, kProcFaceScanline_MaxShiftNoise, kConsoleGroupName, 3);
+  CONSOLE_VAR(s32, kProcFaceScanline_MaxShiftNoise, CONSOLE_GROUP_NAME, 3);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

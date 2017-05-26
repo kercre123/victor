@@ -67,6 +67,7 @@ using Time = time_point<system_clock>;
 using Time = std::chrono::time_point<std::chrono::system_clock>;
 
 #if ANKI_DEV_CHEATS
+namespace {
   NeedsManager* g_DebugNeedsManager = nullptr;
   void DebugFillNeedMeters( ConsoleFunctionContextRef context )
   {
@@ -182,9 +183,12 @@ using Time = std::chrono::time_point<std::chrono::system_clock>;
   CONSOLE_FUNC( DebugSetEnergyLevel, "Needs", float level );
   CONSOLE_FUNC( DebugSetPlayLevel, "Needs", float level );
   CONSOLE_FUNC( DebugPassTimeMinutes, "Needs", float minutes );
-  CONSOLE_VAR(bool, kUseNeedManager, "Needs", false);
+};
 #endif
 
+namespace {
+  CONSOLE_VAR(bool, kUseNeedManager, "Needs", false);
+};
 
 NeedsManager::NeedsManager(Robot& robot)
 : _robot(robot)

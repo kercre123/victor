@@ -48,7 +48,9 @@ namespace Anki {
 namespace Cozmo {
 namespace VoiceCommand {
   
-namespace{
+#if REMOTE_CONSOLE_ENABLED
+namespace {
+  
 void HearVoiceCommand(ConsoleFunctionContextRef context)
 {
   VoiceCommandType command = static_cast<VoiceCommandType>(ConsoleArg_Get_Int(context, "command"));
@@ -58,8 +60,11 @@ void HearVoiceCommand(ConsoleFunctionContextRef context)
     sThis->DoForceHeardPhrase(command);
   }
 }
+  
 CONSOLE_FUNC(HearVoiceCommand, "VoiceCommand", int command);
+
 }
+#endif
   
   
 VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
