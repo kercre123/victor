@@ -316,5 +316,15 @@ std::vector<IBehavior*> IActivity::GetObjectTapBehaviors(){
   return {};
 }
 
+IActivityStrategy* IActivity::DevGetStrategy()
+{
+  if(ANKI_DEV_CHEATS)
+  {
+    assert(_strategy);
+    return _strategy.get();
+  }
+  return nullptr;
+}
+
 } // namespace Cozmo
 } // namespace Anki

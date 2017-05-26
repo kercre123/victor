@@ -77,6 +77,10 @@ public:
   // So that the behavior manager can check whether it should switch to the
   // object tap interaction activity
   std::vector<IBehavior*> GetObjectTapBehaviors();
+  
+  void SetActivityStrategyCooldown(const UnlockId& unlockID,
+                                   const ActivityID& activityId,
+                                   float cooldown_ms);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events

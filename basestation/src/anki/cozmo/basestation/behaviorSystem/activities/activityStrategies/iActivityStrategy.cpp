@@ -228,6 +228,14 @@ void IActivityStrategy::RandomizeCooldown(const Robot& robot) const
 {
   _cooldownSecs = _baseCooldownSecs + robot.GetRNG().RandDbl(_cooldownVarianceSecs);
 }
+
+void IActivityStrategy::SetCooldown(float cooldown_ms)
+{
+  _baseCooldownSecs = cooldown_ms;
+  _cooldownVarianceSecs = 0;
+  _cooldownSecs = _baseCooldownSecs;
+  
+}
   
 } // namespace
 } // namespace

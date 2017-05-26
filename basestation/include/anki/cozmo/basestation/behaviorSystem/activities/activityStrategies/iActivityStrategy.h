@@ -44,6 +44,8 @@ public:
   // true when this activity wants to finish, false if it would rather continue
   bool WantsToEnd(const Robot& robot, float lastTimeActivityStartedSec) const;
   
+  void SetCooldown(float cooldown_ms);
+  
 protected:
 
   // true when this activity would be happy to start, false if it doens't want to be fired now

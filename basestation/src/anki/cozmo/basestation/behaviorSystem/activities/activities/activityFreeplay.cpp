@@ -112,7 +112,17 @@ void ActivitySetSinging( ConsoleFunctionContextRef context ) {
   ActivityFreeplaySetDebugActivity(ActivityID::Singing);
 }
 CONSOLE_FUNC( ActivitySetSinging, "ActivityFreeplay" );
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivitySetSingingCooldown(ConsoleFunctionContextRef context)
+{
+  if(nullptr != defaultFeeplayActivity)
+  {
+    const float cooldown = ConsoleArg_Get_Float(context, "cooldown_ms");
+    defaultFeeplayActivity->SetActivityStrategyCooldown(UnlockId::Count, ActivityID::Singing, cooldown);
+  }
+}
+CONSOLE_FUNC( ActivitySetSingingCooldown, "ActivityFreeplay", float cooldown_ms);
+
 #endif // REMOTE_CONSOLE_ENABLED
 
 };
@@ -711,6 +721,27 @@ void ActivityFreeplay::ClearObjectTapInteractionRequestedActivity()
   if(_requestedActivity == _configParams.objectTapInteractionActivity)
   {
     _requestedActivity = ActivityID::Invalid;
+  }
+}
+
+void ActivityFreeplay::SetActivityStrategyCooldown(const UnlockId& unlockID,
+                                           const ActivityID& activityId,
+                                           float cooldown_ms)
+{
+  const SparkToActivitiesTable::iterator iter = _activities.find(unlockID);
+  if(iter != _activities.end())
+  {
+    for(auto& activity : iter->second)
+    {
+      if(activity->GetID() == activityId)
+      {
+        IActivityStrategy* strategy = activity->DevGetStrategy();
+        if(strategy != nullptr)
+        {
+          strategy->SetCooldown(cooldown_ms);
+        }
+      }
+    }
   }
 }
 

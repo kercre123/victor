@@ -85,6 +85,7 @@ public:
   
   // return strategy that defines this activity's selection
   const IActivityStrategy& GetStrategy() const { assert(_strategy); return *_strategy.get(); }
+  IActivityStrategy* DevGetStrategy();
   
   // returns the activity name set from config
   ActivityID  GetID() const { return _id; }

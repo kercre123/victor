@@ -1,5 +1,9 @@
 [
   {
+    "feature": "Invalid",
+    "enabled": false
+  },
+  {
     "feature": "ObjectTapInteractions",
     "enabled": true
   },
