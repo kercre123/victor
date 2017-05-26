@@ -537,19 +537,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
     }
   }
-  else if(currOnSide){
-    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
-       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
-    {
-      // Transition to Robot on Side
-      if(onRightSide){
-        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
-      }else{
-        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
-      }
-      _timeOffTreadStateChanged_ms = currentTimestamp;
-    }
-  }
   else if(currFacePlant
           && _awaitingConfirmationTreadState != OffTreadsState::OnFace)
   {
@@ -564,6 +551,19 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     _awaitingConfirmationTreadState = OffTreadsState::OnBack;
     // On Back is a special case as it is also an intermediate state for coming from onface -> ontreads. hence we wait a little longer than usual(kRobotTimeToConsiderOfftreads_ms) to check if it's on back.
     _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
+  }
+  else if(currOnSide){
+    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
+       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
+    {
+      // Transition to Robot on Side
+      if(onRightSide){
+        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
+      }else{
+        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
+      }
+      _timeOffTreadStateChanged_ms = currentTimestamp;
+    }
   }
   else if(currOntreads
           && _awaitingConfirmationTreadState != OffTreadsState::InAir
