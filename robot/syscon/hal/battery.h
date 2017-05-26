@@ -9,8 +9,7 @@
 enum CurrentChargeState {
   CHARGE_OFF_CHARGER,
   CHARGE_CHARGING,
-  CHARGE_CHARGED,
-  CHARGE_CHARGER_OUT_OF_SPEC
+  CHARGE_CHARGED
 };
 
 namespace Battery {

@@ -26,8 +26,6 @@ static const int MaxContactTime     = 30 * 60 * (1000 / 20);  // (30min) 20ms pe
 static const int MaxChargedTime     = MaxContactTime * 8; // 4 hours
 static const int MinContactTime     = 25;     // .5s
 static const int MinChargeTime      = 250;    // Should charge for at least 5 seconds
-static const int MaxChargeBounces   = 5;      // If we toggle 5 times too quickly, call charger out of spec
-static const int OffOOSChargerReset = 250;    // 5 seconds
 
 // Updated to 3.0
 static const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
@@ -128,7 +126,7 @@ static inline void sendPowerStateUpdate()
   msg.batteryLevel = Battery::getLevel();
   msg.onCharger  = ContactTime > MinContactTime;
   msg.isCharging = isCharging;
-  msg.chargerOOS = charge_state == CHARGE_CHARGER_OUT_OF_SPEC;
+  msg.chargerOOS = false;
   RobotInterface::SendMessage(msg);
 }
 
@@ -351,7 +349,7 @@ void Battery::updateOperatingMode() {
 
       /*  1.5 code to permit power-on from button while off charger.
           -- seems to be contributing to revert problems.
-           
+
       NVIC_DisableIRQ(UART0_IRQn);
       NVIC_DisableIRQ(GPIOTE_IRQn);
       NVIC_DisableIRQ(RTC1_IRQn);
@@ -449,17 +447,11 @@ static void setChargeState(CurrentChargeState state) {
       isCharging = false;
       nrf_gpio_pin_clear(PIN_CHARGE_EN);
       break ;
-    case CHARGE_CHARGER_OUT_OF_SPEC:
-      isCharging = false;
-      nrf_gpio_pin_clear(PIN_CHARGE_EN);
-      break ;
   }
 }
 
 static void updateChargeState(Fixed vext) {
   using namespace Battery;
-
-  static int chargeBounces = 0;
 
   // Check that we are at safe charging thresholds
   onContacts = vExt > VEXT_DETECT_THRESHOLD || (isCharging && vExt > VEXT_CHARGE_THRESHOLD);
@@ -498,18 +490,7 @@ static void updateChargeState(Fixed vext) {
       // We are no longer on contacts
       if (!onContacts) {
         // Lock up charger if we are bouncing
-        if (++chargeBounces > MaxChargeBounces) {
-          setChargeState(CHARGE_CHARGER_OUT_OF_SPEC);
-        } else {
-          setChargeState(CHARGE_OFF_CHARGER);
-        }
-
-        break ;
-      }
-
-      // We appear to have a stable charge time (clear bounce count)
-      if (ContactTime > MinChargeTime) {
-        chargeBounces = 0;
+        setChargeState(CHARGE_OFF_CHARGER);
       }
 
       break ;
@@ -524,20 +505,6 @@ static void updateChargeState(Fixed vext) {
       if (!onContacts) {
         setChargeState(CHARGE_OFF_CHARGER);
         return ;
-      }
-
-      break ;
-
-    case CHARGE_CHARGER_OUT_OF_SPEC:
-      static int off_charger_time = 0;
-
-      if (!onContacts) {
-        if (++off_charger_time > OffOOSChargerReset) {
-          setChargeState(CHARGE_OFF_CHARGER);
-          chargeBounces = 0;
-        }
-      } else {
-        off_charger_time = 0;
       }
 
       break ;

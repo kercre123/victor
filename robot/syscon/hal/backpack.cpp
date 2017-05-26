@@ -156,9 +156,6 @@ static void setImpulsePattern(void) {
       setLightsMiddle(BPL_IMPULSE, BackpackLights::charged);
       break ;
 
-    case CHARGE_CHARGER_OUT_OF_SPEC:
-      setLightsMiddle(BPL_IMPULSE, BackpackLights::low_battery);
-      break ;
   }
 }
 
