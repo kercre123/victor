@@ -825,6 +825,15 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
 {
   ANKI_CPU_PROFILE("Robot::HandlePotentialCliffEvent");
   
+  // Ignore potential cliff events while on the charger platform because we expect them
+  // while driving off the charger
+  if(robot->IsOnChargerPlatform())
+  {
+    PRINT_NAMED_DEBUG("Robot.HandlePotentialCliffEvent.OnChargerPlatform",
+                      "Ignoring potential cliff event while on charger platform");
+    return;
+  }
+  
   if(robot->GetIsCliffReactionDisabled()){
     IActionRunner* action = new TriggerLiftSafeAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
     robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);

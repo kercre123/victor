@@ -401,6 +401,9 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
       ExternalInterface::MessageEngineToGame(
         ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
       );
+    
+    const u32 thresh = (onPlatform ? CLIFF_SENSOR_UNDROP_LEVEL_MIN : CLIFF_SENSOR_DROP_LEVEL);
+    SetCliffDetectThreshold(thresh);
   }
 }
     
@@ -1025,7 +1028,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 //      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
       
     } else {
-      // This is "normal" mode, where we udpate pose history based on the
+      // This is "normal" mode, where we update pose history based on the
       // reported odometry from the physical robot
           
       // Ignore physical robot's notion of z from the message? (msg.pose_z)
@@ -1082,14 +1085,48 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                           "AddRawOdomStateToHistory failed for timestamp=%d", msg.timestamp);
       return lastResult;
     }
+    
+    Pose3d prevDriveCenterPose ;
+    ComputeDriveCenterPose(GetPose(), prevDriveCenterPose);
 
     if(UpdateCurrPoseFromHistory() == false) {
       lastResult = RESULT_FAIL;
     }
     
-    if (frameIsCurrent) {
+    if(frameIsCurrent)
+    {
+      if(_totalDistanceTravelled_mm == -1.f)
+      {
+        _totalDistanceTravelled_mm = 0.f;
+        
+        // COZMO-11204: Lower the cliff detect threshold to the minimum value until Cozmo
+        // has driven a certain distance. This is to prevent Cozmo from detecting a cliff while
+        // driving off chargers (specificly 1.5 chargers). The cliff threshold should still be high
+        // enough to detect real cliffs
+        SetCliffDetectThreshold(CLIFF_SENSOR_UNDROP_LEVEL_MIN);
+      }
+    
+      // Update total distance travelled only when this state message is from the current frameId
+      Pose3d curDriveCenterPose;
+      ComputeDriveCenterPose(GetPose(), curDriveCenterPose);
+      
+      const Vec3f transDiff =  curDriveCenterPose.GetTranslation() - prevDriveCenterPose.GetTranslation();
+      _totalDistanceTravelled_mm += ABS(transDiff.Length());
+      
+      // Check if we have travelled far enough to set cliff detect threshold back to
+      // default value
+      constexpr f32 kDistanceTravelledToReEnableCliffs_mm = 50;
+      if(!_pastDistanceToReEnableCliffs &&
+         _totalDistanceTravelled_mm > kDistanceTravelledToReEnableCliffs_mm)
+      {
+        // Reset cliff detect threshold back to default after travelling a distance of
+        // kDistanceTravelledToReEnableCliffs_mm
+        SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
+        
+        _pastDistanceToReEnableCliffs = true;
+      }
+      
       _numMismatchedFrameIDs = 0;
-
     } else {
       // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
       // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
@@ -1362,8 +1399,12 @@ Result Robot::Update()
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
   // the charger.
 
-  if( _isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads ) {  
-    ObservableObject* charger = GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+  if( _isOnChargerPlatform && _offTreadsState == OffTreadsState::OnTreads ) {
+    BlockWorldFilter filter;
+    filter.SetAllowedFamilies({ObjectFamily::Charger});
+    // Assuming there is only one charger in the world
+    const ObservableObject* charger = GetBlockWorld().FindLocatedMatchingObject(filter);
+    
     if( nullptr != charger )
     {
       const bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
@@ -3978,6 +4019,11 @@ void Robot::SetBodyColor(const s32 color)
   }
   
   _bodyColor = bodyColor;
+}
+
+void Robot::SetCliffDetectThreshold(u16 thresh)
+{
+  SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(thresh);
 }
 
 void Robot::ObjectToConnectToInfo::Reset()

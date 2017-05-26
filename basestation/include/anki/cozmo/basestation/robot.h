@@ -1135,6 +1135,15 @@ protected:
   Result SendAbortAnimation();
     
   Result SendSetCarryState(CarryState state);
+  
+  void SetCliffDetectThreshold(u16 thresh);
+  
+  // Total distance travelled
+  f32 _totalDistanceTravelled_mm = -1.f;
+  
+  // True when the we have travelled far enough to set cliff detect threshold
+  // back to defaults
+  bool _pastDistanceToReEnableCliffs = false;
 
     
   // =========  Active Object messages  ============
