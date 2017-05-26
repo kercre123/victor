@@ -46,7 +46,7 @@ export PATH=${PATH}:${ANDROID_HOME}/anki/bin # For tools like buck
 
 ### Unity
 
-We are using [Unity 5.3.5p8](https://unity3d.com/unity/qa/patch-releases/5.3.5p8). Make sure you also install the iOS and Android components.
+We are using [Unity 5.6.0f3](https://unity3d.com/get-unity/download/archive). Make sure you also install the iOS and Android components.
 
 Right now we use one scene and load assets by code. The main scene is located here
 
@@ -70,7 +70,7 @@ Java is needed for Buck, so if you don't already have that, you can run:
 
     brew cask install java
 
-Build everything from the cozmo-game folder.
+Build everything from the cozmo-one folder.
 
     cd <path-to-cozmo-repository>
     ./configure.py build
