@@ -16,7 +16,7 @@ namespace Cozmo.Energy.UI {
 
     public void InitializeEnergyModal() {
       NeedsStateManager nsm = NeedsStateManager.Instance;
-      nsm.PauseDecay();
+      nsm.PauseExceptForNeed(NeedId.Energy);
 
       _EnergyMeter.Initialize(allowInput: false,
                               buttonClickCallback: null,
@@ -28,7 +28,7 @@ namespace Cozmo.Energy.UI {
     }
 
     private void OnDestroy() {
-      NeedsStateManager.Instance.ResumeDecay();
+      NeedsStateManager.Instance.ResumeAllNeeds();
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
     }
 

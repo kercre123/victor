@@ -92,15 +92,21 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.SendMessage();
     }
 
-    public void PauseDecay() {
-      RobotEngineManager.Instance.Message.SetNeedsPauseState =
-                          Singleton<SetNeedsPauseState>.Instance.Initialize(true);
+    public void PauseExceptForNeed(NeedId needId) {
+      SetNeedsPauseStates pauseStatesMessage = new SetNeedsPauseStates();
+      pauseStatesMessage.decayPause = new bool[] { true, true, true };
+      pauseStatesMessage.actionPause = new bool[] { true, true, true };
+      pauseStatesMessage.actionPause[(int)needId] = false;
+      RobotEngineManager.Instance.Message.SetNeedsPauseStates = pauseStatesMessage;
       RobotEngineManager.Instance.SendMessage();
     }
 
-    public void ResumeDecay() {
-      RobotEngineManager.Instance.Message.SetNeedsPauseState =
-                          Singleton<SetNeedsPauseState>.Instance.Initialize(false);
+    public void ResumeAllNeeds() {
+      SetNeedsPauseStates pauseStatesMessage = new SetNeedsPauseStates();
+      pauseStatesMessage.decayPause = new bool[] { false, false, false };
+      pauseStatesMessage.actionPause = new bool[] { false, false, false };
+      pauseStatesMessage.decayDiscardAfterUnpause = new bool[] { false, false, false };
+      RobotEngineManager.Instance.Message.SetNeedsPauseStates = pauseStatesMessage;
       RobotEngineManager.Instance.SendMessage();
     }
 

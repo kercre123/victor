@@ -22,7 +22,7 @@ namespace Cozmo.Repair.UI {
 
     public void InitializeRepairModal() {
       NeedsStateManager nsm = NeedsStateManager.Instance;
-      nsm.PauseDecay();
+      nsm.PauseExceptForNeed(NeedId.Repair);
 
       _RepairMeter.Initialize(allowInput: false,
                               buttonClickCallback: null,
@@ -38,7 +38,7 @@ namespace Cozmo.Repair.UI {
     }
 
     private void OnDestroy() {
-      NeedsStateManager.Instance.ResumeDecay();
+      NeedsStateManager.Instance.ResumeAllNeeds();
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
     }
 
