@@ -64,6 +64,7 @@ private:
   
   const CozmoContext*               _context;
   IBehavior*                        _voiceCommandBehavior = nullptr;
+  IBehavior*                        _danceBehavior           = nullptr;
   std::unique_ptr<RequestGameSelector> _requestGameSelector;
   VoiceCommand::VoiceCommandType    _respondingToCommandType = VoiceCommand::VoiceCommandType::Count;
   

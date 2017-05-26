@@ -147,23 +147,40 @@ void CubeLightComponent::Update(bool shouldPickNextAnim)
       // If there are no more patterns in this animation or the animation is being stopped
       if(objectAnim.curPattern == objectAnim.endOfPattern || objectAnim.stopNow)
       {
-        // Call the callback since the animation is complete
-        if(objectAnim.callback)
+        auto removeAndCallback = [this, &objectAnim, &objectInfo, &layer]()
         {
-          // Only call the callback if it isn't from an action or
-          // it is from an action and that action's tag is still in use
-          // If the action gets destroyed and the tag is no longer in use the callback would be
-          // invalid
-          if(objectAnim.actionTagCallbackIsFrom == 0 ||
-             IActionRunner::IsTagInUse(objectAnim.actionTagCallbackIsFrom))
+          auto callback = objectAnim.callback;
+          const u32 actionTag = objectAnim.actionTagCallbackIsFrom;
+          
+          // Remove this animation from the stack
+          // Note: objectAnim is now invalid. It can NOT be reassigned or accessed
+          objectInfo.second.animationsOnLayer[layer].pop_back();
+          
+          // Call the callback since the animation is complete
+          if(callback)
           {
-            objectAnim.callback();
+            // Only call the callback if it isn't from an action or
+            // it is from an action and that action's tag is still in use
+            // If the action gets destroyed and the tag is no longer in use the callback would be
+            // invalid
+            if(actionTag == 0 ||
+               IActionRunner::IsTagInUse(actionTag))
+            {
+              callback();
+            }
           }
-        }
+        };
         
-        // Remove this animation from the stack
-        // Note: objectAnim is now invalid. It can NOT be reassigned or accessed
-        objectInfo.second.animationsOnLayer[layer].pop_back();
+        // Note: objectAnim invalidated by this call
+        removeAndCallback();
+      
+        // Keep removing animations and calling callbacks while there are animations to stop
+        // on this layer
+        while(!objectInfo.second.animationsOnLayer[layer].empty() &&
+              objectInfo.second.animationsOnLayer[layer].back().stopNow)
+        {
+          removeAndCallback();
+        }
       
         // If there are no more animations being played on this layer
         if(objectInfo.second.animationsOnLayer[layer].empty())
@@ -229,9 +246,15 @@ void CubeLightComponent::Update(bool shouldPickNextAnim)
       else
       {
         objectAnim.timeCurPatternEnds = 0;
-        if(objectAnim.curPattern->duration_ms > 0)
+        if(objectAnim.curPattern->duration_ms > 0 ||
+           objectAnim.durationModifier_ms != 0)
         {
-          objectAnim.timeCurPatternEnds = curTime + objectAnim.curPattern->duration_ms;
+          objectAnim.timeCurPatternEnds = curTime +
+                                          objectAnim.curPattern->duration_ms +
+                                          objectAnim.durationModifier_ms;
+          
+          DEV_ASSERT(objectAnim.timeCurPatternEnds > 0,
+                     "CubeLightComponent.Update.TimeCurPatternEndLessThanZero");
         }
       }
       
@@ -273,9 +296,10 @@ bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
                                           const CubeAnimationTrigger& animTrigger,
                                           AnimCompletedCallback callback,
                                           bool hasModifier,
-                                          const ObjectLights& modifier)
+                                          const ObjectLights& modifier,
+                                          const s32 durationModifier_ms)
 {
-  return PlayLightAnim(objectID, animTrigger, AnimLayerEnum::Engine, callback, hasModifier, modifier);
+  return PlayLightAnim(objectID, animTrigger, AnimLayerEnum::Engine, callback, hasModifier, modifier, durationModifier_ms);
 }
 
 bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
@@ -283,7 +307,8 @@ bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
                                           const AnimLayerEnum& layer,
                                           AnimCompletedCallback callback,
                                           bool hasModifier,
-                                          const ObjectLights& modifier)
+                                          const ObjectLights& modifier,
+                                          const s32 durationModifier_ms)
 {
   auto iter = _objectInfo.find(objectID);
   if(iter != _objectInfo.end())
@@ -400,13 +425,22 @@ bool CubeLightComponent::PlayLightAnim(const ObjectID& objectID,
     
     const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
+    // Set this animation's duration modifier
+    animation.durationModifier_ms = durationModifier_ms;
+    
     animation.timeCurPatternEnds = 0;
     
     // If the first pattern in the animation has a non zero duration then update the time the pattern
     // should end
-    if(animation.curPattern->duration_ms > 0)
+    if(animation.curPattern->duration_ms > 0 ||
+       animation.durationModifier_ms != 0)
     {
-      animation.timeCurPatternEnds = curTime + animation.curPattern->duration_ms;
+      animation.timeCurPatternEnds = curTime +
+                                     animation.curPattern->duration_ms +
+                                     animation.durationModifier_ms;
+      
+      DEV_ASSERT(animation.timeCurPatternEnds > 0,
+                 "CubeLightComponent.PlayLightAnim.TimeCurPatternEndLessThanZero");
     }
     
     // Whether or not this animation canBeOverridden is defined by whether or not the last pattern in the
@@ -557,7 +591,7 @@ void CubeLightComponent::ApplyAnimModifier(const LightAnim& anim,
 {
   modifiedAnim.clear();
   modifiedAnim.insert(modifiedAnim.begin(), anim.begin(), anim.end());
-  
+
   // For every pattern in the animation apply the modifier
   for(auto& pattern : modifiedAnim)
   {
@@ -1128,7 +1162,16 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
                    object->GetID().GetValue(), object->GetActiveID());
   }
   
-  _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(object->GetLEDGamma())));
+  // Only send gamma when it changes since it is global across all cubes
+  // (Currently never changes)
+  static u32 prevGamma = 0;
+  const u32 gamma = object->GetLEDGamma();
+  if(gamma != prevGamma)
+  {
+    _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
+    prevGamma = gamma;
+  }
+  
   _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
                                                           MS_TO_LED_FRAMES(rotationPeriod_ms))));
   return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));

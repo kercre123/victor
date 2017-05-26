@@ -23,6 +23,10 @@
     {
       "phrase": "No Thank You",
       "commandType": "NoThankYou"
+    },
+    {
+      "phrase": "Do A Dance",
+      "commandType": "DoADance"
     }
   ],
 
@@ -40,7 +44,8 @@
       "contextIsPhraseSpotted": false,
       "contextAllowsFollowup": false,
       "contextCommandList": [
-        "LetsPlay"
+        "LetsPlay",
+        "DoADance"
       ]
     },
     {

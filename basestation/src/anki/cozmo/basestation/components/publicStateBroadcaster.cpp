@@ -160,6 +160,7 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
       newStruct.currentWorkoutStage = static_cast<WorkoutStage>(stage);
       break;
     }
+    case BehaviorStageTag::Dance: // Dancing doesn't have any stages
     case BehaviorStageTag::Count:
     {
       break;
@@ -182,7 +183,7 @@ int PublicStateBroadcaster::GetBehaviorRoundFromMessage(const RobotPublicState& 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageType,
-                                                           const BehaviorStageStruct& stageStruct){
+                                                         const BehaviorStageStruct& stageStruct){
   switch(stageType){
     case BehaviorStageTag::PyramidConstruction:
     {
@@ -196,10 +197,10 @@ int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageT
     {
       return Util::EnumToUnderlying(stageStruct.currentWorkoutStage);
     }
+    case BehaviorStageTag::Dance: // Dancing doesn't have any stages
     case BehaviorStageTag::Count:
     {
       return 0;
-      break;
     }
   }
   

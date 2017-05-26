@@ -14,8 +14,9 @@ namespace Cozmo {
 
 
 enum uint_8 BehaviorStageTag{
-  PyramidConstruction,
+  Dance,
   GuardDog,
+  PyramidConstruction,
   Workout,
   Count
 }

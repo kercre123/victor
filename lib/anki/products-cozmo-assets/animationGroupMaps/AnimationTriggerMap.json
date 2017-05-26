@@ -301,6 +301,10 @@
       "AnimName": "ag_keepaway_idleliftdown"
     },
     {
+      "CladEvent": "DanceMambo",
+      "AnimName": "ag_dancing_mambo"
+    },
+    {
       "CladEvent": "DemoSpeedTapCozmoWin",
       "AnimName": "ag_demo_win_01"
     },

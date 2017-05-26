@@ -173,7 +173,7 @@ message CameraText
   uint_32 color,
   int_32  x,
   int_32  y,
-  string  text[uint_8]
+  string  text
 }
 
 // EraseObject
@@ -267,7 +267,7 @@ message SetLabel
 {
   uint_32 labelID,
   uint_32 colorID,
-  string  text[uint_8]
+  string text
 }
 
 

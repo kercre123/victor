@@ -322,7 +322,7 @@ void VizControllerImpl::ProcessVizSetLabelMessage(const AnkiEvent<VizInterface::
   const auto& payload = msg.GetData().Get_SetLabel();
   if (payload.text.size() > 0){
     u32 lineNum = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + payload.labelID);
-    DrawText(_disp, lineNum, payload.colorID, payload.text[0].c_str());
+    DrawText(_disp, lineNum, payload.colorID, payload.text.c_str());
   }
 }
 
@@ -446,11 +446,11 @@ void VizControllerImpl::ProcessVizCameraTextMessage(const AnkiEvent<VizInterface
   if (payload.text.size() > 0){
     // Drop shadow
     SetColorHelper(_camDisp, NamedColors::BLACK);
-    _camDisp->drawText(payload.text[0], (int)payload.x+1, (int)payload.y+1);
+    _camDisp->drawText(payload.text, (int)payload.x+1, (int)payload.y+1);
     
     // Actual text
     SetColorHelper(_camDisp, payload.color);
-    _camDisp->drawText(payload.text[0], (int)payload.x, (int)payload.y);
+    _camDisp->drawText(payload.text, (int)payload.x, (int)payload.y);
   }
 }
 

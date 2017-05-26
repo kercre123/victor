@@ -23,6 +23,7 @@
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorBouncer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorCantHandleTallStack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDance.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
@@ -372,6 +373,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::TrackLaser:
     {
       newBehavior = new BehaviorTrackLaser(robot, config);
+      break;
+    }
+    case BehaviorClass::Dance:
+    {
+      newBehavior = new BehaviorDance(robot, config);
       break;
     }
     case BehaviorClass::DevTurnInPlaceTest:

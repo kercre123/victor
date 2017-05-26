@@ -39,8 +39,6 @@ namespace {
   Anki::Cozmo::VoiceCommand::VoiceCommandComponent* sThis = nullptr;
 }
 
-
-
 using namespace Anki::AudioUtil;
 using namespace Anki::Cozmo::ExternalInterface;
 

@@ -191,5 +191,8 @@
   },
   "behavior.singing.YankeeDoodle": {
     "translation": "Cozmo is singing Yankee Doodle"
+  },
+  "behavior.Dance": {
+    "translation": "Cozmo is dancing"
   }
 }

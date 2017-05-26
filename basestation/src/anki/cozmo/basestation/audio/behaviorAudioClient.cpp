@@ -259,8 +259,20 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
       // reset GuardDog stuff
       _guardDogActive = false;
       _prevGuardDogStage = GuardDogStage::Count;
+    }
+    
+    // If this is dancing then post dancing switch
+    if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Dance)
+    {
+      _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
+                                                   static_cast<GenericSwitch>(Freeplay_Mood::Dancing),
+                                                   AudioMetaData::GameObjectType::Default);
+    }
+    
+    if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Count)
+    {
       // Update the Activity state to current Activity
-      //  (this will stop the GuardDog-specific music)
+      // This will stop any music currently playing
       UpdateActivityMusicState(currActivity);
     }
   }

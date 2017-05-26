@@ -993,7 +993,7 @@ namespace Anki.Cozmo.Viz {
         return;
       }
 
-      string text = camText.text.FirstOrDefault() ?? string.Empty;
+      string text = camText.text;
 
       var fontTexture = (Texture2D)_CameraFont.material.mainTexture;
 

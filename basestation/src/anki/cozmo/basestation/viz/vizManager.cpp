@@ -792,10 +792,10 @@ namespace Anki {
     {
       ANKI_CPU_PROFILE("VizManager::SetText");
       
-      char buffer[2048]{0};
+      char buffer[255]{0};
       va_list argptr;
       va_start(argptr, format);
-      vsnprintf(buffer, 2048, format, argptr);
+      vsnprintf(buffer, 255, format, argptr);
       va_end(argptr);
       SendMessage(VizInterface::MessageViz(VizInterface::SetLabel(labelType, (uint32_t)color, {std::string(buffer)})));
     }

@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "Dance",
+  "behaviorID": "Dance_Mambo",
+  "displayNameKey":"behavior.Dance",
+  "animTriggers": ["DanceMambo"]
+}

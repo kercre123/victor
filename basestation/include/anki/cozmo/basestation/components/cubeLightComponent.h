@@ -97,15 +97,18 @@ public:
   
   // Takes whatever animation is pointed to by the animTrigger and plays it on the
   // specified object
-  // Optionally takes a callback that will be called when the animation completes
-  // as well as a modifier to be added to the animation
+  // Optional Arguments
+  // - A callback that will be called when the animation completes
+  // - A light pattern modifier to be added to all patterns in the animation
+  // - A duration modifier to increase the duration of all patterns in the animation
   // Plays the animation on the engine layer
   // Returns true if the animation was able to be played
   bool PlayLightAnim(const ObjectID& objectID,
                      const CubeAnimationTrigger& animTrigger,
                      AnimCompletedCallback callback = {},
                      bool hasModifier = false,
-                     const ObjectLights& modifier = {});
+                     const ObjectLights& modifier = {},
+                     const s32 durationModifier_ms = 0);
   
   // Stops the specified animation pointed to by the animTrigger on an optional object
   // and resumes whatever animation was previously playing
@@ -207,6 +210,9 @@ private:
     // Whether or not this animation should be immediately stopped
     bool stopNow = false;
     
+    // Time to add to the duration of all patterns in this animation
+    s32 durationModifier_ms = 0;
+    
     // If this is != 0 then this animation was played from the TriggerCubeAnimationAction
     // This is to prevent calling a callback that is invalid due to the action being destroyed before the
     // animation completes
@@ -229,7 +235,8 @@ private:
                      const AnimLayerEnum& layer,
                      AnimCompletedCallback callback = {},
                      bool hasModifier = false,
-                     const ObjectLights& modifier = {});
+                     const ObjectLights& modifier = {},
+                     const s32 durationModifier_ms = 0);
   
   // Stop an animation on a specific layer for an object (or all objects)
   // shouldPickNextAnimOnStop determines if we can immediately pick a default anim to

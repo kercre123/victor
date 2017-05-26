@@ -51,6 +51,12 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   gameRequestList[UnlockId::QuickTapGame] = BF.FindBehaviorByID(BehaviorID::RequestSpeedTap);
   gameRequestList[UnlockId::MemoryMatchGame] = BF.FindBehaviorByID(BehaviorID::RequestMemoryMatch);
   
+  // TODO: Will need to change how this works should we add more dance behaviors
+  _danceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::Dance_Mambo);
+  DEV_ASSERT(_danceBehavior != nullptr &&
+             _danceBehavior->GetClass() == BehaviorClass::Dance,
+             "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForName");
+  
   for(const auto& entry: gameRequestList){
     DEV_ASSERT_MSG(entry.second != nullptr &&
                    entry.second->GetClass() == BehaviorClass::RequestGameSimple,
@@ -93,6 +99,15 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       voiceCommandComponent->ClearHeardCommand();
       _voiceCommandBehavior = _requestGameSelector->
                         GetNextRequestGameBehavior(robot, currentRunningBehavior);
+      
+      voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      
+      return _voiceCommandBehavior;
+    }
+    case VoiceCommandType::DoADance:
+    {
+      voiceCommandComponent->ClearHeardCommand();
+      _voiceCommandBehavior = _danceBehavior;
       
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
       
