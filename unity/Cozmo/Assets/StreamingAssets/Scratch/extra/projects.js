@@ -10,8 +10,9 @@
    * @returns {void}
    */
   function setLocalizedText() {
-    setText('#app-title', $t('Code Lab'));
+    setText('#app-title', $t('Cozmo Code Lab'));
 
+    setText('#attribution-label', $t('Based on Scratch, a project of the MIT Media Lab'));
     setText('#tutorial-label', $t('Tutorial'));
     setText('#new-project-label', $t('New Project'));
     setText('#confirm-delete-label', $t('Are you sure you want to delete\nthis project?'));

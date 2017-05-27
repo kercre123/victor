@@ -192,6 +192,17 @@ button:focus {
   border-top: 1px solid #989899;
 }
 
+#projects .ft #attribution-label {
+  margin: 0 auto 0 0;
+  padding: 2vh 1.5vh 1.5vh 1.5vh;
+  width: 120vh;
+  font-family: 'Avenir Next';
+  text-align: left;
+  font-size: 4vh;
+  color: #989899;
+  margin-top: .2em;
+}
+
 #tutorial-link {
   display: flex;
   flex-direction: row;
@@ -199,7 +210,6 @@ button:focus {
   align-items: center;
   text-decoration: none;
   font-weight: bold;
-  text-transform: uppercase;
   padding-top: .1em;
   height: 100%;
   color: #1fadda;
@@ -209,6 +219,7 @@ button:focus {
   display: inline-block;
   font-size: 5vh;
   margin-top: .2em;
+  text-transform: uppercase;
 }
 
 #tutorial-link #tutorial-icon {
@@ -290,6 +301,10 @@ button:focus {
 @media screen and (min-height: 416px) {
   .project {
     font-size: 3.5vh;
+  }
+
+  #projects .ft #attribution-label {
+    font-size: 3vh;
   }
 }
 
