@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: d1a07febac3a54f5c9115d957ca3920a
-timeCreated: 1495671908
+guid: 39a2c9517fef447049a68a4a5f05130b
+timeCreated: 1495845186
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -62,7 +62,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: common_frame_spritesHDAtlas
+  spritePackingTag: common_frame_spritesUHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
