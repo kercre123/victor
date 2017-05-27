@@ -35,6 +35,11 @@ struct VisionPoseData
   
   VisionPoseData() = default;
   
+  // Helpers to check whether the body/head have changed more than a given amount
+  // as compared to another VisionPoseData
+  bool IsBodyPoseSame(const VisionPoseData& other, const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const;
+  bool IsHeadAngleSame(const VisionPoseData& other, const Radians& headAngleThresh) const;
+  
   // ---------- Begin Custom copy implementation ------- //
   template<typename T1, typename T2>
   friend void swap(T1&& first, T2&& second);

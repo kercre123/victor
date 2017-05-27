@@ -66,6 +66,8 @@ namespace Params
   CONSOLE_VAR(f32, kLaser_saturationThreshold_red,       kConsoleGroupName, 30.f);
   CONSOLE_VAR(f32, kLaser_saturationThreshold_green,     kConsoleGroupName, 15.f);
   CONSOLE_VAR(f32, kLaser_saturationBoundingBoxFraction, kConsoleGroupName, 1.25f);
+  
+  CONSOLE_VAR(bool, kLaser_DrawDetectionsInCameraView, kConsoleGroupName, false);
 }
 
 
@@ -372,46 +374,45 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
     points.emplace_back(std::move(laserPoint));
   }
   
-  if(DEBUG_LASER_DETECTION && _vizManager)
+  if(Params::kLaser_DrawDetectionsInCameraView && (nullptr != _vizManager))
   {
     const f32 groundOvalSize = std::max(0.5f, Params::kLaser_scaleMultiplier * std::sqrtf(groundRegionArea / M_PI_F));
     _vizManager->DrawCameraOval(groundCentroidInImage, groundOvalSize, groundOvalSize, NamedColors::GREEN);
-    
-    if(DEBUG_LASER_DETECTION > 1)
-    {
-      Vision::ImageRGB saliencyImageFullSize;
-      if(Params::kLaser_scaleMultiplier > 1)
-      {
-        saliencyImageFullSize = Vision::ImageRGB(imageInGray.GetNumRows(), imageInGray.GetNumCols());;
-        _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
-      }
-      
-      _debugImage.DrawCircle(groundCentroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
-      char tempText[128];
-      //snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, salientPoint.img_x, salientPoint.img_y);
-      //cv::putText(saliencyImgDisp.get_CvMat_(), std::string(tempText),
-      //            cv::Point(0,saliencyImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
-      debugImageRGBs.push_back({"LaserSaliencyImage", _debugImage});
-      
-      Vision::ImageRGB saliencyImageDispGround(poseData.groundPlaneROI.GetOverheadImage(saliencyImageFullSize,
-                                                                                        poseData.groundPlaneHomography));
-      if(groundRegionArea > 0.f) {
-        Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-        saliencyImageDispGround.DrawCircle(dispCentroid - poseData.groundPlaneROI.GetOverheadImageOrigin(),
-                                           NamedColors::RED, 3);
-        Quad2f groundQuad(poseData.groundPlaneROI.GetGroundQuad());
-        groundQuad -= poseData.groundPlaneROI.GetOverheadImageOrigin();
-        saliencyImageDispGround.DrawQuad(groundQuad, NamedColors::YELLOW, 1.f);
-        snprintf(tempText, 127, "Area:%.2f%% X:%d Y:%d", groundRegionArea*100.f,
-                 (s32)std::round(groundPlaneCentroid.x()), (s32)std::round(groundPlaneCentroid.y()));
-        cv::putText(saliencyImageDispGround.get_CvMat_(), std::string(tempText),
-                    cv::Point(0,poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
-                    CV_RGB(0,255,0));
-      }
-      debugImageRGBs.push_back({"LaserSaliencyImageGround", saliencyImageDispGround});
-    }
   }
   
+  if(DEBUG_LASER_DETECTION > 1)
+  {
+    Vision::ImageRGB saliencyImageFullSize;
+    if(Params::kLaser_scaleMultiplier > 1)
+    {
+      saliencyImageFullSize = Vision::ImageRGB(imageInGray.GetNumRows(), imageInGray.GetNumCols());;
+      _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
+    }
+    
+    _debugImage.DrawCircle(groundCentroidInImage * (1.f / (f32)Params::kLaser_scaleMultiplier), NamedColors::RED, 4);
+    char tempText[128];
+    //snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, salientPoint.img_x, salientPoint.img_y);
+    //cv::putText(saliencyImgDisp.get_CvMat_(), std::string(tempText),
+    //            cv::Point(0,saliencyImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
+    debugImageRGBs.push_back({"LaserSaliencyImage", _debugImage});
+    
+    Vision::ImageRGB saliencyImageDispGround(poseData.groundPlaneROI.GetOverheadImage(saliencyImageFullSize,
+                                                                                      poseData.groundPlaneHomography));
+    if(groundRegionArea > 0.f) {
+      Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
+      saliencyImageDispGround.DrawCircle(dispCentroid - poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 3);
+      Quad2f groundQuad(poseData.groundPlaneROI.GetGroundQuad());
+      groundQuad -= poseData.groundPlaneROI.GetOverheadImageOrigin();
+      saliencyImageDispGround.DrawQuad(groundQuad, NamedColors::YELLOW, 1.f);
+      snprintf(tempText, 127, "Area:%.2f%% X:%d Y:%d", groundRegionArea*100.f,
+               (s32)std::round(groundPlaneCentroid.x()), (s32)std::round(groundPlaneCentroid.y()));
+      cv::putText(saliencyImageDispGround.get_CvMat_(), std::string(tempText),
+                  cv::Point(0,poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
+                  CV_RGB(0,255,0));
+    }
+    debugImageRGBs.push_back({"LaserSaliencyImageGround", saliencyImageDispGround});
+  }
+
   return RESULT_OK;
   
 } // FindCentroids()
@@ -482,7 +483,7 @@ bool LaserPointDetector::IsSurroundedByDark(const Vision::Image& image,
     
     if(x >= 0 && x < image.GetNumCols() && y >= 0 && y < image.GetNumRows())
     {
-      if(DEBUG_LASER_DETECTION && _vizManager)
+      if(Params::kLaser_DrawDetectionsInCameraView && (nullptr != _vizManager))
       {
         _vizManager->DrawCameraOval({(f32)x*(f32)Params::kLaser_scaleMultiplier, (f32)y*Params::kLaser_scaleMultiplier},
                                     0.5f, 0.5f, NamedColors::RED);

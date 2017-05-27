@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/cozmo/basestation/vision/laserPointDetector.h"
+#include "anki/cozmo/basestation/vision/motionDetector.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 
 #include "anki/vision/basestation/cameraImagingPipeline.h"
@@ -101,29 +102,6 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
   CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
   
-  // For speed, compute motion detection on half-resolution images
-  CONSOLE_VAR(bool, kUseHalfResMotionDetection,       "Vision.MotionDetection", true);
-  // How long we have to wait between motion detections. This may be reduce-able, but can't get
-  // too small or we'll hallucinate image change (i.e. "motion") due to the robot moving.
-  CONSOLE_VAR(u32,  kLastMotionDelay_ms,              "Vision.MotionDetection", 500);
-  // Affects sensitivity (darker pixels are inherently noisier and should be ignored for
-  // change detection). Range is [0,255]
-  CONSOLE_VAR(u8,   kMinBrightnessForMotionDetection, "Vision.MotionDetection", 10);
-  // This is the main sensitivity parameter: higher means more image difference is required
-  // to register a change and thus report motion.
-  CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
-  CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
-  // For computing robust "centroid" of motion
-  CONSOLE_VAR(f32,  kMotionCentroidPercentileX,       "Vision.MotionDetection", 0.5f);  // In image coordinates
-  CONSOLE_VAR(f32,  kMotionCentroidPercentileY,       "Vision.MotionDetection", 0.5f);  // In image coordinates
-  CONSOLE_VAR(f32,  kGroundMotionCentroidPercentileX, "Vision.MotionDetection", 0.05f); // In robot coordinates (Most important for pounce: distance from robot)
-  CONSOLE_VAR(f32,  kGroundMotionCentroidPercentileY, "Vision.MotionDetection", 0.50f); // In robot coordinates
-  
-  // Tight constraints on max movement allowed to attempt frame differencing for "motion detection"
-  CONSOLE_VAR(f32,  kMotionDetectionMaxHeadAngleChange_deg, "Vision.MotionDetection", 0.1f);
-  CONSOLE_VAR(f32,  kMotionDetectionMaxBodyAngleChange_deg, "Vision.MotionDetection", 0.1f);
-  CONSOLE_VAR(f32,  kMotionDetectionMaxPoseChange_mm,       "Vision.MotionDetection", 0.5f);
-  
   // Min/max size of calibration pattern blobs and distance between them
   CONSOLE_VAR(float, kMaxCalibBlobPixelArea,         "Vision.Calibration", 800.f);
   CONSOLE_VAR(float, kMinCalibBlobPixelArea,         "Vision.Calibration", 20.f);
@@ -162,6 +140,7 @@ namespace Cozmo {
   , _imagingPipeline(new Vision::ImagingPipeline())
   , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
   , _laserPointDetector(new LaserPointDetector(_vizManager))
+  , _motionDetector(new MotionDetector(_camera, _vizManager))
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -1879,9 +1858,10 @@ namespace Cozmo {
     // one face for another. (If one face it was tracking from the last image is
     // now on top of a nearby face in the image, the tracker can't tell if that's
     // because the face moved or the camera moved.)
-    const bool hasHeadMoved = HasHeadAngleChanged(DEG_TO_RAD(kFaceTrackingMaxHeadAngleChange_deg));
-    const bool hasBodyMoved = HasBodyPoseChanged(DEG_TO_RAD(kFaceTrackingMaxBodyAngleChange_deg),
-                                                 kFaceTrackingMaxPoseChange_mm);
+    const bool hasHeadMoved = !_poseData.IsHeadAngleSame(_prevPoseData, DEG_TO_RAD(kFaceTrackingMaxHeadAngleChange_deg));
+    const bool hasBodyMoved = !_poseData.IsBodyPoseSame(_prevPoseData,
+                                                        DEG_TO_RAD(kFaceTrackingMaxBodyAngleChange_deg),
+                                                        kFaceTrackingMaxPoseChange_mm);
     if(hasHeadMoved || hasBodyMoved)
     {
       PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
@@ -1931,6 +1911,7 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectFaces()
   
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectPets(const Vision::Image& grayImage,
                                   std::vector<Anki::Rectangle<s32>>& detections)
   {
@@ -1962,354 +1943,29 @@ namespace Cozmo {
     
 	} // DetectPets()
   
-  // Computes "centroid" at specified percentiles in X and Y
-  size_t GetCentroid(const Vision::Image& motionImg, Anki::Point2f& centroid, f32 xPercentile, f32 yPercentile)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result VisionSystem::DetectMotion(const Vision::ImageRGB& imageRGB, const Vision::Image& imageGray)
   {
-    std::vector<s32> xValues, yValues;
-    
-    for(s32 y=0; y<motionImg.GetNumRows(); ++y)
-    {
-      const u8* motionData_y = motionImg.GetRow(y);
-      for(s32 x=0; x<motionImg.GetNumCols(); ++x) {
-        if(motionData_y[x] != 0) {
-          xValues.push_back(x);
-          yValues.push_back(y);
-        }
-      }
-    }
-    
-    DEV_ASSERT(xValues.size() == yValues.size(), "VisionSystem.GetCentroid.xyValuesSizeMismatch");
-    
-    if(xValues.empty()) {
-      centroid = 0.f;
-      return 0;
-    } else {
-      DEV_ASSERT(xPercentile >= 0.f && xPercentile <= 1.f, "VisionSystem.GetCentroid.xPercentileOOR");
-      DEV_ASSERT(yPercentile >= 0.f && yPercentile <= 1.f, "VisionSystem.GetCentroid.yPercentileOOR");
-      const size_t area = xValues.size(); // NOTE: area > 0 if we get here
-      auto xcen = xValues.begin() + std::round(xPercentile * (f32)(area-1));
-      auto ycen = yValues.begin() + std::round(yPercentile * (f32)(area-1));
-      std::nth_element(xValues.begin(), xcen, xValues.end());
-      std::nth_element(yValues.begin(), ycen, yValues.end());
-      centroid.x() = *xcen;
-      centroid.y() = *ycen;
-      DEV_ASSERT_MSG(centroid.x() >= 0.f && centroid.x() < motionImg.GetNumCols(),
-                     "VisionSystem.GetCentroid.xCenOOR",
-                     "xcen=%f, not in [0,%d)", centroid.x(), motionImg.GetNumCols());
-      DEV_ASSERT_MSG(centroid.y() >= 0.f && centroid.y() < motionImg.GetNumRows(),
-                     "VisionSystem.GetCentroid.yCenOOR",
-                     "ycen=%f, not in [0,%d)", centroid.y(), motionImg.GetNumRows());
-      return area;
-    }
 
-  } // GetCentroid()
-  
-  bool VisionSystem::HasBodyPoseChanged(const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const
-  {
-    const bool isXPositionSame = NEAR(_poseData.histState.GetPose().GetTranslation().x(),
-                                      _prevPoseData.histState.GetPose().GetTranslation().x(),
-                                      bodyPoseThresh_mm);
+    Result result = RESULT_OK;
     
-    const bool isYPositionSame = NEAR(_poseData.histState.GetPose().GetTranslation().y(),
-                                      _prevPoseData.histState.GetPose().GetTranslation().y(),
-                                      bodyPoseThresh_mm);
-    const bool isAngleSame =  NEAR(_poseData.histState.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                   _prevPoseData.histState.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                   bodyAngleThresh.ToFloat());
-    
-    const bool isPoseSame = isXPositionSame && isYPositionSame && isAngleSame;
-    
-    return !isPoseSame;
-  }
-                          
-  bool VisionSystem::HasHeadAngleChanged(const Radians& headAngleThresh) const
-  {
-    const bool headSame =  NEAR(_poseData.histState.GetHeadAngle_rad(),
-                                _prevPoseData.histState.GetHeadAngle_rad(),
-                                headAngleThresh.ToFloat());
-    
-    return !headSame;
-  }
-  
-  Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
-  {
-    // TODO: Move this to its own detection component, analogous to LaserPointDetector (COZMO-10951)
-    
-    const bool headSame = !HasHeadAngleChanged(DEG_TO_RAD(kMotionDetectionMaxHeadAngleChange_deg));
-    
-    const bool poseSame = !HasBodyPoseChanged(DEG_TO_RAD(kMotionDetectionMaxBodyAngleChange_deg),
-                                              kMotionDetectionMaxPoseChange_mm);
-    
-    Vision::ImageRGB image;
-    f32 scaleMultiplier = 1.f;
-    if(kUseHalfResMotionDetection) {
-      image = Vision::ImageRGB(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
-      imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
-      scaleMultiplier = 2.f;
-    } else {
-      image = imageIn;
-    }
-    //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
-    
-    if(headSame && poseSame && !_prevImage.IsEmpty() && !_poseData.histState.WasCameraMoving() &&
-       image.GetTimestamp() - _lastMotionTime > kLastMotionDelay_ms)
+    if(imageRGB.IsEmpty())
     {
-      s32 numAboveThresh = 0;
-      
-      std::function<u8(const Vision::PixelRGB& thisElem, const Vision::PixelRGB& otherElem)> ratioTest = [&numAboveThresh](const Vision::PixelRGB& p1, const Vision::PixelRGB& p2)
-      {
-        auto ratioTestHelper = [](u8 value1, u8 value2)
-        {
-          if(value1 > value2) {
-            return static_cast<f32>(value1) / std::max(1.f, static_cast<f32>(value2));
-          } else {
-            return static_cast<f32>(value2) / std::max(1.f, static_cast<f32>(value1));
-          }
-        };
-        
-        u8 retVal = 0;
-        if(p1.IsBrighterThan(kMinBrightnessForMotionDetection) &&
-           p2.IsBrighterThan(kMinBrightnessForMotionDetection))
-        {
-          const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
-          const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
-          const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
-          if(ratioR > kMotionDetectRatioThreshold || ratioG > kMotionDetectRatioThreshold || ratioB > kMotionDetectRatioThreshold) {
-            ++numAboveThresh;
-            retVal = 255; // use 255 because it will actually display
-          }
-        } // if both pixels are bright enough
-        
-        return retVal;
-      };
-      
-      Vision::Image ratio12(image.GetNumRows(), image.GetNumCols());
-      image.ApplyScalarFunction(ratioTest, _prevImage, ratio12);
-      
-      static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
-      cv::morphologyEx(ratio12.get_CvMat_(), ratio12.get_CvMat_(), cv::MORPH_OPEN, kernel);
-      
-      Vision::Image foregroundMotion = ratio12;
-      
-      Anki::Point2f centroid(0.f,0.f); // Not Embedded::
-      Anki::Point2f groundPlaneCentroid(0.f,0.f);
-      
-      // Get overall image centroid
-      const size_t minArea = (f32)image.GetNumElements() * kMinMotionAreaFraction;
-      f32 imgRegionArea    = 0.f;
-      f32 groundRegionArea = 0.f;
-      if(numAboveThresh > minArea) {
-        imgRegionArea = GetCentroid(foregroundMotion, centroid, kMotionCentroidPercentileX, kMotionCentroidPercentileY);
-      }
-      
-      // Get centroid of all the motion within the ground plane, if we have one to reason about
-      if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
-      {
-        Quad2f imgQuad;
-        _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography,
-                                              imageIn.GetNumCols(), imageIn.GetNumRows(),
-                                              imgQuad);
-        
-        imgQuad *= 1.f / scaleMultiplier;
-        
-        Anki::Rectangle<s32> boundingRect(imgQuad); // Not Embedded::
-        Vision::Image groundPlaneForegroundMotion;
-        foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
-        
-        // Zero out everything in the ratio image that's not inside the ground plane quad
-        imgQuad -= boundingRect.GetTopLeft();
-        Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
-                           groundPlaneForegroundMotion.GetNumCols());
-        mask.FillWith(0);
-        cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
-          imgQuad[Quad::CornerName::TopLeft].get_CvPoint_(),
-          imgQuad[Quad::CornerName::TopRight].get_CvPoint_(),
-          imgQuad[Quad::CornerName::BottomRight].get_CvPoint_(),
-          imgQuad[Quad::CornerName::BottomLeft].get_CvPoint_(),
-        }, 255);
-        
-        for(s32 i=0; i<mask.GetNumRows(); ++i) {
-          const u8* maskData_i = mask.GetRow(i);
-          u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
-          for(s32 j=0; j<mask.GetNumCols(); ++j) {
-            if(maskData_i[j] == 0) {
-              fgMotionData_i[j] = 0;
-            }
-          }
-        }
-        
-        // Find centroid of motion inside the ground plane
-        // NOTE!! We swap X and Y for the percentiles because the ground centroid
-        //        gets mapped to the ground plane in robot coordinates later, but
-        //        small x on the ground corresponds to large y in the *image*, where
-        //        the centroid is actually being computed here.
-        const f32 imgQuadArea = imgQuad.ComputeArea();
-        groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
-                                       groundPlaneCentroid,
-                                       kGroundMotionCentroidPercentileY,
-                                       (1.f - kGroundMotionCentroidPercentileX));
-        
-        // Move back to image coordinates from ROI coordinates
-        groundPlaneCentroid += boundingRect.GetTopLeft();
-        
-        /* Experimental: Try computing moments in an overhead warped view of the ratio image
-         groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
-         
-         cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
-         if(moments.m00 > 0) {
-         groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
-         groundPlaneCentroid.x() = moments.m10 / moments.m00;
-         groundPlaneCentroid.y() = moments.m01 / moments.m00;
-         groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
-         
-         // TODO: return other moments?
-         }
-         */
-        
-        if(groundRegionArea > 0.f)
-        {
-          // Switch centroid back to original resolution, since that's where the
-          // homography information is valid
-          groundPlaneCentroid *= scaleMultiplier;
-          
-          // Make ground region area into a fraction of the ground ROI area
-          groundRegionArea /= imgQuadArea;
-          
-          // Map the centroid onto the ground plane, by doing inv(H) * centroid
-          Point3f temp;
-          Result solveResult = LeastSquares(_poseData.groundPlaneHomography,
-                                            Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f},
-                                            temp);
-          if(RESULT_OK != solveResult) {
-            PRINT_NAMED_WARNING("VisionSystem.DetectMotion.LeastSquaresFailed",
-                                "Failed to project centroid (%.1f,%.1f) to ground plane",
-                                groundPlaneCentroid.x(), groundPlaneCentroid.y());
-            // Don't report this centroid
-            groundRegionArea = 0.f;
-            groundPlaneCentroid = 0.f;
-          } else if(temp.z() <= 0.f) {
-            PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadProjectedZ",
-                                "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
-                                temp.z(), RAD_TO_DEG(_poseData.histState.GetHeadAngle_rad()));
-            // Don't report this centroid
-            groundRegionArea = 0.f;
-            groundPlaneCentroid = 0.f;
-          } else {
-            const f32 divisor = 1.f/temp.z();
-            groundPlaneCentroid.x() = temp.x() * divisor;
-            groundPlaneCentroid.y() = temp.y() * divisor;
-            
-            // This is just a sanity check that the centroid is reasonable
-            if(ANKI_DEVELOPER_CODE)
-            {
-              // Scale ground quad slightly to account for numerical inaccuracy.
-              // Centroid just needs to be very nearly inside the ground quad.
-              Quad2f testQuad(_poseData.groundPlaneROI.GetGroundQuad());
-              testQuad.Scale(1.01f); // Allow for 1% error
-              if(!testQuad.Contains(groundPlaneCentroid)) {
-                PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadGroundPlaneCentroid",
-                                    "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
-              }
-            }
-          }
-        }
-      } // if(groundPlaneVisible)
-      
-      if(imgRegionArea > 0 || groundRegionArea > 0.f)
-      {
-        if(DEBUG_MOTION_DETECTION)
-        {
-          PRINT_CH_INFO(kLogChannelName, "VisionSystem.DetectMotion.FoundCentroid",
-                        "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
-                        "-- %.1f%% of ground area at (%.1f,%.1f)",
-                        imgRegionArea, centroid.x(), centroid.y(),
-                        groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
-        }
-        
-        _lastMotionTime = image.GetTimestamp();
-        
-        ExternalInterface::RobotObservedMotion msg;
-        msg.timestamp = image.GetTimestamp();
-        
-        if(imgRegionArea > 0)
-        {
-          DEV_ASSERT(centroid.x() >= 0.f && centroid.x() <= image.GetNumCols() &&
-                     centroid.y() >= 0.f && centroid.y() <= image.GetNumRows(),
-                     "VisionSystem.DetectMotion.CentroidOOB");
-          
-          // make relative to image center *at processing resolution*
-          DEV_ASSERT(_camera.IsCalibrated(), "Camera must be calibrated");
-          centroid -= _camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier);
-          
-          // Convert area to fraction of image area (to be resolution-independent)
-          // Using scale multiplier to return the coordinates in original image coordinates
-          msg.img_x = centroid.x() * scaleMultiplier;
-          msg.img_y = centroid.y() * scaleMultiplier;
-          msg.img_area = imgRegionArea / static_cast<f32>(image.GetNumElements());
-        } else {
-          msg.img_area = 0;
-          msg.img_x = 0;
-          msg.img_y = 0;
-        }
-        
-        if(groundRegionArea > 0.f)
-        {
-          msg.ground_x = std::round(groundPlaneCentroid.x());
-          msg.ground_y = std::round(groundPlaneCentroid.y());
-          msg.ground_area = groundRegionArea;
-        } else {
-          msg.ground_area = 0;
-          msg.ground_x = 0;
-          msg.ground_y = 0;
-        }
-        
-        _currentResult.observedMotions.emplace_back(std::move(msg));
-        
-        if(DEBUG_MOTION_DETECTION)
-        {
-          char tempText[128];
-          Vision::ImageRGB ratioImgDisp(foregroundMotion);
-          ratioImgDisp.DrawCircle(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)),
-                                  NamedColors::RED, 4);
-          snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
-          cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
-                      cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
-          _currentResult.debugImageRGBs.push_back({"RatioImg", ratioImgDisp});
-          
-          //_currentResult.debugImages.push_back({"PrevRatioImg", _prevRatioImg});
-          //_currentResult.debugImages.push_back({"ForegroundMotion", foregroundMotion});
-          //_currentResult.debugImages.push_back({"AND", cvAND});
-          
-          Vision::Image foregroundMotionFullSize(imageIn.GetNumRows(), imageIn.GetNumCols());;
-          foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
-          Vision::ImageRGB ratioImgDispGround(_poseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
-                                                                                        _poseData.groundPlaneHomography));
-          if(groundRegionArea > 0.f) {
-            Anki::Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-            ratioImgDispGround.DrawCircle(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(),
-                                          NamedColors::RED, 2);
-            snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
-            cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
-                        cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
-                        CV_RGB(0,255,0));
-          }
-          _currentResult.debugImageRGBs.push_back({"RatioImgGround", ratioImgDispGround});
-          
-          //
-          //_currentResult.debugImageRGBs.push_back({"CurrentImg", image});
-        }
-      }
-      
-      //_prevRatioImg = ratio12;
-      
-    } // if(headSame && poseSame)
+      // No color data? Use grayscale
+      DEV_ASSERT(!imageGray.IsEmpty(), "VisionSystem.DetectMotion.EmptyGrayAndColorImages");
+      result = _motionDetector->Detect(imageGray, _poseData, _prevPoseData,
+                                       _currentResult.observedMotions,
+                                       _currentResult.debugImageRGBs);
+    }
+    else
+    {
+      result = _motionDetector->Detect(imageRGB, _poseData, _prevPoseData,
+                                       _currentResult.observedMotions,
+                                       _currentResult.debugImageRGBs);
+    }
     
-    // Store a copy of the current image for next time (at correct resolution!)
-    // NOTE: Now _prevImage should correspond to _prevRobotState
-    // TODO: switch to just swapping pointers between current and previous image
-    image.CopyTo(_prevImage);
+    return result;
     
-    return RESULT_OK;
   } // DetectMotion()
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3394,19 +3050,10 @@ namespace Cozmo {
       Toc("TotalDetectingPets");
     }
     
-    // TODO: support color and grayscale edge detection (COZMO-10950)
-    // TODO: support color and grayscale motion detection (COZMO-10951)
-    Vision::ImageRGB tempColorImage;
-    if(inputImage.IsEmpty()) {
-      tempColorImage = Vision::ImageRGB(inputImageGray);
-    } else {
-      tempColorImage = inputImage; // use the passed-in color data if we already have it
-    }
-    
     if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
     {
       Tic("TotalDetectingMotion");
-      if((lastResult = DetectMotion(tempColorImage)) != RESULT_OK) {
+      if((lastResult = DetectMotion(inputImage, inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
       }
@@ -3416,6 +3063,14 @@ namespace Cozmo {
     
     if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
     {
+      // TODO: support color and grayscale edge detection (COZMO-10950)
+      Vision::ImageRGB tempColorImage;
+      if(inputImage.IsEmpty()) {
+        tempColorImage = Vision::ImageRGB(inputImageGray);
+      } else {
+        tempColorImage = inputImage; // use the passed-in color data if we already have it
+      }
+      
       Tic("TotalDetectingOverheadEdges");
       
       if((lastResult = DetectOverheadEdges(tempColorImage)) != RESULT_OK) {

@@ -89,6 +89,7 @@ namespace Cozmo {
   class CozmoContext;
   class EncodedImage;
   class LaserPointDetector;
+  class MotionDetector;
   class Robot;
   class VizManager;
   
@@ -158,11 +159,6 @@ namespace Cozmo {
     // First decodes the image then calls Update() above
     Result Update(const VisionPoseData&      robotState,
                   const EncodedImage&        encodedImg);
-    
-    // Helpers to check whether the body/head have changed more than a given amount
-    // since the previous frame/pose data were provided
-    bool HasBodyPoseChanged(const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const;
-    bool HasHeadAngleChanged(const Radians& headAngleThresh) const;
     
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
     Result ClearCalibrationImages();
@@ -347,12 +343,7 @@ namespace Cozmo {
     
     Vision::ImageRGB _image;
     Vision::Image    _imageGray;
-    
-    // Previous image for doing background subtraction, e.g. for saliency
-    // NOTE: previous images stored at resolution of motion detection processing.
-    Vision::ImageRGB _prevImage;
-    TimeStamp_t      _lastMotionTime = 0;
-    
+        
     //
     // Formerly in Embedded VisionSystem "private" namespace:
     //
@@ -543,7 +534,8 @@ namespace Cozmo {
     Result DetectPets(const Vision::Image& grayImage,
                       std::vector<Anki::Rectangle<s32>>& ignoreROIs);
     
-    Result DetectMotion(const Vision::ImageRGB& image);
+    // Will use color if not empty, or gray otherwise
+    Result DetectMotion(const Vision::ImageRGB& imageRGB, const Vision::Image& imageGray);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);
     
@@ -562,6 +554,8 @@ namespace Cozmo {
     Result EnableMode(VisionMode whichMode, bool enabled);
     
     std::unique_ptr<LaserPointDetector> _laserPointDetector;
+    
+    std::unique_ptr<MotionDetector> _motionDetector;
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

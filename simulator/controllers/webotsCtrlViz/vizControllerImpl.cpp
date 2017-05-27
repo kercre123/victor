@@ -1151,7 +1151,8 @@ void VizControllerImpl::DrawBehaviorDisplay()
       
       char valueString[32];
       snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back()._value);
-      std::string text = std::string(valueString) + BehaviorIDToString(namedScoreBuffer._id);
+      const char * idStr = BehaviorIDToString(namedScoreBuffer._id);
+      std::string text = std::string(valueString) + (idStr == nullptr ? "<null>" : idStr);
       
       _behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
     }
