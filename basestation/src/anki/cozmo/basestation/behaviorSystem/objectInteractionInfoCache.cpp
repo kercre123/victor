@@ -482,9 +482,14 @@ bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const Observab
       return false;
     }
     
-    Pose3d wasted;
+    Pose3d relPos;
     // check if we can transform to robot space
-    if ( !object->GetPose().GetWithRespectTo(_robot.GetPose(), wasted) ) {
+    if ( !object->GetPose().GetWithRespectTo(_robot.GetPose(), relPos) ) {
+      return false;
+    }
+    
+    // check if it's too high to interact with
+    if ( object->IsPoseTooHigh(relPos, 2.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
       return false;
     }
     
