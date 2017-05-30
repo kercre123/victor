@@ -15,7 +15,7 @@
   "setupChooser" :
   {
     "type" : "StrictPriority",
-    "behaviors" : [
+      "behaviors" : [
       "DriveOffCharger",
       "KnockOverCubes",
       "PyramidPutDownBlock",

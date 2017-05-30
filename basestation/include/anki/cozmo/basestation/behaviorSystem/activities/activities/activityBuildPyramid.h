@@ -136,8 +136,7 @@ private:
   
   // sub-behaviors to keep choosing behavior code cleaner based on stage
   IBehavior* ChooseNextBehaviorSetup(Robot& robot, const IBehavior* currentRunningBehavior);
-  IBehavior* ChooseNextBehaviorBuilding(Robot& robot, const IBehavior* currentRunningBehavior,
-                                        bool& isScoredBehavior);
+  IBehavior* ChooseNextBehaviorBuilding(Robot& robot, const IBehavior* currentRunningBehavior);
   
   // These behaviors return a behavior pointer that should be choosen if they want something run
   // and nullptr if the requester should select a behavior given its own criteria

@@ -52,10 +52,6 @@ static const int kMinUprightBlocksForPyramid      = 3;
 static const float kDelayAccountForPlacing_s      = 3.0f;
 static const float kDelayAccountForBaseCreation_s = 5.0f;
 
-// Any behavior which returns a score greater than this value will not be
-// overridden by the behavior choosers non score based custom best behavior logic
-static const float kMinScoreToEnsureBehaviorRuns = 10.0f;
-
 // Interval at which disconnected cube orientations are pulled from block world
 static const float kIntervalCheckCubeOrientation = 1.0f;
 static const float kIntervalForceUpdateLightMusicState = 1.0f;
@@ -558,9 +554,7 @@ void ActivityBuildPyramid::UpdatePyramidAssignments(const BehaviorBuildPyramidBa
   }
   
 }
-  
-  
-  
+
   
 //////////////////////////////////////////////
 //////////////////////////////////////////////
@@ -575,19 +569,16 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
   
-  IBehavior* scoredBehavior = nullptr;
-  // indicates whether a scored behavior was chosen
-  // if not, we don't want to evaluate the score
-  bool isScoredBehavior = false;
+  IBehavior* behavior = nullptr;
   switch(_chooserPhase){
     case ChooserPhase::SetupBlocks:
     {
-      scoredBehavior = ChooseNextBehaviorSetup(robot, currentRunningBehavior);
+      behavior = ChooseNextBehaviorSetup(robot, currentRunningBehavior);
       break;
     }
     case ChooserPhase::BuildingPyramid:
     {
-      scoredBehavior = ChooseNextBehaviorBuilding(robot, currentRunningBehavior, isScoredBehavior);
+      behavior = ChooseNextBehaviorBuilding(robot, currentRunningBehavior);
       break;
     }
     case ChooserPhase::None:
@@ -597,12 +588,14 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
     }
   }
   
-  // If the scored behavior has a high enough score, allow it to run no matter
-  // runability of custom behaviors
-  if(scoredBehavior != nullptr &&
-     isScoredBehavior &&
-     FLT_GT(scoredBehavior->EvaluateScore(robot), kMinScoreToEnsureBehaviorRuns)){
-    return scoredBehavior;
+  // There are a couple of behaviors that we don't want to interrupt with our custom
+  // logic - so if the selected behavior is one of those, return it now, otherwise
+  // see if there's a custom behavior that would like to take over.
+  const bool behaviorCantBeOverriden = (behavior != nullptr) &&
+                 (behavior->GetClass() == BehaviorClass::DriveOffCharger ||
+                  behavior->GetClass() == BehaviorClass::KnockOverCubes);
+  if(behaviorCantBeOverriden){
+    return behavior;
   }
   
   
@@ -615,7 +608,7 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavio
   }
   
   _objectAxisChangeIDs.clear();
-  return customBehavior != nullptr ? customBehavior : scoredBehavior;
+  return customBehavior != nullptr ? customBehavior : behavior;
 }
 
 
@@ -631,8 +624,7 @@ IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
-                                                             const IBehavior* currentRunningBehavior,
-                                                             bool& isScoredBehavior)
+                                                             const IBehavior* currentRunningBehavior)
 {
   //  Priority of functions:
   //    Build full pyramid -> Build pyramid base -> Search/fast forward behaviors
@@ -664,7 +656,6 @@ IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
     
   }else{
     UpdatePyramidAssignments(nullptr);
-    isScoredBehavior = true;
     bestBehavior = _buildSimpleChooser->ChooseNextBehavior(robot, currentRunningBehavior);
   }
   
