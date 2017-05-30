@@ -551,7 +551,6 @@ GameObject:
   - component: {fileID: 11454172}
   - component: {fileID: 22516724}
   - component: {fileID: 11477270}
-  - component: {fileID: 11416546}
   m_Layer: 5
   m_Name: CoreUpgradeDetailsModal
   m_TagString: Untagged
@@ -786,7 +785,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a6fc1383fe7e42209d6fd22ec53a57d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ImageToSpin: {fileID: 114070916579554724}
   _SpinSpeed: -300
 --- !u!114 &11405450
 MonoBehaviour:
@@ -902,17 +900,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11416546
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 168466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c8fd86b986684e168a186c0b3c497c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11416934
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1054,7 +1041,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a6fc1383fe7e42209d6fd22ec53a57d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ImageToSpin: {fileID: 114145078484306486}
   _SpinSpeed: -300
 --- !u!114 &11426376
 MonoBehaviour:
@@ -1067,7 +1053,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a6fc1383fe7e42209d6fd22ec53a57d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ImageToSpin: {fileID: 114272715047698250}
   _SpinSpeed: -300
 --- !u!114 &11433746
 MonoBehaviour:
@@ -1332,7 +1317,6 @@ MonoBehaviour:
   _SparkAvailableColor: {r: 0.117, g: 0.568, b: 0.831, a: 1}
   _UnavailableColor: {r: 0.411, g: 0.411, b: 0.349, a: 1}
   _UpgradeLockedColor: {r: 0.88235295, g: 0.101960786, b: 0, a: 1}
-  _HasHiccupModal: {fileID: 11416546}
 --- !u!114 &11455274
 MonoBehaviour:
   m_ObjectHideFlags: 1

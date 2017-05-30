@@ -3,28 +3,6 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace UI {
-    public class CoreUpgradeTintNameAttribute : PropertyAttribute {
-      public CoreUpgradeTintNameAttribute() {
-      }
-    }
-
-    [System.Serializable]
-    public class CoreUpgradeTint {
-      [SerializeField]
-      private string _TintName;
-
-      public string TintName {
-        get { return _TintName; }
-      }
-
-      [SerializeField]
-      private Color _TintColor;
-
-      public Color TintColor {
-        get { return _TintColor; }
-      }
-    }
-
     [System.Serializable]
     public class SparkCostTint {
       public Color CanAffordColor;
@@ -37,7 +15,6 @@ namespace Cozmo {
 
       public static void SetInstance(UIColorPalette instance) {
         _sInstance = instance;
-        _sInstance.PopulateDictionary();
       }
 
       public static UIColorPalette Instance {
@@ -134,45 +111,6 @@ namespace Cozmo {
       public static Color FreeplayBehaviorRewardColor {
         get { return Instance._FreeplayBehaviorRewardColor; }
       }
-
-      [SerializeField]
-      private CoreUpgradeTint[] _CoreUpgradeTints;
-
-      public static CoreUpgradeTint[] CoreUpgradeTints {
-        get { return Instance._CoreUpgradeTints; }
-      }
-
-      private Dictionary<string, CoreUpgradeTint> _NameToCoreUpgradeTint;
-
-      private void PopulateDictionary() {
-        _NameToCoreUpgradeTint = new Dictionary<string, CoreUpgradeTint>();
-        foreach (CoreUpgradeTint data in _CoreUpgradeTints) {
-          if (!_NameToCoreUpgradeTint.ContainsKey(data.TintName)) {
-            _NameToCoreUpgradeTint.Add(data.TintName, data);
-          }
-          else {
-            DAS.Error("UIColorPalette.PopulateDictionary", "Trying to add item to dictionary, but the item already exists! item=" + data.TintName);
-          }
-        }
-      }
-
-      public static CoreUpgradeTint GetUpgradeTintData(string coreUpgradeTintName) {
-        CoreUpgradeTint data = null;
-        if (!_sInstance._NameToCoreUpgradeTint.TryGetValue(coreUpgradeTintName, out data)) {
-          DAS.Error("UIColorPalette.GetUpgradeTintData", "Could not find tintName='" + coreUpgradeTintName + "' in dictionary!");
-        }
-        return data;
-      }
-
-#if UNITY_EDITOR
-      public IEnumerable<string> EditorGetItemIds() {
-        List<string> itemIds = new List<string>();
-        foreach (var data in _CoreUpgradeTints) {
-          itemIds.Add(data.TintName);
-        }
-        return itemIds;
-      }
-#endif
     }
   }
 }

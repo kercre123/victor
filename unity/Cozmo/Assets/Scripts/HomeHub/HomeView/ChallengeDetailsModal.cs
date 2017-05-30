@@ -85,10 +85,10 @@ public class ChallengeDetailsModal : BaseModal {
 
   private Cozmo.HomeHub.HomeView _HomeViewInstance;
 
-  [SerializeField]
-  private HasHiccupsModal _HasHiccupModal;
+  private HasHiccupsAlertController _HasHiccupsAlertController;
 
   public void InitializeChallengeData(ChallengeData challengeData, Cozmo.HomeHub.HomeView homeViewInstance) {
+    _HasHiccupsAlertController = new HasHiccupsAlertController();
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
     _ChallengeData = challengeData;
@@ -172,7 +172,7 @@ public class ChallengeDetailsModal : BaseModal {
           }
           // If robot has hiccups and this is not CodeLab then open hiccup alert modal
           else if (robot.HasHiccups && _ChallengeData.UnlockId.Value != Anki.Cozmo.UnlockId.CodeLabGame) {
-            _HasHiccupModal.OpenCozmoHasHiccupsAlert(this.PriorityData, HandleEdgeCaseAlertClosed);
+            _HasHiccupsAlertController.OpenCozmoHasHiccupsAlert(this.PriorityData, HandleEdgeCaseAlertClosed);
           }
           else {
             ChallengeStarted(_ChallengeId);
@@ -291,6 +291,9 @@ public class ChallengeDetailsModal : BaseModal {
   }
 
   protected override void CleanUp() {
+    if (_HasHiccupsAlertController != null) {
+      _HasHiccupsAlertController.Cleanup();
+    }
     _StartChallengeButton.onClick.RemoveAllListeners();
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
 

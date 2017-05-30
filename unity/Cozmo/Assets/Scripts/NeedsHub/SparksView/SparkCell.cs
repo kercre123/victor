@@ -48,7 +48,7 @@ namespace Cozmo.Needs.Sparks.UI {
       _UnlockInfo = unlockInfo;
 
       // Always request a flat cost for performing a trick
-      _SparkCountText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeededMin);
+      _SparkCountText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmount);
 
       Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded += HandleItemValueChanged;
@@ -72,7 +72,7 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void SetSparkTextColor(int itemCount) {
-      if (itemCount >= _UnlockInfo.RequestTrickCostAmountNeededMin) {
+      if (itemCount >= _UnlockInfo.RequestTrickCostAmount) {
         _SparkCountText.color = UIColorPalette.GeneralSparkTintColor.CanAffordColor;
       }
       else {

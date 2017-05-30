@@ -1,25 +1,25 @@
-﻿using UnityEngine;
-using System.Collections;
-using Anki.Cozmo.ExternalInterface;
+﻿using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo {
   namespace UI {
-    public class HasHiccupsModal : MonoBehaviour {
-
+    public class HasHiccupsAlertController {
       private AlertModal _HiccupAlertModal = null;
 
       // Use this for initialization
-      void Start() {
-        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
+      public HasHiccupsAlertController() {
+        RobotEngineManager.Instance.AddCallback<RobotHiccupsChanged>(HandleRobotHiccupsChanged);
       }
 
-      private void OnDestroy() {
+      public void Cleanup() {
         CloseCozmoHasHiccupsAlert();
-        RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotHiccupsChanged>(HandleRobotHiccupsChanged);
+        RobotEngineManager.Instance.RemoveCallback<RobotHiccupsChanged>(HandleRobotHiccupsChanged);
       }
 
-      public void OpenCozmoHasHiccupsAlert(ModalPriorityData priorityData, BaseDialog.SimpleBaseDialogHandler dialogCloseAnimationFinishedCallback = null) {
-        _HiccupAlertModal = null;
+      public void OpenCozmoHasHiccupsAlert(ModalPriorityData priorityData,
+                                           BaseDialog.SimpleBaseDialogHandler dialogCloseAnimationFinishedCallback = null) {
+        if (_HiccupAlertModal != null) {
+          return;
+        }
 
         var cozmoHasHiccupsData = new AlertModalData("cozmo_has_hiccups_alert",
                                                      LocalizationKeys.kChallengeDetailsCozmoHasHiccupsTitle,
@@ -43,7 +43,7 @@ namespace Cozmo {
         }
       }
 
-      private void HandleRobotHiccupsChanged(Anki.Cozmo.ExternalInterface.RobotHiccupsChanged message) {
+      private void HandleRobotHiccupsChanged(RobotHiccupsChanged message) {
         if (!message.hasHiccups) {
           CloseCozmoHasHiccupsAlert();
         }

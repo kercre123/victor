@@ -18,7 +18,6 @@ MonoBehaviour:
   Prerequisites: []
   AnyPrereqUnlock: 0
   _ComingSoon: 1
-  _HideInUI: 0
   DescriptionKey: unlockable.Mystery.Description
   TitleKey: unlockable.Mystery.Title
   SparkButtonDescription: 
@@ -31,12 +30,14 @@ MonoBehaviour:
   RequestTrickCostAmountCurve:
     serializedVersion: 2
     m_Curve:
-    - time: 0
+    - serializedVersion: 2
+      time: 0
       value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
-    - time: 1
+    - serializedVersion: 2
+      time: 1
       value: 1
       inSlope: 2
       outSlope: 2
@@ -44,6 +45,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
+  RequestTrickCostAmount: 2
   RequestTrickCostAmountNeededMin: 2
   RequestTrickCostAmountNeededMaxTimes: 10
   RequestTrickCostAmountNeededMax: 30
@@ -53,3 +55,4 @@ MonoBehaviour:
     type: 3}
   CubesRequired: 0
   SortOrder: 2000
+  AndroidReleaseVersion: 

@@ -115,10 +115,11 @@ namespace Cozmo.Upgrades {
 
     private AlertModal _QuitConfirmAlertModal;
 
-    [SerializeField]
-    private HasHiccupsModal _HasHiccupModal;
+    private HasHiccupsAlertController _HasHiccupAlertController;
 
     public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
+      _HasHiccupAlertController = new HasHiccupsAlertController();
+
       _UnlockInfo = unlockInfo;
       _ButtonCostPaidSuccessCallback = buttonCostPaidCallback;
 
@@ -141,8 +142,8 @@ namespace Cozmo.Upgrades {
           }
         }
         else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked) {
-          if (!playerInventory.CanRemoveItemAmount(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded)) {
-            playerInventory.AddItemAmount(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded);
+          if (!playerInventory.CanRemoveItemAmount(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmount)) {
+            playerInventory.AddItemAmount(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmount);
           }
         }
       }
@@ -153,11 +154,11 @@ namespace Cozmo.Upgrades {
           _RequestTrickButtonContainer.gameObject.SetActive(true);
           _FragmentInventoryContainer.gameObject.SetActive(false);
           _SparksInventoryContainer.gameObject.SetActive(true);
-          UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, unlockInfo.SparkButtonDescription);
+          UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmount, LocalizationKeys.kSparksSparkCozmo, unlockInfo.SparkButtonDescription);
           SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
-                      unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
+                      unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmount, _SparksInventoryLabel, true);
 
-          _SparkButtonCostLabel.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeeded);
+          _SparkButtonCostLabel.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmount);
           RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
         }
       }
@@ -222,7 +223,7 @@ namespace Cozmo.Upgrades {
       _UnlockableNameLabel.text = Localization.Get(unlockInfo.TitleKey);
       _UnlockableDescriptionLabel.text = Localization.Get(unlockInfo.DescriptionKey);
 
-      _UnlockableIcon.sprite = unlockInfo.CoreUpgradeOverlayIcon;
+      _UnlockableIcon.sprite = unlockInfo.CoreUpgradeIcon;
       _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
         unlockInfo.CubesRequired,
         ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
@@ -315,17 +316,17 @@ namespace Cozmo.Upgrades {
         Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
         if (UnlockablesManager.Instance.IsUnlocked(_UnlockInfo.Id.Value)) {
-          _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+          _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
 
           if (_RequestTrickButton.Interactable) {
             _SparkButtonCostLabel.color = _RequestTrickButton.TextEnabledColor;
             _ButtonPromptTitle.color = _SparkAvailableColor;
-            UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, _UnlockInfo.SparkButtonDescription);
+            UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount, LocalizationKeys.kSparksSparkCozmo, _UnlockInfo.SparkButtonDescription);
           }
           else {
             _SparkButtonCostLabel.color = _RequestTrickButton.TextDisabledColor;
             _ButtonPromptTitle.color = _UnavailableColor;
-            UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksNotEnoughSparksTitle, LocalizationKeys.kSparksNotEnoughSparksDesc);
+            UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount, LocalizationKeys.kSparksNotEnoughSparksTitle, LocalizationKeys.kSparksNotEnoughSparksDesc);
           }
 
         }
@@ -458,7 +459,7 @@ namespace Cozmo.Upgrades {
       else {
         // Cozmo failed to perform the spark
         Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+        playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
         UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
       }
 
@@ -475,7 +476,7 @@ namespace Cozmo.Upgrades {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (robot.HasHiccups) {
-          _HasHiccupModal.OpenCozmoHasHiccupsAlert(this.PriorityData);
+          _HasHiccupAlertController.OpenCozmoHasHiccupsAlert(this.PriorityData);
           return;
         }
       }
@@ -486,20 +487,20 @@ namespace Cozmo.Upgrades {
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
       // Inventory valid was already checked when the button was initialized.
-      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
       UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
-      DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
+      DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmount.ToString()));
 
       // Post sparked audio SFX
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Spark_Launch);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         // Give Sparked Behavior music ownership        
-        Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;      
-        if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {     
-          sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;       
-        }        
+        Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
+        if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
+          sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
+        }
         RobotEngineManager.Instance.CurrentRobot.SetSparkedMusicState(sparkedMusicState);
 
         RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
@@ -524,7 +525,7 @@ namespace Cozmo.Upgrades {
 
         // Take the audio state back to freeplay
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
-          
+
         if (!isCleanup) {
           UpdateState();
         }
@@ -536,6 +537,9 @@ namespace Cozmo.Upgrades {
     }
 
     protected override void CleanUp() {
+      if (_HasHiccupAlertController != null) {
+        _HasHiccupAlertController.Cleanup();
+      }
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
       StopSparkUnlock(isCleanup: true);
       // Because of a bug within DOTween Fades don't release even after being killed, so clean up
