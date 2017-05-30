@@ -319,7 +319,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 1, a: 1}
+  m_Color: {r: 0.003, g: 0, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -334,7 +334,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: 
+  _LinkedComponentId: Spark_Icon_Dim
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114859571189492758
@@ -479,16 +479,16 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: Spark_Count_Text
+  _LinkedComponentId: Spark_Count_Text_Small
   _OverrideSkinFont: 0
-  _OverrideSkinFaceTint: 0
+  _OverrideSkinFaceTint: 1
   _OverrideOutlineColor: 1
   _OverrideOutlineThickness: 0
-  _OverrideSkinFontSize: 1
+  _OverrideSkinFontSize: 0
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 1
+  _OverrideSkinAutoSizing: 0
 --- !u!222 &222134758718731544
 CanvasRenderer:
   m_ObjectHideFlags: 1

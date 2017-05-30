@@ -25,7 +25,7 @@ namespace Cozmo.Needs.Sparks.UI {
       _GameButton.onClick.AddListener(() => {
         UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
           SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
-          sparksDetailModal.InitializeSparksDetailModal(challengePacket, UnlockablesManager.Instance.IsUnlocked(challengePacket.Data.UnlockId.Value));
+          sparksDetailModal.InitializeSparksDetailModal(challengePacket);
         });
       });
     }

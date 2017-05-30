@@ -273,7 +273,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114336160790276436}
-    characterCount: 10
+    characterCount: 7
     spriteCount: 0
     spaceCount: 0
     wordCount: 1
@@ -355,7 +355,7 @@ MonoBehaviour:
         duration_sec: 0
         easing: 0
     - target: {fileID: 224370665542986168}
-      originOffset: {x: 0, y: 300}
+      originOffset: {x: -300, y: 0}
       openSetting:
         startTime_sec: 0
         useCustom: 0

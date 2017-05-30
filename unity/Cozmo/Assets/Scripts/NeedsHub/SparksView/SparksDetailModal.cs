@@ -1,8 +1,7 @@
 ﻿using Cozmo.UI;
 using Cozmo.Challenge;
-using System.Collections.Generic;
-using UnityEngine;
 using DataPersistence;
+using UnityEngine;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparksDetailModal : BaseModal {
@@ -20,53 +19,71 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoButton _SparkButton;
 
     [SerializeField]
-    private GameObject _LockedTextContainer;
+    private CozmoText _SparksCostText;
 
     [SerializeField]
-    private CozmoText _UnlockedText;
+    private CozmoText _CubesRequiredLabel;
 
     [SerializeField]
-    private CozmoText _SparksCountText;
+    private CozmoText _ButtonPromptTitle;
+
+    [SerializeField]
+    private CozmoText _ButtonPromptDescription;
+
+    [SerializeField]
+    private GameObject _SparkSpinnerContainer;
 
     private UnlockableInfo _UnlockInfo;
 
-    public void InitializeSparksDetailModal(UnlockableInfo unlockInfo, bool isLocked) {
-
+    public void InitializeSparksDetailModal(UnlockableInfo unlockInfo) {
       _UnlockInfo = unlockInfo;
 
       _Icon.sprite = unlockInfo.CoreUpgradeIcon;
       _Description.text = Localization.Get(unlockInfo.DescriptionKey);
       _Title.text = Localization.Get(unlockInfo.TitleKey);
 
-      _LockedTextContainer.gameObject.SetActive(isLocked);
-      _UnlockedText.gameObject.SetActive(!isLocked);
+      // Require a flat rate even if a spark is requested multiple times
+      _SparksCostText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeededMin);
+
+      _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
+        unlockInfo.CubesRequired,
+        ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
 
       _SparkButton.Initialize(() => {
         SparkCozmo(unlockInfo);
       }, "spark_cozmo_button", this.DASEventDialogName);
 
-      _SparkButton.gameObject.SetActive(!isLocked);
-
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
 
-      UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksCountText);
-      UpdateState();
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded += HandleItemValueChanged;
+      playerInventory.ItemRemoved += HandleItemValueChanged;
+      playerInventory.ItemCountSet += HandleItemValueChanged;
 
+      UpdateButtonState();
     }
 
-    public void InitializeSparksDetailModal(ChallengeManager.ChallengeStatePacket challengePacket, bool isLocked) {
+    public void InitializeSparksDetailModal(ChallengeManager.ChallengeStatePacket challengePacket) {
       _Icon.sprite = challengePacket.Data.ChallengeIcon;
       _Description.text = Localization.Get(challengePacket.Data.ChallengeDescriptionLocKey);
       _Title.text = Localization.Get(challengePacket.Data.ChallengeTitleLocKey);
 
-      _LockedTextContainer.gameObject.SetActive(isLocked);
-      _UnlockedText.gameObject.SetActive(!isLocked);
-
       _SparkButton.Initialize(() => {
         SparkCozmo(challengePacket);
       }, "spark_cozmo_button", this.DASEventDialogName);
+    }
 
-      _SparkButton.gameObject.SetActive(!isLocked);
+    private void OnDestroy() {
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded -= HandleItemValueChanged;
+      playerInventory.ItemRemoved -= HandleItemValueChanged;
+      playerInventory.ItemCountSet -= HandleItemValueChanged;
+    }
+
+    private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+      if (itemId == _UnlockInfo.RequestTrickCostItemId) {
+        UpdateButtonState();
+      }
     }
 
     private void SparkCozmo(UnlockableInfo unlockInfo) {
@@ -83,10 +100,10 @@ namespace Cozmo.Needs.Sparks.UI {
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
       // Inventory valid was already checked when the button was initialized.
-      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-      UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksCountText);
+      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeededMin);
 
-      DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
+      DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(),
+                DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeededMin.ToString()));
 
       // Post sparked audio SFX
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Spark_Launch);
@@ -101,7 +118,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
         RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
       }
-      UpdateState();
+      UpdateButtonState();
       DataPersistenceManager.Instance.Save();
     }
 
@@ -109,32 +126,37 @@ namespace Cozmo.Needs.Sparks.UI {
 
     }
 
-    private void UpdateInventoryLabel(string itemId, CozmoText label) {
-      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      ItemData itemData = ItemDataConfig.GetData(itemId);
-      label.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
-                                            itemData.GetPluralName(),
-                                            Localization.GetNumber(playerInventory.GetItemAmount(itemId)));
-    }
-
-    private void UpdateState() {
+    private void UpdateButtonState() {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
         _SparkButton.Interactable = false;
-        _UnlockedText.text = Localization.Get(LocalizationKeys.kSparksSparked);
+        _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
+        _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkedStateDescription);
+        _SparkSpinnerContainer.gameObject.SetActive(true);
       }
       else {
         Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        if (UnlockablesManager.Instance.IsUnlocked(_UnlockInfo.Id.Value)) {
-          _SparkButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-          if (_SparkButton.Interactable) {
-            _UnlockedText.text = Localization.Get(LocalizationKeys.kSparksSparkCozmo);
-          }
-          else {
-            _UnlockedText.text = Localization.Get(LocalizationKeys.kUnlockableBitsRequiredTitle);
-          }
+        if (playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId,
+                                                _UnlockInfo.RequestTrickCostAmountNeededMin)) {
+          _SparkButton.Interactable = true;
+          _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CanAffordColor;
+          _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparkCozmo);
+          _ButtonPromptDescription.text = Localization.Get(_UnlockInfo.SparkButtonDescription);
         }
+        else {
+          _SparkButton.Interactable = false;
+          _SparksCostText.color = UIColorPalette.ButtonSparkTintColor.CannotAffordColor;
+          _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksNotEnoughSparksTitle);
+          _ButtonPromptDescription.text = Localization.Get(LocalizationKeys.kSparksNotEnoughSparksDesc);
+        }
+        _SparkSpinnerContainer.gameObject.SetActive(false);
       }
+
+      // Force the text to update
+      _ButtonPromptTitle.enabled = false;
+      _ButtonPromptTitle.enabled = true;
+      _ButtonPromptDescription.enabled = false;
+      _ButtonPromptDescription.enabled = true;
     }
 
     private void OnApplicationPause(bool pauseStatus) {
@@ -155,7 +177,7 @@ namespace Cozmo.Needs.Sparks.UI {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
 
         if (!isCleanup) {
-          UpdateState();
+          UpdateButtonState();
         }
       }
     }
@@ -176,8 +198,7 @@ namespace Cozmo.Needs.Sparks.UI {
       else {
         // Cozmo failed to perform the spark
         Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-        UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksCountText);
+        playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeededMin);
       }
 
       StopSparkUnlock();
@@ -189,6 +210,5 @@ namespace Cozmo.Needs.Sparks.UI {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
       StopSparkUnlock(isCleanup: true);
     }
-
   }
 }

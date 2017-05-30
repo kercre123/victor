@@ -5,7 +5,7 @@ using Cozmo.UI;
 namespace Cozmo.Needs.Sparks.UI {
   public class SparkCell : MonoBehaviour {
 
-    private const float kLockedAlpha = 0.5f;
+    private const float kComingSoonAlpha = 0.5f;
 
     [SerializeField]
     private CozmoImage _TrickIcon;
@@ -36,15 +36,11 @@ namespace Cozmo.Needs.Sparks.UI {
 
       if (unlockInfo.ComingSoon) {
         _SparksButton.onClick.AddListener(HandleTappedComingSoon);
-        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kLockedAlpha);
+        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
         _SparkCostContainer.gameObject.SetActive(false);
       }
-      else if (UnlockablesManager.Instance.IsUnlocked(unlockInfo.Id.Value)) {
-        _SparksButton.onClick.AddListener(HandleTappedUnlocked);
-      }
       else {
-        _SparksButton.onClick.AddListener(HandleTappedLocked);
-        _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kLockedAlpha);
+        _SparksButton.onClick.AddListener(HandleTappedUnlocked);
       }
 
       _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
@@ -53,6 +49,35 @@ namespace Cozmo.Needs.Sparks.UI {
 
       // Always request a flat cost for performing a trick
       _SparkCountText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmountNeededMin);
+
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded += HandleItemValueChanged;
+      playerInventory.ItemRemoved += HandleItemValueChanged;
+      playerInventory.ItemCountSet += HandleItemValueChanged;
+
+      SetSparkTextColor(playerInventory.GetItemAmount(unlockInfo.RequestTrickCostItemId));
+    }
+
+    private void OnDestroy() {
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded -= HandleItemValueChanged;
+      playerInventory.ItemRemoved -= HandleItemValueChanged;
+      playerInventory.ItemCountSet -= HandleItemValueChanged;
+    }
+
+    private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+      if (itemId == _UnlockInfo.RequestTrickCostItemId) {
+        SetSparkTextColor(newCount);
+      }
+    }
+
+    private void SetSparkTextColor(int itemCount) {
+      if (itemCount >= _UnlockInfo.RequestTrickCostAmountNeededMin) {
+        _SparkCountText.color = UIColorPalette.GeneralSparkTintColor.CanAffordColor;
+      }
+      else {
+        _SparkCountText.color = UIColorPalette.GeneralSparkTintColor.CannotAffordColor;
+      }
     }
 
     private void HandleTappedComingSoon() {
@@ -68,17 +93,8 @@ namespace Cozmo.Needs.Sparks.UI {
       // pop up sparks modal
       UIManager.OpenModal(_SparksDetailModalPrefab, _SparksDetailModalPriorityData, (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
-        sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo, false);
+        sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo);
       });
     }
-
-    private void HandleTappedLocked() {
-      // pop up sparks modal with locked text info
-      UIManager.OpenModal(_SparksDetailModalPrefab, _SparksDetailModalPriorityData, (obj) => {
-        SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
-        sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo, true);
-      });
-    }
-
   }
 }

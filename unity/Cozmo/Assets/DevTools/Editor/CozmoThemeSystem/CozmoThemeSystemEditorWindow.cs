@@ -14,8 +14,8 @@ public class CozmoThemeSystemEditorWindow : Anki.Core.Editor.Components.ThemeSys
   protected static void InitializeWindowOverride() {
     _sWindow = EditorWindow.GetWindow<CozmoThemeSystemEditorWindow>();
     _sWindow.titleContent = new GUIContent("Theme System");
-    _sWindow.position = new Rect(_sWindow.position.x, _sWindow.position.y, 750f, 500f);
-    _sWindow.minSize = new Vector2(750f, 500f);
+    _sWindow.position = new Rect(_sWindow.position.x, _sWindow.position.y, 1400f, 800f);
+    _sWindow.minSize = new Vector2(1400f, 800f);
     _sWindow.Show();
 
     //Initialize variables
@@ -28,11 +28,61 @@ public class CozmoThemeSystemEditorWindow : Anki.Core.Editor.Components.ThemeSys
 
   #region Override Methods
 
+  protected override void SetupUIAreas() {
+    float columnWidth = _sWindow.position.width * 0.25f;
+    float headerHeight = 75f;
+    float creationHeight = 110f;
+    float selectionY = headerHeight + creationHeight;
+    float selectionHeight = _sWindow.position.height - selectionY;
+
+    _RuntimeOptionsSelectionAreaRect = new Rect(0,
+      0,
+      columnWidth,
+      headerHeight);
+
+    _ThemeSelectionAreaRect = new Rect(columnWidth,
+      0,
+      columnWidth,
+      headerHeight);
+
+    _SkinSelectionAreaRect = new Rect(columnWidth * 2,
+      0,
+      columnWidth,
+      headerHeight);
+
+    _CreationOptionsAreaRect = new Rect(0,
+      headerHeight,
+      columnWidth * 3,
+      creationHeight);
+
+    _ImageComponentSelectionAreaRect = new Rect(0,
+      selectionY,
+      columnWidth,
+      selectionHeight);
+
+    _TextComponentSelectionAreaRect = new Rect(0, 0, 0, 0);
+
+    _TextMeshProComponentSelectionAreaRect = new Rect(columnWidth,
+      selectionY,
+      columnWidth,
+      selectionHeight);
+
+    _ButtonComponentSelectionAreaRect = new Rect(columnWidth * 2,
+      selectionY,
+      columnWidth,
+      selectionHeight);
+
+    _InspectorAreaRect = new Rect(_sWindow.position.width - columnWidth,
+      0,
+      columnWidth,
+      _sWindow.position.height);
+  }
+
   protected override void DrawInspectorButtonComponentUI(ThemesJson.ThemeComponentObj component) {
-    component.SkinButtonTransition = EditorGUILayout.Toggle("Skin Transition Colors", component.SkinButtonTransition);
-    component.ButtonTransition.ColorBlock.normalColor = EditorGUILayout.ColorField("Normal Color", component.ButtonTransition.ColorBlock.normalColor);
-    component.ButtonTransition.ColorBlock.pressedColor = EditorGUILayout.ColorField("Pressed Color", component.ButtonTransition.ColorBlock.pressedColor);
-    component.ButtonTransition.ColorBlock.disabledColor = EditorGUILayout.ColorField("Disabled Color", component.ButtonTransition.ColorBlock.disabledColor);
+    component.SkinButtonTransition = EditorGUILayout.Toggle("Skin Text Transition Colors", component.SkinButtonTransition);
+    component.ButtonTransition.ColorBlock.normalColor = EditorGUILayout.ColorField("Normal Text Color", component.ButtonTransition.ColorBlock.normalColor);
+    component.ButtonTransition.ColorBlock.pressedColor = EditorGUILayout.ColorField("Pressed Text Color", component.ButtonTransition.ColorBlock.pressedColor);
+    component.ButtonTransition.ColorBlock.disabledColor = EditorGUILayout.ColorField("Disabled Text Color", component.ButtonTransition.ColorBlock.disabledColor);
 
     component.SkinButtonImageArray = EditorGUILayout.Toggle("Skin Button Image Array", component.SkinButtonImageArray);
     _ButtonImageFoldout = EditorGUILayout.Foldout(_ButtonImageFoldout, "Button Image Array");

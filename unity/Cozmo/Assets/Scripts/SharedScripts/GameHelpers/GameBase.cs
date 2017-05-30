@@ -146,8 +146,6 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Initialization
 
-  protected const string _kReactionaryBehaviorOwnerId = "unity_game";
-
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
   protected virtual void InitializeReactionaryBehaviorsForGameStart() {
     RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);

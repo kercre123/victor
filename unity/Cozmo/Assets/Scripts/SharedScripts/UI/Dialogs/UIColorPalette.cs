@@ -25,6 +25,12 @@ namespace Cozmo {
       }
     }
 
+    [System.Serializable]
+    public class SparkCostTint {
+      public Color CanAffordColor;
+      public Color CannotAffordColor;
+    }
+
     public class UIColorPalette : ScriptableObject {
 
       private static UIColorPalette _sInstance;
@@ -43,6 +49,20 @@ namespace Cozmo {
 
       public static Color GeneralBackgroundColor {
         get { return Instance._GeneralBackgroundColor; }
+      }
+
+      [SerializeField]
+      private SparkCostTint _GeneralSparkTintColor;
+
+      public static SparkCostTint GeneralSparkTintColor {
+        get { return Instance._GeneralSparkTintColor; }
+      }
+
+      [SerializeField]
+      private SparkCostTint _ButtonSparkTintColor;
+
+      public static SparkCostTint ButtonSparkTintColor {
+        get { return Instance._ButtonSparkTintColor; }
       }
 
       [SerializeField]

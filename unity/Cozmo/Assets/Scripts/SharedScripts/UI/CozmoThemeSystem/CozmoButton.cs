@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Anki.Core.UI.Components;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using Anki.Core.UI.Components;
 
 namespace Cozmo.UI {
   public class CozmoButton : AnkiButton, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
@@ -217,6 +217,7 @@ namespace Cozmo.UI {
       return _Interactable;
     }
 
+    private Coroutine _DelayedInitialUpdateVisuals;
     private bool _IsInitialized = false;
 
     protected override void Start() {
@@ -226,12 +227,23 @@ namespace Cozmo.UI {
       }
       onClick.AddListener(HandleOnPress);
 
+      _DelayedInitialUpdateVisuals = StartCoroutine(DelayedUpdateVisuals());
+    }
+
+    // Delay potentially setting the button background to disabled by a frame so that
+    // the skinning system has a chance to act first. 
+    private IEnumerator DelayedUpdateVisuals() {
+      yield return 0;
       UpdateVisuals();
     }
 
     protected override void OnDestroy() {
       base.OnDestroy();
       onClick.RemoveListener(HandleOnPress);
+
+      if (_DelayedInitialUpdateVisuals != null) {
+        StopCoroutine(_DelayedInitialUpdateVisuals);
+      }
     }
 
     public void Initialize(UnityAction clickCallback, string dasEventButtonName, string dasEventViewController) {
