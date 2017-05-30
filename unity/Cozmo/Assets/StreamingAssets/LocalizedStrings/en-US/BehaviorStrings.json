@@ -154,13 +154,13 @@
     "translation": "Clear This Slot"
   },
   "behavior.singing.Camptown": {
-    "translation": "Cozmo is singing Camptown"
+    "translation": "Cozmo is singing Camptown Races"
   },
   "behavior.singing.ItsyBitsySpider": {
     "translation": "Cozmo is singing Itsy Bitsy Spider"
   },
   "behavior.singing.Beethovens5th": {
-    "translation": "Cozmo is singing Beethovens 5th"
+    "translation": "Cozmo is singing Beethovens 5th Symphony"
   },
   "behavior.singing.PopGoesTheWeasel": {
     "translation": "Cozmo is singing Pop Goes The Weasel"
@@ -169,13 +169,13 @@
     "translation": "Cozmo is singing Row Your Boat"
   },
   "behavior.singing.PachebelCanon": {
-    "translation": "Cozmo is singing Pachelbel Canon"
+    "translation": "Cozmo is singing Pachelbel’s Canon"
   },
   "behavior.singing.OdeToJoy": {
-    "translation": "Cozmo is singing Ode To Joy"
+    "translation": "Cozmo is singing Beethoven's 9th Symphony"
   },
   "behavior.singing.TwinkleTwinkle": {
-    "translation": "Cozmo is singing Twinkle Twinkle"
+    "translation": "Cozmo is singing Twinkle Twinkle Little Star"
   },
   "behavior.singing.FrereJacques": {
     "translation": "Cozmo is singing Frere Jacques"
@@ -187,7 +187,7 @@
     "translation": "Cozmo is singing Take Me Out to the Ballgame"
   },
   "behavior.singing.WilliamTell": {
-    "translation": "Cozmo is singing William Tell"
+    "translation": "Cozmo is singing William Tell Overture"
   },
   "behavior.singing.YankeeDoodle": {
     "translation": "Cozmo is singing Yankee Doodle"
@@ -196,10 +196,10 @@
     "translation": "Cozmo is singing Beautiful Dreamer"
   },
   "behavior.singing.MountainKing": {
-    "translation": "Cozmo is singing Mountain King"
+    "translation": "Cozmo is singing Hall of the Mountain King"
   },
   "behavior.singing.TaRaRaBoom": {
-    "translation": "Cozmo is singing Ta Ra Ra Boom"
+    "translation": "Cozmo is singing Ta Ra Ra Boom De Ay"
   },
   "behavior.singing.EntryOfTheGladiators": {
     "translation": "Cozmo is singing Entry of the Gladiators"
@@ -211,7 +211,7 @@
     "translation": "Cozmo is singing Turkey in the Straw"
   },
   "behavior.singing.Habanera": {
-    "translation": "Cozmo is singing Habanera"
+    "translation": "Cozmo is singing La Habanera"
   },
   "behavior.Dance": {
     "translation": "Cozmo is dancing"
