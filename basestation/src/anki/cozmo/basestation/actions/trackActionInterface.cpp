@@ -474,6 +474,15 @@ ActionResult ITrackAction::CheckIfDone()
       
       if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && (needToMoveFwdBwd || needToPan))
       {
+        // If the robot is not on its treads, it may exhibit erratic turning behavior
+        if (_robot.GetOffTreadsState() != OffTreadsState::OnTreads) {
+          PRINT_NAMED_WARNING("ITrackAction.CheckIfDone.OffTreadsStateInvalid",
+                              "[%d] Off tread state %s is invalid for turning in place",
+                              GetTag(),
+                              EnumToString(_robot.GetOffTreadsState()));
+          return CheckIfDoneReturnHelper(ActionResult::INVALID_OFF_TREADS_STATE, false);
+        }
+        
         const f32 kMaxPanAngle_deg = 89.f;
         
         if(needToMoveFwdBwd)

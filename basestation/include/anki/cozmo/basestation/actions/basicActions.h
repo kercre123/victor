@@ -68,6 +68,7 @@ namespace Cozmo {
       
       bool IsBodyInPosition(Radians& currentAngle) const;
       Result SendSetBodyAngle() const;
+      bool IsOffTreadsStateValid() const;
       
       const f32 _kDefaultSpeed        = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
       const f32 _kDefaultAccel        = 10.f;

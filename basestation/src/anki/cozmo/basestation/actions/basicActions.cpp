@@ -125,8 +125,27 @@ namespace Anki {
       return result;
     }
     
+    bool TurnInPlaceAction::IsOffTreadsStateValid() const
+    {
+      // If the robot is not on its treads, it may exhibit erratic turning behavior
+      const auto otState = _robot.GetOffTreadsState();
+      const bool valid = (otState == OffTreadsState::OnTreads);
+      if (!valid) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.OffTreadsStateInvalid",
+                            "[%d] Off tread state %s is invalid for TurnInPlace",
+                            GetTag(),
+                            EnumToString(otState));
+      }
+      return valid;
+    }
+    
     ActionResult TurnInPlaceAction::Init()
     {
+      // Ensure that the OffTreadsState is valid
+      if (!IsOffTreadsStateValid()) {
+        return ActionResult::INVALID_OFF_TREADS_STATE;
+      }
+      
       // Grab the robot's current heading and PoseFrameId (which
       //  is used later to detect if relocalization occurred mid-turn)
       _prevPoseFrameId = _robot.GetPoseFrameID();
@@ -154,8 +173,8 @@ namespace Anki {
         // First, check the turn angle to make sure it's not too large:
         if (std::abs(_requestedAngle_rad) > 2.f*M_PI_F*_kMaxRelativeTurnRevs) {
           PRINT_NAMED_WARNING("TurnInPlaceAction.Init.AngleTooLarge",
-                        "Requested relative turn angle (%.1f deg) is too large!",
-                        RAD_TO_DEG(_requestedAngle_rad));
+                              "Requested relative turn angle (%.1f deg) is too large!",
+                              RAD_TO_DEG(_requestedAngle_rad));
           return ActionResult::ABORT;
         }
         
@@ -246,11 +265,11 @@ namespace Anki {
       {
         ++_relocalizedCnt;
         PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.PfidChanged",
-                            "[%d] pose frame ID changed (old=%d, new=%d). "
-                            "No longer comparing angles to check if done - using angular distance traversed instead. "
-                            "(relocalizedCnt=%d) (inPositionNow=%d)",
-                            GetTag(), _prevPoseFrameId, _robot.GetPoseFrameID(),
-                            _relocalizedCnt, IsBodyInPosition(_currentAngle));
+                      "[%d] pose frame ID changed (old=%d, new=%d). "
+                      "No longer comparing angles to check if done - using angular distance traversed instead. "
+                      "(relocalizedCnt=%d) (inPositionNow=%d)",
+                      GetTag(), _prevPoseFrameId, _robot.GetPoseFrameID(),
+                      _relocalizedCnt, IsBodyInPosition(_currentAngle));
         _prevPoseFrameId = _robot.GetPoseFrameID();
         // Need to update previous angle since pose has changed (to
         //  keep _angularDistTraversed semi-accurate)
@@ -322,6 +341,11 @@ namespace Anki {
                               _robot.GetPoseFrameID());
           result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
         }
+      }
+      
+      // Ensure that the OffTreadsState is valid
+      if (!IsOffTreadsStateValid()) {
+        result = ActionResult::INVALID_OFF_TREADS_STATE;
       }
       
       return result;
