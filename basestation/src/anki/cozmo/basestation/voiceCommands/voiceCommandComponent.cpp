@@ -482,6 +482,10 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
   const char* phrase = _phraseData->GetFirstPhraseForCommand(commandType);
   if (nullptr == phrase)
   {
+    DEV_ASSERT_MSG(false,
+                   "VoiceCommandComponent.DoForceHeardPhrase.PhraseNotFound",
+                   "No phrase found for voice command %s.  Be sure the type has a phrase associated with it",
+                   VoiceCommandTypeToString(commandType));
     return;
   }
   
@@ -508,6 +512,9 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
   // We're not going to force a command that isn't in the context
   if (commandSet.find(commandType) == commandSet.end())
   {
+    PRINT_NAMED_ERROR("VoiceCommandComponent.DoForceHeardPhrase.PhraseNotInContext",
+                      "The phrase %s is not valid within the current context",
+                      VoiceCommandTypeToString(commandType));
     return;
   }
   

@@ -1,0 +1,17 @@
+[
+  {
+    "unlockID"  : "QuickTapGame",
+    "behaviorID": "VC_RequestSpeedTap",
+    "weight"    : 7
+  },
+  {
+    "unlockID"  : "KeepawayGame",
+    "behaviorID": "VC_RequestKeepAway",
+    "weight"    : 6
+  },
+  {
+    "unlockID"  : "MemoryMatchGame",
+    "behaviorID": "VC_RequestMemoryMatch",
+    "weight"    : 6
+  }
+]

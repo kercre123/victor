@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -44,28 +45,15 @@ using namespace ::Anki::Cozmo::VoiceCommand;
 ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& config)
 :IActivity(robot, config)
 , _context(robot.GetContext())
+, _voiceCommandBehavior(nullptr)
+, _doATrickSelector(new DoATrickSelector(robot))
+, _requestGameSelector(new RequestGameSelector(robot))
 {
-  std::map<UnlockId, IBehavior*> gameRequestList;
-  const auto& BF = robot.GetBehaviorFactory();
-  gameRequestList[UnlockId::KeepawayGame] = BF.FindBehaviorByID(BehaviorID::RequestKeepAway);
-  gameRequestList[UnlockId::QuickTapGame] = BF.FindBehaviorByID(BehaviorID::RequestSpeedTap);
-  gameRequestList[UnlockId::MemoryMatchGame] = BF.FindBehaviorByID(BehaviorID::RequestMemoryMatch);
-  
   // TODO: Will need to change how this works should we add more dance behaviors
   _danceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::Dance_Mambo);
   DEV_ASSERT(_danceBehavior != nullptr &&
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForName");
-  
-  for(const auto& entry: gameRequestList){
-    DEV_ASSERT_MSG(entry.second != nullptr &&
-                   entry.second->GetClass() == BehaviorClass::RequestGameSimple,
-                   "ActivityVoiceCommand.InvalidGameClass.ImproperClassRetrievedForName",
-                   "Behavior with ID %s is of improper class",
-                   entry.second != nullptr ? entry.second->GetIDStr().c_str() : "nullPtr returned");
-  }
-
-  _requestGameSelector = std::make_unique<RequestGameSelector>(std::move(gameRequestList));
   
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
 }
@@ -112,7 +100,16 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
       
       return _voiceCommandBehavior;
+      
     }
+    case VoiceCommandType::DoATrick:
+    {
+      voiceCommandComponent->ClearHeardCommand();
+      _doATrickSelector->RequestATrick(robot);
+      voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      return _behaviorNone;
+    }
+
     // TODO: Handle these two commands appropriately
     case VoiceCommandType::YesPlease:
     case VoiceCommandType::NoThankYou:

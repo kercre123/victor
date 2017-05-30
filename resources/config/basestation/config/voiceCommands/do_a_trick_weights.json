@@ -1,0 +1,31 @@
+[
+  {
+    "unlockID": "StackTwoCubes",
+    "weight"  : 1
+  },
+  {
+    "unlockID": "RollCube",
+    "weight"  : 1
+  },
+  {
+    "unlockID": "PopAWheelieAction",
+    "weight"  : 2
+  },
+  {
+    "unlockID": "Workout",
+    "weight"  : 2
+  },
+  {
+    "unlockID": "FistBump",
+    "weight"  : 3
+  },
+  {
+    "unlockID": "BuildPyramid",
+    "weight"  : 1
+  },
+  {
+    "unlockID": "PeekABoo",
+    "weight"  : 1
+  }
+]
+

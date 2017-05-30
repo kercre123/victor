@@ -17,6 +17,10 @@
       "commandType": "LetsPlay"
     },
     {
+      "phrase": "Do A Trick",
+      "commandType": "DoATrick"
+    },
+    {
       "phrase": "Yes Please",
       "commandType": "YesPlease"
     },
@@ -44,8 +48,9 @@
       "contextIsPhraseSpotted": false,
       "contextAllowsFollowup": false,
       "contextCommandList": [
-        "LetsPlay",
-        "DoADance"
+        "DoADance",
+        "DoATrick",
+        "LetsPlay"
       ]
     },
     {

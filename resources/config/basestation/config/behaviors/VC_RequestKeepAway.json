@@ -1,0 +1,17 @@
+{
+  "behaviorClass" : "RequestGameSimple",
+  "behaviorID" : "VC_RequestKeepAway",
+  "displayNameKey":"behavior.RequestToPlay",
+  "requiredGameFlags" : "KeepAway",
+  "use_block" : false,
+  
+  "zero_block_config": {
+    "initial_animName" : "RequestGameKeepAwayInitial0",
+    "preDrive_animName" : "RequestGameKeepAwayPreDrive0",
+    "request_animName" : "RequestGameKeepAwayRequest0",
+    "idle_animName" : "RequestGameKeepAwayIdle0",
+    "deny_animName" : "RequestGameKeepAwayDeny0",
+    "minRequestDelay_s" : 20.0
+  }
+
+}

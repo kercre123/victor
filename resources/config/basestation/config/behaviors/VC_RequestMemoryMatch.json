@@ -1,0 +1,16 @@
+{
+  "behaviorClass" : "RequestGameSimple",
+  "behaviorID" : "VC_RequestMemoryMatch",
+  "displayNameKey":"behavior.RequestToPlay",
+  "requiredGameFlags" : "MemoryMatch",
+  "use_block" : false,
+  
+  "zero_block_config": {
+    "initial_animName" : "RequestGameMemoryMatchInitial0",
+    "preDrive_animName" : "RequestGameMemoryMatchPreDrive0",
+    "request_animName" : "RequestGameMemoryMatchRequest0",
+    "idle_animName" : "RequestGameMemoryMatchIdle0",
+    "deny_animName" : "RequestGameMemoryMatchDeny0",
+    "minRequestDelay_s" : 20.0
+  }
+}

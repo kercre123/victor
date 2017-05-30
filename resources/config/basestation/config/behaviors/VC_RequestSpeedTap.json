@@ -1,0 +1,16 @@
+{
+  "behaviorClass" : "RequestGameSimple",
+  "behaviorID" : "VC_RequestSpeedTap",
+  "displayNameKey":"behavior.RequestToPlay",
+  "requiredGameFlags" : "SpeedTap",
+  "use_block" : false,
+  
+  "zero_block_config": {
+    "initial_animName" : "RequestGameSpeedTapInitial0",
+    "preDrive_animName" : "RequestGameSpeedTapPreDrive0",
+    "request_animName" : "RequestGameSpeedTapRequest0",
+    "idle_animName" : "RequestGameSpeedTapIdle0",
+    "deny_animName" : "RequestGameSpeedTapDeny0",
+    "minRequestDelay_s" : 20.0
+  }
+}

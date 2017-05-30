@@ -24,18 +24,26 @@ namespace Cozmo {
 // forward declarations
 class IBehavior;
 class Robot;
+
+  
+struct GameRequestData{
+  GameRequestData(UnlockId unlockID, IBehavior* behavior, int weight)
+  : _unlockID(unlockID)
+  , _behavior(behavior)
+  , _weight(weight){}
+  
+  UnlockId   _unlockID;
+  IBehavior* _behavior;
+  int _weight;
+};
   
 class RequestGameSelector{
 public:
-  RequestGameSelector(std::map<UnlockId, IBehavior*>&& gameRequests)
-  : _gameRequests(std::move(gameRequests))
-  , _lastGameRequested(nullptr)
-  {};
+  RequestGameSelector(Robot& robot);
   ~RequestGameSelector() {};
   IBehavior* GetNextRequestGameBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
 private:
-  // The raw pointers to available request game behaviors
-  std::map<UnlockId, IBehavior*> _gameRequests;
+  std::vector<GameRequestData> _gameRequests;
   // track the last game that was requested so that we don't request the same
   // game over and over again
   IBehavior* _lastGameRequested;

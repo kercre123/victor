@@ -230,6 +230,11 @@ enum uint_8 BehaviorID {
   TapInteractionRollCube,
   TapInteractionStackCubes,
   TrackLaser,
+
+  VC_RequestKeepAway,
+  VC_RequestMemoryMatch,
+  VC_RequestSpeedTap,
+
   VisitPossibleMarker
 }
 

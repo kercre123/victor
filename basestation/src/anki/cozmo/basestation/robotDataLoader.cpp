@@ -570,7 +570,50 @@ void RobotDataLoader::LoadActivities()
   }
 }
 
+
+void RobotDataLoader::LoadVoiceCommandConfigs()
+{
+  // Configuration for voice command component 
+  {
+    std::string jsonFilename = "config/basestation/config/voiceCommand_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
+                        "Voice Command Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+      _voiceCommandConfig.clear();
+    }
+  }
   
+  // Configuration for "lets play" game selection
+  {
+    std::string jsonFilename = "config/basestation/config/voiceCommands/lets_play_weights.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _letsPlayWeights);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
+                        "Lets play Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+      _letsPlayWeights.clear();
+    }
+  }
+  
+  // Configuration for "do a trick" spark selection
+  {
+    std::string jsonFilename = "config/basestation/config/voiceCommands/do_a_trick_weights.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
+                        "Do a trick Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+      _doATrickWeights.clear();
+    }
+  }
+}
+
+
 void RobotDataLoader::LoadReactionTriggerMap()
 {
   const std::string filename = "config/basestation/config/reactionTrigger_behavior_map.json";
@@ -661,17 +704,9 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // Voice Command config
   {
-    std::string jsonFilename = "config/basestation/config/voiceCommand_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                        "Voice Command Json config file %s not found or failed to parse.",
-                        jsonFilename.c_str());
-      _voiceCommandConfig.clear();
-    }
+    LoadVoiceCommandConfigs();
   }
-
+  
   // needs system config
   {
     std::string jsonFilename = "config/basestation/config/needs_config.json";

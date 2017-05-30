@@ -90,6 +90,11 @@ public:
   const Json::Value& GetRobotNeedsConfig() const        { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const       { return _starRewardsConfig; }
   const Json::Value& GetRobotNeedsActionsConfig() const { return _needsActionConfig; }
+  
+  
+  // voice command configs
+  const Json::Value& GetLetsPlayWeightsConfig() const { return _letsPlayWeights; }
+  const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
 
   bool IsCustomAnimLoadEnabled() const;
   
@@ -120,6 +125,7 @@ private:
   void LoadEmotionEvents();
   void LoadBehaviors();
   void LoadActivities();
+  void LoadVoiceCommandConfigs();
   void LoadReactionTriggerMap();
 
   const CozmoContext* const _context;
@@ -161,6 +167,10 @@ private:
   Json::Value _needsSystemConfig;
   Json::Value _starRewardsConfig;
   Json::Value _needsActionConfig;
+  
+  // voice command configs
+  Json::Value _letsPlayWeights;
+  Json::Value _doATrickWeights;
   
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
