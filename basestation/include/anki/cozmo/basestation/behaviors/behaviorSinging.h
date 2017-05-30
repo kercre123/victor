@@ -73,6 +73,9 @@ private:
   
   // Output of low pass filter on vibrato scale
   float _vibratoScaleFilt = 0;
+  
+  // Keep track of when cubes start being shaken
+  TimeStamp_t _cubeShakingStartTime_ms = 0;
 };
   
 }

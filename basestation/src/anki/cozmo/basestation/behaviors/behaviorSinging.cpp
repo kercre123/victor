@@ -22,6 +22,8 @@
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -237,6 +239,41 @@ BehaviorStatus BehaviorSinging::UpdateInternal(Robot& robot)
   // Post the filtered vibrato scale to wwise
   robot.GetRobotAudioClient()->PostRobotParameter(kVibratoParam,
                                                   _vibratoScaleFilt);
+  
+  // Using filtered vibrato scale to determine when shaking starts
+  // since it is already smoothed by the low pass filter and is just as representative
+  // of the amount the cube is being shaken as mostShakenObjectAverage is
+  constexpr float kMinFiltVibrato = 0.1;
+  const bool shakeAmountExceedsMin = _vibratoScaleFilt > kMinFiltVibrato;
+  const bool shakeStartTimeIsZero = _cubeShakingStartTime_ms == 0;
+  
+  // If cube is not being shaken and its shake amount exceeds minimum record the time
+  // it started being shaken
+  if(shakeStartTimeIsZero && shakeAmountExceedsMin)
+  {
+    _cubeShakingStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
+  // Otherwise if it is being shaken and the shake amount is now below minimum
+  else if(!shakeStartTimeIsZero && !shakeAmountExceedsMin)
+  {
+    const TimeStamp_t curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    
+    const char* song = EnumToString(GetID());
+    const TimeStamp_t durationOfShake_ms = curTime_ms - _cubeShakingStartTime_ms;
+    
+    // If the shake was longer than 500 ms then log event with the shake duration and song
+    // name. Ignore short shakes which might be caused by cubes being moved or table shaking
+    const TimeStamp_t minShakeDuration_ms = 500;
+    if(durationOfShake_ms > minShakeDuration_ms)
+    {
+      Util::sEventF("robot.song_shake_duration_ms",
+                    {{DDATA, song}},
+                    "%u",
+                    durationOfShake_ms);
+    }
+
+    _cubeShakingStartTime_ms = 0;
+  }
   
   return (IsActing() ? BehaviorStatus::Running : BehaviorStatus::Complete);
 }
