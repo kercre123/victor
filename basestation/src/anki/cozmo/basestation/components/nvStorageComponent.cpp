@@ -89,6 +89,7 @@ std::map<NVEntryTag, u32> NVStorageComponent::_maxSizeTable = {
                                                           {NVEntryTag::NVEntry_FaceEnrollData,  0},
                                                           {NVEntryTag::NVEntry_FaceAlbumData,   0},
                                                           {NVEntryTag::NVEntry_NurtureGameData, 0},
+                                                          {NVEntryTag::NVEntry_InventoryData,   0},
                                                           {NVEntryTag::NVEntry_NEXT_SLOT,       0} };
 
 // This map must be poulated with all the factory tags that you want to be able to read from.

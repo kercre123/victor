@@ -11,6 +11,7 @@ namespace Cozmo {
     public event InventoryValueChangedHandler ItemAdded;
     public event InventoryValueChangedHandler ItemRemoved;
     public event InventoryValueChangedHandler ItemCountSet;
+    public event InventoryValueChangedHandler ItemCountUpdated;
 
     public int InventoryCap {
       get {
@@ -25,6 +26,35 @@ namespace Cozmo {
 
     public Inventory() {
       _ItemIdToCount = new Dictionary<string, int>();
+    }
+
+    public void InitInventory() {
+      // Setup listeners for inventory still stored in engine...
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.InventoryStatus>(HandleEngineInventoryUpdated);
+    }
+
+    public void HandleEngineInventoryUpdated(Anki.Cozmo.ExternalInterface.InventoryStatus message) {
+      int sparksAmount = message.allInventory.inventoryItemAmount[(int)Anki.Cozmo.InventoryType.Sparks];
+
+      // Sparks is the only currency engine is tracking
+      if (!_ItemIdToCount.ContainsKey(RewardedActionManager.Instance.SparkID)) {
+        _ItemIdToCount.Add(RewardedActionManager.Instance.SparkID, 0);
+      }
+      if (sparksAmount != _ItemIdToCount[RewardedActionManager.Instance.SparkID]) {
+        int delta = sparksAmount - _ItemIdToCount[RewardedActionManager.Instance.SparkID];
+        _ItemIdToCount[RewardedActionManager.Instance.SparkID] = sparksAmount;
+        if (ItemCountUpdated != null) {
+          ItemCountUpdated(RewardedActionManager.Instance.SparkID, delta, sparksAmount);
+        }
+      }
+    }
+
+    // Will send back a InventoryStatus message
+    public void ForceEngineValueSync() {
+      RobotEngineManager.Instance.Message.InventoryRequestGet =
+          Singleton<Anki.Cozmo.ExternalInterface.InventoryRequestGet>.Instance;
+      RobotEngineManager.Instance.SendMessage();
     }
 
     public void AddItemAmount(string itemId, int count = 1) {
@@ -50,6 +80,11 @@ namespace Cozmo {
       DAS.Event("meta.inventory.balance", itemId, DASUtil.FormatExtraData(_ItemIdToCount[itemId].ToString()));
       if (ItemAdded != null) {
         ItemAdded(itemId, count, _ItemIdToCount[itemId]);
+      }
+      if (itemId == RewardedActionManager.Instance.SparkID) {
+        RobotEngineManager.Instance.Message.InventoryRequestAdd =
+                  Singleton<Anki.Cozmo.ExternalInterface.InventoryRequestAdd>.Instance.Initialize(Anki.Cozmo.InventoryType.Sparks, count);
+        RobotEngineManager.Instance.SendMessage();
       }
     }
 
@@ -102,6 +137,13 @@ namespace Cozmo {
       DAS.Event("meta.inventory.change", itemId, DASUtil.FormatExtraData(delta.ToString()));
       DAS.Event("meta.inventory.balance", itemId, DASUtil.FormatExtraData(_ItemIdToCount[itemId].ToString()));
       DataPersistence.DataPersistenceManager.Instance.Save();
+
+      // Update the engine value to be confirmed.
+      if (itemId == RewardedActionManager.Instance.SparkID) {
+        RobotEngineManager.Instance.Message.InventoryRequestAdd =
+                  Singleton<Anki.Cozmo.ExternalInterface.InventoryRequestAdd>.Instance.Initialize(Anki.Cozmo.InventoryType.Sparks, -count);
+        RobotEngineManager.Instance.SendMessage();
+      }
     }
 
     public bool CanAddItemAmount(string itemId, int count = 1) {
@@ -159,6 +201,14 @@ namespace Cozmo {
         ItemCountSet(itemId, count - oldValue, count);
       }
       DataPersistence.DataPersistenceManager.Instance.Save();
+
+      // This will cause an eventual InventoryStatus message that could set back to a reliable value
+      // But keep the most up to date value...
+      if (itemId == RewardedActionManager.Instance.SparkID) {
+        RobotEngineManager.Instance.Message.InventoryRequestSet =
+                  Singleton<Anki.Cozmo.ExternalInterface.InventoryRequestSet>.Instance.Initialize(Anki.Cozmo.InventoryType.Sparks, count);
+        RobotEngineManager.Instance.SendMessage();
+      }
     }
 
     public int GetItemAmount(string itemId) {

@@ -468,6 +468,7 @@ public class StartupManager : MonoBehaviour {
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
+    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.InitInventory();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {

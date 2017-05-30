@@ -23,6 +23,7 @@
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
+#include "clad/types/inventoryTypes.clad"
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
@@ -571,6 +572,13 @@ message UnlockedDefaults {
   UnlockId defaultUnlocks[uint_8]
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Inventory
+///////////////////////////////////////////////////////////////////////////////
+
+message InventoryStatus {
+  InventoryList allInventory
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debug / Console

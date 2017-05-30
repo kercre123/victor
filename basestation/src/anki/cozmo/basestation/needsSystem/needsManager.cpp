@@ -16,6 +16,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
+#include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -871,8 +872,14 @@ void NeedsManager::SendStarLevelCompletedToGame()
         _robot.GetProgressionUnlockComponent().SetUnlock(id, true);
         break;
       }
+      case NeedsRewardType::Sparks:
+      {
+        int sparksAdded = std::stoi(rewards[i].data);
+        _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks,sparksAdded);
+        break;
+      }
       default:
-        // TODO: support songs and memories, sparks
+        // TODO: support songs and memories
         break;
     }
   }

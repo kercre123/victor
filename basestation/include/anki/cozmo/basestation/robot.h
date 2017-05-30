@@ -72,6 +72,7 @@ class CubeAccelComponent;
 class DrivingAnimationHandler;
 class FaceWorld;
 class IExternalInterface;
+class InventoryComponent;
 class MatPiece;
 class MoodManager;
 class MovementComponent;
@@ -242,6 +243,15 @@ public:
   inline ProgressionUnlockComponent& GetProgressionUnlockComponent() {
     assert(_progressionUnlockComponent);
     return *_progressionUnlockComponent;
+  }
+  //InventoryComponent
+  inline const InventoryComponent& GetInventoryComponent() const {
+    assert(_inventoryComponent);
+    return *_inventoryComponent;
+  }
+  inline InventoryComponent& GetInventoryComponent() {
+    assert(_inventoryComponent);
+    return *_inventoryComponent;
   }
 
   inline const NVStorageComponent& GetNVStorageComponent() const {
@@ -1044,7 +1054,10 @@ protected:
   MoodManager*         _moodManager;
 
   ///////// Needs ////////
-  NeedsManager*        _needsManager;
+  std::unique_ptr<NeedsManager> _needsManager;
+  
+  ///////// Inventory ////////
+  std::unique_ptr<InventoryComponent> _inventoryComponent;
   
   ///////// Progression/Skills ////////
   ProgressionUnlockComponent* _progressionUnlockComponent;

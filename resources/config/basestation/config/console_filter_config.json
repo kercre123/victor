@@ -48,7 +48,8 @@
       { "channel": "PublicStateBroadcast", "enabled": false },
       { "channel": "CubeAccelComponent",   "enabled": false },
       { "channel": "NeedsSystem",          "enabled": false },
-      { "channel": "VoiceCommands",        "enabled": false }
+      { "channel": "VoiceCommands",        "enabled": false },
+      { "channel": "InventoryComponent",   "enabled": false }
     ],
     "levels":
     [
@@ -97,7 +98,8 @@
       { "channel": "PublicStateBroadcast", "enabled": false },
       { "channel": "CubeAccelComponent",   "enabled": false },
       { "channel": "NeedsSystem",          "enabled": false },
-      { "channel": "VoiceCommands",        "enabled": false }
+      { "channel": "VoiceCommands",        "enabled": false },
+      { "channel": "InventoryComponent",   "enabled": false }
     ],
     "levels":
     [
@@ -146,7 +148,8 @@
       { "channel": "PublicStateBroadcast", "enabled": false },
       { "channel": "CubeAccelComponent",   "enabled": false },
       { "channel": "NeedsSystem",          "enabled": false },
-      { "channel": "VoiceCommands",        "enabled": false }
+      { "channel": "VoiceCommands",        "enabled": false },
+      { "channel": "InventoryComponent",   "enabled": false }
     ],
     "levels":
     [

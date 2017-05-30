@@ -20,6 +20,7 @@
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
+#include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/needsSystemTypes.clad"
@@ -926,6 +927,26 @@ message RequestSetUnlock {
   UnlockId unlockID,
   bool unlocked
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Inventory
+///////////////////////////////////////////////////////////////////////////////
+
+message InventoryRequestAdd {
+  InventoryType inventoryType,
+  int_32 delta
+}
+
+message InventoryRequestSet {
+  InventoryType inventoryType,
+  int_32 total
+}
+
+message InventoryRequestGet {
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Request engine to send data like device id, app run id, etc
 message RequestDeviceData {

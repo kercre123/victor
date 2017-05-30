@@ -1,0 +1,21 @@
+/** Clad message definitions for InventoryTypes */
+
+
+namespace Anki {
+namespace Cozmo {
+
+// Do not reorder and always add to the end so can directly read from robots
+enum uint_32 InventoryType
+{
+  Invalid                 = 0,
+  Sparks                  = 1
+}
+
+
+// List of amount of inventory items
+structure InventoryList {
+  int_32 inventoryItemAmount[64]
+}
+
+} // namespace Cozmo
+} // namespace Anki

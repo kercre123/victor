@@ -40,6 +40,7 @@
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
@@ -226,6 +227,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
   , _needsManager(new NeedsManager(*this))
+  , _inventoryComponent(new InventoryComponent(*this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
@@ -275,6 +277,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // Initialize progression
   _progressionUnlockComponent->Init();
+  
+  _inventoryComponent->Init();
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotActivitiesConfig());
   _behaviorMgr->InitReactionTriggerMap(_context->GetDataLoader()->GetReactionTriggerMap());
@@ -325,7 +329,6 @@ Robot::~Robot()
   _stateHistory.reset();
   
   Util::SafeDelete(_moodManager);
-  Util::SafeDelete(_needsManager);
   Util::SafeDelete(_progressionUnlockComponent);
   Util::SafeDelete(_tapFilterComponent);
   Util::SafeDelete(_blockFilter);
@@ -1428,6 +1431,8 @@ Result Robot::Update()
   _moodManager->Update(currentTime);
   
   _needsManager->Update(currentTime);
+  
+  _inventoryComponent->Update(currentTime);
       
   _progressionUnlockComponent->Update();
   
