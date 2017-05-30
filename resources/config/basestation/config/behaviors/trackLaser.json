@@ -5,7 +5,7 @@
   "displayNameKey":"behavior.TrackLaser",
   
   "startIfLaserSeenWithin_sec": 1.0,
-  "maxDistToGetAttention_mm": 80.0,
+  "maxDistToGetAttention_mm": 120.0,
   
   "darkenedExposure_ms": 1.0,
   "darkenedGain": 0.1,

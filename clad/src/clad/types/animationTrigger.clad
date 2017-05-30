@@ -179,6 +179,7 @@ enum int_32 AnimationTrigger
   KnockOverPreActionNamedFace,
   KnockOverPreActionUnnamedFace,
   KnockOverSuccess,
+  LaserAcknowledge,
   LaserDriveEnd,
   LaserDriveLoop,
   LaserDriveStart,

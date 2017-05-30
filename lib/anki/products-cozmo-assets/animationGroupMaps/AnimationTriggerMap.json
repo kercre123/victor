@@ -665,6 +665,10 @@
       "AnimName": "knockOverStack_success"
     },
     {
+      "CladEvent": "LaserAcknowledge",
+      "AnimName": "ag_laser_react_01"
+    },
+    {
       "CladEvent": "LaserDriveEnd",
       "AnimName": "ag_pounceDriveEnd"
     },

@@ -498,7 +498,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
   
   CompoundActionSequential* action = new CompoundActionSequential(robot, {
     new TurnTowardsPoseAction(robot, laserPointPose, M_PI_F),
-    new TriggerAnimationAction(robot, AnimationTrigger::AcknowledgeObject, 1, true,
+    new TriggerAnimationAction(robot, AnimationTrigger::LaserAcknowledge, 1, true,
                                Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK))
   });
   
