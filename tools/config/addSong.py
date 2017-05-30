@@ -22,25 +22,20 @@ if not os.path.isfile(unlockCladPath):
     print(unlockCladPath + " does not exist")
     exit()
 
-# makes the first character of the behavior json file name lowercase
-lowerFirstChar = lambda s: s[:1].lower() + s[1:] if s else ''
-behaviorConfigName = singingBehaviorConfigsPath + lowerFirstChar(options.song_name) + ".json"
-
-if os.path.isfile(behaviorConfigName):
-    print(behaviorConfigName + " already exists")
-    exit()
-
 behaviorName = "Singing_" + options.song_name
 behaviorNameWithQuotes = "\"Singing_" + options.song_name + "\""
 
+if os.path.isfile(behaviorName):
+    print(behaviorName + " already exists")
+    exit()
 
 # Create behavior config file and populate
 
-songBehaviorConfigFile = open(behaviorConfigName, "w")
+songBehaviorConfigFile = open(behaviorName, "w")
 
 songBehaviorConfigFile.write("{\n")
 songBehaviorConfigFile.write("  \"behaviorClass\":\"Singing\",\n")
-songBehaviorConfigFile.write("  \"name\":" + behaviorNameWithQuotes + ",\n")
+songBehaviorConfigFile.write("  \"behaviorID\":" + behaviorNameWithQuotes + ",\n")
 songBehaviorConfigFile.write("  \"displayNameKey\":\"behavior.singing." + options.song_name + "\",\n")
 songBehaviorConfigFile.write("  \"requiredUnlockId\":" + behaviorNameWithQuotes + ",\n")
 songBehaviorConfigFile.write("  \"audioSwitchGroup\":" + "\"Cozmo_Sings_" + options.song_bpm + "Bpm\",\n")

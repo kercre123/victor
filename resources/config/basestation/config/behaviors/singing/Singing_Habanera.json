@@ -1,0 +1,8 @@
+{
+  "behaviorClass":"Singing",
+  "behaviorID":"Singing_Habanera",
+  "displayNameKey":"behavior.singing.Habanera",
+  "requiredUnlockId":"Singing_Habanera",
+  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
+  "audioSwitch":"Cozmo_Sings_Habanera"
+}

@@ -192,6 +192,27 @@
   "behavior.singing.YankeeDoodle": {
     "translation": "Cozmo is singing Yankee Doodle"
   },
+  "behavior.singing.BeautifulDreamer": {
+    "translation": "Cozmo is singing Beautiful Dreamer"
+  },
+  "behavior.singing.MountainKing": {
+    "translation": "Cozmo is singing Mountain King"
+  },
+  "behavior.singing.TaRaRaBoom": {
+    "translation": "Cozmo is singing Ta Ra Ra Boom"
+  },
+  "behavior.singing.EntryOfTheGladiators": {
+    "translation": "Cozmo is singing Entry of the Gladiators"
+  },
+  "behavior.singing.HelloMyBaby": {
+    "translation": "Cozmo is singing Hello My Baby"
+  },
+  "behavior.singing.TurkeyInTheStraw": {
+    "translation": "Cozmo is singing Turkey in the Straw"
+  },
+  "behavior.singing.Habanera": {
+    "translation": "Cozmo is singing Habanera"
+  },
   "behavior.Dance": {
     "translation": "Cozmo is dancing"
   }

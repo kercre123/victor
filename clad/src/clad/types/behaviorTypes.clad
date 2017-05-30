@@ -197,6 +197,13 @@ enum uint_8 BehaviorID {
   Singing_TwinkleTwinkle,
   Singing_WilliamTell,
   Singing_YankeeDoodle,
+  Singing_BeautifulDreamer,
+  Singing_MountainKing,
+  Singing_TaRaRaBoom,
+  Singing_EntryOfTheGladiators,
+  Singing_HelloMyBaby,
+  Singing_TurkeyInTheStraw,
+  Singing_Habanera,
 
   SparksBringCubeToBeacon,
   SparksCheckForStackAtInterval,
