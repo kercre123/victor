@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: d4e755263f24e45adb2b4f29f582bf08
-timeCreated: 1495837241
+guid: fd88eb3833c094393a04966448f7b2f3
+timeCreated: 1495837524
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -39,7 +39,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spriteBorder: {x: 50, y: 50, z: 50, w: 50}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spritePixelsToUnits: 100
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -58,19 +58,11 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
-  - buildTarget: Standalone
-    maxTextureSize: 2048
-    textureFormat: -1
-    textureCompression: 0
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
   spriteSheet:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: common_frame_spritesUHDAtlas
+  spritePackingTag: common_icon_spritesSDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
