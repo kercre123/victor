@@ -431,6 +431,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
     // send this after we start the action, so if the activity tries to cancel us,
     // we will play the react first
     BehaviorObjectiveAchieved(BehaviorObjective::PouncedAndCaught);
+    NeedActionCompleted(NeedsActionId::Pounce);
   }
 }
   

@@ -144,13 +144,16 @@ IBehavior::Status BehaviorReactToRobotShaken::UpdateInternal(Robot& robot)
       if (_shakenDuration_s > kShakenDurationThresholdHard) {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionHard));
         _reactionPlayed = EReaction::Hard;
+        NeedActionCompleted(NeedsActionId::DizzyHard);
       } else if (_shakenDuration_s > kShakenDurationThresholdMedium) {
 
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionMedium));
         _reactionPlayed = EReaction::Medium;
+        NeedActionCompleted(NeedsActionId::DizzyMedium);
       } else {
         StartActing(new TriggerAnimationAction(robot, AnimationTrigger::DizzyReactionSoft));
         _reactionPlayed = EReaction::Soft;
+        NeedActionCompleted(NeedsActionId::DizzySoft);
       }
       
       _state = EState::Finished;

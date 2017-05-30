@@ -111,6 +111,9 @@ protected:
   // Derived classes can override this function if they want to add listeners
   // to the behavior they will trigger
   virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior){}
+  
+  // Behaviors can call this if there are any needs changes
+  void NeedActionCompleted(const NeedsActionId needActionId);
 
 private:
   Robot& _robot;

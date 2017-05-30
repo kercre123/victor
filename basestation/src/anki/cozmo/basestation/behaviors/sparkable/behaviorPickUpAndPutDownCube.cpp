@@ -89,7 +89,11 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(Robot& robot)
     action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
   }
 
-  StartActing(action, [this](){ BehaviorObjectiveAchieved(BehaviorObjective::PickedUpAndPutDownBlock); });
+  StartActing(action, [this]()
+                      {
+                        BehaviorObjectiveAchieved(BehaviorObjective::PickedUpAndPutDownBlock);
+                        NeedActionCompleted(NeedsActionId::PickupCube);
+                      });
 }
 
 

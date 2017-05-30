@@ -310,6 +310,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   auto animationTrigger = _knockOverFailureTrigger;
   if(_objectsFlipped.size() >= kMinBlocksForSuccess){
     BehaviorObjectiveAchieved(BehaviorObjective::KnockedOverBlocks);
+    NeedActionCompleted(NeedsActionId::KnockDownCubes);
     animationTrigger = _knockOverSuccessTrigger;
   }
   

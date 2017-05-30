@@ -271,6 +271,10 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
       break;
     }
     case State::CompleteSuccess:
+    {
+      NeedActionCompleted(NeedsActionId::FistBump);
+      // Fall through
+    }
     case State::CompleteFail:
     {
       // Should only be sending FistBumpSuccess or FistBumpLeftHanging if this not the sparks Fist bump

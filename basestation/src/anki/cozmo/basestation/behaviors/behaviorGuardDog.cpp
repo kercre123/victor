@@ -828,6 +828,15 @@ void BehaviorGuardDog::RecordResult(std::string&& result)
     _sleepingDuration_s = now - _firstSleepingStartTime_s;
   }
   
+  if( _result == "PlayerSuccess")
+  {
+    NeedActionCompleted(NeedsActionId::GuardDogWin);
+  }
+  else
+  {
+    NeedActionCompleted(NeedsActionId::GuardDogLose);
+  }
+  
   PRINT_CH_INFO("Behaviors",
                 "GuardDog.RecordResult",
                 "GuardDog result = %s, sleepingDuration = %.2f",

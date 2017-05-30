@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -56,6 +57,7 @@ Result ActivityGatherCubes::Update(Robot& robot){
       robot.GetExternalInterface()
       ->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(BehaviorObjective::GatheredCubes);
     }
+    robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::GatherCubes);
     
     _gatherCubesFinished = true;
   }

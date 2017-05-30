@@ -277,6 +277,11 @@ void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
   {
     _hiccupsCured = HiccupsCured::PlayerCured;
     _shouldGetHiccupsAtTime += _hiccupsWontOccurAfterBeingCuredTime_ms;
+    NeedActionCompleted(NeedsActionId::HiccupsEndGood);
+  }
+  else
+  {
+    NeedActionCompleted(NeedsActionId::HiccupsEndBad);
   }
 }
 

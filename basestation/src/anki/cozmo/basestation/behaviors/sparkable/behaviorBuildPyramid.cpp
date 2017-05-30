@@ -246,6 +246,7 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
 {
   SET_STATE(ReactingToPyramid);
   BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
+  NeedActionCompleted(NeedsActionId::PyramidCompleted);
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
 }
 

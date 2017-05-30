@@ -202,6 +202,7 @@ Result BehaviorSinging::InitInternal(Robot& robot)
     if(res == ActionResult::SUCCESS)
     {
       BehaviorObjectiveAchieved(BehaviorObjective::Singing);
+      NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
   

@@ -31,6 +31,7 @@
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorObjectives.h"
 #include "clad/types/behaviorTypes.h"
+#include "clad/types/needsSystemTypes.h"
 #include "clad/types/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
@@ -353,7 +354,9 @@ protected:
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify activity strategies if they listen for the message
   void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true);
-  
+
+  // Behaviors can call this if there are any needs changes
+  void NeedActionCompleted(const NeedsActionId needActionId);
   
   /////////////
   /// "Smart" helpers - Behaviors can call these functions to set properties that

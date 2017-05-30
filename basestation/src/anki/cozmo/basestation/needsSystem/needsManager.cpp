@@ -513,6 +513,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   if (_isPausedOverall)
     return;
 
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompleted", "Completed %s", NeedsActionIdToString(actionCompleted));
   const int actionIndex = static_cast<int>(actionCompleted);
   const auto& actionDelta = _actionsConfig._actionDeltas[actionIndex];
 
