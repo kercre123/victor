@@ -332,6 +332,9 @@ private:
   // Whether or not to play the fade out cube sleep animation
   bool _skipSleepAnim = false;
   
+  // The last cube light gamma that was sent to the robot (global across all cubes)
+  u32 _prevGamma = 0;
+  
 };
 
 }

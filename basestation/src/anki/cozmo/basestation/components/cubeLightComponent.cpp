@@ -1164,12 +1164,11 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotat
   
   // Only send gamma when it changes since it is global across all cubes
   // (Currently never changes)
-  static u32 prevGamma = 0;
   const u32 gamma = object->GetLEDGamma();
-  if(gamma != prevGamma)
+  if(gamma != _prevGamma)
   {
     _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
-    prevGamma = gamma;
+    _prevGamma = gamma;
   }
   
   _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)object->GetActiveID(),
