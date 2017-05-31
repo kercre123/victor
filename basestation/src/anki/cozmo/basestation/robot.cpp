@@ -633,6 +633,8 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                         "t=%dms, duration=%dms",
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
+
+      GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::Fall);
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;

@@ -1,0 +1,7 @@
+{
+  "behaviorClass": "PlanAnimWithFace",
+  "behaviorID": "Needs_SevereLowEnergyGetIn",
+  "displayNameKey":"behavior.Needs_SevereLowEnergyGetIn",
+  "animTriggers": ["NeedsSevereLowEnergyGetIn"],
+  "requiredRecentSwitchToParent_sec" : 0.25 // in case the anim is too short, to not do it again. Could also add repetition penalty
+}

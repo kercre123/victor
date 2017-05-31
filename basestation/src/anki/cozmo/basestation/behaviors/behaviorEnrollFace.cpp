@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
@@ -323,7 +324,7 @@ IBehavior::Status BehaviorEnrollFace::UpdateInternal(Robot& robot)
         _observedUnusableName.clear();
         
         robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
-        
+
         // Note that we will wait to disable face enrollment until the very end of
         // the behavior so that we remain resume-able from reactions, in case we
         // are interrupted after this point (e.g. while playing the sayname animations).

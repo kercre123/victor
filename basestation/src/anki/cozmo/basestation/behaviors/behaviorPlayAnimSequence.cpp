@@ -71,6 +71,14 @@ bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqAnimSequen
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPlayAnimSequence::InitInternal(Robot& robot)
 {
+  StartPlayingAnimations(robot);
+
+  return Result::RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPlayAnimSequence::StartPlayingAnimations(Robot& robot)
+{
   DEV_ASSERT(!_animTriggers.empty(), "BehaviorPlayAnimSequence.InitInternal.NoTriggers");
   
   // start first anim
@@ -86,8 +94,6 @@ Result BehaviorPlayAnimSequence::InitInternal(Robot& robot)
     _sequenceLoopsDone = 0;
     StartSequenceLoop(robot);
   }
-
-  return Result::RESULT_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

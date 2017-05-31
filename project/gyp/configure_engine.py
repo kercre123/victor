@@ -57,6 +57,10 @@ def main(scriptArgs):
                       help='Use das-client repo checked out at DAS_PATH')
   parser.add_argument('--crashReporting', metavar='CRASH_REPORTING_PATH', dest='crashPath', action='store', default=None,
                       help='Use CrashReportingAndroid repo checked out at CRASH_REPORTING_PATH')
+  parser.add_argument('--cozmo-engine-target', action='store',
+                      choices=('cozmoEngine', 'cozmoEngine2'),
+                      default='cozmoEngine',
+                      help='Name of build target for Cozmo Engine')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
@@ -271,7 +275,7 @@ def main(scriptArgs):
 
   configurePath = os.path.join(projectRoot, 'project/gyp')
   coretechInternalConfigurePath = os.path.join(options.coretechInternalPath, 'project/gyp')
-  gypFile = 'cozmoEngine.gyp'
+  gypFile = "{}.gyp".format(options.cozmo_engine_target)
   # gypify path names
   gtestPath = os.path.relpath(gtestPath, configurePath)
   ctiGtestPath = os.path.relpath(gtestPath, coretechInternalConfigurePath)

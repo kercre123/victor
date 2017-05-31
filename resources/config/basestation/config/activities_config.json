@@ -150,7 +150,11 @@
       { "activityID" : "BuildPyramid", "activityPriority"         : 5},
       { "activityID" : "PlayAlone", "activityPriority"            : 6},
       { "activityID" : "Hiking", "activityPriority"               : 7},
-      { "activityID" : "NothingToDo", "activityPriority"          : 8}
+      { "activityID" : "NothingToDo", "activityPriority"          : 8},
+
+      // Debug only for now
+      { "activityID": "NeedsSevereLowEnergy", "activityPriority"  :10},
+      { "activityID": "NeedsSevereLowRepair", "activityPriority"  :10}
     ]
   }
 ]

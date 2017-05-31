@@ -298,6 +298,12 @@ def parse_engine_arguments():
         default=None,
         metavar='path',
         help='Use this flag to specify a non default location for Coretech Eternal.')
+    parser.add_argument(
+        '--cozmo-engine-target',
+        choices=('cozmoEngine', 'cozmoEngine2'),
+        default='cozmoEngine',
+        help='Name of cozmoEngine target to build')
+        
 
     return parser.parse_args()
 
@@ -362,6 +368,11 @@ def generate_gyp(path, command, platform, options, dep_location):
     if options.mex:
         arguments += ['--mex']
 
+    # add extra args
+    opts = vars(options)
+    if 'cozmo_engine_target' in opts:
+        arguments.extend(['--cozmo-engine-target', opts['cozmo_engine_target']])
+
     cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(path)
     ankibuild.util.File.execute(arguments)
@@ -423,9 +434,14 @@ class EnginePlatformConfiguration(object):
         
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
-        generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
+
         if self.platform == 'mac' or self.platform == 'ios':
-            ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
+            for engine_target in ('cozmoEngine', 'cozmoEngine2'):
+                self.options.cozmo_engine_target = engine_target
+                generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
+                ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
+        else:
+            generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
 
     def build(self):
         if self.options.verbose:

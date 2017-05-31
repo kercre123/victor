@@ -83,7 +83,8 @@ void BehaviorPlayArbitraryAnim::SetAnimationTriggers(std::vector<AnimationTrigge
 Result BehaviorPlayArbitraryAnim::InitInternal(Robot& robot)
 {
   _animationAlreadySet = false;
-  return BaseClass::InitInternal(robot);
+  BaseClass::StartPlayingAnimations(robot);
+  return Result::RESULT_OK;
 }
   
   

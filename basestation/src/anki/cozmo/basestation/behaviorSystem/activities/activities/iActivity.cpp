@@ -59,6 +59,7 @@ IActivity::IActivity(Robot& robot, const Json::Value& config)
 : _driveStartAnimTrigger(AnimationTrigger::Count)
 , _driveLoopAnimTrigger(AnimationTrigger::Count)
 , _driveEndAnimTrigger(AnimationTrigger::Count)
+, _idleAnimTrigger(AnimationTrigger::Count)
 , _infoAnalysisProcess(AIInformationAnalysis::EProcess::Invalid)
 , _requiredSpark(UnlockId::Count)
 , _lastTimeActivityStartedSecs(-1.0f)
@@ -137,6 +138,12 @@ void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
   if ( JsonTools::GetValueOptional(config, "driveEndAnimTrigger", animTriggerStr) ) {
     _driveEndAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
   }
+
+  if ( JsonTools::GetValueOptional(config, "idleAnimTrigger", animTriggerStr) ) {
+    _idleAnimTrigger = animTriggerStr.empty()
+      ? AnimationTrigger::Count
+      : AnimationTriggerFromString(animTriggerStr.c_str());
+  }
   
   #if (DEV_ASSERT_ENABLED)
     {
@@ -197,6 +204,11 @@ void IActivity::OnSelected(Robot& robot)
                                                                _driveLoopAnimTrigger,
                                                                _driveEndAnimTrigger} );
   }
+
+  // Set idle animation if desired
+  if( _idleAnimTrigger != AnimationTrigger::Count ) {
+    robot.GetAnimationStreamer().PushIdleAnimation(_idleAnimTrigger);
+  }
   
   // request analyzer process
   if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
@@ -216,6 +228,12 @@ void IActivity::OnDeselected(Robot& robot)
   if(_behaviorChooserPtr.get() != nullptr){
     _behaviorChooserPtr->OnDeselected();
   }
+
+  // clear idle if it was set
+  if( _idleAnimTrigger != AnimationTrigger::Count ) {
+    // NOTE: assumes _idleAnimTrigger doesn't change while this was running
+    robot.GetAnimationStreamer().PopIdleAnimation();
+  }      
   
   // clear driving animations for this activity if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();

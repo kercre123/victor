@@ -413,7 +413,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     if (resCat == ActionResultCategory::SUCCESS)
     {
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
-      
+      NeedActionCompleted(NeedsActionId::StackCube);
       // emotions and behavior objective check
       FireEmotionEvents(robot);
     }

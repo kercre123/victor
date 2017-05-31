@@ -380,6 +380,7 @@ namespace Anki {
         printf("             Pronounce sayString:  \" <double-quote>\n");
         printf("       Pronounce sayString (raw):  \' <single-quote>\n");
         printf("                 Set console var:  ]\n");
+        printf("     Call console func with args:  }\n");
         printf("        Quit keyboard controller:  Alt+Shift+x\n");
         printf("                      Print help:  ? or /\n");
         printf("\n");
@@ -2134,7 +2135,41 @@ namespace Anki {
                 PrintHelp();
                 break;
               }
+
+              case (s32)'}':
+              {
+                // call console function
+                webots::Field* funcNameField = root_->getField("consoleVarName");
+                if( nullptr == funcNameField ) {
+                  printf("ERROR: no consoleVarName field\n");
+                  break;
+                }
+
+                webots::Field* funcArgsField = root_->getField("consoleVarValue");
+                if( nullptr == funcArgsField ) {
+                  printf("ERROR: no consoleVarValue field\n");
+                  break;
+                }
+
+                ExternalInterface::RunDebugConsoleFuncMessage msg;
+                msg.funcName = funcNameField->getSFString();
+                if( msg.funcName.empty() ) {
+                  printf("WARNING: no function name defined in 'consoleVarName'\n");
+                  break;
+                }
+                  
+                msg.funcArgs = funcArgsField->getSFString();
+                // args field is allowed to be empty
+
+                printf("Trying to call console func: %s(%s)\n",
+                       msg.funcName.c_str(),
+                       msg.funcArgs.c_str());
                 
+                SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
+
+                break;
+              }
+              
               case (s32)']':
               {
                 // Set console variable
@@ -2158,7 +2193,7 @@ namespace Anki {
                     }
                   }
                 }
-                break;
+                break;                
               }
                 
               // FIXME: Remove after animation iteration - JMR

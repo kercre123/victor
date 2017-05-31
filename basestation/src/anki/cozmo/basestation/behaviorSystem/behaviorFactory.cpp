@@ -39,6 +39,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorOnConfigSeen.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequenceWithFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
@@ -168,6 +169,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::PlayAnim:
     {
       newBehavior = new BehaviorPlayAnimSequence(robot, config);
+      break;
+    }
+    case BehaviorClass::PlanAnimWithFace:
+    {
+      newBehavior = new BehaviorPlayAnimSequenceWithFace(robot, config);
       break;
     }
     case BehaviorClass::PlayArbitraryAnim:

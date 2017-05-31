@@ -152,6 +152,9 @@ private:
   AnimationTrigger _driveStartAnimTrigger;
   AnimationTrigger _driveLoopAnimTrigger;
   AnimationTrigger _driveEndAnimTrigger;
+
+  // optional idle animation to be used during this activity
+  AnimationTrigger _idleAnimTrigger;
   
   // optional AIInformationAnalyzer process
   AIInformationAnalysis::EProcess _infoAnalysisProcess;

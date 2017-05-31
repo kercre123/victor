@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 import os
 import errno
@@ -250,7 +250,9 @@ def sign_webot_executables(build_type, password):
   executables = [
     'webotsCtrlBuildServerTest',
     'webotsCtrlGameEngine',
-    'webotsCtrlRobot'
+    'webotsCtrlRobot',
+    'webotsCtrlGameEngine2',
+    'webotsCtrlRobot2'
   ]
 
   codesign_command = [
@@ -263,9 +265,10 @@ def sign_webot_executables(build_type, password):
   # Add the executables to the firewall list and explicitly allow incoming connections
   for exe in executables:
     exe_path = os.path.join(executables_folder, exe)
-    firewall_cli(["--add"], password, executable_path=exe_path)
-    firewall_cli(["--unblock"], password, executable_path=exe_path)
-    sudo_this(codesign_command + [exe_path], password)
+    if os.path.isfile(exe_path):
+      firewall_cli(["--add"], password, executable_path=exe_path)
+      firewall_cli(["--unblock"], password, executable_path=exe_path)
+      sudo_this(codesign_command + [exe_path], password)
 
   # There is a strange issue where select tests will fail for no reason if
   # firewall is not reset like below (CST_RobotKidnapping and
@@ -284,12 +287,18 @@ def sign_webot_executables(build_type, password):
 
 
 # build unittest executable
-def build(build_type):
+def build(build_type, cozmo_version_num):
   derived_data_path = get_subpath("generated/mac/DerivedData")
+
+  workspace_prefix = 'Cozmo'
+  if cozmo_version_num == 2:
+    workspace_prefix = 'Cozmov2'
+
+  workspace_filename = "{}Workspace_MAC.xcworkspace".format(workspace_prefix)
 
   build_command = [
     'xcodebuild',
-    '-workspace', get_subpath("generated/mac", "CozmoWorkspace_MAC.xcworkspace"),
+    '-workspace', get_subpath("generated/mac", workspace_filename),
     '-scheme', 'BUILD_WORKSPACE',
     '-sdk', 'macosx',
     '-configuration', build_type.name,
@@ -826,7 +835,7 @@ def main(args):
   UtilLog.debug(options)
 
   # build the project first
-  if not build(options.build_type):
+  if not build(options.build_type, options.cozmo_version):
     UtilLog.error("build failed")
     return 1
 

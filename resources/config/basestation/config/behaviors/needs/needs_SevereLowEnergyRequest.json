@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "PlanAnimWithFace",
+  "behaviorID": "Needs_SevereLowEnergyRequest",
+  "displayNameKey":"behavior.Needs_SevereLowEnergyRequest",
+  "animTriggers": ["NeedsSevereLowEnergyRequest"]
+}

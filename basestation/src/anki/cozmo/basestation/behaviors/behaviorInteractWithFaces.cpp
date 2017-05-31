@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
@@ -159,6 +160,7 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       StopActing();
+      robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
     }
   }
   

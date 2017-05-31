@@ -27,7 +27,7 @@ public class MoveTweenSettingsDrawer : PropertyDrawer {
     // Draw label
     float lineHeight = EditorGUIUtility.singleLineHeight;
     Rect controlRect = new Rect(position.x, position.y, position.width, lineHeight);
-    property.isExpanded = EditorGUI.Foldout(controlRect, property.isExpanded, "Move Tween Settings");
+    property.isExpanded = EditorGUI.Foldout(controlRect, property.isExpanded, "Move Tween Settings:" + property.name);
     controlRect.y += GetLineHeightWithSpacing();
     if (!property.isExpanded) {
       return;
@@ -208,7 +208,7 @@ public class FadeTweenSettingsDrawer : PropertyDrawer {
     // Draw label
     float lineHeight = EditorGUIUtility.singleLineHeight;
     Rect controlRect = new Rect(position.x, position.y, position.width, lineHeight);
-    property.isExpanded = EditorGUI.Foldout(controlRect, property.isExpanded, "Fade Tween Settings");
+    property.isExpanded = EditorGUI.Foldout(controlRect, property.isExpanded, "Fade Tween Settings:" + property.name);
     controlRect.y += GetLineHeightWithSpacing();
     if (!property.isExpanded) {
       return;

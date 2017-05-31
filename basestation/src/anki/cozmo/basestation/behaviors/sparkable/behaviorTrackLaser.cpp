@@ -589,6 +589,7 @@ void BehaviorTrackLaser::TransitionToPounce(Robot& robot)
   
   StartActing(pounceAction, [this,&robot]() {
     BehaviorObjectiveAchieved(BehaviorObjective::LaserPounced);
+    NeedActionCompleted(NeedsActionId::Pounce);
     TransitionToBringingHeadDown(robot);
   });
 }

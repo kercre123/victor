@@ -36,7 +36,7 @@ PotentialObjectives::PotentialObjectives(const Json::Value& config)
   if( JsonTools::GetValueOptional(config, "ignoreIfLocked", unlockStr) ) {
     requiredUnlock = UnlockIdFromString(unlockStr);
   }
-  
+
   probabilityToRequire = config.get("probabilityToRequireObjective", 1.0f).asFloat();
   randCompletionsMin = config.get("randomCompletionsNeededMin", 1).asUInt();
   randCompletionsMax = config.get("randomCompletionsNeededMax", 1).asUInt();

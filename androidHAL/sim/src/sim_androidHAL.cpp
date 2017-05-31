@@ -35,8 +35,7 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Instantiate supervisor
-    webots::Supervisor engineSupervisor;
+    webots::Supervisor* _engineSupervisor = nullptr;
     
     namespace { // "Private members"
 
@@ -86,27 +85,36 @@ namespace Anki {
       }
     };
     
+    void AndroidHAL::SetSupervisor(webots::Supervisor *sup)
+    {
+      _engineSupervisor = sup;
+    }
+    
     AndroidHAL::AndroidHAL()
     {
-      assert(TIME_STEP >= engineSupervisor.getBasicTimeStep());
+      // Did you remember to call SetSupervisor()?
+      DEV_ASSERT(_engineSupervisor != nullptr, "sim_androidHAL.NullWebotsSupervisor");
+      
+      // Is the step time defined in the world file >= than the robot time? It should be!
+      DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "sim_androidHAL.UnexpectedTimeStep");
 
-      headCam_ = engineSupervisor.getCamera("HeadCamera");
+      headCam_ = _engineSupervisor->getCamera("HeadCamera");
 
-      if(VISION_TIME_STEP % static_cast<u32>(engineSupervisor.getBasicTimeStep()) != 0) {
+      if(VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
         PRINT_NAMED_WARNING("sim_androidHAL.InvalidVisionTimeStep",
                             "VISION_TIME_STEP (%d) must be a multiple of the world's basic timestep (%.0f).",
-                            VISION_TIME_STEP, engineSupervisor.getBasicTimeStep());
+                            VISION_TIME_STEP, _engineSupervisor->getBasicTimeStep());
         return;
       }
       headCam_->enable(VISION_TIME_STEP);
       FillCameraInfo(headCam_, headCamInfo_);
 
       // Gyro
-      gyro_ = engineSupervisor.getGyro("gyro");
+      gyro_ = _engineSupervisor->getGyro("gyro");
       gyro_->enable(TIME_STEP);
 
       // Accelerometer
-      accel_ = engineSupervisor.getAccelerometer("accel");
+      accel_ = _engineSupervisor->getAccelerometer("accel");
       accel_->enable(TIME_STEP);
 
     }
@@ -114,7 +122,7 @@ namespace Anki {
 
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
-      return static_cast<TimeStamp_t>(engineSupervisor.getTime() * 1000.0);
+      return static_cast<TimeStamp_t>(_engineSupervisor->getTime() * 1000.0);
     }
 
     // TODO: If we want higher resolution IMU data than this we need to change this
@@ -142,7 +150,7 @@ namespace Anki {
     Result AndroidHAL::Update()
     {
 
-      if(engineSupervisor.step(Cozmo::TIME_STEP) == -1) {
+      if(_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
         return RESULT_FAIL;
       } else {
         //AudioUpdate();
