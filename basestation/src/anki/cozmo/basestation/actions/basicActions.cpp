@@ -29,6 +29,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "util/console/consoleInterface.h"
@@ -1796,7 +1797,7 @@ namespace Anki {
 
     ActionResult TurnTowardsFaceAction::Init()
     {
-      // If we have a last observed face set, use its pose. Otherwise pose wil not be set
+      // If we have a last observed face set, use its pose. Otherwise pose will not be set
       // so fail if we require a face, skip ahead if we don't
       Pose3d pose;
       bool gotPose = false;
@@ -1907,6 +1908,7 @@ namespace Anki {
                         "id %s returned null",
                         _obsFaceID.GetDebugStr().c_str()) ) {
           // Valid face...        
+          _robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
           Pose3d pose;
           if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
             _robot.GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
@@ -2034,6 +2036,9 @@ namespace Anki {
           } else {
             // Wait for say name action to finish
             result = _action->Update();
+            if( ActionResult::SUCCESS == result ) {
+              _robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::SayName);
+            }
           }
             
           break;
