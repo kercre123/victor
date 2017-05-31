@@ -191,6 +191,8 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
               {
                 if(result == ActionResult::SUCCESS)
                 {
+                  // The first try, don't need to force a backup: computing a look up may be sufficient
+                  _forceBackupWhenCheckingForStack = false;
                   LookForStackedCubes(robot);
                 }
                 else
@@ -233,21 +235,38 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
     // current FOV.
     SetGhostBlockPoseRelObject(robot, obj, offsetAboveTarget);
     
-    // First see if we need to back up first, by checking if we can even reach a head
-    // angle that would put the center of the closest marker (in XY) in our FOV. Note that
-    // we don't just use the ghost object's pose b/c at close range, seeing the closest
-    // marker could require a significantly larger angle than the center of the cube.
-    Radians headAngle(0.f);
-    Pose3d checkPose;
-    Result result = _ghostStackedObject->GetClosestMarkerPose(robot.GetPose(), true, checkPose);
+    bool backupFirst = false;
     
-    if(RESULT_OK != result)
+    if(_forceBackupWhenCheckingForStack)
     {
-      PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.LookForStackedCubes.ClosestMarkerPoseFailed", "");
-      checkPose = _ghostStackedObject->GetPose();
+      backupFirst = true;
     }
-    result = robot.ComputeHeadAngleToSeePose(checkPose, headAngle, .1f);
-    const bool backupFirst = (RESULT_OK != result || FLT_GT(headAngle.ToFloat(), MAX_HEAD_ANGLE));
+    else
+    {
+      // First see if we need to back up first, by checking if we can even reach a head
+      // angle that would put the center of the closest marker (in XY) in our FOV. Note that
+      // we don't just use the ghost object's pose b/c at close range, seeing the closest
+      // marker could require a significantly larger angle than the center of the cube.
+      Radians headAngle(0.f);
+      Pose3d checkPose;
+      Result result = _ghostStackedObject->GetClosestMarkerPose(robot.GetPose(), true, checkPose);
+      
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.LookForStackedCubes.ClosestMarkerPoseFailed", "");
+        checkPose = _ghostStackedObject->GetPose();
+      }
+      
+      result = robot.ComputeHeadAngleToSeePose(checkPose, headAngle, .1f);
+      
+      const f32 kMaxHeadAngleBeforeBackingUp_rad = MAX_HEAD_ANGLE - DEG_TO_RAD(10);
+      backupFirst = (RESULT_OK != result || FLT_GT(headAngle.ToFloat(), kMaxHeadAngleBeforeBackingUp_rad));
+      
+      // In case this fails and we come back here (e.g. because we may be able to compute a head angle for the
+      // marker's pose but then actually looking there still doesn't actually make the ghost block visible because
+      // we are too close), then make sure we back up the next time so we don't get stuck in a loop here.
+      _forceBackupWhenCheckingForStack = true;
+    }
     
     // Try looking up at the cube and then trying this whole thing again
     PRINT_CH_DEBUG(kLogChannelName,

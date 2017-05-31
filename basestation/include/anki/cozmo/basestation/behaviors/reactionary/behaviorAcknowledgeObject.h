@@ -93,6 +93,7 @@ private:
   bool _shouldStart = false;
   
   bool _shouldCheckBelowTarget;
+  bool _forceBackupWhenCheckingForStack = false;
   
   mutable std::set<s32> _targets;
   
