@@ -34,8 +34,6 @@ namespace Cozmo {
 namespace{
 CONSOLE_VAR(f32, kBPW_ScoreIncreaseForAction, "Behavior.PopAWheelie", 0.8f);
 CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
-
-CONSOLE_VAR(bool, kCanHiccupWhilePopWheelie, "Hiccups", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieArray = {
@@ -66,38 +64,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieAr
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPopAWheelieArray),
-              "Reaction triggers duplicate or non-sequential");
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr ReactionTriggerHelpers::FullReactionArray kAffectRobotOnBackArray = {
-  {ReactionTrigger::CliffDetected,                false},
-  {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
-  {ReactionTrigger::FacePositionUpdated,          false},
-  {ReactionTrigger::FistBump,                     false},
-  {ReactionTrigger::Frustration,                  false},
-  {ReactionTrigger::Hiccup,                       false},
-  {ReactionTrigger::MotorCalibration,             false},
-  {ReactionTrigger::NoPreDockPoses,               false},
-  {ReactionTrigger::ObjectPositionUpdated,        false},
-  {ReactionTrigger::PlacedOnCharger,              false},
-  {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::PyramidInitialDetection,      false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
-  {ReactionTrigger::RobotOnBack,                  true},
-  {ReactionTrigger::RobotOnFace,                  false},
-  {ReactionTrigger::RobotOnSide,                  false},
-  {ReactionTrigger::RobotShaken,                  false},
-  {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
-  {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
-};
-
-static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectRobotOnBackArray),
               "Reaction triggers duplicate or non-sequential");
 
 } // end namespace
@@ -216,11 +182,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   // that we play the correct animation instead of getting interrupted)  
   auto disableCliff = [this](Robot& robot) {
     // disable reactions we don't want
-    if(!kCanHiccupWhilePopWheelie)
-    {
-      SMART_DISABLE_REACTION_DEV_ONLY(GetIDStr(), ReactionTrigger::Hiccup);
-    }
-
     SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPopAWheelieArray);
     
     // tell the robot not to stop the current action / animation if the cliff sensor fires
