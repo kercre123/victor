@@ -5,6 +5,12 @@
   {
     "type" : "Scoring",
     "behaviors" : [
+      { "behaviorID" : "Singing_BeautifulDreamer",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_Beethovens5th",
         "scoring" :
         {
@@ -17,7 +23,25 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "Singing_EntryOfTheGladiators",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_FrereJacques",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_Habanera",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_HelloMyBaby",
         "scoring" :
         {
           "flatScore": 10
@@ -30,6 +54,12 @@
         }
       },
       { "behaviorID" : "Singing_MaryHadALittleLamb",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_MountainKing",
         "scoring" :
         {
           "flatScore": 10
@@ -60,6 +90,18 @@
         }
       },
       { "behaviorID" : "Singing_TakeMeOutToTheBallgame",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_TaRaRaBoom",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_TurkeyInTheStraw",
         "scoring" :
         {
           "flatScore": 10
