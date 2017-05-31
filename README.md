@@ -169,6 +169,22 @@ ios-deploy does not seem to be 100% reliable, nor does it have great error messa
 
 6. ios-deploy is a popular enough program that google can usually lead you to an answer.
 
-### standalone cozmo engine android apk
+
+### CozmoEngine v2
+
+To build the next gen version of CozmoEngine (ComzoEnginev2), pass the following option to configure.py:
+
+```
+# generate or build v2 targets
+$ ./configure.py --engine-v2
+
+# or, use the short option
+$ ./configure.py -2
+
+# for example to generate the mac workspace with v2 targets:
+$ ./configure.py -p mac -2
+```
+
+#### standalone cozmo engine android apk
 
 Refer to [standalone-apk/README.md](standalone-apk/README.md) for instructions on building and running the standalone cozmo engine android apk, the beginnings of Cozmo 2.0 engine

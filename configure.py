@@ -220,7 +220,10 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                        choices=['factoryTest', 'factoryTestDev', 'sdkOnly', 'standalone'], nargs='+',
+                        choices=['factoryTest',
+                                 'factoryTestDev',
+                                 'sdkOnly',
+                                 'standalone'], nargs='+',
                         help="Generates feature flags for project")
 
     parser.add_argument(
@@ -229,6 +232,12 @@ def parse_game_arguments():
         choices=('mono2x', 'il2cpp', 'auto'),
         default="auto",
         help='Set the Unity scripting back end')
+
+    parser.add_argument(
+        '--engine-v2', '-2',
+        action='store_true',
+        default=False,
+        help='Generate/Build for cozmoEngine2 targets')
  
     parser.add_argument(
         '--provision-profile',
@@ -367,7 +376,10 @@ class GamePlatformConfiguration(object):
         self.gyp_dir = os.path.join(GAME_ROOT, 'project', 'gyp')
 
         if platform != 'android':
-            self.workspace_name = '{0}Workspace_{1}'.format(PRODUCT_NAME, self.platform.upper())
+            version_tag = 'v2' if options.engine_v2 else ''
+            self.workspace_name = '{0}{1}Workspace_{2}'.format(PRODUCT_NAME,
+                                                               version_tag,
+                                                               self.platform.upper())
             if platform == 'ios' and options.selected_script_engine == 'mono2x':
                 self.workspace_name += '_Mono2x'
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
@@ -375,7 +387,9 @@ class GamePlatformConfiguration(object):
             self.scheme = 'BUILD_WORKSPACE'
             self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
             self.config_path = os.path.join(self.platform_output_dir, '{0}.xcconfig'.format(self.platform))
-            self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
+            cozmo_game_target = 'cozmoGame2' if options.engine_v2 else 'cozmoGame'
+            self.gyp_project_path = os.path.join(self.platform_output_dir,
+                                                 '{}.xcodeproj'.format(cozmo_game_target))
 
         if platform == 'android':
             ankibuild.android.setup_android_ndk_and_sdk(options.override_ndk_dir,
@@ -665,15 +679,15 @@ class GamePlatformConfiguration(object):
             self.call_engine(buildaction)
             if buildaction == 'build':
                 # move files.
+                lib_dir = os.path.join(self.engine_generated, "out", self.options.configuration, "lib")
                 # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-                ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                    "libcozmoEngine.so"),
-                                       os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
-                ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                    "libcozmoEngine2.so"),
-                                       os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
-                ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
-                                                    "libDAS.so"),
+                if self.options.engine_v2:
+                    ankibuild.util.File.cp(os.path.join(lib_dir, "libcozmoEngine2.so"),
+                                           os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+                else:
+                    ankibuild.util.File.cp(os.path.join(lib_dir, "libcozmoEngine.so"),
+                                           os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
+                ankibuild.util.File.cp(os.path.join(lib_dir, "libDAS.so"),
                                        os.path.join(self.android_prestrip_lib_dir, self.processors[0]));
                 # build android-specific java files
                 self.build_java()
@@ -728,6 +742,9 @@ class GamePlatformConfiguration(object):
         args += ['--platform', self.platform]
         args += ['--config', self.options.configuration]
         args += ['--script-engine', self.options.selected_script_engine]
+
+        engine_target = 'cozmoEngine2' if self.options.engine_v2 else 'cozmoEngine'
+        args += ['--cozmo-engine-target', engine_target]
         if self.options.verbose:
             args += ['--verbose']
         if self.options.do_not_check_dependencies:

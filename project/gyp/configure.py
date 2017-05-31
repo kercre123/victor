@@ -215,7 +215,6 @@ def main(scriptArgs):
   if not os.path.exists(options.cozmoEnginePath):
     UtilLog.error('cozmo-engine not found [%s]' % (options.cozmoEnginePath) )
     return False
-  cozmoEngineProjectPath = os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngine.gyp')
 
   if not options.coretechInternalPath:
     options.coretechInternalPath = os.path.join(options.projectRoot, 'coretech')
@@ -356,7 +355,10 @@ def main(scriptArgs):
   configurePath = os.path.join(projectRoot, 'project/gyp')
   cozmoEngineConfigurePath = os.path.join(options.cozmoEnginePath, 'project/gyp')
   coretechInternalConfigurePath = os.path.join(options.coretechInternalPath, 'project/gyp')
-  gypFile = 'cozmoGame.gyp'
+  gyp_projects = [
+          { 'game': 'cozmoGame.gyp', 'engine': 'cozmoEngine.gyp' },
+          { 'game': 'cozmoGame2.gyp', 'engine': 'cozmoEngine2.gyp' }
+  ]
   # gypify path names
   cgGtestPath = os.path.relpath(gtestPath, configurePath)
   ceGtestPath = os.path.relpath(gtestPath, cozmoEngineConfigurePath)
@@ -454,11 +456,15 @@ def main(scriptArgs):
         'cozmo_engine_path': options.cozmoEnginePath,
         'build-mex': buildMex,
       })
-      os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
-      gypArgs = getGypArgs('xcode', '../../generated/mac', gypFile)
-      gyp.main(gypArgs)
-
-
+      for gyp_project in gyp_projects:
+        engine_gyp_path = os.path.join(options.cozmoEnginePath, 'project/gyp/{engine}'.format(**gyp_project))
+        cgCozmoEngineProjectPath = os.path.relpath(engine_gyp_path, configurePath)
+        defines.update({
+          'cg-ce_gyp_path': cgCozmoEngineProjectPath
+        })
+        os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+        gypArgs = getGypArgs('xcode', '../../generated/mac', gyp_project['game'])
+        gyp.main(gypArgs)
 
 
   # ios
@@ -471,9 +477,15 @@ def main(scriptArgs):
       'cozmo_asset_path': 'blah',
       'cozmo_config_path': 'blah',
     })
-    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
-    gypArgs = getGypArgs('xcode', '../../generated/ios', gypFile)
-    gyp.main(gypArgs)
+    for gyp_project in gyp_projects:
+      engine_gyp_path = os.path.join(options.cozmoEnginePath, 'project/gyp/{engine}'.format(**gyp_project))
+      cgCozmoEngineProjectPath = os.path.relpath(engine_gyp_path, configurePath)
+      defines.update({
+        'cg-ce_gyp_path': cgCozmoEngineProjectPath
+      })
+      os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+      gypArgs = getGypArgs('xcode', '../../generated/ios', gyp_project['game'])
+      gyp.main(gypArgs)
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary
@@ -509,8 +521,6 @@ def main(scriptArgs):
     })
 
     ##################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
-
     toolchain = defines['android_toolchain']
 
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang')
@@ -519,8 +529,15 @@ def main(scriptArgs):
     os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++')
     os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm' % toolchain)
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/%s/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf' % toolchain)
-    gypArgs = getGypArgs('ninja-android', 'generated/android', gypFile)
-    gyp.main(gypArgs)
+    for gyp_project in gyp_projects:
+      engine_gyp_path = os.path.join(options.cozmoEnginePath, 'project/gyp/{engine}'.format(**gyp_project))
+      cgCozmoEngineProjectPath = os.path.relpath(engine_gyp_path, configurePath)
+      defines.update({
+        'cg-ce_gyp_path': cgCozmoEngineProjectPath
+      })
+      os.environ['GYP_DEFINES'] = util.Gyp.getDefineString(defines)
+      gypArgs = getGypArgs('ninja-android', 'generated/android', gyp_project['game'])
+      gyp.main(gypArgs)
 
   # Configure Anki Audio project
   audio_config_script = os.path.join(audioProjectPath, 'configure.py')

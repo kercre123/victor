@@ -18,6 +18,11 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/cameraParams.h"
 
+// Forward declaration
+namespace webots {
+  class Supervisor;
+}
+
 
 namespace Anki
 {
@@ -46,6 +51,10 @@ namespace Anki
       // NOTE: Only NVStorageComponent::LoadSimData() should call this function.
       //       Everyone else should be getting CameraCalibration data from NVStorageComponent!
       const CameraCalibration* GetHeadCamInfo();
+      
+      // Assign Webots supervisor
+      // Must do this before creating AndroidHAL for the first time
+      static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
 // #pragma mark --- IMU ---

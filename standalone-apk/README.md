@@ -12,7 +12,7 @@ Steps:
     ```
 3.  Build, install, and run on the Android device:  
     ```
-    ./configure.py -p android run -l --features standalone
+    ./configure.py -p android -2 run -l --features standalone
     ```
 4.  Once the app is running on device, deploy the robot process:
     ```

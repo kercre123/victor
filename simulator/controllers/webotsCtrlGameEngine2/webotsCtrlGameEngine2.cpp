@@ -16,6 +16,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "util/console/consoleInterface.h"
+#include "anki/cozmo/basestation/androidHAL/androidHAL.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -42,7 +43,6 @@
 
 namespace Anki {
   namespace Cozmo {
-    extern webots::Supervisor engineSupervisor;
     CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
   }
 }
@@ -125,6 +125,10 @@ int main(int argc, char **argv)
   {
     PRINT_CH_INFO("LOG", "webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
   }
+
+  // Instantiate supervisor and pass to AndroidHAL
+  webots::Supervisor engineSupervisor;
+  AndroidHAL::SetSupervisor(&engineSupervisor);
   
   // Start with a step so that we can attach to the process here for debugging
   engineSupervisor.step(BS_TIME_STEP);
