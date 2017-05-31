@@ -124,6 +124,11 @@ void BodyLightComponent::Update()
     
     _curBackpackLightConfig = bestNewConfig;
   }
+  // Else if both new and cur configs are null then turn lights off
+  else if(newConfig == nullptr && curConfig == nullptr)
+  {
+    SetBackpackLightsInternal(GetOffBackpackLights());
+  }
 }
 
 void BodyLightComponent::SetBackpackLights(const BackpackLights& lights)
