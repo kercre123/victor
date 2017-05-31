@@ -34,6 +34,7 @@ goog.require('Blockly.constants');
 goog.require('Blockly.DropDownDiv');
 goog.require('Blockly.Events');
 //goog.require('Blockly.HorizontalFlyout');
+goog.require('Blockly.Gesture');
 goog.require('Blockly.Options');
 goog.require('Blockly.ScrollbarPair');
 goog.require('Blockly.Touch');
@@ -56,7 +57,7 @@ goog.require('goog.userAgent');
  * @param {!Blockly.Options} options Dictionary of options.
  * @param {Blockly.BlockDragSurfaceSvg=} opt_blockDragSurface Drag surface for
  *     blocks.
- * @param {Blockly.workspaceDragSurfaceSvg=} opt_wsDragSurface Drag surface for
+ * @param {Blockly.WorkspaceDragSurfaceSvg=} opt_wsDragSurface Drag surface for
  *     the workspace.
  * @extends {Blockly.Workspace}
  * @constructor
@@ -69,6 +70,7 @@ Blockly.WorkspaceSvg = function(options, opt_blockDragSurface, opt_wsDragSurface
       options.setMetrics || Blockly.WorkspaceSvg.setTopLevelWorkspaceMetrics_;
 
   Blockly.ConnectionDB.init(this);
+
   if (opt_blockDragSurface) {
     this.blockDragSurface_ = opt_blockDragSurface;
   }
@@ -93,6 +95,11 @@ Blockly.WorkspaceSvg = function(options, opt_blockDragSurface, opt_wsDragSurface
    * @private
    */
   this.highlightedBlocks_ = [];
+
+  this.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME,
+      Blockly.Variables.flyoutCategory);
+  this.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME,
+      Blockly.Procedures.flyoutCategory);
 };
 goog.inherits(Blockly.WorkspaceSvg, Blockly.Workspace);
 
@@ -125,15 +132,6 @@ Blockly.WorkspaceSvg.prototype.isFlyout = false;
 Blockly.WorkspaceSvg.prototype.isMutator = false;
 
 /**
- * Is this workspace currently being dragged around?
- * DRAG_NONE - No drag operation.
- * DRAG_BEGIN - Still inside the initial DRAG_RADIUS.
- * DRAG_FREE - Workspace has been dragged further than DRAG_RADIUS.
- * @private
- */
-Blockly.WorkspaceSvg.prototype.dragMode_ = Blockly.DRAG_NONE;
-
-/**
  * Whether this workspace has resizes enabled.
  * Disable during batch operations for a performance improvement.
  * @type {boolean}
@@ -142,25 +140,25 @@ Blockly.WorkspaceSvg.prototype.dragMode_ = Blockly.DRAG_NONE;
 Blockly.WorkspaceSvg.prototype.resizesEnabled_ = true;
 
 /**
- * Current horizontal scrolling offset.
+ * Current horizontal scrolling offset in pixel units.
  * @type {number}
  */
 Blockly.WorkspaceSvg.prototype.scrollX = 0;
 
 /**
- * Current vertical scrolling offset.
+ * Current vertical scrolling offset in pixel units.
  * @type {number}
  */
 Blockly.WorkspaceSvg.prototype.scrollY = 0;
 
 /**
- * Horizontal scroll value when scrolling started.
+ * Horizontal scroll value when scrolling started in pixel units.
  * @type {number}
  */
 Blockly.WorkspaceSvg.prototype.startScrollX = 0;
 
 /**
- * Vertical scroll value when scrolling started.
+ * Vertical scroll value when scrolling started in pixel units.
  * @type {number}
  */
 Blockly.WorkspaceSvg.prototype.startScrollY = 0;
@@ -189,6 +187,13 @@ Blockly.WorkspaceSvg.prototype.trashcan = null;
  * @type {Blockly.ScrollbarPair}
  */
 Blockly.WorkspaceSvg.prototype.scrollbar = null;
+
+/**
+ * The current gesture in progress on this workspace, if any.
+ * @type {Blockly.Gesture}
+ * @private
+ */
+Blockly.WorkspaceSvg.prototype.currentGesture_ = null;
 
 /**
  * This workspace's surface for dragging blocks, if it exists.
@@ -227,30 +232,7 @@ Blockly.WorkspaceSvg.prototype.isDragSurfaceActive_ = false;
  * @type {Date}
  * @private
  */
-Blockly.WorkspaceSvg.prototype.inverseScreenCTM_ = null;
-
-/**
- * Getter for the inverted screen CTM.
- * @return {SVGMatrix} The matrix to use in mouseToSvg
- */
-Blockly.WorkspaceSvg.prototype.getInverseScreenCTM = function() {
-  return this.inverseScreenCTM_;
-};
-
-/**
- * Update the inverted screen CTM.
- */
-Blockly.WorkspaceSvg.prototype.updateInverseScreenCTM = function() {
-  this.inverseScreenCTM_ = this.getParentSvg().getScreenCTM().inverse();
-};
-
-/**
- * Save resize handler data so we can delete it later in dispose.
- * @param {!Array.<!Array>} handler Data that can be passed to unbindEvent_.
- */
-Blockly.WorkspaceSvg.prototype.setResizeHandlerWrapper = function(handler) {
-  this.resizeHandlerWrapper_ = handler;
-};
+Blockly.WorkspaceSvg.prototype.lastSound_ = null;
 
 /**
  * Last known position of the page scroll.
@@ -268,6 +250,14 @@ Blockly.WorkspaceSvg.prototype.lastRecordedPageScroll_ = null;
  * @private
  */
 Blockly.WorkspaceSvg.prototype.flyoutButtonCallbacks_ = {};
+
+/**
+ * Map from function names to callbacks, for deciding what to do when a custom
+ * toolbox category is opened.
+ * @type {!Object<string, function(!Blockly.Workspace):!Array<!Element>>}
+ * @private
+ */
+Blockly.WorkspaceSvg.prototype.toolboxCategoryCallbacks_ = {};
 
 /**
  * Inverted screen CTM, for use in mouseToSvg.
@@ -347,18 +337,23 @@ Blockly.WorkspaceSvg.prototype.createDom = function(opt_backgroundClass) {
    *   [Trashcan and/or flyout may go here]
    *   <g class="blocklyBlockCanvas"></g>
    *   <g class="blocklyBubbleCanvas"></g>
-   *   [Scrollbars may go here]
    * </g>
    * @type {SVGElement}
    */
   this.svgGroup_ = Blockly.utils.createSvgElement('g',
       {'class': 'blocklyWorkspace'}, null);
+
+  // Note that a <g> alone does not receive mouse events--it must have a
+  // valid target inside it.  If no background class is specified, as in the
+  // flyout, the workspace will not receive mouse events.
   if (opt_backgroundClass) {
     /** @type {SVGElement} */
     this.svgBackground_ = Blockly.utils.createSvgElement('rect',
         {'height': '100%', 'width': '100%', 'class': opt_backgroundClass},
         this.svgGroup_);
+
     if (opt_backgroundClass == 'blocklyMainBackground') {
+      // *** ANKI CHANGE ***
       this.svgBackground_.style.fill = "#535252";
     }
   }
@@ -379,9 +374,6 @@ Blockly.WorkspaceSvg.prototype.createDom = function(opt_backgroundClass) {
   if (!this.isFlyout) {
     Blockly.bindEventWithChecks_(this.svgGroup_, 'mousedown', this,
         this.onMouseDown_);
-    var thisWorkspace = this;
-    Blockly.bindEvent_(this.svgGroup_, 'touchstart', null,
-                       function(e) {Blockly.longStart_(e, thisWorkspace);});
     if (this.options.zoomOptions && this.options.zoomOptions.wheel) {
       // Mouse-wheel.
       Blockly.bindEventWithChecks_(this.svgGroup_, 'wheel', this,
@@ -411,6 +403,9 @@ Blockly.WorkspaceSvg.prototype.createDom = function(opt_backgroundClass) {
 Blockly.WorkspaceSvg.prototype.dispose = function() {
   // Stop rerendering.
   this.rendered = false;
+  if (this.currentGesture_) {
+    this.currentGesture_.cancel();
+  }
   Blockly.WorkspaceSvg.superClass_.dispose.call(this);
   if (this.svgGroup_) {
     goog.dom.removeNode(this.svgGroup_);
@@ -437,6 +432,13 @@ Blockly.WorkspaceSvg.prototype.dispose = function() {
   if (this.zoomControls_) {
     this.zoomControls_.dispose();
     this.zoomControls_ = null;
+  }
+
+  if (this.toolboxCategoryCallbacks_) {
+    this.toolboxCategoryCallbacks_ = null;
+  }
+  if (this.flyoutButtonCallbacks_) {
+    this.flyoutButtonCallbacks_ = null;
   }
   if (!this.options.parentWorkspace) {
     // Top-most workspace.  Dispose of the div that the
@@ -524,7 +526,7 @@ Blockly.WorkspaceSvg.prototype.addFlyout_ = function(tagName) {
  * @return {Blockly.Flyout} The flyout on this workspace.
  * @package
  */
-Blockly.WorkspaceSvg.prototype.getFlyout_ = function() {
+Blockly.WorkspaceSvg.prototype.getFlyout = function() {
   if (this.flyout_) {
     return this.flyout_;
   }
@@ -641,20 +643,6 @@ Blockly.WorkspaceSvg.prototype.getParentSvg = function() {
 };
 
 /**
-  * Get a flyout associated with this workspace, if one exists.
-  * @return {?Blockly.Flyout} Flyout associated with this workspace.
-  */
-Blockly.WorkspaceSvg.prototype.getFlyout = function() {
-  if (this.flyout_) {
-    return this.flyout_;
-  }
-  if (this.toolbox_ && this.toolbox_.flyout_) {
-    return this.toolbox_.flyout_;
-  }
-  return null;
-};
-
-/**
  * Translate this workspace to new coordinates.
  * @param {number} x Horizontal translation.
  * @param {number} y Vertical translation.
@@ -708,6 +696,15 @@ Blockly.WorkspaceSvg.prototype.setupDragSurface = function() {
     return;
   }
 
+  // This can happen if the user starts a drag, mouses up outside of the
+  // document where the mouseup listener is registered (e.g. outside of an
+  // iframe) and then moves the mouse back in the workspace.  On mobile and ff,
+  // we get the mouseup outside the frame. On chrome and safari desktop we do
+  // not.
+  if (this.isDragSurfaceActive_) {
+    return;
+  }
+
   this.isDragSurfaceActive_ = true;
 
   // Figure out where we want to put the canvas back.  The order
@@ -746,8 +743,8 @@ Blockly.WorkspaceSvg.prototype.setVisible = function(isVisible) {
 
   // Tell the flyout whether its container is visible so it can
   // tell when to hide itself.
-  if (this.getFlyout_()) {
-    this.getFlyout_().setContainerVisible(isVisible);
+  if (this.getFlyout()) {
+    this.getFlyout().setContainerVisible(isVisible);
   }
 
   this.getParentSvg().style.display = isVisible ? 'block' : 'none';
@@ -829,10 +826,14 @@ Blockly.WorkspaceSvg.prototype.glowBlock = function(id, isGlowingBlock) {
   if (id) {
     block = this.getBlockById(id);
     if (!block) {
-      throw 'Tried to glow block that does not exist.';
+      // *** ANKI CHANGE ***
+      // This throw can happen if the user taps a block in the toolbar then switches categories. Seems save to ignore.
+      //throw 'Tried to glow block that does not exist.';
     }
   }
   if (block) {
+    // *** ANKI CHANGE ***
+    // Code to glow blocks
     block.setGlowBlock(isGlowingBlock);
   }
 };
@@ -869,7 +870,7 @@ Blockly.WorkspaceSvg.prototype.reportValue = function(id, value) {
   var contentDiv = Blockly.DropDownDiv.getContentDiv();
   var valueReportBox = goog.dom.createElement('div');
   valueReportBox.setAttribute('class', 'valueReportBox');
-  valueReportBox.innerHTML = Blockly.encodeEntities(value);
+  valueReportBox.innerHTML = Blockly.utils.encodeEntities(value);
   contentDiv.appendChild(valueReportBox);
   Blockly.DropDownDiv.setColour(
     Blockly.Colours.valueReportBackground,
@@ -886,10 +887,20 @@ Blockly.WorkspaceSvg.prototype.paste = function(xmlBlock) {
   if (!this.rendered) {
     return;
   }
-  Blockly.terminateDrag_();  // Dragging while pasting?  No.
+  if (this.currentGesture_) {
+    this.currentGesture_.cancel();  // Dragging while pasting?  No.
+  }
   Blockly.Events.disable();
   try {
     var block = Blockly.Xml.domToBlock(xmlBlock, this);
+    // Rerender to get around problem with IE and Edge not measuring text
+    // correctly when it is hidden.
+    if (goog.userAgent.IE || goog.userAgent.EDGE) {
+      var blocks = block.getDescendants();
+      for (var i = blocks.length - 1; i >= 0; i--) {
+        blocks[i].render(false);
+      }
+    }
     // Move the duplicate to original position.
     var blockX = parseInt(xmlBlock.getAttribute('x'), 10);
     var blockY = parseInt(xmlBlock.getAttribute('y'), 10);
@@ -943,6 +954,20 @@ Blockly.WorkspaceSvg.prototype.paste = function(xmlBlock) {
 };
 
 /**
+ * Rename a variable by updating its name in the variable list.
+ * TODO: google/blockly:#468
+ * @param {string} oldName Variable to rename.
+ * @param {string} newName New variable name.
+ */
+Blockly.WorkspaceSvg.prototype.renameVariable = function(oldName, newName) {
+  Blockly.WorkspaceSvg.superClass_.renameVariable.call(this, oldName, newName);
+  // Refresh the toolbox unless there's a drag in progress.
+  if (this.toolbox_ && this.toolbox_.flyout_ && !Blockly.Flyout.startFlyout_) {
+    this.toolbox_.refreshSelection();
+  }
+};
+
+/**
  * Create a new variable with the given name.  Update the flyout to show the new
  *     variable immediately.
  * TODO: #468
@@ -951,7 +976,7 @@ Blockly.WorkspaceSvg.prototype.paste = function(xmlBlock) {
 Blockly.WorkspaceSvg.prototype.createVariable = function(name) {
   Blockly.WorkspaceSvg.superClass_.createVariable.call(this, name);
   // Don't refresh the toolbox if there's a drag in progress.
-  if (this.toolbox_ && this.toolbox_.flyout_ && !Blockly.Flyout.startFlyout_) {
+  if (this.toolbox_ && this.toolbox_.flyout_ && !this.currentGesture_) {
     this.toolbox_.refreshSelection();
   }
 };
@@ -976,7 +1001,6 @@ Blockly.WorkspaceSvg.prototype.recordDeleteAreas = function() {
 
 /**
  * Is the mouse event over a delete area (toolbox or non-closing flyout)?
- * Opens or closes the trashcan and sets the cursor as a side effect.
  * @param {!Event} e Mouse move event.
  * @return {?number} Null if not over a delete area, or an enum representing
  *     which delete area the event is over.
@@ -989,7 +1013,7 @@ Blockly.WorkspaceSvg.prototype.isDeleteArea = function(e) {
   if (this.deleteAreaToolbox_ && this.deleteAreaToolbox_.contains(xy)) {
     return Blockly.DELETE_AREA_TOOLBOX;
   }
-  return null;
+  return Blockly.DELETE_AREA_NONE;
 };
 
 /**
@@ -998,61 +1022,10 @@ Blockly.WorkspaceSvg.prototype.isDeleteArea = function(e) {
  * @private
  */
 Blockly.WorkspaceSvg.prototype.onMouseDown_ = function(e) {
-  this.markFocused();
-  if (Blockly.utils.isTargetInput(e)) {
-    Blockly.Touch.clearTouchIdentifier();
-    return;
+  var gesture = this.getGesture(e);
+  if (gesture) {
+    gesture.handleWsStart(e, this);
   }
-  Blockly.terminateDrag_();  // In case mouse-up event was lost.
-  Blockly.hideChaff();
-  Blockly.DropDownDiv.hide();
-  var isTargetWorkspace = e.target && e.target.nodeName &&
-      (e.target.nodeName.toLowerCase() == 'svg' ||
-       e.target == this.svgBackground_);
-  if (isTargetWorkspace && Blockly.selected && !this.options.readOnly) {
-    // Clicking on the document clears the selection.
-    Blockly.selected.unselect();
-  }
-  if (Blockly.utils.isRightButton(e)) {
-    // Right-click.
-    this.showContextMenu_(e);
-    // This is to handle the case where the event is pretending to be a right
-    // click event but it was really a long press. In that case, we want to make
-    // sure any in progress drags are stopped.
-    Blockly.onMouseUp_(e);
-    // Since this was a click, not a drag, end the gesture immediately.
-    Blockly.Touch.clearTouchIdentifier();
-  } else if (this.scrollbar) {
-    this.dragMode_ = Blockly.DRAG_BEGIN;
-    // Record the current mouse position.
-    this.startDragMouseX = e.clientX;
-    this.startDragMouseY = e.clientY;
-    this.startDragMetrics = this.getMetrics();
-    this.startScrollX = this.scrollX;
-    this.startScrollY = this.scrollY;
-
-    this.setupDragSurface();
-    // If this is a touch event then bind to the mouseup so workspace drag mode
-    // is turned off and double move events are not performed on a block.
-    // See comment in inject.js Blockly.init_ as to why mouseup events are
-    // bound to the document instead of the SVG's surface.
-    if ('mouseup' in Blockly.Touch.TOUCH_MAP) {
-      Blockly.Touch.onTouchUpWrapper_ = Blockly.Touch.onTouchUpWrapper_ || [];
-      Blockly.Touch.onTouchUpWrapper_ = Blockly.Touch.onTouchUpWrapper_.concat(
-          Blockly.bindEventWithChecks_(document, 'mouseup', null,
-          Blockly.onMouseUp_));
-    }
-    Blockly.onMouseMoveWrapper_ = Blockly.onMouseMoveWrapper_ || [];
-    Blockly.onMouseMoveWrapper_ = Blockly.onMouseMoveWrapper_.concat(
-        Blockly.bindEventWithChecks_(document, 'mousemove', null,
-        Blockly.onMouseMove_));
-  } else {
-    // It was a click, but the workspace isn't draggable.
-    Blockly.Touch.clearTouchIdentifier();
-  }
-  // This event has been handled.  No need to bubble up to the document.
-  e.stopPropagation();
-  e.preventDefault();
 };
 
 /**
@@ -1089,10 +1062,15 @@ Blockly.WorkspaceSvg.prototype.moveDrag = function(e) {
  * @return {boolean} True if currently dragging or scrolling.
  */
 Blockly.WorkspaceSvg.prototype.isDragging = function() {
-  return Blockly.dragMode_ == Blockly.DRAG_FREE ||
-      (Blockly.Flyout.startFlyout_ &&
-          Blockly.Flyout.startFlyout_.dragMode_ == Blockly.DRAG_FREE) ||
-      this.dragMode_ == Blockly.DRAG_FREE;
+  return this.currentGesture_ && this.currentGesture_.isDragging();
+};
+
+/**
+ * Is this workspace draggable and scrollable?
+ * @return {boolean} True if this workspace may be dragged.
+ */
+Blockly.WorkspaceSvg.prototype.isDraggable = function() {
+  return !!this.scrollbar;
 };
 
 /**
@@ -1101,14 +1079,17 @@ Blockly.WorkspaceSvg.prototype.isDragging = function() {
  * @private
  */
 Blockly.WorkspaceSvg.prototype.onMouseWheel_ = function(e) {
-  // TODO: Remove terminateDrag and compensate for coordinate skew during zoom.
+  // TODO: Remove gesture cancellation and compensate for coordinate skew during
+  // zoom.
+  if (this.currentGesture_) {
+    this.currentGesture_.cancel();
+  }
   if (e.ctrlKey) {
-    Blockly.terminateDrag_();
     // The vertical scroll distance that corresponds to a click of a zoom button.
     var PIXELS_PER_ZOOM_STEP = 50;
     var delta = -e.deltaY / PIXELS_PER_ZOOM_STEP;
     var position = Blockly.utils.mouseToSvg(e, this.getParentSvg(),
-      this.getInverseScreenCTM());
+        this.getInverseScreenCTM());
     this.zoom(position.x, position.y, delta);
   } else {
     // This is a regular mouse wheel event - scroll the workspace
@@ -1126,6 +1107,7 @@ Blockly.WorkspaceSvg.prototype.onMouseWheel_ = function(e) {
 
 /**
  * Calculate the bounding box for the blocks on the workspace.
+ * Coordinate system: workspace coordinates.
  *
  * @return {Object} Contains the position and size of the bounding box
  *   containing the blocks on the workspace.
@@ -1195,6 +1177,7 @@ Blockly.WorkspaceSvg.prototype.showContextMenu_ = function(e) {
   var menuOptions = [];
   var topBlocks = this.getTopBlocks(true);
   var eventGroup = Blockly.utils.genUid();
+  var ws = this;
 
   // Options to undo/redo previous action.
   var undoOption = {};
@@ -1310,6 +1293,9 @@ Blockly.WorkspaceSvg.prototype.showContextMenu_ = function(e) {
         Blockly.Msg.DELETE_X_BLOCKS.replace('%1', String(deleteCount)),
     enabled: deleteCount > 0,
     callback: function() {
+      if (ws.currentGesture_) {
+        ws.currentGesture_.cancel();
+      }
       if (deleteList.length < 2 ) {
         deleteNext();
       } else {
@@ -1467,7 +1453,7 @@ Blockly.WorkspaceSvg.prototype.updateToolbox = function(tree) {
     }
     this.options.languageTree = tree;
     this.toolbox_.populate_(tree);
-    this.toolbox_.addColour_();
+    this.toolbox_.position();
   } else {
     if (!this.flyout_) {
       throw 'Existing toolbox has categories.  Can\'t change mode.';
@@ -1485,6 +1471,39 @@ Blockly.WorkspaceSvg.prototype.markFocused = function() {
     this.options.parentWorkspace.markFocused();
   } else {
     Blockly.mainWorkspace = this;
+    // We call e.preventDefault in many event handlers which means we
+    // need to explicitly grab focus (e.g from a textarea) because
+    // the browser will not do it for us.  How to do this is browser dependant.
+    this.setBrowserFocus();
+  }
+};
+
+/**
+ * Set the workspace to have focus in the browser.
+ * @private
+ */
+Blockly.WorkspaceSvg.prototype.setBrowserFocus = function() {
+  // Blur whatever was focused since explcitly grabbing focus below does not
+  // work in Edge.
+  if (document.activeElement) {
+    document.activeElement.blur();
+  }
+  try {
+    // Focus the workspace SVG - this is for Chrome and Firefox.
+    this.getParentSvg().focus();
+  }  catch (e) {
+    // IE and Edge do not support focus on SVG elements. When that fails
+    // above, get the injectionDiv (the workspace's parent) and focus that
+    // instead.  This doesn't work in Chrome.
+    try {
+      // In IE11, use setActive (which is IE only) so the page doesn't scroll
+      // to the workspace gaining focus.
+      this.getParentSvg().parentNode.setActive();
+    } catch (e) {
+      // setActive support was discontinued in Edge so when that fails, call
+      // focus instead.
+      this.getParentSvg().parentNode.focus();
+    }
   }
 };
 
@@ -1695,6 +1714,7 @@ Blockly.WorkspaceSvg.prototype.updateStackGlowScale_ = function() {
 /**
  * Return an object with all the metrics required to size scrollbars for a
  * top level workspace.  The following properties are computed:
+ * Coordinate system: pixel coordinates.
  * .viewHeight: Height of the visible rectangle,
  * .viewWidth: Width of the visible rectangle,
  * .contentHeight: Height of the contents,
@@ -1731,6 +1751,7 @@ Blockly.WorkspaceSvg.getTopLevelWorkspaceMetrics_ = function() {
   var MARGIN = Blockly.Flyout.prototype.CORNER_RADIUS - 1;
   var viewWidth = svgSize.width - MARGIN;
   var viewHeight = svgSize.height - MARGIN;
+
   var blockBox = this.getBlocksBoundingBox();
 
   // Fix scale.
@@ -1853,6 +1874,8 @@ Blockly.WorkspaceSvg.prototype.clear = function() {
  *     given button is clicked.
  */
 Blockly.WorkspaceSvg.prototype.registerButtonCallback = function(key, func) {
+  goog.asserts.assert(goog.isFunction(func),
+      'Button callbacks must be functions.');
   this.flyoutButtonCallbacks_[key] = func;
 };
 
@@ -1860,11 +1883,107 @@ Blockly.WorkspaceSvg.prototype.registerButtonCallback = function(key, func) {
  * Get the callback function associated with a given key, for clicks on buttons
  * and labels in the flyout.
  * @param {string} key The name to use to look up the function.
- * @return {function(!Blockly.FlyoutButton)} The function corresponding to the
- *     given key for this workspace.
+ * @return {?function(!Blockly.FlyoutButton)} The function corresponding to the
+ *     given key for this workspace; null if no callback is registered.
  */
 Blockly.WorkspaceSvg.prototype.getButtonCallback = function(key) {
-  return this.flyoutButtonCallbacks_[key];
+  var result = this.flyoutButtonCallbacks_[key];
+  return result ? result : null;
+};
+
+/**
+ * Remove a callback for a click on a button in the flyout.
+ * @param {string} key The name associated with the callback function.
+ */
+Blockly.WorkspaceSvg.prototype.removeButtonCallback = function(key) {
+  this.flyoutButtonCallbacks_[key] = null;
+};
+
+/**
+ * Register a callback function associated with a given key, for populating
+ * custom toolbox categories in this workspace.  See the variable and procedure
+ * categories as an example.
+ * @param {string} key The name to use to look up this function.
+ * @param {function(!Blockly.Workspace):!Array<!Element>} func The function to
+ *     call when the given toolbox category is opened.
+ */
+Blockly.WorkspaceSvg.prototype.registerToolboxCategoryCallback = function(key,
+    func) {
+  goog.asserts.assert(goog.isFunction(func),
+      'Toolbox category callbacks must be functions.');
+  this.toolboxCategoryCallbacks_[key] = func;
+};
+
+/**
+ * Get the callback function associated with a given key, for populating
+ * custom toolbox categories in this workspace.
+ * @param {string} key The name to use to look up the function.
+ * @return {?function(!Blockly.Workspace):!Array<!Element>} The function
+ *     corresponding to the given key for this workspace, or null if no function
+ *     is registered.
+ */
+Blockly.WorkspaceSvg.prototype.getToolboxCategoryCallback = function(key) {
+  var result = this.toolboxCategoryCallbacks_[key];
+  return result ? result : null;
+};
+
+/**
+ * Remove a callback for a click on a custom category's name in the toolbox.
+ * @param {string} key The name associated with the callback function.
+ */
+Blockly.WorkspaceSvg.prototype.removeToolboxCategoryCallback = function(key) {
+  this.toolboxCategoryCallbacks_[key] = null;
+};
+
+/**
+ * Look up the gesture that is tracking this touch stream on this workspace.
+ * May create a new gesture.
+ * @param {!Event} e Mouse event or touch event
+ * @return {Blockly.Gesture} The gesture that is tracking this touch stream,
+ *     or null if no valid gesture exists.
+ * @package
+ */
+Blockly.WorkspaceSvg.prototype.getGesture = function(e) {
+  var isStart = (e.type == 'mousedown' || e.type == 'touchstart');
+
+  var gesture = this.currentGesture_;
+  if (gesture) {
+    if (isStart && gesture.hasStarted()) {
+      console.warn('tried to start the same gesture twice');
+      // That's funny.  We must have missed a mouse up.
+      // Cancel it, rather than try to retrieve all of the state we need.
+      gesture.cancel();
+      return null;
+    }
+    return gesture;
+  }
+
+  // No gesture existed on this workspace, but this looks like the start of a
+  // new gesture.
+  if (isStart) {
+    this.currentGesture_ = new Blockly.Gesture(e, this);
+    return this.currentGesture_;
+  }
+  // No gesture existed and this event couldn't be the start of a new gesture.
+  return null;
+};
+
+/**
+ * Clear the reference to the current gesture.
+ * @package
+ */
+Blockly.WorkspaceSvg.prototype.clearGesture = function() {
+  this.currentGesture_ = null;
+};
+
+/**
+ * Cancel the current gesture, if one exists.
+ * @package
+ */
+Blockly.WorkspaceSvg.prototype.cancelCurrentGesture = function() {
+  if (this.currentGesture_) {
+    this.currentGesture_.cancel();
+  }
 };
 
 // Export symbols that would otherwise be renamed by Closure compiler.

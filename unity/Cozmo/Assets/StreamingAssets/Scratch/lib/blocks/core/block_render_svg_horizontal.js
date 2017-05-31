@@ -100,18 +100,21 @@ Blockly.BlockSvg.FIELD_TOP_PADDING = 0.25 * Blockly.BlockSvg.GRID_UNIT;
  * Corner radius of number inputs
  * @const
  */
+// *** ANKI CHANGE ***
 Blockly.BlockSvg.NUMBER_FIELD_CORNER_RADIUS = 2 * Blockly.BlockSvg.GRID_UNIT;
 
 /**
  * Corner radius of text inputs
  * @const
  */
+// *** ANKI CHANGE ***
 Blockly.BlockSvg.TEXT_FIELD_CORNER_RADIUS = 2 * Blockly.BlockSvg.GRID_UNIT;
 
 /**
  * Default radius for a field, in px.
  * @const
  */
+// *** ANKI CHANGE ***
 Blockly.BlockSvg.FIELD_DEFAULT_CORNER_RADIUS = 2 * Blockly.BlockSvg.GRID_UNIT;
 
 /**
@@ -336,11 +339,11 @@ Blockly.BlockSvg.prototype.updateColour = function() {
 Blockly.BlockSvg.prototype.highlightForReplacement = function(add) {
   if (add) {
     this.svgPath_.setAttribute('filter', 'url(#blocklyReplacementGlowFilter)');
-    Blockly.utils.addClass_(/** @type {!Element} */ (this.svgGroup_),
+    Blockly.utils.addClass(/** @type {!Element} */ (this.svgGroup_),
         'blocklyReplaceable');
   } else {
     this.svgPath_.removeAttribute('filter');
-    Blockly.utils.removeClass_(/** @type {!Element} */ (this.svgGroup_),
+    Blockly.utils.removeClass(/** @type {!Element} */ (this.svgGroup_),
         'blocklyReplaceable');
   }
 };
@@ -416,7 +419,7 @@ Blockly.BlockSvg.prototype.render = function(opt_bubble) {
   }
   Blockly.Field.stopCache();
 
-  // Anki code change:
+  // *** ANKI CHANGE ***
   // Bandaid fix for numeric parameters not displaying correctly
   // https://github.com/LLK/scratch-blocks/issues/826
   for (var i = 0, input; input = this.inputList[i]; i++) {

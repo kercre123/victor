@@ -29,6 +29,7 @@ goog.provide('Blockly.FieldVariable');
 goog.require('Blockly.FieldDropdown');
 goog.require('Blockly.Msg');
 goog.require('Blockly.Variables');
+goog.require('goog.asserts');
 goog.require('goog.string');
 
 
@@ -52,12 +53,14 @@ goog.inherits(Blockly.FieldVariable, Blockly.FieldDropdown);
 /**
  * The menu item index for the rename variable option.
  * @type {number}
+ * @private
  */
 Blockly.FieldVariable.prototype.renameVarItemIndex_ = -1;
 
 /**
  * The menu item index for the delete variable option.
  * @type {number}
+ * @private
  */
 Blockly.FieldVariable.prototype.deleteVarItemIndex_ = -1;
 
@@ -71,6 +74,12 @@ Blockly.FieldVariable.prototype.init = function() {
     return;
   }
   Blockly.FieldVariable.superClass_.init.call(this);
+
+  // TODO (1010): Change from init/initModel to initView/initModel
+  this.initModel();
+};
+
+Blockly.FieldVariable.prototype.initModel = function() {
   if (!this.getValue()) {
     // Variables without names get uniquely named for this workspace.
     var workspace =
@@ -85,6 +94,16 @@ Blockly.FieldVariable.prototype.init = function() {
   if (!this.sourceBlock_.isInFlyout) {
     this.sourceBlock_.workspace.createVariable(this.getValue());
   }
+};
+
+/**
+ * Attach this field to a block.
+ * @param {!Blockly.Block} block The block containing this field.
+ */
+Blockly.FieldVariable.prototype.setSourceBlock = function(block) {
+  goog.asserts.assert(!block.isShadow(),
+      'Variable fields are not allowed to exist on shadow blocks.');
+  Blockly.FieldVariable.superClass_.setSourceBlock.call(this, block);
 };
 
 /**
@@ -113,33 +132,39 @@ Blockly.FieldVariable.prototype.setValue = function(newValue) {
  * Return a sorted list of variable names for variable dropdown menus.
  * Include a special option at the end for creating a new variable name.
  * @return {!Array.<string>} Array of variable names.
- * @this Blockly.FieldVariable
+ * @this {Blockly.FieldVariable}
  */
 Blockly.FieldVariable.dropdownCreate = function() {
+  var variableNameList = [];
   if (this.sourceBlock_ && this.sourceBlock_.workspace) {
     // Get a copy of the list, so that adding rename and new variable options
     // doesn't modify the workspace's list.
-    var variableList = this.sourceBlock_.workspace.variableList.slice(0);
-  } else {
-    var variableList = [];
+
+    var variableModelList = this.sourceBlock_.workspace.getVariablesOfType('');
+    for (var i = 0; i < variableModelList.length; i++) {
+      variableNameList.push(variableModelList[i].name);
+    }
   }
   // Ensure that the currently selected variable is an option.
   var name = this.getText();
-  if (name && variableList.indexOf(name) == -1) {
-    variableList.push(name);
+  if (name && variableNameList.indexOf(name) == -1) {
+    variableNameList.push(name);
   }
-  variableList.sort(goog.string.caseInsensitiveCompare);
+  variableNameList.sort(goog.string.caseInsensitiveCompare);
 
-  this.renameVarItemIndex_ = variableList.length;
-  variableList.push(Blockly.Msg.RENAME_VARIABLE);
+  this.renameVarItemIndex_ = variableNameList.length;
+  variableNameList.push(Blockly.Msg.RENAME_VARIABLE);
 
-  this.deleteVarItemIndex_ = variableList.length;
-  variableList.push(Blockly.Msg.DELETE_VARIABLE.replace('%1', name));
+  this.deleteVarItemIndex_ = variableNameList.length;
+  variableNameList.push(Blockly.Msg.DELETE_VARIABLE.replace('%1', name));
   // Variables are not language-specific, use the name as both the user-facing
   // text and the internal representation.
   var options = [];
-  for (var i = 0; i < variableList.length; i++) {
-    options[i] = [variableList[i], variableList[i]];
+  for (var i = 0; i < variableNameList.length; i++) {
+    // TODO(marisaleung): Set options[i] to [name, uuid]. This requires
+    // changes where the variable gets set since the initialized value would be
+    // id.
+    options[i] = [variableNameList[i], variableNameList[i]];
   }
   return options;
 };

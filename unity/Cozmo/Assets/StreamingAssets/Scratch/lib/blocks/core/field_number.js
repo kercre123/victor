@@ -39,10 +39,11 @@ goog.require('goog.userAgent');
  * These properties are included here (i.e. instead of just accepting a
  * decimalAllowed, negativeAllowed) to maintain API compatibility with Blockly
  * and Blockly for Android.
- * @param {number|string} value The initial content of the field.
- * @param {number|string|undefined} opt_min Minimum value.
- * @param {number|string|undefined} opt_max Maximum value.
- * @param {number|string|undefined} opt_precision Precision for value.
+ * @param {(string|number)=} opt_value The initial content of the field. The value
+ *     should cast to a number, and if it does not, '0' will be used.
+ * @param {(string|number)=} opt_min Minimum value.
+ * @param {(string|number)=} opt_max Maximum value.
+ * @param {(string|number)=} opt_precision Precision for value.
  * @param {Function=} opt_validator An optional function that is called
  *     to validate any constraints on what the user entered.  Takes the new
  *     text as an argument and returns the accepted text or null to abort
@@ -50,11 +51,12 @@ goog.require('goog.userAgent');
  * @extends {Blockly.FieldTextInput}
  * @constructor
  */
-Blockly.FieldNumber = function(value, opt_min, opt_max, opt_precision,
+Blockly.FieldNumber = function(opt_value, opt_min, opt_max, opt_precision,
     opt_validator) {
   var numRestrictor = this.getNumRestrictor(opt_min, opt_max, opt_precision);
-  Blockly.FieldNumber.superClass_.constructor.call(this, value, opt_validator,
-      numRestrictor);
+  opt_value = (opt_value && !isNaN(opt_value)) ? String(opt_value) : '0';
+  Blockly.FieldNumber.superClass_.constructor.call(
+      this, opt_value, opt_validator, numRestrictor);
   this.addArgType('number');
 };
 goog.inherits(Blockly.FieldNumber, Blockly.FieldTextInput);
@@ -186,7 +188,8 @@ Blockly.FieldNumber.prototype.showNumPad_ = function() {
       Blockly.Colours.numPadBorder);
 
   if (window.innerWidth < window.TABLET_WIDTH) {
-      // Anki fix to make numpad dropdown fit on phones and not pop down
+      // *** ANKI CHANGE ***
+      // Fix to make numpad dropdown fit on phones and not pop down
       Blockly.FieldNumber.DROPDOWN_WIDTH = 138;
   }
 
@@ -231,7 +234,8 @@ Blockly.FieldNumber.prototype.position_ = function() {
 Blockly.FieldNumber.prototype.addButtons_ = function(contentDiv) {
   var numPadButtonClass = 'blocklyNumPadButton';
   if (window.innerWidth < window.TABLET_WIDTH) {
-    // Anki fix to make numpad dropdown fit on phones and not pop down
+    // *** ANKI CHANGE ***
+    // Fix to make numpad dropdown fit on phones and not pop down
     numPadButtonClass = 'blocklyNumPadButtonPhone';
   }
 
@@ -240,7 +244,7 @@ Blockly.FieldNumber.prototype.addButtons_ = function(contentDiv) {
   for (var i = 0, buttonText; buttonText = buttons[i]; i++) {
     var button = document.createElement('button');
     button.setAttribute('role', 'menuitem');
-    button.setAttribute('class', numPadButtonClass);
+    button.setAttribute('class', numPadButtonClass); // *** ANKI CHANGE ***
     button.title = buttonText;
     button.innerHTML = buttonText;
     Blockly.bindEvent_(button, 'mousedown', button,
@@ -260,7 +264,7 @@ Blockly.FieldNumber.prototype.addButtons_ = function(contentDiv) {
   // Add erase button to the end
   var eraseButton = document.createElement('button');
   eraseButton.setAttribute('role', 'menuitem');
-  eraseButton.setAttribute('class', numPadButtonClass);
+  eraseButton.setAttribute('class', numPadButtonClass); // *** ANKI CHANGE ***
   eraseButton.title = 'Delete';
 
   var eraseImage = document.createElement('img');

@@ -1,5 +1,5 @@
 # After modifying files in Scratch/lib/blocks, run this file
-# to generate the compressed js files.
+# to generate the compressed js files. - msintov, 5/18/17
 
 rm -rf ../closure-library
 

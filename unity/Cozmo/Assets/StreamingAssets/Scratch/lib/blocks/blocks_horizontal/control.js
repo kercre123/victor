@@ -101,6 +101,7 @@ Blockly.Blocks['control_forever'] = {
       "colourSecondary": Blockly.Colours.control.secondary,
       "colourTertiary": Blockly.Colours.control.tertiary
     });
+    // *** ANKI Change ***
     this.setTooltip("Repeat Forever");
   }
 };
@@ -142,6 +143,7 @@ Blockly.Blocks['control_repeat'] = {
       "colourSecondary": Blockly.Colours.control.secondary,
       "colourTertiary": Blockly.Colours.control.tertiary
     });
+    // *** ANKI Change ***
     this.setTooltip("Repeat");
   }
 };
@@ -171,6 +173,7 @@ Blockly.Blocks['control_stop'] = {
       "colourSecondary": Blockly.Colours.control.secondary,
       "colourTertiary": Blockly.Colours.control.tertiary
     });
+    // *** ANKI Change ***
     this.setTooltip("Stop Program");
   }
 };

@@ -26,6 +26,10 @@
  */
 'use strict';
 
+/**
+ * @name Blockly.utils
+ * @namespace
+ **/
 goog.provide('Blockly.utils');
 
 goog.require('Blockly.Touch');
@@ -34,6 +38,23 @@ goog.require('goog.events.BrowserFeature');
 goog.require('goog.math.Coordinate');
 goog.require('goog.userAgent');
 
+/**
+ * Remove an attribute from a element even if it's in IE 10.
+ * Similar to Element.removeAttribute() but it works on SVG elements in IE 10.
+ * Sets the attribute to null in IE 10, which treats removeAttribute as a no-op
+ * if it's called on an SVG element.
+ * @param {!Element} element DOM element to remove attribute from.
+ * @param {string} attributeName Name of attribute to remove.
+ */
+Blockly.utils.removeAttribute = function(element, attributeName) {
+  // goog.userAgent.isVersion is deprecated, but the replacement is
+  // goog.userAgent.isVersionOrHigher.
+  if (goog.userAgent.IE && goog.userAgent.isVersion('10.0')) {
+    element.setAttribute(attributeName, null);
+  } else {
+    element.removeAttribute(attributeName);
+  }
+};
 
 /**
  * Cached value for whether 3D is supported
@@ -83,7 +104,7 @@ Blockly.utils.removeClass = function(element, className) {
   if (classList.length) {
     element.setAttribute('class', classList.join(' '));
   } else {
-    element.removeAttribute('class');
+    Blockly.utils.removeAttribute(element, 'class');
   }
   return true;
 };
@@ -260,7 +281,7 @@ Blockly.utils.getRelativeXY.XY_2D_REGEX_ =
  * @param {Element} parent Optional parent on which to append the element.
  * @return {!SVGElement} Newly created SVG element.
  */
-Blockly.utils.createSvgElement = function(name, attrs, parent) {
+Blockly.utils.createSvgElement = function(name, attrs, parent /*, opt_workspace */) {
   var e = /** @type {!SVGElement} */ (
       document.createElementNS(Blockly.SVG_NS, name));
   for (var key in attrs) {
@@ -410,17 +431,48 @@ Blockly.utils.tokenizeInterpolation = function(message) {
 };
 
 /**
- * Replaces string table references in a message string. For example,
- * %{bky_my_msg} and %{BKY_MY_MSG} will both be replaced with the value in
- * Blockly.Msg['MY_MSG'].
- * @param {string} message Text which might contain string table references.
+ * Replaces string table references in a message, if the message is a string.
+ * For example, "%{bky_my_msg}" and "%{BKY_MY_MSG}" will both be replaced with
+ * the value in Blockly.Msg['MY_MSG'].
+ * @param {string|?} message Message, which may be a string that contains
+ *                           string table references.
  * @return {!string} String with message references replaced.
  */
 Blockly.utils.replaceMessageReferences = function(message) {
+  if (!goog.isString(message)) {
+    return message;
+  }
   var interpolatedResult = Blockly.utils.tokenizeInterpolation_(message, false);
   // When parseInterpolationTokens == false, interpolatedResult should be at
   // most length 1.
   return interpolatedResult.length ? interpolatedResult[0] : "";
+};
+
+/**
+ * Validates that any %{BKY_...} references in the message refer to keys of
+ * the Blockly.Msg string table.
+ * @param {string} message Text which might contain string table references.
+ * @return {boolean} True if all message references have matching values.
+ *     Otherwise, false.
+ */
+Blockly.utils.checkMessageReferences = function(message) {
+  var isValid = true; // True until a bad reference is found
+
+  var regex = /%{BKY_([a-zA-Z][a-zA-Z0-9_]*)}/g;
+  var match = regex.exec(message);
+  while (match != null) {
+    var msgKey = match[1];
+    if (Blockly.Msg[msgKey] == null) {
+      console.log('WARNING: No message string for %{BKY_' + msgKey + '}.');
+      isValid = false;
+    }
+
+    // Re-run on remainder of sting.
+    message = message.substring(match.index + msgKey.length + 1);
+    match = regex.exec(message);
+  }
+
+  return isValid;
 };
 
 /**
@@ -505,8 +557,18 @@ Blockly.utils.tokenizeInterpolation_ = function(message, parseInterpolationToken
               keyUpper.substring(4) : null;
           if (bklyKey && bklyKey in Blockly.Msg) {
             var rawValue = Blockly.Msg[bklyKey];
-            var subTokens = Blockly.utils.tokenizeInterpolation(rawValue);
-            tokens = tokens.concat(subTokens);
+            if (goog.isString(rawValue)) {
+              // Attempt to dereference substrings, too, appending to the end.
+              Array.prototype.push.apply(tokens,
+                Blockly.utils.tokenizeInterpolation(rawValue));
+            } else if (parseInterpolationTokens) {
+              // When parsing interpolation tokens, numbers are special
+              // placeholders (%1, %2, etc). Make sure all other values are
+              // strings.
+              tokens.push(String(rawValue));
+            } else {
+              tokens.push(rawValue);
+            }
           } else {
             // No entry found in the string table. Pass reference as string.
             tokens.push('%{' + rawKey + '}');
@@ -745,13 +807,14 @@ Blockly.utils.wrapToText_ = function(words, wordBreaks) {
 
 /**
  * Measure some text using a canvas in-memory.
+ * Does not exist in Blockly, but needed in scratch-blocks
  * @param {string} fontSize E.g., '10pt'
  * @param {string} fontFamily E.g., 'Arial'
  * @param {string} fontWeight E.g., '600'
  * @param {string} text The actual text to measure
  * @return {number} Width of the text in px.
  */
-Blockly.measureText = function(fontSize, fontFamily, fontWeight, text) {
+Blockly.utils.measureText = function(fontSize, fontFamily, fontWeight, text) {
   var canvas = document.createElement('canvas');
   var context = canvas.getContext('2d');
   context.font = fontWeight + ' ' + fontSize + ' ' + fontFamily;
@@ -761,10 +824,11 @@ Blockly.measureText = function(fontSize, fontFamily, fontWeight, text) {
 /**
  * Encode a string's HTML entities.
  * E.g., <a> -> &lt;a&gt;
+ * Does not exist in Blockly, but needed in scratch-blocks
  * @param {string} rawStr Unencoded raw string to encode.
  * @return {string} String with HTML entities encoded.
  */
-Blockly.encodeEntities = function(rawStr) {
+Blockly.utils.encodeEntities = function(rawStr) {
   // CC-BY-SA https://stackoverflow.com/questions/18749591/encode-html-entities-in-javascript
   return rawStr.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
     return '&#' + i.charCodeAt(0) + ';';
@@ -838,6 +902,28 @@ Blockly.utils.insertAfter_ = function(newNode, refNode) {
     parentNode.insertBefore(newNode, siblingNode);
   } else {
     parentNode.appendChild(newNode);
+  }
+};
+
+/**
+ * Calls a function after the page has loaded, possibly immediately.
+ * @param {function()} fn Function to run.
+ * @throws Error Will throw if no global document can be found (e.g., Node.js).
+ */
+Blockly.utils.runAfterPageLoad = function(fn) {
+  if (!document) {
+    throw new Error('Blockly.utils.runAfterPageLoad() requires browser document.');
+  }
+  if (document.readyState === 'complete') {
+    fn();  // Page has already loaded. Call immediately.
+  } else {
+    // Poll readyState.
+    var readyStateCheckInterval = setInterval(function() {
+      if (document.readyState === 'complete') {
+        clearInterval(readyStateCheckInterval);
+        fn();
+      }
+    }, 10);
   }
 };
 

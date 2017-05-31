@@ -32,6 +32,7 @@ goog.require('Blockly.Colours');
 
 goog.require('Blockly.constants');
 
+// *** ANKI Change ***
 var MAX_NUM_VALUE = 99;
 
 Blockly.Blocks['math_number'] = {
@@ -101,6 +102,7 @@ Blockly.Blocks['math_whole_number'] = {
   }
 };
 
+// *** ANKI Change ***
 // Same as math_whole_number block above, with a validator added
 Blockly.Blocks['math_whole_number_with_validator'] = {
   /**

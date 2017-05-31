@@ -29,9 +29,9 @@ goog.provide('Blockly.inject');
 goog.require('Blockly.BlockDragSurfaceSvg');
 goog.require('Blockly.Css');
 goog.require('Blockly.constants');
+goog.require('Blockly.DropDownDiv');
 goog.require('Blockly.Options');
 goog.require('Blockly.WorkspaceSvg');
-goog.require('Blockly.DropDownDiv');
 goog.require('Blockly.WorkspaceDragSurfaceSvg');
 goog.require('goog.dom');
 goog.require('goog.ui.Component');
@@ -58,16 +58,17 @@ Blockly.inject = function(container, opt_options) {
   container.appendChild(subContainer);
 
   var svg = Blockly.createDom_(subContainer, options);
+
   // Create surfaces for dragging things. These are optimizations
   // so that the broowser does not repaint during the drag.
   var blockDragSurface = new Blockly.BlockDragSurfaceSvg(subContainer);
-  var workspaceDragSurface = new Blockly.workspaceDragSurfaceSvg(subContainer);
+  var workspaceDragSurface = new Blockly.WorkspaceDragSurfaceSvg(subContainer);
 
   var workspace = Blockly.createMainWorkspace_(svg, options, blockDragSurface,
       workspaceDragSurface);
   Blockly.init_(workspace);
-  workspace.markFocused();
-  Blockly.bindEventWithChecks_(svg, 'focus', workspace, workspace.markFocused);
+  Blockly.mainWorkspace = workspace;
+
   Blockly.svgResize(workspace);
   return workspace;
 };
@@ -165,7 +166,6 @@ Blockly.createDom_ = function(container, options) {
        'operator': 'in', 'result': 'outGlow'}, replacementGlowFilter);
   Blockly.utils.createSvgElement('feComposite',
       {'in': 'SourceGraphic', 'in2': 'outGlow', 'operator': 'over'}, replacementGlowFilter);
-
   /*
     <pattern id="blocklyDisabledPattern837493" patternUnits="userSpaceOnUse"
              width="10" height="10">
@@ -232,11 +232,11 @@ Blockly.createMainWorkspace_ = function(svg, options, blockDragSurface, workspac
 
   // A null translation will also apply the correct initial scale.
   mainWorkspace.translate(0, 0);
-  mainWorkspace.markFocused();
+  Blockly.mainWorkspace = mainWorkspace;
 
   if (!options.readOnly && !options.hasScrollbars) {
     var workspaceChanged = function() {
-      if (Blockly.dragMode_ == Blockly.DRAG_NONE) {
+      if (!mainWorkspace.isDragging()) {
         var metrics = mainWorkspace.getMetrics();
         var edgeLeft = metrics.viewLeft + metrics.absoluteLeft;
         var edgeTop = metrics.viewTop + metrics.absoluteTop;
@@ -300,7 +300,7 @@ Blockly.init_ = function(mainWorkspace) {
   var svg = mainWorkspace.getParentSvg();
 
   // Suppress the browser's context menu.
-  Blockly.bindEventWithChecks_(svg, 'contextmenu', null,
+  Blockly.bindEventWithChecks_(svg.parentNode, 'contextmenu', null,
       function(e) {
         if (!Blockly.utils.isTargetInput(e)) {
           e.preventDefault();
@@ -370,13 +370,10 @@ Blockly.init_ = function(mainWorkspace) {
 Blockly.inject.bindDocumentEvents_ = function() {
   if (!Blockly.documentEventsBound_) {
     Blockly.bindEventWithChecks_(document, 'keydown', null, Blockly.onKeyDown_);
+    // longStop needs to run to stop the context menu from showing up.  It
+    // should run regardless of what other touch event handlers have run.
     Blockly.bindEvent_(document, 'touchend', null, Blockly.longStop_);
-    Blockly.bindEvent_(document, 'touchcancel', null,
-        Blockly.longStop_);
-    // Don't use bindEvent_ for document's mouseup since that would create a
-    // corresponding touch handler that would squelch the ability to interact
-    // with non-Blockly elements.
-    document.addEventListener('mouseup', Blockly.onMouseUp_, false);
+    Blockly.bindEvent_(document, 'touchcancel', null, Blockly.longStop_);
     // Some iPad versions don't fire resize after portrait to landscape change.
     if (goog.userAgent.IPAD) {
       Blockly.bindEventWithChecks_(window, 'orientationchange', document,

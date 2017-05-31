@@ -25,6 +25,9 @@ goog.provide('Blockly.Colours');
 Blockly.Colours = {
   // SVG colours: these must be specificed in #RRGGBB style
   // To add an opacity, this must be specified as a separate property (for SVG fill-opacity)
+  // *** ANKI CHANGE ***
+  // Primary and secondary colors set to match Seth's selections.
+  // Tertiary colors set to be dark so that blocks on workspace show clearer separation between them.
   "motion": {
     "primary": "#0898c4",
     "secondary": "#06799c",
@@ -81,17 +84,17 @@ Blockly.Colours = {
     "tertiary": "#3f3f3f"
   },
   "text": "#575E75",
-  "workspace": "#F5F8FF",
+  "workspace": "#F9F9F9",
   "toolboxHover": "#4C97FF",
   "toolboxSelected": "#e9eef2",
   "toolboxText": "#575E75",
   "toolbox": "#FFFFFF",
-  "flyout": "#DDDDDD",
-  "scrollbar": "#CCCCCC",
-  "scrollbarHover": '#BBBBBB',
+  "flyout": "#F9F9F9",
+  "scrollbar": "#CECDCE",
+  "scrollbarHover": '#CECDCE',
   "textField": "#FFFFFF",
-  "insertionMarker": "#949494",
-  "insertionMarkerOpacity": 0.6,
+  "insertionMarker": "#000000",
+  "insertionMarkerOpacity": 0.2,
   "dragShadowOpacity": 0.3,
   "stackGlow": "#FFF200",
   "stackGlowOpacity": 1,

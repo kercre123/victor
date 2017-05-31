@@ -386,7 +386,7 @@ Blockly.FieldTextInput.prototype.resizeEditor_ = function() {
   var width;
   if (Blockly.BlockSvg.FIELD_TEXTINPUT_EXPAND_PAST_TRUNCATION) {
     // Resize the box based on the measured width of the text, pre-truncation
-    var textWidth = Blockly.measureText(
+    var textWidth = Blockly.utils.measureText(
       Blockly.FieldTextInput.htmlInput_.style.fontSize,
       Blockly.FieldTextInput.htmlInput_.style.fontFamily,
       Blockly.FieldTextInput.htmlInput_.style.fontWeight,
@@ -487,7 +487,8 @@ Blockly.FieldTextInput.prototype.widgetDispose_ = function() {
         }
       }
     }
-    thisField.setValue(text);
+    thisField.setText(text);
+    // Rerender the field now that the text has changed.
     thisField.sourceBlock_.rendered && thisField.sourceBlock_.render();
     Blockly.unbindEvent_(htmlInput.onKeyDownWrapper_);
     Blockly.unbindEvent_(htmlInput.onKeyUpWrapper_);

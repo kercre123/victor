@@ -24,6 +24,10 @@
  */
 'use strict';
 
+/**
+ * @name Blockly.Touch
+ * @namespace
+ **/
 goog.provide('Blockly.Touch');
 
 goog.require('goog.events');
@@ -36,13 +40,6 @@ goog.require('goog.string');
  * @private
  */
 Blockly.Touch.touchIdentifier_ = null;
-
-/**
- * Wrapper function called when a touch mouseUp occurs during a drag operation.
- * @type {Array.<!Array>}
- * @private
- */
-Blockly.Touch.onTouchUpWrapper_ = null;
 
 /**
  * The TOUCH_MAP lookup dictionary specifies additional touch events to fire,
@@ -64,21 +61,23 @@ if (goog.events.BrowserFeature.TOUCH_ENABLED) {
  */
 Blockly.longPid_ = 0;
 
-// Anki: PID of queued task to dismiss tooltip.
+// *** ANKI CHANGE ***
+// PID of queued task to dismiss tooltip.
 Blockly.clearTooltipPid_ = 0;
 
 /**
- * ANKI modification to have longStart show a tooltip.
+ * *** ANKI CHANGE ***
+ *
+ * Modification to have longStart show a tooltip.
  *
  * This function is fired on any touchstart event, queues a task,
  * which after about a second opens the tooltip.  The tasks is killed
  * if the touch event terminates early.
  * @param {!Event} e Touch start event.
- * @param {!Blockly.Block|!Blockly.WorkspaceSvg} uiObject The block or workspace
- *     under the touchstart event.
+ * @param {Blockly.Gesture} gesture The gesture that triggered this longStart.
  * @private
  */
-Blockly.longStart_ = function(e, uiObject) {
+Blockly.longStart_ = function(e, gesture) {
   Blockly.longStop_();
   clearTimeout(Blockly.clearTooltipPid_);
 
@@ -107,56 +106,6 @@ Blockly.longStop_ = function() {
 };
 
 /**
- * Handle a mouse-up anywhere on the page.
- * @param {!Event} e Mouse up event.
- * @private
- */
-Blockly.onMouseUp_ = function(/* e */) {
-  var workspace = Blockly.getMainWorkspace();
-  if (workspace.dragMode_ == Blockly.DRAG_NONE) {
-    return;
-  }
-  Blockly.Touch.clearTouchIdentifier();
-
-  // TODO(#781): Check whether this needs to be called for all drag modes.
-  workspace.resetDragSurface();
-  Blockly.Css.setCursor(Blockly.Css.Cursor.OPEN);
-  workspace.dragMode_ = Blockly.DRAG_NONE;
-  // Unbind the touch event if it exists.
-  if (Blockly.Touch.onTouchUpWrapper_) {
-    Blockly.unbindEvent_(Blockly.Touch.onTouchUpWrapper_);
-    Blockly.Touch.onTouchUpWrapper_ = null;
-  }
-  if (Blockly.onMouseMoveWrapper_) {
-    Blockly.unbindEvent_(Blockly.onMouseMoveWrapper_);
-    Blockly.onMouseMoveWrapper_ = null;
-  }
-};
-
-/**
- * Handle a mouse-move on SVG drawing surface.
- * @param {!Event} e Mouse move event.
- * @private
- */
-Blockly.onMouseMove_ = function(e) {
-  var workspace = Blockly.getMainWorkspace();
-  if (workspace.dragMode_ != Blockly.DRAG_NONE) {
-    var dx = e.clientX - workspace.startDragMouseX;
-    var dy = e.clientY - workspace.startDragMouseY;
-    var x = workspace.startScrollX + dx;
-    var y = workspace.startScrollY + dy;
-    workspace.scroll(x, y);
-    // Cancel the long-press if the drag has moved too far.
-    if (Math.sqrt(dx * dx + dy * dy) > Blockly.DRAG_RADIUS) {
-      Blockly.longStop_();
-      workspace.dragMode_ = Blockly.DRAG_FREE;
-    }
-    e.stopPropagation();
-    e.preventDefault();
-  }
-};
-
-/**
  * Clear the touch identifier that tracks which touch stream to pay attention
  * to.  This ends the current drag/gesture and allows other pointers to be
  * captured.
@@ -179,6 +128,20 @@ Blockly.Touch.shouldHandleEvent = function(e) {
 };
 
 /**
+ * Get the touch identifier from the given event.  If it was a mouse event, the
+ * identifier is the string 'mouse'.
+ * @param {!Event} e Mouse event or touch event.
+ * @return {string} The touch identifier from the first changed touch, if
+ *     defined.  Otherwise 'mouse'.
+ */
+Blockly.Touch.getTouchIdentifierFromEvent = function(e) {
+  return (e.changedTouches && e.changedTouches[0] &&
+      e.changedTouches[0].identifier != undefined &&
+      e.changedTouches[0].identifier != null) ?
+      e.changedTouches[0].identifier : 'mouse';
+};
+
+/**
  * Check whether the touch identifier on the event matches the current saved
  * identifier.  If there is no identifier, that means it's a mouse event and
  * we'll use the identifier "mouse".  This means we won't deal well with
@@ -191,10 +154,7 @@ Blockly.Touch.shouldHandleEvent = function(e) {
  *     saved identifier.
  */
 Blockly.Touch.checkTouchIdentifier = function(e) {
-  var identifier = (e.changedTouches && e.changedTouches[0] &&
-        e.changedTouches[0].identifier != undefined &&
-        e.changedTouches[0].identifier != null) ?
-        e.changedTouches[0].identifier : 'mouse';
+  var identifier = Blockly.Touch.getTouchIdentifierFromEvent(e);
 
   // if (Blockly.touchIdentifier_ )is insufficient because android touch
   // identifiers may be zero.

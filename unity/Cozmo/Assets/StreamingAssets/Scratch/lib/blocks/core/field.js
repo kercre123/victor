@@ -28,6 +28,8 @@
 
 goog.provide('Blockly.Field');
 
+goog.require('Blockly.Gesture');
+
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.math.Size');
@@ -77,7 +79,7 @@ Blockly.Field.cacheReference_ = 0;
 /**
  * Name of field.  Unique within each block.
  * Static labels are usually unnamed.
- * @type {string=}
+ * @type {string|undefined}
  */
 Blockly.Field.prototype.name = undefined;
 
@@ -173,21 +175,28 @@ Blockly.Field.prototype.init = function() {
 
   this.updateEditable();
   this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
-  this.mouseUpWrapper_ =
-      Blockly.bindEventWithChecks_(this.getClickTarget_(), 'mouseup', this,
-      this.onMouseUp_);
   // Force a render.
   this.render_();
   this.size_.width = 0;
+  this.mouseDownWrapper_ =
+      Blockly.bindEventWithChecks_(this.fieldGroup_, 'mousedown', this,
+      this.onMouseDown_);
+};
+
+/**
+ * Initializes the model of the field after it has been installed on a block.
+ * No-op by default.
+ */
+Blockly.Field.prototype.initModel = function() {
 };
 
 /**
  * Dispose of all DOM objects belonging to this editable field.
  */
 Blockly.Field.prototype.dispose = function() {
-  if (this.mouseUpWrapper_) {
-    Blockly.unbindEvent_(this.mouseUpWrapper_);
-    this.mouseUpWrapper_ = null;
+  if (this.mouseDownWrapper_) {
+    Blockly.unbindEvent_(this.mouseDownWrapper_);
+    this.mouseDownWrapper_ = null;
   }
   this.sourceBlock_ = null;
   goog.dom.removeNode(this.fieldGroup_);
@@ -213,6 +222,17 @@ Blockly.Field.prototype.updateEditable = function() {
     Blockly.utils.removeClass(group, 'blocklyEditableText');
     this.fieldGroup_.style.cursor = '';
   }
+};
+
+/**
+ * Check whether this field is currently editable.  Some fields are never
+ * editable (e.g. text labels).  Those fields are not serialized to XML.  Other
+ * fields may be editable, and therefore serialized, but may exist on
+ * non-editable blocks.
+ * @return {boolean} whether this field is editable and on an editable block
+ */
+Blockly.Field.prototype.isCurrentlyEditable = function() {
+  return this.EDITABLE && !!this.sourceBlock_ && this.sourceBlock_.isEditable();
 };
 
 /**
@@ -329,38 +349,17 @@ Blockly.Field.prototype.getSvgRoot = function() {
  * @private
  */
 Blockly.Field.prototype.render_ = function() {
-  var width = 0;
-
   if (this.visible_ && this.textElement_) {
     // Replace the text.
     goog.dom.removeChildren(/** @type {!Element} */ (this.textElement_));
     var textNode = document.createTextNode(this.getDisplayText_());
     this.textElement_.appendChild(textNode);
-
-    // Calculate width of field
-    width = Blockly.Field.getCachedWidth(this.textElement_);
-
-    // Add padding to left and right of text.
-    if (this.EDITABLE) {
-      width += Blockly.BlockSvg.EDITABLE_FIELD_PADDING;
-    }
-
-    // Adjust width for drop-down arrows.
-    var arrowWidth = 0;
-    if (this.positionArrow) {
-      arrowWidth = this.positionArrow(width);
-      width += arrowWidth;
-    }
-
-    // Add padding to any drawn box.
-    if (this.box_) {
-      width += 2 * Blockly.BlockSvg.BOX_FIELD_PADDING;
-    }
+    this.updateWidth();
 
     // Update text centering, based on newly calculated width.
-    var centerTextX = (width - arrowWidth) / 2;
+    var centerTextX = (this.size_.width - this.arrowWidth_) / 2;
     if (this.sourceBlock_.RTL) {
-      centerTextX += arrowWidth;
+      centerTextX += this.arrowWidth_;
     }
 
     // In a text-editing shadow block's field,
@@ -373,7 +372,7 @@ Blockly.Field.prototype.render_ = function() {
         // X position starts at the left edge of the block, in both RTL and LTR.
         // First offset by the width of the block to move to the right edge,
         // and then subtract to move to the same position as LTR.
-        var minCenter = width - minOffset;
+        var minCenter = this.size_.width - minOffset;
         centerTextX = Math.min(minCenter, centerTextX);
       } else {
         // (width / 2) should exceed Blockly.BlockSvg.FIELD_WIDTH / 2
@@ -386,14 +385,42 @@ Blockly.Field.prototype.render_ = function() {
     this.textElement_.setAttribute('x', centerTextX);
   }
 
-  // Set width of the field.
-  this.size_.width = width;
-
   // Update any drawn box to the correct width and height.
   if (this.box_) {
     this.box_.setAttribute('width', this.size_.width);
     this.box_.setAttribute('height', this.size_.height);
   }
+};
+
+/**
+ * Updates thw width of the field. This calls getCachedWidth which won't cache
+ * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
+ * it eventually does succeed, the result will be cached.
+ **/
+Blockly.Field.prototype.updateWidth = function() {
+  var width = Blockly.Field.getCachedWidth(this.textElement_);
+  // Calculate width of field
+  width = Blockly.Field.getCachedWidth(this.textElement_);
+
+  // Add padding to left and right of text.
+  if (this.EDITABLE) {
+    width += Blockly.BlockSvg.EDITABLE_FIELD_PADDING;
+  }
+
+  // Adjust width for drop-down arrows.
+  this.arrowWidth_ = 0;
+  if (this.positionArrow) {
+    this.arrowWidth_ = this.positionArrow(width);
+    width += this.arrowWidth_;
+  }
+
+  // Add padding to any drawn box.
+  if (this.box_) {
+    width += 2 * Blockly.BlockSvg.BOX_FIELD_PADDING;
+  }
+
+  // Set width of the field.
+  this.size_.width = width;
 };
 
 /**
@@ -403,20 +430,31 @@ Blockly.Field.prototype.render_ = function() {
  */
 Blockly.Field.getCachedWidth = function(textElement) {
   var key = textElement.textContent + '\n' + textElement.className.baseVal;
-  if (Blockly.Field.cacheWidths_ && Blockly.Field.cacheWidths_[key]) {
-    var width = Blockly.Field.cacheWidths_[key];
-  } else {
-    try {
-      var width = textElement.getComputedTextLength();
-    } catch (e) {
-      // MSIE 11 is known to throw "Unexpected call to method or property
-      // access." if Blockly is hidden.
-      var width = textElement.textContent.length * 8;
-    }
+  var width;
 
-    if (Blockly.Field.cacheWidths_) {
-      Blockly.Field.cacheWidths_[key] = width;
+  // Return the cached width if it exists.
+  if (Blockly.Field.cacheWidths_) {
+    width = Blockly.Field.cacheWidths_[key];
+    if (width) {
+      return width;
     }
+  }
+
+  // Attempt to compute fetch the width of the SVG text element.
+  try {
+    width = textElement.getComputedTextLength();
+  } catch (e) {
+    // MSIE 11 and Edge are known to throw "Unexpected call to method or
+    // property access." if the block is hidden. Instead, use an
+    // approximation and do not cache the result. At some later point in time
+    // when the block is inserted into the visible DOM, this method will be
+    // called again and, at that point in time, will not throw an exception.
+    return textElement.textContent.length * 8;
+  }
+
+  // Cache the computed width and return.
+  if (Blockly.Field.cacheWidths_) {
+    Blockly.Field.cacheWidths_[key] = width;
   }
   return width;
 };
@@ -517,6 +555,7 @@ Blockly.Field.prototype.setText = function(newText) {
   this.text_ = newText;
   // Set width to 0 to force a rerender of this field.
   this.size_.width = 0;
+
   if (this.sourceBlock_ && this.sourceBlock_.rendered) {
     this.sourceBlock_.render();
     this.sourceBlock_.bumpNeighbours_();
@@ -591,31 +630,20 @@ Blockly.Field.prototype.setValue = function(newValue) {
 };
 
 /**
- * Handle a mouse up event on an editable field.
- * @param {!Event} e Mouse up event.
+ * Handle a mouse down event on a field.
+ * @param {!Event} e Mouse down event.
  * @private
  */
-Blockly.Field.prototype.onMouseUp_ = function(e) {
-  if ((goog.userAgent.IPHONE || goog.userAgent.IPAD) &&
-      !goog.userAgent.isVersionOrHigher('537.51.2') &&
-      e.layerX !== 0 && e.layerY !== 0) {
-    // Old iOS spawns a bogus event on the next touch after a 'prompt()' edit.
-    // Unlike the real events, these have a layerX and layerY set.
+Blockly.Field.prototype.onMouseDown_ = function(e) {
+  if (!this.sourceBlock_ || !this.sourceBlock_.workspace) {
     return;
-  } else if (Blockly.utils.isRightButton(e)) {
-    // Right-click.
-    return;
-  } else if (this.sourceBlock_.workspace.isDragging()) {
-    // Drag operation is concluding.  Don't open the editor.
-    return;
-  } else if (this.sourceBlock_.isEditable()) {
-    // Non-abstract sub-classes must define a showEditor_ method.
-    this.showEditor_();
-    // The field is handling the touch, but we also want the blockSvg onMouseUp
-    // handler to fire, so we will leave the touch identifier as it is.
-    // The next onMouseUp is responsible for nulling it out.
+  }
+  var gesture = this.sourceBlock_.workspace.getGesture(e);
+  if (gesture) {
+    gesture.setStartField(this);
   }
 };
+
 
 /**
  * Change the tooltip text for this field.

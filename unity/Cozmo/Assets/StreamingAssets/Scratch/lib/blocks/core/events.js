@@ -293,6 +293,8 @@ Blockly.Events.fromJson = function(json, workspace) {
  * @constructor
  */
 Blockly.Events.Abstract = function(block) {
+  // *** ANKI Change ***
+  // Add check that block.workspace is non-null to avoid crash when dereferenced.
   if (block && block.workspace) {
     this.blockId = block.id;
     this.workspaceId = block.workspace.id;
@@ -355,7 +357,12 @@ Blockly.Events.Create = function(block) {
     return;  // Blank event to be populated by fromJson.
   }
   Blockly.Events.Create.superClass_.constructor.call(this, block);
-  this.xml = Blockly.Xml.blockToDomWithXY(block);
+
+  if (block.workspace.rendered) {
+    this.xml = Blockly.Xml.blockToDomWithXY(block);
+  } else {
+    this.xml = Blockly.Xml.blockToDom(block);
+  }
   this.ids = Blockly.Events.getDescendantIds_(block);
 };
 goog.inherits(Blockly.Events.Create, Blockly.Events.Abstract);
@@ -424,7 +431,12 @@ Blockly.Events.Delete = function(block) {
     throw 'Connected blocks cannot be deleted.';
   }
   Blockly.Events.Delete.superClass_.constructor.call(this, block);
-  this.oldXml = Blockly.Xml.blockToDomWithXY(block);
+
+  if (block.workspace.rendered) {
+    this.oldXml = Blockly.Xml.blockToDomWithXY(block);
+  } else {
+    this.oldXml = Blockly.Xml.blockToDom(block);
+  }
   this.ids = Blockly.Events.getDescendantIds_(block);
 };
 goog.inherits(Blockly.Events.Delete, Blockly.Events.Abstract);
@@ -812,7 +824,7 @@ Blockly.Events.disableOrphans = function(event) {
           child.setDisabled(false);
         }
       } else if ((block.outputConnection || block.previousConnection) &&
-                 Blockly.dragMode_ == Blockly.DRAG_NONE) {
+                 !workspace.isDragging()) {
         do {
           block.setDisabled(true);
           block = block.getNextBlock();

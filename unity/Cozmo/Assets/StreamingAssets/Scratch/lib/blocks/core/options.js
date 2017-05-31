@@ -49,14 +49,14 @@ Blockly.Options = function(options) {
     if (!options['toolbox']) {
       var oParser = new DOMParser();
       var dom = oParser.parseFromString(Blockly.Blocks.defaultToolbox, 'text/xml');
-      options['toolbox'] = dom.children[0];
+      options['toolbox'] = dom.documentElement;
     }
     var languageTree = Blockly.Options.parseToolboxTree(options['toolbox']);
     var hasCategories = Boolean(languageTree &&
         languageTree.getElementsByTagName('category').length);
     var hasTrashcan = options['trashcan'];
     if (hasTrashcan === undefined) {
-      hasTrashcan = hasCategories;
+      hasTrashcan = false;
     }
     var hasCollapse = options['collapse'];
     if (hasCollapse === undefined) {

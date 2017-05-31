@@ -181,7 +181,8 @@ Blockly.Toolbox.prototype.createFlyout_ = function() {
 Blockly.Toolbox.prototype.populate_ = function(newTree) {
   this.categoryMenu_.populate(newTree);
 
-  // Anki: Hack to set default category
+  // *** ANKI CHANGE ***
+  // Hack to set default category
   // Here we set the default category to the motion blocks category.
   this.setSelectedItem(this.categoryMenu_.categories_[0]);
 };
@@ -243,7 +244,43 @@ Blockly.Toolbox.prototype.clearSelection = function() {
 };
 
 /**
- * Return the deletion rectangle for this toolbar in viewport coordinates.\
+ * Adds styles on the toolbox indicating blocks will be deleted.
+ * @package
+ */
+Blockly.Toolbox.prototype.addDeleteStyle = function() {
+  Blockly.utils.addClass(/** @type {!Element} */ (this.HtmlDiv),
+                         'blocklyToolboxDelete');
+};
+
+/**
+ * Remove styles from the toolbox that indicate blocks will be deleted.
+ * @package
+ */
+Blockly.Toolbox.prototype.removeDeleteStyle = function() {
+  Blockly.utils.removeClass(/** @type {!Element} */ (this.HtmlDiv),
+                            'blocklyToolboxDelete');
+};
+
+/**
+ * Adds styles on the toolbox indicating blocks will be deleted.
+ * @package
+ */
+Blockly.Toolbox.prototype.addDeleteStyle = function() {
+  Blockly.utils.addClass(/** @type {!Element} */ (this.HtmlDiv),
+                         'blocklyToolboxDelete');
+};
+
+/**
+ * Remove styles from the toolbox that indicate blocks will be deleted.
+ * @package
+ */
+Blockly.Toolbox.prototype.removeDeleteStyle = function() {
+  Blockly.utils.removeClass(/** @type {!Element} */ (this.HtmlDiv),
+                            'blocklyToolboxDelete');
+};
+
+/**
+ * Return the deletion rectangle for this toolbox.
  * @return {goog.math.Rect} Rectangle in which to delete.
  */
 Blockly.Toolbox.prototype.getClientRect = function() {
@@ -259,7 +296,8 @@ Blockly.Toolbox.prototype.getClientRect = function() {
 
   var x = toolboxRect.left;
 
-  // Anki change: after adding categories, delete area was not tall enough.
+  // *** ANKI CHANGE ***
+  // After adding categories, delete area was not tall enough.
   // Here we increase it by adding the flyout height plus some extra.
   var y = toolboxRect.top - 1.25*this.flyout_.getHeight(); 
 
@@ -312,6 +350,8 @@ Blockly.Toolbox.prototype.setSelectedItem = function(item) {
       return;
     }
     // They selected a different category but one was already open.  Close it.
+    // *** ANKI CHANGE ***
+    // Play sound when category is selected.
     this.workspace_.playAudio("click");
     this.selectedItem_.setSelected(false);
   }
@@ -381,6 +421,9 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     return;
   }
 
+  // Remove old categories
+  this.dispose();
+  this.createDom();
   var categories = [];
   // Find actual categories from the DOM tree.
   for (var i = 0, child; child = domTree.childNodes[i]; i++) {
@@ -390,7 +433,8 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
     categories.push(child);
   }
 
-  // Anki: Create 1 row for categories
+  // *** ANKI CHANGE ***
+  // Create 1 row for categories
   var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
   this.table.appendChild(row);
   for (var a = 0; a < categories.length; a ++) {
@@ -430,6 +474,7 @@ Blockly.Toolbox.CategoryMenu.prototype.dispose = function() {
   for (var i = 0, category; category = this.categories_[i]; i++) {
     category.dispose();
   }
+  this.categories_ = [];
   if (this.table) {
     goog.dom.removeNode(this.table);
     this.table = null;
@@ -478,13 +523,14 @@ Blockly.Toolbox.Category.prototype.dispose = function() {
 Blockly.Toolbox.Category.prototype.createDom = function() {
   var toolbox = this.parent_.parent_;
   this.item_ = goog.dom.createDom('td',
-      {'class': 'scratchCategoryMenuItem'});
+      {'class': 'scratchCategoryMenuItem'}); // *** ANKI CHANGE ***
   this.bubble_ = goog.dom.createDom('div', {
     'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
-    'scratchCategoryItemBubbleLTR'}, this.name_.toUpperCase());
+    'scratchCategoryItemBubbleLTR'}, this.name_.toUpperCase()); // *** ANKI CHANGE ***
   this.bubble_.style.backgroundColor = this.colour_;
   this.bubble_.style.borderColor = this.secondaryColour_;
   
+  // *** ANKI CHANGE ***
   if (window.innerWidth > window.TABLET_WIDTH) {
     this.bubble_.style.fontSize = "14px";
     this.bubble_.style.width = "130px";
@@ -525,6 +571,7 @@ Blockly.Toolbox.Category.prototype.parseContents_ = function(domTree) {
       case 'SHADOW':
       case 'LABEL':
       case 'BUTTON':
+      case 'SEP':
       case 'TEXT':
         this.contents_.push(child);
         break;

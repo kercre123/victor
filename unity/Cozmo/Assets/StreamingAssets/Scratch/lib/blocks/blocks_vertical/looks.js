@@ -169,39 +169,15 @@ Blockly.Blocks['looks_hide'] = {
   }
 };
 
-Blockly.Blocks['looks_effectmenu'] = {
-  /**
-   * Graphic effects drop-down menu.
-   * @this Blockly.Block
-   */
-  init: function() {
-    this.jsonInit(
-      {
-        "message0": "%1",
-        "args0": [
-          {
-            "type": "field_dropdown",
-            "name": "EFFECT",
-            "options": [
-              ['color', 'COLOR'],
-              ['fisheye', 'FISHEYE'],
-              ['whirl', 'WHIRL'],
-              ['pixelate', 'PIXELATE'],
-              ['mosaic', 'MOSAIC'],
-              ['brightness', 'BRIGHTNESS'],
-              ['ghost', 'GHOST']
-            ]
-          }
-        ],
-        "inputsInline": true,
-        "output": "String",
-        "colour": Blockly.Colours.looks.secondary,
-        "colourSecondary": Blockly.Colours.looks.secondary,
-        "colourTertiary": Blockly.Colours.looks.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
-      });
-  }
-};
+Blockly.Blocks['looks_effect_menu_options'] = [
+  ['color', 'COLOR'],
+  ['fisheye', 'FISHEYE'],
+  ['whirl', 'WHIRL'],
+  ['pixelate', 'PIXELATE'],
+  ['mosaic', 'MOSAIC'],
+  ['brightness', 'BRIGHTNESS'],
+  ['ghost', 'GHOST']
+];
 
 Blockly.Blocks['looks_changeeffectby'] = {
   /**
@@ -210,11 +186,12 @@ Blockly.Blocks['looks_changeeffectby'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "change effect %1 by %2",
+      "message0": "change %1 effect by %2",
       "args0": [
         {
-          "type": "input_value",
-          "name": "EFFECT"
+          "type": "field_dropdown",
+          "name": "EFFECT",
+          "options": Blockly.Blocks['looks_effect_menu_options']
         },
         {
           "type": "input_value",
@@ -239,11 +216,12 @@ Blockly.Blocks['looks_seteffectto'] = {
    */
   init: function() {
     this.jsonInit({
-      "message0": "set effect %1 to %2",
+      "message0": "set %1 effect to %2",
       "args0": [
         {
-          "type": "input_value",
-          "name": "EFFECT"
+          "type": "field_dropdown",
+          "name": "EFFECT",
+          "options": Blockly.Blocks['looks_effect_menu_options']
         },
         {
           "type": "input_value",

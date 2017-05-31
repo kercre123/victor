@@ -32,6 +32,7 @@ goog.require('Blockly.Colours');
 
 goog.require('Blockly.constants');
 
+// *** ANKI Change ***
 var MAX_TEXT_LENGTH = 32;
 
 Blockly.Blocks['text'] = {
@@ -55,6 +56,7 @@ Blockly.Blocks['text'] = {
   }
 };
 
+// *** ANKI Change ***
 // Same as text block above, with a validator added
 Blockly.Blocks['text_with_validator'] = {
   /**

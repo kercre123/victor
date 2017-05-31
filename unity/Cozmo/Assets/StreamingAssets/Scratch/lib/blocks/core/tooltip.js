@@ -29,6 +29,10 @@
  */
 'use strict';
 
+/**
+ * @name Blockly.Tooltip
+ * @namespace
+ **/
 goog.provide('Blockly.Tooltip');
 
 goog.require('goog.dom');
@@ -39,6 +43,13 @@ goog.require('goog.dom.TagName');
  * Is a tooltip currently showing?
  */
 Blockly.Tooltip.visible = false;
+
+/**
+ * Is someone else blocking the tooltip from being shown?
+ * @type {boolean}
+ * @private
+ */
+Blockly.Tooltip.blocked_ = false;
 
 /**
  * Maximum width (in characters) of a tooltip.
@@ -149,9 +160,16 @@ Blockly.Tooltip.bindMouseEvents = function(element) {
  * @private
  */
 Blockly.Tooltip.onMouseOver_ = function(e) {
+  if (Blockly.Tooltip.blocked_) {
+    // Someone doesn't want us to show tooltips.
+    return;
+  }
   // If the tooltip is an object, treat it as a pointer to the next object in
   // the chain to look at.  Terminate when a string or function is found.
   var element = e.target;
+
+  // *** ANKI CHANGE ***
+  // Check that element is non-null to prevent error when user switches categories when tooltip displays
   while (element && !goog.isString(element.tooltip) && !goog.isFunction(element.tooltip)) {
     element = element.tooltip;
   }
@@ -170,6 +188,10 @@ Blockly.Tooltip.onMouseOver_ = function(e) {
  * @private
  */
 Blockly.Tooltip.onMouseOut_ = function(/*e*/) {
+  if (Blockly.Tooltip.blocked_) {
+    // Someone doesn't want us to show tooltips.
+    return;
+  }
   // Moving from one element to another (overlapping or with no gap) generates
   // a mouseOut followed instantly by a mouseOver.  Fork off the mouseOut
   // event and kill it if a mouseOver is received immediately.
@@ -192,11 +214,12 @@ Blockly.Tooltip.onMouseMove_ = function(e) {
   if (!Blockly.Tooltip.element_ || !Blockly.Tooltip.element_.tooltip) {
     // No tooltip here to show.
     return;
-  } else if (Blockly.dragMode_ != Blockly.DRAG_NONE) {
-    // Don't display a tooltip during a drag.
-    return;
   } else if (Blockly.WidgetDiv.isVisible()) {
     // Don't display a tooltip if a widget is open (tooltip would be under it).
+    return;
+  } else if (Blockly.Tooltip.blocked_) {
+    // Someone doesn't want us to show tooltips.  We are probably handling a
+    // user gesture, such as a click or drag.
     return;
   }
   if (Blockly.Tooltip.visible) {
@@ -212,15 +235,17 @@ Blockly.Tooltip.onMouseMove_ = function(e) {
     clearTimeout(Blockly.Tooltip.showPid_);
     // Maybe this time the mouse will stay put.  Schedule showing of tooltip.
 
-    // ANKI: yOffset is used to position the tooltip to appear at the upper right corner of the touch location.
+    // *** ANKI CHANGE ***
+    // yOffset is used to position the tooltip to appear at the upper right corner of the touch location.
     var yOffset = 70;
     if (window.innerWidth < window.TABLET_WIDTH) {
       yOffset = 50;
     }
 
-    // ANKI: The following two lines were set to e.pageX and e.pageY but those values are undefined for mobile.
-    Blockly.Tooltip.lastX_ = e.targetTouches[0].clientX;
-    Blockly.Tooltip.lastY_ = e.targetTouches[0].clientY - yOffset;
+    // *** ANKI CHANGE ***
+    // The following two lines were set to e.pageX and e.pageY but those values are undefined for mobile.
+    Blockly.Tooltip.lastX_ = e.changedTouches[0].clientX;
+    Blockly.Tooltip.lastY_ = e.changedTouches[0].clientY - yOffset;
 
     Blockly.Tooltip.showPid_ =
         setTimeout(Blockly.Tooltip.show_, Blockly.Tooltip.HOVER_MS);
@@ -241,10 +266,33 @@ Blockly.Tooltip.hide = function() {
 };
 
 /**
+ * Hide any in-progress tooltips and block showing new tooltips until the next
+ * call to unblock().
+ * @package
+ */
+Blockly.Tooltip.block = function() {
+  Blockly.Tooltip.hide();
+  Blockly.Tooltip.blocked_ = true;
+};
+
+/**
+ * Unblock tooltips: allow them to be scheduled and shown according to their own
+ * logic.
+ * @package
+ */
+Blockly.Tooltip.unblock = function() {
+  Blockly.Tooltip.blocked_ = false;
+};
+
+/**
  * Create the tooltip and show it.
  * @private
  */
 Blockly.Tooltip.show_ = function() {
+  if (Blockly.Tooltip.blocked_) {
+    // Someone doesn't want us to show tooltips.
+    return;
+  }
   Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
   if (!Blockly.Tooltip.DIV) {
     return;
