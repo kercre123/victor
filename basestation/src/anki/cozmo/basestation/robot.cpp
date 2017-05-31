@@ -543,22 +543,22 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
     }
   }
-  else if(currFacePlant
-          && _awaitingConfirmationTreadState != OffTreadsState::OnFace)
-  {
-    // Transition to Robot on Face
-    _awaitingConfirmationTreadState = OffTreadsState::OnFace;
-    _timeOffTreadStateChanged_ms = currentTimestamp;
+  else if(currFacePlant) {
+    if (_awaitingConfirmationTreadState != OffTreadsState::OnFace) {
+      // Transition to Robot on Face
+      _awaitingConfirmationTreadState = OffTreadsState::OnFace;
+      _timeOffTreadStateChanged_ms = currentTimestamp;
+    }
   }
-  else if(currOnBack
-          && _awaitingConfirmationTreadState != OffTreadsState::OnBack)
-  {
-    // Transition to Robot on Back
-    _awaitingConfirmationTreadState = OffTreadsState::OnBack;
-    // On Back is a special case as it is also an intermediate state for coming from onface -> ontreads. hence we wait a little longer than usual(kRobotTimeToConsiderOfftreads_ms) to check if it's on back.
-    _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
+  else if(currOnBack) {
+    if (_awaitingConfirmationTreadState != OffTreadsState::OnBack) {
+      // Transition to Robot on Back
+      _awaitingConfirmationTreadState = OffTreadsState::OnBack;
+      // On Back is a special case as it is also an intermediate state for coming from onface -> ontreads. hence we wait a little longer than usual(kRobotTimeToConsiderOfftreads_ms) to check if it's on back.
+      _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
+    }
   }
-  else if(currOnSide){
+  else if(currOnSide) {
     if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
        && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
     {
@@ -571,12 +571,13 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _timeOffTreadStateChanged_ms = currentTimestamp;
     }
   }
-  else if(currOntreads
-          && _awaitingConfirmationTreadState != OffTreadsState::InAir
-          && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
-  {
-    _awaitingConfirmationTreadState = OffTreadsState::InAir;
-    _timeOffTreadStateChanged_ms = currentTimestamp;
+  else if(currOntreads) {
+    if (_awaitingConfirmationTreadState != OffTreadsState::InAir
+        && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
+    {
+      _awaitingConfirmationTreadState = OffTreadsState::InAir;
+      _timeOffTreadStateChanged_ms = currentTimestamp;
+    }
   }// end if(isFalling)
     
   /////
