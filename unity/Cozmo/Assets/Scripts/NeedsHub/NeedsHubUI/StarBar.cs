@@ -46,6 +46,8 @@ namespace Cozmo.Needs.UI {
                             NeedsRewardModal needsModal = (NeedsRewardModal)newModal;
                             needsModal.Init(message.rewards);
                           });
+      // TODO: some animation growing the bar exploding and resetting to next level.
+      UpdateBar(0, message.starsRequiredForNextUnlock);
     }
 
     private void UpdateBar(int currSegments, int maxSegments) {
