@@ -54,6 +54,15 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDance = {
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersDance),
               "Reaction triggers duplicate or non-sequential");
+  
+const std::vector<CubeAnimationTrigger> kDanceCubeAnims = {
+  CubeAnimationTrigger::Dance_01,
+  CubeAnimationTrigger::Dance_02,
+  CubeAnimationTrigger::Dance_03,
+  CubeAnimationTrigger::Dance_04,
+  CubeAnimationTrigger::Dance_05,
+  CubeAnimationTrigger::Dance_06
+};
 }
     
 BehaviorDance::BehaviorDance(Robot& robot, const Json::Value& config)
@@ -84,6 +93,8 @@ Result BehaviorDance::InitInternal(Robot& robot)
     CubeLightComponent::AnimCompletedCallback animCompleteCallback = [this, objectID, &robot](){
       CubeAnimComplete(robot, objectID);
     };
+    
+    _lastAnimTrigger[objectID] = CubeAnimationTrigger::Count;
     
     const CubeAnimationTrigger trigger = GetRandomAnimTrigger(robot,
                                                               CubeAnimationTrigger::Count);
@@ -169,35 +180,25 @@ void BehaviorDance::CubeAnimComplete(Robot& robot, const ObjectID& objectID)
 CubeAnimationTrigger BehaviorDance::GetRandomAnimTrigger(Robot& robot,
                                                          const CubeAnimationTrigger& prevTrigger) const
 {
-  // Pick a random dancing animation trigger that is not the prevTrigger
-  CubeAnimationTrigger trigger = prevTrigger;
-  while(trigger == prevTrigger)
+  std::set<CubeAnimationTrigger> triggersInUse;
+  for(const auto& trigger : _lastAnimTrigger)
   {
-    const int rand = robot.GetRNG().RandInt(6);
-    switch(rand)
-    {
-      case 0:
-        trigger = CubeAnimationTrigger::Dance_01;
-        break;
-      case 1:
-        trigger = CubeAnimationTrigger::Dance_02;
-        break;
-      case 2:
-        trigger = CubeAnimationTrigger::Dance_03;
-        break;
-      case 3:
-        trigger = CubeAnimationTrigger::Dance_04;
-        break;
-      case 4:
-        trigger = CubeAnimationTrigger::Dance_05;
-        break;
-      case 5:
-        trigger = CubeAnimationTrigger::Dance_06;
-        break;
-      default:
-        DEV_ASSERT(false, "BehaviorDance.GetRandomAnimTrigger.UnexpectedValue");
-        trigger = CubeAnimationTrigger::Dance_01;
-    }
+    triggersInUse.insert(trigger.second);
+  }
+  
+  // Need to have less than kNumDanceTriggers in use otherwise the while loop
+  // will never end
+  const size_t kNumDanceAnims = kDanceCubeAnims.size();
+  DEV_ASSERT(triggersInUse.size() < kNumDanceAnims,
+             "BehaviorDance.GetRandomAnimTrigger.NoPossibleTriggers");
+  
+  // Pick a random dancing animation trigger that is not currently in use
+  CubeAnimationTrigger trigger = prevTrigger;
+  const u32 kBoundedWhileLoops = 100;
+  BOUNDED_WHILE(kBoundedWhileLoops, triggersInUse.count(trigger) > 0)
+  {
+    const int rand = robot.GetRNG().RandInt(static_cast<int>(kNumDanceAnims));
+    trigger = kDanceCubeAnims[rand];
   }
   
   return trigger;

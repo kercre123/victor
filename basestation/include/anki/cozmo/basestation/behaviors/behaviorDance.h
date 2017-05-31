@@ -37,7 +37,7 @@ private:
   // when the previous one completes
   void CubeAnimComplete(Robot& robot, const ObjectID& objectID);
   
-  // Returns a random dancing related cube animation trigger that is not the same as prevTrigger
+  // Returns a random dancing related cube animation trigger that is not currently being played
   CubeAnimationTrigger GetRandomAnimTrigger(Robot& robot, const CubeAnimationTrigger& prevTrigger) const;
   
   // Map to store the last CubeAnimationTrigger that was played
