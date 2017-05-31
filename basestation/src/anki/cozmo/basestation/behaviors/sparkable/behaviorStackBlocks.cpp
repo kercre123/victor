@@ -266,7 +266,6 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
   SET_STATE(PlayingFinalAnim);
   
   BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
-  NeedActionCompleted(NeedsActionId::StackCube);
   if(!_shouldStreamline){
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
     IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
