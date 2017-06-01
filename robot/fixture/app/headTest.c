@@ -157,9 +157,12 @@ void HeadESPSelfTest(void)
   int len = strlen(line), mem_err_cnt = 0, mem_ok = 0;
   while(len)
   {
-    if( !strcmp("Memtest PASS", line) )
+    const char message_pass[] = "Memtest PASS";
+    if( !strncmp(message_pass, line, strlen(message_pass)) )
       mem_ok = 1;
-    if( !strcmp("Memory Error", line) )
+    
+    const char message_err[]  = "Memory Error";
+    if( !strncmp(message_err, line, strlen(message_err)) )
       mem_err_cnt++;
     
     ConsolePrintf("  %s\r\n", line);
