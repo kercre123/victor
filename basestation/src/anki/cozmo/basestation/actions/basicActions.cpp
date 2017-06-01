@@ -1908,7 +1908,7 @@ namespace Anki {
                         "id %s returned null",
                         _obsFaceID.GetDebugStr().c_str()) ) {
           // Valid face...        
-          _robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
+          _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
           Pose3d pose;
           if(true == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), pose)) {
             _robot.GetMoodManager().TriggerEmotionEvent("LookAtFaceVerified", MoodManager::GetCurrentTimeInSeconds());
@@ -2037,7 +2037,7 @@ namespace Anki {
             // Wait for say name action to finish
             result = _action->Update();
             if( ActionResult::SUCCESS == result ) {
-              _robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::SayName);
+              _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SayName);
             }
           }
             

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -154,7 +155,7 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Robot& r
       // Only if stacked directly, not pyramid.
       if(Util::IsNearZero(_params.placementOffsetX_mm) && Util::IsNearZero(_params.placementOffsetY_mm))
       {
-        robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::StackCube);
+        robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::StackCube);
       }
       _status = BehaviorStatus::Complete;
       break;

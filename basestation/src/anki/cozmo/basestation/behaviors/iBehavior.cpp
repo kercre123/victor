@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -783,7 +784,7 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::NeedActionCompleted(const NeedsActionId needActionId)
 {
-  _robot.GetNeedsManager().RegisterNeedsActionCompleted(needActionId);
+  _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needActionId);
 }
   
   

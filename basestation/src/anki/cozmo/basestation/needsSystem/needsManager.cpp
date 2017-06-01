@@ -191,8 +191,9 @@ namespace {
   CONSOLE_VAR(bool, kUseNeedManager, "Needs", false);
 };
 
-NeedsManager::NeedsManager(Robot& robot)
-: _robot(robot)
+NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
+: _cozmoContext(cozmoContext)
+, _robot(nullptr)
 , _needsState()
 , _needsStateFromRobot()
 , _needsConfig()
@@ -214,7 +215,7 @@ NeedsManager::NeedsManager(Robot& robot)
 , _timeForNextPeriodicDecay_s(0.0f)
 , _pausedDurRemainingPeriodicDecay(0.0f)
 , _signalHandles()
-, kPathToSavedStateFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
+, kPathToSavedStateFile((cozmoContext->GetDataPlatform() != nullptr ? cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
 {
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
@@ -265,9 +266,9 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
   }
 
   // Subscribe to messages
-  if (_robot.HasExternalInterface())
+  if (_cozmoContext->GetExternalInterface() != nullptr)
   {
-    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+    auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
@@ -278,13 +279,6 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
   }
 
-  // Subscribe to message from robot to get serial number;
-  // when we receive this message we will continue the initialization process
-  RobotInterface::MessageHandler *messageHandler = _robot.GetContext()->GetRobotManager()->GetMsgHandler();
-  _signalHandles.push_back(messageHandler->Subscribe(_robot.GetID(),
-                                                     RobotInterface::RobotToEngineTag::mfgId,
-                                                     std::bind(&NeedsManager::HandleMfgID, this, std::placeholders::_1)));
-  
 #if ANKI_DEV_CHEATS
   g_DebugNeedsManager = this;
 #endif
@@ -293,11 +287,24 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
 
 void NeedsManager::InitAfterConnection()
 {
+  _robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
+
+  // Subscribe to message from robot to get serial number;
+  // when we receive this message we will continue the initialization process
+  RobotInterface::MessageHandler *messageHandler = _cozmoContext->GetRobotManager()->GetMsgHandler();
+  _signalHandles.push_back(messageHandler->Subscribe(_robot->GetID(),
+                                                     RobotInterface::RobotToEngineTag::mfgId,
+                                                     std::bind(&NeedsManager::HandleMfgID, this, std::placeholders::_1)));
+}
+
+
+void NeedsManager::InitAfterSerialNumberAcquired()
+{
   if( !kUseNeedManager )
     return;
-  
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterConnection",
-                      "Starting MAIN Init of NeedsManager, with serial number %d", _robot.GetBodySerialNumber());
+
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterSerialNumberAcquired",
+                      "Starting MAIN Init of NeedsManager, with serial number %d", _robot->GetBodySerialNumber());
 
   // First, see if the device has valid stored state, and if so load it
   _deviceHadValidNeedsData = false;
@@ -328,7 +335,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
   }
 
-  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig, &_robot.GetRNG());
+  _needsState.Init(_needsConfig, _robot->GetBodySerialNumber(), _starRewardsConfig, _cozmoContext->GetRandom());
 
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
@@ -386,7 +393,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     }
   }
 
-  _needsState._rng = &_robot.GetRNG();
+  _needsState._rng = _cozmoContext->GetRandom();
 
   const Time now = system_clock::now();
 
@@ -429,15 +436,12 @@ void NeedsManager::HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& m
   _needsState._robotSerialNumber = payload.esn;
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.HandleMfgID", "HandleMfgID holds esn %d", payload.esn);
 
-  InitAfterConnection();
+  InitAfterSerialNumberAcquired();
 }
 
 
 void NeedsManager::Update(const float currentTime_s)
 {
-//  if (!_robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::NeedsSystem))
-//    return;
-
   _currentTime_s = currentTime_s;
   
   if( !kUseNeedManager )
@@ -724,7 +728,7 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   needLevels.reserve((size_t)NeedId::Count);
   for (size_t i = 0; i < (size_t)NeedId::Count; i++)
   {
-    float level = _needsState.GetNeedLevelByIndex(i);
+    const float level = _needsState.GetNeedLevelByIndex(i);
     needLevels.push_back(level);
   }
   
@@ -732,7 +736,7 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   needBrackets.reserve((size_t)NeedBracketId::Count);
   for (size_t i = 0; i < (size_t)NeedBracketId::Count; i++)
   {
-    NeedBracketId bracketId = _needsState.GetNeedBracketByIndex(i);
+    const NeedBracketId bracketId = _needsState.GetNeedBracketByIndex(i);
     needBrackets.push_back(bracketId);
   }
   
@@ -740,7 +744,7 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   partIsDamaged.reserve((size_t)RepairablePartId::Count);
   for (size_t i = 0; i < (size_t)RepairablePartId::Count; i++)
   {
-    bool isDamaged = _needsState.GetPartIsDamagedByIndex(i);
+    const bool isDamaged = _needsState.GetPartIsDamagedByIndex(i);
     partIsDamaged.push_back(isDamaged);
   }
 
@@ -748,14 +752,17 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
                                         std::move(partIsDamaged), _needsState._curNeedsUnlockLevel,
                                         _needsState._numStarsAwarded, _needsState._numStarsForNextUnlock,
                                         actionCausingTheUpdate);
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+
   UpdateStarsState();
 }
 
 void NeedsManager::SendNeedsPauseStateToGame()
 {
   ExternalInterface::NeedsPauseState message(_isPausedOverall);
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
   
 void NeedsManager::SendNeedsPauseStatesToGame()
@@ -774,7 +781,8 @@ void NeedsManager::SendNeedsPauseStatesToGame()
     actionPause.push_back(_isActionsPausedForNeed[i]);
   }
   ExternalInterface::NeedsPauseStates message(decayPause, actionPause);
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
 
@@ -808,7 +816,7 @@ void NeedsManager::UpdateStarsState()
   // TODO: this only needs to be called when the NeedBracket changes.
   // Right now called everytime we send a needs state update
   // If "play stat" is now full, and they haven't gotten a star "today" send the star ready message
-  if( _needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full )
+  if (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full)
   {
     Time nowTime = std::chrono::system_clock::now();
     // Has it past midnight our time...
@@ -824,7 +832,7 @@ void NeedsManager::UpdateStarsState()
                   nowLocalTime.tm_gmtoff);
     
     // Past midnight from lasttime
-    if( nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
+    if (nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
     {
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
                     "now: %d, lastsave: %d",
@@ -836,14 +844,14 @@ void NeedsManager::UpdateStarsState()
       SendSingleStarAddedToGame();
       
       // Completed a set
-      if( _needsState._numStarsAwarded >= _needsState._numStarsForNextUnlock )
+      if (_needsState._numStarsAwarded >= _needsState._numStarsForNextUnlock)
       {
         // resets the stars
         SendStarLevelCompletedToGame();
       }
+
       // Save that we've issued a star today.
       PossiblyStartWriteToRobot(_needsState, true);
-      
     }
   }
 }
@@ -859,7 +867,8 @@ void NeedsManager::SendStarLevelCompletedToGame()
   ExternalInterface::StarLevelCompleted message(_needsState._curNeedsUnlockLevel,
                                                 _needsState._numStarsForNextUnlock,
                                                 std::move(rewards));
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   
   // Issue rewards in inventory
   for( int i = 0; i < rewards.size(); ++i )
@@ -869,13 +878,13 @@ void NeedsManager::SendStarLevelCompletedToGame()
       case NeedsRewardType::Unlock:
       {
         UnlockId id = UnlockIdFromString(rewards[i].data);
-        _robot.GetProgressionUnlockComponent().SetUnlock(id, true);
+        _robot->GetProgressionUnlockComponent().SetUnlock(id, true);
         break;
       }
       case NeedsRewardType::Sparks:
       {
         int sparksAdded = std::stoi(rewards[i].data);
-        _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks,sparksAdded);
+        _robot->GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks,sparksAdded);
         break;
       }
       default:
@@ -895,7 +904,8 @@ void NeedsManager::SendSingleStarAddedToGame()
   ExternalInterface::StarUnlocked message(_needsState._curNeedsUnlockLevel,
                                           _needsState._numStarsForNextUnlock,
                                           _needsState._numStarsAwarded);
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
   
 bool NeedsManager::DeviceHasNeedsState()
@@ -945,7 +955,7 @@ void NeedsManager::WriteToDevice(const NeedsState& needsState)
   state[kTimeLastStarAwardedKey] = Util::numeric_cast<Json::LargestInt>(timeStarAwarded_s);
 
   const auto midTime = std::chrono::system_clock::now();
-  if (!_robot.GetContextDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
+  if (!_cozmoContext->GetDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
@@ -962,7 +972,7 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
   versionUpdated = false;
 
   Json::Value state;
-  if (!_robot.GetContextDataPlatform()->readAsJson(kPathToSavedStateFile + kNeedsStateFile, state))
+  if (!_cozmoContext->GetDataPlatform()->readAsJson(kPathToSavedStateFile + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.ReadFromDevice.ReadStateFailed", "Failed to read %s", kNeedsStateFile.c_str());
     return false;
@@ -1022,6 +1032,9 @@ void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState, bool ignore
   if (_robotStorageState != RobotStorageState::Inactive)
     return;
 
+  if (_robot == nullptr)
+    return;
+
   const Time now = system_clock::now();
   const auto elapsed = now - _timeLastWrittenToRobot;
   const auto secsSinceLastSave = duration_cast<seconds>(elapsed).count();
@@ -1035,6 +1048,9 @@ void NeedsManager::PossiblyStartWriteToRobot(NeedsState& needsState, bool ignore
 
 void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
 {
+  if (_robot == nullptr)
+    return;
+
   ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
               "Attempting to write to robot but state is %d", _robotStorageState);
 
@@ -1065,7 +1081,7 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
-  if (!_robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_NurtureGameData, stateVec.data(), stateVec.size(),
+  if (!_robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_NurtureGameData, stateVec.data(), stateVec.size(),
                                            [this, startTime](NVStorage::NVResult res)
                                            {
                                              FinishWriteToRobot(res, startTime);
@@ -1096,11 +1112,9 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
   else
   {
     // The write was successful
-    // xxx send a message to the game to indicate write was completed??
-    if (_robot.HasExternalInterface())
-    {
-      //_robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RequestSetUnlockResult(id, unlocked)));
-    }
+    // Send a message to the game to indicate write was completed??
+    //const auto& extInt = _cozmoContext->GetExternalInterface();
+    //extInt->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RequestSetUnlockResult(id, unlocked)));
   }
 }
 
@@ -1111,7 +1125,7 @@ bool NeedsManager::StartReadFromRobot()
               "Attempting to read from robot but state is %d", _robotStorageState);
   _robotStorageState = RobotStorageState::Reading;
 
-  if (!_robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
+  if (!_robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
                                             _robotHadValidNeedsData = FinishReadFromRobot(data, size, res);
@@ -1205,7 +1219,7 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
   const seconds durationSinceEpoch_s(stateOnRobot.timeLastWritten);
   _needsStateFromRobot._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
 
-  _needsStateFromRobot._robotSerialNumber = _robot.GetBodySerialNumber();
+  _needsStateFromRobot._robotSerialNumber = _robot->GetBodySerialNumber();
 
   _needsStateFromRobot._curNeedsUnlockLevel = stateOnRobot.curNeedsUnlockLevel;
   _needsStateFromRobot._numStarsAwarded = stateOnRobot.numStarsAwarded;
@@ -1265,10 +1279,13 @@ void NeedsManager::DebugCompleteDay()
 
 void NeedsManager::DebugResetNeeds()
 {
-  _needsState.Init(_needsConfig, _robot.GetBodySerialNumber(), _starRewardsConfig, &_robot.GetRNG());
-  _robotHadValidNeedsData = false;
-  _deviceHadValidNeedsData = false;
-  InitAfterReadFromRobotAttempt();
+  if (_robot != nullptr)
+  {
+    _needsState.Init(_needsConfig, _robot->GetBodySerialNumber(), _starRewardsConfig, _cozmoContext->GetRandom());
+    _robotHadValidNeedsData = false;
+    _deviceHadValidNeedsData = false;
+    InitAfterReadFromRobotAttempt();
+  }
 }
 
 void NeedsManager::DebugCompleteAction(const char* actionName)

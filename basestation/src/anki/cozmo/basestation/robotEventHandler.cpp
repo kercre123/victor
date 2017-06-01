@@ -1127,7 +1127,7 @@ u32 RobotEventHandler::GetNextGameActionTag() {
 }
 
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
-    {
+{
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
       
   // If we don't have a valid robot there's nothing to do

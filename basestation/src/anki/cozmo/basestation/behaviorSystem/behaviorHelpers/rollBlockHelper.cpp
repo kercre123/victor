@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -279,7 +280,7 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, Robot& robot)
   switch(result){
     case ActionResult::SUCCESS:
     {
-      robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::RollACube);
+      robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::RollACube);
       _status = BehaviorStatus::Complete;
       break;
     }

@@ -25,6 +25,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/deviceData/deviceDataManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -224,7 +225,11 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _isInitialized = true;
   
   _context->GetDataLoader()->LoadRobotConfigs();
-  
+
+  _context->GetNeedsManager()->Init(_context->GetDataLoader()->GetRobotNeedsConfig(),
+                                    _context->GetDataLoader()->GetStarRewardsConfig(),
+                                    _context->GetDataLoader()->GetRobotNeedsActionsConfig());
+
   _context->GetRobotManager()->Init(_config);
 
 #ifdef COZMO_V2
@@ -300,8 +305,10 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connect
   } else {
     PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.ConnectToRobot.Fail", "Failed to connect to robot %d!", connectMsg.robotID);
   }
+
+  _context->GetNeedsManager()->InitAfterConnection();
 }
-  
+
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
 {

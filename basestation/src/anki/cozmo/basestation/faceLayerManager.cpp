@@ -376,7 +376,7 @@ void FaceLayerManager::KeepFaceAlive(Robot& robot, const std::map<LiveIdleAnimat
 Result FaceLayerManager::Update(const Robot& robot)
 {
   // For prototyping. Eventually driven by actual needs system, not console var
-  // E.g. something like if(robot.GetNeedsManager().GetCurNeedsState().DoesFaceNeedRepair())
+  // E.g. something like if(robot.GetContext()->GetNeedsManager().GetCurNeedsState().DoesFaceNeedRepair())
   // Alternatively, just add a setter to FaceLayerManager for letting an external component
   // specify the next glitch time and its "degree" (and move the Rand() calls to that
   // component. The advantage of the latter is that it doesn't need to know about the Needs

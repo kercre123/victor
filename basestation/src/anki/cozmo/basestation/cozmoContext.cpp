@@ -4,6 +4,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/dasTransferTask.h"
@@ -43,6 +44,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
+  , _needsManager(new NeedsManager(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
 
@@ -59,19 +61,19 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
 }
-  
+
 
 CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 {
-  
+
 }
 
 CozmoContext::~CozmoContext()
 {
   _robotMgr->RemoveRobots();
 }
-  
-  
+
+
 bool CozmoContext::IsInSdkMode() const
 {
   if (_externalInterface)

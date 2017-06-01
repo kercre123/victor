@@ -226,7 +226,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _cliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
-  , _needsManager(new NeedsManager(*this))
   , _inventoryComponent(new InventoryComponent(*this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
@@ -268,13 +267,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     LoadEmotionEvents();
   }
   
-  if (_context->GetDataPlatform() != nullptr)
-  {
-    _needsManager->Init(_context->GetDataLoader()->GetRobotNeedsConfig(),
-                        _context->GetDataLoader()->GetStarRewardsConfig(),
-                        _context->GetDataLoader()->GetRobotNeedsActionsConfig());
-  }
-
   // Initialize progression
   _progressionUnlockComponent->Init();
   
@@ -634,7 +626,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
                         GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
 
-      GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::Fall);
+      _context->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Fall);
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;
@@ -1430,15 +1422,15 @@ Result Robot::Update()
   // TODO: This object encompasses, for the time-being, what some higher level
   // module(s) would do.  e.g. Some combination of game state, build planner,
   // personality planner, etc.
-      
+
   _moodManager->Update(currentTime);
-  
-  _needsManager->Update(currentTime);
-  
+
+  _context->GetNeedsManager()->Update(currentTime);
+
   _inventoryComponent->Update(currentTime);
-      
+
   _progressionUnlockComponent->Update();
-  
+
   _tapFilterComponent->Update();
 
   // Update AI component before behaviors so that behaviors can use the latest information

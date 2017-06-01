@@ -15,12 +15,9 @@
 #define __Cozmo_Basestation_NeedsSystem_NeedsState_H__
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/needsSystem/needsConfig.h"
 #include "clad/types/needsSystemTypes.h"
 #include "util/global/globalDefinitions.h" // ANKI_DEV_CHEATS define
 #include "util/random/randomGenerator.h"
-
-#include <json/json.h>
 
 #include <assert.h>
 #include <vector>
@@ -111,7 +108,7 @@ public:
   void SetStarLevel(int newLevel);
 
   const NeedsConfig* _needsConfig;
-  
+
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
   
 #if ANKI_DEV_CHEATS

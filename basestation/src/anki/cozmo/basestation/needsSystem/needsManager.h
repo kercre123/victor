@@ -47,7 +47,7 @@ enum class RobotStorageState
 class NeedsManager
 {
 public:
-  explicit NeedsManager(Robot& inRobot);
+  explicit NeedsManager(const CozmoContext* cozmoContext);
   ~NeedsManager();
 
   void Init(const Json::Value& inJson, const Json::Value& inStarsJson, const Json::Value& inActionsJson);
@@ -86,7 +86,8 @@ public:
 private:
 
   void HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  
+  void InitAfterSerialNumberAcquired();
+
   bool DeviceHasNeedsState();
   void PossiblyWriteToDevice(NeedsState& needsState);
   void WriteToDevice(const NeedsState& needsState);
@@ -111,8 +112,9 @@ private:
   void SendNeedsPauseStatesToGame();
   void SendStarLevelCompletedToGame();
   void SendSingleStarAddedToGame();
-  
-  Robot&        _robot;
+
+  const CozmoContext* _cozmoContext;
+  Robot*        _robot;
 
   NeedsState    _needsState;
   NeedsState    _needsStateFromRobot;

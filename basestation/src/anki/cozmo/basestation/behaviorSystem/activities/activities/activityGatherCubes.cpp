@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -57,7 +58,7 @@ Result ActivityGatherCubes::Update(Robot& robot){
       robot.GetExternalInterface()
       ->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(BehaviorObjective::GatheredCubes);
     }
-    robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::GatherCubes);
+    robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::GatherCubes);
     
     _gatherCubesFinished = true;
   }

@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -129,7 +130,7 @@ bool IReactionTriggerStrategy::ShouldTriggerBehavior(const Robot& robot, const I
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IReactionTriggerStrategy::NeedActionCompleted(const NeedsActionId needActionId)
 {
-  _robot.GetNeedsManager().RegisterNeedsActionCompleted(needActionId);
+  _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needActionId);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

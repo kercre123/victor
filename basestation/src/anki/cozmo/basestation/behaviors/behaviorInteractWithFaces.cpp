@@ -160,7 +160,7 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
     if( currTime_s >= _trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       StopActing();
-      robot.GetNeedsManager().RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
+      robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::SeeFace);
     }
   }
   

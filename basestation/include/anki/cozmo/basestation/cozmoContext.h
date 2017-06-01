@@ -50,6 +50,7 @@ class IExternalInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
+class NeedsManager;
   
 namespace VoiceCommand {
   class VoiceCommandComponent;
@@ -95,6 +96,7 @@ public:
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
+  NeedsManager*                         GetNeedsManager() const { return _needsManager.get(); }
   
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
@@ -127,6 +129,7 @@ private:
   std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
+  std::unique_ptr<NeedsManager>                         _needsManager;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

@@ -93,7 +93,6 @@ class RobotToEngineImplMessaging;
 class TextToSpeechComponent;
 class PublicStateBroadcaster;
 class VisionComponent;
-class NeedsManager;
 struct RobotState;
 class PathComponent;
 
@@ -226,9 +225,6 @@ public:
   inline const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
   inline MoodManager&       GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
-  inline const NeedsManager& GetNeedsManager() const { assert(_needsManager); return *_needsManager; }
-  inline NeedsManager&       GetNeedsManager()       { assert(_needsManager); return *_needsManager; }
-  
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
 
@@ -1053,9 +1049,6 @@ protected:
   ///////// Mood/Emotions ////////
   MoodManager*         _moodManager;
 
-  ///////// Needs ////////
-  std::unique_ptr<NeedsManager> _needsManager;
-  
   ///////// Inventory ////////
   std::unique_ptr<InventoryComponent> _inventoryComponent;
   
