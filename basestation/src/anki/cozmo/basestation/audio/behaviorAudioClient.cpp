@@ -16,8 +16,10 @@
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -50,18 +52,30 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 }};
 
 // Mapping from ActivityId to FreeplayMood for music states
+// 'buildPyramid'    - when Cozmo is building a pyramid (manages its own music states)
 // 'hiking'          - when Cozmo is exploring its surroundings on his own
+// 'needsSevereLowEnergy' - when Cozmo's needstate is severely low energy
+// 'needsSevereLowRepair' - when Cozmo's needstate is severely low repair
+// 'objectTapInteraction' - when Cozmo is interacting with a double tapped cube
 // 'playWithHumans'  - when Cozmo requests games to play with the player
 // 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+// 'putDownDispatch' - when Cozmo is looking for stuff after returning to on treads
+// 'singing'         - when Cozmo is singing (manages its own music states)
 // 'socialize'       - when Cozmo wants to interact with faces and players, but without playing games
 // 'nothingToDo'     - fallback when Cozmo can't do anything else
 const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
 {
-  { ActivityID::Hiking,          AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
-  { ActivityID::PlayWithHumans,  AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::PlayAlone,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::Socialize,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::NothingToDo,     AudioMetaData::SwitchState::Freeplay_Mood::Bored }
+  { ActivityID::BuildPyramid,         AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Hiking,               AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
+  { ActivityID::ObjectTapInteraction, AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::NeedsSevereLowEnergy, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::NeedsSevereLowRepair, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::PlayWithHumans,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::PlayAlone,            AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::PutDownDispatch,      AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::Singing,              AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Socialize,            AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::NothingToDo,          AudioMetaData::SwitchState::Freeplay_Mood::Bored }
 };
   
 } // end anonymous namespace
@@ -88,7 +102,24 @@ BehaviorAudioClient::BehaviorAudioClient(Robot& robot)
   };
   
   _eventHandles.push_back(robot.GetPublicStateBroadcaster().Subscribe(handleStateChangeWrapper));
+}
 
+
+void BehaviorAudioClient::Init()
+{
+  if(ANKI_DEV_CHEATS)
+  {
+    const auto nonSparkFreeplayActivities = _robot.GetBehaviorManager().GetNonSparkFreeplayActivities();
+    for(const auto& activity : nonSparkFreeplayActivities)
+    {
+      const ActivityID activityID = activity->GetID();
+
+      DEV_ASSERT_MSG(freeplayStateMap.find(activityID) != freeplayStateMap.end(),
+                     "BehaviorAudioClient.Init.MissingFreeplayActivity",
+                     "Freeplay activity %s does not exist in freeplayStateMap",
+                     EnumToString(activityID));
+    }
+  }
 }
 
 
@@ -139,6 +170,12 @@ void BehaviorAudioClient::UpdateActivityMusicState(ActivityID activityID)
     _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
                                                   static_cast<const GenericSwitch>(it->second),
                                                   AudioMetaData::GameObjectType::Default);
+  }
+  else
+  {
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioClient.UpdateActivityMusicState.NoFreeplayMusic",
+                  "No freeplay music for ActivityName '%s'", ActivityIDToString(activityID));
   }
 }
   

@@ -330,6 +330,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
   {
     InitializeEventHandlers();
   }
+  
+  // Init behavior audio client after parsing config because it relies on parsed values
+  _audioClient->Init();
+  
   _isInitialized = true;
     
   return RESULT_OK;
@@ -1733,6 +1737,32 @@ void BehaviorManager::OnRobotDelocalized()
     _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedKnown);
     _robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::DoubleTappedUnsure);
   }
+}
+
+const std::list<const IActivity* const> BehaviorManager::GetNonSparkFreeplayActivities() const
+{
+  std::list<const IActivity* const> activities;
+  
+  const auto& freeplayActivity = _highLevelActivityMap.find(HighLevelActivity::Freeplay);
+  if(freeplayActivity != _highLevelActivityMap.end())
+  {
+    const ActivityFreeplay* freeplay = static_cast<ActivityFreeplay*>(freeplayActivity->second.get());
+    if(freeplay != nullptr)
+    {
+      const auto& freeplaySubActivities = freeplay->GetFreeplayActivities();
+      const auto& nonSparkActivities = freeplaySubActivities.find(UnlockId::Count);
+      if(nonSparkActivities != freeplaySubActivities.end())
+      {
+        for(auto iter = nonSparkActivities->second.begin();
+            iter != nonSparkActivities->second.end(); ++iter)
+        {
+          activities.push_back(static_cast<const IActivity* const>(iter->get()));
+        }
+      }
+    }
+  }
+  
+  return activities;
 }
 
   

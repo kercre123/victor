@@ -81,6 +81,11 @@ public:
   void SetActivityStrategyCooldown(const UnlockId& unlockID,
                                    const ActivityID& activityId,
                                    float cooldown_ms);
+  
+  using ActivityVector = std::vector< std::unique_ptr<IActivity>>;
+  using SparkToActivitiesTable = std::unordered_map<UnlockId, ActivityVector, Util::EnumHasher>;
+  
+  const SparkToActivitiesTable& GetFreeplayActivities() const { return _activities; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
@@ -132,8 +137,6 @@ private:
   Configuration _configParams;
   
   // set of activities defined for this evaluator, stored by spark required to run the activity
-  using ActivityVector = std::vector< std::unique_ptr<IActivity>>;
-  using SparkToActivitiesTable = std::unordered_map<UnlockId, ActivityVector, Util::EnumHasher>;
   SparkToActivitiesTable _activities;
   
   // raw pointer to the current activity, which is guaranteed be stored in _activities

@@ -40,6 +40,8 @@ class BehaviorAudioClient {
   
 public:
   BehaviorAudioClient(Robot& robot);
+  
+  void Init();
 
   // True if Client has been Activated
   bool IsActive() const { return _isActive; }

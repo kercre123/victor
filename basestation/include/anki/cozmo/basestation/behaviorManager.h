@@ -217,6 +217,9 @@ public:
   // started
   float GetFirstTimeFreeplayStarted() const { return _firstTimeFreeplayStarted; }
   
+  // Returns all the non spark related freeplay activities
+  const std::list<const IActivity* const> GetNonSparkFreeplayActivities() const;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
