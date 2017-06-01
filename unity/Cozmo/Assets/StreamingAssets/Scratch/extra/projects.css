@@ -56,7 +56,6 @@ button:focus {
 }
 #projects .hd #app-title {
   font-weight: bold;
-  text-transform: uppercase;
   font-size: 7vh;
   padding: 0 .3em 0 0;
 }
@@ -219,7 +218,6 @@ button:focus {
   display: inline-block;
   font-size: 5vh;
   margin-top: .2em;
-  text-transform: uppercase;
 }
 
 #tutorial-link #tutorial-icon {
