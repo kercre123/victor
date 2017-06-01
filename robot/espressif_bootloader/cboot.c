@@ -377,7 +377,6 @@ void NOINLINE writeProtect(void)
   // XXX Exectute the flash protect command!
 }
 
-//extern unsigned int xthal_get_ccount(void);
 #define TEST_BASE ((uint32_t*)0x40108000)
 #define TEST_CEIL ((uint32_t*)0x4010Fee0)
 #define ZERO(d)  ((d<<16)|((~d)&0xffff))
@@ -442,7 +441,6 @@ void NOINLINE memtest(void)
    } while (!passed);
    //const uint32_t tock = xthal_get_ccount();
    //ets_printf("Memtest time %d cycles\r\n", tock-tick);
-//   ets_printf("Memtest complete\r\n");
 }
 
 
