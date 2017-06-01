@@ -107,6 +107,30 @@ char g_mode = 'X';
 static int8_t m_rssidat[9];
 static bool rssi_valid = 0;
 
+static u32 m_cubescan_id = 0;
+static u8  m_cubescan_type = 0;
+bool RadioGetCubeScan(u32 *out_id, u8 *out_type)
+{
+  if( !m_cubescan_id ) //have not received a new id
+    return false;
+  
+  if( out_id != NULL )
+    *out_id = m_cubescan_id;
+  if( out_type != NULL )
+    *out_type = m_cubescan_type;
+  
+  m_cubescan_id = 0;
+  return true;
+}
+
+static int argbytes = 0;
+void RadioPurgeBuffer(void)
+{
+  while( GetChar() >= 0 )
+  {}
+  argbytes = 0;
+}
+
 // Process incoming bytes from the radio - must call at least 12,000 times/second
 void RadioProcess()
 {
@@ -116,25 +140,36 @@ void RadioProcess()
     return;
   
   // Otherwise, process messages or grab arguments
-  static int msg = 0, argbytes = 0, argCnt = 0, cubeArg = 0;
+  static int msg = 0, argCnt = 0, cubeArg = 0, cubeType = 0;
   
   if (!argbytes) // Process messages
   {
     msg = c;
-    switch( msg ) {
-      case 'C':       // Print cube ID
-        argbytes = 4; // Cube message has 4 bytes
-        cubeArg = 0;  // reset argument
-        break;
-      case 'R':       // Print RSSI data
-        argbytes = 9; // RSSI message size
-        argCnt = 0;   // reset counter
-        break;
-      case '1':
-        PutChar(g_mode);  // Watchdogged - restore mode
-        break;
+    if( g_mode >= 'S' && g_mode <= 'V' ) //cubescan modes. Ignore all other msg chars - we sometimes purge & resync rx; requires unique start char (not present in data fields).
+    {
+      if( msg == 'S' ) { // Cubescan sync character
+        argbytes = 5; // type(1) + id(4)
+        cubeArg = 0;  // reset arguments
+        cubeType = 0; // "
+      }
     }
-  } 
+    else
+    {
+      switch( msg ) {
+        case 'C':       // Print cube ID
+          argbytes = 4; // Cube message has 4 bytes
+          cubeArg = 0;  // reset argument
+          break;
+        case 'R':       // Print RSSI data
+          argbytes = 9; // RSSI message size
+          argCnt = 0;   // reset counter
+          break;
+      case '1':
+          PutChar(g_mode);  // Watchdogged - restore mode
+          break;
+      }
+    }
+  }
   else // Grab arguments
   {
     switch( msg )
@@ -142,9 +177,25 @@ void RadioProcess()
       case 'C':
         argbytes--;
         cubeArg |= (c << (8*argbytes)); // XXX: This byteswaps because I'm used to IDs being byteswapped
-        if (!argbytes)  // If we have a whole argument, print it out
+        if (!argbytes) // If we have a whole argument, print it out
           ConsolePrintf("cube,%c,%08x\r\n", msg, cubeArg);
         break;
+        
+      case 'S':
+        argbytes--;
+        if( argbytes >= 4 )
+          cubeType = c;
+        else
+          cubeArg |= (c << (8*argbytes));
+        
+        //After rx complete, latch data for async readout
+        if (!argbytes) {
+          m_cubescan_id = cubeArg;
+          m_cubescan_type = cubeType;
+          //ConsolePrintf("cubescan,%C%,%u,%08x\r\n", msg, cubeType, cubeArg);
+        }
+        break;
+        
       case 'R':
         argbytes--;
         m_rssidat[argCnt++] = (s8)c; //signed RSSI value

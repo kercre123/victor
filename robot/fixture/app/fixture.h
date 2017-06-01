@@ -166,6 +166,7 @@ u32 GetSerial();
 #define ERROR_BODY_BACKPACK_PULL    604   // backpack pull-up incorrect
 #define ERROR_BODYCOLOR_INVALID     605   // an invalid color code was detected
 #define ERROR_BODYCOLOR_FULL        606   // no space to write new bodycolor. requires full erase/re-program.
+#define ERROR_BODY_FLASHLIGHT       607   // forward IR LED (flashlight) failure
 
 // Drop sensor errors
 #define ERROR_DROP_LEAKAGE          610   // Drop leakage detected
@@ -198,6 +199,7 @@ u32 GetSerial();
 #define ERROR_CUBE_VERIFY_FAILED    702   // OTP is not empty or did not program correctly
 #define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 #define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
+#define ERROR_CUBE_SCAN_FAILED      707   // Did not detect advertising packets from the cube's radio
 
 // Errors 710-713 for cube/charger types 0-3
 #define ERROR_CUBE_TYPE_CHANGE      710   // Cube type (1 2 3) does not match fixture type (1 2 3)

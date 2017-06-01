@@ -80,18 +80,18 @@ void EnableChargeComms(void)
 {
   //configure charge pins for communication mode and check for active pulses from robot
   //ConsolePrintf("enable charge comms\r\n");
-  int e=0, n = 0;
+  int e=ERROR_OK, n = 0;
   for (int i = 0; i < 4; i++) {
     try { SendTestChar(-1); }
-    catch (int e) { n++; e=e; }
+    catch (int err) { 
+      n++; 
+      e = err != ERROR_OK ? err : e;
+    }
   }
   if( n > 2 ) {
     ConsolePrintf("charge comm init: %d missed pulses\r\n", n);
     throw e;
   }
-  
-  // Let Espressif finish booting
-  MicroWait(300000);
 }
 
 static const int MAX_BODYCOLORS = 4;
@@ -104,7 +104,10 @@ static void readBodycolor(void)
   dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
   SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
   if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
-    throw ERROR_BODY_OUTOFDATE;
+    if (g_allowOutdated)
+      return;
+    else
+      throw ERROR_BODY_OUTOFDATE;
   
   ConsolePrintf("bodycolor,%d,%d,%d,%d\r\n", dat.bodycolor[0], dat.bodycolor[1], dat.bodycolor[2], dat.bodycolor[3] );
   
@@ -162,12 +165,13 @@ void InfoTest(void)
   struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
   
   EnableChargeComms();
+  MicroWait(300*1000); // Let Espressif finish booting
   
   ConsolePrintf("read robot version:\r\n");
   SendCommand(1, 0, 0, 0);    // Put up info face and turn off motors
   dat.bodycolor[MAX_BODYCOLORS-1] = 0xABCD;
   SendCommand(TEST_GETVER, 0, sizeof(dat), (u8*)&dat);
-  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD)
+  if(dat.bodycolor[MAX_BODYCOLORS-1] == 0xABCD && !g_allowOutdated)
     throw ERROR_BODY_OUTOFDATE;
   
   // Mimic robot format for SMERP
@@ -180,14 +184,13 @@ void InfoTest(void)
   readBodycolor();
 }
 
-const int playpenPowerOnDuration_s = 120;
 void PlaypenTest(void)
 {
   EnableChargeComms();
+  MicroWait(300*1000); // Let Espressif finish booting
   
   // Try to put robot into playpen mode
   SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);
-  SendCommand(TEST_POWERON, playpenPowerOnDuration_s, 0, 0);
   
   // Do this last:  Try to put fixture radio in advertising mode
   static bool setRadio = false;
@@ -199,24 +202,14 @@ void PlaypenTest(void)
 extern int g_stepNumber;
 void PlaypenWaitTest(void)
 {
-  const int topOffInterval_s = 30;
-  u32 powerOnTime = 0, offContact = 0, totalTime_s = 0;
-  while( 1 )
-  {
-    //Periodically extend power-on
-    if( getMicroCounter() - powerOnTime >= topOffInterval_s*1000*1000 ) {
-      totalTime_s += topOffInterval_s; //track total time on fixture
-      ConsolePrintf("\r\nTEST_POWERON %ds (total %ds)\r\n", playpenPowerOnDuration_s, totalTime_s);
-      EnableChargeComms(); //switch to comm mode
-      SendCommand(TEST_POWERON, playpenPowerOnDuration_s, 0, 0);
-      powerOnTime = getMicroCounter();
-    }
-    
-    //Turn on charging power
-    PIN_SET(GPIOC, PINC_CHGTX);
-    PIN_OUT(GPIOC, PINC_CHGTX);
-    
-    //test for robot removal
+  int offContact = 0;
+  
+  //Turn on charging power
+  PIN_SET(GPIOC, PINC_CHGTX);
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  
+  //test for robot removal
+  while( 1 ) {
     int current_ma = mGetCurrentMa();
     ConsolePrintf("%d..", current_ma);
     if ((offContact = current_ma < PRESENT_CURRENT_MA ? offContact + 1 : 0) > 10)
@@ -411,6 +404,12 @@ void RobotFixtureDropSensor(void)
     throw ERROR_DROP_TOO_DIM;
 }
 
+u8 tone_select = 2;
+void RobotSetSoundTestTone(u8 tone) { tone_select = tone; }
+
+u8 tone_volume = 192;
+void RobotSetSoundTestVolume(u8 volume) { tone_volume = volume; }
+
 void SpeakerTest(void)
 {
   //const int TEST_TIME_US = 1000000;
@@ -418,8 +417,16 @@ void SpeakerTest(void)
   // Speaker test not on robot1 (head not yet properly fixtured)
   if (g_fixtureType == FIXTURE_ROBOT1_TEST)
     return;
-  SendCommand(TEST_PLAYTONE, 0, 0, 0);
-
+  
+  //Encode tone_select & volume into single byte to send to syscon (limited 8-bit payload size)
+  //-limit tone select range 0-3
+  //-drop 2 LSbits of volume; lose a bit of granularity.
+  //syscon::tests.cpp:
+  //  msg.tone_sel = param & 0x03;
+  //  msg.volume   = param & 0xFC;
+  ConsolePrintf("Play Tone #%d, volume %d\r\n", tone_select & 0x3, tone_volume & 0xFC );
+  SendCommand(TEST_PLAYTONE, (tone_volume & 0xFC) | (tone_select & 0x03), 0, 0);
+  
   // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 
@@ -600,47 +607,51 @@ void Recharge(void)
 //@param vbat_overvolt_v100x - battery too full voltage level. special failure handling above this threshold.
 void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 {
-  #define CHARGE_TEST_DEBUG(x)    //x
-  const int NUM_SAMPLES = 32;
+  #define CHARGE_TEST_DEBUG(x)    x
+  const int NUM_SAMPLES = 16;
   
   EnableChargeComms(); //switch to comm mode
+  MicroWait(300*1000); //let battery voltage settle
   uint16_t battVolt100x = robot_get_battVolt100x(10,0); //+POWERON extra time [s]
   
   //Turn on charging power
   PIN_SET(GPIOC, PINC_CHGTX);
   PIN_OUT(GPIOC, PINC_CHGTX);
   
-  CHARGE_TEST_DEBUG( int print_len = 0; u32 displayLatch = 0; );
-  int avg=0, avgCnt=0, offContact = 0;
-  u32 waitTime = getMicroCounter();
+  CHARGE_TEST_DEBUG( int ibase_ma = 0; u32 print_time = 0;  );
+  int avg=0, avgCnt=0, avgMax = 0, iMax = 0, offContact = 0;
+  u32 avgMaxTime = 0, iMaxTime = 0, waitTime = getMicroCounter();
   while( getMicroCounter() - waitTime < (5*1000*1000) )
   {
     int current_ma = mGetCurrentMa();
     avg = ((avg*avgCnt) + current_ma) / (avgCnt+1); //tracking average
     avgCnt = avgCnt < NUM_SAMPLES ? avgCnt + 1 : avgCnt;
     
-    //========================DEBUG===============================
+    //DEBUG: log charge current as bar graph
     CHARGE_TEST_DEBUG( {
-      for(int x=0; x < print_len; x++ ) { //erase previous line
-        ConsolePutChar(0x08); //backspace
-        ConsolePutChar(0x20); //space
-        ConsolePutChar(0x08); //backspace
-      }
-      
-      //Display real-time averaged current
       const int DISP_MA_PER_CHAR = 15;
-      print_len = ConsolePrintf("%03d ", avg);
-      for(int x=avg; x>0; x -= DISP_MA_PER_CHAR)
-        print_len += ConsolePrintf("=");
-      
-      //preserve a current history in the console window
-      if( getMicroCounter() - displayLatch > 500*1000 ) {
-        displayLatch = getMicroCounter();
+      const int IDIFF_MA = 25;
+      if( ABS(current_ma - ibase_ma) >= IDIFF_MA || ABS(avg - ibase_ma) >= IDIFF_MA || 
+          getMicroCounter() - print_time > 500*1000 || avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
+      {
+        ibase_ma = current_ma;
+        print_time = getMicroCounter();
+        ConsolePrintf("%03d/%03d ", avg, current_ma );
+        for(int x=1; x <= (avg > current_ma ? avg : current_ma); x += DISP_MA_PER_CHAR )
+          ConsolePrintf( x <= avg && x <= current_ma ? "=" : x > avg ? "+" : "-" );
         ConsolePrintf("\r\n");
-        print_len = 0;
       }
     } );
-    //==========================================================*/
+    
+    //save some metrics for debug
+    if( current_ma > iMax ) {
+      iMax = current_ma;
+      iMaxTime = getMicroCounter() - waitTime;
+    }
+    if( avg > avgMax ) {
+      avgMax = avg;
+      avgMaxTime = getMicroCounter() - waitTime;
+    }
     
     //finish when average rises above our threshold (after minimum sample cnt)
     if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
@@ -654,8 +665,8 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
     }
   }
   
-  CHARGE_TEST_DEBUG( ConsolePrintf("\r\n"); );
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
+  ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
   if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
     return; //OK
   
@@ -673,8 +684,102 @@ static void ChargeTest(void)
 {
   const int CHARGING_CURRENT_THRESHOLD_MA = 400;
   const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
-  RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
+  try {
+    RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
+  } catch (int e) {
+    if (!g_allowOutdated || e != ERROR_BODY_OUTOFDATE)  // Optionally allow outdated robots
+      throw e;
+  }
 }
+
+//Set flashlight on/off and measure current
+static int FlashlightGetCurrent_(bool on, int power_on_s)
+{
+  EnableChargeComms();
+  if( power_on_s > 0 )
+    SendCommand(TEST_POWERON, power_on_s, 0, 0);
+  SendCommand(TEST_LIGHT, on ? 0x10 : 0, 0, NULL); //param<4> = headlight on/off  
+  MicroWait(1000);
+  
+  PIN_SET(GPIOC, PINC_CHGTX); //Turn on charging power
+  PIN_OUT(GPIOC, PINC_CHGTX);
+  MicroWait(10*1000);
+  
+  return mGetCurrentMa();
+}
+
+//measure robot current delta with flashlight on/off
+//@param power_on_s - if > 0, send power_on command to keep robot alive for # more seconds
+int RobotFlashlightGetCurrentDelta(int power_on_s)
+{
+  int i_on  = FlashlightGetCurrent_(1,power_on_s);
+  int i_off = FlashlightGetCurrent_(0,0);
+  int i_delta = i_on - i_off;
+  ConsolePrintf("flashlight-mA,on,%d,off,%d,delta,%d\r\n", i_on, i_off, i_delta);
+  return i_delta;
+}
+
+void FlashlightTest(void)
+{
+  //nominal flashlight (IR LED) current is ~40mA -> ~20mA @ 50% duty cycle, less some measurement variation and part tolerance...
+  const int FLASHLIGHT_MA = 12;
+  
+  //variable head current causes some measurement failures. Generally isolated/intermittent. Require a few consecutive successes to pass
+  int SUCCESS_NUM = g_fixtureType == FIXTURE_BODY3_TEST ? 2 : 4; //headless body is very deterministic
+  int cnt = 0;
+  for(int x=0; x < 12; x++) {
+    int i_delta = RobotFlashlightGetCurrentDelta(5);
+    if( (cnt = i_delta >= FLASHLIGHT_MA ? cnt + 1 : 0) >= SUCCESS_NUM ) {
+      EnableChargeComms();
+      return; //success
+    }
+  }
+  throw ERROR_BODY_FLASHLIGHT;
+}
+
+/*/DEBUG: collect averaged data for characterization
+void DEBUG_FlashlightTest_Characterize(void)
+{
+  int on_min = 999, off_min = 999, delta_min = 999, time_min = 999999;
+  int on_max = 0,   off_max = 0,   delta_max = 0,   delta_avg = 0, time_max = 0, time_avg = 0;
+  
+  const int simulate_defective = 0;
+  const int num_samples = 1024;
+  for(int x=0; x < num_samples; x++)
+  {
+    u32 diff_time = getMicroCounter();
+    
+    int i_on_ma  = FlashlightGetCurrent_( simulate_defective ? 0 : 1 ,5);
+    on_min = i_on_ma < on_min ? i_on_ma : on_min;
+    on_max = i_on_ma > on_max ? i_on_ma : on_max;
+    
+    int i_off_ma = FlashlightGetCurrent_(0,0);
+    off_min = i_off_ma < off_min ? i_off_ma : off_min;
+    off_max = i_off_ma > off_max ? i_off_ma : off_max;
+    
+    int delta = i_on_ma - i_off_ma;
+    delta_min = delta < delta_min ? delta : delta_min;
+    delta_max = delta > delta_max ? delta : delta_max;
+    delta_avg += delta;
+    
+    diff_time = getMicroCounter() - diff_time;
+    time_min = diff_time < time_min ? diff_time : time_min;
+    time_max = diff_time > time_max ? diff_time : time_max;
+    time_avg += diff_time;
+    
+    ConsolePrintf("flashlight-mA,on,%03d,off,%03d,delta,%03d,time-us,%06d %s\r\n", i_on_ma, i_off_ma, delta, diff_time,
+      (simulate_defective && delta > 5) || (!simulate_defective && delta < 12) ? "<------" : "" ); //visual marker for bad measurements
+  }
+  EnableChargeComms();
+  
+  delta_avg /= num_samples;
+  time_avg  /= num_samples;
+  ConsolePrintf("flashlight-mA-debug-results:\r\n");
+  ConsolePrintf("  on    min,max     : %03d,%03d\r\n",      on_min,     on_max );
+  ConsolePrintf("  off   min,max     : %03d,%03d\r\n",      off_min,    off_max);
+  ConsolePrintf("  delta min,max,avg : %03d,%03d,%03d\r\n", delta_min,  delta_max,  delta_avg);
+  ConsolePrintf("  time  min,max,avg : %06d,%06d,%06d\r\n", time_min,   time_max,   time_avg );
+}//-*/
 
 //Verify battery voltage sufficient for assembly/packout
 void BatteryCheck(void)
@@ -688,7 +793,7 @@ void BatteryCheck(void)
   
   EnableChargeComms();  //switch to comm mode
   chargeEnable(false);  //disable charger, which could interfere with valid battery measurement
-  MicroWait(100*1000);  //wait for battery voltage to stabilize
+  MicroWait(500*1000);  //wait for battery voltage to stabilize
   u16 vBat100x = robot_get_battVolt100x(0,0);
   chargeEnable(true);   //re-enable charger
   
@@ -714,9 +819,14 @@ void FactoryRevert(void)
 //intercept button test function
 void mButtonTest(void)
 {
-  SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
-  ButtonTest();
-  SendCommand(TEST_POWERON, 4, 0, 0); //reset to default 4s power-off
+  try {
+    SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
+    ButtonTest();
+    SendCommand(TEST_POWERON, 4, 0, 0); //reset to default 4s power-off
+  } catch (int e) {
+    if (!g_allowOutdated || e != ERROR_BODY_OUTOFDATE)  // Optionally allow outdated robots
+      throw e;
+  }
 }
 
 // List of all functions invoked by the test, in order
@@ -755,6 +865,7 @@ TestFunction* GetRobotTestFunctions(void)
     SlowMotors,
     FastMotors,
     RobotFixtureDropSensor,
+    FlashlightTest,
     BatteryCheck,
     WriteBodyColor,
     SpeakerTest,            // Must be last
@@ -797,6 +908,7 @@ TestFunction* GetPackoutTestFunctions(void)
     ChargeTest,             //run after mButtonTest (sets power modes)
     FastMotors,
     RobotFixtureDropSensor,
+    FlashlightTest,
     BatteryCheck,
     VerifyBodyColor,
     SpeakerTest,            // Must be last

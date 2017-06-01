@@ -21,11 +21,11 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 98;
-#define BUILD_INFO "PVT v1.5"
+u8 g_fixtureReleaseVersion = 100;
+#define BUILD_INFO "PVT2 v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 1
+#define NOT_FOR_FACTORY 0
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -146,8 +146,9 @@ void SetFixtureText(void)
 #endif
   DisplayMoveCursor(55, 2);
   DisplayPutString(BUILD_INFO);
-  DisplayMoveCursor(55, fcc ? 108 : 110 );
+  DisplayMoveCursor(55, fcc ? 108 : 105 );
   DisplayPutChar(fcc ? 'c' : 'v');
+  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 100)));
   DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + (g_fixtureReleaseVersion % 10));
   DisplayFlip();
@@ -300,6 +301,7 @@ static void RunTests()
   
   ConsolePrintf("fixtureSerial,%i\r\n", FIXTURE_SERIAL);
   ConsolePrintf("fixtureVersion,%i\r\n", FIXTURE_VERSION);
+  ConsolePrintf("fixtureRev,%s,v%d,%s\r\n", GetBoardRevStr(), g_fixtureReleaseVersion, NOT_FOR_FACTORY > 0 ? "debug" : "release");
   
   error_t error = ERROR_OK;
   try

@@ -110,6 +110,22 @@ static void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
   RobotInterface::ManufacturingID mfgMsg;
   mfgMsg.esn = BODY_ESN;
   mfgMsg.hw_version = BODY_VER;
+  
+  int color = ~0;
+  for(int i = 0; i < MAX_MODELS; i++)
+  {
+    if(BODY_COLOR(i) != ~0)
+    {
+      color = BODY_COLOR(i);
+    }
+    // First empty color slot, last one that was accessed is the valid color
+    else
+    {
+      break;
+    }
+  }
+  mfgMsg.body_color = color;
+  
   RobotInterface::SendMessage(mfgMsg);
 }
 

@@ -330,10 +330,11 @@ static void BodyChargeTest(void)
     RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
   } catch(int e) {
     if( e == ERROR_BAT_OVERVOLT ) {
-      const int BURN_TIME_S = 60;
+      const u8 BURN_TIME_S = 60;
+      ConsolePrintf("motorslam\r\n");
+      SendCommand(TEST_MOTORSLAM, 0, 0, 0); //spin tread motors on body board (no head to burn energy)
       ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
       SendCommand(TEST_POWERON, BURN_TIME_S, 0, 0);
-      SendCommand(TEST_MOTORSLAM, 0, 0, 0); //spin tread motors on body board (no head to burn energy)
       DisableVEXT();
       
       //gracefully detach pgm pins (or nRF51 will reset on detach)
@@ -346,6 +347,12 @@ static void BodyChargeTest(void)
     }
     throw e;
   }
+}
+
+extern void FlashlightTest(void); //robotTest.c
+static void BodyFlashlightTest(void)
+{
+  FlashlightTest(); //merged with robot test
 }
 
 // List of all functions invoked by the test, in order
@@ -378,7 +385,7 @@ TestFunction* GetBody2TestFunctions(void)
   return functions;
 };
 
-extern void BatteryCheck(void);
+extern void BatteryCheck(void); 
 TestFunction* GetBody3TestFunctions(void)
 {
   static TestFunction functions[] =
@@ -386,6 +393,7 @@ TestFunction* GetBody3TestFunctions(void)
     BodyNRF51,
     HeadlessBoot,
     BodyChargeTest, //must be immediately after boot; measures beginning of charge cycle
+    BodyFlashlightTest,
     TestBackpackPullup,
     BodyMotor,
     //DropLeakage, //disable test for 1v5 PVT line changes

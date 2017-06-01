@@ -301,6 +301,10 @@ const u8 ESN_LOOKUP[128] = {
   0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6c,0x6d,0x6e,0x6f,0x71,0x72,0x73,0x74,0x76,0x77,0x79,0x7a,0x7b,
   0x84,0x85,0x86,0x88,0x89,0x8b,0x8c,0x8d,0x8e,0x90,0x91,0x92,0x93,0x96,0x97,0x98,0x99,0x9a,0x9b,0x9c,0x9d,0x9e,
 // Leftovers: 0xa1,0xa2,0xa3,0xa4,0xa5,0xa6,0xa7,0xb0,0xb1,0xb2,0xb3,0xb4,0xb6,0xb7,0xb8,0xb9,0xba,0xbb,0xbc,0xbd,
+  
+  //Unused values from the printable ASCII range (0x20-0x7e):
+  //0x20,0x28,0x29,0x2a,0x2b,0x30,0x35,0x38,0x3c,0x3e,0x3f,0x40,0x41,0x4a,0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x5f,0x60,0x6a,0x6b,0x70,0x75,0x78,0x7c,0x7d,0x7e
+  //' ','(',')','*','+','0','5','8','<','>','?','@','A','J','P','Q','R','S','T','U','V','W','_','`','j','k','p','u','x','|','}','~'
 };
 
 
@@ -348,7 +352,7 @@ static void Patch(u8* where, u32 before, u32 after)
 }
 
 // Handle all the boot loader serial patching stuff
-void ProgramCubeWithSerial()
+cubeid_t ProgramCubeWithSerial(bool read_serial_only)
 {
   // Drive every output into the cube
   PIN_OUT(GPIOA, PINA_DUTCS);
@@ -357,6 +361,10 @@ void ProgramCubeWithSerial()
   PIN_AF(GPIOA, PINA_MOSI);
   PIN_OUT(GPIOA, PINA_PROGHV);
   PIN_OUT(GPIOC, PINC_RESET);
+  
+  u32 serial = 0;
+  cubeid_t cubeid;
+  memset(&cubeid, 0, sizeof(cubeid));
   
   try {  
     // Make a copy of the cube bootloader for patching
@@ -381,11 +389,20 @@ void ProgramCubeWithSerial()
     // We don't want to reserialize the same block
     u8 id[8];
     CubeRead(0x3ff0, (u8*)&id, 8);    
-    u32 serial = *(u32*)id;
+    serial = *(u32*)id;
     serial = __REV(serial);   // Vandiver had it stored backward here
-          
+    
     if (!serial || id[6] != 0xff)   // id[6] is the LSB of the patch byte
       throw ERROR_CUBE_CANNOT_READ;
+    
+    //caller just wants to get the serial#. Skip the rest.
+    if( read_serial_only ) {
+      GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
+      GPIO_SetBits(GPIOA, GPIO_Pin_9);    // Turn off high-voltage PROG
+      cubeid.serial = serial;
+      cubeid.type = id[4];
+      return cubeid;
+    }
     
     // Generate a radio-safe serial number
     bool hadSerial = (serial != 0xffffffff); 
@@ -401,6 +418,7 @@ void ProgramCubeWithSerial()
     // If we're allowing any cube type, just make sure it's a valid one
     if (FIXTURE_CUBEX_TEST == g_fixtureType) 
     {
+      cubeid.type = id[4];
       if (id[4] < 1 && id[4] > 3)
         throw ERROR_CUBEX_NOT_SET;
     
@@ -410,6 +428,7 @@ void ProgramCubeWithSerial()
       if (id[4] != 0xff && type != id[4])
         throw ERROR_CUBE_TYPE_CHANGE + (id[4]&7);
       cubeboot[0x3ff4] = type; 
+      cubeid.type = type;
     }
     // Remember how many patches we've already had (to retest finished board)
     cubeboot[0x3ff7] = id[7];   
@@ -432,6 +451,9 @@ void ProgramCubeWithSerial()
   } catch (int e) {
     GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
     GPIO_SetBits(GPIOA, GPIO_Pin_9);    // Turn off high-voltage PROG
-    throw;
+    throw e;
   }
+  
+  cubeid.serial = serial;
+  return cubeid;
 }
