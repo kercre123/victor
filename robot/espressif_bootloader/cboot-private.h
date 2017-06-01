@@ -75,6 +75,7 @@ extern void ets_delay_us(int);
 extern void ets_memset(void*, uint8, uint32);
 extern void ets_memcpy(void*, const void*, uint32);
 extern void uart_div_modify(int no, int freq);
+extern uint32 xthal_get_ccount(void);
 
 // functions we'll call by address
 typedef void usercode(void);
