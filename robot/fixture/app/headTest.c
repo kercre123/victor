@@ -1,3 +1,4 @@
+#include <string.h>
 #include "app/tests.h"
 #include "hal/portable.h"
 #include "hal/testport.h"
@@ -81,15 +82,27 @@ void HeadK02(void)
     SWDSend(0x20001000, 0x800, 0x1000, g_K02,     g_K02End,       0,            0);
 }
 
-// Boot K02 in test mode
-void BootK02Test(void)
+static void power_off_(void)
 {
-  // Turn off and let power drain out
   DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
   SWDDeinit();
   if( DEBUG_SPINELESS )
     DisableVEXT();
   DisableBAT();     // This has a built-in delay while battery power leaches out
+}
+
+static void power_on_(bool rom_boot = true)
+{
+  InitEspressif(rom_boot); //init pins for ROM or APP boot + flush uart
+  EnableBAT();
+  if( DEBUG_SPINELESS )
+    EnableVEXT();
+}
+
+// Boot K02 in test mode
+void BootK02Test(void)
+{
+  power_off_();
   /*
   // Let head discharge (this takes a while)
   for (int i = 5; i > 0; i--)
@@ -98,10 +111,7 @@ void BootK02Test(void)
     ConsolePrintf("%d..", i);
   } 
   */
-  InitEspressif();
-  EnableBAT();
-  if( DEBUG_SPINELESS )
-    EnableVEXT();
+  power_on_();
 }
 
 // Connect to and flash the Espressif
@@ -114,6 +124,54 @@ void HeadESP(void)
   
   // Program espressif, which will start up, following the program
   ProgramEspressif(serial_);
+}
+
+//reset and monitor status of internal self tests (performed on boot)
+void HeadESPSelfTest(void)
+{
+  const int dat_size = 1024 * 16;       //testport.c -> m_globalBuffer[1024 * 16];
+  char *dat = (char*)GetGlobalBuffer(); //grab a large static buffer from tesport
+  memset(dat, '\0', dat_size);
+  
+  power_off_();
+  ConsolePrintf("ESP Self Test, Debug Output:\r\n");
+  power_on_(false); //boot into application + flush uart
+  
+  //Save incoming esp debug spew
+  int cnt = 0;
+  u32 time = getMicroCounter();
+  while( getMicroCounter()-time < 500*1000 )
+  {
+    int c = ESPGetChar(100);
+    if( cnt < dat_size-1 ) { //preserve end-of-buffer null
+      if( c >= ' ' && c <= '~' ) { //filter printable ascii
+        dat[cnt++] = c;
+        time = getMicroCounter(); //extend wait time while we're receiving data
+      } else if( c == '\n' )
+        dat[cnt++] = '\0'; //null terminate for string parsing
+    }
+  }
+  
+  //process lines
+  char *line = dat;
+  int len = strlen(line), mem_err_cnt = 0, mem_ok = 0;
+  while(len)
+  {
+    if( !strcmp("Memtest PASS", line) )
+      mem_ok = 1;
+    if( !strcmp("Memory Error", line) )
+      mem_err_cnt++;
+    
+    ConsolePrintf("  %s\r\n", line);
+    line += len + 1;
+    len = line >= dat + dat_size ? 0 : strlen(line);
+  }
+  
+  BootK02Test(); //power cycle, back into ROM mode (required by some other tests)
+  
+  ConsolePrintf("esp-memtest,ok,%d,error-cnt,%d\r\n", mem_ok, mem_err_cnt);
+  if( !mem_ok || mem_err_cnt > 0 )
+    throw ERROR_HEAD_ESP_MEM_TEST;
 }
 
 void HeadTest(void)
@@ -158,8 +216,9 @@ TestFunction* GetHeadTestFunctions(void)
     HeadK02,
     BootK02Test,
     HeadESP,
+    HeadESPSelfTest,
     HeadQ1Test,
-    HeadTest,
+    //HeadTest,
     NULL
   };
 
@@ -172,6 +231,7 @@ TestFunction* GetHead2TestFunctions(void)
   {
     HeadK02,
     BootK02Test,
+    HeadESPSelfTest,
     HeadQ1Test,
     NULL
   };
