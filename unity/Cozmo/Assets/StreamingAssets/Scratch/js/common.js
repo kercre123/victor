@@ -82,6 +82,7 @@
         var stop = document.querySelector('#stop');
         closeButton.addEventListener('click', function () {
             workspace.playAudio('click');
+            vm.stopAll();
             clearInterval(window.saveProjectTimerId);
             window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
         });
