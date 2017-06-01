@@ -81,15 +81,7 @@ namespace Cozmo.Needs.UI {
       _MetersWidget.OnPlayPressed -= HandlePlayButton;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
     }
-
-    protected override void ConstructOpenAnimation(Sequence openAnimation) {
-      ConstructDefaultFadeOpenAnimation(openAnimation);
-    }
-
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-      ConstructDefaultFadeCloseAnimation(closeAnimation);
-    }
-
+			
     private void HandlePlayChallengeButtonClicked() {
       if (OnStartChallengeClicked != null) {
         OnStartChallengeClicked();

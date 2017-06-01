@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9844201f93af34ea3b97dcf3bd6287d8, type: 3}
   m_Name: UIColorPalette
   m_EditorClassIdentifier: 
-  _GeneralBackgroundColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
+  _GeneralBackgroundColor: {r: 1, g: 1, b: 1, a: 1}
   _GeneralSparkTintColor:
     CanAffordColor: {r: 0.10196079, g: 0.6745098, b: 0.82745105, a: 1}
     CannotAffordColor: {r: 1, g: 0, b: 0, a: 1}
@@ -28,12 +28,3 @@ MonoBehaviour:
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}
   _FreeplayBehaviorDefaultColor: {r: 0, g: 0.609, b: 1, a: 1}
   _FreeplayBehaviorRewardColor: {r: 0.38039216, g: 0.6862745, b: 0.019607844, a: 1}
-  _CoreUpgradeTints:
-  - _TintName: upgradeRed
-    _TintColor: {r: 1, g: 0.20392157, b: 0.3254902, a: 1}
-  - _TintName: upgradeYellow
-    _TintColor: {r: 1, g: 0.7058824, b: 0, a: 1}
-  - _TintName: upgradeGreen
-    _TintColor: {r: 0.42745098, g: 0.87058824, b: 0.06666667, a: 1}
-  - _TintName: upgradePurple
-    _TintColor: {r: 0.70980394, g: 0.19215687, b: 0.9490196, a: 1}
