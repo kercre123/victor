@@ -682,7 +682,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
 
 static void ChargeTest(void)
 {
-  const int CHARGING_CURRENT_THRESHOLD_MA = 400;
+  const int CHARGING_CURRENT_THRESHOLD_MA = 425;
   const int BAT_OVERVOLT_THRESHOLD = 405; //4.05V
   try {
     RobotChargeTest( CHARGING_CURRENT_THRESHOLD_MA, BAT_OVERVOLT_THRESHOLD );
