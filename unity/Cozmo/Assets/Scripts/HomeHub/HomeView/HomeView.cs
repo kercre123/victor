@@ -37,18 +37,18 @@ namespace Cozmo.HomeHub {
     private AlertModal _BadLightAlertPrefab;
 
     [SerializeField]
-    private HomeViewTab _CozmoTabPrefab;
+    private ViewTab _CozmoTabPrefab;
 
     [SerializeField]
-    private HomeViewTab _PlayTabPrefab;
+    private ViewTab _PlayTabPrefab;
 
     [SerializeField]
-    private HomeViewTab _ProfileTabPrefab;
+    private ViewTab _ProfileTabPrefab;
 
     [SerializeField]
-    private HomeViewTab _SettingsTabPrefab;
+    private ViewTab _SettingsTabPrefab;
 
-    private HomeViewTab _CurrentTabInstance;
+    private ViewTab _CurrentTabInstance;
     private HomeTab _CurrentTab = HomeTab.Play;
     private HomeTab _PreviousTab = HomeTab.Play;
 
@@ -385,8 +385,8 @@ namespace Cozmo.HomeHub {
       CheckForRewardSequence();
     }
 
-    private HomeViewTab GetHomeViewTabPrefab(HomeTab tab) {
-      HomeViewTab tabPrefab = null;
+    private ViewTab GetHomeViewTabPrefab(HomeTab tab) {
+      ViewTab tabPrefab = null;
       switch (tab) {
       case HomeTab.Cozmo:
         tabPrefab = _CozmoTabPrefab;
@@ -410,9 +410,9 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void ShowNewCurrentTab(HomeViewTab homeViewTabPrefab) {
+    private void ShowNewCurrentTab(ViewTab homeViewTabPrefab) {
       _ScrollRect.horizontalNormalizedPosition = 0.0f;
-      _CurrentTabInstance = Instantiate(homeViewTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTabInstance = Instantiate(homeViewTabPrefab.gameObject).GetComponent<ViewTab>();
       _CurrentTabInstance.transform.SetParent(_ScrollRectContent, false);
       _CurrentTabInstance.Initialize(this);
 

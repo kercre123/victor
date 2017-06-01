@@ -185,5 +185,14 @@
   },
   "settings.acknowledgementsPanel.title" : {
     "translation" : "Légal"
+  },
+  "settings.modalTitle": {
+    "translation": "General Settings"
+  },
+  "settings.sdkPanel.sdkUrl.preface": {
+    "translation": "Pour en apprendre davantage sur la visite Cozmo SDK:"
+  },
+  "settings.sdkPanel.sdkUrl.address": {
+    "translation": "go.anki.com/cozmo-app-sdk"
   }
 }

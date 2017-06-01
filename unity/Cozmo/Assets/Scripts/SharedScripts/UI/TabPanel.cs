@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Cozmo.HomeHub {
+namespace Cozmo.UI {
   public class TabPanel : MonoBehaviour {
 
-    private HomeView _HomeViewInstance;
+    protected BaseView _BaseViewInstance;
 
     public UnityEngine.UI.LayoutElement LayoutElement {
       get { return _LayoutElement; }
@@ -13,12 +13,12 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private UnityEngine.UI.LayoutElement _LayoutElement;
 
-    public virtual void Initialize(HomeView homeViewInstance) {
-      _HomeViewInstance = homeViewInstance;
+    public virtual void Initialize(BaseView homeViewInstance) {
+      _BaseViewInstance = homeViewInstance;
     }
 
-    public HomeView GetHomeViewInstance() {
-      return _HomeViewInstance;
+    public BaseView GetBaseViewInstance() {
+      return _BaseViewInstance;
     }
   }
 }

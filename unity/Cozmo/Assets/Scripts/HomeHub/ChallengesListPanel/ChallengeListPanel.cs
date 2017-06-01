@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Cozmo.Challenge;
 using Cozmo.HubWorld;
+using Cozmo.UI;
 
 namespace Cozmo.HomeHub {
   public class ChallengeListPanel : TabPanel {
@@ -17,7 +18,7 @@ namespace Cozmo.HomeHub {
 
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
-    public override void Initialize(HomeView homeViewInstance) {
+    public override void Initialize(BaseView homeViewInstance) {
       base.Initialize(homeViewInstance);
       LoadTiles();
       UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockCompleted;
@@ -34,6 +35,7 @@ namespace Cozmo.HomeHub {
       // The following line has a runtime issue in mono2x on ios, having to do with generics and aot compilation.
       // So I'm replacing with the loop below to avoid the issue.  pterry 2017/03/22
       //sortedDict.AddRange(GetHomeViewInstance().GetChallengeStates());
+
       foreach (var srcItem in GetHomeViewInstance().GetChallengeStates()) {
         sortedDict.Add(new KeyValuePair<string, ChallengeStatePacket>(srcItem.Key, srcItem.Value));
       }
@@ -91,7 +93,11 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      base.GetHomeViewInstance().HandleUnlockedChallengeClicked(challengeClicked, buttonTransform);
+      GetHomeViewInstance().HandleUnlockedChallengeClicked(challengeClicked, buttonTransform);
+    }
+
+    public HomeView GetHomeViewInstance() {
+      return _BaseViewInstance as HomeView;
     }
 
   }

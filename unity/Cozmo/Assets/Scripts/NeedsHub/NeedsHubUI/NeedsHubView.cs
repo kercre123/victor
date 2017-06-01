@@ -8,8 +8,6 @@ using UnityEngine;
 
 namespace Cozmo.Needs.UI {
   public class NeedsHubView : BaseView {
-    private const int kCubesCount = 3;
-
     public delegate void ActivitiesClickedHandler();
     public event ActivitiesClickedHandler OnActivitiesButtonClicked;
 
@@ -35,9 +33,8 @@ namespace Cozmo.Needs.UI {
     private StarBar _StarBar;
 
     [SerializeField]
-    private NeedsSettingsWidget _SettingsWidget;
-
-    private bool _SettingsIsOpen = false;
+    private SettingsModal _SettingsModalPrefab;
+    private SettingsModal _SettingsModalInstance;
 
     [SerializeField]
     private NeedsMetersWidget _MetersWidget;
@@ -101,31 +98,12 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleSettingsButton() {
-      if (!_SettingsIsOpen) {
-        _MetersWidget.gameObject.SetActive(false);
-        _PlayRandomChallengeButton.gameObject.SetActive(false);
-        _ActivitiesButton.gameObject.SetActive(false);
-        _SparksButton.gameObject.SetActive(false);
-        ShowSettings();
-        _SettingsIsOpen = true;
-      }
-      else {
-        _MetersWidget.gameObject.SetActive(true);
-        _PlayRandomChallengeButton.gameObject.SetActive(true);
-        _ActivitiesButton.gameObject.SetActive(true);
-        _SparksButton.gameObject.SetActive(true);
-        _SettingsWidget.HideSettings();
-        _SettingsIsOpen = false;
-      }
+      UIManager.OpenModal(_SettingsModalPrefab, new ModalPriorityData(), HandleSettingsModalCreated);
     }
 
-    private void ShowSettings() {
-      _SettingsWidget.ShowSettings();
-
-      // auto scroll to the cubes setting panel if we don't have three cubes connected.
-      if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount) {
-        _SettingsWidget.ScrollToCubeSettings();
-      }
+    private void HandleSettingsModalCreated(BaseModal newModal) {
+      _SettingsModalInstance = (SettingsModal)newModal;
+      _SettingsModalInstance.Initialize(this);
     }
 
     private void HandleRepairButton() {

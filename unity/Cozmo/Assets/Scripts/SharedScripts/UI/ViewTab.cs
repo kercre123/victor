@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace Cozmo.HomeHub {
-  public class HomeViewTab : MonoBehaviour {
+namespace Cozmo.UI {
+  public class ViewTab : MonoBehaviour {
 
     [SerializeField]
     private TabPanel[] _TabViewPanelPrefabs;
@@ -11,7 +11,7 @@ namespace Cozmo.HomeHub {
     private bool _DisableGameRequestsWhenOpen;
 
     [SerializeField]
-    private Cozmo.UI.SnappableLayoutGroup _SnappableLayoutGroup;
+    private SnappableLayoutGroup _SnappableLayoutGroup;
 
     [SerializeField]
     private ParentLayoutContentSizeFitter _ParentLayoutContentSizeFitter;
@@ -26,7 +26,7 @@ namespace Cozmo.HomeHub {
 
     private Transform _Container;
 
-    public void Initialize(HomeView homeViewInstance) {
+    public void Initialize(BaseView homeViewInstance) {
       if (_Container == null) {
         _Container = transform;
       }

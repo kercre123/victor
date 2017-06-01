@@ -27,7 +27,7 @@ namespace Cozmo.UI {
 
     public float GetNormalizedSnapValue(int index) {
       if (index >= _LayoutElementList.Count) {
-        DAS.Error("HomeViewTab.GoToIndex out of bounds", gameObject.name);
+        DAS.Error("ViewTab.GoToIndex out of bounds", gameObject.name);
         return 0.0f;
       }
 

@@ -11,18 +11,39 @@ namespace Cozmo.Settings {
     private CozmoButtonLegacy _OpenRestoreCozmoDialogButton;
 
     [SerializeField]
+    private CozmoButton _RestoreCozmoButton;
+
+    [SerializeField]
     private AnkiTextLegacy _ClarificationText;
 
+    [SerializeField]
+    private CozmoText _RestoreCozmoClarificationText;
+
     private void Awake() {
-      _OpenRestoreCozmoDialogButton.Initialize(HandleOpenRestoreCozmoViewButtonTapped, "open_restore_cozmo_view_button", this.DASEventDialogName);
+      if (_OpenRestoreCozmoDialogButton != null) {
+        _OpenRestoreCozmoDialogButton.Initialize(HandleOpenRestoreCozmoViewButtonTapped, "open_restore_cozmo_view_button", this.DASEventDialogName);
+      }
+      if (_RestoreCozmoButton != null) {
+        _RestoreCozmoButton.Initialize(HandleOpenRestoreCozmoViewButtonTapped, "open_restore_cozmo_view_button", this.DASEventDialogName);
+      }
     }
 
     protected override void CleanUp() {
     }
 
     public void HideRestoreButton(bool isActive) {
-      _OpenRestoreCozmoDialogButton.gameObject.SetActive(isActive);
-      _ClarificationText.gameObject.SetActive(isActive);
+      if (_OpenRestoreCozmoDialogButton != null) {
+        _OpenRestoreCozmoDialogButton.gameObject.SetActive(isActive);
+      }
+      if (_RestoreCozmoButton != null) {
+        _RestoreCozmoButton.gameObject.SetActive(isActive);
+      }
+      if (_ClarificationText != null) {
+        _ClarificationText.gameObject.SetActive(isActive);
+      }
+      if (_RestoreCozmoClarificationText != null) {
+        _RestoreCozmoClarificationText.gameObject.SetActive(isActive);
+      }
     }
 
     private void HandleOpenRestoreCozmoViewButtonTapped() {

@@ -185,5 +185,14 @@
   },
   "settings.acknowledgementsPanel.title" : {
     "translation" : "法的"
+  },
+  "settings.modalTitle": {
+    "translation": "General Settings"
+  },
+  "settings.sdkPanel.sdkUrl.preface": {
+    "translation": "コズモSDKの訪問について学ぶために："
+  },
+  "settings.sdkPanel.sdkUrl.address": {
+    "translation": "go.anki.com/cozmo-app-sdk"
   }
 }
