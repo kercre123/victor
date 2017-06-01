@@ -30,7 +30,7 @@
  * Modified extensively for a different ROM selection process and flash operation.
  * @author Daniel Casner
  */
-
+ 
 #include "cboot-private.h"
 #include "cboot-gpio.h"
 #include "cboot-rtc.h"
@@ -377,7 +377,7 @@ void NOINLINE writeProtect(void)
   // XXX Exectute the flash protect command!
 }
 
-
+//extern unsigned int xthal_get_ccount(void);
 #define TEST_BASE ((uint32_t*)0x40108000)
 #define TEST_CEIL ((uint32_t*)0x4010Fee0)
 #define ZERO(d)  ((d<<16)|((~d)&0xffff))
@@ -392,6 +392,7 @@ int show_test_err(int n, uint32_t addr, uint32_t val)
 }
 void NOINLINE memtest(void)
 {
+   //const uint32_t tick = xthal_get_ccount();
    uint32_t offset;
    uint32_t val;
    volatile uint32_t* base = TEST_BASE;
@@ -437,8 +438,10 @@ void NOINLINE memtest(void)
             passed = show_test_err(5, (uint32_t)(base+offset), val);
          }
       }
-      ets_printf("Memtest result = %s\r\n", passed?"PASS":"FAIL");
+      ets_printf("Memtest %s\r\n", passed?"PASS":"FAIL");
    } while (!passed);
+   //const uint32_t tock = xthal_get_ccount();
+   //ets_printf("Memtest time %d cycles\r\n", tock-tick);
 //   ets_printf("Memtest complete\r\n");
 }
 
