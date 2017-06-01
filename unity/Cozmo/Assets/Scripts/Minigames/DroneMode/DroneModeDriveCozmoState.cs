@@ -294,7 +294,10 @@ namespace Cozmo {
 
         private void SendDriveRobotMessages() {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec
-              || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
+              || ShouldStopDriving(_TargetDriveSpeed_mmps,
+                                   _CurrentDriveSpeed_mmps,
+                                   _TargetTurnDirection,
+                                   _CurrentTurnDirection)) {
             _LastMessageSentTimestamp = Time.time;
             IsDrivingWheels = DriveWheelsIfNeeded();
 
@@ -311,7 +314,8 @@ namespace Cozmo {
           // Is the user telling us to point turn?
           if (IsUserPointTurning(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
             // Send a new message only if there is a change
-            if (!_TargetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold) || !_CurrentDriveSpeed_mmps.IsNear(_TargetDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)) {
+            if (!_TargetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold)
+                || !_CurrentDriveSpeed_mmps.IsNear(_TargetDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)) {
               _CurrentDriveSpeed_mmps = PointTurnRobotWheels(_TargetTurnDirection);
               _CurrentTurnDirection = _TargetTurnDirection;
             }
@@ -327,7 +331,10 @@ namespace Cozmo {
             }
             droveWheels = true;
           }
-          else if (ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
+          else if (ShouldStopDriving(_TargetDriveSpeed_mmps,
+                                     _CurrentDriveSpeed_mmps,
+                                     _TargetTurnDirection,
+                                     _CurrentTurnDirection)) {
             _TargetDriveSpeed_mmps = 0f;
             _CurrentDriveSpeed_mmps = 0f;
             _TargetTurnDirection = 0f;
@@ -397,9 +404,13 @@ namespace Cozmo {
           return !targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps);
         }
 
-        private bool ShouldStopDriving(float targetDriveSpeed, float currentDriveSpeed, float targetTurnDirection) {
+        private bool ShouldStopDriving(float targetDriveSpeed,
+                                       float currentDriveSpeed,
+                                       float targetTurnDirection,
+                                       float currentTurnDirection) {
           return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
-          && !currentDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+          && (!currentDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+              || !currentTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold))
           && targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
         }
 
