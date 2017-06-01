@@ -212,5 +212,8 @@
   },
   "button.temp": {
     "translation": "Temp"
+  },
+  "label.basicCozmo": {
+    "translation": "Big Brain. Bigger Personality."
   }
 }
