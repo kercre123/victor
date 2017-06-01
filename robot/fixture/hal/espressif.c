@@ -139,7 +139,7 @@ static const FlashLoadLocation ESPRESSIF_ERASE[] =
   { NULL, 0, 0, NULL, 0},
 };
 
-void InitEspressif(void)
+void InitEspressif(bool romBoot)
 {
   // Clock configuration
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
@@ -148,7 +148,11 @@ void InitEspressif(void)
   
   // Pull PA4 (CS#) low to select ESP BOOT.  This MUST happen before ProgramEspressif()
   GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_ResetBits(GPIOA, GPIO_Pin_4);
+  if(romBoot) {
+    GPIO_ResetBits(GPIOA, GPIO_Pin_4);
+  } else { //application boot
+    GPIO_SetBits(GPIOA, GPIO_Pin_4);
+  }
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -217,7 +221,7 @@ static inline void ESPPutChar(u8 c)
   DUTUART->DR = c;
 }
 
-static inline int ESPGetChar(int timeout = -1)
+inline int ESPGetChar(int timeout) //default -1
 {
   int countdown = timeout + getMicroCounter();
   
