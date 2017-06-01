@@ -356,7 +356,7 @@ void NOINLINE setupSerial(void)
   ets_delay_us(100);
   set_gpio(HANDSHAKE_PIN, 0);
   
-  ets_printf("Welcome to cboot\r\nVersion 2.1\r\n");
+  ets_printf("Welcome to cboot\r\nVersion 2.2\r\n");
 }
 
 /** Command SPI flash to make certain sectors read only until next power cycle
@@ -377,6 +377,75 @@ void NOINLINE writeProtect(void)
   // XXX Exectute the flash protect command!
 }
 
+
+#define TEST_BASE ((uint32_t*)0x40108000)
+#define TEST_CEIL ((uint32_t*)0x4010Fee0)
+#define ZERO(d)  ((d<<16)|((~d)&0xffff))
+#define ONEZ(d)  (~ZERO(d))
+
+void show_test_err(int n, uint32_t addr, uint32_t val)
+{
+   ets_printf("Memory Error (%d) at %x: %x -> %x\r\n", n,
+              addr, val, *((uint32_t*)addr));
+   
+}
+void NOINLINE memtest(void)
+{
+   uint32_t offset;
+   uint32_t val;
+   volatile uint32_t* base = TEST_BASE;
+  start:
+
+   //U:w0
+   for (offset=0; TEST_BASE+offset < TEST_CEIL; offset++) {
+      val = ZERO(offset);
+      *(base+offset) = val;
+   }
+   //U:r0w1r1
+   for (offset=0; TEST_BASE+offset < TEST_CEIL; offset++) {
+      val = ZERO(offset);
+      if ( *(base+offset) != val)
+      {
+         show_test_err(1, (uint32_t)(base+offset), val);
+         goto start;
+      }
+      val = ONEZ(offset);
+      *(base+offset) = val;
+      if ( *(base+offset) != val)
+      {
+         show_test_err(2, (uint32_t)(base+offset), val);
+         goto start;
+      }
+   }
+   //D:r1w0r0
+   for (offset=TEST_CEIL-TEST_BASE-1;offset!=(uint32_t)-1;--offset) {
+      val = ONEZ(offset);
+      if (*(base+offset) != val) {
+         show_test_err(3, (uint32_t)(base+offset), val);
+         goto start;
+      }
+      val = ZERO(offset);
+      *(base+offset) = val;
+      if ( *(base+offset) != val)
+      {
+         show_test_err(4, (uint32_t)(base+offset), val);
+         goto start;
+      }
+   }
+   //D:r0
+   for (offset=TEST_CEIL-TEST_BASE-1;offset!=(uint32_t)-1;--offset) {
+      val = ZERO(offset);
+      if ( *(base+offset) != val)
+      {
+         show_test_err(5, (uint32_t)(base+offset), val);
+         goto start;
+      }
+   }
+   ets_printf("Memtest complete\r\n");
+}
+
+
+
 __attribute__((section(".iram2.text"))) void NOINLINE stage2a(void)
 {
   __asm volatile (
@@ -395,6 +464,7 @@ void call_user_start() {
   __asm volatile (
     "mov a15, a0\n"                  // store return addr, hope nobody wanted a15!
     "call0 setupSerial\n"            // Set serial baudrate
+    "call0 memtest\n"
     "call0 writeProtect\n"           // apply flash write protection
     "mov a0, a15\n"                  // restore return addr
     "movi a3, stage2a\n"             // Load pointer to stage 2a 
