@@ -10,7 +10,9 @@ enum uint_32 Cozmo_Sings_100Bpm
   Cozmo_Sings_Beethovens_5Th = 234196460,
   Cozmo_Sings_Camptown_Races = 2068892721,
   Cozmo_Sings_Itsy_Bitsy_Spider = 4216855774,
+  Cozmo_Sings_London_Bridge = 1890869377,
   Cozmo_Sings_Mountain_King = 2556694018,
+  Cozmo_Sings_Muss_I_Denn = 2520896685,
   Cozmo_Sings_Pop_Goes_The_Weasel = 2629521585,
   Cozmo_Sings_Row_Your_Boat = 468566904,
   Cozmo_Sings_Ta_Ra_Ra_Boom = 2367266190,
@@ -19,9 +21,11 @@ enum uint_32 Cozmo_Sings_100Bpm
 
 enum uint_32 Cozmo_Sings_120Bpm
 {
+  Cozmo_Sings_Cozmambo = 885738211,
   Cozmo_Sings_Entry_Of_The_Gladiators = 2101741982,
   Cozmo_Sings_Hello_My_Baby = 1653598059,
   Cozmo_Sings_Ode_To_Joy = 277478768,
+  Cozmo_Sings_Sakura = 1066913866,
   Cozmo_Sings_Turkey_In_The_Straw = 222542119,
   Cozmo_Sings_Twinkle_Twinkle = 2925972690,
   Invalid = 0,
