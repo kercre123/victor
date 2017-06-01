@@ -1,4 +1,22 @@
 ----------------
+Release v101
+----------------
+
+General:
+-update display to "MP v1.5"
+
+Firmware:
+-esp.boot: added memory self-test at boot
+-esp.factory: cherry-picked WDT extension for OTA reliability
+
+HEAD1,HEAD2:
+-add esp memory (cache ram) test.
+-new error code 502 [HEAD_ESP_MEM_TEST]
+
+ROBOTx,PACKOUTx:
+-increase charge current threshold (->425mA) to be more consistent with BODY3 headless test.
+
+----------------
 Release v100
 ----------------
 
