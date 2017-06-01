@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Name: RequestSpeedTap
   m_EditorClassIdentifier: 
   ChallengeID: SpeedTapGame
-  RequestBehaviorGameFlag: 1
+  RequestGameID:
+    _EnumValueAsString: QuickTapGame
+    _EnumValue: 18
   RequestAcceptedAnimationTrigger:
     _EnumValueAsString: RequestGameSpeedTapAccept0
-    _EnumValue: 208
+    _EnumValue: 333

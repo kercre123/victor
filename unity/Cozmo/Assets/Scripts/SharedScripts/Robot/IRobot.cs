@@ -196,9 +196,6 @@ public interface IRobot : IDisposable {
 
   void SetSparkedMusicState(Anki.AudioMetaData.SwitchState.Sparked sparkedState);
 
-  // enable/disable games available for Cozmo to request
-  void SetAvailableGames(BehaviorGameFlag games);
-
   void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams);
 
   void DriveHead(float speed_radps);

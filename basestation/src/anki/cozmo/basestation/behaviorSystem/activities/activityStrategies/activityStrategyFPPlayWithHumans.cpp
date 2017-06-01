@@ -28,15 +28,18 @@ namespace Cozmo {
 ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(Robot& robot, const Json::Value& config)
 : Anki::Cozmo::IActivityStrategy(config)
 , _lastGameRequestTimestampSec(0.0f)
+, _canRequestGame(false)
 {
 
   // register to receive notifications of game requests
   if ( robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _eventHandles);
     helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::RequestGameStart>();
+    helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::CanCozmoRequestGame>();
   }
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyFPPlayWithHumans::WantsToStartInternal(const Robot& robot, float lastTimeActivityRanSec) const
 {
@@ -45,13 +48,9 @@ bool ActivityStrategyFPPlayWithHumans::WantsToStartInternal(const Robot& robot, 
   // checks here for whether we should start
   
   // In any case, at least having games available is a requirement
-  const bool isAnyGameAvailable = robot.GetBehaviorManager().IsAnyGameFlagAvailable( BehaviorGameFlag::All );
-  if ( !isAnyGameAvailable ) {
-    return false;
-  }
-
-  return true;
+  return _canRequestGame;
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyFPPlayWithHumans::WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const
@@ -63,9 +62,10 @@ bool ActivityStrategyFPPlayWithHumans::WantsToEndInternal(const Robot& robot, fl
     return true;
   }
 
-  return false;
+  return !_canRequestGame;
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::RequestGameStart& msg)
@@ -73,6 +73,16 @@ void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::Re
   // set timestamp
   _lastGameRequestTimestampSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::CanCozmoRequestGame& msg)
+{
+  // set whether Cozmo is currently allowed to request games or not
+  _canRequestGame = msg.canRequest;
+}
+
 
 } // namespace
 } // namespace

@@ -53,7 +53,6 @@ static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 static const char* kShouldUseBlocksKey = "use_block";
-static const char* kDoSecondRequestKey = "do_second_request";
 
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
@@ -61,7 +60,6 @@ static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
 static const bool  kShouldUseBlocksDefault = true;
-static const bool  kDoSecondRequestDefault = false;
 
 static const int   kFaceVerificationNumImages = 4;
 static const int   kMaxNumberOfRetries = 2;
@@ -133,7 +131,6 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
   else {
 
     _shouldUseBlocks = config.get(kShouldUseBlocksKey, kShouldUseBlocksDefault).asBool();
-    _doSecondRequest = config.get(kDoSecondRequestKey, kDoSecondRequestDefault).asBool();
   
     _zeroBlockConfig.LoadFromJson(config[kZeroBlockGroupKey]);
 
@@ -210,7 +207,6 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
     }
   }
 
-  _initialRequest = true;
   _numRetriesDrivingToFace = 0;
   _numRetriesPlacingBlock = 0;
   
@@ -534,11 +530,8 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRequestGameArray);
 
-  // always turn back to the face after the animation in case the animation moves the head
-  StartActing(new CompoundActionSequential(robot, {
-        new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
-        new TurnTowardsLastFacePoseAction(robot, M_PI_F)}),
-    &BehaviorRequestGameSimple::TransitionToIdle);
+  StartActing(new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
+              &BehaviorRequestGameSimple::TransitionToIdle);
   SET_STATE(PlayingRequestAnim);
 }
  
@@ -546,7 +539,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
-  SendRequest(robot, _initialRequest);
+  SendRequest(robot);
   
   if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
      && GetFaceID() != Vision::UnknownFaceID){
@@ -572,17 +565,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
   IActionRunner* denyAnimAction = new TriggerAnimationAction( robot, _activeConfig->denyAnimTrigger );
-
-  if( _initialRequest && _doSecondRequest ) {
-    // try again
-    _initialRequest = false;
-    StartActing(denyAnimAction, &BehaviorRequestGameSimple::TransitionToLookingAtFace);
-  }
-  else {
-    // TODO:(bn) different animation the second time?
-    StartActing(denyAnimAction);
-  }
-  
+  StartActing(denyAnimAction);
   SET_STATE(PlayingDenyAnim);
 }
 

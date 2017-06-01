@@ -29,6 +29,12 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "RollBlockOnSideLowScore",
+        "scoring"      :
+        {
+          "flatScore": 7
+        }
+      },
       { "behaviorID" : "Bouncer",
         "scoring"      :
         {
@@ -51,42 +57,11 @@
           }
         }
       },
-      { "behaviorID" : "PutDownBlock",
-        "scoring"      :
-        {
-          "flatScore": 0.1
-        }
-      },
-      { "behaviorID" : "RollBlockOnSideLowScore",
-        "scoring"      :
-        {
-          "flatScore": 0.05
-        }
-      },
+
       { "behaviorID" : "RequestSpeedTap",
         "scoring"      :
         {
-          "emotionScorers" :
-          [
-            {
-              "emotionType" : "WantToPlay",
-              "scoreGraph" :
-              {
-                "nodes" :
-                [
-                  {
-                    "x" : 0.0,
-                    "y" : 0.0
-                  },
-                  {
-                    "x" : 1.0,
-                    "y" : 0.8
-                  }
-                ]
-              },
-              "trackDelta" : false
-            }
-          ],
+          "flatScore": 1.0,
           "repetitionPenalty" :
           {
             "nodes" :
@@ -110,27 +85,7 @@
       { "behaviorID" : "RequestMemoryMatch",
         "scoring"      :
         {
-          "emotionScorers" :
-          [
-            {
-              "emotionType" : "WantToPlay",
-              "scoreGraph" :
-              {
-                "nodes" :
-                [
-                  {
-                    "x" : 0.0,
-                    "y" : 0.0
-                  },
-                  {
-                    "x" : 1.0,
-                    "y" : 0.8
-                  }
-                ]
-              },
-              "trackDelta" : false
-            }
-          ],
+          "flatScore": 1.0,
           "repetitionPenalty" :
           {
             "nodes" :
@@ -154,27 +109,7 @@
       { "behaviorID" : "RequestKeepAway",
         "scoring"      :
         {
-          "emotionScorers" :
-          [
-            {
-              "emotionType" : "WantToPlay",
-              "scoreGraph" :
-              {
-                "nodes" :
-                [
-                  {
-                    "x" : 0.0,
-                    "y" : 0.0
-                  },
-                  {
-                    "x" : 1.0,
-                    "y" : 0.8
-                  }
-                ]
-              },
-              "trackDelta" : false
-            }
-          ],
+          "flatScore": 1.0,
           "repetitionPenalty" :
           {
             "nodes" :
@@ -194,6 +129,15 @@
             ]
           }
         }
+      },
+                   
+      // Last option in case other behaviors aren't runnable due to
+      // carrying an object
+      { "behaviorID" : "PutDownBlock",
+        "scoring"      :
+        {
+          "flatScore": 0.1
+        }
       }
     ]
   },
@@ -202,25 +146,6 @@
     "type" : "PlayWithHumans",
     // do not go back immediately even if still feels playful
     // (it should be possible to fire with other triggers, like pick up)
-    "cooldownBaseSecs" : 30.0,
-    // require a minimum playful score
-    "requiredMinStartMoodScore" : 0.5,
-    "startMoodScorer" :
-    [
-      {
-        // intended meaning: if Cozmo wants to play, this activity should become available, since it
-        // merely asks the player to play
-        "emotionType" : "WantToPlay",
-        "scoreGraph" : {
-          "nodes" : [
-            { "x" : -1.0, "y" : 0.0 },
-            { "x" :  0.0, "y" : 0.0 },  // if WantToPlay is below X, score low
-            { "x" :  0.0, "y" : 1.0 },  // if WantToPlay is above X, score high
-            { "x" :  1.0, "y" : 1.0 }
-          ]
-        },
-        "trackDelta" : false
-      }
-    ]
+    "cooldownBaseSecs" : 30.0
   }
 }

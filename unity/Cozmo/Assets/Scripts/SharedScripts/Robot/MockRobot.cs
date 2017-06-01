@@ -160,11 +160,6 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games) {
-
-  }
-
   public ActiveObject GetActiveObjectById(int id) {
     return null;
   }

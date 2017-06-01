@@ -30,7 +30,8 @@ namespace Cozmo {
 #define DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE 0
 
 static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
-static const char* kRequiredGameFlagsKey = "requiredGameFlags";
+static const char* kUnlockIDKey   = "unlockID";
+
 
 IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -58,40 +59,29 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
                                                     this,
                                                     &robot,
                                                     std::placeholders::_1) );
-  
-  
-  // read required game flag. It must be specified
-  const Json::Value& requiredGameFlagsJson = config[kRequiredGameFlagsKey];
-  if ( !requiredGameFlagsJson.isNull())
-  {
-    _requiredGameFlags = BehaviorGameFlagFromString( requiredGameFlagsJson.asString() );
-  }
-  else
-  {
-    JsonTools::PrintJsonError(config, "IBehaviorRequestGame.NoGameFlag");
-    DEV_ASSERT(!requiredGameFlagsJson.isNull(), "IBehaviorRequestGame.NoGameFlag");
-  }
+  _requestID = UnlockIdFromString(JsonTools::ParseString(config,
+                                                         kUnlockIDKey,
+                                                         GetIDStr() + ".NoUnlockSpecified"));
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedFace,
     EngineToGameTag::RobotDeletedFace
   }});
 
-  SubscribeToTags({
-    GameToEngineTag::DenyGameStart
-  });
+  SubscribeToTags({{
+    GameToEngineTag::DenyGameStart,
+    GameToEngineTag::CanCozmoRequestGame
+  }});
 }
 
 bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
   
-  const bool isGameAvailable = robot.GetBehaviorManager().IsAnyGameFlagAvailable(_requiredGameFlags);
-  if ( !isGameAvailable )
-  {
+  if(!robot.GetProgressionUnlockComponent().IsUnlocked(_requestID)){
     if ( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
       PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable", "'%s': GameFlag not available (%s). Behavior not runnable",
-                        GetIDStr().c_str(), BehaviorGameFlagToString(_requiredGameFlags) );
+                        GetIDStr().c_str(), UnlockIdToString(_requestID));
     }
     return false;
   }
@@ -118,11 +108,11 @@ Result IBehaviorRequestGame::InitInternal(Robot& robot)
   return RequestGame_InitInternal(robot);
 }
 
-void IBehaviorRequestGame::SendRequest(Robot& robot, bool initialRequest)
+void IBehaviorRequestGame::SendRequest(Robot& robot)
 {
   using namespace ExternalInterface;
 
-  robot.Broadcast( MessageEngineToGame( RequestGameStart(initialRequest) ) );
+  robot.Broadcast( MessageEngineToGame( RequestGameStart(_requestID)) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
@@ -284,6 +274,26 @@ void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, const Ro
   }
 }
 
+void IBehaviorRequestGame::AlwaysHandle(const GameToEngineEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case GameToEngineTag::DenyGameStart:
+      // handled in while Running
+      break;
+      
+    case GameToEngineTag::CanCozmoRequestGame:
+      _canRequestGame = event.GetData().Get_CanCozmoRequestGame().canRequest;
+      break;
+      
+    default:
+      PRINT_NAMED_WARNING("IBehaviorRequestGame.AlwaysHandle.InvalidTag",
+                          "Received unexpected event with tag %hhu.", event.GetData().GetTag());
+      break;
+  }
+}
+  
+  
 void IBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   if( event.GetData().GetTag() == EngineToGameTag::CliffEvent ) {
@@ -297,8 +307,14 @@ void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, Ro
   if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
     HandleGameDeniedRequest(robot);
   }
+  else if(event.GetData().GetTag() == GameToEngineTag::CanCozmoRequestGame){
+    // Behavior game requests can no longer run - if we're running stop the behavior
+    if(!event.GetData().Get_CanCozmoRequestGame().canRequest){
+      StopActing(false);
+    }
+  }
   else {
-    PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
+    PRINT_NAMED_WARNING("IBehaviorRequestGame.HandleWhileRunning.InvalidTag",
                         "Received unexpected event with tag %hhu.", event.GetData().GetTag());
   }
 }

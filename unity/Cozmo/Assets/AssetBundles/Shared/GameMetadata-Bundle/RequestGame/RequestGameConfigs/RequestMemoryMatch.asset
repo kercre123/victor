@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Name: RequestMemoryMatch
   m_EditorClassIdentifier: 
   ChallengeID: MemoryMatchGame
-  RequestBehaviorGameFlag: 2
+  RequestGameID:
+    _EnumValueAsString: MemoryMatchGame
+    _EnumValue: 17
   RequestAcceptedAnimationTrigger:
     _EnumValueAsString: RequestGameMemoryMatchAccept0
-    _EnumValue: 225
+    _EnumValue: 320

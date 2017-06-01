@@ -562,6 +562,12 @@ message BehaviorManagerMessage {
   BehaviorManagerMessageUnion  BehaviorManagerMessageUnion
 }
 
+// Enable/Disable Cozmo's ability to request a game
+message CanCozmoRequestGame {
+  bool canRequest
+}
+
+
 // AbortPath
 message AbortPath {
 }

@@ -59,7 +59,7 @@ protected:
   // Utility functions for subclasses
   
   // these send the message (don't do anything with animations)
-  void SendRequest(Robot& robot, bool initialRequest);
+  void SendRequest(Robot& robot);
   void SendDeny(Robot& robot);
 
   // the time at which it will be OK to end the behavior (allowing us a delay after the request), or -1
@@ -92,6 +92,7 @@ protected:
   // Functions from IBehavior which aren't exposed to children
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
+  virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) final override;
 
@@ -104,9 +105,8 @@ private:
   bool       _hasBlockPose = false;
   Pose3d     _lastBlockPose;
   ObjectID   _robotsBlockID;
-  
-  // this behavior can only run if the Robot currently has available the given flags
-  BehaviorGameFlag _requiredGameFlags = BehaviorGameFlag::NoGame;
+  UnlockId   _requestID;
+  bool       _canRequestGame;
 
   std::set<ObjectID> _badBlocks;
 

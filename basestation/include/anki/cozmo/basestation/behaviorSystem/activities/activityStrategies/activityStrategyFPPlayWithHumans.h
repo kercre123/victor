@@ -47,7 +47,7 @@ private:
   
   // last time Cozmo requested a game
   float _lastGameRequestTimestampSec;
-
+  bool  _canRequestGame;
 
 };
   

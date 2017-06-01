@@ -1865,16 +1865,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage =
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID,
-      Singleton<SetAvailableGames>.Instance.Initialize(games)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, float tolerance_rad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(

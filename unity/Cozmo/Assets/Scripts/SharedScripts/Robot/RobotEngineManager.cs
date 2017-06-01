@@ -221,7 +221,6 @@ public class RobotEngineManager : MonoBehaviour {
     IRobot robot = new Robot(robotID);
     Robots.Add(robotID, robot);
     CurrentRobotID = robotID;
-    RequestGameManager.RobotToTrack = robot;
 
     if (BlockPoolTracker != null) {
       BlockPoolTracker.InitBlockPool();
@@ -245,7 +244,6 @@ public class RobotEngineManager : MonoBehaviour {
         BlockPoolTracker.CleanUp();
       }
 
-      RequestGameManager.RobotToTrack = null;
     }
   }
 

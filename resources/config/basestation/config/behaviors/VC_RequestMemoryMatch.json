@@ -2,7 +2,7 @@
   "behaviorClass" : "RequestGameSimple",
   "behaviorID" : "VC_RequestMemoryMatch",
   "displayNameKey":"behavior.RequestToPlay",
-  "requiredGameFlags" : "MemoryMatch",
+  "unlockID": "MemoryMatchGame",
   "use_block" : false,
   
   "zero_block_config": {

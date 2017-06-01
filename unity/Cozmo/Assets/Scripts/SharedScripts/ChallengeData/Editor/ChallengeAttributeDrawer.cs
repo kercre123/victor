@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace Cozmo {
   [CustomPropertyDrawer(typeof(ChallengeIdAttribute))]
   public class ChallengeAttributeDrawer : PropertyDrawer {
-    private const string kChallengeDataConfigLocation = "Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeList.asset";
+    private const string kChallengeDataConfigLocation = "Assets/AssetBundles/Shared/GameMetadata-Bundle/ChallengeData/ChallengeList.asset";
 
     private string[] _ChallengeIDs = null;
     // Draw the property inside the given rect

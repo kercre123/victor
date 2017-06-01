@@ -2,7 +2,7 @@
   "behaviorClass" : "RequestGameSimple",
   "behaviorID" : "VC_RequestKeepAway",
   "displayNameKey":"behavior.RequestToPlay",
-  "requiredGameFlags" : "KeepAway",
+  "unlockID": "KeepawayGame",
   "use_block" : false,
   
   "zero_block_config": {

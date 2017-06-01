@@ -117,10 +117,6 @@ public:
   // Games
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // get if the given flags are available, you can check for all or if any is set
-  inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
-  inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
-  
   UnlockId GetActiveSpark() const { return _activeSpark; }
   UnlockId GetRequestedSpark() const { return _lastRequestedSpark; }
   
@@ -129,9 +125,6 @@ public:
   
   bool IsRequestedSparkSoft() const { return (_lastRequestedSpark != UnlockId::Count) && _isRequestedSparkSoft; }
   bool IsRequestedSparkHard() const { return (_lastRequestedSpark != UnlockId::Count) && !_isRequestedSparkSoft; }
-  
-  // sets which games are available by setting the mask/flag combination
-  void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
@@ -351,10 +344,6 @@ private:
   // others/shared
   // - - - - - - - - - - - - - - -
   
-  // games that are available currently for Cozmo to request
-  using BehaviorGameFlagMask = std::underlying_type<BehaviorGameFlag>::type;
-  BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::NoGame );
-  
   // current active spark (this does not guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
   UnlockId _activeSpark = UnlockId::Count;
   
@@ -387,24 +376,6 @@ private:
   BehaviorClass _behaviorThatSetLights;
   bool _behaviorStateLightsPersistOnReaction;
 }; // class BehaviorManager
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Inline
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorManager::AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const
-{
-  const BehaviorGameFlagMask flags = Util::EnumToUnderlying(gameFlag);
-  const bool allSet = ((_availableGames & flags) == flags);
-  return allSet;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorManager::IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const
-{
-  const BehaviorGameFlagMask flags = Util::EnumToUnderlying(gameFlag);
-  const bool anySet = ((_availableGames & flags) != 0);
-  return anySet;
-}
 
 } // namespace Cozmo
 } // namespace Anki

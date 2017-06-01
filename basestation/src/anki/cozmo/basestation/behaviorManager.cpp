@@ -1109,14 +1109,6 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 {
   switch (message.GetTag())
   {
-    // Available games
-    case ExternalInterface::BehaviorManagerMessageUnionTag::SetAvailableGames:
-    {
-      const auto& msg = message.Get_SetAvailableGames();
-      SetAvailableGame(msg.availableGames);
-      break;
-    }
-    
     // Sparks
     case ExternalInterface::BehaviorManagerMessageUnionTag::ActivateSpark:
     {

@@ -99,10 +99,7 @@ private:
 
   bool   _shouldPopIdle = false;
 
-  bool   _initialRequest = true;
-
   bool   _shouldUseBlocks;
-  bool   _doSecondRequest;
   
   int    _numRetriesDrivingToFace;
   int    _numRetriesPlacingBlock;

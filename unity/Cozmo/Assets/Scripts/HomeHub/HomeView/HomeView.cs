@@ -107,6 +107,7 @@ namespace Cozmo.HomeHub {
     private bool _LootSequenceActive = false;
     private System.Diagnostics.Stopwatch _Stopwatch = null;
     private string _CurrentChallengeId = null;
+    private UnlockId _CurrentChallengeUnlockID = UnlockId.Count;
 
     private Sequence _RewardSequence;
 
@@ -765,8 +766,8 @@ namespace Cozmo.HomeHub {
 
     #region Request Game
 
-    private void HandleAskForMinigame(object messageObject) {
-      ChallengeData data = RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest;
+    private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart messageObject) {
+      ChallengeData data = RobotEngineManager.Instance.RequestGameManager.GetDataForGameID(messageObject.gameRequested);
       // Do not send the minigame message if the challenge is invalid or currently not unlocked.
       if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
         return;
@@ -791,12 +792,11 @@ namespace Cozmo.HomeHub {
         _Stopwatch = new System.Diagnostics.Stopwatch(); // allways create new sintance - GC can take care of previous ones.
         _Stopwatch.Start();
         _CurrentChallengeId = data.ChallengeID;
+        _CurrentChallengeUnlockID = data.UnlockId.Value;
 
         // Hook up callbacks
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Request_Game);
         _RequestDialog = alertModal;
-
-        RobotEngineManager.Instance.RequestGameManager.StartGameRequested();
       };
 
       Action<UIManager.CreationCancelledReason> requestGameCancelled = (cancelReason) => {
@@ -840,8 +840,8 @@ namespace Cozmo.HomeHub {
       }
 
       if (MinigameConfirmed != null) {
-        if (RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest != null) {
-          MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+        if (_CurrentChallengeUnlockID != UnlockId.Count) {
+          MinigameConfirmed.Invoke(_CurrentChallengeId);
         }
         else {
           int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeConfig.NumCubesRequired();
@@ -875,7 +875,6 @@ namespace Cozmo.HomeHub {
 
       if (_RequestDialog != null) {
         _RequestDialog.CloseDialog();
-        RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
         EnableGameRequestsIfAllowed(true);
       }
     }
@@ -884,7 +883,6 @@ namespace Cozmo.HomeHub {
       DAS.Info(this, "HandleUnexpectedClose");
       if (_RequestDialog != null) {
         _RequestDialog.DialogCloseAnimationFinished -= HandleRequestDialogClose;
-        RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
         EnableGameRequestsIfAllowed(true);
       }
     }

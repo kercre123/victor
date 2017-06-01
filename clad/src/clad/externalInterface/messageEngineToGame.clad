@@ -738,7 +738,7 @@ message FirmwareUpdateComplete {
 
 // The behavior wants the UI to pop up a game request
 message RequestGameStart {
-  bool firstRequest
+  UnlockId gameRequested
 }
 
 message HardSparkEndedByEngine {

@@ -13,17 +13,6 @@ namespace Cozmo {
 namespace ExternalInterface {
 
 
-// The "messages" in BehaviorManagerMessageUnion are deliberately marked as  structures, to
-// enforce that they're only used in the union (there is no handler to receive them unless they
-// are within a BehaviorManagerMessageUnion in BehaviorManagerMessage message)
-// See BehaviorManagerMessage in messagesGameToEngine.clad for usage of the union
-
-// Tells the behavior manager which games Cozmo can ask to play
-structure SetAvailableGames
-{
-  BehaviorGameFlag availableGames
-}
-
 // Tells the behavior manager to activate the given spark. Sparks are used to steer Cozmo towards doing
 // specific behavior sets, for example "stacking and destacking cubes nonstop for 30 seconds"
 structure ActivateSpark
@@ -40,7 +29,6 @@ structure SparkUnlocked
 
 
 union BehaviorManagerMessageUnion {
-  SetAvailableGames SetAvailableGames,
   ActivateSpark ActivateSpark,
   SparkUnlocked SparkUnlocked
 }
