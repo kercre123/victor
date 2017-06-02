@@ -23,6 +23,12 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "Singing_CozMambo",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_EntryOfTheGladiators",
         "scoring" :
         {
@@ -30,12 +36,6 @@
         }
       },
       { "behaviorID" : "Singing_FrereJacques",
-        "scoring" :
-        {
-          "flatScore": 10
-        }
-      },
-      { "behaviorID" : "Singing_Habanera",
         "scoring" :
         {
           "flatScore": 10
@@ -53,6 +53,12 @@
           "flatScore": 10
         }
       },
+      { "behaviorID" : "Singing_LondonBridge",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
       { "behaviorID" : "Singing_MaryHadALittleLamb",
         "scoring" :
         {
@@ -60,6 +66,12 @@
         }
       },
       { "behaviorID" : "Singing_MountainKing",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_MussIDenn",
         "scoring" :
         {
           "flatScore": 10
@@ -84,6 +96,12 @@
         }
       },
       { "behaviorID" : "Singing_RowYourBoat",
+        "scoring" :
+        {
+          "flatScore": 10
+        }
+      },
+      { "behaviorID" : "Singing_Sakura",
         "scoring" :
         {
           "flatScore": 10

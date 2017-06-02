@@ -77,7 +77,11 @@ enum int_32 UnlockId
   Singing_EntryOfTheGladiators   = 55,
   Singing_HelloMyBaby            = 56,
   Singing_TurkeyInTheStraw       = 57,
-  Singing_Habanera               = 58,
+  //Singing_Habanera               = 58,
+  Singing_LondonBridge           = 59,
+  Singing_CozMambo               = 60,
+  Singing_Sakura                 = 61,
+  Singing_MussIDenn              = 62,
 
   // ADD NEW UNLOCKS HERE
 

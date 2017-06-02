@@ -210,10 +210,19 @@
   "behavior.singing.TurkeyInTheStraw": {
     "translation": "Cozmo is singing Turkey in the Straw"
   },
-  "behavior.singing.Habanera": {
-    "translation": "Cozmo is singing La Habanera"
-  },
   "behavior.Dance": {
     "translation": "Cozmo is dancing"
+  },
+  "behavior.singing.LondonBridge": {
+    "translation": "Cozmo is singing London Bridge is Falling Down"
+  },
+  "behavior.singing.CozMambo": {
+    "translation": "Cozmo is singing the Cozmo Mambo"
+  },
+  "behavior.singing.Sakura": {
+    "translation": "Cozmo is singing Sakura"
+  },
+  "behavior.singing.MussIDenn": {
+    "translation": "Cozmo is singing Muss I Denn"
   }
 }

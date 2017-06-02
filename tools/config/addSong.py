@@ -31,7 +31,7 @@ if os.path.isfile(behaviorName):
 
 # Create behavior config file and populate
 
-songBehaviorConfigFile = open(behaviorName, "w")
+songBehaviorConfigFile = open(singingBehaviorConfigsPath + behaviorName + ".json", "w")
 
 songBehaviorConfigFile.write("{\n")
 songBehaviorConfigFile.write("  \"behaviorClass\":\"Singing\",\n")
