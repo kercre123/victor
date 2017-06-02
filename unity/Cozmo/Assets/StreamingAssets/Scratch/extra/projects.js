@@ -15,11 +15,7 @@
     setText('#attribution-label', $t('Based on Scratch, a project of the MIT Media Lab'));
     setText('#tutorial-label', $t('Tutorial'));
     setText('#new-project-label', $t('New Project'));
-    setText('#confirm-delete-label', $t('Are you sure you want to delete\nthis project?'));
 
-    setText('#btn-delete-project', $t('Yes, Delete'));
-    setText('#btn-cancel-delete-project', $t('No, Cancel'));
-    setText('#confirm-delete-label', $t('Are you sure you want to delete this project?'));
 
     setText('#prototype-sample-project .project-type', $t('Sample'));
     setText('#prototype-user-project .project-type', $t('Personal'));
@@ -89,22 +85,8 @@
       case 'btn-confirm-delete-project':
         showConfirmDeleteProjectModal(typeElem.parentNode);
         break;
-      case 'btn-cancel-delete-project':
-        hideConfirmDeleteProjectModal();
-        break;
-      case 'btn-delete-project':
-        // play a delete sound instead of a click
-        playClickSound = false;
-        if (window.player) {
-          window.player.play('delete');
-        }
-        CozmoAPI.deleteProject(typeElem.dataset.uuid);
-        break;
       case 'btn-close-page':
-        CozmoAPI.closeCodeLab();
-        break;
-      case 'modal-background':
-        hideConfirmDeleteProjectModal();
+        handleClosePage();
         break;
       case 'tutorial-link':
         playClickSound = false;
@@ -119,6 +101,22 @@
     if (playClickSound && window.player) {
       window.player.play('click');
     }
+  }
+
+
+  function handleClosePage() {
+    // open a dialog confirming that they want to exit the Code Lab
+    ModalConfirm.open({
+      title: $t('Quit Activity?'),
+      prompt: '',
+      confirmButtonLabel: $t('Quit'),
+      cancelButtonLabel: $t('Cancel'),
+      confirmCallback: function(result) {
+        if (result) {
+          CozmoAPI.closeCodeLab();
+        }
+      }
+    });
   }
 
   /**
@@ -326,24 +324,27 @@
   function showConfirmDeleteProjectModal(projectElem){
     var uuid = projectElem.getAttribute('data-uuid');
     var projectName = projectElem.getAttribute('data-project-name');
-    // set the title with the project name
-    setText('#confirm-delete-title', $t('Delete \'{0}\'?', projectName));
 
-    // save the UUID of the project to delete on the confirm delete button element
-    document.querySelector('#btn-delete-project').dataset.uuid = uuid;
 
-    // show the modal
-    document.querySelector('#delete-project-modal').style.visibility = 'visible';
+    ModalConfirm.open({
+      title: $t('Delete \'{0}\'?', projectName),
+      confirmButtonLabel: $t('Yes, Delete'),
+      cancelButtonLabel: $t('No, Cancel'),
+      prompt: $t('Are you sure you want to delete this project?'),
+      confirmCallback: function(result) {
+        if (result) {
+          if (window.player) {
+            window.player.play('delete');
+          }
+          CozmoAPI.deleteProject(uuid);
+        } else {
+          window.player.play('click');
+        }
+      }
+    });
   }
 
 
-  /**
-   * Hides delete user project confirmation modal
-   * @returns {void}
-   */
-  function hideConfirmDeleteProjectModal(){
-    document.querySelector('#delete-project-modal').style.visibility= 'hidden';
-  }
 
 
   // ***************
@@ -373,9 +374,6 @@
     }
 
     function deleteProject(uuid) {
-      // hide the delete project confirmation modal
-      hideConfirmDeleteProjectModal();
-
       // remove the project from the display
       var projectElem = document.querySelector('.project[data-uuid="'+uuid+'"]');
       projectElem.parentNode.removeChild(projectElem);

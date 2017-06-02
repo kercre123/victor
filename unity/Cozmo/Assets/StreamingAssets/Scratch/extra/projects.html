@@ -7,6 +7,7 @@
     <!-- CSS Styles -->
     <link rel="stylesheet" href="../css/normalize.css">
     <link rel="stylesheet" href="projects.css"/>
+    <link rel="stylesheet" href="modal-confirm.css"/>
 
     <link rel="prefetch" href="images/framing_widgetBackground_player1.svg"/>
     <link rel="prefetch" href="images/framing_widgetBackground_player2.svg"/>
@@ -56,21 +57,6 @@
       </div>
     </div>
 
-    <div id="delete-project-modal" class="modal">
-      <div id="modal-bg" class="modal-bg" data-type="modal-background"></div>
-      <div id="modal-inner" class="modal-inner">
-        <h2 id="confirm-delete-title" class="hd"></h2>
-        <p id="confirm-delete-label" class="bd"></p>
-        <div class="ft">
-          <button id="btn-delete-project" class="button-pill button-red-pill" data-type="btn-delete-project"></button>
-          <button id="btn-cancel-delete-project" class="button-pill button-blue-pill" data-type="btn-cancel-delete-project"></button>
-        </div>
-      </div>
-    </div>
-
-
-
-
     <!-- cloneable DOM trees for sample and user projects -->
     <div id="ui-prototypes" style="display:none">
 
@@ -98,5 +84,6 @@
     <script src="../js/webAudioPlayer.js"></script>
     <script src="./extra-common.js"></script>
     <script src="./projects.js"></script>
+    <script src="./modal-confirm.js"></script>
   </body>
 </html>
