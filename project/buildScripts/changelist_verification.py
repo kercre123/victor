@@ -31,8 +31,10 @@ def extract_file_list():
 
 def main():
     file_list = extract_file_list()
+    print( "File(s) changed:\n")
+    print( file_list )
     if verify_regex(file_list) == False:
-	sys.exit("PR was trigger erroneously from Teamcity.")
+	sys.exit("\nPR was trigger erroneously from Teamcity.")
 
 if __name__ == '__main__':
     main()
