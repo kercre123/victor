@@ -41,13 +41,9 @@ namespace Anki
       // TODO: Is this necessary?
       TimeStamp_t GetTimeStamp();
       
-#ifdef SIMULATOR
-      // TODO: Break this out into sim_androidHAL.h?
-      //       Need to make AndroidHAL namespace though.
-      
-      // Take a step (needed for webots only)
       Result Update();
-      
+  
+#ifdef SIMULATOR
       // NOTE: Only NVStorageComponent::LoadSimData() should call this function.
       //       Everyone else should be getting CameraCalibration data from NVStorageComponent!
       const CameraCalibration* GetHeadCamInfo();
@@ -112,6 +108,9 @@ namespace Anki
       AndroidHAL();
       static AndroidHAL* _instance;
 
+      void InitIMU();
+      void ProcessIMUEvents();
+      
 #ifdef SIMULATOR
       CameraCalibration headCamInfo_;
 #endif

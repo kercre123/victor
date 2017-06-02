@@ -934,8 +934,10 @@ namespace Anki {
           }
 #else
       
+          #ifndef COZMO_V2
           // Raw IMU chunks
           HAL::IMUReadRawData(imuRawDataMsg_.a, imuRawDataMsg_.g, &imuRawDataMsg_.timestamp);
+          #endif
           
 //          imuRawDataMsg_.a[0] = accel_robot_frame_filt[0];
 //          imuRawDataMsg_.a[1] = accel_robot_frame_filt[1];

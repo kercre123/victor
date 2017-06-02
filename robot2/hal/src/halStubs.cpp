@@ -38,16 +38,20 @@ namespace Anki {
       
     } // "private" namespace
 
-
-
-    // Forward Declaration.  This is implemented in sim_radio.cpp
+    
+    // Forward Declarations
     Result InitRadio(const char* advertisementIP);
+    void InitIMU();
+    void ProcessIMUEvents();
+    
 
     Result HAL::Init()
     {
       // Set ID
       robotID_ = 1;
 
+      InitIMU();
+      
       if(InitRadio("127.0.0.1") == RESULT_FAIL) {
         printf("Failed to initialize Radio.\n");
         return RESULT_FAIL;
@@ -59,33 +63,6 @@ namespace Anki {
     
 
    
-    bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
-    {
-      // Only one reading allowed per tic
-      // Real hardware may differ
-      
-      IMUData.acc_x = 0;
-      IMUData.acc_y = 0;
-      IMUData.acc_z = 9810;
-      IMUData.rate_x = 0;
-      IMUData.rate_y = 0;
-      IMUData.rate_z = 0;
-      
-      static TimeStamp_t lastReadTime = 0;
-      bool readSuccess = lastReadTime < HAL::GetTimeStamp();
-      lastReadTime = HAL::GetTimeStamp();
-      return readSuccess;
-    }
-    
-    void HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)
-    {
-      // Just storing junk values since this function exists purely for HW debug
-      *timestamp = HAL::GetTimeStamp() % u8_MAX;
-      accel[0] = accel[1] = accel[2] = 0;
-      gyro[0] = gyro[1] = gyro[2] = 0;
-    }
-
-
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
@@ -113,6 +90,8 @@ namespace Anki {
     
     Result HAL::Step(void)
     {
+      ProcessIMUEvents();
+      
       
       // Send block connection state when engine connects
       static bool wasConnected = false;
@@ -126,7 +105,7 @@ namespace Anki {
         
         // send firmware info indicating simulated robot
         {
-          std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":1}"};
+          std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":0}"};
           RobotInterface::FirmwareVersion msg;
           msg.RESRVED = 0;
           msg.json_length = firmwareJson.size() + 1;

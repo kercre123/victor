@@ -1365,7 +1365,17 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-      
+  
+  
+  //////////// Android HAL Update ////////////
+  #ifdef COZMO_V2
+  AndroidHAL::getInstance()->Update();
+  #endif
+  
+  
+  
+  //////////// VisionComponent //////////
+  
       
   if(_visionComponent->GetCamera().IsCalibrated())
   {

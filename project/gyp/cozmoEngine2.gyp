@@ -1627,6 +1627,9 @@
       	  'OS=="android"',
           {
             #'type': 'shared_library',
+            'libraries': [
+              '-landroid',
+            ],
 
             # Compile as position-independent executable (PIE)
             'cflags': [

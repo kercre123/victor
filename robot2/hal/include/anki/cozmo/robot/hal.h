@@ -116,9 +116,6 @@ namespace Anki
        */
       bool IMUReadData(IMU_DataStructure &IMUData);
 
-      /// Read raw unscaled IMU values
-      void IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp);
-
 /************************************************************************
  * \section Motors
  */

@@ -512,14 +512,6 @@ namespace Anki {
       lastReadTimestamp = HAL::GetTimeStamp();
       return newReading;
     }
-    
-    void HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)
-    {
-      // Just storing junk values since this function exists purely for HW debug
-      *timestamp = HAL::GetTimeStamp() % u8_MAX;
-      accel[0] = accel[1] = accel[2] = 0;
-      gyro[0] = gyro[1] = gyro[2] = 0;
-    }
 
 
     // Set the motor power in the unitless range [-1.0, 1.0]
