@@ -53,7 +53,6 @@ public class FirstTimeConnectView : BaseView {
     InitializeTermsOfUseButton();
 
     _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
-    UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
   }
 
   private void InitializePrivacyPolicyButton() {

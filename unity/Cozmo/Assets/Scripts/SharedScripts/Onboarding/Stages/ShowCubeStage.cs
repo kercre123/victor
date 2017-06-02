@@ -50,7 +50,6 @@ namespace Onboarding {
       RobotEngineManager.Instance.AddCallback<OnboardingState>(HandleUpdateOnboardingState);
       RobotEngineManager.Instance.AddCallback<BehaviorTransition>(HandleBehaviorTransition);
 
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Onboarding__Show_Cube);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {

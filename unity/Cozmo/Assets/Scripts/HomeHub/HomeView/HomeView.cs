@@ -978,8 +978,6 @@ namespace Cozmo.HomeHub {
 
       _TabContentContainer.alpha = 0f;
       openAnimation.Join(defaultSettings.CreateFadeInTween(_TabContentContainer, Ease.Unset, contentContainerAnimDuration * 0.3f));
-
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
     }
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {

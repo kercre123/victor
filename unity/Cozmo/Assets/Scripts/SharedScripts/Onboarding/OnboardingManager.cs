@@ -431,9 +431,6 @@ public class OnboardingManager : MonoBehaviour {
       Instance.GoToNextStage();
     }
     else {
-      if (Instance._CurrPhase == OnboardingPhases.Home) {
-        UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.TintMe, Color.white);
-      }
       OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
     }
   }

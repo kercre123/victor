@@ -55,12 +55,6 @@ namespace Onboarding {
       InitSlides();
     }
 
-    public override void OnDestroy() {
-      base.OnDestroy();
-      // the playspace image needs a white background again, then will transition back.
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
-    }
-
     private void UpdateStatusText() {
       _KeepOnChargerText.text = _WasOnCharger ? Localization.Get(LocalizationKeys.kOnboardingCozmoNeedsChargeKeepOnCharger) : Localization.Get(LocalizationKeys.kOnboardingCozmoNeedsChargePutBackOnCharger);
     }
@@ -85,16 +79,17 @@ namespace Onboarding {
       System.DateTime now = System.DateTime.UtcNow;
       System.TimeSpan timeInState = now - _TimeStartUTC;
       float timeInStateSec = (float)timeInState.TotalSeconds - _TimerPausedTotal_Sec;
-//      float timeInStateSec = (float)timeInState.TotalSeconds;
+      //      float timeInStateSec = (float)timeInState.TotalSeconds;
 
       float displayTime = _TimeBeforeContinue_Sec - timeInStateSec;
 
       if (displayTime >= 0.0f) {
         _CounterLabel.text = Mathf.CeilToInt(displayTime).ToString();
-      } else {
+      }
+      else {
         _CounterLabel.text = "0";
         _timerComplete = true;
-        
+
       }
 
       _ChargingCompleteContainer.gameObject.SetActive(timeInStateSec > _TimeBeforeContinue_Sec);
@@ -114,7 +109,7 @@ namespace Onboarding {
         _SlideGameObjects[i].SetActive(false);
       }
 
-      _SlideGameObjects[0].SetActive (true);
+      _SlideGameObjects[0].SetActive(true);
     }
 
     private void UpdateSlides(float time) {
@@ -124,7 +119,7 @@ namespace Onboarding {
       }
 
       float deltaTime = time - _timeOfLastSlide_Sec;
-      if(deltaTime > _SlideInterval_Sec){
+      if (deltaTime > _SlideInterval_Sec) {
         _timeOfLastSlide_Sec = time;
         ShowNextSlide();
       }

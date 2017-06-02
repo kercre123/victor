@@ -482,8 +482,6 @@ namespace Cozmo {
         setupColor.a = 0;
         _MiddleBackgroundImage.color = setupColor;
         _IsShowingMiddle = false;
-
-        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
       }
 
       public void ShowLockedBackground() {

@@ -122,7 +122,6 @@ namespace Cozmo.CheckInFlow.UI {
       _DailyGoalPanelScript.ShowCompletedText(false);
       _DailyGoalPanel.gameObject.SetActive(true);
       _DailyGoalPanel.alpha = 0.0f;
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.TintMe, Color.white);
 
       InitializeButtons();
 

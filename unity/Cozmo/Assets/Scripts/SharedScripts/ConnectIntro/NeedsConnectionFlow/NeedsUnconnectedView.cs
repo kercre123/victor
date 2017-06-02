@@ -18,8 +18,6 @@ namespace Cozmo.ConnectionFlow.UI {
 
     // Use this for initialization
     void Start() {
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
-                                                                      UIColorPalette.GeneralBackgroundColor);
       if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
         _ConnectButton.Initialize(HandleMockConnectButtonPressed, "connect_button", "needs_unconnected_view");
       }

@@ -143,8 +143,6 @@ namespace Cozmo {
             "react_to_pet_button",
             DroneModeControlsSlide.ActionContextType.PetSeen);
 
-          UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
-            _DroneModeControlsSlide.BackgroundColor);
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
 
           // DroneModeControlsSlide implements its own quit button so hide the shared one 

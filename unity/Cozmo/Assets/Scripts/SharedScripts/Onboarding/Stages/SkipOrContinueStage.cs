@@ -67,7 +67,6 @@ namespace Onboarding {
     private void HandleWakeAnimationComplete(bool success) {
       // Complete and shut down onboarding current phase.
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Home);
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
     }
 
     protected override void HandleLoopedAnimationComplete(bool success = true) {

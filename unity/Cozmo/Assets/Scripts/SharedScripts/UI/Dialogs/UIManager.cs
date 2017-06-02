@@ -60,10 +60,6 @@ public class UIManager : MonoBehaviour {
   public TouchCatcher TouchCatcher { get { return _TouchCatcherInstance != null && _TouchCatcherInstance.isActiveAndEnabled ? _TouchCatcherInstance : null; } }
 
   [SerializeField]
-  private BackgroundColorController _BackgroundColorController;
-  public BackgroundColorController BackgroundColorController { get { return _BackgroundColorController; } }
-
-  [SerializeField]
   private CanvasGroup _DimBackgroundPrefab;
 
   private CanvasGroup _DimBackgroundInstance;
@@ -111,7 +107,6 @@ public class UIManager : MonoBehaviour {
   }
 
   void Start() {
-    BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
     // Adjust pixel drag threshold based on screen resolution and size.  COZMO-9751
     // The "160" below is the accepted DPI value for medium sized screen devices
     // https://developer.android.com/guide/practices/screens_support.html

@@ -4103,9 +4103,9 @@
                             "Type": 1,
                             "SkinImageColor": true,
                             "ImageColor": {
-                                "r": 0.3686274588108063,
-                                "g": 0.3686274588108063,
-                                "b": 0.3686274588108063,
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
                                 "a": 1.0
                             },
                             "SkinFontColor": false,
@@ -4116,7 +4116,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/HomeHub/Art/BasicUISprites/basic_ui_sprites-UHD/Unpacked/ui_bg_gradient_tintMe.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/framing_bgVignetting.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,

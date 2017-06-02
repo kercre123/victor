@@ -14,9 +14,6 @@ namespace Onboarding {
     private bool _FreeplayEnabledOnExit = false;
 
     [SerializeField]
-    private bool _TransitionBGColorYellow = false;
-
-    [SerializeField]
     private bool _ShowOutline = false;
 
     protected virtual void Awake() {
@@ -27,9 +24,6 @@ namespace Onboarding {
       base.Start();
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(_FreeplayEnabledOnEnter);
 
-      if (_TransitionBGColorYellow) {
-        UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
-      }
       if (_ShowOutline) {
         // Trying to keep the Onboarding as isolated as possible, so rather than making several layers
         // of getters in homeview, just find it

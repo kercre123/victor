@@ -46,8 +46,6 @@ namespace Cozmo.Needs.UI {
     private NeedsPlayModal _NeedsPlayModalInstance;
 
     public void Start() {
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
-                                                                      UIColorPalette.GeneralBackgroundColor);
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
