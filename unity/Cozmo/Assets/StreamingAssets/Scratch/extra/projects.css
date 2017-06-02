@@ -189,12 +189,16 @@ button:focus {
   text-align: right;
   background-color: #575a5b;
   border-top: 1px solid #989899;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 #projects .ft #attribution-label {
   margin: 0 auto 0 0;
   padding: 2vh 1.5vh 1.5vh 1.5vh;
-  width: 120vh;
   font-family: 'Avenir Next';
   text-align: left;
   font-size: 4vh;
@@ -207,6 +211,7 @@ button:focus {
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
+
   text-decoration: none;
   font-weight: bold;
   padding-top: .1em;
