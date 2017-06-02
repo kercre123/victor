@@ -45,6 +45,8 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   // We shouldn't play the animation a second time if it's interrupted so simply return RESULT_OK
   virtual Result ResumeInternal(Robot& robot) override;
+  virtual void StopInternal(Robot& robot) override;
+
 
   
 private:

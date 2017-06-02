@@ -76,6 +76,7 @@ class IReactToFaceListener;
 class IReactToObjectListener;
 class IReactToPetListener;
 class IFistBumpListener;
+class IFeedingListener;
 
 enum class CubeAnimationTrigger;
 struct BehaviorStateLightInfo;
@@ -211,6 +212,8 @@ public:
                 { DEV_ASSERT(false, "AddListener.PetListener.Unimplemented"); }
   virtual void AddListener(IFistBumpListener* listener)
                 { DEV_ASSERT(false, "AddListener.FistBumpListener.Unimplemented"); }
+  virtual void AddListener(IFeedingListener* listener)
+                { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
   
 protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;

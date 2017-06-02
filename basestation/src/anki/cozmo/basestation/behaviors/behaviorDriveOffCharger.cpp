@@ -182,6 +182,6 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
   }
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 

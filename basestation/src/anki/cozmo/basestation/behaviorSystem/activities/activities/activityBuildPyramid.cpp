@@ -15,7 +15,6 @@
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
@@ -318,7 +317,7 @@ ActivityBuildPyramid::~ActivityBuildPyramid()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityBuildPyramid::OnSelectedInternal()
+void ActivityBuildPyramid::OnSelectedInternal(Robot& robot)
 {
   _uprightAnimIndex = 0;
   _onSideAnimIndex = 0;
@@ -350,7 +349,7 @@ void ActivityBuildPyramid::OnSelectedInternal()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityBuildPyramid::OnDeselectedInternal()
+void ActivityBuildPyramid::OnDeselectedInternal(Robot& robot)
 {
   // Make sure that all custom patterns are cleared off of the cubes
   for(auto& entry: _pyramidCubePropertiesTrackers){

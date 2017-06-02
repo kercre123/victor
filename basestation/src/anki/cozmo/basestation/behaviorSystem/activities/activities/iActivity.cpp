@@ -218,7 +218,7 @@ void IActivity::OnSelected(Robot& robot)
   // log event to das - note freeplay_goal is a legacy name for Activities left
   // in place so that data is queriable - please do not change
   Util::sEventF("robot.freeplay_goal_started", {}, "%s", GetIDStr());
-  OnSelectedInternal();
+  OnSelectedInternal(robot);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -276,7 +276,7 @@ void IActivity::OnDeselected(Robot& robot)
     
     robot.GetBehaviorManager().LeaveObjectTapInteraction();
   }
-  OnDeselectedInternal();
+  OnDeselectedInternal(robot);
 }
 
   

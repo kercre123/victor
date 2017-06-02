@@ -54,8 +54,8 @@ public:
   };
   
 protected:
-  virtual void OnSelectedInternal() override;
-  virtual void OnDeselectedInternal() override;
+  virtual void OnSelectedInternal(Robot& robot) override;
+  virtual void OnDeselectedInternal(Robot& robot) override;
   
 private:
   enum class ChooserPhase{

@@ -61,6 +61,10 @@ void CubeAccelComponent::AddListener(const ObjectID& objectID,
                     obj->GetActiveID());
       
       _robot.SendMessage(RobotInterface::EngineToRobot(StreamObjectAccel(obj->GetActiveID(), true)));
+    }else{
+      PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
+                          "Object id %d is not connected",
+                          objectID.GetValue());
     }
   }
   

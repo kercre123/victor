@@ -57,6 +57,18 @@
             "AnimName": "interacting"
         },
         {
+            "CladEvent": "FeedingBlank",
+            "AnimName": "feedingBlank"
+        },
+        {
+            "CladEvent": "FeedingCyanCycle",
+            "AnimName": "feedingCyanCycle"
+        },
+        {
+            "CladEvent": "FeedingCyanSolid",
+            "AnimName": "feedingCyanSolid"
+        },
+        {
             "CladEvent": "Flash",
             "AnimName": "flash"
         },

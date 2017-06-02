@@ -58,7 +58,7 @@ public:
 protected:
   // reset the state and populate the objective which we will require for this run (they are randomized each
   // time the activity is selected)
-  virtual void OnSelectedInternal() override;
+  virtual void OnSelectedInternal(Robot& robot) override;
   
 private:
   // use the objective requirements to populate _objectivesLeft, taking into account unlocks and random

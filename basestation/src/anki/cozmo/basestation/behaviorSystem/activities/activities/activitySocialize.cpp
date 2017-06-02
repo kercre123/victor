@@ -92,7 +92,7 @@ ActivitySocialize::ActivitySocialize(Robot& robot, const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySocialize::OnSelectedInternal()
+void ActivitySocialize::OnSelectedInternal(Robot& robot)
 {
   // we always want to do the search first, if possible
   _state = State::Initial;

@@ -59,6 +59,7 @@ namespace Cozmo.HomeHub {
 
     public override void DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       CloseChallengeImmediately();
       if (_ChallengeDetailsModalInstance != null) {
         _ChallengeDetailsModalInstance.CloseDialogImmediately();
@@ -132,6 +133,33 @@ namespace Cozmo.HomeHub {
       }
       else {
         DAS.Error("HomeHub.LoadHomeView", "Failed to load asset bundle " + _HomeViewPrefabData.AssetBundle);
+      }
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
+    }
+
+    private void HandleFeedingSFXStageUpdate(Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate message) {
+      uint stageNum = message.stage;
+      switch (stageNum) {
+      case 0: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
+          break;
+        }
+      case 1:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
+          break;
+        }
+      case 2:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
+          break;
+        }
+      case 3:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
+          break;
+        }
+      case 4:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
+          break;
+        }
       }
     }
 

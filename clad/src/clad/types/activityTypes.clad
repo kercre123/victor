@@ -11,6 +11,7 @@ namespace Cozmo {
 enum uint_8 ActivityType {
   BehaviorsOnly,
   BuildPyramid,
+  Feeding,
   Freeplay,
   GatherCubes,
   Socialize,
@@ -25,6 +26,7 @@ enum uint_8 ActivityID {
   Invalid,
 
   BuildPyramid,
+  Feeding,
   Freeplay,
   GatherCubes,
   Hiking,

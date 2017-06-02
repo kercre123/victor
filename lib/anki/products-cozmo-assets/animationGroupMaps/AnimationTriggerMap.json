@@ -433,6 +433,10 @@
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
+      "CladEvent": "FeedingGetIn",
+      "AnimName": "ag_fistbump_success"
+    },
+    {
       "CladEvent": "FistBumpIdle",
       "AnimName": "ag_fistbump_idle"
     },

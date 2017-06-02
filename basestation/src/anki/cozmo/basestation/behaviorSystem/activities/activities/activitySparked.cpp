@@ -115,7 +115,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersFinalAnim
 
 ActivitySparked::ActivitySparked(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
-, _robot(robot)
 , _state(ChooserState::ChooserSelected)
 , _timeChooserStarted(0.f)
 , _currentObjectiveCompletedCount(0)
@@ -162,7 +161,7 @@ ActivitySparked::~ActivitySparked()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::OnSelectedInternal()
+void ActivitySparked::OnSelectedInternal(Robot& robot)
 {
   _timeChooserStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _currentObjectiveCompletedCount = 0;
@@ -182,15 +181,15 @@ void ActivitySparked::OnSelectedInternal()
     .offset                 = {{0,0,120,240,0}}
   };
   
-  BehaviorManager& mngr = _robot.GetBehaviorManager();
+  BehaviorManager& mngr = robot.GetBehaviorManager();
   
   if(!mngr.IsRequestedSparkSoft()){
     // Set the idle driving animations to sparks driving anims
-    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
       AnimationTrigger::SparkDrivingLoop,
       AnimationTrigger::SparkDrivingStop});
-    _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _robot.GetBodyLightComponent().StartLoopingBackpackLights(
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
+    robot.GetBodyLightComponent().StartLoopingBackpackLights(
                             kLoopingSparkLights,
                             BackpackLightSource::Behavior,
                             _bodyLightDataLocator);
@@ -199,13 +198,13 @@ void ActivitySparked::OnSelectedInternal()
   }
   
   // Turn off reactionary behaviors that could interrupt the spark
-  SmartDisableReactionsWithLock(_robot,
+  SmartDisableReactionsWithLock(robot,
                                 GetIDStr(),
                                 kAffectTriggersSparksChooserArray);
   
   // Notify the delegate chooser if it exists
   if(_subActivityDelegate != nullptr){
-    _subActivityDelegate->OnSelected(_robot);
+    _subActivityDelegate->OnSelected(robot);
   }
   
   // for COZMO-8914
@@ -216,20 +215,17 @@ void ActivitySparked::OnSelectedInternal()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::OnDeselectedInternal()
+void ActivitySparked::OnDeselectedInternal(Robot& robot)
 {
-  ResetLightsAndAnimations();
-  
-
-  
+  ResetLightsAndAnimations(robot);
   // clear any custom light events set during the spark
   
   // Notify the delegate chooser if it exists
   if(_subActivityDelegate != nullptr){
-    _subActivityDelegate->OnDeselected(_robot);
+    _subActivityDelegate->OnDeselected(robot);
   }
   
-  _robot.GetCubeLightComponent().StopAllAnims();
+  robot.GetCubeLightComponent().StopAllAnims();
 }
 
   
@@ -295,13 +291,13 @@ Result ActivitySparked::ReloadFromConfig(Robot& robot, const Json::Value& config
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::ResetLightsAndAnimations()
+void ActivitySparked::ResetLightsAndAnimations(Robot& robot)
 {
   if(_idleAnimationsSet){
     // Revert to driving anims
-    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-    _robot.GetAnimationStreamer().PopIdleAnimation();
-    _robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
+    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    robot.GetAnimationStreamer().PopIdleAnimation();
+    robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }
   
@@ -331,7 +327,7 @@ void ActivitySparked::HandleMessage(const ExternalInterface::RobotObservedObject
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivitySparked::Update(Robot& robot)
 {
-  const bool isCurrentBehaviorReactionary = _robot.GetBehaviorManager().CurrentBehaviorTriggeredAsReaction();
+  const bool isCurrentBehaviorReactionary = robot.GetBehaviorManager().CurrentBehaviorTriggeredAsReaction();
   
   // If the intro is interrupted, just continue as normal when reaction is over
   if((_state == ChooserState::ChooserSelected ||
@@ -344,14 +340,14 @@ Result ActivitySparked::Update(Robot& robot)
   
   if(_state == ChooserState::UsingSimpleBehaviorChooser
      || _state == ChooserState::WaitingForCurrentBehaviorToStop ){
-    CheckIfSparkShouldEnd();
+    CheckIfSparkShouldEnd(robot);
   }
   
   // If we've timed out during a reactionary behavior, skip the outro and kill the lights
   if(_state == ChooserState::WaitingForCurrentBehaviorToStop){
     if(isCurrentBehaviorReactionary){
-      CompleteSparkLogic();
-      ResetLightsAndAnimations();
+      CompleteSparkLogic(robot);
+      ResetLightsAndAnimations(robot);
       _state = ChooserState::EndSparkWhenReactionEnds;
     }
   }
@@ -369,7 +365,7 @@ Result ActivitySparked::Update(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* ActivitySparked::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
-  const BehaviorManager& mngr = _robot.GetBehaviorManager();
+  const BehaviorManager& mngr = robot.GetBehaviorManager();
   
   IBehavior* bestBehavior = nullptr;
   
@@ -428,7 +424,7 @@ IBehavior* ActivitySparked::ChooseNextBehavior(Robot& robot, const IBehavior* cu
             }
             
             // make sure we don't immediately play frustration upon ending a spark successfully
-            _robot.GetMoodManager().TriggerEmotionEvent("SuccessfulSpark", MoodManager::GetCurrentTimeInSeconds());
+            robot.GetMoodManager().TriggerEmotionEvent("SuccessfulSpark", MoodManager::GetCurrentTimeInSeconds());
             
           }else if(_sparksFailTrigger != AnimationTrigger::Count){
             getOutAnims.push_back(_sparksFailTrigger);
@@ -455,7 +451,7 @@ IBehavior* ActivitySparked::ChooseNextBehavior(Robot& robot, const IBehavior* cu
       
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
         bestBehavior = _behaviorNone;
-        CompleteSparkLogic();
+        CompleteSparkLogic(robot);
       }
       
       break;
@@ -489,9 +485,9 @@ IBehavior* ActivitySparked::SelectNextSparkInternalBehavior(Robot& robot, const 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::CompleteSparkLogic()
+void ActivitySparked::CompleteSparkLogic(Robot& robot)
 {
-  BehaviorManager& mngr = _robot.GetBehaviorManager();
+  BehaviorManager& mngr = robot.GetBehaviorManager();
   
   const bool completedObjectives = _numberOfRepetitions == 0 ||
   _currentObjectiveCompletedCount >= _numberOfRepetitions;
@@ -552,16 +548,16 @@ void ActivitySparked::CompleteSparkLogic()
       // Notify the game that the spark ended with some success state
       ExternalInterface::HardSparkEndedByEngine sparkEnded;
       sparkEnded.success = completedObjectives;
-      _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::HardSparkEndedByEngine>(sparkEnded);
+      robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::HardSparkEndedByEngine>(sparkEnded);
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySparked::CheckIfSparkShouldEnd()
+void ActivitySparked::CheckIfSparkShouldEnd(Robot& robot)
 {
-  BehaviorManager& mngr = _robot.GetBehaviorManager();
+  BehaviorManager& mngr = robot.GetBehaviorManager();
   const IBehavior* currentRunningBehavior = mngr.GetCurrentBehavior();
   
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -577,12 +573,12 @@ void ActivitySparked::CheckIfSparkShouldEnd()
   if(_state == ChooserState::UsingSimpleBehaviorChooser
      && (minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd))
   {
-    ResetLightsAndAnimations();
+    ResetLightsAndAnimations(robot);
     mngr.RequestCurrentBehaviorEndOnNextActionComplete();
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
     
     // Make sure we don't interrupt the final stage animation if we see a cube
-    SmartDisableReactionsWithLock(_robot,
+    SmartDisableReactionsWithLock(robot,
                                   kPlayingFinalAnimationLock,
                                   kAffectTriggersFinalAnimationArray);
   }else{

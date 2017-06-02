@@ -94,7 +94,12 @@ Result BehaviorPlayArbitraryAnim::ResumeInternal(Robot& robot)
   return RESULT_OK;
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPlayArbitraryAnim::StopInternal(Robot& robot)
+{
+  _animTriggers.clear();
+}
 
 
 } // namespace Cozmo

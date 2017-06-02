@@ -23,6 +23,7 @@
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorBouncer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorCantHandleTallStack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDevTurnInPlaceTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDance.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
@@ -45,7 +46,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRespondToRenameFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorSinging.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDevTurnInPlaceTest.h"
+#include "anki/cozmo/basestation/behaviors/feeding/behaviorFeedingEat.h"
+#include "anki/cozmo/basestation/behaviors/feeding/behaviorFeedingHungerLoop.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
@@ -369,6 +371,17 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::PyramidThankYou:
     {
       newBehavior = new BehaviorPyramidThankYou(robot, config);
+      break;
+    }
+      
+    case BehaviorClass::FeedingEat:
+    {
+      newBehavior = new BehaviorFeedingEat(robot, config);
+      break;
+    }
+    case BehaviorClass::FeedingHungerLoop:
+    {
+      newBehavior = new BehaviorFeedingHungerLoop(robot, config);
       break;
     }
     case BehaviorClass::Singing:

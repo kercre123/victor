@@ -60,6 +60,8 @@ bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqNone& preR
   return hasAnims;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPlayAnimSequence::IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const
 {
   _animTriggers = preReqData.GetAnims();

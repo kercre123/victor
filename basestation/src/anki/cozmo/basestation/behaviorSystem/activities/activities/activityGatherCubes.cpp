@@ -94,7 +94,7 @@ Result ActivityGatherCubes::Update(Robot& robot){
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityGatherCubes::OnSelectedInternal()
+void ActivityGatherCubes::OnSelectedInternal(Robot& robot)
 {
   // destroy beacon so that the sparksThinkAboutBeacons behavior in SparksGatherCube can create it
   ClearBeacons();
@@ -102,7 +102,7 @@ void ActivityGatherCubes::OnSelectedInternal()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityGatherCubes::OnDeselectedInternal()
+void ActivityGatherCubes::OnDeselectedInternal(Robot& robot)
 {
   // destroy beacon so that hiking can recreate it in freeplay
   ClearBeacons();

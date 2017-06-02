@@ -53,17 +53,17 @@ public:
   void HandleMessage(const T& msg);
 
 protected:
-  virtual void OnSelectedInternal() override;
-  virtual void OnDeselectedInternal() override;
+  virtual void OnSelectedInternal(Robot& robot) override;
+  virtual void OnDeselectedInternal(Robot& robot) override;
   
   // initialize the chooser, return result of operation
   Result ReloadFromConfig(Robot& robot, const Json::Value& config);
   
 private:
   
-  void CheckIfSparkShouldEnd();
-  void CompleteSparkLogic();
-  void ResetLightsAndAnimations();
+  void CheckIfSparkShouldEnd(Robot& robot);
+  void CompleteSparkLogic(Robot& robot);
+  void ResetLightsAndAnimations(Robot& robot);
 
   enum class ChooserState{
     ChooserSelected,
@@ -73,9 +73,7 @@ private:
     PlayingSparksOutro,
     EndSparkWhenReactionEnds
   };
-  
-  Robot& _robot;
-  
+    
   ChooserState _state;
   std::vector<Signal::SmartHandle> _signalHandles;
   

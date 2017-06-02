@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityBehaviorsOnly.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityBuildPyramid.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFeeding.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityGatherCubes.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activitySocialize.h"
@@ -41,6 +42,11 @@ IActivity* CreateActivity(Robot& robot, ActivityType activityType, const Json::V
     case ActivityType::BuildPyramid:
     {
       activityPtr = new ActivityBuildPyramid(robot, config);
+      break;
+    }
+    case ActivityType::Feeding:
+    {
+      activityPtr = new ActivityFeeding(robot, config);
       break;
     }
     case ActivityType::Freeplay:

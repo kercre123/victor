@@ -55,7 +55,7 @@ public:
   virtual Result Update(Robot& robot) override;
   
   // exit the current activity so that we clean up any conditions we've set up before entering the new chooser
-  virtual void OnDeselectedInternal() override;
+  virtual void OnDeselectedInternal(Robot& robot) override;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behavior selection

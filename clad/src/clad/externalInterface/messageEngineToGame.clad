@@ -866,6 +866,18 @@ message SupportInfo {
   string deviceId
 }
 
+//  Audio stages are map to different music updates that
+//  should be performed by Unity.
+//  0 - Play__SFX__Cube_Feeding_Loop_Play - begin looping sfx
+//  1 - Play__SFX__Cube_Feeding_Up - shake tick point up
+//  2 - Play__SFX__Cube_Feeding_Down - shake tick point drops
+//  3 - Play__SFX__Cube_Feeding_Success - game is over (also play the stop loop)
+//  4 - Stop__SFX__Cube_Feeding_Loop_Stop - stop looping sfx
+
+message FeedingSFXStageUpdate {
+  uint_8 stage
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  META  /////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

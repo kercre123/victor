@@ -66,6 +66,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
 {
   { ActivityID::BuildPyramid,         AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Feeding,              AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
   { ActivityID::Hiking,               AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
   { ActivityID::ObjectTapInteraction, AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
   { ActivityID::NeedsSevereLowEnergy, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },

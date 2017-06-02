@@ -100,8 +100,8 @@ public:
 protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
   
-  virtual void OnSelectedInternal() {};
-  virtual void OnDeselectedInternal() {};
+  virtual void OnSelectedInternal(Robot& robot) {};
+  virtual void OnDeselectedInternal(Robot& robot) {};
   // Allows activities to pass up a display name from sub activities
   void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
   
