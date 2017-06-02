@@ -156,6 +156,8 @@
         'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
         'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
         'ALWAYS_SEARCH_USER_PATHS': 'NO',
+        'ENABLE_BITCODE': 'NO',
+        'SKIP_INSTALL': 'YES',
         'DYLIB_INSTALL_NAME_BASE': '@loader_path',
     },
     'defines': [
