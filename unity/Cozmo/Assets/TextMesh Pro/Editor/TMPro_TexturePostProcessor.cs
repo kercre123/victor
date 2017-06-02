@@ -26,4 +26,34 @@ namespace TMPro.EditorUtilities
         }
 
     }
+
+
+    public class TMPro_PackageImportPostProcessor : AssetPostprocessor
+    {
+        static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+        {
+            for (int i = 0; i < deletedAssets.Length; i++)
+            {
+                if (deletedAssets[i] == "Assets/TextMesh Pro")
+                {
+                    //Debug.Log("Asset [" + deletedAssets[i] + "] has been deleted.");
+                    string currentBuildSettings = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+
+                    //Check for and inject TMP_PRESENT
+                    if (currentBuildSettings.Contains("TMP_PRESENT;"))
+                    {
+                        currentBuildSettings = currentBuildSettings.Replace("TMP_PRESENT;", "");
+
+                        PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings);
+                    }
+                    else if (currentBuildSettings.Contains("TMP_PRESENT"))
+                    {
+                        currentBuildSettings = currentBuildSettings.Replace("TMP_PRESENT", "");
+
+                        PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings);
+                    }
+                }
+            }
+        }
+    }
 }

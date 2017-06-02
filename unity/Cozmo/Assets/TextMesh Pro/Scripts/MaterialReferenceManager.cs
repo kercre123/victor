@@ -553,14 +553,6 @@ namespace TMPro
                 materialReferences[index].fontAsset = fontAsset;
                 materialReferences[index].spriteAsset = null;
                 materialReferences[index].material = material;
-                // HACK: this is a hack to get around the Unity bug of not showing custom shaders properly when
-                // asset bundles are built in ios but we are trying to simulate them in the Unity Editor.
-                #if UNITY_EDITOR
-                if (Application.isPlaying)
-                {
-                    materialReferences[index].material.shader = Shader.Find(materialReferences[index].material.shader.name);
-                }
-                #endif
                 materialReferences[index].isDefaultMaterial = materialID == fontAsset.material.GetInstanceID() ? true : false;
                 //materialReferences[index].padding = 0;
                 materialReferences[index].referenceCount = 0;
@@ -598,14 +590,6 @@ namespace TMPro
                 materialReferences[index].fontAsset = materialReferences[0].fontAsset;
                 materialReferences[index].spriteAsset = spriteAsset;
                 materialReferences[index].material = material;
-                // HACK: this is a hack to get around the Unity bug of not showing custom shaders properly when
-                // asset bundles are built in ios but we are trying to simulate them in the Unity Editor.
-                #if UNITY_EDITOR
-                if (Application.isPlaying)
-                {
-                    materialReferences[index].material.shader = Shader.Find(materialReferences[index].material.shader.name);
-                }                    
-                #endif
                 materialReferences[index].isDefaultMaterial = true;
                 //materialReferences[index].padding = 0;
                 materialReferences[index].referenceCount = 0;

@@ -1,9 +1,3 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Copyright (C) 2014 - 2016 Stephan Schaem - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
 Shader "TextMeshPro/Bitmap" {
 
 Properties {
@@ -55,11 +49,6 @@ SubShader{
 		#pragma fragment frag
 
 		#include "UnityCG.cginc"
-
-
-	#if UNITY_VERSION < 530
-		bool _UseClipRect;
-	#endif
 
 		struct appdata_t {
 			float4 vertex		: POSITION;
@@ -131,18 +120,10 @@ SubShader{
 			fixed4 c = tex2D(_MainTex, i.texcoord0);
 			c = fixed4 (tex2D(_FaceTex, i.texcoord1).rgb * i.color.rgb, i.color.a * c.a);
 
-			#if UNITY_VERSION < 530
-				if (_UseClipRect)
-				{
-					// Alternative implementation to UnityGet2DClipping with support for softness.
-					half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(i.mask.xy)) * i.mask.zw);
-					c *= m.x * m.y;
-				}
-			#else
-				// Alternative implementation to UnityGet2DClipping with support for softness.
-				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(i.mask.xy)) * i.mask.zw);
-				c *= m.x * m.y;
-			#endif
+			// Alternative implementation to UnityGet2DClipping with support for softness.
+			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(i.mask.xy)) * i.mask.zw);
+			c *= m.x * m.y;
+
 
 			return c;
 		}
