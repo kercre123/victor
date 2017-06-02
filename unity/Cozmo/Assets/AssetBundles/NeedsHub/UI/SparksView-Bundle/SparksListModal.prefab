@@ -1161,7 +1161,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed93d5b2b31c549c6b9bcbb2b56e8be3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventDialogName: sparks_list
+  _DASEventDialogName: sparks_list_modal
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent

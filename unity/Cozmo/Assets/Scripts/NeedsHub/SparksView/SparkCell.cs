@@ -25,15 +25,11 @@ namespace Cozmo.Needs.Sparks.UI {
     [SerializeField]
     private SparksDetailModal _SparksDetailModalPrefab;
 
-    private ModalPriorityData _SparksDetailModalPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow,
-                                                                                     1,
-                                                                                     LowPriorityModalAction.CancelSelf,
-                                                                                     HighPriorityModalAction.Stack);
-
     private UnlockableInfo _UnlockInfo;
+    private CostLabel _CostLabelHelper;
 
-    public void Initialize(UnlockableInfo unlockInfo) {
-
+    public void Initialize(UnlockableInfo unlockInfo, string dasEventDialogName) {
+      _SparksButton.Initialize(null, "spark_cell_" + unlockInfo.DASName, dasEventDialogName);
       if (unlockInfo.ComingSoon) {
         _SparksButton.onClick.AddListener(HandleTappedComingSoon);
         _TrickIcon.color = new Color(_TrickIcon.color.r, _TrickIcon.color.g, _TrickIcon.color.b, kComingSoonAlpha);
@@ -45,39 +41,17 @@ namespace Cozmo.Needs.Sparks.UI {
 
       _TrickIcon.sprite = unlockInfo.CoreUpgradeIcon;
       _TrickTitleText.text = Localization.Get(unlockInfo.TitleKey);
+
       _UnlockInfo = unlockInfo;
 
-      // Always request a flat cost for performing a trick
-      _SparkCountText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmount);
-
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded += HandleItemValueChanged;
-      playerInventory.ItemRemoved += HandleItemValueChanged;
-      playerInventory.ItemCountSet += HandleItemValueChanged;
-
-      SetSparkTextColor(playerInventory.GetItemAmount(unlockInfo.RequestTrickCostItemId));
+      _CostLabelHelper = new CostLabel(unlockInfo.RequestTrickCostItemId,
+                                       unlockInfo.RequestTrickCostAmount,
+                                       _SparkCountText,
+                                       UIColorPalette.GeneralSparkTintColor);
     }
 
     private void OnDestroy() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded -= HandleItemValueChanged;
-      playerInventory.ItemRemoved -= HandleItemValueChanged;
-      playerInventory.ItemCountSet -= HandleItemValueChanged;
-    }
-
-    private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-      if (itemId == _UnlockInfo.RequestTrickCostItemId) {
-        SetSparkTextColor(newCount);
-      }
-    }
-
-    private void SetSparkTextColor(int itemCount) {
-      if (itemCount >= _UnlockInfo.RequestTrickCostAmount) {
-        _SparkCountText.color = UIColorPalette.GeneralSparkTintColor.CanAffordColor;
-      }
-      else {
-        _SparkCountText.color = UIColorPalette.GeneralSparkTintColor.CannotAffordColor;
-      }
+      _CostLabelHelper.DeregisterEvents();
     }
 
     private void HandleTappedComingSoon() {
@@ -91,10 +65,55 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void HandleTappedUnlocked() {
       // pop up sparks modal
-      UIManager.OpenModal(_SparksDetailModalPrefab, _SparksDetailModalPriorityData, (obj) => {
+      UIManager.OpenModal(_SparksDetailModalPrefab, SparksDetailModal.SparksDetailModalPriority(), (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
         sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo);
       });
+    }
+  }
+
+  public class CostLabel {
+    private string _CostItemId;
+    private int _CostAmount;
+    private CozmoText _CostLabel;
+    private SparkCostTint _CostTint;
+
+    public CostLabel(string itemId, int costAmount, CozmoText costLabel, SparkCostTint costTint) {
+      _CostItemId = itemId;
+      _CostAmount = costAmount;
+      _CostLabel = costLabel;
+      _CostTint = costTint;
+
+      _CostLabel.text = Localization.GetNumber(_CostAmount);
+
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded += HandleItemValueChanged;
+      playerInventory.ItemRemoved += HandleItemValueChanged;
+      playerInventory.ItemCountSet += HandleItemValueChanged;
+
+      SetSparkTextColor(playerInventory.GetItemAmount(_CostItemId));
+    }
+
+    public void DeregisterEvents() {
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded -= HandleItemValueChanged;
+      playerInventory.ItemRemoved -= HandleItemValueChanged;
+      playerInventory.ItemCountSet -= HandleItemValueChanged;
+    }
+
+    private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+      if (itemId == _CostItemId) {
+        SetSparkTextColor(newCount);
+      }
+    }
+
+    private void SetSparkTextColor(int itemCount) {
+      if (itemCount >= _CostAmount) {
+        _CostLabel.color = _CostTint.CanAffordColor;
+      }
+      else {
+        _CostLabel.color = _CostTint.CannotAffordColor;
+      }
     }
   }
 }

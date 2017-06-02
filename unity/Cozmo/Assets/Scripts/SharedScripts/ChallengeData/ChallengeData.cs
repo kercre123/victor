@@ -32,6 +32,10 @@ namespace Cozmo.Challenge {
       get { return _ChallengeID; }
     }
 
+    public string DASName {
+      get { return _ChallengeID; }
+    }
+
     // the key used to get the actual localized string for the
     // challenge title shown to the player.
     [SerializeField]

@@ -49,6 +49,13 @@ namespace Cozmo {
       public LongPressConfirmationModal LongPressConfirmationModalPrefab {
         get { return _LongPressConfirmationModalPrefab; }
       }
+
+      [SerializeField]
+      private BaseModal _CubeHelpModalPrefab;
+
+      public BaseModal CubeHelpModalPrefab {
+        get { return _CubeHelpModalPrefab; }
+      }
     }
   }
 }

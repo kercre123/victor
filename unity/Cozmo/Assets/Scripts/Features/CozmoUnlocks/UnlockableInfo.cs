@@ -78,4 +78,8 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   }
 
   public string AndroidReleaseVersion;
+
+  public string DASName {
+    get { return Id.Value.ToString(); }
+  }
 }

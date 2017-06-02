@@ -45,6 +45,8 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeCompleted += HandleChallengeComplete;
       _ChallengeManager.OnChallengeFinishedLoading += HandleChallengeFinishedLoading;
 
+      SparksDetailModal.OnSparkGameClicked += HandleStartChallengePressed;
+
       _Instance = this;
       StartLoadNeedsHubView();
 
@@ -58,6 +60,8 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeViewFinishedClosing -= StartLoadNeedsHubView;
       _ChallengeManager.OnChallengeCompleted -= HandleChallengeComplete;
       _ChallengeManager.OnChallengeFinishedLoading -= HandleChallengeFinishedLoading;
+
+      SparksDetailModal.OnSparkGameClicked -= HandleStartChallengePressed;
 
       // Deregister events
       if (_NeedsViewHubInstance != null) {
@@ -199,6 +203,7 @@ namespace Cozmo.Hub {
       if (_SparksViewInstance != null) {
         DeregisterSparksViewEvents();
         _SparksViewInstance.DialogCloseAnimationFinished += StartLoadChallenge;
+        _SparksViewInstance.CloseDialog();
       }
     }
 
@@ -306,13 +311,13 @@ namespace Cozmo.Hub {
         _ActivitiesViewInstance = (ActivitiesView)newActivitiesView;
         _ActivitiesViewInstance.OnBackButtonPressed += HandleBackToNeedsFromActivitiesPressed;
         _ActivitiesViewInstance.InitializeActivitiesView(_ChallengeManager.GetActivities());
-        _ActivitiesViewInstance.OnActivityButtonPressed += HandleStartActivityPressed;
+        _ActivitiesViewInstance.OnActivityButtonPressed += HandleStartChallengePressed;
       });
     }
 
     private void DeregisterActivitiesViewEvents() {
       _ActivitiesViewInstance.OnBackButtonPressed -= HandleBackToNeedsFromActivitiesPressed;
-      _ActivitiesViewInstance.OnActivityButtonPressed -= HandleStartActivityPressed;
+      _ActivitiesViewInstance.OnActivityButtonPressed -= HandleStartChallengePressed;
       _ActivitiesViewInstance.DialogCloseAnimationFinished -= StartLoadChallenge;
     }
 
@@ -321,7 +326,7 @@ namespace Cozmo.Hub {
       StartLoadNeedsHubView();
     }
 
-    private void HandleStartActivityPressed(string challengeId) {
+    private void HandleStartChallengePressed(string challengeId) {
       PlayChallenge(challengeId, wasRequest: false);
     }
 

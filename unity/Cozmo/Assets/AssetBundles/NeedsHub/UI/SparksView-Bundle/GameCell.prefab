@@ -126,6 +126,7 @@ MonoBehaviour:
   _GameIcon: {fileID: 114859571189492758}
   _GameTitle: {fileID: 114324660689840714}
   _GameButton: {fileID: 114565595148530374}
+  _SparkCountText: {fileID: 114975770468775338}
   _SparksDetailModalPrefab: {fileID: 114836480710974580, guid: 252fd0f2d19f44513b171eb03531edd9,
     type: 2}
 --- !u!114 &114324660689840714

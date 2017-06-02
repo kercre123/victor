@@ -29,32 +29,8 @@ MonoBehaviour:
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 6
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 2
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    - serializedVersion: 2
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 0
   RequestTrickCostAmount: 2
-  RequestTrickCostAmountNeededMin: 2
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 4
-  CoreUpgradeTintColorName: upgradeGreen
-  CoreUpgradeIcon: {fileID: 21300000, guid: e3197ab704e5d4bc2ad88c48e6a17988, type: 3}
-  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 55d44ac342f9645cc9d7b909952cd412,
-    type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: 55d44ac342f9645cc9d7b909952cd412, type: 3}
   CubesRequired: 1
   SortOrder: 600
   AndroidReleaseVersion: 

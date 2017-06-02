@@ -5,6 +5,15 @@ using UnityEngine;
 
 namespace Cozmo.Needs.Sparks.UI {
   public class SparksDetailModal : BaseModal {
+    public delegate void SparkGameClickedHandler(string challengeId);
+    public static event SparkGameClickedHandler OnSparkGameClicked;
+
+    public static ModalPriorityData SparksDetailModalPriority() {
+      return new ModalPriorityData(ModalPriorityLayer.VeryLow,
+                                   1,
+                                   LowPriorityModalAction.CancelSelf,
+                                   HighPriorityModalAction.Stack);
+    }
 
     [SerializeField]
     private CozmoImage _Icon;
@@ -33,50 +42,19 @@ namespace Cozmo.Needs.Sparks.UI {
     [SerializeField]
     private GameObject _SparkSpinnerContainer;
 
-    private bool _ConfirmedQuit = false;
-    private AlertModal _QuitConfirmAlertModal;
+    [SerializeField]
+    protected MoveTweenSettings _StartGameMoveTweenSettings;
+
     private UnlockableInfo _UnlockInfo;
+    private string _ChallengeId;
+    private string _ChallengeTitleLocKey;
+
+    private bool _ConfirmedQuitTrick = false;
+    private AlertModal _QuitConfirmAlertModal;
 
     private HasHiccupsAlertController _HasHiccupsAlertController;
 
-    public void InitializeSparksDetailModal(UnlockableInfo unlockInfo) {
-      _HasHiccupsAlertController = new HasHiccupsAlertController();
-      _UnlockInfo = unlockInfo;
-
-      _Icon.sprite = unlockInfo.CoreUpgradeIcon;
-      _Description.text = Localization.Get(unlockInfo.DescriptionKey);
-      _Title.text = Localization.Get(unlockInfo.TitleKey);
-
-      // Require a flat rate even if a spark is requested multiple times
-      _SparksCostText.text = Localization.GetNumber(unlockInfo.RequestTrickCostAmount);
-
-      _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
-        unlockInfo.CubesRequired,
-        ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
-
-      _SparkButton.Initialize(() => {
-        SparkCozmo(unlockInfo);
-      }, "spark_cozmo_button", this.DASEventDialogName);
-
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
-
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded += HandleItemValueChanged;
-      playerInventory.ItemRemoved += HandleItemValueChanged;
-      playerInventory.ItemCountSet += HandleItemValueChanged;
-
-      UpdateButtonState();
-    }
-
-    public void InitializeSparksDetailModal(ChallengeManager.ChallengeStatePacket challengePacket) {
-      _Icon.sprite = challengePacket.Data.ChallengeIcon;
-      _Description.text = Localization.Get(challengePacket.Data.ChallengeDescriptionLocKey);
-      _Title.text = Localization.Get(challengePacket.Data.ChallengeTitleLocKey);
-
-      _SparkButton.Initialize(() => {
-        SparkCozmo(challengePacket);
-      }, "spark_cozmo_button", this.DASEventDialogName);
-    }
+    private bool _IsSparkingGame = false;
 
     protected override void CleanUp() {
       base.CleanUp();
@@ -90,6 +68,23 @@ namespace Cozmo.Needs.Sparks.UI {
       }
     }
 
+    protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
+      UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+      if (_MoveTweenSettings.targets.Length > 0) {
+        settings.ConstructCloseMoveTween(ref closeAnimation, _MoveTweenSettings);
+      }
+      if (_IsSparkingGame) {
+        if (_StartGameMoveTweenSettings.targets.Length > 0) {
+          settings.ConstructCloseMoveTween(ref closeAnimation, _StartGameMoveTweenSettings);
+        }
+      }
+      else {
+        if (_FadeTweenSettings.targets.Length > 0) {
+          settings.ConstructCloseFadeTween(ref closeAnimation, _FadeTweenSettings);
+        }
+      }
+    }
+
     private void OnApplicationPause(bool pauseStatus) {
       DAS.Debug("CoreUpgradeDetailsDialog.OnApplicationPause", "Application pause: " + pauseStatus);
       if (pauseStatus) {
@@ -98,30 +93,97 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void OnDestroy() {
-      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      playerInventory.ItemAdded -= HandleItemValueChanged;
-      playerInventory.ItemRemoved -= HandleItemValueChanged;
-      playerInventory.ItemCountSet -= HandleItemValueChanged;
+      CleanUpButtonState();
     }
 
-    #region Start Spark
+    private void InitializeDescription(Sprite icon, string titleLocKey, string descLocKey) {
+      _Icon.sprite = icon;
+      _Title.text = Localization.Get(titleLocKey);
+      _Description.text = Localization.Get(descLocKey);
+    }
+
+    private void InitializeUnlockInfo() {
+      this.DASEventDialogName = this.DASEventDialogName + "_" + _UnlockInfo.DASName;
+      _SparksCostText.text = Localization.GetNumber(_UnlockInfo.RequestTrickCostAmount);
+      _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
+        _UnlockInfo.CubesRequired,
+        ItemDataConfig.GetCubeData().GetAmountName(_UnlockInfo.CubesRequired));
+    }
+
+    private void RemoveCostFromInventory() {
+      // Inventory valid was already checked when the button was initialized.
+      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
+      DataPersistenceManager.Instance.Save();
+    }
+
+    #region Spark Game
+
+    public void InitializeSparksDetailModal(ChallengeManager.ChallengeStatePacket challengePacket) {
+      _UnlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(challengePacket.Data.UnlockId.Value);
+      ChallengeData data = challengePacket.Data;
+      _ChallengeId = data.ChallengeID;
+      _ChallengeTitleLocKey = data.ChallengeTitleLocKey;
+      InitializeDescription(data.ChallengeIcon, data.ChallengeTitleLocKey, data.ChallengeDescriptionLocKey);
+      InitializeUnlockInfo();
+
+      _SparkButton.Initialize(() => {
+        SparkCozmo(challengePacket);
+      }, "spark_specific_game_button", this.DASEventDialogName);
+      InitializeButtonState();
+
+      // Handle edge cases
+      _HasHiccupsAlertController = new HasHiccupsAlertController();
+    }
+
+    private void SparkCozmo(ChallengeManager.ChallengeStatePacket challengePacket) {
+      if (ShowEdgeCaseAlertIfNeeded(requireCubes: true)) {
+        return;
+      }
+
+      DAS.Event("meta.spark_specific_game", _UnlockInfo.Id.Value.ToString(),
+                DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmount.ToString()));
+
+      RemoveCostFromInventory();
+
+      if (OnSparkGameClicked != null) {
+        OnSparkGameClicked(_ChallengeId);
+      }
+
+      _IsSparkingGame = true;
+      this.CloseDialog();
+    }
+
+    #endregion
+
+    #region Spark Trick
+
+    public void InitializeSparksDetailModal(UnlockableInfo unlockInfo) {
+      _UnlockInfo = unlockInfo;
+      InitializeDescription(unlockInfo.CoreUpgradeIcon, unlockInfo.TitleKey, unlockInfo.DescriptionKey);
+      InitializeUnlockInfo();
+
+      _SparkButton.Initialize(() => {
+        SparkCozmo(unlockInfo);
+      }, "spark_specific_trick_button", this.DASEventDialogName);
+      InitializeButtonState();
+
+      // Handle edge cases
+      _HasHiccupsAlertController = new HasHiccupsAlertController();
+
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
+    }
 
     private void SparkCozmo(UnlockableInfo unlockInfo) {
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        if (robot.HasHiccups) {
-          _HasHiccupsAlertController.OpenCozmoHasHiccupsAlert(this.PriorityData);
-          return;
-        }
+      if (ShowEdgeCaseAlertIfNeeded(requireCubes: false)) {
+        return;
       }
 
       if (UnlockablesManager.Instance.OnSparkStarted != null) {
         UnlockablesManager.Instance.OnSparkStarted.Invoke(_UnlockInfo.Id.Value);
       }
-      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
-      // Inventory valid was already checked when the button was initialized.
-      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmount);
+      RemoveCostFromInventory();
 
       DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(),
                 DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmount.ToString()));
@@ -139,17 +201,9 @@ namespace Cozmo.Needs.Sparks.UI {
 
         RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
       }
+
       UpdateButtonState();
-      DataPersistenceManager.Instance.Save();
     }
-
-    private void SparkCozmo(ChallengeManager.ChallengeStatePacket challengePacket) {
-
-    }
-
-    #endregion
-
-    #region End Spark
 
     private void StopSparkTrick(bool isCleanup = false) {
       // Send stop message to engine
@@ -196,7 +250,170 @@ namespace Cozmo.Needs.Sparks.UI {
 
     #endregion
 
+    #region Edge Cases
+
+    private bool ShowEdgeCaseAlertIfNeeded(bool requireCubes) {
+      bool edgeCaseFound = true;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        int currentNumCubes = robot.LightCubes.Count;
+        if (requireCubes && currentNumCubes < _UnlockInfo.CubesRequired) {
+          OpenNeedCubesAlert(currentNumCubes, _UnlockInfo.CubesRequired, Localization.Get(_ChallengeTitleLocKey));
+        }
+        else if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.DriveOffCharger) {
+          OpenCozmoNotReadyAlert();
+        }
+        else if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.ReactToRobotShaken) {
+          OpenCozmoDizzyAlert();
+        }
+        else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {
+          OpenCozmoNotOnTreadsAlert();
+        }
+        else if (robot.HasHiccups) {
+          _HasHiccupsAlertController.OpenCozmoHasHiccupsAlert(this.PriorityData);
+        }
+        else {
+          edgeCaseFound = false;
+        }
+      }
+
+      return edgeCaseFound;
+    }
+
+    // Cozmo isn't done driving off the charger.
+    private void OpenCozmoNotReadyAlert() {
+      var cozmoNotReadyData = new AlertModalData("cozmo_driving_off_charger_alert",
+                                LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalTitle,
+                                LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalDescription,
+                                new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
+                                timeoutSec: 10.0f);
+
+      UIManager.OpenAlert(cozmoNotReadyData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+    }
+
+    private void OpenCozmoDizzyAlert() {
+      var cozmoDizzyData = new AlertModalData("cozmo_dizzy_alert",
+                             LocalizationKeys.kChallengeDetailsCozmoDizzyTitle,
+                             LocalizationKeys.kChallengeDetailsCozmoDizzyDescription,
+                             new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+
+      UIManager.OpenAlert(cozmoDizzyData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+    }
+
+    private void OpenCozmoNotOnTreadsAlert() {
+      var cozmoNotOnTreadsData = new AlertModalData("cozmo_off_treads_alert",
+                                   LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle,
+                                   LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription,
+                                   new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
+
+      UIManager.OpenAlert(cozmoNotOnTreadsData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+    }
+
+    public void OpenNeedCubesAlert(int currentCubes, int neededCubes, string titleString) {
+      var needCubesPriorityData = ModalPriorityData.CreateSlightlyHigherData(this.PriorityData);
+      AlertModalButtonData openCubeHelpButtonData = CreateCubeHelpButtonData(needCubesPriorityData);
+      AlertModalData needCubesData = CreateNeedMoreCubesAlertData(openCubeHelpButtonData, currentCubes,
+                                    neededCubes, titleString);
+
+      UIManager.OpenAlert(needCubesData, needCubesPriorityData);
+    }
+
+    private AlertModalButtonData CreateCubeHelpButtonData(ModalPriorityData basePriorityData) {
+      var cubeHelpModalPriorityData = ModalPriorityData.CreateSlightlyHigherData(basePriorityData);
+      System.Action cubeHelpButtonPressed = () => {
+        UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpModalPrefab, cubeHelpModalPriorityData, null);
+      };
+      return new AlertModalButtonData("open_cube_help_modal_button",
+                      LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
+                      cubeHelpButtonPressed);
+    }
+
+    private AlertModalData CreateNeedMoreCubesAlertData(AlertModalButtonData primaryButtonData,
+                                                        int currentCubes, int neededCubes, string titleString) {
+      int differenceCubes = neededCubes - currentCubes;
+      object[] descLocArgs = new object[] {
+        differenceCubes,
+        (ItemDataConfig.GetCubeData().GetAmountName(differenceCubes)),
+        titleString
+      };
+
+      return new AlertModalData("game_needs_more_cubes_alert",
+                    LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle,
+                    LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription,
+                    primaryButtonData, showCloseButton: true, descLocArgs: descLocArgs);
+    }
+
+    #endregion
+
+    #region Confirm Quit Spark Trick
+
+    protected override void HandleUserClose() {
+      if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.IsSparked) {
+        CreateConfirmQuitTrickAlert();
+      }
+      else {
+        base.HandleUserClose();
+      }
+    }
+
+    private void CreateConfirmQuitTrickAlert() {
+      // Hook up callbacks
+      var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked, HandleStaySparked,
+               Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
+      var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave, HandleLeaveSpark);
+
+      var confirmQuitSparkData = new AlertModalData("confirm_quit_spark_alert",
+            LocalizationKeys.kSparksSparkConfirmQuit,
+            LocalizationKeys.kSparksSparkConfirmQuitDescription,
+            staySparkedButtonData,
+            leaveSparkButtonData,
+            dialogCloseAnimationFinishedCallback: HandleQuitTrickAlertClosed);
+
+      var confirmQuitPriorityData = ModalPriorityData.CreateSlightlyHigherData(this.PriorityData);
+
+      // Open confirmation dialog instead
+      UIManager.OpenAlert(confirmQuitSparkData, confirmQuitPriorityData, HandleConfirmQuitTrickAlertCreated);
+      _ConfirmedQuitTrick = false;
+    }
+
+    private void HandleConfirmQuitTrickAlertCreated(AlertModal newAlertModal) {
+      _QuitConfirmAlertModal = newAlertModal;
+    }
+
+    private void HandleQuitTrickAlertClosed() {
+      if (_ConfirmedQuitTrick) {
+        CloseDialog();
+      }
+      _ConfirmedQuitTrick = false;
+    }
+
+    private void HandleStaySparked() {
+      _ConfirmedQuitTrick = false;
+    }
+
+    private void HandleLeaveSpark() {
+      _ConfirmedQuitTrick = true;
+    }
+
+    #endregion
+
     #region UI Updates
+
+    private void InitializeButtonState() {
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded += HandleItemValueChanged;
+      playerInventory.ItemRemoved += HandleItemValueChanged;
+      playerInventory.ItemCountSet += HandleItemValueChanged;
+
+      UpdateButtonState();
+    }
+
+    private void CleanUpButtonState() {
+      Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.ItemAdded -= HandleItemValueChanged;
+      playerInventory.ItemRemoved -= HandleItemValueChanged;
+      playerInventory.ItemCountSet -= HandleItemValueChanged;
+    }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {
       if (itemId == _UnlockInfo.RequestTrickCostItemId) {
@@ -235,58 +452,6 @@ namespace Cozmo.Needs.Sparks.UI {
       _ButtonPromptTitle.enabled = true;
       _ButtonPromptDescription.enabled = false;
       _ButtonPromptDescription.enabled = true;
-    }
-
-    #endregion
-
-    #region Confirm Quit Spark
-
-    protected override void HandleUserClose() {
-      if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.IsSparked) {
-        CreateConfirmQuitAlert();
-      }
-      else {
-        base.HandleUserClose();
-      }
-    }
-
-    private void CreateConfirmQuitAlert() {
-      // Hook up callbacks
-      var staySparkedButtonData = new AlertModalButtonData("stay_sparked_button", LocalizationKeys.kButtonStaySparked, HandleStaySparked,
-                     Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Click_Back));
-      var leaveSparkButtonData = new AlertModalButtonData("quit_spark_confirm_button", LocalizationKeys.kButtonLeave, HandleLeaveSpark);
-
-      var confirmQuitSparkData = new AlertModalData("confirm_quit_spark_alert",
-                  LocalizationKeys.kSparksSparkConfirmQuit,
-                  LocalizationKeys.kSparksSparkConfirmQuitDescription,
-                  staySparkedButtonData,
-                  leaveSparkButtonData,
-                  dialogCloseAnimationFinishedCallback: HandleQuitViewClosed);
-
-      var confirmQuitPriorityData = ModalPriorityData.CreateSlightlyHigherData(this.PriorityData);
-
-      // Open confirmation dialog instead
-      UIManager.OpenAlert(confirmQuitSparkData, confirmQuitPriorityData, HandleConfirmQuitAlertCreated);
-      _ConfirmedQuit = false;
-    }
-
-    private void HandleConfirmQuitAlertCreated(AlertModal newAlertModal) {
-      _QuitConfirmAlertModal = newAlertModal;
-    }
-
-    private void HandleQuitViewClosed() {
-      if (_ConfirmedQuit) {
-        CloseDialog();
-      }
-      _ConfirmedQuit = false;
-    }
-
-    private void HandleStaySparked() {
-      _ConfirmedQuit = false;
-    }
-
-    private void HandleLeaveSpark() {
-      _ConfirmedQuit = true;
     }
 
     #endregion

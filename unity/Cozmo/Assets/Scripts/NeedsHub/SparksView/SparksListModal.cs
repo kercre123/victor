@@ -22,7 +22,7 @@ namespace Cozmo.Needs.Sparks.UI {
       for (int i = 0; i < minigameData.Count; ++i) {
         if (minigameData[i].Data.IsMinigame) {
           GameObject cellInstance = UIManager.CreateUIElement(_GameCellPrefab, _GameListContainer);
-          cellInstance.GetComponent<GameCell>().Initialize(minigameData[i]);
+          cellInstance.GetComponent<GameCell>().Initialize(minigameData[i], DASEventDialogName);
         }
       }
 
@@ -30,9 +30,20 @@ namespace Cozmo.Needs.Sparks.UI {
         if (unlockData[i].FeatureIsEnabled &&
             (UnlockablesManager.Instance.IsUnlocked(unlockData[i].Id.Value) || unlockData[i].ComingSoon)) {
           GameObject cellInstance = UIManager.CreateUIElement(_SparksCellPrefab, _SparksListContainer);
-          cellInstance.GetComponent<SparkCell>().Initialize(unlockData[i]);
+          cellInstance.GetComponent<SparkCell>().Initialize(unlockData[i], DASEventDialogName);
         }
       }
+
+      SparksDetailModal.OnSparkGameClicked += HandleStartChallengePressed;
+    }
+
+    protected override void CleanUp() {
+      base.CleanUp();
+      SparksDetailModal.OnSparkGameClicked -= HandleStartChallengePressed;
+    }
+
+    private void HandleStartChallengePressed(string challengeId) {
+      CloseDialogImmediately();
     }
   }
 }

@@ -61,10 +61,10 @@ namespace Cozmo {
       protected CanvasGroup _AlphaController;
 
       [SerializeField]
-      private MoveTweenSettings _MoveTweenSettings;
+      protected MoveTweenSettings _MoveTweenSettings;
 
       [SerializeField]
-      private FadeTweenSettings _FadeTweenSettings;
+      protected FadeTweenSettings _FadeTweenSettings;
 
       void OnDestroy() {
         if (_CurrentDialogState != DialogState.Closed) {

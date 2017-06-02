@@ -63,10 +63,10 @@ MonoBehaviour:
       _AssetDataName: MemoryMatchHowToPlayAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 397
+    _EnumValue: 408
   GetOutAnimTrigger:
     _EnumValueAsString: MemoryMatchCozmoGetOut
-    _EnumValue: 198
+    _EnumValue: 209
   _NeedsActionIdWin:
     _EnumValueAsString: MemoryMatchWin
     _EnumValue: 11

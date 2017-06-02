@@ -20,3 +20,5 @@ MonoBehaviour:
     type: 2}
   _LongPressConfirmationModalPrefab: {fileID: 11440366, guid: 4fca36139bdf345bcaccade90aaac395,
     type: 2}
+  _CubeHelpModalPrefab: {fileID: 11489240, guid: bbf4f5e51da9f4783b86a0fff9369348,
+    type: 2}
