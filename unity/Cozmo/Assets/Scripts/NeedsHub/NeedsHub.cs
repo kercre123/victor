@@ -129,7 +129,6 @@ namespace Cozmo.Hub {
 
       UIManager.OpenView(needsHubViewPrefab.GetComponent<NeedsHubView>(), (newNeedsHubView) => {
         _NeedsViewHubInstance = (NeedsHubView)newNeedsHubView;
-        _NeedsViewHubInstance.OnStartChallengeClicked += HandleStartRandomChallenge;
         _NeedsViewHubInstance.OnActivitiesButtonClicked += HandleActivitiesButtonClicked;
         _NeedsViewHubInstance.OnSparksButtonClicked += HandleSparksButtonClicked;
 
@@ -170,11 +169,6 @@ namespace Cozmo.Hub {
 
     #region StartChallenge
 
-    private void HandleStartRandomChallenge() {
-      string randomChallengeId = _ChallengeManager.GetRandomChallenge();
-      PlayChallenge(randomChallengeId, false);
-    }
-
     private void PlayChallenge(string challengeId, bool wasRequest) {
       _ChallengeManager.SetCurrentChallenge(challengeId, wasRequest);
 
@@ -209,7 +203,6 @@ namespace Cozmo.Hub {
     }
 
     private void DeregisterNeedsViewEvents() {
-      _NeedsViewHubInstance.OnStartChallengeClicked -= HandleStartRandomChallenge;
       _NeedsViewHubInstance.OnActivitiesButtonClicked -= HandleActivitiesButtonClicked;
       _NeedsViewHubInstance.OnSparksButtonClicked -= HandleSparksButtonClicked;
       _NeedsViewHubInstance.DialogCloseAnimationFinished -= StartLoadChallenge;

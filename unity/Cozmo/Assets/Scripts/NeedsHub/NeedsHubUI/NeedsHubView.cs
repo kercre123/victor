@@ -11,14 +11,8 @@ namespace Cozmo.Needs.UI {
     public delegate void ActivitiesClickedHandler();
     public event ActivitiesClickedHandler OnActivitiesButtonClicked;
 
-    public delegate void StartChallengeClickedHandler();
-    public event StartChallengeClickedHandler OnStartChallengeClicked;
-
     public delegate void SparksClickedHandler();
     public event SparksClickedHandler OnSparksButtonClicked;
-
-    [SerializeField]
-    private CozmoButton _PlayRandomChallengeButton;
 
     [SerializeField]
     private CozmoButton _ActivitiesButton;
@@ -54,7 +48,6 @@ namespace Cozmo.Needs.UI {
     public void Start() {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe,
                                                                       UIColorPalette.GeneralBackgroundColor);
-      _PlayRandomChallengeButton.Initialize(HandlePlayChallengeButtonClicked, "play_random_Challenge_button", DASEventDialogName);
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
@@ -77,12 +70,6 @@ namespace Cozmo.Needs.UI {
       _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
       _MetersWidget.OnPlayPressed -= HandlePlayButton;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
-    }
-			
-    private void HandlePlayChallengeButtonClicked() {
-      if (OnStartChallengeClicked != null) {
-        OnStartChallengeClicked();
-      }
     }
 
     private void HandleActivitiesButtonClicked() {
@@ -153,12 +140,10 @@ namespace Cozmo.Needs.UI {
     private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
       if (repairBracket == NeedBracketId.Critical || repairBracket == NeedBracketId.Warning
           || energyBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Warning) {
-        _PlayRandomChallengeButton.Interactable = false;
         _ActivitiesButton.Interactable = false;
         _SparksButton.Interactable = false;
       }
       else {
-        _PlayRandomChallengeButton.Interactable = true;
         _ActivitiesButton.Interactable = true;
         _SparksButton.Interactable = true;
       }
