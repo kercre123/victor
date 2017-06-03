@@ -91,6 +91,8 @@
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
+      'ENABLE_BITCODE': 'NO',
+      'SKIP_INSTALL': 'YES',
       'FRAMEWORK_SEARCH_PATHS':'$(SDKROOT)/System/Library/Frameworks',
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
