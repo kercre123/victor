@@ -11,6 +11,9 @@ using System.Collections.Generic;
 namespace Anki.Cozmo.VoiceCommand {
   public class VoiceCommandManager : MonoBehaviour {
 
+    public delegate void UserResponseToPromptHandler(bool positiveResponse);
+    public event UserResponseToPromptHandler OnUserPromptResponse;
+
     private static VoiceCommandManager _Instance;
 
     public static VoiceCommandManager Instance {
@@ -83,6 +86,13 @@ namespace Anki.Cozmo.VoiceCommand {
         {
           if (StateDataCallback != null) {
             StateDataCallback(eventData.stateData);
+          }
+          break;
+        }
+      case VoiceCommandEventUnion.Tag.responseToPrompt:
+        {
+          if(OnUserPromptResponse != null) {
+            OnUserPromptResponse(eventData.responseToPrompt.positiveResponse);
           }
           break;
         }

@@ -1,6 +1,7 @@
 using Anki.UI;
 using Anki.Assets;
 using Anki.Cozmo;
+using Anki.Cozmo.VoiceCommand;
 using Cozmo.Challenge;
 using Cozmo.UI;
 using DataPersistence;
@@ -224,6 +225,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
+      VoiceCommandManager.Instance.OnUserPromptResponse += HandleUserResponseToPrompt;
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
@@ -254,6 +256,7 @@ namespace Cozmo.HomeHub {
 
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
+
     }
 
     private void HandleBlockConnectivityChanged(int blocksConnected) {
@@ -766,6 +769,8 @@ namespace Cozmo.HomeHub {
 
     #region Request Game
 
+    AlertModalData _requestGameData = null;
+
     private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart messageObject) {
       ChallengeData data = RobotEngineManager.Instance.RequestGameManager.GetDataForGameID(messageObject.gameRequested);
       // Do not send the minigame message if the challenge is invalid or currently not unlocked.
@@ -773,14 +778,14 @@ namespace Cozmo.HomeHub {
         return;
       }
 
-      var requestGameData = new AlertModalData("request_game_alert",
-                                               LocalizationKeys.kRequestGameTitle,
-                                               LocalizationKeys.kRequestGameDescription,
-                                               new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYes, HandleMiniGameConfirm),
-                                               new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNo, HandleMiniGameRejection),
-                                               icon: data.ChallengeIcon,
-                                               dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
-                                               titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });
+      _requestGameData = new AlertModalData("request_game_alert",
+                                            LocalizationKeys.kRequestGameTitle,
+                                            LocalizationKeys.kRequestGameDescription,
+                                            new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYes, HandleMiniGameConfirm),
+                                            new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNo, HandleMiniGameRejection),
+                                            icon: data.ChallengeIcon,
+                                            dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
+                                            titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });
 
       var requestGamePriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 2,
                                                       LowPriorityModalAction.CancelSelf,
@@ -804,12 +809,23 @@ namespace Cozmo.HomeHub {
         HandleRequestDialogClose();
       };
 
-      UIManager.OpenAlert(requestGameData, requestGamePriority, requestGameCreated,
+      UIManager.OpenAlert(_requestGameData, requestGamePriority, requestGameCreated,
                           creationCancelledCallback: requestGameCancelled,
                           overrideCloseOnTouchOutside: false);
     }
 
+    private void HandleUserResponseToPrompt(bool positiveResponse){
+      if(_requestGameData != null){
+        if (positiveResponse){
+          _requestGameData.PrimaryButtonData.ClickCallback.Invoke();
+        }else{
+          _requestGameData.SecondaryButtonData.ClickCallback.Invoke();
+        }
+      }
+    }
+
     private void HandleMiniGameRejection() {
+      _requestGameData = null;
       float elapsedSec = 0.0f;
       if (_Stopwatch != null) {
         _Stopwatch.Stop();
@@ -826,6 +842,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleMiniGameConfirm() {
+      _requestGameData = null;
       float elapsedSec = 0.0f;
       if (_Stopwatch != null) {
         _Stopwatch.Stop();
@@ -928,6 +945,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
+      VoiceCommandManager.Instance.OnUserPromptResponse -= HandleUserResponseToPrompt;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleCheckForLootView;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvents;
       RewardedActionManager.Instance.OnFreeplayRewardEvent -= HandleFreeplayRewardedAction;

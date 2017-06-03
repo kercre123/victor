@@ -60,6 +60,12 @@ structure StateData {
   AudioCapturePermissionState     capturePermissionState
 }
 
+// notify game that the user has responded to a prompt
+// with a yes or no
+structure UserResponseToPrompt{
+  bool positiveResponse
+}
+
 
 
 // ------------  Structures sent Game -> Engine  ------------ //
@@ -84,6 +90,7 @@ union VoiceCommandEventUnion {
   RespondingToCommandStart    respondingToCommandStart,
   RespondingToCommandEnd      respondingToCommandEnd,
   StateData                   stateData,
+  UserResponseToPrompt        responseToPrompt,
   RequestStatusUpdate         requestStatusUpdate,
   ChangeEnabledStatus         changeEnabledStatus
 }

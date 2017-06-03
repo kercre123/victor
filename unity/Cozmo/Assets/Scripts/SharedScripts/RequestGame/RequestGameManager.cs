@@ -34,9 +34,5 @@ namespace Cozmo.RequestGame {
       }
       return null;
     }
-
-    private void DebugSelectGameToRequest(string param) {
-      EnableRequestGameBehaviorGroups();
-    }
   }
 }

@@ -155,9 +155,24 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       return _voiceCommandBehavior;
     }
 
-    // TODO: Handle these two commands appropriately
+    // Yes Please and No Thank You are handled by Unity, so just send up
+    // the UserResponseToPrompt message
     case VoiceCommandType::YesPlease:
+    {
+      voiceCommandComponent->ClearHeardCommand();
+      VoiceCommandEventUnion vcEvent;
+      vcEvent.Set_responseToPrompt(UserResponseToPrompt(true));
+      robot.Broadcast(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(vcEvent)));
+      return _behaviorNone;
+    }
     case VoiceCommandType::NoThankYou:
+    {
+      voiceCommandComponent->ClearHeardCommand();
+      VoiceCommandEventUnion vcEvent;
+      vcEvent.Set_responseToPrompt(UserResponseToPrompt(false));
+      robot.Broadcast(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(vcEvent)));
+      return _behaviorNone;
+    }
     
     // These two commands will never be handled by this chooser:
     case VoiceCommandType::HeyCozmo:
