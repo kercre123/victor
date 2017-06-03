@@ -12,8 +12,10 @@ namespace VoiceCommand {
 enum uint_8 VoiceCommandType {
   DoADance,
   DoATrick,
+  FistBump,
   HeyCozmo,
   LetsPlay,
+  PeekABoo,
   NoThankYou,
   YesPlease,
 

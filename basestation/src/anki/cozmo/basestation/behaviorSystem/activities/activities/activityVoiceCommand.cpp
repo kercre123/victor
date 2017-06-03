@@ -14,10 +14,12 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -53,8 +55,19 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   _danceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::Dance_Mambo);
   DEV_ASSERT(_danceBehavior != nullptr &&
              _danceBehavior->GetClass() == BehaviorClass::Dance,
-             "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForName");
+             "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
+  
+  
+  _fistBumpBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FistBump);
+  DEV_ASSERT(_fistBumpBehavior != nullptr &&
+             _fistBumpBehavior->GetClass() == BehaviorClass::FistBump,
+             "VoiceCommandBehaviorChooser.FistBump.ImproperClassRetrievedForID");
+  _peekABooBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FPPeekABoo);
+  DEV_ASSERT(_peekABooBehavior != nullptr &&
+             _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
+             "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
+
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
 }
 
@@ -108,6 +121,38 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       _doATrickSelector->RequestATrick(robot);
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
       return _behaviorNone;
+    }
+    
+    case VoiceCommandType::FistBump:
+    {
+      BehaviorPreReqRobot preReqRobot(robot);
+      voiceCommandComponent->ClearHeardCommand();
+      //Ensure fist bump is unlocked and runnable
+      if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::FistBump) &&
+         _fistBumpBehavior->IsRunnable(preReqRobot)){
+        _voiceCommandBehavior = _fistBumpBehavior;
+        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      }else{
+        _voiceCommandBehavior = _behaviorNone;
+      }
+      
+      return _voiceCommandBehavior;
+    }
+    
+    case VoiceCommandType::PeekABoo:
+    {
+      BehaviorPreReqRobot preReqRobot(robot);
+      voiceCommandComponent->ClearHeardCommand();
+      //Ensure PeekABoo is unlocked and runnable
+      if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::PeekABoo) &&
+         _peekABooBehavior->IsRunnable(preReqRobot)){
+        _voiceCommandBehavior = _peekABooBehavior;
+        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      }else{
+        _voiceCommandBehavior = _behaviorNone;
+      }
+      
+      return _voiceCommandBehavior;
     }
 
     // TODO: Handle these two commands appropriately

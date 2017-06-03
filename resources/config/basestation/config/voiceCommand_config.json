@@ -13,24 +13,32 @@
       "commandType": "HeyCozmo"
     },
     {
-      "phrase": "Lets Play A Game",
-      "commandType": "LetsPlay"
+      "phrase": "Do A Dance",
+      "commandType": "DoADance"
     },
     {
       "phrase": "Do A Trick",
       "commandType": "DoATrick"
     },
     {
-      "phrase": "Yes Please",
-      "commandType": "YesPlease"
+      "phrase": "Fist Bump",
+      "commandType": "FistBump"
+    },
+    {
+      "phrase": "Lets Play A Game",
+      "commandType": "LetsPlay"
     },
     {
       "phrase": "No Thank You",
       "commandType": "NoThankYou"
     },
     {
-      "phrase": "Do A Dance",
-      "commandType": "DoADance"
+      "phrase": "Peek a Boo",
+      "commandType": "PeekABoo"
+    },
+    {
+      "phrase": "Yes Please",
+      "commandType": "YesPlease"
     }
   ],
 
@@ -50,7 +58,9 @@
       "contextCommandList": [
         "DoADance",
         "DoATrick",
-        "LetsPlay"
+        "FistBump",
+        "LetsPlay",
+        "PeekABoo"
       ]
     },
     {
