@@ -1,0 +1,27 @@
+{
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
+  },
+  "needs.NeedsEnergyModal.Title": {
+    "translation": "Feed Cozmo"
+  },
+  "needs.NeedsEnergyModal.FeedingSummary": {
+    "translation": "Cozmo needs to be fed to keep him healthy."
+  },
+  "needs.NeedsEnergyModal.Instruction1": {
+    "translation": "Grab any Cube that is pulsing blue."
+  },
+  "needs.NeedsEnergyModal.Instruction2": {
+    "translation": "Shake that Cube until all lights glow brightly."
+  },
+  "needs.NeedsEnergyModal.Instruction3": {
+    "translation": "Place the Cube in front of Cozmo."
+  },
+  "needs.NeedsEnergyModal.FeedingComplete": {
+    "translation": "Cozmo is fed! Now he is ready to play."
+  }
+}

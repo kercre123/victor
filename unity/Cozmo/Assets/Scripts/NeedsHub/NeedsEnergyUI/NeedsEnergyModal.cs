@@ -9,12 +9,28 @@ namespace Cozmo.Energy.UI {
   public class NeedsEnergyModal : BaseModal {
 
     [SerializeField]
-    private CozmoButton _FeedButton;
+    private CozmoText[] _InstructionNumberTexts;
 
     [SerializeField]
     private NeedsMeter _EnergyMeter;
 
+    [SerializeField]
+    private CozmoButton _DoneCozmoButton;
+
+    [SerializeField]
+    private MoveTweenSettings _HungryTweenSettings;
+
+    [SerializeField]
+    private MoveTweenSettings _FullTweenSettings;
+
+    private Sequence _HungryAnimation = null;
+    private Sequence _FullAnimation = null;
+
+    private NeedBracketId _LastNeedBracket = NeedBracketId.Count;
+
     public void InitializeEnergyModal() {
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
+
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
 
@@ -22,22 +38,34 @@ namespace Cozmo.Energy.UI {
                               buttonClickCallback: null,
                               dasButtonName: "energy_need_meter_button",
                               dasParentDialogName: DASEventDialogName);
-      _EnergyMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Energy));
 
-      _FeedButton.Initialize(HandleFeedButtonPressed, "feed_button", DASEventDialogName);
+      float displayEnergy = nsm.GetCurrentDisplayValue(NeedId.Energy);
+      _EnergyMeter.ProgressBar.SetValueInstant(displayEnergy);
+
+      if (_InstructionNumberTexts != null) {
+        for (int i = 0; i < _InstructionNumberTexts.Length; i++) {
+          _InstructionNumberTexts[i].SetText(Localization.GetNumber(i + 1));
+        }
+      }
+
+      if (_DoneCozmoButton != null) {
+        _DoneCozmoButton.Initialize(HandleUserClose, "done_button", DASEventDialogName);
+      }
+
+      //animate our display energy to the engine energy
+      HandleLatestNeedsLevelChanged(NeedsActionId.FeedBlue);
+
+      RefreshForCurrentBracket(nsm);
     }
 
     private void OnDestroy() {
       NeedsStateManager.Instance.ResumeAllNeeds();
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
-    }
 
-    protected override void ConstructOpenAnimation(Sequence openAnimation) {
-      ConstructDefaultFadeOpenAnimation(openAnimation);
-    }
-
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-      ConstructDefaultFadeCloseAnimation(closeAnimation);
+      //RETURN TO FREEPLAY
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      robot.SetEnableFreeplayLightStates(true);
+      robot.SetEnableFreeplayActivity(true);
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -47,20 +75,65 @@ namespace Cozmo.Energy.UI {
 
     protected override void RaiseDialogClosed() {
       base.RaiseDialogClosed();
+
+      if (_LastNeedBracket != NeedBracketId.Count) {
+        AnimateElements(fullElements: _LastNeedBracket == NeedBracketId.Full, hide: true);
+      }
+
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
     }
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       if (actionId == NeedsActionId.FeedBlue) {
-        _FeedButton.Interactable = true;
         NeedsStateManager nsm = NeedsStateManager.Instance;
-        _EnergyMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Energy));
+        float engineEnergy = nsm.PopLatestEngineValue(NeedId.Energy);
+        _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineEnergy);
+        RefreshForCurrentBracket(nsm);
       }
     }
 
-    private void HandleFeedButtonPressed() {
-      _FeedButton.Interactable = false;
-      NeedsStateManager.Instance.RegisterNeedActionCompleted(NeedsActionId.FeedBlue);
+    private void RefreshForCurrentBracket(NeedsStateManager nsm) {
+      NeedBracketId newNeedBracket = nsm.PopLatestEngineBracket(NeedId.Energy);
+      //only hide/show elements if bracket has changed
+      if (_LastNeedBracket != newNeedBracket) {
+        bool cozmoIsFull = newNeedBracket == NeedBracketId.Full;
+        //first hide unwanted elements, snap hidden if this is initial bracket assignment
+        AnimateElements(fullElements: !cozmoIsFull, hide: true, snap: _LastNeedBracket == NeedBracketId.Count);
+        //then show wanted elements
+        AnimateElements(fullElements: cozmoIsFull, hide: false);
+        _LastNeedBracket = newNeedBracket;
+      }
+    }
+
+    private void AnimateElements(bool fullElements = false, bool hide = false, bool snap = false) {
+      MoveTweenSettings tweenSettings = _HungryTweenSettings;
+      Sequence sequence = _HungryAnimation;
+      if (fullElements) {
+        tweenSettings = _FullTweenSettings;
+        sequence = _FullAnimation;
+      }
+
+      if (sequence != null) {
+        sequence.Kill();
+      }
+      sequence = DOTween.Sequence();
+
+      UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
+      if (tweenSettings.targets.Length > 0) {
+        if (hide ^ snap) {
+          settings.ConstructCloseMoveTween(ref sequence, tweenSettings);
+        }
+        else {
+          settings.ConstructOpenMoveTween(ref sequence, tweenSettings);
+        }
+      }
+
+      if (snap) {
+        sequence.Rewind();
+      }
+      else {
+        sequence.Play();
+      }
     }
   }
 }
