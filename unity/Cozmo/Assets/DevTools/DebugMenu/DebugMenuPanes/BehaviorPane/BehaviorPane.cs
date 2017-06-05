@@ -161,9 +161,7 @@ public class BehaviorPane : MonoBehaviour {
   private void OnChooserButton() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       HighLevelActivity activityType  = (HighLevelActivity)_ChooserDropdown.value;
-      if (activityType == HighLevelActivity.Selection) {
-        RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(activityType);
-      }
+      RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(activityType);
       if (_ReactionTriggerBehaviorMap.Count == 0) {
         RobotEngineManager.Instance.CurrentRobot.RequestReactionTriggerMap();
       }
@@ -184,8 +182,6 @@ public class BehaviorPane : MonoBehaviour {
         RobotEngineManager.Instance.CurrentRobot.RequestAllBehaviorsList();
       }
     }
-
-    OnChooserButton();
   }
 
   private void OnBehaviorButton() {
