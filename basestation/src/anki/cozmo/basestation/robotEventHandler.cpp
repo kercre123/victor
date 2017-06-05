@@ -120,9 +120,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& 
   targetPose.SetName("GotoPoseTarget");
   
   // TODO: expose whether or not to drive with head down in message?
-  // TODO: hard-code to false instead (shouldn't be necessary with no mat markers to see)
-  // (For now it is hard-coded to true)
-  const bool driveWithHeadDown = true;
+  const bool driveWithHeadDown = false;
   
   DriveToPoseAction* action = new DriveToPoseAction(robot,
                                                     targetPose,

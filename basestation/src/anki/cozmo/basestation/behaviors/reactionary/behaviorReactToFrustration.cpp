@@ -125,7 +125,8 @@ void BehaviorReactToFrustration::AnimationComplete(Robot& robot)
                                   &randomPoseRot );
 
     // TODO:(bn) motion profile?
-    DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToOrigin());
+    const bool kForceHeadDown = false;
+    DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToOrigin(), kForceHeadDown);
     StartActing(action); // finish behavior when we are done
   }
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);

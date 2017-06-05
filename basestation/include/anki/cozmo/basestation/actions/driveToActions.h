@@ -37,7 +37,7 @@ namespace Anki {
     public:
       DriveToPoseAction(Robot& robot,
                         const Pose3d& pose,
-                        const bool forceHeadDown  = true,
+                        const bool forceHeadDown,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                         const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
@@ -45,12 +45,12 @@ namespace Anki {
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       DriveToPoseAction(Robot& robot,
-                        const bool forceHeadDown  = true,
+                        const bool forceHeadDown,
                         const bool useManualSpeed = false); // Note that SetGoal(s) must be called before Update()!
       
       DriveToPoseAction(Robot& robot,
                         const std::vector<Pose3d>& poses,
-                        const bool forceHeadDown  = true,
+                        const bool forceHeadDown,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                         const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,

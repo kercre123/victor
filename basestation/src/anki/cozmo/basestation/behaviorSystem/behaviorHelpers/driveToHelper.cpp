@@ -148,7 +148,8 @@ void DriveToHelper::DriveToPreActionPose(Robot& robot)
           // Drive to the nearest allowed pose, and then perform a visual verify
           CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
           
-          auto driveToPoseAction = new DriveToPoseAction(robot, possiblePoses);
+          const bool kForceHeadDown = false;
+          auto driveToPoseAction = new DriveToPoseAction(robot, possiblePoses, kForceHeadDown);
           {
             // set path motion profile if applicable
             PathMotionProfile motionProfile;

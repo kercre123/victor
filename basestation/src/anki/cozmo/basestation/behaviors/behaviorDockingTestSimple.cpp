@@ -692,7 +692,8 @@ namespace Anki {
             action->AddAction(placeAction);
           }
           
-          DriveToPoseAction* driveAction = new DriveToPoseAction(robot, p);
+          const bool kDriveWithDown = true;
+          DriveToPoseAction* driveAction = new DriveToPoseAction(robot, p, kDriveWithDown);
           driveAction->SetMotionProfile(_motionProfile);
           action->AddAction(driveAction);
           

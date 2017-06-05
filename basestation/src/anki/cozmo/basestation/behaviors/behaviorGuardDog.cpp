@@ -269,7 +269,8 @@ BehaviorGuardDog::Status BehaviorGuardDog::UpdateInternal(Robot& robot)
       // Compute a goal starting pose near the blocks and drive there.
       Pose3d startingPose;
       ComputeStartingPose(robot, startingPose);
-      auto driveToStartingPoseAction = new DriveToPoseAction(robot, startingPose);
+      const bool kForceHeadDown = false;
+      auto driveToStartingPoseAction = new DriveToPoseAction(robot, startingPose, kForceHeadDown);
       
       // Wrap this in a retry action in case it fails.
       const u8 kNumRetries = 2;

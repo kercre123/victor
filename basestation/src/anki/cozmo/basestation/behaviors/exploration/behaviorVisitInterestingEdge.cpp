@@ -631,7 +631,8 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
   // 1) move to the vantage point
   {
     // request the action
-    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _cache._vantagePoints );
+    const bool kForceHeadDown = true;
+    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _cache._vantagePoints, kForceHeadDown );
     moveAction->AddAction( driveToPoseAction );
   }
   
