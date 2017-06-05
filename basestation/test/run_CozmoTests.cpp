@@ -384,9 +384,9 @@ static Anki::Result FakeRobotMovement(Anki::Cozmo::Robot& robot,
   using namespace Cozmo;
   
   stateMsg.timestamp = fakeTime;
-  stateMsg.status |= (u16)RobotStatusFlag::IS_MOVING; // Set moving flag
+  stateMsg.status |= (u16)RobotStatusFlag::ARE_WHEELS_MOVING; // Set moving flag
   Result lastResult = robot.UpdateFullRobotState(stateMsg);
-  stateMsg.status &= ~(u16)RobotStatusFlag::IS_MOVING; // Unset moving flag
+  stateMsg.status &= ~(u16)RobotStatusFlag::ARE_WHEELS_MOVING; // Unset moving flag
   fakeTime += 10;
   
   return lastResult;
@@ -1690,7 +1690,7 @@ TEST(Localization, LocalizationDistance)
   auto FakeMovement = [](RobotState& stateMsg, Robot& robot, TimeStamp_t& fakeTime) -> Result
   {
     // "Move" the robot with a fake state message indicating movement
-    stateMsg.status |= (s32)RobotStatusFlag::IS_MOVING;
+    stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
     stateMsg.timestamp = fakeTime;
     fakeTime += 10;
     Result lastResult = robot.UpdateFullRobotState(stateMsg);
@@ -1698,7 +1698,7 @@ TEST(Localization, LocalizationDistance)
     {
       
       // Stop
-      stateMsg.status &= ~(s32)RobotStatusFlag::IS_MOVING;
+      stateMsg.status &= ~(s32)RobotStatusFlag::ARE_WHEELS_MOVING;
       stateMsg.timestamp = fakeTime;
       fakeTime += 10;
       lastResult = robot.UpdateFullRobotState(stateMsg);
@@ -1733,14 +1733,14 @@ TEST(Localization, LocalizationDistance)
   ASSERT_EQ(secondID, robot.GetLocalizedTo());
   
   // Need to move and stop the robot so it's willing to localize again
-  stateMsg.status |= (s32)RobotStatusFlag::IS_MOVING;
+  stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
   stateMsg.timestamp = fakeTime;
   fakeTime += 10;
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(RESULT_OK, lastResult);
   
   // Stop in a new pose
-  stateMsg.status &= ~(s32)RobotStatusFlag::IS_MOVING;
+  stateMsg.status &= ~(s32)RobotStatusFlag::ARE_WHEELS_MOVING;
   stateMsg.timestamp = fakeTime;
   stateMsg.pose.angle = DEG_TO_RAD(90);
   fakeTime += 10;

@@ -956,7 +956,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
-  _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _offTreadsState != OffTreadsState::OnTreads;
+  _hasMovedSinceLocalization |= GetMoveComponent().IsCameraMoving() || _offTreadsState != OffTreadsState::OnTreads;
   
   if ( isDelocalizing )
   {
