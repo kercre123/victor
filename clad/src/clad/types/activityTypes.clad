@@ -68,6 +68,7 @@ enum uint_8 ActivityStrategy {
 
 // The high level activities BehaviorManager manages
 enum uint_8 HighLevelActivity {
+  Feeding,
   Freeplay,
   Selection,
   MeetCozmoFindFaces,

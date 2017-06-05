@@ -1,8 +1,0 @@
-{
-  "activityID" : "Feeding",
-  "activityType" : "Feeding",
-  "activityStrategy":
-  {
-    "type" : "Simple"
-  }
-}

@@ -95,6 +95,16 @@
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   {
+    "activityID" : "Feeding",
+    "highLevelID" : "Feeding",
+    "activityType" : "Feeding",
+    "activityStrategy":
+    {
+      "type" : "Simple"
+    }
+  },
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  {
     "activityID" : "Freeplay",
     "highLevelID" : "Freeplay",
     "activityType" : "Freeplay",
@@ -152,7 +162,6 @@
       { "activityID" : "Hiking", "activityPriority"               : 7},
       { "activityID" : "NothingToDo", "activityPriority"          : 8},
       // ONLY RUNNABLE THROUGH CONSOLE VARS
-      { "activityID" : "Feeding", "activityPriority"              : 9},
       { "activityID": "NeedsSevereLowEnergy", "activityPriority"  :10},
       { "activityID": "NeedsSevereLowRepair", "activityPriority"  :10}
     ]

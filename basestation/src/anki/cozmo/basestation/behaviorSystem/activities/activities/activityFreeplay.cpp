@@ -114,12 +114,6 @@ void ActivitySetFPBuildPyramid( ConsoleFunctionContextRef context ) {
   ActivityFreeplaySetDebugActivity(ActivityID::BuildPyramid);
 }
 CONSOLE_FUNC( ActivitySetFPBuildPyramid, "ActivityFreeplay" );
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivitySetFeeding( ConsoleFunctionContextRef context ) {
-  ActivityFreeplaySetDebugActivity(ActivityID::Feeding);
-}
-CONSOLE_FUNC( ActivitySetFeeding, "ActivityFreeplay" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityClearSetting( ConsoleFunctionContextRef context ) {
   ActivityFreeplaySetDebugActivity(ActivityID::Invalid);
