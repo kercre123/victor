@@ -136,6 +136,9 @@ CONSOLE_VAR(bool, kAddCustomObjectsToMemMap, "BlockWorld.MemoryMap", false);
 // Frequency/cooldown to warn about active objects that are seen while not connected
 CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld.MemoryMap", 10.0f);
   
+// How "recently" a cube can be seen for it not to get updated via UpdateStacks
+CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
 namespace {
@@ -1908,7 +1911,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       // grab the object whose pose we changed (we can't trust caching pointers in case we rejigger)
       ObservableObject* changedObjectPtr = GetLocatedObjectByID( changedObjectIt->_id );
-      if ( changedObjectPtr )
+      if ( nullptr != changedObjectPtr )
       {
         // find the object that is currently on top of the old position
         
@@ -1931,10 +1934,28 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         // gets included or ignored happens silently for filters if we don't static_assert requiring all
         filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::MarkerlessObject);
         filter.AddIgnoreFamily(Anki::Cozmo::ObjectFamily::CustomObject);
+        
+        // When Cozmo is looking at a stack/pyramid from a certain distance, the top cube can toggle rapidly between
+        // 'known' and 'dirty' pose state, causing the cube LEDs to flash on and off rapidly. This may cause users
+        // to think there is an issue with the cube. To avoid this, we do not allow updating a stack if we have seen
+        // the top cube "recently", because it's likely that we are simply not seeing all the cubes' markers in all the
+        // frames. See also notes in COZMO-10580.
+        const TimeStamp_t lastProcImageTime_ms = _robot->GetLastImageTimeStamp();
+        BlockWorldFilter::FilterFcn notSeenRecently = [lastProcImageTime_ms](const ObservableObject* obj)
+        {
+          if(obj->GetLastObservedTime() + kRecentlySeenTimeForStackUpdate_ms < lastProcImageTime_ms) {
+            // Not seen recently, so DO allow this object through the filter for updating
+            return true;
+          }
+          // Seen recently, don't update this object
+          return false;
+        };
+        
+        filter.AddFilterFcn(notSeenRecently);
 
         // find object
         ObservableObject* objectOnTopOfOldPose = FindLocatedObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM, filter);
-        if ( objectOnTopOfOldPose )
+        if ( nullptr != objectOnTopOfOldPose )
         {
           // we found an object currently on top of our old pose
           const ObjectID& topID = objectOnTopOfOldPose->GetID();
