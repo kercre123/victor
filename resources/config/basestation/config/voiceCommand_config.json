@@ -17,6 +17,10 @@
       "commandType": "DoADance"
     },
     {
+      "phrase": "Come Here",
+      "commandType": "ComeHere"
+    },
+    {
       "phrase": "Do A Trick",
       "commandType": "DoATrick"
     },
@@ -56,6 +60,7 @@
       "contextIsPhraseSpotted": false,
       "contextAllowsFollowup": false,
       "contextCommandList": [
+        "ComeHere",
         "DoADance",
         "DoATrick",
         "FistBump",

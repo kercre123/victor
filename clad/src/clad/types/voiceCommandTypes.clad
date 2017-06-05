@@ -10,6 +10,7 @@ namespace VoiceCommand {
 
 // ------------  Enum types used across messages  ------------ //
 enum uint_8 VoiceCommandType {
+  ComeHere,
   DoADance,
   DoATrick,
   FistBump,

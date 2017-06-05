@@ -23,6 +23,7 @@ enum uint_8 BehaviorClass {
   Dance,
   DevTurnInPlaceTest,
   DockingTestSimple,
+  DriveToFace,
   DriveOffCharger,
   DrivePath,
   EnrollFace,
@@ -234,6 +235,7 @@ enum uint_8 BehaviorID {
   TapInteractionStackCubes,
   TrackLaser,
 
+  VC_ComeHere,
   VC_RequestKeepAway,
   VC_RequestMemoryMatch,
   VC_RequestSpeedTap,

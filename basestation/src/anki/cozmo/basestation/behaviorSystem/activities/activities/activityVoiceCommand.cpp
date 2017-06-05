@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
@@ -57,7 +58,10 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
-  
+  _comeHereBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::VC_ComeHere);
+  DEV_ASSERT(_comeHereBehavior != nullptr &&
+             _comeHereBehavior->GetClass() == BehaviorClass::DriveToFace,
+             "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
   
   _fistBumpBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FistBump);
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
@@ -123,6 +127,16 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       return _behaviorNone;
     }
     
+    case VoiceCommandType::ComeHere:
+    {
+      BehaviorPreReqRobot preReqData(robot);
+      voiceCommandComponent->ClearHeardCommand();
+      if(_comeHereBehavior->IsRunnable(preReqData)){
+        _voiceCommandBehavior = _comeHereBehavior;
+        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      }
+      return _voiceCommandBehavior;
+    }
     case VoiceCommandType::FistBump:
     {
       BehaviorPreReqRobot preReqRobot(robot);

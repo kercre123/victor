@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDriveToFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorEnrollFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
@@ -404,7 +405,12 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorDevTurnInPlaceTest(robot, config);
       break;
     }
-      
+    case BehaviorClass::DriveToFace:
+    {
+      newBehavior = new BehaviorDriveToFace(robot, config);
+      break;
+    }
+    
     ////////////
     // Behaviors that are used by reaction triggers
     ////////////
