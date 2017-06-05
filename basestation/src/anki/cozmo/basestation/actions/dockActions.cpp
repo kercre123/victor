@@ -1536,6 +1536,11 @@ namespace Anki {
           // already checks this
           if(objectInOriginalPose != nullptr)
           {
+            // We do not expect this code to be running and if we get this error when also seeing a FindOrigin
+            // crash (as in COZMO-10977 for example), it suggests this code is related. (Come bug Andrew/Raul.)
+            PRINT_NAMED_ERROR("PickupObjectAction.Verify.FishyCode",
+                              "Possible red flag for COZMO-10977");
+            
             // Must not actually be carrying the object I thought I was!
             // Put the object I thought I was carrying in the position of the
             // object I matched to it above, and then delete that object.
