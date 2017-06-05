@@ -10,6 +10,7 @@
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/buildTypes.h"
+#include "anki/cozmo/robot/logging.h"
 #include "hal/hardware.h"
 
 #include "uart.h"
@@ -30,6 +31,9 @@
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+static uint32_t expectTimeStamp = 0;
+static bool delayTimestamp = false;
+
 extern int StartupSelfTest(void);
 void UpdateBootloader();
 
@@ -45,14 +49,17 @@ namespace Anki
       void CameraInit(void);
       void CameraStart(void);
 
-      TimeStamp_t t_;      
-      TimeStamp_t GetTimeStamp(void){ return t_; }      
+      TimeStamp_t t_;
+      TimeStamp_t GetTimeStamp(void){ return t_; }
       void SetTimeStamp(TimeStamp_t t) {
         using namespace Anki::Cozmo::RobotInterface;
-        
+
         AdjustTimestamp msg;
         msg.timestamp = t;
         RobotInterface::SendMessage(msg);
+
+        delayTimestamp = true;
+        expectTimeStamp = t;
       }
 
       u32 GetID() { return *(uint32_t*) 0xFFC; }
@@ -84,7 +91,7 @@ namespace Anki
       {
         IMU::Manage();
       }
-      
+
       u16 GetWatchdogResetCounter(void)
       {
         return WDOG_RSTCNT;
@@ -94,11 +101,11 @@ namespace Anki
 }
 
 // This silences exception allocations
-extern "C" 
+extern "C"
 void * __aeabi_vec_ctor_nocookie_nodtor(   void* user_array,
                                            void* (*constructor)(void*),
                                            size_t element_size,
-                                           size_t element_count) 
+                                           size_t element_count)
 
 {
     size_t ii = 0;
@@ -130,7 +137,7 @@ int main (void)
   SOURCE_SETUP(BODY_UART_TX, SourceGPIO | SourcePullDown);
 
   UART::DebugInit();
-  UART::DebugPutc('\xAA');  
+  UART::DebugPutc('\xAA');
   Watchdog::init();
   Power::enableExternal();
   Watchdog::kickAll();
@@ -167,24 +174,31 @@ int main (void)
   SPI::Init();
   CameraStart();
 
-  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
+  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart()
 
   // Run the main thread (lite)
   for(;;)
   {
     Watchdog::kick(WDOG_MAIN_EXEC);
-    
+
     // Pump Wifi clad as quickly as possible
     do {
       WiFi::Update();
     } while (!UART::FoundSync());
-    
+
     // Wait for head body sync to occur
     UART::WaitForSync();
     Spine::Manage();
 
     // Copy through our timestamp
     t_ = g_dataToHead.timestamp;
+
+    if (!delayTimestamp) {
+      AnkiConditionalWarn(g_dataToHead.timestamp == expectTimeStamp, 1213, "head_timestamp_mismatch", 639, "Timestamp expected: %d, got %d", 2, expectTimeStamp, g_dataToHead.timestamp);
+      expectTimeStamp = g_dataToHead.timestamp + 5;
+    } else {
+      delayTimestamp = false;
+    }
 
     if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
     {
