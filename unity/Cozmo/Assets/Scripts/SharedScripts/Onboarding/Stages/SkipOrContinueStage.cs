@@ -60,7 +60,7 @@ namespace Onboarding {
       // Using action chaining to try to prevent one frame pop of idle between these
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
       if (CurrentRobot != null) {
-        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+        CurrentRobot.SendAnimationTrigger(ConnectionFlowController.GetAnimationForWakeUp(), HandleWakeAnimationComplete);
       }
     }
 

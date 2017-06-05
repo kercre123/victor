@@ -60,6 +60,8 @@ enum int_32 AnimationTrigger
   CodeLabUnhappy,
   CodeLabVictory,
   ConnectWakeUp,
+  ConnectWakeUp_SevereEnergy,
+  ConnectWakeUp_SevereRepair,
   CozmoSaysGetIn,
   CozmoSaysGetOut,
   CozmoSaysSpeakGetInShort,

@@ -189,6 +189,14 @@
       "AnimName": "ag_ConnectWakeUp"
     },
     {
+      "CladEvent": "ConnectWakeUp_SevereEnergy",
+      "AnimName": "ag_energy_wakeup"
+    },
+    {
+      "CladEvent": "ConnectWakeUp_SevereRepair",
+      "AnimName": "ag_repair_severe_wakeup_01"
+    },      
+    {
       "CladEvent": "CozmoSaysGetIn",
       "AnimName": "ag_cozmosays_app_getin"
     },

@@ -94,6 +94,17 @@ public class ConnectionFlowController : MonoBehaviour {
     }
   }
 
+  public static AnimationTrigger GetAnimationForWakeUp() {
+    if(Cozmo.Needs.NeedsStateManager.Instance != null){
+      if(Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Repair).Equals(NeedBracketId.Critical)){
+        return Anki.Cozmo.AnimationTrigger.ConnectWakeUp_SevereRepair;
+      }else if(Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Energy).Equals(NeedBracketId.Critical)){
+        return Anki.Cozmo.AnimationTrigger.ConnectWakeUp_SevereEnergy;
+      }
+    }
+    return Anki.Cozmo.AnimationTrigger.ConnectWakeUp;
+  }
+
   private void OnApplicationPause(bool bPause) {
     // manually tell engine we are paused/unpaused because we disabled pause manager.
     RobotEngineManager.Instance.SendGameBeingPaused(bPause);
@@ -487,7 +498,7 @@ public class ConnectionFlowController : MonoBehaviour {
       HandleWakeAnimationComplete(true);
     }
     else {
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(GetAnimationForWakeUp(), HandleWakeAnimationComplete);
     }
 
   }
