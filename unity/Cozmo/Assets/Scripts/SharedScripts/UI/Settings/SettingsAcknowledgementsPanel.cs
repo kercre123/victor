@@ -29,10 +29,6 @@ namespace Cozmo.Settings {
     [SerializeField]
     private string _TermsOfUseTextFileName;
 
-    private ModalPriorityData _SettingsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
-                                                                                 LowPriorityModalAction.CancelSelf,
-                                                                                 HighPriorityModalAction.Stack);
-
     private void Awake() {
       string dasEventViewName = "settings_acknowledgements_panel";
       _AcknowledgementsLinkButton.Initialize(HandleAcknowledgementsLinkButtonTapped, "acknowledgements_link", dasEventViewName);
@@ -65,7 +61,8 @@ namespace Cozmo.Settings {
                                                     acknowledgementsText.text);
         };
 
-        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, acknowledgementsModalCreated);
+        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab,
+                            SettingsModal.SettingsSubModalPriorityData(), acknowledgementsModalCreated);
       }
     }
 
@@ -78,7 +75,8 @@ namespace Cozmo.Settings {
                                                  Localization.ReadLocalizedTextFromFile(_PrivacyPolicyTextFileName));
         };
 
-        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, privacyPolicyCreated);
+        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab,
+                            SettingsModal.SettingsSubModalPriorityData(), privacyPolicyCreated);
       }
     }
 
@@ -90,7 +88,8 @@ namespace Cozmo.Settings {
           _TermsOfUseModalInstance.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse),
                                               Localization.ReadLocalizedTextFromFile(_TermsOfUseTextFileName));
         };
-        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab, _SettingsModalPriorityData, termsOfUseCreated);
+        UIManager.OpenModal(AlertModalLoader.Instance.ScrollingTextModalPrefab,
+                            SettingsModal.SettingsSubModalPriorityData(), termsOfUseCreated);
       }
     }
   }

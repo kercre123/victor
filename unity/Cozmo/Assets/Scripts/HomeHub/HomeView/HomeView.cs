@@ -346,10 +346,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleHelpButton() {
-      var helpTipsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
-                                                            LowPriorityModalAction.CancelSelf,
-                                                            HighPriorityModalAction.Stack);
-      UIManager.OpenModal(_HelpTipsModalPrefab, helpTipsModalPriorityData, (newHelpModal) => {
+      UIManager.OpenModal(_HelpTipsModalPrefab, new ModalPriorityData(), (newHelpModal) => {
         _HelpTipsModalInstance = newHelpModal;
       });
     }

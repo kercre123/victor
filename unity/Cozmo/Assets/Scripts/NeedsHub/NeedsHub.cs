@@ -26,6 +26,9 @@ namespace Cozmo.Hub {
     [SerializeField]
     private GameObjectDataLink _SparksViewPrefabData;
 
+    [SerializeField]
+    private Cozmo.UI.BadLightAlertConroller _BadLightAlertController;
+
     private ActivitiesView _ActivitiesViewInstance;
     private SparksView _SparksViewInstance;
 
@@ -165,7 +168,13 @@ namespace Cozmo.Hub {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         robot.SetEnableFreeplayLightStates(true);
         robot.SetEnableFreeplayActivity(true);
+        AllowFreeplayUI(true);
       }
+    }
+
+    private void AllowFreeplayUI(bool allow) {
+      _BadLightAlertController.EnableBadLightAlerts = allow;
+      PauseManager.Instance.ListeningForBatteryLevel = allow;
     }
 
     #endregion
@@ -178,6 +187,7 @@ namespace Cozmo.Hub {
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
+        AllowFreeplayUI(false);
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
         RequestGameConfig rc = _ChallengeManager.GetCurrentRequestGameConfig();

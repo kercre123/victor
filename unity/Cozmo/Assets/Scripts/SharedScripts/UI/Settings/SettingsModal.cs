@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 namespace Cozmo.UI {
   public class SettingsModal : BaseModal {
+    public static ModalPriorityData SettingsSubModalPriorityData() {
+      return new ModalPriorityData(ModalPriorityLayer.Low, 1,
+                                   LowPriorityModalAction.CancelSelf, HighPriorityModalAction.Stack);
+    }
+
     private const int kCubesCount = 3;
     private const int kCubesHelpIndex = 1;
 

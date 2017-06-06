@@ -73,7 +73,7 @@ namespace Cozmo {
                                                    secondaryButtonData: cancelQuitButtonData,
                                                    dialogCloseAnimationFinishedCallback: HandleQuitViewClosed);
 
-        var quitGamePriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
+        var quitGamePriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
                                                          LowPriorityModalAction.CancelSelf,
                                                          HighPriorityModalAction.Stack);
 

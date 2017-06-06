@@ -60,12 +60,17 @@ namespace Cozmo.Needs.Sparks.UI {
                                                  LocalizationKeys.kUnlockableComingSoonDescription,
                                            new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
 
-      UIManager.OpenAlert(cozmoNotReadyData, new ModalPriorityData());
+      ModalPriorityData comingSoonPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow,
+                                         0,
+                                         LowPriorityModalAction.CancelSelf,
+                                         HighPriorityModalAction.Stack);
+
+      UIManager.OpenAlert(cozmoNotReadyData, comingSoonPriority);
     }
 
     private void HandleTappedUnlocked() {
       // pop up sparks modal
-      UIManager.OpenModal(_SparksDetailModalPrefab, SparksDetailModal.SparksDetailModalPriority(), (obj) => {
+      UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
         sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo);
       });

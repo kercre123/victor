@@ -44,7 +44,7 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void HandleOpenGameDetailsPressed() {
-      UIManager.OpenModal(_SparksDetailModalPrefab, SparksDetailModal.SparksDetailModalPriority(), (obj) => {
+      UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
         sparksDetailModal.InitializeSparksDetailModal(_ChallengePacket);
       });

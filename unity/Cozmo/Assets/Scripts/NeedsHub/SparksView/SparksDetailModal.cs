@@ -8,13 +8,6 @@ namespace Cozmo.Needs.Sparks.UI {
     public delegate void SparkGameClickedHandler(string challengeId);
     public static event SparkGameClickedHandler OnSparkGameClicked;
 
-    public static ModalPriorityData SparksDetailModalPriority() {
-      return new ModalPriorityData(ModalPriorityLayer.VeryLow,
-                                   1,
-                                   LowPriorityModalAction.CancelSelf,
-                                   HighPriorityModalAction.Stack);
-    }
-
     [SerializeField]
     private CozmoImage _Icon;
 

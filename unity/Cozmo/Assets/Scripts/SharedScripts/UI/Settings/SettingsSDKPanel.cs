@@ -44,9 +44,7 @@ namespace Cozmo.Settings {
                                                          primaryButtonData: enableSDKButtonData,
                                                          secondaryButtonData: cancelSDKButtonData);
 
-          var confirmEnableSDKPriority = new ModalPriorityData(ModalPriorityLayer.Low, 0,
-                                                               LowPriorityModalAction.CancelSelf,
-                                                               HighPriorityModalAction.Stack);
+          var confirmEnableSDKPriority = SettingsModal.SettingsSubModalPriorityData();
 
           System.Action<AlertModal> confirmEnableSDKCreated = (alertView) => {
             _ActivateSDKModal = alertView;

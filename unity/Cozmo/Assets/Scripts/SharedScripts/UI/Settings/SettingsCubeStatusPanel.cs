@@ -28,10 +28,6 @@ namespace Cozmo.Settings {
 
     private const string kDasEventViewController = "settings_cube_status_panel";
 
-    private ModalPriorityData _SettingsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
-                                                                                 LowPriorityModalAction.CancelSelf,
-                                                                                 HighPriorityModalAction.Stack);
-
     private void Awake() {
       _RefreshBlockPoolButton.Initialize(HandleRefreshBlockPoolTapped, "refresh_blockpool_button", kDasEventViewController);
       _ShowCubeHelpButton.Initialize(HandleOpenCubeHelpViewTapped, "show_cube_help_dialog_button", kDasEventViewController);
@@ -75,7 +71,7 @@ namespace Cozmo.Settings {
         _ConfirmBlockPoolRefreshView = alertModal;
       };
 
-      UIManager.OpenAlert(refreshBlockPoolAlert, _SettingsModalPriorityData, refreshBlockPoolCreated);
+      UIManager.OpenAlert(refreshBlockPoolAlert, SettingsModal.SettingsSubModalPriorityData(), refreshBlockPoolCreated);
     }
 
     private void HandleRefreshBlockPool() {
@@ -84,7 +80,7 @@ namespace Cozmo.Settings {
 
     private void HandleOpenCubeHelpViewTapped() {
       if (_SettingsCubeHelpDialogInstance == null) {
-        UIManager.OpenModal(_CubeHelpModalPrefab, _SettingsModalPriorityData, (newView) => {
+        UIManager.OpenModal(_CubeHelpModalPrefab, SettingsModal.SettingsSubModalPriorityData(), (newView) => {
           _SettingsCubeHelpDialogInstance = newView;
         });
       }

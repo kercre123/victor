@@ -53,7 +53,11 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void HandleListAbilitiesButtonPressed() {
-      UIManager.OpenModal(_SparksListModalPrefab, new ModalPriorityData(), (obj) => {
+      ModalPriorityData sparksListPriority = new ModalPriorityData(ModalPriorityLayer.VeryLow,
+                                                                   0,
+                                                                   LowPriorityModalAction.CancelSelf,
+                                                                   HighPriorityModalAction.Stack);
+      UIManager.OpenModal(_SparksListModalPrefab, sparksListPriority, (obj) => {
         _SparksListModalInstance = (SparksListModal)obj;
         _SparksListModalInstance.InitializeSparksListModal(_MinigameData, _AllUnlockData);
       });

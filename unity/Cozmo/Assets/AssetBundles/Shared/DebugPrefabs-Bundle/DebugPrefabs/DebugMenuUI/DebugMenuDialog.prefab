@@ -457,7 +457,7 @@ MonoBehaviour:
     panePrefab: {fileID: 183772, guid: d5295c6abc723485eb37f70ee0b3b697, type: 2}
   - name: RobotRestore
     panePrefab: {fileID: 191910, guid: 4e9789da007f24a9aa1fef9ad1a33e49, type: 2}
-  - name: Connection
+  - name: Edge Cases
     panePrefab: {fileID: 183214, guid: e6f4045d50a1844ca85924152bf782fb, type: 2}
   - name: TestTap
     panePrefab: {fileID: 113112, guid: 5ed7fc1d653bd4bfc83aa41e152c6436, type: 2}
@@ -635,9 +635,9 @@ RectTransform:
   m_Father: {fileID: 22475292}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 780, y: -60}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 780, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22495406

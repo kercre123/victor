@@ -50,10 +50,6 @@ namespace Cozmo.Settings {
 
     private bool _RestoreButtonIsActive = true;
 
-    private ModalPriorityData _SettingsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 0,
-                                                                                 LowPriorityModalAction.CancelSelf,
-                                                                                 HighPriorityModalAction.Stack);
-
     private void Awake() {
       string dasEventViewName = "settings_version_panel";
 
@@ -76,7 +72,7 @@ namespace Cozmo.Settings {
       // Fill out Cozmo color args
       _CozmoColorLabel.FormattingArgs = new object[] { ShortenData(BodyColorToString(robot.BodyColor)) };
 
-	    // Fill out Body HW version args
+      // Fill out Body HW version args
       _BodyHWVersionLabel.FormattingArgs = new object[] { ShortenData(BodyHWVersionToString(robot.BodyHWVersion)) };
 
       robot.RequestRobotRestoreData();
@@ -153,7 +149,8 @@ namespace Cozmo.Settings {
           _EraseCozmoModalInstance.ShowInstructionsLabel(Localization.GetWithArgs(LocalizationKeys.kLabelPressAndHoldInstruction,
                                                                                    new object[] { buttonText }));
         };
-        UIManager.OpenModal(AlertModalLoader.Instance.LongPressConfirmationModalPrefab, _SettingsModalPriorityData, eraseCozmoModalCreated);
+        UIManager.OpenModal(AlertModalLoader.Instance.LongPressConfirmationModalPrefab,
+                            SettingsModal.SettingsSubModalPriorityData(), eraseCozmoModalCreated);
       }
     }
 
@@ -196,7 +193,7 @@ namespace Cozmo.Settings {
 
     private void HandleOpenSupportViewButtonTapped() {
       if (_SupportInfoModalInstance == null) {
-        UIManager.OpenModal(_SupportInfoModalPrefab, _SettingsModalPriorityData, (newModal) => {
+        UIManager.OpenModal(_SupportInfoModalPrefab, SettingsModal.SettingsSubModalPriorityData(), (newModal) => {
           _SupportInfoModalInstance = (SettingsSupportInfoModal)newModal;
           _SupportInfoModalInstance.OnOpenRestoreCozmoViewButtonTapped += HandleOpenRestoreCozmoViewButtonTapped;
           _SupportInfoModalInstance.HideRestoreButton(_RestoreButtonIsActive);
@@ -224,7 +221,7 @@ namespace Cozmo.Settings {
                                                                                    new object[] { buttonText }));
         };
 
-        var restoreCozmoModalPriorityData = ModalPriorityData.CreateSlightlyHigherData(_SettingsModalPriorityData);
+        var restoreCozmoModalPriorityData = ModalPriorityData.CreateSlightlyHigherData(SettingsModal.SettingsSubModalPriorityData());
 
         UIManager.OpenModal(AlertModalLoader.Instance.LongPressConfirmationModalPrefab, restoreCozmoModalPriorityData, restoreCozmoModalCreated);
       }
@@ -285,28 +282,28 @@ namespace Cozmo.Settings {
     private string BodyHWVersionToString(int bodyHWVersion) {
       string versionString = "";
       switch (bodyHWVersion) {
-        case 0:  // BODY_VER_EP
-        case 1:  // BODY_VER_PILOT
-        case 2:  // BODY_VER_PROD
-          versionString = "1.0p";
-          break;
-        case 3:  // BODY_VER_SHIP
-        case 4:  // BODY_VER_SHIP
-          versionString = "1.0";
-          break;
-        case 5:  // BODY_VER_1v5
-          versionString = "1.5a";
-          break;
-        case 6:  // BODY_VER_1v5c
-          versionString = "1.5c";
-          break;
-        default:
-          versionString = "0";
-          break;
+      case 0:  // BODY_VER_EP
+      case 1:  // BODY_VER_PILOT
+      case 2:  // BODY_VER_PROD
+        versionString = "1.0p";
+        break;
+      case 3:  // BODY_VER_SHIP
+      case 4:  // BODY_VER_SHIP
+        versionString = "1.0";
+        break;
+      case 5:  // BODY_VER_1v5
+        versionString = "1.5a";
+        break;
+      case 6:  // BODY_VER_1v5c
+        versionString = "1.5c";
+        break;
+      default:
+        versionString = "0";
+        break;
       }
       versionString += " (" + bodyHWVersion.ToString() + ")";
       return versionString;
     }
-					
+
   }
 }

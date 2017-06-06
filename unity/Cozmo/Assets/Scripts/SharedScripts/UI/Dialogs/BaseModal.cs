@@ -149,7 +149,7 @@ namespace Cozmo {
       public HighPriorityModalAction HighPriorityAction { get { return _HighPriorityAction; } }
 
       public ModalPriorityData() {
-        _PriorityLayer = ModalPriorityLayer.VeryLow;
+        _PriorityLayer = ModalPriorityLayer.Low;
         _PriorityOffset = 0;
         _LowPriorityAction = LowPriorityModalAction.CancelSelf;
         _HighPriorityAction = HighPriorityModalAction.Stack;

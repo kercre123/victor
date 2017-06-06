@@ -116,7 +116,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
       _WifiInstructionsModalInstance.ModalClosedWithCloseButtonOrOutside += QuitFlow;
     };
 
-    var wifiInstructionsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 1,
+    var wifiInstructionsModalPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
                                                                   LowPriorityModalAction.CancelSelf,
                                                                   HighPriorityModalAction.Stack);
 
