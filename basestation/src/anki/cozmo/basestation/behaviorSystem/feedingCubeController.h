@@ -41,7 +41,7 @@ public:
   
   void Update(Robot& robot);
   // Set what state the controller should be in
-  void SetControllerState(Robot& robot, ControllerState newState);
+  void SetControllerState(Robot& robot, ControllerState newState, float eatingDuration_s = -1.0);
   
   // Functions which can be queried to find out the state of the cube being
   // controlled
@@ -70,7 +70,7 @@ private:
   
   // Functions which manage fading the cube lights up/down during charging and
   // draining process
-  void StartCubeDrain(Robot& robot);
+  void StartCubeDrain(Robot& robot, float eatingDuration_s);
   void UpdateCubeDrain(Robot& robot);
   void UpdateChargeLights(Robot& robot);
   

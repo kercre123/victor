@@ -29,7 +29,7 @@ namespace Animations {
       // command for this new keyframe will handle it. This avoids delays
       // introduced by "extra" stop messages being inserted unnecessarily.
       const TimeStamp_t prevKeyFrameEndTime = (prevKeyFrame->GetTriggerTime() +
-                                               prevKeyFrame->GetDurationTime());
+                                               prevKeyFrame->GetDurationTime_ms());
       if(prevKeyFrameEndTime >= addedKeyFrame.GetTriggerTime() - IKeyFrame::SAMPLE_LENGTH_MS) {
         //PRINT_NAMED_DEBUG("Animations.EnableStopMessageHelper",
         //                  "Disabling stop message for body motion keyframe at t=%d "

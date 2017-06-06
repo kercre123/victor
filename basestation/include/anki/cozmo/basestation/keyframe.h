@@ -69,6 +69,10 @@ namespace Cozmo {
     // Returns the time to trigger whatever change is implied by the KeyFrame
     TimeStamp_t GetTriggerTime() const { return _triggerTime_ms; }
     
+    // Returns the last time specified by the keyframe - in most cases the
+    // trigger time + duration
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const = 0;
+    
     // Set the triggert time, relative to the start time of track the animation
     // is playing in
     void SetTriggerTime(TimeStamp_t triggerTime_ms) { _triggerTime_ms = triggerTime_ms; }
@@ -135,6 +139,8 @@ namespace Cozmo {
       return ClassName;
     }
     
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug = "");
@@ -165,6 +171,8 @@ namespace Cozmo {
       static const std::string ClassName("LiftHeightKeyFrame");
       return ClassName;
     }
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -197,6 +205,8 @@ namespace Cozmo {
       static const std::string ClassName("DeviceAudioKeyFrame");
       return ClassName;
     }
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -244,6 +254,8 @@ namespace Cozmo {
     
     const AudioRef& GetAudioRef() const;
     
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug = "");
@@ -274,6 +286,8 @@ namespace Cozmo {
       static const std::string ClassName("FaceImageKeyFrame");
       return ClassName;
     }
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -319,6 +333,8 @@ namespace Cozmo {
     const std::string& GetName() const { return _animName; }
     const AnimKeyFrame::FaceImage& GetFaceImage() const { return _faceImageMsg; }
     
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
@@ -361,6 +377,8 @@ namespace Cozmo {
     virtual bool IsDone() override;
     
     const ProceduralFace& GetFace() const { return _procFace; }
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
 
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -404,6 +422,8 @@ namespace Cozmo {
       return ClassName;
     }
     
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
@@ -433,6 +453,8 @@ namespace Cozmo {
     void SetDuration(s32 duration_ms) { _durationTime_ms = duration_ms; }
     
     virtual bool IsDone() override;
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -471,8 +493,10 @@ namespace Cozmo {
     
     virtual bool IsDone() override;
     
-    s32 GetDurationTime() const { return _durationTime_ms; }
+    s32 GetDurationTime_ms() const { return _durationTime_ms; }
     void EnableStopMessage(bool enable) { _enableStopMessage = enable; }
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -506,6 +530,8 @@ namespace Cozmo {
     }
     
     virtual bool IsDone() override;
+    
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -546,7 +572,8 @@ namespace Cozmo {
     
     virtual bool IsDone() override;
     
-    s32 GetDurationTime() const { return _durationTime_ms; }
+    s32 GetDurationTime_ms() const { return _durationTime_ms; }
+    virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;

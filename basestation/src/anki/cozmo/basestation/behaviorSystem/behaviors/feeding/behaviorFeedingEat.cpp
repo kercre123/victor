@@ -16,9 +16,12 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -89,16 +92,20 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToEating(Robot& robot)
 {
+  const char * feedingAnimName = "anim_bored_getout_01";
+  // Extract the length of time that the animation will be playing for so that
+  // it can be passed through to listeners
+  Animation* anim = robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(feedingAnimName);
   for(auto & listener: _feedingListeners){
     if(ANKI_VERIFY(listener != nullptr,
                    "BehaviorFeedingEat.TransitionToEating.ListenerIsNull",
                    "")) {
-      listener->StartedEating(robot);
+      listener->StartedEating(robot, (anim->GetLastKeyFrameEndTime_ms()/1000));
     }
   }
   
   IActionRunner* action;
-  action = new  PlayAnimationAction(robot, "anim_feeding_test_01");
+  action = new  PlayAnimationAction(robot, feedingAnimName);
   StartActing(action, &BehaviorFeedingEat::TransitionToWaiting);
 }
   

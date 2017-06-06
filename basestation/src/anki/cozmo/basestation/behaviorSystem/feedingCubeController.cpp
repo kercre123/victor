@@ -45,7 +45,6 @@ enum class ChargeState{
 CONSOLE_VAR(f32, kTimeBetweenShakes_s,            "Behavior.Feeding", 0.1f);
 CONSOLE_VAR(f32, kTimeBeforeStartLosingCharge_s,  "Behavior.Feeding", 1.0f);
 CONSOLE_VAR(f32, kTimeBetweenLoosingCharge_s,     "Behavior.Feeding", 0.1f);
-CONSOLE_VAR(f32, kTimeToDrainCube,                "Behavior.Feeding", 2.5f);
 CONSOLE_VAR(f32, kChargeLevelToFillSide,          "Behavior.Feeding", 4.0f);
 
 // Constants for the Shake Component MovementListener:
@@ -90,6 +89,7 @@ struct CubeStateTracker{
   
   // tracking drain
   float _timeStartedDraining_s = -1.0f;
+  float _timeToDrainCube = -1.0f;
   
   // tracking light state
   CubeAnimationTrigger _currentAnimationTrigger = CubeAnimationTrigger::Count;
@@ -132,7 +132,7 @@ FeedingCubeController::~FeedingCubeController()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FeedingCubeController::SetControllerState(Robot& robot, ControllerState newState)
+void FeedingCubeController::SetControllerState(Robot& robot, ControllerState newState, float eatingDuration_s)
 {
   if(_currentStage == newState){
     PRINT_NAMED_WARNING("FeedingCubeController.SetControllerState.StateAlreadySet",
@@ -155,7 +155,7 @@ void FeedingCubeController::SetControllerState(Robot& robot, ControllerState new
     }
     case ControllerState::DrainCube:
     {
-      StartCubeDrain(robot);
+      StartCubeDrain(robot, eatingDuration_s);
       break;
     }
   }
@@ -206,8 +206,6 @@ void FeedingCubeController::Update(Robot& robot)
     {
       if(FLT_GT(_cubeStateTracker->_timeStartedDraining_s, 0)){
         UpdateCubeDrain(robot);
-      }else{
-        StartCubeDrain(robot);
       }
       break;
     }
@@ -279,10 +277,11 @@ void FeedingCubeController::CheckForChargeStateChanges(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void FeedingCubeController::StartCubeDrain(Robot& robot)
+void FeedingCubeController::StartCubeDrain(Robot& robot, float eatingDuration_s)
 {
   _currentStage = ControllerState::DrainCube;
   _cubeStateTracker->_timeStartedDraining_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _cubeStateTracker->_timeToDrainCube = eatingDuration_s;
 }
 
 
@@ -294,8 +293,9 @@ void FeedingCubeController::UpdateCubeDrain(Robot& robot)
   // Continuously drain the cube lights as a precentage of the time remaining to drain it
   // until the cube is fully drained
   if((_cubeStateTracker->_timeStartedDraining_s > 0) &&
-     (_cubeStateTracker->_timeStartedDraining_s + kTimeToDrainCube > currentTime_s)){
-    const float percentRemaining = 1.0f - ( (currentTime_s - _cubeStateTracker->_timeStartedDraining_s) / kTimeToDrainCube);
+     (_cubeStateTracker->_timeStartedDraining_s + _cubeStateTracker->_timeToDrainCube > currentTime_s)){
+    const float percentRemaining = 1.0f - (
+      (currentTime_s - _cubeStateTracker->_timeStartedDraining_s) / _cubeStateTracker->_timeToDrainCube);
     
     // Calculate how much to fade all light sides together
     ObjectLights modifiableLights;
@@ -313,7 +313,7 @@ void FeedingCubeController::UpdateCubeDrain(Robot& robot)
     _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::FeedingBlank;
     _cubeStateTracker->_desiredModifier = modifiableLights;
     _cubeStateTracker->_desiredModifierChanged = true;
-  }else if(_cubeStateTracker->_timeStartedDraining_s + kTimeToDrainCube < currentTime_s){
+  }else if(_cubeStateTracker->_timeStartedDraining_s + _cubeStateTracker->_timeToDrainCube < currentTime_s){
     if(_cubeStateTracker->GetChargeState() != ChargeState::Drained){
       // If the cube has been fully drained re-set the state and de-activate the cube
       _cubeStateTracker->SetChargeState(ChargeState::Drained);

@@ -401,14 +401,14 @@ void ActivityFeeding::RobotObservedObject(const ObjectID& objID)
 
 // Implementation of IFeedingListener
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::StartedEating(Robot& robot)
+void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 {
   auto& bodyLightComp = robot.GetBodyLightComponent();
   bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._eatingBackpackLights,
                                            BackpackLightSource::Behavior,
                                            _bodyLightDataLocator);
   using CS = FeedingCubeController::ControllerState;
-  _cubeControllerMap[_interactID]->SetControllerState(robot, CS::DrainCube);
+  _cubeControllerMap[_interactID]->SetControllerState(robot, CS::DrainCube, duration_s);
 }
   
   
