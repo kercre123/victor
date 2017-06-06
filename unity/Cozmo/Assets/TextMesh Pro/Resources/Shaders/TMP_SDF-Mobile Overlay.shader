@@ -1,9 +1,3 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Copyright (C) 2014 - 2016 Stephan Schaem - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
 // Simplified SDF shader:
 // - No Shading Option (bevel / bump / env map)
 // - No Glow Option
@@ -208,18 +202,10 @@ SubShader {
 			c += float4(_UnderlayColor.rgb * _UnderlayColor.a, _UnderlayColor.a) * (1 - saturate(d - input.underlayParam.y)) * sd * (1 - c.a);
 		#endif
 
-		#if UNITY_VERSION < 530
-			// Unity 5.2 2D Rect Mask Support
-			if (_UseClipRect)
-			{
-				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
-				c *= m.x * m.y;
-			}
-		#else
-			// Alternative implementation to UnityGet2DClipping with support for softness.
-			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
-			c *= m.x * m.y;
-		#endif
+		// Alternative implementation to UnityGet2DClipping with support for softness.
+		half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
+		c *= m.x * m.y;
+
 
 		#if (UNDERLAY_ON | UNDERLAY_INNER)
 			c *= input.texcoord1.z;

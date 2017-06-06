@@ -373,8 +373,9 @@ namespace TMPro
 
         public static TMP_SubMesh AddSubTextObject(TextMeshPro textComponent, MaterialReference materialReference)
         {
-            GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]");
-            TMP_SubMesh subMesh = go.AddComponent<TMP_SubMesh>();
+            GameObject go = new GameObject("TMP SubMesh [" + materialReference.material.name + "]", typeof(TMP_SubMesh));
+
+            TMP_SubMesh subMesh = go.GetComponent<TMP_SubMesh>();
 
             go.transform.SetParent(textComponent.transform, false);
             go.transform.localPosition = Vector3.zero;

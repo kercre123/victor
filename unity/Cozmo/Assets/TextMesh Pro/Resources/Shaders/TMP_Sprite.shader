@@ -1,9 +1,3 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Copyright (C) 2014 - 2016 Stephan Schaem - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
 Shader "TextMeshPro/Sprite"
 {
 	Properties
@@ -80,10 +74,6 @@ Shader "TextMeshPro/Sprite"
 			fixed4 _TextureSampleAdd;
 			float4 _ClipRect;
 
-#if UNITY_VERSION < 530
-			bool _UseClipRect;
-#endif
-
 			v2f vert(appdata_t IN)
 			{
 				v2f OUT;
@@ -106,13 +96,8 @@ Shader "TextMeshPro/Sprite"
 			{
 				half4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
 				
-			#if UNITY_VERSION < 530
-				if (_UseClipRect)
-					color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
-			#else
 				color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
-			#endif
-				
+
 				#ifdef UNITY_UI_ALPHACLIP
 				clip (color.a - 0.001);
 				#endif

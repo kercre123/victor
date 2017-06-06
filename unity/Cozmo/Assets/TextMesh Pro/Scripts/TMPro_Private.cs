@@ -1,7 +1,7 @@
 // Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
 // This code can only be used under the standard Unity Asset Store End User License Agreement
 // A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-// Release 1.0.55.52.0b5
+// Release 1.0.55.52.0b9
 
 
 #define PROFILE_ON
@@ -87,12 +87,7 @@ namespace TMPro
         {
             //Debug.Log("Awake() called on Object ID " + GetInstanceID());
 
-            // Code to handle Compatibility related to the switch from Color32 to Color
-            if (m_fontColor == Color.white && m_fontColor32 != Color.white)
-            {
-                Debug.LogWarning("Converting Vertex Colors from Color32 to Color.", this);
-                m_fontColor = m_fontColor32;
-            }
+            // Code to handle compatibility with deprecation of Text Container
 
 
             // Make sure we have a valid TextContainer
@@ -431,11 +426,11 @@ namespace TMPro
                 if (TMP_Settings.defaultFontAsset != null)
                     m_fontAsset =TMP_Settings.defaultFontAsset;
                 else
-                    m_fontAsset = Resources.Load("Fonts & Materials/NotoSans SDF", typeof(TMP_FontAsset)) as TMP_FontAsset;
+                    m_fontAsset = Resources.Load("Fonts & Materials/LiberationSans SDF", typeof(TMP_FontAsset)) as TMP_FontAsset;
 
                 if (m_fontAsset == null)
                 {
-                    Debug.LogWarning("The NotoSans SDF Font Asset was not found. There is no Font Asset assigned to " + gameObject.name + ".", this);
+                    Debug.LogWarning("The LiberationSans SDF Font Asset was not found. There is no Font Asset assigned to " + gameObject.name + ".", this);
                     return;
                 }
 
@@ -1067,6 +1062,44 @@ namespace TMPro
                 #region LOOKUP GLYPH
                 tempFontAsset = TMP_FontUtilities.SearchForGlyph(m_currentFontAsset, c, out glyph);
 
+                // Search for the glyph in the Sprite Asset assigned to the text object.
+                if (glyph == null)
+                {
+                    TMP_SpriteAsset spriteAsset = this.spriteAsset;
+
+                    if (spriteAsset != null)
+                    {
+                        int spriteIndex = -1;
+
+                        // Check Default Sprite Asset and its Fallbacks
+                        spriteAsset = TMP_SpriteAsset.SearchFallbackForSprite(spriteAsset, c, out spriteIndex);
+
+                        if (spriteIndex != -1)
+                        {
+                            m_textElementType = TMP_TextElementType.Sprite;
+                            m_textInfo.characterInfo[m_totalCharacterCount].elementType = m_textElementType;
+
+                            m_currentMaterialIndex = MaterialReference.AddMaterialReference(spriteAsset.material, spriteAsset, m_materialReferences, m_materialReferenceIndexLookup);
+                            m_materialReferences[m_currentMaterialIndex].referenceCount += 1;
+
+                            m_textInfo.characterInfo[m_totalCharacterCount].character = (char)c;
+                            m_textInfo.characterInfo[m_totalCharacterCount].spriteIndex = spriteIndex;
+                            m_textInfo.characterInfo[m_totalCharacterCount].fontAsset = m_currentFontAsset;
+                            m_textInfo.characterInfo[m_totalCharacterCount].spriteAsset = spriteAsset;
+                            m_textInfo.characterInfo[m_totalCharacterCount].materialReferenceIndex = m_currentMaterialIndex;
+
+                            // Restore element type and material index to previous values.
+                            m_textElementType = TMP_TextElementType.Character;
+                            m_currentMaterialIndex = prev_materialIndex;
+
+                            spriteCount += 1;
+                            m_totalCharacterCount += 1;
+
+                            continue;
+                        }
+                    }
+                }
+
                 // Search for the glyph in the list of fallback assigned in the TMP Settings (General Fallbacks).
                 if (glyph == null)
                 {
@@ -1502,7 +1535,7 @@ namespace TMPro
         {
             //Debug.Log("***** GenerateTextMesh() *****"); // ***** Frame: " + Time.frameCount); // + ". Point Size: " + m_fontSize + ". Margins are (W) " + m_marginWidth + "  (H) " + m_marginHeight); // ". Iteration Count: " + loopCountA + ".  Min: " + m_minFontSize + "  Max: " + m_maxFontSize + "  Delta: " + (m_maxFontSize - m_minFontSize) + "  Font size is " + m_fontSize); //called for Object with ID " + GetInstanceID()); // Assigned Material is " + m_uiRenderer.GetMaterial().name); // IncludeForMasking " + this.m_IncludeForMasking); // and text is " + m_text);
 
-            // Early exit if no font asset was assigned. This should not be needed since NotoSans SDF will be assigned by default.
+            // Early exit if no font asset was assigned. This should not be needed since LiberationSans SDF will be assigned by default.
             if (m_fontAsset == null || m_fontAsset.characterDictionary == null)
             {
                 Debug.LogWarning("Can't Generate Mesh! No Font Asset has been assigned to Object ID: " + this.GetInstanceID());
@@ -1587,11 +1620,16 @@ namespace TMPro
             m_fontColor32 = m_fontColor;
             Color32 vertexColor;
             m_htmlColor = m_fontColor32;
+            m_underlineColor = m_htmlColor;
+            m_strikethroughColor = m_htmlColor;
+
             m_colorStack.SetDefault(m_htmlColor);
+            m_underlineColorStack.SetDefault(m_htmlColor);
+            m_strikethroughColorStack.SetDefault(m_htmlColor);
             m_highlightColorStack.SetDefault(m_htmlColor);
 
             // Clear the Style stack.
-            m_styleStack.Clear();
+            //m_styleStack.Clear();
 
             // Clear the Action stack.
             m_actionStack.Clear();
@@ -1827,6 +1865,8 @@ namespace TMPro
                 m_textInfo.characterInfo[m_characterCount].character = (char)charCode;
                 m_textInfo.characterInfo[m_characterCount].pointSize = m_currentFontSize;
                 m_textInfo.characterInfo[m_characterCount].color = m_htmlColor;
+                m_textInfo.characterInfo[m_characterCount].underlineColor = m_underlineColor;
+                m_textInfo.characterInfo[m_characterCount].strikethroughColor = m_strikethroughColor;
                 m_textInfo.characterInfo[m_characterCount].highlightColor = m_highlightColor;
                 m_textInfo.characterInfo[m_characterCount].style = m_style;
                 m_textInfo.characterInfo[m_characterCount].index = (short)i;
@@ -2926,6 +2966,8 @@ namespace TMPro
             #region Handle Line Justification & UV Mapping & Character Visibility & More
             for (int i = 0; i < m_characterCount; i++)
             {
+                TMP_FontAsset currentFontAsset = characterInfos[i].fontAsset;
+
                 char currentCharacter = characterInfos[i].character;
 
                 int currentLine = characterInfos[i].lineNumber;
@@ -3241,14 +3283,14 @@ namespace TMPro
 
                     // Handle maxVisibleCharacters, maxVisibleLines and Overflow Page Mode.
                     #region Handle maxVisibleCharacters / maxVisibleLines / Page Mode
-                    if (i < m_maxVisibleCharacters && currentLine < m_maxVisibleLines && m_overflowMode != TextOverflowModes.Page)
+                    if (i < m_maxVisibleCharacters && wordCount < m_maxVisibleWords && currentLine < m_maxVisibleLines && m_overflowMode != TextOverflowModes.Page)
                     {
                         characterInfos[i].vertex_BL.position += offset;
                         characterInfos[i].vertex_TL.position += offset;
                         characterInfos[i].vertex_TR.position += offset;
                         characterInfos[i].vertex_BR.position += offset;
                     }
-                    else if (i < m_maxVisibleCharacters && currentLine < m_maxVisibleLines && m_overflowMode == TextOverflowModes.Page && characterInfos[i].pageNumber == pageToDisplay)
+                    else if (i < m_maxVisibleCharacters && wordCount < m_maxVisibleWords && currentLine < m_maxVisibleLines && m_overflowMode == TextOverflowModes.Page && characterInfos[i].pageNumber == pageToDisplay)
                     {
                         characterInfos[i].vertex_BL.position += offset;
                         characterInfos[i].vertex_TL.position += offset;
@@ -3418,7 +3460,7 @@ namespace TMPro
                             underlineStartScale = m_textInfo.characterInfo[i].scale;
                             if (underlineMaxScale == 0) underlineMaxScale = underlineStartScale;
                             underline_start = new Vector3(m_textInfo.characterInfo[i].bottomLeft.x, underlineBaseLine, 0);
-                            underlineColor = m_textInfo.characterInfo[i].color;
+                            underlineColor = m_textInfo.characterInfo[i].underlineColor;
                         }
                     }
 
@@ -3463,6 +3505,17 @@ namespace TMPro
                         underlineMaxScale = 0;
                         underlineBaseLine = k_LargePositiveFloat;
                     }
+                    else if (beginUnderline && i < m_characterCount - 1 && !underlineColor.Compare(m_textInfo.characterInfo[i + 1].underlineColor))
+                    {
+                        // End underline if underline color has changed.
+                        beginUnderline = false;
+                        underline_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, underlineBaseLine, 0);
+                        underlineEndScale = m_textInfo.characterInfo[i].scale;
+
+                        DrawUnderlineMesh(underline_start, underline_end, ref last_vert_index, underlineStartScale, underlineEndScale, underlineMaxScale, xScale, underlineColor);
+                        underlineMaxScale = 0;
+                        underlineBaseLine = k_LargePositiveFloat;
+                    }
                 }
                 else
                 {
@@ -3485,6 +3538,8 @@ namespace TMPro
                 #region Strikethrough
                 // NOTE: Need to figure out how underline will be handled with multiple fonts and which font will be used for the underline.
                 bool isStrikethrough = (m_textInfo.characterInfo[i].style & FontStyles.Strikethrough) == FontStyles.Strikethrough;
+                float strikethroughOffset = currentFontAsset.fontInfo.strikethrough;
+
                 if (isStrikethrough)
                 {
                     bool isStrikeThroughVisible = true;
@@ -3501,8 +3556,8 @@ namespace TMPro
                             beginStrikethrough = true;
                             strikethroughPointSize = m_textInfo.characterInfo[i].pointSize;
                             strikethroughScale = m_textInfo.characterInfo[i].scale;
-                            strikethrough_start = new Vector3(m_textInfo.characterInfo[i].bottomLeft.x, m_textInfo.characterInfo[i].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
-                            strikethroughColor = m_textInfo.characterInfo[i].color;
+                            strikethrough_start = new Vector3(m_textInfo.characterInfo[i].bottomLeft.x, m_textInfo.characterInfo[i].baseLine + strikethroughOffset * strikethroughScale, 0);
+                            strikethroughColor = m_textInfo.characterInfo[i].strikethroughColor;
                             strikethroughBaseline = m_textInfo.characterInfo[i].baseLine;
                             //Debug.Log("Char [" + currentCharacter + "] Start Strikethrough POS: " + strikethrough_start);
                         }
@@ -3512,7 +3567,7 @@ namespace TMPro
                     if (beginStrikethrough && m_characterCount == 1)
                     {
                         beginStrikethrough = false;
-                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + strikethroughOffset * strikethroughScale, 0);
 
                         DrawUnderlineMesh(strikethrough_start, strikethrough_end, ref last_vert_index, strikethroughScale, strikethroughScale, strikethroughScale, xScale, strikethroughColor);
                     }
@@ -3522,12 +3577,12 @@ namespace TMPro
                         if (char.IsWhiteSpace(currentCharacter) || currentCharacter == 0x200B)
                         {
                             int lastVisibleCharacterIndex = lineInfo.lastVisibleCharacterIndex;
-                            strikethrough_end = new Vector3(m_textInfo.characterInfo[lastVisibleCharacterIndex].topRight.x, m_textInfo.characterInfo[lastVisibleCharacterIndex].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                            strikethrough_end = new Vector3(m_textInfo.characterInfo[lastVisibleCharacterIndex].topRight.x, m_textInfo.characterInfo[lastVisibleCharacterIndex].baseLine + strikethroughOffset * strikethroughScale, 0);
                         }
                         else
                         {
                             // Terminate Strikethrough at last character of line.
-                            strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                            strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + strikethroughOffset * strikethroughScale, 0);
                         }
 
                         beginStrikethrough = false;
@@ -3540,18 +3595,26 @@ namespace TMPro
 
                         int lastVisibleCharacterIndex = lineInfo.lastVisibleCharacterIndex;
                         if (i > lastVisibleCharacterIndex)
-                            strikethrough_end = new Vector3(m_textInfo.characterInfo[lastVisibleCharacterIndex].topRight.x, m_textInfo.characterInfo[lastVisibleCharacterIndex].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                            strikethrough_end = new Vector3(m_textInfo.characterInfo[lastVisibleCharacterIndex].topRight.x, m_textInfo.characterInfo[lastVisibleCharacterIndex].baseLine + strikethroughOffset * strikethroughScale, 0);
                         else
-                            strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                            strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + strikethroughOffset * strikethroughScale, 0);
 
                         DrawUnderlineMesh(strikethrough_start, strikethrough_end, ref last_vert_index, strikethroughScale, strikethroughScale, strikethroughScale, xScale, strikethroughColor);
                         //Debug.Log("Char [" + currentCharacter + "] at Index: " + i + "  End Strikethrough POS: " + strikethrough_end + "  Baseline: " + m_textInfo.characterInfo[i].baseLine.ToString("f3"));
+                    }
+                    else if (beginStrikethrough && i < m_characterCount && currentFontAsset.GetInstanceID() != characterInfos[i + 1].fontAsset.GetInstanceID())
+                    {
+                        // Terminate Strikethrough if font asset changes.
+                        beginStrikethrough = false;
+                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i].topRight.x, m_textInfo.characterInfo[i].baseLine + strikethroughOffset * strikethroughScale, 0);
+
+                        DrawUnderlineMesh(strikethrough_start, strikethrough_end, ref last_vert_index, strikethroughScale, strikethroughScale, strikethroughScale, xScale, strikethroughColor);
                     }
                     else if (beginStrikethrough && !isStrikeThroughVisible)
                     {
                         // Terminate Strikethrough if character is not visible.
                         beginStrikethrough = false;
-                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i - 1].topRight.x, m_textInfo.characterInfo[i - 1].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i - 1].topRight.x, m_textInfo.characterInfo[i - 1].baseLine + strikethroughOffset * strikethroughScale, 0);
 
                         DrawUnderlineMesh(strikethrough_start, strikethrough_end, ref last_vert_index, strikethroughScale, strikethroughScale, strikethroughScale, xScale, strikethroughColor);
                     }
@@ -3562,7 +3625,7 @@ namespace TMPro
                     if (beginStrikethrough == true)
                     {
                         beginStrikethrough = false;
-                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i - 1].topRight.x, m_textInfo.characterInfo[i - 1].baseLine + font.fontInfo.strikethrough * strikethroughScale, 0);
+                        strikethrough_end = new Vector3(m_textInfo.characterInfo[i - 1].topRight.x, m_textInfo.characterInfo[i - 1].baseLine + strikethroughOffset * strikethroughScale, 0);
 
                         DrawUnderlineMesh(strikethrough_start, strikethrough_end, ref last_vert_index, strikethroughScale, strikethroughScale, strikethroughScale, xScale, strikethroughColor);
                     }
@@ -3603,7 +3666,7 @@ namespace TMPro
                         if (!highlightColor.Compare(currentHighlightColor))
                         {
                             // End drawing at the start of new highlight color to prevent a gap between highlight sections.
-                            highlight_end.x = (highlight_end.x + m_textInfo.characterInfo[i].bottomLeft.x) / 2; // - (1 * m_textInfo.characterInfo[i].scale));
+                            highlight_end.x = (highlight_end.x + m_textInfo.characterInfo[i].bottomLeft.x) / 2;
 
                             highlight_start.y = Mathf.Min(highlight_start.y, m_textInfo.characterInfo[i].descender);
                             highlight_end.y = Mathf.Max(highlight_end.y, m_textInfo.characterInfo[i].ascender);

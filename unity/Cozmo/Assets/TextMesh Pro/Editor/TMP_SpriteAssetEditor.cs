@@ -99,8 +99,21 @@ namespace TMPro.EditorUtilities
             EditorGUI.indentLevel = 1;
 
             //GUI.enabled = false; // Lock UI
-
+            EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(m_spriteAtlas_prop , new GUIContent("Sprite Atlas"));
+            if (EditorGUI.EndChangeCheck())
+            {
+                // Assign the new sprite atlas texture to the current material
+                Texture2D tex = m_spriteAtlas_prop.objectReferenceValue as Texture2D;
+                if (tex != null)
+                {
+                    Material mat = m_material_prop.objectReferenceValue as Material;
+                    if (mat != null)
+                        mat.mainTexture = tex;
+                }
+            }
+
+
             GUI.enabled = true;
             EditorGUILayout.PropertyField(m_material_prop, new GUIContent("Default Material"));
 

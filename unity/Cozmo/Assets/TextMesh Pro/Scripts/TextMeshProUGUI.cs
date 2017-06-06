@@ -1,7 +1,7 @@
 // Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
 // This code can only be used under the standard Unity Asset Store End User License Agreement
 // A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-// Release 1.0.55.52.0b5
+// Release 1.0.55.52.0b9
 
 
 using UnityEngine;
@@ -112,8 +112,6 @@ namespace TMPro
 
             if (m_isCalculateSizeRequired || m_rectTransform.hasChanged)
             {
-                
-
                 m_preferredWidth = GetPreferredWidth();
 
                 ComputeMarginSize();
@@ -594,7 +592,13 @@ namespace TMPro
                 if (i == 0)
                     mesh = m_mesh;
                 else
+                {
+                    // Clear unused vertices
+                    // TODO: Causes issues when sorting geometry as last vertex data attribute get wiped out.
+                    //m_textInfo.meshInfo[i].ClearUnusedVertices();
+
                     mesh = m_subTextObjects[i].mesh;
+                }
 
                 if ((flags & TMP_VertexDataUpdateFlags.Vertices) == TMP_VertexDataUpdateFlags.Vertices)
                     mesh.vertices = m_textInfo.meshInfo[i].vertices;
@@ -635,7 +639,12 @@ namespace TMPro
                 if (i == 0)
                     mesh = m_mesh;
                 else
+                {
+                    // Clear unused vertices
+                    m_textInfo.meshInfo[i].ClearUnusedVertices();
+
                     mesh = m_subTextObjects[i].mesh;
+                }
 
                 //mesh.MarkDynamic();
                 mesh.vertices = m_textInfo.meshInfo[i].vertices;

@@ -92,11 +92,11 @@ GameObject:
   m_PrefabInternal: {fileID: 0}
   serializedVersion: 4
   m_Component:
-  - 4: {fileID: 133236934}
-  - 23: {fileID: 133236933}
+  - 224: {fileID: 133236934}
   - 33: {fileID: 133236932}
-  - 114: {fileID: 133236931}
   - 114: {fileID: 133236930}
+  - 222: {fileID: 133236931}
+  - 23: {fileID: 133236933}
   m_Layer: 0
   m_Name: TextMesh Pro - Caption
   m_TagString: Untagged
@@ -157,8 +157,8 @@ MonoBehaviour:
   m_fontSizeMin: 24
   m_fontSizeMax: 96
   m_fontStyle: 0
-  m_textAlignment: 0
-  m_isAlignmentEnumConverted: 0
+  m_textAlignment: 257
+  m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -173,7 +173,7 @@ MonoBehaviour:
   m_isLinkedTextComponent: 0
   m_enableKerning: 0
   m_enableExtraPadding: 1
-  checkPaddingRequired: 1
+  checkPaddingRequired: 0
   m_isRichText: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
@@ -182,6 +182,7 @@ MonoBehaviour:
   m_ignoreCulling: 1
   m_horizontalMapping: 0
   m_verticalMapping: 2
+  m_uvLineOffset: .300000012
   m_geometrySortingOrder: 0
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
@@ -189,22 +190,20 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 0}
-    characterCount: 0
+    characterCount: 60
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 0
+    spaceCount: 11
+    wordCount: 12
     linkCount: 0
-    lineCount: 0
-    pageCount: 0
-    materialCount: 0
-  m_havePropertiesChanged: 1
+    lineCount: 1
+    pageCount: 1
+    materialCount: 1
+  m_havePropertiesChanged: 0
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_isInputParsingRequired: 1
+  m_isInputParsingRequired: 0
   m_inputSource: 0
-  m_uvOffset: {x: 0, y: 0}
-  m_uvLineOffset: .300000012
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 133236933}
   m_subTextObjects:
@@ -217,28 +216,12 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   m_maskType: 0
-  m_lineLength: 0
-  m_anchor: 0
---- !u!114 &133236931
-MonoBehaviour:
-  m_ObjectHideFlags: 0
+--- !u!222 &133236931
+CanvasRenderer:
+  m_ObjectHideFlags: 2
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 133236929}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b34fc186f40e8043b977d4fa70db8c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_pivot: {x: .5, y: .5}
-  m_anchorPosition: 4
-  m_rect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 112.165207
-    height: 4.58586884
-  m_margins: {x: 0, y: 0, z: 0, w: 0}
 --- !u!33 &133236932
 MeshFilter:
   m_ObjectHideFlags: 2
@@ -264,26 +247,29 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_ScaleInLightmap: 1
   m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
-  m_MinimumChartSize: 4
   m_AutoUVMaxDistance: .5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingOrder: 0
---- !u!4 &133236934
-Transform:
+--- !u!224 &133236934
+RectTransform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 133236929}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -39.0999985, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 3, y: -32.7999992}
+  m_SizeDelta: {x: 128, y: 10}
+  m_Pivot: {x: .5, y: .5}
 --- !u!1 &347737868
 GameObject:
   m_ObjectHideFlags: 0
@@ -291,11 +277,11 @@ GameObject:
   m_PrefabInternal: {fileID: 0}
   serializedVersion: 4
   m_Component:
-  - 4: {fileID: 347737872}
-  - 23: {fileID: 347737871}
+  - 224: {fileID: 347737873}
   - 33: {fileID: 347737870}
-  - 114: {fileID: 347737873}
   - 114: {fileID: 347737869}
+  - 222: {fileID: 347737872}
+  - 23: {fileID: 347737871}
   m_Layer: 0
   m_Name: TextMesh Pro - Styles
   m_TagString: Untagged
@@ -322,25 +308,26 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: '<size=%125><u><#a0ffa0>Rich Text Tags</color>* available in TextMesh<#0080ff>Pro!</color></u></size>
+  m_text: '<size=120%><u><#a0ffa0>Basic Style Tags</color>* available in TextMesh<#0080ff>Pro</color></u></size><line-height=1.5em>
 
-    Normal
+    </line-height>Normal
 
-    <b>Bold</b><pos=30><<#ffff00>b</color>> <<#ffff00>/b</color>>
+    <b>Bold</b><pos=50%><<#ffff00>b</color>> <<#ffff00>/b</color>>
 
-    <i>Italics</i><pos=30><<#ffff00>i</color>> <<#ffff00>/i</color>>
+    <i>Italics</i><pos=50%><<#ffff00>i</color>> <<#ffff00>/i</color>>
 
-    <u>Underline</u><pos=30><<#ffff00>u</color>> <<#ffff00>/u</color>>
+    <u>Underline</u><pos=50%><<#ffff00>u</color>> <<#ffff00>/u</color>>
 
-    <s>Strikethrough</s><pos=30><<#ffff00>s</color>> <<#ffff00>/s</color>>
+    <s>Strikethrough</s><pos=50%><<#ffff00>s</color>> <<#ffff00>/s</color>>
 
-    Super<sup> script</sup><pos=30><<#ffff00>sup</color>> <<#ffff00>/sup</color>>
+    Superscript  - X<sup>3</sup> -<pos=50%><<#ffff00>sup</color>> <<#ffff00>/sup</color>>
 
-    Sub<sub> script</sub><pos=30><<#ffff00>sub</color>> <<#ffff00>/sub</color>>
+    Subscript  - H<sub>2</sub>O -<pos=50%><<#ffff00>sub</color>> <<#ffff00>/sub</color>>
 
-    Size <size=%75>Smaller</size><pos=30><<#ffff00>size=%75</color>> <<#ffff00>/size</color>>
+    Text <mark=#ffff0040>Highlighting</mark><pos=50%><<#ffff00>mark=#ffff8000</color>>
+    <<#ffff00>/mark</color>>
 
-    Size <size=%125>Larger</size><pos=30><<#ffff00>size=%125</color>> <<#ffff00>/size</color>>'
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 715b80e429c437e40867928a4e1fc975, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 715b80e429c437e40867928a4e1fc975, type: 2}
@@ -374,8 +361,8 @@ MonoBehaviour:
   m_fontSizeMin: 24
   m_fontSizeMax: 96
   m_fontStyle: 0
-  m_textAlignment: 0
-  m_isAlignmentEnumConverted: 0
+  m_textAlignment: 257
+  m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -390,7 +377,7 @@ MonoBehaviour:
   m_isLinkedTextComponent: 0
   m_enableKerning: 0
   m_enableExtraPadding: 1
-  checkPaddingRequired: 1
+  checkPaddingRequired: 0
   m_isRichText: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 0
@@ -399,6 +386,7 @@ MonoBehaviour:
   m_ignoreCulling: 1
   m_horizontalMapping: 0
   m_verticalMapping: 2
+  m_uvLineOffset: .300000012
   m_geometrySortingOrder: 0
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
@@ -406,22 +394,20 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 0}
-    characterCount: 0
+    characterCount: 224
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 0
+    spaceCount: 30
+    wordCount: 36
     linkCount: 0
-    lineCount: 0
-    pageCount: 0
-    materialCount: 0
-  m_havePropertiesChanged: 1
+    lineCount: 9
+    pageCount: 1
+    materialCount: 1
+  m_havePropertiesChanged: 0
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_spriteAnimator: {fileID: 0}
-  m_isInputParsingRequired: 1
+  m_isInputParsingRequired: 0
   m_inputSource: 0
-  m_uvOffset: {x: 0, y: 0}
-  m_uvLineOffset: .300000012
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 347737871}
   m_subTextObjects:
@@ -434,8 +420,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   m_maskType: 0
-  m_lineLength: 0
-  m_anchor: 0
 --- !u!33 &347737870
 MeshFilter:
   m_ObjectHideFlags: 2
@@ -461,46 +445,35 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_ScaleInLightmap: 1
   m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
-  m_MinimumChartSize: 4
   m_AutoUVMaxDistance: .5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingOrder: 0
---- !u!4 &347737872
-Transform:
+--- !u!222 &347737872
+CanvasRenderer:
+  m_ObjectHideFlags: 2
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 347737868}
+--- !u!224 &347737873
+RectTransform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 347737868}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.12781143, y: -6.9691782, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
---- !u!114 &347737873
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 347737868}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b34fc186f40e8043b977d4fa70db8c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_pivot: {x: .5, y: .5}
-  m_anchorPosition: 4
-  m_rect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 121.856636
-    height: 61.0100327
-  m_margins: {x: 0, y: 0, z: 0, w: 0}
+  m_RootOrder: 2
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 3, y: 0}
+  m_SizeDelta: {x: 128, y: 59.9000015}
+  m_Pivot: {x: .5, y: .5}
 --- !u!1 &642642694
 GameObject:
   m_ObjectHideFlags: 0
@@ -615,6 +588,7 @@ MonoBehaviour:
   m_ignoreCulling: 1
   m_horizontalMapping: 0
   m_verticalMapping: 0
+  m_uvLineOffset: 0
   m_geometrySortingOrder: 0
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
@@ -636,8 +610,6 @@ MonoBehaviour:
   m_spriteAnimator: {fileID: 0}
   m_isInputParsingRequired: 0
   m_inputSource: 0
-  m_uvOffset: {x: 0, y: 0}
-  m_uvLineOffset: 0
   m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
@@ -768,6 +740,7 @@ MonoBehaviour:
   m_ignoreCulling: 1
   m_horizontalMapping: 0
   m_verticalMapping: 0
+  m_uvLineOffset: 0
   m_geometrySortingOrder: 0
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
@@ -789,8 +762,6 @@ MonoBehaviour:
   m_spriteAnimator: {fileID: 0}
   m_isInputParsingRequired: 0
   m_inputSource: 0
-  m_uvOffset: {x: 0, y: 0}
-  m_uvLineOffset: 0
   m_hasFontAssetChanged: 0
   m_subTextObjects:
   - {fileID: 0}
@@ -885,8 +856,8 @@ Camera:
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 100
+  orthographic: 1
+  orthographic size: 36
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -907,7 +878,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1079079952}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -8.80000019, z: -61.7200012}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -942,7 +913,7 @@ RectTransform:
   - {fileID: 642642697}
   - {fileID: 718714747}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}

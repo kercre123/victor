@@ -760,7 +760,7 @@ namespace TMPro
             {
                 if (m_CachedInputRenderer == null && m_TextComponent != null)
                 {
-                    GameObject go = new GameObject(transform.name + " Input Caret");
+                    GameObject go = new GameObject(transform.name + " Input Caret", typeof(RectTransform));
 
                     // Add MaskableGraphic Component
                     TMP_SelectionCaret caret = go.AddComponent<TMP_SelectionCaret>();
@@ -1388,11 +1388,11 @@ namespace TMPro
         {
             var currentEventModifiers = evt.modifiers;
             RuntimePlatform rp = Application.platform;
-#if UNITY_5_4_OR_NEWER
+            #if UNITY_5_4_OR_NEWER
             bool isMac = (rp == RuntimePlatform.OSXEditor || rp == RuntimePlatform.OSXPlayer);
-#else
+            #else
             bool isMac = (rp == RuntimePlatform.OSXEditor || rp == RuntimePlatform.OSXPlayer || rp == RuntimePlatform.OSXWebPlayer);
-#endif
+            #endif
             bool ctrl = isMac ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
             bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
             bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;
@@ -1497,6 +1497,18 @@ namespace TMPro
                 case KeyCode.DownArrow:
                     {
                         MoveDown(shift);
+                        return EditState.Continue;
+                    }
+
+                case KeyCode.PageUp:
+                    {
+                        MovePageUp(shift);
+                        return EditState.Continue;
+                    }
+
+                case KeyCode.PageDown:
+                    {
+                        MovePageDown(shift);
                         return EditState.Continue;
                     }
 
@@ -1618,6 +1630,9 @@ namespace TMPro
         /// <param name="eventData"></param>
         public virtual void OnScroll(PointerEventData eventData)
         {
+            if (m_LineType == LineType.SingleLine)
+                return;
+
             float scrollDirection = -eventData.scrollDelta.y;
 
             m_ScrollPosition = m_ScrollPosition + (1f / m_TextComponent.textInfo.lineCount) * scrollDirection * m_ScrollSensitivity;
@@ -1891,6 +1906,133 @@ namespace TMPro
         }
 
 
+         private int PageUpCharacterPosition(int originalPos, bool goToFirstChar)
+        {
+            if (originalPos >= m_TextComponent.textInfo.characterCount)
+                originalPos -= 1;
+
+            TMP_CharacterInfo originChar = m_TextComponent.textInfo.characterInfo[originalPos];
+            int originLine = originChar.lineNumber;
+
+            // We are on the first line return first character
+            if (originLine - 1 < 0)
+                return goToFirstChar ? 0 : originalPos;
+
+            float viewportHeight = m_TextViewport.rect.height;
+
+            int newLine = originLine - 1;
+            // Iterate through each subsequent line to find the first baseline that is not visible in the viewport.
+            for (; newLine > 0; newLine--)
+            {
+                if (m_TextComponent.textInfo.lineInfo[newLine].baseline > m_TextComponent.textInfo.lineInfo[originLine].baseline + viewportHeight)
+                    break;
+            }
+
+            int endCharIdx = m_TextComponent.textInfo.lineInfo[newLine].lastCharacterIndex;
+
+            int closest = -1;
+            float distance = TMP_Math.FLOAT_MAX;
+            float range = 0;
+
+            for (int i = m_TextComponent.textInfo.lineInfo[newLine].firstCharacterIndex; i < endCharIdx; ++i)
+            {
+                TMP_CharacterInfo currentChar = m_TextComponent.textInfo.characterInfo[i];
+
+                float d = originChar.origin - currentChar.origin;
+                float r = d / (currentChar.xAdvance - currentChar.origin);
+
+                if (r >= 0 && r <= 1)
+                {
+                    if (r < 0.5f)
+                        return i;
+                    else
+                        return i + 1;
+                }
+
+                d = Mathf.Abs(d);
+
+                if (d < distance)
+                {
+                    closest = i;
+                    distance = d;
+                    range = r;
+                }
+            }
+
+            if (closest == -1) return endCharIdx;
+
+            //Debug.Log("Returning nearest character with Range = " + range);
+
+            if (range < 0.5f)
+                return closest;
+            else
+                return closest + 1;
+        }
+
+
+         private int PageDownCharacterPosition(int originalPos, bool goToLastChar)
+        {
+            if (originalPos >= m_TextComponent.textInfo.characterCount)
+                return m_TextComponent.textInfo.characterCount - 1;
+
+            TMP_CharacterInfo originChar = m_TextComponent.textInfo.characterInfo[originalPos];
+            int originLine = originChar.lineNumber;
+
+            // We are on the last line return last character
+            if (originLine + 1 >= m_TextComponent.textInfo.lineCount)
+                return goToLastChar ? m_TextComponent.textInfo.characterCount - 1 : originalPos;
+
+            float viewportHeight = m_TextViewport.rect.height;
+
+            int newLine = originLine + 1;
+            // Iterate through each subsequent line to find the first baseline that is not visible in the viewport.
+            for (; newLine < m_TextComponent.textInfo.lineCount - 1; newLine++)
+            {
+                if (m_TextComponent.textInfo.lineInfo[newLine].baseline < m_TextComponent.textInfo.lineInfo[originLine].baseline - viewportHeight)
+                    break;
+            }
+
+            // Need to determine end line for next line.
+            int endCharIdx = m_TextComponent.textInfo.lineInfo[newLine].lastCharacterIndex;
+
+            int closest = -1;
+            float distance = TMP_Math.FLOAT_MAX;
+            float range = 0;
+
+            for (int i = m_TextComponent.textInfo.lineInfo[newLine].firstCharacterIndex; i < endCharIdx; ++i)
+            {
+                TMP_CharacterInfo currentChar = m_TextComponent.textInfo.characterInfo[i];
+
+                float d = originChar.origin - currentChar.origin;
+                float r = d / (currentChar.xAdvance - currentChar.origin);
+
+                if (r >= 0 && r <= 1)
+                {
+                    if (r < 0.5f)
+                        return i;
+                    else
+                        return i + 1;
+                }
+
+                d = Mathf.Abs(d);
+
+                if (d < distance)
+                {
+                    closest = i;
+                    distance = d;
+                    range = r;
+                }
+            }
+
+            if (closest == -1) return endCharIdx;
+
+            if (range < 0.5f)
+                return closest;
+            else
+                return closest + 1;
+        }
+
+
         private void MoveDown(bool shift)
         {
             MoveDown(shift, true);
@@ -1918,6 +2060,10 @@ namespace TMPro
                 caretSelectPositionInternal = caretPositionInternal = position;
                 stringSelectPositionInternal = stringPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
             }
+
+            #if DEBUG_MODE
+            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
+            #endif
         }
 
         private void MoveUp(bool shift)
@@ -1947,8 +2093,118 @@ namespace TMPro
                 caretSelectPositionInternal = caretPositionInternal = position;
                 stringSelectPositionInternal = stringPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
             }
+
+            #if DEBUG_MODE
+            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal);
+            #endif
         }
 
+
+        private void MovePageUp(bool shift)
+        {
+            MovePageUp(shift, true);
+        }
+
+        private void MovePageUp(bool shift, bool goToFirstChar)
+        {
+            if (hasSelection && !shift)
+            {
+                // If we have a selection and press up without shift,
+                // set caret position to start of selection before we move it up.
+                caretPositionInternal = caretSelectPositionInternal = Mathf.Min(caretPositionInternal, caretSelectPositionInternal);
+            }
+
+            int position = multiLine ? PageUpCharacterPosition(caretSelectPositionInternal, goToFirstChar) : 0;
+
+            if (shift)
+            {
+                caretSelectPositionInternal = position;
+                stringSelectPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
+            }
+            else
+            {
+                caretSelectPositionInternal = caretPositionInternal = position;
+                stringSelectPositionInternal = stringPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
+            }
+
+
+            // Scroll to top of viewport
+            //int currentLine = m_TextComponent.textInfo.characterInfo[position].lineNumber;
+            //float lineAscender = m_TextComponent.textInfo.lineInfo[currentLine].ascender;
+
+            // Adjust text area up or down if not in single line mode.
+            if (m_LineType != LineType.SingleLine)
+            {
+                float offset = m_TextViewport.rect.height; // m_TextViewport.rect.yMax - (m_TextComponent.rectTransform.anchoredPosition.y + lineAscender);
+
+                float topTextBounds = m_TextComponent.rectTransform.position.y + m_TextComponent.textBounds.max.y;
+                float topViewportBounds = m_TextViewport.position.y + m_TextViewport.rect.yMax;
+
+                offset = topViewportBounds > topTextBounds + offset ? offset : topViewportBounds - topTextBounds;
+
+                m_TextComponent.rectTransform.anchoredPosition += new Vector2(0, offset);
+                AssignPositioningIfNeeded();
+                m_IsScrollbarUpdateRequired = true;
+            }
+
+            #if DEBUG_MODE
+            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal + " Line: " + currentLine);
+            #endif
+
+        }
+
+
+        private void MovePageDown(bool shift)
+        {
+            MovePageDown(shift, true);
+        }
+
+        private void MovePageDown(bool shift, bool goToLastChar)
+        {
+             if (hasSelection && !shift)
+            {
+                // If we have a selection and press down without shift,
+                // set caret to end of selection before we move it down.
+                caretPositionInternal = caretSelectPositionInternal = Mathf.Max(caretPositionInternal, caretSelectPositionInternal);
+            }
+
+            int position = multiLine ? PageDownCharacterPosition(caretSelectPositionInternal, goToLastChar) : m_TextComponent.textInfo.characterCount - 1;
+
+            if (shift)
+            {
+                caretSelectPositionInternal = position;
+                stringSelectPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
+            }
+            else
+            {
+                caretSelectPositionInternal = caretPositionInternal = position;
+                stringSelectPositionInternal = stringPositionInternal = GetStringIndexFromCaretPosition(caretSelectPositionInternal);
+            }
+
+            // Scroll to top of viewport
+            //int currentLine = m_TextComponent.textInfo.characterInfo[position].lineNumber;
+            //float lineAscender = m_TextComponent.textInfo.lineInfo[currentLine].ascender;
+
+            // Adjust text area up or down if not in single line mode.
+            if (m_LineType != LineType.SingleLine)
+            {
+                float offset = m_TextViewport.rect.height; // m_TextViewport.rect.yMax - (m_TextComponent.rectTransform.anchoredPosition.y + lineAscender);
+
+                float bottomTextBounds = m_TextComponent.rectTransform.position.y + m_TextComponent.textBounds.min.y;
+                float bottomViewportBounds = m_TextViewport.position.y + m_TextViewport.rect.yMin;
+
+                offset = bottomViewportBounds > bottomTextBounds + offset ? offset : bottomViewportBounds - bottomTextBounds;
+
+                m_TextComponent.rectTransform.anchoredPosition += new Vector2(0, offset);
+                AssignPositioningIfNeeded();
+                m_IsScrollbarUpdateRequired = true;
+            }
+
+            #if DEBUG_MODE
+            Debug.Log("Caret Position: " + caretPositionInternal + " Selection Position: " + caretSelectPositionInternal + "  String Position: " + stringPositionInternal + " String Select Position: " + stringSelectPositionInternal + " Line: " + currentLine);
+            #endif
+
+        }
 
         private void Delete()
         {
@@ -2683,7 +2939,7 @@ namespace TMPro
                     TMP_CharacterInfo endCharInfo = textInfo.characterInfo[currentChar];
 
                     // Extra check to handle Carriage Return
-                    if (endCharInfo.character == 10 && textInfo.characterInfo[currentChar - 1].character == 13 && currentChar > 0)
+                    if (currentChar > 0 && endCharInfo.character == 10 && textInfo.characterInfo[currentChar - 1].character == 13)
                         endCharInfo = textInfo.characterInfo[currentChar - 1];
 
                     Vector2 startPosition = new Vector2(startCharInfo.origin, textInfo.lineInfo[currentLineIndex].ascender);

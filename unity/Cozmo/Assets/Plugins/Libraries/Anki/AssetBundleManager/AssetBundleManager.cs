@@ -191,10 +191,9 @@ namespace Anki {
             Log(LogType.Error, "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
             return null;
           }
-
+          // There are multiple possible assets that match this name...
           if (assetPaths.Length > 1) {
-            Log(LogType.Warning, "This case in LoadAssets needs to be implemented");
-            return null;
+            Log(LogType.Warning, "Multiple assets named " + assetName + " found in " + assetBundleName + " using first");
           }
           AssetType asset = AssetDatabase.LoadAssetAtPath(assetPaths[0], typeof(AssetType)) as AssetType;
           if (asset == null) {

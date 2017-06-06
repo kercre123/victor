@@ -1,8 +1,3 @@
-// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
-// This code can only be used under the standard Unity Asset Store End User License Agreement
-// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-
-
 using UnityEngine;
 using System.Collections;
 
@@ -48,8 +43,8 @@ namespace TMPro.Examples
                 if (TMProFont != null)
                     m_textMeshPro.font = TMProFont;
 
-                //m_textMeshPro.font = Resources.Load("Fonts & Materials/IMPACT SDF", typeof(TextMeshProFont)) as TextMeshProFont; // Make sure the IMPACT SDF exists before calling this...
-                //m_textMeshPro.fontSharedMaterial = Resources.Load("Fonts & Materials/IMPACT SDF", typeof(Material)) as Material; // Same as above make sure this material exists.
+                //m_textMeshPro.font = Resources.Load("Fonts & Materials/Anton SDF", typeof(TextMeshProFont)) as TextMeshProFont; // Make sure the Anton SDF exists before calling this...
+                //m_textMeshPro.fontSharedMaterial = Resources.Load("Fonts & Materials/Anton SDF", typeof(Material)) as Material; // Same as above make sure this material exists.
 
                 m_textMeshPro.fontSize = 48;
                 m_textMeshPro.alignment = TextAlignmentOptions.Center;
@@ -65,7 +60,7 @@ namespace TMPro.Examples
                 //m_textMeshPro.fontColor = new Color32(255, 255, 255, 255);
 
                 m_material01 = m_textMeshPro.font.material;
-                m_material02 = Resources.Load("Fonts & Materials/LiberationSans SDF - Drop Shadow", typeof(Material)) as Material; // Make sure the IMPACT SDF exists before calling this...  
+                m_material02 = Resources.Load("Fonts & Materials/LiberationSans SDF - Drop Shadow", typeof(Material)) as Material; // Make sure the LiberationSans SDF exists before calling this...  
 
 
             }

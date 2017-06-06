@@ -29,8 +29,19 @@ namespace TMPro.EditorUtilities
         }
 
 
+        // Select the currently assigned material or material preset.
+        [MenuItem("CONTEXT/Material/Select Material", false, 500)]
+        static void SelectMaterial(MenuCommand command)
+        {
+            Material mat = command.context as Material;
+
+            // Select current material
+            EditorUtility.FocusProjectWindow();
+            EditorGUIUtility.PingObject(mat);
+        }
+
+
         // Add a Context Menu to allow easy duplication of the Material.
-        //[MenuItem("CONTEXT/MaterialComponent/Duplicate Material", false)]
         [MenuItem("CONTEXT/Material/Create Material Preset", false)]
         static void DuplicateMaterial(MenuCommand command)
         {
@@ -78,9 +89,9 @@ namespace TMPro.EditorUtilities
                 }
             }
 
-            // Select newly created material
-            //EditorUtility.FocusProjectWindow();
-            //Selection.activeObject = duplicate;
+            // Ping newly created Material Preset.
+            EditorUtility.FocusProjectWindow();
+            EditorGUIUtility.PingObject(duplicate);
         }
 
 
@@ -263,55 +274,10 @@ namespace TMPro.EditorUtilities
             DestroyImmediate(tex);
         }
 
-        [MenuItem("CONTEXT/Asset Creator/Extra", false, 1000)]
-        static void Extra(MenuCommand command)
-        {
 
-        }
-
-
-        // Context Menus for TMPro Sprite Assets
-        //This function is used for debugging and fixing potentially broken Sprite Asset material links.
-        //[MenuItem("CONTEXT/TMP_SpriteAsset/Update Sprite Material", false, 2000)]
-        //static void UpdateMaterial(MenuCommand command)
+        //[MenuItem("CONTEXT/Asset Creator/Extra", false, 1000)]
+        //static void Extra(MenuCommand command)
         //{
-        //    TMP_SpriteAsset spriteAsset = command.context as TMP_SpriteAsset;
-
-        //    ShaderUtilities.GetShaderPropertyIDs();
-
-        //    if (spriteAsset.material == null)
-        //    {
-        //        // Add a new material
-        //        Shader shader = Shader.Find("TMPro/Sprite");
-        //        Material tempMaterial = new Material(shader);
-        //        tempMaterial.SetTexture(ShaderUtilities.ID_MainTex, spriteAsset.spriteSheet);
-
-        //        spriteAsset.material = tempMaterial;
-        //        tempMaterial.hideFlags = HideFlags.HideInHierarchy;
-        //        AssetDatabase.AddObjectToAsset(tempMaterial, spriteAsset);
-
-
-        //    }
-        //    else
-        //    {
-        //        // Update the existing material
-        //        DestroyImmediate(spriteAsset.material, true);
-
-        //        Shader shader = Shader.Find("TMPro/Sprite");
-        //        Material tempMaterial = new Material(shader);
-        //        tempMaterial.SetTexture(ShaderUtilities.ID_MainTex, spriteAsset.spriteSheet);
-
-
-        //        tempMaterial.hideFlags = HideFlags.HideInHierarchy;
-        //        AssetDatabase.AddObjectToAsset(tempMaterial, spriteAsset);
-        //        spriteAsset.material = tempMaterial;
-
-        //        //AssetDatabase.Refresh();
-        //    }
-
-        //    AssetDatabase.SaveAssets();
-        //    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(spriteAsset));  // Re-import font asset to get the new updated version.
-        //    AssetDatabase.Refresh();
 
         //}
 
