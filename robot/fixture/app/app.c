@@ -21,11 +21,11 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 101;
+u8 g_fixtureReleaseVersion = 102;
 #define BUILD_INFO "MP v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -99,7 +99,7 @@ int GetSequence(void)
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial()
 {
-  if (FIXTURE_SERIAL >= 0xf0)
+  if (FIXTURE_SERIAL > 0xfff) //12-bit limit
     throw ERROR_SERIAL_INVALID;
   return (FIXTURE_SERIAL << 20) | (GetSequence() & 0x0Fffff);
 }

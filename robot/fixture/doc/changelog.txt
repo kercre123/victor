@@ -1,4 +1,11 @@
 ----------------
+Release v102
+----------------
+
+HEAD1,BODY1:
+-allow s/n generation from fixtures with serial# up to 0xFFF (increase from 0xF0)
+
+----------------
 Release v101
 ----------------
 
