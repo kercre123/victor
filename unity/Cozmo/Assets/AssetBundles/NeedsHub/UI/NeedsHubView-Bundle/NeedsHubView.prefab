@@ -2651,7 +2651,6 @@ MonoBehaviour:
         useCustom: 0
         duration_sec: 0
         easing: 0
-  _PlayRandomChallengeButton: {fileID: 0}
   _ActivitiesButton: {fileID: 114407009027686870}
   _SettingsButton: {fileID: 114273081088830324}
   _SparksButton: {fileID: 114446962315980540}
@@ -4925,7 +4924,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -291.81, y: -93.000244}
+  m_AnchoredPosition: {x: -291.81006, y: -93}
   m_SizeDelta: {x: 155, y: 155}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224512322964139318
@@ -5266,7 +5265,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -488.1, y: -93.000244}
+  m_AnchoredPosition: {x: -488.1001, y: -93}
   m_SizeDelta: {x: 155, y: 155}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &224743967265000114

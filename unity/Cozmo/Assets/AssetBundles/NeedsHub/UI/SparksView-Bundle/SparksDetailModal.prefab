@@ -90,6 +90,7 @@ GameObject:
   - component: {fileID: 225594643365646330}
   - component: {fileID: 114836480710974580}
   - component: {fileID: 114775676513124814}
+  - component: {fileID: 114175511433420390}
   m_Layer: 5
   m_Name: SparksDetailModal
   m_TagString: Untagged
@@ -857,6 +858,20 @@ MonoBehaviour:
   _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
+--- !u!114 &114175511433420390
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1184273589136798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33f1f53d364ba4d87bee9209afa840c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _PyramidCubeUprightModalPrefab: {fileID: 11467916, guid: e06d83da220314dcd9810feb64ebd598,
+    type: 2}
+  _ReopenModalCooldown_sec: 10
 --- !u!114 &114196221682344288
 MonoBehaviour:
   m_ObjectHideFlags: 1

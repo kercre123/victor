@@ -4,11 +4,13 @@ using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo.Upgrades.GuardDog {
 
-  // Lives on Homeview prefab as an additional component
+  // Lives on NeedsHub prefab as an additional component
   public class GuardDogController : MonoBehaviour {
     [SerializeField]
     private GuardDogModal _GuardDogModalPrefab;
     private GuardDogModal _GuardDogModalPrefabInstance;
+
+    public bool EnableGuardDogModal { get; set; }
 
     private void Start() {
       RobotEngineManager.Instance.AddCallback<GuardDogStart>(HandleGuardDogStart);
@@ -26,6 +28,10 @@ namespace Cozmo.Upgrades.GuardDog {
     }
 
     private void HandleGuardDogStart(GuardDogStart guardDogMessage) {
+      if (!EnableGuardDogModal) {
+        return;
+      }
+
       DAS.Debug("GuardDogController.HandleGuardDogStart", "Opening modal");
       UIManager.OpenModal(_GuardDogModalPrefab,
                           new UI.ModalPriorityData(UI.ModalPriorityLayer.Low, 3,

@@ -4,7 +4,7 @@ using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo.Upgrades {
 
-  // Lives on CoreUpgradeDetailsModal prefab as a second component
+  // Lives on SparksDetailModal prefab as a second component
   public class PyramidCubeUprightController : MonoBehaviour {
     [SerializeField]
     private PyramidCubeUprightModal _PyramidCubeUprightModalPrefab;

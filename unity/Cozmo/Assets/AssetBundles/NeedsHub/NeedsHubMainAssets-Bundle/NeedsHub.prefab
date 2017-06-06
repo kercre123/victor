@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 4452726312163202}
   - component: {fileID: 114550028666726068}
   - component: {fileID: 114403619525950224}
+  - component: {fileID: 114204003721372696}
   m_Layer: 0
   m_Name: NeedsHub
   m_TagString: Untagged
@@ -41,6 +42,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114204003721372696
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1964483991850512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34fe3a07bab484a0e8489d4fc2d11398, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _GuardDogModalPrefab: {fileID: 114647475524996158, guid: ba294ecf431a24ac0b3df9133a2a9eb7,
+    type: 2}
 --- !u!114 &114403619525950224
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -84,3 +98,4 @@ MonoBehaviour:
       _EnumValue: 23
     _AssetDataName: SparksView
   _BadLightAlertController: {fileID: 114403619525950224}
+  _GuardDogController: {fileID: 114204003721372696}

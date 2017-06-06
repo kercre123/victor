@@ -29,6 +29,9 @@ namespace Cozmo.Hub {
     [SerializeField]
     private Cozmo.UI.BadLightAlertConroller _BadLightAlertController;
 
+    [SerializeField]
+    private Cozmo.Upgrades.GuardDog.GuardDogController _GuardDogController;
+
     private ActivitiesView _ActivitiesViewInstance;
     private SparksView _SparksViewInstance;
 
@@ -175,6 +178,7 @@ namespace Cozmo.Hub {
     private void AllowFreeplayUI(bool allow) {
       _BadLightAlertController.EnableBadLightAlerts = allow;
       PauseManager.Instance.ListeningForBatteryLevel = allow;
+      _GuardDogController.EnableGuardDogModal = allow;
     }
 
     #endregion
