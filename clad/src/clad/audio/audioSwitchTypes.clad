@@ -135,6 +135,15 @@ enum uint_32 SwitchGroupType
   Mood = 3128647864,
   Relationship = 3723222599,
   Sparked = 62349551,
+  World_Event = 846944294,
+}
+
+enum uint_32 World_Event
+{
+  Cubes_Stacked = 2547007631,
+  Invalid = 0,
+  Lift_Cube = 3497001966,
+  Request_Game = 2296204869,
 }
 
 } // SwitchState
