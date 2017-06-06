@@ -39,6 +39,7 @@ enum uint_8 DockAction
   DA_PLACE_LOW_BLIND, // Placing block on level 0 (relative to some pose)
   DA_ROLL_LOW,        // Rolling a block at level 0 by pulling it towards you
   DA_DEEP_ROLL_LOW,   // Same as above, but it really gets up in there. Useful when lift tool - cube corner contact friction is low
+  DA_POST_DOCK_ROLL,  // Doesn't actually dock, just does the post dock roll movements
   DA_FACE_PLANT,      // Docks to a stack of blocks and knocks it over, face planting at the same time
   DA_POP_A_WHEELIE,   // Approach block as if about to roll, lower lift on block and drive forward to pop-a-wheelie
   DA_ALIGN,           // Approaches block and stops at specified distance from marker

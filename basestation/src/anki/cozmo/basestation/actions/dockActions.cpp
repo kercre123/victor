@@ -866,19 +866,22 @@ namespace Anki {
         _faceAndVerifyAction->AddAction(verifyNoObjectOnTopOfAction);
       }
       
-      // Set up a visual verification action to make sure we can still see the correct
-      // marker of the selected object before proceeding
-      // NOTE: This also disables tracking head to object if there was any
-      IAction* turnTowardsDockObjectAction = new TurnTowardsObjectAction(_robot,
-                                                                         _dockObjectID,
-                                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarkerCode),
-                                                                         0, true, false);
-      
-      // Disable the turn towards action from issuing a completion signal
-      turnTowardsDockObjectAction->ShouldEmitCompletionSignal(false);
-      turnTowardsDockObjectAction->ShouldSuppressTrackLocking(true);
-      
-      _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
+      if(_firstTurnTowardsObject)
+      {
+        // Set up a visual verification action to make sure we can still see the correct
+        // marker of the selected object before proceeding
+        // NOTE: This also disables tracking head to object if there was any
+        IAction* turnTowardsDockObjectAction = new TurnTowardsObjectAction(_robot,
+                                                                           _dockObjectID,
+                                                                           (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarkerCode),
+                                                                           0, true, false);
+        
+        // Disable the turn towards action from issuing a completion signal
+        turnTowardsDockObjectAction->ShouldEmitCompletionSignal(false);
+        turnTowardsDockObjectAction->ShouldSuppressTrackLocking(true);
+        
+        _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
+      }
     }
     
     template<>
@@ -2349,6 +2352,22 @@ namespace Anki {
       SetName(enable ? "DeepRollObject" : "RollObject");
     }
     
+    void RollObjectAction::EnableRollWithoutDock(bool enable)
+    {
+      _dockAction = enable ? DockAction::DA_POST_DOCK_ROLL : DockAction::DA_ROLL_LOW;
+      SetName(enable ? "RollWithoutDock" : "RollObject");
+      
+      // Don't check if we are near a predock pose because we won't actually be docking
+      SetDoNearPredockPoseCheck(!enable);
+      
+      // Don't care if there is an object on top of at this point
+      SetShouldCheckForObjectOnTopOf(!enable);
+      
+      // We are likely right next to the object to roll so don't bother turning towards it/trying to verify
+      // it is in front of us
+      SetShouldFirstTurnTowardsObject(!enable);
+    }
+    
     bool RollObjectAction::CanActionRollObject(const Robot& robot,
                                                const ObservableObject* object)
     {
@@ -2363,6 +2382,7 @@ namespace Anki {
       {
         case DockAction::DA_ROLL_LOW:
         case DockAction::DA_DEEP_ROLL_LOW:
+        case DockAction::DA_POST_DOCK_ROLL:
         {
           if(_robot.IsCarryingObject()) {
             PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal.ExpectedNotCarryingObject", "");
@@ -2435,6 +2455,7 @@ namespace Anki {
       {
         case DockAction::DA_ROLL_LOW:
         case DockAction::DA_DEEP_ROLL_LOW:
+        case DockAction::DA_POST_DOCK_ROLL:
         {
           if(_robot.GetLastPickOrPlaceSucceeded()) {
             

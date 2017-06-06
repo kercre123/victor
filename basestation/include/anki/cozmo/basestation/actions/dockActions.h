@@ -104,6 +104,9 @@ namespace Anki {
       // Suppress the given reaction triggers during this action
       void SetShouldSuppressReactionTriggers(const ReactionTriggerHelpers::FullReactionArray* reactionTriggers)
                           { _reactionTriggersToSuppress = reactionTriggers; }
+      
+      // Whether or not we should first turn towards and visually verify the dockObject
+      void SetShouldFirstTurnTowardsObject(const bool b) { _firstTurnTowardsObject = b; }
 
       struct PreActionPoseInput
       {
@@ -242,6 +245,7 @@ namespace Anki {
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;
       const ReactionTriggerHelpers::FullReactionArray*
                                  _reactionTriggersToSuppress     = nullptr;
+      bool                       _firstTurnTowardsObject         = true;
       
     private:
     
@@ -522,6 +526,11 @@ namespace Anki {
       
       // Whether or not to do the deep roll action instead of the default roll
       void EnableDeepRoll(bool enable);
+      
+      // Whether or not to attempt to roll without docking to the object
+      // Will still verify that the object was rolled
+      // Not compatable with deep rolling
+      void EnableRollWithoutDock(bool enable);
       
       static bool CanActionRollObject(const Robot& robot,
                                       const ObservableObject* object);

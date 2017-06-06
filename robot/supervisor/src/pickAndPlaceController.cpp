@@ -219,6 +219,7 @@ namespace Anki {
         {
           case DA_PLACE_LOW_BLIND:
           case DA_ROLL_LOW:
+          case DA_POST_DOCK_ROLL:
           {
             backoutDist_mm = MIN_BACKOUT_DIST_MM;
             break;
@@ -319,6 +320,10 @@ namespace Anki {
               case DA_MOUNT_CHARGER:
                 dockOffsetDistX_ = CHARGER_ALIGNED_MARKER_DISTANCE;
                 break;
+              case DA_POST_DOCK_ROLL:
+                // Skip docking completely and go straight to Setting lift for Post Dock
+                mode_ = SET_LIFT_POSTDOCK;
+                break;
               default:
                 AnkiError( 287, "PAP.SET_LIFT_PREDOCK.InvalidAction", 347, "%d", 1, action_);
                 Reset();
@@ -381,19 +386,13 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 122, "DOCKING", 0);
 #endif
-
-              //if (action_ == DA_PICKUP_HIGH) {
-              //  DockingController::TrackCamWithLift(true);
-              //}
             }
             break;
           }
           case DOCKING:
           {
-            if (!DockingController::IsBusy()) {
-
-              //DockingController::TrackCamWithLift(false);
-
+            if (!DockingController::IsBusy())
+            {
               if (DockingController::DidLastDockSucceed())
               {
                 // Docking is complete
@@ -548,6 +547,7 @@ namespace Anki {
               }
               case DA_ROLL_LOW:
               case DA_DEEP_ROLL_LOW:
+              case DA_POST_DOCK_ROLL:
               {
                 ProxSensors::EnableCliffDetector(false);
                 IMUFilter::EnablePickupDetect(false);
@@ -669,6 +669,7 @@ namespace Anki {
 
                 case DA_DEEP_ROLL_LOW:
                 case DA_ROLL_LOW:
+                case DA_POST_DOCK_ROLL:
                 {
                   LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 

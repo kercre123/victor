@@ -405,6 +405,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
     action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
+    action->EnableRollWithoutDock(msg.rollWithoutDocking);
     return action;
   }
 }

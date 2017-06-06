@@ -445,7 +445,7 @@ public class MockRobot : IRobot {
     return 0;
   }
 
-  public void RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, bool rollWithoutDocking = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     // Rather than figure out what side the cube was on, assume it just goes upright
     Rotation = selectedObject.Rotation.zRotation();
@@ -939,9 +939,9 @@ public class MockRobot : IRobot {
     set;
   }
 
-  public int BodyHWVersion { 
+  public int BodyHWVersion {
     get;
-    set; 
+    set;
   }
 
   private ObservableObject _CarryingObject;

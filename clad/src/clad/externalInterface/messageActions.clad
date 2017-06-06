@@ -262,6 +262,7 @@ message RollObject {
   bool usePreDockPose,
   bool useManualSpeed,
   bool checkForObjectOnTop = 1, // fail if object on top
+  bool rollWithoutDocking = 0
 }
 
 // SayText

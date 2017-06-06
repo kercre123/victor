@@ -1626,7 +1626,7 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void RollObject(ObservableObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, bool rollWithoutDocking = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Roll Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + usePreDockPose);
 
@@ -1638,7 +1638,8 @@ public class Robot : IRobot {
       useApproachAngle: false,
       usePreDockPose: usePreDockPose,
       useManualSpeed: useManualSpeed,
-      checkForObjectOnTop: checkForObjectOnTop
+      checkForObjectOnTop: checkForObjectOnTop,
+      rollWithoutDocking: rollWithoutDocking
     ),
       callback,
       queueActionPosition);
@@ -1932,10 +1933,10 @@ public class Robot : IRobot {
 
   public void SetEnableFreeplayActivity(bool enable) {
     if (enable) {
-        ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
+      ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
     }
     else {
-        ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+      ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
       ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
     }
   }
