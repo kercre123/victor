@@ -186,7 +186,7 @@ namespace {
 #endif
 
 namespace {
-  CONSOLE_VAR(bool, kUseNeedManager, "Needs", false);
+  CONSOLE_VAR(bool, kUseNeedManager, "Needs", true);
 };
 
 NeedsManager::NeedsManager(const CozmoContext* cozmoContext)

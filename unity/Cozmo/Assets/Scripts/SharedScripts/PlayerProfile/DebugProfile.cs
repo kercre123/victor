@@ -23,6 +23,7 @@ namespace DataPersistence {
       FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
+      UseNeedsHub = true;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);

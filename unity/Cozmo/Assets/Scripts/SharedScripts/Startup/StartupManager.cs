@@ -129,18 +129,12 @@ public class StartupManager : MonoBehaviour {
     Localization.LoadLocaleAndCultureInfo(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage,
                                           DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSettingOverride);
 
-    // COZMO-10921: Right now we hardcode/force the app to be in "HomeHub" mode for safety. 
-    // Need to remove flag before shipping so that consumers can see it.
-#if SHIPPING
-    _MainSceneData = _HomeHubData;
-#else
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseNeedsHub) {
       _MainSceneData = _NeedsHubData;
     }
     else {
       _MainSceneData = _HomeHubData;
     }
-#endif
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;

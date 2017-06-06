@@ -33,7 +33,7 @@ static const char* kDefaultUnlockIdsConfigKey = "defaultUnlocks";
 static const char* kFreeplayOverridesKey = "freeplayOverrides";
 
 CONSOLE_VAR(u32, kNumAttemptsToWrite, "ProgressionUnlockComponent", 5);
-CONSOLE_VAR(bool, kUseNeedsDefaultUnlocks, "Needs", false);
+CONSOLE_VAR(bool, kUseNeedsDefaultUnlocks, "Needs", true);
 
 ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
   : _robot(robot)
