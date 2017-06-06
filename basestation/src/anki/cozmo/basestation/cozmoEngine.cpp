@@ -126,6 +126,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartEngine>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestLocale>();
 
   _debugConsoleManager.Init(_context->GetExternalInterface());
   _dasToSdkHandler.Init(_context->GetExternalInterface());
@@ -726,6 +727,28 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg
     auto audioCtrl = static_cast<Audio::CozmoAudioController*>( audioMux->GetAudioController() );
     audioCtrl->AppIsInFocus(!_isGamePaused);
   }
+}
+  
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::RequestLocale& msg)
+{
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::ResponseLocale>(
+                                                    _context->GetLocale()->GetLocaleStringLowerCase());
+}
+  
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::RequestDataCollectionOption& msg)
+{
+#if USE_DAS
+  if( msg.CollectionEnabled )
+  {
+    DASEnableNetwork(DASDisableNetworkReason_UserOptOut);
+  }
+  else
+  {
+    DASDisableNetwork(DASDisableNetworkReason_UserOptOut);
+  }
+#endif
 }
 
 void CozmoEngine::ExecuteBackgroundTransfers()

@@ -29,6 +29,16 @@ namespace Cozmo.ConnectionFlow.UI {
       _MetersWidget.OnPlayPressed += HandleMeterPressed;
       _MetersWidget.OnEnergyPressed += HandleMeterPressed;
       _MetersWidget.OnRepairPressed += HandleMeterPressed;
+
+      // Request Locale gives us ability to get real platform dependent locale
+      // whereas unity just gives us the language
+      bool dataCollectionEnabled = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled;
+      if (!dataCollectionEnabled) {
+        // by default on so only needs to get set if false.
+        RobotEngineManager.Instance.Message.RequestDataCollectionOption =
+                      Singleton<Anki.Cozmo.ExternalInterface.RequestDataCollectionOption>.Instance.Initialize(dataCollectionEnabled);
+        RobotEngineManager.Instance.SendMessage();
+      }
     }
 
     protected override void CleanUp() {

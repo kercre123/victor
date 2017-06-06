@@ -53,6 +53,20 @@ public class FirstTimeConnectView : BaseView {
     InitializeTermsOfUseButton();
 
     _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
+
+    // Request Locale gives us ability to get real platform dependent locale
+    // whereas unity just gives us the language
+    bool dataCollectionEnabled = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled = true;
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ResponseLocale>(HandleLocaleResponse);
+      RobotEngineManager.Instance.Message.RequestLocale = Singleton<Anki.Cozmo.ExternalInterface.RequestLocale>.Instance;
+      RobotEngineManager.Instance.SendMessage();
+    }
+    if (!dataCollectionEnabled) {
+      // by default on so only needs to get set if false.
+      SetDataCollection(dataCollectionEnabled);
+    }
   }
 
   private void InitializePrivacyPolicyButton() {
@@ -91,7 +105,7 @@ public class FirstTimeConnectView : BaseView {
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
-
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ResponseLocale>(HandleLocaleResponse);
     DasTracker.Instance.TrackFirstTimeConnectEnded();
   }
 
@@ -190,5 +204,24 @@ public class FirstTimeConnectView : BaseView {
     if (ConnectionFlowQuit != null) {
       ConnectionFlowQuit();
     }
+  }
+
+  public void HandleLocaleResponse(Anki.Cozmo.ExternalInterface.ResponseLocale message) {
+    string[] splitString = message.locale.Split(new char[] { '-', '_' });
+    // Only german displays the option to opt out.
+    if (splitString.Length >= 2) {
+      if (splitString[1].ToLower().Equals("de")) {
+        // TODO:FRG enable prefab showing a checkbox option, mockups COZMO-10495
+        // Should hook into below SetDataCollection
+        //SetDataCollection(false);
+      }
+    }
+  }
+
+  private void SetDataCollection(bool val) {
+    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled = val;
+    RobotEngineManager.Instance.Message.RequestDataCollectionOption =
+                      Singleton<Anki.Cozmo.ExternalInterface.RequestDataCollectionOption>.Instance.Initialize(val);
+    RobotEngineManager.Instance.SendMessage();
   }
 }

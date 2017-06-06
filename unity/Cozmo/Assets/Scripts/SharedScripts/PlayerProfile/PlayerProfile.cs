@@ -5,6 +5,8 @@ namespace DataPersistence {
   public class PlayerProfile {
     public bool FirstTimeUserFlow;
 
+    public bool DataCollectionEnabled;
+
     public bool ProfileCreated;
 
     public string ProfileName;
@@ -54,6 +56,7 @@ namespace DataPersistence {
 
     public PlayerProfile() {
       FirstTimeUserFlow = true;
+      DataCollectionEnabled = true;
       ProfileCreated = false;
       FirstTimeFaceEnrollmentHowToPlay = true;
       CompletedScriptedSequences = new Dictionary<string, bool>();

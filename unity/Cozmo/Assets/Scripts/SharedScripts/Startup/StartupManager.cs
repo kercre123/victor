@@ -247,7 +247,14 @@ public class StartupManager : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       yield return CheckForEngineConnection();
-      SetupEngine(localeVariant);
+      // Locale used to load asset bundles might just be debug version.
+      // Trust engine platform dependent version when not debugging.
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage) {
+        SetupEngine(localeVariant);
+      }
+      else {
+        SetupEngine(string.Empty);
+      }
     }
 
     // As soon as we're done connecting to the engine, start up some music
