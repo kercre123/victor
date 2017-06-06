@@ -19,8 +19,8 @@ namespace TMPro.EditorUtilities
         /// </summary>
         public static void LoadTextMeshProResources()
         {
-            //TMP_Settings.LoadDefaultSettings();
-            //TMP_StyleSheet.LoadDefaultStyleSheet();
+            TMP_Settings.LoadDefaultSettings();
+            TMP_StyleSheet.LoadDefaultStyleSheet();
         }
 
 
@@ -28,10 +28,6 @@ namespace TMPro.EditorUtilities
         {
             //Debug.Log("Loading TMP Resources...");
 
-            // Get current targetted platform
-
-
-            //string Settings = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
             //TMPro.TMP_Settings.LoadDefaultSettings();
             //TMPro.TMP_StyleSheet.LoadDefaultStyleSheet();
         }
@@ -55,19 +51,4 @@ namespace TMPro.EditorUtilities
         //}
 
     }
-
-    //static class TMP_ProjectSettings
-    //{
-    //    [InitializeOnLoadMethod]
-    //    static void SetProjectDefineSymbols()
-    //    {
-    //        string currentBuildSettings = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-
-    //        //Check for and inject TMP_INSTALLED
-    //        if (!currentBuildSettings.Contains("TMP_PRESENT"))
-    //        {
-    //            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, currentBuildSettings + ";TMP_PRESENT");
-    //        }
-    //    }
-    //}
 }

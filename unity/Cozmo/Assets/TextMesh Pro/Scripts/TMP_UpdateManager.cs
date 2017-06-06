@@ -44,8 +44,7 @@ namespace TMPro
         /// </summary>
         protected TMP_UpdateManager()
         {
-            //Camera.onPreRender += new Camera.CameraCallback(this.OnCameraPreRender);
-            Camera.onPreCull += new Camera.CameraCallback(this.OnCameraPreRender); // Temporary until onPreRender fix is available.
+            Camera.onPreRender += new Camera.CameraCallback(this.OnCameraPreRender);
         }
 
 

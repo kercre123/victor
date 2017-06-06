@@ -300,7 +300,6 @@ MonoBehaviour:
     unicode: 9785
     pivot: {x: .5, y: .5}
     sprite: {fileID: 0}
-  fallbackSpriteAssets: []
 --- !u!21 &1369835458
 Material:
   serializedVersion: 6

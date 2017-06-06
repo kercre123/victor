@@ -14,7 +14,6 @@ namespace TMPro
         public byte italic;
         public byte underline;
         public byte strikethrough;
-        public byte highlight;
         public byte superscript;
         public byte subscript;
         public byte uppercase;
@@ -30,7 +29,6 @@ namespace TMPro
             italic = 0;
             underline = 0;
             strikethrough = 0;
-            highlight = 0;
             superscript = 0;
             subscript = 0;
             uppercase = 0;
@@ -48,21 +46,18 @@ namespace TMPro
                 case FontStyles.Italic:
                     italic += 1;
                     return italic;
-                case FontStyles.Underline:
-                    underline += 1;
-                    return underline;
                 case FontStyles.Strikethrough:
                     strikethrough += 1;
                     return strikethrough;
+                case FontStyles.Underline:
+                    underline += 1;
+                    return underline;
                 case FontStyles.Superscript:
                     superscript += 1;
                     return superscript;
                 case FontStyles.Subscript:
                     subscript += 1;
                     return subscript;
-                case FontStyles.Highlight:
-                    highlight += 1;
-                    return highlight;
             }
 
             return 0;
@@ -84,24 +79,18 @@ namespace TMPro
                     else
                         italic = 0;
                     return italic;
-                case FontStyles.Underline:
-                    if (underline > 1)
-                        underline -= 1;
-                    else
-                        underline = 0;
-                    return underline;
                 case FontStyles.Strikethrough:
                     if (strikethrough > 1)
                         strikethrough -= 1;
                     else
                         strikethrough = 0;
                     return strikethrough;
-                case FontStyles.Highlight:
-                    if (highlight > 1)
-                        highlight -= 1;
+                case FontStyles.Underline:
+                    if (underline > 1)
+                        underline -= 1;
                     else
-                        highlight = 0;
-                    return highlight;
+                        underline = 0;
+                    return underline;
                 case FontStyles.Superscript:
                     if (superscript > 1)
                         superscript -= 1;

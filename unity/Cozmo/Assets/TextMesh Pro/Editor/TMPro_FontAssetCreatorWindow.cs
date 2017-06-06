@@ -135,6 +135,32 @@ namespace TMPro.EditorUtilities
             // Initialize & Get shader property IDs.
             ShaderUtilities.GetShaderPropertyIDs();
 
+            // Locate the plugin files & move them to root of project if that hasn't already been done.
+#if !UNITY_5
+            // Find to location of the TextMesh Pro Asset Folder (as users may have moved it)
+            string tmproAssetFolderPath = TMPro_EditorUtility.GetAssetLocation();
+
+            string projectPath = Path.GetFullPath("Assets/..");
+
+            if (System.IO.File.Exists(projectPath + "/TMPro_Plugin.dll") == false)
+            {
+                FileUtil.ReplaceFile(tmproAssetFolderPath + "/Plugins/TMPro_Plugin.dll", projectPath + "/TMPro_Plugin.dll"); // Copy the .dll
+                FileUtil.ReplaceFile(tmproAssetFolderPath + "/Plugins/TMPro_Plugin.dylib", projectPath + "/TMPro_Plugin.dylib"); // Copy Mac .dylib
+                FileUtil.ReplaceFile(tmproAssetFolderPath + "/Plugins/vcomp120.dll", projectPath + "/vcomp120.dll"); // Copy OpemMP .dll
+            } 
+            else // Check if we are using the latest versions
+            {
+                if (System.IO.File.GetLastWriteTime(tmproAssetFolderPath + "/Plugins/TMPro_Plugin.dylib") > System.IO.File.GetLastWriteTime(projectPath + "/TMPro_Plugin.dylib"))
+                    FileUtil.ReplaceFile(tmproAssetFolderPath + "/Plugins/TMPro_Plugin.dylib", projectPath + "/TMPro_Plugin.dylib");
+
+                if (System.IO.File.GetLastWriteTime(tmproAssetFolderPath + "/Plugins/TMPro_Plugin.dll") > System.IO.File.GetLastWriteTime(projectPath + "/TMPro_Plugin.dll"))
+                    FileUtil.ReplaceFile(tmproAssetFolderPath + "/Plugins/TMPro_Plugin.dll", projectPath + "/TMPro_Plugin.dll");
+
+                if (System.IO.File.GetLastWriteTime(tmproAssetFolderPath + "/Plugins/vcomp120.dll") > System.IO.File.GetLastWriteTime(projectPath + "/vcomp120.dll"))
+                    FileUtil.ReplaceFile(tmproAssetFolderPath + "/Plugins/vcomp120.dll", projectPath + "/vcomp120.dll");
+            }
+#endif
+
             // Add Event Listener related to Distance Field Atlas Creation.
             TMPro_EventManager.COMPUTE_DT_EVENT.Add(ON_COMPUTE_DT_EVENT);
 
@@ -1083,7 +1109,14 @@ namespace TMPro.EditorUtilities
                 AssetDatabase.AddObjectToAsset(m_font_Atlas, font_asset);
 
                 // Create new Material and Add it as Sub-Asset
-                Shader default_Shader = Shader.Find("TextMeshPro/Distance Field"); //m_shaderSelection;
+
+                Shader default_Shader;
+                #if UNITY_IOS || UNITY_ANDROID
+                default_Shader = Shader.Find("TextMeshPro/Mobile/Distance Field");
+                #else
+                default_Shader = Shader.Find("TextMeshPro/Distance Field");
+                #endif
+                
                 Material tmp_material = new Material(default_Shader);
 
                 tmp_material.name = tex_FileName + " Material";

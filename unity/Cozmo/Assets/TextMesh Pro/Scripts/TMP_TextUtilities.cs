@@ -1307,41 +1307,6 @@ namespace TMPro
 
 
         /// <summary>
-        /// Function returning the line intersecting the position.
-        /// </summary>
-        /// <param name="textComponent"></param>
-        /// <param name="position"></param>
-        /// <param name="camera"></param>
-        /// <returns></returns>
-        public static int FindIntersectingLine(TMP_Text text, Vector3 position, Camera camera)
-        {
-            RectTransform rectTransform = text.rectTransform;
-
-            int closest = -1;
-
-            // Convert position into Worldspace coordinates
-            ScreenPointToWorldPointInRectangle(rectTransform, position, camera, out position);
-
-            for (int i = 0; i < text.textInfo.lineCount; i++)
-            {
-                TMP_LineInfo lineInfo = text.textInfo.lineInfo[i];
-
-                float ascender = rectTransform.TransformPoint(new Vector3(0, lineInfo.ascender, 0)).y;
-                float descender = rectTransform.TransformPoint(new Vector3(0, lineInfo.descender, 0)).y;
-
-                if (ascender > position.y && descender < position.y)
-                {
-                    //Debug.Log("Position is on line " + i);
-                    return i;
-                }
-            }
-
-            //Debug.Log("Closest line to position is " + closest);
-            return closest;
-        }
-
-
-        /// <summary>
         /// Function returning the index of the Link at the given position (if any).
         /// </summary>
         /// <param name="text">A reference to the TMP_Text component.</param>
@@ -2179,9 +2144,6 @@ namespace TMPro
         /// </summary>
         public static char ToLowerFast(char c)
         {
-            if (c > k_lookupStringL.Length - 1)
-                return c;
-
             return k_lookupStringL[c];
         }
 
@@ -2190,9 +2152,6 @@ namespace TMPro
         /// </summary>
         public static char ToUpperFast(char c)
         {
-            if (c > k_lookupStringU.Length - 1)
-                return c;
-
             return k_lookupStringU[c];
         }
 

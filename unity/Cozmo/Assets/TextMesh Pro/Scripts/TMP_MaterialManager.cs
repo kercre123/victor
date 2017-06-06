@@ -290,8 +290,13 @@ namespace TMPro
             obj.GetComponentsInParent<Mask>(false, maskComponents);
             for (int i = 0; i < maskComponents.Count; i++)
             {
+#if UNITY_5_2 || UNITY_5_3_OR_NEWER
                 if (maskComponents[i].IsActive())
                     count += 1;
+#else
+                if (maskComponents[i].MaskEnabled())
+                    count += 1;
+#endif
             }
 
             TMP_ListPool<Mask>.Release(maskComponents);
@@ -343,6 +348,11 @@ namespace TMPro
             fallback.fallbackID = key;
             fallback.fallbackMaterial = fallbackMaterial;
             fallback.count = 0;
+
+            #if UNITY_5_0 || UNITY_5_1
+            // Have to manually copy shader keywords in Unity 5.0 and 5.1
+            fallbackMaterial.shaderKeywords = sourceMaterial.shaderKeywords;
+            #endif
 
             m_fallbackMaterials.Add(key, fallback);
             m_fallbackMaterialLookup.Add(fallbackMaterial.GetInstanceID(), key);

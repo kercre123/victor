@@ -225,7 +225,6 @@ namespace TMPro
         public static TMP_FontAsset SearchForGlyph (TMP_FontAsset font, int character, out TMP_Glyph glyph)
         {
             glyph = null;
-
             if (font == null) return null;
 
             if (font.characterDictionary.TryGetValue(character, out glyph))
@@ -236,10 +235,6 @@ namespace TMPro
             {
                 for (int i = 0; i < font.fallbackFontAssets.Count && glyph == null; i++)
                 {
-                    // Skip over the fallback font asset in the event it is null or itself.
-                    if (font.fallbackFontAssets[i] == null || font.fallbackFontAssets[i].GetInstanceID() == font.GetInstanceID())
-                        continue;
-
                     TMP_FontAsset temp = SearchForGlyph(font.fallbackFontAssets[i], character, out glyph);
 
                     if (temp != null)

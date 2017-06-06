@@ -94,8 +94,8 @@ GameObject:
   m_Component:
   - 224: {fileID: 347737872}
   - 33: {fileID: 347737870}
-  - 23: {fileID: 347737871}
   - 114: {fileID: 347737869}
+  - 23: {fileID: 347737871}
   - 222: {fileID: 347737874}
   m_Layer: 0
   m_Name: TextMesh Pro - Styles
@@ -124,9 +124,9 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '<u>9x<sup><#00ff00>3</color></sup></u> + <u>4x</u><sup><#00ff00>2</color></sup>
-    + <u>2x + 4 = 0</u>
+    + <u>2x + 4 = 0
 
-    <#ffff00><u><i><#ff8000><b>Propane</b></i></u></color> = <u>C<sub><#ffff00>3</color></sub>H<sub><#ffff00>8</color></sub></u>'
+    <#ffff00><u><i><#ff8000><b>Propane</b></i></u></color> = C<sub><#ffff00>3</color></sub>H<sub><#ffff00>8</color></sub>'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 715b80e429c437e40867928a4e1fc975, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 33db60c37b63f08448ded4b385e74e38, type: 2}
@@ -219,6 +219,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   m_maskType: 0
+  m_lineLength: 0
+  m_anchor: 0
 --- !u!33 &347737870
 MeshFilter:
   m_ObjectHideFlags: 2
@@ -244,7 +246,9 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_ScaleInLightmap: 1
   m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
+  m_MinimumChartSize: 4
   m_AutoUVMaxDistance: .5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}

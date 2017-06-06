@@ -1,7 +1,7 @@
 ﻿// Copyright (C) 2014 - 2016 Stephan Bouchard - All Rights Reserved
 // This code can only be used under the standard Unity Asset Store End User License Agreement
 // A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
-// Release 1.0.55.52.0b9
+// Release 1.0.55.52.0b5
 
 
 using UnityEngine;
@@ -236,16 +236,14 @@ namespace TMPro
             get { return m_fontColor; }
             set { if (m_fontColor == value) return; m_havePropertiesChanged = true; m_fontColor = value; SetVerticesDirty(); }
         }
-        //[UnityEngine.Serialization.FormerlySerializedAs("m_fontColor")] // Required for backwards compatibility with pre-Unity 4.6 releases.
+        [UnityEngine.Serialization.FormerlySerializedAs("m_fontColor")] // Required for backwards compatibility with pre-Unity 4.6 releases.
         [SerializeField]
         protected Color32 m_fontColor32 = Color.white;
         [SerializeField]
         protected Color m_fontColor = Color.white;
         protected static Color32 s_colorWhite = new Color32(255, 255, 255, 255);
-        protected Color32 m_underlineColor = s_colorWhite;
-        protected Color32 m_strikethroughColor = s_colorWhite;
         protected Color32 m_highlightColor = s_colorWhite;
-        
+
 
         /// <summary>
         /// Sets the vertex color alpha value.
@@ -1377,8 +1375,6 @@ namespace TMPro
         // Fields used for vertex colors
         protected Color32 m_htmlColor = new Color(255, 255, 255, 128);
         protected TMP_XmlTagStack<Color32> m_colorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
-        protected TMP_XmlTagStack<Color32> m_underlineColorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
-        protected TMP_XmlTagStack<Color32> m_strikethroughColorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
         protected TMP_XmlTagStack<Color32> m_highlightColorStack = new TMP_XmlTagStack<Color32>(new Color32[16]);
 
         protected float m_tabSpacing = 0;
@@ -1726,10 +1722,6 @@ namespace TMPro
         /// <param name="text"></param>
         public void SetText(string text, bool syncTextInputBox)
         {
-            if (text == old_text) return;
-
-            old_text = text;
-
             m_inputSource = TextInputSources.SetCharArray;
 
             StringToCharArray(text, ref m_char_buffer);
@@ -2223,7 +2215,7 @@ namespace TMPro
                 }
 
                 //// Handle inline replacement of <stlye> and <br> tags.
-                if (sourceText[i] == 60 && m_isRichText)
+                if (sourceText[i] == 60)
                 {
                     if (IsTagName(ref sourceText, "<BR>", i))
                     {
@@ -2406,20 +2398,19 @@ namespace TMPro
 
             m_styleStack.Add(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - srcOffset;
+            int length = style.styleOpeningTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] openingTagArray = style.styleOpeningTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = openingTagArray[i];
 
@@ -2481,20 +2472,19 @@ namespace TMPro
 
             m_styleStack.Add(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - srcOffset;
+            int length = style.styleOpeningTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] openingTagArray = style.styleOpeningTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = openingTagArray[i];
 
@@ -2556,20 +2546,19 @@ namespace TMPro
 
             m_styleStack.Add(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - srcOffset;
+            int length = style.styleOpeningTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] openingTagArray = style.styleOpeningTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = openingTagArray[i];
 
@@ -2630,20 +2619,19 @@ namespace TMPro
 
             m_styleStack.Add(style.hashCode);
 
-            int styleLength = style.styleOpeningTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - srcOffset;
+            int length = style.styleOpeningTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] openingTagArray = style.styleOpeningTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = openingTagArray[i];
 
@@ -2703,20 +2691,19 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null) return false;
 
-            int styleLength = style.styleClosingTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - 8; // Minus 8 for </style>
+            int length = style.styleClosingTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] closingTagArray = style.styleClosingTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = closingTagArray[i];
 
@@ -2776,20 +2763,19 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null) return false;
 
-            int styleLength = style.styleClosingTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - 8; // Minus 8 for </style>
+            int length = style.styleClosingTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] closingTagArray = style.styleClosingTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = closingTagArray[i];
 
@@ -2849,20 +2835,19 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null) return false;
 
-            int styleLength = style.styleClosingTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - 8; // Minus 8 for </style>
+            int length = style.styleClosingTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] closingTagArray = style.styleClosingTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = closingTagArray[i];
 
@@ -2921,20 +2906,19 @@ namespace TMPro
             // Return if we don't have a valid style.
             if (style == null) return false;
 
-            int styleLength = style.styleClosingTagArray.Length;
-            int totalLength = srcIndex + styleLength + sourceText.Length - 8; // Minus 8 for </style>
+            int length = style.styleClosingTagArray.Length;
 
             // Make sure chars array can hold tag definition
-            if (totalLength > charBuffer.Length)
+            if (writeIndex + length >= charBuffer.Length - 1)
             {
-                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(totalLength + 1);
+                int newSize = charBuffer.Length > 1024 ? charBuffer.Length + 256 : Mathf.NextPowerOfTwo(writeIndex + length + 2);
                 Array.Resize(ref charBuffer, newSize);
             }
 
             // Replace <style> tag with opening definition
             int[] closingTagArray = style.styleClosingTagArray;
 
-            for (int i = 0; i < styleLength; i++)
+            for (int i = 0; i < length; i++)
             {
                 int c = closingTagArray[i];
 
@@ -3497,7 +3481,7 @@ namespace TMPro
 
             ////Profiler.BeginSample("TMP Generate Text - Phase I");
 
-            // Early exit if no font asset was assigned. This should not be needed since LiberationSans SDF will be assigned by default.
+            // Early exit if no font asset was assigned. This should not be needed since NotoSans SDF will be assigned by default.
             if (m_fontAsset == null || m_fontAsset.characterDictionary == null)
             {
                 Debug.LogWarning("Can't Generate Mesh! No Font Asset has been assigned to Object ID: " + this.GetInstanceID());
@@ -3540,14 +3524,12 @@ namespace TMPro
 
             m_style = m_fontStyle; // Set the default style.
 
-            m_lineJustification = m_textAlignment; // Sets the line justification mode to match editor alignment.
-            m_lineJustificationStack.SetDefault(m_lineJustification);
-
             float bold_xAdvance_multiplier = 1; // Used to increase spacing between character when style is bold.
 
             m_baselineOffset = 0; // Used by subscript characters.
 
-            //m_styleStack.Clear();
+
+            m_styleStack.Clear();
 
             m_lineOffset = 0; // Amount of space between lines (font line spacing + m_linespacing).
             m_lineHeight = TMP_Math.FLOAT_UNSET;
@@ -3607,7 +3589,7 @@ namespace TMPro
             for (int i = 0; m_char_buffer[i] != 0; i++)
             {
                 charCode = m_char_buffer[i];
-                m_textElementType = m_textInfo.characterInfo[m_characterCount].elementType;
+                m_textElementType = TMP_TextElementType.Character;
 
                 m_currentMaterialIndex = m_textInfo.characterInfo[m_characterCount].materialReferenceIndex;
                 m_currentFontAsset = m_materialReferences[m_currentMaterialIndex].fontAsset;
@@ -3619,7 +3601,6 @@ namespace TMPro
                 if (m_isRichText && charCode == 60)  // '<'
                 {
                     m_isParsingText = true;
-                    m_textElementType = TMP_TextElementType.Character;
 
                     // Check if Tag is valid. If valid, skip to the end of the validated tag.
                     if (ValidateHtmlTag(m_char_buffer, i + 1, out endTagIndex))
@@ -3673,16 +3654,11 @@ namespace TMPro
                 #region Look up Character Data
                 if (m_textElementType == TMP_TextElementType.Sprite)
                 {
-                    // If a sprite is used as a fallback then get a reference to it and set the color to white.
-                    m_currentSpriteAsset = m_textInfo.characterInfo[m_characterCount].spriteAsset;
-                    m_spriteIndex = m_textInfo.characterInfo[m_characterCount].spriteIndex;
-
                     TMP_Sprite sprite = m_currentSpriteAsset.spriteInfoList[m_spriteIndex];
                     if (sprite == null) continue;
 
                     // Sprites are assigned in the E000 Private Area + sprite Index
-                    if (charCode == 60)
-                        charCode = 57344 + m_spriteIndex;
+                    charCode = 57344 + m_spriteIndex;
 
                     m_currentFontAsset = m_fontAsset;
 
@@ -3815,12 +3791,10 @@ namespace TMPro
                     #region Handle Line Breaking, Text Auto-Sizing and Horizontal Overflow
                     float width = m_width != -1 ? Mathf.Min(marginWidth + 0.0001f - m_marginLeft - m_marginRight, m_width) : marginWidth + 0.0001f - m_marginLeft - m_marginRight;
 
-                    bool isJustifiedOrFlush = ((_HorizontalAlignmentOptions)m_lineJustification & _HorizontalAlignmentOptions.Flush) == _HorizontalAlignmentOptions.Flush || ((_HorizontalAlignmentOptions)m_lineJustification & _HorizontalAlignmentOptions.Justified) == _HorizontalAlignmentOptions.Justified;
-
                     // Calculate the line breaking width of the text.
                     linebreakingWidth = m_xAdvance + m_cached_TextElement.xAdvance * (charCode != 0xAD ? currentElementScale : old_scale);
 
-                    if (linebreakingWidth > width * (isJustifiedOrFlush ? 1.05f : 1.0f))
+                    if (linebreakingWidth > width)
                     {
                         // Word Wrapping
                         #region Handle Word Wrapping
@@ -4439,16 +4413,11 @@ namespace TMPro
 
             //state.alignment = m_lineJustification;
             state.vertexColor = m_htmlColor;
-            state.underlineColor = m_underlineColor;
-            state.strikethroughColor = m_strikethroughColor;
-            state.highlightColor = m_highlightColor;
             state.tagNoParsing = tag_NoParsing;
 
             // XML Tag Stack
             state.basicStyleStack = m_fontStyleStack;
             state.colorStack = m_colorStack;
-            state.underlineColorStack = m_underlineColorStack;
-            state.strikethroughColorStack = m_strikethroughColorStack;
             state.highlightColorStack = m_highlightColorStack;
             state.sizeStack = m_sizeStack;
             state.indentStack = m_indentStack;
@@ -4514,16 +4483,11 @@ namespace TMPro
 
             //m_lineJustification = state.alignment;
             m_htmlColor = state.vertexColor;
-            m_underlineColor = state.underlineColor;
-            m_strikethroughColor = state.strikethroughColor;
-            m_highlightColor = state.highlightColor;
             tag_NoParsing = state.tagNoParsing;
 
             // XML Tag Stack
             m_fontStyleStack = state.basicStyleStack;
             m_colorStack = state.colorStack;
-            m_underlineColorStack = state.underlineColorStack;
-            m_strikethroughColorStack = state.strikethroughColorStack;
             m_highlightColorStack = state.highlightColorStack;
             m_sizeStack = state.sizeStack;
             m_indentStack = state.indentStack;
@@ -5176,8 +5140,6 @@ namespace TMPro
                     autoSizeTextContainer = true;
                 else
                 {
-                    m_rectTransform = this.rectTransform;
-
                     if (GetType() == typeof(TextMeshPro))
                         m_rectTransform.sizeDelta = TMP_Settings.defaultTextMeshProTextContainerSize;
                     else
@@ -5974,14 +5936,6 @@ namespace TMPro
                     case 83: // <S>
                         m_style |= FontStyles.Strikethrough;
                         m_fontStyleStack.Add(FontStyles.Strikethrough);
-
-                        if (m_xmlAttribute[1].nameHashCode == 281955 || m_xmlAttribute[1].nameHashCode == 192323)
-                            m_strikethroughColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
-                        else
-                            m_strikethroughColor = m_htmlColor;
-
-                        m_strikethroughColorStack.Add(m_strikethroughColor);
-
                         return true;
                     case 444: // </s>
                     case 412: // </S>
@@ -5995,21 +5949,11 @@ namespace TMPro
                     case 85: // <U>
                         m_style |= FontStyles.Underline;
                         m_fontStyleStack.Add(FontStyles.Underline);
-
-                        if (m_xmlAttribute[1].nameHashCode == 281955 || m_xmlAttribute[1].nameHashCode == 192323)
-                            m_underlineColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[1].valueStartIndex, m_xmlAttribute[1].valueLength);
-                        else
-                            m_underlineColor = m_htmlColor;
-
-                        m_underlineColorStack.Add(m_underlineColor);
-
                         return true;
                     case 446: // </u>
                     case 414: // </U>
                         if ((m_fontStyle & FontStyles.Underline) != FontStyles.Underline)
                         {
-                            m_underlineColor = m_underlineColorStack.Remove();
-
                             if (m_fontStyleStack.Remove(FontStyles.Underline) == 0)
                                 m_style &= ~FontStyles.Underline;
                         }
@@ -6017,8 +5961,6 @@ namespace TMPro
                     case 43045: // <mark=#FF00FF80>
                     case 30245: // <MARK>
                         m_style |= FontStyles.Highlight;
-                        m_fontStyleStack.Add(FontStyles.Highlight);
-
                         m_highlightColor = HexCharsToColor(m_htmlTag, m_xmlAttribute[0].valueStartIndex, m_xmlAttribute[0].valueLength);
                         m_highlightColorStack.Add(m_highlightColor);
                         return true;
@@ -6028,7 +5970,7 @@ namespace TMPro
                         {
                             m_highlightColor = m_highlightColorStack.Remove();
 
-                            if (m_fontStyleStack.Remove(FontStyles.Highlight) == 0)
+                            if (m_highlightColorStack.index == 1)
                                 m_style &= ~FontStyles.Highlight;
                         }
                         return true;

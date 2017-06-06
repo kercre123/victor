@@ -33,13 +33,6 @@ namespace TMPro.EditorUtilities
             // Get a reference to the sprite texture
             Texture tex = (property.serializedObject.targetObject as TMP_SpriteAsset).spriteSheet;
 
-            // Return if we don't have a texture assigned to the sprite asset.
-            if (tex == null)
-            {
-                Debug.LogWarning("Please assign a valid Sprite Atlas texture to the [" + property.serializedObject.targetObject.name + "] Sprite Asset.", property.serializedObject.targetObject);
-                return;
-            }
-
             Vector2 spriteSize = new Vector2(65, 65);
             if (prop_width.floatValue >= prop_height.floatValue)
             {

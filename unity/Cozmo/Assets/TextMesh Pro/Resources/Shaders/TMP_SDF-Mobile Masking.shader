@@ -1,3 +1,9 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Copyright (C) 2014 - 2016 Stephan Schaem - All Rights Reserved
+// This code can only be used under the standard Unity Asset Store End User License Agreement
+// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
+
 // Simplified SDF shader:
 // - No Shading Option (bevel / bump / env map)
 // - No Glow Option
@@ -212,18 +218,32 @@ SubShader {
 			c += float4(_UnderlayColor.rgb * _UnderlayColor.a, _UnderlayColor.a) * (1 - saturate(d - input.underlayParam.y)) * sd * (1 - c.a);
 		#endif
 
-		// Alternative implementation to UnityGet2DClipping with support for softness.
-		half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
-		c *= m.x * m.y;
+		#if UNITY_VERSION < 530
+			// Unity 5.2 2D Rect Mask Support
+			if (_UseClipRect)
+			{
+				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
+				c *= m.x * m.y;
 
-		//#if ALPHA_MASK_ON
-		float a = abs(_MaskInverse - tex2D(_MaskTex, input.texcoord0.zw).a);
-		float t = a + (1 - _MaskWipeControl) * _MaskEdgeSoftness - _MaskWipeControl;
-		a = saturate(t / _MaskEdgeSoftness);
-		c.rgb = lerp(_MaskEdgeColor.rgb*c.a, c.rgb, a);
-		c *= a;
-		//#endif
+				float a = abs(_MaskInverse - tex2D(_MaskTex, input.texcoord0.zw).a);
+				float t = a + (1 - _MaskWipeControl) * _MaskEdgeSoftness - _MaskWipeControl;
+				a = saturate(t / _MaskEdgeSoftness);
+				c.rgb = lerp(_MaskEdgeColor.rgb*c.a, c.rgb, a);
+				c *= a;
+			}
+		#else
+			// Alternative implementation to UnityGet2DClipping with support for softness.
+			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) * input.mask.zw);
+			c *= m.x * m.y;
 
+			//#if ALPHA_MASK_ON
+			float a = abs(_MaskInverse - tex2D(_MaskTex, input.texcoord0.zw).a);
+			float t = a + (1 - _MaskWipeControl) * _MaskEdgeSoftness - _MaskWipeControl;
+			a = saturate(t / _MaskEdgeSoftness);
+			c.rgb = lerp(_MaskEdgeColor.rgb*c.a, c.rgb, a);
+			c *= a;
+			//#endif
+		#endif
 
 		#if (UNDERLAY_ON | UNDERLAY_INNER)
 			c *= input.texcoord1.z;

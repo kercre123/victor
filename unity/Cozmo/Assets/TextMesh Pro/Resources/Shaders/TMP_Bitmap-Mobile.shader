@@ -1,3 +1,9 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Copyright (C) 2014 - 2016 Stephan Schaem - All Rights Reserved
+// This code can only be used under the standard Unity Asset Store End User License Agreement
+// A Copy of the EULA APPENDIX 1 is available at http://unity3d.com/company/legal/as_terms
+
 Shader "TextMeshPro/Mobile/Bitmap" {
 
 Properties {
@@ -75,6 +81,10 @@ SubShader {
 		uniform float		_MaskSoftnessX;
 		uniform float		_MaskSoftnessY;
 
+		#if UNITY_VERSION < 530
+			bool _UseClipRect;
+		#endif
+
 		v2f vert (appdata_t v)
 		{
 			v2f o;
@@ -104,9 +114,18 @@ SubShader {
 		{
 			fixed4 c = fixed4(i.color.rgb, i.color.a * tex2D(_MainTex, i.texcoord0).a);
 
-			// Alternative implementation to UnityGet2DClipping with support for softness.
-			half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(i.mask.xy)) * i.mask.zw);
-			c *= m.x * m.y;
+			#if UNITY_VERSION < 530
+				if (_UseClipRect)
+				{
+					// Alternative implementation to UnityGet2DClipping with support for softness.
+					half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(i.mask.xy)) * i.mask.zw);
+					c *= m.x * m.y;
+				}
+			#else
+				// Alternative implementation to UnityGet2DClipping with support for softness.
+				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(i.mask.xy)) * i.mask.zw);
+				c *= m.x * m.y;
+			#endif
 
 			return c;
 		}

@@ -39,7 +39,11 @@ namespace TMPro
         {
             _utilityType = Type.GetType("UnityEditorInternal.InternalEditorUtility, UnityEditor");
             _sortingLayerNamesProperty = _utilityType.GetProperty("sortingLayerNames", BindingFlags.Static | BindingFlags.NonPublic);
+#if UNITY_5
             _getSortingLayerUserIdMethod = _utilityType.GetMethod("GetSortingLayerUniqueID", BindingFlags.Static | BindingFlags.NonPublic);
+#else
+            _getSortingLayerUserIdMethod = _utilityType.GetMethod("GetSortingLayerUserID", BindingFlags.Static | BindingFlags.NonPublic);
+#endif 
         }
 
         // Gets an array of sorting layer names.
