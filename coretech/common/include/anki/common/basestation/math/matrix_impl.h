@@ -204,8 +204,7 @@ namespace Anki {
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
-    outInverse = *this;
-    outInverse.Invert();
+    cv::invert(this->get_CvMat_(), outInverse.get_CvMat_());
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free transpose?
@@ -220,8 +219,7 @@ namespace Anki {
   {
     
 #if ANKICORETECH_USE_OPENCV
-    outTranspose = *this;
-    outTranspose.Transpose();
+    cv::transpose(this->get_CvMat_(), outTranspose.get_CvMat_());
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free tranpose?

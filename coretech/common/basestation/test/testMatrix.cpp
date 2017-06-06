@@ -355,11 +355,15 @@ GTEST_TEST(TestMatrix, MatrixInverse)
   A(1,1) = 2.f;
   A(2,2) = 3.f;
   
-  Matrix<float> Ainv, I;
+  Matrix<float> A_orig, Ainv, I;
+  A.CopyTo(A_orig);
   
   A.GetInverse(Ainv);
-  I = A*Ainv;
   
+  // Verify A is left unchanged
+  ASSERT_TRUE(IsNearlyEqual(A, A_orig));
+  
+  I = A*Ainv;
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "Matrix A: \n" << A << "\n";
@@ -402,10 +406,14 @@ GTEST_TEST(TestMatrix, SmallMatrixInverse)
                        0, 0, 150};
   Matrix_3x3f A(initValsA);
   Matrix_3x3f Ainv, I;
+  const Matrix_3x3f A_orig(initValsA);
   
   A.GetInverse(Ainv);
-  I = A*Ainv;
   
+  // Verify A has not changed
+  ASSERT_TRUE(IsNearlyEqual(A, A_orig));
+  
+  I = A*Ainv;
   
 #ifdef DEBUG_TEST_MATRIX
   cout << "Matrix A: \n" << A << "\n";
@@ -457,7 +465,8 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
   A(1,0) = 4.f;    A(1,1) = 5.f;     A(1,2) = 6.f;
   A(2,0) = 7.f;    A(2,1) = 8.f;     A(2,2) = 9.f;
   
-  Matrix<float> A_t;
+  Matrix<float> A_orig, A_t;
+  A.CopyTo(A_orig);
   A.GetTranspose(A_t);
   
 #ifdef DEBUG_TEST_MATRIX
@@ -465,6 +474,9 @@ GTEST_TEST(TestMatrix, MatrixTranspose)
   cout << "Matrix A_transpose: \n" << A_t << "\n";
 #endif
 
+  // Verify A is left unchanged
+  ASSERT_TRUE(IsNearlyEqual(A_orig, A));
+  
   // Check that I is identity
   ASSERT_NEAR_EQ(A_t(0,0), 1.f); ASSERT_NEAR_EQ(A_t(0,1), 4.f); ASSERT_NEAR_EQ(A_t(0,2), 7.f);
   ASSERT_NEAR_EQ(A_t(1,0), 2.f); ASSERT_NEAR_EQ(A_t(1,1), 5.f); ASSERT_NEAR_EQ(A_t(1,2), 8.f);
@@ -524,7 +536,8 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   float initValsA[] = {1, 2, 3,
                        4, 5, 6,
                        7, 8, 9};
-  Matrix_3x3f A(initValsA);
+  const Matrix_3x3f A(initValsA);
+  const Matrix_3x3f A_orig(initValsA);
   
   Matrix_3x3f A_t;
   A.GetTranspose(A_t);
@@ -539,13 +552,15 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   ASSERT_NEAR_EQ(A_t(1,0), 2.f); ASSERT_NEAR_EQ(A_t(1,1), 5.f); ASSERT_NEAR_EQ(A_t(1,2), 8.f);
   ASSERT_NEAR_EQ(A_t(2,0), 3.f); ASSERT_NEAR_EQ(A_t(2,1), 6.f); ASSERT_NEAR_EQ(A_t(2,2), 9.f);
   
-  
+  // Check that A is left unchanged
+  ASSERT_TRUE(IsNearlyEqual(A, A_orig));
   
   // Transpose non-square matrix
   float initValsB[] = {1, 2, 3, 4,
                        5, 6, 7, 8,
                        9, 10, 11, 12};
-  Matrix_3x4f B(initValsB);
+  const Matrix_3x4f B(initValsB);
+  const Matrix_3x4f B_orig(initValsB);
   
   SmallMatrix<4,3,float> B_t;
   B.GetTranspose(B_t);
@@ -557,6 +572,9 @@ GTEST_TEST(TestMatrix, SmallMatrixTranspose)
   
   ASSERT_EQ(B_t.GetNumRows(), B.GetNumCols());
   ASSERT_EQ(B_t.GetNumCols(), B.GetNumRows());
+  
+  // Check that A is left unchanged
+  ASSERT_TRUE(IsNearlyEqual(B, B_orig));
   
   ASSERT_NEAR_EQ(B_t(0,0), 1.f); ASSERT_NEAR_EQ(B_t(0,1), 5.f); ASSERT_NEAR_EQ(B_t(0,2), 9.f);
   ASSERT_NEAR_EQ(B_t(1,0), 2.f); ASSERT_NEAR_EQ(B_t(1,1), 6.f); ASSERT_NEAR_EQ(B_t(1,2), 10.f);
