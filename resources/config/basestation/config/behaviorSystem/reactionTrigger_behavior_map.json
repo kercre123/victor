@@ -1,0 +1,207 @@
+{ "reactionTriggerBehaviorMap":
+  [
+    {
+      "reactionTrigger": "FacePositionUpdated",
+      "behaviorID": "AcknowledgeFace"
+    },
+    {
+      "reactionTrigger": "FistBump",
+      "behaviorID": "FistBump",
+      "behaviorObjectiveTriggerParams": [
+        {
+          // The behavior objective that can trigger a fist bump
+          "behaviorObjective": "StackedBlock",
+                                         
+          // Amount of time that must have passed since the last time a fist bump
+          // was completed before this trigger can cause another fist bump.
+          "triggerCooldownTime_s": 180.0,
+                                         
+          // Likelihood of the trigger causing fist bump once cooldown time has expired
+          "triggerProbability": 0.2,
+                                    
+          // If trigger is not able to start fist bump in this amount of time, it expires.
+          // It looks weird if fist bump starts too long after the event that was supposed to trigger it.
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "BuiltPyramid",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.5,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "InteractedWithFace",
+          "triggerCooldownTime_s": 300.0,
+          "triggerProbability": 0.75,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "PeekABooSuccess",
+          "triggerCooldownTime_s": 300.0,
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "PerformedStrongWorkout",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.5,
+          "triggerExpiration_s": 3.0
+        },
+        {
+          "behaviorObjective": "PoppedWheelie",
+          "triggerCooldownTime_s": 180.0,
+          "triggerProbability": 0.2,
+          "triggerExpiration_s": 6.0
+        }
+      ]
+    },
+    {
+      "reactionTrigger": "Hiccup",
+      "behaviorID": "Hiccup",
+      "hiccupParams": {
+        // How often Cozmo should get the hiccups
+        "minHiccupOccurrenceFrequency_s": 300,
+        "maxHiccupOccurrenceFrequency_s": 3300,
+   
+        // Number of hiccups Cozmo will do when he gets the hiccups
+        "minNumberOfHiccupsToDo": 5,
+        "maxNumberOfHiccupsToDo": 10,
+   
+        // Spacing between hiccups while Cozmo has the hiccups
+        "minHiccupSpacing_ms": 4500, // Make sure to consider the length of the hiccup animation
+        "maxHiccupSpacing_ms": 8000,
+   
+        // When Cozmo is cured of hiccups add additional time to the next time hiccups will occur
+        "hiccupsWontOccurAfterBeingCuredTime_s": 600,
+   
+        // The UnlockId that will unlock hiccups
+        "hiccupsUnlockId": "DroneModeGame"
+      }
+    },
+    {
+      "reactionTrigger": "ObjectPositionUpdated",
+      "behaviorID": "AcknowledgeObject"
+    },
+    {
+      "reactionTrigger": "CliffDetected",
+      "behaviorID": "ReactToCliff",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "debugStrategyName": "Trigger Strategy React To Cliff"
+      }
+    },
+    {
+      "reactionTrigger": "CubeMoved",
+      "behaviorID": "ReactToCubeMoved"
+    },
+    {
+      "reactionTrigger": "DoubleTapDetected",
+      "behaviorID": "ReactToDoubleTap",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "canInterruptOtherTriggeredBehavior": false,
+        "needsRobotPreReq": true,
+        "debugStrategyName": "Trigger Strategy Double Tap"
+      }
+    },
+    {
+      "reactionTrigger": "Frustration",
+      "behaviorID": "ReactToFrustrationMinor",
+      "frustrationParams": {
+        "maxConfidence": -0.6,
+        "cooldownTime_s": 60.0
+      } 
+    },
+    {
+      "reactionTrigger": "Frustration",
+      "behaviorID": "ReactToFrustrationMajor",
+      "frustrationParams": {
+        "maxConfidence": -0.9
+      } 
+    },
+    {
+      "reactionTrigger": "MotorCalibration",
+      "behaviorID": "ReactToMotorCalibration",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "debugStrategyName": "Trigger Strategy Motor Calibration"
+      }
+    },
+    {
+      "reactionTrigger": "NoPreDockPoses",
+      "behaviorID": "RamIntoBlock"
+    },
+    {
+      "reactionTrigger": "PlacedOnCharger",
+      "behaviorID": "ReactToOnCharger"
+    },
+    {
+      "reactionTrigger": "PetInitialDetection",
+      "behaviorID": "ReactToPet"
+    },
+    {
+      "reactionTrigger": "RobotPickedUp",
+      "behaviorID": "ReactToPickup",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Pickup"
+      }
+    },
+    {
+      "reactionTrigger": "RobotPlacedOnSlope",
+      "behaviorID": "ReactToPlacedOnSlope"
+    },
+    {
+      "reactionTrigger": "ReturnedToTreads",
+      "behaviorID": "ReactToReturnedToTreads",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Returned to Treads"
+      }
+    },
+    {
+      "reactionTrigger": "RobotOnBack",
+      "behaviorID": "ReactToRobotOnBack",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Robot On Back"
+      }
+    },
+    {
+      "reactionTrigger": "RobotOnFace",
+      "behaviorID": "ReactToRobotOnFace",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Robot On Face"
+      }
+    },
+    {
+      "reactionTrigger": "RobotOnSide",
+      "behaviorID": "ReactToRobotOnSide",
+      "genericStrategyParams": {
+        "shouldResumeLast": false,
+        "debugStrategyName": "Trigger Strategy Robot On Side"
+      }
+    },
+    {
+      "reactionTrigger": "RobotShaken",
+      "behaviorID": "ReactToRobotShaken"
+    },
+    {
+      "reactionTrigger": "Sparked",
+      "behaviorID": "ReactToSparked"
+    },
+    {
+      "reactionTrigger": "UnexpectedMovement",
+      "behaviorID": "ReactToUnexpectedMovement",
+      "genericStrategyParams": {
+        "shouldResumeLast": true,
+        "debugStrategyName": "Trigger Strategy Unexpected Movement"
+      }
+    },
+    {
+      "reactionTrigger": "VC",
+      "behaviorID": "ReactToVoiceCommand"
+    }
+  ]
+}

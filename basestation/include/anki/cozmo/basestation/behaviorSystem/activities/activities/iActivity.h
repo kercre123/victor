@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Activities_Activities_IActivity_H__
 #define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_IActivity_H__
 
-#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
+#include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/common/types.h"
 #include "clad/types/activityTypes.h"

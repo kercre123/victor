@@ -38,7 +38,6 @@ namespace Anki {
         {ReactionTrigger::ObjectPositionUpdated,        true},
         {ReactionTrigger::PlacedOnCharger,              false},
         {ReactionTrigger::PetInitialDetection,          false},
-        {ReactionTrigger::PyramidInitialDetection,      false},
         {ReactionTrigger::RobotPickedUp,                true},
         {ReactionTrigger::RobotPlacedOnSlope,           false},
         {ReactionTrigger::ReturnedToTreads,             true},
@@ -47,7 +46,6 @@ namespace Anki {
         {ReactionTrigger::RobotOnSide,                  false},
         {ReactionTrigger::RobotShaken,                  true},
         {ReactionTrigger::Sparked,                      false},
-        {ReactionTrigger::StackOfCubesInitialDetection, false},
         {ReactionTrigger::UnexpectedMovement,           false},
         {ReactionTrigger::VC,                           false}
       };

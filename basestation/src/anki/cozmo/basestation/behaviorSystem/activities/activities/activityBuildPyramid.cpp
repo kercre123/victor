@@ -15,10 +15,10 @@
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorRespondPossiblyRoll.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPyramidThankYou.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorRespondPossiblyRoll.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -91,7 +91,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectFullPyramidProcessArr
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::PyramidInitialDetection,      false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},
@@ -100,7 +99,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectFullPyramidProcessArr
   {ReactionTrigger::RobotOnSide,                  false},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
   {ReactionTrigger::UnexpectedMovement,           false},
   {ReactionTrigger::VC,                           false}
 };
@@ -124,7 +122,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectPyramidSetupArray = {
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::PyramidInitialDetection,      false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},
@@ -133,7 +130,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectPyramidSetupArray = {
   {ReactionTrigger::RobotOnSide,                  false},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
   {ReactionTrigger::UnexpectedMovement,           false},
   {ReactionTrigger::VC,                           false}
 };

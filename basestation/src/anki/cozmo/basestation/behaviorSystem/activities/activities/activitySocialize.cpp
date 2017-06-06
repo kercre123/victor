@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviors/exploration/behaviorExploreLookAroundInPlace.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/math/math.h"

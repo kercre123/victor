@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {

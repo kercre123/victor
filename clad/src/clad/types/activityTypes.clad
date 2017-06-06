@@ -52,7 +52,6 @@ enum uint_8 ActivityID {
   SparksRollBlock,
   SparksStackBlock,
   SparksWorkout,
-  VisitPossibleMarker,
   VoiceCommand
 }
 

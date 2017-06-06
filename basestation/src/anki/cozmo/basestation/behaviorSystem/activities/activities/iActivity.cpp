@@ -13,13 +13,13 @@
  **/
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 
-#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
-#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"

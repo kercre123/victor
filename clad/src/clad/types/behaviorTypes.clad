@@ -238,9 +238,7 @@ enum uint_8 BehaviorID {
   VC_ComeHere,
   VC_RequestKeepAway,
   VC_RequestMemoryMatch,
-  VC_RequestSpeedTap,
-
-  VisitPossibleMarker
+  VC_RequestSpeedTap
 }
 
 // Each of these should map to exactly 1 instance of a behavior at runtime

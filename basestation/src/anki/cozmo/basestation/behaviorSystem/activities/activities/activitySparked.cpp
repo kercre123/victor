@@ -16,9 +16,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPeekABoo.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -61,7 +61,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooser
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::PyramidInitialDetection,      false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},
@@ -70,7 +69,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersSparksChooser
   {ReactionTrigger::RobotOnSide,                  false},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
   {ReactionTrigger::UnexpectedMovement,           false},
   {ReactionTrigger::VC,                           true}
 };
@@ -93,7 +91,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimatio
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::PyramidInitialDetection,      false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},
@@ -102,7 +99,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFinalAnimatio
   {ReactionTrigger::RobotOnSide,                  false},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
   {ReactionTrigger::UnexpectedMovement,           false},
   {ReactionTrigger::VC,                           true}
 };

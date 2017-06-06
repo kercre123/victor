@@ -1,6 +1,0 @@
-{
-  // TODO(rsam) Possible Markers are not properly generated currently COZMO-1338
-  "behaviorClass": "ExploreVisitPossibleMarker",
-  "behaviorID": "VisitPossibleMarker",
-  "displayNameKey":"behavior.ExploreVisitPossibleMarker"
-}

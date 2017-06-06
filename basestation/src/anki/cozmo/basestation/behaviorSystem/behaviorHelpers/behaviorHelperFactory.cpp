@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperFactory.h"
 
-#include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/driveToHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/pickupBlockHelper.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeBlockHelper.h"

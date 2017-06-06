@@ -19,8 +19,8 @@
 
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
-#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
-#include "anki/cozmo/basestation/behaviorSystem/objectInteractionInfoCache.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"

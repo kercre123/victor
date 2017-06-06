@@ -23,10 +23,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPlacedOnCharger.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPetInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPyramidInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotShaken.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategySparked.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyStackOfCubesInitialDetection.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -137,11 +135,6 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       strategy = new ReactionTriggerStrategyRobotPlacedOnSlope(robot, config);
       break;
     }
-    case ReactionTrigger::PyramidInitialDetection:
-    {
-      strategy = new ReactionTriggerStrategyPyramidInitialDetection(robot, config);
-      break;
-    }
     case ReactionTrigger::ReturnedToTreads:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
@@ -195,11 +188,6 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::Sparked:
     {
       strategy = new ReactionTriggerStrategySparked(robot, config);
-      break;
-    }
-    case ReactionTrigger::StackOfCubesInitialDetection:
-    {
-      strategy = new ReactionTriggerStrategyStackOfCubesInitialDetection(robot, config);
       break;
     }
     case ReactionTrigger::UnexpectedMovement:

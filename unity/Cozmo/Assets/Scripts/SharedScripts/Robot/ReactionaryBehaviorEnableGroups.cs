@@ -26,7 +26,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: true,
     robotPickedUp: false,
     robotPlacedOnSlope: true,
     returnedToTreads: false,
@@ -35,7 +34,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    stackOfCubesInitialDetection: true,
     unexpectedMovement: true,
     vc: true
   );
@@ -54,7 +52,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: true,
     robotPickedUp: false,
     robotPlacedOnSlope: true,
     returnedToTreads: false,
@@ -63,7 +60,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    stackOfCubesInitialDetection: true,
     unexpectedMovement: false,
     vc: true
   );
@@ -82,7 +78,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: true,
     robotPickedUp: true,
     robotPlacedOnSlope: true,
     returnedToTreads: true,
@@ -91,7 +86,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    stackOfCubesInitialDetection: true,
     unexpectedMovement: true,
     vc: true
   );
@@ -110,7 +104,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: true,
     robotPickedUp: false,
     robotPlacedOnSlope: true,
     returnedToTreads: false,
@@ -119,7 +112,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: true,
     sparked: true,
-    stackOfCubesInitialDetection: true,
     unexpectedMovement: false,
     vc: true
   );
@@ -138,7 +130,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: false,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: false,
     robotPickedUp: false,
     robotPlacedOnSlope: false,
     returnedToTreads: false,
@@ -147,7 +138,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: true,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: false,
     vc: true
   );
@@ -166,7 +156,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: true,
     robotPickedUp: true,
     robotPlacedOnSlope: true,
     returnedToTreads: true,
@@ -175,7 +164,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    stackOfCubesInitialDetection: true,
     unexpectedMovement: true,
     vc: true
   );
@@ -194,7 +182,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: false,
     placedOnCharger: false,
     petInitialDetection: false,
-    pyramidInitialDetection: false,
     robotPickedUp: true,
     robotPlacedOnSlope: false,
     returnedToTreads: true,
@@ -203,7 +190,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: true,
     vc: true
   );
@@ -222,7 +208,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: false,
-    pyramidInitialDetection: false,
     robotPickedUp: false,
     robotPlacedOnSlope: true,
     returnedToTreads: false,
@@ -231,7 +216,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: true,
     vc: true
   );
@@ -250,7 +234,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: true,
     placedOnCharger: false,
     petInitialDetection: false,
-    pyramidInitialDetection: false,
     robotPickedUp: true,
     robotPlacedOnSlope: true,
     returnedToTreads: false,
@@ -259,7 +242,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: true,
     vc: true
   );
@@ -278,7 +260,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: false,
     placedOnCharger: false,
     petInitialDetection: false,
-    pyramidInitialDetection: false,
     robotPickedUp: true,
     robotPlacedOnSlope: false,
     returnedToTreads: true,
@@ -287,7 +268,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: false,
     vc: true
   );
@@ -305,7 +285,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: false,
     placedOnCharger: true,
     petInitialDetection: false,
-    pyramidInitialDetection: false,
     robotPickedUp: false,
     robotPlacedOnSlope: false,
     returnedToTreads: false,
@@ -314,7 +293,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: false,
     vc: true
   );
@@ -332,7 +310,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     objectPositionUpdated: false,
     placedOnCharger: false,
     petInitialDetection: true,
-    pyramidInitialDetection: false,
     robotPickedUp: false,
     robotPlacedOnSlope: false,
     returnedToTreads: false,
@@ -341,7 +318,6 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    stackOfCubesInitialDetection: false,
     unexpectedMovement: false,
     vc: true
   );

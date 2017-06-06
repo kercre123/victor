@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
-#include "anki/cozmo/basestation/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
@@ -513,7 +513,7 @@ void RobotDataLoader::LoadEmotionEvents()
 
 void RobotDataLoader::LoadBehaviors()
 {
-  const std::string path =  "config/basestation/config/behaviors/";
+  const std::string path =  "config/basestation/config/behaviorSystem/behaviors/";
 
   const std::string behaviorFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
@@ -543,7 +543,7 @@ void RobotDataLoader::LoadBehaviors()
   
 void RobotDataLoader::LoadActivities()
 {
-  const std::string path =  "config/basestation/config/activities/";
+  const std::string path =  "config/basestation/config/behaviorSystem/activities/";
   
   const std::string activityFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
   auto activityJsonFiles = Util::FileUtils::FilesInDirectory(activityFolder, true, ".json", true);
@@ -616,7 +616,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
 
 void RobotDataLoader::LoadReactionTriggerMap()
 {
-  const std::string filename = "config/basestation/config/reactionTrigger_behavior_map.json";
+  const std::string filename = "config/basestation/config/behaviorSystem/reactionTrigger_behavior_map.json";
 
   Json::Value reactionJSON;
   const bool success = _platform->readAsJson(Util::Data::Scope::Resources, filename, _reactionTriggerMap);
@@ -666,7 +666,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // activities config
   {
-    std::string jsonFilename = "config/basestation/config/activities_config.json";
+    std::string jsonFilename = "config/basestation/config/behaviorSystem/activities_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
     if (!success)
     {
@@ -679,7 +679,7 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // Workout config
   {
-    std::string jsonFilename = "config/basestation/config/workout_config.json";
+    std::string jsonFilename = "config/basestation/config/behaviorSystem/workout_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
     if (!success)
     {

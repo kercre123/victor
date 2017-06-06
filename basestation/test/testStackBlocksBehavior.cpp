@@ -18,14 +18,14 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorStackBlocks.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "clad/types/behaviorTypes.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/behaviorSystem/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 
 
 using namespace Anki;

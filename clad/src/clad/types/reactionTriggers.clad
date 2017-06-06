@@ -22,7 +22,6 @@ enum uint_8 ReactionTrigger {
   ObjectPositionUpdated,
   PlacedOnCharger,
   PetInitialDetection,
-  PyramidInitialDetection,
   RobotPickedUp,
   RobotPlacedOnSlope,
   ReturnedToTreads,
@@ -31,7 +30,6 @@ enum uint_8 ReactionTrigger {
   RobotOnSide,
   RobotShaken,
   Sparked,
-  StackOfCubesInitialDetection,
   UnexpectedMovement,
   VC,
 
@@ -53,7 +51,6 @@ no_default_constructor structure AllTriggersConsidered {
   bool objectPositionUpdated,
   bool placedOnCharger,
   bool petInitialDetection,
-  bool pyramidInitialDetection,
   bool robotPickedUp,
   bool robotPlacedOnSlope,
   bool returnedToTreads,
@@ -62,7 +59,6 @@ no_default_constructor structure AllTriggersConsidered {
   bool robotOnSide,
   bool robotShaken,
   bool sparked,
-  bool stackOfCubesInitialDetection,
   bool unexpectedMovement,
   bool vc
 }

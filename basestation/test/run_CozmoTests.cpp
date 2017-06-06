@@ -11,7 +11,7 @@
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
-#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"

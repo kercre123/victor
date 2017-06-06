@@ -14,9 +14,9 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/activeObject.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
-#include "anki/cozmo/basestation/behaviors/feeding/behaviorFeedingEat.h"
-#include "anki/cozmo/basestation/behaviors/feeding/behaviorFeedingHungerLoop.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingHungerLoop.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"

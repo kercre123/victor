@@ -27,7 +27,6 @@
   {ReactionTrigger::ObjectPositionUpdated,        triggers.objectPositionUpdated}, \
   {ReactionTrigger::PlacedOnCharger,              triggers.placedOnCharger}, \
   {ReactionTrigger::PetInitialDetection,          triggers.petInitialDetection}, \
-  {ReactionTrigger::PyramidInitialDetection,      triggers.pyramidInitialDetection}, \
   {ReactionTrigger::RobotPickedUp,                triggers.robotPickedUp},  \
   {ReactionTrigger::RobotPlacedOnSlope,           triggers.robotPlacedOnSlope},  \
   {ReactionTrigger::ReturnedToTreads,             triggers.returnedToTreads},  \
@@ -36,7 +35,6 @@
   {ReactionTrigger::RobotOnSide,                  triggers.robotOnSide},  \
   {ReactionTrigger::RobotShaken,                  triggers.robotShaken},  \
   {ReactionTrigger::Sparked,                      triggers.sparked},  \
-  {ReactionTrigger::StackOfCubesInitialDetection, triggers.stackOfCubesInitialDetection},  \
   {ReactionTrigger::UnexpectedMovement,           triggers.unexpectedMovement},  \
   {ReactionTrigger::VC,                           triggers.vc},  \
 }
@@ -170,13 +168,6 @@ static void EnsureFullReactionArrayConversionsValid(const FullReactionArray& rea
                    "EnsureFullReactionArrayConversionsValid.PetInitialDetection");
         break;
       }
-      case ReactionTrigger::PyramidInitialDetection:
-      {
-        DEV_ASSERT((triggersAffected.pyramidInitialDetection == reactionEntry.Value()) &&
-                   (triggersAffected.pyramidInitialDetection == commutativeEntry.Value()),
-                   "EnsureFullReactionArrayConversionsValid.PyramidInitialDetection");
-        break;
-      }
       case ReactionTrigger::RobotPickedUp:
       {
         DEV_ASSERT((triggersAffected.robotPickedUp == reactionEntry.Value()) &&
@@ -233,13 +224,6 @@ static void EnsureFullReactionArrayConversionsValid(const FullReactionArray& rea
                    "EnsureFullReactionArrayConversionsValid.Sparked");
         break;
       }
-      case ReactionTrigger::StackOfCubesInitialDetection:
-      {
-        DEV_ASSERT((triggersAffected.stackOfCubesInitialDetection == reactionEntry.Value()) &&
-                   (triggersAffected.stackOfCubesInitialDetection == commutativeEntry.Value()),
-                   "EnsureFullReactionArrayConversionsValid.StackOfCubesInitialDetection");
-        break;
-      }
       case ReactionTrigger::UnexpectedMovement:
       {
         DEV_ASSERT((triggersAffected.unexpectedMovement == reactionEntry.Value()) &&
@@ -283,7 +267,6 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
        reactions[Util::EnumToUnderlying(ReactionTrigger::ObjectPositionUpdated)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::PlacedOnCharger)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::PetInitialDetection)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::PyramidInitialDetection)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotPickedUp)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotPlacedOnSlope)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::ReturnedToTreads)].Value(),
@@ -292,7 +275,6 @@ static AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const F
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotOnSide)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotShaken)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::Sparked)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::StackOfCubesInitialDetection)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::UnexpectedMovement)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::VC)].Value());
   if(ANKI_DEV_CHEATS){
@@ -317,7 +299,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
   {ReactionTrigger::ObjectPositionUpdated,        true},
   {ReactionTrigger::PlacedOnCharger,              true},
   {ReactionTrigger::PetInitialDetection,          true},
-  {ReactionTrigger::PyramidInitialDetection,      true},
   {ReactionTrigger::RobotPickedUp,                true},
   {ReactionTrigger::RobotPlacedOnSlope,           true},
   {ReactionTrigger::ReturnedToTreads,             true},
@@ -326,7 +307,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectAllArray = {
   {ReactionTrigger::RobotOnSide,                  true},
   {ReactionTrigger::RobotShaken,                  true},
   {ReactionTrigger::Sparked,                      true},
-  {ReactionTrigger::StackOfCubesInitialDetection, true},
   {ReactionTrigger::UnexpectedMovement,           true},
   {ReactionTrigger::VC,                           true},
 };

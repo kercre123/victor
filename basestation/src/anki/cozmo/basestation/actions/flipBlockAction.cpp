@@ -56,7 +56,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::PyramidInitialDetection,      false},
   {ReactionTrigger::RobotPickedUp,                false},
   {ReactionTrigger::RobotPlacedOnSlope,           false},
   {ReactionTrigger::ReturnedToTreads,             false},
@@ -65,7 +64,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
   {ReactionTrigger::RobotOnSide,                  false},
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
-  {ReactionTrigger::StackOfCubesInitialDetection, false},
   {ReactionTrigger::UnexpectedMovement,           true},
   {ReactionTrigger::VC,                           false}
 };
