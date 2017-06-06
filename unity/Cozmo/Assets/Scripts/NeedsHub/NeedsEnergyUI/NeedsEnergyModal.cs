@@ -71,6 +71,8 @@ namespace Cozmo.Energy.UI {
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
       NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+
+      RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
     }
 
     protected override void RaiseDialogClosed() {
