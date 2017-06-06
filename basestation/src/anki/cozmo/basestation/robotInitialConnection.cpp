@@ -258,6 +258,8 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       }
       
       SendConnectionResponse(result, robotFwVersion);
+
+      _robotMessageHandler->ConnectRobotToNeedsManager(_serialNumber);
     }));
     
     _robotMessageHandler->SendMessage(_id, RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});

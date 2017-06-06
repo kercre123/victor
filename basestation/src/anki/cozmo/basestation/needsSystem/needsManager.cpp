@@ -65,8 +65,6 @@ using namespace std::chrono;
 using Time = time_point<system_clock>;
 
 
-using Time = std::chrono::time_point<std::chrono::system_clock>;
-
 #if ANKI_DEV_CHEATS
 namespace {
   NeedsManager* g_DebugNeedsManager = nullptr;
@@ -199,6 +197,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _needsConfig()
 , _actionsConfig()
 , _starRewardsConfig()
+, _savedTimeLastWrittenToDevice()
 , _timeLastWrittenToRobot()
 , _robotHadValidNeedsData(false)
 , _deviceHadValidNeedsData(false)
@@ -239,7 +238,8 @@ NeedsManager::~NeedsManager()
 }
 
 
-void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJson, const Json::Value& inActionsJson)
+void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
+                        const Json::Value& inStarsJson, const Json::Value& inActionsJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
@@ -251,21 +251,21 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
   _actionsConfig.Init(inActionsJson);
 
   const u32 uninitializedSerialNumber = 0;
-  _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig);
+  _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
 
-  // We want to pause the whole system until we've finished reading from robot
-  _isPausedOverall = true;
-  
-  if( !kUseNeedManager )
+  _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
+
+  if (!kUseNeedManager)
     return;
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
+    _lastDecayUpdateTime_s[i] = _currentTime_s;
+
     _isDecayPausedForNeed[i] = false;
     _isActionsPausedForNeed[i] = false;
   }
 
-  // Subscribe to messages
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
     auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
@@ -277,44 +277,68 @@ void NeedsManager::Init(const Json::Value& inJson, const Json::Value& inStarsJso
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
   }
+
+  // Read needs data from device storage, if it exists
+  _deviceHadValidNeedsData = false;
+  _deviceNeedsVersionUpdate = false;
+  bool appliedDecay = false;
+
+  if (DeviceHasNeedsState())
+  {
+    _deviceHadValidNeedsData = ReadFromDevice(_needsState, _deviceNeedsVersionUpdate);
+
+    if (_deviceHadValidNeedsData)
+    {
+      // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
+      _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
+
+      // Calculate time elapsed since last connection
+      const Time now = system_clock::now();
+      const float elasped_s = std::chrono::duration_cast<std::chrono::seconds>(now - _needsState._timeLastWritten).count();
+
+      // Now apply decay according to unconnected config, and elapsed time
+      // First, however, we set the timers as if that much time had elapsed:
+      for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+      {
+        _lastDecayUpdateTime_s[i] -= elasped_s;
+      }
+      ApplyDecayAllNeeds();
+
+      appliedDecay = true;
+    }
+  }
+
+  SendNeedsStateToGame(appliedDecay ? NeedsActionId::Decay : NeedsActionId::NoAction);
+
+  // Save to device, because we've either applied a bunch of unconnected decay,
+  // or we never had valid data on this device yet
+  WriteToDevice(_needsState);
 
 #if ANKI_DEV_CHEATS
   g_DebugNeedsManager = this;
 #endif
-  
 }
+
 
 void NeedsManager::InitAfterConnection()
 {
   _robot = _cozmoContext->GetRobotManager()->GetFirstRobot();
-
-  // Subscribe to message from robot to get serial number;
-  // when we receive this message we will continue the initialization process
-  RobotInterface::MessageHandler *messageHandler = _cozmoContext->GetRobotManager()->GetMsgHandler();
-  _signalHandles.push_back(messageHandler->Subscribe(_robot->GetID(),
-                                                     RobotInterface::RobotToEngineTag::mfgId,
-                                                     std::bind(&NeedsManager::HandleMfgID, this, std::placeholders::_1)));
 }
 
 
-void NeedsManager::InitAfterSerialNumberAcquired()
+void NeedsManager::InitAfterSerialNumberAcquired(u32 serialNumber)
 {
-  if( !kUseNeedManager )
+  if (!kUseNeedManager)
     return;
 
+  _needsState._robotSerialNumber = serialNumber;
+
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterSerialNumberAcquired",
-                      "Starting MAIN Init of NeedsManager, with serial number %d", _robot->GetBodySerialNumber());
+                      "Starting MAIN Init of NeedsManager, with serial number %d", serialNumber);
 
-  // First, see if the device has valid stored state, and if so load it
-  _deviceHadValidNeedsData = false;
-  _deviceNeedsVersionUpdate = false;
-  if (DeviceHasNeedsState())
-  {
-    _deviceHadValidNeedsData = ReadFromDevice(_needsState, _deviceNeedsVersionUpdate);
-  }
-
-  // Second, see if the robot has valid stored state, and if so load it
+  // See if the robot has valid needs state, and if so load it
   _robotHadValidNeedsData = false;
   _robotNeedsVersionUpdate = false;
   if (!StartReadFromRobot())
@@ -327,16 +351,6 @@ void NeedsManager::InitAfterSerialNumberAcquired()
 
 void NeedsManager::InitAfterReadFromRobotAttempt()
 {
-  // First, we can finally un-pause the system now that we've read data from the robot
-  _isPausedOverall = false;
-
-  for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
-  {
-    _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
-  }
-
-  _needsState.Init(_needsConfig, _robot->GetBodySerialNumber(), _starRewardsConfig, _cozmoContext->GetRandom());
-
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
 
@@ -366,7 +380,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     if (_needsState._robotSerialNumber == _needsStateFromRobot._robotSerialNumber)
     {
       // This was the same robot the device had been connected to before.
-      if (_needsState._timeLastWritten < _needsStateFromRobot._timeLastWritten)
+      if (_savedTimeLastWrittenToDevice < _needsStateFromRobot._timeLastWritten)
       {
         // Robot data is newer; possibly someone controlled this robot with another device
         // Go with the robot data
@@ -374,7 +388,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
         // Copy the loaded robot needs state into our device needs state
         _needsState = _needsStateFromRobot;
       }
-      else if (_needsState._timeLastWritten > _needsStateFromRobot._timeLastWritten)
+      else if (_savedTimeLastWrittenToDevice > _needsStateFromRobot._timeLastWritten)
       {
         // Device data is newer; something weird happened
         // Go with the device data
@@ -393,8 +407,6 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     }
   }
 
-  _needsState._rng = _cozmoContext->GetRandom();
-
   const Time now = system_clock::now();
 
   if (needToWriteToDevice)
@@ -404,9 +416,13 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _deviceNeedsVersionUpdate = false;
       PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device due to storage version update");
     }
-    else
+    else if (!_deviceHadValidNeedsData)
     {
       PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device for the first time");
+    }
+    else
+    {
+      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device");
     }
     _needsState._timeLastWritten = now;
     WriteToDevice(_needsState);
@@ -419,9 +435,13 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       _robotNeedsVersionUpdate = false;
       PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot due to storage version update");
     }
-    else
+    else if (!_robotHadValidNeedsData)
     {
       PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot for the first time");
+    }
+    else
+    {
+      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot");
     }
     _timeLastWrittenToRobot = now;
     _needsState._timeLastWritten = now;
@@ -430,34 +450,24 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 }
 
 
-void NeedsManager::HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+void NeedsManager::OnRobotDisconnected()
 {
-  const auto& payload = message.GetData().Get_mfgId();
-  _needsState._robotSerialNumber = payload.esn;
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.HandleMfgID", "HandleMfgID holds esn %d", payload.esn);
+  WriteToDevice(_needsState);
 
-  InitAfterSerialNumberAcquired();
+  _robot = nullptr;
 }
 
 
+// This is called whether we are connected to a robot or not
 void NeedsManager::Update(const float currentTime_s)
 {
   _currentTime_s = currentTime_s;
-  
-  if( !kUseNeedManager )
+
+  if (!kUseNeedManager)
     return;
 
   if (_isPausedOverall)
     return;
-
-  // Don't do anything while reading/writing robot data
-  if (_robotStorageState != RobotStorageState::Inactive)
-    return;
-
-  if (NEAR_ZERO(_timeForNextPeriodicDecay_s))
-  {
-    _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
-  }
 
   // Handle periodic decay:
   if (currentTime_s >= _timeForNextPeriodicDecay_s)
@@ -465,12 +475,24 @@ void NeedsManager::Update(const float currentTime_s)
     _timeForNextPeriodicDecay_s += _needsConfig._decayPeriod;
 
     ApplyDecayAllNeeds();
+
+    SendNeedsStateToGame(NeedsActionId::Decay);
+
+    // Note that we don't want to write to robot at this point, as that
+    // can take a long time (300 ms) and can interfere with animations.
+    // So we generally only write to robot on actions completed.
+
+    // However, it's quick to write to device, so we [possibly] do that here:
+    PossiblyWriteToDevice(_needsState);
   }
 }
 
 
 void NeedsManager::SetPaused(const bool paused)
 {
+  if (!kUseNeedManager)
+    return;
+
   if (paused == _isPausedOverall)
   {
     DEV_ASSERT_MSG(paused != _isPausedOverall, "NeedsManager.SetPaused.Redundant",
@@ -515,6 +537,9 @@ void NeedsManager::SetPaused(const bool paused)
 
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
+  if (!kUseNeedManager)
+    return;
+
   if (_isPausedOverall)
     return;
 
@@ -577,6 +602,8 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   }
 
   SendNeedsStateToGame(actionCompleted);
+
+  UpdateStarsState();
 
   PossiblyWriteToDevice(_needsState);
   PossiblyStartWriteToRobot(_needsState);
@@ -679,6 +706,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
   if (needToSendNeedsStateToGame)
   {
     SendNeedsStateToGame();
+
+    UpdateStarsState();
   }
 }
 
@@ -712,11 +741,20 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetGameBeingPaused& ms
 
     if (_robotStorageState == RobotStorageState::Inactive)
     {
-      _timeLastWrittenToRobot = now;
-      _needsState._timeLastWritten = now;
-      StartWriteToRobot(_needsState);
+      if (_robot != nullptr)
+      {
+        _timeLastWrittenToRobot = now;
+        StartWriteToRobot(_needsState);
+      }
     }
   }
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::EnableDroneMode& msg)
+{
+  // Pause the needs system during explorer mode
+  SetPaused(msg.isStarted);
 }
 
 
@@ -754,8 +792,6 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
                                         actionCausingTheUpdate);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-
-  UpdateStarsState();
 }
 
 void NeedsManager::SendNeedsPauseStateToGame()
@@ -788,33 +824,30 @@ void NeedsManager::SendNeedsPauseStatesToGame()
 
 void NeedsManager::ApplyDecayAllNeeds()
 {
+  const DecayConfig& config = _robot == nullptr ? _needsConfig._decayUnconnected : _needsConfig._decayConnected;
+
   NeedsMultipliers multipliers;
-  _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+  _needsState.SetDecayMultipliers(config, multipliers);
 
   for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
   {
     if (!_isDecayPausedForNeed[needIndex])
     {
       const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
-      _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
+      _needsState.ApplyDecay(config, needIndex, duration_s, multipliers);
       _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
     }
   }
-
-  SendNeedsStateToGame(NeedsActionId::Decay);
-
-  // Note that we don't want to write to robot at this point, as that
-  // can take a long time (300 ms) and can interfere with animations.
-  // So we generally only write to robot on actions completed.
-  // However, it's quick to write to device, so we [possibly] do that here:
-  PossiblyWriteToDevice(_needsState);
 }
 
 
 void NeedsManager::UpdateStarsState()
 {
-  // TODO: this only needs to be called when the NeedBracket changes.
-  // Right now called everytime we send a needs state update
+  // The only weakness of this check is:  If the player gets the star awarded near midnight,
+  // and then a few minutes later, after midnight, this function gets called again and the Play
+  // level is still within the "full" range, they would be awarded a second star (erroneously).
+  // Currently, however, Production is OK with this hole.  --PTerry 2017/06/02
+
   // If "play stat" is now full, and they haven't gotten a star "today" send the star ready message
   if (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full)
   {
@@ -1075,9 +1108,11 @@ void NeedsManager::StartWriteToRobot(const NeedsState& needsState)
     partIsDamaged[(int)part.first] = part.second;
   }
 
-  //TODO: get last start assigned time last
+  const auto timeLastStarAwarded_s = duration_cast<seconds>(needsState._timeLastStarAwarded.time_since_epoch()).count();
+  const auto timeLastStarAwarded = Util::numeric_cast<uint64_t>(timeLastStarAwarded_s);
+
   NeedsStateOnRobot stateForRobot(NeedsState::kRobotStorageVersion, timeLastWritten, curNeedLevels,
-                                  needsState._curNeedsUnlockLevel, needsState._numStarsAwarded, partIsDamaged, timeLastWritten);
+                                  needsState._curNeedsUnlockLevel, needsState._numStarsAwarded, partIsDamaged, timeLastStarAwarded);
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
@@ -1158,7 +1193,6 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
     {
       PRINT_NAMED_ERROR("NeedsManager.FinishReadFromRobot.ReadFailedFinish", "Read failed with %s", EnumToString(res));
     }
-
     return false;
   }
 
@@ -1219,8 +1253,6 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
   const seconds durationSinceEpoch_s(stateOnRobot.timeLastWritten);
   _needsStateFromRobot._timeLastWritten = time_point<system_clock>(durationSinceEpoch_s);
 
-  _needsStateFromRobot._robotSerialNumber = _robot->GetBodySerialNumber();
-
   _needsStateFromRobot._curNeedsUnlockLevel = stateOnRobot.curNeedsUnlockLevel;
   _needsStateFromRobot._numStarsAwarded = stateOnRobot.numStarsAwarded;
   _needsStateFromRobot._numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(stateOnRobot.curNeedsUnlockLevel);
@@ -1237,9 +1269,14 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
     _needsStateFromRobot._partIsDamaged[pardId] = stateOnRobot.partIsDamaged[i];
   }
 
+  const seconds durationSinceEpochLastStar_s(stateOnRobot.timeLastStarAwarded);
+  _needsStateFromRobot._timeLastStarAwarded = time_point<system_clock>(durationSinceEpochLastStar_s);
+
+  // Other initialization for things that do not come from storage:
+  _needsStateFromRobot._robotSerialNumber = _robot->GetBodySerialNumber();
   _needsStateFromRobot._needsConfig = &_needsConfig;
   _needsStateFromRobot._starRewardsConfig = _starRewardsConfig;
-
+  _needsStateFromRobot._rng = _cozmoContext->GetRandom();
   _needsStateFromRobot.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
 
   return true;
@@ -1250,6 +1287,7 @@ void NeedsManager::DebugFillNeedMeters()
 {
   _needsState.DebugFillNeedMeters();
   SendNeedsStateToGame();
+  UpdateStarsState();
 }
 
 void NeedsManager::DebugGiveStar()
@@ -1363,6 +1401,8 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 
   SendNeedsStateToGame();
 
+  UpdateStarsState();
+
   PossiblyWriteToDevice(_needsState);
   PossiblyStartWriteToRobot(_needsState);
 }
@@ -1379,6 +1419,10 @@ void NeedsManager::DebugPassTimeMinutes(const float minutes)
   }
 
   ApplyDecayAllNeeds();
+
+  SendNeedsStateToGame(NeedsActionId::Decay);
+
+  WriteToDevice(_needsState);
 }
 #endif
 

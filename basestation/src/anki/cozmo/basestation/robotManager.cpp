@@ -6,19 +6,21 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotDataLoader.h"
-#include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
-#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotInitialConnection.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
@@ -153,6 +155,8 @@ namespace Anki {
           _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
         }
 
+        _context->GetNeedsManager()->OnRobotDisconnected();
+
         delete(iter->second);
         iter = _robots.erase(iter);
         
@@ -250,7 +254,7 @@ namespace Anki {
     void RobotManager::UpdateAllRobots()
     {
       ANKI_CPU_PROFILE("RobotManager::UpdateAllRobots");
-      
+
       //for (auto &r : _robots) {
       for(auto r = _robots.begin(); r != _robots.end(); ) {
         // Call update
@@ -386,6 +390,11 @@ namespace Anki {
       return iter->second.ShouldFilterMessage(msgType);
     }
     
+    void RobotManager::ConnectRobotToNeedsManager(u32 serialNumber) const
+    {
+      _context->GetNeedsManager()->InitAfterSerialNumberAcquired(serialNumber);
+    }
+
     bool RobotManager::MakeRobotFirmwareUntrusted(RobotID_t robotId)
     {
       auto iter = _initialConnections.find(robotId);

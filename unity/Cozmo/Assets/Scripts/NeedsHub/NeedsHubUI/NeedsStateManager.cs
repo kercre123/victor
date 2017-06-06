@@ -42,6 +42,9 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
+
+      // Request needs state from engine ASAP, so we can display the needs levels
+      RequestNeedsState();
     }
 
     private void OnDestroy() {

@@ -50,8 +50,12 @@ public:
   explicit NeedsManager(const CozmoContext* cozmoContext);
   ~NeedsManager();
 
-  void Init(const Json::Value& inJson, const Json::Value& inStarsJson, const Json::Value& inActionsJson);
+  void Init(const float currentTime_s, const Json::Value& inJson,
+            const Json::Value& inStarsJson, const Json::Value& inActionsJson);
   void InitAfterConnection();
+  void InitAfterSerialNumberAcquired(u32 serialNumber);
+
+  void OnRobotDisconnected();
 
   void Update(const float currentTime_s);
 
@@ -84,9 +88,6 @@ public:
 #endif
 
 private:
-
-  void HandleMfgID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void InitAfterSerialNumberAcquired();
 
   bool DeviceHasNeedsState();
   void PossiblyWriteToDevice(NeedsState& needsState);
@@ -123,6 +124,7 @@ private:
   ActionsConfig _actionsConfig;
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
 
+  Time          _savedTimeLastWrittenToDevice;
   Time          _timeLastWrittenToRobot;
   bool          _robotHadValidNeedsData;
   bool          _deviceHadValidNeedsData;

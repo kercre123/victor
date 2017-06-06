@@ -130,6 +130,8 @@ public:
   bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::RobotToEngineTag msgType) const;
   bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::EngineToRobotTag msgType) const;
 
+  void ConnectRobotToNeedsManager(u32 serialNumber) const;
+
 protected:
   RobotMap _robots;
   std::vector<RobotID_t>     _IDs;

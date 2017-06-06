@@ -152,6 +152,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
   
+  _isInitialized = false;
+
   _config = config;
   
   if(!_config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -222,11 +224,11 @@ Result CozmoEngine::Init(const Json::Value& config) {
     return lastResult;
   }
   
-  _isInitialized = true;
-  
   _context->GetDataLoader()->LoadRobotConfigs();
 
-  _context->GetNeedsManager()->Init(_context->GetDataLoader()->GetRobotNeedsConfig(),
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _context->GetNeedsManager()->Init(currentTime,
+                                    _context->GetDataLoader()->GetRobotNeedsConfig(),
                                     _context->GetDataLoader()->GetStarRewardsConfig(),
                                     _context->GetDataLoader()->GetRobotNeedsActionsConfig());
 
@@ -238,6 +240,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   PRINT_NAMED_INFO("CozmoEngine.Init.Version", "1");
 #endif
   
+  _isInitialized = true;
+
   return RESULT_OK;
 }
 
@@ -292,7 +296,7 @@ void CozmoEngine::HandleMessage(const ExternalInterface::SetFeatureToggle& messa
 template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connectMsg)
 {
-  if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
+  if(CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.AlreadyConnected", "Robot %d already connected", connectMsg.robotID);
     return;
   }
@@ -402,6 +406,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
       
       _context->GetRobotManager()->UpdateRobotConnection();
       
+      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _context->GetNeedsManager()->Update(currentTime_s);
+
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
       _context->GetRobotManager()->UpdateAllRobots();

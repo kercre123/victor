@@ -1435,8 +1435,6 @@ Result Robot::Update()
 
   _moodManager->Update(currentTime);
 
-  _context->GetNeedsManager()->Update(currentTime);
-
   _inventoryComponent->Update(currentTime);
 
   _progressionUnlockComponent->Update();

@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/directGameComms.h"
@@ -992,11 +993,15 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       if (msg.isExternalSdkMode) {
         UpdateIsSdkCommunicationEnabled();
       }
+
+      _context->GetNeedsManager()->SetPaused(true);
     }
     
     
     void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
+      _context->GetNeedsManager()->SetPaused(false);
+
       // Note: Robot's message handler also handles this event, and that disconnects the robot
       //       (that's how we ensure that we restore the robot to a safe default state)
       DoExitSdkMode();

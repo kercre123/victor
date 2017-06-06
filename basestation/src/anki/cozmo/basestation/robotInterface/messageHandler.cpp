@@ -220,7 +220,13 @@ const Util::Stats::StatsAccumulator& MessageHandler::GetQueuedTimes_ms() const
 {
   return _robotConnectionManager->GetQueuedTimes_ms();
 }
-  
+
+void MessageHandler::ConnectRobotToNeedsManager(u32 serialNumber) const
+{
+  _robotManager->ConnectRobotToNeedsManager(serialNumber);
+}
+
+
 template<>
 void MessageHandler::HandleMessage(const ExternalInterface::ReliableTransportRunMode& msg)
 {

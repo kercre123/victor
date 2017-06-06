@@ -77,6 +77,8 @@ public:
   
   const Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
 
+  void ConnectRobotToNeedsManager(u32 serialNumber) const;
+
 protected:
   void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
   void Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message);

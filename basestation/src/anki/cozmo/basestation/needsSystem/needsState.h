@@ -51,7 +51,7 @@ public:
   ~NeedsState();
   
   void Init(NeedsConfig& needsConfig, const u32 serialNumber,
-            const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng = 0);
+            const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng);
   
   void Reset();
 
