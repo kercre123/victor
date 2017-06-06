@@ -224,5 +224,8 @@
   },
   "behavior.singing.MussIDenn": {
     "translation": "Cozmo is singing Muss I Denn"
+  },
+  "behavior.ReactToVoiceCommand": {
+    "translation": "Cozmo is listening to you"
   }
 }
