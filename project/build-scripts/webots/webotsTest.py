@@ -911,7 +911,7 @@ def main(args):
     num_of_failed_tests_in_one_run = 0
     for test_controller in test_results.values():
       # Loop through each test controller
-      for test_result in test_controller:
+      for test_result in test_controller.values():
         # Loop through each webots world that the test controller runs in
         if test_result is ResultCode.failed:
           num_of_failed_tests_in_one_run += 1
