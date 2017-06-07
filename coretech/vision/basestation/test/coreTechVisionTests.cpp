@@ -244,3 +244,86 @@ GTEST_TEST(Camera, VisibilityAndOcclusion)
 
 } // GTEST_TEST(Camera, VisibilityAndOcclusion)
 
+
+GTEST_TEST(ColorPixels, Accessors)
+{
+  using namespace Anki::Vision;
+  
+  PixelRGB_<u8> p(23,11,45);
+  
+  ASSERT_EQ(23, p.r());
+  ASSERT_EQ(11, p.g());
+  ASSERT_EQ(45, p.b());
+  
+  ASSERT_EQ(11, p.min());
+  ASSERT_EQ(45, p.max());
+  
+  ASSERT_TRUE(p.IsDarkerThan(50, false));
+  ASSERT_TRUE(p.IsDarkerThan(50, true));
+  ASSERT_TRUE(p.IsBrighterThan(5, false));
+  ASSERT_TRUE(p.IsBrighterThan(5, true));
+  
+  ASSERT_FALSE(p.IsDarkerThan(15, false));
+  ASSERT_TRUE(p.IsDarkerThan(15, true));
+  ASSERT_FALSE(p.IsBrighterThan(40, false));
+  ASSERT_TRUE(p.IsBrighterThan(40, true));
+  
+  p.r() = 223;
+  p.g() = 211;
+  p.b() = 245;
+  
+  ASSERT_EQ(223, p[0]);
+  ASSERT_EQ(211, p[1]);
+  ASSERT_EQ(245, p[2]);
+  
+  
+  PixelRGBA q(23,11,45, 128);
+  
+  ASSERT_EQ(23, q.r());
+  ASSERT_EQ(11, q.g());
+  ASSERT_EQ(45, q.b());
+  ASSERT_EQ(128, q.a());
+  
+  ASSERT_TRUE(q.IsDarkerThan(50, false));
+  ASSERT_TRUE(q.IsDarkerThan(50, true));
+  ASSERT_TRUE(q.IsBrighterThan(5, false));
+  ASSERT_TRUE(q.IsBrighterThan(5, true));
+  
+  ASSERT_FALSE(q.IsDarkerThan(15, false));
+  ASSERT_TRUE(q.IsDarkerThan(15, true));
+  ASSERT_FALSE(q.IsBrighterThan(40, false));
+  ASSERT_TRUE(q.IsBrighterThan(40, true));
+  
+  q.r() = 223;
+  q.g() = 211;
+  q.b() = 245;
+  q.a() = 200;
+  
+  ASSERT_EQ(223, q[0]);
+  ASSERT_EQ(211, q[1]);
+  ASSERT_EQ(245, q[2]);
+  ASSERT_EQ(200, q[3]);
+
+}
+
+GTEST_TEST(ColorPixels, GrayConverters)
+{
+  using namespace Anki::Vision;
+  
+  const PixelRGB_<u8> p_u8(23,11,45);
+  
+  ASSERT_EQ(22, p_u8.gray());
+  ASSERT_EQ(18, p_u8.weightedGray());
+  
+  const PixelRGB_<f32> p_f32(23.f, 11.f, 45.f);
+  
+  ASSERT_NEAR(22.5f, p_f32.gray(), 1e-3f);
+  ASSERT_NEAR(18.464f, p_f32.weightedGray(), 1e-3f);
+  
+  const PixelRGBA p_alpha(23,11,45, 255);
+  
+  ASSERT_EQ(22, p_alpha.gray());
+  ASSERT_EQ(18, p_alpha.weightedGray());
+  
+}
+

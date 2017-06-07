@@ -14,6 +14,7 @@
 #define __Anki_Coretech_Vision_Basestation_ColorPixelTypes_H__
 
 #include "anki/common/types.h"
+#include "util/math/numericCast.h"
 #include <opencv2/core.hpp>
 
 namespace Anki {
@@ -37,8 +38,12 @@ namespace Vision {
     Type& g() { return this->operator[](1); }
     Type& b() { return this->operator[](2); }
     
-    // Convert to gray
+    // Convert to gray (green simply gets double weight and efficient integer math is used)
     Type gray() const;
+    
+    // Convert to gray using weights like OpenCV: gray = 0.299*R + 0.587*G + 0.114*B
+    //   http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html#cvtcolor
+    Type weightedGray() const;
     
     // Return min/max across channels
     Type max() const;
@@ -71,23 +76,19 @@ namespace Vision {
     
     // Const accessors
     u8  r() const { return this->operator[](0); }
-    u8  b() const { return this->operator[](1); }
-    u8  g() const { return this->operator[](2); }
+    u8  g() const { return this->operator[](1); }
+    u8  b() const { return this->operator[](2); }
     u8  a() const { return this->operator[](3); }
     
     // Non-const accessors
     u8& r() { return this->operator[](0); }
-    u8& b() { return this->operator[](1); }
-    u8& g() { return this->operator[](2); }
+    u8& g() { return this->operator[](1); }
+    u8& b() { return this->operator[](2); }
     u8& a() { return this->operator[](3); }
     
-    // Convert to gray
-    u8 gray() const {
-      u16 gray = static_cast<u16>(r() + (g() << 1) + b()); // give green double weight
-      gray = gray >> 2; // divide by 4
-      assert(gray <= std::numeric_limits<u8>::max());
-      return static_cast<u8>(gray);
-    }
+    // Convert to gray (see PixelRGB for details)
+    u8 gray() const;
+    u8 weightedGray() const;
     
     // Return true if all channels are > or < than given value.
     // If "any" is set to true, then returns true if any channel is > or <.
@@ -147,19 +148,47 @@ namespace Vision {
     return *this;
   }
   
+  inline u8 SimpleRGB2Gray(u8 r, u8 g, u8 b)
+  {
+    u16 gray = static_cast<u16>(r + (g << 1) + b); // give green double weight
+    gray = gray >> 2; // divide by 4
+    return Util::numeric_cast<u8>(gray);
+  }
+  
+  inline f32 WeightedRGB2Gray(f32 r, f32 g, f32 b)
+  {
+    const f32 gray = 0.299f*r + 0.587f*g + 0.114f*b;
+    return gray;
+  }
+  
   template<>
   inline u8 PixelRGB_<u8>::gray() const {
-    u16 gray = static_cast<u16>(r() + (g() << 1) + b()); // give green double weight
-    gray = gray >> 2; // divide by 4
-    assert(gray <= std::numeric_limits<u8>::max());
-    return static_cast<u8>(gray);
+    return SimpleRGB2Gray(r(), g(), b());
   }
  
   template<>
+  inline u8 PixelRGB_<u8>::weightedGray() const {
+    return Util::numeric_cast<u8>(WeightedRGB2Gray(r(), g(), b()));
+  }
+  
+  template<>
   inline f32 PixelRGB_<f32>::gray() const {
-    f32 gray = r() + g()*0.5f + b(); // give green double weight
+    f32 gray = r() + g()*2.f + b(); // give green double weight
     gray *= 0.25f;
     return gray;
+  }
+  
+  template<>
+  inline f32 PixelRGB_<f32>::weightedGray() const {
+    return WeightedRGB2Gray(r(), g(), b());
+  }
+  
+  inline u8 PixelRGBA::gray() const {
+    return SimpleRGB2Gray(r(), g(), b());
+  }
+  
+  inline u8 PixelRGBA::weightedGray() const {
+    return Util::numeric_cast<u8>(WeightedRGB2Gray(r(), g(), b()));
   }
   
   template<typename Type>
