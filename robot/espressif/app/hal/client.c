@@ -48,6 +48,12 @@ sint16 clientQueueAvailable(void)
   else return 0;
 }
 
+bool clientQueueFlushed(void)
+{
+  if (clientConnection) return ReliableConnection_GetNumPendingMessages(clientConnection) == 0;
+  else return true;
+}
+
 bool clientCanTransmit(int bytes)
 {
    return ((clientQueueAvailable()>=bytes) &&

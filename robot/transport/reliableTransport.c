@@ -635,3 +635,8 @@ int16_t ICACHE_FLASH_ATTR ReliableConnection_GetReliableQueueAvailable(ReliableC
 {
   return ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - ((int16_t)connection->pendingReliableBytes);
 }
+
+uint8_t ICACHE_FLASH_ATTR ReliableConnection_GetNumPendingMessages(ReliableConnection* connection)
+{
+  return connection->numPendingReliableMessages;
+}

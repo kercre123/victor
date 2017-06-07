@@ -71,8 +71,6 @@ namespace Anki {
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
 
-        bool sendTestStateMessages;
-
         // Flag for receipt of Init message
         bool initReceived_ = false;
         u8 ticsSinceInitReceived_ = 0;
@@ -103,8 +101,6 @@ namespace Anki {
 
         // In sim we don't expect to get the PowerState message which normally sets this
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
-#else
-        sendTestStateMessages = true;
 #endif
         ResetMissedLogCount();
         return RESULT_OK;
@@ -922,11 +918,6 @@ namespace Anki {
         RobotInterface::SendMessage(newMsg);
       }
 
-      void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
-      {
-        sendTestStateMessages = msg.enable;
-      }
-
       void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
       {
         // Handled directly in spi to bypass main execution.
@@ -1070,10 +1061,7 @@ namespace Anki {
 
       void SendTestStateMsg()
       {
-#ifndef COZMO_V2
-#ifndef SIMULATOR
-        if (sendTestStateMessages)
-        {
+#ifdef TARGET_K02
           RobotInterface::TestState tsm;
           memcpy((void*)tsm.speedsFixed,    (void*)g_dataToHead.speeds,    sizeof(tsm.speedsFixed));
           memcpy((void*)tsm.positionsFixed, (void*)g_dataToHead.positions, sizeof(tsm.positionsFixed));
@@ -1084,8 +1072,6 @@ namespace Anki {
           tsm.extVolt10x  = (uint8_t)(vExt_ * 10.0f);
           tsm.chargeStat  = (onCharger_ * RobotInterface::CS_ON_CHARGER) | (isCharging_ * RobotInterface::CS_IS_CHARGING) | (chargerOOS_ * RobotInterface::CS_BAD_CHARGER);
           RobotInterface::SendMessage(tsm);
-        }
-#endif
 #endif
       }
 

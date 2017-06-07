@@ -172,7 +172,6 @@ namespace UpgradeController {
     const char* versionStr = os_strstr(json, VERSION_TAG);
     if (versionStr) {
       COZMO_VERSION_ID = atoi(versionStr + os_strlen(VERSION_TAG));
-      os_printf("version str '%s' = %d\r\n",versionStr+os_strlen(VERSION_TAG), COZMO_VERSION_ID);
     }
     else COZMO_VERSION_ID = -2;
     static const char* TIME_TAG = "\"time\": ";
@@ -954,9 +953,10 @@ namespace UpgradeController {
         else
         {
           AnkiDebug( 172, "UpgradeController.state", 463, "Reboot", 0);
+          ack.result = SUCCESS;
+          RobotInterface::SendMessage(ack);
           self.phase   = OTAT_Reboot;
-          //self.phase   = OTAT_Apply_RTIP;
-          //self.timer = system_get_time() + 10000000; // 10 second timeout
+          self.timer   = system_get_time() + 2000000;
           self.retries = MAX_RETRIES;
         }
         break;
@@ -1016,10 +1016,11 @@ namespace UpgradeController {
           default: // If the RTIP has booted we'll get other gibberish
           {
             AnkiDebug( 172, "UpgradeController.state", 463, "Reboot", 0);
-            #if DEBUG_OTA
-            os_printf("Done programming, send command done\r\n");
-            #endif
-            self.phase = OTAT_Reboot;
+            ack.result = SUCCESS;
+            RobotInterface::SendMessage(ack);
+            self.phase   = OTAT_Reboot;
+            self.timer   = system_get_time() + 2000000;
+            self.retries = MAX_RETRIES;
             break;
           }
         }
@@ -1027,15 +1028,16 @@ namespace UpgradeController {
       }
       case OTAT_Reboot:
       {
-        i2spiBootloaderCommandDone();
-        ack.result = SUCCESS;
-        RobotInterface::SendMessage(ack);
-        AnkiDebug( 172, "UpgradeController.state", 464, "Wait for reboot", 0);
-        self.phase = OTAT_Wait_For_Reboot;
-        #if DEBUG_OTA
-        os_printf("OTAT Wait for Reboot\r\n");
-        #endif
-        self.timer = system_get_time() + 100000; // delay for messages to clear
+        if (clientQueueFlushed() || system_get_time() > self.timer)
+        {
+          i2spiBootloaderCommandDone();
+          AnkiDebug( 172, "UpgradeController.state", 464, "Wait for reboot", 0);
+          self.phase = OTAT_Wait_For_Reboot;
+          #if DEBUG_OTA
+          os_printf("OTAT Wait for Reboot\r\n");
+          #endif
+          self.timer = system_get_time() + 100000; // delay for messages to clear
+        }
         break;
       }
       case OTAT_Wait_For_Reboot:

@@ -51,12 +51,6 @@ namespace RobotInterface {
     int_32 param = 0,
   }
   
-  /// Control whether the TestStateMessage will be sent or not
-  message EnableTestStateMessage
-  {
-    bool enable
-  }
-  
   message TestState
   {
     int_32  speedsFixed[4],

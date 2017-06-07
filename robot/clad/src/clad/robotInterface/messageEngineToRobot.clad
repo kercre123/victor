@@ -500,7 +500,7 @@ union EngineToRobot
   PowerState                    powerState                  = 0x53,
   SetCliffDetectThreshold       setCliffDetectThreshold     = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
-  EnableTestStateMessage        enableTestStateMessage      = 0x56,
+  //          FREE SLOT!!!                                  = 0x56,
   SetCameraParams               setCameraParams             = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,

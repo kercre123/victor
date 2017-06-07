@@ -495,14 +495,6 @@ static void RunMotorLifeTest(const u32 phase)
   Face::FacePrintf(phase & 0x01 ? "    --->" : "        <---");
 }
 
-
-static void inline SetRtipTestState(bool enable) {
-  RobotInterface::EngineToRobot msg;
-  msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
-  msg.enableTestStateMessage.enable = enable;
-  Anki::Cozmo::RTIP::SendMessage(msg);
-}
-
 static void SetBodyRadioMode(BodyRadioMode mode)
 {
   RobotInterface::EngineToRobot msg;
@@ -749,6 +741,10 @@ void Process_TestState(const RobotInterface::TestState& state)
   
   switch (mode)
   {
+    case RobotInterface::FTM_None:
+    {
+      return;
+    }
     case RobotInterface::FTM_Sleepy:
     case RobotInterface::FTM_Off:
     case RobotInterface::FTM_FAC:
@@ -961,12 +957,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
   // Do cleanup on current mode
   switch (mode)
   {
-    case RobotInterface::FTM_None:
-    {
-      SetRtipTestState(true);
-      break;
-    }
-  case RobotInterface::FTM_motorLifeTest:
+    case RobotInterface::FTM_motorLifeTest:
     {
       EnableLiftPower(false);
       RobotInterface::EngineToRobot msg;
@@ -998,11 +989,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
       os_memset(maxPositions, 0, sizeof(maxPositions));
       NotIdle(system_get_time());
       BackPackLightsTakeControl(false);
-      break;
-    }
-    case RobotInterface::FTM_None:
-    {
-      SetRtipTestState(false);
       break;
     }
     case RobotInterface::FTM_Sleepy:
@@ -1048,7 +1034,6 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, uint32_t timeout, co
     case RobotInterface::FTM_PlayPenTest:
     {
       testModePhase = PP_entry;
-      //      SetRtipTestState(false);
       break;
     }
     case RobotInterface::FTM_motorLifeTest:

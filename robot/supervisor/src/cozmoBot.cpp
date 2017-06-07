@@ -82,7 +82,7 @@ namespace Anki {
         
         // Wait flag for StartMotorCalibration that we expect to receive
         // from the body when wifi connects
-        bool waitForFirstMotorCalibAfterConnect_ = true;
+        bool waitForFirstMotorCalibAfterConnect_;
 
       } // Robot private namespace
 
@@ -101,6 +101,8 @@ namespace Anki {
       Result Init(void)
       {
         Result lastResult = RESULT_OK;
+        
+        waitForFirstMotorCalibAfterConnect_ = true;
 
         // HAL and supervisor init
 #ifndef TARGET_K02
@@ -214,6 +216,11 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
+          LiftController::Disable();
+          LiftController::ClearCalibration();
+          HeadController::Disable();
+          HeadController::ClearCalibration();
+          WheelController::Disable();
           #ifndef COZMO_V2
           HAL::CameraSetColorEnabled(false);
           #ifndef SIMULATOR
@@ -230,14 +237,11 @@ namespace Anki {
           mode_ = INIT_MOTOR_CALIBRATION;
 
 #ifdef SIMULATOR
-          LiftController::Disable();
-          HeadController::Disable();
-          WheelController::Disable();
-          
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
 #endif
+
           wasConnected_ = false;
         }
 
@@ -333,7 +337,7 @@ namespace Anki {
         ++robotStateMessageCounter_;
         if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
           if (!waitForFirstMotorCalibAfterConnect_) Messages::SendRobotStateMsg();
-          Messages::SendTestStateMsg();
+          else Messages::SendTestStateMsg();
           robotStateMessageCounter_ = 0;
         }
 

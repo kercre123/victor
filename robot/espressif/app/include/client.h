@@ -47,6 +47,9 @@ bool clientConnected(void);
 /// Retrieve the approximate number of bytes available in the transmit queue
 sint16 clientQueueAvailable(void);
 
+/// Return true if all reliable messages have cleared the queue
+bool clientQueueFlushed(void);
+
 /// Confirm that we have a RT connection with room for `bytes`
 bool clientCanTransmit(int bytes);
 

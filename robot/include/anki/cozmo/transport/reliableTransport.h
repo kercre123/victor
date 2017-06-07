@@ -177,6 +177,10 @@ void ReliableConnection_printState(ReliableConnection* connection);
  */
 int16_t ReliableConnection_GetReliableQueueAvailable(ReliableConnection* connection);
 
+/** Retrieve the number of Reliable Messages currently in the queue (unacked)
+ */
+uint8_t ReliableConnection_GetNumPendingMessages(ReliableConnection* connection);
+
 // end extern "C"
 #ifdef __cplusplus
 }
