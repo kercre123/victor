@@ -226,7 +226,7 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityFeeding::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehavior* ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);

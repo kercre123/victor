@@ -44,10 +44,7 @@ public:
   ActivityVoiceCommand(Robot& robot, const Json::Value& config);
   virtual ~ActivityVoiceCommand();
   
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
-  
   virtual Result Update(Robot& robot) override;
-  
   
 protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,6 +67,7 @@ protected:
   // Returns true if we should check needs state for this command
   bool ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const;
   
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

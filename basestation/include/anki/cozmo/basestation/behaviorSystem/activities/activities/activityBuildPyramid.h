@@ -43,7 +43,6 @@ public:
   ~ActivityBuildPyramid();
   
   
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   virtual Result Update(Robot& robot) override;
   
   enum class PyramidAssignment{
@@ -54,9 +53,11 @@ public:
   };
   
 protected:
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
-  
+
 private:
   enum class ChooserPhase{
     None, // Only used to force update

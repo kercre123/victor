@@ -90,7 +90,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
 }
 
-IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
   if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.ChooseNextBehavior", "VoiceCommandComponent invalid"))

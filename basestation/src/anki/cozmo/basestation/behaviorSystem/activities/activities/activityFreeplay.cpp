@@ -499,7 +499,7 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityFreeplay::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehavior* ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   // returned variable
   IBehavior* chosenBehavior = nullptr;

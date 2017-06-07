@@ -63,9 +63,6 @@ public:
   
   // calculate what the activity should be given the recently detected objects (blocks, faces, ...)
   void CalculateDesiredActivityFromObjects();
-
-  // get next behavior by properly managing the sub-activities
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Acccessors
@@ -98,6 +95,11 @@ public:
   void ClearObjectTapInteractionRequestedActivity();
   
   bool IsCurrentActivityObjectTapInteraction() const;
+
+protected:
+
+  // get next behavior by properly managing the sub-activities
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
 private:
 

@@ -560,7 +560,7 @@ void ActivityBuildPyramid::UpdatePyramidAssignments(const BehaviorBuildPyramidBa
 //////////////////////////////////////////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityBuildPyramid::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehavior* ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
   

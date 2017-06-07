@@ -44,7 +44,6 @@ public:
   ActivitySparked(Robot& robot, const Json::Value& config);
   ~ActivitySparked();
   
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   virtual Result Update(Robot& robot) override;
   
   // ==================== Event/Message Handling ====================
@@ -53,6 +52,8 @@ public:
   void HandleMessage(const T& msg);
 
 protected:
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
   

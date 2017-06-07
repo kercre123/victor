@@ -359,7 +359,7 @@ Result ActivitySparked::Update(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivitySparked::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehavior* ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   const BehaviorManager& mngr = robot.GetBehaviorManager();
   
@@ -470,7 +470,7 @@ IBehavior* ActivitySparked::SelectNextSparkInternalBehavior(Robot& robot, const 
   // If the spark has specified an alternate chooser, call
   // its choose next behavior here
   if(_subActivityDelegate == nullptr){
-    bestBehavior = IActivity::ChooseNextBehavior(robot, currentRunningBehavior);
+    bestBehavior = IActivity::ChooseNextBehaviorInternal(robot, currentRunningBehavior);
   }else{
     bestBehavior = _subActivityDelegate->
                       ChooseNextBehavior(robot,currentRunningBehavior);

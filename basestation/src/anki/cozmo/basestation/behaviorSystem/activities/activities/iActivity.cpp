@@ -283,6 +283,13 @@ void IActivity::OnDeselected(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
+  IBehavior* ret = ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior* IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+{
   if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
                  "IActivity.ChooseNextBehavior.ChooserNotOverwritten",
                  "ChooseNextBehavior called without behavior chooser overwritten")){

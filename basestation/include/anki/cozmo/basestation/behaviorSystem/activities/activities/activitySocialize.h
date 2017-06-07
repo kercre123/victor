@@ -48,14 +48,14 @@ class ActivitySocialize : public IActivity
 public:
   ActivitySocialize(Robot& robot, const Json::Value& config);
   ~ActivitySocialize() {};
-  
-  // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
-  
+    
   template<typename T>
   void HandleMessage(const T& msg);
   
 protected:
+  // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+
   // reset the state and populate the objective which we will require for this run (they are randomized each
   // time the activity is selected)
   virtual void OnSelectedInternal(Robot& robot) override;

@@ -71,8 +71,8 @@ public:
   // Behaviors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // choose next behavior for this activity
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  // choose next behavior for this activity. Internally calls ChooseNextBehaviorInternal.
+  IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
   
   virtual Result Update(Robot& robot) { return Result::RESULT_OK;}
 
@@ -102,6 +102,10 @@ protected:
   
   virtual void OnSelectedInternal(Robot& robot) {};
   virtual void OnDeselectedInternal(Robot& robot) {};
+
+  // can be overridden by derived classes to chose behaviors. Defaults to using the config defined behavior chooser
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior);
+  
   // Allows activities to pass up a display name from sub activities
   void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
   

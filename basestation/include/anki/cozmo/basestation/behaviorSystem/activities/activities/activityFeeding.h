@@ -38,13 +38,14 @@ public:
   ActivityFeeding(Robot& robot, const Json::Value& config);
   ~ActivityFeeding();
   
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   virtual Result Update(Robot& robot) override;
   
   // Implementation of IFeedingListener
   virtual void StartedEating(Robot& robot, const int duration_s) override;
   
 protected:
+  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
   
