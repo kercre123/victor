@@ -547,18 +547,6 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   const int actionIndex = static_cast<int>(actionCompleted);
   const auto& actionDelta = _actionsConfig._actionDeltas[actionIndex];
 
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
-  {
-    if (_isActionsPausedForNeed[i])
-    {
-      _queuedNeedDeltas[i].push_back(actionDelta._needDeltas[i]);
-    }
-    else
-    {
-      _needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i]);
-    }
-  }
-
   switch (actionCompleted)
   {
     case NeedsActionId::RepairHead:
@@ -580,21 +568,30 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
       break;
   }
 
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    if (_isActionsPausedForNeed[i])
+    {
+      _queuedNeedDeltas[i].push_back(actionDelta._needDeltas[i]);
+    }
+    else
+    {
+      _needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i]);
+    }
+  }
+
   switch (actionCompleted)
   {
     case NeedsActionId::RepairHead:
-    {
-      _needsState._partIsDamaged[RepairablePartId::Head] = false;
-      break;
-    }
     case NeedsActionId::RepairLift:
-    {
-      _needsState._partIsDamaged[RepairablePartId::Lift] = false;
-      break;
-    }
     case NeedsActionId::RepairTreads:
     {
-      _needsState._partIsDamaged[RepairablePartId::Treads] = false;
+      if (_needsState.NumDamagedParts() == 0)
+      {
+        // If this was a 'repair' action and there are no more broken parts,
+        // set Repair level to 100%
+        _needsState._curNeedsLevels[NeedId::Repair] = _needsConfig._maxNeedLevel;
+      }
       break;
     }
     default:
