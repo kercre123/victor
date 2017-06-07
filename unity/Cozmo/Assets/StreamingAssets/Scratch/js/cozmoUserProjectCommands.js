@@ -60,6 +60,7 @@
      */
     window.saveCozmoUserProject = function() {
         if (window.isSampleProject) {
+            window.saveProjectCompleted();
             return;
         }
 
@@ -72,6 +73,7 @@
         
         if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
             // No changes to save
+            window.saveProjectCompleted();
             return;
         }
 
@@ -80,10 +82,13 @@
         // project UUID and projectName from Unity and cache it, and display in upper right
         // corner of workspace.
         if (window.cozmoProjectUUID == '' &&  !window.hasUserAddedBlocks()) {
+            window.saveProjectCompleted();
             return;
         }
 
         window.previouslySavedProjectXML = xmlText;
+
+        // If we reached this far, Unity will take care of resolving the promise.
         window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoSaveUserProject','argString': '" + xmlText + "','argUUID': '" + window.cozmoProjectUUID + "'}");
     }
 

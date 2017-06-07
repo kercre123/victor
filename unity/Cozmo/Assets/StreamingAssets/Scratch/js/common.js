@@ -80,11 +80,32 @@
         var challengesButton = document.querySelector('#challengesbutton');
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
+
+        window.resolvePromiseWaitForSaveProject = null;
+        window.saveProjectCompleted = function () {
+            // If we have a Promise to resolve, resolve it
+            if (window.resolvePromiseWaitForSaveProject) {
+                window.resolvePromiseWaitForSaveProject();
+                window.resolvePromiseWaitForSaveProject = null;
+            }
+        }
+
+        window.promiseWaitForSaveProject = function () {
+            return new Promise(function (resolve) {
+                window.resolvePromiseWaitForSaveProject = resolve;
+                window.saveCozmoUserProject();
+            });
+        };
+
         closeButton.addEventListener('click', function () {
             workspace.playAudio('click');
             vm.stopAll();
             clearInterval(window.saveProjectTimerId);
-            window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
+
+            var promiseSaveProject = window.promiseWaitForSaveProject();
+            promiseSaveProject.then(function(result) {
+                window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
+            });
         });
         closeButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
