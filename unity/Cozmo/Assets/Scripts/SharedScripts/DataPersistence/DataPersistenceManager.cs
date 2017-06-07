@@ -59,13 +59,14 @@ namespace DataPersistence {
 
       // In version 0 we let sessions grow infinitely in StartNewSession.
       // This chunk of code converts that into just storing a series of ints so the size is manageable
-      if (profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
+      if (profile != null && profile.Sessions != null &&
+          profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
         // This likely only happens when we're first switching over to the creation of total sessions
         if (profile.Sessions.Count > profile.TotalSessions) {
           profile.TotalSessions = profile.Sessions.Count;
         }
 
-        foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
+        foreach (DataPersistence.TimelineEntryData sessionEntry in profile.Sessions) {
           foreach (Cozmo.UI.DailyGoal goal in sessionEntry.DailyGoals) {
             if (goal.GoalComplete) {
               profile.TotalDailyGoalsCompleted++;
