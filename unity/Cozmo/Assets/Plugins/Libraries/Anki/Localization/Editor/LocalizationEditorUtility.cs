@@ -119,12 +119,15 @@ public static class LocalizationEditorUtility {
 
   private static readonly Dictionary<string, LocalizationDictionary> _LocalizationDictionaries = new Dictionary<string, LocalizationDictionary>();
   private static string[] _LocalizationFiles = new string[0];
+  private static string[][] _LocalizationFileNamespaces = new string[0][];
 
   private static string[] _LocalizationKeys = new string[0];
 
   private const string kLocalizationFolder = "Assets/StreamingAssets/LocalizedStrings/en-US/";
 
   public static string[] LocalizationFiles { get { return _LocalizationFiles; } }
+
+  public static string[][] LocalizationFileNamespaces { get { return _LocalizationFileNamespaces; } }
 
   public static string[] LocalizationKeys { get { return _LocalizationKeys; } }
 
@@ -164,6 +167,45 @@ public static class LocalizationEditorUtility {
     Reload();
   }
 
+  public static string[] GetKeyNamespacesForLocalizationFile(string fileName) {
+    for (int i = 0; i < _LocalizationFileNamespaces.Length; i++) {
+      if (_LocalizationFiles[i] == fileName)
+        return LocalizationFileNamespaces[i];
+    }
+    return null;
+  }
+
+  public static string GetLocalizationFileForNamespaceKey(string namespaceKey) {
+    for (int i = 0; i < _LocalizationFileNamespaces.Length; i++) {
+      var names = _LocalizationFileNamespaces[i];
+      for (int j = 0; j < names.Length; j++) {
+        if (namespaceKey == names[j])
+          return _LocalizationFiles[i];
+      }
+    }
+    return null;
+  }
+
+  public static string GetLocalizationFileForLocalizedKey(string localizedKey) {
+    foreach (var kvp in _LocalizationDictionaries) {
+      if (kvp.Value.Translations.ContainsKey(localizedKey)) {
+        return kvp.Key;
+      }
+    }
+    return null;
+  }
+
+  public static string[] GetAllKeysInFile(string fileName) {
+    return _LocalizationDictionaries[fileName].Translations.Keys.ToArray();
+  }
+
+  public static string FindBestFitFileForKey(string localizedKey) {
+    var names = localizedKey.Split('.');
+    if (names.Length > 0) {
+      return GetLocalizationFileForNamespaceKey(names[0]);
+    }
+    return null;
+  }
 
   [MenuItem("Cozmo/Localization/Reload Localization Files")]
   public static void Reload() {
@@ -174,6 +216,20 @@ public static class LocalizationEditorUtility {
     }
 
     _LocalizationFiles = _LocalizationDictionaries.Keys.ToArray();
+
+    _LocalizationFileNamespaces = new string[_LocalizationDictionaries.Count][];
+    for (int i = 0; i < _LocalizationFiles.Length; i++) {
+      var data = _LocalizationDictionaries[LocalizationFiles[i]];
+      if (data == null || data.Translations == null || data.Translations.Count == 0)
+        continue;
+      HashSet<string> namespaceKeys = new HashSet<string>();
+      foreach (string key in data.Translations.Keys) {
+        var names = key.Split('.');
+        if (names.Length > 0)
+          namespaceKeys.Add(names[0]);
+      }
+      _LocalizationFileNamespaces[i] = namespaceKeys.ToArray();
+    }
 
     _LocalizationKeys = new[] { string.Empty }.Concat(_LocalizationDictionaries.Values.SelectMany(x => x.Translations.Keys)).ToArray();
     // sort them to make it easier to find

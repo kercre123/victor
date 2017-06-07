@@ -160,6 +160,69 @@ public static class EditorDrawingUtility {
     localizedString = LocalizationEditorUtility.GetTranslation(localizationKey, out localizedStringFile);
   }
 
+  private static string[] GetLocalizationFileOptions() {
+    var ret = new string[LocalizationEditorUtility.LocalizationFiles.Length + 1];
+    ret[0] = "Any File";
+    LocalizationEditorUtility.LocalizationFiles.CopyTo(ret, 1);
+    return ret;
+  }
+
+  private static string[] GetLocalizationKeyOptions(int selectedFileIndex, out string[] localizedKeys) {
+    bool useAnyFile = (selectedFileIndex == -1);
+    string localizedStringFile = null;
+    if (!useAnyFile) {
+      localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
+    }
+    List<string> options = new List<string>(100);
+    options.Add(" ");//Default option
+
+    //Get all keys or just the keys from the selected file
+    if (!useAnyFile) {
+      localizedKeys = LocalizationEditorUtility.GetAllKeysInFile(localizedStringFile);
+      Array.Sort(localizedKeys);
+    }
+    else {
+      localizedKeys = LocalizationEditorUtility.LocalizationKeys;
+    }
+
+    for (int i = 0; i < localizedKeys.Length; i++) {
+      var optionKey = localizedKeys[i];
+
+      //If it starts with our localization file name
+      {
+        //Append localization preview
+        string previewString = "";
+        if (!string.IsNullOrEmpty(localizedStringFile)) {
+          previewString = LocalizationEditorUtility.GetTranslation(localizedStringFile, optionKey);
+        }
+        else {
+          var tempLocFileName = LocalizationEditorUtility.GetLocalizationFileForLocalizedKey(optionKey);
+
+          if (!string.IsNullOrEmpty(tempLocFileName)) {
+            previewString = LocalizationEditorUtility.GetTranslation(tempLocFileName, optionKey);
+          }
+
+        }
+
+        const int kmaxPreviewStringLength = 30;
+        //Truncate longer strings
+        if (previewString.Length > kmaxPreviewStringLength) {
+          previewString = previewString.Substring(0, kmaxPreviewStringLength - 3) + "...";
+        }
+        //Remove slashes because / creates a sub menu.
+        previewString = previewString.Replace('/', '\0');
+
+        if (string.IsNullOrEmpty(previewString)) {
+          options.Add(optionKey); //Don't preview empty strings
+        }
+        else {
+          options.Add(string.Format("{0} ({1})", optionKey, previewString));
+        }
+      }
+    }
+    return options.ToArray();
+  }
+
   public static void DrawLocalizationString(ref string localizationKey) {
     string fileName = "";
     string localizedString = "";
@@ -184,14 +247,24 @@ public static class EditorDrawingUtility {
     const int lineCount = 8;
     float lineHeight = position.height / lineCount;
 
+    //Prepend the Any option if people want to scroll through the entire list.
+    string[] localizationFileOptions = GetLocalizationFileOptions();
     position.height = lineHeight;
+
     int selectedFileIndex = EditorGUI.Popup(position, "Localization File",
                               Mathf.Max(0,
                                 System.Array.IndexOf(
-                                  LocalizationEditorUtility.LocalizationFiles,
+                                  localizationFileOptions,
                                   localizedStringFile)),
-                              LocalizationEditorUtility.LocalizationFiles);
-    localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
+                              localizationFileOptions);
+    //Handle offset for default option. -1 means Any File
+    selectedFileIndex--;
+    if (selectedFileIndex == -1) {
+      localizedStringFile = "";
+    }
+    else {
+      localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
+    }
 
     position.y += lineHeight;
 
@@ -199,15 +272,45 @@ public static class EditorDrawingUtility {
     localizationKey = EditorGUI.TextField(position, "Localization Key", localizationKey);
 
     position.y += lineHeight;
-    int quickSelect = EditorGUI.Popup(position, "   ", 0, LocalizationEditorUtility.LocalizationKeys);
+
+
+    string[] localizationKeys;
+    //Get Options for current localization file
+    string[] options = GetLocalizationKeyOptions(selectedFileIndex, out localizationKeys);
+
+    int quickSelect = EditorGUI.Popup(position, "   ", 0, options);
+
+    string keyNamespace = string.Empty;
+
+    //Ignore default option
     if (quickSelect > 0) {
-      localizationKey = LocalizationEditorUtility.LocalizationKeys[quickSelect];
+      //Offset to account for default option
+      quickSelect--;
+      localizationKey = localizationKeys[quickSelect];
       localizedString = string.Empty;
+    }
+
+    if (!string.IsNullOrEmpty(localizationKey)) {
+      keyNamespace = localizationKey.Split('.')[0];
     }
 
     if (localizationKey != lastLocKey && (string.IsNullOrEmpty(localizedString) ||
         localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
       InitializeLocalizationString(localizationKey, out localizedStringFile, out localizedString);
+    }
+
+    bool keyDoesNotExistInFile = !LocalizationEditorUtility.KeyExists(localizedStringFile, localizationKey);
+    bool noBestFitFileForKey = false;
+    string potentialLocalizedStringFile = null;
+    //Check every update if there is a potential file for warning, but don't set it till input.
+    if (keyDoesNotExistInFile && !string.IsNullOrEmpty(localizationKey)) {
+      potentialLocalizedStringFile = LocalizationEditorUtility.FindBestFitFileForKey(localizationKey);
+      noBestFitFileForKey = string.IsNullOrEmpty(potentialLocalizedStringFile);
+    }
+
+    //If new input on the string, update string file to the best fit.
+    if (keyDoesNotExistInFile && localizationKey != lastLocKey && !string.IsNullOrEmpty(localizationKey)) {
+      localizedStringFile = potentialLocalizedStringFile;
     }
 
     position.y += lineHeight;
@@ -221,13 +324,48 @@ public static class EditorDrawingUtility {
     position.height = lineHeight;
     position.width *= 0.5f;
 
-    if (LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey) != localizedString) {
-      if (GUI.Button(position, "Reset")) {
-        localizedString = LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey);
-      }
-      position.x += position.width;
-      if (GUI.Button(position, "Save")) {
-        LocalizationEditorUtility.SetTranslation(localizedStringFile, localizationKey, localizedString);
+    //Let users know they may have a typo
+    if (noBestFitFileForKey) {
+      var c = GUI.color;
+      GUI.color = Color.red;
+      GUILayout.Label(string.Format("I don't know what file \"{0}\" refers to!", keyNamespace));
+      GUI.color = c;
+    }
+
+    if (!string.IsNullOrEmpty(localizedStringFile)) {
+
+      if (LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey) != localizedString) {
+        if (GUI.Button(position, "Reset")) {
+          localizedString = LocalizationEditorUtility.GetTranslation(localizedStringFile, localizationKey);
+        }
+        position.x += position.width;
+        if (keyDoesNotExistInFile ? GUI.Button(position, "Create New") : GUI.Button(position, "Save")) {
+          if (keyDoesNotExistInFile) {
+            if (string.IsNullOrEmpty(keyNamespace)) {
+              keyNamespace = localizationKey.Split('.')[0];
+            }
+
+            //Double check with user if they want to make a new namespace.
+            if (!LocalizationEditorUtility.GetKeyNamespacesForLocalizationFile(localizedStringFile).Contains(keyNamespace)) {
+              bool continueDespiteWarning = EditorUtility.DisplayDialog("Warning", string.Format("You are creating a new namespace \"{0}\" in file {1}\n\nAre you sure?",
+                                                                   keyNamespace, localizedStringFile), "Yes", "No");
+              if (!continueDespiteWarning)
+                return;
+            }
+
+            bool userWantsToSave = EditorUtility.DisplayDialog("Create New Localization String?",
+                                        string.Format("Create new entry \"{0}\" in {1} with English string:\n \"{2}\"",
+                                                      localizationKey, localizedStringFile, localizedString),
+                                        "OK", "Cancel");
+            if (userWantsToSave) {
+              LocalizationEditorUtility.SetTranslation(localizedStringFile, localizationKey, localizedString);
+              LocalizationEditorUtility.Reload();
+            }
+          }
+          else {
+            LocalizationEditorUtility.SetTranslation(localizedStringFile, localizationKey, localizedString);
+          }
+        }
       }
     }
   }
