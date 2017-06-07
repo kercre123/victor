@@ -30,6 +30,10 @@
 #include "anki/types.h"
 #include "clad/types/motorTypes.h"
 
+
+//#TODO: static assert that MotorTypes matches spine_protocol
+
+
 #ifdef SIMULATOR
 #include "sim_hal.h"
 #endif
@@ -45,6 +49,7 @@ namespace Anki
     
     namespace HAL
     {
+
 
 /************************************************************************
  * \section Parameters and Constants
@@ -63,6 +68,8 @@ namespace Anki
       // TODO: Can probably move these back to sim_hal once real hal is working
       Result Init(void);
       Result Step(void);
+
+      Result MonitorConnectionState(void) ; //not sure where this really goes
       
 /************************************************************************
  * \section Time
@@ -157,7 +164,7 @@ namespace Anki
         CLIFF_BL,     ///< Back left
         CLIFF_BR,     ///< Back right
         CLIFF_COUNT
-      } CliffID;
+      } CliffID; //TODO: assert matches DropSensor, or use directly
       
       /// Face proximity sensor
       u16 GetRawProxData();

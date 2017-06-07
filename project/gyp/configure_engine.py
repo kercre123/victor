@@ -203,9 +203,14 @@ def main(scriptArgs):
 
   #run robot clad's make
   if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'robot/clad')) != 0):
-    UtilLog.error("error compiling clad files")
+    UtilLog.error("error compiling robot clad files")
     return False
-    
+
+  #run robot2 clad's make
+  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'robot2/clad')) != 0):
+    UtilLog.error("error compiling robot2 clad files")
+    return False
+
   #generate AnkiLogStringTables.json
   if (subprocess.call(['make', '--silent', 'app'], cwd=os.path.join(projectRoot, 'robot')) != 0):
       UtilLog.error("Error generating AnkiLogStringTables.json")
@@ -235,7 +240,7 @@ def main(scriptArgs):
   generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot2'],
                           ['project/gyp/ctrlRobot2.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c', 'nvStorage.*'])
-  generator.processFolder(['robot2/hal/src', 'robot/supervisor/src', 'robot/transport'],
+  generator.processFolder(['robot2/hal/src', 'robot2/hal/spine', 'robot/supervisor/src', 'robot/transport'],
                           ['project/gyp/cozmoRobot2.lst'],
                           ['matlabVisionProcessor.*', 'matlabVisualization.*', 'nvStorage.*'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])

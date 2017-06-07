@@ -1581,6 +1581,7 @@
       'include_dirs': [
         '../../robot2/hal/include',
         '../../robot/include',
+        '../../robot2/generated',
         '../../robot/generated',
       ],
       'dependencies': [
@@ -1654,10 +1655,12 @@
         '<!@(cat <(robot_generated_clad_source))',
       ],
       'include_dirs': [
+        '../../robot2/generated/clad/robot',
         '../../robot/generated/clad/robot',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
+          '../../robot2/generated/clad/robot',
           '../../robot/generated/clad/robot',
         ],
       },

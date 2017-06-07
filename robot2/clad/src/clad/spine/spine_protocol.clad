@@ -1,0 +1,184 @@
+/** Clad definition file for messages sent between Application processor and Hardware processor.
+ *
+ * All structures must be fixed size.
+*/
+
+/* All spine messages follow the following format:
+    <SYNC><TYPE><WORDCOUNT><PAYLOAD><CHECKSUM>
+    SYNC is 4-byte fixed string for sync:
+        "\xAAB2H" for body messages
+        "\xAAH2B" for head messages
+    TYPE uint16: payload type.
+    Huge majority of messages will be
+        "DF" for primary DataFrame
+       Others to be added later to suport init, dfu, etc as needed.
+       *Important*: Payload Type can not contain any of the Sync characters.
+                    This allows us to avoid rescanning them when we get invalid ones.
+    BYTECOUNT = uint16: bytes  to follow (excluding checksum).
+    PAYLOAD one of the message types below
+    CHECKSUM is uint32 bytewise sum of payload.
+
+*/
+
+namespace Anki {
+namespace Cozmo {
+namespace Spine {
+
+enum uint_32 SpineSync {
+   SYNC_BODY_TO_HEAD = 0x483242AA, //"\xAAB2H
+   SYNC_HEAD_TO_BODY = 0x423248AA, //"\xAAH2B
+}
+
+enum uint_32 RobotMotor {
+  MOTOR_LEFT,
+  MOTOR_RIGHT,
+  MOTOR_LIFT,
+  MOTOR_HEAD,
+  MOTOR_COUNT
+}
+
+enum uint_32 DropSensor {
+  DROP_SENSOR_FRONT_LEFT,
+  DROP_SENSOR_FRONT_RIGHT,
+  DROP_SENSOR_BACK_LEFT,
+  DROP_SENSOR_BACK_RIGHT,
+  DROP_SENSOR_COUNT
+}
+
+enum uint_16 PayloadId {
+   PAYLOAD_MODE_CHANGE = 0x6d64,  //"md"
+   PAYLOAD_DATA_FRAME = 0x6466,   //"df"
+   PAYLOAD_DFU_PACKET = 0x6675,   //"fu"
+   PAYLOAD_TYPE_COUNT = 2,        // INCREMENT THIS for each new type
+   PAYLOAD_INVALID = 0xFFFF,      //-1
+   PAYLOAD_CORRUPT = 0xFFFE,      //-2
+}
+
+enum uint_32 RobotMode {
+     IDLE,
+     RUN,
+     DFU,
+}
+
+enum uint_32 BatteryFlags {
+   isCharging = 0x01,
+   isOnCharger= 0x02,
+   chargerOOS = 0x04,
+}
+
+enum uint_16 PowerState {
+  POWER_STATE_OFF               ,
+  POWER_STATE_OFF_WAKE_ON_RADIO ,
+  POWER_STATE_ON                ,
+  POWER_STATE_IDLE              ,
+  POWER_STATE_FORCE_RECOVERY    ,
+  POWER_STATE_OTA_MODE          ,
+  POWER_STATE_CHARGER_TEST_MODE ,
+  POWER_STATE_DTM_MODE          ,
+}
+
+enum uint_32 LedIndexes {
+  LED0_RED,
+  LED0_GREEN,
+  LED0_BLUE,
+  LED1_RED,
+  LED1_GREEN,
+  LED1_BLUE,
+  LED2_RED,
+  LED2_GREEN,
+  LED2_BLUE,
+  LED3_RED,
+  LED3_GREEN,
+  LED3_BLUE,
+  LED_UNUSED1,  // Future proof for indicator lights
+  LED_UNUSED2,  //
+  LED_UNUSED3,  //
+  LED_COUNT
+}
+
+enum uint_16 ProxSensorCommands {
+   CMD_STOP,
+   CMD_RUN,
+   CALIBRATE,
+   SET_OFFSET,
+   SET_XTALK,
+   SET_RANGING_TIME,
+   SET_PERIOD,
+}
+
+structure MotorPower {
+   int_16 leftWheel,
+   int_16 rightWheel,
+   int_16 liftMotor,
+   int_16 headMotor,
+}
+
+structure BatteryState {
+   int_32 batteryVolts,
+   int_32 chargerVolts,
+   BatteryFlags flags,
+}
+
+structure ButtonState {
+   uint_16 level,
+}
+
+structure RangeData {
+  uint_8 rangeStatus,
+  uint_8 spare1,
+  uint_16 rangeMM,
+  uint_16 signalRate,
+  uint_16 ambientRate,
+  uint_32 calibrationResult,
+}
+
+structure ProcessorStatus {
+  uint_16 watchdogCount,
+  uint_16 statusBits
+}
+
+structure ProxControl {
+  uint_32 configValue,
+  uint_32 commandValue,
+  ProxSensorCommands command,
+  uint_16 spare,
+}
+
+structure MotorState {
+   int_32 position,
+   int_32 delta,
+   uint_32 time,
+}
+
+structure SpineMessageHeader {
+   SpineSync sync_bytes,
+   PayloadId payload_type,
+   uint_16   bytes_to_follow,
+}
+
+structure SpineMessageFooter {
+  uint_32 checksum,
+}
+
+structure BodyToHead {
+   uint_32 framecounter,
+   MotorState motor[4],
+   uint_16 cliffSense[4],
+   BatteryState battery,
+   ButtonState buttons[4],
+   RangeData proximity,
+   uint_8 audio[640]
+}
+
+structure HeadToBody {
+   uint_32 framecounter,
+   int_16 motorPower[4],
+   uint_8 ledColors[16],
+   ProxControl proxCmd,
+   PowerState powerState,
+   uint_16 spare,
+}
+
+}
+}
+}

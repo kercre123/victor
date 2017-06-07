@@ -23,6 +23,7 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "testModeController.h"
+
 #include "timeProfiler.h"
 #include "wheelController.h"
 
@@ -134,6 +135,13 @@ namespace Anki {
         lastResult = LiftController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 226, "CozmoBot.InitFail.LiftController", 305, "", 0);
 
+
+#ifdef COZMO_V2
+        //TODO: move to correct point in time. This was just proof-of-life.
+        LiftController::StartCalibrationRoutine(1);
+        //        TestModeController::Start(TM_LIFT_TOGGLE);
+#endif        
+        
         robotStateMessageCounter_ = 0;
 
         return RESULT_OK;
