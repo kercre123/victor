@@ -1,7 +1,0 @@
-yesplease = Yes Please;
-nothankyou = No Thank You;
-commandlist = $yesplease | $nothankyou;
- paramA:$yesplease -1200;
- paramB:$yesplease 500;
- paramA:$nothankyou -1200;
- paramB:$nothankyou 500;

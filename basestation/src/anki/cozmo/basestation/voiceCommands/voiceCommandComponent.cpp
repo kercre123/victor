@@ -21,6 +21,8 @@
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/languagePhraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/phraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -92,14 +94,14 @@ VoiceCommandComponent::~VoiceCommandComponent()
   sThis = nullptr;
 }
 
-void VoiceCommandComponent::Init()
+bool VoiceCommandComponent::Init()
 {
   // Set up the AudioCaptureSystem
   {
     _captureSystem->Init();
     if (!ANKI_VERIFY(_captureSystem->IsValid(), "VoiceCommandComponent.Init", "CaptureSystem Init failed"))
     {
-      return;
+      return false;
     }
     _captureSystem->StartRecording();
   }
@@ -109,28 +111,44 @@ void VoiceCommandComponent::Init()
     const auto* dataLoader = _context.GetDataLoader();
     if (!ANKI_VERIFY(dataLoader != nullptr, "VoiceCommandComponent.Init", "DataLoader missing"))
     {
-      return;
+      return false;
     }
 
     ANKI_VERIFY(_phraseData->Init(dataLoader->GetVoiceCommandConfig()), "VoiceCommandComponent.Init", "CommandPhraseData Init failed.");
-    std::vector<const char*> phraseList = _phraseData->GetPhraseListRaw();
-    SpeechRecognizerTHF* newRecognizer = new SpeechRecognizerTHF();
-    newRecognizer->Init();
     
     const Util::Data::DataPlatform* dataPlatform = _context.GetDataPlatform();
     if (!ANKI_VERIFY(dataPlatform != nullptr, "VoiceCommandComponent.Init", "DataPlatform missing"))
     {
-      return;
+      return false;
     }
     
-    // TODO: Generalize this for different languages COZMO-10089
-    static const char* const voiceCommandAssetDirStr = "assets/voiceCommand";
-    static const char* const universalDataDirStr = "base";
-    static const char* const contextualDataDirStr = "contextual";
-    static const char* const languageDirStr = "en_us_16kHz_v10";
+    SetLocaleInfo();
+    
+    const auto& currentLanguageType = _locale->GetLanguage();
+    const auto& currentCountryType = _locale->GetCountry();
+    const auto& languageFilenames = _phraseData->GetLanguageFilenames(currentLanguageType, currentCountryType);
+    static const std::string& voiceCommandAssetDirStr = "assets/voiceCommand/base";
+    
+    // We expect a valid language to be set in SetLocaleInfo() above; If we don't have valid files now then something's wrong
+    if (languageFilenames._languageDataDir.empty() ||
+        languageFilenames._ltsFilename.empty() ||
+        languageFilenames._netfileFilename.empty())
+    {
+      PRINT_NAMED_ERROR("VoiceCommandComponent.Init.LanguageData",
+                        "Missing language data for locale %s",
+                        _locale->ToString().c_str());
+      return false;
+    }
+    
+    const std::string& languageDirStr = languageFilenames._languageDataDir;
     
     const std::string& pathBase = dataPlatform->pathToResource(Util::Data::Scope::Resources, voiceCommandAssetDirStr);
-    const std::string& generalNNPath = Util::FileUtils::FullFilePath( {pathBase, universalDataDirStr, languageDirStr, "nn_en_us_mfcc_16k_15_250_v5.1.1.raw"} );
+    const std::string& generalNNPath = Util::FileUtils::FullFilePath( {pathBase, languageDirStr, languageFilenames._netfileFilename} );
+    const std::string& generalPronunPath = Util::FileUtils::FullFilePath( {pathBase, languageDirStr, languageFilenames._ltsFilename} );
+    
+    _recognizer.reset();
+    SpeechRecognizerTHF* newRecognizer = new SpeechRecognizerTHF();
+    newRecognizer->Init(generalPronunPath);
     
     const auto& contextDataMap = _phraseData->GetContextData();
     for (const auto& contextDataEntry : contextDataMap)
@@ -138,12 +156,8 @@ void VoiceCommandComponent::Init()
       const auto typeIndex = Util::EnumToUnderlying(contextDataEntry.first);
       const auto& contextData = contextDataEntry.second;
       
-      const std::string& contextTypeString = EnumToString(contextDataEntry.first);
-      const std::string& nnFilename = Util::FileUtils::FullFilePath( {pathBase, contextualDataDirStr, languageDirStr, (contextTypeString + "_NN.raw")} );
-      const std::string& nnFileToUse = contextData._isPhraseSpotted ? nnFilename : generalNNPath;
-      const std::string& srchFilename = Util::FileUtils::FullFilePath( {pathBase, contextualDataDirStr, languageDirStr, (contextTypeString + "_SRCH.raw")} );
-      
-      newRecognizer->AddRecognitionDataFromFile(typeIndex, nnFileToUse, srchFilename, contextData._isPhraseSpotted, contextData._allowsFollowup);
+      newRecognizer->AddRecognitionDataAutoGen(typeIndex, generalNNPath, _phraseData->GetPhraseDataList(currentLanguageType, contextDataEntry.first),
+                                               contextData._isPhraseSpotted, contextData._allowsFollowup);
     }
     
     _recognizer.reset(newRecognizer);
@@ -156,7 +170,7 @@ void VoiceCommandComponent::Init()
     if (_recogProcessor == nullptr)
     {
       PRINT_NAMED_ERROR("VoiceCommandComponent.Init", "Can't Init voice command component with an invalid audio processor.");
-      return;
+      return false;
     }
     
     _recogProcessor->SetSpeechRecognizer(_recognizer.get());
@@ -165,6 +179,30 @@ void VoiceCommandComponent::Init()
   }
   
   _initialized = true;
+  return true;
+}
+
+void VoiceCommandComponent::SetLocaleInfo()
+{
+  const auto& contextLocale = *_context.GetLocale();
+  const auto& currentLanguageType = contextLocale.GetLanguage();
+  const auto& currentCountryType = contextLocale.GetCountry();
+  const auto& languageFilenames = _phraseData->GetLanguageFilenames(currentLanguageType, currentCountryType);
+  
+  // Check whether we have valid language data. If not fall back to English
+  if (languageFilenames._languageDataDir.empty() ||
+      languageFilenames._ltsFilename.empty() ||
+      languageFilenames._netfileFilename.empty())
+  {
+    PRINT_NAMED_WARNING("VoiceCommandComponent.SetLocaleInfo",
+                        "No language data found for locale %s. Falling back to US English.",
+                        contextLocale.ToString().c_str());
+    _locale.reset(new Util::Locale(Util::Locale::Language::en, Util::Locale::CountryISO2::US));
+  }
+  else
+  {
+    _locale.reset(new Util::Locale(contextLocale));
+  }
 }
 
 void VoiceCommandComponent::ResetContext()
@@ -190,7 +228,7 @@ bool VoiceCommandComponent::RequestEnableVoiceCommand(AudioCaptureSystem::Permis
       if (!_initialized)
       {
         LOG_INFO("VoiceCommandComponent.HandlePermissionState.Granted", "");
-        Init();
+        return Init();
       }
       return true;
     }
@@ -264,21 +302,34 @@ void VoiceCommandComponent::Update()
     }
     
     const auto& nextPhrase = nextResult.first;
-    const auto& commandFound = _phraseData->GetCommandForPhrase(nextPhrase);
+    const auto& commandDataFound = _phraseData->GetDataForPhrase(_locale->GetLanguage(), nextPhrase);
+    const auto& commandType = commandDataFound->GetVoiceCommandType();
     
-    if (commandFound == VoiceCommandType::Count)
+    if (commandType == VoiceCommandType::Count)
     {
-      LOG_INFO("VoiceCommandComponent.HeardCommand", "Heard phrase with no command: %s", nextPhrase.c_str());
+      LOG_INFO("VoiceCommandComponent.HeardPhraseNoCommand", "Heard phrase with no command: %s", nextPhrase.c_str());
       continue;
     }
     
-    // TODO: Update the config phrase data with an optional score minimum to use for a phrase.
-    heardCommandUpdated = HandleCommand(commandFound);
+    if (commandDataFound->HasDataValueSet(PhraseData::DataValueType::MinRecogScore))
+    {
+      const auto& minScore = commandDataFound->GetMinRecogScore();
+      const auto& phraseScore = nextResult.second;
+      // Negative scores are from forced commands, so let those pass through
+      if (phraseScore > 0.0f && phraseScore < minScore)
+      {
+        LOG_INFO("VoiceCommandComponent.HeardCommandBelowThreshold",
+                 "Heard phrase %s but score %.2f was below minimum %.2f",
+                 nextPhrase.c_str(), phraseScore, minScore);
+        continue;
+      }
+    }
+    heardCommandUpdated = HandleCommand(commandType);
     
     // If we updated the pending, heard command, leave the rest of the results for later
     if (heardCommandUpdated)
     {
-      LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", EnumToString(commandFound));
+      LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", EnumToString(commandType));
       break;
     }
   }
@@ -479,7 +530,7 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
     return;
   }
   
-  const char* phrase = _phraseData->GetFirstPhraseForCommand(commandType);
+  const char* phrase = _phraseData->GetFirstPhraseForCommand(_locale->GetLanguage(), commandType);
   if (nullptr == phrase)
   {
     DEV_ASSERT_MSG(false,

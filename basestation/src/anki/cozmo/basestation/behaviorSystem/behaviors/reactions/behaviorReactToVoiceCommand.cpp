@@ -23,6 +23,10 @@
 #include "clad/types/animationTrigger.h"
 
 
+namespace {
+  const float kReactToTriggerDelayTime_s = 4.0f;
+}
+
 namespace Anki {
 namespace Cozmo {
   
@@ -68,7 +72,7 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   {
     auto* parallelActions = new CompoundActionParallel(robot);
     parallelActions->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(10.f)));
-    parallelActions->AddAction(new WaitAction(robot, 2.5f));
+    parallelActions->AddAction(new WaitAction(robot, kReactToTriggerDelayTime_s));
     actionSeries->AddAction(parallelActions);
   }
   

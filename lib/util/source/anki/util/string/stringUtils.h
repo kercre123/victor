@@ -26,6 +26,10 @@ std::string StringToLower(const std::string& source);
 
 std::string StringToUpper(const std::string& source);
 
+std::string StringToLowerUTF8(const std::string& s);
+
+std::string StringToUpperUTF8(const std::string& s);
+
 std::string StringFromContentsOfFile(const std::string &filename);
 
 std::string StringMapToJson(const std::map<std::string,std::string> &stringMap);

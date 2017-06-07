@@ -11,6 +11,7 @@
 **/
 
 #include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/languagePhraseData.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
 
@@ -22,11 +23,7 @@ namespace Cozmo {
 namespace VoiceCommand {
 
 namespace {
-  const std::string& kPhraseListKey = "phraseList";
-  const std::string& kPhraseCommandsMapKey = "phraseCommandsMap";
-  const std::string& kPhraseCommandsMapPhraseKey = "phrase";
-  const std::string& kPhraseCommandsMapCommandsKey = "commands";
-  const std::string& kPhraseCommandsMapCommandKey = "commandType";
+  const std::string& kLanguagePhraseListKey = "languagePhraseList";
   
   const std::string& kContextDataMapKey = "contextDataMap";
   const std::string& kContextDataTypeKey = "contextType";
@@ -34,7 +31,11 @@ namespace {
   const std::string& kContextDataAllowsFollowupKey = "contextAllowsFollowup";
   const std::string& kContextDataCommandsKey = "contextCommandList";
 }
-  
+
+// unique_ptr of a forward-declared class type demands this sacrifice
+CommandPhraseData::CommandPhraseData() = default;
+CommandPhraseData::~CommandPhraseData() = default;
+
 bool CommandPhraseData::Init(const Json::Value& commandPhraseData)
 {
   if (!commandPhraseData.isObject())
@@ -43,26 +44,40 @@ bool CommandPhraseData::Init(const Json::Value& commandPhraseData)
     return false;
   }
   
-  // Set up the phrase to command map
+  // Set up the phrase to command maps for each language
   {
-    if (!commandPhraseData.isMember(kPhraseCommandsMapKey))
+    if (!commandPhraseData.isMember(kLanguagePhraseListKey))
     {
-      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data does not contain phrase command map!");
+      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data does not contain language phrase data list.");
       return false;
     }
     
-    const Json::Value& phraseMapData = commandPhraseData[kPhraseCommandsMapKey];
-    if (!phraseMapData.isArray())
+    const Json::Value& languageDataList = commandPhraseData[kLanguagePhraseListKey];
+    if (!languageDataList.isArray())
     {
-      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data phrase command map is not a list?");
+      PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Keyphrase data language data is not a list?");
       return false;
     }
     
-    // Make our local copy of the phrase list
-    for (int i=0; i < phraseMapData.size(); ++i)
+    for (int i=0; i < languageDataList.size(); ++i)
     {
-      const Json::Value& curItem = phraseMapData[i];
-      AddPhraseCommandMap(curItem);
+      auto languageData = std::make_unique<LanguagePhraseData>();
+      if (languageData->Init(languageDataList[i]))
+      {
+        auto languageType = languageData->GetLanguageType();
+        
+        // If no data entry yet exists for this language, add in this one
+        if (_languagePhraseDataMap.find(languageType) == _languagePhraseDataMap.end())
+        {
+          _languagePhraseDataMap[languageType] = std::move(languageData);
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("CommandPhraseData.Init.LanguagePhraseDataIgnored",
+                            "Secondary language data for language %s is ignored.",
+                            Anki::Util::Locale::LanguageToString(languageType).c_str());
+        }
+      }
     }
   }
   
@@ -88,61 +103,6 @@ bool CommandPhraseData::Init(const Json::Value& commandPhraseData)
       AddContextData(curItem);
     }
   }
-  
-  return true;
-}
-
-bool CommandPhraseData::AddPhraseCommandMap(const Json::Value& dataObject)
-{
-  if (!dataObject.isObject())
-  {
-    PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                      "Phrase command map item is not an object?\n%s",
-                      Json::StyledWriter().write(dataObject).c_str());
-    return false;
-  }
-  
-  if (!dataObject.isMember(kPhraseCommandsMapPhraseKey) || !dataObject[kPhraseCommandsMapPhraseKey].isString())
-  {
-    PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                      "Phrase command map does not contain phrase!\n%s",
-                      Json::StyledWriter().write(dataObject).c_str());
-    return false;
-  }
-  
-  const std::string& phraseKey = dataObject[kPhraseCommandsMapPhraseKey].asString();
-  
-  // We want this to be a unique entry in the map
-  auto phraseMapIter = _phraseToTypeMap.find(phraseKey);
-  if (phraseMapIter != _phraseToTypeMap.end())
-  {
-    PRINT_NAMED_ERROR("CommandPhraseData.Init.JsonData", "Phrase command map contains phrase already stored once: %s", phraseKey.c_str());
-    return false;
-  }
-  
-  if (!dataObject.isMember(kPhraseCommandsMapCommandKey) || !dataObject[kPhraseCommandsMapCommandKey].isString())
-  {
-    PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                      "Phrase command map does not contain command type!\n%s",
-                      Json::StyledWriter().write(dataObject).c_str());
-    return false;
-  }
-  
-  const std::string& commandKey = dataObject[kPhraseCommandsMapCommandKey].asString();
-  VoiceCommandType commandType = VoiceCommandTypeFromString(commandKey.c_str());
-  if (VoiceCommandType::Count == commandType)
-  {
-    PRINT_NAMED_ERROR("CommandPhraseData.AddPhraseCommandMap.JsonData",
-                      "Phrase command map's command was not found.\n%s",
-                      Json::StyledWriter().write(dataObject).c_str());
-    return false;
-  }
-  
-  // There might be multiple phrases that match the command type
-
-  
-  _phraseToTypeMap[phraseKey] = commandType;
-  _commandToPhrasesMap[commandType].push_back(phraseKey);
   
   return true;
 }
@@ -252,36 +212,60 @@ bool CommandPhraseData::AddContextData(const Json::Value& dataObject)
   return true;
 }
 
-std::vector<const char*> CommandPhraseData::GetPhraseListRaw() const
+std::vector<PhraseDataSharedPtr> CommandPhraseData::GetPhraseDataList(LanguageType languageType, VoiceCommandListenContext context) const
 {
-  std::vector<const char*> rawList;
-  for (const auto& phraseData : _phraseToTypeMap)
+  const auto& iter = _languagePhraseDataMap.find(languageType);
+  if (iter == _languagePhraseDataMap.end())
   {
-    rawList.push_back(phraseData.first.c_str());
-  }
-  return rawList;
-}
-  
-VoiceCommandType CommandPhraseData::GetCommandForPhrase(const std::string& phrase) const
-{
-  const auto& phraseDataIter = _phraseToTypeMap.find(phrase);
-  if (phraseDataIter == _phraseToTypeMap.end())
-  {
-    return VoiceCommandType::Count;
+    return std::vector<PhraseDataSharedPtr>{};
   }
   
-  return phraseDataIter->second;
+  const auto& contextDataMap = GetContextData();
+  const auto& contextIter = contextDataMap.find(context);
+  if (contextIter == contextDataMap.end())
+  {
+    return std::vector<PhraseDataSharedPtr>{};
+  }
+  
+  return iter->second->GetPhraseDataList(contextIter->second._commandsSet);
+}
+
+PhraseDataSharedPtr CommandPhraseData::GetDataForPhrase(LanguageType languageType, const std::string& phrase) const
+{
+  const auto& iter = _languagePhraseDataMap.find(languageType);
+  if (iter != _languagePhraseDataMap.end())
+  {
+    return iter->second->GetDataForPhrase(phrase);
+  }
+  
+  return PhraseDataSharedPtr{};
 }
   
-const char* CommandPhraseData::GetFirstPhraseForCommand(VoiceCommandType commandType) const
+const char* CommandPhraseData::GetFirstPhraseForCommand(LanguageType languageType, VoiceCommandType commandType) const
 {
-  const auto& iter = _commandToPhrasesMap.find(commandType);
-  if (iter != _commandToPhrasesMap.end() && iter->second.size() > 0)
+  const auto& iter = _languagePhraseDataMap.find(languageType);
+  if (iter != _languagePhraseDataMap.end())
   {
-    return iter->second.front().c_str();
+    return iter->second->GetFirstPhraseForCommand(commandType);
   }
   
   return nullptr;
+}
+
+const LanguageFilenames& CommandPhraseData::GetLanguageFilenames(LanguageType languageType, CountryType countryType) const
+{
+  const auto& iter = _languagePhraseDataMap.find(languageType);
+  if (iter == _languagePhraseDataMap.end())
+  {
+    PRINT_NAMED_ERROR("CommandPhraseData.GetLanguageFilenames",
+                      "Could not find language phrase data for %s",
+                      Anki::Util::Locale::LanguageToString(languageType).c_str());
+    
+    static LanguageFilenames emptyFilenames{};
+    return emptyFilenames;
+  }
+  
+  return iter->second->GetLanguageFilenames(countryType);
 }
 
 } // namespace VoiceCommand

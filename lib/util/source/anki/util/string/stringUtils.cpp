@@ -13,6 +13,7 @@
 #include "stringUtils.h"
 
 #include "json/json.h"
+#include <codecvt>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -66,6 +67,29 @@ std::string StringToUpper(const std::string& source)
     }
   }
   return result;
+}
+
+// Utility functions for converting UTF-8 encoded strings to lowercase and uppercase, indepdendent of language
+// Found on stackoverflow https://stackoverflow.com/a/33059122
+std::string StringToLowerUTF8(const std::string& s)
+{
+  // Use user locale (default) because we can't be sure what will exist on the platform.
+  const auto& userLocale = std::locale("");
+  auto ss = std::wstring_convert<std::codecvt_utf8<wchar_t>>{}.from_bytes(s);
+  for (auto& c : ss) {
+    c = std::tolower(c, userLocale);
+  }
+  return std::wstring_convert<std::codecvt_utf8<wchar_t>>{}.to_bytes(ss);
+}
+
+std::string StringToUpperUTF8(const std::string& s)
+{
+  const auto& utf8Locale = std::locale("");
+  auto ss = std::wstring_convert<std::codecvt_utf8<wchar_t>>{}.from_bytes(s);
+  for (auto& c : ss) {
+    c = std::toupper(c, utf8Locale);
+  }
+  return std::wstring_convert<std::codecvt_utf8<wchar_t>>{}.to_bytes(ss);
 }
 
 std::string StringFromContentsOfFile(const std::string &filename)

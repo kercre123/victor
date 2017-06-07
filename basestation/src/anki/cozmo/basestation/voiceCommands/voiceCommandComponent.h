@@ -75,6 +75,7 @@ public:
   
 private:
   const CozmoContext&                                   _context;
+  std::unique_ptr<Util::Locale>                         _locale;
   std::unique_ptr<AudioUtil::AudioRecognizerProcessor>  _recogProcessor;
   std::unique_ptr<AudioUtil::AudioCaptureSystem>        _captureSystem;
   std::unique_ptr<AudioUtil::SpeechRecognizer>          _recognizer;
@@ -89,7 +90,8 @@ private:
   bool                                                  _permRequestAlreadyDenied = false;
   std::recursive_mutex                                  _permissionCallbackLock;
   
-  void Init();
+  bool Init();
+  void SetLocaleInfo();
   
   // Updates the status of the backpack light on Cozmo that indicates hearing a command
   void UpdateCommandLight(bool heardTriggerPhrase);

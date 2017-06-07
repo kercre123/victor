@@ -13,9 +13,11 @@
 #ifndef __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_
 #define __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_
 
+#include "util/environment/locale.h"
 #include "clad/types/voiceCommandTypes.h"
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -29,16 +31,26 @@ namespace Anki {
 namespace Cozmo {
 namespace VoiceCommand {
   
+class LanguagePhraseData;
+struct LanguageFilenames;
+
+class PhraseData;
+using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
+  
 class CommandPhraseData {
 public:
+  CommandPhraseData();
+  ~CommandPhraseData();
+  
   bool Init(const Json::Value& commandPhraseData);
   
-  // NOTE: The char* items in the vector should be used immedately, and NOT held onto,
-  // as any alterations to the phrase list will invalidate the pointers.
-  std::vector<const char*> GetPhraseListRaw() const;
+  using LanguageType = Anki::Util::Locale::Language;
+  using CountryType = Anki::Util::Locale::CountryISO2;
   
-  VoiceCommandType GetCommandForPhrase(const std::string& phrase) const;
-  const char* GetFirstPhraseForCommand(VoiceCommandType commandType) const;
+  std::vector<PhraseDataSharedPtr> GetPhraseDataList(LanguageType languageType, VoiceCommandListenContext context) const;
+  
+  PhraseDataSharedPtr GetDataForPhrase(LanguageType languageType, const std::string& phrase) const;
+  const char* GetFirstPhraseForCommand(LanguageType languageType, VoiceCommandType commandType) const;
   
   // Simple struct for holding the data of a context and associated list of commands
   struct ContextData
@@ -50,15 +62,13 @@ public:
   using ContextDataMap = std::map<VoiceCommandListenContext, ContextData>;
   const ContextDataMap& GetContextData() const { return _contextDataMap; }
   
+  const LanguageFilenames& GetLanguageFilenames(LanguageType languageType, CountryType countryType) const;
+  
 private:
+  std::map<LanguageType, std::unique_ptr<LanguagePhraseData>> _languagePhraseDataMap;
+  std::map<VoiceCommandListenContext, ContextData>            _contextDataMap;
   
-  // A couple maps for holding the data of the phrase and associated command
-  std::map<std::string, VoiceCommandType>                 _phraseToTypeMap;
-  std::map<VoiceCommandType, std::vector<std::string>>    _commandToPhrasesMap;
-  
-  std::map<VoiceCommandListenContext, ContextData>    _contextDataMap;
-  
-  bool AddPhraseCommandMap(const Json::Value& dataObject);
+  bool AddLanguagePhraseData(const Json::Value& dataObject);
   bool AddContextData(const Json::Value& dataObject);
 };
 

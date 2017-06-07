@@ -14,11 +14,17 @@
 
 #include "audioUtil/speechRecognizer.h"
 
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace VoiceCommand {
+  class PhraseData;
+  using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
+}
 
 class SpeechRecognizerTHF : public AudioUtil::SpeechRecognizer
 {
@@ -30,8 +36,11 @@ public:
   SpeechRecognizerTHF(const SpeechRecognizerTHF& other) = delete;
   SpeechRecognizerTHF& operator=(const SpeechRecognizerTHF& other) = delete;
   
-  bool Init();
-  bool AddRecognitionDataAutoGen(IndexType index, const char* const * phraseList, unsigned int numPhrases);
+  bool Init(const std::string& pronunPath);
+  bool AddRecognitionDataAutoGen(IndexType index,
+                                 const std::string& nnFilePath,
+                                 const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList,
+                                 bool isPhraseSpotted, bool allowsFollowupRecog);
   bool AddRecognitionDataFromFile(IndexType index,
                                   const std::string& nnFilePath, const std::string& searchFilePath,
                                   bool isPhraseSpotted, bool allowsFollowupRecog);

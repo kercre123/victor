@@ -12,6 +12,7 @@
 *
 */
 
+#include "anki/cozmo/basestation/voiceCommands/phraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHFTypes.h"
 #include "util/console/consoleInterface.h"
@@ -20,12 +21,15 @@
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 #include "trulyhandsfree.h"
-#include "sensoryStaticData.h"
 #endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
+#include <algorithm>
 #include <array>
 #include <iostream>
+#include <locale>
 #include <map>
+#include <string>
+#include <sstream>
 
 namespace Anki {
 namespace Cozmo {
@@ -42,17 +46,21 @@ void SpeechRecognizerTHF::SetForceHeardPhrase(const char* phrase)
   sPhraseForceHeard = (phrase == nullptr) ? "" : phrase;
 }
 
+namespace {
+  // THF keyword for "none of the above" that can be used in non-phrasespotted grammars and search lists
+  const std::string kNotaString = "*nota";
+  
+  // Defaults based on the THF documentation for phrasespotting params A and B
+  const int kPhraseSpotParamADefault = -1200;
+  const int kPhraseSpotParamBDefault = 500;
+}
+
 // Local definition of data used internally for more strict encapsulation
 struct SpeechRecognizerTHF::SpeechRecognizerTHFData
 {
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   thf_t*      _thfSession = nullptr;
   pronuns_t*  _thfPronun = nullptr;
-  
-  // Grab references to the static data used for recognition
-  // Not bothering to make these const since the API expects them NON const for some reason
-  sdata_t* const precog_data = &thf_static_recog_data;
-  sdata_t* const ppronun_data = &thf_static_pronun_data;
 #endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
   IndexType                          _thfCurrentRecog = InvalidIndex;
@@ -60,6 +68,8 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   std::map<IndexType, RecogDataSP>   _thfAllRecogs;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
+  searchs_t* CreatePhraseSpottedSearch(recog_t* createdRecognizer,
+                                       const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList) const;
 };
   
 SpeechRecognizerTHF::SpeechRecognizerTHF()
@@ -137,7 +147,7 @@ void SpeechRecognizerTHF::RemoveRecognitionData(IndexType index)
 
 #if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
-bool SpeechRecognizerTHF::Init()
+bool SpeechRecognizerTHF::Init(const std::string& pronunPath)
 {
   Cleanup();
   
@@ -154,7 +164,7 @@ bool SpeechRecognizerTHF::Init()
   _impl->_thfSession = createdSession;
   
   /* Create pronunciation */
-  pronuns_t* createdPronunciation = thfPronunCreateFromStatic(_impl->_thfSession, _impl->ppronun_data, 0, 0);
+  pronuns_t* createdPronunciation = thfPronunCreateFromFile(_impl->_thfSession, pronunPath.c_str(), 0);
   if(!createdPronunciation)
   {
     HandleInitFail(std::string("ERROR thfPronunCreateFromFile ") + thfGetLastError(_impl->_thfSession));
@@ -171,7 +181,10 @@ void SpeechRecognizerTHF::HandleInitFail(const std::string& failMessage)
   Cleanup();
 }
 
-bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index, const char* const * phraseList, unsigned int numPhrases)
+bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
+                                                    const std::string& nnFilePath,
+                                                    const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList,
+                                                    bool isPhraseSpotted, bool allowsFollowupRecog)
 {
   recog_t* createdRecognizer = nullptr;
   searchs_t* createdSearch = nullptr;
@@ -188,7 +201,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index, const char*
     return false;
   }
   
-  // Check whether this spot is already taken
+  // First check whether this spot is already taken
   auto indexIter = _impl->_thfAllRecogs.find(index);
   if (indexIter != _impl->_thfAllRecogs.end())
   {
@@ -200,23 +213,41 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index, const char*
   auto bufferSizeInSamples = Util::numeric_cast<unsigned short>(AudioUtil::kSamplesPerChunk * 2);
   
   /* Create recognizer */
-  createdRecognizer = thfRecogCreateFromStatic(_impl->_thfSession, _impl->precog_data, 0, bufferSizeInSamples, -1, SDET);
+  auto doSpeechDetect = isPhraseSpotted ? NO_SDET : SDET;
+  createdRecognizer = thfRecogCreateFromFile(_impl->_thfSession, nnFilePath.c_str(), bufferSizeInSamples, -1, doSpeechDetect);
   if(!createdRecognizer)
   {
-    cleanupAfterFailure("ERROR thfRecogCreateFromStatic");
+    cleanupAfterFailure("ERROR thfRecogCreateFromFile");
     return false;
   }
   
   /* Create search */
-  // Using const_cast because the THF API apparently wants to be able to modify strings?
-  auto phraseListAPIType = const_cast<const char**>(phraseList);
-  createdSearch = thfPhrasespotCreateFromList(_impl->_thfSession, createdRecognizer, _impl->_thfPronun,
-                                              phraseListAPIType, Util::numeric_cast<uint16_t>(numPhrases),
-                                              NULL, NULL, 0, PHRASESPOT_LISTEN_SHORT);
+  if (isPhraseSpotted)
+  {
+    createdSearch = _impl->CreatePhraseSpottedSearch(createdRecognizer, phraseList);
+  }
+  else
+  {
+    std::vector<const char*> recogList;
+    for (const auto& listItem : phraseList)
+    {
+      recogList.push_back(listItem->GetPhrase().c_str());
+    }
+    // Non-phrasespotted lists do better with a *nota entry to capture sound that doesn't match:
+    recogList.push_back(kNotaString.c_str());
+    
+    const auto& itemList = static_cast<const char**>(recogList.data());
+    const auto& numItems = Util::numeric_cast<unsigned short>(recogList.size());
+    constexpr unsigned short numBestResultsToReturn = 1;
+    createdSearch = thfSearchCreateFromList(_impl->_thfSession, createdRecognizer, _impl->_thfPronun,
+                                            itemList, NULL, numItems,
+                                            numBestResultsToReturn);
+  }
   if(!createdSearch)
   {
     const char *err = thfGetLastError(_impl->_thfSession);
-    std::string errorMessage = std::string("ERROR thfPhrasespotCreateFromList ") + err;
+    std::string searchMethod = isPhraseSpotted ? "thfPhrasespotCreateFromList " : "thfSearchCreateFromList ";
+    std::string errorMessage = std::string("ERROR ") + searchMethod + err;
     cleanupAfterFailure(errorMessage);
     return false;
   }
@@ -228,12 +259,121 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index, const char*
     return false;
   }
   
+  if (allowsFollowupRecog)
+  {
+    if (!isPhraseSpotted)
+    {
+      cleanupAfterFailure("Tried to set up phrase following with non-phrasespotting recognizers, which is not allowed.");
+      return false;
+    }
+    
+    constexpr float overlapTime_ms = 1000.f;
+    if (!thfPhrasespotConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, PS_SEQ_BUFFER, overlapTime_ms))
+    {
+      cleanupAfterFailure("ERROR thfPhrasespotConfigSet PS_SEQ_BUFFER");
+      return false;
+    }
+  }
+  
+  if (isPhraseSpotted)
+  {
+    if (!thfPhrasespotConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, PS_DELAY, 90))
+    {
+      cleanupAfterFailure("ERROR thfPhrasespotConfigSet PS_DELAY");
+      return false;
+    }
+  }
+  
   // Everything should be happily added, so store off this recognizer
-  constexpr bool isPhraseSpotted = true;
-  constexpr bool allowsFollowupRecog = false;
   _impl->_thfAllRecogs[index] = MakeRecogDataSP(createdRecognizer, createdSearch, isPhraseSpotted, allowsFollowupRecog);
   
   return true;
+}
+
+searchs_t* SpeechRecognizerTHF::SpeechRecognizerTHFData::CreatePhraseSpottedSearch(recog_t* createdRecognizer,
+                                                                                   const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList) const
+{
+  if (nullptr == createdRecognizer)
+  {
+    return nullptr;
+  }
+
+  // Go through list of phrases, pull out all unique words, and grab their pronunciation
+  std::map<std::string, std::string> wordToPronunMap;
+  std::vector<const char*> wordList;
+  std::vector<const char*> pronunList;
+  for (const auto& phrase : phraseList)
+  {
+    std::istringstream wordStream = std::istringstream(phrase->GetPhrase());
+    for(std::string word; wordStream >> word; )
+    {
+      const auto& iter = wordToPronunMap.find(word);
+      if (iter == wordToPronunMap.end())
+      {
+        const auto& numResultsDesired = static_cast<unsigned short>( 1 );
+        const char* pronun = thfPronunCompute(_thfSession, _thfPronun, word.c_str(), numResultsDesired, nullptr, nullptr);
+        wordToPronunMap[word] = pronun;
+        
+        auto newIter = wordToPronunMap.find(word);
+        wordList.push_back(newIter->first.c_str());
+        pronunList.push_back(newIter->second.c_str());
+      }
+    }
+  }
+  
+  // Compose the grammar for this list
+  
+  // Define each of the phrases as its own var in the grammar
+  std::stringstream grammarStream;
+  for (int i=0; i<phraseList.size(); ++i)
+  {
+    grammarStream << std::to_string(i) << " = " << phraseList[i]->GetPhrase() << "; ";
+  }
+  
+  // Add in the final grammar definition ORing all the vars together
+  grammarStream << "g = ";
+  for (int i=0; i<phraseList.size(); ++i)
+  {
+    grammarStream << "$" << std::to_string(i);
+    if (i < (phraseList.size() - 1))
+    {
+      grammarStream << " | ";
+    }
+  }
+  grammarStream << "; ";
+  
+  // Set the params for each phrase var
+  for (int i=0; i<phraseList.size(); ++i)
+  {
+    auto paramAValue = kPhraseSpotParamADefault;
+    if (phraseList[i]->HasDataValueSet(VoiceCommand::PhraseData::DataValueType::ParamA))
+    {
+      paramAValue = phraseList[i]->GetParamA();
+    }
+    
+    auto paramBValue = kPhraseSpotParamBDefault;
+    if (phraseList[i]->HasDataValueSet(VoiceCommand::PhraseData::DataValueType::ParamB))
+    {
+      paramBValue = phraseList[i]->GetParamB();
+    }
+    
+    // We always want to set params A and B
+    grammarStream << "paramA:$" << std::to_string(i) << " " << std::to_string(paramAValue) << "; ";
+    grammarStream << "paramB:$" << std::to_string(i) << " " << std::to_string(paramBValue) << "; ";
+    
+    // Special case for paramC: only add it to the grammar if it was set in the phrase data
+    if (phraseList[i]->HasDataValueSet(VoiceCommand::PhraseData::DataValueType::ParamC))
+    {
+      grammarStream << "paramC:$" << std::to_string(i) << " " << std::to_string(phraseList[i]->GetParamC()) << "; ";
+    }
+  }
+  
+  std::string grammarString = grammarStream.str();
+  const auto& numItems = Util::numeric_cast<unsigned short>(wordToPronunMap.size());
+  const auto& numResultsDesired = static_cast<unsigned short>( 1 );
+  
+  // Use the grammar, wordlist, and pronunlist to set up the phrasespotted search
+  return thfSearchCreateFromGrammar(_thfSession, createdRecognizer, _thfPronun, grammarString.c_str(), wordList.data(), pronunList.data(), numItems, numResultsDesired, PHRASESPOTTING);
 }
 
 bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
@@ -386,24 +526,27 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   if (!sPhraseForceHeard.empty() || RecogStatusIsEndCondition(status))
   {
     float score = 0;
-    const char* foundString = nullptr;
+    const char* foundStringRaw = nullptr;
     if (sPhraseForceHeard.empty())
     {
-      if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundString, NULL, NULL, NULL, NULL, NULL, NULL))
+      if (!thfRecogResult(_impl->_thfSession, currentRecognizer, &score, &foundStringRaw, NULL, NULL, NULL, NULL, NULL, NULL))
       {
         PRINT_NAMED_ERROR("SpeechRecognizerTHF.Update.thfRecogResult.Fail", "%s", thfGetLastError(_impl->_thfSession));
       }
     }
     else
     {
-      foundString = sPhraseForceHeard.c_str();
+      foundStringRaw = sPhraseForceHeard.c_str();
+      score = -1.0f;
       status = RECOG_DONE;
     }
     
-    if (foundString != nullptr && foundString[0] != '\0')
+    if (foundStringRaw != nullptr && foundStringRaw[0] != '\0' && kNotaString.compare(foundStringRaw) != 0)
     {
-      DoCallback(foundString, score);
-      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString);
+      std::string foundString{foundStringRaw};
+      std::replace(foundString.begin(), foundString.end(), '_', ' ');
+      DoCallback(foundString.c_str(), score);
+      PRINT_CH_INFO("VoiceCommands", "SpeechRecognizerTHF.Update", "Recognizer score %f %s", score, foundString.c_str());
     }
     
     // If the current recognizer allows a followup recognizer to immediately take over

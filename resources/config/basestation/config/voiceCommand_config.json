@@ -1,48 +1,203 @@
 {
-  "phraseCommandsMap": [
+  "languagePhraseList" : [
     {
-      "phrase": "Hey Cozmo",
-      "commandType": "HeyCozmo"
+      "languageCode" : "en",
+      "languageDataDir" : "en_us_16kHz_v10",
+      "netfileFilename" : "nn_en_us_mfcc_16k_15_250_v5.1.1.raw",
+      "ltsFilename" : "lts_en_us_9.5.2b.raw",
+      "altCountryDataList" : [
+        {
+          "countryCode" : "GB",
+          "languageDataDir" : "en_UK_16kHz_v20170130",
+          "netfileFilename" : "nn_en_mfcc6_monophone_3x500_v3.3.2.raw",
+          "ltsFilename" : "lts_en_3.0.raw"
+        }
+      ],
+      "phraseCommandsMap": [
+        {
+          "phrase": "HeyCozmo",
+          "commandType": "HeyCozmo",
+          "paramA": -600,
+          "paramB": 550
+        },
+        {
+          "phrase": "Do A Dance",
+          "commandType": "DoADance",
+          "minRecogScore": 3.0
+        },
+        {
+          "phrase": "Come Here",
+          "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Do A Trick",
+          "commandType": "DoATrick"
+        },
+        {
+          "phrase": "Fist Bump",
+          "commandType": "FistBump",
+          "minRecogScore": 2.0
+        },
+        {
+          "phrase": "Do You Want To Play",
+          "commandType": "LetsPlay"
+        },
+        {
+          "phrase": "No Thank You",
+          "commandType": "NoThankYou"
+        },
+        {
+          "phrase": "Peek a Boo",
+          "commandType": "PeekABoo"
+        },
+        {
+          "phrase": "Yes Please",
+          "commandType": "YesPlease"
+        }
+      ]
     },
     {
-      "phrase": "HeyCozmo",
-      "commandType": "HeyCozmo"
+      "languageCode" : "de",
+      "languageDataDir" : "de_16kHz_v20170130",
+      "netfileFilename" : "nn_de_mfcc6_16k_15_monophone_3-500-relu-bias_v4.1.0.raw",
+      "ltsFilename" : "lts_de_4.0.1.raw",
+      "phraseCommandsMap": [
+        {
+          "phrase": "Hey Cozmo",
+          "commandType": "HeyCozmo",
+          "paramA": -300,
+          "paramB": 850
+        },
+        {
+          "phrase": "Tanze",
+          "commandType": "DoADance"
+        },
+        {
+          "phrase": "Komm her",
+          "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Zieg Mier Einen Trick",
+          "commandType": "DoATrick"
+        },
+        {
+          "phrase": "Fauststoß",
+          "commandType": "FistBump"
+        },
+        {
+          "phrase": "Lass Uns Spielen",
+          "commandType": "LetsPlay",
+          "minRecogScore": 2.0
+        },
+        {
+          "phrase": "Nein Danke",
+          "commandType": "NoThankYou"
+        },
+        {
+          "phrase": "Kuckuck",
+          "commandType": "PeekABoo"
+        },
+        {
+          "phrase": "Ja Bitte",
+          "commandType": "YesPlease"
+        }
+      ]
     },
     {
-      "phrase": "HeyCuzmo",
-      "commandType": "HeyCozmo"
+      "languageCode" : "fr",
+      "languageDataDir" : "fr_16kHz_v20170124",
+      "netfileFilename" : "nn_fr_mfcc6_monophone_3x500_Jan17_v5.1.0.raw",
+      "ltsFilename" : "lts_fr_5.1.0.raw",
+      "phraseCommandsMap": [
+        {
+          "phrase": "Hé Cozmo",
+          "commandType": "HeyCozmo",
+          "paramA": -600,
+          "paramB": 700
+        },
+        {
+          "phrase": "Danse un peu",
+          "commandType": "DoADance",
+          "minRecogScore": 3.5
+        },
+        {
+          "phrase": "Viens là",
+          "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Fais moi un tour",
+          "commandType": "DoATrick",
+          "minRecogScore": 2.0
+        },
+        {
+          "phrase": "Poing à poing",
+          "commandType": "FistBump",
+          "minRecogScore": 3.0
+        },
+        {
+          "phrase": "Viens jouer",
+          "commandType": "LetsPlay"
+        },
+        {
+          "phrase": "Non merci",
+          "commandType": "NoThankYou"
+        },
+        {
+          "phrase": "Coucou",
+          "commandType": "PeekABoo",
+          "minRecogScore": 4.0
+        },
+        {
+          "phrase": "Oui s'il te plait",
+          "commandType": "YesPlease"
+        }
+      ]
     },
     {
-      "phrase": "Do A Dance",
-      "commandType": "DoADance"
-    },
-    {
-      "phrase": "Come Here",
-      "commandType": "ComeHere"
-    },
-    {
-      "phrase": "Do A Trick",
-      "commandType": "DoATrick"
-    },
-    {
-      "phrase": "Fist Bump",
-      "commandType": "FistBump"
-    },
-    {
-      "phrase": "Lets Play A Game",
-      "commandType": "LetsPlay"
-    },
-    {
-      "phrase": "No Thank You",
-      "commandType": "NoThankYou"
-    },
-    {
-      "phrase": "Peek a Boo",
-      "commandType": "PeekABoo"
-    },
-    {
-      "phrase": "Yes Please",
-      "commandType": "YesPlease"
+      "languageCode" : "ja",
+      "languageDataDir" : "ja_16kHz_v12 (mfcc6)",
+      "netfileFilename" : "nn_ja_mfcc6_16k_15_monophone_3-500-sigmoid-no-bias_v6.6.1.raw",
+      "ltsFilename" : "lts_ja_6.7.12.raw",
+      "phraseCommandsMap": [
+        {
+          "phrase": "Ne kozumo",
+          "commandType": "HeyCozmo",
+          "paramA": -900,
+          "paramB": 600
+        },
+        {
+          "phrase": "Odotte",
+          "commandType": "DoADance"
+        },
+        {
+          "phrase": "Kocchi kite",
+          "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Nanika yatte mite",
+          "commandType": "DoATrick"
+        },
+        {
+          "phrase": "Gūtatchi shiyou",
+          "commandType": "FistBump"
+        },
+        {
+          "phrase": "Asobou",
+          "commandType": "LetsPlay"
+        },
+        {
+          "phrase": "Iranai",
+          "commandType": "NoThankYou"
+        },
+        {
+          "phrase": "Inai inai ba",
+          "commandType": "PeekABoo"
+        },
+        {
+          "phrase": "Onegai",
+          "commandType": "YesPlease"
+        }
+      ]
     }
   ],
 
@@ -78,5 +233,4 @@
       ]
     }
   ]
-
 }
