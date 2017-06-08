@@ -51,7 +51,8 @@ public:
   ~NeedsManager();
 
   void Init(const float currentTime_s, const Json::Value& inJson,
-            const Json::Value& inStarsJson, const Json::Value& inActionsJson);
+            const Json::Value& inStarsJson, const Json::Value& inActionsJson,
+            const Json::Value& inDecayJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
 

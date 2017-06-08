@@ -1,114 +1,23 @@
 {
-  "MinimumNeedLevel": 0.00,
-  "MaximumNeedLevel": 1.00,
-  "DecayPeriodSeconds": 60.0, // How frequently to decay needs while connected
-
-  // Starting values for each need (when cozmo is born)
-  "InitialNeedsLevels": {
-    "Repair" : 1.0000,
-    "Energy" : 1.0000,
-    "Play"   : 1.0000
-  },
-
-  // Bracket levels:  For each bracket level, if the need level is AT OR ABOVE
-  //   the corresponding value, then that is the bracket we're in.  The last
-  //   bracket should always be 0.0000
-  "BracketLevels": {
-    "Repair" : {
-      "Full"     : 0.9500,
-      "Normal"   : 0.5000,
-      "Warning"  : 0.1000,
-      "Critical" : 0.0000
-    },
-    "Energy" : {
-      "Full"     : 0.9500,
-      "Normal"   : 0.5000,
-      "Warning"  : 0.1000,
-      "Critical" : 0.0000
-    },
-    "Play"   : {
-      "Full"     : 0.9500,
-      "Normal"   : 0.5000,
-      "Warning"  : 0.1000,
-      "Critical" : 0.0000
-    }
-  },
-
-  // These are the Repair need levels at which parts become broken
-  "BrokenPartThresholds":
-    [
-      0.7500,
-      0.5000,
-      0.2500
-    ],
-
-  // Decay (when connected)
-  "DecayConnected": {
-    "Repair": {
-      "DecayRates": 
-      [
-        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.0000, "DecayPerMinute": 0.0020 }
-      ],
-      "DecayModifiers":
-      [
-        { "Threshold": 0.5000, "OtherNeedsAffected":
-          [
-          ]
-        },
-        { "Threshold": 0.0000, "OtherNeedsAffected":
-          [
-            { "OtherNeedID": "Energy", "Multiplier" : 1.1000 },
-            { "OtherNeedID": "Play",   "Multiplier" : 1.2000 }
-          ]
-        }
-      ]
-    },
-    "Energy": {
-      "DecayRates":
-      [
-        { "Threshold": 0.5010, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2510, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1010, "DecayPerMinute": 0.0020 }
-      ]
-    },
-    "Play": {
-      "DecayRates":
-      [
-        { "Threshold": 0.5001, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2501, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1001, "DecayPerMinute": 0.0020 }
-      ]
-    }
-  },
-
-  // Decay (when unconnected)
-  "DecayUnconnected": {
-    "Repair": {
-      "DecayRates":
-      [
-        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
-      ]
-    },
-    "Energy": {
-      "DecayRates":
-      [
-        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
-      ]
-    },
-    "Play": {
-      "DecayRates":
-      [
-        { "Threshold": 0.5000, "DecayPerMinute": 0.0100 },
-        { "Threshold": 0.2500, "DecayPerMinute": 0.0050 },
-        { "Threshold": 0.1000, "DecayPerMinute": 0.0020 }
-      ]
-    }
-  }
+  "MaximumNeedLevel": 1,
+  "MinimumNeedLevel": 0,
+  "DecayPeriodSeconds": 60,
+  "InitialNeedLevelRepair": 1,
+  "InitialNeedLevelEnergy": 1,
+  "InitialNeedLevelPlay": 1,
+  "BracketLevelRepairFull": 0.95,
+  "BracketLevelRepairNormal": 0.5,
+  "BracketLevelRepairWarning": 0.1,
+  "BracketLevelRepairCritical": 0,
+  "BracketLevelEnergyFull": 0.95,
+  "BracketLevelEnergyNormal": 0.5,
+  "BracketLevelEnergyWarning": 0.1,
+  "BracketLevelEnergyCritical": 0,
+  "BracketLevelPlayFull": 0.95,
+  "BracketLevelPlayNormal": 0.5,
+  "BracketLevelPlayWarning": 0.1,
+  "BracketLevelPlayCritical": 0,
+  "BrokenPartThreshold0": 0.75,
+  "BrokenPartThreshold1": 0.5,
+  "BrokenPartThreshold2": 0.25
 }
-

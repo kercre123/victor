@@ -71,6 +71,7 @@ public:
   NeedsConfig();
 
   void Init(const Json::Value& json);
+  void InitDecay(const Json::Value& json);
 
   float _minNeedLevel;
   float _maxNeedLevel;
@@ -89,7 +90,8 @@ public:
   DecayConfig _decayUnconnected;
 
 private:
-  void InitDecay(const Json::Value& json, const std::string& decayKey, DecayConfig& decayConfig);
+  void InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
+  void InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo);
 
 };
 

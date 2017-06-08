@@ -239,11 +239,13 @@ NeedsManager::~NeedsManager()
 
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
-                        const Json::Value& inStarsJson, const Json::Value& inActionsJson)
+                        const Json::Value& inStarsJson, const Json::Value& inActionsJson,
+                        const Json::Value& inDecayJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
   _needsConfig.Init(inJson);
+  _needsConfig.InitDecay(inDecayJson);
   
   _starRewardsConfig = std::make_shared<StarRewardsConfig>();
   _starRewardsConfig->Init(inStarsJson);

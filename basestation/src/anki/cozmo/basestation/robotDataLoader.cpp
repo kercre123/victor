@@ -743,6 +743,18 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
+  // needs system decay config
+  {
+    std::string jsonFilename = "config/basestation/config/needs_decay_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
+                        "Needs System Decay Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+    }
+  }
+
   // feature gate
   {
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};

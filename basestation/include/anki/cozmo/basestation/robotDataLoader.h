@@ -90,7 +90,8 @@ public:
   const Json::Value& GetRobotNeedsConfig() const        { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const       { return _starRewardsConfig; }
   const Json::Value& GetRobotNeedsActionsConfig() const { return _needsActionConfig; }
-  
+  const Json::Value& GetRobotNeedsDecayConfig() const   { return _needsDecayConfig; }
+
   
   // voice command configs
   const Json::Value& GetLetsPlayWeightsConfig() const { return _letsPlayWeights; }
@@ -167,6 +168,7 @@ private:
   Json::Value _needsSystemConfig;
   Json::Value _starRewardsConfig;
   Json::Value _needsActionConfig;
+  Json::Value _needsDecayConfig;
   
   // voice command configs
   Json::Value _letsPlayWeights;

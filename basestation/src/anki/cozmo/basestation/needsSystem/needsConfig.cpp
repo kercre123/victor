@@ -12,6 +12,7 @@
 
 
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "clad/types/needsSystemTypes.h"
 #include <assert.h>
@@ -23,20 +24,19 @@ namespace Cozmo {
 static const std::string kMinNeedLevelKey = "MinimumNeedLevel";
 static const std::string kMaxNeedLevelKey = "MaximumNeedLevel";
 static const std::string kDecayPeriodSecondsKey = "DecayPeriodSeconds";
-
-static const std::string kInitialNeedsLevelsArrayKey = "InitialNeedsLevels";
-static const std::string kBracketLevelsArrayKey = "BracketLevels";
-
-static const std::string kBrokenPartThresholds = "BrokenPartThresholds";
-
-static const std::string kDecayConnectedKey = "DecayConnected";
-static const std::string kDecayUnconnectedKey = "DecayUnconnected";
+static const std::string kInitialNeedLevelKey = "InitialNeedLevel";
+static const std::string kBracketLevelKey = "BracketLevel";
+static const std::string kBrokenPartThresholdKey = "BrokenPartThreshold";
 
 static const std::string kDecayRatesKey = "DecayRates";
+static const std::string kConnectedDecayRatesKey = "ConnectedDecayRates";
+static const std::string kUnconnectedDecayRatesKey = "UnconnectedDecayRates";
 static const std::string kThresholdKey = "Threshold";
 static const std::string kDecayPerMinuteKey = "DecayPerMinute";
 
 static const std::string kDecayModifiersKey = "DecayModifiers";
+static const std::string kConnectedDecayModifiersKey = "ConnectedDecayModifiers";
+static const std::string kUnconnectedDecayModifiersKey = "UnconnectedDecayModifiers";
 static const std::string kOtherNeedsAffectedKey = "OtherNeedsAffected";
 static const std::string kOtherNeedIDKey = "OtherNeedID";
 static const std::string kMultiplierKey = "Multiplier";
@@ -112,6 +112,7 @@ void StarRewardsConfig::GetRewardsForLevel(int level, std::vector<NeedsReward>& 
   }
 }
 
+
 void NeedsConfig::Init(const Json::Value& json)
 {
   _minNeedLevel = JsonTools::ParseFloat(json, kMinNeedLevelKey.c_str(), "Failed to parse min need level");
@@ -119,25 +120,24 @@ void NeedsConfig::Init(const Json::Value& json)
   _decayPeriod = JsonTools::ParseFloat(json, kDecayPeriodSecondsKey.c_str(), "Failed to parse decay frequency");
 
   _initialNeedsLevels.clear();
-  const auto& jsonInitialNeedsLevels = json[kInitialNeedsLevelsArrayKey];
   for (size_t i = 0; i < (size_t)NeedId::Count; i++)
   {
-    const auto value = JsonTools::ParseFloat(jsonInitialNeedsLevels,
-                                   EnumToString(static_cast<NeedId>(i)),
-                                   "Failed to parse an initial need level");
+    const std::string keyStr = kInitialNeedLevelKey + EnumToString(static_cast<NeedId>(i));
+    const auto value = JsonTools::ParseFloat(json, keyStr.c_str(),
+                                             "Failed to parse an initial need level");
     _initialNeedsLevels[static_cast<NeedId>(i)] = value;
   }
 
   _needsBrackets.clear();
   for (size_t i = 0; i < (size_t)NeedId::Count; i++)
   {
-    const auto& jsonForNeedId = json[kBracketLevelsArrayKey][EnumToString(static_cast<NeedId>(i))];
     BracketThresholds thresholds;
     float prevValue = 1.0f;
-    for (size_t i = 0; i < (size_t)NeedBracketId::Count; i++)
+    for (size_t j = 0; j < (size_t)NeedBracketId::Count; j++)
     {
-      const auto value = JsonTools::ParseFloat(jsonForNeedId,
-                                               EnumToString(static_cast<NeedBracketId>(i)),
+      const std::string keyStr = kBracketLevelKey + EnumToString(static_cast<NeedId>(i))
+                                 + EnumToString(static_cast<NeedBracketId>(j));
+      const auto value = JsonTools::ParseFloat(json, keyStr.c_str(),
                                                "Failed to parse an initial need level");
       DEV_ASSERT_MSG(value <= prevValue,
                      "NeedsConfig.Init",
@@ -152,20 +152,37 @@ void NeedsConfig::Init(const Json::Value& json)
   }
 
   _brokenPartThresholds.clear();
-  const Json::Value& bpt = json[kBrokenPartThresholds];
   float prevValue = 1.0f;
-  for (int i = 0; i < bpt.size(); i++)
+  for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
   {
-    const float value = bpt[i].asFloat();
+    const std::string keyStr = kBrokenPartThresholdKey + std::to_string(i);
+
+    // Since we don't really know how many repairable parts there are yet (MAX_REPAIRABLE_PARTS
+    // is set to something higher than we allow now, for future expansion), just keep trying
+    // for a higher number in the key, until the new key doesn't exist, and then stop silently
+    const auto & val = json[keyStr];
+    if (!val.isNumeric())
+    {
+      break;
+    }
+    const auto value = val.asFloat();
+
     DEV_ASSERT_MSG(value <= prevValue,
                    "NeedsConfig.Init",
                    "Broken part thresholds not in descending order (%f vs %f)", value, prevValue);
     prevValue = value;
     _brokenPartThresholds.push_back(value);
   }
+}
 
-  InitDecay(json, kDecayConnectedKey, _decayConnected);
-  InitDecay(json, kDecayUnconnectedKey, _decayUnconnected);
+
+void NeedsConfig::InitDecay(const Json::Value& json)
+{
+  InitDecayRates(json[kDecayRatesKey], kConnectedDecayRatesKey, _decayConnected);
+  InitDecayRates(json[kDecayRatesKey], kUnconnectedDecayRatesKey, _decayUnconnected);
+
+  InitDecayModifiers(json[kDecayModifiersKey], kConnectedDecayModifiersKey, _decayConnected);
+  InitDecayModifiers(json[kDecayModifiersKey], kUnconnectedDecayModifiersKey, _decayUnconnected);
 }
 
 struct SortDecayRatesByThresholdDescending
@@ -185,38 +202,50 @@ struct SortDecayModifiersByThresholdDescending
 };
 
 
-void NeedsConfig::InitDecay(const Json::Value& json, const std::string& decayKey, DecayConfig& decayInfo)
+void NeedsConfig::InitDecayRates(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo)
 {
   DecayRatesByNeed decayRatesByNeed;
-  DecayModifiersByNeed decayModifiersByNeed;
 
   for (size_t needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
   {
-    const auto& jsonForNeed = json[decayKey][EnumToString(static_cast<NeedId>(needIndex))];
+    const std::string keyStr = baseKey + EnumToString(static_cast<NeedId>(needIndex));
+    const auto& jsonForNeed = json[keyStr.c_str()];
 
     DecayRates decayRates;
-    for (const auto& item : jsonForNeed[kDecayRatesKey])
+    for (const auto& item : jsonForNeed)
     {
       const auto threshold = JsonTools::ParseFloat(item, kThresholdKey.c_str(),
-                                                   "Failed to parse a decay threshold");
+                                                   "Failed to parse a decay rate threshold");
       const auto rate = JsonTools::ParseFloat(item, kDecayPerMinuteKey.c_str(),
                                               "Failed to parse a decay rate");
-      DEV_ASSERT_MSG(rate >= 0.0f,
-                     "NeedsConfig.InitDecay",
+      DEV_ASSERT_MSG(rate >= 0.0f, "NeedConfig.InitDecayRates",
                      "A decay rate needs to be positive but is %f", rate);
       decayRates.push_back(DecayRate(threshold, rate));
     }
     // Sort the decay rates by descending threshold
     std::sort(decayRates.begin(), decayRates.end(), SortDecayRatesByThresholdDescending());
-
+    
     decayRatesByNeed.push_back(decayRates);
+  }
+
+  decayInfo._decayRatesByNeed = std::move(decayRatesByNeed);
+}
+
+
+void NeedsConfig::InitDecayModifiers(const Json::Value& json, const std::string& baseKey, DecayConfig& decayInfo)
+{
+  DecayModifiersByNeed decayModifiersByNeed;
+
+  for (size_t needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
+  {
+    const std::string keyStr = baseKey + EnumToString(static_cast<NeedId>(needIndex));
+    const auto& jsonForNeed = json[keyStr.c_str()];
 
     DecayModifiers decayModifiers;
-    for (const auto& item : jsonForNeed[kDecayModifiersKey])
+    for (const auto& item : jsonForNeed)
     {
       const auto threshold = JsonTools::ParseFloat(item, kThresholdKey.c_str(),
-                                                   "Failed to parse a modifier threshold");
-
+                                                   "Failed to parse a decay modifier threshold");
       OtherNeedModifiers otherNeedModifiers;
       for (const auto& otherNeedItem : item[kOtherNeedsAffectedKey])
       {
@@ -224,7 +253,7 @@ void NeedsConfig::InitDecay(const Json::Value& json, const std::string& decayKey
                                                          "Failed to parse a modifier 'other need id'");
         const NeedId otherNeedID = NeedIdFromString(otherNeedStr.c_str());
         const auto multiplier = JsonTools::ParseFloat(otherNeedItem, kMultiplierKey.c_str(),
-                                                      "Failed to parse a modifier multiplier");
+                                                      "Failed to parse a decay modifier multiplier");
         otherNeedModifiers.push_back(OtherNeedModifier(otherNeedID, multiplier));
       }
       decayModifiers.push_back(DecayModifier(threshold, otherNeedModifiers));
@@ -235,7 +264,6 @@ void NeedsConfig::InitDecay(const Json::Value& json, const std::string& decayKey
     decayModifiersByNeed.push_back(decayModifiers);
   }
 
-  decayInfo._decayRatesByNeed = std::move(decayRatesByNeed);
   decayInfo._decayModifiersByNeed = std::move(decayModifiersByNeed);
 }
 

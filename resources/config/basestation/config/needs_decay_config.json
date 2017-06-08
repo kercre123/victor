@@ -1,0 +1,156 @@
+{
+  "DecayRates": {
+    "ConnectedDecayRatesRepair": [
+      {
+        "Threshold": 0.5,
+        "DecayPerMinute": 0.01
+      },
+      {
+        "Threshold": 0.25,
+        "DecayPerMinute": 0.005
+      },
+      {
+        "Threshold": 0,
+        "DecayPerMinute": 0.002
+      }
+    ],
+    "ConnectedDecayRatesEnergy": [
+      {
+        "Threshold": 0.501,
+        "DecayPerMinute": 0.01
+      },
+      {
+        "Threshold": 0.251,
+        "DecayPerMinute": 0.005
+      },
+      {
+        "Threshold": 0.101,
+        "DecayPerMinute": 0.002
+      }
+    ],
+    "ConnectedDecayRatesPlay": [
+      {
+        "Threshold": 0.5001,
+        "DecayPerMinute": 0.01
+      },
+      {
+        "Threshold": 0.2501,
+        "DecayPerMinute": 0.005
+      },
+      {
+        "Threshold": 0.1001,
+        "DecayPerMinute": 0.002
+      }
+    ],
+    "UnconnectedDecayRatesRepair": [
+      {
+        "Threshold": 0.5,
+        "DecayPerMinute": 0.01
+      },
+      {
+        "Threshold": 0.25,
+        "DecayPerMinute": 0.005
+      },
+      {
+        "Threshold": 0,
+        "DecayPerMinute": 0.002
+      }
+    ],
+    "UnconnectedDecayRatesEnergy": [
+      {
+        "Threshold": 0.501,
+        "DecayPerMinute": 0.01
+      },
+      {
+        "Threshold": 0.251,
+        "DecayPerMinute": 0.005
+      },
+      {
+        "Threshold": 0.101,
+        "DecayPerMinute": 0.002
+      }
+    ],
+    "UnconnectedDecayRatesPlay": [
+      {
+        "Threshold": 0.5001,
+        "DecayPerMinute": 0.01
+      },
+      {
+        "Threshold": 0.2501,
+        "DecayPerMinute": 0.005
+      },
+      {
+        "Threshold": 0.1001,
+        "DecayPerMinute": 0.002
+      }
+    ]
+  },
+  "DecayModifiers": {
+    "ConnectedDecayModifiersEnergy": [
+      {
+        "Threshold": 0.5,
+        "OtherNeedsAffected": [
+          {
+            "OtherNeedID": "Repair",
+            "Multiplier": 1
+          }
+        ]
+      },
+      {
+        "Threshold": 0.25,
+        "OtherNeedsAffected": [
+          {
+            "OtherNeedID": "Repair",
+            "Multiplier": 1.5
+          }
+        ]
+      },
+      {
+        "Threshold": 0.1,
+        "OtherNeedsAffected": [
+          {
+            "OtherNeedID": "Repair",
+            "Multiplier": 2
+          }
+        ]
+      },
+      {
+        "Threshold": 0,
+        "OtherNeedsAffected": [
+          {
+            "OtherNeedID": "Repair",
+            "Multiplier": 3
+          }
+        ]
+      }
+    ],
+    "ConnectedDecayModifiersRepair": [
+      {
+        "Threshold": 0.5,
+        "OtherNeedsAffected": [
+          {
+            "OtherNeedID": "Energy",
+            "Multiplier": 1
+          },
+          {
+            "OtherNeedID": "Play",
+            "Multiplier": 1
+          }
+        ]
+      },
+      {
+        "Threshold": 0,
+        "OtherNeedsAffected": [
+          {
+            "OtherNeedID": "Energy",
+            "Multiplier": 1.5
+          },
+          {
+            "OtherNeedID": "Play",
+            "Multiplier": 1.25
+          }
+        ]
+      }
+    ]
+  }
+}
