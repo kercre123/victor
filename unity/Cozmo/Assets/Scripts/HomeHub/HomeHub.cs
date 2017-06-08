@@ -144,19 +144,19 @@ namespace Cozmo.HomeHub {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
           break;
         }
-      case 1:{
+      case 1: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
           break;
         }
-      case 2:{
+      case 2: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
           break;
         }
-      case 3:{
+      case 3: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
           break;
         }
-      case 4:{
+      case 4: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
           break;
         }
@@ -175,7 +175,7 @@ namespace Cozmo.HomeHub {
       UIManager.OpenView(homeViewPrefab.GetComponent<HomeView>(), (newHomeView) => {
         _HomeViewInstance = (HomeView)newHomeView;
         _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-        _HomeViewInstance.MinigameConfirmed += HandleStartChallengeRequest;
+        RequestGameManager.Instance.OnRequestGameConfirmed += HandleStartChallengeRequest;
 
         // Show the current state of challenges being locked/unlocked
         _HomeViewInstance.Initialize(_ChallengeStatesById, this);
@@ -530,7 +530,7 @@ namespace Cozmo.HomeHub {
     private void DeregisterDialogEvents() {
       if (_HomeViewInstance != null) {
         _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-        _HomeViewInstance.MinigameConfirmed -= HandleStartChallengeRequest;
+        RequestGameManager.Instance.OnRequestGameConfirmed -= HandleStartChallengeRequest;
       }
     }
 

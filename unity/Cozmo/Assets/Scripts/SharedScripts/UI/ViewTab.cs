@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Cozmo.RequestGame;
 
 namespace Cozmo.UI {
   public class ViewTab : MonoBehaviour {
@@ -45,16 +46,16 @@ namespace Cozmo.UI {
 
     void OnDestroy() {
       if (_DisableGameRequestsWhenOpen) {
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
       }
     }
 
     public void EnableGameRequestsIfAllowed(bool enable) {
       if (enable && !_DisableGameRequestsWhenOpen) {
-        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+        RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
       }
       else {
-        RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
+        RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
       }
     }
   }

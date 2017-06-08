@@ -470,6 +470,9 @@ public class StartupManager : MonoBehaviour {
     DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.InitInventory();
+
+    Anki.Cozmo.VoiceCommand.VoiceCommandManager.CreateInstance();
+    Cozmo.RequestGame.RequestGameManager.CreateInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {

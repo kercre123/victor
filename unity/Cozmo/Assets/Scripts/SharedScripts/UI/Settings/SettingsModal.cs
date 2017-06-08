@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using Cozmo.RequestGame;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
@@ -39,7 +40,7 @@ namespace Cozmo.UI {
         _SnappableLayoutGroup.RegisterLayoutElement(newTabPanel.LayoutElement);
       }
 
-      RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
+      RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
       if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount) {
         ScrollToCubeSettings();
@@ -51,7 +52,7 @@ namespace Cozmo.UI {
     }
 
     void OnDestroy() {
-      RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+      RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
     }
 
     public void ScrollToCubeSettings() {

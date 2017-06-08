@@ -1,11 +1,12 @@
-using System;
-using UnityEngine;
-using System.Collections.Generic;
+using Anki.Assets;
 using Anki.Cozmo;
 using Cozmo.HomeHub;
+using Cozmo.RequestGame;
 using DataPersistence;
 using Onboarding;
-using Anki.Assets;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class OnboardingManager : MonoBehaviour {
 
@@ -218,7 +219,7 @@ public class OnboardingManager : MonoBehaviour {
         }
       }
     } // end first phase complete
-    RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
+    RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
@@ -250,7 +251,7 @@ public class OnboardingManager : MonoBehaviour {
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
-    RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
+    RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
     ShowOutlineRegion(false);
   }
 

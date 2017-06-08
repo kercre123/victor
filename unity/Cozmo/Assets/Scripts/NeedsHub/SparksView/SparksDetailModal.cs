@@ -1,5 +1,6 @@
-﻿using Cozmo.UI;
 using Cozmo.Challenge;
+using Cozmo.RequestGame;
+using Cozmo.UI;
 using DataPersistence;
 using UnityEngine;
 
@@ -51,6 +52,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
     protected override void CleanUp() {
       base.CleanUp();
+      RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
       StopSparkTrick(isCleanup: true);
       if (_QuitConfirmAlertModal != null) {
@@ -127,6 +129,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
       // Handle edge cases
       _HasHiccupsAlertController = new HasHiccupsAlertController();
+      RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
     }
 
     private void SparkCozmo(ChallengeManager.ChallengeStatePacket challengePacket) {
@@ -163,6 +166,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
       // Handle edge cases
       _HasHiccupsAlertController = new HasHiccupsAlertController();
+      RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
     }
@@ -251,7 +255,10 @@ namespace Cozmo.Needs.Sparks.UI {
       if (robot != null) {
         int currentNumCubes = robot.LightCubes.Count;
         if (requireCubes && currentNumCubes < _UnlockInfo.CubesRequired) {
-          OpenNeedCubesAlert(currentNumCubes, _UnlockInfo.CubesRequired, Localization.Get(_ChallengeTitleLocKey));
+          NeedCubesAlertHelper.OpenNeedCubesAlert(currentNumCubes,
+                                                  _UnlockInfo.CubesRequired,
+                                                  Localization.Get(_ChallengeTitleLocKey),
+                                                  this.PriorityData);
         }
         else if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.DriveOffCharger) {
           OpenCozmoNotReadyAlert();
@@ -300,40 +307,6 @@ namespace Cozmo.Needs.Sparks.UI {
                                    new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
 
       UIManager.OpenAlert(cozmoNotOnTreadsData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
-    }
-
-    public void OpenNeedCubesAlert(int currentCubes, int neededCubes, string titleString) {
-      var needCubesPriorityData = ModalPriorityData.CreateSlightlyHigherData(this.PriorityData);
-      AlertModalButtonData openCubeHelpButtonData = CreateCubeHelpButtonData(needCubesPriorityData);
-      AlertModalData needCubesData = CreateNeedMoreCubesAlertData(openCubeHelpButtonData, currentCubes,
-                                    neededCubes, titleString);
-
-      UIManager.OpenAlert(needCubesData, needCubesPriorityData);
-    }
-
-    private AlertModalButtonData CreateCubeHelpButtonData(ModalPriorityData basePriorityData) {
-      var cubeHelpModalPriorityData = ModalPriorityData.CreateSlightlyHigherData(basePriorityData);
-      System.Action cubeHelpButtonPressed = () => {
-        UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpModalPrefab, cubeHelpModalPriorityData, null);
-      };
-      return new AlertModalButtonData("open_cube_help_modal_button",
-                      LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
-                      cubeHelpButtonPressed);
-    }
-
-    private AlertModalData CreateNeedMoreCubesAlertData(AlertModalButtonData primaryButtonData,
-                                                        int currentCubes, int neededCubes, string titleString) {
-      int differenceCubes = neededCubes - currentCubes;
-      object[] descLocArgs = new object[] {
-        differenceCubes,
-        (ItemDataConfig.GetCubeData().GetAmountName(differenceCubes)),
-        titleString
-      };
-
-      return new AlertModalData("game_needs_more_cubes_alert",
-                    LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle,
-                    LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription,
-                    primaryButtonData, showCloseButton: true, descLocArgs: descLocArgs);
     }
 
     #endregion

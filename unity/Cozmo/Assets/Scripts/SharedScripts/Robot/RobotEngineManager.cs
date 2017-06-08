@@ -107,11 +107,6 @@ public class RobotEngineManager : MonoBehaviour {
   private Anki.Cozmo.ExternalInterface.RequestDeviceData _RequestDeviceDataMessage = new Anki.Cozmo.ExternalInterface.RequestDeviceData();
   private Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup _RequestUnlockDataFromBackupMessage = new Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup();
 
-  public RequestGameManager RequestGameManager {
-    get;
-    private set;
-  }
-
   private void HandleUiDeviceConnected(Anki.Cozmo.ExternalInterface.UiDeviceConnected message) {
     if (!message.toGameCLADHash.SequenceEqual(MessageEngineToGameHash._Data)) {
       DAS.Error("RobotEngineManager.CladMismatchEngineToGame", "Engine's hash (" +
@@ -135,8 +130,6 @@ public class RobotEngineManager : MonoBehaviour {
     else {
       Instance = this;
     }
-
-    RequestGameManager = new RequestGameManager();
 
     Application.runInBackground = true;
 

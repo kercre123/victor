@@ -31,7 +31,6 @@ namespace Cozmo.HomeHub {
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
-    public Action<string> MinigameConfirmed;
     public Action<string> OnTabChanged;
 
     [SerializeField]
@@ -106,9 +105,6 @@ namespace Cozmo.HomeHub {
     private GameObjectDataLink _LootViewPrefabData;
 
     private bool _LootSequenceActive = false;
-    private System.Diagnostics.Stopwatch _Stopwatch = null;
-    private string _CurrentChallengeId = null;
-    private UnlockId _CurrentChallengeUnlockID = UnlockId.Count;
 
     private Sequence _RewardSequence;
 
@@ -167,8 +163,6 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private BaseModal _CubeHelpModalPrefab;
 
-    private AlertModal _RequestDialog = null;
-
     private AlertModal _BadLightAlertInstance = null;
 
     private HomeHub _HomeHubInstance;
@@ -222,10 +216,7 @@ namespace Cozmo.HomeHub {
       _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
 
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
-      VoiceCommandManager.Instance.OnUserPromptResponse += HandleUserResponseToPrompt;
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
@@ -764,145 +755,6 @@ namespace Cozmo.HomeHub {
 
     #endregion
 
-    #region Request Game
-
-    AlertModalData _requestGameData = null;
-
-    private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart messageObject) {
-      ChallengeData data = RobotEngineManager.Instance.RequestGameManager.GetDataForGameID(messageObject.gameRequested);
-      // Do not send the minigame message if the challenge is invalid or currently not unlocked.
-      if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
-        return;
-      }
-
-      _requestGameData = new AlertModalData("request_game_alert",
-                                            LocalizationKeys.kRequestGameTitle,
-                                            LocalizationKeys.kRequestGameDescription,
-                                            new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYes, HandleMiniGameConfirm),
-                                            new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNo, HandleMiniGameRejection),
-                                            icon: data.ChallengeIcon,
-                                            dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
-                                            titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });
-
-      var requestGamePriority = new ModalPriorityData(ModalPriorityLayer.VeryLow, 2,
-                                                      LowPriorityModalAction.CancelSelf,
-                                                      HighPriorityModalAction.Stack);
-
-      Action<AlertModal> requestGameCreated = (alertModal) => {
-        ContextManager.Instance.AppFlash(playChime: true);
-        // start response timer
-        _Stopwatch = new System.Diagnostics.Stopwatch(); // allways create new sintance - GC can take care of previous ones.
-        _Stopwatch.Start();
-        _CurrentChallengeId = data.ChallengeID;
-        _CurrentChallengeUnlockID = data.UnlockId.Value;
-
-        // Hook up callbacks
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Request_Game);
-        _RequestDialog = alertModal;
-      };
-
-      Action<UIManager.CreationCancelledReason> requestGameCancelled = (cancelReason) => {
-        HandleMiniGameRejection();
-        HandleRequestDialogClose();
-      };
-
-      UIManager.OpenAlert(_requestGameData, requestGamePriority, requestGameCreated,
-                          creationCancelledCallback: requestGameCancelled,
-                          overrideCloseOnTouchOutside: false);
-    }
-
-    private void HandleUserResponseToPrompt(bool positiveResponse){
-      if(_requestGameData != null){
-        if (positiveResponse){
-          _requestGameData.PrimaryButtonData.ClickCallback.Invoke();
-        }else{
-          _requestGameData.SecondaryButtonData.ClickCallback.Invoke();
-        }
-      }
-    }
-
-    private void HandleMiniGameRejection() {
-      _requestGameData = null;
-      float elapsedSec = 0.0f;
-      if (_Stopwatch != null) {
-        _Stopwatch.Stop();
-        elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
-      }
-      // If current challenge ID is null, robot has already canceled this request, so don't fire redundant DAS events
-      if (_CurrentChallengeId != null) {
-        DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("fail"));
-        DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
-        _CurrentChallengeId = null;
-      }
-
-      RobotEngineManager.Instance.SendDenyGameStart();
-    }
-
-    private void HandleMiniGameConfirm() {
-      _requestGameData = null;
-      float elapsedSec = 0.0f;
-      if (_Stopwatch != null) {
-        _Stopwatch.Stop();
-        elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
-      }
-      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("success"));
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
-
-      if (_RequestDialog != null) {
-        _RequestDialog.DisableAllButtons();
-        _RequestDialog.DialogClosed -= HandleRequestDialogClose;
-      }
-
-      if (MinigameConfirmed != null) {
-        if (_CurrentChallengeUnlockID != UnlockId.Count) {
-          MinigameConfirmed.Invoke(_CurrentChallengeId);
-        }
-        else {
-          int cubesRequired = ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeConfig.NumCubesRequired();
-          if (RobotEngineManager.Instance.CurrentRobot.LightCubes.Count < cubesRequired) {
-            // challenge request has become null due to cube(s) disconnecting.
-            string challengeTitle = Localization.Get(ChallengeDataList.Instance.GetChallengeDataById(_CurrentChallengeId).ChallengeTitleLocKey);
-            OpenNeedCubesAlert(RobotEngineManager.Instance.CurrentRobot.LightCubes.Count, cubesRequired, challengeTitle);
-          }
-          else {
-            DAS.Error("HomeView.HandleMiniGameConfirm", "challenge request is null for an unknown reason");
-          }
-        }
-      }
-
-      _CurrentChallengeId = null;
-    }
-
-    private void HandleExternalRejection(object messageObject) {
-      DAS.Info(this, "HandleExternalRejection");
-      float elapsedSec = 0.0f;
-      if (_Stopwatch != null) {
-        _Stopwatch.Stop();
-        elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
-      }
-      // If current challenge ID is null, we have already responded to this request, so don't fire redundant DAS events
-      if (_CurrentChallengeId != null) {
-        DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("robot_canceled"));
-        DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
-        _CurrentChallengeId = null;
-      }
-
-      if (_RequestDialog != null) {
-        _RequestDialog.CloseDialog();
-        EnableGameRequestsIfAllowed(true);
-      }
-    }
-
-    private void HandleRequestDialogClose() {
-      DAS.Info(this, "HandleUnexpectedClose");
-      if (_RequestDialog != null) {
-        _RequestDialog.DialogCloseAnimationFinished -= HandleRequestDialogClose;
-        EnableGameRequestsIfAllowed(true);
-      }
-    }
-
-    #endregion
-
     public void OpenNeedCubesAlert(int currentCubes, int neededCubes, string titleString) {
       var needCubesPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
                                                         LowPriorityModalAction.CancelSelf,
@@ -939,10 +791,7 @@ namespace Cozmo.HomeHub {
     }
 
     protected override void CleanUp() {
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
-      VoiceCommandManager.Instance.OnUserPromptResponse -= HandleUserResponseToPrompt;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleCheckForLootView;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvents;
       RewardedActionManager.Instance.OnFreeplayRewardEvent -= HandleFreeplayRewardedAction;

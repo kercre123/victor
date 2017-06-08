@@ -9,12 +9,16 @@ using Anki.Cozmo.Audio.VolumeParameters;
 using System.Collections.Generic;
 
 namespace Anki.Cozmo.VoiceCommand {
-  public class VoiceCommandManager : MonoBehaviour {
+  public class VoiceCommandManager {
 
     public delegate void UserResponseToPromptHandler(bool positiveResponse);
     public event UserResponseToPromptHandler OnUserPromptResponse;
 
     private static VoiceCommandManager _Instance;
+
+    public static void CreateInstance() {
+      _Instance = new VoiceCommandManager();
+    }
 
     public static VoiceCommandManager Instance {
       get {
@@ -49,55 +53,42 @@ namespace Anki.Cozmo.VoiceCommand {
       RobotEngineManager.Instance.SendMessage();
     }
 
-    private void Awake() {
-      Instance = this;
-    }
-
-    private void Start() {
+    private VoiceCommandManager() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.VoiceCommand.VoiceCommandEvent>(HandleVoiceCommandEvent);
 
       RespondingToCommandStartCallback += HandleRespondCommandStart;
       RespondingToCommandEndCallback += HandleRespondCommandEnd;
     }
 
-    private void OnDestroy() {
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.VoiceCommand.VoiceCommandEvent>(HandleVoiceCommandEvent);
-    }
-
     private void HandleVoiceCommandEvent(Anki.Cozmo.VoiceCommand.VoiceCommandEvent voiceCommandEvent) {
       VoiceCommandEventUnion eventData = voiceCommandEvent.voiceCommandEvent;
       VoiceCommandEventUnion.Tag eventType = eventData.GetTag();
       switch (eventType) {
-      case VoiceCommandEventUnion.Tag.respondingToCommandStart:
-        {
+      case VoiceCommandEventUnion.Tag.respondingToCommandStart: {
           if (RespondingToCommandStartCallback != null) {
             RespondingToCommandStartCallback(eventData.respondingToCommandStart);
           }
           break;
         }
-      case VoiceCommandEventUnion.Tag.respondingToCommandEnd:
-        {
+      case VoiceCommandEventUnion.Tag.respondingToCommandEnd: {
           if (RespondingToCommandEndCallback != null) {
             RespondingToCommandEndCallback(eventData.respondingToCommandEnd);
           }
           break;
         }
-      case VoiceCommandEventUnion.Tag.stateData:
-        {
+      case VoiceCommandEventUnion.Tag.stateData: {
           if (StateDataCallback != null) {
             StateDataCallback(eventData.stateData);
           }
           break;
         }
-      case VoiceCommandEventUnion.Tag.responseToPrompt:
-        {
-          if(OnUserPromptResponse != null) {
+      case VoiceCommandEventUnion.Tag.responseToPrompt: {
+          if (OnUserPromptResponse != null) {
             OnUserPromptResponse(eventData.responseToPrompt.positiveResponse);
           }
           break;
         }
-      default:
-        {
+      default: {
           break;
         }
       }

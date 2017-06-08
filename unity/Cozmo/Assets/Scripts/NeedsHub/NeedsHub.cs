@@ -1,9 +1,10 @@
-﻿using Anki.Assets;
+using Anki.Assets;
 using Anki.Cozmo;
+using Cozmo.Challenge;
 using Cozmo.Needs.Activities.UI;
 using Cozmo.Needs.Sparks.UI;
-using Cozmo.Challenge;
 using Cozmo.Needs.UI;
+using Cozmo.RequestGame;
 using Cozmo.Util;
 using DataPersistence;
 using System.Collections;
@@ -52,6 +53,7 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeFinishedLoading += HandleChallengeFinishedLoading;
 
       SparksDetailModal.OnSparkGameClicked += HandleStartChallengePressed;
+      RequestGameManager.Instance.OnRequestGameConfirmed += HandleStartChallengeRequest;
 
       _Instance = this;
       StartLoadNeedsHubView();
@@ -68,6 +70,7 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeFinishedLoading -= HandleChallengeFinishedLoading;
 
       SparksDetailModal.OnSparkGameClicked -= HandleStartChallengePressed;
+      RequestGameManager.Instance.OnRequestGameConfirmed -= HandleStartChallengeRequest;
 
       // Deregister events
       if (_NeedsViewHubInstance != null) {
@@ -184,6 +187,10 @@ namespace Cozmo.Hub {
     #endregion
 
     #region StartChallenge
+
+    private void HandleStartChallengeRequest(string challengeRequested) {
+      PlayChallenge(challengeRequested, true);
+    }
 
     private void PlayChallenge(string challengeId, bool wasRequest) {
       _ChallengeManager.SetCurrentChallenge(challengeId, wasRequest);

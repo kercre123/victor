@@ -859,7 +859,7 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Debug("GameBase.SoftEndGameRobotReset", "soft end game reset called");
 
-    RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
+    Cozmo.RequestGame.RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
     if (OnShowEndGameDialog != null) {
       OnShowEndGameDialog();

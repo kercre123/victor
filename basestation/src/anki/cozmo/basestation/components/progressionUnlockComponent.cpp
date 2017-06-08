@@ -392,6 +392,10 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                                 unlockedIds.Unpack(data, size);
                                                 _currentUnlocks.clear();
                                                 
+                                                // For Needs, the default unlocks have changed, so we need to grant
+                                                // the new default unlocks if the player haven't done so yet.
+                                                _currentUnlocks = _defaultUnlocks;
+                                                
                                                 for(const UnlockId& id : unlockedIds.unlockedIds)
                                                 {
                                                   if(id > UnlockId::Invalid && id < UnlockId::Count)
