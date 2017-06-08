@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
@@ -144,11 +145,11 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       //Ensure fist bump is unlocked and runnable
       if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::FistBump) &&
          _fistBumpBehavior->IsRunnable(preReqRobot)){
-        _voiceCommandBehavior = _fistBumpBehavior;
+        const bool isSoftSpark = false;
+        robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
         voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
-      }else{
-        _voiceCommandBehavior = _behaviorNone;
       }
+      _voiceCommandBehavior = _behaviorNone;
       
       return _voiceCommandBehavior;
     }
@@ -160,11 +161,12 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       //Ensure PeekABoo is unlocked and runnable
       if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::PeekABoo) &&
          _peekABooBehavior->IsRunnable(preReqRobot)){
-        _voiceCommandBehavior = _peekABooBehavior;
+        const bool isSoftSpark = false;
+        robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
         voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
-      }else{
-        _voiceCommandBehavior = _behaviorNone;
       }
+      
+      _voiceCommandBehavior = _behaviorNone;
       
       return _voiceCommandBehavior;
     }
