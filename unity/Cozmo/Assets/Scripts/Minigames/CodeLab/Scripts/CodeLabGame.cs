@@ -518,7 +518,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void TurnInPlace(float turnAngle, RobotCallback callback) {
       float finalTurnAngle = turnAngle;
-      const float kExtraAngle = 4.0f * Mathf.Deg2Rad; // All turns seem to, on average, be this short
+      const float kExtraAngle = 2.0f * Mathf.Deg2Rad; // All turns seem to, on average, be this short
       if (finalTurnAngle < 0.0f) {
         finalTurnAngle -= kExtraAngle;
       }

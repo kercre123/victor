@@ -83,10 +83,10 @@ namespace Anki {
       f32 pointTurnSpeedKi_ = 0.5;
       f32 pointTurnSpeedMaxIntegralError_ = 100;
       
-      f32 pointTurnKp_ = 150;
-      f32 pointTurnKd_ = 4000;
-      f32 pointTurnKi_ = 0.3f;
-      f32 pointTurnMaxIntegralError_ = 100;
+      f32 pointTurnKp_ = 450.f;
+      f32 pointTurnKd_ = 4000.f;
+      f32 pointTurnKi_ = 20.f;
+      f32 pointTurnMaxIntegralError_ = 5;
       f32 prevPointTurnAngleError_ = 0;
       f32 pointTurnAngleErrorSum_ = 0;
       TimeStamp_t inPositionStartTime_ = 0;
@@ -101,8 +101,24 @@ namespace Anki {
       const u32 POINT_TURN_STUCK_THRESHOLD_MS = 500;
       const f32 POINT_TURN_STUCK_THRESHOLD_RAD = DEG_TO_RAD_F32(0.5f);
       
-      // If desired wheel speed exceeds this limit there is no integral error accumulation
-      const s16 POINT_TURN_INTEGRAL_ERROR_ACCUMULATE_SPEED_LIMIT_MMPS = 10;
+      // If angular distance to target is less than this value, zero the P and I terms, and clear error sum
+      // (to combat stiction). This effectively limits the accuracy of the turn to this amount (keep it small)
+      const f32 POINT_TURN_CONTROLLER_PI_DEADBAND_RAD = DEG_TO_RAD_F32(0.5f);
+      
+      // Integrator only accumulates if the angular distance to target is within this value, and is zeroed if not
+      const f32 POINT_TURN_INTEGRATOR_THRESH_RAD = DEG_TO_RAD_F32(5.f);
+      
+      // Amount by which to reduce P and D gains for low speed turns, to prevent controller 'stuttering'
+      // The thresholds below determine when this is active. (this should be between 0 and 1)
+      const f32 POINT_TURN_LOW_SPEED_GAIN_REDUCTION_FACTOR = 0.5f;
+      
+      // For turns that remain below this speed the entire time (or if the commanded velocity
+      // is below this) the P and D gains are reduced to avoid controller stuttering
+      const f32 POINT_TURN_REDUCE_GAINS_SPEED_THRESH_RAD_PER_S = DEG_TO_RAD_F32(40.f);
+      
+      // For turns with a commanded accel below this threshold, reduce the P and D gains if the
+      // commanded velocity is below a threshold (to prevent controller stuttering at low speeds)
+      const f32 POINT_TURN_REDUCE_GAINS_ACCEL_THRESH_RAD_PER_S2 = DEG_TO_RAD_F32(100.f);
       
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
@@ -717,25 +733,51 @@ namespace Anki {
           }
           
         }
-
         
         // PID control for maintaining desired orientation
-        f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
-        arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_
-                     + (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_
-                     + pointTurnAngleErrorSum_ * pointTurnKi_);
+        const f32 ff = (f32) arcVel;
+        
+        const f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
+        f32 p = angularDistToCurrDesiredAngle * pointTurnKp_;
+        f32 i = pointTurnAngleErrorSum_ * pointTurnKi_;
+        f32 d = (angularDistToCurrDesiredAngle - prevPointTurnAngleError_) * pointTurnKd_;
+        
+        // Stiction correction - zero P and I terms if close to set point (prevents limit cycle due to stiction)
+        // See Section 3.2 of http://www.wescottdesign.com/articles/Friction/friction.pdf
+        if (absAngularDistToTarget < POINT_TURN_CONTROLLER_PI_DEADBAND_RAD) {
+          p = i = 0.f;
+          pointTurnAngleErrorSum_ = 0.f;
+        }
+        
+        // Low speed 'stuttering' correction
+        // At low speeds, scale back the P and D terms to prevent controller 'stuttering'. Only apply this to either turns
+        // that remain at low speed the entire time, or if the accel is low enough for stuttering to be noticeable.
+        if ((fabsf(vpg_.GetMaxReachableVel()) < POINT_TURN_REDUCE_GAINS_SPEED_THRESH_RAD_PER_S) ||
+              (fabsf(angularAccel_) < POINT_TURN_REDUCE_GAINS_ACCEL_THRESH_RAD_PER_S2 &&
+               fabsf(currDesiredAngularVel) < POINT_TURN_REDUCE_GAINS_SPEED_THRESH_RAD_PER_S)) {
+          p *= POINT_TURN_LOW_SPEED_GAIN_REDUCTION_FACTOR;
+          d *= POINT_TURN_LOW_SPEED_GAIN_REDUCTION_FACTOR;
+        }
+        
+        arcVel = (s16)(ff + p + i + d);
         prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
         
         // Integral windup protection
-        // Only accumulate integral error if desired wheel speed is below specified limit
-        if (ABS(arcVel) < POINT_TURN_INTEGRAL_ERROR_ACCUMULATE_SPEED_LIMIT_MMPS) {
+        // Only accumulate integral error if we're close to the target angle
+        if (absAngularDistToTarget < POINT_TURN_INTEGRATOR_THRESH_RAD) {
           pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
+        } else {
+          pointTurnAngleErrorSum_ = 0.f;
         }
         
-        //AnkiDebugPeriodic(50, 160, "ManagePointTurn.Controller", 444, "currAngle %f, currDesired %f, errSum %f, arcVel %d", 4, currAngle.getDegrees(), RAD_TO_DEG_F32(currDesiredAngle), pointTurnAngleErrorSum_, arcVel);
-
-
-        
+//        AnkiDebug( 1231, "SteeringController.ManagePointTurn.Controller", 643, "timestamp %d, currAngle %.1f, desAngle %.1f, currSpeed %.1f, desSpeed %.1f, arcVel %d, ff %.1f, p %.1f, i %.1f, d %.1f, errSum %.1f", 11,
+//                  HAL::GetTimeStamp(),
+//                  currAngle.getDegrees(),
+//                  RAD_TO_DEG_F32(currDesiredAngle),
+//                  RAD_TO_DEG_F32(IMUFilter::GetRotationSpeed()),
+//                  RAD_TO_DEG_F32(currDesiredAngularVel),
+//                  arcVel, ff, p, i, d,
+//                  pointTurnAngleErrorSum_);
       } else {
         
         // PID control for maintaining desired speed

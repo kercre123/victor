@@ -231,7 +231,7 @@ namespace Cozmo {
         
       case TestState::ReSeeObjectA:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_A, 2)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_robotState.localizedToObjectID == _objectID_A, 3)
         {
           CST_ASSERT(IsRobotPoseCorrect(_poseDistThresh_mm, _poseAngleThresh),
                      "Localization after re-seeing first object failed.");
