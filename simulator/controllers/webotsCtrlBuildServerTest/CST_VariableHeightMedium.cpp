@@ -25,30 +25,6 @@ namespace Anki {
       TestDone
     };
     
-    // Motion profile for test
-    const f32 defaultPathSpeed_mmps = 60;
-    const f32 defaultPathAccel_mmps2 = 200;
-    const f32 defaultPathDecel_mmps2 = 500;
-    const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
-    const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
-    const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-    const f32 defaultDockSpeed_mmps = 60;
-    const f32 defaultDockAccel_mmps2 = 200;
-    const f32 defaultDockDecel_mmps2 = 100;
-    const f32 defaultReverseSpeed_mmps = 30;
-    PathMotionProfile motionProfile6(defaultPathSpeed_mmps,
-                                     defaultPathAccel_mmps2,
-                                     defaultPathDecel_mmps2,
-                                     defaultPathPointTurnSpeed_rad_per_sec,
-                                     defaultPathPointTurnAccel_rad_per_sec2,
-                                     defaultPathPointTurnDecel_rad_per_sec2,
-                                     defaultDockSpeed_mmps,
-                                     defaultDockAccel_mmps2,
-                                     defaultDockDecel_mmps2,
-                                     defaultReverseSpeed_mmps,
-                                     true);
-    
-    
     // ============ Test class declaration ============
     class CST_VariableHeightMedium : public CozmoSimTestController {
       
@@ -96,7 +72,7 @@ namespace Anki {
             auto objectsWithType = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE2);
             CST_ASSERT(objectsWithType.size()==1, "Expecting 1 object of type LIGHTCUBE2");
             _id = objectsWithType.front();
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, motionProfile6, 0, false, true, false, true));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, _defaultTestMotionProfile, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

@@ -32,30 +32,6 @@ namespace Anki {
       TestDone
     };
     
-    // Motion profile for test
-    const f32 defaultPathSpeed_mmps = 60;
-    const f32 defaultPathAccel_mmps2 = 200;
-    const f32 defaultPathDecel_mmps2 = 500;
-    const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
-    const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
-    const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-    const f32 defaultDockSpeed_mmps = 60;
-    const f32 defaultDockAccel_mmps2 = 200;
-    const f32 defaultDockDecel_mmps2 = 100;
-    const f32 defaultReverseSpeed_mmps = 30;
-    PathMotionProfile mp(defaultPathSpeed_mmps,
-                         defaultPathAccel_mmps2,
-                         defaultPathDecel_mmps2,
-                         defaultPathPointTurnSpeed_rad_per_sec,
-                         defaultPathPointTurnAccel_rad_per_sec2,
-                         defaultPathPointTurnDecel_rad_per_sec2,
-                         defaultDockSpeed_mmps,
-                         defaultDockAccel_mmps2,
-                         defaultDockDecel_mmps2,
-                         defaultReverseSpeed_mmps,
-                         true);
-    
-    
     // ============ Test class declaration ============
     class CST_DockingSpeeds : public CozmoSimTestController
     {
@@ -79,6 +55,9 @@ namespace Anki {
       
       bool _placeActionCompleted = false;
       u32 _placeActionTag = 1000;
+      
+      // Motion profile for test
+      PathMotionProfile mp = _defaultTestMotionProfile;
       
       virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg) override;
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;

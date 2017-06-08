@@ -49,29 +49,6 @@ enum class TestState {
   PlaceObjectShouldFail,        // Placing should fail since the cube is no longer on the lift.
   TestDone
 };
-  
-// Motion profile for test
-const f32 defaultPathSpeed_mmps = 60;
-const f32 defaultPathAccel_mmps2 = 200;
-const f32 defaultPathDecel_mmps2 = 500;
-const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
-const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
-const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-const f32 defaultDockSpeed_mmps = 60;
-const f32 defaultDockAccel_mmps2 = 200;
-const f32 defaultDockDecel_mmps2 = 100;
-const f32 defaultReverseSpeed_mmps = 30;
-PathMotionProfile motionProfile (defaultPathSpeed_mmps,
-                     defaultPathAccel_mmps2,
-                     defaultPathDecel_mmps2,
-                     defaultPathPointTurnSpeed_rad_per_sec,
-                     defaultPathPointTurnAccel_rad_per_sec2,
-                     defaultPathPointTurnDecel_rad_per_sec2,
-                     defaultDockSpeed_mmps,
-                     defaultDockAccel_mmps2,
-                     defaultDockDecel_mmps2,
-                     defaultReverseSpeed_mmps,
-                     true);
 
 static const BehaviorID kBehaviorID = BehaviorID::StackBlocks;
 
@@ -533,7 +510,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
         placePose.SetTranslation(Vec3f(T.x(), T.y() - 100.f, 22));
         
         _placeObjectResult = ActionResult::RUNNING;
-        SendPlaceObjectOnGroundSequence(placePose, motionProfile);
+        SendPlaceObjectOnGroundSequence(placePose, _defaultTestMotionProfile);
         
         SET_STATE(PlaceObjectShouldFail)
       }
@@ -629,7 +606,7 @@ void CST_StackBlockBehavior::SendPickupObjectByType(const ObjectType& objType)
   // Should have found exactly one object ID for this object type:
   CST_ASSERT(objIds.size() == 1, "Did not find exactly one object ID for given type!");
   
-  SendPickupObject(objIds[0], motionProfile, true);
+  SendPickupObject(objIds[0], _defaultTestMotionProfile, true);
 }
   
 

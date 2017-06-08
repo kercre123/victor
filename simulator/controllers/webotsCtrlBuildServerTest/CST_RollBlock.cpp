@@ -25,30 +25,6 @@ namespace Anki {
       TestDone
     };
     
-    // Motion profile for test
-    const f32 defaultPathSpeed_mmps = 60;
-    const f32 defaultPathAccel_mmps2 = 200;
-    const f32 defaultPathDecel_mmps2 = 500;
-    const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
-    const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
-    const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-    const f32 defaultDockSpeed_mmps = 60;
-    const f32 defaultDockAccel_mmps2 = 200;
-    const f32 defaultDockDecel_mmps2 = 100;
-    const f32 defaultReverseSpeed_mmps = 30;
-    PathMotionProfile motionProfile4(defaultPathSpeed_mmps,
-                                    defaultPathAccel_mmps2,
-                                    defaultPathDecel_mmps2,
-                                    defaultPathPointTurnSpeed_rad_per_sec,
-                                    defaultPathPointTurnAccel_rad_per_sec2,
-                                    defaultPathPointTurnDecel_rad_per_sec2,
-                                    defaultDockSpeed_mmps,
-                                    defaultDockAccel_mmps2,
-                                    defaultDockDecel_mmps2,
-                                    defaultReverseSpeed_mmps,
-                                    true);
-    
-    
     // ============ Test class declaration ============
     class CST_RollBlock : public CozmoSimTestController {
       
@@ -91,7 +67,7 @@ namespace Anki {
             m.idTag = 11;
             m.numRetries = 3;
             // Roll object 0
-            m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile4, 0, false, false, true, false, true, false));
+            m.action.Set_rollObject(ExternalInterface::RollObject(0, _defaultTestMotionProfile, 0, false, false, true, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

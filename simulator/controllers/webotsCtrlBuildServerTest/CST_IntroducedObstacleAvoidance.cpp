@@ -29,29 +29,6 @@ private:
   ObjectType _lightCubeType = ObjectType::InvalidObject;
   bool _driveToPoseSucceeded = false;
 
-  // Motion profile for test
-  const f32 defaultPathSpeed_mmps = 60;
-  const f32 defaultPathAccel_mmps2 = 200;
-  const f32 defaultPathDecel_mmps2 = 500;
-  const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
-  const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
-  const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-  const f32 defaultDockSpeed_mmps = 60;
-  const f32 defaultDockAccel_mmps2 = 200;
-  const f32 defaultDockDecel_mmps2 = 100;
-  const f32 defaultReverseSpeed_mmps = 30;
-  PathMotionProfile motionProfile = PathMotionProfile(defaultPathSpeed_mmps,
-                                                      defaultPathAccel_mmps2,
-                                                      defaultPathDecel_mmps2,
-                                                      defaultPathPointTurnSpeed_rad_per_sec,
-                                                      defaultPathPointTurnAccel_rad_per_sec2,
-                                                      defaultPathPointTurnDecel_rad_per_sec2,
-                                                      defaultDockSpeed_mmps,
-                                                      defaultDockAccel_mmps2,
-                                                      defaultDockDecel_mmps2,
-                                                      defaultReverseSpeed_mmps,
-                                                      true);
-
   void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
   void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg) override;
 };
@@ -109,7 +86,7 @@ s32 CST_IntroducedObstacleAvoidance::UpdateSimInternal()
       // rather it will be relative to where it starts. That is, if cozmo starts at x=-200mm and the
       // translation in the pose is x=+500mm, he will travel to a ground truth position of +300mm
       // (500-200), and his robot estimated pose will be +500mm.
-      SendExecutePathToPose(kRobotDestination, motionProfile, false);
+      SendExecutePathToPose(kRobotDestination, _defaultTestMotionProfile, false);
       _testState = TestState::IntroduceObstacle;
       break;
     }

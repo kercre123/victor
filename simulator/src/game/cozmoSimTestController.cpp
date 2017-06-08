@@ -65,7 +65,20 @@ namespace Anki {
     , _screenshotInterval(-1.f)
     , _timeOfLastScreenshot(0.)
     , _screenshotNum(0)
-    { }
+    {
+      // Parameters for the default motion profile to be used for webots tests:
+      _defaultTestMotionProfile.speed_mmps = 60.f;
+      _defaultTestMotionProfile.accel_mmps2 = 200.f;
+      _defaultTestMotionProfile.decel_mmps2 = 500.f;
+      _defaultTestMotionProfile.pointTurnSpeed_rad_per_sec = 1.5f;
+      _defaultTestMotionProfile.pointTurnAccel_rad_per_sec2 = 100.f;
+      _defaultTestMotionProfile.pointTurnDecel_rad_per_sec2 = 500.f;
+      _defaultTestMotionProfile.dockSpeed_mmps = 60.f;
+      _defaultTestMotionProfile.dockAccel_mmps2 = 200.f;
+      _defaultTestMotionProfile.dockDecel_mmps2 = 100.f;
+      _defaultTestMotionProfile.reverseSpeed_mmps = 30.f;
+      _defaultTestMotionProfile.isCustom = true;
+    }
     
     CozmoSimTestController::~CozmoSimTestController()
     { }
