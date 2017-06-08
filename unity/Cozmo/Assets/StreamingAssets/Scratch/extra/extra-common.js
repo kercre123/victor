@@ -19,6 +19,11 @@ window.$t = function $t(str) {
   // use a translation if you find one, or echo back the string passed in
   str = window._$translations[str] || str;
 
+  // all strings should come from the translations object's 'translation' property
+  if (typeof str == "object" && typeof str.translation !== 'undefined') {
+    str = str.translation;
+  }
+
   // subsitute values into the translated string if params are passed
   if (arguments.length > 1) {
     var numSubs = arguments.length - 1;

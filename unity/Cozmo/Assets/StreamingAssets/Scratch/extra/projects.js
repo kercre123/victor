@@ -10,15 +10,15 @@
    * @returns {void}
    */
   function setLocalizedText() {
-    setText('#app-title', $t('Cozmo Code Lab'));
+    setText('#app-title', $t('codeLab.projects.modalTitle'));
 
-    setText('#attribution-label', $t('Based on Scratch, a project of the MIT Media Lab'));
-    setText('#tutorial-label', $t('Tutorial'));
-    setText('#new-project-label', $t('New Project'));
+    setText('#attribution-label', $t('codeLab.projects.attributionLabel'));
+    setText('#tutorial-label', $t('codeLab.projects.tutorialLabel'));
+    setText('#new-project-label', $t('codeLab.projects.newProjectButtonLabel'));
 
 
-    setText('#prototype-sample-project .project-type', $t('Sample'));
-    setText('#prototype-user-project .project-type', $t('Personal'));
+    setText('#prototype-sample-project .project-type', $t('codeLab.projects.projectType.sampleProject'));
+    setText('#prototype-user-project .project-type', $t('codeLab.projects.projectType.personalProject'));
   }
 
 
@@ -95,7 +95,6 @@
 
       default:
         playClickSound = false;
-        console.log('unrecognized click data-type: ' + type);
     }
 
     if (playClickSound && window.player) {
@@ -107,10 +106,10 @@
   function handleClosePage() {
     // open a dialog confirming that they want to exit the Code Lab
     ModalConfirm.open({
-      title: $t('Quit Activity?'),
+      title: $t('codeLab.projects.confirmQuit.promptText'),
       prompt: '',
-      confirmButtonLabel: $t('Quit'),
-      cancelButtonLabel: $t('Cancel'),
+      confirmButtonLabel: $t('codeLab.projects.confirmQuit.confirmButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmQuit.cancelButton.labelText'),
       confirmCallback: function(result) {
         if (result) {
           CozmoAPI.closeCodeLab();
@@ -327,10 +326,10 @@
 
 
     ModalConfirm.open({
-      title: $t('Delete \'{0}\'?', projectName),
-      confirmButtonLabel: $t('Yes, Delete'),
-      cancelButtonLabel: $t('No, Cancel'),
-      prompt: $t('Are you sure you want to delete this project?'),
+      title: $t('codeLab.projects.confirmDeleteProject.confirmPromptTitle', projectName),
+      confirmButtonLabel: $t('codeLab.projects.confirmDeleteProject.confirmButton.labelText'),
+      cancelButtonLabel: $t('codeLab.projects.confirmDeleteProject.cancelButton.labelText'),
+      prompt: $t('codeLab.projects.confirmDeleteProject.confirmPrompt'),
       confirmCallback: function(result) {
         if (result) {
           if (window.player) {

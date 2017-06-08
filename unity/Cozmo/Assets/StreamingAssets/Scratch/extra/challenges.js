@@ -76,7 +76,7 @@
 
     // load translations when DOM is ready for filling in values
     window.addEventListener('DOMContentLoaded', function() {
-      setText('#challenges-modal .modal-title', $t('Challenges'));
+      setText('#challenges-modal .modal-title', $t('codeLabChallenge_challengesUI.challengesModalTitle'));
       renderChallenges(window._CodeLabChallengesData);
     });
   }

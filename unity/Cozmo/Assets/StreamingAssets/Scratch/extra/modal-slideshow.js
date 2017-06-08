@@ -5,9 +5,9 @@
 
   function registerEvents() {
     window.addEventListener('DOMContentLoaded', function() {
-      setText('.modal-slides #btn-back .button-label', 'Back');
-      setText('.modal-slides #btn-next .button-label', 'Next');
-      setText('.modal-slides #btn-done .button-label', 'Done');
+      setText('.modal-slides #btn-back .button-label', $t('codeLab.modalSlideshow.backButtonLabel'));
+      setText('.modal-slides #btn-next .button-label', $t('codeLab.modalSlideshow.nextButtonLabel'));
+      setText('.modal-slides #btn-done .button-label', $t('codeLab.modalSlideshow.doneButtonLabel'));
 
       Slides.init();
     });
@@ -267,7 +267,7 @@
       }
 
       // set the progress text
-      setText('.progress', $t('{0} of {1}', slideNum, slides.length));
+      setText('.progress', $t('codeLabChallenge_challengesUI.slideXofY', slideNum, slides.length));
 
       // disable back button on first slide
       if (slideNum === 1) {
