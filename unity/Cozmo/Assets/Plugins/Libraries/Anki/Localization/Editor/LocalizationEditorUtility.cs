@@ -459,52 +459,104 @@ public static class LocalizationEditorUtility {
     return filesContainingStr;
   }
 
+  // Running on a thread so needs to be volatile locked.
+  private static volatile bool _LocReportRunning = false;
+
+  public class LocReportWrapper {
+    public static volatile bool _WantsContinueRunning = true;
+    private string _ApplicationDataPath;
+    private const int _kSleepTime_ms = 5;
+    public LocReportWrapper(string applicationDataPath) {
+      _ApplicationDataPath = applicationDataPath;
+    }
+    public void ThreadPoolCallback(System.Object threadContext) {
+      _LocReportRunning = true;
+      Debug.Log("LocReportWrapper started, select again to kill");
+      List<LocKeyReference> locKeyReferences = new List<LocKeyReference>();
+
+      foreach (var localizationDictFile in _LocalizationDictionaries) {
+        string fileName = localizationDictFile.Key;
+        // Special case file that adds plural etc
+        if (fileName == "ItemStrings") {
+          continue;
+        }
+        Debug.Log("Begin parsing " + fileName);
+        // Walk through keys to find incidence
+        Dictionary<string, LocalizationDictionaryEntry> keysDict = localizationDictFile.Value.Translations;
+        foreach (var locKey in keysDict) {
+          List<string> pathsContainingKey = new List<string>();
+          AddFilesContainingStringInDir(ref pathsContainingKey, VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs");
+          System.Threading.Thread.Sleep(_kSleepTime_ms);
+          AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, "Assets/", new string[] { ".prefab", ".asset" });
+          System.Threading.Thread.Sleep(_kSleepTime_ms);
+          AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, _ApplicationDataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json");
+          System.Threading.Thread.Sleep(_kSleepTime_ms);
+          AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, _ApplicationDataPath + "/../../../resources/config/basestation/config", "*.json");
+
+          if (pathsContainingKey.Count > 0) {
+            LocKeyReference reference = new LocKeyReference();
+            reference.Key = locKey.Key;
+            reference.Value = locKey.Value.Translation;
+            reference.FilesThatReference = pathsContainingKey;
+            locKeyReferences.Add(reference);
+            Debug.Log("Found: " + reference.Key);
+          }
+          else {
+            Debug.LogWarning(locKey.Key + " is unused, consider removing");
+          }
+          // breaking instead of returning so function only has one exit and gets cleaned up properly
+          if (!_WantsContinueRunning) {
+            break;
+          }
+          System.Threading.Thread.Sleep(_kSleepTime_ms);
+        }
+
+        Debug.Log("Completed parsing " + fileName);
+        // breaking instead of returning so function only has one exit and gets cleaned up properly
+        if (!_WantsContinueRunning) {
+          break;
+        }
+      }
+      if (_WantsContinueRunning) {
+        locKeyReferences.Sort((x, y) => {
+          return x.FilesThatReference.Count.CompareTo(y.FilesThatReference.Count);
+        });
+
+        string fileContents = "Loc Value,Loc Key,Files\n";
+        foreach (var reference in locKeyReferences) {
+          fileContents += "\"" + reference.Value.Replace("\n", " ").Replace("\"", "") + "\"," + reference.Key + ",";
+          fileContents += reference.FilesThatReference[0] + "\n";
+          for (int i = 1; i < reference.FilesThatReference.Count; i++) {
+            fileContents += ",," + reference.FilesThatReference[i] + "\n";
+          }
+        }
+
+        // Write the to a file
+        File.WriteAllText(kLocKeyReferenceReportFilePath, fileContents);
+        Debug.Log("Report written to " + kLocKeyReferenceReportFilePath);
+      }
+      else {
+        Debug.Log("Report was cancelled");
+      }
+      _LocReportRunning = false;
+    }
+  }
+
   private const string kLocKeyReferenceReportFilePath = "LocKeyReferenceReport.csv";
 
   [MenuItem("Cozmo/Localization/Report Loc Key References")]
-  private static void ReportLocKeyReferences() {
-    List<LocKeyReference> locKeyReferences = new List<LocKeyReference>();
-
-    foreach (var localizationDictFile in _LocalizationDictionaries) {
-      string fileName = localizationDictFile.Key;
-      // Special case file that adds plural etc
-      if (fileName == "ItemStrings") {
-        continue;
-      }
-
-      // Walk through keys to find incidence
-      Dictionary<string, LocalizationDictionaryEntry> keysDict = localizationDictFile.Value.Translations;
-      foreach (var locKey in keysDict) {
-        List<string> pathsContainingKey = new List<string>();
-        AddFilesContainingStringInDir(ref pathsContainingKey, VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs");
-        AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, "Assets/", new string[] { ".prefab", ".asset" });
-        AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, Application.dataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json");
-        AddFilesContainingStringInDir(ref pathsContainingKey, locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json");
-
-        LocKeyReference reference = new LocKeyReference();
-        reference.Key = locKey.Key;
-        reference.Value = locKey.Value.Translation;
-        reference.FilesThatReference = pathsContainingKey;
-        locKeyReferences.Add(reference);
-      }
+  private static void ReportLocKeyReferencesThreaded() {
+    if (_LocReportRunning == false) {
+      // Pass in any info that needs to be on the main thread.
+      LocReportWrapper reportThread = new LocReportWrapper(Application.dataPath);
+      LocReportWrapper._WantsContinueRunning = true;
+      // Application.DataPath can only be called on the main thead
+      System.Threading.ThreadPool.QueueUserWorkItem(reportThread.ThreadPoolCallback);
     }
-
-    locKeyReferences.Sort((x, y) => {
-      return x.FilesThatReference.Count.CompareTo(y.FilesThatReference.Count);
-    });
-
-    string fileContents = "Loc Value,Loc Key,Files\n";
-    foreach (var reference in locKeyReferences) {
-      fileContents += "\"" + reference.Value.Replace("\n", " ").Replace("\"", "") + "\"," + reference.Key + ",";
-      fileContents += reference.FilesThatReference[0] + "\n";
-      for (int i = 1; i < reference.FilesThatReference.Count; i++) {
-        fileContents += ",," + reference.FilesThatReference[i] + "\n";
-      }
+    else {
+      Debug.Log("Report is cancelling");
+      LocReportWrapper._WantsContinueRunning = false;
     }
-
-    // Write the to a file
-    File.WriteAllText(kLocKeyReferenceReportFilePath, fileContents);
-    Debug.Log("Report written to " + kLocKeyReferenceReportFilePath);
   }
 
   private struct LocKeyReference {

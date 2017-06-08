@@ -10,21 +10,11 @@
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 3,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         }
       ],
       "Reward": {
@@ -43,31 +33,16 @@
         {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
           "TargetAcc": 0.75,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Accuracy Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -86,21 +61,11 @@
         {
           "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
           "TargetTime": 300.0,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Challenge Time Played Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "DroneModeGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "DroneModeGame"
         }
       ],
       "Reward": {
@@ -118,40 +83,20 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 3,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 3
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -169,40 +114,20 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 2,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 2
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -220,40 +145,20 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 1,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 1
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -271,40 +176,20 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 0,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 0
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -322,22 +207,12 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -355,42 +230,22 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "CubePounceGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "compareType": "EQUAL",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "EQUAL"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -408,21 +263,11 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "CubePounceGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         }
       ],
       "Reward": {
@@ -440,12 +285,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "CubePounceGame"
         }
       ],
       "Reward": {
@@ -464,31 +304,16 @@
         {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
           "TargetAcc": 0.5,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Challenge Accuracy Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -507,31 +332,16 @@
         {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
           "TargetAcc": 1.0,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Challenge Accuracy Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -550,21 +360,11 @@
         {
           "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
           "TargetTime": 600.0,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Challenge Time Played Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "DroneModeGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "DroneModeGame"
         }
       ],
       "Reward": {
@@ -583,21 +383,11 @@
         {
           "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
           "TargetTime": 900.0,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Challenge Time Played Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "DroneModeGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "DroneModeGame"
         }
       ],
       "Reward": {
@@ -616,21 +406,11 @@
         {
           "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
           "TargetTime": 1200.0,
-          "compareType": "GREATER_INCLUSIVE",
-          "Label": {
-            "text": "Challenge Time Played Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER_INCLUSIVE"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "DroneModeGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "DroneModeGame"
         }
       ],
       "Reward": {
@@ -648,21 +428,11 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 1,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 1
         }
       ],
       "Reward": {
@@ -680,21 +450,11 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 0,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 0
         }
       ],
       "Reward": {
@@ -712,30 +472,15 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 0,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 0
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         }
       ],
       "Reward": {
@@ -753,23 +498,13 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 5,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         }
       ],
       "Reward": {
@@ -787,23 +522,13 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 10,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         }
       ],
       "Reward": {
@@ -821,23 +546,13 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 15,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         }
       ],
       "Reward": {
@@ -855,23 +570,13 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 20,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         }
       ],
       "Reward": {
@@ -889,23 +594,13 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 25,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         }
       ],
       "Reward": {
@@ -923,23 +618,13 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 30,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "GREATER"
         }
       ],
       "Reward": {
@@ -957,32 +642,17 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
           "TargetValue": 1.0,
           "ConditionKey": "human_lives",
-          "compareType": "EQUAL",
-          "Label": {
-            "text": "Challenge Specific Game Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "EQUAL"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 0,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 0
         }
       ],
       "Reward": {
@@ -1000,32 +670,17 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
           "TargetValue": 2.0,
           "ConditionKey": "human_lives",
-          "compareType": "EQUAL",
-          "Label": {
-            "text": "Challenge Specific Game Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "EQUAL"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 0,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 0
         }
       ],
       "Reward": {
@@ -1043,32 +698,17 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
           "TargetValue": 3.0,
           "ConditionKey": "human_lives",
-          "compareType": "EQUAL",
-          "Label": {
-            "text": "Challenge Specific Game Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "EQUAL"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 0,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 0
         }
       ],
       "Reward": {
@@ -1086,21 +726,11 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "MemoryMatchGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "MemoryMatchGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 1,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Difficulty": 1
         }
       ],
       "Reward": {
@@ -1118,12 +748,12 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "PoppedWheelie",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Behavior": "PoppedWheelie"
+        },
+        {
+          "$type": "Anki.Cozmo.CurrentInventoryCondition, Assembly-CSharp",
+          "ItemType": "treat",
+          "ItemCount": 30
         }
       ],
       "Reward": {
@@ -1141,12 +771,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "PouncedAndCaught",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Behavior": "PouncedAndCaught"
         }
       ],
       "Reward": {
@@ -1164,12 +789,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "PoppedWheelie",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Behavior": "PoppedWheelie"
         }
       ],
       "Reward": {
@@ -1187,12 +807,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "BuiltPyramid",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Behavior": "BuiltPyramid"
         }
       ],
       "Reward": {
@@ -1210,12 +825,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "StackedBlock",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Behavior": "StackedBlock"
         }
       ],
       "Reward": {
@@ -1233,12 +843,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
-          "Behavior": "FistBumpSuccess",
-          "Label": {
-            "text": "Freeplay Behavior Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "Behavior": "FistBumpSuccess"
         }
       ],
       "Reward": {
@@ -1271,40 +876,20 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "compareType": "EQUAL",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "EQUAL"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -1324,31 +909,16 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 1,
-          "compareType": "LESS",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS"
         },
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "SpeedTapGame"
         },
         {
           "$type": "Anki.Cozmo.NumberOfPlayersCondition, Assembly-CSharp",
           "NumPlayers": 2,
-          "compareType": "LESS_INCLUSIVE",
-          "Label": {
-            "text": "Number Of Players Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS_INCLUSIVE"
         }
       ],
       "Reward": {
@@ -1366,32 +936,17 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "ChallengeID": "CubePounceGame"
         },
         {
           "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "PlayerWin": true
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 1,
-          "compareType": "LESS",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "compareType": "LESS"
         }
       ],
       "Reward": {
@@ -1412,12 +967,7 @@
           "UseMinSession": true,
           "MinSession": 2,
           "UseMaxSession": false,
-          "MaxSession": 0,
-          "Label": {
-            "text": "Current Daily Streak Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "MaxSession": 0
         }
       ],
       "Reward": {
@@ -1438,12 +988,7 @@
           "UseMinSession": true,
           "MinSession": 2,
           "UseMaxSession": false,
-          "MaxSession": 0,
-          "Label": {
-            "text": "Current Daily Streak Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "MaxSession": 0
         }
       ],
       "Reward": {
@@ -1464,12 +1009,7 @@
           "UseMinSession": true,
           "MinSession": 2,
           "UseMaxSession": false,
-          "MaxSession": 0,
-          "Label": {
-            "text": "Current Daily Streak Condition",
-            "image": null,
-            "tooltip": ""
-          }
+          "MaxSession": 0
         }
       ],
       "Reward": {

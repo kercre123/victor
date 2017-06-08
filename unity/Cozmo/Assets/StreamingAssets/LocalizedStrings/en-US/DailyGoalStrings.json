@@ -45,12 +45,6 @@
   "dailyGoal.title.WinSpeedTap.Level3": {
     "translation": "Win a game of <b>Quick Tap</b> in Four Color mode"
   },
-  "dailyGoal.title.SpeedTap.Shutout.Round": {
-    "translation": "Win a round of <b>Quick Tap</b> 5 to 0"
-  },
-  "dailyGoal.title.SpeedTap.TieBreaker.Round": {
-    "translation": "Win a round of <b>Quick Tap</b> after being tied 4 to 4"
-  },
   "dailyGoal.title.WinSpeedTap.Accuracy.50": {
     "translation": "Win a game of <b>Quick Tap</b> with better than 50% Accuracy"
   },

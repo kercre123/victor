@@ -21,9 +21,6 @@
   "behavior.BringCubeToBeacon": {
     "translation": "Cozmo is collecting his Cubes"
   },
-  "behavior.ExploreVisitPossibleMarker": {
-    "translation": "Cozmo is exploring his surroundings"
-  },
   "behavior.LookInPlaceMemoryMap": {
     "translation": "Cozmo is exploring his surroundings"
   },

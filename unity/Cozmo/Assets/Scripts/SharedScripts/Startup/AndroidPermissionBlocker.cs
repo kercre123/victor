@@ -35,12 +35,13 @@ public class AndroidPermissionBlocker : MonoBehaviour {
     if (canGetPermission) {
       action = () => _Activity.Call("unityRequestPermission", kPermission,
         this.gameObject.name, "OnPermissionResults");
-      _Label.text = _StartupManager.GetBootString("boot.needStoragePermission");
-      _Button.Text = _StartupManager.GetBootString("boot.continue");
-    } else {
+      _Label.text = _StartupManager.GetBootString(LocalizationKeys.kBootNeedStoragePermission);
+      _Button.Text = _StartupManager.GetBootString(LocalizationKeys.kBootContinue);
+    }
+    else {
       action = () => _PermissionUtil.CallStatic("openAppSettings");
-      _Label.text = _StartupManager.GetBootString("boot.appSettingsPermission");
-      _Button.Text = _StartupManager.GetBootString("boot.settings");
+      _Label.text = _StartupManager.GetBootString(LocalizationKeys.kBootAppSettingsPermission);
+      _Button.Text = _StartupManager.GetBootString(LocalizationKeys.kBootSettings);
     }
     _Button.Initialize(action, "button", "android_permission_blocker");
   }
@@ -54,7 +55,8 @@ public class AndroidPermissionBlocker : MonoBehaviour {
     if (result) {
       // cool, we're done here
       GameObject.Destroy(this.gameObject);
-    } else {
+    }
+    else {
       // did the user shoot themselves in the foot and make us direct them to app settings?
       InitUI(CanAskForPermission());
     }

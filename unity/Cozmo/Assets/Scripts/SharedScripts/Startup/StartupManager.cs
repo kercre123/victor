@@ -308,7 +308,7 @@ public class StartupManager : MonoBehaviour {
       string shortData = ShortenData(currentPair.dataValue);
       switch (currentPair.dataType) {
       case Anki.Cozmo.DeviceDataType.DeviceID: {
-          _LoadingDeviceIdLabel.text = GetBootString("boot.deviceId", new object[] { shortData });
+          _LoadingDeviceIdLabel.text = GetBootString(LocalizationKeys.kBootDeviceId, new object[] { shortData });
           break;
         }
       case Anki.Cozmo.DeviceDataType.BuildVersion: {
@@ -320,7 +320,7 @@ public class StartupManager : MonoBehaviour {
           }
           // Chop off the last delimiter
           releaseVersion = releaseVersion.Substring(0, releaseVersion.Length - 1);
-          _LoadingVersionLabel.text = GetBootString("boot.appVersion", new object[] { releaseVersion });
+          _LoadingVersionLabel.text = GetBootString(LocalizationKeys.kBootAppVersion, new object[] { releaseVersion });
           break;
         }
       default: {
@@ -617,7 +617,7 @@ public class StartupManager : MonoBehaviour {
           diskBytes = File.ReadAllBytes(toPath + assetPath);
         }
       } catch (Exception e) {
-        _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",0);
+        _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,0);
         Debug.Log("Exception checking asset hash: " + e.ToString());
         yield break;
       }
@@ -632,7 +632,7 @@ public class StartupManager : MonoBehaviour {
             hashMatches = true;
           }
         } catch (Exception e) {
-          _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",1);
+          _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,1);
           Debug.Log("Exception checking asset hash: " + e.ToString());
           yield break;
         }
@@ -656,7 +656,7 @@ public class StartupManager : MonoBehaviour {
       Directory.CreateDirectory(toPath);
     }
     catch (Exception e) {
-      _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",2);
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,2);
       Debug.Log("There was an exception extracting the resource files: " + e.ToString());
       yield break;
     }
@@ -666,7 +666,7 @@ public class StartupManager : MonoBehaviour {
     yield return resourcesWWW;
 
     if (!string.IsNullOrEmpty(resourcesWWW.error)) {
-      _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",3);
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorReadingFiles,3);
       Debug.Log("Error loading resources.txt: " + resourcesWWW.error);
       yield break;
     }
@@ -683,7 +683,7 @@ public class StartupManager : MonoBehaviour {
           Directory.CreateDirectory(toPath + fileName);
         }
         catch (Exception e) {
-          _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
+          _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
           Debug.Log("Error extracting file: " + e.ToString());
           yield break;
         }
@@ -745,7 +745,7 @@ public class StartupManager : MonoBehaviour {
 
   private bool ExtractOneFile(WWW www, string toPath) {
     if (!string.IsNullOrEmpty(www.error)) {
-      _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
       Debug.Log("Error extracting file: " + www.error);
       return false;
     }
@@ -754,7 +754,7 @@ public class StartupManager : MonoBehaviour {
       File.WriteAllBytes(toPath, www.bytes);
     }
     catch (Exception e) {
-      _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
+      _ExtractionErrorMessage = GetBootString(LocalizationKeys.kBootErrorDiskFull);
       Debug.Log("Error extracting file: " + e.ToString());
       return false;
     }
