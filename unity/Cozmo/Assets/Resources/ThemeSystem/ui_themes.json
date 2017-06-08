@@ -3523,18 +3523,18 @@
                             "SkinButtonImageArray": true,
                             "ButtonImageArray": [
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_backIcon_down.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_backIcon_on.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_backIcon_on.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_backIcon_down.png",
                                     "DisabledSpriteColor": {
-                                        "r": 0.4745098054409027,
-                                        "g": 0.4745098054409027,
-                                        "b": 0.4745098054409027,
+                                        "r": 0.9338235259056091,
+                                        "g": 0.9544225931167603,
+                                        "b": 0.9544225931167603,
                                         "a": 1.0
                                     }
                                 }
@@ -3691,18 +3691,18 @@
                             "SkinButtonImageArray": true,
                             "ButtonImageArray": [
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
                                     "DisabledSpriteColor": {
-                                        "r": 0.4745098054409027,
-                                        "g": 0.4745098054409027,
-                                        "b": 0.4745098054409027,
+                                        "r": 0.8676470518112183,
+                                        "g": 0.8676470518112183,
+                                        "b": 0.8676470518112183,
                                         "a": 1.0
                                     }
                                 }
@@ -4275,7 +4275,7 @@
                             "TextAlignment": 514,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -4426,7 +4426,7 @@
                             "TextAlignment": 513,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -6920,8 +6920,8 @@
                             "Type": 1,
                             "SkinImageColor": true,
                             "ImageColor": {
-                                "r": 0.003000000026077032,
-                                "g": 0.0,
+                                "r": 1.0,
+                                "g": 1.0,
                                 "b": 1.0,
                                 "a": 1.0
                             },
@@ -6933,7 +6933,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonIconSprites/common_icon_sprites-UHD/Packed/icon_sparks_greyEmboss.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
@@ -7071,7 +7071,7 @@
                             "Type": 1,
                             "SkinImageColor": true,
                             "ImageColor": {
-                                "r": 0.003000000026077032,
+                                "r": 1.0,
                                 "g": 1.0,
                                 "b": 1.0,
                                 "a": 1.0
@@ -7084,7 +7084,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonIconSprites/common_icon_sprites-UHD/Packed/icon_sparks_blue.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
