@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
 
 #include "anki/cozmo/basestation/activeObject.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"

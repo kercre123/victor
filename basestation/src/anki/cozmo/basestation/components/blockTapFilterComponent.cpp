@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 
 #include "anki/cozmo/basestation/activeObject.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

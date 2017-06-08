@@ -12,7 +12,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFPPlayWithHumans.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/utils/timer.h"

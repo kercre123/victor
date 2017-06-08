@@ -21,7 +21,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

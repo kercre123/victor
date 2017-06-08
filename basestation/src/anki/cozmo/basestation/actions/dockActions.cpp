@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"

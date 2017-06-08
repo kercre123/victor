@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFrustration.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"

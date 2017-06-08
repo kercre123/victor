@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"

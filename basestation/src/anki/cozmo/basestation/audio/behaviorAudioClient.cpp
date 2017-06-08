@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/audio/cozmoAudioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/workoutComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"

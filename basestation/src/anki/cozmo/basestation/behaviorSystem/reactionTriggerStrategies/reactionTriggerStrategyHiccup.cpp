@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyHiccup.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"

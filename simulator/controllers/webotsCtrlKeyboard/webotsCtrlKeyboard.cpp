@@ -13,7 +13,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/helpers/printByteArray.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/block.h"

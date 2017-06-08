@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"

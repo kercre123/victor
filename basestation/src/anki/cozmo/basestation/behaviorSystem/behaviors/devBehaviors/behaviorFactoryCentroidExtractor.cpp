@@ -20,7 +20,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"

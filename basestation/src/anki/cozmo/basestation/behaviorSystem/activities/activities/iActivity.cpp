@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"

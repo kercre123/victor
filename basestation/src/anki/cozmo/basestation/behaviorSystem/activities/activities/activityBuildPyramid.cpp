@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorBuildPyramidBase.h"

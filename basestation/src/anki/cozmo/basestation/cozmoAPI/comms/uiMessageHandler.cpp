@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/cozmoAPI/comms/udpSocketComms.h"
 #include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/buildVersion.h"

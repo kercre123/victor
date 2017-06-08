@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"

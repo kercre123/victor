@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"

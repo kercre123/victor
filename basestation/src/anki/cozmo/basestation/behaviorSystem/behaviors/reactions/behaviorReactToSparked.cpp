@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToSparked.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 
 
 namespace Anki {

@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorRollBlock.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorEventAnimResponseDirector.h"

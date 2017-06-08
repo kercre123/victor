@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014-2016
  **/
 
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"

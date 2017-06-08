@@ -15,7 +15,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"

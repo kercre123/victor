@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyPositionUpdate.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 

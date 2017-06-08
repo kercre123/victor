@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"

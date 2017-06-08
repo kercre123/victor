@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"

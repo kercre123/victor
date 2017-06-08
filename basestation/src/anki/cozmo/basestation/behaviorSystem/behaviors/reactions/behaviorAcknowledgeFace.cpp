@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iReactToFaceListener.h"

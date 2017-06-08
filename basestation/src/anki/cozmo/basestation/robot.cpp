@@ -26,7 +26,7 @@
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
