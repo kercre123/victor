@@ -390,27 +390,48 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       PlayerProfile defaultProfile = DataPersistenceManager.Instance.Data.DefaultProfile;
 
       if (String.IsNullOrEmpty(projectUUID)) {
-        // Create new project with the XML stored in projectXML.
+        string newUserProjectName = null;
+        CodeLabProject newProject = null;
+        try {
+          if (defaultProfile == null) {
+            DAS.Error("OnCozmoSaveUserProject.NullDefaultProfile", "In saving new Code Lab user project, defaultProfile is null");
+          }
 
-        // Create project name: "My Project 1", "My Project 2", etc.
-        string newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
-        defaultProfile.CodeLabUserProjectNum++;
+          // Create new project with the XML stored in projectXML.
 
-        CodeLabProject newProject = new CodeLabProject(newUserProjectName, projectXML);
-        defaultProfile.CodeLabProjects.Add(newProject);
+          // Create project name: "My Project 1", "My Project 2", etc.
+          newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
+          defaultProfile.CodeLabUserProjectNum++;
 
-        // Inform workspace that the current work on workspace has been saved to a project.
-        _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
+          newProject = new CodeLabProject(newUserProjectName, projectXML);
 
-        _SessionState.OnCreatedProject(newProject);
+          if (defaultProfile.CodeLabProjects == null) {
+            DAS.Error("OnCozmoSaveUserProject.NullCodeLabProjects", "defaultProfile.CodeLabProjects is null");
+          }
+          defaultProfile.CodeLabProjects.Add(newProject);
+
+          // Inform workspace that the current work on workspace has been saved to a project.
+          _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
+
+          _SessionState.OnCreatedProject(newProject);
+        }
+        catch (NullReferenceException) {
+          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionSaveNewProject", "Save new Code Lab user project. CodeLabUserProjectNum = " + defaultProfile.CodeLabUserProjectNum + ", newProject = " + newProject);
+        }
       }
       else {
-        // Project already has a guid. Locate the project then update it.
-        CodeLabProject projectToUpdate = FindUserProjectWithUUID(projectUUID);
-        projectToUpdate.ProjectXML = projectXML;
-        projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
+        CodeLabProject projectToUpdate = null;
+        try {
+          // Project already has a guid. Locate the project then update it.
+          projectToUpdate = FindUserProjectWithUUID(projectUUID);
+          projectToUpdate.ProjectXML = projectXML;
+          projectToUpdate.DateTimeLastModifiedUTC = DateTime.UtcNow;
 
-        _SessionState.OnUpdatedProject(projectToUpdate);
+          _SessionState.OnUpdatedProject(projectToUpdate);
+        }
+        catch (NullReferenceException) {
+          DAS.Error("OnCozmoSaveUserProject.NullReferenceExceptionUpdateProject", "Save existing CodeLab user project. projectUUID = " + projectUUID + ", projectToUpdate = " + projectToUpdate);
+        }
       }
 
       _WebViewObjectComponent.EvaluateJS(@"window.saveProjectCompleted();");
