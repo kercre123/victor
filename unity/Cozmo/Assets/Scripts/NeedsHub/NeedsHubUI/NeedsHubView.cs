@@ -45,6 +45,9 @@ namespace Cozmo.Needs.UI {
     private NeedsPlayModal _NeedsPlayModalPrefab;
     private NeedsPlayModal _NeedsPlayModalInstance;
 
+    [SerializeField]
+    private CozmoImage _SettingsAlertImage;
+
     public void Start() {
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
@@ -60,6 +63,9 @@ namespace Cozmo.Needs.UI {
       NeedBracketId energyBracket = nsm.GetCurrentDisplayBracket(NeedId.Energy);
       EnableButtonsBasedOnBrackets(repairBracket, energyBracket);
 
+      RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
+      _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
+
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
     }
 
@@ -68,6 +74,14 @@ namespace Cozmo.Needs.UI {
       _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
       _MetersWidget.OnPlayPressed -= HandlePlayButton;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
+
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged -= HandleBlockConnectivityChanged;
+      }
+    }
+
+    private void HandleBlockConnectivityChanged(int blocksConnected) {
+      _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
     }
 
     private void HandleActivitiesButtonClicked() {

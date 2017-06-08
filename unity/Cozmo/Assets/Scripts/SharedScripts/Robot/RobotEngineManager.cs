@@ -21,6 +21,8 @@ public class RobotEngineManager : MonoBehaviour {
   public const string kEngineIP = "127.0.0.1";
   public const string kSimRobotIP = "127.0.0.1";
 
+  public const int kMaxCubeCount = 3;
+
   public enum ConnectionType {
     Robot,
     Sim,
@@ -530,6 +532,10 @@ public class RobotEngineManager : MonoBehaviour {
   public void SendGameBeingPaused(bool isPaused) {
     Message.SetGameBeingPaused = Singleton<Anki.Cozmo.ExternalInterface.SetGameBeingPaused>.Instance.Initialize(isPaused);
     SendMessage();
+  }
+
+  public bool AllCubesConnected() {
+    return (CurrentRobot != null && CurrentRobot.LightCubes.Count >= kMaxCubeCount);
   }
 
   #region Mocks
