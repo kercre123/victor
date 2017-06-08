@@ -495,9 +495,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void WebViewCallback(string text) {
       string jsonStringFromJS = string.Format("{0}", text);
-
-      // Sometimes required by Unity editor. Will turn on in master soon.
-      //jsonStringFromJS = WWW.UnEscapeURL(jsonStringFromJS);
+      jsonStringFromJS = WWW.UnEscapeURL(jsonStringFromJS);
 
       Debug.Log("JSON from JavaScript: " + jsonStringFromJS);
       ScratchRequest scratchRequest = JsonConvert.DeserializeObject<ScratchRequest>(jsonStringFromJS, GlobalSerializerSettings.JsonSettings);
