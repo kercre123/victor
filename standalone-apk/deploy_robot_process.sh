@@ -61,7 +61,7 @@ fi
 $ADB push $CPP_LIB /data/local/tmp
 
 # Shell into android device and execute robot process
-$ADB shell "
+$ADB shell -x "
 export LD_LIBRARY_PATH=/data/local/tmp
 cd /data/local/tmp
 nice -n -20 ./cozmoRobot2

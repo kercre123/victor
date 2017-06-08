@@ -177,7 +177,7 @@
         'target_archs%': ['armveabi-v7a'],
         'target_cpu': ['arm'],
         'compiler_flags': [
-          '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
+          '--sysroot=<(ndk_root)/platforms/android-24/arch-arm',
           '-DANDROID=1',
           '-D__ARM_NEON=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
@@ -197,10 +197,10 @@
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++/include',
           '-I<(ndk_root)/sources/cxx-stl/llvm-libc++abi/include',
           '-I<(ndk_root)/sources/android/support/include',
-          '-I<(ndk_root)/platforms/android-18/arch-arm/usr/include',
+          '-I<(ndk_root)/platforms/android-24/arch-arm/usr/include',
         ],
         'linker_flags': [
-            '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
+            '--sysroot=<(ndk_root)/platforms/android-24/arch-arm',
             '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64',
             '-no-canonical-prefixes',
             '-target armv7-none-linux-androideabi',
@@ -210,7 +210,7 @@
             '-Wl,-z,relro',
             '-Wl,-z,now',
             '-mthumb',
-            '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
+            '-L<(ndk_root)/platforms/android-24/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
             # '-L<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
             # '-L<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
@@ -1535,6 +1535,8 @@
               '-llog',
               '-lOpenSLES',
               '-landroid',
+              '-lcamera2ndk',
+              '-lmediandk',
             ],
             'include_dirs': [
               '<(crash_path)/Breakpad/include/breakpad',
@@ -1597,34 +1599,35 @@
         'COZMO_ROBOT',
         'CORETECH_ROBOT',
         'COZMO_V2',
-        '_DEBUG'
+        '_DEBUG',
+        #'USING_ANDROID_PHONE',  # Uncomment if deploying on non-Cozmo android device
       ],
       'defines!': [
         'RELEASE'
       ],
       'conditions': [
         [
-          'OS=="ios" or OS=="mac"',
-          {
-            #'type': 'static_library',
-            'libraries': [
-              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
-            ],
-
-            # This should also be done in Android, but ninja doesn't like it when actions have no output,
-            # so instead this step is called explicitly in configure.py when building Android.
-            'actions': [
-               {
-                 'action_name': 'Robot pre-build steps',
-                 'inputs': [],
-                 'outputs': [],
-                 'action': [
-                   'make', '-C', '../../robot/', 'dev2', 'BUILD_TYPE=DEVELOPMENT'
-                 ],
-               }
-            ],
-
-          },
+#          'OS=="ios" or OS=="mac"',
+#          {
+#            #'type': 'static_library',
+#            'libraries': [
+#              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+#            ],
+#
+#            # This should also be done in Android, but ninja doesn't like it when actions have no output,
+#            # so instead this step is called explicitly in configure.py when building Android.
+#            'actions': [
+#               {
+#                 'action_name': 'Robot pre-build steps',
+#                 'inputs': [],
+#                 'outputs': [],
+#                 'action': [
+#                   'make', '-C', '../../robot/', 'dev2', 'BUILD_TYPE=DEVELOPMENT'
+#                 ],
+#               }
+#            ],
+#
+#          },
       	  'OS=="android"',
           {
             #'type': 'shared_library',

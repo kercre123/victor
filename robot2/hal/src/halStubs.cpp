@@ -79,6 +79,12 @@ namespace Anki {
       BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
       HeadToBody headData_;  //-we own this one.
 
+      #ifdef USING_ANDROID_PHONE
+      BodyToHead dummyBodyData_ = {
+        .cliffSense = {800, 800, 800, 800}
+      };
+      #endif
+      
       struct {
         s32 motorOffset[RobotMotor_MOTOR_COUNT];
         CONSOLE_DATA(f32 motorSpeed[RobotMotor_MOTOR_COUNT]);
@@ -114,19 +120,25 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      printf("Starting spine hal\n");
+      #ifndef USING_ANDROID_PHONE
+      {
+        printf("Starting spine hal\n");
 
-      SpineErr_t result = hal_init(SPINE_TTY, SPINE_BAUD);
+        SpineErr_t result = hal_init(SPINE_TTY, SPINE_BAUD);
 
-      if (result != err_OK) {
-        return RESULT_FAIL;
+        if (result != err_OK) {
+          return RESULT_FAIL;
+        }
+
+        hal_set_mode(RobotMode_RUN);
+        
+        while (GetSpineDataFrame() != RESULT_OK) {
+          ; //spin on good frame
+        }
       }
-
-      hal_set_mode(RobotMode_RUN);
-      
-      while (GetSpineDataFrame() != RESULT_OK) {
-        ; //spin on good frame
-      }
+      #else
+      bodyData_ = &dummyBodyData_;
+      #endif
 
       MotorID m;
       for (m=MOTOR_LIFT;m<MOTOR_COUNT;m++) {
@@ -191,8 +203,6 @@ namespace Anki {
 
     Result HAL::MonitorConnectionState(void)
     {
-      ProcessIMUEvents();
-      
       // Send block connection state when engine connects
       static bool wasConnected = false;
       if (!wasConnected && HAL::RadioIsConnected()) {
@@ -226,16 +236,23 @@ namespace Anki {
     
     Result HAL::Step(void)
     {
-      static int repeater = FRAMES_PER_RESPONSE;
-      if (--repeater <= 0) {
-        repeater = FRAMES_PER_RESPONSE;
-        headData_.framecounter++;
-        hal_send_frame(PayloadId_PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
-      }
-      Result result =  GetSpineDataFrame();
-
-      PrintConsoleOutput();
+      Result result = RESULT_OK;
       
+      #ifndef USING_ANDROID_PHONE
+      {
+        static int repeater = FRAMES_PER_RESPONSE;
+        if (--repeater <= 0) {
+          repeater = FRAMES_PER_RESPONSE;
+          headData_.framecounter++;
+          hal_send_frame(PayloadId_PAYLOAD_DATA_FRAME, &headData_, sizeof(HeadToBody));
+        }
+        result =  GetSpineDataFrame();
+
+        PrintConsoleOutput();
+      }
+      #endif
+      
+      ProcessIMUEvents();
       MonitorConnectionState();
       return result;
     }

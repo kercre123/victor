@@ -137,10 +137,10 @@ namespace Anki {
 
 
 #ifdef COZMO_V2
-        //TODO: move to correct point in time. This was just proof-of-life.
+        // Calibrate motors
         LiftController::StartCalibrationRoutine(1);
-        //        TestModeController::Start(TM_LIFT_TOGGLE);
-#endif        
+        HeadController::StartCalibrationRoutine(1);
+#endif
         
         robotStateMessageCounter_ = 0;
 
@@ -224,12 +224,12 @@ namespace Anki {
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
+          #ifndef COZMO_V2
           LiftController::Disable();
           LiftController::ClearCalibration();
           HeadController::Disable();
           HeadController::ClearCalibration();
           WheelController::Disable();
-          #ifndef COZMO_V2
           HAL::CameraSetColorEnabled(false);
           #ifndef SIMULATOR
           HAL::SetImageSendMode(Off, QVGA);

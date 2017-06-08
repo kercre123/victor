@@ -5,6 +5,10 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
+// For development purposes, while HW is scarce, it's useful to be able to run on phones
+#ifdef USING_ANDROID_PHONE
+#define HAL_NOT_PROVIDING_CLOCK 1
+#endif
 
 int main (void)
 {

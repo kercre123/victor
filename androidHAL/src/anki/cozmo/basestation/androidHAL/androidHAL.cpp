@@ -12,11 +12,17 @@
  **/
 
 #include "anki/cozmo/basestation/androidHAL/androidHAL.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
-// Android includes
+// Android IMU
 #include <android/sensor.h>
 
+// Android camera
+#include "anki/cozmo/basestation/androidHAL/camera/camera_manager.h"
+#include "anki/cozmo/basestation/androidHAL/camera/image_reader.h"
+#include "anki/cozmo/basestation/androidHAL/camera/utils/native_debug.h"
+#include "anki/vision/CameraSettings.h"
 
 #include <vector>
 #include <chrono>
@@ -30,20 +36,6 @@ namespace Anki {
     
     namespace { // "Private members"
 
-      // Time
-      std::chrono::steady_clock::time_point _timeOffset = std::chrono::steady_clock::now();
-      
-      
-      // Android sensor (i.e. IMU)
-      ASensorManager*    _sensorManager;
-      const ASensor*     _accelerometer;
-      const ASensor*     _gyroscope;
-      ASensorEventQueue* _sensorEventQueue;
-      ALooper*           _looper;
-      
-      const int SENSOR_REFRESH_RATE_HZ = 16;
-      constexpr int32_t SENSOR_REFRESH_PERIOD_US = int32_t(1000000 / SENSOR_REFRESH_RATE_HZ);
-      
     } // "private" namespace
 
 
@@ -70,16 +62,28 @@ namespace Anki {
      * Removes instance
      */
     void AndroidHAL::removeInstance() {
-      // check if the instance has been created yet
-      if(0 != _instance) {
-        delete _instance;
-        _instance = 0;
-      }
+      Util::SafeDelete(_instance);
     };
     
     AndroidHAL::AndroidHAL()
+    : _timeOffset(std::chrono::steady_clock::now())
+    , _sensorManager(nullptr)
+    , _accelerometer(nullptr)
+    , _gyroscope(nullptr)
+    , _sensorEventQueue(nullptr)
+    , _looper(nullptr)
+    , _androidCamera(nullptr)
+    , _reader(nullptr)
+    , _imageCaptureResolution(ImageResolution::QVGA)
+    , _imageFrameID(1)
     {
       InitIMU();
+      InitCamera();
+    }
+    
+    AndroidHAL::~AndroidHAL()
+    {
+      DeleteCamera();
     }
 
     
@@ -137,11 +141,37 @@ namespace Anki {
       (void)status;   //to silence unused compiler warning
     }
 
+    void AndroidHAL::InitCamera()
+    {
+      PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingInit", "");
+      
+      DeleteCamera();
+      
+      _androidCamera = new NativeCamera(nullptr);
+      ASSERT(_androidCamera, "Failed to Create CameraObject");
+      
+      // Get image resolution info
+      const int cameraRes = static_cast<const int>(_imageCaptureResolution);
+      const int width = Vision::CameraResInfo[cameraRes].width;
+      const int height = Vision::CameraResInfo[cameraRes].height;
+
+      PRINT_NAMED_INFO("AndroidHAL.InitCamera.StartingCaptureSession", "%d x %d", width, height);
+      ImageResolution_Android res {width, height, 0};
+      _reader= new ImageReader(&res);
+      
+      _androidCamera->CreateSession(_reader->GetNativeWindow());
+      _androidCamera->Animate();
+    }
+
+    void AndroidHAL::DeleteCamera() {
+      Util::SafeDelete(_androidCamera);
+      Util::SafeDelete(_reader);
+    }
     
     Result AndroidHAL::Update()
     {
       ProcessIMUEvents();
-      
+
       return RESULT_OK;
     }
     
@@ -170,10 +200,34 @@ namespace Anki {
       return;
     }
 
-    u32 AndroidHAL::CameraGetFrame(u8* frame, ImageResolution res, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
       DEV_ASSERT(frame != NULL, "androidHAL.CameraGetFrame.NullFramePointer");
-      return imageFrameID_++;
+      
+      if (_reader && _reader->IsReady()) {
+        u32 dataLength;
+        _reader->GetLatestRGBImage(frame, dataLength);
+        imageID = ++_imageFrameID;
+        
+        // --------------------------------------------------------------------
+        // TEMP: Image-imu sync isn't implemented yet so, just fake the imu data for now.
+        // See sim_hal::IMUGetCameraTime() for explanation of line2Number
+        ImageImuData imu_meas(imageID,
+                              0.f, 0.f, 0.f,
+                              125);          // IMU data point for middle of this image
+
+        imuData.push_back(imu_meas);
+        
+        // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
+        imu_meas.imageId = imageID + 1;
+        imu_meas.line2Number = 1;
+        imuData.push_back(imu_meas);
+        // --------------------------------------------------------------------
+
+        return true;
+      }
+      
+      return false;
 
     } // CameraGetFrame()
     

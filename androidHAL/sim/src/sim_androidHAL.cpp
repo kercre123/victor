@@ -119,6 +119,10 @@ namespace Anki {
 
     }
 
+    AndroidHAL::~AndroidHAL() {
+      
+    }
+    
 
     TimeStamp_t AndroidHAL::GetTimeStamp(void)
     {
@@ -229,7 +233,7 @@ namespace Anki {
 
 
     // Starts camera frame synchronization
-    u32 AndroidHAL::CameraGetFrame(u8* frame, ImageResolution res, std::vector<ImageImuData>& imuData )
+    bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
       DEV_ASSERT(frame != NULL, "sim_androidHAL.CameraGetFrame.NullFramePointer");
 
@@ -260,7 +264,7 @@ namespace Anki {
       IMUReadData(imu);
       
       ImageImuData data;
-      data.imageId = imageFrameID_;
+      data.imageId = _imageFrameID;
       data.rateX = imu.rate_x;
       data.rateY = imu.rate_y;
       data.rateZ = imu.rate_z;
@@ -271,11 +275,14 @@ namespace Anki {
       imuData.push_back(data);
       
       // Include IMU data for beginning of the next image (for rolling shutter correction purposes)
-      data.imageId = imageFrameID_ + 1;
+      data.imageId = _imageFrameID + 1;
       data.line2Number = 1;
       imuData.push_back(data);
+
+      imageID = _imageFrameID;
+      _imageFrameID++;
       
-      return imageFrameID_++;
+      return true;
 
     } // CameraGetFrame()
         

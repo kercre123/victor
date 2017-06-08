@@ -22,6 +22,12 @@
 namespace webots {
   class Supervisor;
 }
+class ASensorManager;
+class ASensor;
+class ASensorEventQueue;
+class ALooper;
+class NativeCamera;
+class ImageReader;
 
 
 namespace Anki
@@ -37,6 +43,9 @@ namespace Anki
       
       // Removes instance
       static void removeInstance();
+      
+      // Dtor
+      ~AndroidHAL();
       
       // TODO: Is this necessary?
       TimeStamp_t GetTimeStamp();
@@ -92,11 +101,12 @@ namespace Anki
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
 
-      // Starts camera frame synchronization (blocking call)
-      // Returns image ID
+      // Fill provided frame buffer with image data if available
+      // Returns true if image available
       // TODO: How fast will this be in hardware? Is image ready and waiting?
-      u32 CameraGetFrame(u8* frame, ImageResolution res, std::vector<ImageImuData>& imuData);
+      bool CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData);
 
+      ImageResolution CameraGetResolution() const {return _imageCaptureResolution;}
       
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////
@@ -110,12 +120,37 @@ namespace Anki
 
       void InitIMU();
       void ProcessIMUEvents();
+        
+      void InitCamera();
+      void DeleteCamera();
       
 #ifdef SIMULATOR
       CameraCalibration headCamInfo_;
+#else
+      
+      // Time
+      std::chrono::steady_clock::time_point _timeOffset;
+      
+      
+      // Android sensor (i.e. IMU)
+      ASensorManager*    _sensorManager;
+      const ASensor*     _accelerometer;
+      const ASensor*     _gyroscope;
+      ASensorEventQueue* _sensorEventQueue;
+      ALooper*           _looper;
+      
+      static constexpr int SENSOR_REFRESH_RATE_HZ = 16;
+      static constexpr int SENSOR_REFRESH_PERIOD_US = 1000000 / SENSOR_REFRESH_RATE_HZ;
+      
+      // Camera
+      NativeCamera*   _androidCamera;
+      ImageReader*    _reader;
 #endif
       
-      u32 imageFrameID_ = 1;
+      // Camera
+      ImageResolution _imageCaptureResolution = ImageResolution::QVGA;
+      u32             _imageFrameID;
+      
       
     }; // class AndroidHAL
     

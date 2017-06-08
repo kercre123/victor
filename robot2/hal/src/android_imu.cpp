@@ -131,7 +131,24 @@ namespace Anki {
     
     bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
-      return PopIMU(IMUData);
+      //return PopIMU(IMUData);
+      
+      // TEMP HACK: Send 0s because on my Nexus 5x, the gyro values are kinda crazy.
+      PopIMU(IMUData); // Just to pop queue
+      static TimeStamp_t lastIMURead = 0;
+      TimeStamp_t now = HAL::GetTimeStamp();
+      if (now - lastIMURead > 4) {
+        IMUData.acc_x = 0.f;
+        IMUData.acc_y = 0.f;
+        IMUData.acc_z = 9800.f;
+        IMUData.rate_x = 0.f;
+        IMUData.rate_y = 0.f;
+        IMUData.rate_z = 0.f;
+        lastIMURead = now;
+        return true;
+      }
+      return false;
+      
     }
     
   } // namespace Cozmo

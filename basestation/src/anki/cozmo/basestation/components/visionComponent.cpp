@@ -1565,7 +1565,7 @@ namespace Cozmo {
       CV_IMWRITE_JPEG_QUALITY, quality
     };
     
-    //cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
+    cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
     
     std::vector<u8> compressedBuffer;
     cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
@@ -2357,8 +2357,11 @@ namespace Cozmo {
 # ifdef COZMO_V2
   void VisionComponent::CaptureAndSendImage()
   {
-    const ImageResolution res = ImageResolution::QVGA;
-    const int cameraRes = static_cast<const int>(res);
+    // This resolution should match AndroidHAL::_imageCaptureResolution!
+    const ImageResolution expectedResolution = ImageResolution::QVGA;
+    DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
+               "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
+    const int cameraRes = static_cast<const int>(expectedResolution);
     const int numRows = Vision::CameraResInfo[cameraRes].height;
     const int numCols = Vision::CameraResInfo[cameraRes].width;
     
@@ -2368,31 +2371,32 @@ namespace Cozmo {
     // Get image buffer
     // TODO: ImageImuData can be engine-only, non-clad, struct
     std::vector<ImageImuData> imuData;
-    u32 imageId = AndroidHAL::getInstance()->CameraGetFrame(buffer, res, imuData);
-    
-    // Add IMU data to history
-    for (auto& data : imuData) {
-      GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
+    u32 imageId;
+    if (AndroidHAL::getInstance()->CameraGetFrame(buffer, imageId, imuData)) {
+      
+      // Add IMU data to history
+      for (const auto& data : imuData) {
+        GetImuDataHistory().AddImuData(data.imageId , data.rateX, data.rateY, data.rateZ, data.line2Number);
+      }
+      
+      // Create ImageRGB object from image buffer
+      Vision::ImageRGB imgRGB(numRows, numCols, buffer);
+      
+      // Create EncodedImage with proper imageID and timestamp
+      // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
+      TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
+      
+      // ***** TODO: Get rid of encodedImage since we no longer need "encoded" images internally *****
+      imgRGB.SetTimestamp(ts);
+      EncodedImage encodedImage(imgRGB, imageId);
+      
+      // Set next image for VisionComponent
+      Result lastResult = SetNextImage(encodedImage);
+      
+      // Compress to jpeg and send to game and viz
+      lastResult = CompressAndSendImage(imgRGB, 50);
+      DEV_ASSERT(RESULT_OK == lastResult, "CompressAndSendImage() failed");
     }
-    
-    // Create ImageRGB object from image buffer
-    cv::Mat cvImg;
-    cvImg = cv::Mat(numRows, numCols, CV_8UC3, (void*)buffer);
-    cvtColor(cvImg, cvImg, CV_BGR2RGB);
-    Vision::ImageRGB imgRGB(numRows, numCols, buffer);
-    
-    // Create EncodedImage with proper imageID and timestamp
-    // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
-    TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
-    imgRGB.SetTimestamp(ts);
-    EncodedImage encodedImage(imgRGB, imageId);
-    
-    // Set next image for VisionComponent
-    Result lastResult = SetNextImage(encodedImage);
-    
-    // Compress to jpeg and send to game and viz
-    lastResult = CompressAndSendImage(imgRGB, 50);
-    DEV_ASSERT(RESULT_OK == lastResult, "CompressAndSendImage() failed");
   }
   
 # endif // #ifdef COZMO_V2
@@ -2537,6 +2541,19 @@ namespace Cozmo {
           }
         } else {
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
+          
+#ifdef COZMO_V2
+          // TEMP HACK: Use dummy calibration for now since final camera not available yet
+          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
+          std::array<float,8> junkArr;
+          Vision::CameraCalibration calib(240, 320,
+                                          280, 280,
+                                          160, 120,
+                                          0,
+                                          junkArr);
+          SetCameraCalibration(calib);
+#endif
+          
         }
         
         Enable(true);
