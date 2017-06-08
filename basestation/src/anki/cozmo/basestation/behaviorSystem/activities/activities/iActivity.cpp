@@ -13,15 +13,16 @@
  **/
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/iActivityStrategy.h"
-#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
-#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
@@ -43,14 +44,15 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const char* kActivityIDConfigKey      = "activityID";
-static const char* kActivityTypeConfigKey    = "activityType";
-static const char* kBehaviorChooserConfigKey = "behaviorChooser";
-static const char* kStrategyConfigKey        = "activityStrategy";
-static const char* kRequiresSparkKey         = "requireSpark";
-static const char* kRequiresObjectTapped     = "requireObjectTapped";
-static const char* kSupportsObjectTapInteractionKey = "supportsObjectTapInteractions";
-static const char* kSmartReactionLockSuffix = "_activityLock";
+static const char* kActivityIDConfigKey               = "activityID";
+static const char* kActivityTypeConfigKey             = "activityType";
+static const char* kBehaviorChooserConfigKey          = "behaviorChooser";
+static const char* kInterludeBehaviorChooserConfigKey = "interludeBehaviorChooser";
+static const char* kStrategyConfigKey                 = "activityStrategy";
+static const char* kRequiresSparkKey                  = "requireSpark";
+static const char* kRequiresObjectTapped              = "requireObjectTapped";
+static const char* kSupportsObjectTapInteractionKey   = "supportsObjectTapInteractions";
+static const char* kSmartReactionLockSuffix           = "_activityLock";
 
 } // end namespace
   
@@ -166,14 +168,22 @@ void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
   AIInformationAnalysis::EProcessFromString(inanProcessStr.c_str());
   
   // configure chooser and set in pointer if specified
-  // otherwise if ChooseNextBehavior hasn't been overridden assert should hit below
+  // otherwise if ChooseNextBehaviorInternal hasn't been overridden assert should hit below
   _behaviorChooserPtr.reset();
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   if(!chooserConfig.isNull()){
     IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
     _behaviorChooserPtr.reset( newChooser );
   }
-  
+
+  // configure the interlude behavior chooser, to specify behaviors that can run in between other behaviors.
+  _interludeBehaviorChooserPtr.reset();
+  const Json::Value& interludeChooserConfig = config[kInterludeBehaviorChooserConfigKey];
+  if( !interludeChooserConfig.isNull() ) {
+    IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, interludeChooserConfig);
+    _interludeBehaviorChooserPtr.reset(newChooser);
+  }
+    
   // strategy
   const Json::Value& strategyConfig = config[kStrategyConfigKey];
   IActivityStrategy* newStrategy = ActivityStrategyFactory::CreateActivityStrategy(robot, strategyConfig);
@@ -251,6 +261,9 @@ void IActivity::OnDeselected(Robot& robot)
     SmartRemoveDisableReactionsLock(robot, *_smartLockIDs.begin());
   }
   _smartLockIDs.clear();
+
+  // clear the interlude behavior, if it was set
+  _lastChosenInterludeBehavior = nullptr;
   
   // log event to das
   int nSecs = Util::numeric_cast<int>(_lastTimeActivityStoppedSecs - _lastTimeActivityStartedSecs);
@@ -283,7 +296,40 @@ void IActivity::OnDeselected(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
+
+  // if an intlude behavior was chosen and is still running, return that
+  if( _lastChosenInterludeBehavior != nullptr &&
+      _lastChosenInterludeBehavior == currentRunningBehavior ) {
+    return _lastChosenInterludeBehavior;
+  }
+  else {
+    _lastChosenInterludeBehavior = nullptr;
+  }
+  
   IBehavior* ret = ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+
+  const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
+  const bool switchingBehaviors = ret != currentRunningBehavior;
+  
+  if( hasInterludeChooser && switchingBehaviors ) {
+    // if we are changing behaviors, give the interlude choose an opportunity to run something. Pass in the
+    // behavior that we would otherwise choose (The one that would run next) as "current"
+    _lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->ChooseNextBehavior(robot, ret);
+    if( !IBehavior::IsNoneOrNull(_lastChosenInterludeBehavior) ) {
+      PRINT_CH_INFO("Behaviors", "IActivity.ChooseInterludeBehavior",
+                    "Activity %s is inserting interlude %s between behaviors %s and %s",
+                    GetIDStr(),
+                    _lastChosenInterludeBehavior->GetIDStr().c_str(),
+                    currentRunningBehavior ? currentRunningBehavior->GetIDStr().c_str() : "NULL",
+                    ret ? ret->GetIDStr().c_str() : "NULL");
+      return _lastChosenInterludeBehavior;
+    }
+    else {
+      // set to null to avoid confusing with None (see COZMO-12095)
+      _lastChosenInterludeBehavior = nullptr;
+    }
+  }
+  
   return ret;
 }
 
@@ -291,8 +337,8 @@ IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentR
 IBehavior* IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
-                 "IActivity.ChooseNextBehavior.ChooserNotOverwritten",
-                 "ChooseNextBehavior called without behavior chooser overwritten")){
+                 "IActivity.ChooseNextBehaviorInternal.ChooserNotOverwritten",
+                 "ChooseNextBehaviorInternal called without behavior chooser overwritten")){
     // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
     // note we pass
     IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);

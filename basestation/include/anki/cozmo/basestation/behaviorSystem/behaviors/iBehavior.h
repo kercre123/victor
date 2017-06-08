@@ -109,6 +109,9 @@ public:
   static Json::Value CreateDefaultBehaviorConfig(BehaviorID behaviorID);
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
 
+  // returns true if the behavior is a NoneBehavior or a nullptr is passed in
+  static bool IsNoneOrNull(const IBehavior* behavior);
+  
   bool IsRunning() const { return _isRunning; }
   // returns true if any action from StartAction is currently running, indicating that the behavior is
   // likely waiting for something to complete

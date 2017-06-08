@@ -131,6 +131,12 @@ Json::Value IBehavior::CreateDefaultBehaviorConfig(BehaviorID behaviorID)
   return config;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::IsNoneOrNull(const IBehavior* behavior)
+{
+  return ( behavior == nullptr ) || ( behavior->GetClass() == BehaviorClass::NoneBehavior );
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorID IBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
