@@ -195,6 +195,11 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
         PRINT_NAMED_INFO("ReactionTriggerStrategyHiccup.BehaviorNotRunnable",
                          "Trying to hiccup but behavior is not runnable");
       }
+      // Hiccup behavior is runnable and this is the first hiccup
+      else if(_firstHiccupStartTime == 0)
+      {
+        _firstHiccupStartTime = curTime;
+      }
       
       return isRunnable;
     }
@@ -214,6 +219,8 @@ void ReactionTriggerStrategyHiccup::ResetHiccups()
                                                           _maxHiccupOccurrenceFrequency_ms);
   
   _nextHiccupInBoutTime = _shouldGetHiccupsAtTime;
+  
+  _firstHiccupStartTime = 0;
   
   if(DEBUG_HICCUPS)
   {
@@ -262,7 +269,14 @@ void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
 {
   // Log an event to DAS before reseting
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  const TimeStamp_t hiccupsDuration = curTime - _shouldGetHiccupsAtTime;
+  TimeStamp_t hiccupsDuration = curTime - _firstHiccupStartTime;
+  
+  // If for some reason we have not yet actually hiccuped but are being cured report a duration of 0
+  // I don't think this is possible during normal execution but can happen when force triggering hiccups
+  if(_firstHiccupStartTime == 0)
+  {
+    hiccupsDuration = 0;
+  }
   
   Util::sEventF("robot.hiccups.ended",
                 {{DDATA, std::to_string(hiccupsDuration).c_str()}},

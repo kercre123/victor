@@ -92,6 +92,9 @@ private:
   
   Util::RandomGenerator& _rng;
   AIWhiteboard& _whiteboard;
+  
+  // The time when the first hiccup in a bout occured
+  TimeStamp_t _firstHiccupStartTime = 0;
 
   // Json defined params
   // How often a bout of hiccups can occur
