@@ -382,7 +382,7 @@ namespace Cozmo {
           _LowBatteryAlertInstance = alertModal;
         };
 
-        var lowBatteryPriorityData = new ModalPriorityData(ModalPriorityLayer.Low, 1,
+        var lowBatteryPriorityData = new ModalPriorityData(ModalPriorityLayer.VeryLow, 1,
                                                            LowPriorityModalAction.Queue,
                                                            HighPriorityModalAction.Stack);
         DAS.Debug("PauseManager.OpenLowBatteryAlert", "Opening Low Battery Alert");
