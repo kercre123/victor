@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Anki.Assets;
 using Cozmo.ConnectionFlow.UI;
+using System.Collections.Generic;
 
 namespace Cozmo.ConnectionFlow {
   public class NeedsConnectionManager : MonoBehaviour {
@@ -18,6 +19,10 @@ namespace Cozmo.ConnectionFlow {
     [SerializeField]
     private GameObjectDataLink _ConnectionFlowPrefabData;
     private ConnectionFlowController _ConnectionFlowInstance;
+
+    [SerializeField]
+    private GameObjectDataLink _FirstTimeConnectViewPrefabData;
+    private FirstTimeConnectView _FirstTimeConnectViewInstance;
 
     private bool _StartFlowInProgress = false;
 
@@ -64,6 +69,11 @@ namespace Cozmo.ConnectionFlow {
 
       _StartFlowInProgress = true;
 
+      // Before starting, reset some state
+      if (DebugMenuManager.Instance.DemoMode) {
+        SetupForDemoMode();
+      }
+
 #if UNITY_ANDROID && !UNITY_EDITOR
     // begin attempting to ping Cozmo now on Android;
     // if we're already connected to his wifi, we want to detect that
@@ -72,8 +82,57 @@ namespace Cozmo.ConnectionFlow {
       AndroidConnectionFlow.StartPingTest();
     }
 #endif
+      OnboardingManager.Instance.PreloadOnboarding();
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+        ShowFirstTimeFlow();
+      }
+      else {
+        ShowNeedsUnconnectedView();
+      }
+    }
 
-      ShowNeedsUnconnectedView();
+    private void ShowFirstTimeFlow() {
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_FirstTimeConnectViewPrefabData.AssetBundle, LoadFirstTimeView);
+    }
+
+    private void LoadFirstTimeView(bool assetBundleSuccess) {
+      if (assetBundleSuccess) {
+        _FirstTimeConnectViewPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+          if (_FirstTimeConnectViewInstance == null && connectViewPrefab != null) {
+            UIManager.OpenView(connectViewPrefab.GetComponent<FirstTimeConnectView>(), HandleFirstTimeConnectViewCreated);
+          }
+        });
+      }
+      else {
+        DAS.Error("NeedsConnectionManager.LoadFirstTimeView", "Failed to load asset bundle " + _FirstTimeConnectViewPrefabData.AssetBundle);
+      }
+    }
+    private void HandleFirstTimeConnectViewCreated(Cozmo.UI.BaseView firstTimeConnectView) {
+      _FirstTimeConnectViewInstance = (FirstTimeConnectView)firstTimeConnectView;
+      _FirstTimeConnectViewInstance.ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
+      _FirstTimeConnectViewInstance.ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
+    }
+
+    private void HandleFirstTimeConnectionFlowComplete() {
+      AssetBundleManager.Instance.UnloadAssetBundle(_FirstTimeConnectViewPrefabData.AssetBundle);
+      if (_FirstTimeConnectViewInstance != null) {
+        _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
+        _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
+        _FirstTimeConnectViewInstance.CloseDialog();
+        _FirstTimeConnectViewInstance = null;
+      }
+      IntroFlowComplete();
+    }
+    private void HandleFirstTimeConnectFlowQuit() {
+      // destroy and re-create the connect dialog to restart the flow
+      DAS.Info("NeedsConnectionManager.HandleConnectionFlowQuit", "Restarting Connection Dialog Flow");
+      if (_FirstTimeConnectViewInstance != null) {
+        _FirstTimeConnectViewInstance.ConnectionFlowComplete -= HandleFirstTimeConnectionFlowComplete;
+        _FirstTimeConnectViewInstance.ConnectionFlowQuit -= HandleFirstTimeConnectFlowQuit;
+        _FirstTimeConnectViewInstance.CloseDialogImmediately();
+        _FirstTimeConnectViewInstance = null;
+      }
+      ShowFirstTimeFlow();
     }
 
     private void ShowNeedsUnconnectedView() {
@@ -156,6 +215,26 @@ namespace Cozmo.ConnectionFlow {
       CloseNeedsUnconnectView(false);
 
       ShowNeedsUnconnectedView();
+    }
+
+    private void SetupForDemoMode() {
+      // Set needing onboarding home, but not other phases
+      DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.Home] = 0;
+      // reset the item inventory
+      List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
+      for (int i = 0; i < itemIDs.Count; ++i) {
+        profile.Inventory.SetItemAmount(itemIDs[i], 0);
+      }
+      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Loot);
+      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      // Needs to set all difficulties unlocked ( don't just return in UI so that we don't have "new difficulty unlocked popups");
+      Challenge.ChallengeData[] challengeList = Challenge.ChallengeDataList.Instance.ChallengeData;
+      for (int i = 0; i < challengeList.Length; ++i) {
+        profile.GameInstructionalVideoPlayed[challengeList[i].ChallengeID] = true;
+        profile.GameDifficulty[challengeList[i].ChallengeID] = challengeList[i].DifficultyOptions.Count;
+      }
+      // Later on Robot unlocks happen
     }
 
     public void ForceBoot() {
