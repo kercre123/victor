@@ -36,7 +36,7 @@
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/console/consoleInterface.h"

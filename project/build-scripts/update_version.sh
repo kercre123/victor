@@ -16,7 +16,7 @@ minor=`echo $version | cut -d. -f2`
 revision=`echo $version | cut -d. -f3`
 printf -v  LONG_VERSION "%05d.%05d.%05d" $major $minor $revision
 
-ENGINE_VERSION_FILE=$TOPLEVEL/cozmoAPI/include/anki/cozmo/buildVersion.h
+ENGINE_VERSION_FILE=$TOPLEVEL/basestation/src/anki/cozmo/basestation/buildVersion.h
 SDK_VERSION_FILE=$TOPLEVEL/tools/sdk/cozmoclad/src/cozmoclad/__init__.py
 PLIST_FILE=$TOPLEVEL/unity/ios/Info.plist
 UNITY_VERSION_FILE=$TOPLEVEL/unity/Cozmo/ProjectSettings/ProjectSettings.asset

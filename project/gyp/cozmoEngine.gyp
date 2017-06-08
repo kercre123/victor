@@ -14,8 +14,6 @@
     'clad_engine_source': '../../generated/clad/engine.lst',
     'clad_robot_source': '../../generated/clad/robot.lst',
     'clad_viz_source': '../../generated/clad/viz.lst',
-    'api_source': 'cozmoAPI.lst',
-    'api_library_type': 'static_library',
     'engine_test_source': 'cozmoEngine-test.lst',
     'ctrlShared_source': 'ctrlShared.lst',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
@@ -1101,6 +1099,7 @@
             'type': 'executable',
             'include_dirs': [
               '../../basestation/test',
+              '../../basestation/src',
               '../../robot/include',
               '<@(opencv_includes)',
               '<@(flatbuffers_include)',
@@ -1322,7 +1321,6 @@
         '<!@(cat <(clad_robot_source))',
         '<!@(cat <(clad_viz_source))',
         '<!@(cat <(clad_source))',
-        '<!@(cat <(api_source))',
       ],
       'sources/': [
         ['exclude', 'bleRobotManager.mm'],
@@ -1341,7 +1339,6 @@
         '<@(flatbuffers_include)',
         '<@(text_to_speech_include_dirs)',
         '<@(routing_http_server_include)',
-        '../../cozmoAPI/include',
         '../../generated/clad/game',
         '<@(libarchive_include)',
         '<@(das_include)',
@@ -1354,7 +1351,6 @@
           '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
-          '../../cozmoAPI/include',
           '../../generated/clad/game',
         ],
         'defines': [
@@ -1517,7 +1513,7 @@
         ['OS=="mac"',{
           'sources/': [
             ['exclude', '(android|linux)'],
-            ['exclude', '../../cozmoAPI/src/anki/cozmo/csharp-binding/ios']
+            ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
           ]
         }],
         ['OS=="android"',{

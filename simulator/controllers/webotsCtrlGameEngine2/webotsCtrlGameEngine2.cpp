@@ -7,7 +7,6 @@
  */
 
 #include "../shared/ctrlCommonInitialization.h"
-#include "anki/cozmo/cozmoAPI.h"
 #include "util/logging/logging.h"
 #include "util/logging/channelFilter.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -17,6 +16,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "util/console/consoleInterface.h"
 #include "anki/cozmo/basestation/androidHAL/androidHAL.h"
+#include "anki/cozmo/basestation/cozmoAPI/cozmoAPI.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"

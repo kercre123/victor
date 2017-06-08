@@ -12,8 +12,8 @@
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "speedChooser.h"
 #include "util/logging/logging.h"
 
 

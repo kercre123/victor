@@ -8,8 +8,8 @@
 
 #include "anki/cozmo/simulator/game/uiGameController.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/game/comms/gameMessageHandler.h"
-#include "anki/cozmo/game/comms/gameComms.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/gameComms.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/gameMessageHandler.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

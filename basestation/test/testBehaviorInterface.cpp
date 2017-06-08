@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
 #include "gtest/gtest.h"
 
 

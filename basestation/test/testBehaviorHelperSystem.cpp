@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
 
 
 using namespace Anki;

@@ -12,7 +12,7 @@
  **/
 
 #import "UnityAppController.h"
-#include "anki/cozmo/csharp-binding/csharp-binding.h"
+#include "anki/cozmo/basestation/cozmoAPI/csharp-binding/csharp-binding.h"
 #include "util/console/consoleInterface.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>

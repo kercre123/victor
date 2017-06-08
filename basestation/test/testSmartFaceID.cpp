@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/smartFaceId.h"
-#include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
 
 
 using namespace Anki;

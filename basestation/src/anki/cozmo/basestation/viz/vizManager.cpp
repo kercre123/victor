@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
-#include "anki/cozmo/game/comms/gameMessagePort.h"
+#include "anki/cozmo/basestation/cozmoAPI/comms/gameMessagePort.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"

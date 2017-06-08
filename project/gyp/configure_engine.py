@@ -232,7 +232,6 @@ def main(scriptArgs):
                            'androidHAL/sim/src',
                            'include', 'resources'],
                           ['project/gyp/cozmoEngine2_sim.lst'])
-  generator.processFolder(['cozmoAPI/src/anki/cozmo', 'cozmoAPI/include' ], ['project/gyp/cozmoAPI.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
