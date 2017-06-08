@@ -13,7 +13,7 @@ namespace Cozmo.Settings {
     }
 
     private void HandleSleepCozmoButtonTapped() {
-      PauseManager.Instance.OpenConfirmSleepCozmoDialog(handleOnChargerSleepCancel: false);
+      PauseManager.Instance.OpenConfirmSleepCozmoDialog(handleSleepCancel: false);
     }
   }
 }

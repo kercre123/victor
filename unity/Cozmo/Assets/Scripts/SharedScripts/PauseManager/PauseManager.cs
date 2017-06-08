@@ -25,7 +25,7 @@ namespace Cozmo {
     public Action OnPauseDialogOpen;
     private bool _IsPaused = false;
     private AlertModal _GoToSleepDialog = null;
-    private bool _IsOnChargerToSleep = false;
+    private bool _EngineTriggeredSleep = false;
     private bool _StartedIdleTimeout = false;
     private bool _IdleTimeOutEnabled = true;
     private float _ShouldPlayWakeupTimestamp = -1;
@@ -136,9 +136,10 @@ namespace Cozmo {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
+      // Stop sleeping if a reactionary behavior other than PlacedOnCharger runs 
       if (IsConfirmSleepDialogOpen && message.newTrigger != Anki.Cozmo.ReactionTrigger.PlacedOnCharger) {
         StopIdleTimeout();
-        _IsOnChargerToSleep = false;
+        _EngineTriggeredSleep = false;
         CloseGoToSleepDialog();
         CloseConfirmSleepDialog();
 
@@ -158,7 +159,7 @@ namespace Cozmo {
         }
 
         _ShouldPlayWakeupTimestamp = -1;
-        if (!_IsOnChargerToSleep && _IdleTimeOutEnabled) {
+        if (!_EngineTriggeredSleep && _IdleTimeOutEnabled) {
           StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
           // Set up a timer so that if we unpause after starting the goToSleep, we'll do the wakeup (using a little buffer past beginning of sleep)
           _ShouldPlayWakeupTimestamp = Time.realtimeSinceStartup + Settings.AppBackground_TimeTilSleep_sec + Settings.AppBackground_SleepAnimGetInBuffer_sec;
@@ -184,7 +185,7 @@ namespace Cozmo {
         // If the go to sleep dialog is open, the user has selected sleep and there's no turning back, so don't wake up Cozmo
         if (!IsGoToSleepDialogOpen) {
           bool shouldPlayWakeup = false;
-          if (!_IsOnChargerToSleep && _IdleTimeOutEnabled) {
+          if (!_EngineTriggeredSleep && _IdleTimeOutEnabled) {
             StopIdleTimeout();
             if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
               shouldPlayWakeup = true;
@@ -204,7 +205,7 @@ namespace Cozmo {
       }
     }
 
-    private void HandleConfirmSleepCozmoOnChargerButtonTapped() {
+    private void HandleConfirmEngineTriggeredSleepCozmoButtonTapped() {
       StartPlayerInducedSleep(true);
     }
 
@@ -212,7 +213,7 @@ namespace Cozmo {
       StartPlayerInducedSleep(false);
     }
 
-    public void StartPlayerInducedSleep(bool fromCharger) {
+    public void StartPlayerInducedSleep(bool fromEngineTriggeredSleep) {
       Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
         robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
@@ -242,15 +243,15 @@ namespace Cozmo {
       }
     }
 
-    // Handles message sent from engine when the player puts cozmo on the charger.
+    // Handles message sent from engine when the player puts cozmo on the charger or says a voice command to sleep.
     private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
-      _IsOnChargerToSleep = true;
-      OpenConfirmSleepCozmoDialog(handleOnChargerSleepCancel: true);
+      _EngineTriggeredSleep = true;
+      OpenConfirmSleepCozmoDialog(handleSleepCancel: true);
     }
 
     private void HandleDisconnectionMessage(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
@@ -261,7 +262,7 @@ namespace Cozmo {
       CloseAllDialogs();
       ListeningForBatteryLevel = false;
       _StartedIdleTimeout = false;
-      _IsOnChargerToSleep = false;
+      _EngineTriggeredSleep = false;
       _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
       _LowBatteryAlertTriggered = false;
     }
@@ -289,7 +290,7 @@ namespace Cozmo {
       }
     }
 
-    public void OpenConfirmSleepCozmoDialog(bool handleOnChargerSleepCancel) {
+    public void OpenConfirmSleepCozmoDialog(bool handleSleepCancel) {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
@@ -301,15 +302,15 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
         AlertModalData confirmSleepCozmoAlert = null;
-        if (handleOnChargerSleepCancel) {
+        if (handleSleepCancel) {
           confirmSleepCozmoAlert = new AlertModalData("sleep_cozmo_on_charger_alert",
                                                       LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle,
                                                       LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription,
                                                       new AlertModalButtonData("confirm_sleep_button",
                                                                                LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                                               HandleConfirmSleepCozmoOnChargerButtonTapped,
+                                                                               HandleConfirmEngineTriggeredSleepCozmoButtonTapped,
                                                                                Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Disconnect)),
-                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel));
+                                                      new AlertModalButtonData("cancel_sleep_button", LocalizationKeys.kButtonCancel, HandleEngineTriggeredSleepCancel));
 
         }
         else {
@@ -338,9 +339,9 @@ namespace Cozmo {
       }
     }
 
-    private void HandleOnChargerSleepCancel() {
+    private void HandleEngineTriggeredSleepCancel() {
       StopIdleTimeout();
-      _IsOnChargerToSleep = false;
+      _EngineTriggeredSleep = false;
     }
 
     private void OpenGoToSleepDialogAndFreezeUI() {

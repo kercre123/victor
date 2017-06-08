@@ -29,6 +29,35 @@ using namespace ExternalInterface;
 namespace {
 static const char* kTimeTilSleepAnimationKey = "timeTilSleepAnimation_s";
 static const char* kTimeTilDisconnectionKey = "timeTilDisconnection_s";
+
+constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersOnCharger = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               true},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      true},
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersOnCharger),
+              "Reaction triggers duplicate or non-sequential");
+
 }
 
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
@@ -61,6 +90,8 @@ bool BehaviorReactToOnCharger::IsRunnableInternal(const BehaviorPreReqNone& preR
 
 Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
+  SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersOnCharger);
+
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   

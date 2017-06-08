@@ -53,6 +53,10 @@
         {
           "phrase": "Yes Please",
           "commandType": "YesPlease"
+        },
+        {
+          "phrase": "Go To Sleep",
+          "commandType": "GoToSleep"
         }
       ]
     },
@@ -100,6 +104,10 @@
         {
           "phrase": "Ja Bitte",
           "commandType": "YesPlease"
+        },
+        {
+          "phrase": "Geh schlafen",
+          "commandType": "GoToSleep"
         }
       ]
     },
@@ -150,6 +158,10 @@
         {
           "phrase": "Oui s'il te plait",
           "commandType": "YesPlease"
+        },
+        {
+          "phrase": "Va dormir",
+          "commandType": "GoToSleep"
         }
       ]
     },
@@ -196,6 +208,10 @@
         {
           "phrase": "Onegai",
           "commandType": "YesPlease"
+        },
+        {
+          "phrase": "Nerujikan dayo",
+          "commandType": "GoToSleep"
         }
       ]
     }
@@ -220,7 +236,8 @@
         "DoATrick",
         "FistBump",
         "LetsPlay",
-        "PeekABoo"
+        "PeekABoo",
+        "GoToSleep"
       ]
     },
     {

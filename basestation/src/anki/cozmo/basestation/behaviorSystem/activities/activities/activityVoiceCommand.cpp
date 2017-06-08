@@ -98,11 +98,16 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
   }
   
   _respondingToCommandType = voiceCommandComponent->GetPendingCommand();
+  if(_respondingToCommandType != VoiceCommandType::HeyCozmo &&
+     _respondingToCommandType != VoiceCommandType::Count)
+  {
+    voiceCommandComponent->ClearHeardCommand();
+  }
+  
   switch (_respondingToCommandType)
   {
     case VoiceCommandType::LetsPlay:
     {
-      voiceCommandComponent->ClearHeardCommand();
       _voiceCommandBehavior = _requestGameSelector->
                         GetNextRequestGameBehavior(robot, currentRunningBehavior);
       
@@ -112,7 +117,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     }
     case VoiceCommandType::DoADance:
     {
-      voiceCommandComponent->ClearHeardCommand();
       _voiceCommandBehavior = _danceBehavior;
       
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
@@ -122,7 +126,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     }
     case VoiceCommandType::DoATrick:
     {
-      voiceCommandComponent->ClearHeardCommand();
       _doATrickSelector->RequestATrick(robot);
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
       return _behaviorNone;
@@ -131,7 +134,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     case VoiceCommandType::ComeHere:
     {
       BehaviorPreReqRobot preReqData(robot);
-      voiceCommandComponent->ClearHeardCommand();
       if(_comeHereBehavior->IsRunnable(preReqData)){
         _voiceCommandBehavior = _comeHereBehavior;
         voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
@@ -141,7 +143,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     case VoiceCommandType::FistBump:
     {
       BehaviorPreReqRobot preReqRobot(robot);
-      voiceCommandComponent->ClearHeardCommand();
       //Ensure fist bump is unlocked and runnable
       if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::FistBump) &&
          _fistBumpBehavior->IsRunnable(preReqRobot)){
@@ -153,11 +154,23 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       
       return _voiceCommandBehavior;
     }
-    
+    case VoiceCommandType::GoToSleep:
+    {
+      // Force execute the PlacedOnCharger/ReactToOnCharger behavior which will send appropriate
+      // messages to game triggering the sleep modal
+      ExternalInterface::ExecuteReactionTrigger r;
+      r.reactionTriggerToBehaviorEntry.behaviorID = BehaviorID::ReactToOnCharger;
+      r.reactionTriggerToBehaviorEntry.trigger = ReactionTrigger::PlacedOnCharger;
+      ExternalInterface::MessageGameToEngine m;
+      m.Set_ExecuteReactionTrigger(std::move(r));
+      robot.GetExternalInterface()->Broadcast(std::move(m));
+      
+      _voiceCommandBehavior = _behaviorNone;
+      return _voiceCommandBehavior;
+    }
     case VoiceCommandType::PeekABoo:
     {
       BehaviorPreReqRobot preReqRobot(robot);
-      voiceCommandComponent->ClearHeardCommand();
       //Ensure PeekABoo is unlocked and runnable
       if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::PeekABoo) &&
          _peekABooBehavior->IsRunnable(preReqRobot)){
@@ -175,7 +188,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     // the UserResponseToPrompt message
     case VoiceCommandType::YesPlease:
     {
-      voiceCommandComponent->ClearHeardCommand();
       VoiceCommandEventUnion vcEvent;
       vcEvent.Set_responseToPrompt(UserResponseToPrompt(true));
       robot.Broadcast(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(vcEvent)));
@@ -183,7 +195,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     }
     case VoiceCommandType::NoThankYou:
     {
-      voiceCommandComponent->ClearHeardCommand();
       VoiceCommandEventUnion vcEvent;
       vcEvent.Set_responseToPrompt(UserResponseToPrompt(false));
       robot.Broadcast(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(vcEvent)));
