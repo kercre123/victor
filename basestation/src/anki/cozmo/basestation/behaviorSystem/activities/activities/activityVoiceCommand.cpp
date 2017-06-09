@@ -17,14 +17,17 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "util/logging/logging.h"
@@ -32,7 +35,18 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace {
 
+  // Maps a voice command to how many sparks it costs to execute
+  const std::map<VoiceCommand::VoiceCommandType, SparkCosts> kVoiceCommandToSparkCostMap = {
+    {VoiceCommand::VoiceCommandType::DoATrick, SparkCosts::DoATrick},
+    {VoiceCommand::VoiceCommandType::LetsPlay, SparkCosts::PlayAGame},
+    {VoiceCommand::VoiceCommandType::FistBump, SparkCosts::FistBump},
+    {VoiceCommand::VoiceCommandType::PeekABoo, SparkCosts::PeekABoo},
+  };
+  
+  
+}
   
 ActivityVoiceCommand::~ActivityVoiceCommand() = default;
   
@@ -72,6 +86,11 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
+  
+  _refuseBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::VC_Refuse);
+  DEV_ASSERT(_refuseBehavior != nullptr &&
+             _refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
+             "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
 
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
 }
@@ -98,10 +117,26 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
   }
   
   _respondingToCommandType = voiceCommandComponent->GetPendingCommand();
-  if(_respondingToCommandType != VoiceCommandType::HeyCozmo &&
-     _respondingToCommandType != VoiceCommandType::Count)
+  
+  const bool isCommandValid = IsCommandValid(_respondingToCommandType);
+  
+  if(isCommandValid)
   {
     voiceCommandComponent->ClearHeardCommand();
+  
+    // Check if we should refuse to execute the command due to needs state
+    const bool shouldRefuse = CheckRefusalDueToNeeds(robot, _voiceCommandBehavior);
+    if(shouldRefuse)
+    {
+      return _voiceCommandBehavior;
+    }
+    
+    // Check if we have enough sparks to execute the command
+    if(!HasEnoughSparksForCommand(robot, _respondingToCommandType))
+    {
+      CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+      return _voiceCommandBehavior;
+    }
   }
   
   switch (_respondingToCommandType)
@@ -118,11 +153,8 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     case VoiceCommandType::DoADance:
     {
       _voiceCommandBehavior = _danceBehavior;
-      
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
-      
       return _voiceCommandBehavior;
-      
     }
     case VoiceCommandType::DoATrick:
     {
@@ -130,7 +162,6 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
       return _behaviorNone;
     }
-    
     case VoiceCommandType::ComeHere:
     {
       BehaviorPreReqRobot preReqData(robot);
@@ -138,19 +169,46 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
         _voiceCommandBehavior = _comeHereBehavior;
         voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
       }
+      else
+      {
+        CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+      }
+      
       return _voiceCommandBehavior;
     }
     case VoiceCommandType::FistBump:
     {
       BehaviorPreReqRobot preReqRobot(robot);
-      //Ensure fist bump is unlocked and runnable
-      if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::FistBump) &&
-         _fistBumpBehavior->IsRunnable(preReqRobot)){
+      //Ensure fist bump is runnable
+      if(_fistBumpBehavior->IsRunnable(preReqRobot))
+      {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
         voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+        _voiceCommandBehavior = _behaviorNone;
       }
-      _voiceCommandBehavior = _behaviorNone;
+      else
+      {
+        CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+      }
+
+      return _voiceCommandBehavior;
+    }
+    case VoiceCommandType::PeekABoo:
+    {
+      BehaviorPreReqRobot preReqRobot(robot);
+      //Ensure PeekABoo is runnable
+      if(_peekABooBehavior->IsRunnable(preReqRobot))
+      {
+        const bool isSoftSpark = false;
+        robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
+        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+        _voiceCommandBehavior = _behaviorNone;
+      }
+      else
+      {
+        CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+      }
       
       return _voiceCommandBehavior;
     }
@@ -168,22 +226,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       _voiceCommandBehavior = _behaviorNone;
       return _voiceCommandBehavior;
     }
-    case VoiceCommandType::PeekABoo:
-    {
-      BehaviorPreReqRobot preReqRobot(robot);
-      //Ensure PeekABoo is unlocked and runnable
-      if(robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::PeekABoo) &&
-         _peekABooBehavior->IsRunnable(preReqRobot)){
-        const bool isSoftSpark = false;
-        robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
-        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
-      }
-      
-      _voiceCommandBehavior = _behaviorNone;
-      
-      return _voiceCommandBehavior;
-    }
-
+    
     // Yes Please and No Thank You are handled by Unity, so just send up
     // the UserResponseToPrompt message
     case VoiceCommandType::YesPlease:
@@ -209,6 +252,79 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       return _behaviorNone;
     }
   }
+}
+
+bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandType command) const
+{
+  const auto& commandToSparkCost = kVoiceCommandToSparkCostMap.find(command);
+  if(commandToSparkCost != kVoiceCommandToSparkCostMap.end())
+  {
+    int curNumSparks = robot.GetInventoryComponent().GetInventoryAmount(InventoryType::Sparks);
+    return (curNumSparks > commandToSparkCost->second);
+  }
+  
+  return true;
+}
+
+bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outputBehavior) const
+{
+  if(_respondingToCommandType != VoiceCommandType::Count)
+  {
+    AnimationTrigger refuseAnim = AnimationTrigger::Count;
+    const Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
+    if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
+    {
+      refuseAnim = AnimationTrigger::VCRefuse_repair;
+    }
+    else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
+    {
+      refuseAnim = AnimationTrigger::VCRefuse_energy;
+    }
+    
+    if(refuseAnim != AnimationTrigger::Count)
+    {
+      return CheckAndSetupRefuseBehavior(refuseAnim, outputBehavior);
+    }
+  }
+  return false;
+}
+
+bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command) const
+{
+  switch(command)
+  {
+    case VoiceCommandType::LetsPlay:
+    case VoiceCommandType::DoADance:
+    case VoiceCommandType::DoATrick:
+    case VoiceCommandType::ComeHere:
+    case VoiceCommandType::FistBump:
+    case VoiceCommandType::PeekABoo:
+    case VoiceCommandType::GoToSleep:
+    case VoiceCommandType::YesPlease:
+    case VoiceCommandType::NoThankYou:
+    {
+      return true;
+    }
+    // These two commands will never be handled by this chooser:
+    case VoiceCommandType::HeyCozmo:
+    case VoiceCommandType::Count:
+    {
+      // We're intentionally not handling these types in ActivityVoiceCommand
+      return false;
+    }
+  }
+}
+
+bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(AnimationTrigger animTrigger,
+                                                       IBehavior*& outputBehavior) const
+{
+  BehaviorPreReqAnimSequence preReq({animTrigger});
+  if(_refuseBehavior->IsRunnable(preReq))
+  {
+    outputBehavior = _refuseBehavior;
+    return true;
+  }
+  return false;
 }
 
 } // namespace Cozmo

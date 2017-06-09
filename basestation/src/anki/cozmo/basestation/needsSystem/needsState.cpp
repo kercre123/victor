@@ -371,6 +371,19 @@ RepairablePartId NeedsState::PickPartToDamage() const
   return static_cast<RepairablePartId>(i);
 }
 
+bool NeedsState::IsNeedAtBracket(NeedId need, NeedBracketId bracket) const
+{
+  const auto& iter = _curNeedsBracketsCache.find(need);
+  if(iter != _curNeedsBracketsCache.end())
+  {
+    return iter->second == bracket;
+  }
+  PRINT_NAMED_ERROR("NeedsState.IsNeedAtBracket.InvalidNeed",
+                    "No needs bracket for need %d",
+                    static_cast<int>(need));
+  return false;
+}
+
 
 #if ANKI_DEV_CHEATS
 void NeedsState::DebugFillNeedMeters()

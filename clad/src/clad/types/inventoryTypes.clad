@@ -17,5 +17,14 @@ structure InventoryList {
   int_32 inventoryItemAmount[64]
 }
 
+// How many sparks it costs for various things
+enum no_cpp_class uint_32 SparkCosts
+{
+  DoATrick = 5,
+  PlayAGame = 5,
+  FistBump = 5,
+  PeekABoo = 5,
+}
+
 } // namespace Cozmo
 } // namespace Anki

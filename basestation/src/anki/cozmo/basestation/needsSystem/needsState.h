@@ -68,6 +68,9 @@ public:
   
   // Set current needs bracket levels from current levels
   void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);
+
+  bool IsNeedAtBracket(NeedId need, NeedBracketId bracket) const;
+
   void SetNeedsBracketsDirty() { _needsBracketsDirty = true; };
 
   int NumDamagedParts() const;

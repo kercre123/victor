@@ -56,6 +56,12 @@ protected:
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // Checks if the voice command should be refused due to severe needs states
+  // Returns true if the outputBehavior has been set to the refuse behavior due to our needs state
+  bool CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outputBehavior) const;
+  
+  // Returns true if the command should be handled
+  bool IsCommandValid(VoiceCommand::VoiceCommandType command) const;
   
   
 private:
@@ -69,6 +75,7 @@ private:
   IBehavior*                        _comeHereBehavior     = nullptr;
   IBehavior*                        _fistBumpBehavior     = nullptr;
   IBehavior*                        _peekABooBehavior     = nullptr;
+  IBehavior*                        _refuseBehavior       = nullptr;
   std::unique_ptr<DoATrickSelector>    _doATrickSelector;
   std::unique_ptr<RequestGameSelector> _requestGameSelector;
   VoiceCommand::VoiceCommandType       _respondingToCommandType = VoiceCommand::VoiceCommandType::Count;
@@ -76,6 +83,13 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Returns whether or not we have enough sparks to execute the command
+  bool HasEnoughSparksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command) const;
+  
+  // Setups up the refuse behavior to play the animTrigger
+  // Returns true if the outputBehavior has been set to the refuse behavior
+  bool CheckAndSetupRefuseBehavior(AnimationTrigger animTrigger, IBehavior*& outputBehavior) const;
   
   
 };

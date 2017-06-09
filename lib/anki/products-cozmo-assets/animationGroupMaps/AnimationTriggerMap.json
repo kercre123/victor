@@ -1601,6 +1601,18 @@
       "AnimName": "ag_askForBlock"
     },
     {
+      "CladEvent": "VCRefuse_energy",
+      "AnimName": "ag_vc_refuse_energy_01"
+    },
+    {
+      "CladEvent": "VCRefuse_repair",
+      "AnimName": "ag_vc_refuse_repair_01"
+    },
+    {
+      "CladEvent": "VCRefuse_sparks",
+      "AnimName": "ag_vc_refuse_nosparks_01"
+    },
+    {
       "CladEvent": "WaitOnSideLoop",
       "AnimName": "ag_reacttocliff_wait"
     },    

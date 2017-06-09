@@ -1,0 +1,6 @@
+{
+  "behaviorClass" : "PlayAnim",
+  "behaviorID" : "VC_Refuse",
+  "displayNameKey":"behavior.VC_Refuse",
+  "animTriggers": ["VCRefuse_energy"]
+}
