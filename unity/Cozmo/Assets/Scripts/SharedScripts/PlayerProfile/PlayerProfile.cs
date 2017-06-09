@@ -15,8 +15,6 @@ namespace DataPersistence {
 
     public System.DateTime Birthdate;
 
-    public Dictionary<string, bool> CompletedScriptedSequences;
-
     public List<DataPersistence.TimelineEntryData> Sessions;
 
     // this would work better as a HashSet or a list but for some reason
@@ -59,7 +57,6 @@ namespace DataPersistence {
       DataCollectionEnabled = true;
       ProfileCreated = false;
       FirstTimeFaceEnrollmentHowToPlay = true;
-      CompletedScriptedSequences = new Dictionary<string, bool>();
       GameDifficulty = new Dictionary<string, int>();
       HighScores = new Dictionary<string, int>();
       TotalGamesPlayed = new Dictionary<string, int>();

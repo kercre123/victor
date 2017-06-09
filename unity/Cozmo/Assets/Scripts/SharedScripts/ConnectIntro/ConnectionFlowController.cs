@@ -53,14 +53,6 @@ public class ConnectionFlowController : MonoBehaviour {
   private GameObject _WakingUpCozmoScreenInstance;
 
   [SerializeField]
-  private PinSecurityModal _PinSecurityModalPrefab;
-  private PinSecurityModal _PinSecurityModalInstance;
-
-  [SerializeField]
-  private InvalidPinModal _InvalidPinModalPrefab;
-  private InvalidPinModal _InvalidPinModalInstance;
-
-  [SerializeField]
   private SimpleConnectModal _ReplaceCozmoOnChargerModalPrefab;
   private SimpleConnectModal _ReplaceCozmoOnChargerModalInstance;
 
@@ -95,10 +87,11 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   public static AnimationTrigger GetAnimationForWakeUp() {
-    if(Cozmo.Needs.NeedsStateManager.Instance != null){
-      if(Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Repair).Equals(NeedBracketId.Critical)){
+    if (Cozmo.Needs.NeedsStateManager.Instance != null) {
+      if (Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Repair).Equals(NeedBracketId.Critical)) {
         return Anki.Cozmo.AnimationTrigger.ConnectWakeUp_SevereRepair;
-      }else if(Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Energy).Equals(NeedBracketId.Critical)){
+      }
+      else if (Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Energy).Equals(NeedBracketId.Critical)) {
         return Anki.Cozmo.AnimationTrigger.ConnectWakeUp_SevereEnergy;
       }
     }
@@ -132,10 +125,6 @@ public class ConnectionFlowController : MonoBehaviour {
 
     if (_UpdateFirmwareScreenInstance != null) {
       GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
-    }
-
-    if (_InvalidPinModalInstance != null) {
-      UIManager.CloseModalImmediately(_InvalidPinModalInstance);
     }
 
     if (_ReplaceCozmoOnChargerModalInstance != null) {
@@ -390,28 +379,6 @@ public class ConnectionFlowController : MonoBehaviour {
     _SecuringConnectionScreenInstance.OnScreenComplete += HandleSecuringConnectionScreenDone;
   }
 
-  private void ShowInvalidPinScreen() {
-    ModalPriorityData invalidPinModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
-    UIManager.OpenModal(_InvalidPinModalPrefab, invalidPinModalData, HandleInvalidPinModalCreated);
-  }
-
-  private void HandleInvalidPinModalCreated(BaseModal newInvalidPinModal) {
-    _InvalidPinModalInstance = (InvalidPinModal)newInvalidPinModal;
-    _InvalidPinModalInstance.OnRetryPin += ShowPinScreen;
-    _InvalidPinModalInstance.ModalClosedWithCloseButtonOrOutside += ReturnToTitle;
-  }
-
-  private void ShowPinScreen() {
-    ModalPriorityData pinSecurityModalData = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
-    UIManager.OpenModal(_PinSecurityModalPrefab, pinSecurityModalData, HandlePinSecurityViewCreated);
-  }
-
-  private void HandlePinSecurityViewCreated(BaseModal newPinSecurityModal) {
-    _PinSecurityModalInstance = (PinSecurityModal)newPinSecurityModal;
-    _PinSecurityModalInstance.ModalClosedWithCloseButtonOrOutside += HandlePinSecurityViewClosedByUser;
-    _PinSecurityModalInstance.OnPinEntered += HandlePinSecurityEntered;
-  }
-
   private void UpdateAppScreen() {
     ModalPriorityData updateAppModalPrefab = ModalPriorityData.CreateSlightlyHigherData(_ConnectionFlowBackgroundModalInstance.PriorityData);
     UIManager.OpenModal(_UpdateAppModalPrefab, updateAppModalPrefab, HandleUpdateAppViewCreated);
@@ -420,15 +387,6 @@ public class ConnectionFlowController : MonoBehaviour {
   private void HandleUpdateAppViewCreated(BaseModal newUpdateAppModal) {
     _UpdateAppModalInstance = (UpdateAppModal)newUpdateAppModal;
     _UpdateAppModalInstance.ModalClosedWithCloseButtonOrOutside += ReturnToTitle;
-  }
-
-  private void HandlePinSecurityViewClosedByUser() {
-    ReturnToTitle();
-  }
-
-  private void HandlePinSecurityEntered(string pin) {
-    UIManager.CloseModal(_PinSecurityModalInstance);
-    ShowConnectingToCozmoScreen();
   }
 
   private void HandleSecuringConnectionScreenDone() {
@@ -588,24 +546,15 @@ public class ConnectionFlowController : MonoBehaviour {
       break;
 
     case RobotConnectionResult.NeedsPin:
-      if (_ConnectingToCozmoScreenInstance != null) {
-        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
-      }
-      PlayScanLoopAudio(false);
-      ShowPinScreen();
+      // No longer used
       break;
 
     case RobotConnectionResult.InvalidPin:
-      if (_ConnectingToCozmoScreenInstance != null) {
-        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
-      }
-      PlayScanLoopAudio(false);
-      ShowInvalidPinScreen();
+      // No longer used
       break;
 
     case RobotConnectionResult.PinMaxAttemptsReached:
-      PlayScanLoopAudio(false);
-      ReplaceCozmoOnCharger();
+      // No longer used
       break;
 
     case RobotConnectionResult.ConnectionRejected:

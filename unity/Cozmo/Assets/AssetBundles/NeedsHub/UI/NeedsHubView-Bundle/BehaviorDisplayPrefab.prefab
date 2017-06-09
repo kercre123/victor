@@ -5,11 +5,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22485420}
-  - 222: {fileID: 22227096}
-  - 114: {fileID: 11460958}
+  - component: {fileID: 22485420}
+  - component: {fileID: 22227096}
+  - component: {fileID: 11460958}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -22,12 +22,12 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22434792}
-  - 222: {fileID: 22252594}
-  - 114: {fileID: 11477852}
-  - 114: {fileID: 11495896}
+  - component: {fileID: 22434792}
+  - component: {fileID: 22252594}
+  - component: {fileID: 11477852}
+  - component: {fileID: 11495896}
   m_Layer: 0
   m_Name: Divider Stroke
   m_TagString: Untagged
@@ -40,13 +40,13 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22445376}
-  - 222: {fileID: 22247290}
-  - 114: {fileID: 11487898}
-  - 114: {fileID: 11490584}
-  - 114: {fileID: 11462764}
+  - component: {fileID: 22445376}
+  - component: {fileID: 22247290}
+  - component: {fileID: 11487898}
+  - component: {fileID: 11490584}
+  - component: {fileID: 11462764}
   m_Layer: 5
   m_Name: BehaviorDisplayPrefab
   m_TagString: Untagged
@@ -89,6 +89,7 @@ MonoBehaviour:
   m_Text: 
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11462764
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -102,6 +103,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _BehaviorLabel: {fileID: 11460958}
   _MinTimeInStateBeforeChange_Sec: 0.5
+  _MinTimeShowingRewardBeforeChange_Sec: 2.5
   _FadeTime_Sec: 0.3
 --- !u!114 &11477852
 MonoBehaviour:
@@ -220,10 +222,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22445376}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 45}
@@ -238,12 +240,12 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22434792}
   - {fileID: 22485420}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -258,10 +260,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22445376}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -26.5, y: 0}

@@ -29,8 +29,6 @@ namespace Cozmo.HomeHub {
     private float _FreeplayStartedTimestamp = -1;
     private const int kCubesCount = 3;
 
-    public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
-
     public Action<string> OnTabChanged;
 
     [SerializeField]

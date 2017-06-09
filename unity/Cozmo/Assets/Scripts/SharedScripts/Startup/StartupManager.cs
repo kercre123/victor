@@ -497,12 +497,6 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.UIDefaultTransitionSettings.SetInstance(colorP);
       });
 
-    assetBundleManager.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName,
-      "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
-        psc.Initialize();
-        Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
-      });
-
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
       "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
         Cozmo.ItemDataConfig.SetInstance(idc);

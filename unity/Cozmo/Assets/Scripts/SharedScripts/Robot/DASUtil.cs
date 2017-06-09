@@ -6,10 +6,6 @@ public static class DASUtil {
     return date.ToString();
   }
 
-  public static string FormatStatAmount(Anki.Cozmo.ProgressionStatType type, int amount) {
-    return string.Format("{0}_{1}", type.ToString().ToLower(), amount);
-  }
-
   public static string FormatGoal(Cozmo.UI.DailyGoal dailyGoal) {
     return string.Format("{0}_{1}/{2}", dailyGoal.Title, dailyGoal.Progress, dailyGoal.Target);
   }
