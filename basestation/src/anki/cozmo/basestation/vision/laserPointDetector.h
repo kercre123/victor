@@ -26,6 +26,12 @@
 #include <string>
 
 namespace Anki {
+  
+  // Forward declaration:
+  namespace Vision {
+    class ImageCache;
+  }
+
 namespace Cozmo {
     
 // Forward declaration:
@@ -41,8 +47,7 @@ public:
   // If imageInColor is not empty, extra checks are done to verify red/green color saturation.
   // Otherwise, imageInGray is used for detecting potential laser dots.
   // isDarkExposure specifies whether the passed-in images were captured under low-gain, fast-exposure settings.
-  Result Detect(const Vision::ImageRGB& imageInColor,
-                const Vision::Image&    imageInGray,
+  Result Detect(Vision::ImageCache&   imageCache,
                 const VisionPoseData& poseData,
                 const bool isDarkExposure,
                 std::list<ExternalInterface::RobotObservedLaserPoint>& points,

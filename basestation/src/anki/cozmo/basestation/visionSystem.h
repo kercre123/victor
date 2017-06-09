@@ -79,6 +79,7 @@ namespace Embedded {
   
 namespace Vision {
   class FaceTracker;
+  class ImageCache;
   class ImagingPipeline;
   class PetTracker;
 }
@@ -153,8 +154,7 @@ namespace Cozmo {
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const VisionPoseData&      robotState,
-                  const Vision::ImageRGB&    inputImg,
-                  Vision::Image&             inputImgGray); // Can be modified by rolling shutter correction
+                  Vision::ImageCache&        imageCache);
     
     // First decodes the image then calls Update() above
     Result Update(const VisionPoseData&      robotState,
@@ -317,8 +317,7 @@ namespace Cozmo {
                              const std::vector<Anki::Rectangle<s32>>& detectionRects);
     
     // Will use color if not empty, or gray otherwise
-    Result DetectLaserPoints(const Vision::ImageRGB& inputImage,
-                             const Vision::Image&    inputImageGray);
+    Result DetectLaserPoints(Vision::ImageCache& imageCache);
     
     bool IsExposureValid(s32 exposure) const;
     
@@ -341,9 +340,8 @@ namespace Cozmo {
     Matlab _matlab;
 #   endif
     
-    Vision::ImageRGB _image;
-    Vision::Image    _imageGray;
-        
+    std::unique_ptr<Vision::ImageCache> _imageCache;
+    
     //
     // Formerly in Embedded VisionSystem "private" namespace:
     //
@@ -535,7 +533,7 @@ namespace Cozmo {
                       std::vector<Anki::Rectangle<s32>>& ignoreROIs);
     
     // Will use color if not empty, or gray otherwise
-    Result DetectMotion(const Vision::ImageRGB& imageRGB, const Vision::Image& imageGray);
+    Result DetectMotion(Vision::ImageCache& imageCache);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);
     

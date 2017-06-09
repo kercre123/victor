@@ -37,7 +37,7 @@ void ShowBlanks(Vision::FaceTracker& faceTracker, s32 kNumBlankFramesBetweenPeop
 {
   static Vision::Image blankImg;
   if(blankImg.GetNumRows() != numRows || blankImg.GetNumCols() != numCols) {
-    blankImg = Vision::Image(numRows, numCols);
+    blankImg.Allocate(numRows, numCols);
     blankImg.FillWith(0);
   }
   
@@ -61,7 +61,7 @@ void ShowBlanks(Vision::FaceTracker& faceTracker, s32 kNumBlankFramesBetweenPeop
     if(blankImgDisp.GetNumRows() != blankImg.GetNumRows() ||
        blankImgDisp.GetNumCols() != blankImg.GetNumCols())
     {
-      blankImgDisp = Vision::ImageRGB(blankImg.GetNumRows(), blankImg.GetNumCols());
+      blankImgDisp.Allocate(blankImg.GetNumRows(), blankImg.GetNumCols());
       blankImgDisp.FillWith(Vision::PixelRGB(255,0,0));
     }
     blankImgDisp.Display(gWindowName);

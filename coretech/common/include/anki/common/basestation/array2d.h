@@ -52,6 +52,14 @@ namespace Anki
     Array2d(s32 nrows, s32 ncols, std::vector<T> &data);
 //    Array2d(const Embedded::Array2d<T> &other); // *copies* data from unmanaged array
 
+    // Allocate to a given size (does NOT initialize the data).
+    // Only reallocates its memory if the new size will not fit into the old one.
+    // Otherwise just changes the size of the array and reuses memory. (Like cv::Mat.)
+    void Allocate(s32 nrows, s32 ncols);
+    
+    // "Empties" an image to make it size zero, but does not actually release memory.
+    void Clear() { Allocate(0,0); }
+    
     // Reference counting assignment (does not copy):
     Array2d<T>& operator= (const Array2d<T> &other);
     

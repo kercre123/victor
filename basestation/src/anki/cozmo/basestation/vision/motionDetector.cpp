@@ -19,6 +19,7 @@
 
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/basestation/imageCache.h"
 
 #include "anki/cozmo/basestation/visionPoseData.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -172,14 +173,41 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
   
   return numAboveThresh;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<class ImageType>
-Result MotionDetector::Detect(const ImageType&        imageIn,
+Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
                               const VisionPoseData&   crntPoseData,
                               const VisionPoseData&   prevPoseData,
                               std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                               DebugImageList<Vision::ImageRGB>& debugImageRGBs)
+{
+  const f32 scaleMultiplier = (kMotionDetection_UseHalfRes ? 2.f : 1.f);
+
+  const Vision::ImageCache::Size imageSize = Vision::ImageCache::GetSize((s32)scaleMultiplier,
+                                                                         Vision::ResizeMethod::NearestNeighbor);
+    
+  if(imageCache.HasColor())
+  {
+    const Vision::ImageRGB& imageColor = imageCache.GetRGB(imageSize);
+    return DetectHelper(imageColor, imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols(), scaleMultiplier,
+                        crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
+  }
+  else
+  {
+    const Vision::Image& imageGray = imageCache.GetGray(imageSize);
+    return DetectHelper(imageGray, imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols(), scaleMultiplier,
+                        crntPoseData, prevPoseData, observedMotions, debugImageRGBs);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class ImageType>
+Result MotionDetector::DetectHelper(const ImageType&        image,
+                                    s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
+                                    const VisionPoseData&   crntPoseData,
+                                    const VisionPoseData&   prevPoseData,
+                                    std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
+                                    DebugImageList<Vision::ImageRGB>& debugImageRGBs)
 {
   const bool headSame = crntPoseData.IsHeadAngleSame(prevPoseData, DEG_TO_RAD(kMotionDetection_MaxHeadAngleChange_deg));
   
@@ -187,15 +215,6 @@ Result MotionDetector::Detect(const ImageType&        imageIn,
                                                     DEG_TO_RAD(kMotionDetection_MaxBodyAngleChange_deg),
                                                     kMotionDetection_MaxPoseChange_mm);
   
-  ImageType image;
-  f32 scaleMultiplier = 1.f;
-  if(kMotionDetection_UseHalfRes) {
-    image = ImageType(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
-    imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
-    scaleMultiplier = 2.f;
-  } else {
-    image = imageIn;
-  }
   //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
   
   const bool longEnoughSinceLastMotion = ((image.GetTimestamp() - _lastMotionTime) > kMotionDetection_LastMotionDelay_ms);
@@ -226,9 +245,7 @@ Result MotionDetector::Detect(const ImageType&        imageIn,
     if(crntPoseData.groundPlaneVisible && prevPoseData.groundPlaneVisible)
     {
       Quad2f imgQuad;
-      crntPoseData.groundPlaneROI.GetImageQuad(crntPoseData.groundPlaneHomography,
-                                               imageIn.GetNumCols(), imageIn.GetNumRows(),
-                                               imgQuad);
+      crntPoseData.groundPlaneROI.GetImageQuad(crntPoseData.groundPlaneHomography, origNumCols, origNumRows, imgQuad);
       
       imgQuad *= 1.f / scaleMultiplier;
       
@@ -407,7 +424,7 @@ Result MotionDetector::Detect(const ImageType&        imageIn,
         //_currentResult.debugImages.push_back({"ForegroundMotion", foregroundMotion});
         //_currentResult.debugImages.push_back({"AND", cvAND});
         
-        Vision::Image foregroundMotionFullSize(imageIn.GetNumRows(), imageIn.GetNumCols());;
+        Vision::Image foregroundMotionFullSize(origNumRows, origNumCols);
         foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
         Vision::ImageRGB ratioImgDispGround(crntPoseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
                                                                                       crntPoseData.groundPlaneHomography));
@@ -440,17 +457,17 @@ Result MotionDetector::Detect(const ImageType&        imageIn,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Explicit instantiation of Detect() method for Gray and RGB images
-template Result MotionDetector::Detect(const Vision::Image&,
-                                       const VisionPoseData&,
-                                       const VisionPoseData&,
-                                       std::list<ExternalInterface::RobotObservedMotion>&,
-                                       DebugImageList<Vision::ImageRGB>&);
+template Result MotionDetector::DetectHelper(const Vision::Image&, s32, s32, f32,
+                                             const VisionPoseData&,
+                                             const VisionPoseData&,
+                                             std::list<ExternalInterface::RobotObservedMotion>&,
+                                             DebugImageList<Vision::ImageRGB>&);
 
-template Result MotionDetector::Detect(const Vision::ImageRGB&,
-                                       const VisionPoseData&,
-                                       const VisionPoseData&,
-                                       std::list<ExternalInterface::RobotObservedMotion>&,
-                                       DebugImageList<Vision::ImageRGB>&);
+template Result MotionDetector::DetectHelper(const Vision::ImageRGB&, s32, s32, f32,
+                                             const VisionPoseData&,
+                                             const VisionPoseData&,
+                                             std::list<ExternalInterface::RobotObservedMotion>&,
+                                             DebugImageList<Vision::ImageRGB>&);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Computes "centroid" at specified percentiles in X and Y

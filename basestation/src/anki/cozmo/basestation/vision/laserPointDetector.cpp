@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 
 #include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/basestation/imageCache.h"
 
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -217,7 +218,7 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
   
   if(DEBUG_LASER_DETECTION > 1)
   {
-    _debugImage = Vision::ImageRGB(aboveLowThreshImg.GetNumRows(), aboveLowThreshImg.GetNumCols());
+    _debugImage.Allocate(aboveLowThreshImg.GetNumRows(), aboveLowThreshImg.GetNumCols());
 
     // Record only those connected components that we're keeping in the debug iamge
     for(s32 i=0; i<labelImage.GetNumRows(); ++i)
@@ -237,20 +238,12 @@ Result LaserPointDetector::FindConnectedComponents(const Vision::ImageRGB& imgCo
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
-                                  const Vision::Image&    imageInGray,
+Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
                                   const VisionPoseData& poseData,
                                   const bool isDarkExposure,
                                   std::list<ExternalInterface::RobotObservedLaserPoint>& points,
                                   DebugImageList<Vision::ImageRGB>& debugImageRGBs)
 {
-  DEV_ASSERT(!imageInGray.IsEmpty(), "LaserPointDetector.Detect.EmptyGrayImage");
-  
-  // If color image is provided, it should be same size as gray
-  DEV_ASSERT(imageInColor.IsEmpty() || (imageInColor.GetNumRows() == imageInGray.GetNumRows() &&
-                                        imageInColor.GetNumCols() == imageInGray.GetNumCols()),
-             "LaserPointDetector.Detect.ImageSizeMismatch");
-  
   if(!poseData.groundPlaneVisible)
   {
     // Can't look for laser points unless we can see the ground
@@ -261,27 +254,16 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
   Point2f groundPlaneCentroid(0.f,0.f);
   Point2f groundCentroidInImage(0.f, 0.f);
   
+  const Vision::ImageCache::Size scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier,
+                                                                         Vision::ResizeMethod::NearestNeighbor);
+  
   Vision::ImageRGB imageColor;
-  Vision::Image    imageGray;
-  if(Params::kLaser_scaleMultiplier != 1)
+  if(imageCache.HasColor())
   {
-    if(!imageInColor.IsEmpty())
-    {
-      imageColor = Vision::ImageRGB(imageInColor.GetNumRows()/Params::kLaser_scaleMultiplier,
-                                    imageInColor.GetNumCols()/Params::kLaser_scaleMultiplier);
-      imageInColor.Resize(imageColor, Vision::ResizeMethod::NearestNeighbor);
-    }
-    
-    imageGray = Vision::Image(imageInGray.GetNumRows()/Params::kLaser_scaleMultiplier,
-                              imageInGray.GetNumCols()/Params::kLaser_scaleMultiplier);
-    imageInGray.Resize(imageGray, Vision::ResizeMethod::NearestNeighbor);
-    
+    imageColor = imageCache.GetRGB(scaleSize);
   }
-  else
-  {
-    imageColor = imageInColor;
-    imageGray  = imageInGray;
-  }
+  
+  const Vision::Image& imageGray = imageCache.GetGray(scaleSize);
   
   // Choose the thresholds based on the exposure
   const u8 lowThreshold  = (isDarkExposure ? Params::kLaser_lowThreshold_darkExposure  : Params::kLaser_lowThreshold_normalExposure );
@@ -298,10 +280,10 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
   // Get centroid of all the motion within the ground plane, if we have one to reason about
   Quad2f imgQuad;
   poseData.groundPlaneROI.GetImageQuad(poseData.groundPlaneHomography,
-                                       imageInGray.GetNumCols(), imageInGray.GetNumRows(),
+                                       imageCache.GetOrigNumCols(), imageCache.GetOrigNumRows(),
                                        imgQuad);
   
-  imgQuad *= 1.f / (f32)Params::kLaser_scaleMultiplier;
+  imgQuad *= 1.f/(f32)Params::kLaser_scaleMultiplier;
   
   // Find centroid(s) of saliency inside the ground plane
   const f32 imgQuadArea = imgQuad.ComputeArea();
@@ -385,7 +367,7 @@ Result LaserPointDetector::Detect(const Vision::ImageRGB& imageInColor,
     Vision::ImageRGB saliencyImageFullSize;
     if(Params::kLaser_scaleMultiplier > 1)
     {
-      saliencyImageFullSize = Vision::ImageRGB(imageInGray.GetNumRows(), imageInGray.GetNumCols());;
+      saliencyImageFullSize.Allocate(imageCache.GetOrigNumRows(), imageCache.GetOrigNumCols());
       _debugImage.Resize(saliencyImageFullSize, Vision::ResizeMethod::NearestNeighbor);
     }
     

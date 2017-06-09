@@ -182,12 +182,12 @@ Image ImageBrightnessHistogram::GetDisplayImage(const s32 maxCount) const
     PRINT_NAMED_WARNING("ImageBrightnessHistogram.GetDisplayImage.BadMaxCount",
                         "MaxCount should be > 0, not %d", maxCount);
     
-    histImg = Image(1, (s32)_counts.size());
+    histImg.Allocate(1, (s32)_counts.size());
     histImg.FillWith(0);
   }
   else
   {
-    histImg = Vision::Image((s32)_counts.size(), maxCount); // start transposed, for efficiency
+    histImg.Allocate((s32)_counts.size(), maxCount); // start transposed, for efficiency
     histImg.FillWith(255);
     
     // Shift is the bit-shift amount to achieve scaling the count values such that

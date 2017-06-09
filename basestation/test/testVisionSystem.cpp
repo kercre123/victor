@@ -21,6 +21,8 @@
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "anki/vision/basestation/imageCache.h"
+
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -105,8 +107,8 @@ TEST(VisionSystem, MarkerDetectionTests)
     
   };
   
-  Vision::ImageRGB img;
-  Vision::Image    imgGray;
+
+  Vision::ImageCache imageCache;
   
   for(auto & testDefinition : testDefinitions)
   {
@@ -117,13 +119,14 @@ TEST(VisionSystem, MarkerDetectionTests)
     u32 numFailures = 0;
     for(auto & filename : testFiles)
     {
+      Vision::ImageRGB img;
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
       
-      imgGray = img.ToGray();
+      imageCache.Reset(img);
       
       Cozmo::VisionPoseData robotState; // not needed just to detect markers
-      result = visionSystem.Update(robotState, img, imgGray);
+      result = visionSystem.Update(robotState, imageCache);
       ASSERT_EQ(RESULT_OK, result);
       
       Cozmo::VisionProcessingResult processingResult;
@@ -234,8 +237,7 @@ TEST(VisionSystem, ImageQuality)
     "Good", "TooBright", "TooDark"
   };
   
-  Vision::ImageRGB img;
-  Vision::Image    imgGray;
+  Vision::ImageCache imageCache;
   
   // Fake the exposure parameters so that we are always against the extremes in order
   // to trigger TooDark and TooBright
@@ -249,13 +251,14 @@ TEST(VisionSystem, ImageQuality)
     
     for(auto & filename : testFiles)
     {
+      Vision::ImageRGB img;
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subDir, filename}));
       ASSERT_EQ(RESULT_OK, result);
       
-      imgGray = img.ToGray();
+      imageCache.Reset(img);
       
       Cozmo::VisionPoseData robotState; // not needed for image quality check
-      result = visionSystem.Update(robotState, img, imgGray);
+      result = visionSystem.Update(robotState, imageCache);
       ASSERT_EQ(RESULT_OK, result);
       
       Cozmo::VisionProcessingResult processingResult;

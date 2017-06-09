@@ -9,6 +9,7 @@
 
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/imageCache.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 #include "anki/vision/basestation/profiler.h"
@@ -327,3 +328,116 @@ GTEST_TEST(ColorPixels, GrayConverters)
   
 }
 
+GTEST_TEST(ImageCache, ImageCacheGray)
+{
+  using namespace Anki::Vision;
+  
+  ImageCache cache;
+  
+  // Nothing in the cache: should fail
+  ASSERT_DEATH(cache.GetRGB(), "");
+  ASSERT_DEATH(cache.GetGray(), "");
+  
+  const s32 nrows = 16;
+  const s32 ncols = 32;
+  Vision::Image imgGray(nrows, ncols);
+  imgGray(0,0) = 42;
+  cache.Reset(imgGray);
+  
+  ASSERT_EQ(false, cache.HasColor());
+  ASSERT_EQ(nrows, cache.GetOrigNumRows());
+  ASSERT_EQ(ncols, cache.GetOrigNumCols());
+  
+  ImageCache::GetType getType;
+  
+  // Cached gray image should share data pointer with original
+  const Vision::Image& getResult = cache.GetGray(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(imgGray.GetDataPointer(), getResult.GetDataPointer());
+  
+  // Getting original should not have required any resizing/computation
+  ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
+  
+  // Compute new resized entry
+  const Vision::Image& halfSize = cache.GetGray(ImageCache::Size::Half_NN, &getType);
+  ASSERT_EQ(nrows/2, halfSize.GetNumRows());
+  ASSERT_EQ(ncols/2, halfSize.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+  
+  // Compute double sized entry
+  const Vision::Image& doubleSize = cache.GetGray(ImageCache::Size::Double_NN, &getType);
+  ASSERT_EQ(nrows*2, doubleSize.GetNumRows());
+  ASSERT_EQ(ncols*2, doubleSize.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+  
+  // Second request should be cached
+  const Vision::Image& halfSize2 = cache.GetGray(ImageCache::Size::Half_NN, &getType);
+  ASSERT_EQ(&halfSize, &halfSize2);
+  ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
+  
+  // Request with different resize method should compute
+  const Vision::Image& halfSize3 = cache.GetGray(ImageCache::Size::Half_Linear, &getType);
+  ASSERT_EQ(nrows/2, halfSize3.GetNumRows());
+  ASSERT_EQ(ncols/2, halfSize3.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+  
+  // Get full-scale color version (should require computation)
+  const Vision::ImageRGB& colorVersion = cache.GetRGB(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(nrows, colorVersion.GetNumRows());
+  ASSERT_EQ(ncols, colorVersion.GetNumCols());
+  ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
+  
+  // Gray value should be replicated to all three color channels
+  ASSERT_EQ(Vision::PixelRGB(42,42,42), colorVersion(0,0));
+  
+  // Getting colorized gray should not change cache's HasColor status
+  ASSERT_EQ(false, cache.HasColor());
+  
+  // Second request for color should be cached
+  const Vision::ImageRGB& colorVersion2 = cache.GetRGB(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(&colorVersion, &colorVersion2);
+  ASSERT_EQ(ImageCache::GetType::FullyCached, getType);
+  
+  // Request for quarter size color should create new entry
+  const Vision::ImageRGB& qtrSizeColor = cache.GetRGB(ImageCache::Size::Quarter_Linear, &getType);
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+  ASSERT_EQ(nrows/4, qtrSizeColor.GetNumRows());
+  ASSERT_EQ(ncols/4, qtrSizeColor.GetNumCols());
+  
+  // Asking for quarter size gray should compute it from the color one we just created
+  const Vision::Image& qtrSizeGray = cache.GetGray(ImageCache::Size::Quarter_Linear, &getType);
+  ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
+  ASSERT_EQ(nrows/4, qtrSizeGray.GetNumRows());
+  ASSERT_EQ(ncols/4, qtrSizeGray.GetNumCols());
+  
+  // Resetting with a new image and asking for half size should resize into an existing entry and use same data
+  Vision::Image newImg(nrows,ncols);
+  cache.Reset(newImg);
+  const Vision::Image& newHalfSize = cache.GetGray(ImageCache::Size::Half_NN, &getType);
+  ASSERT_EQ(ImageCache::GetType::ResizeIntoExisting, getType);
+  ASSERT_EQ(newHalfSize.GetDataPointer(), halfSize.GetDataPointer());
+  
+  // Resetting with a new color image should mean asking for full-sized gray will cause a compute
+  Vision::ImageRGB newColorImg(nrows,ncols);
+  const Vision::PixelRGB colorPixel(5, 10, 15);
+  newColorImg(0,0) = colorPixel;
+  cache.Reset(newColorImg);
+  ASSERT_EQ(true, cache.HasColor());
+  const Vision::Image& newGray = cache.GetGray(ImageCache::Size::Full, &getType);
+  ASSERT_EQ(ImageCache::GetType::ComputeFromExisting, getType);
+  ASSERT_EQ(nrows, newGray.GetNumRows());
+  ASSERT_EQ(ncols, newGray.GetNumCols());
+  
+  // Gray value should be weighted average of the RGB values
+  ASSERT_EQ(colorPixel.weightedGray(), newGray(0,0));
+  
+  // ReleaseMemory should clear out the cache and thus a request for an image should fail
+  cache.ReleaseMemory();
+  ASSERT_DEATH(cache.GetGray(), "");
+  
+  // Resetting with a color image and requesting a resized version should trigger a
+  // new allocation and not a resize into existing memory, since we called ReleaseMemory
+  cache.Reset(newColorImg);
+  ASSERT_EQ(true, cache.HasColor());
+  cache.GetRGB(ImageCache::Size::Half_NN, &getType);
+  ASSERT_EQ(ImageCache::GetType::NewEntry, getType);
+}

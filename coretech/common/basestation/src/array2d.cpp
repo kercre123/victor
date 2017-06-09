@@ -13,4 +13,4 @@ namespace Anki
     // Exponentiate "stuff" in place:
     stuff.ApplyScalarFunction(expf);
   }
-} // namespace Anki
+} // namespace Anki

@@ -81,6 +81,12 @@ namespace Anki
   } // Constructor: Array2d(rows, cols, &data)
   
   template<typename T>
+  void Array2d<T>::Allocate(s32 numRows, s32 numCols)
+  {
+    cv::Mat_<T>::create(numRows, numCols);
+  }
+  
+  template<typename T>
   template<typename Trect>
   const Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) const
   {

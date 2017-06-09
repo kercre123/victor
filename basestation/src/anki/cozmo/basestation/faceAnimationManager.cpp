@@ -472,7 +472,7 @@ namespace Cozmo {
   void FaceAnimationManager::DrawFaceRLE(const std::vector<u8>& rleData,
                                          Vision::Image& outImg)
   {
-    outImg = Vision::Image(FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH);
+    outImg.Allocate(FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH);
     
     // Clear the display
     outImg.FillWith(0);

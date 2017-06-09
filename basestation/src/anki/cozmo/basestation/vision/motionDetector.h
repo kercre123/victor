@@ -30,6 +30,7 @@ namespace Anki {
 // Forward declaration
 namespace Vision {
   class Camera;
+  class ImageCache;
 }
   
 namespace Cozmo {
@@ -44,15 +45,22 @@ public:
   
   MotionDetector(const Vision::Camera& camera, VizManager* vizManager);
 
-  // ImageType can be Image or ImageRGB
-  template<class ImageType>
-  Result Detect(const ImageType&        imageIn,
+  // Will use Color data if available in ImageCache, otherwise grayscale only
+  Result Detect(Vision::ImageCache&     imageCache,
                 const VisionPoseData&   crntPoseData,
                 const VisionPoseData&   prevPoseData,
                 std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
                 DebugImageList<Vision::ImageRGB>& debugImageRGBs);
   
 private:
+  
+  template<class ImageType>
+  Result DetectHelper(const ImageType&        resizedImage,
+                      s32 origNumRows, s32 origNumCols, f32 scaleMultiplier,
+                      const VisionPoseData&   crntPoseData,
+                      const VisionPoseData&   prevPoseData,
+                      std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
+                      DebugImageList<Vision::ImageRGB>& debugImageRGBs);
   
   s32 RatioTest(const Vision::Image& image,    Vision::Image& ratio12);
   s32 RatioTest(const Vision::ImageRGB& image, Vision::Image& ratio12);

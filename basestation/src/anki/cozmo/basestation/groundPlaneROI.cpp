@@ -33,7 +33,7 @@ const Vision::Image& GroundPlaneROI::GetOverheadMask() const
 {
   if(_overheadMask.IsEmpty())
   {
-    _overheadMask = Vision::Image(_widthFar, _length);
+    _overheadMask.Allocate(_widthFar, _length);
     const s32 w = std::round(0.5f*(_widthFar - _widthClose));
     _overheadMask.FillWith(0);
     cv::fillConvexPoly(_overheadMask.get_CvMat_(), std::vector<cv::Point>{

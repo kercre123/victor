@@ -446,7 +446,7 @@ namespace Anki {
   {
     SmallMatrix<NROWS,KCOLS,T_work> res;
 #if ANKICORETECH_USE_OPENCV
-    res = cv::Matx<T_work,NROWS,NCOLS>(this->get_CvMatx_()) * cv::Matx<T_work,NCOLS,KCOLS>(other.get_CvMatx_());
+    res = this->get_CvMatx_() * other.get_CvMatx_();
 #else
     // TODO: This could probably be made more efficient by avoiding so many operator(i,j) calls
     for(MatDimType iThis=0; iThis<NROWS; ++iThis) {

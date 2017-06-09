@@ -33,6 +33,7 @@
 #include "anki/vision/basestation/cameraImagingPipeline.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/basestation/imageCache.h"
 #include "anki/vision/basestation/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -136,6 +137,7 @@ namespace Cozmo {
   
   VisionSystem::VisionSystem(const CozmoContext* context)
   : _rollingShutterCorrector()
+  , _imageCache(new Vision::ImageCache())
   , _context(context)
   , _imagingPipeline(new Vision::ImagingPipeline())
   , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
@@ -1944,43 +1946,28 @@ namespace Cozmo {
 	} // DetectPets()
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result VisionSystem::DetectMotion(const Vision::ImageRGB& imageRGB, const Vision::Image& imageGray)
+  Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
   {
 
     Result result = RESULT_OK;
     
-    if(imageRGB.IsEmpty())
-    {
-      // No color data? Use grayscale
-      DEV_ASSERT(!imageGray.IsEmpty(), "VisionSystem.DetectMotion.EmptyGrayAndColorImages");
-      result = _motionDetector->Detect(imageGray, _poseData, _prevPoseData,
-                                       _currentResult.observedMotions,
-                                       _currentResult.debugImageRGBs);
-    }
-    else
-    {
-      result = _motionDetector->Detect(imageRGB, _poseData, _prevPoseData,
-                                       _currentResult.observedMotions,
-                                       _currentResult.debugImageRGBs);
-    }
+    _motionDetector->Detect(imageCache, _poseData, _prevPoseData,
+                            _currentResult.observedMotions, _currentResult.debugImageRGBs);
     
     return result;
     
   } // DetectMotion()
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result VisionSystem::DetectLaserPoints(const Vision::ImageRGB& inputImage,
-                                         const Vision::Image&    inputImageGray)
+  Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   {
     const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposure_ms, _minCameraExposureTime_ms) &&
                                  Util::IsNear(_currentCameraParams.gain, _minCameraGain));
     
-    Result result = _laserPointDetector->Detect(inputImage, inputImageGray, _poseData, isDarkExposure,
+    Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
                                                 _currentResult.laserPoints,
                                                 _currentResult.debugImageRGBs);
     
-    // Remove any points that are not surrounding by dark stuff
-    // (the "on" area in the image should be about the same if 
     return result;
   }
   
@@ -2844,15 +2831,15 @@ namespace Cozmo {
     Result decodeResult = RESULT_FAIL;
     if(encodedImg.IsColor())
     {
-      decodeResult = encodedImg.DecodeImageRGB(_image);
-      _imageGray = _image.ToGray();
-      DEV_ASSERT(_imageGray.GetTimestamp() == _image.GetTimestamp(), "VisionSystem.Update.MismatchedTimestamps");
+      Vision::ImageRGB imgRGB;
+      decodeResult = encodedImg.DecodeImageRGB(imgRGB);
+      _imageCache->Reset(imgRGB);
     }
     else
     {
-      decodeResult = encodedImg.DecodeImageGray(_imageGray);
-      _image = Vision::ImageRGB();
-      _image.SetTimestamp(_imageGray.GetTimestamp());
+      Vision::Image imgGray;
+      decodeResult = encodedImg.DecodeImageGray(imgGray);
+      _imageCache->Reset(imgGray);
     }
     Toc("DecodeJPEG");
     
@@ -2860,22 +2847,12 @@ namespace Cozmo {
       return decodeResult;
     }
     
-    // Gray image should never be empty, though color may be
-    if(_imageGray.IsEmpty())
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Update.EmptyDecodedImage", "t=%u",
-                        encodedImg.GetTimeStamp());
-      return RESULT_FAIL;
-    }
-    
-    return Update(poseData, _image, _imageGray);
+    return Update(poseData, *_imageCache);
   }
   
   
   // This is the regular Update() call
-  Result VisionSystem::Update(const VisionPoseData&      poseData,
-                              const Vision::ImageRGB&    inputImage,
-                              Vision::Image&             inputImageGray)
+  Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& imageCache)
   {
     Result lastResult = RESULT_OK;
     
@@ -2900,6 +2877,8 @@ namespace Cozmo {
     lastResult = UpdateMarkerToTrack();
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
+    
+    const Vision::Image& inputImageGray = imageCache.GetGray();
     
     // Set up the results for this frame:
     VisionProcessingResult result;
@@ -2973,7 +2952,8 @@ namespace Cozmo {
       if(IsModeEnabled(VisionMode::Tracking))
       {
         Tic("RollingShutterWarpImage");
-        inputImageGray = _rollingShutterCorrector.WarpImage(inputImageGray);
+        // NOTE: This is going away with COZMO-76
+        //inputImageGray = _rollingShutterCorrector.WarpImage(inputImageGray);
         Toc("RollingShutterWarpImage");
         
         if(inputImageGray.IsEmpty())
@@ -3022,8 +3002,26 @@ namespace Cozmo {
     }
     
     if(ShouldProcessVisionMode(VisionMode::Tracking)) {
+      
+      // This is all moot once COZMO-76 goes in
+      Vision::Image warpedImage = inputImageGray;
+      if(_doRollingShutterCorrection)
+      {
+        Tic("RollingShutterWarpImage");
+        // NOTE: This is going away with COZMO-76
+        warpedImage = _rollingShutterCorrector.WarpImage(inputImageGray);
+        Toc("RollingShutterWarpImage");
+        
+        if(warpedImage.IsEmpty())
+        {
+          PRINT_NAMED_ERROR("VisionSystem.Update.RollingShutterCorrectionEmpty",
+                            "Rolling shutter warp during tracking yielded empty image");
+          return RESULT_FAIL;
+        }
+      }
+      
       // Update the tracker transformation using this image
-      if((lastResult = TrackTemplate(inputImageGray)) != RESULT_OK) {
+      if((lastResult = TrackTemplate(warpedImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.TrackTemplateFailed", "");
         return lastResult;
       }
@@ -3053,7 +3051,7 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
     {
       Tic("TotalDetectingMotion");
-      if((lastResult = DetectMotion(inputImage, inputImageGray)) != RESULT_OK) {
+      if((lastResult = DetectMotion(imageCache)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
       }
@@ -3063,17 +3061,10 @@ namespace Cozmo {
     
     if(ShouldProcessVisionMode(VisionMode::DetectingOverheadEdges))
     {
-      // TODO: support color and grayscale edge detection (COZMO-10950)
-      Vision::ImageRGB tempColorImage;
-      if(inputImage.IsEmpty()) {
-        tempColorImage = Vision::ImageRGB(inputImageGray);
-      } else {
-        tempColorImage = inputImage; // use the passed-in color data if we already have it
-      }
-      
       Tic("TotalDetectingOverheadEdges");
-      
-      if((lastResult = DetectOverheadEdges(tempColorImage)) != RESULT_OK) {
+      // TODO: support color and grayscale edge detection (COZMO-10950)
+      // This call to GetRGB() will compute and cache a "colorized" gray version.
+      if((lastResult = DetectOverheadEdges(imageCache.GetRGB())) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }
@@ -3106,7 +3097,7 @@ namespace Cozmo {
       if(_context->GetFeatureGate()->IsFeatureEnabled(FeatureType::Laser))
       {
         Tic("TotalDetectingLaserPoints");
-        if((lastResult = DetectLaserPoints(inputImage, inputImageGray)) != RESULT_OK) {
+        if((lastResult = DetectLaserPoints(imageCache)) != RESULT_OK) {
           PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
           return lastResult;
         }
