@@ -29,7 +29,10 @@ namespace Cozmo.Energy.UI {
     private NeedBracketId _LastNeedBracket = NeedBracketId.Count;
 
     public void InitializeEnergyModal() {
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.SetEnableFreeplayActivity(false);
+      }
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -64,15 +67,20 @@ namespace Cozmo.Energy.UI {
 
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
-      robot.SetEnableFreeplayLightStates(true);
-      robot.SetEnableFreeplayActivity(true);
+      if (robot != null) {
+        robot.SetEnableFreeplayLightStates(true);
+        robot.SetEnableFreeplayActivity(true);
+      }
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
       NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
 
-      RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
+      }
     }
 
     protected override void RaiseDialogClosed() {
