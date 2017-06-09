@@ -121,6 +121,7 @@ private:
   void SendNeedsPauseStatesToGame();
   void SendStarLevelCompletedToGame();
   void SendSingleStarAddedToGame();
+  void SendNeedsDebugVizString(const NeedsActionId actionCausingTheUpdate);
 
   const CozmoContext* _cozmoContext;
   Robot*        _robot;

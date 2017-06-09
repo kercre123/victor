@@ -1466,16 +1466,15 @@ Result Robot::Update()
   if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
   {
     _behaviorMgr->Update(*this);
-        
+
+    currentActivityName = ActivityIDToString(_behaviorMgr->GetCurrentActivity()->GetID());
+
+    behaviorDebugStr = currentActivityName;
+
     const IBehavior* behavior = _behaviorMgr->GetCurrentBehavior();
     if(behavior != nullptr) {
-      if( behavior->IsActing() ) {
-        behaviorDebugStr = "A ";
-      }
-      else {
-        behaviorDebugStr = "  ";
-      }
-      behaviorDebugStr += BehaviorIDToString(behavior->GetID());
+      behaviorDebugStr += " ";
+      behaviorDebugStr +=  BehaviorIDToString(behavior->GetID());
       const std::string& stateName = behavior->GetDebugStateName();
       if (!stateName.empty())
       {
@@ -1483,7 +1482,6 @@ Result Robot::Update()
       }
     }
 
-    currentActivityName = ActivityIDToString(_behaviorMgr->GetCurrentActivity()->GetID());
   } else {
     --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
   }
@@ -1493,7 +1491,7 @@ Result Robot::Update()
   
   GetContext()->SetSdkStatus(SdkStatusType::Behavior,
                                  std::string(currentActivityName) + std::string(":") + behaviorDebugStr);
-  
+
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
   
@@ -1618,7 +1616,7 @@ Result Robot::Update()
   // So we can have an arbitrary number of data here that is likely to change want just hash it all
   // together if anything changes without spamming
   snprintf(buffer, sizeof(buffer),
-           "%c%c%c%c%c %2dHz %s%s ",
+           "%c%c%c%c%c %2dHz %s %s ",
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -3710,12 +3708,7 @@ Result Robot::SendDebugString(const char* format, ...)
       
   // Send message to game
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
-      
-  // Send message to viz
-  GetContext()->GetVizManager()->SetText(VizManager::DEBUG_STRING,
-                                         NamedColors::ORANGE,
-                                         "%s", text);
-      
+  
   return RESULT_OK;
 }
       

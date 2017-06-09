@@ -69,7 +69,7 @@ namespace Anki {
         VISION_MODE,
         BEHAVIOR_STATE,
         ANIMATION_NAME,
-        DEBUG_STRING
+        NEEDS_STATE
       } TextLabelType;
       
       using Handle_t = u32;

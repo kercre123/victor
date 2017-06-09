@@ -62,6 +62,10 @@ public:
   // Apply a given delta to a given need
   void ApplyDelta(const NeedId needId, const NeedDelta& needDelta);
 
+
+  float         GetNeedLevel(NeedId need) const;
+  NeedBracketId GetNeedBracket(NeedId need);
+  
   float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
   NeedBracketId GetNeedBracketByIndex(size_t i);
   bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };

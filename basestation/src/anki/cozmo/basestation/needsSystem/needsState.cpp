@@ -276,6 +276,33 @@ void NeedsState::SetStarLevel(int newLevel)
   _numStarsForNextUnlock = _starRewardsConfig->GetMaxStarsForLevel(_curNeedsUnlockLevel);
 }
 
+float NeedsState::GetNeedLevel(NeedId need) const
+{
+  const auto& it = _curNeedsLevels.find(need);
+  if( it != _curNeedsLevels.end() ) {
+    return it->second;
+  }
+  else {
+    PRINT_NAMED_ERROR("NeedsState.InvalidNeedLevel", "Need level does not exist in curr levels!");
+    return 0.0f;
+  }
+}
+
+NeedBracketId NeedsState::GetNeedBracket(NeedId need)
+{
+  UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
+
+  const auto& it = _curNeedsBracketsCache.find(need);
+  if( it != _curNeedsBracketsCache.end() ) {
+    return it->second;
+  }
+  else {
+    PRINT_NAMED_WARNING("NeedsState.InvalidNeedLevel", "Need level does not exist in brackets cache");
+    return NeedBracketId::Count;
+  }
+}
+  
+
 void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
 {
   if (!_needsBracketsDirty)

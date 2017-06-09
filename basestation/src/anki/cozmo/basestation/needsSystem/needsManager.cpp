@@ -11,27 +11,28 @@
  **/
 
 
-#include "anki/common/types.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/types.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/inventoryComponent.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/needsSystem/needsConfig.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 
@@ -842,6 +843,30 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
                                         actionCausingTheUpdate);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+
+  SendNeedsDebugVizString(actionCausingTheUpdate);
+}
+
+void NeedsManager::SendNeedsDebugVizString(const NeedsActionId actionCausingTheUpdate)
+{
+#if ANKI_DEV_CHEATS
+
+  // Example string:
+  // Eng:0.31-Warn Play:1.00-Full Repr:0.05-Crit HiccupsEndGood
+
+  _cozmoContext->GetVizManager()->SetText(
+    VizManager::NEEDS_STATE, NamedColors::ORANGE,
+    "Eng:%04.2f-%.4s Play:%04.2f-%.4s Repr:%04.2f-%.4s %s",
+    _needsState.GetNeedLevel(NeedId::Energy),
+    NeedBracketIdToString(_needsState.GetNeedBracket(NeedId::Energy)),
+    _needsState.GetNeedLevel(NeedId::Play),
+    NeedBracketIdToString(_needsState.GetNeedBracket(NeedId::Play)),
+    _needsState.GetNeedLevel(NeedId::Repair),
+    NeedBracketIdToString(_needsState.GetNeedBracket(NeedId::Repair)),
+    NeedsActionIdToString(actionCausingTheUpdate));
+  
+#endif
+
 }
 
 void NeedsManager::SendNeedsPauseStateToGame()
