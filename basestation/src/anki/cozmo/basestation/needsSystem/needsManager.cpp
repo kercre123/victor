@@ -537,6 +537,14 @@ void NeedsManager::SetPaused(const bool paused)
 }
 
 
+const NeedsState& NeedsManager::GetCurNeedsState()
+{
+  _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
+
+  return _needsState;
+}
+
+
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
   if (!kUseNeedManager)
@@ -593,6 +601,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
         // If this was a 'repair' action and there are no more broken parts,
         // set Repair level to 100%
         _needsState._curNeedsLevels[NeedId::Repair] = _needsConfig._maxNeedLevel;
+        _needsState.SetNeedsBracketsDirty();
       }
       break;
     }
@@ -1053,6 +1062,7 @@ bool NeedsManager::ReadFromDevice(NeedsState& needsState, bool& versionUpdated)
     versionUpdated = true;
   }
 
+  _needsState.SetNeedsBracketsDirty();
   _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
 
   return true;
@@ -1276,6 +1286,7 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
   _needsStateFromRobot._needsConfig = &_needsConfig;
   _needsStateFromRobot._starRewardsConfig = _starRewardsConfig;
   _needsStateFromRobot._rng = _cozmoContext->GetRandom();
+  _needsStateFromRobot.SetNeedsBracketsDirty();
   _needsStateFromRobot.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
 
   return true;

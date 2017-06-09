@@ -63,7 +63,7 @@ public:
   void SetPaused(const bool paused);
   bool GetPaused() const { return _isPausedOverall; };
 
-  const NeedsState& GetCurNeedsState() const { return _needsState; };
+  const NeedsState& GetCurNeedsState();
 
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
 

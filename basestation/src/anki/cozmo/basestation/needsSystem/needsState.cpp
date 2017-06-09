@@ -36,6 +36,7 @@ NeedsState::NeedsState()
 , _timeLastStarAwarded(Time())
 , _needsConfig(nullptr)
 , _starRewardsConfig(nullptr)
+, _needsBracketsDirty(true)
 {
 }
 
@@ -64,6 +65,7 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
     _curNeedsLevels[needId] = needsConfig._initialNeedsLevels[needId];
   }
 
+  _needsBracketsDirty = true;
   UpdateCurNeedsBrackets(needsConfig._needsBrackets);
   
   for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
@@ -85,6 +87,8 @@ void NeedsState::Reset()
   _curNeedsLevels.clear();
   _curNeedsBracketsCache.clear();
   _partIsDamaged.clear();
+
+  _needsBracketsDirty = true;
 }
 
 
@@ -194,6 +198,7 @@ void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex,
   }
 
   _curNeedsLevels[needId] = curNeedLevel;
+  _needsBracketsDirty = true;
 
   if (needId == NeedId::Repair)
   {
@@ -247,12 +252,22 @@ void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta)
   }
 
   _curNeedsLevels[needId] = needLevel;
+  _needsBracketsDirty = true;
 
   if ((needId == NeedId::Repair) && (delta < 0.0f))
   {
     PossiblyDamageParts();
   }
 }
+
+
+NeedBracketId NeedsState::GetNeedBracketByIndex(size_t i)
+{
+  UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
+
+  return _curNeedsBracketsCache[static_cast<NeedId>(i)];
+}
+
 
 void NeedsState::SetStarLevel(int newLevel)
 {
@@ -263,6 +278,9 @@ void NeedsState::SetStarLevel(int newLevel)
 
 void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
 {
+  if (!_needsBracketsDirty)
+    return;
+
   // Set each of the needs' "current bracket" based on the current level for that need
   for (int needIndex = 0; needIndex < (size_t)NeedId::Count; needIndex++)
   {
@@ -285,6 +303,8 @@ void NeedsState::UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets)
     }
     _curNeedsBracketsCache[needId] = static_cast<NeedBracketId>(bracketIndex);
   }
+
+  _needsBracketsDirty = false;
 }
 
 int NeedsState::NumDamagedParts() const
@@ -359,9 +379,10 @@ void NeedsState::DebugFillNeedMeters()
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
-    _curNeedsLevels[static_cast<NeedId>(i)] = 1.0f;
+    _curNeedsLevels[static_cast<NeedId>(i)] = _needsConfig->_maxNeedLevel;
   }
-  
+
+  _needsBracketsDirty = true;
   UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
   
   for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)

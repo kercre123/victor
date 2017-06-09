@@ -52,8 +52,6 @@ public:
   
   void Init(NeedsConfig& needsConfig, const u32 serialNumber,
             const std::shared_ptr<StarRewardsConfig> starRewardsConfig, Util::RandomGenerator* rng);
-  
-  void Reset();
 
   // Set up decay multipliers (we do this prior to calling ApplyDecay)
   void SetDecayMultipliers(const DecayConfig& decayConfig, std::array<float, (size_t)NeedId::Count>& multipliers);
@@ -65,15 +63,14 @@ public:
   void ApplyDelta(const NeedId needId, const NeedDelta& needDelta);
 
   float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
-  NeedBracketId GetNeedBracketByIndex(size_t i)   { return _curNeedsBracketsCache[static_cast<NeedId>(i)]; };
+  NeedBracketId GetNeedBracketByIndex(size_t i);
   bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };
   
   // Set current needs bracket levels from current levels
   void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);
+  void SetNeedsBracketsDirty() { _needsBracketsDirty = true; };
 
   int NumDamagedParts() const;
-  void PossiblyDamageParts();
-  RepairablePartId PickPartToDamage() const;
 
   // Serialization versions; increment this when the format of the serialization changes
   // This is stored in the serialized file
@@ -110,11 +107,21 @@ public:
   const NeedsConfig* _needsConfig;
 
   std::shared_ptr<StarRewardsConfig> _starRewardsConfig;
-  
+
 #if ANKI_DEV_CHEATS
   void DebugFillNeedMeters();
   // TODO: more granular settings
 #endif
+
+private:
+
+  bool _needsBracketsDirty;
+
+  void Reset();
+
+  void PossiblyDamageParts();
+  RepairablePartId PickPartToDamage() const;
+
 };
 
 
