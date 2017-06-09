@@ -27,6 +27,8 @@ def main():
                         help="Print the interval between packets rather than packet content")
     parser.add_argument('-p', '--plot', action='store_true',
                         help="Plot the result of certain functions instead of printing")
+    parser.add_argument('-c', '--count', action='store_true',
+                        help="Count the number of messages of each type rather than priting them")
     args = parser.parse_args()
 
     if args.plot:
@@ -52,6 +54,10 @@ def main():
         if args.plot:
             pyplot.plot(deltas)
             pyplot.show()
+    elif args.count:
+        msg_types = [m[2] for m in messages]
+        for kind in args.types:
+            print('0x{0:02x}\t{1:d}'.format(kind, msg_types.count(kind)))
     else:
         for timestamp, size, msg_type, data in messages:
             # split data into groups of 16 for pretty formatting
