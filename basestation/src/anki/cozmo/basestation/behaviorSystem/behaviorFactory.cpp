@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorPickupCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorPutDownBlock.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorDockingTestSimple.h"
@@ -30,7 +31,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorLiftLoadTest.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingHungerLoop.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveToFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorOnConfigSeen.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
@@ -380,9 +381,9 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
       newBehavior = new BehaviorFeedingEat(robot, config);
       break;
     }
-    case BehaviorClass::FeedingHungerLoop:
+    case BehaviorClass::FeedingSearchForCube:
     {
-      newBehavior = new BehaviorFeedingHungerLoop(robot, config);
+      newBehavior = new BehaviorFeedingSearchForCube(robot, config);
       break;
     }
     case BehaviorClass::Singing:
@@ -408,6 +409,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::DriveToFace:
     {
       newBehavior = new BehaviorDriveToFace(robot, config);
+      break;
+    }
+    case BehaviorClass::TurnToFace:
+    {
+      newBehavior = new BehaviorTurnToFace(robot, config);
       break;
     }
     

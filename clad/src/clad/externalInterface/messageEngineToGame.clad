@@ -532,6 +532,14 @@ message NeedsState {
   NeedsActionId actionCausingTheUpdate
 }
 
+// If engine needs to update a need state to make a decision, and then
+// notify the UI of when the robot has completed the action that appears to
+// the user as the need having been "fullfilled", this message can be sent
+// and subscribed to to indicate when the UI should update for a specific action
+message DelayedUIUpdateForAction {
+  NeedsActionId actionCausingTheUpdate
+}
+
 message NeedsPauseState {
   bool isPaused
 }

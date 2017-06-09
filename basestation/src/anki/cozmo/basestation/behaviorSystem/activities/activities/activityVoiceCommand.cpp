@@ -271,7 +271,7 @@ bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outp
   if(_respondingToCommandType != VoiceCommandType::Count)
   {
     AnimationTrigger refuseAnim = AnimationTrigger::Count;
-    const Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
+    Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
     if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
     {
       refuseAnim = AnimationTrigger::VCRefuse_repair;

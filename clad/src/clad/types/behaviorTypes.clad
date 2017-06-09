@@ -32,7 +32,7 @@ enum uint_8 BehaviorClass {
   FactoryCentroidExtractor,
   FactoryTest,
   FeedingEat,
-  FeedingHungerLoop,
+  FeedingSearchForCube,
   FindFaces,
   FistBump,
   GuardDog,
@@ -62,6 +62,7 @@ enum uint_8 BehaviorClass {
   StackBlocks,
   ThinkAboutBeacons,
   TrackLaser,
+  TurnToFace,
   VisitInterestingEdge,
 
   // Behaviors mapped to reaction triggers
@@ -113,7 +114,8 @@ enum uint_8 BehaviorID {
   FactoryCentroidExtractor,
   FactoryTest,
   FeedingEat,
-  FeedingHungerLoop,
+  FeedingSearchForCube,
+  FeedingTurnToFace,
   FindFaces_socialize,
   FistBump,
   GuardDog,

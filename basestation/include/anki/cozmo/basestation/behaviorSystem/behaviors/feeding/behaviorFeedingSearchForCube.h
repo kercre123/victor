@@ -1,5 +1,5 @@
 /**
-* File: behaviorFeedingHungerLoop.h
+* File: behaviorFeedingSearchForCube.h
 *
 * Author: Kevin M. Karol
 * Created: 2017-3-28
@@ -11,29 +11,27 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingHungerLoop_H__
-#define __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingHungerLoop_H__
+#ifndef __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingSearchForCube_H__
+#define __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingSearchForCube_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorFeedingHungerLoop : public IBehavior
+class BehaviorFeedingSearchForCube : public IBehavior
 {
 protected:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorFeedingHungerLoop(Robot& robot, const Json::Value& config);
+  BehaviorFeedingSearchForCube(Robot& robot, const Json::Value& config);
   
 public:
   
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
-  
-  bool HasUsableFace(Robot& robot);
-  
+    
 protected:
   virtual Result InitInternal(Robot& robot) override;
   
@@ -48,5 +46,5 @@ private:
 } // namespace Anki
 
 
-#endif // __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingHungerLoop_H__
+#endif // __Cozmo_Basestation_Behaviors_Feeding_BehaviorFeedingSearchForCube_H__
 

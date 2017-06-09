@@ -16,12 +16,17 @@
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingHungerLoop.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/console/consoleInterface.h"
@@ -33,7 +38,6 @@ namespace{
 #define UPDATE_STAGE(s) UpdateActivityStage(s, #s)
 
 CONSOLE_VAR(float, kTimeSearchForFace, "Behavior.Feeding", 5.0f);
-CONSOLE_VAR(int, kSuccessfullFeedingsToEnd, "Behavior.Feeding", 3);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct BackpackLightMapping{
@@ -58,22 +62,18 @@ BackpackLightMapping kFeedingBackpackLights;
 ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
 , _timeFaceSearchShouldEnd_s(0.0f)
-, _currentSuccessfullFoodCount(0)
 , _eatingComplete(false)
+, _idleAndDrivingSet(false)
 {
   ////////
   /// Grab behaviors
   ////////
   
   // Get the hunger loop behavior
-  IBehavior* hungerLoop = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingHungerLoop);
-  DEV_ASSERT(hungerLoop != nullptr &&
-             hungerLoop->GetClass() == BehaviorClass::FeedingHungerLoop,
-             "ActivityFeeding.FeedingHungerLoop.IncorrectBehaviorReceivedFromFactory");
-  
-  _hungerLoopBehavior = dynamic_cast<BehaviorFeedingHungerLoop*>(hungerLoop);
-  DEV_ASSERT(_hungerLoopBehavior != nullptr,
-             "ActivityFeeding.FeedingHungerLoop.DynamicCastFailed");
+  _searchForCubeBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingSearchForCube);
+  DEV_ASSERT(_searchForCubeBehavior != nullptr &&
+             _searchForCubeBehavior->GetClass() == BehaviorClass::FeedingSearchForCube,
+             "ActivityFeeding.FeedingSearchForCube.IncorrectBehaviorReceivedFromFactory");
   
   // Get the feeding get in behavior
   IBehavior* eatFoodBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingEat);
@@ -90,6 +90,11 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   DEV_ASSERT(_searchingForFaceBehavior != nullptr &&
              _searchingForFaceBehavior->GetClass() == BehaviorClass::FindFaces,
              "ActivityFeeding.FeedingFoodReady.IncorrectBehaviorReceivedFromFactory");
+  
+  _turnToFaceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingTurnToFace);
+  DEV_ASSERT(_turnToFaceBehavior != nullptr &&
+             _turnToFaceBehavior->GetClass() == BehaviorClass::TurnToFace,
+             "ActivityFeeding.TurnToFaceBheavior.IncorrectBehaviorReceievedFromFactory");
   
   //Create an arbitrary animation behavior
   Json::Value basicConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::PlayArbitraryAnim);
@@ -154,10 +159,20 @@ ActivityFeeding::~ActivityFeeding()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::OnSelectedInternal(Robot& robot)
 {
-  _currentSuccessfullFoodCount = 0;
   _eatingComplete = false;
   _chooserStage = FeedingActivityStage::None;
   SmartDisableReactionsWithLock(robot, GetIDStr(), ReactionTriggerHelpers::kAffectAllArray);
+  
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  if(currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical)){
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::FeedingDrivingGetIn_Severe,
+      AnimationTrigger::FeedingDrivingLoop_Severe,
+      AnimationTrigger::FeedingDrivingGetOut_Severe});
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::FeedingIdleToFullCube_Severe);
+    _idleAndDrivingSet = true;
+  }else{
+    _idleAndDrivingSet = false;
+  }
   
   // Set up _cubeControllerMap with all connected cubes
   {
@@ -193,6 +208,11 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 {
+  if(_idleAndDrivingSet){
+    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    robot.GetAnimationStreamer().PopIdleAnimation();
+  }
+  
   for(auto& entry: _cubeControllerMap){
     using CS = FeedingCubeController::ControllerState;
     entry.second->SetControllerState(robot, CS::Deactivated);
@@ -208,36 +228,31 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* ActivityFeeding::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
+  
   IBehavior* bestBehavior = nullptr;
   switch(_chooserStage){
     case FeedingActivityStage::None:
     {
-      _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::FeedingGetIn, 1);
-      bestBehavior = _behaviorPlayAnimation;
-      UPDATE_STAGE(FeedingActivityStage::FeedingGetIn);
-      break;
-    }
-    case FeedingActivityStage::FeedingGetIn:
-    {
-      if(_behaviorPlayAnimation->IsRunning()){
-        bestBehavior = _behaviorPlayAnimation;
-      }else{
-        bestBehavior = _searchingForFaceBehavior;
-        UPDATE_STAGE(FeedingActivityStage::SearchForFace);
-        
-        const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        _timeFaceSearchShouldEnd_s = currentTime_s + kTimeSearchForFace;
-      }
+      bestBehavior = _searchingForFaceBehavior;
+      UPDATE_STAGE(FeedingActivityStage::SearchForFace);
       
+      const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _timeFaceSearchShouldEnd_s = currentTime_s + kTimeSearchForFace;
       break;
     }
     case FeedingActivityStage::SearchForFace:
     {
+      BehaviorPreReqRobot preReqData(robot);
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if(_hungerLoopBehavior->HasUsableFace(robot) ||
-         (currentTime_s > _timeFaceSearchShouldEnd_s)){
-        TransitionIntoHungerLoop(robot);
-        bestBehavior = _hungerLoopBehavior;
+      if(_turnToFaceBehavior->IsRunnable(preReqData)){
+        UPDATE_STAGE(FeedingActivityStage::TurnToFace);
+        bestBehavior = _turnToFaceBehavior;
+      }else if(currentTime_s > _timeFaceSearchShouldEnd_s){
+        TransitionToBestActivityStage(robot);
+        bestBehavior = _behaviorPlayAnimation;
+        
         using CS = FeedingCubeController::ControllerState;
         for(auto& entry: _cubeControllerMap){
           entry.second->SetControllerState(robot, CS::Activated);
@@ -247,71 +262,87 @@ IBehavior* ActivityFeeding::ChooseNextBehavior(Robot& robot, const IBehavior* cu
       }
       break;
     }
-    case FeedingActivityStage::HungerLoop:
+    case FeedingActivityStage::TurnToFace:
+    {
+      if(_turnToFaceBehavior->IsRunning()){
+        bestBehavior = _turnToFaceBehavior;
+      }else{
+        TransitionToBestActivityStage(robot);
+        using CS = FeedingCubeController::ControllerState;
+        for(auto& entry: _cubeControllerMap){
+          entry.second->SetControllerState(robot, CS::Activated);
+        }
+        bestBehavior = _behaviorPlayAnimation;
+      }
+      break;
+    }
+    case FeedingActivityStage::WaitingForShake:
+    {
+      // Transition out of this state happens in the update function
+      bestBehavior = _behaviorPlayAnimation;
+      break;
+    }
+    case FeedingActivityStage::ReactingToShake:
+    {
+      if(!_behaviorPlayAnimation->IsRunning()){
+        UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
+        AnimationTrigger bestAnimation = isNeedSevere ?
+                            AnimationTrigger::FeedingIdleToFullCube_Severe :
+                            AnimationTrigger::FeedingIdleToFullCube_Normal;
+        UpdateAnimationToPlay(bestAnimation, 0);
+      }
+      bestBehavior = _behaviorPlayAnimation;
+      break;
+    }
+    case FeedingActivityStage::WaitingForFullyCharged:
+    {
+      // Transition out of this state happens in the update function
+      bestBehavior = _behaviorPlayAnimation;
+      break;
+    }
+    case FeedingActivityStage::ReactingToFullyCharged:
+    {
+      if(!_behaviorPlayAnimation->IsRunning()){
+        UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
+        AnimationTrigger bestAnimation = isNeedSevere ?
+                            AnimationTrigger::FeedingReactToFullCube_Severe :
+                            AnimationTrigger::FeedingIdleToFullCube_Normal;
+        UpdateAnimationToPlay(bestAnimation, 0);
+      }
+      bestBehavior = _behaviorPlayAnimation;
+      break;
+    }
+    case FeedingActivityStage::SearchingForCube:
     {
       // Transition out of hunger loop happens in the Update() function
       // when a cube is seen
-      bestBehavior = _hungerLoopBehavior;
+      bestBehavior = _searchForCubeBehavior;
       break;
     }
-    case FeedingActivityStage::EatFood:
+    case FeedingActivityStage::ReactingToCube:
     {
-      // Notify the eat food behavior the ID it should interact with if the behavior
-      // hasn't started yet
-      if(!_eatFoodBehavior->IsRunning()){
+      if(!_behaviorPlayAnimation->IsRunning()){
+        // Notify the eat food behavior the ID it should interact with
+        UPDATE_STAGE(FeedingActivityStage::EatFood);
         BehaviorPreReqAcknowledgeObject preReqData(_interactID);
         ANKI_VERIFY(_eatFoodBehavior->IsRunnable(preReqData),
                     "FeedingActivity.EatFood.NotRunnable",
                     "Eating behavior isn't runnable - feeding will get stuck in infinet loop");
-      }
-      bestBehavior = _eatFoodBehavior;
-      break;
-    }
-    case FeedingActivityStage::TransitionCelebrateFood:
-    {
-      // Transition into this state happens in the Update() function
-      // when the cube is fully drained
-      auto& bodyLightComp = robot.GetBodyLightComponent();
-      bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._solidBackpackLights,
-                                               BackpackLightSource::Behavior,
-                                               _bodyLightDataLocator);
-      robot.SetCarriedObjectAsUnattached();
-      _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::WorkoutPutDown_highEnergy, 1);
-      bestBehavior = _behaviorPlayAnimation;
-      UPDATE_STAGE(FeedingActivityStage::CelebrateFood);
-      break;
-    }
-    case FeedingActivityStage::CelebrateFood:
-    {
-      if(_behaviorPlayAnimation->IsRunning()){
-        bestBehavior = _behaviorPlayAnimation;
-      }else{
-        // do another feeding
-        TransitionIntoHungerLoop(robot);
-        bestBehavior = _hungerLoopBehavior;
-      }
-      break;
-    }
-    case FeedingActivityStage::FeedingGetOut:
-    {
-      // Transition into this state happens in the Update() function
-      // when it's determined that Cozmo has eaten all the cubes he needs
-      auto& bodyLightComp = robot.GetBodyLightComponent();
-      bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._solidBackpackLights,
-                                               BackpackLightSource::Behavior,
-                                               _bodyLightDataLocator);
-      _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::BuildPyramidSuccess, 1);
-      bestBehavior = _behaviorPlayAnimation;
-      UPDATE_STAGE(FeedingActivityStage::Done);
-      break;
-    }
-    case FeedingActivityStage::Done:
-    {
-      if(!_behaviorPlayAnimation->IsRunning()){
-        bestBehavior = nullptr;
+        bestBehavior = _eatFoodBehavior;
       }else{
         bestBehavior = _behaviorPlayAnimation;
       }
+      break;
+    }
+    case FeedingActivityStage::EatFood:
+    {
+      if(_eatFoodBehavior->IsRunning()){
+        bestBehavior = _eatFoodBehavior;
+      }else{
+        TransitionToBestActivityStage(robot);
+        bestBehavior = _behaviorPlayAnimation;
+      }
+
       break;
     }
   }
@@ -323,29 +354,52 @@ IBehavior* ActivityFeeding::ChooseNextBehavior(Robot& robot, const IBehavior* cu
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivityFeeding::Update(Robot& robot)
 {
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
+  
   // Update the cube controllers if the activity is past the intro/search for faces
-  if(_chooserStage >= FeedingActivityStage::HungerLoop){
+  if(_chooserStage >= FeedingActivityStage::WaitingForShake){
     for(auto& entry: _cubeControllerMap){
       entry.second->Update(robot);
     }
   }
   
-  // Transition out of hunger loop if an interactable object has been located
-  if(_chooserStage == FeedingActivityStage::HungerLoop){
-    if(_interactID.IsSet()){
-      UPDATE_STAGE(FeedingActivityStage::EatFood);
+  if(_chooserStage == FeedingActivityStage::WaitingForShake){
+    bool anyCubesCharging = false;
+    for(const auto& entry: _cubeControllerMap){
+      anyCubesCharging = anyCubesCharging || entry.second->IsCubeCharging();
+    }
+    if(anyCubesCharging){
+      UPDATE_STAGE(FeedingActivityStage::ReactingToShake);
+      AnimationTrigger bestAnimation = isNeedSevere ?
+                          AnimationTrigger::FeedingReactToShake_Severe :
+                          AnimationTrigger::FeedingReactToShake_Normal;
+      UpdateAnimationToPlay(bestAnimation, 1);
     }
   }
   
-  // Transition out of eating food if the cube has been drained while eating food
-  if((_chooserStage == FeedingActivityStage::EatFood) &&
-     _cubeControllerMap[_interactID]->IsCubeDrained()){
-    _currentSuccessfullFoodCount++;
-    
-    if(_currentSuccessfullFoodCount >= kSuccessfullFeedingsToEnd){
-      UPDATE_STAGE(FeedingActivityStage::FeedingGetOut);
-    }else{
-      UPDATE_STAGE(FeedingActivityStage::TransitionCelebrateFood);
+  if(_chooserStage == FeedingActivityStage::WaitingForFullyCharged){
+    bool anyCubesCharged = false;
+    for(const auto& entry: _cubeControllerMap){
+      anyCubesCharged = anyCubesCharged || entry.second->IsCubeCharged();
+    }
+    if(anyCubesCharged){
+      UPDATE_STAGE(FeedingActivityStage::ReactingToFullyCharged);
+      AnimationTrigger bestAnimation = isNeedSevere ?
+                          AnimationTrigger::FeedingReactToFullCube_Severe :
+                          AnimationTrigger::FeedingReactToFullCube_Normal;
+      UpdateAnimationToPlay(bestAnimation, 1);
+    }
+  }
+  
+  // Transition out of hunger loop if an interactable object has been located
+  if(_chooserStage == FeedingActivityStage::SearchingForCube){
+    if(_interactID.IsSet()){
+      UPDATE_STAGE(FeedingActivityStage::ReactingToCube);
+      AnimationTrigger bestTrigger = isNeedSevere ?
+                                       AnimationTrigger::FeedingReactToSeeCube_Severe :
+                                       AnimationTrigger::FeedingReactToSeeCube_Normal;
+      UpdateAnimationToPlay(bestTrigger, 1);
     }
   }
   
@@ -366,8 +420,11 @@ void ActivityFeeding::UpdateActivityStage(FeedingActivityStage newStage,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::TransitionIntoHungerLoop(Robot& robot)
+void ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
 {
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
+  
   if(_interactID.IsSet()){
     // Clear all data about the cube that we just interacted with
     using CS = FeedingCubeController::ControllerState;
@@ -376,18 +433,45 @@ void ActivityFeeding::TransitionIntoHungerLoop(Robot& robot)
     _interactID.UnSet();
   }
   
-  UPDATE_STAGE(FeedingActivityStage::HungerLoop);
+  // check for cubes that are fully charged or partially charged
+  bool anyCubesCharging = false;
+  bool anyCubesFullyCharged = false;
+  for(const auto& entry: _cubeControllerMap){
+    anyCubesFullyCharged = anyCubesFullyCharged || entry.second->IsCubeCharged();
+    anyCubesCharging = anyCubesCharging || entry.second->IsCubeCharging();
+  }
+  
+  AnimationTrigger bestAnimation = isNeedSevere ?
+                      AnimationTrigger::FeedingIdleToFullCube_Severe :
+                      AnimationTrigger::FeedingIdleToFullCube_Normal;
+  UpdateAnimationToPlay(bestAnimation, 0);
+  
+  if(anyCubesFullyCharged){
+    UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
+  }else if(anyCubesCharging){
+    UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
+  }else{
+    UPDATE_STAGE(FeedingActivityStage::WaitingForShake);
+  }
+
+  
   auto& bodyLightComp = robot.GetBodyLightComponent();
   bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._waitingForFoodBackpackLights,
                                            BackpackLightSource::Behavior,
                                            _bodyLightDataLocator);
+  
+  if(_idleAndDrivingSet && !isNeedSevere){
+    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    robot.GetAnimationStreamer().PopIdleAnimation();
+    _idleAndDrivingSet = false;
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::RobotObservedObject(const ObjectID& objID)
 {
-  if((_chooserStage == FeedingActivityStage::HungerLoop) &&
+  if((_chooserStage == FeedingActivityStage::SearchingForCube) &&
      !_interactID.IsSet()){
     auto entry = _cubeControllerMap.find(objID);
     if(entry != _cubeControllerMap.end()){
@@ -403,13 +487,19 @@ void ActivityFeeding::RobotObservedObject(const ObjectID& objID)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 {
-  auto& bodyLightComp = robot.GetBodyLightComponent();
-  bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._eatingBackpackLights,
-                                           BackpackLightSource::Behavior,
-                                           _bodyLightDataLocator);
   using CS = FeedingCubeController::ControllerState;
   _cubeControllerMap[_interactID]->SetControllerState(robot, CS::DrainCube, duration_s);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions)
+{
+  _behaviorPlayAnimation->Stop();
+  _behaviorPlayAnimation->SetAnimationTrigger(animTrigger, repetitions);
+  _behaviorPlayAnimation->Init();
+}
+
   
   
 } // namespace Cozmo

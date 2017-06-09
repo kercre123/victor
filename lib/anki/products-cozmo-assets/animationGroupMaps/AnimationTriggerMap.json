@@ -441,8 +441,72 @@
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
-      "CladEvent": "FeedingGetIn",
-      "AnimName": "ag_fistbump_success"
+      "CladEvent": "FeedingAteFullEnough_Normal",
+      "AnimName": "ag_energy_eatingfullyfull"
+    },
+    {
+      "CladEvent": "FeedingAteFullEnough_Severe",
+      "AnimName": "ag_energy_eatinggoodenough"
+    },
+    {
+      "CladEvent": "FeedingAteNotFullEnough_Normal",
+      "AnimName": "ag_energy_eatingnotfull"
+    },
+    {
+      "CladEvent": "FeedingAteNotFullEnough_Severe",
+      "AnimName": "ag_energy_eatingstillhungry"
+    },
+    {
+      "CladEvent": "FeedingDrivingGetIn_Severe",
+      "AnimName": "ag_energy_drivegetin"
+    },
+    {
+      "CladEvent": "FeedingDrivingGetOut_Severe",
+      "AnimName": "ag_energy_drivegetout"
+    },
+    {
+      "CladEvent": "FeedingDrivingLoop_Severe",
+      "AnimName": "ag_energy_driveloop"
+    },
+    {
+      "CladEvent": "FeedingPlaceLiftOnCube_Normal",
+      "AnimName": "ag_energy_liftoncubelvl1"
+    },
+    {
+      "CladEvent": "FeedingPlaceLiftOnCube_Severe",
+      "AnimName": "ag_energy_liftoncubelvl2"
+    },
+    {
+      "CladEvent": "FeedingIdleToFullCube_Normal",
+      "AnimName": "ag_energy_idle_01"
+    },
+    {
+      "CladEvent": "FeedingIdleToFullCube_Severe",
+      "AnimName": "ag_energy_idlefeeding"
+    },
+    {
+      "CladEvent": "FeedingReactToFullCube_Normal",
+      "AnimName": "ag_energy_cubetone"
+    },
+    {
+      "CladEvent": "FeedingReactToFullCube_Severe",
+      "AnimName": "ag_energy_cubetonesevere"
+    },
+    {
+      "CladEvent": "FeedingReactToSeeCube_Normal",
+      "AnimName": "ag_energy_cubedown"
+    },
+    {
+      "CladEvent": "FeedingReactToSeeCube_Severe",
+      "AnimName": "ag_energy_cubedownsevere"
+    },
+    {
+      "CladEvent": "FeedingReactToShake_Normal",
+      "AnimName": "ag_energy_cubeshake"
+    },
+    {
+      "CladEvent": "FeedingReactToShake_Severe",
+      "AnimName": "ag_energy_cubeshakesevere"
     },
     {
       "CladEvent": "FistBumpIdle",

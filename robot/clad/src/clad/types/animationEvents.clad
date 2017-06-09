@@ -7,8 +7,9 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 AnimEvent {
-  TAPPED_BLOCK,
   DEVICE_AUDIO_TRIGGER,
+  ENERGY_DRAINCUBE_END,
+  TAPPED_BLOCK,
 
   Count
 }

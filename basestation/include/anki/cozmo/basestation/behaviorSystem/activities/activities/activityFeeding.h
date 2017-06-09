@@ -29,7 +29,6 @@ namespace Cozmo {
   
 // forward declarations
 class BehaviorFeedingEat;
-class BehaviorFeedingHungerLoop;
 class BehaviorPlayArbitraryAnim;
 class FeedingCubeController;
 
@@ -52,20 +51,20 @@ protected:
 private:
   enum class FeedingActivityStage{
     None,
-    FeedingGetIn,
     SearchForFace,
-    HungerLoop,
-    EatFood,
-    TransitionCelebrateFood,
-    CelebrateFood,
-    FeedingGetOut,
-    Done
+    TurnToFace,
+    WaitingForShake,
+    ReactingToShake,
+    WaitingForFullyCharged,
+    ReactingToFullyCharged,
+    SearchingForCube,
+    ReactingToCube,
+    EatFood
   };
   
   
   FeedingActivityStage _chooserStage;
   float _timeFaceSearchShouldEnd_s;
-  int   _currentSuccessfullFoodCount;
   
   std::map<ObjectID, std::unique_ptr<FeedingCubeController>> _cubeControllerMap;
   
@@ -78,21 +77,27 @@ private:
   // Bool that will be set by a behavior listener callback when the behavior has
   bool _eatingComplete;
   
+  bool _idleAndDrivingSet;
+  
   std::vector<Signal::SmartHandle> _eventHandlers;
   
   // Behaviors that the chooser calls directly
   IBehavior* _searchingForFaceBehavior              = nullptr;
-  BehaviorFeedingHungerLoop* _hungerLoopBehavior    = nullptr;
+  IBehavior* _turnToFaceBehavior                    = nullptr;
+  IBehavior* _searchForCubeBehavior                 = nullptr;
   BehaviorFeedingEat* _eatFoodBehavior              = nullptr;
   BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;
   
   void UpdateActivityStage(FeedingActivityStage newStage, const std::string& stageName);
   
   // Sets backpack lights etc for getting into hunger loop
-  void TransitionIntoHungerLoop(Robot& robot);
+  void TransitionToBestActivityStage(Robot& robot);
   
   // Handle object observations
   void RobotObservedObject(const ObjectID& objID);
+  
+  void UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions);
+
 };
 
 

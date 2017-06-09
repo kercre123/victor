@@ -98,6 +98,7 @@ Result BehaviorPlayArbitraryAnim::ResumeInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlayArbitraryAnim::StopInternal(Robot& robot)
 {
+  _animationAlreadySet = false;
   _animTriggers.clear();
 }
 

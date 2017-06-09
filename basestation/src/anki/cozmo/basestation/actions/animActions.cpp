@@ -46,6 +46,12 @@ namespace Anki {
     , _interruptRunning(interruptRunning)
     , _timeout_sec(timeout_sec)
     {
+      // If an animation is supposed to loop infinitely, it should have a
+      // much longer default timeout
+      if((numLoops == 0) &&
+         (timeout_sec = _kDefaultTimeout_sec)){
+        _timeout_sec = _kDefaultTimeoutForInfiniteLoops_sec;
+      }
       
     }
     

@@ -59,11 +59,13 @@ namespace Cozmo.Energy.UI {
       HandleLatestNeedsLevelChanged(NeedsActionId.FeedBlue);
 
       RefreshForCurrentBracket(nsm);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
     }
 
     private void OnDestroy() {
       NeedsStateManager.Instance.ResumeAllNeeds();
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnUpdateUIForAction -= HandleLatestNeedsLevelChanged;
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
 
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -75,7 +77,7 @@ namespace Cozmo.Energy.UI {
 
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnUpdateUIForAction += HandleLatestNeedsLevelChanged;
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
@@ -143,6 +145,32 @@ namespace Cozmo.Energy.UI {
       }
       else {
         sequence.Play();
+      }
+    }
+
+    private void HandleFeedingSFXStageUpdate(Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate message) {
+      uint stageNum = message.stage;
+      switch (stageNum) {
+      case 0: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
+          break;
+        }
+      case 1:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
+          break;
+        }
+      case 2:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
+          break;
+        }
+      case 3:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
+          break;
+        }
+      case 4:{
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
+          break;
+        }
       }
     }
   }

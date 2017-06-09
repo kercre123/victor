@@ -17,6 +17,12 @@ namespace Cozmo.Needs {
     public delegate void LatestNeedBracketChangedHandler(NeedsActionId actionThatCausedChange, NeedId needThatChanged);
     public event LatestNeedBracketChangedHandler OnNeedsBracketChanged;
 
+    // If engine needs to update needs before it is displayed to the user this function
+    // will be called after the engine has completed its task and needs should be updated
+    // visibly for the user
+    public delegate void UpdateUIForAction(NeedsActionId actionThatCausedChange);
+    public event UpdateUIForAction OnUpdateUIForAction;
+
     public static NeedsStateManager Instance { get; private set; }
 
     private NeedsState _LatestStateFromEngine;
@@ -40,6 +46,7 @@ namespace Cozmo.Needs {
     private void Awake() {
       RobotEngineManager.Instance.ConnectedToClient += (s) => RequestNeedsState();
       RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
+      RobotEngineManager.Instance.AddCallback<DelayedUIUpdateForAction>(HandleUpdateUI);
       _LatestStateFromEngine = CreateNewNeedsState();
       _CurrentDisplayState = CreateNewNeedsState();
 
@@ -50,6 +57,7 @@ namespace Cozmo.Needs {
     private void OnDestroy() {
       if (RobotEngineManager.Instance != null) {
         RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
+        RobotEngineManager.Instance.RemoveCallback<DelayedUIUpdateForAction>(HandleUpdateUI);
       }
     }
 
@@ -143,6 +151,13 @@ namespace Cozmo.Needs {
         }
       }
     }
+
+    private void HandleUpdateUI(DelayedUIUpdateForAction updateUIForAction){
+      if(OnUpdateUIForAction != null){
+        OnUpdateUIForAction(updateUIForAction.actionCausingTheUpdate);
+      }
+    }
+
 
     private NeedsState CreateNewNeedsState() {
       NeedsState needsState = new NeedsState();

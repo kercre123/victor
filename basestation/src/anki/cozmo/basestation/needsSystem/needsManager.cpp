@@ -536,12 +536,17 @@ void NeedsManager::SetPaused(const bool paused)
   SendNeedsPauseStateToGame();
 }
 
+  
+NeedsState& NeedsManager::GetCurNeedsStateMutable()
+{
+  _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
+  return _needsState;
+}
+
 
 const NeedsState& NeedsManager::GetCurNeedsState()
 {
-  _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
-
-  return _needsState;
+  return GetCurNeedsStateMutable();
 }
 
 

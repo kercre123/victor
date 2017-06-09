@@ -490,6 +490,12 @@ void FeedingCubeController::UpdateChargeAudioRound(Robot& robot, ChargeStateChan
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool FeedingCubeController::IsCubeCharging() const
+{
+  return _cubeStateTracker->GetChargeState() == ChargeState::Charging;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool FeedingCubeController::IsCubeCharged() const
 {
   return _cubeStateTracker->GetChargeState() == ChargeState::FullyCharged;

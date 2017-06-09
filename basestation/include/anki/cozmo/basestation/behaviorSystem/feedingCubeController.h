@@ -45,6 +45,7 @@ public:
   
   // Functions which can be queried to find out the state of the cube being
   // controlled
+  bool IsCubeCharging() const;
   bool IsCubeCharged() const;
   bool IsCubeDrained() const;
 

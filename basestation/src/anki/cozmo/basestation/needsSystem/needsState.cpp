@@ -371,8 +371,9 @@ RepairablePartId NeedsState::PickPartToDamage() const
   return static_cast<RepairablePartId>(i);
 }
 
-bool NeedsState::IsNeedAtBracket(NeedId need, NeedBracketId bracket) const
+bool NeedsState::IsNeedAtBracket(NeedId need, NeedBracketId bracket)
 {
+  UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
   const auto& iter = _curNeedsBracketsCache.find(need);
   if(iter != _curNeedsBracketsCache.end())
   {

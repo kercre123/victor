@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "clad/types/animationKeyFrames.h"
 
+
 namespace Anki {
   
   namespace Cozmo {
@@ -75,7 +76,8 @@ namespace Anki {
       Signal::SmartHandle _abortSignalHandle;
       
       static constexpr float _kDefaultTimeout_sec = 60.f;
-      
+      static constexpr float _kDefaultTimeoutForInfiniteLoops_sec = std::numeric_limits<f32>::max();
+
     }; // class PlayAnimationAction
 
 

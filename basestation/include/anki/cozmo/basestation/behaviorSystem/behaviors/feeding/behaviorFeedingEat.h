@@ -48,11 +48,15 @@ protected:
 private:
   mutable ObjectID _targetID;
   std::vector<IFeedingListener*> _feedingListeners;
+  bool _shouldSendUpdateUI;
   
   void TransitionToReactingToFood(Robot& robot);
   void TransitionToDrivingToFood(Robot& robot);
   void TransitionToEating(Robot& robot);
-  void TransitionToWaiting(Robot& robot);
+  
+  AnimationTrigger UpdateNeedsStateAndCalculateAnimation(Robot& robot);
+
+  void SendDelayedUIUpdateIfAppropriate(Robot& robot);
 
 };
 
