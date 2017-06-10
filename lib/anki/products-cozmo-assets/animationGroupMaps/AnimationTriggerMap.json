@@ -925,6 +925,18 @@
       "AnimName" : "ag_greeting_happy"
     },
     {
+      "CladEvent": "NeedsMildLowEnergyRequest",
+      "AnimName": "ag_energy_request"
+    },
+    {
+      "CladEvent": "NeedsMildLowPlayRequest",
+      "AnimName": "ag_play_requestplay_level1_01"
+    },
+    {
+      "CladEvent": "NeedsMildLowRepairRequest",
+      "AnimName": "ag_repair_reaction_01"
+    },
+    {
       "CladEvent": "NeedsSevereLowEnergyDrivingEnd",
       "AnimName": "ag_energy_drivegetout"
     },

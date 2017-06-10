@@ -29,6 +29,7 @@ enum uint_8 BehaviorClass {
   EnrollFace,
   ExploreLookAroundInPlace,
   ExploreVisitPossibleMarker,
+  ExpressNeeds,
   FactoryCentroidExtractor,
   FactoryTest,
   FeedingEat,
@@ -141,6 +142,8 @@ enum uint_8 BehaviorID {
   Needs_SevereLowEnergyRequest,
   Needs_SevereLowRepairGetIn,
   Needs_SevereLowRepairRequest,
+  Needs_MildLowEnergyRequest,
+  Needs_MildLowRepairRequest,
 
   NothingToDo_BoredAnim,
   NothingToDo_Idle,

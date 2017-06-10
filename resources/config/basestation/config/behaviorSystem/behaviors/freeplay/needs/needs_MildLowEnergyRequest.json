@@ -1,0 +1,34 @@
+{
+  "behaviorClass": "ExpressNeeds",
+  
+  "behaviorID": "Needs_MildLowEnergyRequest",
+  "displayNameKey":"behavior.Needs_MildLowEnergyRequest",
+  "animTrigger": "NeedsMildLowEnergyRequest",  
+  "need": "Energy",
+  "needBracket": "Warning",
+
+  "cooldown": {
+    "nodes": [
+      // x = needs level
+      // y = cooldown in seconds.
+      // Note that this behavior only runs in the mild warning state
+
+      {
+        "x": 0.0,
+        "y": 20.0
+      },
+      {
+        "x": 0.1,
+        "y": 20.0
+      },
+      {
+        "x": 0.5,
+        "y": 60.0
+      },
+      {
+        "x": 1.0,
+        "y": 60.0
+      }
+    ]
+  }  
+}

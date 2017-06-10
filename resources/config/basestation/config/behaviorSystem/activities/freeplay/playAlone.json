@@ -139,5 +139,12 @@
         }
       }
     ]
+  },
+  "interludeBehaviorChooser": {
+    "type": "StrictPriority",
+    "behaviors": [
+      "Needs_MildLowEnergyRequest",
+      "Needs_MildLowRepairRequest"
+    ]
   }
 }

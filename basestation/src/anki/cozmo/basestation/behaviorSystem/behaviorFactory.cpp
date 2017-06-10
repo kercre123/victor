@@ -55,6 +55,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/oneShots/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/oneShots/behaviorDance.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/oneShots/behaviorExpressNeeds.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/userInteractive/behaviorBouncer.h"
@@ -415,6 +416,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorClass behaviorType, Robot& ro
     case BehaviorClass::TurnToFace:
     {
       newBehavior = new BehaviorTurnToFace(robot, config);
+      break;
+    }
+    case BehaviorClass::ExpressNeeds:
+    {
+      newBehavior = new BehaviorExpressNeeds(robot, config);
       break;
     }
     
