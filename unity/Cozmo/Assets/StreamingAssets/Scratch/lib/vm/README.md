@@ -3,8 +3,7 @@
 
 [![Build Status](https://travis-ci.org/LLK/scratch-vm.svg?branch=develop)](https://travis-ci.org/LLK/scratch-vm)
 [![Coverage Status](https://coveralls.io/repos/github/LLK/scratch-vm/badge.svg?branch=develop)](https://coveralls.io/github/LLK/scratch-vm?branch=develop)
-[![Dependency Status](https://david-dm.org/LLK/scratch-vm.svg)](https://david-dm.org/LLK/scratch-vm)
-[![devDependency Status](https://david-dm.org/LLK/scratch-vm/dev-status.svg)](https://david-dm.org/LLK/scratch-vm#info=devDependencies)
+[![Greenkeeper badge](https://badges.greenkeeper.io/LLK/scratch-vm.svg)](https://greenkeeper.io/)
 
 ## Installation
 This requires you to have Git and Node.js installed.
@@ -30,13 +29,9 @@ Open a Command Prompt or Terminal in the repository and run:
 ```bash
 npm start
 ```
-Or on Windows:
-```bash
-StartServerWindows.bat
-```
 
 ## Playground
-To run the Playground, make sure the dev server's running and go to [http://localhost:8080/](http://localhost:8080/) - you will be directed to the playground, which demonstrates various tools and internal state.
+To run the Playground, make sure the dev server's running and go to [http://localhost:8073/playground/](http://localhost:8073/playground/) - you will be directed to the playground, which demonstrates various tools and internal state.
 
 ![VM Playground Screenshot](https://i.imgur.com/nOCNqEc.gif)
 
@@ -55,13 +50,13 @@ npm run build
 ```
 
 ## How to include in a Node.js App
-For an extended setup example, check out the /playground directory, which includes a fully running VM instance.
+For an extended setup example, check out the /src/playground directory, which includes a fully running VM instance.
 ```js
 var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
 
 // Block events
-workspace.addChangeListener(vm.blockListener);
+Scratch.workspace.addChangeListener(vm.blockListener);
 
 // Run threads
 vm.start();

@@ -21,7 +21,7 @@
  * properties. By hand, I matched the opcode name to the 3.0 opcode.
  * Finally, I filled in the expected arguments as below.
  */
-var specMap = {
+const specMap = {
     'forward:': {
         opcode: 'motion_movesteps',
         argMap: [
@@ -166,9 +166,8 @@ var specMap = {
         opcode: 'motion_setrotationstyle',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'motion_setrotationstyle_menu',
-                inputName: 'STYLE'
+                type: 'field',
+                fieldName: 'STYLE'
             }
         ]
     },
@@ -276,9 +275,8 @@ var specMap = {
         opcode: 'looks_changeeffectby',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'looks_effectmenu',
-                inputName: 'EFFECT'
+                type: 'field',
+                fieldName: 'EFFECT'
             },
             {
                 type: 'input',
@@ -291,9 +289,8 @@ var specMap = {
         opcode: 'looks_seteffectto',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'looks_effectmenu',
-                inputName: 'EFFECT'
+                type: 'field',
+                fieldName: 'EFFECT'
             },
             {
                 type: 'input',
@@ -382,7 +379,7 @@ var specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'sound_sounds_option',
+                inputOp: 'sound_sounds_menu',
                 inputName: 'SOUND_MENU'
             }
         ]
@@ -392,7 +389,7 @@ var specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'sound_sounds_option',
+                inputOp: 'sound_sounds_menu',
                 inputName: 'SOUND_MENU'
             }
         ]
@@ -408,7 +405,7 @@ var specMap = {
             {
                 type: 'input',
                 inputOp: 'math_number',
-                inputName: 'DRUMTYPE'
+                inputName: 'DRUM'
             },
             {
                 type: 'input',
@@ -563,7 +560,7 @@ var specMap = {
         ]
     },
     'setPenShadeTo:': {
-        opcode: 'pen_changepenshadeby',
+        opcode: 'pen_setpenshadeto',
         argMap: [
             {
                 type: 'input',
@@ -1171,9 +1168,8 @@ var specMap = {
         opcode: 'operator_mathop',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'operator_mathop_menu',
-                inputName: 'OPERATOR'
+                type: 'field',
+                fieldName: 'OPERATOR'
             },
             {
                 type: 'input',
@@ -1186,9 +1182,8 @@ var specMap = {
         opcode: 'data_variable',
         argMap: [
             {
-                type: 'input',
-                inputOp: 'data_variablemenu',
-                inputName: 'VARIABLE'
+                type: 'field',
+                fieldName: 'VARIABLE'
             }
         ]
     },

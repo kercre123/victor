@@ -1,6 +1,10 @@
+# *** ANKI CHANGE ***
+#
+# Build script to compress vm files. 
+#
 # Note: caching the node_modules directory greatly speeds up this step
 #       with npm update it should ensure that it's equivalent to a fresh install
-ENABLE_NODE_MODULE_CACHING=1
+ENABLE_NODE_MODULE_CACHING=0
 
 if [ $ENABLE_NODE_MODULE_CACHING != 0 ]
 then
@@ -15,6 +19,9 @@ fi
 echo npm install:
 npm install
 
+echo npm run build:
+npm run build
+
 if [ $ENABLE_NODE_MODULE_CACHING != 0 ]
 then
     echo caching node_modules back to home directory out of the way of git
@@ -27,6 +34,11 @@ fi
 echo removing node_modules.meta incase Unity made one
 rm -f node_modules.meta
 
-echo reverting playground
-git checkout -- playground
-git clean -fd playground
+echo removing lib/vm/dist/node
+rm -rf dist/node
+
+echo removing node.meta incase Unity made one
+rm -f dist/node.meta
+
+echo removing lib/vm/playground
+rm -rf playground

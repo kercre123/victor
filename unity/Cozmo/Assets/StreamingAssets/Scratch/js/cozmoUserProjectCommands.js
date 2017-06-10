@@ -39,7 +39,7 @@
     // Check that there is a script on the workspace and it contains
     // more than just the green flag.
     window.hasUserAddedBlocks = function() {
-        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
         var nodes = xml.getElementsByTagName('block');
         var greenFlagType = 'event_whenflagclicked';
         var hasUserAddedBlocks = false;
@@ -64,7 +64,7 @@
             return;
         }
 
-        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
         var xmlText = Blockly.Xml.domToText(xml);
 
         if (window.cozmoProjectUUID == null) {
@@ -78,9 +78,6 @@
         }
 
         // If it's a new project, only save the project if the user has added blocks.
-        // TODO For new projects, after they are first saved by Unity, need to get both the
-        // project UUID and projectName from Unity and cache it, and display in upper right
-        // corner of workspace.
         if (window.cozmoProjectUUID == '' &&  !window.hasUserAddedBlocks()) {
             window.saveProjectCompleted();
             return;
@@ -96,10 +93,8 @@
         var isCozmoSampleProject = (isCozmoSampleProjectStr == 'true');
 
         // Remove all existing scripts from workspace
-        window.workspace.clear();
+        Scratch.workspace.clear();
 
-        // TODO show projectName in upper right corner of workspace
-        // TODO whether the project is autosaved or not (yes for personal projects, no for sample projects) below projectName in workspace
         window.cozmoProjectUUID = projectUUID;
         window.cozmoProjectName = projectName;
         window.isCozmoSampleProject = isCozmoSampleProject;
@@ -156,6 +151,6 @@
 
     window.openBlocklyXML = function(xml) {
         var domXML = Blockly.Xml.textToDom(xml);
-        Blockly.Xml.domToWorkspace(domXML, workspace);
+        Blockly.Xml.domToWorkspace(domXML, Scratch.workspace);
     }
 })();

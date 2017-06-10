@@ -33,6 +33,7 @@
             <canvas id="scratch-stage" style="width: 480px; height: 360px;"></canvas><br />
             x: <input id='sinfo-x' />
             y: <input id='sinfo-y' /><br />
+            size: <input id='sinfo-size' /><br />
             dir: <input id='sinfo-direction' />
             rotation style: <input id='sinfo-rotationstyle' /><br />
             visible: <input id='sinfo-visible' />
@@ -52,9 +53,9 @@
             <button id="projectLoadButton">Load</button>
             <button id="createEmptyProject">New Project</button><br />
             <p>
-                <input type="button" value="Export to XML" onclick="toXml()">
+                <input type="button" value="Export to JSON" onclick="toJson()">
                 &nbsp;
-                <input type="button" value="Import from XML" onclick="fromXml()" id="import">
+                <input type="button" value="Import from JSON" onclick="fromJson()" id="import">
                 <br /><br />
                 <textarea id="importExport"></textarea>
             </p>
@@ -66,22 +67,21 @@
     <!-- FPS counter, Syntax highlighter, Blocks, Renderer -->
     <script src="./vendor.js"></script>
     <!-- VM Worker -->
-    <script src="./vm.js"></script>
+    <script src="./scratch-vm.js"></script>
     <!-- Playground -->
     <script src="./playground.js"></script>
     <script>
-        function toXml() {
+        function toJson() {
             var output = document.getElementById('importExport');
-            var xml = Blockly.Xml.workspaceToDom(workspace);
-            output.value = Blockly.Xml.domToPrettyText(xml);
+            var json = window.Scratch.vm.toJSON();
+            output.value = json;
             output.focus();
             output.select();
           }
 
-          function fromXml() {
+          function fromJson() {
             var input = document.getElementById('importExport');
-            var xml = Blockly.Xml.textToDom(input.value);
-            Blockly.Xml.domToWorkspace(workspace, xml);
+            window.Scratch.vm.fromJSON(input.value);
           }
     </script>
 </body>

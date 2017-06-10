@@ -1,78 +1,85 @@
-var CopyWebpackPlugin = require('copy-webpack-plugin');
-var defaultsDeep = require('lodash.defaultsdeep');
-var path = require('path');
-var webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const defaultsDeep = require('lodash.defaultsdeep');
+const path = require('path');
+const webpack = require('webpack');
 
-var base = {
+const base = {
     devServer: {
-        contentBase: path.resolve(__dirname, 'playground'),
-        host: '0.0.0.0'
+        contentBase: false,
+        host: '0.0.0.0',
+        port: process.env.PORT || 8073
     },
+    devtool: 'cheap-module-source-map',
     module: {
-        loaders: [
-            {
-                test: /\.json$/,
-                loader: 'json-loader'
+        rules: [{
+            test: /\.js$/,
+            loader: 'babel-loader',
+            include: path.resolve(__dirname, 'src'),
+            query: {
+                presets: ['es2015']
             }
-        ]
+        }]
     },
     plugins: [
         new webpack.optimize.UglifyJsPlugin({
             include: /\.min\.js$/,
-            minimize: true,
-            compress: {
-                warnings: false
-            }
+            minimize: true
         })
     ]
 };
 
 module.exports = [
-    // Web-compatible, playground
+    // Web-compatible
     defaultsDeep({}, base, {
+        target: 'web',
         entry: {
-            'vm': './src/index.js',
-            'vm.min': './src/index.js'
+            'scratch-vm': './src/index.js',
+            'scratch-vm.min': './src/index.js'
         },
         output: {
-            path: __dirname,
+            path: path.resolve(__dirname, 'dist/web'),
             filename: '[name].js'
         },
         module: {
-            loaders: base.module.loaders.concat([
+            rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose?VirtualMachine'
+                    loader: 'expose-loader?VirtualMachine'
                 }
             ])
         }
     }),
-    // Webpack-compatible
+    // Node-compatible
     defaultsDeep({}, base, {
+        target: 'node',
         entry: {
-            dist: './src/index.js'
+            'scratch-vm': './src/index.js'
         },
-
         output: {
             library: 'VirtualMachine',
             libraryTarget: 'commonjs2',
-            path: __dirname,
+            path: path.resolve(__dirname, 'dist/node'),
             filename: '[name].js'
         }
     }),
     // Playground
     defaultsDeep({}, base, {
+        target: 'web',
         entry: {
-            vm: './src/index.js',
-            vendor: [
+            'scratch-vm': './src/index.js',
+            'vendor': [
                 // FPS counter
                 'stats.js/build/stats.min.js',
                 // Syntax highlighter
                 'highlightjs/highlight.pack.min.js',
                 // Scratch Blocks
                 'scratch-blocks/dist/vertical.js',
+                // Audio
+                'scratch-audio',
                 // Renderer
-                'scratch-render'
+                'scratch-render',
+                // Storage
+                'scratch-storage'
             ]
         },
         output: {
@@ -80,26 +87,34 @@ module.exports = [
             filename: '[name].js'
         },
         module: {
-            loaders: base.module.loaders.concat([
+            rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose?VirtualMachine'
+                    loader: 'expose-loader?VirtualMachine'
                 },
                 {
                     test: require.resolve('stats.js/build/stats.min.js'),
-                    loader: 'script'
+                    loader: 'script-loader'
                 },
                 {
                     test: require.resolve('highlightjs/highlight.pack.min.js'),
-                    loader: 'script'
+                    loader: 'script-loader'
                 },
                 {
                     test: require.resolve('scratch-blocks/dist/vertical.js'),
-                    loader: 'expose?Blockly'
+                    loader: 'expose-loader?Blockly'
+                },
+                {
+                    test: require.resolve('scratch-audio'),
+                    loader: 'expose-loader?AudioEngine'
                 },
                 {
                     test: require.resolve('scratch-render'),
-                    loader: 'expose?RenderWebGL'
+                    loader: 'expose-loader?RenderWebGL'
+                },
+                {
+                    test: require.resolve('scratch-storage'),
+                    loader: 'expose-loader?Scratch.Storage'
                 }
             ])
         },
@@ -110,8 +125,7 @@ module.exports = [
             }, {
                 from: 'node_modules/highlightjs/styles/zenburn.css'
             }, {
-                from: 'assets',
-                to: 'assets'
+                from: 'src/playground'
             }])
         ])
     })

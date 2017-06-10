@@ -1,4 +1,5 @@
 (function () {
+    const Scratch = window.Scratch = window.Scratch || {};
 
     /**
      * Window "onload" handler.
@@ -8,10 +9,33 @@
         window.TABLET_WIDTH = 800;
 
         // Instantiate the VM and create an empty project
-        var vm = new window.VirtualMachine();
-        window.vm = vm;
-        window.vm.createEmptyProject();
+        const vm = new window.VirtualMachine();
+        Scratch.vm = vm;
 
+        // Provided by Scratch team and reduced to remove unused assets.
+        var emptyProjectJSONString = '{' +
+            '"objName": "Stage",' +
+            '"currentCostumeIndex": 0,' +
+            '"penLayerID": -1,' +
+            '"tempoBPM": 60,' +
+            '"videoAlpha": 0.5,' +
+            '"children": [{' +
+                    '"objName": "Sprite1",' +
+                    '"currentCostumeIndex": 0,' +
+                    '"scratchX": 0,' +
+                    '"scratchY": 0,' +
+                    '"scale": 1,' +
+                    '"direction": 90,' +
+                    '"rotationStyle": "normal",' +
+                    '"isDraggable": false,' +
+                    '"indexInLibrary": 1,' +
+                    '"visible": true,' +
+                    '"spriteInfo": {' +
+                    '}' +
+            '}]' +
+        '}';
+
+        vm.loadProject(emptyProjectJSONString);
 
         // Get XML toolbox definition
         var toolbox = document.getElementById('toolbox');
@@ -32,7 +56,7 @@
                 startScale: 1.2
             },
             colours: {
-                workspace: '#334771',
+                workspace: '#535252',
                 flyout: '#283856',
                 scrollbar: '#24324D',
                 scrollbarHover: '#0C111A',
@@ -42,7 +66,7 @@
                 dragShadowOpacity: 0.6
             }
         });
-        window.workspace = workspace;
+        Scratch.workspace = workspace;
 
         // Create an array which stores resolve functions indexed by requestId.
         // These will be used as a means of communication between the JavaScript
@@ -50,26 +74,27 @@
         // should proceed to the next block.
         window.resolveCommands = [];
 
-        // Attach blocks to the VM
+        // Attach scratch-blocks events to VM.
         workspace.addChangeListener(vm.blockListener);
-        var flyoutWorkspace = workspace.getFlyout().getWorkspace();
+        const flyoutWorkspace = workspace.getFlyout().getWorkspace();
         flyoutWorkspace.addChangeListener(vm.flyoutBlockListener);
+        flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
 
         // Handle VM events
         vm.on('STACK_GLOW_ON', function(data) {
-            workspace.glowStack(data.id, true);
+            Scratch.workspace.glowStack(data.id, true);
         });
         vm.on('STACK_GLOW_OFF', function(data) {
-            workspace.glowStack(data.id, false);
+            Scratch.workspace.glowStack(data.id, false);
         });
         vm.on('BLOCK_GLOW_ON', function(data) {
-            workspace.glowBlock(data.id, true);
+            Scratch.workspace.glowBlock(data.id, true);
         });
         vm.on('BLOCK_GLOW_OFF', function(data) {
-            workspace.glowBlock(data.id, false);
+            Scratch.workspace.glowBlock(data.id, false);
         });
         vm.on('VISUAL_REPORT', function(data) {
-            workspace.reportValue(data.id, data.value);
+            Scratch.workspace.reportValue(data.id, data.value);
         });
 
         // Run threads
@@ -98,7 +123,7 @@
         };
 
         closeButton.addEventListener('click', function () {
-            workspace.playAudio('click');
+            Scratch.workspace.playAudio('click');
             vm.stopAll();
             clearInterval(window.saveProjectTimerId);
 
@@ -112,21 +137,21 @@
         });
         challengesButton.addEventListener('click', function () {
           // show challenges dialog
-          workspace.playAudio('click');
+          Scratch.workspace.playAudio('click');
           Challenges.show();
         });
         challengesButton.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
         greenFlag.addEventListener('click', function () {
-            workspace.playAudio('click');
+            Scratch.workspace.playAudio('click');
             vm.greenFlag();
         });
         greenFlag.addEventListener('touchmove', function (e) {
             e.preventDefault();
         });
         stop.addEventListener('click', function () {
-            workspace.playAudio('click');
+            Scratch.workspace.playAudio('click');
             vm.stopAll();
         });
         stop.addEventListener('touchmove', function (e) {
@@ -152,10 +177,10 @@
         // Also see CSS height column here: https://mydevice.io/devices/
 
         if (window.innerWidth < window.TABLET_WIDTH) {
-            workspace.setScale(0.70);
+            Scratch.workspace.setScale(0.70);
             //document.getElementById('navigation').style.zoom = "80%"
         }else{
-            workspace.setScale(1.2);
+            Scratch.workspace.setScale(1.2);
         }
     };
 
