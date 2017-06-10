@@ -393,14 +393,31 @@ window._$translations = {
     },
 
 
-
-
-
-
-
-
-
-
-
-
+    "codeLabSampleProject_DriveInSquare.projectName": {
+        "translation": "Drive In Square"
+    },
+    "codeLabSampleProject_RainbowBackpack.projectName": {
+        "translation": "Rainbow Backpack"
+    },
+    "codeLabSampleProject_DrivingAndSneezing.projectName": {
+        "translation": "Driving and Sneezing"
+    },
+    "codeLabSampleProject_TapCubeForMysteryAnimation.projectName": {
+        "translation": "Tap Cube for Mystery Animation"
+    },
+    "codeLabSampleProject_DriveInSquareAdvanced.projectName": {
+        "translation": "Drive In Square: Advanced"
+    },
+    "codeLabSampleProject_PushCube.projectName": {
+        "translation": "Push Cube"
+    },
+    "codeLabSampleProject_Peekaboo.projectName": {
+        "translation": "Peekaboo"
+    },
+    "codeLabSampleProject_WorkoutwithCube.projectName": {
+        "translation": "Workout with Cube"
+    },
+    "codeLabSampleProject_IntruderAlarm.projectName": {
+        "translation": "Intruder Alarm!"
+    }
 };

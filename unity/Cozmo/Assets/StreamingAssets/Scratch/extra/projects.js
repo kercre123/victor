@@ -32,7 +32,7 @@
       CozmoAPI.getProjects('window.renderProjects');
 
       // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-      // _devLoadProjects();
+      //_devLoadProjects();
     });
 
     // register main click handler for the document
@@ -244,8 +244,8 @@
     // add the project data to the element
     setProjectData(project, projectData);
 
-    // set the project title
-    project.querySelector('.project-title').textContent = projectData.ProjectName;
+    // set the project title to the localized name
+    project.querySelector('.project-title').textContent = $t(projectData.ProjectName);
 
     // set the icon to match the content of the sample project
     var icon = projectData.ProjectIconName;
@@ -409,6 +409,15 @@
     getJSON('../sample-projects.json', function(sampleProjects) {
       // copy 3 of the sample projects and render them as user projects
       var userProjects = sampleProjects.slice(0,3);
+
+      // deep copy the fake user projects so that translations of sample projects are not effected
+      userProjects = JSON.parse(JSON.stringify(userProjects));
+
+      // translate the sample project names
+      for (var i=0; i < userProjects.length; i++) {
+        userProjects[i].ProjectName = $t(userProjects[i].ProjectName);
+      }
+
       window.renderProjects(JSON.stringify(userProjects), JSON.stringify(sampleProjects));
     });
   }
