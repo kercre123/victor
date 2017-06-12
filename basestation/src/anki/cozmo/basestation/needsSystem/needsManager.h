@@ -92,14 +92,14 @@ public:
 private:
 
   bool DeviceHasNeedsState();
-  void PossiblyWriteToDevice(NeedsState& needsState);
-  void WriteToDevice(const NeedsState& needsState);
-  bool ReadFromDevice(NeedsState& needsState, bool& versionUpdated);
+  void PossiblyWriteToDevice();
+  void WriteToDevice(bool stampWithNowTime = true);
+  bool ReadFromDevice(bool& versionUpdated);
 
   static inline const std::string GetNurtureFolder() { return "nurture/"; }
 
-  void PossiblyStartWriteToRobot(NeedsState& needsState, bool ignoreCooldown = false);
-  void StartWriteToRobot(const NeedsState& needsState);
+  void PossiblyStartWriteToRobot(bool ignoreCooldown = false);
+  void StartWriteToRobot();
   void FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime);
   bool StartReadFromRobot();
   bool FinishReadFromRobot(const u8* data, const size_t size, const NVStorage::NVResult res);
@@ -132,6 +132,7 @@ private:
   bool          _deviceHadValidNeedsData;
   bool          _robotNeedsVersionUpdate;
   bool          _deviceNeedsVersionUpdate;
+  u32           _previousRobotSerialNumber;
 
   bool          _isPausedOverall;
   float         _timeWhenPausedOverall_s;
