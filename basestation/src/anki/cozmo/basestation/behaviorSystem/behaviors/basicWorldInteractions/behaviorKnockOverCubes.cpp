@@ -285,10 +285,6 @@ void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(Robot& robot)
     flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
   }
   
-  // Unlock the reactions b/c we're about to re-lock them
-  // It's possible they might not have been locked - it's safe to remove an invalid lock
-  // but locking twice due to a retry will cause a crash
-  SmartRemoveDisableReactionsLock(kPreparingToKnockOverStackLock);
   PrepareForKnockOverAttempt();
   StartActing(flipAndWaitAction, &BehaviorKnockOverCubes::TransitionToPlayingReaction);
 }
@@ -405,6 +401,11 @@ void BehaviorKnockOverCubes::PrepareForKnockOverAttempt()
 {
   _objectsFlipped.clear();
   IncreaseScoreWhileActing(kScoreIncreaseSoNoRoll);
+  
+  // Unlock the reactions b/c we're about to re-lock them
+  // It's possible they might not have been locked - it's safe to remove an invalid lock
+  // but locking twice due to a retry will cause a crash
+  SmartRemoveDisableReactionsLock(kPreparingToKnockOverStackLock);
   SmartDisableReactionsWithLock(kPreparingToKnockOverStackLock,
                                 kAffectTriggersPreparingKnockOverArray);
 }

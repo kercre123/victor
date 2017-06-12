@@ -198,9 +198,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   StartActing(goPopAWheelie,
               [&, this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
-                  // Release the on back lock directly instead of going through smart disable
-                  // so that other triggers aren't kicked out too.
-                  this->_robot.GetBehaviorManager().RemoveDisableReactionsLock(GetIDStr());
+                  this->SmartRemoveDisableReactionsLock(GetIDStr());
                 }
                 
                 switch(IActionRunner::GetActionResultCategory(msg.result))
