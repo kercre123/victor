@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -23,12 +24,40 @@
 #include "clad/types/animationTrigger.h"
 
 
-namespace {
-  const float kReactToTriggerDelayTime_s = 4.0f;
-}
-
 namespace Anki {
 namespace Cozmo {
+
+namespace {
+  const float kReactToTriggerDelayTime_s = 4.0f;
+  
+  constexpr ReactionTriggerHelpers::FullReactionArray kDisableReactionTriggersArray = {
+    {ReactionTrigger::CliffDetected,                false},
+    {ReactionTrigger::CubeMoved,                    true},
+    {ReactionTrigger::DoubleTapDetected,            true},
+    {ReactionTrigger::FacePositionUpdated,          true},
+    {ReactionTrigger::FistBump,                     true},
+    {ReactionTrigger::Frustration,                  true},
+    {ReactionTrigger::Hiccup,                       false},
+    {ReactionTrigger::MotorCalibration,             false},
+    {ReactionTrigger::NoPreDockPoses,               false},
+    {ReactionTrigger::ObjectPositionUpdated,        false},
+    {ReactionTrigger::PlacedOnCharger,              false},
+    {ReactionTrigger::PetInitialDetection,          true},
+    {ReactionTrigger::RobotPickedUp,                false},
+    {ReactionTrigger::RobotPlacedOnSlope,           false},
+    {ReactionTrigger::ReturnedToTreads,             true},
+    {ReactionTrigger::RobotOnBack,                  false},
+    {ReactionTrigger::RobotOnFace,                  false},
+    {ReactionTrigger::RobotOnSide,                  false},
+    {ReactionTrigger::RobotShaken,                  false},
+    {ReactionTrigger::Sparked,                      false},
+    {ReactionTrigger::UnexpectedMovement,           true},
+    {ReactionTrigger::VC,                           false}
+  };
+}
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableReactionTriggersArray),
+              "Reaction triggers duplicate or non-sequential");
   
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -63,6 +92,8 @@ bool BehaviorReactToVoiceCommand::IsRunnableInternal(const BehaviorPreReqAcknowl
 
 Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
 {
+  SmartDisableReactionsWithLock(GetIDStr(), kDisableReactionTriggersArray);
+  
   // Stop all movement so we can listen for a command
   robot.GetMoveComponent().StopAllMotors();
   
