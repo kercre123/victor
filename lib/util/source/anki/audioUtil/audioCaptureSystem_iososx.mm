@@ -189,6 +189,108 @@ void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallba
     resultCallback();
   }
 }
+  
+static void DoIPhoneSpecificConfig()
+{
+#if IPHONE_TYPE
+  AVAudioSession * session = [AVAudioSession sharedInstance];
+  if (!session)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSession.sharedInstance.Invalid", "");
+    return;
+  }
+
+  auto currentOptions = [session categoryOptions];
+  // This option needs to be set explicitly for the PlayAndRecord category we're switching to below.
+  // If that doesn't happen, audio reverts to default playback through phone speaker only, instead of
+  // speakerphone mode.
+  currentOptions |= AVAudioSessionCategoryOptionDefaultToSpeaker;
+  NSError* nsError = nil;
+  [session setCategory:AVAudioSessionCategoryPlayAndRecord
+           withOptions:currentOptions
+                 error:&nsError];
+  if (nsError)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSession.setCategory.Error", "Code %ld %s",
+                        (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+  }
+
+  // The System measurement mode could? help with voice recognition (it's the mode used by the speech
+  // recognition software THF by Sensory), but unfortunately enabling it results in reducing overall device
+  // output volume by ~60% (very rough guess) which isn't well documented in Apple docs. So far I haven't found
+  // any way to disable that side effect either, so leaving this in but disabled for historical purposes.
+  // Set the "system measurement" mode to disable signal processing from input
+//  [session setMode:AVAudioSessionModeMeasurement error:&nsError];
+//  if (nsError)
+//  {
+//    PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setMode.Error", "Code %ld %s",
+//                      (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+//  }
+
+  [session setActive:YES error:&nsError];
+  if (nsError)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSession.setActive.Error", "Code %ld %s",
+                      (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+  }
+  
+  
+  // Now that the session has been enabled, look for a front microphone. If it exists we'll prioritize it.
+  // Note this has been adapted from the example at https://developer.apple.com/library/content/qa/qa1799/_index.html
+  // Also note that the final part of the example was removed, which set the built-in mic to be the preferred
+  // input port. It was removed because of the earlier check below which returns early if there's more than one
+  // mic port found.
+  
+  // Get the set of available inputs. If there are no audio accessories attached, there will be
+  // only one available input -- the built in microphone.
+  NSArray* inputs = [session availableInputs];
+  if ([inputs count] > 1)
+  {
+    // If there's more than one input, we'll assume the user wants to use the other input instead
+    // of the built-in mic, so we'll return rather than configure (and prioritize) that mic
+    return;
+  }
+  
+  // Locate the Port corresponding to the built-in microphone.
+  AVAudioSessionPortDescription* builtInMicPort = nil;
+  for (AVAudioSessionPortDescription* port in inputs)
+  {
+    if ([port.portType isEqualToString:AVAudioSessionPortBuiltInMic])
+    {
+      builtInMicPort = port;
+      break;
+    }
+  }
+  
+  // Print out a description of the data sources for the built-in microphone
+//  NSLog(@"There are %u data sources for port :\"%@\"", (unsigned)[builtInMicPort.dataSources count], builtInMicPort);
+//  NSLog(@"%@", builtInMicPort.dataSources);
+  
+  // loop over the built-in mic's data sources and attempt to locate the front microphone
+  AVAudioSessionDataSourceDescription* frontDataSource = nil;
+  for (AVAudioSessionDataSourceDescription* source in builtInMicPort.dataSources)
+  {
+    if ([source.orientation isEqual:AVAudioSessionOrientationFront])
+    {
+      frontDataSource = source;
+      break;
+    }
+  } // end data source iteration
+  
+  if (frontDataSource)
+  {
+//    NSLog(@"Currently selected source is \"%@\" for port \"%@\"", builtInMicPort.selectedDataSource.dataSourceName, builtInMicPort.portName);
+//    NSLog(@"Attempting to select source \"%@\" on port \"%@\"", frontDataSource, builtInMicPort.portName);
+    
+    // Set a preference for the front data source.
+    if (![builtInMicPort setPreferredDataSource:frontDataSource error:&nsError])
+    {
+      PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSessionPortDescription.setPreferredDataSource.Error", "Code %ld %s",
+                        (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+    }
+  }
+#endif
+}
 
 void AudioCaptureSystem::StartRecording()
 {
@@ -200,39 +302,10 @@ void AudioCaptureSystem::StartRecording()
       AudioQueueEnqueueBuffer(_impl->_queue, _impl->_buffers[i], 0, NULL);
     }
     
-    // IOS needs to have the AVAudioSession set up properly in order to begin queueing audio
-#if IPHONE_TYPE
-    AVAudioSession * session = [AVAudioSession sharedInstance];
-    
-    if (!session)
+    if (IPHONE_TYPE)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.sharedInstance.Invalid", "");
+      DoIPhoneSpecificConfig();
     }
-    else
-    {
-      auto currentOptions = [session categoryOptions];
-      // This option needs to be set explicitly for the PlayAndRecord category we're switching to below.
-      // If that doesn't happen, audio reverts to default playback through phone speaker only, instead of
-      // speakerphone mode.
-      currentOptions |= AVAudioSessionCategoryOptionDefaultToSpeaker;
-      NSError* nsError;
-      [session setCategory:AVAudioSessionCategoryPlayAndRecord
-               withOptions:currentOptions
-                     error:&nsError];
-      if (nsError)
-      {
-        PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setCategory.Error", "Code %ld %s",
-                            (long)[nsError code], [[nsError localizedDescription] UTF8String]);
-      }
-      
-      [session setActive:YES error:&nsError];
-      if (nsError)
-      {
-        PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setActive.Error", "Code %ld %s",
-                          (long)[nsError code], [[nsError localizedDescription] UTF8String]);
-      }
-    }
-#endif
     
     OSStatus status = AudioQueueStart(_impl->_queue, NULL);
     if (kAudioServicesNoError != status)

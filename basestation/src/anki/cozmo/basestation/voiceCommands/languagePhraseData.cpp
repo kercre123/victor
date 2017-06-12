@@ -57,7 +57,7 @@ bool LanguagePhraseData::Init(const Json::Value& dataObject)
   // Load the default language filenames for this language
   if (!LoadLanguageFilenames(dataObject, _languageFilenames))
   {
-    PRINT_NAMED_ERROR("LanguagePhraseData.Init.JsonData", "Language data does not expected filenames");
+    PRINT_NAMED_ERROR("LanguagePhraseData.Init.JsonData", "Language data does not contain expected filenames");
     return false;
   }
   

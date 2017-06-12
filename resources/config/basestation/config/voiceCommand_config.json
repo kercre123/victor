@@ -36,7 +36,7 @@
         {
           "phrase": "Fist Bump",
           "commandType": "FistBump",
-          "minRecogScore": 2.0
+          "minRecogScore": 1.75
         },
         {
           "phrase": "Do You Want To Play",
