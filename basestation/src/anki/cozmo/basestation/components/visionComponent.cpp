@@ -33,6 +33,7 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
+#include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/common/basestation/math/point_impl.h"
@@ -77,6 +78,8 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   
+  // Don't send docking error signal if body is rotating faster than this
+  CONSOLE_VAR(f32, kDockingRotatingTooFastThresh_degs, "WasRotatingTooFast.Dock.Body_deg/s", RAD_TO_DEG(0.4f));
   
   namespace JsonKey
   {
@@ -297,30 +300,6 @@ namespace Cozmo {
     
     Util::SafeDelete(_visionSystem);
   } // ~VisionSystem()
- 
-  
-  void VisionComponent::SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
-                        const Point2f&               markerSize_mm,
-                        const Point2f&               imageCenter,
-                        const f32                    radius,
-                        const bool                   checkAngleX,
-                        const f32                    postOffsetX_mm,
-                        const f32                    postOffsetY_mm,
-                        const f32                    postOffsetAngle_rad)
-  {
-    if(_visionSystem != nullptr) {
-      Embedded::Point2f pt(imageCenter.x(), imageCenter.y());
-      Vision::MarkerType markerType = static_cast<Vision::MarkerType>(markerToTrack);
-      _visionSystem->SetMarkerToTrack(markerType, markerSize_mm,
-                                      pt, radius, checkAngleX,
-                                      postOffsetX_mm,
-                                      postOffsetY_mm,
-                                      postOffsetAngle_rad);
-    } else {
-      PRINT_NAMED_ERROR("VisionComponent.SetMarkerToTrack.NullVisionSystem",
-                        "Cannot set vision marker to track before vision system is instantiated.");
-    }
-  }
   
   TimeStamp_t VisionComponent::GetLastProcessedImageTimeStamp() const
   {
@@ -847,10 +826,6 @@ namespace Cozmo {
         //  and should be done before sending RobotProcessedImage below!)
         tryAndReport(&VisionComponent::UpdatePets,                VisionMode::DetectingPets);
         
-        // Note: tracking mode has two associated update calls:
-        tryAndReport(&VisionComponent::UpdateTrackingQuad,        VisionMode::Tracking);
-        tryAndReport(&VisionComponent::UpdateDockingErrorSignal,  VisionMode::Tracking);
-        
         tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
         tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
         tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
@@ -976,8 +951,7 @@ namespace Cozmo {
       // and this should be true
       assert(procResult.timestamp == t);
       
-      // If we were moving too fast at timestamp t and we aren't doing rolling shutter correction
-      // then don't queue this marker otherwise don't queue if only the head was moving too fast
+      // If we were moving too fast at timestamp t then don't queue this marker
       if(WasRotatingTooFast(t, DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)))
       {
         return RESULT_OK;
@@ -1041,6 +1015,12 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");
     }
     
+    // If we have observed a marker, attempt to update the docking error signal
+    if(!observedMarkers.empty())
+    {
+      UpdateDockingErrorSignal(procResult.timestamp);
+    }
+    
     return lastResult;
     
   } // UpdateVisionMarkers()
@@ -1094,73 +1074,6 @@ namespace Cozmo {
     Result lastResult = _robot.GetPetWorld().Update(procResult.pets);
     return lastResult;
   }
-  
-  Result VisionComponent::UpdateTrackingQuad(const VisionProcessingResult& procResult)
-  {
-    for(auto & trackerQuad : procResult.trackerQuads)
-    {
-      // Send tracker quad info to viz
-      _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
-                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
-                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
-                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
-    }
-
-    return RESULT_OK;
-  } // UpdateTrackingQuad()
-  
-  Result VisionComponent::UpdateDockingErrorSignal(const VisionProcessingResult& procResult)
-  {
-    for(auto markerPoseWrtCamera : procResult.dockingPoses)
-    {
-      // Hook the pose coming out of the vision system up to the historical
-      // camera at that timestamp
-      HistRobotState histState;
-      TimeStamp_t p_timeStamp;
-      Result poseStampResult = GetImageHistState(_robot, procResult.timestamp, histState, p_timeStamp);
-      if(RESULT_OK != poseStampResult)
-      {
-        PRINT_NAMED_WARNING("VisionComponent.UpdateDockingErrorSignal.HistoricalCameraFail",
-                            "Failed to get historical camera at t=%u, Result=%0x",
-                            procResult.timestamp, poseStampResult);
-        return poseStampResult;
-      }
-
-      Vision::Camera histCamera = _robot.GetHistoricalCamera(histState, p_timeStamp);
-      markerPoseWrtCamera.SetParent(&histCamera.GetPose());
-      /*
-       // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
-       Pose3d markerPoseWrtRobot;
-       if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
-       PRINT_NAMED_ERROR("VisionComponent.Update.PoseOriginFail",
-       "Could not get marker pose w.r.t. robot.");
-       return RESULT_FAIL;
-       }
-       */
-      //Pose3d poseWrtRobot = poseWrtCam;
-      //poseWrtRobot.PreComposeWith(camWrtRobotPose);
-      Pose3d markerPoseWrtRobot(markerPoseWrtCamera);
-      markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
-      
-      DockingErrorSignal dockErrMsg;
-      dockErrMsg.timestamp = procResult.timestamp;
-      dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
-      dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
-      dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
-      dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
-      
-      // Visualize docking error signal
-      _vizManager->SetDockingError(dockErrMsg.x_distErr,
-                                   dockErrMsg.y_horErr,
-                                   dockErrMsg.z_height,
-                                   dockErrMsg.angleErr);
-
-      // Try to use this for closed-loop control by sending it on to the robot
-      _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
-    }
-
-    return RESULT_OK;
-  } // UpdateDockingErrorSignal()
   
   Result VisionComponent::UpdateMotionCentroid(const VisionProcessingResult& procResult)
   {
@@ -1387,11 +1300,11 @@ namespace Cozmo {
 
   bool VisionComponent::WasHeadRotatingTooFast(TimeStamp_t t,
                                                const f32 headTurnSpeedLimit_radPerSec,
-                                               const int numImuDataToLookBack)
+                                               const int numImuDataToLookBack) const
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
-    if(!_visionWhileMovingFastEnabled && !_robot.IsPickingOrPlacing())
+    if(!_visionWhileMovingFastEnabled)
     {
       if(numImuDataToLookBack > 0)
       {
@@ -1420,11 +1333,11 @@ namespace Cozmo {
   
   bool VisionComponent::WasBodyRotatingTooFast(TimeStamp_t t,
                                                const f32 bodyTurnSpeedLimit_radPerSec,
-                                               const int numImuDataToLookBack)
+                                               const int numImuDataToLookBack) const
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
-    if(!_visionWhileMovingFastEnabled && !_robot.IsPickingOrPlacing())
+    if(!_visionWhileMovingFastEnabled)
     {
       if(numImuDataToLookBack > 0)
       {
@@ -1453,7 +1366,7 @@ namespace Cozmo {
   bool VisionComponent::WasRotatingTooFast(TimeStamp_t t,
                                            const f32 bodyTurnSpeedLimit_radPerSec,
                                            const f32 headTurnSpeedLimit_radPerSec,
-                                           const int numImuDataToLookBack)
+                                           const int numImuDataToLookBack) const
   {
     return (WasHeadRotatingTooFast(t, headTurnSpeedLimit_radPerSec, numImuDataToLookBack) ||
             WasBodyRotatingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
@@ -2351,6 +2264,113 @@ namespace Cozmo {
   f32 VisionComponent::GetMaxCameraGain() const
   {
     return _visionSystem->GetMaxCameraGain();
+  }
+  
+  void VisionComponent::UpdateDockingErrorSignal(const TimeStamp_t t) const
+  {
+    // The WasRotatingTooFast threshold for sending the docking error signal should be
+    // tighter than the general WasRotatingTooFast threshold for marker detection
+    DEV_ASSERT((kDockingRotatingTooFastThresh_degs <= kBodyTurnSpeedThreshBlock_degs),
+               "VisionComponent.UpdateDockingErrorSignal.BodyTurnSpeedThreshTooRestrictive");
+  
+    const ObjectID& dockObjectID = _robot.GetDockObject();
+    
+    if(dockObjectID.IsUnknown())
+    {
+      return;
+    }
+    
+    if(WasBodyRotatingTooFast(t, kDockingRotatingTooFastThresh_degs))
+    {
+      PRINT_CH_INFO("VisionComponent",
+                    "VisionComponent.UpdateDockingErrorSignal.RotatingTooFast",
+                    "Body rotating too fast at time %u",
+                    t);
+      return;
+    }
+    
+    BlockWorldFilter filter;
+    filter.AddAllowedID(dockObjectID);
+    
+    const ObservableObject* object = _robot.GetBlockWorld().FindLocatedMatchingObject(filter);
+    if(object != nullptr)
+    {
+      std::vector<Vision::KnownMarker*> dockMarkers = object->GetMarkersWithCode(_robot.GetDockMarkerCode());
+      
+      // There should only be one marker with the docking marker code
+      if(dockMarkers.size() == 1 && dockMarkers.front() != nullptr)
+      {
+        Pose3d robotPose;
+        const Result res = _robot.GetComputedStateAt(t, robotPose);
+        if(res == RESULT_OK)
+        {
+          Pose3d markerWrtRobot;
+          const bool wrtSuccess = dockMarkers.front()->GetPose().GetWithRespectTo(robotPose, markerWrtRobot);
+          if(wrtSuccess)
+          {
+            f32 xOffset;
+            f32 yOffset;
+            f32 angleOffset;
+            _robot.GetDockPlacementOffsets(xOffset, yOffset, angleOffset);
+          
+            DockingErrorSignal dockErrMsg;
+            dockErrMsg.timestamp = t;
+            // xOffset should always be positive distance in front of the object so subtract it from
+            // the x dist error
+            dockErrMsg.x_distErr = markerWrtRobot.GetTranslation().x() - xOffset;
+            dockErrMsg.y_horErr  = markerWrtRobot.GetTranslation().y() + yOffset;
+            dockErrMsg.z_height  = markerWrtRobot.GetTranslation().z();
+            
+            // At most rotations, it is fine to grab individual axis angles from the rotation
+            // However there are often many combinations of individual axis angles to compose
+            // a given 3d rotation. This tends to become apparent as the z-axis nears downwards
+            // vertical resulting in odd individual axis angles while the full 3d rotation is
+            // still completely valid (this issue is not present at exactly upsidedown vertical).
+            // Therefore to get around the issue, the rotation is clamped to flat so the z-axis
+            // will be guaranteed vertical while maintaining rotation around z and grabbing the
+            // individual angle around z-axis will always result in a correct/expected angle.
+            const f32 kAngleTolToFlat = DEG_TO_RAD(40.f);
+            ObservableObject::ClampPoseToFlat(markerWrtRobot, kAngleTolToFlat);
+            dockErrMsg.angleErr  = markerWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2 + angleOffset;
+            
+            // Visualize docking error signal
+            _vizManager->SetDockingError(dockErrMsg.x_distErr,
+                                         dockErrMsg.y_horErr,
+                                         dockErrMsg.z_height,
+                                         dockErrMsg.angleErr);
+            
+            // Try to use this for closed-loop control by sending it on to the robot
+            _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
+          }
+          else
+          {
+            PRINT_NAMED_ERROR("VisionComponent.UpdateVisionMarkers.GetMarkerWRTRobotFailed",
+                              "Failed to get dockMarker %s wrt robot",
+                              dockMarkers.front()->GetCodeName());
+          }
+        }
+        else
+        {
+          // Potentially expected?
+          PRINT_NAMED_WARNING("VisionComponent.UpdateVisionMarkers.GetHistoricRobotPoseFailed",
+                              "Failed to get computed state at time %u, result %u",
+                              t,
+                              res);
+        }
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("VisionComponent.UpdateVisionMarkers.BadNumDockingMarkers",
+                          "Expecting 1 dockMarker have %zu",
+                          dockMarkers.size());
+      }
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("VisionComponent.UpdateVisionMarkers.NullDockObject",
+                        "Dock object %d is null, can't send docking error signal",
+                        dockObjectID.GetValue());
+    }
   }
   
   

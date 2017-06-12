@@ -413,10 +413,6 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
   
   robot->SetLastPickOrPlaceSucceeded(payload.didSucceed);
   
-  // Note: this returns the vision system to whatever mode it was in before
-  // it was docking/tracking
-  robot->GetVisionComponent().EnableMode(VisionMode::Tracking, false);
-  
   switch(payload.blockStatus)
   {
     case BlockStatus::NO_BLOCK:

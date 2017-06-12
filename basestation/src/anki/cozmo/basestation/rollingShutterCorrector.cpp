@@ -67,7 +67,7 @@ namespace Anki {
     
     bool ImuDataHistory::GetImuDataBeforeAndAfter(TimeStamp_t t,
                                                   ImuDataHistory::ImuData& before,
-                                                  ImuDataHistory::ImuData& after)
+                                                  ImuDataHistory::ImuData& after) const
     {
       if(_history.size() < 2)
       {
@@ -95,7 +95,7 @@ namespace Anki {
     
     bool ImuDataHistory::IsImuDataBeforeTimeGreaterThan(const TimeStamp_t t,
                                                         const int numToLookBack,
-                                                        const f32 rateX, const f32 rateY, const f32 rateZ)
+                                                        const f32 rateX, const f32 rateY, const f32 rateZ) const
     {
       if(_history.size() == 0)
       {

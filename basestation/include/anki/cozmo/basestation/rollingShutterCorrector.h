@@ -51,13 +51,13 @@ namespace Anki {
         };
       
         // Gets the imu data before and after the timestamp
-        bool GetImuDataBeforeAndAfter(TimeStamp_t t, ImuData& before, ImuData& after);
+        bool GetImuDataBeforeAndAfter(TimeStamp_t t, ImuData& before, ImuData& after) const;
       
         // Returns true if the any of the numToLookBack imu data before timestamp t have rates that are greater than
         // the given rates
         bool IsImuDataBeforeTimeGreaterThan(const TimeStamp_t t,
                                             const int numToLookBack,
-                                            const f32 rateX, const f32 rateY, const f32 rateZ);
+                                            const f32 rateX, const f32 rateY, const f32 rateZ) const;
       
         std::deque<ImuData>::const_iterator begin() const { return _history.begin(); }
         std::deque<ImuData>::const_iterator end() const { return _history.end(); }

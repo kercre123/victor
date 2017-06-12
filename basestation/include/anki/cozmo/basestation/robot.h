@@ -451,11 +451,14 @@ public:
       
   // =========== Object Docking / Carrying ===========
 
-  const ObjectID&            GetDockObject()          const {return _dockObjectID;}
-  const ObjectID&            GetCarryingObject()      const {return _carryingObjectID;}
-  const ObjectID&            GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
-  const std::set<ObjectID>   GetCarryingObjects()     const;
-  const Vision::Marker::Code GetCarryingMarkerCode()  const {return _carryingMarkerCode;}
+  const ObjectID&                  GetDockObject()          const {return _dockObjectID;}
+  const Vision::KnownMarker::Code  GetDockMarkerCode()      const {return _dockMarkerCode;}
+  void                             GetDockPlacementOffsets(f32& x_mm, f32& y_mm, f32& a_rad) const
+    { x_mm = _dockPlacementOffsetX_mm; y_mm = _dockPlacementOffsetY_mm; a_rad = _dockPlacementOffsetAngle_rad;}
+  const ObjectID&                  GetCarryingObject()      const {return _carryingObjectID;}
+  const ObjectID&                  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
+  const std::set<ObjectID>         GetCarryingObjects()     const;
+  const Vision::Marker::Code       GetCarryingMarkerCode()  const {return _carryingMarkerCode;}
 
   bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
   bool IsCarryingObject(const ObjectID& objectID) const;
@@ -1026,10 +1029,14 @@ protected:
   // could cause a located instance to be destroyed and recreated
   ObjectID                  _dockObjectID;
   Vision::KnownMarker::Code _dockMarkerCode = Vision::MARKER_INVALID;
+  f32                       _dockPlacementOffsetX_mm = 0;
+  f32                       _dockPlacementOffsetY_mm = 0;
+  f32                       _dockPlacementOffsetAngle_rad = 0;
   ObjectID                  _carryingObjectID;
   Vision::KnownMarker::Code _carryingMarkerCode = Vision::MARKER_INVALID;
   ObjectID                  _carryingObjectOnTopID;
   bool                      _lastPickOrPlaceSucceeded = false;
+  
     
   EncodedImage _encodedImage; // TODO:(bn) store pointer?
   double       _timeSinceLastImage_s = 0.0;

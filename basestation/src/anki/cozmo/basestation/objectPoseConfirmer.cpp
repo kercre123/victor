@@ -107,12 +107,13 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isRobotOnTreads = OffTreadsState::OnTreads == _robot.GetOffTreadsState();
   const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
-
+  const bool isDockObject = _robot.GetDockObject() == objectID;
 
   bool updatePose = false;
-  if ( isCarriedObject )
+  if ( isCarriedObject || isDockObject)
   {
     // carried objects are always updated so that they get detached from the lift upon observing them
+    // dock objects are always updated so that we send updated docking error signals
     updatePose = true;
   }
   else if ( isNewObject || !robotWasMoving )

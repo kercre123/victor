@@ -9,7 +9,6 @@ namespace Cozmo {
   {
     Idle                   = 0x00,
     DetectingMarkers,
-    Tracking,
     DetectingFaces,
     DetectingMotion,
     DetectingOverheadEdges,

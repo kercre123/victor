@@ -74,14 +74,14 @@ namespace Anki {
       HAL::IMU_DataStructure imuData;
       while (ASensorEventQueue_getEvents(_sensorEventQueue, &event, 1) > 0) {
         if(event.type == ASENSOR_TYPE_ACCELEROMETER) {
-//          AnkiDebug( 1228, "HAL.ProcessIMUEvents.Accel", 640, "%d [%f]: %f, %f, %f", 5, HAL::GetTimeStamp(), ((double)(event.timestamp-lastAccTime))/1000000000.0, event.acceleration.x, event.acceleration.y, event.acceleration.z);
+//          AnkiDebug( 1228, "HAL.ProcessIMUEvents.Accel", 646, "%d [%f]: %f, %f, %f", 5, HAL::GetTimeStamp(), ((double)(event.timestamp-lastAccTime))/1000000000.0, event.acceleration.x, event.acceleration.y, event.acceleration.z);
           lastAccTime = event.timestamp;
           imuData.acc_x = event.acceleration.x * 1000;
           imuData.acc_y = event.acceleration.y * 1000;
           imuData.acc_z = event.acceleration.z * 1000;
         }
         else if(event.type == ASENSOR_TYPE_GYROSCOPE) {
-//          AnkiDebug( 1229, "HAL.ProcessIMUEvents.Gyro", 640, "%d [%f]: %f, %f, %f", 5, HAL::GetTimeStamp(), ((double)(event.timestamp-lastGyroTime))/1000000000.0, event.vector.x, event.vector.y, event.vector.z);
+//          AnkiDebug( 1229, "HAL.ProcessIMUEvents.Gyro", 646, "%d [%f]: %f, %f, %f", 5, HAL::GetTimeStamp(), ((double)(event.timestamp-lastGyroTime))/1000000000.0, event.vector.x, event.vector.y, event.vector.z);
           lastGyroTime = event.timestamp;
           imuData.rate_x = event.vector.x;
           imuData.rate_y = event.vector.y;
@@ -106,8 +106,8 @@ namespace Anki {
       _looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
       AnkiConditionalErrorAndReturn(_looper != nullptr, 1219, "HAL.InitIMU.NullLooper", 305, "", 0);
      
-      AnkiDebug( 1226, "HAL.InitIMU.AccMinDelay", 641, "%d us", 1, ASensor_getMinDelay(_accelerometer));
-      AnkiDebug( 1227, "HAL.InitIMU.GyroMinDelay", 641, "%d us", 1, ASensor_getMinDelay(_gyroscope));
+      AnkiDebug( 1226, "HAL.InitIMU.AccMinDelay", 644, "%d us", 1, ASensor_getMinDelay(_accelerometer));
+      AnkiDebug( 1227, "HAL.InitIMU.GyroMinDelay", 644, "%d us", 1, ASensor_getMinDelay(_gyroscope));
       
       _sensorEventQueue = ASensorManager_createEventQueue(_sensorManager, _looper, 0, nullptr, nullptr);
 

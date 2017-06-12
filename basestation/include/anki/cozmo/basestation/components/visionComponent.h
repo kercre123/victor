@@ -108,16 +108,6 @@ struct DockingErrorSignal;
     // Check whether a specific vision mode is enabled
     bool IsModeEnabled(VisionMode mode) const;
     
-    // Vision system will switch to tracking when this marker is seen
-    void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
-                          const Point2f&               markerSize_mm,
-                          const Point2f&               imageCenter,
-                          const f32                    radius,
-                          const bool                   checkAngleX,
-                          const f32                    postOffsetX_mm = 0,
-                          const f32                    postOffsetY_mm = 0,
-                          const f32                    postOffsetAngle_rad = 0);
-    
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMovingFast(bool enable);
@@ -131,8 +121,6 @@ struct DockingErrorSignal;
     Result UpdateFaces(const VisionProcessingResult& result);
     Result UpdatePets(const VisionProcessingResult& procResult);
     Result UpdateVisionMarkers(const VisionProcessingResult& result);
-    Result UpdateTrackingQuad(const VisionProcessingResult& result);
-    Result UpdateDockingErrorSignal(const VisionProcessingResult& result);
     Result UpdateMotionCentroid(const VisionProcessingResult& result);
     Result UpdateLaserPoints(const VisionProcessingResult& result);
     Result UpdateOverheadEdges(const VisionProcessingResult& result);
@@ -142,6 +130,10 @@ struct DockingErrorSignal;
     
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionPoseData& poseData);
+    
+    // Sends an updated docking error signal to the robot if we are currently docking
+    // TODO: This doesn't have to be in VisionComponent, it could live elsewhere
+    void UpdateDockingErrorSignal(const TimeStamp_t t) const;
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -176,10 +168,10 @@ struct DockingErrorSignal;
     
     bool WasHeadRotatingTooFast(TimeStamp_t t,
                                 const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                                const int numImuDataToLookBack = 0);
+                                const int numImuDataToLookBack = 0) const;
     bool WasBodyRotatingTooFast(TimeStamp_t t,
                                 const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                                const int numImuDataToLookBack = 0);
+                                const int numImuDataToLookBack = 0) const;
     
     // Returns true if head or body were moving too fast at the timestamp
     // If numImuDataToLookBack is greater than zero we will look that far back in imu data history instead
@@ -187,7 +179,7 @@ struct DockingErrorSignal;
     bool WasRotatingTooFast(TimeStamp_t t,
                             const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
                             const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
-                            const int numImuDataToLookBack = 0);
+                            const int numImuDataToLookBack = 0) const;
 
     // Add an occluder to the camera for the cross-bar of the lift in its position
     // at the requested time

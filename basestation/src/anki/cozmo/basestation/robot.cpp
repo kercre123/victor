@@ -2523,7 +2523,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
   
   // notify if we have more than one, since we are going to assume that any is fine to use its pose
   // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
-  // simetrical with respect to the object
+  // symmetrical with respect to the object
   const bool hasMultipleMarkers = (markersWithCode.size() > 1);
   if(hasMultipleMarkers) {
     PRINT_NAMED_WARNING("Robot.DockWithObject.MultipleMarkersForCode",
@@ -2545,6 +2545,10 @@ Result Robot::DockWithObject(const ObjectID objectID,
   GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
 
   _lastPickOrPlaceSucceeded = false;
+  
+  _dockPlacementOffsetX_mm = placementOffsetX_mm;
+  _dockPlacementOffsetY_mm = placementOffsetY_mm;
+  _dockPlacementOffsetAngle_rad = placementOffsetAngle_rad;
       
   // Sends a message to the robot to dock with the specified marker
   // that it should currently be seeing. If pixel_radius == std::numeric_limits<u8>::max(),
@@ -2560,21 +2564,6 @@ Result Robot::DockWithObject(const ObjectID objectID,
                                                                       numRetries,
                                                                       dockingMethod,
                                                                       doLiftLoadCheck);
-  if(sendResult == RESULT_OK) {
-        
-    // When we are "docking" with a ramp or crossing a bridge, we
-    // don't want to worry about the X angle being large (since we
-    // _expect_ it to be large, since the markers are facing upward).
-    const bool checkAngleX = !(dockAction == DockAction::DA_RAMP_ASCEND  ||
-                               dockAction == DockAction::DA_RAMP_DESCEND ||
-                               dockAction == DockAction::DA_CROSS_BRIDGE);
-        
-    // Tell the VisionSystem to start tracking this marker:
-    _visionComponent->SetMarkerToTrack(dockMarker->GetCode(), dockMarker->GetSize(),
-                                          image_pixel_x, image_pixel_y, checkAngleX,
-                                          placementOffsetX_mm, placementOffsetY_mm,
-                                          placementOffsetAngle_rad);
-  }
       
   return sendResult;
 }

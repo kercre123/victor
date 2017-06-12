@@ -887,6 +887,8 @@ namespace Anki {
             _yellForCompletion = false;
             _yellForHelp = false;
             _reset = false;
+            
+            _cubePlacementPose.SetParent(robot.GetWorldOrigin());
           }
           break;
         }

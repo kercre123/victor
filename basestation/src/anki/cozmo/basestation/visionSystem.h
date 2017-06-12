@@ -106,7 +106,6 @@ namespace Cozmo {
     f32 cameraGain;       // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
     u8  imageMean;        // Only valid if VisionMode::ComputingStatistics enabled
     
-    std::list<VizInterface::TrackerQuad>                        trackerQuads;
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
     std::list<Vision::ObservedMarker>                           observedMarkers;
     std::list<Vision::TrackedFace>                              faces;
@@ -148,9 +147,6 @@ namespace Cozmo {
     
     Result EnableToolCodeCalibration(bool enable);
     
-    // Accessors
-    const Point2f& GetTrackingMarkerSize();
-    
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const VisionPoseData&      robotState,
@@ -174,31 +170,6 @@ namespace Cozmo {
     Result ClearToolCodeImages();
     size_t GetNumStoredToolCodeImages() const {return _toolCodeImages.size();}
     const std::vector<Vision::Image>& GetToolCodeImages() const {return _toolCodeImages;}
-    
-    void StopTracking();
-
-    // Select a block type to look for to dock with.
-    // Use MARKER_UNKNOWN to disable.
-    // Next time the vision system sees a block of this type while looking
-    // for blocks, it will initialize a template tracker and switch to
-    // docking mode.
-    // If checkAngleX is true, then tracking will be considered as a failure if
-    // the X angle is greater than TrackerParameters::MAX_BLOCK_DOCKING_ANGLE.
-    Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                            const Point2f&             markerSize_mm,
-                            const bool                 checkAngleX);
-    
-    // Same as above, except the robot will only start tracking the marker
-    // if its observed centroid is within the specified radius (in pixels)
-    // from the given image point.
-    Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                            const Point2f&             markerSize_mm,
-                            const Embedded::Point2f&   imageCenter,
-                            const f32                  radius,
-                            const bool                 checkAngleX,
-                            const f32                  postOffsetX_mm = 0,
-                            const f32                  postOffsetY_mm = 0,
-                            const f32                  posttOffsetAngle_rad = 0);
     
     u32 DownsampleHelper(const Embedded::Array<u8>& imageIn,
                          Embedded::Array<u8>&       imageOut,
@@ -367,13 +338,7 @@ namespace Cozmo {
     CameraParams _currentCameraParams{16, 2.0};
     std::pair<bool,CameraParams> _nextCameraParams; // bool represents if set but not yet sent
     
-    // The tracker can fail to converge this many times before we give up
-    // and reset the docker
-    // TODO: Move this to visionParameters
-    const s32 MAX_TRACKING_FAILURES = 1;
-    
     Util::BitFlags32<VisionMode> _mode;
-    Util::BitFlags32<VisionMode> _modeBeforeTracking;
     std::queue<std::pair<VisionMode, bool>> _nextModes;
     
     using ModeScheduleStack = std::list<AllVisionModesSchedule>;
@@ -383,36 +348,6 @@ namespace Cozmo {
     bool _calibrateFromToolCode = false;
     
     s32 _frameNumber = 0;
-    s32 _trackingIteration; // Simply for display at this point
-    
-    // Tracking marker related members
-    struct MarkerToTrack {
-      Anki::Vision::MarkerType  type;
-      Point2f                   size_mm;
-      Embedded::Point2f         imageCenter;
-      f32                       imageSearchRadius;
-      bool                      checkAngleX;
-      f32                       postOffsetX_mm;
-      f32                       postOffsetY_mm;
-      f32                       postOffsetAngle_rad;
-      
-      MarkerToTrack();
-      bool IsSpecified() const {
-        return type != Anki::Vision::MARKER_UNKNOWN;
-      }
-      void Clear();
-      bool Matches(const Embedded::VisionMarker& marker) const;
-    };
-    
-    MarkerToTrack _markerToTrack;
-    MarkerToTrack _newMarkerToTrack;
-    bool          _newMarkerToTrackWasProvided = false;
-    
-    Embedded::Quadrilateral<f32>    _trackingQuad;
-    s32                             _numTrackFailures = 0;
-    Tracker                         _tracker;
-    bool                            _trackerJustInitialized = false;
-    bool                            _isTrackingMarkerFound = false;
     
     Embedded::Point3<P3P_PRECISION> _canonicalMarker3d[4];
     
@@ -423,7 +358,6 @@ namespace Cozmo {
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
-    TrackerParameters               _trackerParameters;
     ImageResolution                 _captureResolution;
     
     // For sending images to basestation
@@ -482,10 +416,8 @@ namespace Cozmo {
     
     VisionMemory _memory;
     
-    Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
     Result UpdatePoseData(const VisionPoseData& newPoseData);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
-    Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
     
@@ -518,14 +450,6 @@ namespace Cozmo {
     
     static u8 ComputeMean(const Vision::Image& inputImageGray, const s32 sampleInc);
     
-    Result InitTemplate(Embedded::Array<u8> &grayscaleImage,
-                        const Embedded::Quadrilateral<f32> &trackingQuad);
-    
-    Result TrackTemplate(const Vision::Image& inputImage);
-    
-    Result TrackerPredictionUpdate(const Embedded::Array<u8>& grayscaleImage,
-                                   Embedded::MemoryStack scratch);
-    
     Result DetectFaces(const Vision::Image& grayImage,
                        std::vector<Anki::Rectangle<s32>>& detectionRects);
                        
@@ -544,8 +468,6 @@ namespace Cozmo {
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
-    
-    void RestoreNonTrackingMode();
     
     bool ShouldProcessVisionMode(VisionMode mode);
     
