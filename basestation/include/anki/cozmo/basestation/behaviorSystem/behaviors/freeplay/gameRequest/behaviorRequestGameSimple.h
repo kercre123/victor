@@ -36,7 +36,7 @@ public:
 protected:
   virtual Result RequestGame_InitInternal(Robot& robot) override;
   virtual Status RequestGame_UpdateInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
+  virtual void   RequestGame_StopInternal(Robot& robot) override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
   virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
 

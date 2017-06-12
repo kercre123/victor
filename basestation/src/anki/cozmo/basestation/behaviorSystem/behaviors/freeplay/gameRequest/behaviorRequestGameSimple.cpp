@@ -254,9 +254,9 @@ bool BehaviorRequestGameSimple::CheckRequestTimeout()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRequestGameSimple::StopInternal(Robot& robot)
+void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
 {
-  PRINT_NAMED_INFO("BehaviorRequestGameSimple.StopInternal", "");
+  PRINT_NAMED_INFO("BehaviorRequestGameSimple.RequestGame_StopInternal", "");
 
   if( _state == State::Idle ) {
     // this means we have send up the game request, so now we should send a Deny to cancel it

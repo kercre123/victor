@@ -104,10 +104,13 @@ namespace Cozmo.RequestGame {
     private void HandleUserResponseToPrompt(bool positiveResponse) {
       if (_RequestGameAlertData != null) {
         if (positiveResponse) {
-          _RequestGameAlertData.PrimaryButtonData.ClickCallback.Invoke();
+          HandleMiniGameConfirm();
         }
         else {
-          _RequestGameAlertData.SecondaryButtonData.ClickCallback.Invoke();
+          HandleMiniGameRejection();
+        }
+        if (_RequestDialog != null) {
+          _RequestDialog.CloseDialog();
         }
       }
     }

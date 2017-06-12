@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "clad/types/voiceCommandTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
+
+#include <functional>
 #include <vector>
 
 namespace Json {
@@ -44,6 +46,8 @@ public:
   
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
+  virtual Result Update(Robot& robot) override;
+  
   
 protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,16 +73,16 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  const CozmoContext*               _context;
-  IBehavior*                        _voiceCommandBehavior = nullptr;
-  IBehavior*                        _danceBehavior        = nullptr;
-  IBehavior*                        _comeHereBehavior     = nullptr;
-  IBehavior*                        _fistBumpBehavior     = nullptr;
-  IBehavior*                        _peekABooBehavior     = nullptr;
-  IBehavior*                        _refuseBehavior       = nullptr;
-  std::unique_ptr<DoATrickSelector>    _doATrickSelector;
-  std::unique_ptr<RequestGameSelector> _requestGameSelector;
-  VoiceCommand::VoiceCommandType       _respondingToCommandType = VoiceCommand::VoiceCommandType::Count;
+  const CozmoContext*                   _context;
+  IBehavior*                            _voiceCommandBehavior = nullptr;
+  IBehavior*                            _danceBehavior        = nullptr;
+  IBehavior*                            _comeHereBehavior     = nullptr;
+  IBehavior*                            _fistBumpBehavior     = nullptr;
+  IBehavior*                            _peekABooBehavior     = nullptr;
+  IBehavior*                            _refuseBehavior       = nullptr;
+  std::unique_ptr<DoATrickSelector>     _doATrickSelector;
+  std::unique_ptr<RequestGameSelector>  _requestGameSelector;
+  std::function<void()>                 _doneRespondingTask;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -90,6 +94,10 @@ private:
   // Setups up the refuse behavior to play the animTrigger
   // Returns true if the outputBehavior has been set to the refuse behavior
   bool CheckAndSetupRefuseBehavior(AnimationTrigger animTrigger, IBehavior*& outputBehavior) const;
+  
+  // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
+  // do once we're done responding to the command
+  void BeginRespondingToCommand(VoiceCommand::VoiceCommandType command);
   
   
 };

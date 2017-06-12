@@ -54,6 +54,7 @@ protected:
   virtual Result RequestGame_InitInternal(Robot& robot) = 0;
   virtual Status RequestGame_UpdateInternal(Robot& robot) = 0;
   virtual void HandleGameDeniedRequest(Robot& robot) = 0;
+  virtual void RequestGame_StopInternal(Robot& robot) { }
 
   // --------------------------------------------------------------------------------
   // Utility functions for subclasses
@@ -95,6 +96,8 @@ protected:
   virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) final override;
+  
+  virtual void StopInternal(Robot& robot) final override;
 
   f32        _requestTime_s = -1.0f;
 private:

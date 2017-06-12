@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -111,6 +112,8 @@ Result IBehaviorRequestGame::InitInternal(Robot& robot)
 void IBehaviorRequestGame::SendRequest(Robot& robot)
 {
   using namespace ExternalInterface;
+  
+  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::SimplePrompt);
 
   robot.Broadcast( MessageEngineToGame( RequestGameStart(_requestID)) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -338,5 +341,12 @@ void IBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::RobotDelet
   }
 }
 
+void IBehaviorRequestGame::StopInternal(Robot& robot)
+{
+  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::Keyphrase);
+  
+  RequestGame_StopInternal(robot);
 }
-}
+
+} // namespace Cozmo
+} // namespace Anki

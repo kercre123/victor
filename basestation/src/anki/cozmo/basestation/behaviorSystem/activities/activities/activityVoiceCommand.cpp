@@ -103,6 +103,8 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     return _behaviorNone;
   }
   
+  const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
+  
   // If we already have a behavior assigned we should keep using it, if it's running
   if (_voiceCommandBehavior)
   {
@@ -111,14 +113,16 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       return _voiceCommandBehavior;
     }
     
-    voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(_respondingToCommandType));
+    if (_doneRespondingTask)
+    {
+      _doneRespondingTask();
+      _doneRespondingTask = std::function<void()>{};
+    }
     // Otherwise this behavior isn't running anymore so clear it and potentially get a new one to use below
     _voiceCommandBehavior = nullptr;
   }
   
-  _respondingToCommandType = voiceCommandComponent->GetPendingCommand();
-  
-  const bool isCommandValid = IsCommandValid(_respondingToCommandType);
+  const bool isCommandValid = IsCommandValid(currentCommand);
   
   if(isCommandValid)
   {
@@ -132,34 +136,34 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     }
     
     // Check if we have enough sparks to execute the command
-    if(!HasEnoughSparksForCommand(robot, _respondingToCommandType))
+    if(!HasEnoughSparksForCommand(robot, currentCommand))
     {
       CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
       return _voiceCommandBehavior;
     }
   }
   
-  switch (_respondingToCommandType)
+  switch (currentCommand)
   {
     case VoiceCommandType::LetsPlay:
     {
       _voiceCommandBehavior = _requestGameSelector->
                         GetNextRequestGameBehavior(robot, currentRunningBehavior);
       
-      voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      BeginRespondingToCommand(currentCommand);
       
       return _voiceCommandBehavior;
     }
     case VoiceCommandType::DoADance:
     {
       _voiceCommandBehavior = _danceBehavior;
-      voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      BeginRespondingToCommand(currentCommand);
       return _voiceCommandBehavior;
     }
     case VoiceCommandType::DoATrick:
     {
       _doATrickSelector->RequestATrick(robot);
-      voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+      BeginRespondingToCommand(currentCommand);
       return _behaviorNone;
     }
     case VoiceCommandType::ComeHere:
@@ -167,7 +171,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       BehaviorPreReqRobot preReqData(robot);
       if(_comeHereBehavior->IsRunnable(preReqData)){
         _voiceCommandBehavior = _comeHereBehavior;
-        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+        BeginRespondingToCommand(currentCommand);
       }
       else
       {
@@ -184,7 +188,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
-        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+        BeginRespondingToCommand(currentCommand);
         _voiceCommandBehavior = _behaviorNone;
       }
       else
@@ -202,7 +206,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
-        voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(_respondingToCommandType));
+        BeginRespondingToCommand(currentCommand);
         _voiceCommandBehavior = _behaviorNone;
       }
       else
@@ -227,22 +231,9 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       return _voiceCommandBehavior;
     }
     
-    // Yes Please and No Thank You are handled by Unity, so just send up
-    // the UserResponseToPrompt message
+    // Yes Please and No Thank You do not trigger a behavior here
     case VoiceCommandType::YesPlease:
-    {
-      VoiceCommandEventUnion vcEvent;
-      vcEvent.Set_responseToPrompt(UserResponseToPrompt(true));
-      robot.Broadcast(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(vcEvent)));
-      return _behaviorNone;
-    }
     case VoiceCommandType::NoThankYou:
-    {
-      VoiceCommandEventUnion vcEvent;
-      vcEvent.Set_responseToPrompt(UserResponseToPrompt(false));
-      robot.Broadcast(ExternalInterface::MessageEngineToGame(VoiceCommandEvent(vcEvent)));
-      return _behaviorNone;
-    }
     
     // These two commands will never be handled by this chooser:
     case VoiceCommandType::HeyCozmo:
@@ -268,23 +259,20 @@ bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandT
 
 bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outputBehavior) const
 {
-  if(_respondingToCommandType != VoiceCommandType::Count)
+  AnimationTrigger refuseAnim = AnimationTrigger::Count;
+  Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
   {
-    AnimationTrigger refuseAnim = AnimationTrigger::Count;
-    Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-    if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
-    {
-      refuseAnim = AnimationTrigger::VCRefuse_repair;
-    }
-    else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
-    {
-      refuseAnim = AnimationTrigger::VCRefuse_energy;
-    }
-    
-    if(refuseAnim != AnimationTrigger::Count)
-    {
-      return CheckAndSetupRefuseBehavior(refuseAnim, outputBehavior);
-    }
+    refuseAnim = AnimationTrigger::VCRefuse_repair;
+  }
+  else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
+  {
+    refuseAnim = AnimationTrigger::VCRefuse_energy;
+  }
+  
+  if(refuseAnim != AnimationTrigger::Count)
+  {
+    return CheckAndSetupRefuseBehavior(refuseAnim, outputBehavior);
   }
   return false;
 }
@@ -325,6 +313,43 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(AnimationTrigger animTrig
     return true;
   }
   return false;
+}
+
+void ActivityVoiceCommand::BeginRespondingToCommand(VoiceCommand::VoiceCommandType command)
+{
+  auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+  voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(command));
+  DEV_ASSERT_MSG(!_doneRespondingTask,
+                 "ActivityVoiceCommand.BeginRespondingToCommand",
+                 "The _doneRespondingTask was not cleared and is being overwritten");
+  _doneRespondingTask = [voiceCommandComponent, command] ()
+  {
+    voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(command));
+  };
+}
+
+Result ActivityVoiceCommand::Update(Robot& robot)
+{
+  auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+  if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.Update", "VoiceCommandComponent invalid"))
+  {
+    return Result::RESULT_FAIL;
+  }
+  
+  // These voice commands don't have behaviors directly associated, so we send out events here when the command is triggered instead
+  const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
+  if (currentCommand == VoiceCommandType::YesPlease)
+  {
+    voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(true));
+    voiceCommandComponent->ClearHeardCommand();
+  }
+  else if (currentCommand == VoiceCommandType::NoThankYou)
+  {
+    voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(false));
+    voiceCommandComponent->ClearHeardCommand();
+  }
+
+  return Result::RESULT_OK;
 }
 
 } // namespace Cozmo

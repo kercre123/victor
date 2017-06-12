@@ -161,7 +161,7 @@ bool VoiceCommandComponent::Init()
     }
     
     _recognizer.reset(newRecognizer);
-    ResetContext();
+    UpdateContextForRecognizer();
     _recognizer->Start();
   }
   
@@ -205,14 +205,19 @@ void VoiceCommandComponent::SetLocaleInfo()
   }
 }
 
-void VoiceCommandComponent::ResetContext()
+void VoiceCommandComponent::UpdateContextForRecognizer()
 {
   if (_recognizer)
   {
-    constexpr auto keyphraseIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Keyphrase);
-    constexpr auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
-    _recognizer->SetRecognizerIndex(keyphraseIndex);
-    _recognizer->SetRecognizerFollowupIndex(freeplayIndex);
+    const auto newIndex = Util::EnumToUnderlying(_listenContext);
+    _recognizer->SetRecognizerIndex(newIndex);
+    
+    // When we switch back to the keyphrase context, also update the follow index
+    if (_listenContext == VoiceCommandListenContext::Keyphrase)
+    {
+      const auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
+      _recognizer->SetRecognizerFollowupIndex(freeplayIndex);
+    }
   }
 }
 
@@ -292,6 +297,24 @@ void VoiceCommandComponent::Update()
 {
   bool heardCommandUpdated = false;
   
+  // If there are any commands still waiting at the beginning of this update (from last update)
+  // we want to clear the command and set the context back to what it was before this command was heard
+  if (AnyCommandPending())
+  {
+    PRINT_NAMED_WARNING("VoiceCommandComponent.Update.OldCommandBeingCleared",
+                        "A pending command (%s) was not used, so being cleared now.",
+                        VoiceCommandTypeToString(_pendingHeardCommand));
+    ClearHeardCommand();
+    if (_lastListenContext != _listenContext)
+    {
+      PRINT_NAMED_WARNING("VoiceCommandComponent.Update.ResettingContext",
+                          "Unused command triggering context rollback from %s back to %s",
+                          EnumToString(_listenContext), EnumToString(_lastListenContext));
+      
+      ForceListenContext(_lastListenContext);
+    }
+  }
+  
   while (_recogProcessor->HasResults())
   {
     const auto& nextResult = _recogProcessor->PopNextResult();
@@ -342,6 +365,12 @@ void VoiceCommandComponent::Update()
   }
 }
 
+void VoiceCommandComponent::ForceListenContext(VoiceCommandListenContext listenContext)
+{
+  SetListenContext(listenContext);
+  _lastListenContext = listenContext;
+}
+
 void VoiceCommandComponent::SetListenContext(VoiceCommandListenContext listenContext)
 {
   if (_listenContext == listenContext)
@@ -349,17 +378,12 @@ void VoiceCommandComponent::SetListenContext(VoiceCommandListenContext listenCon
     return;
   }
   
+  LOG_INFO("VoiceCommandComponent.SetListenContext", "%s -> %s",
+           EnumToString(_listenContext), EnumToString(listenContext));
+  _lastListenContext = _listenContext;
   _listenContext = listenContext;
   
-  const auto newIndex = Util::EnumToUnderlying(_listenContext);
-  _recognizer->SetRecognizerIndex(newIndex);
-  
-  // When we switch back to the keyphrase context, also update the follow index
-  if (_listenContext == VoiceCommandListenContext::Keyphrase)
-  {
-    const auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
-    _recognizer->SetRecognizerFollowupIndex(freeplayIndex);
-  }
+  UpdateContextForRecognizer();
 }
 
 bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
@@ -408,6 +432,15 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
       updatedHeardCommand = true;
       SetListenContext(VoiceCommandListenContext::Keyphrase);
       
+      break;
+    }
+    case VoiceCommandListenContext::SimplePrompt:
+    {
+      _pendingHeardCommand = command;
+      updatedHeardCommand = true;
+      
+      // Note we don't update the listen context here; we expect simpleprompt to transition
+      // to another context from the same place that put us into this context in the first place
       break;
     }
     default:
@@ -504,7 +537,7 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
       else
       {
         _commandRecogEnabled = false;
-        ResetContext();
+        UpdateContextForRecognizer();
         BroadcastVoiceEvent(VoiceCommand::StateData(_commandRecogEnabled,
                                                     ConvertAudioCapturePermission(_captureSystem->GetPermissionState(_permRequestAlreadyDenied))));
       }
@@ -563,9 +596,6 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
   // We're not going to force a command that isn't in the context
   if (commandSet.find(commandType) == commandSet.end())
   {
-    PRINT_NAMED_ERROR("VoiceCommandComponent.DoForceHeardPhrase.PhraseNotInContext",
-                      "The phrase %s is not valid within the current context",
-                      VoiceCommandTypeToString(commandType));
     return;
   }
   

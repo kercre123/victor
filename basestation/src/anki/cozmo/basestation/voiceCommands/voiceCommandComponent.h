@@ -64,7 +64,7 @@ public:
   
   void ClearHeardCommand() { _pendingHeardCommand = VoiceCommandType::Count; }
   
-  void SetListenContext(VoiceCommandListenContext listenContext);
+  void ForceListenContext(VoiceCommandListenContext listenContext);
   void DoForceHeardPhrase(VoiceCommandType commandType);
   
   template<typename T>
@@ -83,6 +83,7 @@ private:
   BackpackLightDataLocator                              _bodyLightDataLocator{};
   float                                                 _commandLightTimeRemaining_s = -1.f;
   VoiceCommandListenContext                             _listenContext = VoiceCommandListenContext::Keyphrase;
+  VoiceCommandListenContext                             _lastListenContext = VoiceCommandListenContext::Keyphrase;
   VoiceCommandType                                      _pendingHeardCommand = VoiceCommandType::Count;
   bool                                                  _initialized = false;
   bool                                                  _commandRecogEnabled = false;
@@ -97,11 +98,13 @@ private:
   void UpdateCommandLight(bool heardTriggerPhrase);
   bool HandleCommand(const VoiceCommandType& command);
   
-  void ResetContext();
+  void UpdateContextForRecognizer();
   bool RequestEnableVoiceCommand(AudioUtil::AudioCaptureSystem::PermissionState permissionState);
   
   AudioCapturePermissionState ConvertAudioCapturePermission(AudioUtil::AudioCaptureSystem::PermissionState state);
   bool StateRequiresCallback(AudioUtil::AudioCaptureSystem::PermissionState permissionState) const;
+  
+  void SetListenContext(VoiceCommandListenContext listenContext);
   
 }; // class VoiceCommandComponent
   
