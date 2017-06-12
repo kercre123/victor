@@ -30,8 +30,11 @@ namespace Cozmo {
   
 namespace{
 CONSOLE_VAR(f32, kTimeUntilCancelFaceTrack_s,"BehaviorDriveToFace", 5.0f);
-CONSOLE_VAR(f32, kMinDriveToFaceDistance_mm, "BehaviorDriveToFace", 600.0f);
-
+CONSOLE_VAR(f32, kMinDriveToFaceDistance_mm, "BehaviorDriveToFace", 200.0f);
+// We want cozmo to slow down as he approaches the face since there's probably
+// an edge.  The decel factor relative to the default profile is arbitrary but
+// tuned based off some testing to attempt the right feeling of "approaching" the face
+const float kArbitraryDecelFactor = 3.0f;
 }
    
   
@@ -46,8 +49,13 @@ BehaviorDriveToFace::BehaviorDriveToFace(Robot& robot, const Json::Value& config
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveToFace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
-{  
-  return preReqData.GetRobot().GetFaceWorld().HasAnyFaces();
+{
+  Pose3d facePose;
+  const Robot& robot = preReqData.GetRobot();
+  robot.GetFaceWorld().GetLastObservedFace(facePose, true);
+  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+  
+  return lastFaceInCurrentOrigin;
 }
 
   
@@ -123,10 +131,11 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(Robot& robot)
   if(ComputeDistanceBetween(headPoseModified, robot.GetPose(), distToHead) &&
      distToHead > kMinDriveToFaceDistance_mm){
     
-    StartActing(new DriveStraightAction(robot,
-                                        distToHead - kMinDriveToFaceDistance_mm,
-                                        MAX_WHEEL_SPEED_MMPS),
-                &BehaviorDriveToFace::TransitionToTrackingFace);
+    DriveStraightAction* driveAction = new DriveStraightAction(robot,
+                                                               distToHead - kMinDriveToFaceDistance_mm,
+                                                               MAX_WHEEL_SPEED_MMPS);
+    driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
+    StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
   }else{
     TransitionToTrackingFace(robot);
   }
