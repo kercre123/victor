@@ -320,10 +320,8 @@ void VizControllerImpl::DrawText(webots::Display* disp, u32 lineNum, const char*
 void VizControllerImpl::ProcessVizSetLabelMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   const auto& payload = msg.GetData().Get_SetLabel();
-  if (payload.text.size() > 0){
-    u32 lineNum = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + payload.labelID);
-    DrawText(_disp, lineNum, payload.colorID, payload.text.c_str());
-  }
+  const u32 lineNum = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + payload.labelID);
+  DrawText(_disp, lineNum, payload.colorID, payload.text.c_str());
 }
 
 void VizControllerImpl::ProcessVizDockingErrorSignalMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
