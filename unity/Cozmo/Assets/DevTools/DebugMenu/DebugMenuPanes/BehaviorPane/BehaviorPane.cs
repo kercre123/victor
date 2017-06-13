@@ -24,12 +24,6 @@ public class BehaviorPane : MonoBehaviour {
   private Text _InfoLabel;
 
   [SerializeField]
-  private Button _BehaviorByNameButton;
-
-  [SerializeField]
-  private InputField _BehaviorNameInput;
-
-  [SerializeField]
   private Dropdown _ReactionTriggerDropdown;
 
   [SerializeField]
@@ -47,7 +41,6 @@ public class BehaviorPane : MonoBehaviour {
     _ReactionTriggerDropdown.onValueChanged.AddListener(OnReactionTriggerDropdownChanged);
     _ChooserButton.onClick.AddListener(OnChooserButton);
     _BehaviorButton.onClick.AddListener(OnBehaviorButton);
-    _BehaviorByNameButton.onClick.AddListener(OnBehaviorByNameButton);
     _ReactionTriggerButton.onClick.AddListener(OnReactionTriggerButton);
 
 
@@ -112,8 +105,6 @@ public class BehaviorPane : MonoBehaviour {
       _BehaviorDropdown.captionText.text = _BehaviorDropdown.options[0].text;
       _BehaviorButton.interactable = true;
       _BehaviorDropdown.interactable = true;
-      _BehaviorByNameButton.interactable = true;
-      _BehaviorNameInput.interactable = true;
     }
     else {
       _BehaviorDropdown.captionText.text = "";
@@ -172,8 +163,6 @@ public class BehaviorPane : MonoBehaviour {
     _BehaviorDropdown.ClearOptions();
     _BehaviorButton.interactable = false;
     _BehaviorDropdown.interactable = false;
-    _BehaviorByNameButton.interactable = false;
-    _BehaviorNameInput.interactable = false;
 
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       // We only allow unity to set behaviors when in selection activity
@@ -188,13 +177,6 @@ public class BehaviorPane : MonoBehaviour {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       BehaviorID behaviorID = (BehaviorID)Enum.Parse(typeof(BehaviorID), _BehaviorDropdown.captionText.text);
       RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(behaviorID);
-    }
-  }
-
-  private void OnBehaviorByNameButton() {
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      BehaviorID behaviorID = (BehaviorID)Enum.Parse(typeof(BehaviorID), _BehaviorNameInput.text);
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(behaviorID, 1);
     }
   }
 
