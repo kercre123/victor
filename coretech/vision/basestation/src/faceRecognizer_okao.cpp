@@ -1620,11 +1620,13 @@ namespace Vision {
                                         std::to_string(nextNextID == Vision::UnknownFaceID ? -1 : scores[nextNextIndex])).c_str()}},
                               "%d, %d, %d", matchingID, nextMatchingID, nextNextID);
                 
-                
-                PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.BeforeMergeOfLowerRankedMatch",
-                               "Top match entries: %s. Next match entries: %s.",
-                               matchIter->second.GetAlbumEntriesString().c_str(),
-                               nextMatchIter->second.GetAlbumEntriesString().c_str());
+                if(ANKI_DEV_CHEATS)
+                {
+                  PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.BeforeMergeOfLowerRankedMatch",
+                                 "Top match entries: %s. Next match entries: %s.",
+                                 matchIter->second.GetAlbumEntriesString().c_str(),
+                                 nextMatchIter->second.GetAlbumEntriesString().c_str());
+                }
                 
                 Result mergeResult = MergeFaces(nextMatchingID, matchingID);
                 if(RESULT_OK != mergeResult) {
@@ -1636,10 +1638,13 @@ namespace Vision {
                 DEV_ASSERT(nextMatchIter != _enrollmentData.end(),
                            "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
                 
-                PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.AfterMergeOfLowerRankedMatch",
-                               "Top match entries: %s. Next match entries: %s.",
-                               matchIter->second.GetAlbumEntriesString().c_str(),
-                               nextMatchIter->second.GetAlbumEntriesString().c_str());
+                if(ANKI_DEV_CHEATS)
+                {
+                  // Note: matchIter is no longer valid -- its entry has been merged into nextMatchIter!
+                  PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.AfterMergeOfLowerRankedMatch",
+                                 "Merged match entries: %s",
+                                 nextMatchIter->second.GetAlbumEntriesString().c_str());
+                }
                 
                 // We just merged, so the matching album entry for "matchIndex" no
                 // longer exists. Update it to be what is in "nextIndex".
