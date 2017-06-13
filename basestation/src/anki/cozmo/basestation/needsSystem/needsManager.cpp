@@ -105,6 +105,14 @@ namespace {
       g_DebugNeedsManager->DebugCompleteAction(actionName);
     }
   }
+  void DebugPredictActionResult( ConsoleFunctionContextRef context )
+  {
+    if( g_DebugNeedsManager != nullptr)
+    {
+      const char* actionName = ConsoleArg_Get_String(context, "actionName");
+      g_DebugNeedsManager->DebugPredictActionResult(actionName);
+    }
+  }
   void DebugPauseDecayForNeed( ConsoleFunctionContextRef context )
   {
     if( g_DebugNeedsManager != nullptr)
@@ -174,6 +182,7 @@ namespace {
   CONSOLE_FUNC( DebugCompleteDay, "Needs" );
   CONSOLE_FUNC( DebugResetNeeds, "Needs" );
   CONSOLE_FUNC( DebugCompleteAction, "Needs", const char* actionName );
+  CONSOLE_FUNC( DebugPredictActionResult, "Needs", const char* actionName );
   CONSOLE_FUNC( DebugPauseDecayForNeed, "Needs", const char* needName );
   CONSOLE_FUNC( DebugPauseActionsForNeed, "Needs", const char* needName );
   CONSOLE_FUNC( DebugUnpauseDecayForNeed, "Needs", const char* needName );
@@ -572,67 +581,15 @@ const NeedsState& NeedsManager::GetCurNeedsState()
 
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
-  if (!kUseNeedManager)
+  if (!kUseNeedManager) {
     return;
+  }
 
-  if (_isPausedOverall)
+  if (_isPausedOverall) {
     return;
-
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompleted", "Completed %s", NeedsActionIdToString(actionCompleted));
-  const int actionIndex = static_cast<int>(actionCompleted);
-  const auto& actionDelta = _actionsConfig._actionDeltas[actionIndex];
-
-  switch (actionCompleted)
-  {
-    case NeedsActionId::RepairHead:
-    {
-      _needsState._partIsDamaged[RepairablePartId::Head] = false;
-      break;
-    }
-    case NeedsActionId::RepairLift:
-    {
-      _needsState._partIsDamaged[RepairablePartId::Lift] = false;
-      break;
-    }
-    case NeedsActionId::RepairTreads:
-    {
-      _needsState._partIsDamaged[RepairablePartId::Treads] = false;
-      break;
-    }
-    default:
-      break;
   }
-
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
-  {
-    if (_isActionsPausedForNeed[i])
-    {
-      _queuedNeedDeltas[i].push_back(actionDelta._needDeltas[i]);
-    }
-    else
-    {
-      _needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i]);
-    }
-  }
-
-  switch (actionCompleted)
-  {
-    case NeedsActionId::RepairHead:
-    case NeedsActionId::RepairLift:
-    case NeedsActionId::RepairTreads:
-    {
-      if (_needsState.NumDamagedParts() == 0)
-      {
-        // If this was a 'repair' action and there are no more broken parts,
-        // set Repair level to 100%
-        _needsState._curNeedsLevels[NeedId::Repair] = _needsConfig._maxNeedLevel;
-        _needsState.SetNeedsBracketsDirty();
-      }
-      break;
-    }
-    default:
-      break;
-  }
+  
+  RegisterNeedsActionCompletedInternal(actionCompleted, _needsState, false);
 
   SendNeedsStateToGame(actionCompleted);
 
@@ -643,6 +600,93 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 }
 
 
+void NeedsManager::PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState)
+{
+  outNeedsState = _needsState;
+
+  if (!kUseNeedManager) {
+    return;
+  }
+
+  if (_isPausedOverall) {
+    return;
+  }
+
+  // NOTE: Since an action's deltas can have a 'random uniform distribution', this code
+  // is not fully accurate when that applies, since when the 'real' call is made, we'll
+  // generate the random range again.  (We don't seem to have a random number generator
+  // that allows us to extract the current seed, save it, and later restore it.)
+  RegisterNeedsActionCompletedInternal(actionCompleted, outNeedsState, true);
+}
+
+
+void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,
+                                                        NeedsState& needsState,
+                                                        bool predictionOnly)
+{
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.RegisterNeedsActionCompletedInternal",
+                "%s %s", predictionOnly ? "Predicted" : "Completed",
+                NeedsActionIdToString(actionCompleted));
+  const int actionIndex = static_cast<int>(actionCompleted);
+  const auto& actionDelta = _actionsConfig._actionDeltas[actionIndex];
+
+  switch (actionCompleted)
+  {
+    case NeedsActionId::RepairHead:
+    {
+      needsState._partIsDamaged[RepairablePartId::Head] = false;
+      break;
+    }
+    case NeedsActionId::RepairLift:
+    {
+      needsState._partIsDamaged[RepairablePartId::Lift] = false;
+      break;
+    }
+    case NeedsActionId::RepairTreads:
+    {
+      needsState._partIsDamaged[RepairablePartId::Treads] = false;
+      break;
+    }
+    default:
+      break;
+  }
+
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    if (_isActionsPausedForNeed[i])
+    {
+      if (!predictionOnly)
+      {
+        _queuedNeedDeltas[i].push_back(actionDelta._needDeltas[i]);
+      }
+    }
+    else
+    {
+      needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i]);
+    }
+  }
+
+  switch (actionCompleted)
+  {
+    case NeedsActionId::RepairHead:
+    case NeedsActionId::RepairLift:
+    case NeedsActionId::RepairTreads:
+    {
+      if (needsState.NumDamagedParts() == 0)
+      {
+        // If this was a 'repair' action and there are no more broken parts,
+        // set Repair level to 100%
+        needsState._curNeedsLevels[NeedId::Repair] = _needsConfig._maxNeedLevel;
+        needsState.SetNeedsBracketsDirty();
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+  
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
@@ -1120,11 +1164,11 @@ void NeedsManager::StartWriteToRobot()
   if (_robot == nullptr)
     return;
 
-  ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
-              "Attempting to write to robot but state is %d", _robotStorageState);
-
-  if (_robotStorageState != RobotStorageState::Inactive)
+  if (!ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartWriteToRobot.RobotStorageConflict",
+              "Attempting to write to robot but state is %d", _robotStorageState))
+  {
     return;
+  }
 
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
   const auto startTime = std::chrono::system_clock::now();
@@ -1195,11 +1239,11 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
 
 bool NeedsManager::StartReadFromRobot()
 {
-  ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartReadFromRobot.RobotStorageConflict",
-              "Attempting to read from robot but state is %d", _robotStorageState);
-
-  if (_robotStorageState != RobotStorageState::Inactive)
+  if (!ANKI_VERIFY(_robotStorageState == RobotStorageState::Inactive, "NeedsManager.StartReadFromRobot.RobotStorageConflict",
+              "Attempting to read from robot but state is %d", _robotStorageState))
+  {
     return false;
+  }
 
   _robotStorageState = RobotStorageState::Reading;
 
@@ -1374,6 +1418,13 @@ void NeedsManager::DebugCompleteAction(const char* actionName)
 {
   const NeedsActionId actionId = NeedsActionIdFromString(actionName);
   RegisterNeedsActionCompleted(actionId);
+}
+
+void NeedsManager::DebugPredictActionResult(const char* actionName)
+{
+  const NeedsActionId actionId = NeedsActionIdFromString(actionName);
+  NeedsState state;
+  PredictNeedsActionResult(actionId, state);
 }
 
 void NeedsManager::DebugPauseDecayForNeed(const char* needName)

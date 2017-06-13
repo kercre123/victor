@@ -67,6 +67,7 @@ public:
   const NeedsState& GetCurNeedsState();
 
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
+  void PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState);
 
   static const char* kLogChannelName;
 
@@ -80,6 +81,7 @@ public:
   void DebugCompleteDay();
   void DebugResetNeeds();
   void DebugCompleteAction(const char* actionName);
+  void DebugPredictActionResult(const char* actionName);
   void DebugPauseDecayForNeed(const char* needName);
   void DebugPauseActionsForNeed(const char* needName);
   void DebugUnpauseDecayForNeed(const char* needName);
@@ -107,6 +109,10 @@ private:
   void InitAfterReadFromRobotAttempt();
 
   void ApplyDecayAllNeeds();
+
+  void RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,
+                                            NeedsState& needsState,
+                                            bool predictionOnly);
 
   void UpdateStarsState();
 
