@@ -88,12 +88,12 @@ Java_com_anki_cozmoengine_Standalone_startCozmoEngine(JNIEnv* env,
   std::string configurationString = Anki::Util::JNIUtils::getStringFromJString(env, configuration);
   (void) cozmo_startup(configurationString.c_str());
   
-  // Yes this is a hack but this is all temporary code to get a standalone version of the engine running
-  bool isExternalSdkMode = true;
-  uint8_t enter_sdk_mode_message[2] =
-    { static_cast<uint8_t>(Anki::Cozmo::ExternalInterface::MessageGameToEngineTag::EnterSdkMode),
-      static_cast<uint8_t>(isExternalSdkMode) };
-  cozmo_transmit_game_to_engine(enter_sdk_mode_message, sizeof(enter_sdk_mode_message));
+//  // Yes this is a hack but this is all temporary code to get a standalone version of the engine running
+//  bool isExternalSdkMode = true;
+//  uint8_t enter_sdk_mode_message[2] =
+//    { static_cast<uint8_t>(Anki::Cozmo::ExternalInterface::MessageGameToEngineTag::EnterSdkMode),
+//      static_cast<uint8_t>(isExternalSdkMode) };
+//  cozmo_transmit_game_to_engine(enter_sdk_mode_message, sizeof(enter_sdk_mode_message));
 }
 
 JNIEXPORT void JNICALL

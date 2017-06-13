@@ -134,7 +134,7 @@ namespace Anki {
       //return PopIMU(IMUData);
       
       // TEMP HACK: Send 0s because on my Nexus 5x, the gyro values are kinda crazy.
-      PopIMU(IMUData); // Just to pop queue
+      while(PopIMU(IMUData)) {}; // Just to pop queue
       static TimeStamp_t lastIMURead = 0;
       TimeStamp_t now = HAL::GetTimeStamp();
       if (now - lastIMURead > 4) {

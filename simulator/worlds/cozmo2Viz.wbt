@@ -1,6 +1,6 @@
 #VRML_SIM V7.3.0 utf8
 CozmoWorldInfo {
-  info ["For connecting to standalone cozmoRobot2 process running on mac"]
+  info ["For connecting to cozmoEngine+cozmoRobot running on physical robot / Android device"]
   #basicTimeStep 60
 }
 Viewpoint {
@@ -34,16 +34,18 @@ DEF CozmoViz_1 CozmoBot2 {
   # Enable vizMode
   vizMode TRUE
 }
-CozmoEngine2 {
-  filterLogs FALSE
-  #sleepUntilEndOfTic TRUE
-}
 CozmoVizDisplay {
 }
 WebotsKeyboardController{
+  
+  # To connect to a V2 Cozmo, uncomment both of these fields and 
+  # update to the IP address of the robot.
+  # forcedRobotIP "192.168.X.X"
+  # engineIP      "192.168.X.X"
+  
+  redirectViz            TRUE
   forcedRobotIsSimulated FALSE
-  forcedRobotIP "127.0.0.1"
-  doAutoBlockpool FALSE
-  #filterLogs TRUE
+  doAutoBlockpool        FALSE
+  #filterLogs             TRUE
 }
 

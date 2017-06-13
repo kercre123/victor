@@ -204,6 +204,10 @@ PROTO WebotsKeyboardController [
   field SFFloat exposure_ms 16.8
   field SFFloat gain 1.0
 
+  # Redirect viz to this host upon connect
+  # Only useful if engine is not on the same host as this webots controller
+  field SFBool  redirectViz FALSE
+
   # Force-add robot options
   field SFBool   forceAddRobot TRUE
   field SFString forcedRobotIP "127.0.0.1"

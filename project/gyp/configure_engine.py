@@ -223,15 +223,10 @@ def main(scriptArgs):
   generator.processFolder(['basestation/src/anki/cozmo',
                            'basestation/include/anki/cozmo',
                            'androidHAL/include/anki/cozmo',
-                           'androidHAL/src/anki/cozmo',                           
+                           'androidHAL/src/anki/cozmo',   # Include both sim and non-sim AndroidHAL src
+                           'androidHAL/sim/src',          # gyp target will selective exclude appropriate files                           
                            'include', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'])
-  generator.processFolder(['basestation/src/anki/cozmo',
-                           'basestation/include/anki/cozmo',
-                           'androidHAL/include/anki/cozmo',
-                           'androidHAL/sim/src',
-                           'include', 'resources'],
-                          ['project/gyp/cozmoEngine2_sim.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],

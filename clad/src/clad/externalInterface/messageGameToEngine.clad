@@ -310,6 +310,11 @@ message QueueCompoundAction {
 // Image-Related Commands
 ///////////////////////////////////////////////////////////////////////////////
 
+// Redirects Viz messages to go to the specified IP addr
+message RedirectViz {
+    uint_32 ipAddr, // LSB.X.X.MSB
+}
+
 // ImageRequest
 message ImageRequest {
     uint_8 robotID,

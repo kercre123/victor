@@ -14,6 +14,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "util/transport/udpTransport.h"
 // includes for physics functions
 #include "anki/messaging/shared/UdpClient.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
@@ -157,18 +158,40 @@ namespace Anki {
       HandleRobotDeletedLocatedObject(msg);
     }
 
-    void UiGameController::HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn)
+    void UiGameController::HandleUiDeviceAvailableBase(ExternalInterface::UiDeviceAvailable const& msgIn)
     {
       // Just send a message back to the game to connect to any UI device that's
       // advertising (since we don't have a selection mechanism here)
-      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceConnectionBase", "Sending message to command connection to %s device %d.",
+      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceAvailableBase", "Sending message to command connection to %s device %d.",
                        EnumToString(msgIn.connectionType), msgIn.deviceID);
       ExternalInterface::ConnectToUiDevice msgOut(msgIn.connectionType, msgIn.deviceID);
       ExternalInterface::MessageGameToEngine message;
       message.Set_ConnectToUiDevice(msgOut);
       SendMessage(message);
       
-      HandleUiDeviceConnection(msgIn);
+      HandleUiDeviceAvailable(msgIn);
+    }
+    
+    void UiGameController::HandleUiDeviceConnectedBase(ExternalInterface::UiDeviceConnected const& msg)
+    {
+      // Redirect Viz
+      webots::Field* redirectVizField = _root->getField("redirectViz");
+      if (nullptr != redirectVizField) {
+        if (redirectVizField->getSFBool()) {
+          ExternalInterface::RedirectViz vizMsg;
+          vizMsg.ipAddr = Util::UDPTransport::GetLocalIpAddress();
+          ExternalInterface::MessageGameToEngine message;
+          message.Set_RedirectViz(vizMsg);
+          SendMessage(message);
+          
+          const uint8_t* ipBytes = (const uint8_t*)&vizMsg.ipAddr;
+          PRINT_NAMED_INFO("UiGameController.Init.RedirectingViz",
+                           "%u.%u.%u.%u",
+                           ipBytes[0], ipBytes[1], ipBytes[2], ipBytes[3]);
+        }
+      }
+      
+      HandleUiDeviceConnected(msg);
     }
     
     void UiGameController::HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg)
@@ -522,6 +545,7 @@ namespace Anki {
       }
       _msgHandler.Init(_gameComms);
       
+      
       // Register callbacks for incoming messages from game
       // TODO: Have CLAD generate this?
       _msgHandler.RegisterCallbackForMessage([this](const ExternalInterface::MessageEngineToGame& message) {
@@ -545,7 +569,10 @@ namespace Anki {
             HandleRobotObservedPetBase(message.Get_RobotObservedPet());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
-            HandleUiDeviceConnectionBase(message.Get_UiDeviceAvailable());
+            HandleUiDeviceAvailableBase(message.Get_UiDeviceAvailable());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::UiDeviceConnected:
+            HandleUiDeviceConnectedBase(message.Get_UiDeviceConnected());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::ImageChunk:
             HandleImageChunkBase(message.Get_ImageChunk());

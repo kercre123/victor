@@ -9,7 +9,6 @@
   'variables': {
 
     'engine2_source': 'cozmoEngine2.lst',
-    'engine2_sim_source': 'cozmoEngine2_sim.lst',
     'cozmoRobot2_source': 'cozmoRobot2.lst',
     'clad_vision_source': '../../generated/clad/vision.lst',
     'clad_common_source': '../../generated/clad/common.lst',
@@ -515,7 +514,7 @@
               '<@(webots_includes)', # After opencv!
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -583,7 +582,7 @@
               '../../robot/include',
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -682,113 +681,6 @@
             ]
           }, # end controller Robot 2
 
-
-
-          {
-            'target_name': 'cozmoEngine2_sim',
-            'type': 'static_library',
-            'sources': [
-              '<!@(cat <(engine2_sim_source))',
-              '<!@(cat <(clad_engine_source))',
-              '<!@(cat <(clad_common_source))',
-              '<!@(cat <(clad_vision_source))',
-              '<!@(cat <(clad_robot_source))',
-              '<!@(cat <(clad_viz_source))',
-              '<!@(cat <(clad_source))',
-            ],
-            'sources/': [
-              ['exclude', 'bleRobotManager.mm'],
-              ['exclude', 'bleComms.mm'],
-              ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
-            ],
-            'include_dirs': [
-              '../../basestation/src',
-              '../../basestation/include',
-              '../../basestation/include/anki/cozmo/basestation',
-              '../../basestation/include/anki/cozmo/basestation/actions',
-              '../../androidHAL/include',
-              '../../include',
-              '../../robot/include',
-              '../../generated/clad/engine',
-              '../../coretech/generated/clad/vision',
-              '<@(opencv_includes)',
-              '<@(webots_includes)', # After opencv!        
-              '<@(flatbuffers_include)',
-              '<@(text_to_speech_include_dirs)',
-              '<@(routing_http_server_include)',
-              '../../generated/clad/game',
-              '<@(libarchive_include)',
-              '<@(das_include)',
-              '<@(voice_recog_library_includes)',
-            ],
-            'direct_dependent_settings': {
-              'include_dirs': [
-                '../../basestation/include',
-                '../../androidHAL/include',
-                '../../include',
-                '../../robot/include',
-                '../../generated/clad/engine',
-                '../../basestation/src',
-                '../../generated/clad/game',
-              ],
-              'defines': [
-                'COZMO_BASESTATION',
-                'COZMO_V2',
-                'SIMULATOR'
-              ],
-            },
-            'defines': [
-              'COZMO_BASESTATION',
-              'COZMO_V2',
-              'SIMULATOR'
-            ],
-            'dependencies': [
-              '<(ce-util_gyp_path):util',
-              '<(ce-util_gyp_path):audioUtil',
-              '<(ce-cti_gyp_path):ctiCommon',
-              '<(ce-cti_gyp_path):ctiMessaging',
-              '<(ce-cti_gyp_path):ctiPlanning',
-              '<(ce-cti_gyp_path):ctiVision',
-              '<(ce-cti_gyp_path):ctiCommonRobot',
-              '<(ce-cti_gyp_path):ctiVisionRobot',
-              '<(cg-audio_path):AudioEngine',
-              '<(ce-ble_cozmo_path):BLECozmo',
-              '<(ce-das_path):DAS',
-            ],
-            'libraries': [
-              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
-              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
-              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
-              '<@(flatbuffers_libs)',
-              '<@(text_to_speech_libraries)',
-              '<@(routing_http_server_libs)',
-              '<@(libarchive_libs)',
-              '<@(voice_recog_library_libs)',
-            ],
-
-            'conditions': [
-              ['face_library=="faciometric"', {
-                # Copy FacioMetric's models into the resources so they are available at runtime.
-                # This is a little icky since it reaches into cozmo engine...
-                'actions': [
-                  {
-                    'action_name': 'copy_faciometric_models',
-                    'action': [
-                      'cp',
-                      '-R',
-                      '<(face_library_path)/Demo/models',
-                      '../../resources/config/basestation/vision/faciometric',
-                    ],
-                  },
-                ],
-              }],
-              ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}]
-            ] #'conditions'
-
-          }, # end cozmoEngine2_sim target
-
-
-
           {
             'target_name': 'webotsCtrlGameEngine2',
             'type': 'executable',
@@ -801,7 +693,7 @@
               '<@(voice_recog_library_includes)',
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiVision',
@@ -898,7 +790,7 @@
               '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-util_gyp_path):util',
               '<(ce-util_gyp_path):kazmath',
               '<(ce-cti_gyp_path):ctiCommon',
@@ -956,7 +848,7 @@
               '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-util_gyp_path):util',
               '<(ce-util_gyp_path):kazmath',
               '<(ce-cti_gyp_path):ctiCommon',
@@ -988,7 +880,7 @@
               '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-util_gyp_path):util',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiVision',
@@ -1222,7 +1114,7 @@
               '<@(webots_includes)',
             ],
             'dependencies': [
-              'cozmoEngine2_sim',
+              'cozmoEngine2',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -1379,7 +1271,6 @@
         '../../basestation/include',
         '../../basestation/include/anki/cozmo/basestation',
         '../../basestation/include/anki/cozmo/basestation/actions',
-        '../../androidHAL/src',
         '../../androidHAL/include',
         '../../include',
         '../../robot/include',
@@ -1402,7 +1293,6 @@
           '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
-          '../../androidHAL/src',
           '../../generated/clad/game',
         ],
         'defines': [
@@ -1429,9 +1319,26 @@
       ],
       'conditions': [
         [
-          'OS=="ios" or OS=="mac"',
+          'OS=="mac"',
           {
             'type': 'static_library',
+            'defines': [
+              'SIMULATOR'
+            ],
+            'direct_dependent_settings': {
+              'defines': [
+                'SIMULATOR'
+              ]
+            },
+            'sources/': [
+              ['exclude', '.androidHAL/src/anki/cozmo/.'],
+              ['exclude', '_android\\.'],
+              ['exclude', '(linux)'],
+              ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
+            ],
+            'include_dirs' : [
+              '<@(webots_includes)', # After opencv!
+            ],
             'libraries': [
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
@@ -1443,7 +1350,7 @@
               '<@(voice_recog_library_libs)',
             ],
           },
-      	  'OS=="android"',
+          'OS=="android"',
           {
             'type': 'shared_library',
             'library_dirs':
@@ -1530,7 +1437,17 @@
               '-lcamera2ndk',
               '-lmediandk',
             ],
+            'sources/': [
+              ['exclude', '.androidHAL/sim/src/.'],
+              ['exclude', '(ios|linux|mac)']
+            ],
+            'direct_dependent_settings': {
+              'include_dirs': [
+                '../../androidHAL/src',
+              ],
+            },
             'include_dirs': [
+              '../../androidHAL/src',
               '<(crash_path)/Breakpad/include/breakpad',
               '<@(flatbuffers_include)',
               '../../include/anki/cozmo',
@@ -1540,31 +1457,6 @@
             ],
           }
         ],
-
-        ['OS=="ios"',{
-          'sources/': [
-            ['exclude', '(android|linux)']
-          ],
-          'libraries': [
-              '../../lib/HockeySDK-iOS/HockeySDK.framework',
-          ]
-        }],
-        ['OS=="mac"',{
-          'sources/': [
-            ['exclude', '(android|linux)'],
-            ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios']
-          ]
-        }],
-        ['OS=="android"',{
-          'sources/': [
-            ['exclude', '(ios|linux|mac)']
-          ]
-        }],
-        ['OS=="linux"',{
-          'sources/': [
-            ['exclude', '(android|ios|mac)']
-          ]
-        }],
       ] #'conditions'
 
     }, # end engine2 target
@@ -1599,27 +1491,6 @@
       ],
       'conditions': [
         [
-#          'OS=="ios" or OS=="mac"',
-#          {
-#            #'type': 'static_library',
-#            'libraries': [
-#              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
-#            ],
-#
-#            # This should also be done in Android, but ninja doesn't like it when actions have no output,
-#            # so instead this step is called explicitly in configure.py when building Android.
-#            'actions': [
-#               {
-#                 'action_name': 'Robot pre-build steps',
-#                 'inputs': [],
-#                 'outputs': [],
-#                 'action': [
-#                   'make', '-C', '../../robot/', 'dev2', 'BUILD_TYPE=DEVELOPMENT'
-#                 ],
-#               }
-#            ],
-#
-#          },
       	  'OS=="android"',
           {
             #'type': 'shared_library',
