@@ -1,8 +1,6 @@
 ## @file Robot Firmware Makefile for Cozmo
 # @author Daniel Casner
 #
-# Initially only handling Espressif firmware and pre/post-build steps for K02 and nrf51. May eventually have targets for
-# all firmware.
 
 ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
@@ -18,6 +16,8 @@ BUILD_DIR=build
 RELEASE_DIR=release
 
 EXTERNALS_DIR=../EXTERNALS/firmware
+
+STATIC_SRC_DIRS=supervisor espressif/app hal syscon/hal
 
 DIFFIE_KEY=certs/diffie.pem
 DEVELOPMENT_KEY=certs/development.pem
@@ -36,7 +36,7 @@ OTA_FILE=$(RELEASE_DIR)/cozmo.safe
 
 BUILD_TYPE?=DEVELOPMENT
 
-.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3 $(BUILD_TYPE_HEADER)
+.PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3 $(BUILD_TYPE_HEADER) cppcheck
 
 ########################################################################################################################
 # Build rules for engine / app
@@ -52,7 +52,7 @@ all: sim app esp k02 nrf
 ########################################################################################################################
 # Convenience rules
 
-dev: AnkiLog nrf k02 esp $(BUILD_TYPE_HEADER)
+dev: AnkiLog nrf k02 esp $(BUILD_TYPE_HEADER) cppcheck
 
 dev2: AnkiLog k02 $(BUILD_TYPE_HEADER)
 
@@ -103,6 +103,9 @@ pull:
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
+
+cppcheck:
+	@if which cppcheck; then cppcheck $(STATIC_SRC_DIRS); else echo 'CPPCHECK NOT INSTALLED'; echo 'run `brew install cppcheck`'; fi
 
 ########################################################################################################################
 # Code generation and preprocessing
@@ -181,7 +184,7 @@ $(BUILD_DIR)/syscon.map:
 ########################################################################################################################
 # Build server steps
 
-server.1: nrf k02 $(BUILD_TYPE_HEADER)
+server.1: nrf k02 $(BUILD_TYPE_HEADER) cppcheck
 	tar -cjf generated.tar.bz2 $(GENERATED_DIR)
 
 server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to generate these files
