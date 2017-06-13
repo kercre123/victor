@@ -3,7 +3,6 @@ public static class LocalizationKeys {
   #region BehaviorStrings
 
   public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";
-  public const string kBehaviorExploreVisitPossibleMarker = "behavior.ExploreVisitPossibleMarker";
   public const string kBehaviorLookInPlaceMemoryMap = "behavior.LookInPlaceMemoryMap";
   public const string kBehaviorExploreLookAroundInPlace = "behavior.ExploreLookAroundInPlace";
   public const string kBehaviorThinkAboutBeacons = "behavior.ThinkAboutBeacons";
@@ -60,6 +59,18 @@ public static class LocalizationKeys {
   public const string kBehaviorSingingTakeMeOutToTheBallgame = "behavior.singing.TakeMeOutToTheBallgame";
   public const string kBehaviorSingingWilliamTell = "behavior.singing.WilliamTell";
   public const string kBehaviorSingingYankeeDoodle = "behavior.singing.YankeeDoodle";
+  public const string kBehaviorSingingBeautifulDreamer = "behavior.singing.BeautifulDreamer";
+  public const string kBehaviorSingingMountainKing = "behavior.singing.MountainKing";
+  public const string kBehaviorSingingTaRaRaBoom = "behavior.singing.TaRaRaBoom";
+  public const string kBehaviorSingingEntryOfTheGladiators = "behavior.singing.EntryOfTheGladiators";
+  public const string kBehaviorSingingHelloMyBaby = "behavior.singing.HelloMyBaby";
+  public const string kBehaviorSingingTurkeyInTheStraw = "behavior.singing.TurkeyInTheStraw";
+  public const string kBehaviorDance = "behavior.Dance";
+  public const string kBehaviorSingingLondonBridge = "behavior.singing.LondonBridge";
+  public const string kBehaviorSingingCozMambo = "behavior.singing.CozMambo";
+  public const string kBehaviorSingingSakura = "behavior.singing.Sakura";
+  public const string kBehaviorSingingMussIDenn = "behavior.singing.MussIDenn";
+  public const string kBehaviorReactToVoiceCommand = "behavior.ReactToVoiceCommand";
 
   #endregion
 
@@ -107,6 +118,182 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region CodeLabHorizontalStrings
+
+  public const string kCodeLabHorizontalUserProjectMyProject = "codeLabHorizontal.UserProject.MyProject";
+  public const string kCodeLabHorizontalCozmoSaysBlockDefaultText = "codeLabHorizontal.CozmoSaysBlock.DefaultText";
+  public const string kCodeLabHorizontalTooltipRepeatForever = "codeLabHorizontal.Tooltip.RepeatForever";
+  public const string kCodeLabHorizontalTooltipRepeat = "codeLabHorizontal.Tooltip.Repeat";
+  public const string kCodeLabHorizontalTooltipStopProgram = "codeLabHorizontal.Tooltip.StopProgram";
+  public const string kCodeLabHorizontalTooltipLightBackpack = "codeLabHorizontal.Tooltip.LightBackpack";
+  public const string kCodeLabHorizontalTooltipDriveForward = "codeLabHorizontal.Tooltip.DriveForward";
+  public const string kCodeLabHorizontalTooltipDriveForwardFast = "codeLabHorizontal.Tooltip.DriveForwardFast";
+  public const string kCodeLabHorizontalTooltipDriveBackward = "codeLabHorizontal.Tooltip.DriveBackward";
+  public const string kCodeLabHorizontalTooltipDriveBackwardFast = "codeLabHorizontal.Tooltip.DriveBackwardFast";
+  public const string kCodeLabHorizontalTooltipActHappy = "codeLabHorizontal.Tooltip.ActHappy";
+  public const string kCodeLabHorizontalTooltipActLikeWinner = "codeLabHorizontal.Tooltip.ActLikeWinner";
+  public const string kCodeLabHorizontalTooltipActSad = "codeLabHorizontal.Tooltip.ActSad";
+  public const string kCodeLabHorizontalTooltipActSurprised = "codeLabHorizontal.Tooltip.ActSurprised";
+  public const string kCodeLabHorizontalTooltipActLikeDog = "codeLabHorizontal.Tooltip.ActLikeDog";
+  public const string kCodeLabHorizontalTooltipActLikeCat = "codeLabHorizontal.Tooltip.ActLikeCat";
+  public const string kCodeLabHorizontalTooltipSneeze = "codeLabHorizontal.Tooltip.Sneeze";
+  public const string kCodeLabHorizontalTooltipActExcited = "codeLabHorizontal.Tooltip.ActExcited";
+  public const string kCodeLabHorizontalTooltipThinkHard = "codeLabHorizontal.Tooltip.ThinkHard";
+  public const string kCodeLabHorizontalTooltipActBored = "codeLabHorizontal.Tooltip.ActBored";
+  public const string kCodeLabHorizontalTooltipActFrustrated = "codeLabHorizontal.Tooltip.ActFrustrated";
+  public const string kCodeLabHorizontalTooltipActChatty = "codeLabHorizontal.Tooltip.ActChatty";
+  public const string kCodeLabHorizontalTooltipActDisappointed = "codeLabHorizontal.Tooltip.ActDisappointed";
+  public const string kCodeLabHorizontalTooltipSnore = "codeLabHorizontal.Tooltip.Snore";
+  public const string kCodeLabHorizontalTooltipMysteryAnimation = "codeLabHorizontal.Tooltip.MysteryAnimation";
+  public const string kCodeLabHorizontalTooltipMoveLift = "codeLabHorizontal.Tooltip.MoveLift";
+  public const string kCodeLabHorizontalTooltipMoveHead = "codeLabHorizontal.Tooltip.MoveHead";
+  public const string kCodeLabHorizontalTooltipDriveToCube = "codeLabHorizontal.Tooltip.DriveToCube";
+  public const string kCodeLabHorizontalTooltipSay = "codeLabHorizontal.Tooltip.Say";
+  public const string kCodeLabHorizontalTooltipTurnLeft = "codeLabHorizontal.Tooltip.TurnLeft";
+  public const string kCodeLabHorizontalTooltipTurnRight = "codeLabHorizontal.Tooltip.TurnRight";
+  public const string kCodeLabHorizontalTooltipWaitToSeeFace = "codeLabHorizontal.Tooltip.WaitToSeeFace";
+  public const string kCodeLabHorizontalTooltipWaitToSeeSmile = "codeLabHorizontal.Tooltip.WaitToSeeSmile";
+  public const string kCodeLabHorizontalTooltipWaitToSeeFrown = "codeLabHorizontal.Tooltip.WaitToSeeFrown";
+  public const string kCodeLabHorizontalTooltipWaitToSeeCube = "codeLabHorizontal.Tooltip.WaitToSeeCube";
+  public const string kCodeLabHorizontalTooltipWaitTorCubeTap = "codeLabHorizontal.Tooltip.WaitTorCubeTap";
+  public const string kCodeLabHorizontalTooltipStartProgramHere = "codeLabHorizontal.Tooltip.StartProgramHere";
+
+  #endregion
+
+  #region CodeLabStrings
+
+  public const string kCodeLabChallenge_driveForwardFourQuestionSlidePrimaryText = "codeLabChallenge_driveForwardFour.questionSlide.primaryText";
+  public const string kCodeLabChallenge_driveForwardFourQuestionSlideSecondaryText = "codeLabChallenge_driveForwardFour.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_driveForwardFourAnswerSlidePrimaryText = "codeLabChallenge_driveForwardFour.answerSlide.primaryText";
+  public const string kCodeLabChallenge_driveAndSneezeQuestionSlidePrimaryText = "codeLabChallenge_driveAndSneeze.questionSlide.primaryText";
+  public const string kCodeLabChallenge_driveAndSneezeQuestionSlideSecondaryText = "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_driveAndSneezeAnswerSlidePrimaryText = "codeLabChallenge_driveAndSneeze.answerSlide.primaryText";
+  public const string kCodeLabChallenge_driveSquareSimpleQuestionSlidePrimaryText = "codeLabChallenge_driveSquareSimple.questionSlide.primaryText";
+  public const string kCodeLabChallenge_driveSquareSimpleQuestionSlideSecondaryText = "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_driveSquareSimpleAnswerSlidePrimaryText = "codeLabChallenge_driveSquareSimple.answerSlide.primaryText";
+  public const string kCodeLabChallenge_driveBackwardSquareQuestionSlidePrimaryText = "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText";
+  public const string kCodeLabChallenge_driveBackwardSquareQuestionSlideSecondaryText = "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_driveBackwardSquareAnswerSlidePrimaryText = "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText";
+  public const string kCodeLabChallenge_sayHiQuestionSlidePrimaryText = "codeLabChallenge_sayHi.questionSlide.primaryText";
+  public const string kCodeLabChallenge_sayHiQuestionSlideSecondaryText = "codeLabChallenge_sayHi.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_sayHiAnswerSlidePrimaryText = "codeLabChallenge_sayHi.answerSlide.primaryText";
+  public const string kCodeLabChallenge_lightBackpackGreenQuestionSlidePrimaryText = "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText";
+  public const string kCodeLabChallenge_lightBackpackGreenQuestionSlideSecondaryText = "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_lightBackpackGreenAnswerSlidePrimaryText = "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText";
+  public const string kCodeLabChallenge_lightBackpackSayColorQuestionSlidePrimaryText = "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText";
+  public const string kCodeLabChallenge_lightBackpackSayColorQuestionSlideSecondaryText = "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_lightBackpackSayColorAnswerSlidePrimaryText = "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSayQuestionSlidePrimaryText = "codeLabChallenge_whenFaceSay.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSayQuestionSlideSecondaryText = "codeLabChallenge_whenFaceSay.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenFaceSayAnswerSlidePrimaryText = "codeLabChallenge_whenFaceSay.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSaySayAndDriveQuestionSlidePrimaryText = "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSaySayAndDriveQuestionSlideSecondaryText = "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenFaceSaySayAndDriveAnswerSlidePrimaryText = "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText";
+  public const string kCodeLabChallenge_lightBackpackMysteryQuestionSlidePrimaryText = "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText";
+  public const string kCodeLabChallenge_lightBackpackMysteryQuestionSlideSecondaryText = "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_lightBackpackMysteryAnswerSlidePrimaryText = "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeTappedMysteryBackpackQuestionSlidePrimaryText = "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeTappedMysteryBackpackQuestionSlideSecondaryText = "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenCubeTappedMysteryBackpackAnswerSlidePrimaryText = "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeTappedMysteryActionQuestionSlidePrimaryText = "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeTappedMysteryActionQuestionSlideSecondaryText = "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenCubeTappedMysteryActionAnswerSlidePrimaryText = "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeSeenHappyActionQuestionSlidePrimaryText = "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeSeenHappyActionQuestionSlideSecondaryText = "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenCubeSeenHappyActionAnswerSlidePrimaryText = "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeSeenDriveToCubeQuestionSlidePrimaryText = "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeSeenDriveToCubeQuestionSlideSecondaryText = "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenCubeSeenDriveToCubeAnswerSlidePrimaryText = "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText";
+  public const string kCodeLabChallenge_PushCubeQuestionSlidePrimaryText = "codeLabChallenge_PushCube.questionSlide.primaryText";
+  public const string kCodeLabChallenge_PushCubeQuestionSlideSecondaryText = "codeLabChallenge_PushCube.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_PushCubeAnswerSlidePrimaryText = "codeLabChallenge_PushCube.answerSlide.primaryText";
+  public const string kCodeLabChallenge_MoveLiftUpAndDownQuestionSlidePrimaryText = "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText";
+  public const string kCodeLabChallenge_MoveLiftUpAndDownQuestionSlideSecondaryText = "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_MoveLiftUpAndDownAnswerSlidePrimaryText = "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText";
+  public const string kCodeLabChallenge_LiftCubeQuestionSlidePrimaryText = "codeLabChallenge_LiftCube.questionSlide.primaryText";
+  public const string kCodeLabChallenge_LiftCubeQuestionSlideSecondaryText = "codeLabChallenge_LiftCube.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_LiftCubeAnswerSlidePrimaryText = "codeLabChallenge_LiftCube.answerSlide.primaryText";
+  public const string kCodeLabChallenge_WorkoutWithCubeQuestionSlidePrimaryText = "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText";
+  public const string kCodeLabChallenge_WorkoutWithCubeQuestionSlideSecondaryText = "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_WorkoutWithCubeAnswerSlidePrimaryText = "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText";
+  public const string kCodeLabChallenge_DriveFastSquareQuestionSlidePrimaryText = "codeLabChallenge_DriveFastSquare.questionSlide.primaryText";
+  public const string kCodeLabChallenge_DriveFastSquareQuestionSlideSecondaryText = "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_DriveFastSquareAnswerSlidePrimaryText = "codeLabChallenge_DriveFastSquare.answerSlide.primaryText";
+  public const string kCodeLabChallenge_DriveSquareAdvancedQuestionSlidePrimaryText = "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText";
+  public const string kCodeLabChallenge_DriveSquareAdvancedQuestionSlideSecondaryText = "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_DriveSquareAdvancedAnswerSlidePrimaryText = "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeTappedDriveSideQuestionSlidePrimaryText = "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeTappedDriveSideQuestionSlideSecondaryText = "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenCubeTappedDriveSideAnswerSlidePrimaryText = "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenSmileActHappyQuestionSlidePrimaryText = "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenSmileActHappyQuestionSlideSecondaryText = "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenSmileActHappyAnswerSlidePrimaryText = "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenSmileDriveSideQuestionSlidePrimaryText = "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenSmileDriveSideQuestionSlideSecondaryText = "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenSmileDriveSideAnswerSlidePrimaryText = "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenSmileActWinnerQuestionSlidePrimaryText = "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenSmileActWinnerQuestionSlideSecondaryText = "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenSmileActWinnerAnswerSlidePrimaryText = "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText";
+  public const string kCodeLabChallenge_peekabooQuestionSlidePrimaryText = "codeLabChallenge_peekaboo.questionSlide.primaryText";
+  public const string kCodeLabChallenge_peekabooQuestionSlideSecondaryText = "codeLabChallenge_peekaboo.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_peekabooAnswerSlidePrimaryText = "codeLabChallenge_peekaboo.answerSlide.primaryText";
+  public const string kCodeLabChallenge_stackCubesQuestionSlidePrimaryText = "codeLabChallenge_stackCubes.questionSlide.primaryText";
+  public const string kCodeLabChallenge_stackCubesQuestionSlideSecondaryText = "codeLabChallenge_stackCubes.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_stackCubesAnswerSlidePrimaryText = "codeLabChallenge_stackCubes.answerSlide.primaryText";
+  public const string kCodeLabChallenge_stackCubesTipOverQuestionSlidePrimaryText = "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText";
+  public const string kCodeLabChallenge_stackCubesTipOverQuestionSlideSecondaryText = "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_stackCubesTipOverAnswerSlidePrimaryText = "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSeenTurnAroundQuestionSlidePrimaryText = "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSeenTurnAroundQuestionSlideSecondaryText = "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenFaceSeenTurnAroundAnswerSlidePrimaryText = "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSeenActSurprisedTurnAroundQuestionSlidePrimaryText = "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceSeenActSurprisedTurnAroundQuestionSlideSecondaryText = "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenFaceSeenActSurprisedTurnAroundAnswerSlidePrimaryText = "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceFetchCubeQuestionSlidePrimaryText = "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenFaceFetchCubeQuestionSlideSecondaryText = "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenFaceFetchCubeAnswerSlidePrimaryText = "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeSeenSetBehindQuestionSlidePrimaryText = "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText";
+  public const string kCodeLabChallenge_whenCubeSeenSetBehindQuestionSlideSecondaryText = "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_whenCubeSeenSetBehindAnswerSlidePrimaryText = "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText";
+  public const string kCodeLabChallenge_intruderQuestionSlidePrimaryText = "codeLabChallenge_intruder.questionSlide.primaryText";
+  public const string kCodeLabChallenge_intruderQuestionSlideSecondaryText = "codeLabChallenge_intruder.questionSlide.secondaryText";
+  public const string kCodeLabChallenge_intruderAnswerSlidePrimaryText = "codeLabChallenge_intruder.answerSlide.primaryText";
+  public const string kCodeLabChallenge_challengesUISlideXofY = "codeLabChallenge_challengesUI.slideXofY";
+  public const string kCodeLabChallenge_challengesUIChallengesModalTitle = "codeLabChallenge_challengesUI.challengesModalTitle";
+  public const string kCodeLabModalSlideshowBackButtonLabel = "codeLab.modalSlideshow.backButtonLabel";
+  public const string kCodeLabModalSlideshowNextButtonLabel = "codeLab.modalSlideshow.nextButtonLabel";
+  public const string kCodeLabModalSlideshowDoneButtonLabel = "codeLab.modalSlideshow.doneButtonLabel";
+  public const string kCodeLabTutorialModalTitle = "codeLab.tutorial.modalTitle";
+  public const string kCodeLabTutorialSlide_letsYouProgramCozmo = "codeLab.tutorial.slide_letsYouProgramCozmo";
+  public const string kCodeLabTutorialSlide_tapBlockToSeeFunction = "codeLab.tutorial.slide_tapBlockToSeeFunction";
+  public const string kCodeLabTutorialSlide_tapBlockToSeeFunctionSampleTooltipTurnLeft = "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft";
+  public const string kCodeLabTutorialSlide_dragBlocksToMakePrograms = "codeLab.tutorial.slide_dragBlocksToMakePrograms";
+  public const string kCodeLabTutorialSlide_greenBlockFirst = "codeLab.tutorial.slide_greenBlockFirst";
+  public const string kCodeLabProjectsModalTitle = "codeLab.projects.modalTitle";
+  public const string kCodeLabProjectsAttributionLabel = "codeLab.projects.attributionLabel";
+  public const string kCodeLabProjectsTutorialLabel = "codeLab.projects.tutorialLabel";
+  public const string kCodeLabProjectsNewProjectButtonLabel = "codeLab.projects.newProjectButtonLabel";
+  public const string kCodeLabProjectsProjectTypeSampleProject = "codeLab.projects.projectType.sampleProject";
+  public const string kCodeLabProjectsProjectTypePersonalProject = "codeLab.projects.projectType.personalProject";
+  public const string kCodeLabProjectsConfirmQuitPromptText = "codeLab.projects.confirmQuit.promptText";
+  public const string kCodeLabProjectsConfirmQuitConfirmButtonLabelText = "codeLab.projects.confirmQuit.confirmButton.labelText";
+  public const string kCodeLabProjectsConfirmQuitCancelButtonLabelText = "codeLab.projects.confirmQuit.cancelButton.labelText";
+  public const string kCodeLabProjectsConfirmDeleteProjectConfirmPromptTitle = "codeLab.projects.confirmDeleteProject.confirmPromptTitle";
+  public const string kCodeLabProjectsConfirmDeleteProjectConfirmButtonLabelText = "codeLab.projects.confirmDeleteProject.confirmButton.labelText";
+  public const string kCodeLabProjectsConfirmDeleteProjectCancelButtonLabelText = "codeLab.projects.confirmDeleteProject.cancelButton.labelText";
+  public const string kCodeLabProjectsConfirmDeleteProjectConfirmPrompt = "codeLab.projects.confirmDeleteProject.confirmPrompt";
+  public const string kCodeLabSampleProject_DriveInSquareProjectName = "codeLabSampleProject_DriveInSquare.projectName";
+  public const string kCodeLabSampleProject_RainbowBackpackProjectName = "codeLabSampleProject_RainbowBackpack.projectName";
+  public const string kCodeLabSampleProject_DrivingAndSneezingProjectName = "codeLabSampleProject_DrivingAndSneezing.projectName";
+  public const string kCodeLabSampleProject_TapCubeForMysteryAnimationProjectName = "codeLabSampleProject_TapCubeForMysteryAnimation.projectName";
+  public const string kCodeLabSampleProject_DriveInSquareAdvancedProjectName = "codeLabSampleProject_DriveInSquareAdvanced.projectName";
+  public const string kCodeLabSampleProject_PushCubeProjectName = "codeLabSampleProject_PushCube.projectName";
+  public const string kCodeLabSampleProject_PeekabooProjectName = "codeLabSampleProject_Peekaboo.projectName";
+  public const string kCodeLabSampleProject_WorkoutwithCubeProjectName = "codeLabSampleProject_WorkoutwithCube.projectName";
+  public const string kCodeLabSampleProject_IntruderAlarmProjectName = "codeLabSampleProject_IntruderAlarm.projectName";
+
+  #endregion
+
   #region ConnectivityStrings
 
   public const string kConnectivityConnectingToCozmoText = "connectivity.connectingToCozmoText";
@@ -125,7 +312,6 @@ public static class LocalizationKeys {
   public const string kConnectivityUpdateApp = "connectivity.updateApp";
   public const string kConnectivityPullTabsTitle = "connectivity.pullTabsTitle";
   public const string kConnectivityEnterDOB = "connectivity.enterDOB";
-  public const string kConnectivityEnterName = "connectivity.enterName";
   public const string kConnectivityPairingDesc = "connectivity.pairingDesc";
   public const string kConnectivityCozmoSleepTitle = "connectivity.cozmoSleepTitle";
   public const string kConnectivityCozmoSleepDesc = "connectivity.cozmoSleepDesc";
@@ -167,8 +353,6 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitleWinSpeedTapLevel2 = "dailyGoal.title.WinSpeedTap.Level2";
   public const string kDailyGoalTitlePlaySpeedTapLevel3 = "dailyGoal.title.PlaySpeedTap.Level3";
   public const string kDailyGoalTitleWinSpeedTapLevel3 = "dailyGoal.title.WinSpeedTap.Level3";
-  public const string kDailyGoalTitleSpeedTapShutoutRound = "dailyGoal.title.SpeedTap.Shutout.Round";
-  public const string kDailyGoalTitleSpeedTapTieBreakerRound = "dailyGoal.title.SpeedTap.TieBreaker.Round";
   public const string kDailyGoalTitleWinSpeedTapAccuracy50 = "dailyGoal.title.WinSpeedTap.Accuracy.50";
   public const string kDailyGoalTitleWinSpeedTapAccuracy75 = "dailyGoal.title.WinSpeedTap.Accuracy.75";
   public const string kDailyGoalTitleWinSpeedTapAccuracy100 = "dailyGoal.title.WinSpeedTap.Accuracy.100";
@@ -418,6 +602,17 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region NeedsStrings
+
+  public const string kNeedsNeedsEnergyModalTitle = "needs.NeedsEnergyModal.Title";
+  public const string kNeedsNeedsEnergyModalFeedingSummary = "needs.NeedsEnergyModal.FeedingSummary";
+  public const string kNeedsNeedsEnergyModalInstruction1 = "needs.NeedsEnergyModal.Instruction1";
+  public const string kNeedsNeedsEnergyModalInstruction2 = "needs.NeedsEnergyModal.Instruction2";
+  public const string kNeedsNeedsEnergyModalInstruction3 = "needs.NeedsEnergyModal.Instruction3";
+  public const string kNeedsNeedsEnergyModalFeedingComplete = "needs.NeedsEnergyModal.FeedingComplete";
+
+  #endregion
+
   #region OnboardingStrings
 
   public const string kOnboardingCozmoNeedsChargeTitle = "onboarding.CozmoNeedsCharge.Title";
@@ -582,6 +777,9 @@ public static class LocalizationKeys {
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
   public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
   public const string kSettingsAcknowledgementsPanelTitle = "settings.acknowledgementsPanel.title";
+  public const string kSettingsModalTitle = "settings.modalTitle";
+  public const string kSettingsSdkPanelSdkUrlPreface = "settings.sdkPanel.sdkUrl.preface";
+  public const string kSettingsSdkPanelSdkUrlAddress = "settings.sdkPanel.sdkUrl.address";
 
   #endregion
 
@@ -652,6 +850,7 @@ public static class LocalizationKeys {
   public const string kLabelTermsInstructions = "label.termsInstructions";
   public const string kLabelSimpleCount = "label.simpleCount";
   public const string kButtonTemp = "button.temp";
+  public const string kLabelBasicCozmo = "label.basicCozmo";
 
   #endregion
 
@@ -711,7 +910,6 @@ public static class LocalizationKeys {
   public const string kUnlockableSpeedTapTitle = "unlockable.SpeedTap.Title";
   public const string kUnlockableSpeedTapDescription = "unlockable.SpeedTap.Description";
   public const string kUnlockableCodeLabTitle = "unlockable.CodeLab.Title";
-  public const string kUnlockableCodeLabDescription = "unlockable.CodeLab.Description";
   public const string kUnlockableCozmoSaysTitle = "unlockable.cozmoSays.Title";
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";

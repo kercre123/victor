@@ -62,8 +62,6 @@ namespace CodeLab {
     private const float kLiftSpeed_rps = 2.0f;
     private const float kTimeoutForResetToHomePose_s = 3.0f;
 
-    private const string kUserProjectName = "My Project"; // TODO Move to internationalization files
-
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
 
@@ -400,7 +398,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           // Create new project with the XML stored in projectXML.
 
           // Create project name: "My Project 1", "My Project 2", etc.
-          newUserProjectName = kUserProjectName + " " + defaultProfile.CodeLabUserProjectNum;
+          newUserProjectName = Localization.GetWithArgs(LocalizationKeys.kCodeLabHorizontalUserProjectMyProject, defaultProfile.CodeLabUserProjectNum);
           defaultProfile.CodeLabUserProjectNum++;
 
           newProject = new CodeLabProject(newUserProjectName, projectXML);
