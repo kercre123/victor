@@ -67,12 +67,14 @@ enum uint_32 Freeplay_Mood
   Chill = 4294400669,
   Cubeinteract = 889740396,
   Dancing = 386094975,
-  Frustrated = 1309079467,
   Guard_Dog = 1030326287,
   Happy = 1427264549,
   Hiking = 296159617,
   Invalid = 0,
   Neutral = 670611050,
+  Nurture_Feeding = 2320504975,
+  Nurture_Severe = 1058497985,
+  Nuture_Repair = 2785480036,
   Sleep = 3671647190,
 }
 
