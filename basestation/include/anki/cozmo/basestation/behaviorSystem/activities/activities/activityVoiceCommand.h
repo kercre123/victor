@@ -97,7 +97,7 @@ private:
   
   // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
   // do once we're done responding to the command
-  void BeginRespondingToCommand(VoiceCommand::VoiceCommandType command);
+  void BeginRespondingToCommand(VoiceCommand::VoiceCommandType command, bool trackResponseLifetime = false);
   
   
 };

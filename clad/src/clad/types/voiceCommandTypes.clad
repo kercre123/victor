@@ -49,6 +49,10 @@ structure CommandHeardEvent {
   VoiceCommandType            voiceCommandType,
 }
 
+structure RespondingToCommand {
+  VoiceCommandType            voiceCommandType,
+}
+
 structure RespondingToCommandStart {
   VoiceCommandType            voiceCommandType,
 }
@@ -89,6 +93,7 @@ structure ChangeEnabledStatus {
 // Use tag to determine what struct to use
 union VoiceCommandEventUnion {
   CommandHeardEvent           commandHeardEvent,
+  RespondingToCommand         respondingToCommand,
   RespondingToCommandStart    respondingToCommandStart,
   RespondingToCommandEnd      respondingToCommandEnd,
   StateData                   stateData,

@@ -112,14 +112,15 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     {
       return _voiceCommandBehavior;
     }
-    
-    if (_doneRespondingTask)
-    {
-      _doneRespondingTask();
-      _doneRespondingTask = std::function<void()>{};
-    }
     // Otherwise this behavior isn't running anymore so clear it and potentially get a new one to use below
     _voiceCommandBehavior = nullptr;
+  }
+  
+  // If we don't have an existing running voice command behavior, execute any waiting tasks
+  if (_doneRespondingTask)
+  {
+    _doneRespondingTask();
+    _doneRespondingTask = std::function<void()>{};
   }
   
   const bool isCommandValid = IsCommandValid(currentCommand);
@@ -150,14 +151,18 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       _voiceCommandBehavior = _requestGameSelector->
                         GetNextRequestGameBehavior(robot, currentRunningBehavior);
       
-      BeginRespondingToCommand(currentCommand);
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
     }
     case VoiceCommandType::DoADance:
     {
       _voiceCommandBehavior = _danceBehavior;
-      BeginRespondingToCommand(currentCommand);
+      
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+      
       return _voiceCommandBehavior;
     }
     case VoiceCommandType::DoATrick:
@@ -171,12 +176,14 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       BehaviorPreReqRobot preReqData(robot);
       if(_comeHereBehavior->IsRunnable(preReqData)){
         _voiceCommandBehavior = _comeHereBehavior;
-        BeginRespondingToCommand(currentCommand);
       }
       else
       {
         CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
       }
+      
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
     }
@@ -188,13 +195,15 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
-        BeginRespondingToCommand(currentCommand);
         _voiceCommandBehavior = _behaviorNone;
       }
       else
       {
         CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
       }
+      
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
 
       return _voiceCommandBehavior;
     }
@@ -206,13 +215,15 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
-        BeginRespondingToCommand(currentCommand);
         _voiceCommandBehavior = _behaviorNone;
       }
       else
       {
         CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
       }
+      
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
     }
@@ -227,13 +238,17 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       m.Set_ExecuteReactionTrigger(std::move(r));
       robot.GetExternalInterface()->Broadcast(std::move(m));
       
-      _voiceCommandBehavior = _behaviorNone;
-      return _voiceCommandBehavior;
+      BeginRespondingToCommand(currentCommand);
+      return _behaviorNone;
     }
     
     // Yes Please and No Thank You do not trigger a behavior here
     case VoiceCommandType::YesPlease:
     case VoiceCommandType::NoThankYou:
+    {
+      BeginRespondingToCommand(currentCommand);
+      // NOTE INTENTIONAL FALLTHROUGH
+    }
     
     // These two commands will never be handled by this chooser:
     case VoiceCommandType::HeyCozmo:
@@ -315,9 +330,18 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(AnimationTrigger animTrig
   return false;
 }
 
-void ActivityVoiceCommand::BeginRespondingToCommand(VoiceCommand::VoiceCommandType command)
+void ActivityVoiceCommand::BeginRespondingToCommand(VoiceCommand::VoiceCommandType command, bool trackResponseLifetime)
 {
   auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+  
+  voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommand(command));
+  
+  // If we don't care about the lifetime of this command response, just send out the response event
+  if (!trackResponseLifetime)
+  {
+    return;
+  }
+  
   voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(command));
   DEV_ASSERT_MSG(!_doneRespondingTask,
                  "ActivityVoiceCommand.BeginRespondingToCommand",
