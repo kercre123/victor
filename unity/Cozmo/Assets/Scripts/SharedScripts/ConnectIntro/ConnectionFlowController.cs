@@ -273,7 +273,7 @@ public class ConnectionFlowController : MonoBehaviour {
     _ConnectionFlowBackgroundModalInstance.SetStateInProgress(0);
 
     if (_SearchForCozmoScreenInstance != null) {
-      DAS.Error("ConnectionFlow.SearchForCozmo", "Search screen still exist! Don't create duplicate search screens");
+      DAS.Error("ConnectionFlow.SearchForCozmo", "Search screen still exists! Don't create duplicate search screens");
       return;
     }
 
@@ -313,10 +313,14 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void HandleEndpointFound() {
-    _SearchForCozmoFailedScreenInstance.OnEndpointFound -= HandleEndpointFound;
-    _SearchForCozmoFailedScreenInstance.OnQuitFlow -= HandleOnQuitFlowFromFailedSearch;
-    GameObject.Destroy(_SearchForCozmoFailedScreenInstance.gameObject);
-    _ConnectionFlowBackgroundModalInstance.SetStateComplete(0);
+    if (_SearchForCozmoFailedScreenInstance != null) {
+      _SearchForCozmoFailedScreenInstance.OnEndpointFound -= HandleEndpointFound;
+      _SearchForCozmoFailedScreenInstance.OnQuitFlow -= HandleOnQuitFlowFromFailedSearch;
+      GameObject.Destroy(_SearchForCozmoFailedScreenInstance.gameObject);
+    }
+    if (_ConnectionFlowBackgroundModalInstance != null) {
+      _ConnectionFlowBackgroundModalInstance.SetStateComplete(0);
+    }
     ShowConnectingToCozmoScreen();
     // Restart Scan loop sound
     PlayScanLoopAudio(true);
