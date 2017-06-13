@@ -67,6 +67,9 @@ protected:
   // Returns true if the command should be handled
   bool IsCommandValid(VoiceCommand::VoiceCommandType command) const;
   
+  // Returns true if we should check needs state for this command
+  bool ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const;
+  
   
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

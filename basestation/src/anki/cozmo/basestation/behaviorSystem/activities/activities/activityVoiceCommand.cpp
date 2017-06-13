@@ -129,11 +129,14 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
   {
     voiceCommandComponent->ClearHeardCommand();
   
-    // Check if we should refuse to execute the command due to needs state
-    const bool shouldRefuse = CheckRefusalDueToNeeds(robot, _voiceCommandBehavior);
-    if(shouldRefuse)
+    if(ShouldCheckNeeds(currentCommand))
     {
-      return _voiceCommandBehavior;
+      // Check if we should refuse to execute the command due to needs state
+      const bool shouldRefuse = CheckRefusalDueToNeeds(robot, _voiceCommandBehavior);
+      if(shouldRefuse)
+      {
+        return _voiceCommandBehavior;
+      }
     }
     
     // Check if we have enough sparks to execute the command
@@ -313,6 +316,32 @@ bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command
     case VoiceCommandType::Count:
     {
       // We're intentionally not handling these types in ActivityVoiceCommand
+      return false;
+    }
+  }
+}
+
+bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const
+{
+  switch(command)
+  {
+    case VoiceCommandType::LetsPlay:
+    case VoiceCommandType::DoADance:
+    case VoiceCommandType::DoATrick:
+    case VoiceCommandType::ComeHere:
+    case VoiceCommandType::FistBump:
+    case VoiceCommandType::PeekABoo:
+    {
+      return true;
+    }
+
+    // These commands are special; we don't care what our needs are when handling them
+    case VoiceCommandType::GoToSleep:
+    case VoiceCommandType::YesPlease:
+    case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::HeyCozmo:
+    case VoiceCommandType::Count:
+    {
       return false;
     }
   }
