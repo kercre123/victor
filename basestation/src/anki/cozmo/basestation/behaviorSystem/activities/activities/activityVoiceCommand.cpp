@@ -86,11 +86,6 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
-  
-  _refuseBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::VC_Refuse);
-  DEV_ASSERT(_refuseBehavior != nullptr &&
-             _refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
-             "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
 
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
 }
@@ -135,6 +130,9 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       const bool shouldRefuse = CheckRefusalDueToNeeds(robot, _voiceCommandBehavior);
       if(shouldRefuse)
       {
+        const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+        BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+      
         return _voiceCommandBehavior;
       }
     }
@@ -142,7 +140,11 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
     // Check if we have enough sparks to execute the command
     if(!HasEnoughSparksForCommand(robot, currentCommand))
     {
-      CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+      CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
+      
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+      
       return _voiceCommandBehavior;
     }
   }
@@ -182,7 +184,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       }
       else
       {
-        CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       }
       
       const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
@@ -202,7 +204,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       }
       else
       {
-        CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       }
       
       const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
@@ -222,7 +224,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehavior(Robot& robot, const IBehavio
       }
       else
       {
-        CheckAndSetupRefuseBehavior(AnimationTrigger::VCRefuse_sparks, _voiceCommandBehavior);
+        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       }
       
       const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
@@ -277,20 +279,20 @@ bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandT
 
 bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outputBehavior) const
 {
-  AnimationTrigger refuseAnim = AnimationTrigger::Count;
+  BehaviorID whichRefuse = BehaviorID::NoneBehavior;
   Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
   {
-    refuseAnim = AnimationTrigger::VCRefuse_repair;
+    whichRefuse = BehaviorID::VC_Refuse_Repair;
   }
   else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
   {
-    refuseAnim = AnimationTrigger::VCRefuse_energy;
+    whichRefuse = BehaviorID::VC_Refuse_Energy;
   }
   
-  if(refuseAnim != AnimationTrigger::Count)
+  if(whichRefuse != BehaviorID::NoneBehavior)
   {
-    return CheckAndSetupRefuseBehavior(refuseAnim, outputBehavior);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, outputBehavior);
   }
   return false;
 }
@@ -347,13 +349,19 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
   }
 }
 
-bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(AnimationTrigger animTrigger,
+bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
+                                                       BehaviorID whichRefuse,
                                                        IBehavior*& outputBehavior) const
 {
-  BehaviorPreReqAnimSequence preReq({animTrigger});
-  if(_refuseBehavior->IsRunnable(preReq))
+  IBehavior* refuseBehavior = robot.GetBehaviorFactory().FindBehaviorByID(whichRefuse);
+  DEV_ASSERT(refuseBehavior != nullptr &&
+             refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
+             "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
+  
+  BehaviorPreReqNone preReq;
+  if(refuseBehavior->IsRunnable(preReq))
   {
-    outputBehavior = _refuseBehavior;
+    outputBehavior = refuseBehavior;
     return true;
   }
   return false;

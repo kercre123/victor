@@ -1,0 +1,6 @@
+{
+  "behaviorClass" : "PlayAnim",
+  "behaviorID" : "VC_Refuse_Sparks",
+  "displayNameKey":"behavior.VC_Refuse_Sparks",
+  "animTriggers": ["VCRefuse_sparks"]
+}

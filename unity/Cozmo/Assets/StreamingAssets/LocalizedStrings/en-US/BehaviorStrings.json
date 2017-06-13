@@ -224,5 +224,14 @@
   },
   "behavior.ReactToVoiceCommand": {
     "translation": "Cozmo is listening to you"
+  },
+  "behavior.VC_Refuse_Energy": {
+    "translation": "Cozmo needs to be fed"
+  },
+  "behavior.VC_Refuse_Repair": {
+    "translation": "Cozmo needs a tune-up"
+  },
+  "behavior.VC_Refuse_Sparks": {
+    "translation": "You don't have enough sparks"
   }
 }

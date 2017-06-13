@@ -238,7 +238,9 @@ enum uint_8 BehaviorID {
   TrackLaser,
 
   VC_ComeHere,
-  VC_Refuse,
+  VC_Refuse_Energy,
+  VC_Refuse_Repair,
+  VC_Refuse_Sparks,
   VC_RequestKeepAway,
   VC_RequestMemoryMatch,
   VC_RequestSpeedTap

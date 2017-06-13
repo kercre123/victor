@@ -82,7 +82,6 @@ private:
   IBehavior*                            _comeHereBehavior     = nullptr;
   IBehavior*                            _fistBumpBehavior     = nullptr;
   IBehavior*                            _peekABooBehavior     = nullptr;
-  IBehavior*                            _refuseBehavior       = nullptr;
   std::unique_ptr<DoATrickSelector>     _doATrickSelector;
   std::unique_ptr<RequestGameSelector>  _requestGameSelector;
   std::function<void()>                 _doneRespondingTask;
@@ -96,7 +95,7 @@ private:
   
   // Setups up the refuse behavior to play the animTrigger
   // Returns true if the outputBehavior has been set to the refuse behavior
-  bool CheckAndSetupRefuseBehavior(AnimationTrigger animTrigger, IBehavior*& outputBehavior) const;
+  bool CheckAndSetupRefuseBehavior(Robot& robot, BehaviorID whichRefuse, IBehavior*& outputBehavior) const;
   
   // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
   // do once we're done responding to the command
