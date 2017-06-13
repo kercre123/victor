@@ -18,6 +18,8 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
@@ -231,6 +233,12 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   DEBUG_SET_STATE(KnockingOverStack);
   
   auto flipCallback = [this, &robot](const ActionResult& result){
+    // Mark the object as having no preaction poses - there's nothing else we can do
+    if(result == ActionResult::NO_PREACTION_POSES){
+      robot.GetAIComponent().GetWhiteboard().SetNoPreDockPosesOnObject(_bottomBlockID);
+      return;
+    }
+    
     const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
     if(resCat == ActionResultCategory::SUCCESS){
       //Knocked over stack successfully
