@@ -12,9 +12,7 @@
 #ifndef __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypes_H_
 #define __Cozmo_Basestation_VoiceCommands_SpeechRecognizerTHFTypes_H_
 
-#if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 extern "C" {
-  
 #ifndef bool
 #define bool_needsreset
 #define bool
@@ -26,7 +24,6 @@ extern "C" {
 #undef bool
 #endif
 }
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 
 #include <memory>
 #include <utility>
@@ -37,7 +34,6 @@ namespace Cozmo {
 class RecogData
 {
 public:
-#if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   RecogData(recog_t* recog, searchs_t* search, bool isPhraseSpotted, bool allowsFollowupRecog);
   ~RecogData();
   
@@ -51,25 +47,14 @@ public:
   searchs_t* GetSearch() const { return _search; }
   
   static void DestroyData(recog_t*& recognizer, searchs_t*& search);
-
-#elif VOICE_RECOG_PROVIDER == VOICE_RECOG_NONE
-  RecogData(bool isPhraseSpotted, bool allowsFollowupRecog)
-  : _isPhraseSpotted(isPhraseSpotted)
-  , _allowsFollowupRecog(allowsFollowupRecog)
-  { }
-  
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_NONE
   
   bool IsPhraseSpotted() const { return _isPhraseSpotted; }
   bool AllowsFollowupRecog() const { return _allowsFollowupRecog; }
   
   
 private:
-#if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   recog_t*          _recognizer = nullptr;
   searchs_t*        _search = nullptr;
-  
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
   bool              _isPhraseSpotted = false;
   bool              _allowsFollowupRecog = false;

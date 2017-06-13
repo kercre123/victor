@@ -57,10 +57,8 @@ namespace {
 // Local definition of data used internally for more strict encapsulation
 struct SpeechRecognizerTHF::SpeechRecognizerTHFData
 {
-#if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   thf_t*      _thfSession = nullptr;
   pronuns_t*  _thfPronun = nullptr;
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
   
   IndexType                         _thfCurrentRecog = InvalidIndex;
   IndexType                         _thfFollowupRecog = InvalidIndex;

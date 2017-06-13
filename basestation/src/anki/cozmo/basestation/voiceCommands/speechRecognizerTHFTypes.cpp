@@ -12,7 +12,6 @@
 
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHFTypes.h"
 
-#if VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
 namespace Anki {
 namespace Cozmo {
 
@@ -66,4 +65,3 @@ void RecogData::DestroyData(recog_t*& recognizer, searchs_t*& search)
   
 } // end namespace Cozmo
 } // end namespace Anki
-#endif // VOICE_RECOG_PROVIDER == VOICE_RECOG_THF
