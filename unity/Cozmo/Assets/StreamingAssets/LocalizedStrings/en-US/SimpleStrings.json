@@ -37,7 +37,7 @@
     "translation": "No"
   },
   "button.continue": {
-    "translation": "Continue"
+    "translation": "CONTINUE"
   },
   "button.okay": {
     "translation": "Okay"
@@ -103,7 +103,7 @@
     "translation": "Friend Bonus"
   },
   "label.connect": {
-    "translation": "Connect"
+    "translation": "CONNECT"
   },
   "label.start": {
     "translation": "Start"

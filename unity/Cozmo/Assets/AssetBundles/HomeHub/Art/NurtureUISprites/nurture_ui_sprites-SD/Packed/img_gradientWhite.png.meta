@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 28474e89ed2a34624ba4f869923f6513
-timeCreated: 1497028676
+guid: 939950a5d9e77417fa4b7f3f5413272b
+timeCreated: 1496966883
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -39,8 +39,8 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spriteBorder: {x: 1, y: 1, z: 1, w: 1}
-  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 35
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -58,19 +58,11 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
-  - buildTarget: Standalone
-    maxTextureSize: 2048
-    textureFormat: -1
-    textureCompression: 0
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
   spriteSheet:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: common_frame_spritesUHDAtlas
+  spritePackingTag: nurture_ui_spritesSDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

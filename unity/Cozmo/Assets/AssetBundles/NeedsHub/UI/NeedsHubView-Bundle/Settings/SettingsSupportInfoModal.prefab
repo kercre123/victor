@@ -1142,7 +1142,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_Secondary_Background
+  _LinkedComponentId: CozmoButton_Primary_BlueBackground
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114839353339217834
@@ -1198,7 +1198,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Secondary
+  _LinkedComponentId: CozmoButton_Primary_Blue
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 114713473769956840}

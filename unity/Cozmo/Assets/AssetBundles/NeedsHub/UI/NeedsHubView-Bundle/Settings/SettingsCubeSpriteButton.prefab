@@ -138,7 +138,13 @@ MonoBehaviour:
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  ButtonGraphics: []
+  ButtonGraphics:
+  - targetImage: {fileID: 11482724}
+    ignoreSprite: 0
+    pressedSprite: {fileID: 21300000, guid: 26f6b1272b8154478b9403b943119dd1, type: 3}
+    pressedColor: {r: 0.5588235, g: 0.5588235, b: 0.5588235, a: 1}
+    disabledSprite: {fileID: 21300000, guid: 9f661cd28ba904bf8ba3c45e80f18263, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
