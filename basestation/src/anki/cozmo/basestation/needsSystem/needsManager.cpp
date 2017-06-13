@@ -369,14 +369,14 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
 
   if (!_robotHadValidNeedsData && !_deviceHadValidNeedsData)
   {
-    PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Neither robot nor device has needs data");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Neither robot nor device has needs data");
     // Neither robot nor device has needs data
     needToWriteToDevice = true;
     needToWriteToRobot = true;
   }
   else if (_robotHadValidNeedsData && !_deviceHadValidNeedsData)
   {
-    PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Robot has needs data, but device doesn't");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Robot has needs data, but device doesn't");
     // Robot has needs data, but device doesn't
     // (Use case:  Robot has been used with another device)
     needToWriteToDevice = true;
@@ -385,23 +385,23 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   }
   else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
   {
-    PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Robot does NOT have needs data, but device does");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Robot does NOT have needs data, but device does");
     // Robot does NOT have needs data, but device does
     // So just go with device data, and write that to robot
     needToWriteToRobot = true;
   }
   else
   {
-    PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Both robot and device have needs data...");
-    PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Serial numbers %x and %x", _previousRobotSerialNumber, _needsStateFromRobot._robotSerialNumber);
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Both robot and device have needs data...");
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Serial numbers %x and %x", _previousRobotSerialNumber, _needsStateFromRobot._robotSerialNumber);
     // Both robot and device have needs data
     if (_previousRobotSerialNumber == _needsStateFromRobot._robotSerialNumber)
     {
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "...and serial numbers MATCH");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "...and serial numbers MATCH");
       // This was the same robot the device had been connected to before
       if (_savedTimeLastWrittenToDevice < _needsStateFromRobot._timeLastWritten)
       {
-        PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Robot data is newer");
+        PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Robot data is newer");
         // Robot data is newer; possibly someone controlled this robot with another device
         // Go with the robot data
         needToWriteToDevice = true;
@@ -410,19 +410,19 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       }
       else if (_savedTimeLastWrittenToDevice > _needsStateFromRobot._timeLastWritten)
       {
-        PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Device data is newer");
+        PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Device data is newer");
         // Device data is newer; go with the device data
         needToWriteToRobot = true;
       }
       else
       {
         // (else the times are identical, which is the normal case...nothing to do)
-        PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Timestamps are IDENTICAL");
+        PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Timestamps are IDENTICAL");
       }
     }
     else
     {
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "...and serial numbers DON'T match");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "...and serial numbers DON'T match");
       // User has connected to a different robot that has used the needs feature.
       // Use the robot's state; copy it to the device.
       needToWriteToDevice = true;
@@ -438,15 +438,15 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     if (_deviceNeedsVersionUpdate)
     {
       _deviceNeedsVersionUpdate = false;
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device due to storage version update");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to device due to storage version update");
     }
     else if (!_deviceHadValidNeedsData)
     {
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device for the first time");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to device for the first time");
     }
     else
     {
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to device");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to device");
     }
     // Instead of having WriteToDevice do the time-stamping, we do it externally here
     // so that we can use the exact same timestamp in StartWriteToRobot below
@@ -459,15 +459,15 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     if (_robotNeedsVersionUpdate)
     {
       _robotNeedsVersionUpdate = false;
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot due to storage version update");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to robot due to storage version update");
     }
     else if (!_robotHadValidNeedsData)
     {
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot for the first time");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to robot for the first time");
     }
     else
     {
-      PRINT_CH_INFO(kLogChannelName, "InitAfterReadFromRobotAttempt", "Writing needs data to robot");
+      PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Writing needs data to robot");
     }
     _timeLastWrittenToRobot = now;
     StartWriteToRobot();
@@ -1170,6 +1170,9 @@ void NeedsManager::StartWriteToRobot()
     return;
   }
 
+  if (_robotStorageState != RobotStorageState::Inactive)
+    return;
+
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
   const auto startTime = std::chrono::system_clock::now();
 
@@ -1208,9 +1211,6 @@ void NeedsManager::StartWriteToRobot()
     PRINT_NAMED_ERROR("NeedsState.StartWriteToRobot.WriteFailed", "Write failed");
     _robotStorageState = RobotStorageState::Inactive;
   }
-  auto endTime = std::chrono::system_clock::now();
-  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Write to robot START took %lld microseconds", microsecs.count());
 }
 
 void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time startTime)
