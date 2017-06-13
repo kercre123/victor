@@ -22,6 +22,9 @@ CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
 sys.path.insert(0, ENGINE_ROOT)
 PRODUCT_NAME = 'Cozmo'
 
+PY_SETUP_SCRIPT = os.path.join('project', 'buildScripts', 'cozmo_basestation_setup.py')
+BUILD_PY_EXT_CMD = 'python %s build_ext' % PY_SETUP_SCRIPT
+
 from configure_engine import BUILD_TOOLS_ROOT, print_header, print_status
 from configure_engine import ArgumentParser, generate_gyp, configure
 
@@ -222,6 +225,7 @@ def parse_game_arguments():
     parser.add_argument('--features', action='append', dest='features',
                         choices=['factoryTest',
                                  'factoryTestDev',
+                                 'pyExt',
                                  'sdkOnly',
                                  'standalone'], nargs='+',
                         help="Generates feature flags for project")
@@ -707,11 +711,20 @@ class GamePlatformConfiguration(object):
                                                  'build',
                                                  ':cozmoengine_standalone_app'])
 
-
         elif not os.path.exists(self.workspace_path):
             print_status('Workspace {0} does not exist...you must do a generate before doing a clean or build'.format(self.workspace_path))
             sys.exit(0)
         else:
+
+            if self.options.features and 'pyExt' in self.options.features[0]:
+                if self.platform == 'mac':
+                    # Run "brew update && brew install boost-python" before building the 'pyExt' feature
+                    # (with "configure.py -p mac build --features pyExt" or something similar) because
+                    # that feature depends on Boost.Python (http://www.boost.org/doc/libs/1_64_0/libs/python)
+                    subprocess.call(BUILD_PY_EXT_CMD, shell=True)
+                else:
+                    print("WARNING: The 'pyExt' feature is only available for the 'mac' platform")
+
             if self.options.verbose:
                 print_status('Calling ankibuild.xcode.build with scriptengine={0}'.format(script_engine))
             # Other cs flags and codesigning identity have default values that will work no matter what.

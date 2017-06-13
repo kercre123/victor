@@ -114,7 +114,7 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   
   for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
   {
-    SetParameter(eye, static_cast<ProceduralFace::Parameter>(i),eyeArray[i]);
+    SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
 }
 
@@ -138,8 +138,8 @@ void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKey
   }
   SetEyeArrayHelper(WhichEye::Right, eyeParams);
  
-  f32 jsonFaceAngle = procFaceKeyframe->faceAngle();
-  SetFaceAngle(jsonFaceAngle);
+  f32 fbFaceAngle = procFaceKeyframe->faceAngle();
+  SetFaceAngle(fbFaceAngle);
  
   f32 fbFaceCenterX = procFaceKeyframe->faceCenterX();
   f32 fbFaceCenterY = procFaceKeyframe->faceCenterY();
@@ -180,7 +180,29 @@ void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
     SetFaceScale({jsonFaceScaleX, jsonFaceScaleY});
   }
 }
-  
+
+void ProceduralFace::SetFromValues(const std::vector<f32>& leftEyeData, const std::vector<f32>& rightEyeData,
+                                   f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY)
+{
+  std::vector<Value> eyeParams;
+
+  for (std::vector<f32>::const_iterator it = leftEyeData.begin(); it != leftEyeData.end(); ++it) {
+    eyeParams.push_back(*it);
+  }
+  SetEyeArrayHelper(WhichEye::Left, eyeParams);
+
+  eyeParams.clear();
+
+  for (std::vector<f32>::const_iterator it = rightEyeData.begin(); it != rightEyeData.end(); ++it) {
+    eyeParams.push_back(*it);
+  }
+  SetEyeArrayHelper(WhichEye::Right, eyeParams);
+
+  SetFaceAngle(faceAngle_deg);
+  SetFacePosition({faceCenterX, faceCenterY});
+  SetFaceScale({faceScaleX, faceScaleY});
+}
+
 void ProceduralFace::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
   SetFaceAngle(msg.faceAngle_deg);

@@ -77,10 +77,11 @@ public:
   // Reset parameters to their nominal values
   void Reset();
   
-  // Read in available parameters from Json and FlatBuffers
+  // Read in available parameters from Json, FlatBuffers or input values
   void SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe);
   void SetFromJson(const Json::Value &jsonRoot);
-  
+  void SetFromValues(const std::vector<f32>& leftEyeData, const std::vector<f32>& rightEyeData,
+                     f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY);
   void SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg);
   
   // Get/Set each of the above procedural parameters, for each eye
