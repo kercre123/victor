@@ -123,21 +123,28 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(Robot& robot)
 {
   SET_STATE(DriveToFace);
   // Get the distance between the robot and the head's pose on the X/Y plane
-  Pose3d headPoseModified = robot.GetFaceWorld().GetFace(_targetFace)->GetHeadPose();
-  headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
-                                   headPoseModified.GetTranslation().y(),
-                                   robot.GetPose().GetTranslation().z()});
-  f32 distToHead;
-  if(ComputeDistanceBetween(headPoseModified, robot.GetPose(), distToHead) &&
-     distToHead > kMinDriveToFaceDistance_mm){
-    
-    DriveStraightAction* driveAction = new DriveStraightAction(robot,
-                                                               distToHead - kMinDriveToFaceDistance_mm,
-                                                               MAX_WHEEL_SPEED_MMPS);
-    driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
-    StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
+  const Vision::TrackedFace* facePtr = robot.GetFaceWorld().GetFace(_targetFace);
+  if(facePtr != nullptr){
+    Pose3d headPoseModified = facePtr->GetHeadPose();
+    headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
+                                     headPoseModified.GetTranslation().y(),
+                                     robot.GetPose().GetTranslation().z()});
+    f32 distToHead;
+    if(ComputeDistanceBetween(headPoseModified, robot.GetPose(), distToHead) &&
+       distToHead > kMinDriveToFaceDistance_mm){
+      
+      DriveStraightAction* driveAction = new DriveStraightAction(robot,
+                                                                 distToHead - kMinDriveToFaceDistance_mm,
+                                                                 MAX_WHEEL_SPEED_MMPS);
+      driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
+      StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
+    }else{
+      TransitionToTrackingFace(robot);
+    }
   }else{
-    TransitionToTrackingFace(robot);
+    PRINT_CH_INFO("BehaviorDriveToFace.TransitionToDrivingToFace.NullFace",
+                  "Target face appears to have disappeared",
+                  "Face ID: %s", _targetFace.GetDebugStr().c_str());
   }
 }
 
