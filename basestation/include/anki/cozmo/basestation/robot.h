@@ -578,7 +578,8 @@ public:
   
   bool IsPickedUp() const { return _isPickedUp; }
   
-  u16  GetCliffDataRaw() const { return _cliffDataRaw; }
+  // index corresponds to CliffSensor enum
+  u16  GetCliffDataRaw(unsigned int ind = 0) const;
   
   // sets distance detected by forward proximity sensor
   void SetForwardSensorValue(u16 value_mm)       { _forwardSensorValue_mm = value_mm; }
@@ -970,7 +971,7 @@ protected:
   bool             _isPickedUp            = false;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
-  u16              _cliffDataRaw          = std::numeric_limits<u16>::max();
+  std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> _cliffDataRaw; // initialized in constructor
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;

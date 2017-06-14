@@ -39,15 +39,15 @@ namespace Anki {
       // Only update pose-related information: includes pose frame ID, body pose in the world, and head/lift angles
       void SetPose(const PoseFrameID_t frameID, const Pose3d& pose, const f32 headAngle_rad, const f32 liftAngle_rad);
       
-      const Pose3d&       GetPose()                 const {return _pose;               }
-      const f32           GetHeadAngle_rad()        const {return _state.headAngle;    }
-      const f32           GetLiftAngle_rad()        const {return _state.liftAngle;    }
-      const f32           GetLiftHeight_mm()        const;
-      const u16           GetCliffData()            const {return _state.cliffDataRaw; }
-      const PoseFrameID_t GetFrameId()              const {return _state.pose_frame_id;}
+      const Pose3d&       GetPose()                        const {return _pose;               }
+      const f32           GetHeadAngle_rad()               const {return _state.headAngle;    }
+      const f32           GetLiftAngle_rad()               const {return _state.liftAngle;    }
+      const f32           GetLiftHeight_mm()               const;
+      const u16           GetCliffData(unsigned int ind=0) const;
+      const PoseFrameID_t GetFrameId()                     const {return _state.pose_frame_id;}
       
-      const f32           GetLeftWheelSpeed_mmps()  const {return _state.lwheel_speed_mmps;}
-      const f32           GetRightWheelSpeed_mmps() const {return _state.lwheel_speed_mmps;}
+      const f32           GetLeftWheelSpeed_mmps()         const {return _state.lwheel_speed_mmps;}
+      const f32           GetRightWheelSpeed_mmps()        const {return _state.lwheel_speed_mmps;}
                                                           
       bool WasCarryingObject() const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK)); }
       bool WasMoving()         const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_MOVING)); }

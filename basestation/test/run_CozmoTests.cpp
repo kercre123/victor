@@ -602,21 +602,7 @@ TEST(BlockWorld, PoseUpdates)
   }
   
   // Fake a state message update for robot
-  RobotState stateMsg(1, // timestamp,
-                      0, // pose_frame_id,
-                      1, // pose_origin_id,
-                      RobotPose(0.f,0.f,0.f,0.f,0.f),
-                      0.f, // lwheel_speed_mmps,
-                      0.f, // rwheel_speed_mmps,
-                      0.f, // headAngle,
-                      0.f, // liftAngle,
-                      AccelData(),
-                      GyroData(),
-                      0.f, // batteryVoltage,
-                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
-                      0, // lastPathID,
-                      0, // cliffDataRaw,
-                      0); // currPathSegment
+  RobotState stateMsg = robot.GetDefaultRobotState();
   
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);

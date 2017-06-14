@@ -847,26 +847,35 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
   // always listen to events which say we aren't on a cliff, but ignore ones which say we are (so we don't
   // get "stuck" om a cliff
-  if( !(robot->IsCliffSensorEnabled()) && cliffEvent.detected ) {
+  if( !robot->IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0) ) {
     return;
   }
   
-  if (cliffEvent.detected) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
-                     cliffEvent.x_mm, cliffEvent.y_mm);
-    
-    // Add cliff obstacle
-    Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, robot->GetWorldOrigin());
-    robot->GetBlockWorld().AddCliff(cliffPose);
-    
+  if (cliffEvent.detectedFlags != 0) {
+    // grab historical state at the time the cliff was detected
+    HistRobotState histState;
+    TimeStamp_t histTimestamp;
+    const bool useInterp = true;
+    if (robot->GetStateHistory()->ComputeStateAt(cliffEvent.timestamp, histTimestamp, histState, useInterp) == RESULT_OK) {
+      // TODO: The cliff pose should be computed more intelligently for multiple cliff sensor scenario (COZMO-12243)
+      Pose3d cliffPose = histState.GetPose();
+      PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
+                       cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
+      // Add cliff obstacle
+      robot->GetBlockWorld().AddCliff(cliffPose);
+    } else {
+      PRINT_NAMED_ERROR("RobotImplMessaging.HandleCliffEvent.NoHistoricalPose",
+                        "Could not retrieve historical pose for timestamp %u",
+                        cliffEvent.timestamp);
+    }
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
   
-  robot->SetCliffDetected(cliffEvent.detected);
+  robot->SetCliffDetected(cliffEvent.detectedFlags != 0);
   
   // Forward on with EngineToGame event
-  robot->Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(cliffEvent)));
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));
 }
 
 void RobotToEngineImplMessaging::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message)

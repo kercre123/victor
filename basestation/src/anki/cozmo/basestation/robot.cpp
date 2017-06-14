@@ -255,6 +255,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   // the robot localized (by odometry alone) to start, until he gets picked up.
   _isLocalized = true;
   SetLocalizedTo(nullptr);
+  
+  _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
 
   _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
       
@@ -401,7 +403,19 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
     SetCliffDetectThreshold(thresh);
   }
 }
-    
+  
+u16 Robot::GetCliffDataRaw(unsigned int ind) const
+{
+  #ifdef COZMO_V2
+  DEV_ASSERT(ind < Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT), "Robot.GetCliffDataRaw.InvalidIndex");
+  #else
+  // For pre-V2 robots, there is only one cliff sensor, so index should be 0.
+  DEV_ASSERT(ind == 0, "Robot.GetCliffDataRaw.InvalidIndex");
+  #endif // COZMO_V2
+  
+  return _cliffDataRaw[ind];
+}
+  
 void Robot::IncrementSuspiciousCliffCount()
 {
   if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
@@ -425,8 +439,8 @@ void Robot::EvaluateCliffSuspiciousnessWhenStopped() {
 // Updates mean and variance of cliff readings observed in last kCliffSensorRunningStatsWindowSize RobotState msgs.
 // Based on Welford Algorithm. See http://stackoverflow.com/questions/5147378/rolling-variance-algorithm
 void Robot::UpdateCliffRunningStats(const RobotState& msg) {
-  
-  u16 obs = msg.cliffDataRaw;
+  // TODO: update this to support multiple cliff sensors
+  u16 obs = msg.cliffDataRaw[0];
   if (GetMoveComponent().AreWheelsMoving() && (GetOffTreadsState() == OffTreadsState::OnTreads) && obs > (_cliffDetectThreshold)) {
 
     _cliffDataQueue.push_back(obs);
@@ -3819,6 +3833,9 @@ RobotState Robot::GetDefaultRobotState()
   
   const RobotPose kDefaultPose(0.f, 0.f, 0.f, 0.f, 0.f);
   
+  std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
+  defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
+  
   const RobotState state(1, //uint32_t timestamp, (Robot does not report at t=0
                          0, //uint32_t pose_frame_id,
                          1, //uint32_t pose_origin_id,
@@ -3832,7 +3849,7 @@ RobotState Robot::GetDefaultRobotState()
                          5.f, //float batteryVoltage,
                          kDefaultStatus, //uint32_t status,
                          0, //uint16_t lastPathID,
-                         0, //uint16_t cliffDataRaw,
+                         std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          -1); //int8_t currPathSegment
   
   return state;

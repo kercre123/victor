@@ -103,6 +103,12 @@ namespace Anki {
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
 #endif
         ResetMissedLogCount();
+#ifndef COZMO_V2
+        // For pre-V2 robots, only the 0th entry of cliffDataRaw is used, so initialize the other entries
+        for (int i=0 ; i<CLIFF_COUNT ; i++) {
+          robotState_.cliffDataRaw[i] = 0;
+        }
+#endif
         return RESULT_OK;
       }
 
@@ -192,8 +198,14 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
-        robotState_.cliffDataRaw = ProxSensors::GetMinRawCliffValue();
-
+#ifdef COZMO_V2
+        for (int i=0 ; i < CLIFF_COUNT ; i++) {
+          robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
+        }
+#else
+        robotState_.cliffDataRaw[0] = ProxSensors::GetRawCliffValue(0);
+#endif
+        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
         robotState_.status = 0;
@@ -211,7 +223,7 @@ namespace Anki {
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
-        robotState_.status |= ProxSensors::IsCliffDetected() ? CLIFF_DETECTED : 0;
+        robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;

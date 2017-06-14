@@ -34,12 +34,11 @@ namespace Anki {
       
       void EnableStopOnCliff(bool enable);
 
-      bool IsCliffDetected();
+      bool IsAnyCliffDetected();
       
       void SetCliffDetectThreshold(u16 level);
       
-      // Returns the minimum value of all cliff sensor values
-      u16 GetMinRawCliffValue();
+      u16 GetRawCliffValue(unsigned int ind = 0);
       
     } // namespace ProxSensors
   } // namespace Cozmo

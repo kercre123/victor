@@ -650,7 +650,7 @@ void BehaviorLookAround::HandleRobotOfftreadsStateChanged(const EngineToGameEven
 
 void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, const Robot& robot)
 {
-  if( event.GetData().Get_CliffEvent().detected ) {
+  if( event.GetData().Get_CliffEvent().detectedFlags != 0 ) {
     // consider this location an obstacle
     UpdateSafeRegionForCliff(robot.GetPose());
   }

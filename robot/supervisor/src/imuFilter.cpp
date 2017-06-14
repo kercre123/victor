@@ -99,7 +99,11 @@ namespace Anki {
         const u8  PUTDOWN_COUNT      = 40;
         u8 putdownCnt_               = 0;
         
-        u16 cliffValWhileNotMoving_      = 0;
+#ifdef COZMO_V2
+        u16 cliffValsWhileNotMoving_[CLIFF_COUNT] = {0};
+#else
+        u16 cliffValWhileNotMoving_ = 0;
+#endif
         const u16 CLIFF_DELTA_FOR_PICKUP = 50;
         
         const f32 ACCEL_DISTURBANCE_MOTION_THRESH = 40.f;
@@ -273,7 +277,13 @@ namespace Anki {
 
       void ResetPickupVars() {
         pickedUp_ = 0;
+#ifdef COZMO_V2
+        for (int i=0 ; i < CLIFF_COUNT ; i++) {
+          cliffValsWhileNotMoving_[i] = 0;
+        }
+#else
         cliffValWhileNotMoving_ = 0;
+#endif
         potentialPickupCnt_ = 0;
         putdownCnt_ = 0;
         external_accel_disturbance_cnt[0] = external_accel_disturbance_cnt[1] = external_accel_disturbance_cnt[2] = 0;
@@ -450,10 +460,10 @@ namespace Anki {
               BraceForImpact();
             } else {
               // only clear the flag if aMag rises above the higher threshold.
-              fallStarted = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && ProxSensors::IsCliffDetected();
+              fallStarted = (accelMagnitudeSqrd_ < FALLING_THRESH_HIGH_MMPS2_SQRD) && ProxSensors::IsAnyCliffDetected();
             }
           } else { // not fallStarted
-            if ((accelMagnitudeSqrd_ < FALLING_THRESH_LOW_MMPS2_SQRD) && ProxSensors::IsCliffDetected()) {
+            if ((accelMagnitudeSqrd_ < FALLING_THRESH_LOW_MMPS2_SQRD) && ProxSensors::IsAnyCliffDetected()) {
               fallStarted = true;
               fallStartedTime = now;
             }
@@ -506,7 +516,7 @@ namespace Anki {
           
           // Picked up flag is reset only when the robot has
           // stopped moving, detects no cliffs, and has been set upright.
-          if (!ProxSensors::IsCliffDetected() &&
+          if (!ProxSensors::IsAnyCliffDetected() &&
               CheckPutdown() &&
               (accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2)) {
             if (++putdownCnt_ > PUTDOWN_COUNT) {
@@ -522,20 +532,39 @@ namespace Anki {
           bool cliffBasedPickupDetect = false;
           bool gyroZBasedMotionDetect = false;
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
-            s16 cliffDelta = 0;
-            if (cliffValWhileNotMoving_ == 0) {
-              cliffValWhileNotMoving_ = ProxSensors::GetMinRawCliffValue();
-            } else {
-              cliffDelta = ABS(cliffValWhileNotMoving_ - ProxSensors::GetMinRawCliffValue());
-            }
+            s16 maxCliffDelta = 0;
             
-            cliffBasedPickupDetect = cliffDelta > CLIFF_DELTA_FOR_PICKUP;
+#ifdef COZMO_V2
+            for (int i=0 ; i < CLIFF_COUNT ; i++) {
+              if (cliffValsWhileNotMoving_[i] == 0) {
+                cliffValsWhileNotMoving_[i] = ProxSensors::GetRawCliffValue(i);
+              } else {
+                const s16 absCliffDelta = ABS(cliffValsWhileNotMoving_[i] - ProxSensors::GetRawCliffValue(i));
+                maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
+              }
+            }
+#else
+            if (cliffValWhileNotMoving_ == 0) {
+              cliffValWhileNotMoving_ = ProxSensors::GetRawCliffValue();
+            } else {
+              const s16 absCliffDelta = ABS(cliffValWhileNotMoving_ - ProxSensors::GetRawCliffValue());
+              maxCliffDelta = MAX(maxCliffDelta, absCliffDelta);
+            }
+#endif
+            
+            cliffBasedPickupDetect = maxCliffDelta > CLIFF_DELTA_FOR_PICKUP;
 
             // As long as wheels aren't moving, we can also check for Z-axis gyro motion
             gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2];
             
           } else {
+#ifdef COZMO_V2
+            for (int i=0 ; i < CLIFF_COUNT ; i++) {
+              cliffValsWhileNotMoving_[i] = 0;
+            }
+#else
             cliffValWhileNotMoving_ = 0;
+#endif
             
             // Is the robot turning at a radically different speed than what it should be experiencing given current wheel speeds?
             // UNEXPECTED_ROTATION_SPEED_THRESH is being used as a multipurpose margin here. Because GetCurrNoSlipBodyRotSpeed() is based
@@ -783,7 +812,7 @@ namespace Anki {
               gyroBiasCoeff_ = GYRO_BIAS_FILT_COEFF;
               gyroMotionThresh_ = GYRO_MOTION_THRESHOLD;
             }
-            else if ( ProxSensors::IsCliffDetected() ||
+            else if ( ProxSensors::IsAnyCliffDetected() ||
                       (ABS(gyro_bias_filt[0] - imu_data_.rate_x) > BIAS_FILT_RESTART_THRESH) ||
                       (ABS(gyro_bias_filt[1] - imu_data_.rate_y) > BIAS_FILT_RESTART_THRESH) ||
                       (ABS(gyro_bias_filt[2] - imu_data_.rate_z) > BIAS_FILT_RESTART_THRESH) ) {

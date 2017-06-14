@@ -6,12 +6,18 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_8 CliffSensor {
+  CLIFF_FL = 0, // Front left
+  CLIFF_FR,     // Front right
+  CLIFF_BL,     // Back left
+  CLIFF_BR,     // Back right
+  CLIFF_COUNT
+}
+
 // If detected, (x_mm, y_mm) represent the location the cliff was detected
 message CliffEvent {
-  float_32 x_mm,
-  float_32 y_mm,
-  float_32 angle_rad,
-  bool     detected,
+  uint_32  timestamp,
+  uint_8   detectedFlags,  // bit flags shifted by CliffSensor values above
   bool     didStopForCliff
 }
 

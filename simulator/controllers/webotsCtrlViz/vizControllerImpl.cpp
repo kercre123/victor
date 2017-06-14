@@ -592,10 +592,21 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
   bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
+#ifdef COZMO_V2
+  sprintf(txt, "Cliff: {%4u, %4u, %4u, %4u} %s",
+          payload.state.cliffDataRaw[0],
+          payload.state.cliffDataRaw[1],
+          payload.state.cliffDataRaw[2],
+          payload.state.cliffDataRaw[3],
+          cliffDetected ? "CLIFF DETECTED" : "");
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
+#else
   sprintf(txt, "Cliff: %4u %s",
-          payload.state.cliffDataRaw,
+          payload.state.cliffDataRaw[0],
           cliffDetected ? "CLIFF DETECTED" : "");
           DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
+#endif // COZMO_V2
+
   
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
     (int)payload.state.lwheel_speed_mmps,

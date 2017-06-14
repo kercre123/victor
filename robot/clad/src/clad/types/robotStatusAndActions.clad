@@ -1,4 +1,4 @@
-// File: robotStatusFlag
+// File: robotStatusAndActions
 // Author: damjan stulic
 // Created: 8/13/15
 // Copyright: Anki, inc. 2015
@@ -90,7 +90,7 @@ structure RobotState
   float_32 batteryVoltage,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 lastPathID,
-  uint_16 cliffDataRaw,
+  uint_16 cliffDataRaw[4],
   int_8   currPathSegment, // -1 if not traversing a path
 }
 

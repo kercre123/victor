@@ -461,7 +461,7 @@ void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const 
     }
       
     case MessageEngineToGameTag::CliffEvent: {
-      if(event.GetData().Get_CliffEvent().detected){
+      if(event.GetData().Get_CliffEvent().detectedFlags != 0){
         _lastCliffEvent_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       break;

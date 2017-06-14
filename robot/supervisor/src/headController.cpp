@@ -450,7 +450,7 @@ namespace HeadController {
       if (potentialBurnoutStartTime_ms_ == 0) {
         potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-        if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsCliffDetected()) {
+        if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
           // Stop messing with the head! Going limp until you do!
           Messages::SendMotorAutoEnabledMsg(MOTOR_HEAD, false);
           Disable(true);

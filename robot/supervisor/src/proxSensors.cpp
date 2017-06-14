@@ -21,11 +21,26 @@ namespace Anki {
       namespace {
 
         // Cliff sensor
+        #ifdef COZMO_V2
+        const int _nCliffSensors = CLIFF_COUNT;
+        #else
+        const int _nCliffSensors = 1;
+        // The upper bound on the cliff detection threshold is computed by subtracting
+        // cliff off value from this.
+        const u16 MAX_CLIFF_SENSOR_DETECT_THRESH_UPPER_BOUND = 2*CLIFF_SENSOR_DROP_LEVEL;
+        #endif
+        
+        u16 _cliffVals[_nCliffSensors] = {0};
+        
+        // Bits correspond to each of the cliff sensors (4 for V2, 1 otherwise)
+        uint8_t _cliffDetectedFlags = 0;
+        
         bool _enableCliffDetect = true;
-        bool _cliffDetected    = false;
-        bool _wasCliffDetected = false;
+        bool _wasAnyCliffDetected = false;
         bool _wasPickedup      = false;
 
+        bool _stopOnCliff = true;
+        
         u16 _cliffDetectThresh = CLIFF_SENSOR_DROP_LEVEL;
         
         CliffEvent _cliffMsg;
@@ -38,26 +53,20 @@ namespace Anki {
         const u32 PROX_EVENT_CYCLE_PERIOD = 6;
         #endif
         
-        #ifdef COZMO_V2
-        u16 _cliffVals[HAL::CLIFF_COUNT];
-        HAL::CliffID _minCliffSensor;
-        #else
-        // The upper bound on the cliff detection threshold is computed by subtracting
-        // cliff off value from this.
-        const u16 MAX_CLIFF_SENSOR_DETECT_THRESH_UPPER_BOUND = 2*CLIFF_SENSOR_DROP_LEVEL;
-        #endif
-        
-        bool _stopOnCliff = true;
-        
       } // "private" namespace
 
-      void QueueCliffEvent(f32 x, f32 y, f32 angle) {
+      void QueueCliffEvent() {
         if (_pendingCliffEvent == 0) {
           _pendingCliffEvent = HAL::GetTimeStamp() + CLIFF_EVENT_DELAY_MS;
-          _cliffMsg.x_mm = x;
-          _cliffMsg.y_mm = y;
-          _cliffMsg.angle_rad = angle;
-          _cliffMsg.detected = true;
+          _cliffMsg.timestamp = HAL::GetTimeStamp();
+          #ifdef COZMO_V2
+          _cliffMsg.detectedFlags = _cliffDetectedFlags;
+          #else
+          // For pre-V2 robots, there is only one cliff sensor in the front. However,
+          // send the message as if the front left and front right cliffs were detected
+          // so that the engine will handle it appropriately.
+          _cliffMsg.detectedFlags = (1<<CLIFF_FL) | (1<<CLIFF_FR);
+          #endif // COZMO_V2
           _cliffMsg.didStopForCliff = _stopOnCliff;
         }
       }
@@ -74,42 +83,26 @@ namespace Anki {
         }
       }
 
-      u16 GetMinRawCliffValue()
+      u16 GetRawCliffValue(unsigned int ind)
       {
         #ifdef COZMO_V2
-        return _cliffVals[_minCliffSensor];
+        AnkiConditionalErrorAndReturnValue(ind < CLIFF_COUNT, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);
+        return HAL::GetRawCliffData(static_cast<HAL::CliffID>(ind));
         #else
+        AnkiConditionalErrorAndReturnValue(ind == 0, 0, 1233, "ProxSensors.GetRawCliffValue.InvalidIndex", 647, "Index %d is not valid", 1, ind);
         return HAL::GetRawCliffData();
         #endif // COZMO_V2
       }
-
-      
       
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the
       // reason for the cliff was actually a pickup.
       void UpdateCliff()
       {
-        #ifdef COZMO_V2
-        {
-          // Update all cliff values and store sensor with min value
-          _cliffVals[HAL::CLIFF_FL] = HAL::GetRawCliffData(HAL::CLIFF_FL);
-          _cliffVals[HAL::CLIFF_FR] = HAL::GetRawCliffData(HAL::CLIFF_FR);
-          _cliffVals[HAL::CLIFF_BL] = HAL::GetRawCliffData(HAL::CLIFF_BL);
-          _cliffVals[HAL::CLIFF_BR] = HAL::GetRawCliffData(HAL::CLIFF_BR);
-
-          u16 minVal = _cliffVals[0];
-          _minCliffSensor = (HAL::CliffID)0;
-          for (int i=1; i<HAL::CLIFF_COUNT; ++i) {
-            if (_cliffVals[i] < minVal) {
-              minVal = _cliffVals[i];
-              _minCliffSensor = (HAL::CliffID)i;
-            }
-          }
+        // Update all cliff values
+        for (int i=0 ; i < _nCliffSensors ; i++) {
+          _cliffVals[i] = GetRawCliffValue(i);
         }
-        #endif  // COZMO_V2
-
-
         
         // Compute bounds on cliff detect/undetect thresholds which may be adjusted according to the
         // intensity of ambient light as measured by the LED-off level.
@@ -139,13 +132,14 @@ namespace Anki {
         
         #endif  // ifdef COZMO_V2
         
-        
-        // Update cliff status with hysteresis
-        u16 rawCliff = GetMinRawCliffValue();
-        if (!_cliffDetected && rawCliff < cliffDetectThresh) {
-          _cliffDetected = true;
-        } else if (_cliffDetected && rawCliff > cliffUndetectThresh) {
-          _cliffDetected = false;
+        for (int i=0 ; i < _nCliffSensors ; i++) {
+          // Update cliff status with hysteresis
+          const bool alreadyDetected = (_cliffDetectedFlags & (1<<i)) != 0;
+          if (!alreadyDetected && _cliffVals[i] < cliffDetectThresh) {
+            _cliffDetectedFlags |= (1<<i);
+          } else if (alreadyDetected && _cliffVals[i] > cliffUndetectThresh) {
+            _cliffDetectedFlags &= ~(1<<i);
+          }
         }
         
         #ifdef COZMO_V2
@@ -168,10 +162,10 @@ namespace Anki {
         bool alreadyStopping = (desiredLeftSpeed == 0.f) && (desiredRightSpeed == 0.f);
 
         if (_enableCliffDetect &&
-            IsCliffDetected() &&
+            IsAnyCliffDetected() &&
             !IMUFilter::IsPickedUp() &&
             isDriving && !alreadyStopping &&
-            !_wasCliffDetected) {
+            !_wasAnyCliffDetected) {
           
           // TODO (maybe): Check for cases where cliff detect should not stop motors
           // 1) Turning in place
@@ -202,12 +196,12 @@ namespace Anki {
           }
           
           // Queue cliff detected message
-          QueueCliffEvent(Localization::GetCurrPose_x(), Localization::GetCurrPose_y(), Localization::GetCurrPose_angle().ToFloat());
+          QueueCliffEvent();
           
-          _wasCliffDetected = true;
-        } else if (!IsCliffDetected() && _wasCliffDetected) {
+          _wasAnyCliffDetected = true;
+        } else if (!IsAnyCliffDetected() && _wasAnyCliffDetected) {
           QueueUncliffEvent();
-          _wasCliffDetected = false;
+          _wasAnyCliffDetected = false;
         }
 
         
@@ -217,15 +211,23 @@ namespace Anki {
         }
         _wasPickedup = IMUFilter::IsPickedUp();
         
-        // Send queued cliff event
-        if (_pendingCliffEvent != 0 && HAL::GetTimeStamp() >= _pendingCliffEvent) {
-          RobotInterface::SendMessage(_cliffMsg);
-          _pendingCliffEvent = 0;
+        // Send or update queued cliff event
+        if (_pendingCliffEvent != 0) {
+          #ifdef COZMO_V2
+          // Update the detectedFlags field if any new cliffs have been detected
+          // since first queuing the message
+          _cliffMsg.detectedFlags |= _cliffDetectedFlags;
+          #endif // COZMO_V2
+          
+          if (HAL::GetTimeStamp() >= _pendingCliffEvent) {
+            RobotInterface::SendMessage(_cliffMsg);
+            _pendingCliffEvent = 0;
+          }
         }
         
         // Send queued uncliff event
         if (_pendingUncliffEvent != 0 && HAL::GetTimeStamp() >= _pendingUncliffEvent) {
-          _cliffMsg.detected = false;
+          _cliffMsg.detectedFlags = 0;
           RobotInterface::SendMessage(_cliffMsg);
           _pendingUncliffEvent = 0;
         }
@@ -273,9 +275,9 @@ namespace Anki {
       } // Update()
 
 
-      bool IsCliffDetected()
+      bool IsAnyCliffDetected()
       {
-        return _cliffDetected;
+        return _cliffDetectedFlags != 0;
       }
       
       void EnableCliffDetector(bool enable) {
@@ -305,10 +307,11 @@ namespace Anki {
       void Reset() {
         _enableCliffDetect = true;
         _stopOnCliff       = true;
-        _wasCliffDetected  = false;
+        _wasAnyCliffDetected  = false;
         _wasPickedup       = false;
         
-        _cliffDetected     = false;
+        _cliffDetectedFlags = 0;
+        
         _cliffDetectThresh = CLIFF_SENSOR_DROP_LEVEL;
         
         _pendingCliffEvent   = 0;

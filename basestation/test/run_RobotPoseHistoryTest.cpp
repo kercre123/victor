@@ -44,9 +44,9 @@ TEST(RobotStateHistory, AddGetPose)
   state2.liftAngle = 0.5f;
   state2.liftAngle = 0.7f;
   
-  state1.cliffDataRaw = 800;
-  state2.cliffDataRaw = 800;
-  state3.cliffDataRaw = 800;
+  state1.cliffDataRaw.fill(800);
+  state2.cliffDataRaw.fill(800);
+  state3.cliffDataRaw.fill(800);
   
   const TimeStamp_t t1 = 0;
   const TimeStamp_t t2 = 10;

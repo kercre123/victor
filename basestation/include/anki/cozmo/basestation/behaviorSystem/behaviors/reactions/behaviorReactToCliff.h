@@ -14,12 +14,13 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToCliff_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
-#include "anki/common/basestation/objectIDs.h"
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
+class ICompoundAction;
+  
 class BehaviorReactToCliff : public IBehavior
 {
 private:
@@ -54,11 +55,15 @@ private:
   State _state = State::PlayingStopReaction;
 
   bool _gotCliff = false;
+  uint8_t _detectedFlags = 0;
   
   void TransitionToPlayingStopReaction(Robot& robot);
   void TransitionToPlayingCliffReaction(Robot& robot);
   void TransitionToBackingUp(Robot& robot);
   void SendFinishedReactToCliffMessage(Robot& robot);
+  
+  // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
+  CompoundActionSequential* GetCliffPreReactAction(Robot& robot, uint8_t cliffDetectedFlags);
 
   u16 _cliffDetectThresholdAtStart = 0;
   bool _quitReaction = false;
