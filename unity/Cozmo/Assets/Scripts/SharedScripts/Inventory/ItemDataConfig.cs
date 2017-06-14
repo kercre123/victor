@@ -84,9 +84,6 @@ namespace Cozmo {
     private ItemData[] _ItemMap;
 
     [SerializeField]
-    private ItemData _GenericHexItemData;
-
-    [SerializeField]
     private ItemData _GenericCubeItemData;
 
     private Dictionary<string, ItemData> _IdToData;
@@ -113,17 +110,10 @@ namespace Cozmo {
 
     public static ItemData GetData(string itemId) {
       ItemData data = null;
-      if (HexItemList.IsPuzzlePiece(itemId)) {
-        data = GetHexData();
-      }
-      else if (!_sInstance._IdToData.TryGetValue(itemId, out data)) {
+      if (!_sInstance._IdToData.TryGetValue(itemId, out data)) {
         DAS.Error("ItemDataConfig.GetData", "Could not find item='" + itemId + "' in dictionary!");
       }
       return data;
-    }
-
-    public static ItemData GetHexData() {
-      return _sInstance._GenericHexItemData;
     }
 
     public static ItemData GetCubeData() {
@@ -133,7 +123,6 @@ namespace Cozmo {
     public static List<string> GetAllItemIds() {
       List<string> allItemIds = new List<string>();
       allItemIds.AddRange(GetItemIds());
-      allItemIds.AddRange(HexItemList.GetPuzzlePieceIds());
       return allItemIds;
     }
 

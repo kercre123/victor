@@ -250,9 +250,8 @@ public class RewardedActionsEditor : EditorWindow {
     string toCSV = "Description,Reward,Tag\n";
     for (int i = 0; i < _CurrentRewardData.RewardedActions.Count; i++) {
       RewardedActionData data = _CurrentRewardData.RewardedActions[i];
-      toCSV += string.Format("{0},{1},{2}\n", LocalizationEditorUtility.GetTranslationSansFormatting(data.Reward.DescriptionKey),
-                             data.Reward.Amount,
-                             data.Tag);
+      toCSV += string.Format("{0},{1}\n", LocalizationEditorUtility.GetTranslationSansFormatting(data.Reward.DescriptionKey),
+                             data.Reward.Amount);
     }
     string targetCSV = Path.Combine(sCSVDirectory, kRewardedActionsCSV);
     if (File.Exists(targetCSV)) {
@@ -356,8 +355,6 @@ public class RewardedActionsEditor : EditorWindow {
     else {
       data.RewardEvent.Value = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, data.RewardEvent.Value.ToString())), _FilteredCladNameOptions)];
     }
-
-    EditorDrawingUtility.DrawTagDropDown(ref data.Tag);
 
     EditorGUILayout.LabelField("Localization", EditorDrawingUtility.SubtitleStyle);
     EditorDrawingUtility.DrawLocalizationString(ref data.Reward.DescriptionKey);

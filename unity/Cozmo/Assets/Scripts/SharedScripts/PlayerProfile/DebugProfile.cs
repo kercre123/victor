@@ -15,7 +15,6 @@ namespace DataPersistence {
     public bool UseFastConnectivityFlow;
     public bool OverrideLanguage;
     public UnityEngine.SystemLanguage LanguageSettingOverride;
-    public bool UseNeedsHub;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -23,11 +22,9 @@ namespace DataPersistence {
       FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
-      UseNeedsHub = true;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
-      DebugConsoleData.Instance.AddConsoleVar("UseNeedsHub", "NeedsHub", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;

@@ -13,45 +13,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KnockOverThreeCubeStack
-    _EnumValue: 5
+    _EnumValue: 11
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: RollCube
     _EnumValue: 9
   AnyPrereqUnlock: 0
   _ComingSoon: 0
-  _HideInUI: 0
   DescriptionKey: unlockable.KnockOverThreeCubeStack.Description
   TitleKey: unlockable.KnockOverThreeCubeStack.Title
   SparkButtonDescription: unlockable.KnockOverThreeCubeStack.SparkButtonDescription
   SparkedStateDescription: unlockable.KnockOverThreeCubeStack.SparkedStateDescription
   SparkedMusicState:
-    _Sparked: 982472036
-  UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 6
+    _Sparked: 0
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountCurve:
-    serializedVersion: 2
-    m_Curve:
-    - time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    - time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 1
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 3
-  CoreUpgradeTintColorName: upgradePurple
+  RequestTrickCostAmount: 1
   CoreUpgradeIcon: {fileID: 21300000, guid: d06dda776cd77466a87509f56df730a2, type: 3}
-  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: d06dda776cd77466a87509f56df730a2,
-    type: 3}
   CubesRequired: 2
   SortOrder: 500
+  AndroidReleaseVersion: 

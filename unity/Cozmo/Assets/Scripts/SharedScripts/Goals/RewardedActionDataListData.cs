@@ -17,7 +17,6 @@ namespace Cozmo {
         Id = 0;
         Reward = new RewardData();
         RewardEvent = new SerializableGameEvents();
-        Tag = "";
       }
 
       /// <summary>
@@ -25,10 +24,6 @@ namespace Cozmo {
       /// </summary>
       public uint Id;
       public SerializableGameEvents RewardEvent;
-      /// <summary>
-      /// The tag group of this reward.
-      /// </summary>
-      public string Tag;
       /// <summary>
       /// The Conditions for if this reward will be granted when its event is fired.
       /// </summary>

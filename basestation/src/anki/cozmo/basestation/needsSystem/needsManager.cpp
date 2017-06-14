@@ -194,10 +194,6 @@ namespace {
 };
 #endif
 
-namespace {
-  CONSOLE_VAR(bool, kUseNeedManager, "Needs", true);
-};
-
 NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 : _cozmoContext(cozmoContext)
 , _robot(nullptr)
@@ -266,9 +262,6 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
   _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
 
   _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
-
-  if (!kUseNeedManager)
-    return;
 
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -342,9 +335,6 @@ void NeedsManager::InitAfterConnection()
 
 void NeedsManager::InitAfterSerialNumberAcquired(u32 serialNumber)
 {
-  if (!kUseNeedManager)
-    return;
-
   _previousRobotSerialNumber = _needsState._robotSerialNumber;
   _needsState._robotSerialNumber = serialNumber;
 
@@ -490,9 +480,6 @@ void NeedsManager::Update(const float currentTime_s)
 {
   _currentTime_s = currentTime_s;
 
-  if (!kUseNeedManager)
-    return;
-
   if (_isPausedOverall)
     return;
 
@@ -517,9 +504,6 @@ void NeedsManager::Update(const float currentTime_s)
 
 void NeedsManager::SetPaused(const bool paused)
 {
-  if (!kUseNeedManager)
-    return;
-
   if (paused == _isPausedOverall)
   {
     DEV_ASSERT_MSG(paused != _isPausedOverall, "NeedsManager.SetPaused.Redundant",
@@ -581,10 +565,6 @@ const NeedsState& NeedsManager::GetCurNeedsState()
 
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
-  if (!kUseNeedManager) {
-    return;
-  }
-
   if (_isPausedOverall) {
     return;
   }
@@ -603,10 +583,6 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 void NeedsManager::PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState)
 {
   outNeedsState = _needsState;
-
-  if (!kUseNeedManager) {
-    return;
-  }
 
   if (_isPausedOverall) {
     return;

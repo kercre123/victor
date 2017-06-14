@@ -98,15 +98,11 @@ public class RewardedActionManager : MonoBehaviour {
   public int TotalPendingEnergy {
     get {
       int total = 0;
-      List<string> caughtTags = new List<string>();
       foreach (RewardedActionData reward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
         int count = 0;
         if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(reward, out count)) {
-          if (!caughtTags.Contains(reward.Tag)) {
-            if (reward.Reward.ItemID == _RewardConfig.EnergyID) {
-              total += count;
-              caughtTags.Add(reward.Tag);
-            }
+          if (reward.Reward.ItemID == _RewardConfig.EnergyID) {
+            total += count;
           }
         }
       }
@@ -175,7 +171,7 @@ public class RewardedActionManager : MonoBehaviour {
             if (!PendingActionRewards.ContainsKey(reward)) {
               PendingActionRewards.Add(reward, reward.Reward.Amount);
             }// If not using a valid tag, allow the reward to stack if trigger multiple times
-            else if (!TagConfig.IsValidTag(reward.Tag)) {
+            else {
               PendingActionRewards[reward] += reward.Reward.Amount;
             }
           }
@@ -224,60 +220,11 @@ public class RewardedActionManager : MonoBehaviour {
   /// Sends the pending rewards to inventory after resolving existing tag collisions.
   /// </summary>
   public void SendPendingRewardsToInventory() {
-    PendingActionRewards = ResolveTagRewardCollisions(PendingActionRewards);
     foreach (KeyValuePair<RewardedActionData, int> reward in PendingActionRewards) {
       DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Key.Reward.ItemID, reward.Value);
     }
     DataPersistenceManager.Instance.Save();
     ResetPendingRewards();
-  }
-
-  /// <summary>
-  /// Checks a dict of rewards for collisions,
-  /// Only keep the highest ending value for rewarding things that share a tag.
-  /// Also sorts remaining rewards by value and removes any that aren't
-  /// the top X rewards, where X is the number we intend to display
-  /// </summary>
-  public Dictionary<RewardedActionData, int> ResolveTagRewardCollisions(Dictionary<RewardedActionData, int> rewardsToResolve) {
-    List<string> tagList = TagConfig.GetAllTags();
-    List<KeyValuePair<RewardedActionData, int>> toClear;
-    KeyValuePair<RewardedActionData, int> highestValueRewardPair;
-    for (int i = 0; i < tagList.Count; i++) {
-      // Get rewards that match an existing tag
-      if (TryGetRewardsByTag(rewardsToResolve, tagList[i], out toClear)) {
-        // Remove the highest value one from the tag list and then clear all
-        // remaining in the tag list from the PendingActionRewards
-        if (TryGetHighestValueReward(toClear, out highestValueRewardPair)) {
-          toClear.Remove(highestValueRewardPair);
-          for (int j = 0; j < toClear.Count; j++) {
-            rewardsToResolve.Remove(toClear[j].Key);
-          }
-        }
-      }
-    }
-    return rewardsToResolve;
-  }
-
-  private bool TryGetRewardsByTag(Dictionary<RewardedActionData, int> rewardsToResolve, string Tag, out List<KeyValuePair<RewardedActionData, int>> foundCollisions) {
-    foundCollisions = new List<KeyValuePair<RewardedActionData, int>>();
-    // Only bother checking for Valid Tags, if you have blank tag or broken tags ignore tag
-    // fire warning if tag is not empty
-    bool success = false;
-    if (TagConfig.IsValidTag(Tag)) {
-      foreach (KeyValuePair<RewardedActionData, int> reward in rewardsToResolve) {
-        if (reward.Key.Tag == Tag) {
-          foundCollisions.Add(reward);
-        }
-      }
-      success = foundCollisions.Count > 0;
-    }
-    else {
-      if (Tag != TagConfig.NoTag && Tag != "") {
-        DAS.Warn("RewardedActionManager.TryGetPendingRewardFromTag", "Invalid Tag detected");
-      }
-      success = false;
-    }
-    return success;
   }
 
   /// <summary>
@@ -325,7 +272,6 @@ public class RewardedActionManager : MonoBehaviour {
     fakeData.RewardEvent.Value = GameEvent.Count;
     fakeData.Reward.Amount = count;
     fakeData.Reward.DescriptionKey = "FAKE";
-    fakeData.Tag = "FAKE";
     fakeData.Reward.ItemID = _RewardConfig.EnergyID;
 
     PendingActionRewards.Add(fakeData, fakeData.Reward.Amount);

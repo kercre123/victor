@@ -30,10 +30,7 @@ public class ConnectionPane : MonoBehaviour {
 
   private void OnDisconnectButtonClicked() {
     DebugMenuManager.Instance.CloseDebugMenuDialog();
-    if (IntroManager.Instance != null) {
-      IntroManager.Instance.ForceBoot();
-    }
-    else if (NeedsConnectionManager.Instance != null) {
+    if (NeedsConnectionManager.Instance != null) {
       NeedsConnectionManager.Instance.ForceBoot();
     }
   }

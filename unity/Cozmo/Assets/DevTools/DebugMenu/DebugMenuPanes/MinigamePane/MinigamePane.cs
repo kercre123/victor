@@ -1,10 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
-using System;
-using Cozmo.HomeHub;
-using System.Linq;
 
 public class MinigamePane : MonoBehaviour {
   // Force Win Game Buttons

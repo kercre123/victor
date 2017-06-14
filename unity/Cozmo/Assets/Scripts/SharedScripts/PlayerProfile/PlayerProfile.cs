@@ -34,8 +34,6 @@ namespace DataPersistence {
     public int MaximumStreak;
     public int CurrentStreak;
     public int TotalSessions;
-    // Just displayed in profile tab, hopefully we can kill this later.
-    public int TotalDailyGoalsCompleted;
     // Mainly just for logging, but different from sessions in that you need to connect.
     public int DaysWithCozmo;
     public int CodeLabUserProjectNum;
@@ -70,7 +68,6 @@ namespace DataPersistence {
       CurrentStreak = 0;
       TotalSessions = 0;
       DaysWithCozmo = 0;
-      TotalDailyGoalsCompleted = 0;
       CodeLabUserProjectNum = 1;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();

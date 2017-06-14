@@ -370,19 +370,6 @@ public static class EditorDrawingUtility {
     }
   }
 
-  public static void DrawTagDropDown(ref string chosenTag) {
-    TagConfig config = AssetDatabase.LoadAssetAtPath<TagConfig>(TagConfig.kTagConfigLocation);
-    TagConfig.SetInstance(config);
-    List<string> tagList = new List<string>();
-    tagList.AddRange(TagConfig.GetAllTags());
-    string[] tagOptions = tagList.ToArray();
-    int currOption = Mathf.Max(0, Array.IndexOf(tagOptions, chosenTag));
-    int newOption = EditorGUILayout.Popup("Tag", currOption, tagOptions);
-    if (newOption != currOption) {
-      chosenTag = tagOptions[newOption];
-    }
-  }
-
   public static string GetConditionListString(List<GoalCondition> condList) {
     string newS = string.Format(" ({0})", condList.Count);
     for (int i = 0; i < condList.Count; i++) {

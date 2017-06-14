@@ -9,8 +9,6 @@ namespace Anki {
       OnChallengeRoundEnd,
       OnChallengeComplete,
       OnChallengeInterrupted,
-      OnDailyGoalCompleted,
-      OnDailyGoalProgress,
       OnUnlockableEarned,
       OnReEnrollFace,
       OnMeetNewPerson,

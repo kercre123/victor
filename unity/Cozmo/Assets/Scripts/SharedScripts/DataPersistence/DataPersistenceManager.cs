@@ -67,11 +67,6 @@ namespace DataPersistence {
         }
 
         foreach (DataPersistence.TimelineEntryData sessionEntry in profile.Sessions) {
-          foreach (Cozmo.UI.DailyGoal goal in sessionEntry.DailyGoals) {
-            if (goal.GoalComplete) {
-              profile.TotalDailyGoalsCompleted++;
-            }
-          }
           if (sessionEntry.HasConnectedToCozmo) {
             profile.DaysWithCozmo++;
           }
@@ -203,29 +198,6 @@ namespace DataPersistence {
       // Pop off sessions we're not going to need anymore. We still look at a few recent sessions for different daily goal gen.
       if (profile.Sessions.Count > kMaxDaysStored) {
         profile.Sessions.RemoveRange(0, profile.Sessions.Count - kMaxDaysStored);
-      }
-
-      if (lastSession != null && !lastSession.GoalsFinished) {
-        Cozmo.UI.DailyGoal goal = lastSession.DailyGoals.FirstOrDefault();
-        string goalName = "";
-        if (goal != null) {
-          goalName = goal.Title.Key;
-        }
-        DAS.Event("meta.goal_expired", numDays.ToString(), DASUtil.FormatExtraData(goalName));
-        foreach (Cozmo.UI.DailyGoal dailyGoal in lastSession.DailyGoals) {
-          DAS.Event("meta.goal_expired_progress", dailyGoal.Title.Key, DASUtil.FormatExtraData(
-            string.Format("{0}/{1}", dailyGoal.Progress, dailyGoal.Target)));
-        }
-
-      }
-
-      newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-      // log daily goals
-      foreach (Cozmo.UI.DailyGoal dailyGoal in newSession.DailyGoals) {
-        DAS.Event("meta.daily_goals", numDays.ToString(), DASUtil.FormatExtraData(dailyGoal.Title.Key));
-      }
-      if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
-        DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
       }
 
       if (Data.DefaultProfile.CurrentStreak >= Data.DefaultProfile.MaximumStreak) {

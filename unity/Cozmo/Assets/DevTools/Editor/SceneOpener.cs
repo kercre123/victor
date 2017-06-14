@@ -8,18 +8,13 @@ public static class SceneOpener {
     EditorSceneManager.OpenScene("Assets/Scenes/Bootstrap.unity", OpenSceneMode.Single);
   }
 
-  [MenuItem("Cozmo/Scenes/Open HomeHub Scene %#2")]
-  public static void OpenHomeHubScene() {
-    EditorSceneManager.OpenScene("Assets/AssetBundles/HomeHub/MainScene-Bundle/HomeHub.unity", OpenSceneMode.Single);
+  [MenuItem("Cozmo/Scenes/Open UI Sandbox Scene %#2")]
+  public static void OpenNeedsHubScene() {
+    EditorSceneManager.OpenScene("Assets/AssetBundles/NeedsHub/NeedsHubScene-Bundle/NeedsHub.unity", OpenSceneMode.Single);
   }
 
   [MenuItem("Cozmo/Scenes/Open UI Sandbox Scene %#5")]
   public static void OpenUISandboxScene() {
     EditorSceneManager.OpenScene("Assets/Scenes/UISandbox.unity", OpenSceneMode.Single);
-  }
-
-  [MenuItem("Cozmo/Scenes/Open UI Sandbox Scene %#6")]
-  public static void OpenNeedsHubScene() {
-    EditorSceneManager.OpenScene("Assets/AssetBundles/NeedsHub/NeedsHubScene-Bundle/NeedsHub.unity", OpenSceneMode.Single);
   }
 }

@@ -234,10 +234,7 @@ namespace Cozmo {
         // If this is fired because we are returning from backgrounding the app
         // but Cozmo has disconnected, CloseAllDialogs and handle it like a disconnect
         PauseManager.Instance.PauseManagerReset();
-        if (IntroManager.Instance != null) {
-          IntroManager.Instance.ForceBoot();
-        }
-        else if (NeedsConnectionManager.Instance != null) {
+        if (NeedsConnectionManager.Instance != null) {
           NeedsConnectionManager.Instance.ForceBoot();
         }
       }

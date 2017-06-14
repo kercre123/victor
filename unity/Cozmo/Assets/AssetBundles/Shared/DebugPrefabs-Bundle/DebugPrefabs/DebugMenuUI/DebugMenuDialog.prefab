@@ -447,8 +447,8 @@ MonoBehaviour:
     panePrefab: {fileID: 119064, guid: 22fc923f0adb648ff8b444bae576a91f, type: 2}
   - name: Inventory
     panePrefab: {fileID: 149194, guid: 440942ce90caf4e13b4f07a870587f1b, type: 2}
-  - name: DailyGoal
-    panePrefab: {fileID: 149194, guid: 6952cd381a30e48b48aacd5aca28eb45, type: 2}
+  - name: Needs
+    panePrefab: {fileID: 113112, guid: decdda9e82ab74b839a354f65d704d62, type: 2}
   - name: Data Persistence
     panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
   - name: Playtest
@@ -463,8 +463,6 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: 5ed7fc1d653bd4bfc83aa41e152c6436, type: 2}
   - name: VoiceCommand
     panePrefab: {fileID: 102660, guid: 5e6a6ff4669284ee4a5759166a3d68a7, type: 2}
-  - name: Needs
-    panePrefab: {fileID: 113112, guid: decdda9e82ab74b839a354f65d704d62, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 159258}

@@ -10,18 +10,6 @@ public class InventoryPane : MonoBehaviour {
   [SerializeField]
   UnityEngine.UI.Button _QuickRemoveTreatButton;
 
-  [SerializeField]
-  UnityEngine.UI.Button _QuickAddExperienceButton;
-
-  [SerializeField]
-  UnityEngine.UI.Button _QuickRemoveExperienceButton;
-
-  [SerializeField]
-  UnityEngine.UI.InputField _ChestLevelInputField;
-
-  [SerializeField]
-  UnityEngine.UI.Button _SetChestLevelButton;
-
   // TODO: Validate id
   [SerializeField]
   UnityEngine.UI.Dropdown _ItemIdDropdown;
@@ -45,7 +33,6 @@ public class InventoryPane : MonoBehaviour {
   UnityEngine.UI.Button _SetItemAmountButton;
 
   private const string _kTreatItemId = "treat";
-  private const string _kExperienceItemId = "experience";
 
   private Cozmo.Inventory _PlayerInventory;
 
@@ -56,13 +43,6 @@ public class InventoryPane : MonoBehaviour {
 
     _QuickAddTreatButton.onClick.AddListener(HandleQuickAddTreatsClicked);
     _QuickRemoveTreatButton.onClick.AddListener(HandleQuickRemoveTreatsClicked);
-    _QuickAddExperienceButton.onClick.AddListener(HandleQuickAddExperienceClicked);
-    _QuickRemoveExperienceButton.onClick.AddListener(HandleQuickRemoveExperienceClicked);
-    if (DataPersistenceManager.Instance.CurrentSession != null) {
-      _ChestLevelInputField.text = DataPersistenceManager.Instance.CurrentSession.ChestsGained.ToString();
-    }
-    _ChestLevelInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _SetChestLevelButton.onClick.AddListener(HandleSetChestLevelButtonClicked);
 
     _ItemIdDropdown.ClearOptions();
     _ItemIdDropdown.AddOptions(Cozmo.ItemDataConfig.GetAllItemIds());
@@ -87,25 +67,6 @@ public class InventoryPane : MonoBehaviour {
 
   private void HandleQuickRemoveTreatsClicked() {
     DebugRemoveItem(_kTreatItemId, 100);
-  }
-
-  private void HandleQuickAddExperienceClicked() {
-    DebugAddItem(_kExperienceItemId, 100);
-  }
-
-  private void HandleQuickRemoveExperienceClicked() {
-    DebugRemoveItem(_kExperienceItemId, 100);
-  }
-
-  private void HandleSetChestLevelButtonClicked() {
-    if (DataPersistenceManager.Instance.CurrentSession != null) {
-      DataPersistenceManager.Instance.CurrentSession.ChestsGained = GetValidInt(_ChestLevelInputField);
-
-      // Trigger UI to update
-      DebugAddItem(_kExperienceItemId, 0);
-
-      DataPersistenceManager.Instance.Save();
-    }
   }
 
   private void HandleAddItemClicked() {

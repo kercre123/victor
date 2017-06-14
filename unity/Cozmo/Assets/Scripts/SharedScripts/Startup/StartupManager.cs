@@ -51,9 +51,6 @@ public class StartupManager : MonoBehaviour {
   private float _CurrentProgress;
 
   [SerializeField]
-  private MainSceneData _HomeHubData;
-
-  [SerializeField]
   private MainSceneData _NeedsHubData;
 
   [SerializeField]
@@ -129,12 +126,7 @@ public class StartupManager : MonoBehaviour {
     Localization.LoadLocaleAndCultureInfo(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage,
                                           DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSettingOverride);
 
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseNeedsHub) {
-      _MainSceneData = _NeedsHubData;
-    }
-    else {
-      _MainSceneData = _HomeHubData;
-    }
+    _MainSceneData = _NeedsHubData;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
     bool needPermission = false;
@@ -468,7 +460,6 @@ public class StartupManager : MonoBehaviour {
 
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
-    ChestRewardManager.CreateInstance();
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.InitInventory();
 
     Anki.Cozmo.VoiceCommand.VoiceCommandManager.CreateInstance();
@@ -491,7 +482,6 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.UIColorPalette.SetInstance(colorP);
       });
 
-
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIDefaultTransitionSettings>(_BasicUIPrefabAssetBundleName,
       "UIDefaultTransitionSettings", (Cozmo.UI.UIDefaultTransitionSettings colorP) => {
         Cozmo.UI.UIDefaultTransitionSettings.SetInstance(colorP);
@@ -500,21 +490,6 @@ public class StartupManager : MonoBehaviour {
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
       "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
         Cozmo.ItemDataConfig.SetInstance(idc);
-      });
-
-    assetBundleManager.LoadAssetAsync<TagConfig>(_GameMetadataAssetBundleName,
-      "TagListConfig", (TagConfig tc) => {
-        TagConfig.SetInstance(tc);
-      });
-
-    assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName,
-      "DefaultChestConfig", (ChestData cd) => {
-        ChestData.SetInstance(cd);
-      });
-
-    assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName,
-      "HexItemList", (Cozmo.HexItemList cd) => {
-        Cozmo.HexItemList.SetInstance(cd);
       });
 
     assetBundleManager.LoadAssetAsync<Cozmo.Challenge.ChallengeDataList>(_GameMetadataAssetBundleName,
@@ -526,7 +501,6 @@ public class StartupManager : MonoBehaviour {
       "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
         Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
       });
-
 
     assetBundleManager.LoadAssetAsync<Cozmo.Settings.DefaultSettingsValuesConfig>(_GameMetadataAssetBundleName,
       "DefaultSettingsValuesConfig", (Cozmo.Settings.DefaultSettingsValuesConfig dsvc) => {
@@ -547,7 +521,7 @@ public class StartupManager : MonoBehaviour {
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
 #if FACTORY_TEST
-    assetBundleManager.LoadSceneAsync(_HomeHubData.MainSceneAssetBundleName, "FactoryTest", loadAdditively: false, callback: null);
+    assetBundleManager.LoadSceneAsync(_MainSceneData.MainSceneAssetBundleName, "FactoryTest", loadAdditively: false, callback: null);
 #else
     assetBundleManager.LoadSceneAsync(_MainSceneData.MainSceneAssetBundleName, _MainSceneData.MainSceneName,
                                       loadAdditively: false, callback: null);

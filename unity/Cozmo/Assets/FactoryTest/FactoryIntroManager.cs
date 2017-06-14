@@ -130,10 +130,10 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private void RunFactoryTest() {
     // runs the factory test.
-    RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(false);
-    RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-    RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
+    RobotEngineManager.Instance.CurrentRobot.DisableAllReactionsWithLock("factory");
+    RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(false);
+    RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+    RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(Anki.Cozmo.BehaviorID.FactoryTest);
   }
 
   private void HandleOptionsButtonClick() {

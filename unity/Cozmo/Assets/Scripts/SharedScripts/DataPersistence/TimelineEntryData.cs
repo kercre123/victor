@@ -6,29 +6,11 @@ namespace DataPersistence {
   public class TimelineEntryData {
     public Date Date;
 
-    public List<DailyGoal> DailyGoals;
-
-    public float GetTotalProgress() {
-      float totalG = 0.0f;
-      float totalP = 0.0f;
-      for (int i = 0; i < DailyGoals.Count; i++) {
-        totalG += DailyGoals[i].Target;
-        totalP += DailyGoals[i].Progress;
-      }
-      float finalP = totalP / totalG;
-      return finalP;
-    }
-
     public float PlayTime;
 
     public bool HasConnectedToCozmo;
 
     public readonly List<CompletedChallengeData> CompletedChallenges;
-
-    // Is true once all daily goals have been completed
-    public bool GoalsFinished;
-
-    public int ChestsGained;
 
     public Dictionary<string, int> TotalWins;
 
@@ -36,7 +18,6 @@ namespace DataPersistence {
 
     public TimelineEntryData() {
       CompletedChallenges = new List<CompletedChallengeData>();
-      DailyGoals = new List<DailyGoal>();
       SparkCount = new Dictionary<Anki.Cozmo.UnlockId, int>();
       TotalWins = new Dictionary<string, int>();
       PlayTime = 0.0f;

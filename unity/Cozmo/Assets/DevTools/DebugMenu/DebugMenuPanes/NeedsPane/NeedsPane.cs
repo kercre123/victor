@@ -6,9 +6,6 @@ using Anki.Cozmo.ExternalInterface;
 public class NeedsPane : MonoBehaviour {
 
   [SerializeField]
-  private Toggle _NeedsEnabledCheckbox;
-
-  [SerializeField]
   private Dropdown _NeedsActionCompletedDropDown;
   [SerializeField]
   private Button _NeedsActionApplyButton;
@@ -40,10 +37,6 @@ public class NeedsPane : MonoBehaviour {
   private const string _kDebugSetPlayLevelKey = "DebugSetPlayLevel";
   private const string _kDebugSetRepairLevelKey = "DebugSetRepairLevel";
 
-  private const string _kUseNeedsManagerKey = "UseNeedManager";
-  private const string _kUseNeedsDefaultUnlocksKey = "UseNeedsDefaultUnlocks";
-  private const string _kSaveConsoleVarsKey = "SaveConsoleVars";
-
   // Use this for initialization
   void Start() {
     _GiveStarButton.onClick.AddListener(HandleGiveStarTap);
@@ -60,22 +53,10 @@ public class NeedsPane : MonoBehaviour {
     RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
     RobotEngineManager.Instance.Message.GetNeedsState = new GetNeedsState();
     RobotEngineManager.Instance.SendMessage();
-
-    // Really a little more than just could get toggled, but most people will just toggle from this menu as a group.
-    _NeedsEnabledCheckbox.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseNeedsHub;
-    _NeedsEnabledCheckbox.onValueChanged.AddListener(HandleEnableChanged);
   }
 
   void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<NeedsState>(HandleNeedsStateFromEngine);
-  }
-
-  private void HandleEnableChanged(bool isOn) {
-    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseNeedsHub = isOn;
-    RobotEngineManager.Instance.SetDebugConsoleVar(_kUseNeedsManagerKey, isOn.ToString());
-    RobotEngineManager.Instance.SetDebugConsoleVar(_kUseNeedsDefaultUnlocksKey, isOn.ToString());
-    DataPersistence.DataPersistenceManager.Instance.Save();
-    RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kSaveConsoleVarsKey, "");
   }
 
   private void HandleNeedsStateFromEngine(NeedsState newNeedsState) {

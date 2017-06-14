@@ -7,7 +7,6 @@ namespace Cozmo {
   [CustomPropertyDrawer(typeof(ItemIdAttribute))]
   public class ItemAttributeDrawer : PropertyDrawer {
     private const string kItemDataConfigLocation = "Assets/AssetBundles/Shared/GameMetadata-Bundle/ItemDataConfig.asset";
-    private const string kHexItemListLocation = "Assets/AssetBundles/Shared/GameMetadata-Bundle/HexData/HexItemList.asset";
 
     private string[] _ItemIds = null;
     // Draw the property inside the given rect
@@ -38,10 +37,8 @@ namespace Cozmo {
 
     private string[] GetAllItemIds() {
       ItemDataConfig itemDataConfig = AssetDatabase.LoadAssetAtPath<ItemDataConfig>(kItemDataConfigLocation);
-      HexItemList hexItemList = AssetDatabase.LoadAssetAtPath<HexItemList>(kHexItemListLocation);
       List<string> allIds = new List<string>();
       allIds.AddRange(itemDataConfig.EditorGetItemIds());
-      allIds.AddRange(hexItemList.EditorGetPuzzlePieceIds());
       return allIds.ToArray();
     }
   }

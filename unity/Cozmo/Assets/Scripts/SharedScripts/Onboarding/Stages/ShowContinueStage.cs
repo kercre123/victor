@@ -13,9 +13,6 @@ namespace Onboarding {
     [SerializeField]
     private bool _FreeplayEnabledOnExit = false;
 
-    [SerializeField]
-    private bool _ShowOutline = false;
-
     protected virtual void Awake() {
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
     }
@@ -23,16 +20,6 @@ namespace Onboarding {
     public override void Start() {
       base.Start();
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(_FreeplayEnabledOnEnter);
-
-      if (_ShowOutline) {
-        // Trying to keep the Onboarding as isolated as possible, so rather than making several layers
-        // of getters in homeview, just find it
-        DailyGoalPanel panel = (DailyGoalPanel)GameObject.FindObjectOfType(typeof(DailyGoalPanel));
-        if (panel != null) {
-          OnboardingManager.Instance.SetOutlineRegion(panel.transform);
-          OnboardingManager.Instance.ShowOutlineRegion(true);
-        }
-      }
     }
 
     public override void SkipPressed() {

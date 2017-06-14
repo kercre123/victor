@@ -1,6 +1,5 @@
 using Anki.Assets;
 using Anki.Cozmo;
-using Cozmo.HomeHub;
 using Cozmo.RequestGame;
 using DataPersistence;
 using Onboarding;
@@ -12,7 +11,7 @@ public class OnboardingManager : MonoBehaviour {
 
   public static OnboardingManager Instance { get; private set; }
 
-  private HomeView _HomeView;
+  private Cozmo.Needs.UI.NeedsHubView _NeedsView;
 
   public enum OnboardingPhases : int {
     Home,
@@ -81,7 +80,6 @@ public class OnboardingManager : MonoBehaviour {
     }
     else {
       Instance = this;
-      GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnected);
 #if ENABLE_DEBUG_PANEL
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
@@ -149,10 +147,10 @@ public class OnboardingManager : MonoBehaviour {
     return _CurrPhase != OnboardingPhases.None;
   }
 
-  public void InitHomeHubOnboarding(HomeView homeview) {
-    _HomeView = homeview;
-    _OnboardingTransform = homeview.transform;
-    _HomeView.DialogClosed += HandleHomeViewClosed;
+  public void InitNeedsHubOnboarding(Cozmo.Needs.UI.NeedsHubView needsView) {
+    _NeedsView = needsView;
+    _OnboardingTransform = needsView.transform;
+    _NeedsView.DialogClosed += HandleNeedsViewClosed;
 
     if (IsOnboardingRequired(OnboardingPhases.Home)) {
       StartPhase(OnboardingPhases.Home);
@@ -161,7 +159,7 @@ public class OnboardingManager : MonoBehaviour {
 
   // Clear out the phase if the homeview closed unexpected like a disconnect.
   // The UI is destroyed but our save state will reinit us next time.
-  private void HandleHomeViewClosed() {
+  private void HandleNeedsViewClosed() {
     if (_CurrPhase != OnboardingPhases.None) {
       _CurrPhase = OnboardingPhases.None;
       if (_OnboardingUIInstance != null) {
@@ -204,12 +202,8 @@ public class OnboardingManager : MonoBehaviour {
       }
 
       // This is safe because you can't spend currency in the first phase of onboarding
-      Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetHexData();
-      int currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(RewardedActionManager.Instance.CoinID);
-      if (currAmt < itemData.StartingAmount) {
-        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.SetItemAmount(RewardedActionManager.Instance.CoinID, itemData.StartingAmount);
-      }
-      // Hex piece bits are their own thing because they will be puzzle pieces..
+      Cozmo.ItemData itemData = null;
+      int currAmt;
       List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
       for (int i = 0; i < itemIDs.Count; ++i) {
         itemData = Cozmo.ItemDataConfig.GetData(itemIDs[i]);
@@ -270,10 +264,6 @@ public class OnboardingManager : MonoBehaviour {
   // spam clicking tabs, usually we lock tabs based on blockers in the prefab.
   // if they clicked away before the prefab load finished, just cancel and start the next time
   private bool VerifyCanStartPhase() {
-    // Stage has specific prereq of this panel existing
-    if (_CurrPhase == OnboardingPhases.Upgrades) {
-      return _HomeView.CurrentTab == HomeView.HomeTab.Cozmo;
-    }
     return _CurrPhase != OnboardingPhases.None;
   }
   private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {
@@ -381,19 +371,6 @@ public class OnboardingManager : MonoBehaviour {
     DataPersistenceManager.Instance.Save();
   }
 
-  private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
-    if (gameEvent.GameEventEnum == GameEvent.OnDailyGoalCompleted) {
-      // If all completed, complete the tutorial and get new goals the next day...
-      if (DataPersistenceManager.Instance.CurrentSession != null) {
-        List<Cozmo.UI.DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
-        bool allGoalsComplete = goals.TrueForAll(x => x.GoalComplete);
-        if (allGoalsComplete) {
-          CompletePhase(OnboardingPhases.DailyGoals);
-        }
-      }
-    }
-  }
-
   private void HandleRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     // The UI is getting torn down and we're resetting, clear whatever happened.
     _CurrPhase = OnboardingPhases.None;
@@ -446,12 +423,6 @@ public class OnboardingManager : MonoBehaviour {
   #endregion
 
   private void UpdateStage(bool showTopBar = true, bool showBotBar = true, bool showContent = true, bool showButtons = true, bool reactionsEnabled = true) {
-    if (_HomeView != null) {
-      _HomeView.TopBarContainer.gameObject.SetActive(showTopBar);
-      _HomeView.BottomBarContainer.gameObject.SetActive(showBotBar);
-      _HomeView.TabContentContainer.gameObject.SetActive(showContent);
-      _HomeView.TabButtonContainer.gameObject.SetActive(showButtons);
-    }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       if (reactionsEnabled) {
         if (_StageDisabledReactionaryBehaviors) {

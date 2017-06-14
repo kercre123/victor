@@ -143,43 +143,6 @@ public class UnlockableGameEvent : GameEventWrapper {
 
 }
 
-public class DailyGoalCompleteGameEvent : GameEventWrapper {
-  public DailyGoal CompletedGoal;
-
-  public override void Init(GameEvent Enum, params object[] args) {
-    base.Init(Enum);
-
-    if (args.Length > 0 && args[0].GetType() == typeof(DailyGoal)) {
-      CompletedGoal = (DailyGoal)args[0];
-    }
-
-  }
-}
-
-public class DailyGoalProgressGameEvent : GameEventWrapper {
-  public DailyGoal GoalProgressed;
-  public int Progress;
-  public int Target;
-
-  public override void Init(GameEvent Enum, params object[] args) {
-    base.Init(Enum);
-
-    if (args.Length > 0 && args[0].GetType() == typeof(DailyGoal)) {
-      GoalProgressed = (DailyGoal)args[0];
-    }
-
-    if (args.Length > 1 && args[1].GetType() == typeof(int)) {
-      Progress = (int)args[1];
-    }
-
-    if (args.Length > 2 && args[2].GetType() == typeof(int)) {
-      Target = (int)args[2];
-    }
-  }
-
-
-}
-
 public class SessionStartedGameEvent : GameEventWrapper {
   public int CurrentStreak;
 
@@ -241,8 +204,6 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnChallengeComplete, typeof(ChallengeGameEvent));
     Register(GameEvent.OnChallengeDifficultyUnlock, typeof(DifficultyUnlockedGameEvent));
     Register(GameEvent.OnUnlockableEarned, typeof(UnlockableGameEvent));
-    Register(GameEvent.OnDailyGoalProgress, typeof(DailyGoalProgressGameEvent));
-    Register(GameEvent.OnDailyGoalCompleted, typeof(DailyGoalCompleteGameEvent));
     Register(GameEvent.OnNewDayStarted, typeof(SessionStartedGameEvent));
     Register(GameEvent.OnUnlockableSparked, typeof(UnlockableGameEvent));
     Register(GameEvent.OnFreeplayBehaviorSuccess, typeof(BehaviorSuccessGameEvent));

@@ -13,7 +13,6 @@ using System.IO;
 /// </summary>
 public class SpriteAssetPostProcessor : AssetPostprocessor {
 
-  private const string _kHomeHubParentFolder = "AssetBundles/HomeHub/Art";
   private const string _kNeedsHubParentFolder = "AssetBundles/NeedsHub/Art";
   private const string _kPackSpriteFolderName = "Packed";
   private const string _kUnpackSpriteFolderName = "Unpacked";
@@ -202,7 +201,7 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   }
 
   private bool InHubParentFolder(string assetPath) {
-    return assetPath.Contains(_kNeedsHubParentFolder) || assetPath.Contains(_kHomeHubParentFolder);
+    return assetPath.Contains(_kNeedsHubParentFolder);
   }
 
   private bool IsUHDAsset() {

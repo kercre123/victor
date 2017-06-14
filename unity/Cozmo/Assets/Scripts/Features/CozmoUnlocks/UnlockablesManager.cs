@@ -24,7 +24,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public Action<UnlockId> OnSparkStarted;
-  public Action<Cozmo.Upgrades.CoreUpgradeDetailsModal> OnSparkComplete;
+  public Action OnSparkComplete;
   public Action<UnlockId> OnUnlockComplete;
 
   public bool UnlocksLoaded { get { return _UnlocksLoaded; } }
@@ -98,18 +98,6 @@ public class UnlockablesManager : MonoBehaviour {
       DAS.Error("UnlockablesManager.IsFaceSlotUnlocked", "Face slot out of range " + faceSlot);
     }
     return IsUnlocked((Anki.Cozmo.UnlockId)_FaceSlotUnlockMap[faceSlot]);
-  }
-
-  public KeyValuePair<string, int> FaceUnlockCost(int faceSlot) {
-    UnlockableInfo unlockInfo = System.Array.Find(_UnlockableInfoList.UnlockableInfoData, (obj) => (int)obj.Id.Value == _FaceSlotUnlockMap[faceSlot]);
-    KeyValuePair<string, int> costInfo = new KeyValuePair<string, int>("", 0);
-    if (unlockInfo != null) {
-      costInfo = new KeyValuePair<string, int>(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded);
-    }
-    else {
-      DAS.Error("UnlockablesManager.FaceUnlockCost", "Could not find faceslot " + faceSlot);
-    }
-    return costInfo;
   }
 
   public int FaceSlotsSize() {

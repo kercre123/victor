@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 public class DeleteEmptyFolders {
-  
+
   // http://docs.unity3d.com/ScriptReference/AssetPostprocessor.OnPostprocessAllAssets.html
   // https://gist.github.com/liortal53/780075ddb17f9306ae32
   [MenuItem("Cozmo/Remove empty folders")]
@@ -15,6 +15,7 @@ public class DeleteEmptyFolders {
     // Create a list of all the empty subfolders under Assets.
     var emptyFolders = projectSubfolders.Where(path => IsEmptyRecursive(path)).ToArray();
 
+    int numFoldersDeleted = 0;
     foreach (var folder in emptyFolders) {
       // Verify that the folder exists (may have been already removed).
       if (Directory.Exists(folder)) {
@@ -22,6 +23,7 @@ public class DeleteEmptyFolders {
 
         // Remove dir (recursively)
         Directory.Delete(folder, true);
+        numFoldersDeleted++;
 
         // Sync AssetDatabase with the delete operation.
         AssetDatabase.DeleteAsset(folder.Substring(index + 1));
@@ -30,6 +32,8 @@ public class DeleteEmptyFolders {
 
     // Refresh the asset database once we're done.
     AssetDatabase.Refresh();
+
+    Debug.Log("Finished deleting empty folders. Folders deleted: " + numFoldersDeleted);
   }
 
   /// <summary>

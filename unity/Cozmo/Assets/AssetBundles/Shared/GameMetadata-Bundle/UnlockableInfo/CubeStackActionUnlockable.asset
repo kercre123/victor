@@ -13,45 +13,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: StackTwoCubes
-    _EnumValue: 10
+    _EnumValue: 11
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: PickupCube
     _EnumValue: 6
   AnyPrereqUnlock: 0
   _ComingSoon: 0
-  _HideInUI: 0
   DescriptionKey: unlockable.CubeStackAction.Description
   TitleKey: unlockable.CubeStackAction.Title
   SparkButtonDescription: unlockable.CubeStackAction.SparkButtonDescription
   SparkedStateDescription: unlockable.CubeStackAction.SparkedStateDescription
   SparkedMusicState:
-    _Sparked: 468648200
-  UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 2
+    _Sparked: 0
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountCurve:
-    serializedVersion: 2
-    m_Curve:
-    - time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    - time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 1
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 3
-  CoreUpgradeTintColorName: upgradeGreen
+  RequestTrickCostAmount: 1
   CoreUpgradeIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59, type: 3}
-  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59,
-    type: 3}
   CubesRequired: 2
   SortOrder: 200
+  AndroidReleaseVersion: 

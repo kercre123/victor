@@ -26,35 +26,9 @@ MonoBehaviour:
   SparkedStateDescription: unlockable.BuildPyramid.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 797712787
-  UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 10
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 2
-      time: 0
-      value: 0
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 34
-    - serializedVersion: 2
-      time: 1
-      value: 1
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 34
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 0
   RequestTrickCostAmount: 3
-  RequestTrickCostAmountNeededMin: 3
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 5
-  CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: 9971eb00f732c4741aa2817f8acfe166, type: 3}
-  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 9971eb00f732c4741aa2817f8acfe166,
-    type: 3}
   CubesRequired: 3
   SortOrder: 800
   AndroidReleaseVersion: 

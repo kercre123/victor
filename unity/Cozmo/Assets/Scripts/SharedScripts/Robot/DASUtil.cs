@@ -6,10 +6,6 @@ public static class DASUtil {
     return date.ToString();
   }
 
-  public static string FormatGoal(Cozmo.UI.DailyGoal dailyGoal) {
-    return string.Format("{0}_{1}/{2}", dailyGoal.Title, dailyGoal.Progress, dailyGoal.Target);
-  }
-
   public static string FormatViewTypeForOpen(Cozmo.UI.BaseDialog dialog) {
     return string.Format("ui.{0}.enter", GetStringFromViewType(dialog));
   }

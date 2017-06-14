@@ -27,8 +27,8 @@ namespace Onboarding {
     private void HandleSparkStarted(Anki.Cozmo.UnlockId unlock) {
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(true);
     }
-    private void HandleSparkComplete(CoreUpgradeDetailsModal modal) {
-      modal.CloseDialog();
+    private void HandleSparkComplete() {
+      // Do nothing
     }
 
 #if ENABLE_DEBUG_PANEL
@@ -36,24 +36,12 @@ namespace Onboarding {
       if (!UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.PickupCube)) {
         UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.PickupCube, true);
       }
-      // Gross but only done once we've hit this stage and only for debugging.
-      // Basically waiting a minute sucks for testing and the the opened event is in the previous state.
-      // So just find the window in scene in case "debug skip" is pressed.
-      BaseModal sparksModal = FindObjectOfType<CoreUpgradeDetailsModal>();
-      if (sparksModal != null) {
-        sparksModal.CloseDialog();
-      }
-      else {
-        // Handle case if hit before window is even open for spamming
-        base.SkipPressed();
-      }
+      base.SkipPressed();
     }
 #endif
 
     private void HandleModalClosed(BaseModal modal) {
-      if (modal is CoreUpgradeDetailsModal) {
-        OnboardingManager.Instance.GoToNextStage();
-      }
+      OnboardingManager.Instance.GoToNextStage();
     }
   }
 

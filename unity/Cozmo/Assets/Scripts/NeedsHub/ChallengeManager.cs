@@ -145,8 +145,7 @@ namespace Cozmo.Challenge {
             LoadChallengeInternal(_ChallengeStatesById[_CurrentChallengePlaying.ChallengeId].Data);
           }
           else {
-            // TODO show error dialog and boot to home
-            DAS.Error("HomeHub.HandleHomeViewCloseAnimationFinished", "Failed to load asset bundle " + _ChallengeDataPrefabAssetBundle.Value.ToString());
+            DAS.Error("ChallengeManager.LoadChallengeAssetBundle", "Failed to load asset bundle " + _ChallengeDataPrefabAssetBundle.Value.ToString());
           }
         });
     }

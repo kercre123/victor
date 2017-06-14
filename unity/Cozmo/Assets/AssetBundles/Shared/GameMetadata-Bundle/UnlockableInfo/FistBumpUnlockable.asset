@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: FistBump
-    _EnumValue: 35
+    _EnumValue: 11
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: Workout
@@ -25,36 +25,10 @@ MonoBehaviour:
   SparkButtonDescription: unlockable.FistBump.SparkButtonDescription
   SparkedStateDescription: unlockable.FistBump.SparkedStateDescription
   SparkedMusicState:
-    _Sparked: 982472036
-  UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 6
+    _Sparked: 0
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 2
-      time: 0
-      value: 0
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 34
-    - serializedVersion: 2
-      time: 1
-      value: 1
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 34
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 0
   RequestTrickCostAmount: 2
-  RequestTrickCostAmountNeededMin: 2
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 3
-  CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: 7847a2c83e5ff426fb6bc77953051f07, type: 3}
-  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 7847a2c83e5ff426fb6bc77953051f07,
-    type: 3}
   CubesRequired: 0
   SortOrder: 750
   AndroidReleaseVersion: 

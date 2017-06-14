@@ -1047,7 +1047,6 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HidePlayer2Scoreboard();
       SharedMinigameView.HideCozmoScoreboard();
-      RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
       DASReportPendingActionRewards();
       SharedMinigameView.ShowContinueButtonReward(HandleChallengeResultViewClosed,
         Localization.Get(LocalizationKeys.kRewardCollectCollectEnergyButton),
@@ -1069,7 +1068,6 @@ public abstract class GameBase : MonoBehaviour {
   private void DASReportPendingActionRewards() {
     foreach (KeyValuePair<RewardedActionData, int> reward in RewardedActionManager.Instance.PendingActionRewards) {
       DAS.Event("game.end.energy_reward", reward.Key.Reward.ItemID, DASUtil.FormatExtraData(reward.Key.Reward.Amount.ToString()));
-      DAS.Event("game.end.reward_tag", reward.Key.Tag);
     }
   }
 

@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using Cozmo.Challenge;
 using Cozmo.ConnectionFlow;
-using Cozmo.HomeHub;
 
 namespace DataPersistence {
   public class DataPersistencePane : MonoBehaviour {
@@ -34,21 +33,6 @@ namespace DataPersistence {
     private Text _LblStatus;
     private bool _IsResettingEverything = false;
 
-    private HomeHub GetHomeHub() {
-      var go = GameObject.Find("HomeHub(Clone)");
-      if (go != null) {
-        return go.GetComponent<HomeHub>();
-      }
-      return null;
-    }
-
-    private void TryReloadHomeHub() {
-      var homeHub = GetHomeHub();
-      if (homeHub != null) {
-        homeHub.TestLoadTimeline();
-      }
-    }
-
     private void Start() {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
@@ -70,10 +54,7 @@ namespace DataPersistence {
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
       DataPersistenceManager.Instance.Save();
 
-      if (IntroManager.Instance != null) {
-        IntroManager.Instance.ForceBoot();
-      }
-      else if (NeedsConnectionManager.Instance != null) {
+      if (NeedsConnectionManager.Instance != null) {
         NeedsConnectionManager.Instance.ForceBoot();
       }
 
@@ -96,11 +77,7 @@ namespace DataPersistence {
         DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.ForEach(x => x.Date = x.Date.OffsetDays(-days));
         DataPersistenceManager.Instance.Save();
       }
-      DailyGoalManager.Instance.LoadDailyGoalGenerationData();
-      if (IntroManager.Instance != null) {
-        IntroManager.Instance.ForceBoot();
-      }
-      else if (NeedsConnectionManager.Instance != null) {
+      if (NeedsConnectionManager.Instance != null) {
         NeedsConnectionManager.Instance.ForceBoot();
       }
     }

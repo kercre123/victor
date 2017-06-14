@@ -1,6 +1,4 @@
 using UnityEngine;
-using Cozmo.HomeHub;
-using System.Collections;
 
 public class DebugMenuManager : MonoBehaviour {
 
