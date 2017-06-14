@@ -415,6 +415,28 @@ TEST(TestMath, TestWrapToMax)
   EXPECT_NEAR( Anki::Util::WrapToMax(  4.69f, 2.34f), 0.01f, kEpsilon );
 }
 
-
+TEST(TestMath, FloatZeroComparison)
+{
+  const float zeroEquiv = 1e-8f;
+  
+  EXPECT_TRUE( Anki::Util::IsFltGTZero(1e-3f));
+  EXPECT_TRUE( Anki::Util::IsFltGTZero(10.f));
+  EXPECT_FALSE( Anki::Util::IsFltGTZero(0.f));
+  EXPECT_FALSE( Anki::Util::IsFltGTZero(-1e-3f));
+  EXPECT_FALSE( Anki::Util::IsFltGTZero(-zeroEquiv));
+  EXPECT_FALSE( Anki::Util::IsFltGTZero(zeroEquiv));
+  
+  EXPECT_TRUE( Anki::Util::IsFltGEZero(1e-3f));
+  EXPECT_TRUE( Anki::Util::IsFltGEZero(10.f));
+  EXPECT_TRUE( Anki::Util::IsFltGEZero(0.f));
+  EXPECT_FALSE( Anki::Util::IsFltGEZero(-1e-3f));
+  EXPECT_TRUE( Anki::Util::IsFltGEZero(-zeroEquiv));
+  EXPECT_TRUE( Anki::Util::IsFltGEZero(zeroEquiv));
+  
+  EXPECT_TRUE( Anki::Util::IsNearZero(0.f));
+  EXPECT_TRUE( Anki::Util::IsNearZero(zeroEquiv));
+  EXPECT_TRUE( Anki::Util::IsNearZero(-zeroEquiv));
+  EXPECT_FALSE( Anki::Util::IsNearZero(.1f));
+}
 
 
