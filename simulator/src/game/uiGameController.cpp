@@ -354,7 +354,8 @@ namespace Anki {
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
-      LOG_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
+      PRINT_CH_INFO("Animations", "UiGameController.HandleAnimationAvailableBase.HandleAnimationAvailable",
+                    "Animation available: %s", msg.animName.c_str());
 
       HandleAnimationAvailable(msg);
     }

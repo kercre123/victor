@@ -219,7 +219,8 @@ void RobotDataLoader::CollectAnimFiles()
   // print results
   {
     for (const auto& fileListPair : _jsonFiles) {
-      PRINT_NAMED_INFO("RobotDataLoader.CollectAnimFiles", "found %zu animation files of type %d", fileListPair.second.size(), (int)fileListPair.first);
+      PRINT_CH_INFO("Animations", "RobotDataLoader.CollectAnimFiles.Results", "Found %zu animation files of type %d",
+                    fileListPair.second.size(), (int)fileListPair.first);
     }
   }
 }
@@ -271,7 +272,12 @@ void RobotDataLoader::LoadAnimationsInternal()
 
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
-  PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationsInternal", "Time to load animations = %.2f ms", loadTime);
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationsInternal.LoadTime",
+                "Time to load animations = %.2f ms", loadTime);
+
+  auto animNames = _cannedAnimations->GetAnimationNames();
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimations.CannedAnimationsCount",
+                "Total number of canned animations available = %lu", (unsigned long) animNames.size());
 }
 
 void RobotDataLoader::LoadCubeLightAnimations()
@@ -292,9 +298,8 @@ void RobotDataLoader::LoadCubeLightAnimations()
   
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
-  PRINT_NAMED_INFO("RobotDataLoader.LoadCubeLightAnimations",
-                   "Time to load cube light animations = %.2f ms",
-                   loadTime);
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadCubeLightAnimations.LoadTime",
+                "Time to load cube light animations = %.2f ms", loadTime);
 }
 
 void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
@@ -325,9 +330,8 @@ void RobotDataLoader::LoadBackpackLightAnimations()
   
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
-  PRINT_NAMED_INFO("RobotDataLoader.LoadBackpackLightAnimations",
-                   "Time to load backpack light animations = %.2f ms",
-                   loadTime);
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadBackpackLightAnimations.LoadTime",
+                "Time to load backpack light animations = %.2f ms", loadTime);
 }
 
 void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
@@ -397,7 +401,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
   ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoader.AnimFileOnMainThread", "" );
 
-  PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationFile", "Loading animations from %s", path.c_str());
+  PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
+                "Loading animations from %s", path.c_str());
 
   const bool binFile = Util::FileUtils::FilenameHasSuffix(path.c_str(), "bin");
 
@@ -432,7 +437,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     for (int clipIdx=0; clipIdx < allClips->size(); clipIdx++) {
       auto animClip = allClips->Get(clipIdx);
       auto animName = animClip->Name()->c_str();
-      PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimationFile", "Loading '%s' from %s", animName, path.c_str());
+      PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
+                    "Loading '%s' from %s", animName, path.c_str());
       std::string strName = animName;
 
       // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
@@ -484,7 +490,8 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
     auto dotIndex = jsonName.find_last_of(".");
     std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
 
-    PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), path.c_str());
+    PRINT_CH_INFO("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
+                  "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
 
     std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     DEV_ASSERT(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");

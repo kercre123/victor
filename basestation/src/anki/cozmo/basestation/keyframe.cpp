@@ -753,11 +753,9 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-        PRINT_NAMED_INFO("BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
-                         "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-                         animNameDebug.c_str(),
-                         std::abs(_streamMsg.speed),
-                         MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                      "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed,
                                 -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
                                 MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -768,10 +766,9 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-        PRINT_NAMED_INFO("BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
-                         "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-                         animNameDebug.c_str(),
-                         std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
+                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
     }
@@ -784,10 +781,9 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       //       speed limit should look like between straight and point turns so
       //       just using straight limit for now as a sanity check.
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-        PRINT_NAMED_INFO("BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
-                         "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-                         animNameDebug.c_str(),
-                         std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+        PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
+                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
     }
@@ -958,11 +954,11 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     {
       // Check that speed is valid
       if (std::abs(_streamMsg.speed_degPerSec) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-        PRINT_NAMED_INFO("TurnToRecordedHeadingKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
-                         "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-                         animNameDebug.c_str(),
-                         std::abs(_streamMsg.speed_degPerSec),
-                         MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+        PRINT_CH_INFO("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
+                      "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                      animNameDebug.c_str(),
+                      std::abs(_streamMsg.speed_degPerSec),
+                      MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         _streamMsg.speed_degPerSec = CLIP((f32)_streamMsg.speed_degPerSec,
                                           -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
                                           MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -970,21 +966,21 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       
       // Check that accel/decel are within range
       if (std::abs(_streamMsg.accel_degPerSec2) > MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2) {
-        PRINT_NAMED_INFO("TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnAccelExceedsLimit",
-                         "%s: PointTurn accel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
-                         animNameDebug.c_str(),
-                         std::abs(_streamMsg.accel_degPerSec2),
-                         MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+        PRINT_CH_INFO("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnAccelExceedsLimit",
+                      "%s: PointTurn accel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
+                      animNameDebug.c_str(),
+                      std::abs(_streamMsg.accel_degPerSec2),
+                      MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
         _streamMsg.accel_degPerSec2 = CLIP((f32)_streamMsg.accel_degPerSec2,
                                           -MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2,
                                           MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
       }
       if (std::abs(_streamMsg.decel_degPerSec2) > MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2) {
-        PRINT_NAMED_INFO("TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnDecelExceedsLimit",
-                         "%s: PointTurn decel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
-                         animNameDebug.c_str(),
-                         std::abs(_streamMsg.decel_degPerSec2),
-                         MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
+        PRINT_CH_INFO("Animations", "TurnToRecordedHeadingKeyFrame.CheckRotationAccel.PointTurnDecelExceedsLimit",
+                      "%s: PointTurn decel %d deg/s^2 exceeds limit of %f deg/s^2. Clamping",
+                      animNameDebug.c_str(),
+                      std::abs(_streamMsg.decel_degPerSec2),
+                      MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
         _streamMsg.decel_degPerSec2 = CLIP((f32)_streamMsg.decel_degPerSec2,
                                            -MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2,
                                            MAX_BODY_ROTATION_ACCEL_DEG_PER_SEC2);
