@@ -349,4 +349,7 @@ unity/Cozmo/Assets/StreamingAssets/DASConfig.json.meta
 unity/Cozmo/Assets/Resources/bootstrap/LocalizedStrings/
 unity/Cozmo/Assets/Resources/bootstrap/LocalizedStrings.meta
 
+# Code Lab
+unity/Cozmo/Assets/StreamingAssets/Scratch/LocalizedStrings
+unity/Cozmo/Assets/StreamingAssets/Scratch/LocalizedStrings.meta
 

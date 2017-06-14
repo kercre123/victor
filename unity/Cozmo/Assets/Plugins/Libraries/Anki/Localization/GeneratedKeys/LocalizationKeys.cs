@@ -71,6 +71,9 @@ public static class LocalizationKeys {
   public const string kBehaviorSingingSakura = "behavior.singing.Sakura";
   public const string kBehaviorSingingMussIDenn = "behavior.singing.MussIDenn";
   public const string kBehaviorReactToVoiceCommand = "behavior.ReactToVoiceCommand";
+  public const string kBehaviorVC_Refuse_Energy = "behavior.VC_Refuse_Energy";
+  public const string kBehaviorVC_Refuse_Repair = "behavior.VC_Refuse_Repair";
+  public const string kBehaviorVC_Refuse_Sparks = "behavior.VC_Refuse_Sparks";
 
   #endregion
 
@@ -115,48 +118,6 @@ public static class LocalizationKeys {
   public const string kCodeLabTitle = "codeLab.title";
   public const string kCodeLabDescription = "codeLab.description";
   public const string kActivityViewTitle = "activityView.title";
-
-  #endregion
-
-  #region CodeLabHorizontalStrings
-
-  public const string kCodeLabHorizontalUserProjectMyProject = "codeLabHorizontal.UserProject.MyProject";
-  public const string kCodeLabHorizontalCozmoSaysBlockDefaultText = "codeLabHorizontal.CozmoSaysBlock.DefaultText";
-  public const string kCodeLabHorizontalTooltipRepeatForever = "codeLabHorizontal.Tooltip.RepeatForever";
-  public const string kCodeLabHorizontalTooltipRepeat = "codeLabHorizontal.Tooltip.Repeat";
-  public const string kCodeLabHorizontalTooltipStopProgram = "codeLabHorizontal.Tooltip.StopProgram";
-  public const string kCodeLabHorizontalTooltipLightBackpack = "codeLabHorizontal.Tooltip.LightBackpack";
-  public const string kCodeLabHorizontalTooltipDriveForward = "codeLabHorizontal.Tooltip.DriveForward";
-  public const string kCodeLabHorizontalTooltipDriveForwardFast = "codeLabHorizontal.Tooltip.DriveForwardFast";
-  public const string kCodeLabHorizontalTooltipDriveBackward = "codeLabHorizontal.Tooltip.DriveBackward";
-  public const string kCodeLabHorizontalTooltipDriveBackwardFast = "codeLabHorizontal.Tooltip.DriveBackwardFast";
-  public const string kCodeLabHorizontalTooltipActHappy = "codeLabHorizontal.Tooltip.ActHappy";
-  public const string kCodeLabHorizontalTooltipActLikeWinner = "codeLabHorizontal.Tooltip.ActLikeWinner";
-  public const string kCodeLabHorizontalTooltipActSad = "codeLabHorizontal.Tooltip.ActSad";
-  public const string kCodeLabHorizontalTooltipActSurprised = "codeLabHorizontal.Tooltip.ActSurprised";
-  public const string kCodeLabHorizontalTooltipActLikeDog = "codeLabHorizontal.Tooltip.ActLikeDog";
-  public const string kCodeLabHorizontalTooltipActLikeCat = "codeLabHorizontal.Tooltip.ActLikeCat";
-  public const string kCodeLabHorizontalTooltipSneeze = "codeLabHorizontal.Tooltip.Sneeze";
-  public const string kCodeLabHorizontalTooltipActExcited = "codeLabHorizontal.Tooltip.ActExcited";
-  public const string kCodeLabHorizontalTooltipThinkHard = "codeLabHorizontal.Tooltip.ThinkHard";
-  public const string kCodeLabHorizontalTooltipActBored = "codeLabHorizontal.Tooltip.ActBored";
-  public const string kCodeLabHorizontalTooltipActFrustrated = "codeLabHorizontal.Tooltip.ActFrustrated";
-  public const string kCodeLabHorizontalTooltipActChatty = "codeLabHorizontal.Tooltip.ActChatty";
-  public const string kCodeLabHorizontalTooltipActDisappointed = "codeLabHorizontal.Tooltip.ActDisappointed";
-  public const string kCodeLabHorizontalTooltipSnore = "codeLabHorizontal.Tooltip.Snore";
-  public const string kCodeLabHorizontalTooltipMysteryAnimation = "codeLabHorizontal.Tooltip.MysteryAnimation";
-  public const string kCodeLabHorizontalTooltipMoveLift = "codeLabHorizontal.Tooltip.MoveLift";
-  public const string kCodeLabHorizontalTooltipMoveHead = "codeLabHorizontal.Tooltip.MoveHead";
-  public const string kCodeLabHorizontalTooltipDriveToCube = "codeLabHorizontal.Tooltip.DriveToCube";
-  public const string kCodeLabHorizontalTooltipSay = "codeLabHorizontal.Tooltip.Say";
-  public const string kCodeLabHorizontalTooltipTurnLeft = "codeLabHorizontal.Tooltip.TurnLeft";
-  public const string kCodeLabHorizontalTooltipTurnRight = "codeLabHorizontal.Tooltip.TurnRight";
-  public const string kCodeLabHorizontalTooltipWaitToSeeFace = "codeLabHorizontal.Tooltip.WaitToSeeFace";
-  public const string kCodeLabHorizontalTooltipWaitToSeeSmile = "codeLabHorizontal.Tooltip.WaitToSeeSmile";
-  public const string kCodeLabHorizontalTooltipWaitToSeeFrown = "codeLabHorizontal.Tooltip.WaitToSeeFrown";
-  public const string kCodeLabHorizontalTooltipWaitToSeeCube = "codeLabHorizontal.Tooltip.WaitToSeeCube";
-  public const string kCodeLabHorizontalTooltipWaitTorCubeTap = "codeLabHorizontal.Tooltip.WaitTorCubeTap";
-  public const string kCodeLabHorizontalTooltipStartProgramHere = "codeLabHorizontal.Tooltip.StartProgramHere";
 
   #endregion
 
@@ -291,6 +252,43 @@ public static class LocalizationKeys {
   public const string kCodeLabSampleProject_PeekabooProjectName = "codeLabSampleProject_Peekaboo.projectName";
   public const string kCodeLabSampleProject_WorkoutwithCubeProjectName = "codeLabSampleProject_WorkoutwithCube.projectName";
   public const string kCodeLabSampleProject_IntruderAlarmProjectName = "codeLabSampleProject_IntruderAlarm.projectName";
+  public const string kCodeLabHorizontalUserProjectMyProject = "codeLabHorizontal.UserProject.MyProject";
+  public const string kCodeLabHorizontalCozmoSaysBlockDefaultText = "codeLabHorizontal.CozmoSaysBlock.DefaultText";
+  public const string kCodeLabHorizontalTooltipRepeatForever = "codeLabHorizontal.Tooltip.RepeatForever";
+  public const string kCodeLabHorizontalTooltipRepeat = "codeLabHorizontal.Tooltip.Repeat";
+  public const string kCodeLabHorizontalTooltipStopProgram = "codeLabHorizontal.Tooltip.StopProgram";
+  public const string kCodeLabHorizontalTooltipLightBackpack = "codeLabHorizontal.Tooltip.LightBackpack";
+  public const string kCodeLabHorizontalTooltipDriveForward = "codeLabHorizontal.Tooltip.DriveForward";
+  public const string kCodeLabHorizontalTooltipDriveForwardFast = "codeLabHorizontal.Tooltip.DriveForwardFast";
+  public const string kCodeLabHorizontalTooltipDriveBackward = "codeLabHorizontal.Tooltip.DriveBackward";
+  public const string kCodeLabHorizontalTooltipDriveBackwardFast = "codeLabHorizontal.Tooltip.DriveBackwardFast";
+  public const string kCodeLabHorizontalTooltipActHappy = "codeLabHorizontal.Tooltip.ActHappy";
+  public const string kCodeLabHorizontalTooltipActLikeWinner = "codeLabHorizontal.Tooltip.ActLikeWinner";
+  public const string kCodeLabHorizontalTooltipActSad = "codeLabHorizontal.Tooltip.ActSad";
+  public const string kCodeLabHorizontalTooltipActSurprised = "codeLabHorizontal.Tooltip.ActSurprised";
+  public const string kCodeLabHorizontalTooltipActLikeDog = "codeLabHorizontal.Tooltip.ActLikeDog";
+  public const string kCodeLabHorizontalTooltipActLikeCat = "codeLabHorizontal.Tooltip.ActLikeCat";
+  public const string kCodeLabHorizontalTooltipSneeze = "codeLabHorizontal.Tooltip.Sneeze";
+  public const string kCodeLabHorizontalTooltipActExcited = "codeLabHorizontal.Tooltip.ActExcited";
+  public const string kCodeLabHorizontalTooltipThinkHard = "codeLabHorizontal.Tooltip.ThinkHard";
+  public const string kCodeLabHorizontalTooltipActBored = "codeLabHorizontal.Tooltip.ActBored";
+  public const string kCodeLabHorizontalTooltipActFrustrated = "codeLabHorizontal.Tooltip.ActFrustrated";
+  public const string kCodeLabHorizontalTooltipActChatty = "codeLabHorizontal.Tooltip.ActChatty";
+  public const string kCodeLabHorizontalTooltipActDisappointed = "codeLabHorizontal.Tooltip.ActDisappointed";
+  public const string kCodeLabHorizontalTooltipSnore = "codeLabHorizontal.Tooltip.Snore";
+  public const string kCodeLabHorizontalTooltipMysteryAnimation = "codeLabHorizontal.Tooltip.MysteryAnimation";
+  public const string kCodeLabHorizontalTooltipMoveLift = "codeLabHorizontal.Tooltip.MoveLift";
+  public const string kCodeLabHorizontalTooltipMoveHead = "codeLabHorizontal.Tooltip.MoveHead";
+  public const string kCodeLabHorizontalTooltipDriveToCube = "codeLabHorizontal.Tooltip.DriveToCube";
+  public const string kCodeLabHorizontalTooltipSay = "codeLabHorizontal.Tooltip.Say";
+  public const string kCodeLabHorizontalTooltipTurnLeft = "codeLabHorizontal.Tooltip.TurnLeft";
+  public const string kCodeLabHorizontalTooltipTurnRight = "codeLabHorizontal.Tooltip.TurnRight";
+  public const string kCodeLabHorizontalTooltipWaitToSeeFace = "codeLabHorizontal.Tooltip.WaitToSeeFace";
+  public const string kCodeLabHorizontalTooltipWaitToSeeSmile = "codeLabHorizontal.Tooltip.WaitToSeeSmile";
+  public const string kCodeLabHorizontalTooltipWaitToSeeFrown = "codeLabHorizontal.Tooltip.WaitToSeeFrown";
+  public const string kCodeLabHorizontalTooltipWaitToSeeCube = "codeLabHorizontal.Tooltip.WaitToSeeCube";
+  public const string kCodeLabHorizontalTooltipWaitTorCubeTap = "codeLabHorizontal.Tooltip.WaitTorCubeTap";
+  public const string kCodeLabHorizontalTooltipStartProgramHere = "codeLabHorizontal.Tooltip.StartProgramHere";
 
   #endregion
 
