@@ -66,27 +66,21 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.SendMessage();
     }
 
-    public float GetCurrentDisplayValue(NeedId needId) {
+    public NeedsValue GetCurrentDisplayValue(NeedId needId) {
       int needIndex = (int)needId;
-      return _CurrentDisplayState.curNeedLevel[needIndex];
+      NeedsValue currentValue;
+      currentValue.Value = _CurrentDisplayState.curNeedLevel[needIndex];
+      currentValue.Bracket = _CurrentDisplayState.curNeedBracket[needIndex];
+      return currentValue;
     }
 
-    public float PopLatestEngineValue(NeedId needId) {
+    public NeedsValue PopLatestEngineValue(NeedId needId) {
       int needIndex = (int)needId;
-      float latestValue = _LatestStateFromEngine.curNeedLevel[needIndex];
-      _CurrentDisplayState.curNeedLevel[needIndex] = latestValue;
-      return latestValue;
-    }
-
-    public NeedBracketId GetCurrentDisplayBracket(NeedId needId) {
-      int needIndex = (int)needId;
-      return _CurrentDisplayState.curNeedBracket[needIndex];
-    }
-
-    public NeedBracketId PopLatestEngineBracket(NeedId needId) {
-      int needIndex = (int)needId;
-      NeedBracketId latestValue = _LatestStateFromEngine.curNeedBracket[needIndex];
-      _CurrentDisplayState.curNeedBracket[needIndex] = latestValue;
+      NeedsValue latestValue;
+      latestValue.Value = _LatestStateFromEngine.curNeedLevel[needIndex];
+      latestValue.Bracket = _LatestStateFromEngine.curNeedBracket[needIndex];
+      _CurrentDisplayState.curNeedLevel[needIndex] = latestValue.Value;
+      _CurrentDisplayState.curNeedBracket[needIndex] = latestValue.Bracket;
       return latestValue;
     }
 
@@ -152,8 +146,8 @@ namespace Cozmo.Needs {
       }
     }
 
-    private void HandleUpdateUI(DelayedUIUpdateForAction updateUIForAction){
-      if(OnUpdateUIForAction != null){
+    private void HandleUpdateUI(DelayedUIUpdateForAction updateUIForAction) {
+      if (OnUpdateUIForAction != null) {
         OnUpdateUIForAction(updateUIForAction.actionCausingTheUpdate);
       }
     }
@@ -183,5 +177,10 @@ namespace Cozmo.Needs {
 
       return needsState;
     }
+  }
+
+  public struct NeedsValue {
+    public float Value;
+    public NeedBracketId Bracket;
   }
 }

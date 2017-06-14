@@ -87,15 +87,16 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   public static AnimationTrigger GetAnimationForWakeUp() {
-    if (Cozmo.Needs.NeedsStateManager.Instance != null) {
-      if (Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Repair).Equals(NeedBracketId.Critical)) {
-        return Anki.Cozmo.AnimationTrigger.ConnectWakeUp_SevereRepair;
+    Cozmo.Needs.NeedsStateManager nsm = Cozmo.Needs.NeedsStateManager.Instance;
+    if (nsm != null) {
+      if (nsm.GetCurrentDisplayValue(NeedId.Repair).Bracket.Equals(NeedBracketId.Critical)) {
+        return AnimationTrigger.ConnectWakeUp_SevereRepair;
       }
-      else if (Cozmo.Needs.NeedsStateManager.Instance.GetCurrentDisplayBracket(NeedId.Energy).Equals(NeedBracketId.Critical)) {
-        return Anki.Cozmo.AnimationTrigger.ConnectWakeUp_SevereEnergy;
+      else if (nsm.GetCurrentDisplayValue(NeedId.Energy).Bracket.Equals(NeedBracketId.Critical)) {
+        return AnimationTrigger.ConnectWakeUp_SevereEnergy;
       }
     }
-    return Anki.Cozmo.AnimationTrigger.ConnectWakeUp;
+    return AnimationTrigger.ConnectWakeUp;
   }
 
   private void OnApplicationPause(bool bPause) {
@@ -434,10 +435,6 @@ public class ConnectionFlowController : MonoBehaviour {
       data.Pack(ms);
       RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
 
-      FinishConnectionFlow();
-    }
-    // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
-    else if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       FinishConnectionFlow();
     }
     // normal flow

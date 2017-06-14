@@ -18,7 +18,7 @@ namespace Cozmo.Play.UI {
                             buttonClickCallback: null,
                             dasButtonName: "play_need_meter_button",
                             dasParentDialogName: DASEventDialogName);
-      _PlayMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Play));
+      _PlayMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Play).Value);
     }
 
     private void OnDestroy() {
@@ -45,7 +45,7 @@ namespace Cozmo.Play.UI {
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
-      _PlayMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Play));
+      _PlayMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Play).Value);
     }
   }
 }

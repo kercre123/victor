@@ -42,8 +42,8 @@ namespace Cozmo.Energy.UI {
                               dasButtonName: "energy_need_meter_button",
                               dasParentDialogName: DASEventDialogName);
 
-      float displayEnergy = nsm.GetCurrentDisplayValue(NeedId.Energy);
-      _EnergyMeter.ProgressBar.SetValueInstant(displayEnergy);
+      NeedsValue displayValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
+      _EnergyMeter.ProgressBar.SetValueInstant(displayValue.Value);
 
       if (_InstructionNumberTexts != null) {
         for (int i = 0; i < _InstructionNumberTexts.Length; i++) {
@@ -58,7 +58,7 @@ namespace Cozmo.Energy.UI {
       //animate our display energy to the engine energy
       HandleLatestNeedsLevelChanged(NeedsActionId.FeedBlue);
 
-      RefreshForCurrentBracket(nsm);
+      RefreshForCurrentBracket(displayValue.Bracket);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
     }
 
@@ -98,14 +98,13 @@ namespace Cozmo.Energy.UI {
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       if (actionId == NeedsActionId.FeedBlue) {
         NeedsStateManager nsm = NeedsStateManager.Instance;
-        float engineEnergy = nsm.PopLatestEngineValue(NeedId.Energy);
-        _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineEnergy);
-        RefreshForCurrentBracket(nsm);
+        NeedsValue engineValue = nsm.PopLatestEngineValue(NeedId.Energy);
+        _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineValue.Value);
+        RefreshForCurrentBracket(engineValue.Bracket);
       }
     }
 
-    private void RefreshForCurrentBracket(NeedsStateManager nsm) {
-      NeedBracketId newNeedBracket = nsm.PopLatestEngineBracket(NeedId.Energy);
+    private void RefreshForCurrentBracket(NeedBracketId newNeedBracket) {
       //only hide/show elements if bracket has changed
       if (_LastNeedBracket != newNeedBracket) {
         bool cozmoIsFull = newNeedBracket == NeedBracketId.Full;
@@ -155,19 +154,19 @@ namespace Cozmo.Energy.UI {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
           break;
         }
-      case 1:{
+      case 1: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
           break;
         }
-      case 2:{
+      case 2: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
           break;
         }
-      case 3:{
+      case 3: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
           break;
         }
-      case 4:{
+      case 4: {
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
           break;
         }

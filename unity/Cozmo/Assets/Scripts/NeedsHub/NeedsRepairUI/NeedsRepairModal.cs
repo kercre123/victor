@@ -28,7 +28,7 @@ namespace Cozmo.Repair.UI {
                               buttonClickCallback: null,
                               dasButtonName: "repair_need_meter_button",
                               dasParentDialogName: DASEventDialogName);
-      _RepairMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Repair));
+      _RepairMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Repair).Value);
 
       _RepairHeadButton.Initialize(HandleRepairHeadButtonPressed, "repair_head_button", DASEventDialogName);
 
@@ -68,7 +68,7 @@ namespace Cozmo.Repair.UI {
       if (actionId == NeedsActionId.RepairHead || actionId == NeedsActionId.RepairLift
           || actionId == NeedsActionId.RepairTreads) {
         NeedsStateManager nsm = NeedsStateManager.Instance;
-        _RepairMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Repair));
+        _RepairMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Repair).Value);
       }
     }
 
