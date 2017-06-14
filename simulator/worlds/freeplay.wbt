@@ -77,6 +77,8 @@ WebotsKeyboardController {
   robotVolume 0
   userName "Billy"
   unlockName "Workout"
+  consoleVarName "DebugSetEnergyLevel"
+  consoleVarValue "1.0"
   filterLogs TRUE
   autoConnect FALSE
 }

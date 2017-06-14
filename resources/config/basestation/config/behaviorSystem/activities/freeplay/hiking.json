@@ -124,6 +124,7 @@
     "type": "StrictPriority",
     "behaviors": [
       "Needs_MildLowEnergyRequest",
+      "Needs_MildLowPlayRequest",
       "Needs_MildLowRepairRequest"
     ]
   },

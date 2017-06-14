@@ -143,6 +143,7 @@ enum uint_8 BehaviorID {
   Needs_SevereLowRepairGetIn,
   Needs_SevereLowRepairRequest,
   Needs_MildLowEnergyRequest,
+  Needs_MildLowPlayRequest,
   Needs_MildLowRepairRequest,
 
   NothingToDo_BoredAnim,
