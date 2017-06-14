@@ -132,8 +132,23 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   {
     const PoseState newPoseState = (setAsKnown ? PoseState::Known : PoseState::Dirty);
     
-    if ( isConfirmedMatch ) {
-      SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "ObjectPoseConfirmer.UpdatePoseInInstace");
+    if ( isConfirmedMatch )
+    {
+      if(isDockObject)
+      {
+        // Since we are constantly updating the pose of the dock object, even while moving, the pose
+        // will not be super accurate. This inaccuracy can result in the pose rotating and possibly
+        // no longer being considered flat. To prevent this just clamp the pose to flat.
+        Pose3d clampedPose = newPose;
+        const f32 kClampedAngleTol = DEG_TO_RAD(20);
+        ObservableObject::ClampPoseToFlat(clampedPose, kClampedAngleTol);
+        SetPoseHelper(object, clampedPose, obsDistance_mm, newPoseState,
+                      "ObjectPoseConfirmer.UpdateClampedPoseInInstance");
+      }
+      else
+      {
+        SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "ObjectPoseConfirmer.UpdatePoseInInstance");
+      }
       
       // when we set the pose for an object we were carrying, we also unset it from the lift, tell the robot
       // we are not carrying it anymore
@@ -144,7 +159,9 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
                       object->GetID().GetValue());
         _robot.UnSetCarryObject(object->GetID());
       }
-    } else {
+    }
+    else
+    {
       DEV_ASSERT( !isCarriedObject, "ObjectPoseConfirmer.UpdatePoseInInstance.CantCarryUnconfirmedObjects");
       
       // currently we use UpdatePoseInInstance for both unconfirmed and confirmed objects. If we are changing the

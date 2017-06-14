@@ -181,6 +181,11 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
     }
     
     if(shouldStop){
+      PRINT_CH_DEBUG("Behaviors",
+                     "BehaviorStackBlocks.UpdateInternal.BlocksInvalid",
+                     "Stopping due to invalid blocks topBlockValid:%d bottomBlockValid:%d",
+                     topValid,
+                     bottomValid);
       StopWithoutImmediateRepetitionPenalty();
       return BehaviorStatus::Complete;
     }
