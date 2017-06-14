@@ -35,5 +35,59 @@
   },
   "needs.NeedsEnergyModal.FeedingComplete": {
     "translation": "Cozmo is fed! Now he is ready to play."
+  },
+  "needs.NeedsRepairModal.Title": {
+    "translation": "Tune Up Cozmo"
+  },
+  "needs.NeedsRepairModal.RepairSummary": {
+    "translation": "Cozmo needs to be tuned up in order to keep him healthy."
+  },
+  "needs.NeedsRepairModal.HeadDamageNotice": {
+    "translation": "Head needs adjustment"
+  },
+  "needs.NeedsRepairModal.HeadRepairedNotice": {
+    "translation": "Head adjusted"
+  },
+  "needs.NeedsRepairModal.TreadsDamageNotice": {
+    "translation": "Treads require alignment"
+  },
+  "needs.NeedsRepairModal.TreadsRepairedNotice": {
+    "translation": "Treads aligned"
+  },
+  "needs.NeedsRepairModal.LiftDamageNotice": {
+    "translation": "Arms need calibration"
+  },
+  "needs.NeedsRepairModal.LiftRepairedNotice": {
+    "translation": "Arms calibrated"
+  },
+  "needs.NeedsRepairModal.RepairButtonsInstruction": {
+    "translation": "Tap the regions to be repaired."
+  },  
+  "needs.NeedsRepairModal.TuneUpInstruction": {
+    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap Calibrate."
+  },
+  "needs.NeedsRepairModal.NoRepairsNeeded": {
+    "translation": "Cozmo is fully tuned up!"
+  },
+  "needs.NeedsRepairModal.CalibrateButtonText": {
+    "translation": "CALIBRATE"
+  },
+  "needs.NeedsRepairModal.ScanButtonText": {
+    "translation": "SCAN COZMO"
+  },
+  "needs.NeedsRepairModal.AlligningHead": {
+    "translation": "Aligning Head..."
+  },
+  "needs.NeedsRepairModal.AligningLift": {
+    "translation": "Aligning Arms..."
+  },
+  "needs.NeedsRepairModal.AligningTreads": {
+    "translation": "Aligning Treads..."
+  },
+  "needs.ContinueButtonText": {
+    "translation": "CONTINUE"
+  },
+  "needs.NeedsRepairModal.TuneUpComplete": {
+    "translation": "Cozmo is all tuned up. Come back again when his meter is more empty."
   }
 }

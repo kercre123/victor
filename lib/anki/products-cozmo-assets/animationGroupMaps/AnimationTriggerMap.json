@@ -1349,6 +1349,54 @@
       "AnimName": "ag_reactToStop"
     },
     {
+      "CladEvent": "RepairGetReadyMild",
+      "AnimName": "ag_repair_fix_getready_01"
+    },
+    {
+      "CladEvent": "RepairGetReadyMildLowerLift",
+      "AnimName": "ag_repair_fix_lowerlift_01"
+    },
+    {
+      "CladEvent": "RepairGetReadyMildRaiseLift",
+      "AnimName": "ag_repair_fix_raiselift_01"
+    },
+    {
+      "CladEvent": "RepairGetReadySevere",
+      "AnimName": "ag_repair_severe_fix_getready_01"
+    },
+    {
+      "CladEvent": "RepairGetReadySevereLowerLift",
+      "AnimName": "ag_repair_severe_fix_lowerlift_01"
+    },
+    {
+      "CladEvent": "RepairGetReadySevereRaiseLift",
+      "AnimName": "ag_repair_severe_fix_raiselift_01"
+    },
+    {
+      "CladEvent": "RepairLiftDown",
+      "AnimName": "ag_repair_fix_lift_down_01"
+    },
+    {
+      "CladEvent": "RepairLiftUp",
+      "AnimName": "ag_repair_fix_lift_up_01"
+    },
+    {
+      "CladEvent": "RepairHeadDown",
+      "AnimName": "ag_repair_fix_head_down_01"
+    },
+    {
+      "CladEvent": "RepairHeadUp",
+      "AnimName": "ag_repair_fix_head_up_01"
+    },
+    {
+      "CladEvent": "RepairWheelsBack",
+      "AnimName": "ag_repair_fix_wheels_back_01"
+    },
+    {
+      "CladEvent": "RepairWheelsFront",
+      "AnimName": "ag_repair_fix_wheels_forward_01"
+    },        
+    {
       "CladEvent": "RequestGameSpeedTapDeny0",
       "AnimName": "requestGame_speedTap_deny"
     },

@@ -3705,22 +3705,6 @@
                                         "b": 0.8676470518112183,
                                         "a": 1.0
                                     }
-                                },
-                                {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
-                                    "PressedSpriteColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
-                                    },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-UHD/Packed/img_solidBlock_white.png",
-                                    "DisabledSpriteColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
-                                    }
                                 }
                             ],
                             "SkinAutoSizing": false,
@@ -7856,6 +7840,1011 @@
                             },
                             "SkinImage": false,
                             "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonFrameSprites/common_frame_sprites-SD/Packed/framing_blurOverlay_bg.png",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": false,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": false,
+                            "ButtonImageArray": [],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "CozmoButton_Calibrate",
+                            "Type": 0,
+                            "SkinImageColor": false,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": false,
+                            "ImageResourceKey": "",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": true,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": true,
+                            "ButtonImageArray": [
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairCalibrate_down.png",
+                                    "PressedSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairCalibrate_on.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.2647058963775635,
+                                        "g": 0.26665225625038149,
+                                        "b": 0.26665225625038149,
+                                        "a": 1.0
+                                    }
+                                },
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairCalibrate_down.png",
+                                    "PressedSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairCalibrate_on.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 0.0
+                                    }
+                                }
+                            ],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.3764705955982208,
+                                        "g": 0.3764705955982208,
+                                        "b": 0.3764705955982208,
+                                        "a": 1.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.9607843160629273,
+                                        "g": 0.9607843160629273,
+                                        "b": 0.9607843160629273,
+                                        "a": 1.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.8980392217636108,
+                                        "g": 0.9843137264251709,
+                                        "b": 0.9921568632125855,
+                                        "a": 1.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.4760902225971222,
+                                        "g": 0.654411792755127,
+                                        "b": 0.2213451862335205,
+                                        "a": 1.0
+                                    },
+                                    "m_ColorMultiplier": 1.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "CozmoButton_Calibrate_Background",
+                            "Type": 1,
+                            "SkinImageColor": true,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": true,
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairCalibrate_on.png",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": false,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": false,
+                            "ButtonImageArray": [],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "CozmoButton_RepairArrow",
+                            "Type": 0,
+                            "SkinImageColor": false,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": false,
+                            "ImageResourceKey": "",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": true,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": true,
+                            "ButtonImageArray": [
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_down.png",
+                                    "PressedSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_on.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.654411792755127,
+                                        "g": 0.6688473224639893,
+                                        "b": 0.6688473224639893,
+                                        "a": 1.0
+                                    }
+                                },
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_down.png",
+                                    "PressedSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_on.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.654411792755127,
+                                        "g": 0.6688473224639893,
+                                        "b": 0.6688473224639893,
+                                        "a": 1.0
+                                    }
+                                }
+                            ],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.9607843160629273,
+                                        "g": 0.9607843160629273,
+                                        "b": 0.9607843160629273,
+                                        "a": 1.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.8980392217636108,
+                                        "g": 0.9843137264251709,
+                                        "b": 0.9921568632125855,
+                                        "a": 1.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.32549020648002627,
+                                        "g": 0.3686274588108063,
+                                        "b": 0.3843137323856354,
+                                        "a": 1.0
+                                    },
+                                    "m_ColorMultiplier": 1.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "CozmoButton_RepairArrow_Background",
+                            "Type": 1,
+                            "SkinImageColor": true,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": true,
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_on.png",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": false,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": false,
+                            "ButtonImageArray": [],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "CozmoButton_RepairPart",
+                            "Type": 0,
+                            "SkinImageColor": false,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": false,
+                            "ImageResourceKey": "",
+                            "SkinFont": false,
+                            "SkinFontStyle": false,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": false,
+                            "TextAlignment": 0,
+                            "SkinTextOverflow": false,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "",
+                            "SkinFontSize": false,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": true,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": false,
+                            "TMPOutlineColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": false,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": true,
+                            "ButtonImageArray": [
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "PressedSpriteColor": {
+                                        "r": 0.35467126965522768,
+                                        "g": 0.5326247811317444,
+                                        "b": 0.5882352590560913,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 0.4000000059604645,
+                                        "g": 0.4000000059604645,
+                                        "b": 0.4000000059604645,
+                                        "a": 0.5215686559677124
+                                    }
+                                },
+                                {
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "PressedSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "DisabledSpriteColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 0.0
+                                    }
+                                }
+                            ],
+                            "SkinAutoSizing": false,
+                            "EnableAutoSizing": false,
+                            "AutoSizingMin": 0.0,
+                            "AutoSizingMax": 0.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.8980392217636108,
+                                        "g": 0.9843137264251709,
+                                        "b": 0.9921568632125855,
+                                        "a": 1.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.32549020648002627,
+                                        "g": 0.3686274588108063,
+                                        "b": 0.3843137323856354,
+                                        "a": 1.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "CozmoButton_RepairPart_Background",
+                            "Type": 1,
+                            "SkinImageColor": true,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": false,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": true,
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
