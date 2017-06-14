@@ -94,7 +94,7 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Light Backpack");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.LightBackpack'));
   }
 };
 
@@ -128,7 +128,7 @@ Blockly.Blocks['cozmo_drive_forward'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive Forward");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.DriveForward'));
   }
 };
 
@@ -162,7 +162,7 @@ Blockly.Blocks['cozmo_drive_forward_fast'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive Forward Fast");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.DriveForwardFast'));
   }
 };
 
@@ -196,7 +196,7 @@ Blockly.Blocks['cozmo_drive_backward'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive Backward");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.DriveBackward'));
   }
 };
 
@@ -230,7 +230,7 @@ Blockly.Blocks['cozmo_drive_backward_fast'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive Backward Fast");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.DriveBackwardFast'));
   }
 };
 
@@ -259,7 +259,7 @@ Blockly.Blocks['cozmo_happy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Happy");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActHappy'));
   }
 };
 
@@ -288,7 +288,7 @@ Blockly.Blocks['cozmo_victory_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Winner");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActLikeWinner'));
   }
 };
 
@@ -317,7 +317,7 @@ Blockly.Blocks['cozmo_unhappy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Sad");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActSad'));
   }
 };
 
@@ -346,7 +346,7 @@ Blockly.Blocks['cozmo_surprise_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Surprised");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActSurprised'));
   }
 };
 
@@ -375,7 +375,7 @@ Blockly.Blocks['cozmo_dog_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Dog");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActLikeDog'));
   }
 };
 
@@ -404,7 +404,7 @@ Blockly.Blocks['cozmo_cat_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Cat");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActLikeCat'));
   }
 };
 
@@ -433,7 +433,7 @@ Blockly.Blocks['cozmo_sneeze_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Sneeze");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.Sneeze'));
   }
 };
 
@@ -462,7 +462,7 @@ Blockly.Blocks['cozmo_excited_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Excited");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActExcited'));
   }
 };
 
@@ -491,7 +491,7 @@ Blockly.Blocks['cozmo_thinking_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Think Hard");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ThinkHard'));
   }
 };
 
@@ -520,7 +520,7 @@ Blockly.Blocks['cozmo_bored_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Bored");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActBored'));
   }
 };
 
@@ -549,7 +549,7 @@ Blockly.Blocks['cozmo_frustrated_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Frustrated");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActFrustrated'));
   }
 };
 
@@ -578,7 +578,7 @@ Blockly.Blocks['cozmo_chatty_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Chatty");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActChatty'));
   }
 };
 
@@ -607,7 +607,7 @@ Blockly.Blocks['cozmo_dejected_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Disappointed");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.ActDisappointed'));
   }
 };
 
@@ -636,7 +636,7 @@ Blockly.Blocks['cozmo_sleep_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Snore");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.Snore'));
   }
 };
 
@@ -665,7 +665,7 @@ Blockly.Blocks['cozmo_mystery_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Mystery Animation");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.MysteryAnimation'));
   }
 };
 
@@ -721,7 +721,7 @@ Blockly.Blocks['cozmo_liftheight'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Move Lift");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.MoveLift'));
   }
 };
 
@@ -777,7 +777,7 @@ Blockly.Blocks['cozmo_headangle'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Move Head");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.MoveHead'));
   }
 };
 
@@ -806,7 +806,7 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive to Cube");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.DriveToCube'));
   }
 };
 
@@ -840,7 +840,7 @@ init: function() {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Say");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.Say'));
   }
 };
 
@@ -869,7 +869,7 @@ Blockly.Blocks['cozmo_turn_left'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Turn Left");
+    this.setTooltip($t('codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft'));
   }
 };
 
@@ -898,7 +898,7 @@ Blockly.Blocks['cozmo_turn_right'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Turn Right");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.TurnRight'));
   }
 };
 
@@ -926,7 +926,7 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Face");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.WaitToSeeFace'));
   }
 };
 
@@ -954,7 +954,7 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Smile");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.WaitToSeeSmile'));
   }
 };
 
@@ -982,7 +982,7 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Frown");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.WaitToSeeFrown'));
   }
 };
 
@@ -1010,7 +1010,7 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Cube");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.WaitToSeeCube'));
   }
 };
 
@@ -1038,6 +1038,6 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait for Cube Tap");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.WaitTorCubeTap'));
   }
 };

@@ -57,7 +57,7 @@ Blockly.Blocks['event_whenflagclicked'] = {
       "colourTertiary": Blockly.Colours.event.tertiary
     });
     // *** ANKI CHANGE ***
-    this.setTooltip("Start Program Here");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.StartProgramHere'));
   }
 };
 

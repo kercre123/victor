@@ -31,6 +31,9 @@ git clean -fd i18n
 echo reverting node_modules
 rm -rf node_modules
 
+echo reverting dist
+rm -rf dist
+
 echo reverting msg
 git checkout -- msg
 git clean -fd msg

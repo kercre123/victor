@@ -515,5 +515,20 @@
   },
   "codeLabHorizontal.Tooltip.StartProgramHere": {
     "translation": "Start Program Here"
+  },
+  "codeLabHorizontal.Category.Drive": {
+    "translation": "Drive"
+  },
+  "codeLabHorizontal.Category.Actions": {
+    "translation": "Actions"
+  },
+  "codeLabHorizontal.Category.Animations": {
+    "translation": "Animations"
+  },
+  "codeLabHorizontal.Category.Events": {
+    "translation": "Events"
+  },
+  "codeLabHorizontal.Category.Control": {
+    "translation": "Control"
   }
 }

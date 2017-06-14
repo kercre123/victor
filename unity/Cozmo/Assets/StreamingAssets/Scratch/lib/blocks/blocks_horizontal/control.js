@@ -102,7 +102,7 @@ Blockly.Blocks['control_forever'] = {
       "colourTertiary": Blockly.Colours.control.tertiary
     });
     // *** ANKI Change ***
-    this.setTooltip("Repeat Forever");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.RepeatForever'));
   }
 };
 
@@ -144,7 +144,7 @@ Blockly.Blocks['control_repeat'] = {
       "colourTertiary": Blockly.Colours.control.tertiary
     });
     // *** ANKI Change ***
-    this.setTooltip("Repeat");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.Repeat'));
   }
 };
 
@@ -174,10 +174,11 @@ Blockly.Blocks['control_stop'] = {
       "colourTertiary": Blockly.Colours.control.tertiary
     });
     // *** ANKI Change ***
-    this.setTooltip("Stop Program");
+    this.setTooltip($t('codeLabHorizontal.Tooltip.StopProgram'));
   }
 };
 
+// Timer block to wait for time to pass. Not currently used. - msintov, 6/14/17
 Blockly.Blocks['control_wait'] = {
   /**
    * Block to wait (pause) stack.
