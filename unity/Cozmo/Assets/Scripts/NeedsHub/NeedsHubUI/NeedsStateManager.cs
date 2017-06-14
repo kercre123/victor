@@ -113,7 +113,7 @@ namespace Cozmo.Needs {
       SetNeedsPauseStates pauseStatesMessage = new SetNeedsPauseStates();
       pauseStatesMessage.decayPause = new bool[] { false, false, false };
       pauseStatesMessage.actionPause = new bool[] { false, false, false };
-      pauseStatesMessage.decayDiscardAfterUnpause = new bool[] { false, false, false };
+      pauseStatesMessage.decayDiscardAfterUnpause = new bool[] { true, true, true };
       RobotEngineManager.Instance.Message.SetNeedsPauseStates = pauseStatesMessage;
       RobotEngineManager.Instance.SendMessage();
     }
