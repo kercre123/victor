@@ -54,10 +54,14 @@ public:
   bool RemoveListener(const ObjectID& objectID,
                       const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener);
   
+  
+  // Exposed for debug purposes - should not be called directly
+  void HandleObjectAccel(const ObjectAccel& objectAccel);
+
 private:
   
-  void HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
-  
+  void ReceiveObjectAccelData(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
+
   struct AccelHistory
   {
     // Window size of data to keep in history

@@ -17,20 +17,80 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+Anki::Cozmo::CubeAccelComponent* sThis = nullptr;
+}
+  
+#if REMOTE_CONSOLE_ENABLED
+namespace {
+  
+CONSOLE_VAR(u32, kCubeAccelObjectActiveID, "CubeAccelComponent.FakeAccel", 0);
+CONSOLE_VAR(f32, kCubeAccelMagnitude_mm_s_s, "CubeAccelComponent.FakeAccel", 3500.0f);
+  
+void FakeCubeAcceleration(ConsoleFunctionContextRef context)
+{
+  const TimeStamp_t timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  uint32_t objectID = kCubeAccelObjectActiveID;
+  ActiveAccel accel(kCubeAccelMagnitude_mm_s_s, 0,0);
+  ObjectAccel payload(timestamp,
+                       objectID,
+                       accel);
+  
+  if(sThis != nullptr){
+    sThis->HandleObjectAccel(payload);
+  }
+}
+
+void FakeCubeShake(ConsoleFunctionContextRef context)
+{
+  uint32_t objectID = kCubeAccelObjectActiveID;
+
+  const TimeStamp_t previousTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 1000;
+  ActiveAccel positiveAccel(kCubeAccelMagnitude_mm_s_s, 0,0);
+  ObjectAccel positivePayload(previousTimestamp,
+                              objectID,
+                              positiveAccel);
+  
+  const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  ActiveAccel negativeAccel(-kCubeAccelMagnitude_mm_s_s, 0,0);
+  ObjectAccel negativePayload(currentTimestamp,
+                              objectID,
+                              negativeAccel);
+  
+  if(sThis != nullptr){
+    sThis->HandleObjectAccel(positivePayload);
+    sThis->HandleObjectAccel(negativePayload);
+  }
+}
+  
+CONSOLE_FUNC(FakeCubeAcceleration, "CubeAccelComponent.FakeAccel");
+CONSOLE_FUNC(FakeCubeShake, "CubeAccelComponent.FakeAccel");
+
+}
+#endif
+  
+  
+  
+  
 CubeAccelComponent::CubeAccelComponent(Robot& robot)
 : _robot(robot)
 {
   _eventHandler = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
                                                             RobotInterface::RobotToEngineTag::objectAccel,
-                                                            std::bind(&CubeAccelComponent::HandleObjectAccel, this, std::placeholders::_1));
+                                                            std::bind(&CubeAccelComponent::ReceiveObjectAccelData, this, std::placeholders::_1));
+  sThis = this;
 }
 
 CubeAccelComponent::~CubeAccelComponent()
 {
-  
+  sThis = nullptr;
 }
 
 void CubeAccelComponent::AddListener(const ObjectID& objectID,
@@ -116,10 +176,14 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
   return false;
 }
 
-void CubeAccelComponent::HandleObjectAccel(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
+void CubeAccelComponent::ReceiveObjectAccelData(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
 {
-  const ObjectAccel& payload = msg.GetData().Get_objectAccel();
-  const ActiveObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
+  HandleObjectAccel(msg.GetData().Get_objectAccel());
+}
+  
+void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
+{
+  const ActiveObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
   DEV_ASSERT(object != nullptr, "CubeAccelComponent.HandleObjectAccel.GetAccelForUnconnectedObject");
   
   const uint32_t objectID = object->GetID();
@@ -132,20 +196,20 @@ void CubeAccelComponent::HandleObjectAccel(const AnkiEvent<RobotInterface::Robot
                  objectID))
   {
     // Add accel data to history
-    iter->second.history[payload.timestamp] = payload.accel;
+    iter->second.history[objectAccel.timestamp] = objectAccel.accel;
     
     // Update all of the listeners with the accel data
     for(auto& listener : iter->second.listeners)
     {
-      listener->Update(payload.accel);
+      listener->Update(objectAccel.accel);
     }
     
     CullToWindowSize(iter->second);
   }
   
   // Forward to game and viz
-  _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(payload.timestamp, objectID, payload.accel)));
-  _robot.GetContext()->GetVizManager()->SendObjectAccelState(objectID, payload.accel);
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(objectAccel.timestamp, objectID, objectAccel.accel)));
+  _robot.GetContext()->GetVizManager()->SendObjectAccelState(objectID, objectAccel.accel);
 }
   
 void CubeAccelComponent::CullToWindowSize(AccelHistory& accelHistory)
