@@ -28,10 +28,10 @@ echo reverting i18n
 git checkout -- i18n
 git clean -fd i18n
 
-echo reverting node_modules
+echo removing node_modules
 rm -rf node_modules
 
-echo reverting dist
+echo removing dist
 rm -rf dist
 
 echo reverting msg

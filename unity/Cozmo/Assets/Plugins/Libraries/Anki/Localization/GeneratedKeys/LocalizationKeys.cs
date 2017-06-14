@@ -289,6 +289,11 @@ public static class LocalizationKeys {
   public const string kCodeLabHorizontalTooltipWaitToSeeCube = "codeLabHorizontal.Tooltip.WaitToSeeCube";
   public const string kCodeLabHorizontalTooltipWaitTorCubeTap = "codeLabHorizontal.Tooltip.WaitTorCubeTap";
   public const string kCodeLabHorizontalTooltipStartProgramHere = "codeLabHorizontal.Tooltip.StartProgramHere";
+  public const string kCodeLabHorizontalCategoryDrive = "codeLabHorizontal.Category.Drive";
+  public const string kCodeLabHorizontalCategoryActions = "codeLabHorizontal.Category.Actions";
+  public const string kCodeLabHorizontalCategoryAnimations = "codeLabHorizontal.Category.Animations";
+  public const string kCodeLabHorizontalCategoryEvents = "codeLabHorizontal.Category.Events";
+  public const string kCodeLabHorizontalCategoryControl = "codeLabHorizontal.Category.Control";
 
   #endregion
 
@@ -608,6 +613,24 @@ public static class LocalizationKeys {
   public const string kNeedsNeedsEnergyModalInstruction2 = "needs.NeedsEnergyModal.Instruction2";
   public const string kNeedsNeedsEnergyModalInstruction3 = "needs.NeedsEnergyModal.Instruction3";
   public const string kNeedsNeedsEnergyModalFeedingComplete = "needs.NeedsEnergyModal.FeedingComplete";
+  public const string kNeedsNeedsRepairModalTitle = "needs.NeedsRepairModal.Title";
+  public const string kNeedsNeedsRepairModalRepairSummary = "needs.NeedsRepairModal.RepairSummary";
+  public const string kNeedsNeedsRepairModalHeadDamageNotice = "needs.NeedsRepairModal.HeadDamageNotice";
+  public const string kNeedsNeedsRepairModalHeadRepairedNotice = "needs.NeedsRepairModal.HeadRepairedNotice";
+  public const string kNeedsNeedsRepairModalTreadsDamageNotice = "needs.NeedsRepairModal.TreadsDamageNotice";
+  public const string kNeedsNeedsRepairModalTreadsRepairedNotice = "needs.NeedsRepairModal.TreadsRepairedNotice";
+  public const string kNeedsNeedsRepairModalLiftDamageNotice = "needs.NeedsRepairModal.LiftDamageNotice";
+  public const string kNeedsNeedsRepairModalLiftRepairedNotice = "needs.NeedsRepairModal.LiftRepairedNotice";
+  public const string kNeedsNeedsRepairModalRepairButtonsInstruction = "needs.NeedsRepairModal.RepairButtonsInstruction";
+  public const string kNeedsNeedsRepairModalTuneUpInstruction = "needs.NeedsRepairModal.TuneUpInstruction";
+  public const string kNeedsNeedsRepairModalNoRepairsNeeded = "needs.NeedsRepairModal.NoRepairsNeeded";
+  public const string kNeedsNeedsRepairModalCalibrateButtonText = "needs.NeedsRepairModal.CalibrateButtonText";
+  public const string kNeedsNeedsRepairModalScanButtonText = "needs.NeedsRepairModal.ScanButtonText";
+  public const string kNeedsNeedsRepairModalAlligningHead = "needs.NeedsRepairModal.AlligningHead";
+  public const string kNeedsNeedsRepairModalAligningLift = "needs.NeedsRepairModal.AligningLift";
+  public const string kNeedsNeedsRepairModalAligningTreads = "needs.NeedsRepairModal.AligningTreads";
+  public const string kNeedsContinueButtonText = "needs.ContinueButtonText";
+  public const string kNeedsNeedsRepairModalTuneUpComplete = "needs.NeedsRepairModal.TuneUpComplete";
 
   #endregion
 
@@ -655,6 +678,11 @@ public static class LocalizationKeys {
   public const string kOnboardingFreeplayStringFakeOnboarding = "onboarding.FreeplayStringFakeOnboarding";
   public const string kOnboardingBirthWait = "onboarding.BirthWait";
   public const string kOnboardingPhase4Body5 = "onboarding.Phase4.Body5";
+  public const string kOnboardingMeetCozmoIntro = "onboarding.MeetCozmoIntro";
+  public const string kOnboardingNeedsIntro = "onboarding.NeedsIntro";
+  public const string kOnboardingPlayIntro = "onboarding.PlayIntro";
+  public const string kOnboardingRewardsIntro = "onboarding.RewardsIntro";
+  public const string kOnboardingActivitiesIntro = "onboarding.ActivitiesIntro";
 
   #endregion
 

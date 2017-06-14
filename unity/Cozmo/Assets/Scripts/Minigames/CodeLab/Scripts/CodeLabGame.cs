@@ -815,7 +815,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           String projectXMLEscaped = codeLabSampleProject.ProjectXML.Replace("\"", "\\\"");
 
           // Open requested project in webview
-          _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + codeLabSampleProject.ProjectName + "',\"" + projectXMLEscaped + "\",'true');");
+          String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
+          _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectName + "',\"" + projectXMLEscaped + "\",'true');");
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
