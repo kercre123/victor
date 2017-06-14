@@ -89,5 +89,8 @@
   },
   "needs.NeedsRepairModal.TuneUpComplete": {
     "translation": "Cozmo is all tuned up. Come back again when his meter is more empty."
+  },
+  "needs.Done": {
+    "translation": "DONE"
   }
 }

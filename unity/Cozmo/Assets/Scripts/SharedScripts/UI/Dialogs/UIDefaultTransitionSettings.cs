@@ -33,7 +33,7 @@ namespace Cozmo {
 
       #endregion
 
-      #region UI Transitions
+      #region UI Transition Settings
 
       [SerializeField]
       private float _StartTimeStagger_sec = 0.2f;
@@ -70,6 +70,10 @@ namespace Cozmo {
       [SerializeField]
       private Ease _MoveCloseEase;
       public Ease MoveCloseEase { get { return _MoveCloseEase; } }
+
+      #endregion
+
+      #region Fade Transition Methods 
 
       public void ConstructOpenFadeTween(ref Sequence openSequence, FadeTweenSettings fadeTweenSettings) {
         switch (fadeTweenSettings.staggerType) {
@@ -167,6 +171,10 @@ namespace Cozmo {
       private Tweener CreateFadeTween(CanvasGroup targetCanvas, float alpha, Ease easing, float duration) {
         return targetCanvas.DOFade(alpha, duration).SetEase(easing);
       }
+
+      #endregion
+
+      #region Move Transition Methods (non-repeatable)
 
       public void ConstructOpenMoveTween(ref Sequence openSequence, MoveTweenSettings moveTweenSettings) {
         switch (moveTweenSettings.staggerType) {
@@ -279,8 +287,135 @@ namespace Cozmo {
                       targetTransform.localPosition.z),
           duration).SetEase(easing);
       }
+
+      #endregion
+
+      #region Repeatable Move Transition Methods
+
+      public void ConstructOpenRepeatableMoveTween(ref Sequence openSequence, RepeatableMoveTweenSettings moveTweenSettings) {
+        switch (moveTweenSettings.staggerType) {
+        case StaggerType.DefaultUniform:
+          CreateUniformOpenRepeatableMoveTween(ref openSequence, moveTweenSettings.targets, _StartTimeStagger_sec);
+          break;
+        case StaggerType.CustomUniform:
+          CreateUniformOpenRepeatableMoveTween(ref openSequence, moveTweenSettings.targets, moveTweenSettings.uniformStagger_sec);
+          break;
+        case StaggerType.Custom:
+          CreateCustomOpenRepeatableMoveTween(ref openSequence, moveTweenSettings.targets);
+          break;
+        default:
+          CreateUniformOpenRepeatableMoveTween(ref openSequence, moveTweenSettings.targets, _StartTimeStagger_sec);
+          break;
+        }
+      }
+
+      private void CreateUniformOpenRepeatableMoveTween(ref Sequence openSequence, RepeatableMoveTweenTarget[] moveTweenTargets, float stagger_sec) {
+        for (int i = 0; i < moveTweenTargets.Length; i++) {
+          openSequence.Insert(stagger_sec * i, CreateOpenRepeatableMoveTween(moveTweenTargets[i]));
+        }
+      }
+
+      private void CreateCustomOpenRepeatableMoveTween(ref Sequence openSequence, RepeatableMoveTweenTarget[] moveTweenTargets) {
+        for (int i = 0; i < moveTweenTargets.Length; i++) {
+          openSequence.Insert(moveTweenTargets[i].openSetting.startTime_sec, CreateOpenRepeatableMoveTween(moveTweenTargets[i]));
+        }
+      }
+
+      private Tweener CreateOpenRepeatableMoveTween(RepeatableMoveTweenTarget tweenTarget) {
+        if (tweenTarget.storedInitialLocalPosition == null) {
+          tweenTarget.storedInitialLocalPosition = tweenTarget.target.localPosition;
+        }
+
+        if (tweenTarget.openSetting.useCustom) {
+          return CreateOpenRepeatableMoveTween(tweenTarget.target, tweenTarget.storedInitialLocalPosition.Value, tweenTarget.originOffset.x, tweenTarget.originOffset.y,
+                         tweenTarget.openSetting.easing, tweenTarget.openSetting.duration_sec);
+        }
+        return CreateOpenRepeatableMoveTween(tweenTarget.target, tweenTarget.storedInitialLocalPosition.Value, tweenTarget.originOffset.x, tweenTarget.originOffset.y);
+      }
+
+      /// <summary>
+      /// Creates a default open animation sequence. 
+      /// Offsets are relative to the tranform's actual position in the UI after the sequence ends.
+      /// (-x for from the left, -y for from below)
+      /// </summary>
+      public Tweener CreateOpenRepeatableMoveTween(Transform targetTransform, Vector3 initialLocalPosition, float xOffset, float yOffset, Ease easing = Ease.Unset, float duration = 0) {
+        if (duration <= 0f) {
+          duration = _MoveOpenDuration_sec;
+        }
+        if (easing == Ease.Unset) {
+          easing = _MoveOpenEase;
+        }
+        return CreateRepeatableMoveTween(targetTransform, initialLocalPosition, xOffset, yOffset, duration, easing).From();
+      }
+
+      public void ConstructCloseRepeatableMoveTween(ref Sequence closeSequence, RepeatableMoveTweenSettings moveTweenSettings) {
+        switch (moveTweenSettings.staggerType) {
+        case StaggerType.DefaultUniform:
+          CreateUniformCloseRepeatableMoveTween(ref closeSequence, moveTweenSettings.targets, _StartTimeStagger_sec);
+          break;
+        case StaggerType.CustomUniform:
+          CreateUniformCloseRepeatableMoveTween(ref closeSequence, moveTweenSettings.targets, moveTweenSettings.uniformStagger_sec);
+          break;
+        case StaggerType.Custom:
+          CreateCustomCloseRepeatableMoveTween(ref closeSequence, moveTweenSettings.targets);
+          break;
+        default:
+          CreateUniformCloseRepeatableMoveTween(ref closeSequence, moveTweenSettings.targets, _StartTimeStagger_sec);
+          break;
+        }
+      }
+
+      private void CreateUniformCloseRepeatableMoveTween(ref Sequence closeSequence, RepeatableMoveTweenTarget[] moveTweenTargets, float stagger_sec) {
+        for (int i = 0; i < moveTweenTargets.Length; i++) {
+          closeSequence.Insert(stagger_sec * i, CreateCloseRepeatableMoveTween(moveTweenTargets[i]));
+        }
+      }
+
+      private void CreateCustomCloseRepeatableMoveTween(ref Sequence closeSequence, RepeatableMoveTweenTarget[] moveTweenTargets) {
+        for (int i = 0; i < moveTweenTargets.Length; i++) {
+          closeSequence.Insert(moveTweenTargets[i].closeSetting.startTime_sec, CreateCloseRepeatableMoveTween(moveTweenTargets[i]));
+        }
+      }
+
+      private Tweener CreateCloseRepeatableMoveTween(RepeatableMoveTweenTarget tweenTarget) {
+
+        if (tweenTarget.storedInitialLocalPosition == null) {
+          tweenTarget.storedInitialLocalPosition = tweenTarget.target.localPosition;
+        }
+
+        if (tweenTarget.closeSetting.useCustom) {
+          return CreateCloseRepeatableMoveTween(tweenTarget.target, tweenTarget.storedInitialLocalPosition.Value, tweenTarget.originOffset.x, tweenTarget.originOffset.y,
+                        tweenTarget.closeSetting.easing, tweenTarget.closeSetting.duration_sec);
+        }
+        return CreateCloseRepeatableMoveTween(tweenTarget.target, tweenTarget.storedInitialLocalPosition.Value, tweenTarget.originOffset.x, tweenTarget.originOffset.y);
+      }
+
+      /// <summary>
+      /// Creates a default close animation sequence. 
+      /// Offsets are relative to the tranform's actual position in the UI after the sequence ends.
+      /// (-x for to the left, -y for to below)
+      /// </summary>
+      public Tweener CreateCloseRepeatableMoveTween(Transform targetTransform, Vector3 initialLocalPosition, float xOffset, float yOffset, Ease easing = Ease.Unset, float duration = -1f) {
+        if (duration <= 0f) {
+          duration = _MoveCloseDuration_sec;
+        }
+        if (easing == Ease.Unset) {
+          easing = _MoveCloseEase;
+        }
+        return CreateRepeatableMoveTween(targetTransform, initialLocalPosition, xOffset, yOffset, duration, easing);
+      }
+
+      private Tweener CreateRepeatableMoveTween(Transform targetTransform, Vector3 initialLocalPosition, float xOffset, float yOffset, float duration, Ease easing) {
+        targetTransform.localPosition = initialLocalPosition;
+        return targetTransform.DOLocalMove(
+          new Vector3(initialLocalPosition.x + xOffset,
+                initialLocalPosition.y + yOffset,
+                initialLocalPosition.z),
+          duration).SetEase(easing);
+      }
+
+      #endregion
     }
-    #endregion
 
     public enum StaggerType {
       DefaultUniform,
@@ -298,6 +433,23 @@ namespace Cozmo {
     [System.Serializable]
     public struct MoveTweenTarget {
       public Transform target;
+      public Vector2 originOffset;
+      public TweenSetting openSetting;
+      public TweenSetting closeSetting;
+    }
+
+    [System.Serializable]
+    public class RepeatableMoveTweenSettings {
+      public StaggerType staggerType;
+      public float uniformStagger_sec;
+      public RepeatableMoveTweenTarget[] targets;
+    }
+
+    [System.Serializable]
+    public class RepeatableMoveTweenTarget {
+      public Transform target;
+      [System.NonSerialized]
+      public Vector3? storedInitialLocalPosition = null;
       public Vector2 originOffset;
       public TweenSetting openSetting;
       public TweenSetting closeSetting;

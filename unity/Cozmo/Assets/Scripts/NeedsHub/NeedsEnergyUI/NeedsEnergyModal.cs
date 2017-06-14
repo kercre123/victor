@@ -18,10 +18,10 @@ namespace Cozmo.Energy.UI {
     private CozmoButton _DoneCozmoButton;
 
     [SerializeField]
-    private MoveTweenSettings _HungryTweenSettings;
+    private RepeatableMoveTweenSettings _TweenSettings_CozmoHungryElements = null;
 
     [SerializeField]
-    private MoveTweenSettings _FullTweenSettings;
+    private RepeatableMoveTweenSettings _TweenSettings_CozmoFullElements = null;
 
     private Sequence _HungryAnimation = null;
     private Sequence _FullAnimation = null;
@@ -42,8 +42,8 @@ namespace Cozmo.Energy.UI {
                               dasButtonName: "energy_need_meter_button",
                               dasParentDialogName: DASEventDialogName);
 
-      NeedsValue displayValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
-      _EnergyMeter.ProgressBar.SetValueInstant(displayValue.Value);
+      float displayEnergy = nsm.GetCurrentDisplayValue(NeedId.Energy).Value;
+      _EnergyMeter.ProgressBar.SetValueInstant(displayEnergy);
 
       if (_InstructionNumberTexts != null) {
         for (int i = 0; i < _InstructionNumberTexts.Length; i++) {
@@ -58,13 +58,13 @@ namespace Cozmo.Energy.UI {
       //animate our display energy to the engine energy
       HandleLatestNeedsLevelChanged(NeedsActionId.FeedBlue);
 
-      RefreshForCurrentBracket(displayValue.Bracket);
+      RefreshForCurrentBracket(nsm);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
     }
 
     private void OnDestroy() {
       NeedsStateManager.Instance.ResumeAllNeeds();
-      NeedsStateManager.Instance.OnUpdateUIForAction -= HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
 
       //RETURN TO FREEPLAY
@@ -77,7 +77,7 @@ namespace Cozmo.Energy.UI {
 
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnUpdateUIForAction += HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
@@ -96,15 +96,16 @@ namespace Cozmo.Energy.UI {
     }
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
-      if (actionId == NeedsActionId.FeedBlue) {
-        NeedsStateManager nsm = NeedsStateManager.Instance;
-        NeedsValue engineValue = nsm.PopLatestEngineValue(NeedId.Energy);
-        _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineValue.Value);
-        RefreshForCurrentBracket(engineValue.Bracket);
-      }
+      //if (actionId == NeedsActionId.FeedBlue) {
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+      float engineEnergy = nsm.PopLatestEngineValue(NeedId.Energy).Value;
+      _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineEnergy);
+      RefreshForCurrentBracket(nsm);
+      //}
     }
 
-    private void RefreshForCurrentBracket(NeedBracketId newNeedBracket) {
+    private void RefreshForCurrentBracket(NeedsStateManager nsm) {
+      NeedBracketId newNeedBracket = nsm.PopLatestEngineValue(NeedId.Energy).Bracket;
       //only hide/show elements if bracket has changed
       if (_LastNeedBracket != newNeedBracket) {
         bool cozmoIsFull = newNeedBracket == NeedBracketId.Full;
@@ -117,10 +118,10 @@ namespace Cozmo.Energy.UI {
     }
 
     private void AnimateElements(bool fullElements = false, bool hide = false, bool snap = false) {
-      MoveTweenSettings tweenSettings = _HungryTweenSettings;
+      RepeatableMoveTweenSettings tweenSettings = _TweenSettings_CozmoHungryElements;
       Sequence sequence = _HungryAnimation;
       if (fullElements) {
-        tweenSettings = _FullTweenSettings;
+        tweenSettings = _TweenSettings_CozmoFullElements;
         sequence = _FullAnimation;
       }
 
@@ -132,10 +133,10 @@ namespace Cozmo.Energy.UI {
       UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
       if (tweenSettings.targets.Length > 0) {
         if (hide ^ snap) {
-          settings.ConstructCloseMoveTween(ref sequence, tweenSettings);
+          settings.ConstructCloseRepeatableMoveTween(ref sequence, tweenSettings);
         }
         else {
-          settings.ConstructOpenMoveTween(ref sequence, tweenSettings);
+          settings.ConstructOpenRepeatableMoveTween(ref sequence, tweenSettings);
         }
       }
 
