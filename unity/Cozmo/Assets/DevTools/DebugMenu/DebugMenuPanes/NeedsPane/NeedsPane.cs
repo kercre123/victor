@@ -69,6 +69,13 @@ public class NeedsPane : MonoBehaviour {
 
   private void HandleGiveStarTap() {
     RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugGiveStarKey, "");
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+      MessageEngineToGame messageEngineToGame = new MessageEngineToGame();
+      StarUnlocked starCompletedMsg = new StarUnlocked();
+      starCompletedMsg.Initialize(1, 3, 1);
+      messageEngineToGame.StarUnlocked = starCompletedMsg;
+      RobotEngineManager.Instance.MockCallback(messageEngineToGame);
+    }
   }
   private void HandlePassTimeTap() {
     RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugPassTimeMinutesKey, _PassTimeInput.text);

@@ -143,5 +143,20 @@
   },
   "onboarding.Phase4.Body5": {
     "translation": "Now Cozmo can Stack Cubes!\n\nWatch him try out his new skill now..."
+  },
+  "onboarding.MeetCozmoIntro": {
+    "translation": "Cozmo Would like to meet you!"
+  },
+  "onboarding.NeedsIntro": {
+    "translation": "Cozmo has Needs!"
+  },
+  "onboarding.PlayIntro": {
+    "translation": "Fill Cozmo’s Play Need each day to earn a Daily Bonus Token."
+  },
+  "onboarding.RewardsIntro": {
+    "translation": "You’ve earned a Daily Bonus Token by filling Cozmo’s Play Need!\nTokens unlock Bonus Boxes, filled with rewards such as sparks and new abilities!"
+  },
+  "onboarding.ActivitiesIntro": {
+    "translation": "These are special activities that don’t affect Cozmo’s needs or sparks!"
   }
 }

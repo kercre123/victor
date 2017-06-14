@@ -5,10 +5,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22408034}
-  - 114: {fileID: 11492020}
+  - component: {fileID: 22408034}
+  - component: {fileID: 11492020}
   m_Layer: 5
   m_Name: OnboardingUIWrapper
   m_TagString: Untagged
@@ -30,21 +30,30 @@ MonoBehaviour:
   _DebugLayerPrefab: {fileID: 103178, guid: d8451532cb4d14fc0a3f7bb0535f4fd9, type: 2}
   _OutlinePrefab: {fileID: 155514, guid: 4b1f85a0dde694822ae983825d11dd9a, type: 2}
   _OutlineLargePrefab: {fileID: 155514, guid: 18646e54e7fb14121b22148be364d5e7, type: 2}
-  _PhaseHomePrefabs:
-  - {fileID: 11495446, guid: 3eb4226eb2af946cd9a295206cee564a, type: 2}
-  - {fileID: 11430974, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
-  - {fileID: 11478974, guid: 066cb281859864617803ba25b0125af6, type: 2}
-  - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
-  - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
-  - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
-  - {fileID: 11442482, guid: f6c2e8426a4ec48fb9ad931e3b8605a2, type: 2}
-  - {fileID: 11481006, guid: 959fa8ad92264464a87d01febec5a53c, type: 2}
-  - {fileID: 11446348, guid: 181e3635bbfd94b3ab937c9a50f65c50, type: 2}
-  _PhaseLootPrefabs:
-  - {fileID: 11498296, guid: b3db4e05e330e46908d15bc271c92558, type: 2}
-  - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
-  _PhaseUpgradesPrefabs:
-  - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
+  _NurtureStagesPrefabs:
+  - onboardingPrefab:
+    - {fileID: 11495446, guid: 3eb4226eb2af946cd9a295206cee564a, type: 2}
+    - {fileID: 11430974, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
+    - {fileID: 11478974, guid: 066cb281859864617803ba25b0125af6, type: 2}
+    - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
+    - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
+    - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
+    - {fileID: 11442482, guid: dcb0d70a6883c4f7fb9c8170df6b5131, type: 2}
+  - onboardingPrefab:
+    - {fileID: 114297680771573382, guid: 886a611fd6708458089db54b6bf10f7f, type: 2}
+  - onboardingPrefab:
+    - {fileID: 11442482, guid: 7cf4cb9ae99b34d3492806fdb9f77831, type: 2}
+    - {fileID: 114311453000456258, guid: e112c3549a93a4da6b18c653bbfcc35a, type: 2}
+    - {fileID: 114884972346539074, guid: d130fb8ad0f6142c18c5d518defea158, type: 2}
+  - onboardingPrefab:
+    - {fileID: 114311453000456258, guid: 6fbabf90815cb4160b46900ff645528f, type: 2}
+    - {fileID: 114884972346539074, guid: d130fb8ad0f6142c18c5d518defea158, type: 2}
+  - onboardingPrefab:
+    - {fileID: 114311453000456258, guid: c03305f5a8c3f4f8683d5b606ef77ced, type: 2}
+  - onboardingPrefab:
+    - {fileID: 11442482, guid: b55624e79df5e4ef2aded5e829de10b8, type: 2}
+  - onboardingPrefab:
+    - {fileID: 11442482, guid: 671e06d41525d4f1cb371e797547ed21, type: 2}
 --- !u!224 &22408034
 RectTransform:
   m_ObjectHideFlags: 1
@@ -54,10 +63,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0.0000076293945, y: 0}

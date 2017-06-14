@@ -7,21 +7,14 @@ namespace Onboarding {
   // Be added in editor
   public class OnboardingBaseStage : MonoBehaviour {
 
-    public bool ActiveTopBar { get { return _ActiveTopBar; } }
-    public bool ActiveBotBar { get { return _ActiveBotBar; } }
-    public bool ActiveTabButtons { get { return _ActiveTabButtons; } }
     public bool ActiveMenuContent { get { return _ActiveMenuContent; } }
     public bool ReactionsEnabled { get { return _ReactionsEnabled; } }
     public int DASPhaseID { get { return _DASPhaseID; } }
 
-    [SerializeField]
-    protected bool _ActiveTopBar = false;
-
-    [SerializeField]
-    protected bool _ActiveBotBar = false;
-
-    [SerializeField]
-    protected bool _ActiveTabButtons = false;
+    public OnboardingButtonStates ButtonStateDiscover { get { return _ButtonStateDiscover; } }
+    public OnboardingButtonStates ButtonStateRepair { get { return _ButtonStateRepair; } }
+    public OnboardingButtonStates ButtonStateFeed { get { return _ButtonStateFeed; } }
+    public OnboardingButtonStates ButtonStatePlay { get { return _ButtonStatePlay; } }
 
     [SerializeField]
     protected bool _ActiveMenuContent = false;
@@ -34,6 +27,26 @@ namespace Onboarding {
 
     [SerializeField]
     protected int _DASPhaseID = 0;
+
+    [SerializeField]
+    protected bool _IsLastPhase = false;
+
+    // Serialized as an int, do not reorder/delete
+    public enum OnboardingButtonStates {
+      Hidden,
+      Disabled,
+      Sparkle,
+      Active
+    };
+
+    [SerializeField]
+    protected OnboardingButtonStates _ButtonStateDiscover = OnboardingButtonStates.Active;
+    [SerializeField]
+    protected OnboardingButtonStates _ButtonStateRepair = OnboardingButtonStates.Active;
+    [SerializeField]
+    protected OnboardingButtonStates _ButtonStateFeed = OnboardingButtonStates.Active;
+    [SerializeField]
+    protected OnboardingButtonStates _ButtonStatePlay = OnboardingButtonStates.Active;
 
     public virtual void Start() {
       DAS.Info("DEV onboarding stage.started", name);

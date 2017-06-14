@@ -3,6 +3,13 @@ using UnityEngine;
 using System.Collections.Generic;
 
 namespace Onboarding {
+
+  // Just forcing a list of Lists to be drawn without making a custom drawer.
+  [System.Serializable]
+  public class OnboardingPhasePrefabList {
+    public List<OnboardingBaseStage> onboardingPrefab;
+  }
+
   // Just a wrapper for abstracting the assetBundle bits of OnboardingManager
   public class OnboardingUIWrapper : MonoBehaviour {
 
@@ -17,11 +24,7 @@ namespace Onboarding {
     private GameObject _OutlineLargePrefab;
 
     [SerializeField]
-    private List<OnboardingBaseStage> _PhaseHomePrefabs;
-    [SerializeField]
-    private List<OnboardingBaseStage> _PhaseLootPrefabs;
-    [SerializeField]
-    private List<OnboardingBaseStage> _PhaseUpgradesPrefabs;
+    private List<OnboardingPhasePrefabList> _NurtureStagesPrefabs;
 
     public void AddDebugButtons() {
       if (_DebugLayer == null && _DebugLayerPrefab != null) {
@@ -44,39 +47,22 @@ namespace Onboarding {
       return _OutlineLargePrefab;
     }
 
-    public int GetShowCubeStateID() {
-      for (int i = 0; i < _PhaseHomePrefabs.Count; ++i) {
-        if (_PhaseHomePrefabs[i] is ShowCubeStage) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
     public int GetMaxStageInPhase(OnboardingManager.OnboardingPhases phase) {
-      switch (phase) {
-      case OnboardingManager.OnboardingPhases.Home:
-        return _PhaseHomePrefabs.Count;
-      case OnboardingManager.OnboardingPhases.Loot:
-        return _PhaseLootPrefabs.Count;
-      case OnboardingManager.OnboardingPhases.Upgrades:
-        return _PhaseUpgradesPrefabs.Count;
-      // Daily goals is a special case where it is just used to save state.co
-      case OnboardingManager.OnboardingPhases.DailyGoals:
-        return 1;
+      if ((int)phase >= _NurtureStagesPrefabs.Count) {
+        return 0;
       }
-      return 0;
+      return _NurtureStagesPrefabs[(int)phase].onboardingPrefab.Count;
     }
     public OnboardingBaseStage GetCurrStagePrefab(int currStage, OnboardingManager.OnboardingPhases phase) {
       switch (phase) {
       case OnboardingManager.OnboardingPhases.Home:
-        return _PhaseHomePrefabs[currStage];
       case OnboardingManager.OnboardingPhases.Loot:
-        return _PhaseLootPrefabs[currStage];
       case OnboardingManager.OnboardingPhases.Upgrades:
-        return _PhaseUpgradesPrefabs[currStage];
+      case OnboardingManager.OnboardingPhases.None:
+      case OnboardingManager.OnboardingPhases.DailyGoals:
+        return null;
       }
-      return null;
+      return _NurtureStagesPrefabs[(int)phase].onboardingPrefab[currStage];
     }
 
   }

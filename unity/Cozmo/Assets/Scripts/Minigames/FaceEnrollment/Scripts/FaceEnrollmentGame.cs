@@ -69,6 +69,13 @@ namespace FaceEnrollment {
 
       _UpdateThresholdLastSeenSeconds = faceEnrollmentConfig.UpdateThresholdLastSeenSeconds;
       _UpdateThresholdLastEnrolledSeconds = faceEnrollmentConfig.UpdateThresholdLastEnrolledSeconds;
+
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.MeetCozmo)) {
+        if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+          SharedMinigameView.HideQuitButton();
+        }
+        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.MeetCozmo);
+      }
     }
 
     protected override void InitializeReactionaryBehaviorsForGameStart() {
@@ -83,7 +90,7 @@ namespace FaceEnrollment {
       // if we have no faces enrolled let's skip the face list UI and go directly to enroll a new face
       // with the default profile name pre-populated.
       if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
-        EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+        EnterNameForNewFace(string.Empty);
       }
       else {
         _StateMachine.SetNextState(new FaceSlideState());
@@ -144,6 +151,12 @@ namespace FaceEnrollment {
       _StateMachine.SetNextState(detailsState);
     }
 
+    public void CompleteMeetCozmoOnboarding() {
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.MeetCozmo)) {
+        OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.MeetCozmo);
+      }
+    }
+
     private void HandleNewEnrollmentRequested() {
       // if this the first name then we should pre-populate the name with the profile name.
       if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
@@ -155,7 +168,7 @@ namespace FaceEnrollment {
     }
 
     protected override void CleanUpOnDestroy() {
-
+      CompleteMeetCozmoOnboarding();
     }
 
   }

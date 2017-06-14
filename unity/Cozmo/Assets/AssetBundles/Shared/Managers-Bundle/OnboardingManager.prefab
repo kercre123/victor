@@ -40,14 +40,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4887f77b48c344d53a94972a455cfb2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _NumStagesHome: 9
-  _NumStagesLoot: 2
-  _NumStagesUpgrades: 1
   _OnboardingUIPrefabData:
     _AssetBundle:
       _EnumValueAsString: onboarding_ui_prefabs
       _EnumValue: 18
     _AssetDataName: OnboardingUIWrapper
+  _NumOnboardingStages: 07000000010000000300000002000000010000000100000001000000
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

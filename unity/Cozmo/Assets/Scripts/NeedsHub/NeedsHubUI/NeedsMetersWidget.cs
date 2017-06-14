@@ -125,5 +125,17 @@ namespace Cozmo.Needs.UI {
         OnPlayPressed();
       }
     }
+
+    // Onboarding
+    public CozmoButton RepairButton {
+      get {
+        return _RepairMeter.Button;
+      }
+    }
+    public CozmoButton FeedButton {
+      get {
+        return _EnergyMeter.Button;
+      }
+    }
   }
 }

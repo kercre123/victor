@@ -26,6 +26,12 @@ namespace Cozmo.Needs.UI {
       }
     }
 
+    public CozmoButton Button {
+      get {
+        return _MeterButton;
+      }
+    }
+
     public bool ButtonEnabled {
       get {
         return _MeterButton.Interactable;

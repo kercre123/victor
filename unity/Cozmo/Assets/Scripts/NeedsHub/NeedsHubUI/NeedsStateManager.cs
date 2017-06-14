@@ -101,7 +101,10 @@ namespace Cozmo.Needs {
       SetNeedsPauseStates pauseStatesMessage = new SetNeedsPauseStates();
       pauseStatesMessage.decayPause = new bool[] { true, true, true };
       pauseStatesMessage.actionPause = new bool[] { true, true, true };
-      pauseStatesMessage.actionPause[(int)needId] = false;
+      // Pause everything ( onboarding )
+      if (needId != NeedId.Count) {
+        pauseStatesMessage.actionPause[(int)needId] = false;
+      }
       RobotEngineManager.Instance.Message.SetNeedsPauseStates = pauseStatesMessage;
       RobotEngineManager.Instance.SendMessage();
     }

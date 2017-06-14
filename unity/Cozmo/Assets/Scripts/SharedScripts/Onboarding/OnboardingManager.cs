@@ -5,21 +5,37 @@ using DataPersistence;
 using Onboarding;
 using System;
 using System.Collections.Generic;
+using Cozmo.Needs.UI;
+using Cozmo.Challenge;
 using UnityEngine;
 
 public class OnboardingManager : MonoBehaviour {
 
   public static OnboardingManager Instance { get; private set; }
-
-  private Cozmo.Needs.UI.NeedsHubView _NeedsView;
+  private NeedsHubView _NeedsHubView;
 
   public enum OnboardingPhases : int {
+    InitialSetup,
+    MeetCozmo,
+    NurtureIntro, // includes repair
+    FeedIntro,
+    PlayIntro,
+    RewardBox,
+    DiscoverIntro,
+    VoiceCommands,
+    // Start OLD
     Home,
     Loot,
     Upgrades,
     DailyGoals,
+    // End Old
     None
   };
+
+  public static readonly OnboardingPhases[] kRequiredPhases = { OnboardingPhases.InitialSetup,
+                                    OnboardingPhases.MeetCozmo, OnboardingPhases.NurtureIntro,OnboardingPhases.FeedIntro,
+                                    OnboardingPhases.PlayIntro, OnboardingPhases.RewardBox,OnboardingPhases.DiscoverIntro,
+                                    OnboardingPhases.VoiceCommands };
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
   public Action<OnboardingPhases> OnOnboardingPhaseCompleted;
@@ -35,14 +51,11 @@ public class OnboardingManager : MonoBehaviour {
   private bool _StageDisabledReactionaryBehaviors = false;
 
   [SerializeField]
-  private int _NumStagesHome = 9;
-  [SerializeField]
-  private int _NumStagesLoot = 2;
-  [SerializeField]
-  private int _NumStagesUpgrades = 1;
-  [SerializeField]
   private GameObjectDataLink _OnboardingUIPrefabData;
   private OnboardingUIWrapper _OnboardingUIInstance;
+
+  [SerializeField]
+  private List<int> _NumOnboardingStages;
 
   // The DAS phaseIDs are checkpoints from the design doc.
   private int _CurrDASPhaseID = -1;
@@ -108,26 +121,15 @@ public class OnboardingManager : MonoBehaviour {
 
   private int GetMaxStageInPhase(OnboardingPhases phase) {
     int numPhases = 0;
-    switch (phase) {
-    case OnboardingPhases.Home:
-      numPhases = _NumStagesHome;
-      break;
-    case OnboardingPhases.Loot:
-      numPhases = _NumStagesLoot;
-      break;
-    case OnboardingPhases.Upgrades:
-      numPhases = _NumStagesUpgrades;
-      break;
-    // Daily goals is a special case where it is just used to save state.
-    case OnboardingPhases.DailyGoals:
-      numPhases = _NumStagesUpgrades;
-      break;
+    if ((int)phase < _NumOnboardingStages.Count) {
+      numPhases = _NumOnboardingStages[(int)phase];
     }
     if (_OnboardingUIInstance != null) {
       // A logical check but we don't want to load the whole asset bundle if we don't have to
       int numPrefabs = _OnboardingUIInstance.GetMaxStageInPhase(phase);
       if (numPhases != numPrefabs) {
-        DAS.Error("onboarding.setuperror.PrefabPhasesMismatch", "");
+        DAS.Error("onboarding.setuperror.PrefabPhasesMismatch", phase + " prefabs: " + numPrefabs + " manager: " + numPhases);
+        numPhases = numPrefabs;
       }
     }
     return numPhases;
@@ -147,21 +149,20 @@ public class OnboardingManager : MonoBehaviour {
     return _CurrPhase != OnboardingPhases.None;
   }
 
-  public void InitNeedsHubOnboarding(Cozmo.Needs.UI.NeedsHubView needsView) {
-    _NeedsView = needsView;
-    _OnboardingTransform = needsView.transform;
-    _NeedsView.DialogClosed += HandleNeedsViewClosed;
+  public void InitInitalOnboarding(NeedsHubView needsHubView) {
+    _NeedsHubView = needsHubView;
+    _NeedsHubView.DialogClosed += HandleHomeViewClosed;
+    _OnboardingTransform = _NeedsHubView.transform.parent.transform;
 
-    if (IsOnboardingRequired(OnboardingPhases.Home)) {
-      StartPhase(OnboardingPhases.Home);
+    if (IsOnboardingRequired(OnboardingPhases.InitialSetup)) {
+      StartPhase(OnboardingPhases.InitialSetup);
     }
   }
 
   // Clear out the phase if the homeview closed unexpected like a disconnect.
   // The UI is destroyed but our save state will reinit us next time.
-  private void HandleNeedsViewClosed() {
+  private void HandleHomeViewClosed() {
     if (_CurrPhase != OnboardingPhases.None) {
-      _CurrPhase = OnboardingPhases.None;
       if (_OnboardingUIInstance != null) {
         _OnboardingUIInstance.RemoveDebugButtons();
       }
@@ -174,7 +175,10 @@ public class OnboardingManager : MonoBehaviour {
 #else
     // End any previous phase, can only highlight one thing at once
     if (_CurrPhase != OnboardingPhases.None) {
-      SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
+      // None means we just want to clear everything so don't start something new
+      if (_CurrStageInst != null) {
+        GameObject.Destroy(_CurrStageInst);
+      }
     }
     // Going to disconnect soon and won't be able to clean up a lot of onboarding stuff without a robot
     IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
@@ -183,7 +187,7 @@ public class OnboardingManager : MonoBehaviour {
     }
     int startStage = 0;
     _CurrPhase = phase;
-    if (_CurrPhase == OnboardingPhases.Home) {
+    if (_CurrPhase == OnboardingPhases.InitialSetup) {
       CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
       RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
       bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
@@ -201,19 +205,20 @@ public class OnboardingManager : MonoBehaviour {
         startStage = 2;
       }
 
-      // This is safe because you can't spend currency in the first phase of onboarding
-      Cozmo.ItemData itemData = null;
-      int currAmt;
+
+      // Hex piece bits are their own thing because they will be puzzle pieces..
       List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
       for (int i = 0; i < itemIDs.Count; ++i) {
-        itemData = Cozmo.ItemDataConfig.GetData(itemIDs[i]);
-        currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemData.ID);
+        Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(itemIDs[i]);
+        int currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemData.ID);
         if (currAmt < itemData.StartingAmount) {
           DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.SetItemAmount(itemData.ID, itemData.StartingAmount);
         }
       }
     } // end first phase complete
     RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
+
+    Cozmo.Needs.NeedsStateManager.Instance.PauseExceptForNeed(NeedId.Count);
 
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
@@ -222,11 +227,11 @@ public class OnboardingManager : MonoBehaviour {
     }
 #endif
   }
-  public void CompletePhase(OnboardingPhases phase) {
+  public void CompletePhase(OnboardingPhases phase, bool canStartNewPhase = true) {
     // If it's the current phase clean up UI.
     // Otherwise just set the save file forward.
     if (phase == _CurrPhase) {
-      SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
+      SetSpecificStage(GetMaxStageInPhase(_CurrPhase), canStartNewPhase);
     }
     else {
       SetCurrStageInPhase(GetMaxStageInPhase(phase), phase);
@@ -238,21 +243,49 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseCompleted != null) {
       OnOnboardingPhaseCompleted.Invoke(_CurrPhase);
     }
-    if (_CurrPhase == OnboardingPhases.Home) {
+    if (_CurrPhase == OnboardingPhases.InitialSetup) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
         RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
+    Cozmo.Needs.NeedsStateManager.Instance.ResumeAllNeeds();
     RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
     ShowOutlineRegion(false);
   }
 
+  public void StartAnyPhaseIfNeeded() {
+    if (!IsOnboardingRequired(OnboardingPhases.InitialSetup) && IsOnboardingRequired(OnboardingPhases.MeetCozmo)) {
+      HubWorldBase instance = HubWorldBase.Instance;
+      if (instance != null && instance is Cozmo.Hub.NeedsHub) {
+        Cozmo.Hub.NeedsHub homeHubInstance = (Cozmo.Hub.NeedsHub)instance;
+
+        ChallengeData data = Array.Find(ChallengeDataList.Instance.ChallengeData,
+                                      (ChallengeData obj) => { return obj.UnlockId.Value == UnlockId.MeetCozmoGame; });
+        // "FaceEnrollmentTest"
+        if (data != null) {
+          homeHubInstance.ForceStartChallenge(data.ChallengeID);
+        }
+      }
+    }
+
+    if (!IsOnboardingRequired(OnboardingPhases.MeetCozmo) && IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
+      StartPhase(OnboardingPhases.NurtureIntro);
+    }
+
+    if (!IsOnboardingRequired(OnboardingPhases.NurtureIntro) && IsOnboardingRequired(OnboardingPhases.FeedIntro)) {
+      StartPhase(OnboardingPhases.FeedIntro);
+    }
+
+    if (!IsOnboardingRequired(OnboardingPhases.FeedIntro) && IsOnboardingRequired(OnboardingPhases.PlayIntro)) {
+      StartPhase(OnboardingPhases.PlayIntro);
+    }
+  }
+
   public bool PreloadOnboarding() {
-    if (!IsOnboardingRequired(OnboardingPhases.Home) &&
-        !IsOnboardingRequired(OnboardingPhases.Loot) &&
-        !IsOnboardingRequired(OnboardingPhases.Upgrades)) {
+    bool allCompleted = Array.TrueForAll(kRequiredPhases, (OnboardingPhases phase) => { return !IsOnboardingRequired(phase); });
+    if (allCompleted) {
       return false;
     }
     if (_OnboardingUIInstance == null) {
@@ -286,9 +319,8 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
   private void UnloadIfDoneWithAllPhases() {
-    if (!IsOnboardingRequired(OnboardingPhases.Home) &&
-        !IsOnboardingRequired(OnboardingPhases.Loot) &&
-        !IsOnboardingRequired(OnboardingPhases.Upgrades)) {
+    bool allCompleted = Array.TrueForAll(kRequiredPhases, (OnboardingPhases phase) => { return !IsOnboardingRequired(phase); });
+    if (allCompleted) {
       AssetBundleManager.Instance.UnloadAssetBundle(_OnboardingUIPrefabData.AssetBundle);
       if (_OnboardingUIInstance != null) {
         GameObject.Destroy(_OnboardingUIInstance);
@@ -299,9 +331,9 @@ public class OnboardingManager : MonoBehaviour {
 
   public void GoToNextStage() {
     // In demo mode skip to wake up
-    if (DebugMenuManager.Instance.DemoMode && _CurrPhase == OnboardingPhases.Home) {
+    if (DebugMenuManager.Instance.DemoMode && _CurrPhase == OnboardingPhases.InitialSetup) {
       // Completed the Show CubePhase
-      if (GetCurrStageInPhase(_CurrPhase) == _OnboardingUIInstance.GetShowCubeStateID()) {
+      if (GetCurrStageInPhase(_CurrPhase) == (_OnboardingUIInstance.GetMaxStageInPhase(_CurrPhase) - 1)) {
         CompletePhase(_CurrPhase);
       }
       else {
@@ -313,7 +345,7 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
-  public void SetSpecificStage(int nextStage) {
+  private void SetSpecificStage(int nextStage, bool canStartNewPhase = true) {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
     }
@@ -323,7 +355,7 @@ public class OnboardingManager : MonoBehaviour {
     }
     int nextDASPhaseID = -1;
     SetCurrStageInPhase(nextStage, _CurrPhase);
-    if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
+    if (nextStage >= 0 && nextStage < _OnboardingUIInstance.GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
       // likely OnboardingUIWrapper.prefab needs to be updated if this ever happens legit
       if (stagePrefab == null) {
@@ -336,8 +368,9 @@ public class OnboardingManager : MonoBehaviour {
       if (OnOnboardingStageStarted != null) {
         OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
       }
-      UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveBotBar, stagePrefab.ActiveMenuContent,
-                  stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
+
+      UpdateStage(stagePrefab.ButtonStateDiscover, stagePrefab.ButtonStateRepair, stagePrefab.ButtonStateFeed,
+                  stagePrefab.ButtonStatePlay, stagePrefab.ActiveMenuContent, stagePrefab.ReactionsEnabled);
       // Create the debug layer to have a few buttons to work with on screen easily for QA
       // who will have to see this all the time.
       if (_DebugDisplayOn) {
@@ -347,12 +380,18 @@ public class OnboardingManager : MonoBehaviour {
     else {
       PhaseCompletedInternal();
       _OnboardingUIInstance.RemoveDebugButtons();
+      OnboardingPhases completedPhase = _CurrPhase;
       _CurrPhase = OnboardingPhases.None;
       UpdateStage();
-
-      HubWorldBase instance = HubWorldBase.Instance;
-      if (instance != null) {
-        instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+      // only Meet Cozmo phase takes us out of pausing inside needshub
+      if (completedPhase != OnboardingPhases.MeetCozmo) {
+        HubWorldBase instance = HubWorldBase.Instance;
+        if (instance != null) {
+          instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+        }
+        if (canStartNewPhase) {
+          StartAnyPhaseIfNeeded();
+        }
       }
       UnloadIfDoneWithAllPhases();
     }
@@ -373,6 +412,9 @@ public class OnboardingManager : MonoBehaviour {
 
   private void HandleRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     // The UI is getting torn down and we're resetting, clear whatever happened.
+    if (_CurrPhase != OnboardingPhases.None && _CurrStageInst != null) {
+      GameObject.Destroy(_CurrStageInst);
+    }
     _CurrPhase = OnboardingPhases.None;
     if (_DebugDisplayOn && _OnboardingUIInstance != null) {
       _OnboardingUIInstance.RemoveDebugButtons();
@@ -393,10 +435,11 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void DebugCompleteAllOnboarding(string param) {
-    OnboardingManager.Instance.CompletePhase(OnboardingPhases.Home);
-    OnboardingManager.Instance.CompletePhase(OnboardingPhases.DailyGoals);
-    OnboardingManager.Instance.CompletePhase(OnboardingPhases.Loot);
-    OnboardingManager.Instance.CompletePhase(OnboardingPhases.Upgrades);
+    // not including none
+    int numStates = Enum.GetNames(typeof(OnboardingPhases)).Length - 1;
+    for (int i = 0; i < numStates; ++i) {
+      OnboardingManager.Instance.CompletePhase((OnboardingPhases)i, false);
+    }
   }
 
   public void DebugSkipOne() {
@@ -404,13 +447,7 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void DebugSkipAll() {
-    // special debug case. Since this loot view is listening for a state starting it hangs so just let it start loot.
-    if (Instance._CurrPhase == OnboardingPhases.Loot && Instance.GetCurrStageInPhase(OnboardingPhases.Loot) == 0) {
-      Instance.GoToNextStage();
-    }
-    else {
-      OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
-    }
+    DebugCompleteAllOnboarding(string.Empty);
   }
   private void SkipPressed() {
     if (_CurrStageInst != null) {
@@ -422,7 +459,27 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-  private void UpdateStage(bool showTopBar = true, bool showBotBar = true, bool showContent = true, bool showButtons = true, bool reactionsEnabled = true) {
+  private void UpdateButtonState(Cozmo.UI.CozmoButton button, OnboardingBaseStage.OnboardingButtonStates buttonState) {
+    button.gameObject.SetActive(buttonState != OnboardingBaseStage.OnboardingButtonStates.Hidden);
+    button.Interactable = buttonState != OnboardingBaseStage.OnboardingButtonStates.Disabled;
+    if (buttonState == OnboardingBaseStage.OnboardingButtonStates.Sparkle) {
+      SetOutlineRegion(button.transform);
+      ShowOutlineRegion(true);
+    }
+  }
+
+  private void UpdateStage(OnboardingBaseStage.OnboardingButtonStates showButtonDiscover = OnboardingBaseStage.OnboardingButtonStates.Active,
+                            OnboardingBaseStage.OnboardingButtonStates showButtonRepair = OnboardingBaseStage.OnboardingButtonStates.Active,
+                            OnboardingBaseStage.OnboardingButtonStates showButtonFeed = OnboardingBaseStage.OnboardingButtonStates.Active,
+                            OnboardingBaseStage.OnboardingButtonStates showButtonPlay = OnboardingBaseStage.OnboardingButtonStates.Active,
+                            bool showContent = true, bool reactionsEnabled = true) {
+    if (_NeedsHubView != null) {
+      _NeedsHubView.gameObject.SetActive(showContent);
+      UpdateButtonState(_NeedsHubView.DiscoverButton, showButtonDiscover);
+      UpdateButtonState(_NeedsHubView.RepairButton, showButtonRepair);
+      UpdateButtonState(_NeedsHubView.FeedButton, showButtonFeed);
+      UpdateButtonState(_NeedsHubView.PlayButton, showButtonPlay);
+    }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       if (reactionsEnabled) {
         if (_StageDisabledReactionaryBehaviors) {

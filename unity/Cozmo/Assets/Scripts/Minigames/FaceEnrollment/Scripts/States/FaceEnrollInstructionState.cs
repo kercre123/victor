@@ -141,6 +141,7 @@ namespace FaceEnrollment {
 
     private void PopupErrorAlert(FaceEnrollmentCompleted faceEnrollmentCompleted) {
       AlertModalData errorAlertData = null;
+      _FaceEnrollmentGame.CompleteMeetCozmoOnboarding();
 
       switch (faceEnrollmentCompleted.result) {
 
@@ -182,6 +183,7 @@ namespace FaceEnrollment {
         ReturnToFaceSlide();
       }
       else {
+        _FaceEnrollmentGame.CompleteMeetCozmoOnboarding();
         if (_CurrentRobot.EnrolledFaces.Count == 1) {
           ShowDoneAlertModal();
         }

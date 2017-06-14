@@ -48,6 +48,11 @@ namespace Cozmo.Needs.Activities.UI {
       else {
         _ScrollRect.horizontalNormalizedPosition = 0f;
       }
+
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DiscoverIntro)) {
+        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.DiscoverIntro);
+      }
+
     }
 
     protected override void CleanUp() {

@@ -170,6 +170,7 @@ namespace Cozmo.Hub {
 
     public override void StartFreeplay(IRobot robot) {
       if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
+          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup) &&
         robot != null) {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         robot.SetEnableFreeplayLightStates(true);
@@ -347,6 +348,10 @@ namespace Cozmo.Hub {
     }
 
     private void HandleStartChallengePressed(string challengeId) {
+      PlayChallenge(challengeId, wasRequest: false);
+    }
+
+    public void ForceStartChallenge(string challengeId) {
       PlayChallenge(challengeId, wasRequest: false);
     }
 

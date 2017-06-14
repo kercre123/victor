@@ -48,8 +48,12 @@ namespace Onboarding {
 
     protected void HandleSkipClicked() {
       // No tutorials needed for the next few phases either
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      for (int i = 0; i < OnboardingManager.kRequiredPhases.Length; ++i) {
+        if (OnboardingManager.kRequiredPhases[i] != OnboardingManager.OnboardingPhases.InitialSetup) {
+          OnboardingManager.Instance.CompletePhase(OnboardingManager.kRequiredPhases[i]);
+        }
+      }
+
       DAS.Event("onboarding.skip_status", "1", DASUtil.FormatExtraData("1"));
       for (int i = 0; i < _OldRobotSecondaryInfo.Length; ++i) {
         _OldRobotSecondaryInfo[i].gameObject.SetActive(false);
@@ -66,7 +70,7 @@ namespace Onboarding {
 
     private void HandleWakeAnimationComplete(bool success) {
       // Complete and shut down onboarding current phase.
-      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Home);
+      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.InitialSetup);
     }
 
     protected override void HandleLoopedAnimationComplete(bool success = true) {

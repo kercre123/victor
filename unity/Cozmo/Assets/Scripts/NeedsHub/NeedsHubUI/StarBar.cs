@@ -33,6 +33,10 @@ namespace Cozmo.Needs.UI {
 
     private void HandleStarUnlocked(Anki.Cozmo.ExternalInterface.StarUnlocked message) {
       UpdateBar(message.currentStars, message.maxStarsForLevel);
+
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.RewardBox)) {
+        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.RewardBox);
+      }
     }
 
     private void HandleGotNeedsState(Anki.Cozmo.ExternalInterface.NeedsState message) {

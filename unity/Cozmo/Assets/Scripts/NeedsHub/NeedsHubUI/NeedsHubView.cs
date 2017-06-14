@@ -68,6 +68,8 @@ namespace Cozmo.Needs.UI {
       _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
 
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+
+      OnboardingManager.Instance.InitInitalOnboarding(this);
     }
 
     protected override void CleanUp() {
@@ -136,6 +138,8 @@ namespace Cozmo.Needs.UI {
     private void HandleDialogFinishedOpenAnimation() {
       PopLatestBracketAndUpdateButtons();
       NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+
+      OnboardingManager.Instance.StartAnyPhaseIfNeeded();
     }
 
     private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
@@ -163,5 +167,20 @@ namespace Cozmo.Needs.UI {
         _SparksButton.Interactable = true;
       }
     }
+
+    #region Onboarding
+    public CozmoButton DiscoverButton {
+      get { return _ActivitiesButton; }
+    }
+    public CozmoButton RepairButton {
+      get { return _MetersWidget.RepairButton; }
+    }
+    public CozmoButton FeedButton {
+      get { return _MetersWidget.FeedButton; }
+    }
+    public CozmoButton PlayButton {
+      get { return _SparksButton; }
+    }
+    #endregion
   }
 }

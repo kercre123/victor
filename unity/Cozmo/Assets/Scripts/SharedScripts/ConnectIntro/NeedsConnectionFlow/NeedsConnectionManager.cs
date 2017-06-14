@@ -220,7 +220,7 @@ namespace Cozmo.ConnectionFlow {
     private void SetupForDemoMode() {
       // Set needing onboarding home, but not other phases
       DataPersistence.PlayerProfile profile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-      profile.OnboardingStages[OnboardingManager.OnboardingPhases.Home] = 0;
+      profile.OnboardingStages[OnboardingManager.OnboardingPhases.InitialSetup] = 0;
       // reset the item inventory
       List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
       for (int i = 0; i < itemIDs.Count; ++i) {

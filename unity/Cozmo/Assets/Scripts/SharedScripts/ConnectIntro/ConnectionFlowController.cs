@@ -437,6 +437,10 @@ public class ConnectionFlowController : MonoBehaviour {
 
       FinishConnectionFlow();
     }
+    // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
+    else if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup)) {
+      FinishConnectionFlow();
+    }
     // normal flow
     else {
       WakeupSequence();

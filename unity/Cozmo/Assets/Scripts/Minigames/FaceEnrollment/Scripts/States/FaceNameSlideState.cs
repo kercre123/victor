@@ -30,7 +30,9 @@
       }
 
       if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
-        _FaceEnrollmentGame.SharedMinigameView.ShowQuitButton();
+        if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.MeetCozmo)) {
+          _FaceEnrollmentGame.SharedMinigameView.ShowQuitButton();
+        }
       }
       else {
         _FaceEnrollmentGame.SharedMinigameView.ShowBackButton(() => {

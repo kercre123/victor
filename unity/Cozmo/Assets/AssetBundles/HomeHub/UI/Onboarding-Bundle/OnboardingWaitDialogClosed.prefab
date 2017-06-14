@@ -5,36 +5,18 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22461814}
-  - 222: {fileID: 22277488}
-  - 114: {fileID: 11410378}
+  - component: {fileID: 22461814}
+  - component: {fileID: 22277488}
+  - component: {fileID: 114884972346539074}
   m_Layer: 5
-  m_Name: OnboardingSparks
+  m_Name: OnboardingWaitDialogClosed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &11410378
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 173596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f68f7d4806074b5a9d74fd586e2a33c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ActiveTopBar: 1
-  _ActiveBotBar: 1
-  _ActiveTabButtons: 0
-  _ActiveMenuContent: 1
-  _ReactionsEnabled: 1
-  _PlayIdle: 0
-  _DASPhaseID: 0
 --- !u!222 &22277488
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -50,10 +32,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -70,3 +52,26 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 173596}
   m_IsPrefabParent: 1
+--- !u!114 &114884972346539074
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 173596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d841ee39b9949258160d7ba69cc525, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ActiveTopBar: 0
+  _ActiveBotBar: 0
+  _ActiveTabButtons: 0
+  _ActiveMenuContent: 1
+  _ReactionsEnabled: 1
+  _PlayIdle: 0
+  _DASPhaseID: 4
+  _IsLastPhase: 0
+  _ButtonStateDiscover: 3
+  _ButtonStateRepair: 3
+  _ButtonStateFeed: 3
+  _ButtonStatePlay: 3
