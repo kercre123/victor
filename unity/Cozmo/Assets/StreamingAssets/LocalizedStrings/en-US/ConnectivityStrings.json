@@ -25,7 +25,7 @@
     "translation": "You need to connect to Cozmo"
   },
   "connectivity.moreInfo": {
-    "translation": "More Info"
+    "translation": "MORE INFO"
   },
   "connectivity.turnCozmoOn": {
     "translation": "Turn Cozmo On"
@@ -99,10 +99,10 @@
   "connectivity.connectionRejected.title": {
     "translation": "Another Device is connected to Cozmo\nPlease disconnect that Device and try again"
   },
-  "needs.unconnected.needToConnect.title":{
+  "needs.unconnected.needToConnect.title": {
     "translation": "Cozmo Is Not Connected"
   },
-  "needs.unconnected.needToConnect.description":{
+  "needs.unconnected.needToConnect.description": {
     "translation": "In order to care for Cozmo and check on his needs, you must first connect to him. "
   }
 }

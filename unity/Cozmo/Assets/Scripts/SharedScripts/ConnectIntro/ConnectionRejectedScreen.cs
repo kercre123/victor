@@ -7,10 +7,10 @@ public class ConnectionRejectedScreen : MonoBehaviour {
   public System.Action OnRetryButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _CancelButton;
+  private Cozmo.UI.CozmoButton _CancelButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _RetryButton;
+  private Cozmo.UI.CozmoButton _RetryButton;
 
   private void Awake() {
 

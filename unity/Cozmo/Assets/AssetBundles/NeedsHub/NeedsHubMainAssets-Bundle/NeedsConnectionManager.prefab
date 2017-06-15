@@ -76,3 +76,4 @@ MonoBehaviour:
       _EnumValueAsString: start_view_prefabs
       _EnumValue: 12
     _AssetDataName: FirstTimeConnectView
+  _UseConnectionFlowInMock: 1

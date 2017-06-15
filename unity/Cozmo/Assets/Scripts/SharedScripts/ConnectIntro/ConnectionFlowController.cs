@@ -69,6 +69,16 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private bool _scanLoopPlaying = false;
 
+#if UNITY_EDITOR
+  public static bool sManualProgress;
+  public static bool ManualSuccess() {
+    return Input.GetKeyDown(KeyCode.S);
+  }
+  public static bool ManualFailure() {
+    return Input.GetKeyDown(KeyCode.F);
+  }
+#endif
+
   private void Awake() {
     Cozmo.PauseManager.Instance.gameObject.SetActive(false);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
@@ -84,6 +94,31 @@ public class ConnectionFlowController : MonoBehaviour {
     if (Cozmo.PauseManager.InstanceExists) {
       Cozmo.PauseManager.Instance.gameObject.SetActive(true);
     }
+  }
+
+  // only for debug stuff
+  private void Update() {
+#if UNITY_EDITOR
+    if (sManualProgress) {
+      if (_SearchForCozmoScreenInstance != null) {
+        if (ManualSuccess()) {
+          HandleSearchForCozmoScreenDone(true);
+        }
+        else if (ManualFailure()) {
+          HandleSearchForCozmoScreenDone(false);
+        }
+      }
+      else if (_ConnectingToCozmoScreenInstance != null) {
+        if (ManualSuccess()) {
+          // progress from the connection screen to the next part of the flow
+          _ConnectingToCozmoScreenInstance.ConnectionComplete();
+        }
+        else if (ManualFailure()) {
+          HandleRobotConnectResponse(RobotConnectionResult.ConnectionRejected);
+        }
+      }
+    }
+#endif
   }
 
   public static AnimationTrigger GetAnimationForWakeUp() {
@@ -280,7 +315,16 @@ public class ConnectionFlowController : MonoBehaviour {
 
     var screenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<SearchForCozmoScreen>();
     bool androidFlowActive = _AndroidConnectionFlowInstance != null;
-    screenInstance.Initialize(androidFlowActive ? null : _PingStatus);
+    PingStatus pingStatusForSearch = _PingStatus;
+#if UNITY_EDITOR
+    if (sManualProgress) {
+      pingStatusForSearch = null;
+    }
+#endif
+    if (androidFlowActive) {
+      pingStatusForSearch = null;
+    }
+    screenInstance.Initialize(pingStatusForSearch);
     screenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
     _SearchForCozmoScreenInstance = screenInstance.gameObject;
     // Start Scan loop sound for connection phase

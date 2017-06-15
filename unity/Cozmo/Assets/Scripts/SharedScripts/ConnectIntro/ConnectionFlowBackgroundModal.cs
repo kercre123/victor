@@ -2,27 +2,14 @@
 using System.Collections;
 
 public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
-
   [SerializeField]
-  private Sprite _CompletedStateSprite;
-
+  private GameObject[] _StateImages;
   [SerializeField]
-  private Sprite _CompletedStateBackground;
-
+  private GameObject[] _InProgressIndicators;
   [SerializeField]
-  private Sprite _InProgressBackground;
-
+  private GameObject[] _SuccessIndicators;
   [SerializeField]
-  private Sprite _FailedSprite;
-
-  [SerializeField]
-  private Sprite _FailedBackground;
-
-  [SerializeField]
-  private UnityEngine.UI.Image[] _StateImages;
-
-  [SerializeField]
-  private UnityEngine.UI.Image[] _StateBackgrounds;
+  private GameObject[] _FailureIndicators;
 
   [SerializeField]
   private GameObject[] _InProgressSpinners;
@@ -38,13 +25,17 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
     for (int i = 0; i < _InProgressSpinners.Length; ++i) {
       _InProgressSpinners[i].SetActive(false);
     }
-    for (int i = 0; i < _StateImages.Length; ++i) {
-      _StateImages[i].gameObject.SetActive(true);
-      _StateImages[i].overrideSprite = null;
+    for (int i = 0; i < _InProgressIndicators.Length; ++i) {
+      _InProgressIndicators[i].SetActive(true);
     }
-    for (int i = 0; i < _StateBackgrounds.Length; ++i) {
-      _StateBackgrounds[i].overrideSprite = null;
-      _StateBackgrounds[i].gameObject.SetActive(false);
+    for (int i = 0; i < _StateImages.Length; ++i) {
+      _StateImages[i].SetActive(true);
+    }
+    for (int i = 0; i < _SuccessIndicators.Length; ++i) {
+      _SuccessIndicators[i].SetActive(false);
+    }
+    for (int i = 0; i < _FailureIndicators.Length; ++i) {
+      _FailureIndicators[i].SetActive(false);
     }
   }
 
@@ -57,8 +48,8 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
 
     Invoke("SetProgressSpinner", 0.33f);
 
-    _StateBackgrounds[currentState].gameObject.SetActive(true);
-    _StateBackgrounds[currentState].overrideSprite = _InProgressBackground;
+    _StateImages[currentState].SetActive(false);
+    _InProgressIndicators[currentState].SetActive(true);
   }
 
   private void SetProgressSpinner() {
@@ -70,12 +61,11 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
     if (failedState < 0 || failedState >= _StateImages.Length) {
       DAS.Error("ConnectionFlowBackground.SetFailedState", "Setting current state out of range");
     }
-    _StateImages[failedState].gameObject.SetActive(true);
-    _StateImages[failedState].overrideSprite = _FailedSprite;
-    _StateBackgrounds[failedState].gameObject.SetActive(true);
-    _StateBackgrounds[failedState].overrideSprite = _FailedBackground;
-
+    _StateImages[failedState].SetActive(false);
+    _InProgressIndicators[failedState].SetActive(false);
+    _FailureIndicators[failedState].SetActive(true);
     _InProgressSpinners[failedState].gameObject.SetActive(false);
+
     CancelInvoke();
   }
 
@@ -84,12 +74,11 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
     if (completedState < 0 || completedState >= _StateImages.Length) {
       DAS.Error("ConnectionFlowBackground.SetStateComplete", "Setting current state out of range");
     }
-    _StateImages[completedState].gameObject.SetActive(true);
-    _StateImages[completedState].overrideSprite = _CompletedStateSprite;
-    _StateBackgrounds[completedState].gameObject.SetActive(true);
-    _StateBackgrounds[completedState].overrideSprite = _CompletedStateBackground;
-
+    _StateImages[completedState].SetActive(false);
+    _InProgressIndicators[completedState].SetActive(false);
+    _SuccessIndicators[completedState].SetActive(true);
     _InProgressSpinners[completedState].gameObject.SetActive(false);
+
     CancelInvoke();
   }
 

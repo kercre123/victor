@@ -16,6 +16,13 @@ public class ConnectingToCozmoScreen : MonoBehaviour {
   }
 
   private void Update() {
+#if UNITY_EDITOR
+    if (ConnectionFlowController.sManualProgress) {
+      if (ConnectionFlowController.ManualSuccess()) {
+        ConnectionComplete();
+      }
+    }
+#endif
     if (_MinimumDelayMet && _ConnectionComplete) {
       if (ConnectionScreenComplete != null) {
         ConnectionScreenComplete();

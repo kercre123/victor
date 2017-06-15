@@ -15,6 +15,7 @@ namespace DataPersistence {
     public bool UseFastConnectivityFlow;
     public bool OverrideLanguage;
     public UnityEngine.SystemLanguage LanguageSettingOverride;
+    public bool UseConnectFlowInMock;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -22,9 +23,11 @@ namespace DataPersistence {
       FakeTouchRecordings = new Dictionary<string, List<FakeTouch>>();
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
+      UseConnectFlowInMock = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
+      DebugConsoleData.Instance.AddConsoleVar("UseConnectFlowInMock", "UseConnectFlowInMock", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;

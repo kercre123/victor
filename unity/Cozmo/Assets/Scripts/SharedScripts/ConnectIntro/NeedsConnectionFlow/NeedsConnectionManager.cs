@@ -163,7 +163,12 @@ namespace Cozmo.ConnectionFlow {
       if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
         DataPersistence.DataPersistenceManager.Instance.StartNewSession();
       }
-      HandleConnectionFlowComplete();
+      if (!DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseConnectFlowInMock) {
+        HandleConnectionFlowComplete();
+      }
+      else {
+        AssetBundleManager.Instance.LoadAssetBundleAsync(_ConnectionFlowPrefabData.AssetBundle, LoadConnectionFlowPrefab);
+      }
     }
 
     private void HandleConnectButton() {
@@ -182,6 +187,11 @@ namespace Cozmo.ConnectionFlow {
             _ConnectionFlowInstance = GameObject.Instantiate(connectionFlowPrefab.gameObject).GetComponent<ConnectionFlowController>();
             _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
             _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
+#if UNITY_EDITOR
+            if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseConnectFlowInMock) {
+              ConnectionFlowController.sManualProgress = true;
+            }
+#endif
             _ConnectionFlowInstance.StartConnectionFlow();
           }
         });
