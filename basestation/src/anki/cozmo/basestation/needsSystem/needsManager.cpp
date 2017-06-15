@@ -1492,6 +1492,23 @@ void NeedsManager::DebugImplPausing(const char* needName, const bool isDecay, co
 void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 {
   const float delta = level - _needsState._curNeedsLevels[needId];
+
+  if ((needId == NeedId::Repair) && (delta > 0.0f))
+  {
+    // For the repair need, if we're going UP, we also need to repair enough
+    // parts as needed so that the new level will be within the correct
+    // threshold for 'number of broken parts'.
+    // We don't need to do this when going DOWN because ApplyDelta will
+    // break parts for us.
+    int numDamagedParts = _needsState.NumDamagedParts();
+    int newNumDamagedParts = _needsState.NumDamagedPartsForRepairLevel(level);
+    while (newNumDamagedParts < numDamagedParts)
+    {
+      _needsState._partIsDamaged[_needsState.PickPartToRepair()] = false;
+      numDamagedParts--;
+    }
+  }
+
   NeedDelta needDelta(delta, 0.0f);
   _needsState.ApplyDelta(needId, needDelta);
 

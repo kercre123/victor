@@ -78,6 +78,8 @@ public:
   void SetNeedsBracketsDirty() { _needsBracketsDirty = true; };
 
   int NumDamagedParts() const;
+  int NumDamagedPartsForRepairLevel(const float level) const;
+  RepairablePartId PickPartToRepair() const;
 
   // Serialization versions; increment this when the format of the serialization changes
   // This is stored in the serialized file

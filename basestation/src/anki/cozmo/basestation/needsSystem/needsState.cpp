@@ -347,6 +347,19 @@ int NeedsState::NumDamagedParts() const
   return numDamagedParts;
 }
 
+int NeedsState::NumDamagedPartsForRepairLevel(const float level) const
+{
+  int newNumDamagedParts = 0;
+  for ( ; newNumDamagedParts < _needsConfig->_brokenPartThresholds.size(); newNumDamagedParts++)
+  {
+    if (level > _needsConfig->_brokenPartThresholds[newNumDamagedParts])
+    {
+      break;
+    }
+  }
+  return newNumDamagedParts;
+}
+
 void NeedsState::PossiblyDamageParts()
 {
   const int numDamagedParts = NumDamagedParts();
@@ -355,14 +368,7 @@ void NeedsState::PossiblyDamageParts()
     return;
 
   const float curRepairLevel = _curNeedsLevels[NeedId::Repair];
-  int newNumDamagedParts = 0;
-  for ( ; newNumDamagedParts < _needsConfig->_brokenPartThresholds.size(); newNumDamagedParts++)
-  {
-    if (curRepairLevel > _needsConfig->_brokenPartThresholds[newNumDamagedParts])
-    {
-      break;
-    }
-  }
+  int newNumDamagedParts = NumDamagedPartsForRepairLevel(curRepairLevel);
   if (newNumDamagedParts > numPartsTotal)
   {
     newNumDamagedParts = numPartsTotal;
@@ -392,6 +398,25 @@ RepairablePartId NeedsState::PickPartToDamage() const
         break;
       }
       undamagedPartIndex--;
+    }
+    i++;
+  }
+  return static_cast<RepairablePartId>(i);
+}
+
+RepairablePartId NeedsState::PickPartToRepair() const
+{
+  int damagedPartIndex = _rng->RandInt(NumDamagedParts());
+  int i = 0;
+  for (const auto& part : _partIsDamaged)
+  {
+    if (part.second)
+    {
+      if (damagedPartIndex == 0)
+      {
+        break;
+      }
+      damagedPartIndex--;
     }
     i++;
   }
