@@ -336,13 +336,17 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void HandleConnectingToCozmoScreenDone() {
-    GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+    if (_ConnectingToCozmoScreenInstance != null) {
+      GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+    }
     _ConnectionFlowBackgroundModalInstance.SetStateComplete(1);
     ShowSecuringConnectionScreen();
   }
 
   private void UpdateFirmware() {
-    GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+    if (_ConnectingToCozmoScreenInstance != null) {
+      GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+    }
     _UpdateFirmwareScreenInstance = UIManager.CreateUIElement(_UpdateFirmwareScreenPrefab.gameObject, _ConnectionFlowBackgroundModalInstance.transform).GetComponent<UpdateFirmwareScreen>();
     _UpdateFirmwareScreenInstance.FirmwareUpdateDone += FirmwareUpdated;
   }
@@ -425,15 +429,22 @@ public class ConnectionFlowController : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
       DataPersistence.DataPersistenceManager.Instance.Save();
 
-      // Need to create the stuct the will be written to the NVEntryTag, set values in it, and then pack it into a
-      // memoryStream which will modify the byte array it was constructed with. That byte array is then what is
-      // passed to the NVStorageWrite message
-      Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
-      data.hasCompletedOnboarding = true;
-      byte[] byteArr = new byte[data.Size];
-      System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
-      data.Pack(ms);
-      RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        // Need to create the struct that will be written to the NVEntryTag, set values in it, and then pack it into a
+        // memoryStream which will modify the byte array it was constructed with. That byte array is then what is
+        // passed to the NVStorageWrite message.
+        Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
+        data.hasCompletedOnboarding = true;
+        byte[] byteArr = new byte[data.Size];
+        System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
+        data.Pack(ms);
+
+        robot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
+      }
+      else {
+        DAS.Warn("ConnectionFlowController.CheckForRestoreRobotFlow", "Robot has disconnected");
+      }
 
       FinishConnectionFlow();
     }
