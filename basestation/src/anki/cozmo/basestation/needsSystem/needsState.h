@@ -60,7 +60,7 @@ public:
   void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
 
   // Apply a given delta to a given need
-  void ApplyDelta(const NeedId needId, const NeedDelta& needDelta);
+  void ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause);
 
 
   float         GetNeedLevel(NeedId need) const;
@@ -72,11 +72,15 @@ public:
   
   // Set current needs bracket levels from current levels
   void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);
-  
+
   bool IsNeedAtBracket(const NeedId need, const NeedBracketId bracket);
 
   void SetNeedsBracketsDirty() { _needsBracketsDirty = true; };
 
+  void SetPrevNeedsBrackets();
+
+  NeedBracketId GetPrevNeedBracketByIndex(size_t i) { return _prevNeedsBracketsCache[static_cast<NeedId>(i)]; }
+  
   int NumDamagedParts() const;
   int NumDamagedPartsForRepairLevel(const float level) const;
   RepairablePartId PickPartToRepair() const;
@@ -97,11 +101,6 @@ public:
 
   using CurNeedsMap = std::map<NeedId, float>;
   CurNeedsMap _curNeedsLevels;
-
-  // These are meant for convenience to the game, and indicate the 'severity bracket' of the
-  // corresponding need level (e.g. 'full', 'normal', 'warning', 'critical')
-  using CurNeedsBrackets = std::map<NeedId, NeedBracketId>;
-  CurNeedsBrackets _curNeedsBracketsCache;
 
   using PartIsDamagedMap = std::map<RepairablePartId, bool>;
   PartIsDamagedMap _partIsDamaged;
@@ -124,13 +123,18 @@ public:
 
 private:
 
+  // These are meant for convenience to the game, and indicate the 'severity bracket' of the
+  // corresponding need level (e.g. 'full', 'normal', 'warning', 'critical')
+  using CurNeedsBrackets = std::map<NeedId, NeedBracketId>;
+  CurNeedsBrackets _curNeedsBracketsCache;
+  CurNeedsBrackets _prevNeedsBracketsCache;
+
   bool _needsBracketsDirty;
 
   void Reset();
 
-  void PossiblyDamageParts();
+  void PossiblyDamageParts(const NeedsActionId cause);
   RepairablePartId PickPartToDamage() const;
-
 };
 
 

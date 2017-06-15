@@ -111,11 +111,12 @@ private:
 
 struct NeedDelta
 {
-  NeedDelta(float delta, float randomRange) { _delta = delta; _randomRange = randomRange; };
-  NeedDelta() { _delta = 0.0f; _randomRange = 0.0f; }
+  NeedDelta(float delta, float randomRange, NeedsActionId cause) { _delta = delta; _randomRange = randomRange; _cause = cause; };
+  NeedDelta() { _delta = 0.0f; _randomRange = 0.0f; _cause = NeedsActionId::NoAction; }
 
-  float _delta;
-  float _randomRange;
+  float         _delta;
+  float         _randomRange;
+  NeedsActionId _cause;
 };
 
 struct ActionDelta

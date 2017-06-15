@@ -116,6 +116,11 @@ private:
 
   void UpdateStarsState();
 
+  void DetectBracketChangeForDas();
+  void SendRepairDasEvent(const NeedsState& needsState,
+                          const NeedsActionId cause,
+                          const RepairablePartId part);
+
   void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate = NeedsActionId::NoAction);
   void SendNeedsPauseStateToGame();
   void SendNeedsPauseStatesToGame();

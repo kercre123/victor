@@ -28,7 +28,6 @@ NeedsState::NeedsState()
 , _robotSerialNumber(0)
 , _rng(nullptr)
 , _curNeedsLevels()
-, _curNeedsBracketsCache()
 , _partIsDamaged()
 , _curNeedsUnlockLevel(0)
 , _numStarsAwarded(0)
@@ -36,6 +35,8 @@ NeedsState::NeedsState()
 , _timeLastStarAwarded(Time())
 , _needsConfig(nullptr)
 , _starRewardsConfig(nullptr)
+, _curNeedsBracketsCache()
+, _prevNeedsBracketsCache()
 , _needsBracketsDirty(true)
 {
 }
@@ -86,6 +87,7 @@ void NeedsState::Reset()
 {
   _curNeedsLevels.clear();
   _curNeedsBracketsCache.clear();
+  _prevNeedsBracketsCache.clear();
   _partIsDamaged.clear();
 
   _needsBracketsDirty = true;
@@ -202,12 +204,12 @@ void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex,
 
   if (needId == NeedId::Repair)
   {
-    PossiblyDamageParts();
+    PossiblyDamageParts(NeedsActionId::Decay);
   }
 }
 
 
-void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta)
+void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause)
 {
   float needLevel = _curNeedsLevels[needId];
 
@@ -256,7 +258,7 @@ void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta)
 
   if ((needId == NeedId::Repair) && (delta < 0.0f))
   {
-    PossiblyDamageParts();
+    PossiblyDamageParts(cause);
   }
 }
 
@@ -360,7 +362,7 @@ int NeedsState::NumDamagedPartsForRepairLevel(const float level) const
   return newNumDamagedParts;
 }
 
-void NeedsState::PossiblyDamageParts()
+void NeedsState::PossiblyDamageParts(const NeedsActionId cause)
 {
   const int numDamagedParts = NumDamagedParts();
   const int numPartsTotal = static_cast<int>(_partIsDamaged.size());
@@ -380,7 +382,18 @@ void NeedsState::PossiblyDamageParts()
 
   for (int i = 0; i < partsToDamage; i++)
   {
-    _partIsDamaged[PickPartToDamage()] = true;
+    RepairablePartId part = PickPartToDamage();
+    _partIsDamaged[part] = true;
+
+    // DAS Event: "needs.part_damaged"
+    // s_val: The name of the part damaged (RepairablePartId)
+    // data: New number of damaged parts, followed by a colon, followed
+    //       by the cause of damage (NeedsActionId, which can be 'decay')
+    std::string data = std::to_string(numDamagedParts + i + 1) + ":" +
+                       NeedsActionIdToString(cause);
+    Anki::Util::sEvent("needs.part_damaged",
+                       {{DDATA, data.c_str()}},
+                       RepairablePartIdToString(part));
   }
 }
 
@@ -435,6 +448,13 @@ bool NeedsState::IsNeedAtBracket(const NeedId need, const NeedBracketId bracket)
                     "No needs bracket for need %d",
                     static_cast<int>(need));
   return false;
+}
+
+void NeedsState::SetPrevNeedsBrackets()
+{
+  UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
+
+  _prevNeedsBracketsCache = _curNeedsBracketsCache;
 }
 
 

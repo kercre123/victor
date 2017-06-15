@@ -358,6 +358,19 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
   bool needToWriteToDevice = false;
   bool needToWriteToRobot = _robotNeedsVersionUpdate;
 
+  // DAS Event: "needs.resolve_on_connection"
+  // s_val: Whether device had valid needs data (1 or 0), and whether robot
+  //        had valid needs data, separated by a colon
+  // data: Serial number extracted from device storage, and serial number on
+  //       robot, separated by colon
+  std::ostringstream stream;
+  stream << (_deviceHadValidNeedsData ? "1" : "0") << ":" << (_robotHadValidNeedsData ? "1" : "0");
+  const std::string serialNumbers = std::to_string(_previousRobotSerialNumber) + ":" +
+                                    std::to_string(_needsStateFromRobot._robotSerialNumber);
+  Anki::Util::sEvent("needs.resolve_on_connection",
+                     {{DDATA, serialNumbers.c_str()}},
+                     stream.str().c_str());
+
   if (!_robotHadValidNeedsData && !_deviceHadValidNeedsData)
   {
     PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Neither robot nor device has needs data");
@@ -388,6 +401,14 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // Both robot and device have needs data
     if (_previousRobotSerialNumber == _needsStateFromRobot._robotSerialNumber)
     {
+      // DAS Event: "needs.resolve_on_connection_matched"
+      // s_val: 0 if timestamps matched; -1 if device storage was newer; 1 if
+      //        robot storage was newer
+      // data: Unused
+      std::string comparison = (_savedTimeLastWrittenToDevice < _needsStateFromRobot._timeLastWritten ? "1" :
+                               (_savedTimeLastWrittenToDevice > _needsStateFromRobot._timeLastWritten ? "-1" : "0"));
+      Anki::Util::sEvent("needs.resolve_on_connection_matched", {}, comparison.c_str());
+
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "...and serial numbers MATCH");
       // This was the same robot the device had been connected to before
       if (_savedTimeLastWrittenToDevice < _needsStateFromRobot._timeLastWritten)
@@ -569,12 +590,40 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   if (_isPausedOverall) {
     return;
   }
-  
+
+  NeedsState::CurNeedsMap prevNeedsLevels = _needsState._curNeedsLevels;
+  _needsState.SetPrevNeedsBrackets();
+
   RegisterNeedsActionCompletedInternal(actionCompleted, _needsState, false);
+
+  // DAS Event: "needs.action_completed"
+  // s_val: The needs action being completed
+  // data: The needs levels before the completion, followed by the needs levels after
+  //       the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
+  std::ostringstream stream;
+  stream.precision(5);
+  stream << std::fixed;
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    if (needIndex > 0)
+    {
+      stream << ":";
+    }
+    stream << prevNeedsLevels[static_cast<NeedId>(needIndex)];
+  }
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    stream << ":" << _needsState.GetNeedLevelByIndex(needIndex);
+  }
+  Anki::Util::sEvent("needs.action_completed",
+                     {{DDATA, stream.str().c_str()}},
+                     NeedsActionIdToString(actionCompleted));
 
   SendNeedsStateToGame(actionCompleted);
 
   UpdateStarsState();
+
+  DetectBracketChangeForDas();
 
   PossiblyWriteToDevice();
   PossiblyStartWriteToRobot();
@@ -611,35 +660,54 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
   {
     case NeedsActionId::RepairHead:
     {
-      needsState._partIsDamaged[RepairablePartId::Head] = false;
+      const auto partId = RepairablePartId::Head;
+      needsState._partIsDamaged[partId] = false;
+      if (!predictionOnly)
+      {
+        SendRepairDasEvent(needsState, actionCompleted, partId);
+      }
       break;
     }
     case NeedsActionId::RepairLift:
     {
-      needsState._partIsDamaged[RepairablePartId::Lift] = false;
+      const auto partId = RepairablePartId::Lift;
+      needsState._partIsDamaged[partId] = false;
+      if (!predictionOnly)
+      {
+        SendRepairDasEvent(needsState, actionCompleted, partId);
+      }
       break;
     }
     case NeedsActionId::RepairTreads:
     {
-      needsState._partIsDamaged[RepairablePartId::Treads] = false;
+      const auto partId = RepairablePartId::Treads;
+      needsState._partIsDamaged[partId] = false;
+      if (!predictionOnly)
+      {
+        SendRepairDasEvent(needsState, actionCompleted, partId);
+      }
       break;
     }
     default:
       break;
   }
 
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
   {
-    if (_isActionsPausedForNeed[i])
+    if (_isActionsPausedForNeed[needIndex])
     {
       if (!predictionOnly)
       {
-        _queuedNeedDeltas[i].push_back(actionDelta._needDeltas[i]);
+        NeedDelta deltaToSave = actionDelta._needDeltas[needIndex];
+        deltaToSave._cause = actionCompleted;
+        _queuedNeedDeltas[needIndex].push_back(deltaToSave);
       }
     }
     else
     {
-      needsState.ApplyDelta(static_cast<NeedId>(i), actionDelta._needDeltas[i]);
+      needsState.ApplyDelta(static_cast<NeedId>(needIndex),
+                            actionDelta._needDeltas[needIndex],
+                            actionCompleted);
     }
   }
 
@@ -663,7 +731,22 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
   }
 }
 
-  
+void NeedsManager::SendRepairDasEvent(const NeedsState& needsState,
+                                      const NeedsActionId cause,
+                                      const RepairablePartId part)
+{
+  // DAS Event: "needs.part_repaired"
+  // s_val: The name of the part repaired (RepairablePartId)
+  // data: New number of damaged parts, followed by a colon, followed
+  //       by the cause of repair (NeedsActionId)
+  std::string data = std::to_string(needsState.NumDamagedParts()) + ":" +
+                     NeedsActionIdToString(cause);
+  Anki::Util::sEvent("needs.part_repaired",
+                     {{DDATA, data.c_str()}},
+                     RepairablePartIdToString(part));
+}
+
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
@@ -691,6 +774,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
                   "SetNeedsPauseStates message received but ignored because overall needs manager is paused");
     return;
   }
+
+  _needsState.SetPrevNeedsBrackets();
 
   // Pause/unpause for decay
   NeedsMultipliers multipliers;
@@ -748,7 +833,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
       auto& queuedDeltas = _queuedNeedDeltas[needIndex];
       for (int j = 0; j < queuedDeltas.size(); j++)
       {
-        _needsState.ApplyDelta(static_cast<NeedId>(needIndex), queuedDeltas[j]);
+        _needsState.ApplyDelta(static_cast<NeedId>(needIndex), queuedDeltas[j], queuedDeltas[j]._cause);
         needToSendNeedsStateToGame = true;
       }
       queuedDeltas.clear();
@@ -762,6 +847,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
     SendNeedsStateToGame();
 
     UpdateStarsState();
+
+    DetectBracketChangeForDas();
   }
 }
 
@@ -822,8 +909,8 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   }
   
   std::vector<NeedBracketId> needBrackets;
-  needBrackets.reserve((size_t)NeedBracketId::Count);
-  for (size_t i = 0; i < (size_t)NeedBracketId::Count; i++)
+  needBrackets.reserve((size_t)NeedId::Count);
+  for (size_t i = 0; i < (size_t)NeedId::Count; i++)
   {
     const NeedBracketId bracketId = _needsState.GetNeedBracketByIndex(i);
     needBrackets.push_back(bracketId);
@@ -901,6 +988,8 @@ void NeedsManager::ApplyDecayAllNeeds()
 {
   const DecayConfig& config = _robot == nullptr ? _needsConfig._decayUnconnected : _needsConfig._decayConnected;
 
+  _needsState.SetPrevNeedsBrackets();
+
   NeedsMultipliers multipliers;
   _needsState.SetDecayMultipliers(config, multipliers);
 
@@ -913,21 +1002,19 @@ void NeedsManager::ApplyDecayAllNeeds()
       _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
     }
   }
+
+  DetectBracketChangeForDas();
 }
 
 
 void NeedsManager::UpdateStarsState()
 {
-  // The only weakness of this check is:  If the player gets the star awarded near midnight,
-  // and then a few minutes later, after midnight, this function gets called again and the Play
-  // level is still within the "full" range, they would be awarded a second star (erroneously).
-  // Currently, however, Production is OK with this hole.  --PTerry 2017/06/02
-
-  // If "play stat" is now full, and they haven't gotten a star "today" send the star ready message
-  if (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full)
+  // If "Play" level has transitioned to Full
+  if ((_needsState.GetPrevNeedBracketByIndex((size_t)NeedId::Play) != NeedBracketId::Full) &&
+      (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full))
   {
+    // Now see if they've already received the star award today:
     Time nowTime = std::chrono::system_clock::now();
-    // Has it past midnight our time...
     std::time_t lastStarTime = std::chrono::system_clock::to_time_t( _needsState._timeLastStarAwarded );
     std::tm lastLocalTime;
     localtime_r(&lastStarTime, &lastLocalTime);
@@ -938,10 +1025,14 @@ void NeedsManager::UpdateStarsState()
     PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
                   "Local time gmt offset %ld",
                   nowLocalTime.tm_gmtoff);
+
+    bool starAwarded = false;
     
-    // Past midnight from lasttime
+    // Is it past midnight (a different day-of-year (0-365), or a different year)
     if (nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
     {
+      starAwarded = true;
+
       PRINT_CH_INFO(kLogChannelName, "NeedsManager.UpdateStarsState",
                     "now: %d, lastsave: %d",
                     nowLocalTime.tm_yday, lastLocalTime.tm_yday);
@@ -958,9 +1049,14 @@ void NeedsManager::UpdateStarsState()
         SendStarLevelCompletedToGame();
       }
 
-      // Save that we've issued a star today.
+      // Save that we've issued a star today
       PossiblyStartWriteToRobot(true);
     }
+
+    // DAS Event: "needs.play_need_filled"
+    // s_val: Whether a daily star was awarded (1 or 0)
+    // data: Unused
+    Anki::Util::sEvent("needs.play_need_filled", {}, starAwarded ? "1" : "0");
   }
 }
 
@@ -1015,7 +1111,30 @@ void NeedsManager::SendSingleStarAddedToGame()
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
-  
+
+void NeedsManager::DetectBracketChangeForDas()
+{
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    const auto oldBracket = _needsState.GetPrevNeedBracketByIndex(needIndex);
+    const auto newBracket = _needsState.GetNeedBracketByIndex(needIndex);
+
+    if (oldBracket != newBracket)
+    {
+      // DAS Event: "needs.bracket_changed"
+      // s_val: The need whose bracket is changing (e.g. "Play")
+      // data: Old bracket name, followed by new bracket name, separated by
+      //       colon, e.g. "Normal:Full"
+      std::string data = std::string(NeedBracketIdToString(oldBracket)) + ":" +
+                         std::string(NeedBracketIdToString(newBracket));
+      Anki::Util::sEvent("needs.bracket_changed",
+                         {{DDATA, data.c_str()}},
+                         NeedIdToString(static_cast<NeedId>(needIndex)));
+    }
+  }
+}
+
+
 bool NeedsManager::DeviceHasNeedsState()
 {
   return Util::FileUtils::FileExists(kPathToSavedStateFile + kNeedsStateFile);
@@ -1374,6 +1493,8 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
 #if ANKI_DEV_CHEATS
 void NeedsManager::DebugFillNeedMeters()
 {
+  _needsState.SetPrevNeedsBrackets();
+
   _needsState.DebugFillNeedMeters();
   SendNeedsStateToGame();
   UpdateStarsState();
@@ -1491,6 +1612,8 @@ void NeedsManager::DebugImplPausing(const char* needName, const bool isDecay, co
 
 void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 {
+  _needsState.SetPrevNeedsBrackets();
+
   const float delta = level - _needsState._curNeedsLevels[needId];
 
   if ((needId == NeedId::Repair) && (delta > 0.0f))
@@ -1509,12 +1632,14 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
     }
   }
 
-  NeedDelta needDelta(delta, 0.0f);
-  _needsState.ApplyDelta(needId, needDelta);
+  NeedDelta needDelta(delta, 0.0f, NeedsActionId::NoAction);
+  _needsState.ApplyDelta(needId, needDelta, NeedsActionId::NoAction);
 
   SendNeedsStateToGame();
 
   UpdateStarsState();
+
+  DetectBracketChangeForDas();
 
   PossiblyWriteToDevice();
   PossiblyStartWriteToRobot();
