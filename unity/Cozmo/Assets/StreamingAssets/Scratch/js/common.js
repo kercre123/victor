@@ -160,6 +160,8 @@
 
         // Extension event handlers
         bindExtensionHandler();
+
+        window.setLocalizedValues();
         window.onresize();
     }
 
@@ -183,6 +185,12 @@
             Scratch.workspace.setScale(1.2);
         }
     };
+
+    window.setLocalizedValues = function() {
+        // Set localized value of Cozmo Says default "Hi" text
+        var cozmoSaysText = document.getElementById("cozmo_says_text");
+        cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
+    }
 
     /**
      * Binds the extension interface to `window.extensions`.

@@ -494,7 +494,11 @@ Blockly.Toolbox.CategoryMenu.prototype.dispose = function() {
 Blockly.Toolbox.Category = function(parent, parentHtml, domTree) {
   this.parent_ = parent;
   this.parentHtml_ = parentHtml;
-  this.name_ = domTree.getAttribute('name');
+
+  // ANKI CHANGE: Look up category name using localized keys
+  var key = domTree.getAttribute('name');
+  this.name_ = $t(key);
+
   this.setColour(domTree);
   this.custom_ = domTree.getAttribute('custom');
   this.contents_ = [];
