@@ -93,15 +93,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-/*
-// static initializers
-const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-0, 0, 1,
--1, 0, 0,
-0,-1, 0
-});
-*/
 
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
   
@@ -250,11 +241,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _frameId = 0;
   _stateHistory->Clear();
   _needToSendLocalizationUpdate = false;
-  
-  // Delocalize will mark isLocalized as false, but we are going to consider
-  // the robot localized (by odometry alone) to start, until he gets picked up.
-  _isLocalized = true;
-  SetLocalizedTo(nullptr);
   
   _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
 
