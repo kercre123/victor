@@ -695,6 +695,24 @@ class GamePlatformConfiguration(object):
                 with open(destFileName, 'w') as modified:
                     modified.write(codeComment + "\nwindow._$translations = \n" + data + ";")
 
+        # Copy all font *.otf files to Scratch/fonts folder. The *.otf files are required so webview/css can access them.
+        # Unity does not include the otf files in the build otherwise.
+        codeLabFontsSrc = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'AssetBundles', 'Fonts')
+        codeLabFontsDest = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'StreamingAssets', 'Scratch', 'fonts')
+
+        for root, dirs, files in os.walk(codeLabFontsSrc):
+            for file in files:
+                if file.endswith(".otf"):
+                     srcParentFolder = os.path.basename(root)
+                     copy_srcFile = os.path.join(root, file)
+                     copy_destFile = os.path.join(codeLabFontsDest, srcParentFolder, file)
+                     if not os.path.exists(copy_srcFile):
+                         print_status('Cannot find code lab font source file {0}'.format(copy_srcFile))
+                         continue
+                     else:
+                         ankibuild.util.File.mkdir_p(os.path.dirname(copy_destFile))
+                         ankibuild.util.File.cp(copy_srcFile, copy_destFile)
+
     def build(self):
         if self.options.command == 'clean':
             buildaction = 'clean'

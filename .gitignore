@@ -352,5 +352,7 @@ unity/Cozmo/Assets/Resources/bootstrap/LocalizedStrings.meta
 # Code Lab
 unity/Cozmo/Assets/StreamingAssets/Scratch/LocalizedStrings
 unity/Cozmo/Assets/StreamingAssets/Scratch/LocalizedStrings.meta
+unity/Cozmo/Assets/StreamingAssets/Scratch/fonts
+unity/Cozmo/Assets/StreamingAssets/Scratch/fonts.meta
 unity/Cozmo/Assets/StreamingAssets/Scratch/lib/closure-library
 

@@ -1095,11 +1095,11 @@ Blockly.Css.CONTENT = [
 
 '@font-face {',
   'font-family: "Avenir Next Bold";',
-  'src: url("extra/fonts/Fonts-latin/AvenirLTStd-Heavy.otf");', /* File to be stored at your site */
+  'src: url("../fonts/Fonts-latin/AvenirLTStd-Heavy.otf");',
 '}',
 '@font-face {',
   'font-family: "Avenir Next";',
-  'src: url("extra/fonts/Fonts-latin/AvenirLTStd-Medium.otf");', /* File to be stored at your site */
+  'src: url("../fonts/Fonts-latin/AvenirLTStd-Medium.otf");',
   '}',
   ''
 ];
