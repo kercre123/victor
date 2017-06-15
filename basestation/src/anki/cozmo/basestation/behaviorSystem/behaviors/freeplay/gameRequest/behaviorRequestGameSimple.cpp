@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/pathMotionProfileHelpers.h"
@@ -198,7 +199,7 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   }
   else {
     _activeConfig = &_oneBlockConfig;
-    if(robot.IsCarryingObject()){
+    if(robot.GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToFace(robot);
     }else if( ! IsActing() ) {
       TransitionToPlayingInitialAnimation(robot);
@@ -632,7 +633,8 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
           return false;
         }
 
-        if( robot.IsCarryingObject() && robot.GetCarryingObject() == obj->GetID() ) {
+        if( robot.GetCarryingComponent().IsCarryingObject() &&
+            robot.GetCarryingComponent().GetCarryingObject() == obj->GetID() ) {
           // ignore the block we are carrying
           return false;
         }

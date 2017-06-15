@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -197,7 +198,7 @@ void PlaceRelObjectHelper::MarkFailedToStackOrPlace(Robot& robot)
 {
   const ObservableObject* placeRelObj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   const ObservableObject* carryingObj = robot.GetBlockWorld().GetLocatedObjectByID(
-                                                      robot.GetCarryingObject());
+                                                      robot.GetCarryingComponent().GetCarryingObject());
   
   if((placeRelObj != nullptr) &&
      (carryingObj != nullptr)){

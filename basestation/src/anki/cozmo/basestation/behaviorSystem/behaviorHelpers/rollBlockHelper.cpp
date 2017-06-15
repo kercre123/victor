@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/placeBlockHelper.h"
 #include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -85,7 +86,7 @@ BehaviorStatus RollBlockHelper::UpdateWhileActiveInternal(Robot& robot)
 void RollBlockHelper::DetermineAppropriateAction(Robot& robot)
 {
   // If the robot is carrying a block, put it down
-  if(robot.IsCarryingObject()){
+  if(robot.GetCarryingComponent().IsCarryingObject()){
     DelegateToPutDown(robot);
   }else{
     // If the block can't be accessed, pick it up and move it so it can be rolled

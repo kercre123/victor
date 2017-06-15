@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
@@ -191,7 +192,7 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
     ObservableObject* object1 = blockWorld.GetLocatedObjectByID(objID1);
     ASSERT_TRUE(object1 != nullptr);
   }
-  robot.SetCarryingObject(objID1, Vision::MARKER_INVALID);
+  robot.GetCarryingComponent().SetCarryingObject(objID1, Vision::MARKER_INVALID);
     
   {
     ObservableObject* object2 = blockWorld.GetLocatedObjectByID(objID2);

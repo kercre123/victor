@@ -42,6 +42,8 @@ namespace Anki {
     class Robot;
     class Animation;
     class DriveToPlaceCarriedObjectAction;
+    class DockingComponent;
+    class CarryingComponent;
     
     Point2f ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
                                               const Pose3d& actionObject,
@@ -246,6 +248,8 @@ namespace Anki {
       const ReactionTriggerHelpers::FullReactionArray*
                                  _reactionTriggersToSuppress     = nullptr;
       bool                       _firstTurnTowardsObject         = true;
+      DockingComponent&          _dockingComponentRef;
+      CarryingComponent&         _carryingComponentRef;
       
     private:
     

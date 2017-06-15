@@ -19,6 +19,8 @@
 #include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -1346,7 +1348,7 @@ namespace Cozmo {
     // are not picking or placing
     if(_isLiveTwitchEnabled &&
        _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms) &&
-       !robot.IsPickingOrPlacing())
+       !robot.GetDockingComponent().IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
       const bool wheelsAvailable = (!robot.GetMoveComponent().IsMoving() &&
@@ -1401,7 +1403,7 @@ namespace Cozmo {
       const bool liftIsAvailable = (!robot.GetMoveComponent().IsLiftMoving() &&
                                     !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK));
       const bool timeToMoveLIft = (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0;
-      if(liftIsAvailable && timeToMoveLIft && !robot.IsCarryingObject())
+      if(liftIsAvailable && timeToMoveLIft && !robot.GetCarryingComponent().IsCarryingObject())
       {
         _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
                                                    GET_PARAM(s32, LiftMovementDurationMax_ms));

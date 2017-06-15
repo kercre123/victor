@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -188,7 +189,7 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
 
   // if we should lower the lift, do that now
   if( _configParams.behavior_ShouldLowerLift
-     && !(_configParams.behavior_CanCarryCube && robot.IsCarryingObject())
+     && !(_configParams.behavior_CanCarryCube && robot.GetCarryingComponent().IsCarryingObject())
   ){
     IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
     StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);

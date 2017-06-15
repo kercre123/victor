@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/potentialObjectsForLocalizingTo.h"
 
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
@@ -381,7 +382,7 @@ bool PotentialObjectsForLocalizingTo::CouldUseObjectForLocalization(const Observ
   //  - the object is neither the object the robot is docking to or tracking to
   
   const bool objectCanBeUsedForLocalization = matchingObject->CanBeUsedForLocalization();
-  const bool isDockingObject = matchingObject->GetID() == _robot.GetDockObject();
+  const bool isDockingObject = matchingObject->GetID() == _robot.GetDockingComponent().GetDockObject();
   const bool isTrackToObject = matchingObject->GetID() == _robot.GetMoveComponent().GetTrackToObject();
   const bool objectWasTappedRecently = _robot.WasObjectTappedRecently(matchingObject->GetID());
   

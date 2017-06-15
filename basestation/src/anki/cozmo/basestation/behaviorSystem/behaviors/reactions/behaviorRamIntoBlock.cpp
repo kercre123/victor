@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/pose.h"
@@ -87,7 +88,7 @@ bool BehaviorRamIntoBlock::IsRunnableInternal(const BehaviorPreReqAcknowledgeObj
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorRamIntoBlock::InitInternal(Robot& robot)
 {
-  if(robot.IsCarryingObject()){
+  if(robot.GetCarryingComponent().IsCarryingObject()){
     TransitionToPuttingDownBlock(robot);
   }else{
     TransitionToTurningToBlock(robot);
@@ -113,8 +114,8 @@ void BehaviorRamIntoBlock::StopInternal(Robot& robot)
 void BehaviorRamIntoBlock::TransitionToPuttingDownBlock(Robot& robot)
 {
   CompoundActionSequential* placeAction = new CompoundActionSequential(robot);
-  if(robot.GetCarryingObject() != _targetID){
-    ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingObject());
+  if(robot.GetCarryingComponent().GetCarryingObject() != _targetID){
+    ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(robot.GetCarryingComponent().GetCarryingObject());
     if(obj != nullptr){
       Vec3f outVector;
       if(ComputeVectorBetween(robot.GetPose(), obj->GetPose(), outVector)){

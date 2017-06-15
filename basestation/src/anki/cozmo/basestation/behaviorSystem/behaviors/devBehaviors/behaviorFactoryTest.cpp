@@ -32,6 +32,7 @@
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -1482,7 +1483,8 @@ static const char* kBehaviorTestName = "Behavior factory test";
         }
         
         auto pickupCallback = [this,&robot](ActionResult result){
-          if (result == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
+          if (result == ActionResult::SUCCESS &&
+              robot.GetCarryingComponent().GetCarryingObject() == _blockObjectID) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
           } else if (_attemptCounter <= _kNumPickupRetries) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.FailedRetrying", "");
@@ -1518,7 +1520,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         
         
         auto placementCallback = [this,&robot](ActionResult result){
-          if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
+          if (result == ActionResult::SUCCESS && !robot.GetCarryingComponent().IsCarryingObject()) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");
           } else {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.placementCallback.Failed", "");

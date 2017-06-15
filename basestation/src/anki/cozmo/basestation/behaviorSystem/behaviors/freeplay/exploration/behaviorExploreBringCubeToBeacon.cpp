@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -246,11 +248,12 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   _selectedObjectID.UnSet();
   
   // calculate starting state
-  if ( robot.IsCarryingObject() )
+  if ( robot.GetCarryingComponent().IsCarryingObject() )
   {
     // we are carrying an object
     // assert what we expect from IsRunnable cache
-    DEV_ASSERT(_candidateObjects.size() == 1 && _candidateObjects[0].id == robot.GetCarryingObject(),
+    DEV_ASSERT(_candidateObjects.size() == 1 &&
+               _candidateObjects[0].id == robot.GetCarryingComponent().GetCarryingObject(),
                "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
     
     // select it and pretend we just picked it up
@@ -354,7 +357,8 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, in
       else if (resCat == ActionResultCategory::RETRY)
       {
         // do we currently have the object in the lift?
-        const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+        const bool isCarrying = (robot.GetCarryingComponent().IsCarryingObject() &&
+                                 robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
         if ( isCarrying )
         {
           PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPickUpActionResult.RetryOk").c_str(), "We do have '%d' picked up, so pretend we are fine", _selectedObjectID.GetValue());
@@ -420,7 +424,8 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     else if (resCat == ActionResultCategory::RETRY)
     {
       const bool canRetry = (attempt < kMaxAttempts);
-      const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+      const bool isCarrying = (robot.GetCarryingComponent().IsCarryingObject() &&
+                               robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
       if ( canRetry && isCarrying )
       {
         PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.CanRetry").c_str(),
@@ -485,7 +490,8 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     else if (resCat == ActionResultCategory::RETRY)
     {
       const bool canRetry = false || (attempt < kMaxAttempts);
-      const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+      const bool isCarrying = (robot.GetCarryingComponent().IsCarryingObject() &&
+                               robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID);
       if ( canRetry && isCarrying )
       {
         PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onPlaceActionResult.Done.CanRetry").c_str(),
@@ -556,7 +562,8 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
   }
 
   // if we successfully picked up the object we wanted we can continue, otherwise freak out
-  if ( robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID )
+  if ( robot.GetCarryingComponent().IsCarryingObject() &&
+       robot.GetCarryingComponent().GetCarryingObject() == _selectedObjectID )
   {
     const ObservableObject* const pickedUpObject = robot.GetBlockWorld().GetLocatedObjectByID( _selectedObjectID);
     if ( pickedUpObject == nullptr ) {
@@ -678,7 +685,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     if ( isBlockInSelectedBeacon )
     {
       // check if we can stack on top of this object
-      const bool canStackOnObject = robot.CanStackOnTopOfObject(*blockPtr);
+      const bool canStackOnObject = robot.GetDockingComponent().CanStackOnTopOfObject(*blockPtr);
       if ( canStackOnObject )
       {
         // TODO rsam: this stops at the first found, not closest or anything fancy

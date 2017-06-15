@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -572,7 +573,7 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
   }
   
   //check if the behavior can handle holding a block
-  if(robot.IsCarryingObject() && !CarryingObjectHandledInternally()){
+  if(robot.GetCarryingComponent().IsCarryingObject() && !CarryingObjectHandledInternally()){
     return false;
   }
   

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -63,10 +64,10 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
 {
   // If we're carrying anything, the animation will likely cause us to throw it, so unattach
   // and set as unknown pose
-  if(robot.IsCarryingObject())
+  if(robot.GetCarryingComponent().IsCarryingObject())
   {
     const bool clearCarriedObjects = true; // to mark as unknown, not just dirty
-    robot.SetCarriedObjectAsUnattached(clearCarriedObjects);
+    robot.GetCarryingComponent().SetCarriedObjectAsUnattached(clearCarriedObjects);
   }
   
   // Don't respond to people or pets during hard spark

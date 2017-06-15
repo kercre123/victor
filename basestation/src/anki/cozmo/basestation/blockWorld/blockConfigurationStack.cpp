@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/observableObject.h"
 
@@ -140,6 +141,7 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
     robot.GetBlockWorld().FindLocatedMatchingObjects(bottomBlockFilter, blocksOnGround);
   }
 
+  const ObjectID& carryingObject = robot.GetCarryingComponent().GetCarryingObject();
   
   // Identify all blocks above and below the current block
   std::vector<const ObservableObject*> blocksOnTopOfObject;
@@ -155,8 +157,8 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
                                                                                  BlockWorld::kOnCubeStackHeightTolerance,
                                                                                  blocksOnlyFilter))){
       // Blocks being carried by the robot are not part of a stack
-      if(robot.GetCarryingObject().IsSet() &&
-         (robot.GetCarryingObject() == nextBlock->GetID())){
+      if(carryingObject.IsSet() &&
+         (carryingObject == nextBlock->GetID())){
         break;
       }
       blocksOnTopOfObject.push_back(nextBlock);
@@ -178,8 +180,8 @@ const StackOfCubes* StackOfCubes::BuildTallestStackForObject(const Robot& robot,
   const StackOfCubes* largestStackContainingBlock = nullptr;
 
   // check to see if the block is part of a stack
-  const bool robotIsCarryingObject = robot.GetCarryingObject().IsSet() &&
-                                      (robot.GetCarryingObject() == object->GetID());
+  const bool robotIsCarryingObject = carryingObject.IsSet() &&
+                                      (carryingObject == object->GetID());
   if(robotIsCarryingObject || blocksOnGround.empty() ||
      (blocksOnTopOfObject.empty() && blocksBelowObject.empty())){
     return largestStackContainingBlock;

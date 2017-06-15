@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -757,7 +758,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHeight& msg)
 {
   // Special case if commanding low dock height while carrying a block...
-  if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot.IsCarryingObject())
+  if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot.GetCarryingComponent().IsCarryingObject())
   {
     // ...put the block down right here.
     IActionRunner* newAction = new PlaceObjectOnGroundAction(robot);
@@ -1571,14 +1572,14 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
   }
   else
   {
-    if(robot->IsCarryingObject()) {
+    if(robot->GetCarryingComponent().IsCarryingObject()) {
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
-      const ObservableObject* carryObject = robot->GetBlockWorld().GetLocatedObjectByID(robot->GetCarryingObject());
+      const ObservableObject* carryObject = robot->GetBlockWorld().GetLocatedObjectByID(robot->GetCarryingComponent().GetCarryingObject());
       if(nullptr == carryObject)
       {
         PRINT_NAMED_WARNING("RobotEventHandler.HandleDrawPoseMarker.NullCarryObject",
                             "Carry object set to ID=%d, but BlockWorld returned NULL",
-                            robot->GetCarryingObject().GetValue());
+                            robot->GetCarryingComponent().GetCarryingObject().GetValue());
         return;
       }
       Quad2f objectFootprint = carryObject->GetBoundingQuadXY(targetPose);
@@ -1636,9 +1637,9 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
   else
   {
     if(msg.objectID < 0) {
-      robot->SetCarriedObjectAsUnattached();
+      robot->GetCarryingComponent().SetCarriedObjectAsUnattached();
     } else {
-      robot->SetCarryingObject(msg.objectID, Vision::MARKER_INVALID);
+      robot->GetCarryingComponent().SetCarryingObject(msg.objectID, Vision::MARKER_INVALID);
     }
   }
 }

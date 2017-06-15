@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -981,7 +982,7 @@ PyramidConstructionStage ActivityBuildPyramid::CheckLightAndPyramidConstructionS
     (_lastTimeConstructionStageChanged_s + kDelayAccountForPlacing_s > currentTime_s ||
      _lastTimeConstructionStageChanged_s + kDelayAccountForBaseCreation_s < currentTime_s);
     
-    if(robot.IsCarryingObject() || possiblyPlacingBase){
+    if(robot.GetCarryingComponent().IsCarryingObject() || possiblyPlacingBase){
       return PyramidConstructionStage::InitialCubeCarry;
     }else{
       return PyramidConstructionStage::SearchingForCube;
@@ -992,7 +993,7 @@ PyramidConstructionStage ActivityBuildPyramid::CheckLightAndPyramidConstructionS
     // just been in a carrying state, don't cut the music/lights suddenly
     const bool behaviorStillPlacingBlock = _behaviorBuildPyramid->IsRunning() &&
     (_currentPyramidConstructionStage == PyramidConstructionStage::TopBlockCarry);
-    if(robot.IsCarryingObject() || behaviorStillPlacingBlock){
+    if(robot.GetCarryingComponent().IsCarryingObject() || behaviorStillPlacingBlock){
       return PyramidConstructionStage::TopBlockCarry;
     }else{
       return PyramidConstructionStage::BaseFormed;

@@ -16,6 +16,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
 
@@ -76,15 +77,15 @@ void PublicStateBroadcaster::Update(Robot& robot)
     currentStateUpdated = true;
   }
   
-  
+  const bool isCarryingObject = robot.GetCarryingComponent().IsCarryingObject();
   // Check if a cube has been added to/removed from the lift
-  if(robot.IsCarryingObject() != _currentState->isCubeInLift){
-    _currentState->isCubeInLift = robot.IsCarryingObject();
+  if(isCarryingObject != _currentState->isCubeInLift){
+    _currentState->isCubeInLift = isCarryingObject;
     currentStateUpdated = true;
     PRINT_CH_INFO(kChannelName,
                   "PublicStateBroadcaster.Update.RobotCarryingObjectChanged",
                   "Robot %s carrying an object",
-                  robot.IsCarryingObject() ? "is now" : "is no longer"
+                  isCarryingObject ? "is now" : "is no longer"
                   );
   }
   

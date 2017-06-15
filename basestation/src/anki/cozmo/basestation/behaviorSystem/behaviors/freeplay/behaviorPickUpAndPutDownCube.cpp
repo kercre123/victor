@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -39,8 +40,8 @@ bool BehaviorPickUpAndPutDownCube::IsRunnableInternal(const BehaviorPreReqRobot&
 
 Result BehaviorPickUpAndPutDownCube::InitInternal(Robot& robot)
 {
-  if(robot.IsCarryingObject()){
-    _targetBlockID = robot.GetCarryingObject();
+  if(robot.GetCarryingComponent().IsCarryingObject()){
+    _targetBlockID = robot.GetCarryingComponent().GetCarryingObject();
     TransitionToDriveWithCube(robot);
     return Result::RESULT_OK;
   }

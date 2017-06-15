@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
@@ -91,7 +92,7 @@ Result BehaviorBuildPyramidBase::InitInternal(Robot& robot)
 {
   ResetMemberVars();
   
-  if(!robot.IsCarryingObject()){
+  if(!robot.GetCarryingComponent().IsCarryingObject()){
     TransitionToDrivingToBaseBlock(robot);
   }else{
     TransitionToPlacingBaseBlock(robot);

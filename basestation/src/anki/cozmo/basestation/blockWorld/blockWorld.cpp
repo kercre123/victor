@@ -31,6 +31,8 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/bridge.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -1085,7 +1087,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       Pose3d newPose;
       
-      if(_robot->IsCarryingObject(oldObject->GetID()))
+      if(_robot->GetCarryingComponent().IsCarryingObject(oldObject->GetID()))
       {
         // Special case: don't use the pose w.r.t. the origin b/c carried objects' parent
         // is the lift. The robot is already in the new frame by the time this called,
@@ -1737,7 +1739,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
             // Note that if the object is observed at a different location than the lift, it will be moved to that
             // location, and the robot should be notified that it's no longer carried. That responsibility now
             // lies on whomever changes the position (PoseConfirmer)
-            if (_robot->IsCarryingObject(objectFound->GetID()))
+            if (_robot->GetCarryingComponent().IsCarryingObject(objectFound->GetID()))
             {
               // If this is the object we're carrying observed in the carry position,
               // do nothing and continue to the next observed object.
@@ -1773,7 +1775,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       {
         // For non-unique objects, match based on pose (considering only objects in current frame)
         // Ignore objects we're carrying
-        const ObjectID& carryingObjectID = _robot->GetCarryingObject();
+        const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObject();
         filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
           const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
           return !isObjectBeingCarried;
@@ -1961,7 +1963,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           const ObjectID& topID = objectOnTopOfOldPose->GetID();
           
           // if this is not an object we are carrying
-          if ( !_robot->IsCarryingObject(topID) )
+          if ( !_robot->GetCarryingComponent().IsCarryingObject(topID) )
           {
             // check if it used to be there too or we have already moved it this udpate
             auto matchIDlambda = [&topID](const PoseChange& a) { return a._id == topID; };
@@ -2061,8 +2063,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
           //    - who are a charger (since those stay around)
           const TimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
           const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
-                                      (_robot->GetCarryingObject() != object->GetID()) &&
-                                      (_robot->GetDockObject() != object->GetID()) &&
+                                      (_robot->GetCarryingComponent().GetCarryingObject() != object->GetID()) &&
+                                      (_robot->GetDockingComponent().GetDockObject() != object->GetID()) &&
                                       (object->GetFamily() != ObjectFamily::Charger) );
           if ( isUnobserved )
           {
@@ -4043,7 +4045,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // (I feel like we should be able to always do this, since we _do_ check that the
     //  object is not the docking object as part of the filter, and we do height checks as well.
     //  But I'm wary of changing it now either...)
-    if(!_robot->IsPickingOrPlacing())
+    if(!_robot->GetDockingComponent().IsPickingOrPlacing())
     {
       BlockWorldFilter unobservedCollidingObjectFilter;
       unobservedCollidingObjectFilter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
@@ -4111,8 +4113,8 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     
     // Don't worry about collision with an object being carried or that we are
     // docking with, since we are expecting to be in close proximity to either
-    const bool isCarryingObject = _robot->IsCarryingObject(objectID);
-    const bool isDockingWithObject = _robot->GetDockObject() == objectID;
+    const bool isCarryingObject = _robot->GetCarryingComponent().IsCarryingObject(objectID);
+    const bool isDockingWithObject = _robot->GetDockingComponent().GetDockObject() == objectID;
     if(isCarryingObject || isDockingWithObject) {
       return false;
     }
@@ -4252,13 +4254,13 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     // If so, clear them too or update their poses somehow? (Deleting seems easier)
     
     // Check to see if this object is the one the robot is carrying.
-    if(_robot->GetCarryingObject() == object->GetID()) {
+    if(_robot->GetCarryingComponent().GetCarryingObject() == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingCarriedObject",
                     "Clearing %s object %d which robot %d thinks it is carrying.",
                     ObjectTypeToString(object->GetType()),
                     object->GetID().GetValue(),
                     _robot->GetID());
-      _robot->UnSetCarryingObjects();
+      _robot->GetCarryingComponent().UnSetCarryingObjects();
     }
     
     if(_selectedObjectID == object->GetID()) {
@@ -4578,7 +4580,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
   {
     BlockWorldFilter filter;
-    filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingObjects()));
+    filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingComponent().GetCarryingObjects()));
     
     // Figure out height filters in world coordinates (because GetLocatedObjectBoundingBoxesXY()
     // uses heights of objects in world coordinates)
@@ -4845,7 +4847,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
       if(object != nullptr &&
-         !_robot->IsCarryingObject(object->GetID()))
+         !_robot->GetCarryingComponent().IsCarryingObject(object->GetID()))
       {
         //PRINT_INFO("currID: %d", block.first);
         if (currSelectedObjectFound) {
@@ -4882,7 +4884,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       for(auto const & obj : allObjects) {
         const ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
         if(object != nullptr &&
-           !_robot->IsCarryingObject(object->GetID()))
+           !_robot->GetCarryingComponent().IsCarryingObject(object->GetID()))
         {
           firstObject = obj->GetID();
           break;

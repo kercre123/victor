@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -121,13 +122,13 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
     
   const auto& pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   if(!pyramidBases.empty() || !pyramids.empty()){
-    if(!robot.IsCarryingObject()){
+    if(!robot.GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToTopBlock(robot);
     }else{
       TransitionToPlacingTopBlock(robot);
     }
   }else{
-    if(!robot.IsCarryingObject()){
+    if(!robot.GetCarryingComponent().IsCarryingObject()){
       TransitionToDrivingToBaseBlock(robot);
     }else{
       TransitionToPlacingBaseBlock(robot);
@@ -202,7 +203,7 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
       const bool relativeCurrentMarker = false;
       
       auto removeSoonFailure = [this](Robot& robot){
-        if(!robot.IsCarryingObject()){
+        if(!robot.GetCarryingComponent().IsCarryingObject()){
           _checkForFullPyramidVisualVerifyFailure = true;
           // This will be removed by a helper soon - hopefully....
           CompoundActionParallel* checkForTopBlock =

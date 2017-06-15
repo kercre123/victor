@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/onboarding/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -436,7 +437,7 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
   // after generic fails we loop back to this state so they can try again.
   if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered ||
        _state == State::ErrorCubeWrongSideUp || _state == State::ErrorCubeMoved) &&
-        robot.CanPickUpObjectFromGround(*block) )
+        robot.GetDockingComponent().CanPickUpObjectFromGround(*block) )
   {
     _targetBlock = msg.objectID;
     if( _state == State::WaitForShowCube)

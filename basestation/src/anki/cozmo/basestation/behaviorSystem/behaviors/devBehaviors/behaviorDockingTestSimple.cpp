@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -500,7 +501,7 @@ namespace Anki {
                             }
                             if(kAlignInsteadOfPickup)
                             {
-                              robot.SetCarryingObject(_blockObjectIDPickup, _markerBeingSeen.GetCode());
+                              robot.GetCarryingComponent().SetCarryingObject(_blockObjectIDPickup, _markerBeingSeen.GetCode());
                             }
                             
                             SetCurrState(State::PlaceLow);
@@ -683,7 +684,7 @@ namespace Anki {
           ICompoundAction* action = new CompoundActionSequential(robot);
           
           // If we are carrying the object when we reset then make sure to put it down before driving to the pose
-          if(robot.IsCarryingObject())
+          if(robot.GetCarryingComponent().IsCarryingObject())
           {
             PlaceObjectOnGroundAtPoseAction* placeAction = new PlaceObjectOnGroundAtPoseAction(robot,
                                                                                                _cubePlacementPose,

@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -80,7 +81,7 @@ BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value
 bool BehaviorCubeLiftWorkout::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
-  if( robot.IsCarryingObject() ) {
+  if( robot.GetCarryingComponent().IsCarryingObject() ) {
     return true;
   }
   else {
@@ -103,9 +104,9 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   _numStrongLiftsToDo = currWorkout.GetNumStrongLifts(robot);
   _numWeakLiftsToDo = currWorkout.GetNumWeakLifts(robot);
 
-  if( robot.IsCarryingObject() ) {
+  if( robot.GetCarryingComponent().IsCarryingObject() ) {
     _shouldBeCarrying = true;
-    _targetBlockID = robot.GetCarryingObject();
+    _targetBlockID = robot.GetCarryingComponent().GetCarryingObject();
     TransitionToPostLiftAnim(robot);
   }
   else {
@@ -137,7 +138,7 @@ void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
 {
-  if( _shouldBeCarrying && ! robot.IsCarryingObject() ) {
+  if( _shouldBeCarrying && ! robot.GetCarryingComponent().IsCarryingObject() ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".Update.NotCarryingWhenShould").c_str(),
                   "behavior thinks we should be carrying an object but we aren't, so it must have been detected on "
                   "the ground. Exit the behavior");
@@ -277,7 +278,7 @@ void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);
 
   // if we still think we are carrying the object, see if we can find it
-  if( robot.IsCarryingObject() ) {
+  if( robot.GetCarryingComponent().IsCarryingObject() ) {
 
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".StillCarryingCheck").c_str(),
                   "Robot still thinks it's carrying object, do a quick search for it");
@@ -301,7 +302,7 @@ void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
 void BehaviorCubeLiftWorkout::TransitionToManualPutDown(Robot& robot)
 {
   // in case the put down didn't work, do it manually
-  if( robot.IsCarryingObject() ) {
+  if( robot.GetCarryingComponent().IsCarryingObject() ) {
     PRINT_CH_INFO("Behaviors", (GetIDStr() + ".ManualPutDown").c_str(),
                   "Manually putting down object because animation (may have) failed to do it");
     StartActing(new PlaceObjectOnGroundAction(robot), &BehaviorCubeLiftWorkout::EndIteration);
@@ -317,8 +318,8 @@ void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
 {
   // if we are _still_ holding the cube, then clearly we are confused, so just mark the cube as no longer in
   // the lift
-  if( robot.IsCarryingObject() ) {
-    robot.SetCarriedObjectAsUnattached();
+  if( robot.GetCarryingComponent().IsCarryingObject() ) {
+    robot.GetCarryingComponent().SetCarriedObjectAsUnattached();
   }
 
   BehaviorObjectiveAchieved(BehaviorObjective::PerformedWorkout);

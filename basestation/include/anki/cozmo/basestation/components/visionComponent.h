@@ -130,10 +130,6 @@ struct DockingErrorSignal;
     
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionPoseData& poseData);
-    
-    // Sends an updated docking error signal to the robot if we are currently docking
-    // TODO: This doesn't have to be in VisionComponent, it could live elsewhere
-    void UpdateDockingErrorSignal(const TimeStamp_t t) const;
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -284,6 +280,8 @@ struct DockingErrorSignal;
     // Captures image to be queued for processing and sent to game and viz
     void CaptureAndSendImage();
 #   endif
+
+    f32 GetBodyTurnSpeedThresh_degPerSec() const;
     
   protected:
     

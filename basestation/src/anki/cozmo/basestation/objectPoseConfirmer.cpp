@@ -18,7 +18,9 @@
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -75,7 +77,8 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
 
   // if we are updating an object that we are carrying, we always want to update, so that we can correct the
   // fact that it's not in the lift, it's where the observation happens
-  const bool isCarriedObject = (nullptr != confirmedMatch) && _robot.IsCarryingObject( confirmedMatch->GetID() );
+  const bool isCarriedObject = (nullptr != confirmedMatch) &&
+                               _robot.GetCarryingComponent().IsCarryingObject( confirmedMatch->GetID() );
   const bool isLocalizableObject = object->CanBeUsedForLocalization();
   const bool isConfirmedMatch = (object == confirmedMatch);
   const bool isNewObject = (nullptr == confirmedMatch);
@@ -107,7 +110,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   const bool isRobotOnTreads = OffTreadsState::OnTreads == _robot.GetOffTreadsState();
   const bool isFarAway  = Util::IsFltGT(obsDistance_mm,  object->GetMaxLocalizationDistance_mm());
   const bool setAsKnown = isRobotOnTreads && !isFarAway && !robotWasMoving && !objectIsMoving;
-  const bool isDockObject = _robot.GetDockObject() == objectID;
+  const bool isDockObject = _robot.GetDockingComponent().GetDockObject() == objectID;
 
   bool updatePose = false;
   if ( isCarriedObject || isDockObject)
@@ -157,7 +160,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
         PRINT_CH_INFO("PoseConfirmer", "ObjectPoseConfirmer.UpdatePoseInInstance.SeeingCarriedObject",
                       "We changed the pose of %d, we must not be carrying it anymore. Unsetting as carried object.",
                       object->GetID().GetValue());
-        _robot.UnSetCarryObject(object->GetID());
+        _robot.GetCarryingComponent().UnSetCarryObject(object->GetID());
       }
     }
     else
@@ -390,7 +393,7 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
   {
     // For passive objects, match based on pose (considering only objects in current frame)
     // Ignore objects we're carrying
-    const ObjectID& carryingObjectID = _robot.GetCarryingObject();
+    const ObjectID& carryingObjectID = _robot.GetCarryingComponent().GetCarryingObject();
     filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
       const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
       return !isObjectBeingCarried;
@@ -902,7 +905,7 @@ void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool prop
       
         // if this is not an object we are carrying (rsam: I copied this from BlockWorld, not sure if it would even
         // happen, but sounds like a good check, since detaching from lift may require additional bookkeeping)
-        if ( !_robot.IsCarryingObject(topID) )
+        if ( !_robot.GetCarryingComponent().IsCarryingObject(topID) )
         {
           // add to objects to delete
           affectedObjectIDs.insert(topID);
@@ -961,7 +964,7 @@ void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object, bool propaga
     {
       // if this is not an object we are carrying (rsam: I copied this from BlockWorld, not sure if it would even
       // happen, but sounds like a good check, since cubes on lift are considered Known at the moment
-      if ( !_robot.IsCarryingObject(objectOnTop->GetID()) )
+      if ( !_robot.GetCarryingComponent().IsCarryingObject(objectOnTop->GetID()) )
       {
         // can call recursively
         MarkObjectDirty(objectOnTop, propagateStack);

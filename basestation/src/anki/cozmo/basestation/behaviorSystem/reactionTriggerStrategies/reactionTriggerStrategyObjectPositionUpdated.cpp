@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
@@ -59,8 +61,8 @@ void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(con
 bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
 {
   const bool robotInValidState = kEnableObjectAcknowledgement &&
-                                  !robot.IsCarryingObject() &&
-                                  !robot.IsPickingOrPlacing() &&
+                                  !robot.GetCarryingComponent().IsCarryingObject() &&
+                                  !robot.GetDockingComponent().IsPickingOrPlacing() &&
                                   !robot.IsOnChargerPlatform();
   
   if(robotInValidState && HasDesiredReactionTargets(robot)){
@@ -88,8 +90,8 @@ void ReactionTriggerStrategyObjectPositionUpdated::HandleObjectObserved(const Ro
   Pose3d obsPose( msg.pose, robot.GetPoseOriginList() );
   
   // ignore cubes we are carrying or docking to (don't react to them)
-  if(msg.objectID == robot.GetCarryingObject() ||
-     msg.objectID == robot.GetDockObject())
+  if(msg.objectID == robot.GetCarryingComponent().GetCarryingObject() ||
+     msg.objectID == robot.GetDockingComponent().GetDockObject())
   {
     const bool considerReaction = false;
     HandleNewObservation(msg.objectID, obsPose, msg.timestamp, considerReaction);

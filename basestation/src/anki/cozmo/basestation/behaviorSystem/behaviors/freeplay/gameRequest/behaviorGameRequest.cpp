@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -151,7 +152,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
     obj->IsPoseStateKnown() &&
     obj->GetFamily() == ObjectFamily::LightCube &&
     !recentlyFailed &&
-    robotPtr->CanPickUpObject(*obj);
+    robotPtr->GetDockingComponent().CanPickUpObject(*obj);
 
 }
 

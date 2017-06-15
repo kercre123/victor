@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -128,7 +129,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   // Don't check for unexpected movement while playing animations that are moving the body
   // because some of them rapidly move the motors which triggers false positives
   // Or the robot is picking/placing
-  if((_robot.IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK)) || _robot.IsPickingOrPlacing())
+  if((_robot.IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK))
+     || _robot.GetDockingComponent().IsPickingOrPlacing())
   {
     return;
   }

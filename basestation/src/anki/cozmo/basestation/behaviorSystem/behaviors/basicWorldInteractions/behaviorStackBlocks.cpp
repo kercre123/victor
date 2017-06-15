@@ -25,6 +25,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
@@ -93,7 +95,7 @@ bool BehaviorStackBlocks::IsRunnableInternal(const BehaviorPreReqRobot& preReqDa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorStackBlocks::InitInternal(Robot& robot)
 {
-  if(robot.GetCarryingObject() == _targetBlockTop){
+  if(robot.GetCarryingComponent().GetCarryingObject() == _targetBlockTop){
     TransitionToStackingBlock(robot);
   }else{
     TransitionToPickingUpBlock(robot);
@@ -237,7 +239,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   SET_STATE(StackingBlock);
   
   // if we aren't carrying the top block, fail back to pick up
-  const bool holdingTopBlock = robot.IsCarryingObject() && robot.GetCarryingObject() == _targetBlockTop;
+  const bool holdingTopBlock = robot.GetCarryingComponent().IsCarryingObject() &&
+                               robot.GetCarryingComponent().GetCarryingObject() == _targetBlockTop;
   if( ! holdingTopBlock ) {
     PRINT_NAMED_DEBUG("BehaviorStackBlocks.FailBackToPickup",
                       "wanted to stack, but we aren't carrying a block");
@@ -288,7 +291,7 @@ void BehaviorStackBlocks::TransitionToFailedToStack(Robot& robot)
   
   // If cozmo thinks he's still carrying the cube, try placing it on the ground to
   // see if it's really there - then see if we can try again
-  if(robot.IsCarryingObject()){
+  if(robot.GetCarryingComponent().IsCarryingObject()){
     CompoundActionSequential* placeAction = new CompoundActionSequential(robot, {
       new DriveStraightAction(robot,
                               -kDistToBackupOnStackFailure_mm,
@@ -365,8 +368,8 @@ void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObje
                     "block %d: blockUpright?%d CanPickUpObject%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
                     obj->GetID().GetValue(),
                     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS,
-                    _robot.CanPickUpObject(*obj),
-                    _robot.CanStackOnTopOfObject(*obj),
+                    _robot.GetDockingComponent().CanPickUpObject(*obj),
+                    _robot.GetDockingComponent().CanStackOnTopOfObject(*obj),
                     poseStateStr,
                     obj->IsMoving(),
                     obj->IsRestingFlat());

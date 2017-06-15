@@ -38,8 +38,10 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
@@ -205,6 +207,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _bodyLightComponent(new BodyLightComponent(*this, _context))
   , _cubeAccelComponent(new CubeAccelComponent(*this))
   , _gyroDriftDetector(std::make_unique<RobotGyroDriftDetector>(*this))
+  , _dockingComponent(new DockingComponent(*this))
+  , _carryingComponent(new CarryingComponent(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -654,14 +658,14 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         SetLocalizedTo(nullptr); // marks us as localized to odometry only
       }
     }
-    else if(IsCarryingObject() &&
+    else if(GetCarryingComponent().IsCarryingObject() &&
             _offTreadsState != OffTreadsState::InAir &&
             _offTreadsState != OffTreadsState::Count)
     {
       // If we're falling or not upright and were carrying something, assume we
       // are no longer carrying that something and don't know where it is anymore
       const bool clearObjects = true; // To mark as Unknown, not just Dirty
-      SetCarriedObjectAsUnattached(clearObjects);
+      GetCarryingComponent().SetCarriedObjectAsUnattached(clearObjects);
     }
 
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
@@ -770,24 +774,24 @@ void Robot::Delocalize(bool isCarryingObject)
   GetObjectPoseConfirmer().Clear();
   
   // Sanity check carrying state
-  if(isCarryingObject != IsCarryingObject())
+  if(isCarryingObject != GetCarryingComponent().IsCarryingObject())
   {
     PRINT_NAMED_WARNING("Robot.Delocalize.IsCarryingObjectMismatch",
                         "Passed-in isCarryingObject=%c, IsCarryingObject()=%c",
                         isCarryingObject   ? 'Y' : 'N',
-                        IsCarryingObject() ? 'Y' : 'N');
+                        GetCarryingComponent().IsCarryingObject() ? 'Y' : 'N');
   }
   
   // Have to do this _after_ clearing the pose confirmer because UpdateObjectOrigin
   // adds the carried objects to the pose confirmer in their newly updated pose,
   // but _before_ deleting zombie objects (since dirty carried objects may get
   // deleted)
-  if(IsCarryingObject())
+  if(GetCarryingComponent().IsCarryingObject())
   {
     // Carried objects are in the pose chain of the robot, whose origin has now changed.
     // Thus the carried objects' actual origin no longer matches the way they are stored
     // in BlockWorld.
-    for(auto const& objectID : GetCarryingObjects())
+    for(auto const& objectID : GetCarryingComponent().GetCarryingObjects())
     {
       const Result result = _blockWorld->UpdateObjectOrigin(objectID, oldOrigin);
       if(RESULT_OK != result)
@@ -928,7 +932,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // carrying
   const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
-  SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
+  GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
@@ -1144,7 +1148,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
         
         _numMismatchedFrameIDs = 0;
         
-        Delocalize(IsCarryingObject());
+        Delocalize(GetCarryingComponent().IsCarryingObject());
         
         return RESULT_FAIL;
       }
@@ -1606,7 +1610,7 @@ Result Robot::Update()
            GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
            GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
            GetMoveComponent().IsMoving() ? 'B' : ' ',
-           IsCarryingObject() ? 'C' : ' ',
+           GetCarryingComponent().IsCarryingObject() ? 'C' : ' ',
            IsOnChargerPlatform() ? 'P' : ' ',
            // SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
            // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
@@ -1661,14 +1665,15 @@ Result Robot::Update()
                           PoseStateToString( obj->GetPoseState() ),
                           obj->IsMoving(),
                           obj->IsRestingFlat(),
-                          (IsCarryingObject() && GetCarryingObject() == obj->GetID()),
+                          (GetCarryingComponent().IsCarryingObject() && GetCarryingComponent().
+                           GetCarryingObject() == obj->GetID()),
                           gotRelPose,
                           topObj ? topObj->GetID().GetValue() : -1,
                           relPose.GetTranslation().z(),
                           axisStr,
-                          CanStackOnTopOfObject(*obj),
-                          CanPickUpObject(*obj),
-                          CanPickUpObjectFromGround(*obj));
+                          GetDockingComponent().CanStackOnTopOfObject(*obj),
+                          GetDockingComponent().CanPickUpObject(*obj),
+                          GetDockingComponent().CanPickUpObjectFromGround(*obj));
     }
   }
       
@@ -1799,22 +1804,7 @@ Radians Robot::GetPitchAngle() const
   return _pitchAngle;
 }
   
-Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
-{
-  if(!IsCarryingObject()) {
-    PRINT_NAMED_ERROR("Robot.PlaceObjectOnGround.NotCarryingObject",
-                      "Robot told to place object on ground, but is not carrying an object.");
-    return RESULT_FAIL;
-  }
 
-  _lastPickOrPlaceSucceeded = false;
-      
-  return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
-                                                            DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
-                                                            DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
-                                                            DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
-                                                            useManualSpeed);
-}
 
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 {
@@ -2448,546 +2438,7 @@ Result Robot::SetPoseOnCharger()
   return RESULT_OK;
       
 } // SetOnPose()
-    
-    
-Result Robot::DockWithObject(const ObjectID objectID,
-                             const f32 speed_mmps,
-                             const f32 accel_mmps2,
-                             const f32 decel_mmps2,
-                             const Vision::KnownMarker::Code markerCode,
-                             const Vision::KnownMarker::Code markerCode2,
-                             const DockAction dockAction,
-                             const f32 placementOffsetX_mm,
-                             const f32 placementOffsetY_mm,
-                             const f32 placementOffsetAngle_rad,
-                             const bool useManualSpeed,
-                             const u8 numRetries,
-                             const DockingMethod dockingMethod,
-                             const bool doLiftLoadCheck)
-{
-  return DockWithObject(objectID,
-                        speed_mmps,
-                        accel_mmps2,
-                        decel_mmps2,
-                        markerCode,
-                        markerCode2,
-                        dockAction,
-                        0, 0, std::numeric_limits<u8>::max(),
-                        placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
-                        useManualSpeed,
-                        numRetries,
-                        dockingMethod,
-                        doLiftLoadCheck);
-}
-    
-Result Robot::DockWithObject(const ObjectID objectID,
-                             const f32 speed_mmps,
-                             const f32 accel_mmps2,
-                             const f32 decel_mmps2,
-                             const Vision::KnownMarker::Code markerCode,
-                             const Vision::KnownMarker::Code markerCode2,
-                             const DockAction dockAction,
-                             const u16 image_pixel_x,
-                             const u16 image_pixel_y,
-                             const u8 pixel_radius,
-                             const f32 placementOffsetX_mm,
-                             const f32 placementOffsetY_mm,
-                             const f32 placementOffsetAngle_rad,
-                             const bool useManualSpeed,
-                             const u8 numRetries,
-                             const DockingMethod dockingMethod,
-                             const bool doLiftLoadCheck)
-{
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetLocatedObjectByID(objectID));
-  if(object == nullptr) {
-    PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
-                      "Object with ID=%d no longer exists for docking.", objectID.GetValue());
-    return RESULT_FAIL;
-  }
-      
-  // Need to store these so that when we receive notice from the physical
-  // robot that it has picked up an object we can transition the docking
-  // object to being carried, using PickUpDockObject()
-  _dockObjectID   = objectID;
-  _dockMarkerCode = markerCode;
-
-  // get the marker from the code
-  const auto& markersWithCode = object->GetMarkersWithCode(markerCode);
-  if ( markersWithCode.empty() ) {
-    PRINT_NAMED_ERROR("Robot.DockWithObject.NoMarkerWithCode",
-                      "No marker found with that code.");
-    return RESULT_FAIL;
-  }
   
-  // notify if we have more than one, since we are going to assume that any is fine to use its pose
-  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
-  // symmetrical with respect to the object
-  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
-  if(hasMultipleMarkers) {
-    PRINT_NAMED_WARNING("Robot.DockWithObject.MultipleMarkersForCode",
-                        "Multiple markers found for code '%d'. Using first for lift attachment", markerCode);
-  }
-  
-  const Vision::KnownMarker* dockMarker = markersWithCode[0];
-  DEV_ASSERT(dockMarker != nullptr, "Robot.DockWithObject.InvalidMarker");
-  
-  // Dock marker has to be a child of the dock block
-  if(dockMarker->GetPose().GetParent() != &object->GetPose()) {
-    PRINT_NAMED_ERROR("Robot.DockWithObject.MarkerNotOnObject",
-                      "Specified dock marker must be a child of the specified dock object.");
-    return RESULT_FAIL;
-  }
-
-  // Mark as dirty so that the robot no longer localizes to this object
-  const bool propagateStack = false;
-  GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
-
-  _lastPickOrPlaceSucceeded = false;
-  
-  _dockPlacementOffsetX_mm = placementOffsetX_mm;
-  _dockPlacementOffsetY_mm = placementOffsetY_mm;
-  _dockPlacementOffsetAngle_rad = placementOffsetAngle_rad;
-      
-  // Sends a message to the robot to dock with the specified marker
-  // that it should currently be seeing. If pixel_radius == std::numeric_limits<u8>::max(),
-  // the marker can be seen anywhere in the image (same as above function), otherwise the
-  // marker's center must be seen at the specified image coordinates
-  // with pixel_radius pixels.
-  Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f,
-                                                                      speed_mmps,
-                                                                      accel_mmps2,
-                                                                      decel_mmps2,
-                                                                      dockAction,
-                                                                      useManualSpeed,
-                                                                      numRetries,
-                                                                      dockingMethod,
-                                                                      doLiftLoadCheck);
-      
-  return sendResult;
-}
-    
-    
-const std::set<ObjectID> Robot::GetCarryingObjects() const
-{
-  std::set<ObjectID> objects;
-  if (_carryingObjectID.IsSet()) {
-    objects.insert(_carryingObjectID);
-  }
-  if (_carryingObjectOnTopID.IsSet()) {
-    objects.insert(_carryingObjectOnTopID);
-  }
-  return objects;
-}
-
-bool Robot::IsCarryingObject(const ObjectID& objectID) const
-{
-  return _carryingObjectID == objectID || _carryingObjectOnTopID == objectID;
-}
-
-void Robot::SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode)
-{
-  ObservableObject* object = _blockWorld->GetLocatedObjectByID(carryObjectID);
-  if(object == nullptr) {
-    PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
-                      "Object %d no longer exists in the world. Can't set it as robot's carried object.",
-                      carryObjectID.GetValue());
-  }
-  else
-  {
-    _carryingObjectID = carryObjectID;
-    _carryingMarkerCode = atMarkerCode;
-    
-    // Don't remain localized to an object if we are now carrying it
-    if(_carryingObjectID == GetLocalizedTo())
-    {
-      // Note that the robot may still remaing localized (based on its
-      // odometry), but just not *to an object*
-      SetLocalizedTo(nullptr);
-    } // if(_carryingObjectID == GetLocalizedTo())
-    
-    // Tell the robot it's carrying something
-    // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
-    if(_carryingObjectOnTopID.IsSet()) {
-      SendSetCarryState(CarryState::CARRY_2_BLOCK);
-    } else {
-      SendSetCarryState(CarryState::CARRY_1_BLOCK);
-    }
-  }
-}
-  
-void Robot::UnSetCarryingObjects(bool topOnly)
-{
-  // Note this loop doesn't actually _do_ anything. It's just sanity checks.
-  std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
-  for (auto& objID : carriedObjectIDs)
-  {
-    if (topOnly && objID != _carryingObjectOnTopID) {
-      continue;
-    }
-        
-    ObservableObject* carriedObject = _blockWorld->GetLocatedObjectByID(objID);
-    if(carriedObject == nullptr) {
-      PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
-                        "Object %d robot %d thought it was carrying no longer exists in the world.",
-                        objID.GetValue(), GetID());
-      continue;
-    }
-    
-    if ( carriedObject->GetPose().GetParent() == &_liftPose) {
-      // if the carried object is still attached to the lift it can cause issues. We had a bug
-      // in which we delocalized and unset as carrying, but would not dettach from lift, causing
-      // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
-      // in the current origin. It would still be the a copy in the old origin in blockworld, but its pose
-      // would be pointing to the current one, which caused issues with relocalization.
-      // It's a warning because I think there are legit cases (like ClearObject), where it would be fine to
-      // ignore the current pose, since it won't be used again.
-      PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects.StillAttached",
-                          "Setting carried object '%d' as not being carried, but the pose is still attached to the lift", objID.GetValue());
-      continue;
-    }
-    
-    if ( !carriedObject->GetPose().GetParent()->IsOrigin() ) {
-      // this happened as a bug when we had a stack of 2 cubes in the lift. The top one was not being detached properly,
-      // so its pose was left attached to the bottom cube, which could cause issues if we ever deleted the bottom
-      // object without seeing the top one ever again, since the pose for the bottom one (which is still top's pose's
-      // parent) is deleted.
-      // Also like &_liftPose check above, I believe it can happen when we delete the object, so downgraded to warning
-      // instead of ANKI_VERIFY (which would be my ideal choice if delete took care of also detaching)
-      PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects.StillAttachedToSomething",
-                          "Setting carried object '%d' as not being carried, but the pose is still attached to something (other cube?!)",
-                          objID.GetValue());
-    }
-  }
-
-  // this method should not affect the objects pose or pose state; just clear the IDs
-
-  if (!topOnly) {
-    // Tell the robot it's not carrying anything
-    if (_carryingObjectID.IsSet()) {
-      SendSetCarryState(CarryState::CARRY_NONE);
-    }
-
-    // Even if the above failed, still mark the robot's carry ID as unset
-    _carryingObjectID.UnSet();
-    _carryingMarkerCode = Vision::MARKER_INVALID;
-  }
-  _carryingObjectOnTopID.UnSet();
-}
-    
-void Robot::UnSetCarryObject(ObjectID objID)
-{
-  // If it's the bottom object in the stack, unset all carried objects.
-  if (_carryingObjectID == objID) {
-    UnSetCarryingObjects(false);
-  } else if (_carryingObjectOnTopID == objID) {
-    UnSetCarryingObjects(true);
-  }
-}
-    
-    
-Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker::Code atMarkerCode)
-{
-  if(!objectID.IsSet()) {
-    // This can happen if the robot is picked up after/right at the end of completing a dock
-    // The dock object gets cleared from the world but the robot ends up sending a
-    // pickAndPlaceResult success
-    PRINT_NAMED_WARNING("Robot.PickUpDockObject.ObjectIDNotSet",
-                        "No docking object ID set, but told to pick one up.");
-    return RESULT_FAIL;
-  }
-  
-  if(IsCarryingObject()) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.AlreadyCarryingObject",
-                      "Already carrying an object, but told to pick one up.");
-    return RESULT_FAIL;
-  }
-      
-  ObservableObject* object = _blockWorld->GetLocatedObjectByID(objectID);
-  if(object == nullptr) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
-                      "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
-    return RESULT_FAIL;
-  }
-  
-  // get the marker from the code
-  const auto& markersWithCode = object->GetMarkersWithCode(atMarkerCode);
-  if ( markersWithCode.empty() ) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoMarkerWithCode",
-                      "No marker found with that code.");
-    return RESULT_FAIL;
-  }
-  
-  // notify if we have more than one, since we are going to assume that any is fine to use its pose
-  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
-  // simetrical with respect to the object
-  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
-  if(hasMultipleMarkers) {
-    PRINT_NAMED_WARNING("Robot.PickUpDockObject.MultipleMarkersForCode",
-                        "Multiple markers found for code '%d'. Using first for lift attachment", atMarkerCode);
-  }
-  
-  const Vision::KnownMarker* attachmentMarker = markersWithCode[0];
-  
-  // Base the object's pose relative to the lift on how far away the dock
-  // marker is from the center of the block
-  // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
-  Pose3d objectPoseWrtLiftPose;
-  if(object->GetPose().GetWithRespectTo(_liftPose, objectPoseWrtLiftPose) == false) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectAndLiftPoseHaveDifferentOrigins",
-                      "Object robot is picking up and robot's lift must share a common origin.");
-    return RESULT_FAIL;
-  }
-      
-  objectPoseWrtLiftPose.SetTranslation({attachmentMarker->GetPose().GetTranslation().Length() +
-        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f});
-
-  // If we know there's an object on top of the object we are picking up,
-  // mark it as being carried too
-  // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
-
-  ObservableObject* objectOnTop = _blockWorld->FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
-  if(objectOnTop != nullptr)
-  {
-    Pose3d onTopPoseWrtCarriedPose;
-    if(objectOnTop->GetPose().GetWithRespectTo(object->GetPose(), onTopPoseWrtCarriedPose) == false)
-    {
-      PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift",
-                          "Found object on top of carried object, but could not get its "
-                          "pose w.r.t. the carried object.");
-    } else {
-      PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
-                       "Setting object %d on top of carried object as also being carried.",
-                       objectOnTop->GetID().GetValue());
-      
-      onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
-      
-      // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
-      // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
-      // we are not dropping the cube yet
-      Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, onTopPoseWrtCarriedPose, object);
-      if(RESULT_OK != poseResult)
-      {
-        PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservationFailed",
-                            "objectID:%d", object->GetID().GetValue());
-        return poseResult;
-      }
-      
-      _carryingObjectOnTopID = objectOnTop->GetID();
-    }
-    
-  } else {
-    _carryingObjectOnTopID.UnSet();
-  }
-      
-  SetCarryingObject(objectID, atMarkerCode); // also marks the object as carried
-  
-  // Robot may have just destroyed a configuration
-  // update the configuration manager
-  GetBlockWorld().GetBlockConfigurationManager().FlagForRebuild();
-  
-  // Don't actually change the object's pose until we've checked for objects on top
-  Result poseResult = GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
-  if(RESULT_OK != poseResult)
-  {
-    // TODO: warn
-    return poseResult;
-  }
-  
-  return RESULT_OK;
-      
-} // AttachObjectToLift()
-    
-    
-Result Robot::SetCarriedObjectAsUnattached(bool deleteLocatedObjects)
-{
-  if(IsCarryingObject() == false) {
-    PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
-                        "Robot not carrying object, but told to place one. "
-                        "(Possibly actually rolling or balancing or popping a wheelie.");
-    return RESULT_FAIL;
-  }
-  
-  // we currently only support attaching/detaching two objects
-  DEV_ASSERT(GetCarryingObjects().size()<=2,"Robot.SetCarriedObjectAsUnattached.CountNotSupported");
-  
-  
-  ObservableObject* object = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
-      
-  if(object == nullptr)
-  {
-    // This really should not happen.  How can a object being carried get deleted?
-    PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.CarryingObjectDoesNotExist",
-                      "Carrying object with ID=%d no longer exists.", _carryingObjectID.GetValue());
-    return RESULT_FAIL;
-  }
-     
-  Pose3d placedPoseWrtRobot;
-  if(object->GetPose().GetWithRespectTo(_pose, placedPoseWrtRobot) == false) {
-    PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
-                      "Could not get carrying object's pose relative to robot's origin.");
-    return RESULT_FAIL;
-  }
-  
-  // Initially just mark the pose as Dirty. Iff deleteLocatedObjects=true, then the ClearObject
-  // call at the end will mark as Unknown. This is necessary because there are some
-  // unfortunate ordering dependencies with how we set the pose, set the pose state, and
-  // unset the carrying objects below. It's safer to do all of that, and _then_
-  // clear the objects at the end.
-  const Result poseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
-  if(RESULT_OK != poseResult)
-  {
-    PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
-                      "AddRobotRealtiveObservation failed for %d", object->GetID().GetValue());
-    return poseResult;
-  }
-    
-  PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.ObjectPlaced",
-                   "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
-                   _ID, object->GetID().GetValue(),
-                   object->GetPose().GetTranslation().x(),
-                   object->GetPose().GetTranslation().y(),
-                   object->GetPose().GetTranslation().z());
-  
-  // if we have a top one, we expect it to currently be attached to the bottom one (pose-wise)
-  // recalculate its pose right where we think it is, but detach from the block, and hook directly to the origin
-  if ( _carryingObjectOnTopID.IsSet() )
-  {
-    ObservableObject* topObject = _blockWorld->GetLocatedObjectByID(_carryingObjectOnTopID);
-    if ( nullptr != topObject )
-    {
-      // get wrt robot so that we can add a robot observation (handy way to modify a pose)
-      Pose3d topPlacedPoseWrtRobot;
-      if(topObject->GetPose().GetWithRespectTo(_pose, topPlacedPoseWrtRobot) == true)
-      {
-        const Result topPoseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(topObject, topPlacedPoseWrtRobot, PoseState::Dirty);
-        if(RESULT_OK == topPoseResult)
-        {
-          PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.TopObjectPlaced",
-                            "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
-                            _ID,
-                            topObject->GetID().GetValue(),
-                            topObject->GetPose().GetTranslation().x(),
-                            topObject->GetPose().GetTranslation().y(),
-                            topObject->GetPose().GetTranslation().z());
-        }
-        else
-        {
-          PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
-                            "AddRobotRealtiveObservation failed for %d", topObject->GetID().GetValue());
-        }
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopOriginMisMatch",
-                          "Could not get top carrying object's pose relative to robot's origin.");
-      }
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopCarryingObjectDoesNotExist",
-                        "Top carrying object with ID=%d no longer exists.", _carryingObjectOnTopID.GetValue());
-    }
-  }
-
-  // Store the object IDs we were carrying before we unset them so we can clear them later if needed
-  auto const& carriedObjectIDs = GetCarryingObjects();
-  
-  UnSetCarryingObjects();  
-      
-  if(deleteLocatedObjects)
-  {
-    BlockWorldFilter filter;
-    filter.AddAllowedIDs(carriedObjectIDs);
-    GetBlockWorld().DeleteLocatedObjects(filter);
-  }
-    
-  return RESULT_OK;
-      
-} // UnattachCarriedObject()
-    
-    
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const
-{
-  // TODO:(bn) maybe there should be some central logic for which object families are valid here
-  if( object.GetFamily() != ObjectFamily::Block &&
-      object.GetFamily() != ObjectFamily::LightCube ) {
-    return false;
-  }
-
-  // check that the object is ready to place on top of
-  if( !object.IsRestingFlat() ||
-      (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
-    return false;
-  }
-
-  // check if we can transform to robot space
-  if ( !object.GetPose().GetWithRespectTo(GetPose(), relPose) ) {
-    return false;
-  }
-
-  // check if it has something on top
-  const ObservableObject* objectOnTop = GetBlockWorld().FindLocatedObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
-  if ( nullptr != objectOnTop ) {
-    return false;
-  }
-
-  return true;
-}
-    
-bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
-{
-  // Note rsam/kevin: this only works currently for original cubes. Doing height checks would require more
-  // comparison of sizes, checks for I can stack but not pick up due to slack required to pick up, etc. In order
-  // to simplify just cover the most basic case here (for the moment)
-
-  Pose3d relPos;
-  if( ! CanInteractWithObjectHelper(objectToStackOn, relPos) ) {
-    return false;
-  }
-            
-  // check if it's too high to stack on
-  if ( objectToStackOn.IsPoseTooHigh(relPos, 1.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
-    return false;
-  }
-    
-  // all checks clear
-  return true;
-}
-
-bool Robot::CanPickUpObject(const ObservableObject& objectToPickUp) const
-{
-  Pose3d relPos;
-  if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
-    return false;
-  }
-      
-  // check if it's too high to pick up
-  if ( objectToPickUp.IsPoseTooHigh(relPos, 2.f, STACKED_HEIGHT_TOL_MM, 0.5f) ) {
-    return false;
-  }
-    
-  // all checks clear
-  return true;
-}
-
-bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
-{
-  Pose3d relPos;
-  if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
-    return false;
-  }
-      
-  // check if it's too high to pick up
-  if ( objectToPickUp.IsPoseTooHigh(relPos, 0.5f, ON_GROUND_HEIGHT_TOL_MM, 0.f) ) {
-    return false;
-  }
-    
-  // all checks clear
-  return true;
-}
-    
 // ============ Messaging ================
     
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
@@ -3629,7 +3080,7 @@ Result Robot::AbortAll()
     anyFailures = true;
   }
       
-  if(AbortDocking() != RESULT_OK) {
+  if(GetDockingComponent().AbortDocking() != RESULT_OK) {
     anyFailures = true;
   }
       
@@ -3647,11 +3098,6 @@ Result Robot::AbortAll()
       
 }
       
-Result Robot::AbortDocking()
-{
-  return SendAbortDocking();
-}
-      
 Result Robot::AbortAnimation()
 {
   return SendAbortAnimation();
@@ -3660,16 +3106,6 @@ Result Robot::AbortAnimation()
 Result Robot::SendAbortAnimation()
 {
   return SendMessage(RobotInterface::EngineToRobot(RobotInterface::AbortAnimation()));
-}
-    
-Result Robot::SendAbortDocking()
-{
-  return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::AbortDocking()));
-}
- 
-Result Robot::SendSetCarryState(CarryState state)
-{
-  return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryStateUpdate(state)));
 }
       
 Result Robot::SendFlashObjectIDs()
@@ -3720,7 +3156,7 @@ void Robot::MoveRobotPoseForward(const Pose3d &startPose, f32 distance, Pose3d &
       
 f32 Robot::GetDriveCenterOffset() const {
   f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
-  if (IsCarryingObject()) {
+  if (GetCarryingComponent().IsCarryingObject()) {
     driveCenterOffset = 0;
   }
   return driveCenterOffset;
@@ -3782,10 +3218,10 @@ ExternalInterface::RobotState Robot::GetRobotState() const
   msg.status = _lastStatusFlags;
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
-  if(IsCarryingObject())   {
+  if(GetCarryingComponent().IsCarryingObject())   {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
-    msg.carryingObjectID = GetCarryingObject();
-    msg.carryingObjectOnTopID = GetCarryingObjectOnTop();
+    msg.carryingObjectID = GetCarryingComponent().GetCarryingObject();
+    msg.carryingObjectOnTopID = GetCarryingComponent().GetCarryingObjectOnTop();
   } else {
     msg.carryingObjectID = -1;
     msg.carryingObjectOnTopID = -1;

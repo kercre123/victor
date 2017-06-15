@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -694,7 +695,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
     }
   }
   
-  if(_robot.GetCarryingObject() == objectID)
+  if(_robot.GetCarryingComponent().GetCarryingObject() == objectID)
   {
     anim = CubeAnimationTrigger::Carrying;
   }
@@ -992,7 +993,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::RobotDelocalized
   // (except for carried objects, because we still know where those are)
   for(auto& pair: _objectInfo)
   {
-    const bool isCarryingCube = _robot.IsCarryingObject(pair.first);
+    const bool isCarryingCube = _robot.GetCarryingComponent().IsCarryingObject(pair.first);
     if(!isCarryingCube)
     {
       PlayLightAnim(pair.first, CubeAnimationTrigger::Connected, AnimLayerEnum::State);

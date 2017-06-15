@@ -20,6 +20,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -75,7 +77,7 @@ bool BehaviorReactToDoubleTap::IsRunnableInternal(const BehaviorPreReqRobot& pre
   // This prevents this behavior from running should the current tapped object become dirty from random moved
   // messages
   const Robot& robot = preReqData.GetRobot();
-  return (!robot.IsPickingOrPlacing() &&
+  return (!robot.GetDockingComponent().IsPickingOrPlacing() &&
           IsTappedObjectValid(robot) &&
           (_lastObjectReactedTo != robot.GetBehaviorManager().GetCurrTappedObject() ||
            robot.GetAIComponent().GetWhiteboard().CanReactToDoubleTapReactAgain()) &&
@@ -236,7 +238,7 @@ bool BehaviorReactToDoubleTap::IsTappedObjectValid(const Robot& robot) const
     
     // The double tapped cube is valid for this reaction as long as it is not known and is not being
     // carried
-    if(robot.GetCarryingObject() != objectID)
+    if(robot.GetCarryingComponent().GetCarryingObject() != objectID)
     {
       // If the object doesn't exist in the current frame we still want to react to the double tap
       if(object == nullptr)

@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -278,7 +279,7 @@ namespace Anki {
     {
       
       // Ensure animation doesn't throw cube down, but still can play get down animations
-      if(robot.IsCarryingObject()
+      if(robot.GetCarryingComponent().IsCarryingObject()
          && robot.GetOffTreadsState() == OffTreadsState::OnTreads){
         tracksCurrentlyLocked = tracksCurrentlyLocked | (u8) AnimTrackFlag::LIFT_TRACK;
       }

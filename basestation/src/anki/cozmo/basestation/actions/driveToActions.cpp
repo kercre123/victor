@@ -18,7 +18,9 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -279,7 +281,7 @@ namespace Anki {
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
-        if(!_robot.IsCarryingObject(object->GetID()))
+        if(!_robot.GetCarryingComponent().IsCarryingObject(object->GetID()))
         {
           TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_robot, _objectID, Radians(0), true, false);
           PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
@@ -416,7 +418,7 @@ namespace Anki {
                                                                      const bool checkDestinationFree,
                                                                      const float destinationObjectPadding_mm)
     : DriveToObjectAction(robot,
-                          robot.GetCarryingObject(),
+                          robot.GetCarryingComponent().GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
                           0,
                           false,
@@ -435,13 +437,13 @@ namespace Anki {
     {
       ActionResult result = ActionResult::SUCCESS;
       
-      if(_robot.IsCarryingObject() == false) {
+      if(_robot.GetCarryingComponent().IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
                           _robot.GetID());
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
       } else {
-        _objectID = _robot.GetCarryingObject();
+        _objectID = _robot.GetCarryingComponent().GetCarryingObject();
         
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
@@ -509,7 +511,7 @@ namespace Anki {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     bool DriveToPlaceCarriedObjectAction::IsPlacementGoalFree() const
     {
-      ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingObject() );
+      ObservableObject* object = _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObject());
       if ( nullptr != object )
       {
         BlockWorldFilter ignoreSelfFilter;
@@ -899,7 +901,7 @@ namespace Anki {
     , _objectID(objectID)
     , _preDockPoseDistOffsetX_mm(predockOffsetDistX_mm)
     {
-      if(objectID == robot.GetCarryingObject())
+      if(objectID == robot.GetCarryingComponent().GetCarryingObject())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
                             "Robot is currently carrying action object with ID=%d",
@@ -1034,7 +1036,7 @@ namespace Anki {
     : CompoundActionSequential(robot)
     , _objectID(objectID)
     {
-      if(objectID == robot.GetCarryingObject())
+      if(objectID == robot.GetCarryingComponent().GetCarryingObject())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
                             "Robot is currently carrying action object with ID=%d",

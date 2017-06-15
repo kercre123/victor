@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -255,7 +256,7 @@ void ReactionTriggerStrategyHiccup::ForceHiccups()
 
 bool ReactionTriggerStrategyHiccup::CanHiccup(const Robot& robot) const
 {
-  const bool isPickingOrPlacing = robot.IsPickingOrPlacing();
+  const bool isPickingOrPlacing = robot.GetDockingComponent().IsPickingOrPlacing();
   
   if(isPickingOrPlacing)
   {

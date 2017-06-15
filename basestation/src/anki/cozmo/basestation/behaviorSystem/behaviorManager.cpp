@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -1422,7 +1423,7 @@ void BehaviorManager::HandleObjectTapInteraction(const ObjectID& objectID)
 {
   // Have to be in freeplay and not picking or placing and flat on the ground
   if((_currentHighLevelActivity != HighLevelActivity::Freeplay) ||
-     _robot.IsPickingOrPlacing() ||
+     _robot.GetDockingComponent().IsPickingOrPlacing() ||
      (_robot.GetOffTreadsState() != OffTreadsState::OnTreads))
   {
     PRINT_CH_INFO("Behaviors", "HandleObjectTapInteraction.CantRun",

@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "util/console/consoleInterface.h"
@@ -71,7 +72,7 @@ BehaviorPutDownBlock::BehaviorPutDownBlock(Robot& robot, const Json::Value& conf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPutDownBlock::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  return preReqData.GetRobot().IsCarryingObject() || IsActing();
+  return preReqData.GetRobot().GetCarryingComponent().IsCarryingObject() || IsActing();
 }
 
 Result BehaviorPutDownBlock::InitInternal(Robot& robot)
@@ -100,7 +101,7 @@ void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
   StartActingExtraScore(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,
               [this,&robot]() {
-                if(robot.IsCarryingObject()) {
+                if(robot.GetCarryingComponent().IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were
                   // putting down for some reason, mark the robot as not carrying
                   // anything so we don't get stuck in a loop of trying to put
@@ -108,7 +109,7 @@ void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
                   // TODO: We should really be using some kind of PlaceOnGroundAction instead of raw animation (see COZMO-2192)
                   PRINT_NAMED_WARNING("BehaviorPutDownBlock.LookDownAtBlock.DidNotSeeBlock",
                                       "Forcibly setting carried objects as unattached (See COZMO-2192)");
-                  robot.SetCarriedObjectAsUnattached();
+                  robot.GetCarryingComponent().SetCarriedObjectAsUnattached();
                 }
               });
 }
@@ -118,7 +119,7 @@ void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(Robot& robot, bool doLookAtFaceAfter)
 {
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  if( robot.IsCarryingObject() ) {
+  if( robot.GetCarryingComponent().IsCarryingObject() ) {
     // glance down to see if we see the cube if we still think we are carrying
     static const int kNumFrames = 2;
     

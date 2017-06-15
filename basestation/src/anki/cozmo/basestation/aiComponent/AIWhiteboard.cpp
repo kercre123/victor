@@ -21,6 +21,8 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
@@ -205,9 +207,9 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
   {
     // if the robot is currently carrying a cube, insert only that one right away, regardless of whether it's inside or
     // outisde the beacon, since we would always want to drop it. Any other cube would be unusable until we drop this one
-    if ( _robot.IsCarryingObject() )
+    if ( _robot.GetCarryingComponent().IsCarryingObject() )
     {
-      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingObject() );
+      const ObservableObject* const carryingObject = _robot.GetBlockWorld().GetLocatedObjectByID( _robot.GetCarryingComponent().GetCarryingObject() );
       if ( nullptr != carryingObject ) {
         outObjectList.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
       } else {
@@ -215,7 +217,7 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
         // the blockworld
         PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons.NullCarryingObject",
                           "Could not get carrying object pointer (ID=%d)",
-                          _robot.GetCarryingObject().GetValue());
+                          _robot.GetCarryingComponent().GetCarryingObject().GetValue());
       }
     }
     else
@@ -225,7 +227,7 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
       filter.AddFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
         // check if the robot can pick up this object
-        const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
+        const bool canPickUp = _robot.GetDockingComponent().CanPickUpObject(*blockPtr);
         if ( canPickUp )
         {
           bool isBlockInAnyBeacon = false;
@@ -280,7 +282,7 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
     filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
     filter.AddFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
     {
-      if(!_robot.IsCarryingObject(blockPtr->GetID()) )
+      if(!_robot.GetCarryingComponent().IsCarryingObject(blockPtr->GetID()) )
       {
         const bool isBlockInBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose());
         if ( isBlockInBeacon ) {
@@ -313,7 +315,7 @@ bool AIWhiteboard::AreAllCubesInBeacons() const
   if ( !_beacons.empty() )
   {
     // robot can't be carrying an object, otherwise they are not in beacons
-    if ( !_robot.IsCarryingObject() )
+    if ( !_robot.GetCarryingComponent().IsCarryingObject() )
     {
       size_t locatedCubesInBeacon = 0;
       size_t allDefinedCubes = 0;

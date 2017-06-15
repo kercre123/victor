@@ -32,7 +32,6 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationKeyFrames.h"
-#include "clad/types/dockingSignals.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -95,6 +94,8 @@ class PublicStateBroadcaster;
 class VisionComponent;
 struct RobotState;
 class PathComponent;
+class DockingComponent;
+class CarryingComponent;
 
 namespace Audio {
 class RobotAudioClient;
@@ -277,6 +278,24 @@ public:
     assert(_publicStateBroadcaster);
     return *_publicStateBroadcaster;
   }
+  
+  inline DockingComponent& GetDockingComponent() {
+    assert(_dockingComponent);
+    return *_dockingComponent;
+  }
+  inline const DockingComponent& GetDockingComponent() const {
+    assert(_dockingComponent);
+    return *_dockingComponent;
+  }
+  
+  inline CarryingComponent& GetCarryingComponent() {
+    assert(_carryingComponent);
+    return *_carryingComponent;
+  }
+  inline const CarryingComponent& GetCarryingComponent() const {
+    assert(_carryingComponent);
+    return *_carryingComponent;
+  }
 
   inline const PathComponent& GetPathComponent() const { return *_pathComponent; }
   inline       PathComponent& GetPathComponent()       { return *_pathComponent; }
@@ -448,115 +467,8 @@ public:
     
   // Computes robot origin pose for the given drive center pose
   void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
-      
-  // =========== Object Docking / Carrying ===========
-
-  const ObjectID&                  GetDockObject()          const {return _dockObjectID;}
-  const Vision::KnownMarker::Code  GetDockMarkerCode()      const {return _dockMarkerCode;}
-  void                             GetDockPlacementOffsets(f32& x_mm, f32& y_mm, f32& a_rad) const
-    { x_mm = _dockPlacementOffsetX_mm; y_mm = _dockPlacementOffsetY_mm; a_rad = _dockPlacementOffsetAngle_rad;}
-  const ObjectID&                  GetCarryingObject()      const {return _carryingObjectID;}
-  const ObjectID&                  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
-  const std::set<ObjectID>         GetCarryingObjects()     const;
-  const Vision::Marker::Code       GetCarryingMarkerCode()  const {return _carryingMarkerCode;}
-
-  bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
-  bool IsCarryingObject(const ObjectID& objectID) const;
-  
-  bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
   
   EncodedImage& GetEncodedImage() { return _encodedImage; }
-  
-  // TODO Define better API for (un)setting carried objects: they are confused easily with SetCarriedObjectAsUnattached
-  void SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode);
-  void UnSetCarryingObjects(bool topOnly = false);
-  
-  // If objID == carryingObjectOnTopID, only that object's carry state is unset.
-  // If objID == carryingObjectID, all carried objects' carry states are unset.
-  void UnSetCarryObject(ObjectID objID);
-  
-  // Tell the physical robot to dock with the specified marker
-  // of the specified object that it should currently be seeing.
-  // If pixel_radius == std::numeric_limits<u8>::max(), the marker can be seen anywhere in the image,
-  // otherwise the marker's center must be seen within pixel_radius of the
-  // specified image coordinates.
-  // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indicate
-  // the expected marker on the end of the bridge. Otherwise, it is ignored.
-  Result DockWithObject(const ObjectID objectID,
-                        const f32 speed_mmps,
-                        const f32 accel_mmps2,
-                        const f32 decel_mmps2,
-                        const Vision::KnownMarker::Code marker,
-                        const Vision::KnownMarker::Code marker2,
-                        const DockAction dockAction,
-                        const u16 image_pixel_x,
-                        const u16 image_pixel_y,
-                        const u8 pixel_radius,
-                        const f32 placementOffsetX_mm = 0,
-                        const f32 placementOffsetY_mm = 0,
-                        const f32 placementOffsetAngle_rad = 0,
-                        const bool useManualSpeed = false,
-                        const u8 numRetries = 2,
-                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
-                        const bool doLiftLoadCheck = false);
-  
-  // Same as above but without specifying image location for marker
-  Result DockWithObject(const ObjectID objectID,
-                        const f32 speed_mmps,
-                        const f32 accel_mmps2,
-                        const f32 decel_mmps2,
-                        const Vision::KnownMarker::Code marker,
-                        const Vision::KnownMarker::Code marker2,
-                        const DockAction dockAction,
-                        const f32 placementOffsetX_mm = 0,
-                        const f32 placementOffsetY_mm = 0,
-                        const f32 placementOffsetAngle_rad = 0,
-                        const bool useManualSpeed = false,
-                        const u8 numRetries = 2,
-                        const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING,
-                        const bool doLiftLoadCheck = false);
-    
-  // Transitions the object that robot was docking with to the one that it
-  // is carrying, and puts it in the robot's pose chain, attached to the
-  // lift. Returns RESULT_FAIL if the robot wasn't already docking with
-  // an object.
-  Result SetDockObjectAsAttachedToLift();
-    
-  // Same as above, but with specified object
-  Result SetObjectAsAttachedToLift(const ObjectID& objectID,
-                                   const Vision::KnownMarker::Code atMarkerCode);
-  
-  void UnsetDockObjectID() { _dockObjectID.UnSet(); _dockMarkerCode = Vision::MARKER_INVALID; }
-  void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf;  }
-  bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
-    
-  // Places the object that the robot was carrying in its current position w.r.t. the world, and removes
-  // it from the lift pose chain so it is no "attached" to the robot. Set deleteLocatedObject=true to delete
-  // the object instead of leaving it at the pose
-  Result SetCarriedObjectAsUnattached(bool deleteLocatedObjects = false);
-
-  // Send a message to the robot to place whatever it is carrying on the
-  // ground right where it is. Returns RESULT_FAIL if robot is not carrying
-  // anything.
-  Result PlaceObjectOnGround(const bool useManualSpeed = false);
-  
-  bool WasObjectTappedRecently(const ObjectID& objectID) const;
-
-  // =========== Object Stacking ===========
-  
-  // lets the robot decide if we should try to stack on top of the given object, so that we have a central place
-  // to make the appropriate checks.
-  // returns true if we should try to stack on top of the given object, false if something would prevent it,
-  // for example if we think that block has something on top or it's too high to reach
-  bool CanStackOnTopOfObject(const ObservableObject& object) const;
-
-  // lets the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
-  // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
-  bool CanPickUpObject(const ObservableObject& object) const;
-
-  // same as above, but check that the block is on the ground (as opposed to stacked, on top of a notebook or
-  // something, or in someone's hand
-  bool CanPickUpObjectFromGround(const ObservableObject& object) const;
     
   /*
   // =========== Proximity Sensors ===========
@@ -739,7 +651,9 @@ public:
 
   // Set whether or not to broadcast to game which objects are available for connection
   void BroadcastAvailableObjects(bool enable);
-    
+  
+  bool WasObjectTappedRecently(const ObjectID& objectID) const;
+  
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
       
@@ -750,7 +664,6 @@ public:
     
   // Abort things individually
   Result AbortAnimation();
-  Result AbortDocking(); // a.k.a. PickAndPlace
   
   // Helper template for sending Robot messages with clean syntax
   template<typename T, typename... Args>
@@ -897,6 +810,8 @@ protected:
   std::unique_ptr<BodyLightComponent>     _bodyLightComponent;
   std::unique_ptr<CubeAccelComponent>     _cubeAccelComponent;
   std::unique_ptr<RobotGyroDriftDetector> _gyroDriftDetector;
+  std::unique_ptr<DockingComponent>       _dockingComponent;
+  std::unique_ptr<CarryingComponent>      _carryingComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
@@ -959,7 +874,6 @@ protected:
   ObjectID         _chargerID;
   
   // State
-  bool             _isPickingOrPlacing    = false;
   bool             _isOnCharger           = false;
   bool             _isCharging            = false;
   bool             _chargerOOS            = false;
@@ -1014,9 +928,6 @@ protected:
   // Unless you know what you're doing you probably want to use
   // the public function SetNewPose()
   void SetPose(const Pose3d &newPose);
-
-  // helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
-  bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
   // State history
   std::unique_ptr<RobotStateHistory> _stateHistory;
@@ -1024,20 +935,6 @@ protected:
   // Takes startPose and moves it forward as if it were a robot pose by distance mm and
   // puts result in movedPose.
   static void MoveRobotPoseForward(const Pose3d &startPose, const f32 distance, Pose3d &movedPose);
-  
-  // Docking / Carrying
-  // We can't store pointers to makers eithers because the object may be unobserved and reoverserved, which
-  // could cause a located instance to be destroyed and recreated
-  ObjectID                  _dockObjectID;
-  Vision::KnownMarker::Code _dockMarkerCode = Vision::MARKER_INVALID;
-  f32                       _dockPlacementOffsetX_mm = 0;
-  f32                       _dockPlacementOffsetY_mm = 0;
-  f32                       _dockPlacementOffsetAngle_rad = 0;
-  ObjectID                  _carryingObjectID;
-  Vision::KnownMarker::Code _carryingMarkerCode = Vision::MARKER_INVALID;
-  ObjectID                  _carryingObjectOnTopID;
-  bool                      _lastPickOrPlaceSucceeded = false;
-  
     
   EncodedImage _encodedImage; // TODO:(bn) store pointer?
   double       _timeSinceLastImage_s = 0.0;
@@ -1046,7 +943,6 @@ protected:
 
   ///////// Modifiers ////////
   
-  void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
   void SetOnCharger(bool onCharger);
   void SetOnChargerPlatform(bool onPlatform);
   void SetIsCharging(bool isCharging)     {_isCharging = isCharging;}
@@ -1145,10 +1041,7 @@ protected:
   // Request imu log from robot
   Result SendIMURequest(const u32 length_ms) const;
 
-  Result SendAbortDocking();
   Result SendAbortAnimation();
-    
-  Result SendSetCarryState(CarryState state);
   
   void SetCliffDetectThreshold(u16 thresh);
   
@@ -1201,10 +1094,6 @@ inline const f32 Robot::GetLiftAngle() const
 inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
   _rampID = rampID;
   _rampDirection = direction;
-}
-  
-inline Result Robot::SetDockObjectAsAttachedToLift(){
-  return SetObjectAsAttachedToLift(_dockObjectID, _dockMarkerCode);
 }
   
 inline u8 Robot::GetCurrentAnimationTag() const {

@@ -20,6 +20,8 @@
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -353,7 +355,7 @@ bool ObjectInteractionInfoCache::CanPickupNoAxisCheck(const ObservableObject* ob
                                            DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                                            DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
   
-  const bool canPickUp = _robot.CanPickUpObject(*object);
+  const bool canPickUp = _robot.GetDockingComponent().CanPickUpObject(*object);
   return !recentlyFailed && canPickUp;
 }
 
@@ -377,8 +379,8 @@ bool ObjectInteractionInfoCache::CanPickupAxisCheck(const ObservableObject* obje
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectInteractionInfoCache::CanUseAsStackTopNoAxisCheck(const ObservableObject* object) const
 {
-  if(_robot.IsCarryingObject()) {
-    return object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingObject());
+  if(_robot.GetCarryingComponent().IsCarryingObject()) {
+    return object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObject());
   }else{
     return CanPickupNoAxisCheck(object);
   }
@@ -388,8 +390,8 @@ bool ObjectInteractionInfoCache::CanUseAsStackTopNoAxisCheck(const ObservableObj
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectInteractionInfoCache::CanUseAsStackTopAxisCheck(const ObservableObject* object) const
 {
-  if(_robot.IsCarryingObject()) {
-    const bool isCarriedObj = (object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingObject()));
+  if(_robot.GetCarryingComponent().IsCarryingObject()) {
+    const bool isCarriedObj = (object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObject()));
     const bool isCarriedUpright = (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
     return isCarriedObj && isCarriedUpright;
   }else{
@@ -417,7 +419,7 @@ bool ObjectInteractionInfoCache::CanUseAsStackBottomHelper(const ObservableObjec
   
   bool ret = (!hasFailedRecently &&
               (object->GetFamily() == ObjectFamily::LightCube) &&
-              _robot.CanStackOnTopOfObject( *object ));
+              _robot.GetDockingComponent().CanStackOnTopOfObject( *object ));
   return ret;
 }
 
@@ -452,7 +454,7 @@ bool ObjectInteractionInfoCache::CanUseForPopAWheelie(const ObservableObject* ob
                                                    DefaultFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
                                                    DefaultFailToUseParams::kAngleToleranceAfterFailure_radians);
   
-  return (!hasFailedToPopAWheelie && _robot.CanPickUpObjectFromGround(*object));
+  return (!hasFailedToPopAWheelie && _robot.GetDockingComponent().CanPickUpObjectFromGround(*object));
 }
 
 
@@ -556,13 +558,13 @@ bool ObjectInteractionInfoCache::CanUseAsBuildPyramidBaseBlock(const ObservableO
   for(const auto& stack: stacks){
     if(stack->GetStackHeight() == kMaxStackHeightReach &&
        stack->GetTopBlockID() == object->GetID()){
-      return _robot.CanPickUpObject(*object);
+      return _robot.GetDockingComponent().CanPickUpObject(*object);
     }
   }
   
   // If the robot is carrying a block, make that the static block
-  if(_robot.IsCarryingObject()){
-    return _robot.GetCarryingObject() == object->GetID();
+  if(_robot.GetCarryingComponent().IsCarryingObject()){
+    return _robot.GetCarryingComponent().GetCarryingObject() == object->GetID();
   }
   
   if(!stacks.empty()){
@@ -570,7 +572,7 @@ bool ObjectInteractionInfoCache::CanUseAsBuildPyramidBaseBlock(const ObservableO
   }
   
   // So long as we can pick the object up, it's a valid base block
-  return _robot.CanPickUpObject(*object);
+  return _robot.GetDockingComponent().CanPickUpObject(*object);
 }
 
 
@@ -634,12 +636,12 @@ bool ObjectInteractionInfoCache::CanUseAsBuildPyramidTopBlock(const ObservableOb
   
   // If the robot is carrying a block, which is not needed for the base
   // make that the TopBlock
-  if(_robot.IsCarryingObject() &&
-     _robot.GetCarryingObject() == object->GetID()){
+  if(_robot.GetCarryingComponent().IsCarryingObject() &&
+     _robot.GetCarryingComponent().GetCarryingObject() == object->GetID()){
     return true;
   }
   
-  return _robot.CanPickUpObject(*object);
+  return _robot.GetDockingComponent().CanPickUpObject(*object);
 }
 
 
@@ -721,7 +723,7 @@ ObjectID ObjectInteractionInfoCache::RollBlockBestObjectFunction(const std::set<
     }
     
     
-    if(_robot.CanPickUpObject(*validObj) &&
+    if(_robot.GetDockingComponent().CanPickUpObject(*validObj) &&
        (validObj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>()
                                               != AxisName::Z_POS)){
       objsOnSideNothingOnTop.insert(objID);

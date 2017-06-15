@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -113,7 +114,7 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
   _nextGazeChangeIndex = 0;
   _lastTimeOffTreads_s = 0.f;
   
-  if (robot.IsCarryingObject()) {
+  if (robot.GetCarryingComponent().IsCarryingObject()) {
     _state = State::PutdownObject;
   } else {
     _state = State::LookForFace;

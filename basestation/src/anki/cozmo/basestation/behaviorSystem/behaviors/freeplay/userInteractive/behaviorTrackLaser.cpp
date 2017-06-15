@@ -22,6 +22,8 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/trackGroundPointAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -125,7 +127,8 @@ bool BehaviorTrackLaser::IsRunnableInternal(const BehaviorPreReqRobot& preReqDat
     return false;
   }
   
-  if(robot.IsPickingOrPlacing() || robot.IsCarryingObject())
+  if(robot.GetDockingComponent().IsPickingOrPlacing() ||
+     robot.GetCarryingComponent().IsCarryingObject())
   {
     // Don't interrupt while docking (since exposure change for confirmation can be really bad
     // and noticeable while tracking a cube). Also don't get distracted while carrying a cube.

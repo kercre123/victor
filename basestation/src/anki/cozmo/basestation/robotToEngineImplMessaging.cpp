@@ -26,6 +26,8 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
+#include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -239,10 +241,12 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
                   "%s", EnumToString(payload.motorID));
   }
   
-  if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && robot->IsCarryingObject() ) {
+  if( payload.motorID == MotorID::MOTOR_LIFT &&
+      payload.calibStarted && robot->GetCarryingComponent().IsCarryingObject() )
+  {
     // if this was a lift calibration, we are no longer holding a cube
     const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
-    robot->SetCarriedObjectAsUnattached(deleteObjects);
+    robot->GetCarryingComponent().SetCarriedObjectAsUnattached(deleteObjects);
   }
   
   if (payload.motorID == MotorID::MOTOR_HEAD) {
@@ -273,9 +277,10 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
 
   // This probably applies here as it does in HandleMotorCalibration.
   // Seems reasonable to expect whatever object the robot may have been carrying to no longer be there.
-  if( payload.motorID == MotorID::MOTOR_LIFT && !payload.enabled && robot->IsCarryingObject() ) {
+  if( payload.motorID == MotorID::MOTOR_LIFT &&
+      !payload.enabled && robot->GetCarryingComponent().IsCarryingObject() ) {
     const bool deleteObjects = true; // we have no idea what happened to the cube, so remove completely from the origin
-    robot->SetCarriedObjectAsUnattached(deleteObjects);
+    robot->GetCarryingComponent().SetCarriedObjectAsUnattached(deleteObjects);
   }
     
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorAutoEnabled(payload)));
@@ -411,7 +416,7 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
   const PickAndPlaceResult& payload = message.GetData().Get_pickAndPlaceResult();
   const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
   
-  robot->SetLastPickOrPlaceSucceeded(payload.didSucceed);
+  robot->GetDockingComponent().SetLastPickOrPlaceSucceeded(payload.didSucceed);
   
   switch(payload.blockStatus)
   {
@@ -427,7 +432,7 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
                        "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr);
     
       if(payload.didSucceed) {
-        robot->SetCarriedObjectAsUnattached();
+        robot->GetCarryingComponent().SetCarriedObjectAsUnattached();
       }
       
       robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
@@ -442,7 +447,7 @@ void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotI
                        "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr, resultStr);
     
       if(payload.didSucceed) {
-        robot->SetDockObjectAsAttachedToLift();
+        robot->GetCarryingComponent().SetDockObjectAsAttachedToLift();
       }
 
       break;
@@ -664,7 +669,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     // Their pose state should remain accurate/known because they are attached to
     // the lift. I'm leaving this a separate check from the decision about broadcasting
     // the movement, in case we want to easily remove the checks above but keep this one.
-    const bool isCarryingObject = robot->IsCarryingObject(object->GetID());
+    const bool isCarryingObject = robot->GetCarryingComponent().IsCarryingObject(object->GetID());
     if(object->IsPoseStateKnown() && !isCarryingObject)
     {
       // Once an object moves, we can no longer use it for localization because
@@ -700,8 +705,8 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
     //       - Option 2: add a "wasDocking" flag to the ObjectMoved/Stopped message
     //       - Option 3: add a new ObjectMovedWhileDocking message
     //
-    const bool isDockingObject = (connectedObj->GetID() == robot->GetDockObject());
-    const bool isCarryingObject = robot->IsCarryingObject(connectedObj->GetID());
+    const bool isDockingObject = (connectedObj->GetID() == robot->GetDockingComponent().GetDockObject());
+    const bool isCarryingObject = robot->GetCarryingComponent().IsCarryingObject(connectedObj->GetID());
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = matchedObjectID;
