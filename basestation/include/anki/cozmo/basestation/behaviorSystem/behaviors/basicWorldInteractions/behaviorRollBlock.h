@@ -52,6 +52,11 @@ protected:
         }
   
 private:
+  enum class State {
+    RollingBlock,
+    CelebratingRoll
+  };
+  
   const Robot& _robot;
 
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
@@ -61,11 +66,17 @@ private:
   
   bool _didCozmoAttemptDock;
   AxisName _upAxisOnBehaviorStart;
+  State    _behaviorState;
 
   void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
   void TransitionToRollSuccess(Robot& robot);
   void ResetBehavior(Robot& robot);
   virtual void UpdateTargetBlock(const Robot& robot) const;
+  
+  void UpdateTargetsUpAxis(Robot& robot);
+  
+  void SetState_internal(State state, const std::string& stateName);
+
 };
 
 }

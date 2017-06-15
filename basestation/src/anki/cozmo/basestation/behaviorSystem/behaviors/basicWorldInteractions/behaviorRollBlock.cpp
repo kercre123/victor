@@ -32,11 +32,18 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
+#define SET_STATE(s) SetState_internal(State::s, #s)
+
+  
 static const char* const kIsBlockRotationImportant = "isBlockRotationImportant";
+static const float kMaxDistCozmoIsRollingCube_mm = 120;
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 CONSOLE_VAR(f32, kBRB_MaxTowardFaceAngle_deg, "Behavior.RollBlock", 90.f);
 CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
+  
+}
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -46,6 +53,7 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
 , _isBlockRotationImportant(true)
 , _didCozmoAttemptDock(false)
 , _upAxisOnBehaviorStart(AxisName::X_POS)
+, _behaviorState(State::RollingBlock)
 {  
   _isBlockRotationImportant = config.get(kIsBlockRotationImportant, true).asBool();
 }
@@ -66,7 +74,7 @@ Result BehaviorRollBlock::InitInternal(Robot& robot)
   _didCozmoAttemptDock = false;
   ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
   if(object != nullptr){
-    _upAxisOnBehaviorStart = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+    UpdateTargetsUpAxis(robot);
     TransitionToPerformingAction(robot);
     return Result::RESULT_OK;
   }
@@ -79,20 +87,28 @@ Result BehaviorRollBlock::InitInternal(Robot& robot)
 IBehavior::Status BehaviorRollBlock::UpdateInternal(Robot& robot)
 {
   ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
-  if(object != nullptr){
+  if(object != nullptr && _behaviorState == State::RollingBlock){
     const AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
     if(currentUpAxis != _upAxisOnBehaviorStart){
-      _upAxisOnBehaviorStart = currentUpAxis;
-      StopActing(false, false);
-
-      if(_didCozmoAttemptDock){
-        TransitionToRollSuccess(robot);
-      }else{
-        UpdateTargetBlock(robot);
-        if(_targetID.IsSet()){
-          TransitionToPerformingAction(robot);
+      // Cozmo can see the cube at the end of a roll
+      // so check distance between Cozmo and the cube to see whether he is still
+      // rolling the cube himself or it was put upright by the user
+      f32 distBetween = 0;
+      if(ComputeDistanceSQBetween(robot.GetPose(), object->GetPose(), distBetween) &&
+         (distBetween > (kMaxDistCozmoIsRollingCube_mm * kMaxDistCozmoIsRollingCube_mm))){
+        
+        UpdateTargetsUpAxis(robot);
+        StopActing(false, false);
+        
+        if(_didCozmoAttemptDock){
+          TransitionToRollSuccess(robot);
         }else{
-          return IBehavior::Status::Complete;
+          UpdateTargetBlock(robot);
+          if(_targetID.IsSet()){
+            TransitionToPerformingAction(robot);
+          }else{
+            return IBehavior::Status::Complete;
+          }
         }
       }
     }
@@ -131,7 +147,7 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
-  DEBUG_SET_STATE(PerformingAction);
+  SET_STATE(RollingBlock);
   
   if( ! _targetID.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorRollBlock.NoBlockID",
@@ -195,9 +211,11 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::TransitionToRollSuccess(Robot& robot)
 {
+  SET_STATE(CelebratingRoll);
   // The mood manager listens for actions to succeed to modify mood, but we may have just canceled the
   // action, so manually send the mood event here
   robot.GetMoodManager().TriggerEmotionEvent("RollSucceeded", MoodManager::GetCurrentTimeInSeconds());
+  UpdateTargetsUpAxis(robot);
 
   if(!_shouldStreamline){
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
@@ -212,6 +230,26 @@ void BehaviorRollBlock::ResetBehavior(Robot& robot)
 {
   _targetID.UnSet();
 }
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRollBlock::UpdateTargetsUpAxis(Robot& robot)
+{
+  ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if(object != nullptr){
+    _upAxisOnBehaviorStart = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRollBlock::SetState_internal(State state, const std::string& stateName)
+{
+  _behaviorState = state;
+  SetDebugStateName(stateName);
+}
+
+
 
 }
 }
