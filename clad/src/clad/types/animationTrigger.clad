@@ -255,6 +255,8 @@ enum int_32 AnimationTrigger
   NeedsSevereLowEnergyGetIn,
   NeedsSevereLowEnergyIdle,
   NeedsSevereLowEnergyRequest,
+  NeedsSevereLowPlayGetIn,
+  NeedsSevereLowPlayRequest,
   NeedsSevereLowRepairDrivingEnd,
   NeedsSevereLowRepairDrivingLoop,
   NeedsSevereLowRepairDrivingStart,

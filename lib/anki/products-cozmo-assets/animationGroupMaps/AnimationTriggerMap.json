@@ -961,6 +961,14 @@
       "AnimName": "ag_energy_requestsevere"
     },
     {
+      "CladEvent": "NeedsSevereLowPlayGetIn",
+      "AnimName": "ag_play_getin"
+    },
+    {
+      "CladEvent": "NeedsSevereLowPlayRequest",
+      "AnimName": "ag_play_requestplay_level2_01"
+    },
+    {
       "CladEvent": "NeedsSevereLowRepairDrivingEnd",
       "AnimName": "ag_repair_severe_driving_end_01"
     },

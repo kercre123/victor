@@ -66,6 +66,7 @@
     "type": "StrictPriority",
     "behaviors": [
       "Needs_MildLowEnergyRequest",
+      "Needs_SevereLowPlayRequest",
       "Needs_MildLowPlayRequest",
       "Needs_MildLowRepairRequest"
     ]
