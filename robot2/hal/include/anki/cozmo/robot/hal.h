@@ -196,8 +196,6 @@ namespace Anki
       // @param frame - a pointer to an audio frame or NULL to play one frame of silence
       void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
       void AudioPlaySilence();
-
-      void FaceAnimate(u8* frame, const u16 length);
       
 /************************************************************************
  * \section Buttons

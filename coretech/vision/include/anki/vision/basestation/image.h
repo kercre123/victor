@@ -212,7 +212,7 @@ namespace Vision {
     // If anyChannel=true, then any channel being above the value suffices. Otherwise, all channels must be.
     Image Threshold(u8 value, bool anyChannel) const;
     
-    virtual s32 GetNumChannels() const override { return 4; }
+    virtual s32 GetNumChannels() const override { return 3; }
     
   }; // class ImageRGB
   
@@ -243,7 +243,7 @@ namespace Vision {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);
     }
     
-    virtual s32 GetNumChannels() const override { return 3; }
+    virtual s32 GetNumChannels() const override { return 4; }
     
   }; // class ImageRGBA
 

@@ -232,5 +232,18 @@ namespace Anki {
     } // CameraGetFrame()
     
     
+    void AndroidHAL::FaceClear() {
+      // Stub
+    }
+    
+    void AndroidHAL::FaceDraw(u16* frame) {
+      // Stub
+    }
+    
+    void AndroidHAL::FacePrintf(const char *format, ...) {
+      // Stub
+    }
+    
+
   } // namespace Cozmo
 } // namespace Anki

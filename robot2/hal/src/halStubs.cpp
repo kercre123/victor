@@ -237,6 +237,12 @@ namespace Anki {
     Result HAL::Step(void)
     {
       Result result = RESULT_OK;
+      TimeStamp_t now = HAL::GetTimeStamp();
+      
+      // Check if audio frame is done
+      if (now >= audioEndTime_) {
+        audioReadyForFrame_ = true;
+      }
       
       #ifndef USING_ANDROID_PHONE
       {
@@ -369,8 +375,6 @@ namespace Anki {
       audioReadyForFrame_ = false;
     }
     
-    void HAL::FaceAnimate(u8* frame, const u16 length)
-    {}
     
   } // namespace Cozmo
 } // namespace Anki

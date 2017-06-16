@@ -49,6 +49,9 @@ namespace Anki {
       webots::Gyro* gyro_;
       webots::Accelerometer* accel_;
 
+      // Face display
+      webots::Display* face_;
+      
     } // "private" namespace
 
 
@@ -117,6 +120,12 @@ namespace Anki {
       accel_ = _engineSupervisor->getAccelerometer("accel");
       accel_->enable(TIME_STEP);
 
+      // Face display
+      face_ = _engineSupervisor->getDisplay("face_display");
+      assert(face_->getWidth() == FACE_DISPLAY_WIDTH);
+      assert(face_->getHeight() == FACE_DISPLAY_HEIGHT);
+      face_->setFont("Lucida Console", 8, true);
+      FaceClear();
     }
 
     AndroidHAL::~AndroidHAL() {
@@ -285,6 +294,52 @@ namespace Anki {
       return true;
 
     } // CameraGetFrame()
-        
+    
+    void AndroidHAL::FaceClear()
+    {
+      face_->setColor(0);
+      face_->fillRectangle(0,0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+    }
+    
+    void AndroidHAL::FaceDraw(u16* frame)
+    {
+      const u16 Rmask = 0xf800;
+      const u16 Gmask = 0x07e0;
+      const u16 Bmask = 0x001f;
+      const u16 Rshift = 8;
+      const u16 Gshift = 5;
+      const u16 Bshift = 3;
+      
+      for (u8 i = 0; i < FACE_DISPLAY_HEIGHT; ++i) {
+        for (u8 j = 0; j < FACE_DISPLAY_WIDTH; ++j) {
+          
+          int color = ((*frame & Rmask) << Rshift) +
+                      ((*frame & Gmask) << Gshift) +
+                      ((*frame & Bmask) << Bshift);
+          ++frame;
+          
+          face_->setColor(color);
+          face_->drawPixel(j, i);
+        }
+      }
+    }
+    
+    void AndroidHAL::FacePrintf(const char* format, ...)
+    {
+      // TODO: Smartly insert line breaks?
+
+      face_->setColor(0xf0ff);
+     
+      #define MAX_FACE_DISPLAY_CHAR_LENGTH 30
+      char line[MAX_FACE_DISPLAY_CHAR_LENGTH];
+      
+      va_list argptr;
+      va_start(argptr, format);
+      vsnprintf(line, MAX_FACE_DISPLAY_CHAR_LENGTH, format, argptr);
+      va_end(argptr);
+      
+      face_->drawText(std::string(line), 0, 0);
+    }
+  
   } // namespace Cozmo
 } // namespace Anki

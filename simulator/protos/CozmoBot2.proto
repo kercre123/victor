@@ -289,10 +289,6 @@ Supervisor {
                 }
                 %{ end }%  #vizMode
 
-                CozmoFaceDisplay {
-                  translation 0.012 0 0
-                }
-
                 DEF HEAD_SHAPE Group {
                   children [
                     Transform {

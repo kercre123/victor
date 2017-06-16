@@ -25,8 +25,8 @@ PROTO CozmoFaceDisplay [
         children [
           Display {
             name           "face_display"
-            width          128
-            height         64
+            width          184
+            height         96
             children [
               Shape {
                 appearance Appearance {
@@ -34,7 +34,8 @@ PROTO CozmoFaceDisplay [
                   }
                 }
                 geometry Box {
-                  size 0.001 0.013 0.026
+                  # https://ankiinc.atlassian.net/wiki/display/COZMO/V2+Face
+                  size 0.001 0.0121 0.0232
                 }
               }
             ]

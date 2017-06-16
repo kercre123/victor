@@ -162,13 +162,6 @@ namespace Anki {
       bool playingSound_ = false;
       #endif
 
-      
-      // Face display
-      webots::Display* face_;
-      const u32 DISPLAY_WIDTH = 128;
-      const u32 DISPLAY_HEIGHT = 64;
-      uint64_t faceFrame_[DISPLAY_WIDTH];
-
       // Audio
       // (Can't actually play sound in simulator, but proper handling of audio frames is still
       // necessary for proper animation timing)
@@ -434,12 +427,6 @@ namespace Anki {
       leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
       leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
       leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
-
-      // Face display
-      face_ = webotRobot_.getDisplay("face_display");
-      assert(face_->getWidth() == DISPLAY_WIDTH);
-      assert(face_->getHeight() == DISPLAY_HEIGHT);
-      FaceClear();
 
       isInitialized = true;
       return RESULT_OK;
@@ -778,32 +765,6 @@ namespace Anki {
       #endif
     }
 
-    void HAL::FaceClear()
-    {
-      face_->setColor(0);
-      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-      face_->setColor(0x0000f0ff);
-    }
-
-    void HAL::FaceAnimate(u8* src, const u16 length)
-    {
-      // Clear the display
-      FaceClear();
-
-      // Decode the image
-      if (length == MAX_FACE_FRAME_SIZE) memcpy(faceFrame_, src, MAX_FACE_FRAME_SIZE);
-      else FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
-
-      // Draw face
-      for (u8 i = 0; i < DISPLAY_WIDTH; ++i) {
-        for (u8 j = 0; j < DISPLAY_HEIGHT; ++j) {
-          if ((faceFrame_[i] >> j) & 1) {
-            face_->drawPixel(i, j);
-          }
-        }
-      }
-    }
-
     u32 HAL::GetID()
     {
       return robotID_;
@@ -1106,15 +1067,6 @@ namespace Anki {
 //      // TODO: If we ever start sending upAxis messages from sim robot, clear it here.
 //    }
     
-    void HAL::FacePrintf(const char *format, ...)
-    {
-      // Stub
-    }
-    
-    void HAL::FaceUnPrintf()
-    {
-      // Stub
-    }
 
     u8 HAL::GetWatchdogResetCounter()
     {

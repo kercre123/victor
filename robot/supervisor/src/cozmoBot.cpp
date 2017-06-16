@@ -247,7 +247,6 @@ namespace Anki {
 #ifdef SIMULATOR
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);
-          HAL::FaceClear();
 #endif
 
           wasConnected_ = false;

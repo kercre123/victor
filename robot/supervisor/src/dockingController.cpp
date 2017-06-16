@@ -842,17 +842,6 @@ namespace Anki {
                     }
                   }
                 }
-                AnkiDebug( 1232, "DockingCOntroller.final", 645, "inPosition:%d, hM:%d, x:%f, y:%f, z:%f, a:%f t:%d", 7,
-                          inPosition, doHannsManeuver,
-                          dockingErrSignalMsg_.x_distErr,
-                          dockingErrSignalMsg_.y_horErr,
-                          dockingErrSignalMsg_.z_height,
-                          dockingErrSignalMsg_.angleErr,
-                          (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
-                AnkiDebug( 1215, "DockingController.rels", 641, "x:%f y:%f a:%f", 3,
-                          rel_vert_dist_block,
-                          rel_horz_dist_block,
-                          RAD_TO_DEG(rel_angle_to_block));
               }
               
               // If we know we are not in position and we are not currently backing up due to an already recognized

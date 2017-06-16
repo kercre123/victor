@@ -18,7 +18,7 @@ extern "C" {
   #include "client.h"
   #include "anki/cozmo/robot/drop.h"
 }
-extern "C" void FacePrintf(const char *format, ...);
+
 #else // Not on Espressif
 #define STORE_ATTR
 #include <string.h>
@@ -712,7 +712,9 @@ namespace AnimationController {
                     _currentTime_ms, system_get_time());
 #               endif
 
+#             ifndef COZMO_V2
               HAL::FaceAnimate(msg.animFaceImage.image, msg.animFaceImage.image_length);
+#             endif
 
               _tracksInUse |= FACE_IMAGE_TRACK;
             }

@@ -68,29 +68,6 @@ namespace Anki
       void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
       void AudioPlaySilence();
 
-// #pragma mark --- Face ---
-      /////////////////////////////////////////////////////////////////////
-      // Face
-      // TODO: To be removed when animation streaming migrates to engine
-
-      // Update the face to the next frame of an animation
-      // @param frame - a pointer to a variable length frame of face animation data
-      // Frame is in 8-bit RLE format:
-      //  0 terminates the image
-      //  1-63 draw N full lines (N*128 pixels) of black or blue
-      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
-      // The decoder starts out drawing black, and inverts the color on every byte >= 64
-      void FaceAnimate(u8* frame, const u16 length);
-
-      // Clear the currently animated face
-      void FaceClear();
-
-      // Print a message to the face - this will permanently replace the face with your message
-      extern "C" void FacePrintf(const char *format, ...);
-
-      // Restore normal operation of the face from a FacePrintf
-      extern "C" void FaceUnPrintf(void);
-
       
     } // namespace HAL
   } // namespace Cozmo
