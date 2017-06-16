@@ -330,9 +330,6 @@
   "codeLab.projects.modalTitle": {
       "translation": "Cozmo Code Lab"
   },
-  "codeLab.projects.attributionLabel": {
-      "translation": "Based on Scratch, a project of the MIT Media Lab"
-  },
   "codeLab.projects.tutorialLabel": {
       "translation": "Tutorial"
   },

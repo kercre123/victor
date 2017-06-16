@@ -231,7 +231,6 @@ public static class LocalizationKeys {
   public const string kCodeLabTutorialSlide_dragBlocksToMakePrograms = "codeLab.tutorial.slide_dragBlocksToMakePrograms";
   public const string kCodeLabTutorialSlide_greenBlockFirst = "codeLab.tutorial.slide_greenBlockFirst";
   public const string kCodeLabProjectsModalTitle = "codeLab.projects.modalTitle";
-  public const string kCodeLabProjectsAttributionLabel = "codeLab.projects.attributionLabel";
   public const string kCodeLabProjectsTutorialLabel = "codeLab.projects.tutorialLabel";
   public const string kCodeLabProjectsNewProjectButtonLabel = "codeLab.projects.newProjectButtonLabel";
   public const string kCodeLabProjectsProjectTypeSampleProject = "codeLab.projects.projectType.sampleProject";
@@ -631,6 +630,7 @@ public static class LocalizationKeys {
   public const string kNeedsNeedsRepairModalAligningTreads = "needs.NeedsRepairModal.AligningTreads";
   public const string kNeedsContinueButtonText = "needs.ContinueButtonText";
   public const string kNeedsNeedsRepairModalTuneUpComplete = "needs.NeedsRepairModal.TuneUpComplete";
+  public const string kNeedsDone = "needs.Done";
 
   #endregion
 

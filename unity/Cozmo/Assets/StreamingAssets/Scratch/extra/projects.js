@@ -12,7 +12,7 @@
   function setLocalizedText() {
     setText('#app-title', $t('codeLab.projects.modalTitle'));
 
-    setText('#attribution-label', $t('codeLab.projects.attributionLabel'));
+    setText('#attribution-label', '');
     setText('#tutorial-label', $t('codeLab.projects.tutorialLabel'));
     setText('#new-project-label', $t('codeLab.projects.newProjectButtonLabel'));
 
