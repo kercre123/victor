@@ -14,10 +14,20 @@ Steps:
     ```
     ./configure.py -p android -2 run -l --features standalone
     ```
+    To restart the engine, you can call 
+    ```
+    ./standalone-apk/run_engine.sh
+    ```
 4.  Once the app is running on device, deploy the robot process:
     ```
     ./standalone-apk/deploy_robot_process.sh
     ```
+5.  To connect to engine with Webots, modify `simulator/worlds/cozmo2Viz.wbt` so that `forcedRobotIP` and `engineIP` are set to the IP address of the Android device.
+    Run the world file and you should now have keyboard control along with Viz (including camera images and state info)
+
+
+<!-- This used to be the way to connect with sdk, but it no longer works because now using UdpSocketComms instead of DirectGameComms.
+
 5.  Get the standalone engine to load assets and connect to a robot:  
     ```
     ./tools/sdk_devonly/start_sim.py -r -v2
@@ -26,3 +36,4 @@ Steps:
     The `-v2` means that the robot is a V2 robot which currently just implies that the process is running on the same host as the engine.
 6.  Now you can run the example python scripts in [cozmo-python-sdk/examples/tutorials](https://github.com/anki/cozmo-python-sdk/tree/nextclad/examples)
 7.  You can also use `-f` or `--freeplay-mode` as an argument to `start_sim.py`, to start in freeplay mode.
+-->
