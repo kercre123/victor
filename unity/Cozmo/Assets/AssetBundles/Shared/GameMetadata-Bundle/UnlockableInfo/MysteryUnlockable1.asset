@@ -24,7 +24,7 @@ MonoBehaviour:
   SparkedStateDescription: 
   SparkedMusicState:
     _Sparked: 0
-  RequestTrickCostItemId: treat
+  RequestTrickCostItemId: spark
   RequestTrickCostAmount: 2
   CoreUpgradeIcon: {fileID: 21300000, guid: d4b0acd9a90974addb33b3931c05d473, type: 3}
   CubesRequired: 0

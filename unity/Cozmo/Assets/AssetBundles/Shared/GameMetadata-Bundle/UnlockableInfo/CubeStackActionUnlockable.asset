@@ -26,7 +26,7 @@ MonoBehaviour:
   SparkedStateDescription: unlockable.CubeStackAction.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 0
-  RequestTrickCostItemId: treat
+  RequestTrickCostItemId: spark
   RequestTrickCostAmount: 1
   CoreUpgradeIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59, type: 3}
   CubesRequired: 2
