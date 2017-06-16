@@ -97,9 +97,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64825ec04a6c04286977a66470358250, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 0
-  _ActiveBotBar: 0
-  _ActiveTabButtons: 0
   _ActiveMenuContent: 1
   _ReactionsEnabled: 0
   _PlayIdle: 0
@@ -112,7 +109,6 @@ MonoBehaviour:
   _ContinueButtonInstance: {fileID: 0}
   _FreeplayEnabledOnEnter: 0
   _FreeplayEnabledOnExit: 0
-  _ShowOutline: 0
 --- !u!114 &11459748
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -285,7 +281,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.5588235, g: 0.15203288, b: 0.15203288, a: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.241}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:

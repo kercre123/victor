@@ -231,6 +231,7 @@ public static class LocalizationKeys {
   public const string kCodeLabTutorialSlide_dragBlocksToMakePrograms = "codeLab.tutorial.slide_dragBlocksToMakePrograms";
   public const string kCodeLabTutorialSlide_greenBlockFirst = "codeLab.tutorial.slide_greenBlockFirst";
   public const string kCodeLabProjectsModalTitle = "codeLab.projects.modalTitle";
+  public const string kCodeLabProjectsAttributionLabel = "codeLab.projects.attributionLabel";
   public const string kCodeLabProjectsTutorialLabel = "codeLab.projects.tutorialLabel";
   public const string kCodeLabProjectsNewProjectButtonLabel = "codeLab.projects.newProjectButtonLabel";
   public const string kCodeLabProjectsProjectTypeSampleProject = "codeLab.projects.projectType.sampleProject";
@@ -680,6 +681,7 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase4Body5 = "onboarding.Phase4.Body5";
   public const string kOnboardingMeetCozmoIntro = "onboarding.MeetCozmoIntro";
   public const string kOnboardingNeedsIntro = "onboarding.NeedsIntro";
+  public const string kOnboardingNeedsIntroReturning = "onboarding.NeedsIntroReturning";
   public const string kOnboardingPlayIntro = "onboarding.PlayIntro";
   public const string kOnboardingRewardsIntro = "onboarding.RewardsIntro";
   public const string kOnboardingActivitiesIntro = "onboarding.ActivitiesIntro";

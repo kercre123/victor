@@ -13,7 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnergyID: experience
   CoinID: TestHexItem0
-  SparkID: treat
+  SparkID: spark
+  TreatID: treat
   ExpPerParticleEffect: 8
   BurstPerParticleHit: 3
   ExpParticleMinSpread: 25

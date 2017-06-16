@@ -17,7 +17,7 @@ MonoBehaviour:
     _ItemIcon: {fileID: 0}
     _StartingAmount: 0
     _DemoStartingAmount: -1
-  - _ItemId: treat
+  - _ItemId: spark
     _LocKey: item.treat
     _ItemIcon: {fileID: 0}
     _StartingAmount: 8

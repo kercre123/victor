@@ -5,11 +5,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22482554}
-  - 222: {fileID: 22281194}
-  - 114: {fileID: 11403252}
+  - component: {fileID: 22482554}
+  - component: {fileID: 22281194}
+  - component: {fileID: 11403252}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -22,12 +22,12 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22432836}
-  - 222: {fileID: 22286596}
-  - 114: {fileID: 11415114}
-  - 114: {fileID: 11486948}
+  - component: {fileID: 22432836}
+  - component: {fileID: 22286596}
+  - component: {fileID: 11415114}
+  - component: {fileID: 11486948}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -40,11 +40,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22461814}
-  - 222: {fileID: 22277488}
-  - 114: {fileID: 11413716}
+  - component: {fileID: 22461814}
+  - component: {fileID: 22277488}
+  - component: {fileID: 11413716}
   m_Layer: 5
   m_Name: OnboardingBirth
   m_TagString: Untagged
@@ -57,9 +57,9 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22419098}
+  - component: {fileID: 22419098}
   m_Layer: 5
   m_Name: OldRobotLogoPosition
   m_TagString: Untagged
@@ -105,16 +105,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5430e7ea973384f6f90bf92b7c27a436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 0
-  _ActiveBotBar: 0
-  _ActiveTabButtons: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
   _PlayIdle: 0
   _DASPhaseID: 2
+  _IsLastPhase: 0
+  _ButtonStateDiscover: 3
+  _ButtonStateRepair: 3
+  _ButtonStateFeed: 3
+  _ButtonStatePlay: 3
   _Animation:
     _EnumValueAsString: OnboardingBirth
-    _EnumValue: 159
+    _EnumValue: 270
   _Logo: {fileID: 22482554}
   _OldRobotLogoPos: {fileID: 22419098}
 --- !u!114 &11415114
@@ -129,8 +131,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -198,10 +200,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 450}
@@ -216,10 +218,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -378}
@@ -234,13 +236,13 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22482554}
   - {fileID: 22419098}
   - {fileID: 22432836}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -255,10 +257,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 300}

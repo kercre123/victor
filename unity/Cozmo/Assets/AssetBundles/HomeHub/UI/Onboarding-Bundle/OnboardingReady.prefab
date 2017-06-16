@@ -5,11 +5,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22404998}
-  - 222: {fileID: 22275406}
-  - 114: {fileID: 11423712}
+  - component: {fileID: 22404998}
+  - component: {fileID: 22275406}
+  - component: {fileID: 11423712}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -22,10 +22,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22445752}
-  - 114: {fileID: 11459748}
+  - component: {fileID: 22445752}
+  - component: {fileID: 11459748}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -38,11 +38,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22461814}
-  - 222: {fileID: 22277488}
-  - 114: {fileID: 11442482}
+  - component: {fileID: 22461814}
+  - component: {fileID: 22277488}
+  - component: {fileID: 11442482}
   m_Layer: 5
   m_Name: OnboardingReady
   m_TagString: Untagged
@@ -55,11 +55,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22446148}
-  - 222: {fileID: 22239440}
-  - 114: {fileID: 11491018}
+  - component: {fileID: 22446148}
+  - component: {fileID: 22239440}
+  - component: {fileID: 11491018}
   m_Layer: 5
   m_Name: HeaderText
   m_TagString: Untagged
@@ -79,8 +79,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -102,6 +102,7 @@ MonoBehaviour:
   m_Text: '#onboarding.Slide2'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11442482
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -113,17 +114,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64825ec04a6c04286977a66470358250, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 0
-  _ActiveTabButtons: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
   _PlayIdle: 0
   _DASPhaseID: 2
+  _IsLastPhase: 0
+  _ButtonStateDiscover: 3
+  _ButtonStateRepair: 3
+  _ButtonStateFeed: 3
+  _ButtonStatePlay: 3
   _ContinueButtonInstance: {fileID: 0}
   _FreeplayEnabledOnEnter: 0
   _FreeplayEnabledOnExit: 0
-  _TransitionBGColorYellow: 0
-  _ShowOutline: 0
 --- !u!114 &11459748
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -158,7 +160,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -180,6 +182,7 @@ MonoBehaviour:
   m_Text: '#onboarding.Slide2Header'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22239440
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -207,10 +210,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 145}
@@ -225,10 +228,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -525.9515}
@@ -243,10 +246,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461814}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -85}
@@ -261,13 +264,13 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22446148}
   - {fileID: 22404998}
   - {fileID: 22445752}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}

@@ -98,6 +98,13 @@ public class OnboardingManager : MonoBehaviour {
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Complete All Onboarding", "Onboarding", DebugCompleteAllOnboarding);
 #endif
+      // "Home" was the old tutorial, if they had it, just let them skip first part of new tutorial.
+      if (IsReturningUser()) {
+        PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+        profile.OnboardingStages[OnboardingPhases.InitialSetup] = GetMaxStageInPhase(OnboardingPhases.InitialSetup);
+        profile.OnboardingStages[OnboardingPhases.MeetCozmo] = GetMaxStageInPhase(OnboardingPhases.MeetCozmo);
+      }
+
     }
   }
 
@@ -147,6 +154,14 @@ public class OnboardingManager : MonoBehaviour {
   }
   public bool IsAnyOnboardingActive() {
     return _CurrPhase != OnboardingPhases.None;
+  }
+  public bool IsReturningUser() {
+    PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+    int returningUserStage = 0;
+    if (profile.OnboardingStages.TryGetValue(OnboardingPhases.Home, out returningUserStage)) {
+      return returningUserStage > 0;
+    }
+    return false;
   }
 
   public void InitInitalOnboarding(NeedsHubView needsHubView) {
@@ -203,17 +218,6 @@ public class OnboardingManager : MonoBehaviour {
       // In demo mode skip to wake up
       if (DebugMenuManager.Instance.DemoMode) {
         startStage = 2;
-      }
-
-
-      // Hex piece bits are their own thing because they will be puzzle pieces..
-      List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
-      for (int i = 0; i < itemIDs.Count; ++i) {
-        Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(itemIDs[i]);
-        int currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemData.ID);
-        if (currAmt < itemData.StartingAmount) {
-          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.SetItemAmount(itemData.ID, itemData.StartingAmount);
-        }
       }
     } // end first phase complete
     RequestGameManager.Instance.DisableRequestGameBehaviorGroups();

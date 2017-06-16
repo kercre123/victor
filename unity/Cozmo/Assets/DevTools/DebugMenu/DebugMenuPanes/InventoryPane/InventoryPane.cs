@@ -32,8 +32,6 @@ public class InventoryPane : MonoBehaviour {
   [SerializeField]
   UnityEngine.UI.Button _SetItemAmountButton;
 
-  private const string _kTreatItemId = "treat";
-
   private Cozmo.Inventory _PlayerInventory;
 
   // TODO: Allow add / remove any item
@@ -62,11 +60,11 @@ public class InventoryPane : MonoBehaviour {
   }
 
   private void HandleQuickAddTreatsClicked() {
-    DebugAddItem(_kTreatItemId, 100);
+    DebugAddItem(Cozmo.UI.GenericRewardsConfig.Instance.SparkID, 100);
   }
 
   private void HandleQuickRemoveTreatsClicked() {
-    DebugRemoveItem(_kTreatItemId, 100);
+    DebugRemoveItem(Cozmo.UI.GenericRewardsConfig.Instance.SparkID, 100);
   }
 
   private void HandleAddItemClicked() {

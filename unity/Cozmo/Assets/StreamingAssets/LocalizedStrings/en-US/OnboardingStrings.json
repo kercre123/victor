@@ -148,7 +148,10 @@
     "translation": "Cozmo Would like to meet you!"
   },
   "onboarding.NeedsIntro": {
-    "translation": "Cozmo has Needs!"
+    "translation": "Cozmo has needs.\n\nTake care of him each day to earn new games and abilities"
+  },
+  "onboarding.NeedsIntroReturning": {
+    "translation": "Cozmo has Needs.\n\nTake car of him each day to unlock new games and abilities.\n\nCozmo's app may look a little different but you'll keep your progress of any unlocked games, upgrades, and sparks."
   },
   "onboarding.PlayIntro": {
     "translation": "Fill Cozmo’s Play Need each day to earn a Daily Bonus Token."

@@ -24,7 +24,11 @@ namespace Cozmo {
       [ItemId]
       public string CoinID = "TestHexItem0";
       [ItemId]
-      public string SparkID = "treat";
+      public string SparkID = "spark";
+
+      // The old version of sparks, still in older saves but shouldn't show in editor
+      [HideInInspector]
+      public string TreatID = "treat";
 
       public int ExpPerParticleEffect = 5;
       public int BurstPerParticleHit = 10;

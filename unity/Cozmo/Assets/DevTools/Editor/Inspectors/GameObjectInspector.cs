@@ -443,6 +443,10 @@ namespace UnityEditor {
       if (depth > 40) {
         throw new Exception("Hit depth 40 " + typeString);
       }
+      // Renames sometimes cause null children
+      if (obj == null) {
+        return false;
+      }
 
       var fields = GetFields(type);
 

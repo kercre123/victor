@@ -123,15 +123,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b81f54556840342a4ad435590f0e3e8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 0
-  _ActiveBotBar: 0
-  _ActiveTabButtons: 0
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
   _DASPhaseID: 4
   _IsLastPhase: 0
-  _ButtonStateDiscover: 0
+  _ButtonStateDiscover: 1
   _ButtonStateRepair: 2
   _ButtonStateFeed: 1
   _ButtonStatePlay: 1

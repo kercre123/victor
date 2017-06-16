@@ -284,6 +284,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterNeedsActionCompleted>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
   }
 
   // Read needs data from device storage, if it exists
@@ -856,6 +857,14 @@ template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseStates& msg)
 {
   SendNeedsPauseStatesToGame();
+}
+  
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::GetWantsNeedsOnboarding& msg)
+{
+  ExternalInterface::WantsNeedsOnboarding message(!_robotHadValidNeedsData);
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
 template<>

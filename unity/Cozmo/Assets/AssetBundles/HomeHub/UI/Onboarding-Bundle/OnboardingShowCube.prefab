@@ -5,11 +5,11 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22461618}
-  - 222: {fileID: 22262728}
-  - 114: {fileID: 11439578}
+  - component: {fileID: 22461618}
+  - component: {fileID: 22262728}
+  - component: {fileID: 11439578}
   m_Layer: 5
   m_Name: FooterImage
   m_TagString: Untagged
@@ -22,10 +22,10 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22414276}
-  - 114: {fileID: 11436310}
+  - component: {fileID: 22414276}
+  - component: {fileID: 11436310}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -38,11 +38,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22444728}
-  - 222: {fileID: 22249680}
-  - 114: {fileID: 11428402}
+  - component: {fileID: 22444728}
+  - component: {fileID: 22249680}
+  - component: {fileID: 11428402}
   m_Layer: 5
   m_Name: CozmoVisionCone
   m_TagString: Untagged
@@ -55,11 +55,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22404440}
-  - 222: {fileID: 22294894}
-  - 114: {fileID: 11401212}
+  - component: {fileID: 22404440}
+  - component: {fileID: 22294894}
+  - component: {fileID: 11401212}
   m_Layer: 5
   m_Name: CozmoError
   m_TagString: Untagged
@@ -72,9 +72,9 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22455672}
+  - component: {fileID: 22455672}
   m_Layer: 5
   m_Name: GraphicContainer
   m_TagString: Untagged
@@ -87,11 +87,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22490742}
-  - 222: {fileID: 22201412}
-  - 114: {fileID: 11486074}
+  - component: {fileID: 22490742}
+  - component: {fileID: 22201412}
+  - component: {fileID: 11486074}
   m_Layer: 5
   m_Name: ShelfText
   m_TagString: Untagged
@@ -104,10 +104,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22469606}
-  - 114: {fileID: 11413212}
+  - component: {fileID: 22469606}
+  - component: {fileID: 11413212}
   m_Layer: 5
   m_Name: OnboardingShowCube
   m_TagString: Untagged
@@ -120,11 +120,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22497418}
-  - 222: {fileID: 22257802}
-  - 114: {fileID: 11425632}
+  - component: {fileID: 22497418}
+  - component: {fileID: 22257802}
+  - component: {fileID: 11425632}
   m_Layer: 5
   m_Name: CubeLightsRightSideUp
   m_TagString: Untagged
@@ -137,10 +137,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22434772}
-  - 114: {fileID: 11412554}
+  - component: {fileID: 22434772}
+  - component: {fileID: 11412554}
   m_Layer: 5
   m_Name: TextContainer
   m_TagString: Untagged
@@ -153,11 +153,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22472534}
-  - 222: {fileID: 22253516}
-  - 114: {fileID: 11403400}
+  - component: {fileID: 22472534}
+  - component: {fileID: 22253516}
+  - component: {fileID: 11403400}
   m_Layer: 5
   m_Name: CubeLights
   m_TagString: Untagged
@@ -170,10 +170,10 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22479862}
-  - 114: {fileID: 11436152}
+  - component: {fileID: 22479862}
+  - component: {fileID: 11436152}
   m_Layer: 5
   m_Name: TextContainerFull
   m_TagString: Untagged
@@ -186,9 +186,9 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22456960}
+  - component: {fileID: 22456960}
   m_Layer: 5
   m_Name: CozmoViewSprite
   m_TagString: Untagged
@@ -201,11 +201,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22419900}
-  - 222: {fileID: 22268636}
-  - 114: {fileID: 11415164}
+  - component: {fileID: 22419900}
+  - component: {fileID: 22268636}
+  - component: {fileID: 11415164}
   m_Layer: 5
   m_Name: CozmoOverhead
   m_TagString: Untagged
@@ -218,11 +218,11 @@ GameObject:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22429498}
-  - 222: {fileID: 22289386}
-  - 114: {fileID: 11404992}
+  - component: {fileID: 22429498}
+  - component: {fileID: 22289386}
+  - component: {fileID: 11404992}
   m_Layer: 5
   m_Name: TransparentCube
   m_TagString: Untagged
@@ -325,14 +325,8 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
-    JsonValue: 0.4
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLegacy:m_Color:g
-    JsonValue: 0.4
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLegacy:m_Color:r
-    JsonValue: 0.4
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLegacy:m_FontData:m_Alignment:value__
     JsonValue: 3
@@ -358,13 +352,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79cdaed9c811d495aad4a12f7c659200, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 0
-  _ActiveBotBar: 0
-  _ActiveTabButtons: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 1
   _PlayIdle: 0
   _DASPhaseID: 3
+  _IsLastPhase: 0
+  _ButtonStateDiscover: 3
+  _ButtonStateRepair: 3
+  _ButtonStateFeed: 3
+  _ButtonStatePlay: 3
   _ShowCozmoCubesLabel: {fileID: 0}
   _FullScreenLabel: {fileID: 0}
   _ShowShelfTextLabel: {fileID: 11486074}
@@ -467,6 +463,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLegacy:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLegacy:m_Color:b
     JsonValue: 0.4
@@ -584,7 +583,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -606,6 +605,7 @@ MonoBehaviour:
   m_Text: TEST TEST TEST
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22201412
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -663,10 +663,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22455672}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 556.9965, y: 55.002472}
@@ -681,10 +681,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461618}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -100, y: 0}
@@ -699,10 +699,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22456960}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 600.0017, y: -11.000641}
@@ -717,10 +717,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22456960}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -286.00024, y: 1}
@@ -735,10 +735,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22469606}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0.45, y: 1}
   m_AnchoredPosition: {x: 60, y: 0}
@@ -753,10 +753,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22456960}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 130.00146, y: -0.0008049011}
@@ -771,13 +771,13 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22456960}
   - {fileID: 22497418}
   - {fileID: 22404440}
   m_Father: {fileID: 22469606}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.45, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -25.5, y: 0}
@@ -792,7 +792,6 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22444728}
   - {fileID: 22419900}
@@ -800,6 +799,7 @@ RectTransform:
   - {fileID: 22472534}
   m_Father: {fileID: 22455672}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 557.00024, y: 55}
@@ -814,12 +814,12 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22490742}
   - {fileID: 22414276}
   m_Father: {fileID: 22469606}
   m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -834,7 +834,6 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22455672}
   - {fileID: 22434772}
@@ -842,6 +841,7 @@ RectTransform:
   - {fileID: 22479862}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -856,10 +856,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22456960}
   m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -285.9993, y: 1}
@@ -874,10 +874,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22469606}
   m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.26649523}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 25, y: -32}
@@ -892,10 +892,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22461618}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: -100, y: 0}
@@ -910,10 +910,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22455672}
   m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
