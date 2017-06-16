@@ -193,10 +193,13 @@ void PlaypenTest(void)
   SendCommand(FTM_PlayPenTest, (FIXTURE_SERIAL)&63, 0, 0);
   
   // Do this last:  Try to put fixture radio in advertising mode
-  static bool setRadio = false;
-  if (!setRadio)
-    SetRadioMode('A');
-  setRadio = true;
+  if( g_fixtureType != FIXTURE_EMROBOT_TEST )
+  {
+    static bool setRadio = false;
+    if (!setRadio)
+      SetRadioMode('A');
+    setRadio = true;
+  }
 }
 
 extern int g_stepNumber;
@@ -829,6 +832,14 @@ void mButtonTest(void)
   }
 }
 
+void EmPlaypenDelay(void)
+{
+  SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
+  MicroWait(1*1000*1000);
+  ConsolePrintf("test-head-radio\r\n");
+  MicroWait(3*1000*1000);
+}
+
 void DtmTest(void)
 {
   const int freq = 2; //2=2402MHz, 42=2442MHz, 81=2481MHz
@@ -837,8 +848,12 @@ void DtmTest(void)
   //EnableChargeComms();
   ConsolePrintf("Starting DTM: tone 0dBm %dMHz\r\n", 2400+freq );
   try{ SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status); } catch(int e) {}
-  ConsolePrintf("dtm status: %d\r\n", dtm_status);
+  if( dtm_status == 0 )
+    ConsolePrintf("test-body-radio\r\n"); //PC software is waiting for this line to take RF measurements
+  else
+    ConsolePrintf("failed to enter DTM mode\r\n");
   
+  ConsolePrintf("dtm status: %d\r\n", dtm_status);
   if( dtm_status == 255 ) {
     if (g_allowOutdated)
       return;
@@ -965,6 +980,8 @@ TestFunction* GetEMRobotTestFunctions(void)
   {
     InfoTest,
     //BatteryCheck,
+    PlaypenTest,
+    EmPlaypenDelay,
     DtmTest,
     PlaypenWaitTest, //wait for robot removal
     NULL
