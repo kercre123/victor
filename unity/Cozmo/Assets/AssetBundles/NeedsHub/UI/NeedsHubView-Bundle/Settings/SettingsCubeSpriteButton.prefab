@@ -26,7 +26,7 @@ GameObject:
   m_Component:
   - component: {fileID: 22489060}
   - component: {fileID: 22209668}
-  - component: {fileID: 11482724}
+  - component: {fileID: 114565472636108248}
   m_Layer: 5
   m_Name: CubeBackground
   m_TagString: Untagged
@@ -77,8 +77,8 @@ GameObject:
   m_Component:
   - component: {fileID: 22401874}
   - component: {fileID: 11443226}
-  - component: {fileID: 11439190}
   - component: {fileID: 22552442}
+  - component: {fileID: 114715163556993546}
   m_Layer: 5
   m_Name: LightCubeSprite
   m_TagString: Untagged
@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _AlphaWhenNoBlockFound: 0.5
-  _LightUpCubeButton: {fileID: 11439190}
+  _LightUpCubeButton: {fileID: 114715163556993546}
   _LightCubeSprite: {fileID: 11443226}
   _CubeStatusMissingObject: {fileID: 1633354599606128}
   _CubeStatusFoundObject: {fileID: 167896}
@@ -120,36 +120,6 @@ MonoBehaviour:
   m_PreferredHeight: 480
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &11439190
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 175176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _Interactable: 1
-  _TextLabel: {fileID: 0}
-  _TextLabelOffset: -5
-  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  _AlphaController: {fileID: 0}
-  ButtonGraphics:
-  - targetImage: {fileID: 11482724}
-    ignoreSprite: 0
-    pressedSprite: {fileID: 21300000, guid: 26f6b1272b8154478b9403b943119dd1, type: 3}
-    pressedColor: {r: 0.5588235, g: 0.5588235, b: 0.5588235, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 9f661cd28ba904bf8ba3c45e80f18263, type: 3}
-    disabledColor: {r: 1, g: 1, b: 1, a: 1}
-  _GlintAnimator: {fileID: 0}
-  _UISoundEvent:
-    _Event: Play__Ui__Click_General
-    _EventType: Ui
-  _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11443226
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -190,33 +160,6 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 1bca07b2f810a4d36bb4bc7a21086349, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
---- !u!114 &11482724
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 138580}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 4add5deb562da41b99b9045fad6cdaf7, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -430,6 +373,99 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &114565472636108248
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 138580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f76f04f83593f480ab70c5fb50dddf1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 21300000, guid: 4add5deb562da41b99b9045fad6cdaf7, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  _LinkedComponentId: 
+  _OverrideSkinColor: 0
+  _OverrideSkinImage: 0
+--- !u!114 &114715163556993546
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 175176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04aa69c625a594415940896ee2c4d961, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 0}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+  _LinkedComponentId: 
+  _OverrideSkinTransition: 0
+  _Interactable: 1
+  _TextLabel: {fileID: 0}
+  _TextLabelOffset: 0
+  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _AlphaController: {fileID: 0}
+  ButtonGraphics:
+  - targetImage: {fileID: 114565472636108248}
+    ignoreSprite: 0
+    pressedSprite: {fileID: 21300000, guid: 26f6b1272b8154478b9403b943119dd1, type: 3}
+    pressedColor: {r: 0.5588235, g: 0.5588235, b: 0.5588235, a: 1}
+    disabledSprite: {fileID: 21300000, guid: 9f661cd28ba904bf8ba3c45e80f18263, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 1}
+  _OverrideButtonImageArray: 0
+  _GlintAnimator: {fileID: 0}
+  _UISoundEvent:
+    _Event: Play__Ui__Click_General
+    _EventType: Ui
+  _ShowDisabledStateWhenInteractable: 0
 --- !u!222 &222300068323075416
 CanvasRenderer:
   m_ObjectHideFlags: 1

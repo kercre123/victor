@@ -61,7 +61,6 @@ GameObject:
   - component: {fileID: 224064146180665228}
   - component: {fileID: 114306567444602040}
   - component: {fileID: 114878583970262510}
-  - component: {fileID: 114582391146389120}
   - component: {fileID: 114883796400275152}
   m_Layer: 5
   m_Name: Content
@@ -478,17 +477,6 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.ScrollRect+ScrollRectEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
---- !u!114 &114582391146389120
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1196437515920624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01fa14616975747589ddb1eb25154d3d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &114595580861209808
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -573,7 +561,6 @@ MonoBehaviour:
   - {fileID: 11443554, guid: ad591d3147f4846f6b649a1de5b699ae, type: 2}
   - {fileID: 11443554, guid: e6ccb6ce9d67e47ff8bab13576debb66, type: 2}
   _SnappableLayoutGroup: {fileID: 114878583970262510}
-  _ParentLayoutContentSizeFitter: {fileID: 114582391146389120}
   _HorizontalLayoutGroup: {fileID: 114306567444602040}
 --- !u!114 &114878583970262510
 MonoBehaviour:

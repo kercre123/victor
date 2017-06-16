@@ -323,7 +323,7 @@ namespace Cozmo {
 
         var confirmSleepCozmoPriority = new ModalPriorityData(ModalPriorityLayer.High, 1,
                                                               LowPriorityModalAction.Queue,
-                                                              HighPriorityModalAction.ForceCloseOthersAndOpen);
+                                                              HighPriorityModalAction.Stack);
 
         Action<AlertModal> confirmSleepCreated = (alertModal) => {
           _SleepCozmoConfirmDialog = alertModal;

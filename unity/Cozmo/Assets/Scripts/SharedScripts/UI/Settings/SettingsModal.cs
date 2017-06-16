@@ -23,16 +23,16 @@ namespace Cozmo.UI {
     private SnappableLayoutGroup _SnappableLayoutGroup;
 
     [SerializeField]
-    private ParentLayoutContentSizeFitter _ParentLayoutContentSizeFitter;
-
-    [SerializeField]
     private HorizontalLayoutGroup _HorizontalLayoutGroup;
 
     private List<TabPanel> _TabPanelsList = new List<TabPanel>();
 
     public void Initialize(BaseView homeViewInstance) {
+      RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
-      //float totalWidth = 0f;
+      //prevent scroll rect from reacting to its parent getting tweened on screen
+      _SettingsScrollRect.enabled = false;
+
       for (int i = 0; i < _PanelPrefabs.Length; ++i) {
         TabPanel newTabPanel = UIManager.CreateUIElement(_PanelPrefabs[i].gameObject, _SettingsScrollRect.content).GetComponent<TabPanel>();
         newTabPanel.Initialize(homeViewInstance);
@@ -40,11 +40,14 @@ namespace Cozmo.UI {
         _SnappableLayoutGroup.RegisterLayoutElement(newTabPanel.LayoutElement);
       }
 
-      RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
-
       if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.LightCubes.Count != kCubesCount) {
         ScrollToCubeSettings();
       }
+    }
+
+    protected override void RaiseDialogOpenAnimationFinished() {
+      base.RaiseDialogOpenAnimationFinished();
+      _SettingsScrollRect.enabled = true;
     }
 
     public float GetNormalizedSnapIndexPosition(int index) {
