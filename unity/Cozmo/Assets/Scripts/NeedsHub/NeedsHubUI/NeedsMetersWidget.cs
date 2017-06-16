@@ -94,11 +94,11 @@ namespace Cozmo.Needs.UI {
     }
 
     private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
-      if (repairBracket == NeedBracketId.Critical || repairBracket == NeedBracketId.Warning) {
+      if (repairBracket == NeedBracketId.Critical) {
         _EnergyMeter.ButtonEnabled = false;
         _PlayMeter.ButtonEnabled = false;
       }
-      else if (energyBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Warning) {
+      else if (energyBracket == NeedBracketId.Critical) {
         _EnergyMeter.ButtonEnabled = true;
         _PlayMeter.ButtonEnabled = false;
       }
@@ -126,7 +126,7 @@ namespace Cozmo.Needs.UI {
       }
     }
 
-    // Onboarding
+    #region Onboarding
     public CozmoButton RepairButton {
       get {
         return _RepairMeter.Button;
@@ -137,5 +137,6 @@ namespace Cozmo.Needs.UI {
         return _EnergyMeter.Button;
       }
     }
+    #endregion
   }
 }

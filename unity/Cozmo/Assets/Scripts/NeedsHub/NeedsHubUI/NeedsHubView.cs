@@ -157,13 +157,10 @@ namespace Cozmo.Needs.UI {
     }
 
     private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
-      if (repairBracket == NeedBracketId.Critical || repairBracket == NeedBracketId.Warning
-          || energyBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Warning) {
-        _ActivitiesButton.Interactable = false;
+      if (repairBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Critical) {
         _SparksButton.Interactable = false;
       }
       else {
-        _ActivitiesButton.Interactable = true;
         _SparksButton.Interactable = true;
       }
     }
