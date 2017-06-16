@@ -31,10 +31,10 @@
     "translation": "Please help Cozmo get upright and ready to play."
   },
   "challengeDetails.cozmoDizzy.title": {
-    "translation": "Cozmo is dizzy"
+    "translation": "Cozmo is Dizzy"
   },
   "challengeDetails.cozmoDizzy.description": {
-    "translation": "Wait until Cozmo has recovered from being dizzy and is ready to play."
+    "translation": "Wait until Cozmo has recovered from being Dizzy and is ready to play."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title": {
     "translation": "Cozmo is Waking Up"
@@ -73,7 +73,7 @@
     "translation": "Memory Match"
   },
   "memoryMatchGame.description": {
-    "translation": "A pattern game that tests your memory. Watch the cubes and listen carefully!"
+    "translation": "A pattern game that tests your memory. Watch the Cubes and listen carefully!"
   },
   "speedTap.title": {
     "translation": "Quick Tap"

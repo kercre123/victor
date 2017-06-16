@@ -34,28 +34,28 @@
     "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.KnockOverCubes": {
-    "translation": "Cozmo is knocking over a stack of Cubes"
+    "translation": "Cozmo is Knocking over a Stack of Cubes"
   },
   "behavior.TrackLaser": {
-    "translation": "Cozmo is following a laser"
+    "translation": "Cozmo is following a Laser"
   },
   "behavior.PopAWheelie": {
-    "translation": "Cozmo is popping a wheelie"
+    "translation": "Cozmo is Popping a Wheelie"
   },
   "behavior.PounceOnMotion": {
-    "translation": "Cozmo wants to pounce on your finger"
+    "translation": "Cozmo wants to Pounce on your finger"
   },
   "behavior.FistBump": {
     "translation": "Cozmo wants to fist bump"
   },
   "behavior.GuardDog": {
-    "translation": "Cozmo is guarding his cubes"
+    "translation": "Cozmo is guarding his Cubes"
   },
   "behavior.RollBlock": {
     "translation": "Cozmo is rolling a Cube"
   },
   "behavior.StackCube": {
-    "translation": "Cozmo is creating a stack of Cubes"
+    "translation": "Cozmo is creating a Stack of Cubes"
   },
   "behavior.LookingForFaces": {
     "translation": "Cozmo is looking around"
@@ -88,7 +88,7 @@
     "translation": ""
   },
   "behavior.ReactToShaken": {
-    "translation": "Cozmo is dizzy"
+    "translation": "Cozmo is Dizzy"
   },
   "behavior.RequestToPlay": {
     "translation": "Cozmo is setting up a game"
@@ -115,7 +115,7 @@
     "translation": "Cozmo is waking up"
   },
   "behavior.PickupCube": {
-    "translation": "Cozmo is picking up a cube"
+    "translation": "Cozmo is picking up a Cube"
   },
   "behavior.Workout": {
     "translation": "Cozmo is doing a workout"
@@ -133,19 +133,19 @@
     "translation": "Make sure Cozmo only sees"
   },
   "behavior.BuildPyramid": {
-    "translation": "Cozmo is building a pyramid"
+    "translation": "Cozmo is Building a Pyramid"
   },
   "behavior.PrepareCubes": {
-    "translation": "Cozmo is preparing his cubes"
+    "translation": "Cozmo is preparing his Cubes"
   },
   "behavior.PeekAboo": {
       "translation": "Cozmo wants to play Peekaboo"
   },
   "behavior.LookInPlaceForCube": {
-    "translation": "Cozmo is looking for a cube"
+    "translation": "Cozmo is looking for a Cube"
   },
   "behavior.Hiccup": {
-    "translation": "Cozmo has the hiccups"
+    "translation": "Cozmo has the Hiccups"
   },
   "button.clearThisSlot": {
     "translation": "Clear This Slot"
@@ -226,12 +226,12 @@
     "translation": "Cozmo is listening to you"
   },
   "behavior.VC_Refuse_Energy": {
-    "translation": "Cozmo needs to be fed"
+    "translation": "Cozmo needs Energy"
   },
   "behavior.VC_Refuse_Repair": {
-    "translation": "Cozmo needs a tune-up"
+    "translation": "Cozmo needs a Tune Up"
   },
   "behavior.VC_Refuse_Sparks": {
-    "translation": "You don't have enough sparks"
+    "translation": "You don't have enough Sparks"
   }
 }
