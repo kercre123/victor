@@ -20,6 +20,11 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+#include "dtm.h"
+#include "ble_dtm.h"
+#include "bluetooth.h"
+#include "cubes.h"
+
 using namespace Anki::Cozmo;
 
 // Some internals we hijack for testing purposes
@@ -308,6 +313,41 @@ void TestFixtures::dispatch(uint8_t test, uint8_t param)
       
       SendDown(sizeof(wasEnabled), (u8*)&wasEnabled);
       return;   // Already replied
+    }
+    
+    case TEST_DTM:
+    {
+      //Mimic DTM sequence normally started from the head
+      //fcc.cpp -> FCC::start -> configureTest(0,1)
+      __disable_irq();
+      g_turnPowerOff = false;
+      
+      //head sends: SetBodyRadioMode msg;
+      //Battery::setOperatingMode(BODY_DTM_OPERATING_MODE);
+      //Battery::updateOperatingMode(); //called from main, but we can't wait that long. calls DTM::start()
+      Backpack::clearLights(BPL_USER); //BPL_IMPULSE
+      Backpack::setLayer(BPL_USER); //BPL_IMPULSE
+      Backpack::detachTimer();
+      //sd_softdevice_disable(); //Bluetooth::shutdown(); //this causes system to reset?????????
+      Radio::shutdown(); //cubes.cpp
+      Motors::disable(true);
+      Head::enableFixtureComms(false);
+      
+      //head sends: SendDTMCommand msg;
+      #define POWER(i) (i & 0xfc)
+      RobotInterface::SendDTMCommand msg;
+      msg.command = LE_TRANSMITTER_TEST;
+      msg.freq = param; //2=2402MHz, 42=2442MHz, 81=2481MHz
+      msg.payload = DTM_PKT_VENDORSPECIFIC|POWER(0);
+      msg.length = CARRIER_TEST;
+      DTM::start();
+      DTM::testCommand(msg.command, msg.freq, msg.length, msg.payload);
+      
+      //acknowledge that we started dtm
+      u8 status = 0;
+      SendDown(sizeof(status), (u8*)&status);
+      while(1) { __NOP(); } //spin until watchdog resets
+      //return
     }
   }
   

@@ -20,7 +20,8 @@ enum {
   TEST_BACKPULLUP    = 0x8C,
   TEST_ENCODERS      = 0x8D,
   TEST_CHGENABLE     = 0x8E,
-  TEST_SETCOLOR      = 0x8F
+  TEST_SETCOLOR      = 0x8F,
+  TEST_DTM           = 0x90,
 };
 
 namespace TestFixtures {
