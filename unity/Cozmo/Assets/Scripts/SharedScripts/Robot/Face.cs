@@ -5,6 +5,8 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   private const uint _kFindFaceTimeoutFrames = 1;
   private int _ConsecutiveVisionFramesNotSeen = 0;
 
+  public int NumVisionFramesSinceLastSeen { get { return _ConsecutiveVisionFramesNotSeen; } }
+
   public delegate void InFieldOfViewStateChangedHandler(Face faceChanged, bool newState);
 
   public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;

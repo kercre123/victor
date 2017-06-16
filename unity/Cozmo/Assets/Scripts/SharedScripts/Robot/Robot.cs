@@ -712,6 +712,16 @@ public class Robot : IRobot {
     return null;
   }
 
+  public LightCube GetLightCubeWithObjectType(ObjectType objectType) {
+    foreach (LightCube lc in LightCubes.Values) {
+      if (lc.ObjectType == objectType) {
+        return lc;
+      }
+    }
+
+    return null;
+  }
+
   public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, byte numRetries = 0) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction =
@@ -2242,6 +2252,10 @@ public class Robot : IRobot {
 
   public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(Singleton<Wait>.Instance.Initialize(waitTime_s), callback, queueActionPosition);
+  }
+
+  public void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(Singleton<DisplayFaceImage>.Instance.Initialize(duration_ms, faceData), callback, queueActionPosition);
   }
 
 }

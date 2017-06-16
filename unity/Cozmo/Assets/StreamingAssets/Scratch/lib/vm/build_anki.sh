@@ -4,7 +4,7 @@
 #
 # Note: caching the node_modules directory greatly speeds up this step
 #       with npm update it should ensure that it's equivalent to a fresh install
-ENABLE_NODE_MODULE_CACHING=0
+ENABLE_NODE_MODULE_CACHING=1
 
 if [ $ENABLE_NODE_MODULE_CACHING != 0 ]
 then

@@ -109,8 +109,69 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       UIManager.Instance.HideTouchCatcher();
     }
 
+    private CozmoStateForCodeLab _LatestCozmoState = new CozmoStateForCodeLab(); // The latest world state sent to JS
+
+    private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
+      if (cubeSrc == null) {
+        cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
+        cubeDest.isValid = false;
+      }
+      else {
+        cubeDest.pos = cubeSrc.WorldPosition;
+        cubeDest.isValid = true;
+      }
+    }
+
+    private void SendWorldStateToWebView() {
+      // Send entire current world state over to JS in Web View
+
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+
+      if ((robot != null) && (_WebViewObjectComponent != null)) {
+        // Set Cozmo data
+
+        _LatestCozmoState.pos = robot.WorldPosition;
+        _LatestCozmoState.poseAngle_d = robot.PoseAngle * Mathf.Rad2Deg;
+
+        // Set cube data
+
+        LightCube cube1 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE1);
+        LightCube cube2 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE2);
+        LightCube cube3 = robot.GetLightCubeWithObjectType(ObjectType.Block_LIGHTCUBE3);
+
+        SetCubeStateForCodeLab(_LatestCozmoState.cube1, cube1);
+        SetCubeStateForCodeLab(_LatestCozmoState.cube2, cube2);
+        SetCubeStateForCodeLab(_LatestCozmoState.cube3, cube3);
+
+        // Set Face data
+
+        Face face = InProgressScratchBlock.GetMostRecentlySeenFace();
+        const int kMaxVisionFramesSinceSeeingFace = 30;
+        if (face != null) {
+          _LatestCozmoState.face.pos = face.WorldPosition;
+          _LatestCozmoState.face.camPos = face.VizRect.center;
+          _LatestCozmoState.face.name = face.Name;
+          _LatestCozmoState.face.isVisible = (face.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingFace);
+        }
+        else {
+          _LatestCozmoState.face.pos = new Vector3(0.0f, 0.0f, 0.0f);
+          _LatestCozmoState.face.camPos = new Vector2(0.0f, 0.0f);
+          _LatestCozmoState.face.name = "";
+          _LatestCozmoState.face.isVisible = false;
+        }
+
+        // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
+
+        string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
+        _WebViewObjectComponent.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
+      }
+    }
+
     protected override void Update() {
       base.Update();
+
+      SendWorldStateToWebView();
+
       // Error case exiting conditions:
       // WebView visibility is the same as being "loaded." Attaching is platform depended so for this edge case
       // avoid cases where the load callback might be called after the quit wait until loaded.
@@ -128,7 +189,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Send EnterSDKMode to engine as we enter this view
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        _SessionState.StartSession();
+        // TODO: Once we have UI support for selecting horizontal / vertical this setting will come from elsewhere
+        bool useVertical = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseVerticalGrammarCodelab;
+        GrammarMode grammarMode = useVertical ? GrammarMode.Vertical : GrammarMode.Horizontal;
+        _SessionState.StartSession(grammarMode);
         robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
@@ -155,14 +219,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     // SetHeadAngleLazy only calls SetHeadAngle if difference is far enough
     private bool SetHeadAngleLazy(float desiredHeadAngle, RobotCallback callback,
-                    QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+                    QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       var currentHeadAngle = robot.HeadAngle;
       var angleDiff = desiredHeadAngle - currentHeadAngle;
       var kAngleEpsilon = 0.05; // ~2.8deg // if closer than this then skip the action
 
       if (System.Math.Abs(angleDiff) > kAngleEpsilon) {
-        robot.SetHeadAngle(desiredHeadAngle, callback, queueActionPosition, useExactAngle: true);
+        robot.SetHeadAngle(desiredHeadAngle, callback, queueActionPosition, useExactAngle: true, speed_radPerSec: speed_radPerSec, accel_radPerSec2: accel_radPerSec2);
         return true;
       }
       else {
@@ -173,14 +237,14 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     // SetLiftHeightLazy only calls SetLiftHeight if difference is far enough
     private bool SetLiftHeightLazy(float desiredHeightFactor, RobotCallback callback,
                      QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                     float speed_radPerSec = kLiftSpeed_rps) {
+                     float speed_radPerSec = kLiftSpeed_rps, float accel_radPerSec2 = -1.0f) {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       var currentLiftHeightFactor = robot.LiftHeightFactor; // 0..1
       var heightFactorDiff = desiredHeightFactor - currentLiftHeightFactor;
       var kHeightFactorEpsilon = 0.05; // 5% of range // if closer than this then skip the action
 
       if (System.Math.Abs(heightFactorDiff) > kHeightFactorEpsilon) {
-        robot.SetLiftHeight(desiredHeightFactor, callback, queueActionPosition, speed_radPerSec: speed_radPerSec);
+        robot.SetLiftHeight(desiredHeightFactor, callback, queueActionPosition, speed_radPerSec: speed_radPerSec, accel_radPerSec2: accel_radPerSec2);
         return true;
       }
       else {
@@ -548,11 +612,95 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       robot.TurnInPlace(finalTurnAngle, 0.0f, 0.0f, kToleranceAngle, callback);
     }
 
+    private void TurnInPlaceVertical(float turnAngle, float speed_deg_per_sec, RobotCallback callback) {
+      float finalTurnAngle = turnAngle * Mathf.Deg2Rad;
+      const float kExtraAngle = 0.0f * Mathf.Deg2Rad; // No adjustment in vertical for now...
+      if (finalTurnAngle < 0.0f) {
+        finalTurnAngle -= kExtraAngle;
+      }
+      else {
+        finalTurnAngle += kExtraAngle;
+      }
+      float speed_rad_per_sec = speed_deg_per_sec * Mathf.Deg2Rad;
+      float accel_rad_per_sec2 = 0.0f;
+      float toleranceAngle = ((Math.Abs(turnAngle) > 25.0f) ? 10.0f : 5.0f) * Mathf.Deg2Rad;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      robot.TurnInPlace(finalTurnAngle, speed_rad_per_sec, accel_rad_per_sec2, toleranceAngle, callback, QueueActionPosition.IN_PARALLEL);
+    }
+
+    private void DrawToFace() {
+      // TODO: implement C#-side drawing routines to build this image
+      byte[] faceData = new byte[1024];
+      uint duration_ms = 1000 * 30;
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      robot.DisplayFaceImage(duration_ms, faceData, queueActionPosition: QueueActionPosition.IN_PARALLEL);
+    }
+
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
       inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
 
-      if (scratchRequest.command == "cozmoDriveForward") {
+      if (scratchRequest.command == "cozVertPathOffset") {
+        float offsetX = scratchRequest.argFloat;
+        float offsetY = scratchRequest.argFloat2;
+        float offsetAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(offsetX.ToString() + " , " + offsetY.ToString() + " , " + offsetAngle.ToString()));
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        // Offset is in current robot space, so rotate        
+        float currentAngle = robot.PoseAngle;
+        float cosAngle = Mathf.Cos(currentAngle);
+        float sinAngle = Mathf.Sin(currentAngle);
+        float newX = robot.WorldPosition.x + cosAngle * offsetX - sinAngle * offsetY;
+        float newY = robot.WorldPosition.y + sinAngle * offsetX + cosAngle * offsetY;
+        float newAngle = robot.PoseAngle + offsetAngle;
+        bool level = false;
+        bool useManualSpeed = false;
+        robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+      }
+      else if (scratchRequest.command == "cozVertPathTo") {
+        float newX = scratchRequest.argFloat;
+        float newY = scratchRequest.argFloat2;
+        float newAngle = scratchRequest.argFloat3 * Mathf.Deg2Rad;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(newX.ToString() + " , " + newY.ToString() + " , " + newAngle.ToString()));
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        bool level = false;
+        bool useManualSpeed = false;
+        robot.GotoPose(newX, newY, newAngle, level, useManualSpeed, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+      }
+      else if (scratchRequest.command == "cozVertHeadAngle") {
+        float angle = scratchRequest.argFloat * Mathf.Deg2Rad;
+        float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
+        float accel = -1.0f;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (!SetHeadAngleLazy(angle, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+      }
+      else if (scratchRequest.command == "cozVertLiftHeight") {
+        float liftHeight = scratchRequest.argFloat;
+        float speed = scratchRequest.argFloat2 * Mathf.Deg2Rad;
+        float accel = -1.0f;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(liftHeight.ToString() + " , " + speed.ToString()));
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+
+        if (!SetLiftHeightLazy(liftHeight, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL, speed, accel)) {
+          inProgressScratchBlock.AdvanceToNextBlock(true);
+        }
+      }
+      else if (scratchRequest.command == "cozVertTurn") {
+        float angle = scratchRequest.argFloat;
+        float speed = scratchRequest.argFloat2;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(angle.ToString() + " , " + speed.ToString()));
+        TurnInPlaceVertical(angle, speed, inProgressScratchBlock.CompletedTurn);
+      }
+      else if (scratchRequest.command == "cozVertDrive") {
+        float dist_mm = scratchRequest.argFloat;
+        float speed = scratchRequest.argFloat2;
+        _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString() + " , " + speed.ToString()));
+        RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(speed, dist_mm, false, inProgressScratchBlock.AdvanceToNextBlock, QueueActionPosition.IN_PARALLEL);
+      }
+      else if (scratchRequest.command == "cozmoDriveForward") {
         // argFloat represents the number selected from the dropdown under the "drive forward" block
         float dist_mm = kDriveDist_mm * scratchRequest.argFloat;
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(dist_mm.ToString()));
@@ -684,7 +832,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Cache the request to open project. These vars will be used after the webview is loaded but before it is visible.
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
-      LoadURL("index.html");
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        LoadURL("index_vertical.html");
+      }
+      else {
+        LoadURL("index.html");
+      }
     }
 
     // Display blue "Cozmo is getting ready to play" while the Scratch workspace is finishing setup

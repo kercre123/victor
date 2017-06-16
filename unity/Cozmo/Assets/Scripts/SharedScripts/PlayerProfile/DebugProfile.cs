@@ -16,6 +16,7 @@ namespace DataPersistence {
     public bool OverrideLanguage;
     public UnityEngine.SystemLanguage LanguageSettingOverride;
     public bool UseConnectFlowInMock;
+    public bool UseVerticalGrammarCodelab;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -24,10 +25,12 @@ namespace DataPersistence {
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
       UseConnectFlowInMock = false;
+      UseVerticalGrammarCodelab = false;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
       DebugConsoleData.Instance.AddConsoleVar("UseConnectFlowInMock", "UseConnectFlowInMock", this);
+      DebugConsoleData.Instance.AddConsoleVar("UseVerticalGrammarCodelab", "CodeLab", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
         OverrideLanguage = false;
@@ -70,6 +73,9 @@ namespace DataPersistence {
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;
       case "UseNeedsHub":
+        DataPersistence.DataPersistenceManager.Instance.Save();
+        break;
+      case "UseVerticalGrammarCodelab":
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;
       }

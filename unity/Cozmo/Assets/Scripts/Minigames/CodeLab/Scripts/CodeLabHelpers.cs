@@ -1,6 +1,28 @@
 using Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
+using UnityEngine;
 namespace CodeLab {
+
+  public class CubeStateForCodeLab {
+    public Vector3 pos;
+    public bool isValid;
+  }
+
+  public class FaceStateForCodeLab {
+    public Vector3 pos;
+    public Vector2 camPos;
+    public string name;
+    public bool isVisible;
+  }
+
+  public class CozmoStateForCodeLab {
+    public float poseAngle_d;
+    public Vector3 pos;
+    public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();
+    public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();
+    public CubeStateForCodeLab cube3 = new CubeStateForCodeLab();
+    public FaceStateForCodeLab face = new FaceStateForCodeLab();
+  }
 
   public class ScratchRequest {
     public int requestId { get; set; }
@@ -10,6 +32,8 @@ namespace CodeLab {
     public int argInt { get; set; }
     public uint argUInt { get; set; }
     public float argFloat { get; set; }
+    public float argFloat2 { get; set; }
+    public float argFloat3 { get; set; }
   }
 
   public class InProgressScratchBlock {
@@ -107,6 +131,24 @@ namespace CodeLab {
     public void RobotObservedObject(RobotObservedObject message) {
       RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(RobotObservedObject);
       AdvanceToNextBlock(true);
+    }
+
+    public static Face GetMostRecentlySeenFace() {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      Face lastFaceSeen = null;
+      for (int i = 0; i < robot.Faces.Count; ++i) {
+        Face face = robot.Faces[i];
+        if (face.IsInFieldOfView) {
+          return face;
+        }
+        else {
+          if ((lastFaceSeen == null) || (face.NumVisionFramesSinceLastSeen < lastFaceSeen.NumVisionFramesSinceLastSeen)) {
+            lastFaceSeen = face;
+          }
+        }
+      }
+
+      return lastFaceSeen;
     }
 
     private static LightCube GetMostRecentlySeenCube() {

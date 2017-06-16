@@ -115,6 +115,10 @@ public class MockRobot : IRobot {
     return null;
   }
 
+  public LightCube GetLightCubeWithObjectType(ObjectType objectType) {
+    return null;
+  }
+
   public ActiveObject GetActiveObjectWithFactoryID(uint factoryID) {
     return null;
   }
@@ -1090,5 +1094,8 @@ public class MockRobot : IRobot {
   }
 
   public void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  }
+
+  public void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
   }
 }

@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+        <!-- Compressed files. Run Scratch/lib/blocks/build.sh to generate. -->
+        <script src="./lib/blocks/blockly_compressed_vertical.js"></script>
+        <script src="./lib/blocks/blocks_compressed.js"></script>
+        <script src="./lib/blocks/blocks_compressed_vertical.js"></script>
+
+        <!-- Uncompressed files. When updating lib/blocks/*, use these files instead of the above compressed files to see your changes immediately. -->
+        <!-- When using these uncompressed files (either in browser or in app), must also copy tools/scratch/closure-library to Scratch/lib/closure-library -->
+        <!--
+        <script src="./lib/blocks/blockly_uncompressed_horizontal.js"></script>
+        <script src="./lib/blocks/blocks_common/math.js"></script>
+        <script src="./lib/blocks/blocks_common/text.js"></script>
+        <script src="./lib/blocks/blocks_vertical/control.js"></script>
+        <script src="./lib/blocks/blocks_vertical/data.js"></script>
+        <script src="./lib/blocks/blocks_vertical/event.js"></script>
+        <script src="./lib/blocks/blocks_vertical/operators.js"></script>
+        <script src="./lib/blocks/blocks_vertical/cozmo.js"></script>
+        -->
+
+        <script src="./lib/blocks/media/sounds.js"></script>
+        <script src="./lib/blocks/msg/messages.js"></script>
+        <script src="./js/common.js"></script>
+        <script src="./js/CozmoSaveLoadAPI.js"></script>
+        <script src="./js/cozmoUserProjectCommands.js"></script>
+        <script src="./js/webAudioPlayer.js"></script>
+        <script src="./lib/vm/dist/web/scratch-vm.min.js"></script>
+        <script src="./extra/challenges-frame.js"></script>
+        <script src="./extra/extra-common.js"></script>
+        <script src="./LocalizedStrings/en-US/CodeLabStrings.js"></script>
+
+        <!-- CSS Styles -->
+        <link rel="stylesheet" href="./css/normalize.css">
+        <link rel="stylesheet" href="./css/common.css">
+        <script>
+        window.Unity = {
+            call: function(msg) {
+                var iframe = document.createElement('IFRAME');
+                iframe.setAttribute('src', 'unity:' + msg);
+                document.documentElement.appendChild(iframe);
+                iframe.parentNode.removeChild(iframe);
+                iframe = null;
+            }
+        }
+        </script>
+	</head>
+
+	<body>
+
+        <!-- Toolbox -->
+        <xml id="toolbox">
+            <category name="Drive" colour="#0898c4" secondaryColour="0">
+              <block type="cozmo_vert_drive">
+                  <value name="DISTANCE">
+                      <shadow type="math_number">
+                          <field name="NUM">50.0</field>
+                      </shadow>
+                  </value>
+                  <value name="SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">25.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_path_offset">
+                  <value name="OFFSET_X">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="OFFSET_Y">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="OFFSET_ANGLE">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_path_to">
+                  <value name="NEW_X">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="NEW_Y">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="NEW_ANGLE">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+              </block>
+              
+              <block type="cozmo_vert_turn">
+                  <value name="ANGLE">
+                      <shadow type="math_number">
+                          <field name="NUM">90</field>
+                      </shadow>
+                  </value>
+                  <value name="SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">45.0</field>
+                      </shadow>
+                  </value>
+              </block>
+              
+              <block type="cozmo_dock_with_cube"></block>
+            </category>
+            <category name="Actions" colour="#5e3dfc" secondaryColour="0">
+            
+              <block type="cozmo_vert_liftheight">
+                  <value name="HEIGHT_RATIO">
+                      <shadow type="math_number">
+                          <field name="NUM">1.0</field>
+                      </shadow>
+                  </value>
+                  <value name="SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">45.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_vert_headangle">
+                  <value name="HEAD_ANGLE">
+                      <shadow type="math_number">
+                          <field name="NUM">0.0</field>
+                      </shadow>
+                  </value>
+                  <value name="SPEED">
+                      <shadow type="math_number">
+                          <field name="NUM">45.0</field>
+                      </shadow>
+                  </value>
+              </block>
+
+              <block type="cozmo_setbackpackcolor">
+                  <value name="CHOICE">
+                      <shadow type="dropdown_cozmo_setcolor">
+                          <field name="CHOICE">coral</field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="cozmo_says">
+                  <value name="STRING">
+                      <shadow type="text_with_validator">
+                          <field name="TEXT">Hi</field>
+                      </shadow>
+                  </value>
+              </block>
+            </category>
+            <category name="Animations" colour="#a03c87" secondaryColour="0">
+              <block type="cozmo_happy_animation"></block>
+              <block type="cozmo_victory_animation"></block>
+              <block type="cozmo_unhappy_animation"></block>
+              <block type="cozmo_surprise_animation"></block>
+              <block type="cozmo_dog_animation"></block>
+              <block type="cozmo_cat_animation"></block>
+              <block type="cozmo_sneeze_animation"></block>
+              <block type="cozmo_excited_animation"></block>
+              <block type="cozmo_thinking_animation"></block>
+              <block type="cozmo_bored_animation"></block>
+              <block type="cozmo_frustrated_animation"></block>
+              <block type="cozmo_chatty_animation"></block>
+              <block type="cozmo_dejected_animation"></block>
+              <block type="cozmo_sleep_animation"></block>
+              <block type="cozmo_mystery_animation"></block>
+            </category>
+            <category name="Events" colour="#f4b606" secondaryColour="0">
+              <block type="event_whenflagclicked"></block>
+              <block type="cozmo_wait_for_face"></block>
+              <block type="cozmo_wait_for_happy_face"></block>
+              <block type="cozmo_wait_for_sad_face"></block>
+              <block type="cozmo_wait_until_see_cube"></block>
+              <block type="cozmo_wait_for_cube_tap"></block>
+
+              <block type="event_whenkeypressed"></block>
+              <block type="event_whenthisspriteclicked"></block>
+              <block type="event_whenbackdropswitchesto"></block>
+              <block type="event_whengreaterthan">
+                <value name="VALUE">
+                  <shadow type="math_number">
+                    <field name="NUM">10</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="event_whenbroadcastreceived">
+              </block>
+              <block type="event_broadcast">
+                <value name="BROADCAST_OPTION">
+                  <shadow type="event_broadcast_menu"></shadow>
+                </value>
+              </block>
+              <block type="event_broadcastandwait">
+                <value name="BROADCAST_OPTION">
+                  <shadow type="event_broadcast_menu"></shadow>
+                </value>
+              </block>            
+            </category>
+
+            <category name="Control" colour="#e5580a" secondaryColour="0">
+              <block type="control_repeat">
+                  <value name="TIMES">
+                      <shadow type="math_whole_number_with_validator">
+                          <field name="NUM">4</field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="control_forever"></block>
+              <block type="control_if"></block>
+              <block type="control_if_else"></block>
+              <block type="control_wait_until"></block>
+              <block type="control_repeat_until"></block>
+              <block type="control_stop"></block>
+              <block type="control_start_as_clone"></block>
+              <block type="control_create_clone_of">
+                  <value name="CLONE_OPTION">
+                      <shadow type="control_create_clone_of_menu"></shadow>
+                  </value>
+              </block>
+              <block type="control_delete_this_clone"></block>
+            </category>
+            
+            <category name="Sensors" colour="#404FbA" secondaryColour="#383498">
+              <block type="cozmo_vert_position"></block>
+              <block type="cozmo_vert_angle"></block>
+              <block type="cozmo_vert_face_name"></block>
+              <block type="cozmo_vert_face_2d"></block>
+              <block type="cozmo_vert_face_3d"></block>
+              <block type="cozmo_vert_cube_position"></block>
+            </category>
+
+            <category name="Operators" colour="#40BF4A" secondaryColour="#389438">
+              <block type="operator_add">
+                  <value name="NUM1">
+                      <shadow type="math_number">
+                          <field name="NUM"></field>
+                      </shadow>
+                  </value>
+                  <value name="NUM2">
+                      <shadow type="math_number">
+                          <field name="NUM"></field>
+                      </shadow>
+                  </value>
+              </block>
+              <block type="operator_subtract">
+                  <value name="NUM1">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+                  <value name="NUM2">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_multiply">
+                  <value name="NUM1">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+                  <value name="NUM2">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_divide">
+                  <value name="NUM1">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+                  <value name="NUM2">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_random">
+                  <value name="FROM">
+                  <shadow type="math_number">
+                      <field name="NUM">1</field>
+                  </shadow>
+                  </value>
+                  <value name="TO">
+                  <shadow type="math_number">
+                      <field name="NUM">10</field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_lt">
+                  <value name="OPERAND1">
+                  <shadow type="text">
+                      <field name="TEXT"></field>
+                  </shadow>
+                  </value>
+                  <value name="OPERAND2">
+                  <shadow type="text">
+                      <field name="TEXT"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_equals">
+                  <value name="OPERAND1">
+                  <shadow type="text">
+                      <field name="TEXT"></field>
+                  </shadow>
+                  </value>
+                  <value name="OPERAND2">
+                  <shadow type="text">
+                      <field name="TEXT"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_gt">
+                  <value name="OPERAND1">
+                  <shadow type="text">
+                      <field name="TEXT"></field>
+                  </shadow>
+                  </value>
+                  <value name="OPERAND2">
+                  <shadow type="text">
+                      <field name="TEXT"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_and"></block>
+              <block type="operator_or"></block>
+              <block type="operator_not"></block>
+              <block type="operator_join">
+                  <value name="STRING1">
+                  <shadow type="text">
+                      <field name="TEXT">hello</field>
+                  </shadow>
+                  </value>
+                  <value name="STRING2">
+                  <shadow type="text">
+                      <field name="TEXT">world</field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_letter_of">
+                  <value name="LETTER">
+                  <shadow type="math_whole_number">
+                      <field name="NUM">1</field>
+                  </shadow>
+                  </value>
+                  <value name="STRING">
+                  <shadow type="text">
+                      <field name="TEXT">world</field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_length">
+                  <value name="STRING">
+                  <shadow type="text">
+                      <field name="TEXT">world</field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_mod">
+                  <value name="NUM1">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+                  <value name="NUM2">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_round">
+                  <value name="NUM">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+              <block type="operator_mathop">
+                  <value name="OPERATOR">
+                  <shadow type="operator_mathop_menu"></shadow>
+                  </value>
+                  <value name="NUM">
+                  <shadow type="math_number">
+                      <field name="NUM"></field>
+                  </shadow>
+                  </value>
+              </block>
+            </category>
+            
+            <category name="Data" colour="#FF8C1A" secondaryColour="#DB6E00" custom="VARIABLE">
+            </category>
+
+            <category name="Lists" colour="#FF8C1A" secondaryColour="#DB6E00">
+              <block type="data_listcontents"></block>
+              <block type="data_addtolist">
+                <value name="ITEM">
+                  <shadow type="text">
+                    <field name="TEXT">thing</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="data_deleteoflist">
+                <value name="INDEX">
+                  <shadow type="data_listindexall">
+                    <field name="INDEX">1</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="data_insertatlist">
+                <value name="INDEX">
+                  <shadow type="data_listindexrandom">
+                    <field name="INDEX">1</field>
+                  </shadow>
+                </value>
+                <value name="ITEM">
+                  <shadow type="text">
+                    <field name="TEXT">thing</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="data_replaceitemoflist">
+                <value name="INDEX">
+                  <shadow type="data_listindexrandom">
+                    <field name="INDEX">1</field>
+                  </shadow>
+                </value>
+                <value name="ITEM">
+                  <shadow type="text">
+                    <field name="TEXT">thing</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="data_itemoflist">
+                <value name="INDEX">
+                  <shadow type="data_listindexrandom">
+                    <field name="INDEX">1</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="data_lengthoflist"></block>
+              <block type="data_listcontainsitem">
+                <value name="ITEM">
+                  <shadow type="text">
+                    <field name="TEXT">thing</field>
+                  </shadow>
+                </value>
+              </block>
+              <block type="data_showlist"></block>
+              <block type="data_hidelist"></block>
+            </category>
+        </xml>
+
+        <!-- Blocks -->
+        <div id="blocks"></div>
+
+        <!-- Close -->
+        <div id="close">
+            <div class="primary">
+                <button id="closebutton" />
+            </div>
+        </div>
+
+        <!-- Challenges button -->
+        <div id="challenges">
+            <div class="primary">
+                <button id="challengesbutton" />
+            </div>
+        </div>
+
+        <!-- projecttext -->
+        <div id="projecttext">
+            <div class="primary">
+                <span id="app-title"></span><br>
+                <span id="app-title-subtext"></span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div id="navigation">
+            <div class="greenflag">
+                <button id="greenflag" />
+            </div>
+            <div class="stop">
+                <button id="stop" />
+            </div>
+        </div>
+	</body>
+</html>

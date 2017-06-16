@@ -284,11 +284,11 @@ namespace CodeLab {
       _ReceivedGreenFlagEvent = false;
     }
 
-    public void StartSession() {
+    public void StartSession(GrammarMode grammarMode) {
       DAS_Event("robot.code_lab.open", "");
       Reset();
       _EnterCodeLabDateTime = System.DateTime.UtcNow;
-      SetGrammarMode(GrammarMode.Horizontal);
+      SetGrammarMode(grammarMode);
     }
 
     public void EndSession() {
@@ -346,6 +346,10 @@ namespace CodeLab {
           EnterGrammarMode(newGrammar);
         }
       }
+    }
+
+    public GrammarMode GetGrammarMode() {
+      return _CurrentGrammar;
     }
 
     public void ScratchBlockEvent(string blockEventName, Dictionary<string, string> extraData = null) {

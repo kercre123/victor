@@ -20544,7 +20544,22 @@ Scratch3CozmoBlocks.prototype.getPrimitives = function () {
         cozmo_dock_with_cube: this.dockWithCube,
         cozmo_turn_left: this.turnLeft,
         cozmo_turn_right: this.turnRight,
-        cozmo_says: this.speak
+        cozmo_says: this.speak,
+        // ==================== Vertical Grammar ====================
+        // Actions
+        cozmo_vert_turn: this.verticalTurn,
+        cozmo_vert_drive: this.verticalDrive,
+        cozmo_vert_path_offset: this.verticalPathOffset,
+        cozmo_vert_path_to: this.verticalPathTo,
+        cozmo_vert_headangle: this.verticalHeadAngle,
+        cozmo_vert_liftheight: this.verticalLiftHeight,
+        // Sensors / Inputs
+        cozmo_vert_cube_position: this.verticalCubePosition,
+        cozmo_vert_position: this.verticalCozmoPosition,
+        cozmo_vert_angle: this.verticalCozmoAngle,
+        cozmo_vert_face_name: this.verticalFaceName,
+        cozmo_vert_face_2d: this.verticalFace2d,
+        cozmo_vert_face_3d: this.verticalFace3d
     };
 };
 
@@ -20563,6 +20578,14 @@ Scratch3CozmoBlocks.prototype._promiseForCommand = function (requestId) {
     return new Promise(function (resolve) {
         window.resolveCommands[requestId] = resolve;
     });
+};
+
+// Global variable containing Cozmo's World's latest state (as a JSON object)
+var gCozmoWorldState = null;
+
+window.setCozmoState = function (cozmoStateStr) {
+    var cozmoState = JSON.parse(cozmoStateStr);
+    gCozmoWorldState = cozmoState;
 };
 
 Scratch3CozmoBlocks.prototype.setBackpackColor = function (args, util) {
@@ -20854,6 +20877,137 @@ Scratch3CozmoBlocks.prototype._getAnimation = function (animationName) {
     }
 
     return animationName;
+};
+
+// ================================================================================================================================================================
+// Vertical Grammar
+// ================================================================================================================================================================
+// Actions:
+// ========
+
+Scratch3CozmoBlocks.prototype.verticalTurn = function (args, util) {
+    var requestId = this._getRequestId();
+    var turnAngle = Cast.toNumber(args.ANGLE);
+    var speed = Cast.toNumber(args.SPEED);
+
+    commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertTurn", "argFloat": "' + turnAngle + '", "argFloat2": "' + speed + '"}');
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalDrive = function (args, util) {
+    var requestId = this._getRequestId();
+    var distance = Cast.toNumber(args.DISTANCE);
+    var speed = Cast.toNumber(args.SPEED);
+
+    commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertDrive", "argFloat": "' + distance + '", "argFloat2": "' + speed + '"}');
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalPathOffset = function (args, util) {
+    var requestId = this._getRequestId();
+    var offsetX = Cast.toNumber(args.OFFSET_X);
+    var offsetY = Cast.toNumber(args.OFFSET_Y);
+    var offsetAngle = Cast.toNumber(args.OFFSET_ANGLE);
+
+    commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertPathOffset", "argFloat": "' + offsetX + '", "argFloat2": "' + offsetY + '", "argFloat3": "' + offsetAngle + '"}');
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalPathTo = function (args, util) {
+    var requestId = this._getRequestId();
+    var newX = Cast.toNumber(args.NEW_X);
+    var newY = Cast.toNumber(args.NEW_Y);
+    var newAngle = Cast.toNumber(args.NEW_ANGLE);
+
+    commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertPathTo", "argFloat": "' + newX + '", "argFloat2": "' + newY + '", "argFloat3": "' + newAngle + '"}');
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalHeadAngle = function (args, util) {
+    var requestId = this._getRequestId();
+    var angle = Cast.toNumber(args.HEAD_ANGLE);
+    var speed = Cast.toNumber(args.SPEED);
+
+    commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertHeadAngle", "argFloat": "' + angle + '", "argFloat2": "' + speed + '"}');
+    return commandPromise;
+};
+
+Scratch3CozmoBlocks.prototype.verticalLiftHeight = function (args, util) {
+    var requestId = this._getRequestId();
+    var heightRatio = Cast.toNumber(args.HEIGHT_RATIO);
+    var speed = Cast.toNumber(args.SPEED);
+
+    commandPromise = this._promiseForCommand(requestId);
+    window.Unity.call('{"requestId": "' + requestId + '", "command": "cozVertLiftHeight", "argFloat": "' + heightRatio + '", "argFloat2": "' + speed + '"}');
+    return commandPromise;
+};
+
+// =================
+// Sensors / Inputs:
+// =================
+
+Scratch3CozmoBlocks.prototype.verticalCubePosition = function (args, util) {
+    var cube = Cast.toNumber(args.CUBE_SELECT);
+    var axis = Cast.toNumber(args.AXIS);
+
+    var srcCube = gCozmoWorldState.cube3;
+    if (cube == 0) {
+        srcCube = gCozmoWorldState.cube1;
+    } else if (cube == 1) {
+        srcCube = gCozmoWorldState.cube2;
+    }
+
+    if (axis == 0) {
+        return Cast.toNumber(srcCube.pos.x);
+    } else if (axis == 1) {
+        return Cast.toNumber(srcCube.pos.y);
+    } else {
+        return Cast.toNumber(srcCube.pos.z);
+    }
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoPosition = function (args, util) {
+    var axis = Cast.toNumber(args.AXIS);
+    if (axis == 0) {
+        return Cast.toNumber(gCozmoWorldState.pos.x);
+    } else if (axis == 1) {
+        return Cast.toNumber(gCozmoWorldState.pos.y);
+    } else {
+        return Cast.toNumber(gCozmoWorldState.pos.z);
+    }
+};
+
+Scratch3CozmoBlocks.prototype.verticalCozmoAngle = function (args, util) {
+    return Cast.toNumber(gCozmoWorldState.poseAngle_d);
+};
+
+Scratch3CozmoBlocks.prototype.verticalFaceName = function (args, util) {
+    return Cast.toString(gCozmoRobot.face.name);
+};
+
+Scratch3CozmoBlocks.prototype.verticalFace2d = function (args, util) {
+    var axis = Cast.toNumber(args.AXIS);
+    if (axis == 0) {
+        return Cast.toNumber(gCozmoRobot.face.camPos.x);
+    } else {
+        return Cast.toNumber(gCozmoRobot.face.camPos.y);
+    }
+};
+
+Scratch3CozmoBlocks.prototype.verticalFace3d = function (args, util) {
+    var axis = Cast.toNumber(args.AXIS);
+    if (axis == 0) {
+        return Cast.toNumber(gCozmoRobot.face.pos.x);
+    } else if (axis == 1) {
+        return Cast.toNumber(gCozmoRobot.face.pos.y);
+    } else {
+        return Cast.toNumber(gCozmoRobot.face.pos.z);
+    }
 };
 
 module.exports = Scratch3CozmoBlocks;
@@ -28473,7 +28627,7 @@ module.exports = {
 				"spec": "5.7.1",
 				"type": "version"
 			},
-			"/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"
+			"/Users/mwesley/zGitRepos2/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"
 		]
 	],
 	"_from": "got@5.7.1",
@@ -28501,13 +28655,14 @@ module.exports = {
 		"type": "version"
 	},
 	"_requiredBy": [
-		"#DEV:/"
+		"#DEV:/",
+		"#USER"
 	],
 	"_resolved": "https://registry.npmjs.org/got/-/got-5.7.1.tgz",
 	"_shasum": "5f81635a61e4a6589f180569ea4e381680a51f35",
 	"_shrinkwrap": null,
 	"_spec": "got@5.7.1",
-	"_where": "/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm",
+	"_where": "/Users/mwesley/zGitRepos2/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm",
 	"browser": {
 		"unzip-response": false
 	},

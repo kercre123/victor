@@ -178,6 +178,8 @@ public interface IRobot : IDisposable {
 
   LightCube GetLightCubeWithFactoryID(uint factoryID);
 
+  LightCube GetLightCubeWithObjectType(ObjectType objectType);
+
   ActiveObject GetActiveObjectWithFactoryID(uint factoryID);
 
   void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight);
@@ -396,4 +398,6 @@ public interface IRobot : IDisposable {
   void PlayCubeAnimationTrigger(ObservableObject obj, CubeAnimationTrigger trigger, RobotCallback callback = null);
 
   void WaitAction(float waitTime_s, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  void DisplayFaceImage(uint duration_ms, byte[] faceData, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 }
