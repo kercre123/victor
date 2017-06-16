@@ -196,6 +196,7 @@ unity/Cozmo/*.obj
 unity/Cozmo/obj/*
 unity/Cozmo/AssetBundles/*
 unity/Cozmo/Assets/Resources/ThemeSystem/ThemesScriptableObj.asset
+unity/Cozmo/Assets/Resources/ThemeSystem/ThemesScriptableObj.asset.meta
 
 # Visual studio
 *.userprefs

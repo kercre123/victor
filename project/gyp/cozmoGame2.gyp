@@ -517,16 +517,6 @@
                 ],
             },
             {
-                'action_name': 'create_symlink_resources_daily_goals',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_asset_path)/DailyGoals',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/DailyGoals'
-                ],
-            },
-            {
                 'action_name': 'create_symlink_resources_anim_group_maps',
                 'inputs': [],
                 'outputs': [],
@@ -590,16 +580,6 @@
                   '-n',
                   '<(externals_path)/cozmo-assets/faceAnimations',
                   '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/faceAnimations',
-                ],
-            },
-            {
-                'action_name': 'create_symlink_resources_daily_goals2',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_asset_path)/DailyGoals',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/DailyGoals'
                 ],
             },
             {

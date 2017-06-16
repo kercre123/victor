@@ -55,8 +55,6 @@ class CopyResources(object):
                         action='store', default=None, help='where animation groups are located')
     parser.add_argument('--cubeAnimationGroupPath', dest='cubeAnimationGroupPath', required=True,
                         action='store', default=None, help='where cube animation groups are located')
-    parser.add_argument('--dailyGoalsPath', dest='dailyGoalsPath', required=True,
-                        action='store', default=None, help='Where daily goals data is located')
     parser.add_argument('--rewardedActionsPath', dest='rewardedActionsPath', required=True,
                         action='store', default=None, help='Where rewarded actions data is located')
     parser.add_argument('--voiceCommandResourcesPath', dest='voiceCommandResourcesPath', required=True,
@@ -167,14 +165,6 @@ class CopyResources(object):
       self.log.error("error copying {0} to {1}".format (self.options.cubeAnimationGroupPath, cubeAnimationGroupPath))
       return False
 
-    # daily goals
-    dailyGoalsPath = os.path.join(cozmoResourcesPath, 'assets/DailyGoals')
-    if os.path.isdir(dailyGoalsPath):
-      ankibuild.util.File.rm_rf(dailyGoalsPath)
-    if not ankibuild.util.File.cptree(self.options.dailyGoalsPath, dailyGoalsPath):
-      self.log.error("error copying {0} to {1}".format (self.options.dailyGoalsPath, dailyGoalsPath))
-      return False
-
     # rewarded actions
     rewardedActionsPath = os.path.join(cozmoResourcesPath, 'assets/RewardedActions')
     if os.path.isdir(rewardedActionsPath):
@@ -251,12 +241,6 @@ class CopyResources(object):
     cubeAnimationGroupPath = os.path.join(cozmoResourcesPath, 'assets/cubeAnimationGroupMaps')
     args = baseargs[:]
     args += [self.options.cubeAnimationGroupPath, cubeAnimationGroupPath]
-    ankibuild.util.File.execute(args)
-
-    # daily goals
-    dailyGoalsPath = os.path.join(cozmoResourcesPath, 'assets/DailyGoals')
-    args = baseargs[:]
-    args += [self.options.dailyGoalsPath, dailyGoalsPath]
     ankibuild.util.File.execute(args)
 
     # rewarded actions

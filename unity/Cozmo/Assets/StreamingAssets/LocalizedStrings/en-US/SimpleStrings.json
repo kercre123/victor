@@ -75,15 +75,6 @@
   "label.plusCount": {
     "translation": "+{0}"
   },
-  "label.xCount": {
-    "translation": "x{0}"
-  },
-  "label.totalCount": {
-    "translation": "Your {0}: {1}"
-  },
-  "label.fractionCount": {
-    "translation": "{0}/{1}"
-  },
   "label.dayCount": {
     "translation": "Day {0}"
   },
@@ -96,38 +87,14 @@
   "requestGame.description": {
     "translation": "Cozmo wants to play"
   },
-  "dailyGoal.title": {
-    "translation": "Today's Goals"
-  },
-  "dailyGoal.FriendBonus": {
-    "translation": "Friend Bonus"
-  },
   "label.connect": {
     "translation": "CONNECT"
   },
   "label.start": {
     "translation": "Start"
   },
-  "cozmoTab.title": {
-    "translation": "Upgrades"
-  },
-  "cozmoTab.subTitle": {
-    "translation": ": Expand Cozmo's abilities"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
-  },
-  "loot.Start": {
-    "translation": "Tap Repeatedly!"
-  },
-  "loot.Mid": {
-    "translation": "Keep Going!"
-  },
-  "loot.Almost": {
-    "translation": "Almost There!"
-  },
-  "loot.Announce": {
-    "translation": "Emotion Chip Charged!"
   },
   "label.emptyWithArg": {
     "translation": "{0}"
@@ -149,9 +116,6 @@
   },
   "refreshCubesPrompt.description": {
     "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
-  },
-  "label.available": {
-    "translation": "Available!"
   },
   "button.replay": {
     "translation": "Replay"
@@ -180,23 +144,8 @@
   "label.privacyPolicy": {
     "translation": "Privacy Policy"
   },
-  "button.openEnvelope": {
-    "translation": "TAP TO OPEN"
-  },
   "label.pressAndHoldInstruction": {
     "translation": "Press and hold {0} to confirm"
-  },
-  "label.activePlayer": {
-    "translation": "Active Player:"
-  },
-  "label.streaksCount": {
-    "translation": "Longest Daily Streak:"
-  },
-  "label.goalsCompleted": {
-    "translation": "Goals Completed:"
-  },
-  "label.daysWithCozmo": {
-    "translation": "Days Played With Cozmo:"
   },
   "label.termsOfUse": {
     "translation": "Terms of Use"

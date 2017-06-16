@@ -63,9 +63,6 @@
   "minigame.label.cubesReady.plural": {
     "translation": "{0} Cubes ready!"
   },
-  "minigames.label.gamesAndActivities": {
-    "translation": "Cozmo Apps"
-  },
   "minigame.label.cozmoPrep": {
     "translation": "Cozmo is getting ready to play..."
   },

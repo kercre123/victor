@@ -51,12 +51,6 @@
   "connectivity.updatingFirmwareFooter": {
     "translation": "You will need to reconnect to Cozmo's WiFi after the update completes"
   },
-  "connectivity.pairingPinTitle": {
-    "translation": "Enter the pin shown on your Cozmo"
-  },
-  "connectivity.invalidPinTitle": {
-    "translation": "Invalid Pin"
-  },
   "connectivity.updateApp": {
     "translation": "You must update your Cozmo App to continue"
   },
@@ -65,9 +59,6 @@
   },
   "connectivity.enterDOB": {
     "translation": "Enter your birthday"
-  },
-  "connectivity.pairingDesc": {
-    "translation": "This step is required when connecting from a new device"
   },
   "connectivity.cozmoSleepTitle": {
     "translation": "Going to Sleep"

@@ -355,6 +355,8 @@ public static class LocalizationEditorUtility {
     }
   }
 
+  #region Remove Unused Loc Keys
+
   private static string VariableNameFromLocalizationKey(string localizationKey) {
     string variableName = "k";
     char[] delimiter = { '.', ' ' };
@@ -365,27 +367,22 @@ public static class LocalizationEditorUtility {
     return variableName;
   }
 
-  private static bool StringContainedInDir(string str, string dir, string searchPattern, string exclude = null) {
-    foreach (var path in Directory.GetFiles(dir, searchPattern, SearchOption.AllDirectories)) {
-      if (exclude != null && path.Contains(exclude)) {
+  private static bool StringContainedInFiles(string str, ref string[] filePaths, ref string[] fileContents, string excludePath = null) {
+    // For each file...
+    for (int i = 0; i < filePaths.Length; i++) {
+      // Skip blacklisted files
+      if (!string.IsNullOrEmpty(excludePath) && filePaths[i].Contains(excludePath)) {
         continue;
       }
-      if (File.ReadAllText(path).Contains(str)) {
-        return true;
+
+      // If we haven't read this file yet cache the contents for later searches
+      if (string.IsNullOrEmpty(fileContents[i])) {
+        fileContents[i] = File.ReadAllText(filePaths[i]);
       }
-    }
-    return false;
-  }
-  // Can't search with multiple file extensions
-  private static bool StringContainedInDir(string str, string dir, string[] searchPatterns) {
-    foreach (var path in Directory.GetFiles(dir, "*", SearchOption.AllDirectories)) {
-      for (int i = 0; i < searchPatterns.Length; ++i) {
-        if (path.Contains(searchPatterns[i])) {
-          if (File.ReadAllText(path).Contains(str)) {
-            return true;
-          }
-          break;
-        }
+
+      // Check to see if the file contains the search string
+      if (fileContents[i].Contains(str)) {
+        return true;
       }
     }
     return false;
@@ -393,43 +390,124 @@ public static class LocalizationEditorUtility {
 
   [MenuItem("Cozmo/Localization/Remove Unused Loc Keys")]
   public static void RemoveUnusedLocKeys() {
+    // Cache file paths
+    string directoryProgressTitle = "Getting Files in Directory";
+    string directoryProgressInfo = "Directory {0}/{1}";
+    int totalDirectories = 6;
+
+    string[] csFilePaths = Directory.GetFiles("Assets/", "*.cs", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 1, totalDirectories), (float)1 / totalDirectories);
+
+    string[] prefabFilePaths = Directory.GetFiles("Assets/", "*.prefab", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 2, totalDirectories), (float)2 / totalDirectories);
+
+    string[] assetFilePaths = Directory.GetFiles("Assets/", "*.asset", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 3, totalDirectories), (float)3 / totalDirectories);
+
+    string[] productConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../lib/anki/products-cozmo-assets/",
+                                                         "*.json", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 4, totalDirectories), (float)4 / totalDirectories);
+
+    string[] basestationConfigFilePaths = Directory.GetFiles(Application.dataPath + "/../../../resources/config/basestation/config",
+                                                             "*.json", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 5, totalDirectories), (float)5 / totalDirectories);
+
+    string[] jsFilePaths = Directory.GetFiles("Assets/StreamingAssets/Scratch", "*.js", SearchOption.AllDirectories);
+    EditorUtility.DisplayProgressBar(directoryProgressTitle, string.Format(directoryProgressInfo, 6, totalDirectories), (float)6 / totalDirectories);
+
+    // Prep caches for file contents 
+    string[] csFileContents = new string[csFilePaths.Length];
+    string[] prefabFileContents = new string[prefabFilePaths.Length];
+    string[] assetFileContents = new string[assetFilePaths.Length];
+    string[] productConfigFileContents = new string[productConfigFilePaths.Length];
+    string[] basestationConfigFileContents = new string[basestationConfigFilePaths.Length];
+    string[] jsFileContents = new string[jsFilePaths.Length];
+
+    // Keep count for progress bar
+    int numTotalFiles = _LocalizationDictionaries.Count;
+    int currentFileNum = 0;
+
+    // Iterate over each localization file
+    bool anyFileChanged = false;
     foreach (var localizationDictFile in _LocalizationDictionaries) {
+      currentFileNum++;
+
+      // Skip file that has singular vs plural keys because they are constructed at runtime
       string fileName = localizationDictFile.Key;
-      // Special case file that adds plural etc
       if (fileName == "ItemStrings") {
         continue;
       }
+
+      // For Code Lab strings, only search js files for references
+      Func<string, bool> keySearchStrategy;
+      if (fileName == "CodeLabStrings") {
+        keySearchStrategy = (string x) => {
+          return StringContainedInFiles(x, ref jsFilePaths, ref jsFileContents);
+        };
+      }
+      else {
+        // For all other files search cs, json, prefabs, and assets
+        keySearchStrategy = (string x) => {
+          string csFileToExclude = "LocalizationKeys.cs";
+          return (StringContainedInFiles(VariableNameFromLocalizationKey(x), ref csFilePaths, ref csFileContents, csFileToExclude)
+                  || StringContainedInFiles(x, ref prefabFilePaths, ref prefabFileContents)
+                  || StringContainedInFiles(x, ref assetFilePaths, ref assetFileContents)
+                  || StringContainedInFiles(x, ref productConfigFilePaths, ref productConfigFileContents)
+                  || StringContainedInFiles(x, ref basestationConfigFilePaths, ref basestationConfigFileContents));
+        };
+      }
+
       // Deep copy to remove from source
-      Dictionary<string, LocalizationDictionaryEntry> keysDict = new Dictionary<string, LocalizationDictionaryEntry>(localizationDictFile.Value.Translations);
-      bool anyUpdateNeeded = false;
+      Dictionary<string, LocalizationDictionaryEntry> keysDict =
+        new Dictionary<string, LocalizationDictionaryEntry>(localizationDictFile.Value.Translations);
+
+      // Keep count for progress bar
+      int numLocKeys = keysDict.Count;
+      int currentKeyNum = 0;
+
+      // Iterate over each localization key
+      bool locFileUpdateNeeded = false;
       foreach (var locKey in keysDict) {
-        bool keyFound = false;
-        // Check C# code, prefabs, assets.
-        // Check configs for game
-        // Check Config code from engine...
-        if (locKey.Key.Contains(".plural") || locKey.Key.Contains(".singular") ||
-            StringContainedInDir(VariableNameFromLocalizationKey(locKey.Key), "Assets/", "*.cs", "LocalizationKeys.cs") ||
-            StringContainedInDir(locKey.Key, "Assets/", new string[] { ".prefab", ".asset" }) ||
-            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../lib/anki/products-cozmo-assets/", "*.json") ||
-            StringContainedInDir(locKey.Key, Application.dataPath + "/../../../resources/config/basestation/config", "*.json")
-            ) {
-          // orring for fast out
-          keyFound = true;
+        currentKeyNum++;
+
+        // Skip plural and singular keys
+        if (locKey.Key.Contains(".plural") || locKey.Key.Contains(".singular")) {
+          continue;
         }
+
+        // Update editor progress bar
+        EditorUtility.DisplayProgressBar(string.Format("Removing Unused Loc Keys - File {0}/{1}: {2}",
+                                                       currentFileNum, numTotalFiles, fileName),
+                                         string.Format("Key {0}/{1}: {2}", currentKeyNum, numLocKeys, locKey.Key),
+                                         (float)currentKeyNum / numLocKeys);
+
+        // Search files for key
+        bool keyFound = keySearchStrategy.Invoke(locKey.Key);
 
         // Consider a key not used if it is not in C# code, prefabs, or engine configs
         if (!keyFound) {
           localizationDictFile.Value.Translations.Remove(locKey.Key);
-          anyUpdateNeeded = true;
+          locFileUpdateNeeded = true;
           Debug.LogWarning("Not Found " + locKey.Key);
         }
       }
 
-      if (anyUpdateNeeded) {
+      // Write changes to file if any keys were removed
+      if (locFileUpdateNeeded) {
         File.WriteAllText(kLocalizationFolder + fileName + ".json", JsonConvert.SerializeObject(localizationDictFile.Value, Formatting.Indented));
+        anyFileChanged = true;
       }
     }
+
+    // Regenerate constant file
+    if (anyFileChanged) {
+      GenerateLocalizationKeyConstFile();
+    }
+
+    EditorUtility.ClearProgressBar();
   }
+
+  #endregion // Remove Unused Loc Keys
 
   private static List<string> AddFilesContainingStringInDir(ref List<string> filesContainingStr, string str, string dir, string searchPattern, string exclude = null) {
     foreach (var path in Directory.GetFiles(dir, searchPattern, SearchOption.AllDirectories)) {

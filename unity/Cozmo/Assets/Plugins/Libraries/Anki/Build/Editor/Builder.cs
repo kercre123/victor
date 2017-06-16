@@ -207,15 +207,13 @@ namespace Anki {
 
         // Copy engine resources
         // The 'animations' and 'animationGroups' directories come from '../../EXTERNALS/cozmo-assets/' (SVN) while
-        // the 'animationGroupMaps', 'behaviors' and 'DailyGoals' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
+        // the 'animationGroupMaps', and 'behaviors' directories come from '../../lib/anki/products-cozmo-assets/' (Git).
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", assetFolder + "/assets");
         FileUtil.DeleteFileOrDirectory(assetFolder + "/assets/.svn");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/animationGroupMaps",
                                                    assetFolder + "/assets/animationGroupMaps");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/cubeAnimationGroupMaps",
                                                    assetFolder + "/assets/cubeAnimationGroupMaps");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/DailyGoals",
-                                                   assetFolder + "/assets/DailyGoals");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/voiceCommand/exports",

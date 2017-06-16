@@ -18,38 +18,8 @@
       "/{*}"
     ]
   },
-  "unlockable.Unlock": {
-    "translation": "Unlock"
-  },
-  "unlockable.Locked": {
-    "translation": "Locked"
-  },
-  "unlockable.App": {
-    "translation": "App"
-  },
-  "unlockable.Upgrade": {
-    "translation": "Upgrade"
-  },
-  "unlockable.Available": {
-    "translation": "Available:"
-  },
-  "unlockable.PreReqNeeded.Description": {
-    "translation": "You need to unlock the {0} {1} first!"
-  },
   "unlockable.OSNotSupported.Description": {
     "translation": "Code Lab requires Android {0} or newer."    
-  },
-  "unlockable.BitsRequired.Title": {
-    "translation": "Not Enough Bits"
-  },
-  "unlockable.CurrencyRequired": {
-    "translation": "Not Enough {0}"
-  },
-  "unlockable.BitsRequired.Description": {
-    "translation": "Use {0} {1} to Unlock"
-  },
-  "unlockable.BitsRequired.EarnMore": {
-    "translation": "Earn more by completing Daily Goals"
   },
   "unlockable.Mystery.Title": {
     "translation": "????"
@@ -243,9 +213,6 @@
   "sparks.Spark.plural": {
     "translation": "Sparks"
   },
-  "unlockable.Unavailable.Description": {
-    "translation": "Unlock more upgrades before you can unlock {0}."
-  },
   "sparks.Spark.ConfirmQuit": {
     "translation": "Cozmo is Sparked!"
   },
@@ -258,7 +225,7 @@
   "sparks.NotEnoughSparks.Desc": {
     "translation": "Earn more by completing Daily Goals"
   },
-  "sparks.CubesNeedUpright.Title":{
+  "sparks.CubesNeedUpright.Title": {
     "translation": "Make Sure Cubes are Upright"
   },
   "sparks.CubesNeedUpright.Desc": {
