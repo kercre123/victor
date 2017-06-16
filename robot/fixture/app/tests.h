@@ -24,6 +24,7 @@ TestFunction* GetLifetestTestFunctions(void);
 TestFunction* GetRechargeTestFunctions(void);
 TestFunction* GetSoundTestFunctions(void);
 TestFunction* GetFacRevertTestFunctions(void);
+TestFunction* GetEMRobotTestFunctions(void);
     
 bool MotorDetect(void);
 TestFunction* GetMotor1LTestFunctions(void);

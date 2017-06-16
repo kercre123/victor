@@ -21,11 +21,11 @@
 #include "app/tests.h"
 #include "nvReset.h"
 
-u8 g_fixtureReleaseVersion = 102;
+u8 g_fixtureReleaseVersion = 103;
 #define BUILD_INFO "MP v1.5"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 0
+#define NOT_FOR_FACTORY 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -216,6 +216,7 @@ bool DetectDevice(void)
     case FIXTURE_RECHARGE2_TEST:
     case FIXTURE_PLAYPEN_TEST:
     case FIXTURE_SOUND_TEST:
+    case FIXTURE_EMROBOT_TEST:
       return RobotDetect();
     case FIXTURE_MOTOR1L_TEST:
     case FIXTURE_MOTOR1H_TEST:
@@ -413,6 +414,9 @@ static void MainExecution()
     case FIXTURE_ROBOT3_TEST:
     case FIXTURE_ROBOT3_CE_TEST:
       m_functions = GetRobotTestFunctions();
+      break;
+    case FIXTURE_EMROBOT_TEST:
+      m_functions = GetEMRobotTestFunctions();
       break;
     case FIXTURE_COZ187_TEST:
       m_functions = GetFacRevertTestFunctions();

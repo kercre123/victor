@@ -829,6 +829,24 @@ void mButtonTest(void)
   }
 }
 
+void DtmTest(void)
+{
+  const int freq = 2; //2=2402MHz, 42=2442MHz, 81=2481MHz
+  u8 dtm_status = 255;
+  
+  //EnableChargeComms();
+  ConsolePrintf("Starting DTM: tone 0dBm %dMHz\r\n", 2400+freq );
+  try{ SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status); } catch(int e) {}
+  ConsolePrintf("dtm status: %d\r\n", dtm_status);
+  
+  if( dtm_status == 255 ) {
+    if (g_allowOutdated)
+      return;
+    else
+      throw ERROR_BODY_OUTOFDATE; //old fw does not support fixture DTM
+  }
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetInfoTestFunctions(void)
 {
@@ -941,3 +959,16 @@ TestFunction* GetFacRevertTestFunctions(void)
   return functions;
 }
 
+TestFunction* GetEMRobotTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    //BatteryCheck,
+    DtmTest,
+    PlaypenWaitTest, //wait for robot removal
+    NULL
+  };
+
+  return functions;
+}
