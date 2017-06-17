@@ -851,7 +851,7 @@ void DtmTest(void)
   ConsolePrintf("Starting DTM: tone 0dBm %dMHz\r\n", 2400+freq );
   try{ SendCommand(TEST_DTM, freq, sizeof(dtm_status), (u8*)&dtm_status); } catch(int e) {}
   if( dtm_status == 0 )
-    ConsolePrintf("test-body-radio\r\n"); //PC software is waiting for this line to take RF measurements
+    ConsolePrintf("test-body-radio,%08x\r\n", body_esn); //PC software is waiting for this line to take RF measurements
   else
     ConsolePrintf("failed to enter DTM mode\r\n");
   
