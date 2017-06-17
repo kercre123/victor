@@ -78,6 +78,9 @@
   "faceEnrollment.label.lastScanned": {
     "translation": "Last Scanned:"
   },
+  "faceEnrollment.label.cozmoPrep": {
+    "translation": "Cozmo is getting ready to meet people..."
+  },
   "faceEnrollment.label.today": {
     "translation": "Today"
   }

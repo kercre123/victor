@@ -231,7 +231,6 @@ public static class LocalizationKeys {
   public const string kCodeLabTutorialSlide_dragBlocksToMakePrograms = "codeLab.tutorial.slide_dragBlocksToMakePrograms";
   public const string kCodeLabTutorialSlide_greenBlockFirst = "codeLab.tutorial.slide_greenBlockFirst";
   public const string kCodeLabProjectsModalTitle = "codeLab.projects.modalTitle";
-  public const string kCodeLabProjectsAttributionLabel = "codeLab.projects.attributionLabel";
   public const string kCodeLabProjectsTutorialLabel = "codeLab.projects.tutorialLabel";
   public const string kCodeLabProjectsNewProjectButtonLabel = "codeLab.projects.newProjectButtonLabel";
   public const string kCodeLabProjectsProjectTypeSampleProject = "codeLab.projects.projectType.sampleProject";
@@ -364,6 +363,7 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentLabelDayCountPlural = "faceEnrollment.label.dayCount.plural";
   public const string kFaceEnrollmentLabelHelpCozmoRecognize = "faceEnrollment.label.HelpCozmoRecognize";
   public const string kFaceEnrollmentLabelLastScanned = "faceEnrollment.label.lastScanned";
+  public const string kFaceEnrollmentLabelCozmoPrep = "faceEnrollment.label.cozmoPrep";
   public const string kFaceEnrollmentLabelToday = "faceEnrollment.label.today";
 
   #endregion

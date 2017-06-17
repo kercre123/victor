@@ -128,6 +128,9 @@ public abstract class GameBase : MonoBehaviour {
   public virtual List<PlayerInfo> GetPlayers() {
     return _PlayerInfo;
   }
+  protected virtual string GetLoadingTextKey() {
+    return LocalizationKeys.kMinigameLabelCozmoPrep;
+  }
 
   private class BlinkData {
     public int cubeID;
@@ -283,7 +286,8 @@ public abstract class GameBase : MonoBehaviour {
       newView.InitializeColor(UIColorPalette.ActivityBackgroundColor);
     }
 
-    newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
+    newView.ShowWideSlideWithText(GetLoadingTextKey(), null);
+
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
     newView.QuitChallengeConfirmed += HandleQuitConfirmed;

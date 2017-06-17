@@ -82,6 +82,10 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kFaceEnrollmentTriggers);
     }
 
+    protected override string GetLoadingTextKey() {
+      return LocalizationKeys.kFaceEnrollmentLabelCozmoPrep;
+    }
+
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
 
