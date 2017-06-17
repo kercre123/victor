@@ -31,42 +31,42 @@ Anki::Cozmo::CubeAccelComponent* sThis = nullptr;
 #if REMOTE_CONSOLE_ENABLED
 namespace {
   
-CONSOLE_VAR(u32, kCubeAccelObjectActiveID, "CubeAccelComponent.FakeAccel", 0);
+CONSOLE_VAR(u32, kCubeAccelWhichLightCube, "CubeAccelComponent.FakeAccel", 1); // LightCube 1, 2, or 3
 CONSOLE_VAR(f32, kCubeAccelMagnitude_mm_s_s, "CubeAccelComponent.FakeAccel", 3500.0f);
   
 void FakeCubeAcceleration(ConsoleFunctionContextRef context)
 {
   const TimeStamp_t timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  uint32_t objectID = kCubeAccelObjectActiveID;
+  uint32_t whichLightCube = kCubeAccelWhichLightCube;
   ActiveAccel accel(kCubeAccelMagnitude_mm_s_s, 0,0);
   ObjectAccel payload(timestamp,
-                       objectID,
+                       0,
                        accel);
   
   if(sThis != nullptr){
-    sThis->HandleObjectAccel(payload);
+    sThis->Dev_HandleObjectAccel(whichLightCube, payload);
   }
 }
 
 void FakeCubeShake(ConsoleFunctionContextRef context)
 {
-  uint32_t objectID = kCubeAccelObjectActiveID;
+  uint32_t whichLightCube = kCubeAccelWhichLightCube;
 
   const TimeStamp_t previousTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 1000;
   ActiveAccel positiveAccel(kCubeAccelMagnitude_mm_s_s, 0,0);
   ObjectAccel positivePayload(previousTimestamp,
-                              objectID,
+                              0,
                               positiveAccel);
   
   const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   ActiveAccel negativeAccel(-kCubeAccelMagnitude_mm_s_s, 0,0);
   ObjectAccel negativePayload(currentTimestamp,
-                              objectID,
+                              0,
                               negativeAccel);
   
   if(sThis != nullptr){
-    sThis->HandleObjectAccel(positivePayload);
-    sThis->HandleObjectAccel(negativePayload);
+    sThis->Dev_HandleObjectAccel(whichLightCube, positivePayload);
+    sThis->Dev_HandleObjectAccel(whichLightCube, negativePayload);
   }
 }
   
@@ -184,7 +184,13 @@ void CubeAccelComponent::ReceiveObjectAccelData(const AnkiEvent<RobotInterface::
 void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
 {
   const ActiveObject* object = _robot.GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
-  DEV_ASSERT(object != nullptr, "CubeAccelComponent.HandleObjectAccel.GetAccelForUnconnectedObject");
+  if(object == nullptr)
+  {
+    PRINT_NAMED_ERROR("CubeAccelComponent.HandleObjectAccel.NullObject",
+                      "No connected object with id %u found",
+                      objectAccel.objectID);
+    return;
+  }
   
   const uint32_t objectID = object->GetID();
   const auto& iter = _objectAccelHistory.find(objectID);
@@ -229,6 +235,29 @@ void CubeAccelComponent::CullToWindowSize(AccelHistory& accelHistory)
     if(!accelHistory.history.empty() && it != accelHistory.history.begin())
     {
       accelHistory.history.erase(accelHistory.history.begin(), it);
+    }
+  }
+}
+
+void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, ObjectAccel& objectAccel)
+{
+  static const std::map<u32, ObjectType> kLightCubeTypeToObjectType = {
+    {1, ObjectType::Block_LIGHTCUBE1},
+    {2, ObjectType::Block_LIGHTCUBE2},
+    {3, ObjectType::Block_LIGHTCUBE3}
+  };
+  
+  const auto& objectTypeIter = kLightCubeTypeToObjectType.find(whichLightCubeType);
+  if(objectTypeIter != kLightCubeTypeToObjectType.end())
+  {
+    BlockWorldFilter filter;
+    filter.SetAllowedTypes({objectTypeIter->second});
+
+    const ObservableObject* object = _robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+    if(object != nullptr)
+    {
+      objectAccel.objectID = object->GetID();
+      HandleObjectAccel(objectAccel);
     }
   }
 }

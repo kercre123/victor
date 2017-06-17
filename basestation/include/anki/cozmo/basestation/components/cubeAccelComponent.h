@@ -56,9 +56,12 @@ public:
   
   
   // Exposed for debug purposes - should not be called directly
-  void HandleObjectAccel(const ObjectAccel& objectAccel);
+  // whichLightCubeType should be 1, 2, or 3 for LightCube1, 2, or 3
+  void Dev_HandleObjectAccel(const u32 whichLightCubeType, ObjectAccel& accel);
 
 private:
+  
+  void HandleObjectAccel(const ObjectAccel& objectAccel);
   
   void ReceiveObjectAccelData(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
 
