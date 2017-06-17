@@ -1,4 +1,16 @@
 ----------------
+Release v103
+----------------
+
+Firmware:
+-syscon.bin: add DTM test command
+-esp.safe.bin: update for modified syscon
+-radio.bin: fixed channel scan bug in radio_read project (build omission)
+
+EMROBOT,EMCUBE:
+-new fixture modes for JRL testing
+
+----------------
 Release v102
 ----------------
 
