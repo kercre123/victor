@@ -15,7 +15,9 @@
 #define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_IActivity_H__
 
 #include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+
 #include "anki/common/types.h"
 #include "clad/types/activityTypes.h"
 #include "clad/types/animationTrigger.h"
@@ -32,7 +34,6 @@ namespace Cozmo {
 
 class IActivityStrategy;
 class IBehaviorChooser;
-class IBehavior;
 class Robot;
   
 
@@ -71,8 +72,8 @@ public:
   // Behaviors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // choose next behavior for this activity. Internally calls ChooseNextBehaviorInternal.
-  IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  // choose next behavior for this activity
+  IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior);
   
   virtual Result Update(Robot& robot) { return Result::RESULT_OK;}
 
@@ -95,7 +96,7 @@ public:
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
   
   // Used to access objectTapInteraction behaviors
-  std::vector<IBehavior*> GetObjectTapBehaviors();
+  std::vector<IBehaviorPtr> GetObjectTapBehaviors();
   
 protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
@@ -104,7 +105,7 @@ protected:
   virtual void OnDeselectedInternal(Robot& robot) {};
 
   // can be overridden by derived classes to chose behaviors. Defaults to using the config defined behavior chooser
-  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior);
+  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior);
   
   // Allows activities to pass up a display name from sub activities
   void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
@@ -157,7 +158,7 @@ private:
 
   // The last chosen interlude behavior. When an interlude behavior is chosen, it is always allowed to run to
   // completion before another behavior gets selected
-  IBehavior* _lastChosenInterludeBehavior = nullptr;
+  IBehaviorPtr _lastChosenInterludeBehavior;
   
   // activity name - defined in config or passed up from sub-activity
   ActivityID _id;

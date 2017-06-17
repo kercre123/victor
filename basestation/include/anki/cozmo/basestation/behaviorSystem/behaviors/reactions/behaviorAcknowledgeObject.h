@@ -55,7 +55,7 @@ protected:
   void LoadConfig(const Json::Value& config);
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;

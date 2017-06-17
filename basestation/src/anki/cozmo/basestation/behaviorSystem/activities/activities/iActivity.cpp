@@ -294,7 +294,7 @@ void IActivity::OnDeselected(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr IActivity::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
 
   // if an intlude behavior was chosen and is still running, return that
@@ -303,10 +303,10 @@ IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentR
     return _lastChosenInterludeBehavior;
   }
   else {
-    _lastChosenInterludeBehavior = nullptr;
+    _lastChosenInterludeBehavior.reset();
   }
   
-  IBehavior* ret = ChooseNextBehaviorInternal(robot, currentRunningBehavior);
+  IBehaviorPtr ret = ChooseNextBehaviorInternal(robot, currentRunningBehavior);
 
   const bool hasInterludeChooser = _interludeBehaviorChooserPtr != nullptr;
   const bool switchingBehaviors = ret != currentRunningBehavior;
@@ -315,7 +315,7 @@ IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentR
     // if we are changing behaviors, give the interlude choose an opportunity to run something. Pass in the
     // behavior that we would otherwise choose (The one that would run next) as "current"
     _lastChosenInterludeBehavior = _interludeBehaviorChooserPtr->ChooseNextBehavior(robot, ret);
-    if( !IBehavior::IsNoneOrNull(_lastChosenInterludeBehavior) ) {
+    if(_lastChosenInterludeBehavior != nullptr) {
       PRINT_CH_INFO("Behaviors", "IActivity.ChooseInterludeBehavior",
                     "Activity %s is inserting interlude %s between behaviors %s and %s",
                     GetIDStr(),
@@ -334,16 +334,18 @@ IBehavior* IActivity::ChooseNextBehavior(Robot& robot, const IBehavior* currentR
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr IActivity::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
+  IBehaviorPtr ret;
   if(ANKI_VERIFY(_behaviorChooserPtr.get() != nullptr,
                  "IActivity.ChooseNextBehaviorInternal.ChooserNotOverwritten",
                  "ChooseNextBehaviorInternal called without behavior chooser overwritten")){
     // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
     // note we pass
-    IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
+    IBehaviorPtr ret = _behaviorChooserPtr->ChooseNextBehavior(robot, currentRunningBehavior);
     return ret;
   }
+  
   return nullptr;
 }
 
@@ -380,7 +382,7 @@ void IActivity::SmartDisableReactionWithLock(Robot& robot,
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehavior*> IActivity::GetObjectTapBehaviors(){
+std::vector<IBehaviorPtr> IActivity::GetObjectTapBehaviors(){
   if(_behaviorChooserPtr != nullptr){
     return _behaviorChooserPtr->GetObjectTapBehaviors();
   }

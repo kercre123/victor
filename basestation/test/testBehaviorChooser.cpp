@@ -11,14 +11,18 @@
  * --gtest_filter=BehaviorChooser*
  **/
 
+// Access protected factory functions for test purposes
+#define protected public
 
 #include "gtest/gtest.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorContainer.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+
 
 
 using namespace Anki::Cozmo;
@@ -26,19 +30,19 @@ using namespace Anki::Cozmo;
 
 static const char* kTestBehavior1Json =
 "{"
-"   \"behaviorClass\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"Wait\","
 "   \"name\" : \"Test1\""
 "}";
 
 static const char* kTestBehavior2Json =
 "{"
-"   \"behaviorClass\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"Wait\","
 "   \"name\" : \"Test2\""
 "}";
 
 static const char* kTestBehavior3Json =
 "{"
-"   \"behaviorClass\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"Wait\","
 "   \"name\" : \"Test3\""
 "}";
 
@@ -46,7 +50,7 @@ static const char* kTestBehavior3Json =
 bool LoadTestBehaviors(Robot& testRobot, ScoringBehaviorChooser& behaviorChooser)
 {
   bool allAddedOk = true;
-  BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
+  BehaviorContainer& behaviorContainer = testRobot.GetBehaviorManager().GetBehaviorContainer();
 
   Json::Reader reader;
   
@@ -62,7 +66,7 @@ bool LoadTestBehaviors(Robot& testRobot, ScoringBehaviorChooser& behaviorChooser
     {
       // Factory will automatically delete the behaviors later when robot is destroyed
       
-      IBehavior* newBehavior = behaviorFactory.CreateBehavior(testBehaviorJson, testRobot);
+      IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson, testRobot);
       EXPECT_NE(newBehavior, nullptr);
       if (newBehavior)
       {

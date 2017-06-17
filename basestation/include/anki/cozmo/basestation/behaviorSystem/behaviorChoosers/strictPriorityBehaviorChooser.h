@@ -38,10 +38,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
 private:
-  std::vector<IBehavior*> _behaviors;
+  std::vector<IBehaviorPtr> _behaviors;
 };
    
 } // namespace Cozmo

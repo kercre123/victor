@@ -13,8 +13,8 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -38,13 +38,13 @@ RequestGameSelector::RequestGameSelector(Robot& robot)
 {
   // load the lets play mapping in from JSON
   const Json::Value& letsPlayConfig = robot.GetContext()->GetDataLoader()->GetLetsPlayWeightsConfig();
-  const auto& BF = robot.GetBehaviorFactory();
+  const auto& BM = robot.GetBehaviorManager();
   for(const auto& entry: letsPlayConfig){
     UnlockId unlockID = UnlockIdFromString(
               JsonTools::ParseString(entry,
                                      kUnlockIDConfigKey,
                                      "RequestGameSelector.UnlockID"));
-    IBehavior* behaviorPtr = BF.FindBehaviorByID(
+    IBehaviorPtr behaviorPtr = BM.FindBehaviorByID(
                    BehaviorIDFromString(
                      JsonTools::ParseString(entry,
                                             kBehaviorIDConfigKey,
@@ -64,10 +64,10 @@ RequestGameSelector::RequestGameSelector(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* RequestGameSelector::GetNextRequestGameBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr RequestGameSelector::GetNextRequestGameBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   // Map weight to behavior for unlocked
-  std::vector<std::pair<int, IBehavior*>> unlockedBehaviors;
+  std::vector<std::pair<int, IBehaviorPtr>> unlockedBehaviors;
   int totalWeight = 0;
   for(const auto& entry: _gameRequests){
     if(robot.GetProgressionUnlockComponent().IsUnlocked(entry._unlockID)){
@@ -83,7 +83,7 @@ IBehavior* RequestGameSelector::GetNextRequestGameBehavior(Robot& robot, const I
   }else if(unlockedBehaviors.size() == 1){
     _lastGameRequested = (*unlockedBehaviors.begin()).second;
   }else{
-    IBehavior* nextRequest = nullptr;
+    IBehaviorPtr nextRequest = nullptr;
     int randomIndicator = 0;
     BOUNDED_WHILE(kMaxRetrys, ((nextRequest == nullptr) ||
                                (nextRequest == _lastGameRequested)))

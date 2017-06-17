@@ -662,10 +662,10 @@ public class Robot : IRobot {
     LiftHeight = float.MaxValue;
     BatteryVoltage = float.MaxValue;
     _LastProcessedVisionFrameEngineTimestamp = 0;
-    CurrentBehaviorClass = BehaviorClass.NoneBehavior;
+    CurrentBehaviorClass = BehaviorClass.Wait;
     CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
     // usually this is unique
-    CurrentBehaviorID = BehaviorID.NoneBehavior;
+    CurrentBehaviorID = BehaviorID.Wait;
     CurrentBehaviorDisplayNameKey = "";
     HasHiccups = false;
 
@@ -1947,7 +1947,7 @@ public class Robot : IRobot {
     }
     else {
       ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
-      ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.NoneBehavior);
+      ExecuteBehaviorByExecutableType(Anki.Cozmo.ExecutableBehaviorType.Wait);
     }
   }
 

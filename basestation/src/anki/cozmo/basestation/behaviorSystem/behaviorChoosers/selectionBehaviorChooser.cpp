@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -49,16 +49,18 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
                                          this, std::placeholders::_1)));
   }
   
-  // Setup None Behavior now since it's always the fallback
-  Json::Value noneConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
-  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, noneConfig);
+  // Setup Behavior wait now since it's always the fallback
+  _behaviorWait = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::Wait);
+  DEV_ASSERT(_behaviorWait != nullptr &&
+             _behaviorWait->GetClass() == BehaviorClass::Wait,
+             "SelectionBehaviorChooser.BehaviorWaitNotLoaded");
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
-  auto runnable = [this, &robot](const IBehavior* behavior)
+  auto runnable = [this, &robot](const IBehaviorPtr behavior)
   {
     BehaviorPreReqRobot preReqData(robot);
     const bool behaviorIsRunning = nullptr != behavior && behavior->IsRunning();
@@ -92,9 +94,9 @@ IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBeh
   {
     return _selectedBehavior;
   }
-  else if (runnable(_behaviorNone))
+  else if (runnable(_behaviorWait))
   {
-    return _behaviorNone;
+    return _behaviorWait;
   }
   
   return nullptr;
@@ -105,12 +107,12 @@ IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBeh
 void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
 
-  IBehavior* selectedBehavior = nullptr;
+  IBehaviorPtr selectedBehavior;
 
   switch( event.GetData().GetTag() ) {
     case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByID: {
       const ExternalInterface::ExecuteBehaviorByID& msg = event.GetData().Get_ExecuteBehaviorByID();
-      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByID( msg.behaviorID );
+      selectedBehavior = _robot.GetBehaviorManager().FindBehaviorByID( msg.behaviorID );
       _numRuns = msg.numRuns;
 
       if( selectedBehavior != nullptr ) {
@@ -128,7 +130,7 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
     case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType:
     {
       const ExternalInterface::ExecuteBehaviorByExecutableType& msg = event.GetData().Get_ExecuteBehaviorByExecutableType();
-      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByExecutableType( msg.behaviorType );
+      selectedBehavior = _robot.GetBehaviorManager().FindBehaviorByExecutableType( msg.behaviorType );
       _numRuns = msg.numRuns;
       
       if( selectedBehavior != nullptr ) {
@@ -175,7 +177,7 @@ void SelectionBehaviorChooser::OnDeselected()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SelectionBehaviorChooser::SetProcessEnabled(const IBehavior* behavior, bool newValue)
+void SelectionBehaviorChooser::SetProcessEnabled(const IBehaviorPtr behavior, bool newValue)
 {
   if ( nullptr != behavior )
   {

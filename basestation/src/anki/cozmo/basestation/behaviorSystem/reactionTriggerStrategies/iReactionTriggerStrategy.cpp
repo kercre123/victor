@@ -102,14 +102,16 @@ void IReactionTriggerStrategy::AlwaysHandle(const GameToEngineEvent& event, cons
 
 }
 
-void IReactionTriggerStrategy::BehaviorThatStrategyWillTrigger(IBehavior *behavior)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IReactionTriggerStrategy::BehaviorThatStrategyWillTrigger(IBehaviorPtr behavior)
 {
   _DebugBehaviorID = behavior->GetID();
   BehaviorThatStrategyWillTriggerInternal(behavior);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IReactionTriggerStrategy::ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+bool IReactionTriggerStrategy::ShouldTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   //  if the user is forcing
   //  try to trigger normally but if that fails

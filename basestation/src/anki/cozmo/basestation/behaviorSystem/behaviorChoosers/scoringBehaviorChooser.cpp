@@ -13,8 +13,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
@@ -70,17 +70,13 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
   // clear previous
   ClearBehaviors();
 
-  // grab none behavior
-  Json::Value noneConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
-  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, noneConfig);
-
   // add behaviors to this chooser
   const Json::Value& behaviorsConfig = config[kBehaviorsInChooserConfigKey];
   DEV_ASSERT_MSG(!behaviorsConfig.isNull(),
                  "ScoringBehaviorChooser.ReloadFromConfig.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorsConfig.isNull()){
-    const BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
+    const BehaviorManager& behaviorManager = robot.GetBehaviorManager();
     
     for(const auto& behavior: behaviorsConfig)
     {
@@ -92,7 +88,7 @@ Result ScoringBehaviorChooser::ReloadFromConfig(Robot& robot, const Json::Value&
                      "Scoring Information Not Provided For %s",
                      BehaviorIDToString(behaviorID));
       // Find the behavior name in the factory
-      IBehavior* scoredBehavior =  behaviorFactory.FindBehaviorByID(behaviorID);
+      IBehaviorPtr scoredBehavior =  behaviorManager.FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(scoredBehavior != nullptr,
                      "ScoringBehaviorChooser.ReloadFromConfig.FailedToFindBehavior",
                      "Behavior not found: %s",
@@ -141,20 +137,20 @@ float ScoringBehaviorChooser::ScoreBonusForCurrentBehavior(float runningDuration
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ScoringBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ScoringBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   const float kRandomFactor = 0.1f;
   
   VIZ_BEHAVIOR_SELECTION_ONLY( VizInterface::RobotBehaviorSelectData robotBehaviorSelectData );
 
-  const IBehavior* runningBehavior = nullptr;
+  IBehaviorPtr runningBehavior;
   float runningBehaviorScore = 0.0f;
   
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior;
   float bestScore = 0.0f;
   for (const auto& kv : _idToScoredBehaviorMap)
   {
-    IBehavior* behavior = kv.second;
+    IBehaviorPtr behavior = kv.second;
     
     VizInterface::BehaviorScoreData scoreData;
 
@@ -232,15 +228,10 @@ IBehavior* ScoringBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehav
   
   VIZ_BEHAVIOR_SELECTION_ONLY( robot.GetContext()->GetVizManager()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
   
-  if (bestBehavior == nullptr)
-  {
-    bestBehavior = _behaviorNone;
-  }
-
   if( runningBehavior != nullptr && bestBehavior != runningBehavior ) {
     PRINT_NAMED_INFO("BehaviorChooser.SwitchBehaviors",
                       "behavior '%s' has score of %f, so is interrupting running behavior '%s' which scored %f",
-                      bestBehavior->GetIDStr().c_str(),
+                      bestBehavior != nullptr ? bestBehavior->GetIDStr().c_str() : "null",
                       bestScore,
                       runningBehavior->GetIDStr().c_str(),
                       runningBehaviorScore);
@@ -252,29 +243,12 @@ IBehavior* ScoringBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehav
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ScoringBehaviorChooser::ClearBehaviors()
 {
-  // behaviors should actually be smart pointers, since the factory can be destroyed before choosers
-
-  // clear behavior none
-  DEV_ASSERT((nullptr == _behaviorNone) || (_behaviorNone->IsOwnedByFactory()),
-             "ScoringBehaviorChooser.ClearBehaviors.BadNoneBehavior");
-  _behaviorNone = nullptr;
-  
-  // clear all others
-  #if ANKI_DEVELOPER_CODE
-  {
-    for( const auto& infoPair : _idToScoredBehaviorMap )
-    {
-      DEV_ASSERT((nullptr != infoPair.second) && (infoPair.second->IsOwnedByFactory()),
-                 "ScoringBehaviorChooser.ClearBehaviors.BehaviorNotOwnedByFactory");
-    }
-  }
-  #endif
   _idToScoredBehaviorMap.clear();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ScoringBehaviorChooser::TryAddBehavior(IBehavior* behavior)
+Result ScoringBehaviorChooser::TryAddBehavior(IBehaviorPtr behavior)
 {
   // try to add by behavior name
   BehaviorID behaviorID = behavior->GetID();
@@ -302,9 +276,9 @@ Result ScoringBehaviorChooser::TryAddBehavior(IBehavior* behavior)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ScoringBehaviorChooser::FindBehaviorInTableByID(BehaviorID behaviorID)
+IBehaviorPtr ScoringBehaviorChooser::FindBehaviorInTableByID(BehaviorID behaviorID)
 {
-  IBehavior* ret = nullptr;
+  IBehaviorPtr ret = nullptr;
   const auto& matchIt = _idToScoredBehaviorMap.find(behaviorID);
   if ( matchIt != _idToScoredBehaviorMap.end() ) {
     ret = matchIt->second;
@@ -314,9 +288,9 @@ IBehavior* ScoringBehaviorChooser::FindBehaviorInTableByID(BehaviorID behaviorID
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehavior*> ScoringBehaviorChooser::GetObjectTapBehaviors()
+std::vector<IBehaviorPtr> ScoringBehaviorChooser::GetObjectTapBehaviors()
 {
-  std::vector<IBehavior*> behaviors;
+  std::vector<IBehaviorPtr> behaviors;
   for(const auto& entry: _idToScoredBehaviorMap){
     behaviors.push_back(entry.second);
   }

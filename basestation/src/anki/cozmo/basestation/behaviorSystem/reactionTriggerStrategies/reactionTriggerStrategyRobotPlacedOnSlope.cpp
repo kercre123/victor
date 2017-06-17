@@ -34,12 +34,12 @@ ReactionTriggerStrategyRobotPlacedOnSlope::ReactionTriggerStrategyRobotPlacedOnS
   
 }
 
-void ReactionTriggerStrategyRobotPlacedOnSlope::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyRobotPlacedOnSlope::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
 }
   
-bool ReactionTriggerStrategyRobotPlacedOnSlope::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyRobotPlacedOnSlope::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   // Grab the current time:
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

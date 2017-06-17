@@ -33,7 +33,7 @@ namespace Onboarding {
     private int _CubesFoundTimes = 0;
     private float _StartTime;
     private OnboardingStateEnum _State = OnboardingStateEnum.Inactive;
-    private BehaviorClass _CurrBehavior = BehaviorClass.NoneBehavior;
+    private BehaviorClass _CurrBehavior = BehaviorClass.Wait;
 
     private void Awake() {
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
@@ -70,7 +70,7 @@ namespace Onboarding {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Onboarding__Play_Tab);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(BehaviorID.NoneBehavior);
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByID(BehaviorID.Wait);
         // re-enable reactionary behaviors.
         RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingCubeStageId);
       }

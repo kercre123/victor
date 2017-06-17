@@ -15,7 +15,6 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
@@ -68,34 +67,37 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
 , _requestGameSelector(new RequestGameSelector(robot))
 {
   // TODO: Will need to change how this works should we add more dance behaviors
-  _danceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::Dance_Mambo);
+  _danceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::Dance_Mambo);
   DEV_ASSERT(_danceBehavior != nullptr &&
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
-  _comeHereBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::VC_ComeHere);
+  _comeHereBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_ComeHere);
   DEV_ASSERT(_comeHereBehavior != nullptr &&
              _comeHereBehavior->GetClass() == BehaviorClass::DriveToFace,
              "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
   
-  _fistBumpBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FistBump);
+  _fistBumpBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FistBump);
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
              _fistBumpBehavior->GetClass() == BehaviorClass::FistBump,
              "VoiceCommandBehaviorChooser.FistBump.ImproperClassRetrievedForID");
-  _peekABooBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FPPeekABoo);
+  _peekABooBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FPPeekABoo);
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
-
+  
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
 }
 
-IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+
+IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
+  IBehaviorPtr emptyPtr;
+  
   auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
   if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.ChooseNextBehavior", "VoiceCommandComponent invalid"))
   {
-    return _behaviorNone;
+    return emptyPtr;
   }
   
   const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
@@ -174,7 +176,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const 
     {
       _doATrickSelector->RequestATrick(robot);
       BeginRespondingToCommand(currentCommand);
-      return _behaviorNone;
+      return emptyPtr;
     }
     case VoiceCommandType::ComeHere:
     {
@@ -200,7 +202,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const 
       {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
-        _voiceCommandBehavior = _behaviorNone;
+        _voiceCommandBehavior = emptyPtr;
       }
       else
       {
@@ -220,7 +222,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const 
       {
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
-        _voiceCommandBehavior = _behaviorNone;
+        _voiceCommandBehavior = emptyPtr;
       }
       else
       {
@@ -244,7 +246,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const 
       robot.GetExternalInterface()->Broadcast(std::move(m));
       
       BeginRespondingToCommand(currentCommand);
-      return _behaviorNone;
+      return emptyPtr;
     }
     
     // Yes Please and No Thank You do not trigger a behavior here
@@ -260,7 +262,7 @@ IBehavior* ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const 
     case VoiceCommandType::Count:
     {
       // We're intentionally not handling these types in ActivityVoiceCommand
-      return _behaviorNone;
+      return emptyPtr;
     }
   }
 }
@@ -277,23 +279,20 @@ bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandT
   return true;
 }
 
-bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outputBehavior) const
+bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehaviorPtr& outputBehavior) const
 {
-  BehaviorID whichRefuse = BehaviorID::NoneBehavior;
   Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
   {
-    whichRefuse = BehaviorID::VC_Refuse_Repair;
+    BehaviorID whichRefuse = BehaviorID::VC_Refuse_Repair;
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, outputBehavior);
   }
   else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
   {
-    whichRefuse = BehaviorID::VC_Refuse_Energy;
-  }
-  
-  if(whichRefuse != BehaviorID::NoneBehavior)
-  {
+    BehaviorID whichRefuse = BehaviorID::VC_Refuse_Energy;
     return CheckAndSetupRefuseBehavior(robot, whichRefuse, outputBehavior);
   }
+  
   return false;
 }
 
@@ -322,7 +321,7 @@ bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command
     }
   }
 }
-
+  
 bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const
 {
   switch(command)
@@ -351,9 +350,9 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
 
 bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
                                                        BehaviorID whichRefuse,
-                                                       IBehavior*& outputBehavior) const
+                                                       IBehaviorPtr& outputBehavior) const
 {
-  IBehavior* refuseBehavior = robot.GetBehaviorFactory().FindBehaviorByID(whichRefuse);
+  IBehaviorPtr refuseBehavior = robot.GetBehaviorManager().FindBehaviorByID(whichRefuse);
   DEV_ASSERT(refuseBehavior != nullptr &&
              refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
              "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");

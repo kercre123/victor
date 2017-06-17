@@ -46,7 +46,7 @@ ReactionTriggerStrategyFacePositionUpdated::ReactionTriggerStrategyFacePositionU
 }
 
 
-void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   if(!_desiredTargets.empty()){
     BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
@@ -66,7 +66,7 @@ void ReactionTriggerStrategyFacePositionUpdated::SetupForceTriggerBehavior(const
   }
 }
   
-bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyFacePositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   if(!_desiredTargets.empty()){
     BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(_desiredTargets, robot);
@@ -194,7 +194,7 @@ void ReactionTriggerStrategyFacePositionUpdated::AlwaysHandlePoseBasedInternal(c
   }
 }
 
-void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
+void ReactionTriggerStrategyFacePositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }

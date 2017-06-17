@@ -83,15 +83,6 @@ public class BehaviorPane : MonoBehaviour {
   private void HandleRespondAllBehaviorsList(G2U.RespondAllBehaviorsList message) {
     List<BehaviorID> behaviorList = new List<BehaviorID>(message.behaviors);
     behaviorList.Sort(delegate (BehaviorID s1, BehaviorID s2) {
-      if (s1 == BehaviorID.NoneBehavior) {
-        if (s2 == BehaviorID.NoneBehavior) {
-          return 0;
-        }
-        return -1;
-      }
-      if (s2 == BehaviorID.NoneBehavior) {
-        return 1;
-      }
       return s1.CompareTo(s2);
     });
     foreach (BehaviorID behaviorID in behaviorList) {

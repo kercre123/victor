@@ -27,7 +27,7 @@ class BehaviorReactToUnexpectedMovement : public IBehavior
 private:
   using super = IBehavior;
   
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToUnexpectedMovement(Robot& robot, const Json::Value& config);
   
 public:  

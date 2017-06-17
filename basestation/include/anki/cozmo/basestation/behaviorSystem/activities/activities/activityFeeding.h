@@ -44,7 +44,7 @@ public:
   virtual void StartedEating(Robot& robot, const int duration_s) override;
   
 protected:
-  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
@@ -83,11 +83,11 @@ private:
   std::vector<Signal::SmartHandle> _eventHandlers;
   
   // Behaviors that the chooser calls directly
-  IBehavior* _searchingForFaceBehavior              = nullptr;
-  IBehavior* _turnToFaceBehavior                    = nullptr;
-  IBehavior* _searchForCubeBehavior                 = nullptr;
-  BehaviorFeedingEat* _eatFoodBehavior              = nullptr;
-  BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;
+  IBehaviorPtr _searchingForFaceBehavior;
+  IBehaviorPtr _turnToFaceBehavior;
+  IBehaviorPtr _searchForCubeBehavior;
+  std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
+  std::shared_ptr<BehaviorPlayArbitraryAnim> _behaviorPlayAnimation;
   
   void UpdateActivityStage(FeedingActivityStage newStage, const std::string& stageName);
   

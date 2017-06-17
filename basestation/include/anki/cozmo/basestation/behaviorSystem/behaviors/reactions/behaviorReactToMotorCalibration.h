@@ -27,7 +27,7 @@ class BehaviorReactToMotorCalibration : public IBehavior
 private:
   using super = IBehavior;
   
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToMotorCalibration(Robot& robot, const Json::Value& config);
   
 public:  

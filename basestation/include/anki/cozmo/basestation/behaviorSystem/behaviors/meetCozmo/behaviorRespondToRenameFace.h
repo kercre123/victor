@@ -24,7 +24,7 @@ class BehaviorRespondToRenameFace : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorRespondToRenameFace(Robot& robot, const Json::Value& config);
   
 public:

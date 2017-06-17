@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_iReactionTriggerStrategy_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -29,7 +30,6 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-class IBehavior;
 
 namespace ReactionTriggerConst{
 static const BehaviorPreReqNone kNoPreReqs;
@@ -52,7 +52,7 @@ public:
   // behavior manager checks the return value of this function every tick
   // to see if the reactionary behavior has requested a computational switch
   // override to trigger a reactionary behavior based on something other than a message
-  bool ShouldTriggerBehavior(const Robot& robot, const IBehavior* behavior);
+  bool ShouldTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior);
   
   // if true, the previously running behavior will be resumed (if possible) after the behavior triggered by
   // this trigger is complete. Otherwise, a new behavior will be selected by the chooser.
@@ -68,7 +68,7 @@ public:
   
   // Derived classes can override this function if they want to add listeners
   // to the behavior they will trigger
-  void BehaviorThatStrategyWillTrigger(IBehavior* behavior);
+  void BehaviorThatStrategyWillTrigger(IBehaviorPtr behavior);
 
   // A random number generator all subclasses can share
   Util::RandomGenerator& GetRNG() const;
@@ -101,16 +101,16 @@ protected:
 
   // Debug user is about to force a behavior
   // each behavior needs to be able to handle "gracefully" a transition into starting the behavior
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) = 0;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) = 0;
 
   // behavior manager checks the return value of this function every tick
   // to see if the reactionary behavior has requested a computational switch
   // override to trigger a reactionary behavior based on something other than a message
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) = 0;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) = 0;
  
   // Derived classes can override this function if they want to add listeners
   // to the behavior they will trigger
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior){}
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior){}
   
   // Behaviors can call this if there are any needs changes
   void NeedActionCompleted(const NeedsActionId needActionId);

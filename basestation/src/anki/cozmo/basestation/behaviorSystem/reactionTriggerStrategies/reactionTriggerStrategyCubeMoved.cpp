@@ -79,7 +79,7 @@ ReactionTriggerStrategyCubeMoved::ReactionTriggerStrategyCubeMoved(Robot& robot,
   }});
 }
 
-void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   //  already failed to find a suitable cube so just grab the first valid cube
   auto objIter = _reactionObjects.begin();
@@ -100,7 +100,7 @@ void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& ro
   PRINT_NAMED_WARNING("ReactionTriggerStrategyCubeMoved.SetupForceTriggerBehavior", "No cubes found to force behavior");
 }
   
-bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   auto objIter = _reactionObjects.begin();
   while(objIter != _reactionObjects.end()){

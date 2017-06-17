@@ -32,7 +32,7 @@ namespace Cozmo {
   {
   protected:
     
-    friend class BehaviorFactory;
+    friend class BehaviorContainer;
     BehaviorFactoryCentroidExtractor(Robot& robot, const Json::Value& config);
     
   public:

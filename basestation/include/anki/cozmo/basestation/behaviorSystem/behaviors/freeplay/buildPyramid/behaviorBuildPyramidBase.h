@@ -34,7 +34,7 @@ class BehaviorBuildPyramidBase : public IBehavior
 protected:
   friend class BuildPyramidBehaviorChooser;
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorBuildPyramidBase(Robot& robot, const Json::Value& config);
 
   

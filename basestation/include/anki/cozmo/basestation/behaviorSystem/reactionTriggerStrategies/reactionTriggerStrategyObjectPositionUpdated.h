@@ -31,13 +31,13 @@ public:
   virtual void ClearDesiredTargets(Robot& robot) override;
   
 protected:
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
   void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) override;
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
   
 private:
-  BehaviorClass _classTriggerMapsTo = BehaviorClass::NoneBehavior;
+  BehaviorClass _classTriggerMapsTo = BehaviorClass::Wait;
                   
 };
 

@@ -23,7 +23,7 @@ class BehaviorReactToRobotOnBack : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config);
   
 public:

@@ -37,7 +37,7 @@ private:
   using BaseClass = IBehavior;
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorLookInPlaceMemoryMap(Robot& robot, const Json::Value& config);
   
 public:

@@ -27,7 +27,7 @@ class BehaviorCheckForStackAtInterval : public IBehavior
 {
 protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorCheckForStackAtInterval(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;

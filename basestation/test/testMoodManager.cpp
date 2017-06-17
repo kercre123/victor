@@ -11,12 +11,15 @@
  * --gtest_filter=MoodManager*
  **/
 
+// Access protected factory functions for test purposes
+#define protected public
 
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorContainer.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
@@ -392,8 +395,8 @@ TEST(MoodManager, DecayResetFromAwards)
 
 static const char* kTestBehavior1Json =
 "{"
-"   \"behaviorClass\" : \"NoneBehavior\","
-"   \"behaviorID\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"Wait\","
+"   \"behaviorID\" : \"Wait\","
 "   \"repetitionPenalty\" :"
 "   {"
 "     \"nodes\" :"
@@ -415,7 +418,7 @@ static const char* kTestBehavior1Json =
 // doesn't conflict score configs with kTestBehavior1Json
 static const char* kTestBehavior2Json =
 "{"
-"   \"behaviorClass\" : \"NoneBehavior\","
+"   \"behaviorClass\" : \"Wait\","
 "   \"behaviorID\" : \"AcknowledgeFace\","
 "   \"repetitionPenalty\" :"
 "   {"
@@ -441,7 +444,7 @@ TEST(MoodManager, BehaviorScoring)
   CozmoContext context{};
   Robot testRobot(0, &context);
   
-  BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
+  BehaviorContainer& behaviorFactory = testRobot.GetBehaviorManager().GetBehaviorContainer();
 
   MoodManager& moodManager = testRobot.GetMoodManager();
   TickMoodManager(moodManager, 1, kTickTimestep);
@@ -455,10 +458,10 @@ TEST(MoodManager, BehaviorScoring)
   ASSERT_TRUE(parsedOK);
   
   // have to alloc the behaviors - they're freed by the chooser
-  IBehavior* testBehaviorReqHappy = behaviorFactory.CreateBehavior(testBehavior1Json, testRobot);
+  IBehaviorPtr testBehaviorReqHappy = behaviorFactory.CreateBehavior(testBehavior1Json, testRobot);
   testBehaviorReqHappy->ReadFromScoredJson(testBehavior1Json);
 
-  IBehavior* testBehaviorReqCalm  = behaviorFactory.CreateBehavior(testBehavior2Json, testRobot);
+  IBehaviorPtr testBehaviorReqCalm  = behaviorFactory.CreateBehavior(testBehavior2Json, testRobot);
   testBehaviorReqCalm->ReadFromScoredJson(testBehavior2Json);
   ASSERT_NE(testBehaviorReqHappy, nullptr);
   ASSERT_NE(testBehaviorReqCalm,  nullptr);
@@ -484,7 +487,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+    IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -498,7 +501,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+    IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
@@ -512,7 +515,7 @@ TEST(MoodManager, BehaviorScoring)
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+    IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
@@ -532,7 +535,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
+      IBehaviorPtr behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, nullptr);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;

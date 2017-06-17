@@ -23,7 +23,7 @@ class BehaviorThinkAboutBeacons : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorThinkAboutBeacons(Robot& robot, const Json::Value& config);
   
 public:

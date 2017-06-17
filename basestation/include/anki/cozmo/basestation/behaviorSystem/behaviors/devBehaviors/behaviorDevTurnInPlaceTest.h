@@ -31,7 +31,7 @@ public:
 
 protected:
   
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorDevTurnInPlaceTest(Robot& robot, const Json::Value& config);
 
 private:

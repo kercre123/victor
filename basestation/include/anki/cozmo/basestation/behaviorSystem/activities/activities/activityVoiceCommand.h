@@ -44,22 +44,21 @@ public:
   ActivityVoiceCommand(Robot& robot, const Json::Value& config);
   virtual ~ActivityVoiceCommand();
   
+
   virtual Result Update(Robot& robot) override;
   
 protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  static constexpr IBehavior* _behaviorNone = nullptr;
-  
+    
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Checks if the voice command should be refused due to severe needs states
   // Returns true if the outputBehavior has been set to the refuse behavior due to our needs state
-  bool CheckRefusalDueToNeeds(Robot& robot, IBehavior*& outputBehavior) const;
+  bool CheckRefusalDueToNeeds(Robot& robot, IBehaviorPtr& outputBehavior) const;
   
   // Returns true if the command should be handled
   bool IsCommandValid(VoiceCommand::VoiceCommandType command) const;
@@ -67,22 +66,23 @@ protected:
   // Returns true if we should check needs state for this command
   bool ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const;
   
-  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const CozmoContext*   _context;
+
+  IBehaviorPtr          _voiceCommandBehavior;
+  IBehaviorPtr          _danceBehavior;
+  IBehaviorPtr          _comeHereBehavior;
+  IBehaviorPtr          _fistBumpBehavior;
+  IBehaviorPtr          _peekABooBehavior;
   
-  const CozmoContext*                   _context;
-  IBehavior*                            _voiceCommandBehavior = nullptr;
-  IBehavior*                            _danceBehavior        = nullptr;
-  IBehavior*                            _comeHereBehavior     = nullptr;
-  IBehavior*                            _fistBumpBehavior     = nullptr;
-  IBehavior*                            _peekABooBehavior     = nullptr;
-  std::unique_ptr<DoATrickSelector>     _doATrickSelector;
-  std::unique_ptr<RequestGameSelector>  _requestGameSelector;
-  std::function<void()>                 _doneRespondingTask;
+  std::unique_ptr<DoATrickSelector>    _doATrickSelector;
+  std::unique_ptr<RequestGameSelector> _requestGameSelector;
+  std::function<void()> _doneRespondingTask;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -93,7 +93,7 @@ private:
   
   // Setups up the refuse behavior to play the animTrigger
   // Returns true if the outputBehavior has been set to the refuse behavior
-  bool CheckAndSetupRefuseBehavior(Robot& robot, BehaviorID whichRefuse, IBehavior*& outputBehavior) const;
+  bool CheckAndSetupRefuseBehavior(Robot& robot, BehaviorID whichRefuse, IBehaviorPtr& outputBehavior) const;
   
   // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
   // do once we're done responding to the command

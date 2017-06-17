@@ -44,7 +44,7 @@ ReactionTriggerStrategyObjectPositionUpdated::ReactionTriggerStrategyObjectPosit
   });
 }
   
-void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) {
+void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) {
   if (HasDesiredReactionTargets(robot)){
     std::set<s32> targets;
     GetDesiredReactionTargets(robot, targets);
@@ -58,7 +58,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(con
   }
 }
   
-bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   const bool robotInValidState = kEnableObjectAcknowledgement &&
                                   !robot.GetCarryingComponent().IsCarryingObject() &&
@@ -107,7 +107,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
   {
     case EngineToGameTag::RobotObservedObject: {
       // only update target blocks if we are running
-      const IBehavior* currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
+      const IBehaviorPtr currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
       if(currentBehavior != nullptr &&
          currentBehavior->GetClass() != _classTriggerMapsTo){
         HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
@@ -131,7 +131,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::AlwaysHandlePoseBasedInternal
   
 }
 
-void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
+void ReactionTriggerStrategyObjectPositionUpdated::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
   _classTriggerMapsTo = behavior->GetClass();

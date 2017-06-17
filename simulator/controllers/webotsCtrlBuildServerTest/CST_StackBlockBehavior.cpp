@@ -348,7 +348,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
                                             NEAR( ABS(pose2.GetTranslation().z() - pose1.GetTranslation().z()), 44.0f, 10.0f)) {
         // Cancel the stack behavior:
         SendMessage(ExternalInterface::MessageGameToEngine(
-                       ExternalInterface::ExecuteBehaviorByID(BehaviorID::NoneBehavior, -1)));
+                       ExternalInterface::ExecuteBehaviorByID(BehaviorID::Wait, -1)));
         // Now attempt to pick up the top block:
         _pickupObjectResult = ActionResult::RUNNING;
         SendPickupObjectByType(_topCube);

@@ -44,6 +44,7 @@ public:
   ActivitySparked(Robot& robot, const Json::Value& config);
   ~ActivitySparked();
   
+
   virtual Result Update(Robot& robot) override;
   
   // ==================== Event/Message Handling ====================
@@ -52,7 +53,7 @@ public:
   void HandleMessage(const T& msg);
 
 protected:
-  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
@@ -79,9 +80,9 @@ private:
   std::vector<Signal::SmartHandle> _signalHandles;
   
   // Created with factory
-  BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;
+  std::shared_ptr<BehaviorPlayArbitraryAnim> _behaviorPlayAnimation;
   // To clear objects to be acknowledged when sparked
-  BehaviorAcknowledgeObject* _behaviorAcknowledgeObject = nullptr;
+  std::shared_ptr<BehaviorAcknowledgeObject> _behaviorAcknowledgeObject;
   
   // Reset each time spark is activated
   float _timeChooserStarted;
@@ -116,11 +117,11 @@ private:
   
   // for COZMO-8914 - peek a boo grabbed directly so that it can know when
   // a spark starts and when it has to play its get out;
-  BehaviorPeekABoo* _behaviorPeekABoo;
+  std::shared_ptr<BehaviorPeekABoo> _behaviorPeekABoo;
   
-  IBehavior* _behaviorNone = nullptr;
+  IBehaviorPtr _behaviorWait = nullptr;
   
-  IBehavior* SelectNextSparkInternalBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  IBehaviorPtr SelectNextSparkInternalBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior);
 
 };
 

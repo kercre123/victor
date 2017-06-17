@@ -24,7 +24,7 @@ class BehaviorFindFaces : public BehaviorExploreLookAroundInPlace
 protected:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorFindFaces(Robot& robot, const Json::Value& config);
   
 public:

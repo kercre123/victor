@@ -92,7 +92,7 @@ template<typename TYPE> class AnkiEvent;
 class IBehavior
 {
 protected:  
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   // Allows helpers to run StartActing calls directly on the behavior that
   // delegated to them
   friend class IHelper;
@@ -106,12 +106,10 @@ protected:
 public:
   using Status = BehaviorStatus;
   
-  static Json::Value CreateDefaultBehaviorConfig(BehaviorID behaviorID);
+  static Json::Value CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID);
   static BehaviorID ExtractBehaviorIDFromConfig(const Json::Value& config, const std::string& fileName = "");
+  static BehaviorClass ExtractBehaviorClassFromConfig(const Json::Value& config);
 
-  // returns true if the behavior is a NoneBehavior or a nullptr is passed in
-  static bool IsNoneOrNull(const IBehavior* behavior);
-  
   bool IsRunning() const { return _isRunning; }
   // returns true if any action from StartAction is currently running, indicating that the behavior is
   // likely waiting for something to complete
@@ -175,8 +173,6 @@ public:
   // Return true if the behavior explicitly handles the case where the robot starts holding the block
   // Equivalent to !robot.IsCarryingObject() in IsRunnable()
   virtual bool CarryingObjectHandledInternally() const = 0;
-
-  bool IsOwnedByFactory() const { return _isOwnedByFactory; }
 
   // Helper function for having DriveToObjectActions use the second closest preAction pose useful when the action
   // is being retried or the action failed due to visualVerification
@@ -436,8 +432,6 @@ protected:
   // due to a double tap
   virtual void StopInternalFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternal(robot); } }
   
-  inline void SetBehaviorClass(BehaviorClass classID) {if(_behaviorClassID == BehaviorClass::NoneBehavior){ _behaviorClassID = classID;}};
-
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();
   
@@ -476,7 +470,7 @@ private:
   
   std::string _displayNameKey = "";
   std::string _debugStateName = "";
-  BehaviorClass _behaviorClassID = BehaviorClass::NoneBehavior;
+  BehaviorClass _behaviorClassID;
   ExecutableBehaviorType _executableType;
   
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
@@ -502,7 +496,6 @@ private:
   bool _isRunning;
   // should only be used to allow StartActing to start while a behavior is resuming
   bool _isResuming;
-  bool _isOwnedByFactory;
   
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop

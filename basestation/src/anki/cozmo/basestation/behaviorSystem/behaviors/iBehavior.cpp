@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
@@ -48,6 +47,7 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
+static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
 static const char* kDisplayNameKey                   = "displayNameKey";
 
@@ -125,17 +125,12 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kSparkBehaviorDisablesAr
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Json::Value IBehavior::CreateDefaultBehaviorConfig(BehaviorID behaviorID)
+Json::Value IBehavior::CreateDefaultBehaviorConfig(BehaviorClass behaviorClass, BehaviorID behaviorID)
 {
   Json::Value config;
+  config[kBehaviorClassKey] = BehaviorClassToString(behaviorClass);
   config[kBehaviorIDConfigKey] = BehaviorIDToString(behaviorID);
   return config;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IBehavior::IsNoneOrNull(const IBehavior* behavior)
-{
-  return ( behavior == nullptr ) || ( behavior->GetClass() == BehaviorClass::NoneBehavior );
 }
 
   
@@ -164,6 +159,16 @@ BehaviorID IBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
   
   return BehaviorIDFromString(behaviorID_str);
 }
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorClass IBehavior::ExtractBehaviorClassFromConfig(const Json::Value& config)
+{
+  const Json::Value& behaviorTypeJson = config[kBehaviorClassKey];
+  const char* behaviorTypeString = behaviorTypeJson.isString() ? behaviorTypeJson.asCString() : "";
+  return BehaviorClassFromString(behaviorTypeString);
+}
+
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -174,13 +179,13 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 , _startedRunningTime_s(0.0f)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
+, _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _executableType(ExecutableBehaviorType::Count)
 , _requiredUnlockId( UnlockId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isRunning(false)
 , _isResuming(false)
-, _isOwnedByFactory(false)
 {
   if(!ReadFromJson(config)){
     PRINT_NAMED_WARNING("IBehavior.ReadFromJson.Failed",
@@ -269,7 +274,6 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::~IBehavior()
 {
-  DEV_ASSERT(!IsOwnedByFactory(), "Behavior must be removed from factory before destroying it!");
 }
   
   

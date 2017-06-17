@@ -98,13 +98,13 @@ ReactionTriggerStrategyHiccup::~ReactionTriggerStrategyHiccup()
   _this = nullptr;
 }
 
-void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   BehaviorPreReqAnimSequence req(GetHiccupAnim());
   behavior->IsRunnable(req);
 }
   
-bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   // If Hiccups are not enabled then do nothing
   if(!robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::Hiccups))

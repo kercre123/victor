@@ -24,7 +24,7 @@ class BehaviorDriveOffCharger : public IBehavior
 protected:
 
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;  
+  friend class BehaviorContainer;  
   BehaviorDriveOffCharger(Robot& robot, const Json::Value& config);
 
 public:

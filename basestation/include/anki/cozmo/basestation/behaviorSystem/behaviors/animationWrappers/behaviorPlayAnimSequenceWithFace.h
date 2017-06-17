@@ -24,7 +24,7 @@ using BaseClass = BehaviorPlayAnimSequence;
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorPlayAnimSequenceWithFace(Robot& robot, const Json::Value& config);
 
 public:

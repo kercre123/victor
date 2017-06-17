@@ -46,7 +46,7 @@ ReactionTriggerStrategyPetInitialDetection::ReactionTriggerStrategyPetInitialDet
   
 }
 
-void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   const auto & petWorld = robot.GetPetWorld();
   const auto & pets = petWorld.GetAllKnownPets();
@@ -70,7 +70,7 @@ void ReactionTriggerStrategyPetInitialDetection::SetupForceTriggerBehavior(const
 // Called at the start of each tick when behavior is runnable but not active.
 // Return true if behavior should become active.
 //
-bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyPetInitialDetection::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   // Keep track of petIDs observed during cooldown.  This prevents Cozmo from
   // suddenly reacting to a "known" pet when cooldown expires.
@@ -133,7 +133,7 @@ bool ReactionTriggerStrategyPetInitialDetection::RecentlyReacted() const
 }
   
   
-void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior)
+void ReactionTriggerStrategyPetInitialDetection::BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior)
 {
   behavior->AddListener(this);
 }

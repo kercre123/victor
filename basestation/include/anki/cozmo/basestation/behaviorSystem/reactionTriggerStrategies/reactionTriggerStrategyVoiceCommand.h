@@ -33,8 +33,8 @@ public:
   
 protected:
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
 
 private:
   bool                                  _shouldTrigger = false;

@@ -30,7 +30,7 @@ using BaseClass = BehaviorPlayAnimSequence;
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorPlayArbitraryAnim(Robot& robot, const Json::Value& config);
 
 public:

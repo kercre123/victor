@@ -36,7 +36,7 @@
 //private:
 //  
 //  // Enforce creation through BehaviorFactory
-//  friend class BehaviorFactory;
+//  friend class BehaviorContainer;
 //  BehaviorExploreMarkedCube(Robot& robot, const Json::Value& config);
 //  
 //public:

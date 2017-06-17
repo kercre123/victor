@@ -29,7 +29,7 @@ public:
 
 protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorPutDownBlock(Robot& robot, const Json::Value& config);
 
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;

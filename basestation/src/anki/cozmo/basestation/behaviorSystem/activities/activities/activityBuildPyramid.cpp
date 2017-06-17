@@ -21,7 +21,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/buildPyramid/behaviorPyramidThankYou.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/scoringBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRespondPossiblyRoll.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
@@ -204,48 +203,48 @@ ActivityBuildPyramid::ActivityBuildPyramid(Robot& robot, const Json::Value& conf
   ///////
   
   // Get the build pyramid base behavior
-  IBehavior* baseRaw = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::BuildPyramidBase);
+  IBehaviorPtr baseRaw = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::BuildPyramidBase);
   DEV_ASSERT(baseRaw != nullptr &&
              baseRaw->GetClass() == BehaviorClass::BuildPyramidBase,
              "BuildPyramidBehaviorChooser.BuildPyramidBase.ImproperClassRetrievedForName");
   
-  _behaviorBuildPyramidBase = dynamic_cast<BehaviorBuildPyramidBase*>(baseRaw);
+  _behaviorBuildPyramidBase = std::static_pointer_cast<BehaviorBuildPyramidBase>(baseRaw);
   DEV_ASSERT(_behaviorBuildPyramidBase,
              "BuildPyramidBehaviorChooser.BehaviorBuildBase.PointerNotSet");
   
   // Get the build pyramid behavior
-  IBehavior* pyramidRaw = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::BuildPyramid);
+  IBehaviorPtr pyramidRaw = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::BuildPyramid);
   DEV_ASSERT(pyramidRaw != nullptr &&
              pyramidRaw->GetClass() == BehaviorClass::BuildPyramid,
              "BuildPyramidBehaviorChooser.BuildPyramid.ImproperClassRetrievedForName");
   
-  _behaviorBuildPyramid = dynamic_cast<BehaviorBuildPyramid*>(pyramidRaw);
+  _behaviorBuildPyramid = std::static_pointer_cast<BehaviorBuildPyramid>(pyramidRaw);
   DEV_ASSERT(_behaviorBuildPyramid,
              "BuildPyramidBehaviorChooser.BehaviorBuildPyramid.PointerNotSet");
   
   // Get the put down cube behavior
-  IBehavior* putDownRaw = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::PyramidPutDownBlock);
+  IBehaviorPtr putDownRaw = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PyramidPutDownBlock);
   DEV_ASSERT(putDownRaw != nullptr &&
              putDownRaw->GetClass() == BehaviorClass::PutDownBlock,
              "BuildPyramidBehaviorChooser.PutDownBlock.ImproperClassRetrievedForName");
   
   // Get the respond possibly roll behavior
-  IBehavior* respondRoll = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::PyramidRespondPossiblyRoll);
+  IBehaviorPtr respondRoll = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PyramidRespondPossiblyRoll);
   DEV_ASSERT(respondRoll != nullptr &&
              respondRoll->GetClass() == BehaviorClass::RespondPossiblyRoll,
              "BuildPyramidBehaviorChooser.RespondRoll.ImproperClassRetrievedForName");
   
-  _behaviorRespondPossiblyRoll = dynamic_cast<BehaviorRespondPossiblyRoll*>(respondRoll);
+  _behaviorRespondPossiblyRoll = std::static_pointer_cast<BehaviorRespondPossiblyRoll>(respondRoll);
   DEV_ASSERT(_behaviorRespondPossiblyRoll,
              "BuildPyramidBehaviorChooser.RespondRoll.PointerNotSet");
   
   // Get the pyramid thank you behavior
-  IBehavior* pyramidThankYou = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::PyramidThankYou);
+  IBehaviorPtr pyramidThankYou = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PyramidThankYou);
   DEV_ASSERT(pyramidThankYou != nullptr &&
              pyramidThankYou->GetClass() == BehaviorClass::PyramidThankYou,
              "BuildPyramidBehaviorChooser.PyramidThankYou.ImproperClassRetrievedForName");
   
-  _behaviorPyramidThankYou = dynamic_cast<BehaviorPyramidThankYou*>(pyramidThankYou);
+  _behaviorPyramidThankYou = std::static_pointer_cast<BehaviorPyramidThankYou>(pyramidThankYou);
   DEV_ASSERT(_behaviorRespondPossiblyRoll,
              "BuildPyramidBehaviorChooser.PyramidThankYou.PointerNotSet");
   
@@ -513,7 +512,7 @@ void ActivityBuildPyramid::UpdateStateTrackerForUnrecognizedID(const ObjectID& o
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityBuildPyramid::UpdatePyramidAssignments(const BehaviorBuildPyramidBase* behavior)
+void ActivityBuildPyramid::UpdatePyramidAssignments(const std::shared_ptr<BehaviorBuildPyramidBase> behavior)
 {
   for(auto& entry: _pyramidCubePropertiesTrackers){
     if(entry.second.GetPyramidAssignment() != ActivityBuildPyramid::PyramidAssignment::None){
@@ -561,11 +560,11 @@ void ActivityBuildPyramid::UpdatePyramidAssignments(const BehaviorBuildPyramidBa
 //////////////////////////////////////////////
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(currentRunningBehavior);
   
-  IBehavior* behavior = nullptr;
+  IBehaviorPtr behavior = nullptr;
   switch(_chooserPhase){
     case ChooserPhase::SetupBlocks:
     {
@@ -596,7 +595,7 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const 
   
   
   // Thank the user if possible
-  IBehavior* customBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
+  IBehaviorPtr customBehavior = CheckForShouldThankUser(robot, currentRunningBehavior);
   
   // Otherwise, see if we have to roll or respond to a block
   if(customBehavior == nullptr){
@@ -611,21 +610,21 @@ IBehavior* ActivityBuildPyramid::ChooseNextBehaviorInternal(Robot& robot, const 
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
-                                                          const IBehavior* currentRunningBehavior)
+IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorSetup(Robot& robot,
+                                                          const IBehaviorPtr currentRunningBehavior)
 {
   return _activeBehaviorChooser->ChooseNextBehavior(robot, currentRunningBehavior);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
-                                                             const IBehavior* currentRunningBehavior)
+IBehaviorPtr  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
+                                                             const IBehaviorPtr currentRunningBehavior)
 {
   //  Priority of functions:
   //    Build full pyramid -> Build pyramid base -> Search/fast forward behaviors
   
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior = nullptr;
   BehaviorPreReqRobot kRobotPreReq(robot);
   
   if(_behaviorBuildPyramid->IsRunning() ||
@@ -660,12 +659,12 @@ IBehavior*  ActivityBuildPyramid::ChooseNextBehaviorBuilding(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
-                                                                const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
+                                                                const IBehaviorPtr currentRunningBehavior)
 {
   // Run through all of the axis changes to find if thank you can run
   // and to update the pyramidCubeProperties tracking information
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior = nullptr;
   for(const auto& objectID: _objectAxisChangeIDs){
     PyramidCubePropertiesTracker* pyramidCubeProperties = nullptr;
     
@@ -711,8 +710,8 @@ IBehavior* ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
-                                                                     const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
+                                                                     const IBehaviorPtr currentRunningBehavior)
 {
   // If any of the manually set behaviors are running, keep them running
   if(currentRunningBehavior != nullptr &&
@@ -723,7 +722,7 @@ IBehavior* ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
     }
   }
   
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior = nullptr;
   BehaviorPreReqNone kNoPreReqs;
   int numberOfCubesOnSide = 0;
   
@@ -774,7 +773,7 @@ IBehavior* ActivityBuildPyramid::CheckForResponsePossiblyRoll(Robot& robot,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityBuildPyramid::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehavior* currentRunningBehavior)
+void ActivityBuildPyramid::UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehaviorPtr currentRunningBehavior)
 {
   // The respond possibly roll behavior may have updated properties while running
   const bool respondCurrentlyRunning = currentRunningBehavior != nullptr &&

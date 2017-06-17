@@ -123,7 +123,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotPickedUp:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::InAir;
       });
       
@@ -152,7 +152,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotOnBack:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::OnBack;
       });
       
@@ -162,7 +162,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotOnFace:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::OnFace;
       });
       
@@ -172,7 +172,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotOnSide:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehavior* behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::OnLeftSide
             || robot.GetOffTreadsState() == OffTreadsState::OnRightSide;
       });

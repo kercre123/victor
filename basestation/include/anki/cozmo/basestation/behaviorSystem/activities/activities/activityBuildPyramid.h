@@ -42,7 +42,6 @@ public:
   ActivityBuildPyramid(Robot& robot, const Json::Value& config);
   ~ActivityBuildPyramid();
   
-  
   virtual Result Update(Robot& robot) override;
   
   enum class PyramidAssignment{
@@ -53,7 +52,7 @@ public:
   };
   
 protected:
-  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   virtual void OnSelectedInternal(Robot& robot) override;
   virtual void OnDeselectedInternal(Robot& robot) override;
@@ -94,10 +93,10 @@ private:
   std::set<ObjectID> _objectAxisChangeIDs;
   
   // Created with factory
-  BehaviorPyramidThankYou* _behaviorPyramidThankYou = nullptr;
-  BehaviorRespondPossiblyRoll* _behaviorRespondPossiblyRoll = nullptr;
-  BehaviorBuildPyramidBase* _behaviorBuildPyramidBase = nullptr;
-  BehaviorBuildPyramid* _behaviorBuildPyramid = nullptr;
+  std::shared_ptr<BehaviorPyramidThankYou> _behaviorPyramidThankYou;
+  std::shared_ptr<BehaviorRespondPossiblyRoll> _behaviorRespondPossiblyRoll;
+  std::shared_ptr<BehaviorBuildPyramidBase> _behaviorBuildPyramidBase;
+  std::shared_ptr<BehaviorBuildPyramid> _behaviorBuildPyramid;
   
   
   ////////
@@ -129,25 +128,25 @@ private:
                                             PyramidCubePropertiesTracker*& lightState);
   void CheckBlockWorldCubeOrientations(Robot& robot);
   void UpdateStateTrackerForUnrecognizedID(const ObjectID& objID);
-  void UpdatePyramidAssignments(const BehaviorBuildPyramidBase* behavior);
+  void UpdatePyramidAssignments(const std::shared_ptr<BehaviorBuildPyramidBase> behavior);
   
   ////////
   /// Functions relating to choose next behaivor
   ///////
   
   // sub-behaviors to keep choosing behavior code cleaner based on stage
-  IBehavior* ChooseNextBehaviorSetup(Robot& robot, const IBehavior* currentRunningBehavior);
-  IBehavior* ChooseNextBehaviorBuilding(Robot& robot, const IBehavior* currentRunningBehavior);
+  IBehaviorPtr ChooseNextBehaviorSetup(Robot& robot, const IBehaviorPtr currentRunningBehavior);
+  IBehaviorPtr ChooseNextBehaviorBuilding(Robot& robot, const IBehaviorPtr currentRunningBehavior);
   
   // These behaviors return a behavior pointer that should be choosen if they want something run
   // and nullptr if the requester should select a behavior given its own criteria
-  IBehavior* CheckForShouldThankUser(Robot& robot, const IBehavior* currentRunningBehavior);
-  IBehavior* CheckForResponsePossiblyRoll(Robot& robot, const IBehavior* currentRunningBehavior);
+  IBehaviorPtr CheckForShouldThankUser(Robot& robot, const IBehaviorPtr currentRunningBehavior);
+  IBehaviorPtr CheckForResponsePossiblyRoll(Robot& robot, const IBehaviorPtr currentRunningBehavior);
   
   // Some behaviors run directly by the chooser set properties once they've reached a
   // certain state.  This function ticks those behaviors when appropriate to find out
   // whether the PropertiesTracker needs to be updated to reflect the behavior's success
-  void UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehavior* currentRunningBehavior);
+  void UpdatePropertiesTrackerBasedOnRespondPossiblyRoll(const IBehaviorPtr currentRunningBehavior);
   
   
   ////////

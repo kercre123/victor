@@ -34,7 +34,7 @@ class BehaviorExpressNeeds : public IBehavior
 {
 protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorExpressNeeds(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;

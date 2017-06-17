@@ -32,10 +32,10 @@ public:
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return false; }
   
 protected:
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
 
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void ResetTrigger(bool updateLastCompletionTime) override;
   

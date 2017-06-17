@@ -10,13 +10,16 @@
  *
  **/
 
+// Access protected factory functions for test purposes
+#define protected public
+
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorContainer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
@@ -33,17 +36,17 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CreateStackBehavior(Robot& robot, IBehavior*& stackBehavior)
+void CreateStackBehavior(Robot& robot, IBehaviorPtr& stackBehavior)
 {
   ASSERT_TRUE(stackBehavior == nullptr) << "test bug: should not have behavior yet";
 
-  auto& factory = robot.GetBehaviorManager().GetBehaviorFactory();
+  auto& behaviorContainer = robot.GetBehaviorManager().GetBehaviorContainer();
 
-  // Arbitrarily using the NoneBehavior ID - no effect on implementation details
+  // Arbitrarily using the Wait ID - no effect on implementation details
   const std::string& configStr =
     R"({
          "behaviorClass": "StackBlocks",
-         "behaviorID": "NoneBehavior",
+         "behaviorID": "Wait",
          "flatScore": 0.8
        })";
 
@@ -52,10 +55,9 @@ void CreateStackBehavior(Robot& robot, IBehavior*& stackBehavior)
   bool parseOK = reader.parse( configStr.c_str(), config);
   ASSERT_TRUE(parseOK) << "failed to parse JSON, bug in the test";
   
-  stackBehavior = factory.CreateBehavior(BehaviorClass::StackBlocks,
-                                         robot,
-                                         config,
-                                         BehaviorFactory::NameCollisionRule::Fail);
+  stackBehavior = behaviorContainer.CreateBehavior(BehaviorClass::StackBlocks,
+                                                   robot,
+                                                   config);
   ASSERT_TRUE(stackBehavior != nullptr);
 }
 
@@ -108,7 +110,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SetupStackTest(Robot& robot, IBehavior*& stackBehavior, ObjectID& objID1, ObjectID& objID2)
+void SetupStackTest(Robot& robot, IBehaviorPtr& stackBehavior, ObjectID& objID1, ObjectID& objID2)
 {
   auto& aiComponent = robot.GetAIComponent();
   
@@ -166,7 +168,7 @@ TEST(StackBlocksBehavior, InitBehavior)
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
 
-  IBehavior* stackBehavior = nullptr;
+  IBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, objID1, objID2);
   
@@ -184,7 +186,7 @@ TEST(StackBlocksBehavior, DeleteCubeCrash)
   auto& blockWorld = robot.GetBlockWorld();
   auto& aiComponent = robot.GetAIComponent();
 
-  IBehavior* stackBehavior = nullptr;
+  IBehaviorPtr stackBehavior = nullptr;
   ObjectID objID1, objID2;
   SetupStackTest(robot, stackBehavior, objID1, objID2);
 

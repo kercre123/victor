@@ -27,7 +27,8 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 
 
-static constexpr BehaviorID emptyID = BehaviorID::NoneBehavior;
+static constexpr BehaviorClass emptyClass = BehaviorClass::Wait;
+static constexpr BehaviorID emptyID = BehaviorID::Wait;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Test behavior to run actions and delegate to helpers
@@ -327,7 +328,7 @@ TEST(BehaviorHelperSystem, BehaviorComplete)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -349,7 +350,7 @@ TEST(BehaviorHelperSystem, BehaviorWithActions)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -395,7 +396,7 @@ TEST(BehaviorHelperSystem, SimpleDelegate)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -492,7 +493,7 @@ TEST(BehaviorHelperSystem, DelegateWithActions)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -586,7 +587,7 @@ TEST(BehaviorHelperSystem, BehaviorStopsHelper)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -801,7 +802,7 @@ TEST(BehaviorHelperSystem, MultiLayerSuccess)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -902,7 +903,7 @@ TEST(BehaviorHelperSystem, CancelDelegates)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
@@ -1064,7 +1065,7 @@ TEST(BehaviorHelperSystem, StopBehavior)
   UiMessageHandler handler(0, nullptr);
   CozmoContext context(nullptr, &handler);
   Robot robot(0, &context);
-  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyID);
+  Json::Value empty = IBehavior::CreateDefaultBehaviorConfig(emptyClass, emptyID);
   TestBehaviorWithHelpers b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);

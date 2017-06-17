@@ -33,7 +33,7 @@
 //private:
 //  
 //  // Enforce creation through BehaviorFactory
-//  friend class BehaviorFactory;
+//  friend class BehaviorContainer;
 //  BehaviorExploreCliff(Robot& robot, const Json::Value& config);
 //  
 //public:

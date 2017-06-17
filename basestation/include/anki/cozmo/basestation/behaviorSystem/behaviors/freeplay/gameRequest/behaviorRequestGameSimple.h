@@ -25,7 +25,7 @@ class BehaviorRequestGameSimple : public IBehaviorRequestGame
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorRequestGameSimple(Robot& robot, const Json::Value& config);
 
 public:

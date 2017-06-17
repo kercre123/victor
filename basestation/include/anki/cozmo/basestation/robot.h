@@ -228,10 +228,6 @@ public:
 
   inline const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   inline BehaviorManager&       GetBehaviorManager()       { return *_behaviorMgr; }
-
-  const BehaviorFactory& GetBehaviorFactory() const;
-  BehaviorFactory&       GetBehaviorFactory();
-  
   
   inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const {
     assert(_progressionUnlockComponent);

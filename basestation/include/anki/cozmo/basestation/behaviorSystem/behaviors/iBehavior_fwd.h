@@ -33,6 +33,7 @@ struct RobotCompletedAction;
 
 class Robot;
 
+using IBehaviorPtr = std::shared_ptr<IBehavior>;
 using BehaviorRobotCompletedActionCallback = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
 using BehaviorActionResultCallback = std::function<void(ActionResult)>;
 using BehaviorActionResultWithRobotCallback = std::function<void(ActionResult, Robot&)>;

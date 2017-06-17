@@ -11,12 +11,14 @@
  * --gtest_filter=BehaviorFactory*
  **/
 
+// Access protected factory functions for test purposes
+#define protected public
 
 #include "gtest/gtest.h"
 
+#include "anki/cozmo/basestation/behaviorSystem/behaviorContainer.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -28,7 +30,7 @@ using namespace Anki::Cozmo;
 static const char* kTestBehaviorJson =
 "{"
 "   \"behaviorClass\" : \"PlayAnim\","
-"   \"behaviorID\" : \"NoneBehavior\","
+"   \"behaviorID\" : \"Wait\","
 "   \"animTriggers\" : [ \"UnitTestAnim\" ],"
 "   \"minTimeBetweenRuns\" : 5.0,"
 "   \"emotionScorers\" : ["
@@ -95,10 +97,10 @@ static const char* kTestBehaviorJson =
 "  }"
 "}";
 
-static const BehaviorID expectedID = BehaviorID::NoneBehavior;
+static const BehaviorID expectedID = BehaviorID::Wait;
 
 // verifies that behavior matches expected data based on the Json above and factory contains it correctly
-void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactory, size_t expectedBehaviorCount)
+void VerifyBehavior(const IBehaviorPtr inBehavior, BehaviorContainer& behaviorContainer, size_t expectedBehaviorCount)
 {
   EXPECT_EQ(inBehavior->GetID(), expectedID);
   
@@ -118,8 +120,8 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
   EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(35.0f), 0.75f);
   EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(200.0f), 0.5f);
   
-  EXPECT_EQ(behaviorFactory.FindBehaviorByID(expectedID), inBehavior);
-  EXPECT_EQ(behaviorFactory.GetBehaviorMap().size(), expectedBehaviorCount);
+  EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), inBehavior);
+  EXPECT_EQ(behaviorContainer.GetBehaviorMap().size(), expectedBehaviorCount);
 }
 
 
@@ -127,48 +129,19 @@ TEST(BehaviorFactory, CreateAndDestroyBehaviors)
 {
   CozmoContext context{};
   Robot testRobot(0, &context);
-  BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
+  BehaviorContainer& behaviorContainer = testRobot.GetBehaviorManager().GetBehaviorContainer();
   
-  const size_t kBaseBehaviorCount = behaviorFactory.GetBehaviorMap().size(); // some behaviors are added by default so likely >0
+  const size_t kBaseBehaviorCount = behaviorContainer.GetBehaviorMap().size(); // some behaviors are added by default so likely >0
   
   Json::Value  testBehaviorJson;
   Json::Reader reader;
   const bool parsedOK = reader.parse(kTestBehaviorJson, testBehaviorJson, false);
   ASSERT_TRUE(parsedOK);
   
-  EXPECT_EQ(behaviorFactory.FindBehaviorByID(expectedID), nullptr); // this behavior shouldn't exist by default
+  EXPECT_EQ(behaviorContainer.FindBehaviorByID(expectedID), nullptr); // this behavior shouldn't exist by default
 
-  IBehavior* newBehavior = behaviorFactory.CreateBehavior(testBehaviorJson, testRobot);
+  IBehaviorPtr newBehavior = behaviorContainer.CreateBehavior(testBehaviorJson, testRobot);
   ASSERT_NE(newBehavior, nullptr);
   
-  VerifyBehavior(newBehavior, behaviorFactory, kBaseBehaviorCount + 1);
-  
-  // Creating duplicates - behavior depends on rule specified
-  
-  {
-    IBehavior* newBehavior2 = behaviorFactory.CreateBehavior(testBehaviorJson, testRobot, BehaviorFactory::NameCollisionRule::ReuseOld);
-    EXPECT_EQ(newBehavior2, newBehavior);
-    VerifyBehavior(newBehavior, behaviorFactory, kBaseBehaviorCount + 1);
-  }
-  {
-    IBehavior* newBehavior2 = behaviorFactory.CreateBehavior(testBehaviorJson, testRobot, BehaviorFactory::NameCollisionRule::OverwriteWithNew);
-    ASSERT_NE(newBehavior2, nullptr);
-    EXPECT_NE(newBehavior2, newBehavior);
-    newBehavior = newBehavior2; // newBehavior will have been destroyed, use the new replacement now
-    VerifyBehavior(newBehavior2, behaviorFactory, kBaseBehaviorCount + 1);
-  }
-  {
-    IBehavior* newBehavior2 = behaviorFactory.CreateBehavior(testBehaviorJson, testRobot, BehaviorFactory::NameCollisionRule::Fail);
-    EXPECT_EQ(newBehavior2, nullptr);
-    VerifyBehavior(newBehavior, behaviorFactory, kBaseBehaviorCount + 1);
-  }
-  
-  // Destroying a behavior will automatically remove it from the factory
-  
-  IBehavior* castForDestroy = static_cast<IBehavior*>(newBehavior);
-  behaviorFactory.SafeDestroyBehavior(castForDestroy);
-  
-  EXPECT_EQ(behaviorFactory.FindBehaviorByID(expectedID), nullptr);
-  EXPECT_EQ(behaviorFactory.GetBehaviorMap().size(), kBaseBehaviorCount);
-  EXPECT_EQ(castForDestroy, nullptr);
+  VerifyBehavior(newBehavior, behaviorContainer, kBaseBehaviorCount + 1);
 }

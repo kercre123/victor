@@ -29,7 +29,7 @@ class BehaviorRamIntoBlock : public IBehavior
   
 private:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorRamIntoBlock(Robot& robot, const Json::Value& config);
 
 

@@ -1461,7 +1461,8 @@ Result Robot::Update()
 
     behaviorDebugStr = currentActivityName;
 
-    const IBehavior* behavior = _behaviorMgr->GetCurrentBehavior();
+    const IBehaviorPtr behavior = _behaviorMgr->GetCurrentBehavior();
+
     if(behavior != nullptr) {
       behaviorDebugStr += " ";
       behaviorDebugStr +=  BehaviorIDToString(behavior->GetID());
@@ -3319,17 +3320,7 @@ FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxR
   
   return closest;
 }
-
-  
-const BehaviorFactory& Robot::GetBehaviorFactory() const
-{
-  return _behaviorMgr->GetBehaviorFactory();
-}
-
-BehaviorFactory& Robot::GetBehaviorFactory()
-{
-  return _behaviorMgr->GetBehaviorFactory();
-}
+ 
   
 Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
 {

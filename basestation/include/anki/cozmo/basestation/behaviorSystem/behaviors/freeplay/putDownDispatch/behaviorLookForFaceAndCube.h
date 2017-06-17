@@ -37,7 +37,7 @@ private:
   using BaseClass = IBehavior;
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorLookForFaceAndCube(Robot& robot, const Json::Value& config);
   
 public:

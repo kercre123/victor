@@ -24,7 +24,7 @@ class BehaviorPlayAnimSequence : public IBehavior
 protected:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorPlayAnimSequence(Robot& robot, const Json::Value& config, bool triggerRequired = true);
   
 public:

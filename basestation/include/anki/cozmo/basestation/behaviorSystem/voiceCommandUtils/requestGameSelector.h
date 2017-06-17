@@ -14,6 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_VoiceCommandUtils_RequestGameSelector_H__
 #define __Cozmo_Basestation_BehaviorSystem_VoiceCommandUtils_RequestGameSelector_H__
 
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
 #include "clad/types/unlockTypes.h"
 
 #include <map>
@@ -22,18 +23,16 @@ namespace Anki {
 namespace Cozmo {
   
 // forward declarations
-class IBehavior;
 class Robot;
-
   
 struct GameRequestData{
-  GameRequestData(UnlockId unlockID, IBehavior* behavior, int weight)
+  GameRequestData(UnlockId unlockID, IBehaviorPtr behavior, int weight)
   : _unlockID(unlockID)
   , _behavior(behavior)
   , _weight(weight){}
   
   UnlockId   _unlockID;
-  IBehavior* _behavior;
+  IBehaviorPtr _behavior;
   int _weight;
 };
   
@@ -41,12 +40,12 @@ class RequestGameSelector{
 public:
   RequestGameSelector(Robot& robot);
   ~RequestGameSelector() {};
-  IBehavior* GetNextRequestGameBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  IBehaviorPtr GetNextRequestGameBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior);
 private:
   std::vector<GameRequestData> _gameRequests;
   // track the last game that was requested so that we don't request the same
   // game over and over again
-  IBehavior* _lastGameRequested;
+  IBehaviorPtr _lastGameRequested;
 };
   
   

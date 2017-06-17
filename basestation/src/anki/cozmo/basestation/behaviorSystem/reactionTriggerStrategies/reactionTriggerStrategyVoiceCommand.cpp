@@ -39,7 +39,7 @@ ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Robot& 
 {
 }
 
-void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   std::set<Vision::FaceID_t> targets;
   targets.insert(GetDesiredFace(robot));
@@ -48,7 +48,7 @@ void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(const Robot&
   behavior->IsRunnable(acknowledgeFacePreReqs);
 }
   
-bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   auto* voiceCommandComponent = robot.GetContext()->GetVoiceCommandComponent();
   if (!ANKI_VERIFY(voiceCommandComponent, "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal", "VoiceCommandComponent invalid"))

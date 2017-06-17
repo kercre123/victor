@@ -22,7 +22,7 @@ class BehaviorReactToRobotOnFace : public IBehavior
 {
 private:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToRobotOnFace(Robot& robot, const Json::Value& config);
   
 public:

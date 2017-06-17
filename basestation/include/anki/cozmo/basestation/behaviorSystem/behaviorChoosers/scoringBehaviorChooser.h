@@ -54,18 +54,18 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // adds a specific behavior to the table of behaviors if name doesn't exist, otherwise fail
-  Result TryAddBehavior(IBehavior* behavior);
+  Result TryAddBehavior(IBehaviorPtr behavior);
   
   
   // Used to access objectTapInteraction behaviors
-  std::vector<IBehavior*> GetObjectTapBehaviors();
+  std::vector<IBehaviorPtr> GetObjectTapBehaviors();
   
 protected:  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,23 +79,21 @@ protected:
   void ClearBehaviors();
   
   // returns a pointer to the behavior in our table whose key matches the passed name, nullptr if not found
-  IBehavior* FindBehaviorInTableByID(BehaviorID behaviorID);
+  IBehaviorPtr FindBehaviorInTableByID(BehaviorID behaviorID);
   
   float ScoreBonusForCurrentBehavior(float runningDuration) const;
 
   // Allows derived classes to modify a score for a particular behavior. Updates passed in score value (if desired)
-  virtual void ModifyScore(const IBehavior* behavior, float& score) const {}
+  virtual void ModifyScore(const IBehaviorPtr behavior, float& score) const {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  using BehaviorIDToScoredBehaviorInfoMap = std::map<BehaviorID, IBehavior*>;
+  using BehaviorIDToScoredBehaviorInfoMap = std::map<BehaviorID, IBehaviorPtr>;
   BehaviorIDToScoredBehaviorInfoMap _idToScoredBehaviorMap;
   
-  Util::GraphEvaluator2d  _scoreBonusForCurrentBehavior;
-  
-  IBehavior* _behaviorNone = nullptr;
+  Util::GraphEvaluator2d  _scoreBonusForCurrentBehavior;  
 };
    
 } // namespace Cozmo

@@ -13,6 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
 #include "anki/common/types.h"
 #include "util/helpers/noncopyable.h"
 #include <vector>
@@ -26,7 +27,6 @@ namespace Anki {
 namespace Cozmo {
   
 //Forward declarations
-class IBehavior;
 class Robot;
 
 // Interface for the container and logic associated with holding and choosing behaviors
@@ -51,14 +51,14 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) = 0;
+  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Used to access objectTapInteraction behaviors
-  std::vector<IBehavior*> GetObjectTapBehaviors(){ return {};}
+  std::vector<IBehaviorPtr> GetObjectTapBehaviors(){ return {};}
   
 }; // class IBehaviorChooser
   

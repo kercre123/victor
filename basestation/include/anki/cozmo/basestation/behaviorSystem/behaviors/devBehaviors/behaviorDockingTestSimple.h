@@ -42,7 +42,7 @@ namespace Anki {
     class BehaviorDockingTestSimple : public IBehavior
     {
       protected:
-        friend class BehaviorFactory;
+        friend class BehaviorContainer;
         BehaviorDockingTestSimple(Robot& robot, const Json::Value& config);
       
       public:

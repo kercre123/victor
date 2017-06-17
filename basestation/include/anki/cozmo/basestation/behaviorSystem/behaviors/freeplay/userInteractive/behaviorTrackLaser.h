@@ -24,7 +24,7 @@ class BehaviorTrackLaser : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorTrackLaser(Robot& robot, const Json::Value& config);
   
 public:

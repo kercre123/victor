@@ -39,7 +39,7 @@ class BehaviorExploreVisitPossibleMarker : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorExploreVisitPossibleMarker(Robot& robot, const Json::Value& config);
   
 public:

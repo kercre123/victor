@@ -34,9 +34,9 @@ protected:
   virtual void EnabledStateChanged(bool enabled) override
                  {_desiredTargets.clear();}
 
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
   
 private:
   void HandleFaceObserved(const Robot& robot, const ExternalInterface::RobotObservedFace& msg);

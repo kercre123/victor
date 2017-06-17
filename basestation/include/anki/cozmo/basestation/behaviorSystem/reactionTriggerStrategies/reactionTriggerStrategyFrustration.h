@@ -30,9 +30,9 @@ public:
   virtual void AnimationComplete() override;
 
 protected:
-  virtual void BehaviorThatStrategyWillTriggerInternal(IBehavior* behavior) override;
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
 
 private:
   void LoadJson(const Json::Value& config);

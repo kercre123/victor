@@ -35,7 +35,7 @@ namespace Anki {
     class BehaviorLiftLoadTest : public IBehavior
     {
       protected:
-        friend class BehaviorFactory;
+        friend class BehaviorContainer;
         BehaviorLiftLoadTest(Robot& robot, const Json::Value& config);
       
       public:

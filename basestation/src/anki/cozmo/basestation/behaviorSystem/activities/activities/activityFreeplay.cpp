@@ -499,10 +499,10 @@ void ActivityFreeplay::CalculateDesiredActivityFromObjects()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   // returned variable
-  IBehavior* chosenBehavior = nullptr;
+  IBehaviorPtr chosenBehavior = nullptr;
   const bool hasActivityAtStart = (_currentActivityPtr != nullptr);
   
   // see if anything causes an activity change
@@ -573,7 +573,7 @@ IBehavior* ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IBeh
     hasChosenBehavior = true;
 
     // if the picked behavior is not good, we want a new activity too
-    if ( (chosenBehavior == nullptr) || (chosenBehavior->GetClass() == BehaviorClass::NoneBehavior))
+    if (chosenBehavior == nullptr)
     {
       getNewActivity = true;
       isCurrentAllowedToBePicked = false;
@@ -640,7 +640,7 @@ IBehavior* ActivityFreeplay::ChooseNextBehaviorInternal(Robot& robot, const IBeh
         // The activity will be asked to leave next frame if it continues to pick null/None.
         // TODO in this case we might want to apply a different cooldown, rather than the default for
         // the activity.
-        if ( changedActivity && ((!chosenBehavior)||(chosenBehavior->GetClass() == BehaviorClass::NoneBehavior)))
+        if ( changedActivity && (chosenBehavior != nullptr))
         {
           PRINT_CH_INFO("Behaviors", "ActivityFreeplay.ChooseNextBehavior.NewActivityDidNotChooseBehavior",
             "The new activity '%s' picked no behavior. It probably didn't cover the same conditions as the behaviors.",
@@ -701,7 +701,7 @@ void ActivityFreeplay::DebugPrintActivities() const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<IBehavior*> ActivityFreeplay::GetObjectTapBehaviors()
+std::vector<IBehaviorPtr> ActivityFreeplay::GetObjectTapBehaviors()
 {
   if(_objectTapBehaviorsCache.size() != 0){
     return _objectTapBehaviorsCache;

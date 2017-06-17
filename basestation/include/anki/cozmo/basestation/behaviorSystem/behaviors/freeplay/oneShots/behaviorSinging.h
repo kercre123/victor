@@ -26,7 +26,7 @@ namespace Cozmo {
 class BehaviorSinging : public IBehavior
 {
 protected:
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorSinging(Robot& robot, const Json::Value& config);
   
 public:

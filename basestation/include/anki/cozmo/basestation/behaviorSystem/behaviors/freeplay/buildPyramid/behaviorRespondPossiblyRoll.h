@@ -80,7 +80,7 @@ class BehaviorRespondPossiblyRoll: public IBehavior
 {
 private:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorRespondPossiblyRoll(Robot& robot, const Json::Value& config);
 
 public:

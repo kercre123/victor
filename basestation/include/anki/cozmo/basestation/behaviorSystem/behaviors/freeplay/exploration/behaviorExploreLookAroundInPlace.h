@@ -41,7 +41,7 @@ class BehaviorExploreLookAroundInPlace : public IBehavior
 protected:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorExploreLookAroundInPlace(Robot& robot, const Json::Value& config);
   
 public:

@@ -23,7 +23,7 @@ class BehaviorReactToRobotShaken : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToRobotShaken(Robot& robot, const Json::Value& config);
   
 public:

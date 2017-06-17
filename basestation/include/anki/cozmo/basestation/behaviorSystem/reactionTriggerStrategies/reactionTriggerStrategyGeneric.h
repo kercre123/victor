@@ -32,7 +32,7 @@ public:
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return _canInterruptOtherTriggeredBehavior; }
   
   // Callback for the custom logic to determine whether to trigger the behavior
-  using ShouldTriggerCallbackType = std::function<bool(const Robot& robot, const IBehavior* behavior)>;
+  using ShouldTriggerCallbackType = std::function<bool(const Robot& robot, const IBehaviorPtr behavior)>;
   
   // Callback for the custom logic to determine whether to computationally switch based on this event
   using EventHandleCallbackType = std::function<bool(const EngineToGameEvent& event, const Robot& robot)>;
@@ -45,8 +45,8 @@ protected:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
 
-  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior) override;
-  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior) override;
+  virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
   
 private:
   bool                          _shouldTrigger = false;

@@ -29,7 +29,7 @@ class BehaviorGuardDog : public IBehavior
 protected:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorGuardDog(Robot& robot, const Json::Value& config);
   
 public:

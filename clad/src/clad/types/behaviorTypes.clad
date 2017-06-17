@@ -10,8 +10,6 @@ namespace Cozmo {
 // which the behavior is an instance of
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorClass {
-  NoneBehavior, // Named differently to not conflict with the Python keyword
-
   // Behaviors based on scores
   Bouncer,
   BringCubeToBeacon,
@@ -65,6 +63,8 @@ enum uint_8 BehaviorClass {
   TrackLaser,
   TurnToFace,
   VisitInterestingEdge,
+  Wait,
+
 
   // Behaviors mapped to reaction triggers
   AcknowledgeFace,
@@ -97,8 +97,6 @@ enum uint_8 BehaviorClass {
 // so that they can be referenced by other parts of the behavior system
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BehaviorID {
-  NoneBehavior,
-
   AcknowledgeFace,
   AcknowledgeObject,
   Bouncer,
@@ -247,14 +245,14 @@ enum uint_8 BehaviorID {
   VC_Refuse_Sparks,
   VC_RequestKeepAway,
   VC_RequestMemoryMatch,
-  VC_RequestSpeedTap
+  VC_RequestSpeedTap,
+
+  Wait
 }
 
 // Each of these should map to exactly 1 instance of a behavior at runtime
 // Only needs to include behaviors that make sense for e.g. SDK to request directly
 enum uint_8 ExecutableBehaviorType {
-  NoneBehavior,
-
   EnrollFace,
   FindFaces,
   FistBump,
@@ -265,6 +263,7 @@ enum uint_8 ExecutableBehaviorType {
   RollBlock,
   StackBlocks,
   TrackLaser,
+  Wait,
 
   Count
 }

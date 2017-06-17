@@ -11,7 +11,7 @@
 **/
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/strictPriorityBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -36,13 +36,13 @@ StrictPriorityBehaviorChooser::StrictPriorityBehaviorChooser(Robot& robot, const
                  "StrictPriorityBehaviorChooser.BehaviorsNotSpecified",
                  "No Behaviors key found");
   if(!behaviorArray.isNull()){
-    const BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
+    const BehaviorManager& behaviorManager = robot.GetBehaviorManager();
     
     for(const auto& behaviorIDStr: behaviorArray)
     {
       BehaviorID behaviorID = BehaviorIDFromString(behaviorIDStr.asString());
       
-      IBehavior* behavior =  behaviorFactory.FindBehaviorByID(behaviorID);
+      IBehaviorPtr behavior =  behaviorManager.FindBehaviorByID(behaviorID);
       DEV_ASSERT_MSG(behavior != nullptr,
                      "ScoringBehaviorChooser.ReloadFromConfig.FailedToFindBehavior",
                      "Behavior not found: %s",
@@ -61,7 +61,7 @@ StrictPriorityBehaviorChooser::~StrictPriorityBehaviorChooser()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* StrictPriorityBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr StrictPriorityBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   BehaviorPreReqRobot preReq(robot);
   // Iterate through available behaviors, and return the first one that is runnable

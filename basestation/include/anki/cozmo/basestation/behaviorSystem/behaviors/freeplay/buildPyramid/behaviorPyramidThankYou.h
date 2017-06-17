@@ -26,11 +26,13 @@ class Robot;
 
 class BehaviorPyramidThankYou : public IBehavior
 {
+public:
+  virtual ~BehaviorPyramidThankYou();
+  
 protected:
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorPyramidThankYou(Robot& robot, const Json::Value& config);
-  virtual ~BehaviorPyramidThankYou();
 
   virtual Result InitInternal(Robot& robot) override;
   virtual Result ResumeInternal(Robot& robot) override;

@@ -21,7 +21,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/userInteractive/behaviorPeekABoo.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
@@ -124,20 +123,19 @@ ActivitySparked::ActivitySparked(Robot& robot, const Json::Value& config)
   ReloadFromConfig(robot, config);
   
   // be able to reset the objects that Cozmo has reacted to when a spark starts
-  IBehavior* acknowledgeObjectBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::AcknowledgeObject);
-  assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
-  _behaviorAcknowledgeObject = static_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior);
+  IBehaviorPtr acknowledgeObjectBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::AcknowledgeObject);
+  assert(std::static_pointer_cast< BehaviorAcknowledgeObject>(acknowledgeObjectBehavior));
+  _behaviorAcknowledgeObject = std::static_pointer_cast<BehaviorAcknowledgeObject>(acknowledgeObjectBehavior);
   DEV_ASSERT(nullptr != _behaviorAcknowledgeObject, "ActivitySparked.BehaviorAcknowledgeObjectNotFound");
   
   // for COZMO-8914
-  IBehavior* sparksPeekABoo = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::SparksPeekABoo);
-  assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
-  _behaviorPeekABoo = dynamic_cast<BehaviorPeekABoo*>(sparksPeekABoo);
+  IBehaviorPtr sparksPeekABoo = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::SparksPeekABoo);
+  assert(std::static_pointer_cast<BehaviorAcknowledgeObject>(acknowledgeObjectBehavior));
+  _behaviorPeekABoo = std::static_pointer_cast<BehaviorPeekABoo>(sparksPeekABoo);
   DEV_ASSERT(_behaviorPeekABoo != nullptr, "ActivitySparked.BehaviorPeekABooNotFound");
   
   // grab none behavior
-  Json::Value noneConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::NoneBehavior);
-  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorClass::NoneBehavior, robot, noneConfig);
+  _behaviorWait = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::Wait);
   
   // Listen for behavior objective achieved messages for spark repetitions counter
   if(robot.HasExternalInterface()) {
@@ -250,10 +248,8 @@ Result ActivitySparked::ReloadFromConfig(Robot& robot, const Json::Value& config
   }
   
   //Create an arbitrary animation behavior
-  Json::Value playAnimConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::PlayArbitraryAnim);
-  _behaviorPlayAnimation = dynamic_cast<BehaviorPlayArbitraryAnim*>(
-                              robot.GetBehaviorFactory().CreateBehavior(
-                                BehaviorClass::PlayArbitraryAnim, robot, playAnimConfig));
+  _behaviorPlayAnimation = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(
+                                   robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim));
   DEV_ASSERT(_behaviorPlayAnimation, "ActivitySparked.Behavior pointer not set");
   
   _minTimeSecs = JsonTools::ParseFloat(config, kMinTimeConfigKey, "Failed to parse min time");
@@ -359,11 +355,11 @@ Result ActivitySparked::Update(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   const BehaviorManager& mngr = robot.GetBehaviorManager();
   
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior;
   
   // Handle behavior selection based on current state
   switch(_state){
@@ -446,7 +442,6 @@ IBehavior* ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBeha
       bestBehavior = _behaviorPlayAnimation;
       
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
-        bestBehavior = _behaviorNone;
         CompleteSparkLogic(robot);
       }
       
@@ -454,7 +449,6 @@ IBehavior* ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBeha
     }
     case ChooserState::EndSparkWhenReactionEnds:
     {
-      bestBehavior = _behaviorNone;
       break;
     }
   } // end switch(_state)
@@ -464,9 +458,9 @@ IBehavior* ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBeha
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivitySparked::SelectNextSparkInternalBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivitySparked::SelectNextSparkInternalBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior = nullptr;
   // If the spark has specified an alternate chooser, call
   // its choose next behavior here
   if(_subActivityDelegate == nullptr){
@@ -554,7 +548,7 @@ void ActivitySparked::CompleteSparkLogic(Robot& robot)
 void ActivitySparked::CheckIfSparkShouldEnd(Robot& robot)
 {
   BehaviorManager& mngr = robot.GetBehaviorManager();
-  const IBehavior* currentRunningBehavior = mngr.GetCurrentBehavior();
+  const IBehaviorPtr currentRunningBehavior = mngr.GetCurrentBehavior();
   
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   

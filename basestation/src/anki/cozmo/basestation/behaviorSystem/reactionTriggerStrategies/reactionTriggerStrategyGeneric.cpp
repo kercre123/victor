@@ -73,7 +73,7 @@ ReactionTriggerStrategyGeneric::ReactionTriggerStrategyGeneric(Robot& robot,
   }
 }
 
-void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   if (_needsRobotPreReq)
   {
@@ -88,7 +88,7 @@ void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(const Robot& robo
 // Overrides interface to allow for instances with different configurations to decide how they should trigger.
 // If the ShouldTriggerCallback isn't set, there are no relevant events being watched, and other values are
 // default, this boils down to only checking behavior->IsRunnable with no prereqs.
-bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   if(_relevantEvents.empty() || _shouldTrigger)
   {

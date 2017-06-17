@@ -14,7 +14,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/exploration/behaviorExploreLookAroundInPlace.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -72,12 +72,12 @@ ActivitySocialize::ActivitySocialize(Robot& robot, const Json::Value& config)
 {
   // choosers and activities are created after the behaviors are added to the factory, so grab those now
   
-  IBehavior* facesBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FindFaces_socialize);
-  assert(dynamic_cast< BehaviorExploreLookAroundInPlace* >(facesBehavior));
-  _findFacesBehavior = static_cast< BehaviorExploreLookAroundInPlace* >(facesBehavior);
+  IBehaviorPtr facesBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FindFaces_socialize);
+  assert(std::static_pointer_cast<BehaviorExploreLookAroundInPlace>(facesBehavior));
+  _findFacesBehavior = std::static_pointer_cast<BehaviorExploreLookAroundInPlace>(facesBehavior);
   DEV_ASSERT(nullptr != _findFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.FindFaces");
   
-  _interactWithFacesBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::InteractWithFaces);
+  _interactWithFacesBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::InteractWithFaces);
   DEV_ASSERT(nullptr != _interactWithFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.InteractWithFaces");
   
   // defaults to 0 to mean allow infinite iterations
@@ -101,13 +101,13 @@ void ActivitySocialize::OnSelectedInternal(Robot& robot)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
-  IBehavior* bestBehavior = nullptr;
+  IBehaviorPtr bestBehavior;
   
   bestBehavior = IActivity::ChooseNextBehaviorInternal(robot, currentRunningBehavior);
   
-  if( bestBehavior != nullptr && bestBehavior->GetClass() != BehaviorClass::NoneBehavior ) {
+  if(bestBehavior != nullptr) {
     if( bestBehavior != currentRunningBehavior ) {
       PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.ChooseNext.UseSimple",
                     "Simple behavior chooser chose behavior '%s', so use it",
@@ -181,14 +181,14 @@ IBehavior* ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const IBe
       // Has objectives we might want to do
       if( !_objectivesLeft.empty() )
       {
-        std::vector<IBehavior*> wantsRunnableBehaviors;
+        std::vector<IBehaviorPtr> wantsRunnableBehaviors;
         // fill in _playingBehavior with one of the valid objectives
         for( const auto& reqPtr : _potentialObjectives )
         {
           // Check if behavior objective found
           if( _objectivesLeft.find(reqPtr->objective) != _objectivesLeft.end() )
           {
-            IBehavior* beh = robot.GetBehaviorFactory().FindBehaviorByID(reqPtr->behaviorID);
+            IBehaviorPtr beh = robot.GetBehaviorManager().FindBehaviorByID(reqPtr->behaviorID);
             BehaviorPreReqRobot preReqData(robot);
             if( beh != nullptr )
             {
@@ -263,13 +263,7 @@ IBehavior* ActivitySocialize::ChooseNextBehaviorInternal(Robot& robot, const IBe
     case State::None:
     break;
   }
-  
-  // double check that we don't return null
-  if (bestBehavior == nullptr)
-  {
-    bestBehavior = _behaviorNone;
-  }
-  
+
   return bestBehavior;      
 }
 

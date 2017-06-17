@@ -31,12 +31,12 @@ ReactionTriggerStrategySparked::ReactionTriggerStrategySparked(Robot& robot, con
 }
 
   
-void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategySparked::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
 }
   
-bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   bool currentBehaviorIsReaction = robot.GetBehaviorManager().CurrentBehaviorTriggeredAsReaction();
   if(!currentBehaviorIsReaction){
@@ -52,7 +52,7 @@ bool ReactionTriggerStrategySparked::ShouldTriggerBehaviorInternal(const Robot& 
   const bool cancelCurrentReaction = (robot.GetBehaviorManager().GetRequestedSpark() != UnlockId::Count) &&
                                      (robot.GetBehaviorManager().GetActiveSpark() != robot.GetBehaviorManager().GetRequestedSpark());
   
-  const IBehavior* currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
+  const IBehaviorPtr currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
   const bool behaviorWhitelisted = (currentBehavior != nullptr &&
                                     ((currentBehavior->GetClass() == BehaviorClass::ReactToCliff) ||
                                      (currentBehavior->GetClass() == BehaviorClass::ReactToSparked)));

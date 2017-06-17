@@ -29,7 +29,7 @@ public:
 protected:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorBouncer(Robot& robot, const Json::Value& config);
   
   // IBehavior interface

@@ -25,7 +25,6 @@ namespace Cozmo {
   
 // forward declarations
 class IBehavior;
-class BehaviorNone;
 class Robot;
 namespace ExternalInterface {
   class MessageGameToEngine;
@@ -37,7 +36,7 @@ class SelectionBehaviorChooser : public IBehaviorChooser
 public:
   SelectionBehaviorChooser(Robot& robot, const Json::Value& config);
   
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehavior(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
   
   // events to notify the chooser when it becomes (in)active
   virtual void OnSelected() override;
@@ -46,13 +45,13 @@ public:
 protected:
   Robot& _robot;
   std::vector<Signal::SmartHandle> _eventHandlers;
-  IBehavior* _selectedBehavior = nullptr;
-  IBehavior* _behaviorNone = nullptr;
+  IBehaviorPtr _selectedBehavior = nullptr;
+  IBehaviorPtr _behaviorWait;
   
   void HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
     
   // requests enabling processes required by behaviors when they are the selected one
-  void SetProcessEnabled(const IBehavior* behavior, bool newValue);
+  void SetProcessEnabled(const IBehaviorPtr behavior, bool newValue);
   
 private:
   // Number of times to run the selected behavior

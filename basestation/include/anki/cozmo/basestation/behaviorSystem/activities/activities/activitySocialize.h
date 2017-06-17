@@ -48,13 +48,13 @@ class ActivitySocialize : public IActivity
 public:
   ActivitySocialize(Robot& robot, const Json::Value& config);
   ~ActivitySocialize() {};
-    
+  
   template<typename T>
   void HandleMessage(const T& msg);
   
 protected:
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehavior* ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior) override;
+  virtual IBehaviorPtr ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior) override;
 
   // reset the state and populate the objective which we will require for this run (they are randomized each
   // time the activity is selected)
@@ -80,12 +80,10 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Parameters set during init / construction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  static constexpr IBehavior* _behaviorNone = nullptr;
-
-  BehaviorExploreLookAroundInPlace* _findFacesBehavior = nullptr;
-  IBehavior* _interactWithFacesBehavior = nullptr;
+  std::shared_ptr<BehaviorExploreLookAroundInPlace> _findFacesBehavior = nullptr;
+  IBehaviorPtr _interactWithFacesBehavior = nullptr;
   
-  IBehavior* _playingBehavior = nullptr;
+  IBehaviorPtr _playingBehavior = nullptr;
   
   unsigned int _maxNumIterationsToAllowForSearch = 0; // 0 means infinite
   

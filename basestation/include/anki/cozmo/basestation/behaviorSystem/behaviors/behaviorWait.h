@@ -1,5 +1,5 @@
 /**
- * File: behaviorNone.h
+ * File: behaviorWait.h
  *
  * Author: Lee Crippen
  * Created: 10/01/15
@@ -10,28 +10,28 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorNone_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorNone_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorWait_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorWait_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorNone: public IBehavior
+class BehaviorWait: public IBehavior
 {
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
-  BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
+  friend class BehaviorContainer;
+  BehaviorWait(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
   {
-    SetExecutableType(ExecutableBehaviorType::NoneBehavior);
+    SetExecutableType(ExecutableBehaviorType::Wait);
   }
   
 public:
   
-  virtual ~BehaviorNone() { }
+  virtual ~BehaviorWait() { }
   
   //
   // Abstract methods to be overloaded:
@@ -60,4 +60,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorNone_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorWait_H__

@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
@@ -70,38 +69,39 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   ////////
   
   // Get the hunger loop behavior
-  _searchForCubeBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingSearchForCube);
+  _searchForCubeBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingSearchForCube);
   DEV_ASSERT(_searchForCubeBehavior != nullptr &&
              _searchForCubeBehavior->GetClass() == BehaviorClass::FeedingSearchForCube,
              "ActivityFeeding.FeedingSearchForCube.IncorrectBehaviorReceivedFromFactory");
   
   // Get the feeding get in behavior
-  IBehavior* eatFoodBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingEat);
+  IBehaviorPtr eatFoodBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingEat);
   DEV_ASSERT(eatFoodBehavior != nullptr &&
              eatFoodBehavior->GetClass() == BehaviorClass::FeedingEat,
              "ActivityFeeding.FeedingFoodReady.IncorrectBehaviorReceivedFromFactory");
   
-  _eatFoodBehavior = dynamic_cast<BehaviorFeedingEat*>(eatFoodBehavior);
+  _eatFoodBehavior = std::static_pointer_cast<BehaviorFeedingEat>(eatFoodBehavior);
   DEV_ASSERT(_eatFoodBehavior != nullptr,
              "ActivityFeeding.FeedingFoodReady.DynamicCastFailed");
 
   // Get the searching for face behavior
-  _searchingForFaceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FindFaces_socialize);
+  _searchingForFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FindFaces_socialize);
   DEV_ASSERT(_searchingForFaceBehavior != nullptr &&
              _searchingForFaceBehavior->GetClass() == BehaviorClass::FindFaces,
              "ActivityFeeding.FeedingFoodReady.IncorrectBehaviorReceivedFromFactory");
   
-  _turnToFaceBehavior = robot.GetBehaviorFactory().FindBehaviorByID(BehaviorID::FeedingTurnToFace);
+  _turnToFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingTurnToFace);
   DEV_ASSERT(_turnToFaceBehavior != nullptr &&
              _turnToFaceBehavior->GetClass() == BehaviorClass::TurnToFace,
              "ActivityFeeding.TurnToFaceBheavior.IncorrectBehaviorReceievedFromFactory");
   
   //Create an arbitrary animation behavior
-  Json::Value basicConfig = IBehavior::CreateDefaultBehaviorConfig(BehaviorID::PlayArbitraryAnim);
-  _behaviorPlayAnimation = dynamic_cast<BehaviorPlayArbitraryAnim*>(
-                                                                    robot.GetBehaviorFactory().CreateBehavior(
-                                                                      BehaviorClass::PlayArbitraryAnim, robot, basicConfig));
-  DEV_ASSERT(_behaviorPlayAnimation, "SparksBehaviorChooser.BehaviorPlayAnimPointerNotSet");
+  IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
+  _behaviorPlayAnimation = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
+  
+  DEV_ASSERT(_behaviorPlayAnimation != nullptr &&
+             _behaviorPlayAnimation->GetClass() == BehaviorClass::PlayArbitraryAnim,
+             "SparksBehaviorChooser.BehaviorPlayAnimPointerNotSet");
   
   ////////
   /// Setup Lights
@@ -226,12 +226,12 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBehavior* currentRunningBehavior)
+IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
+  IBehaviorPtr bestBehavior;
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-  
-  IBehavior* bestBehavior = nullptr;
+    
   switch(_chooserStage){
     case FeedingActivityStage::None:
     {

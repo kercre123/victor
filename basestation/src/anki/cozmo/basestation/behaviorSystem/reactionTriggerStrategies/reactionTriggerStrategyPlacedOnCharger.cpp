@@ -33,12 +33,12 @@ ReactionTriggerStrategyPlacedOnCharger::ReactionTriggerStrategyPlacedOnCharger(R
   });
 }
   
-void ReactionTriggerStrategyPlacedOnCharger::SetupForceTriggerBehavior(const Robot& robot, const IBehavior* behavior)
+void ReactionTriggerStrategyPlacedOnCharger::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
   behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
 }
   
-bool ReactionTriggerStrategyPlacedOnCharger::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehavior* behavior)
+bool ReactionTriggerStrategyPlacedOnCharger::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
   // This is a hack - if cozmo doesn't start on the charging points but is on the platform
   // he frequently reacts to the cliff, and we don't want to pop a modal asking the user

@@ -23,7 +23,7 @@ class BehaviorReactToReturnedToTreads : public IBehavior
 private:
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToReturnedToTreads(Robot& robot, const Json::Value& config);
 
 public:

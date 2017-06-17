@@ -28,7 +28,7 @@ protected:
   using super = IBehavior;
   
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorCubeLiftWorkout(Robot& robot, const Json::Value& config);
 
 public:

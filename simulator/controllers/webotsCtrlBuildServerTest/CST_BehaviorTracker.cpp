@@ -35,8 +35,8 @@ public:
 
 private:
   struct BehaviorStateChange {
-    BehaviorID oldBehaviorID = BehaviorID::NoneBehavior;
-    BehaviorID newBehaviorID = BehaviorID::NoneBehavior;
+    BehaviorID oldBehaviorID = BehaviorID::Wait;
+    BehaviorID newBehaviorID = BehaviorID::Wait;
     float elapsedTime = 0.f;
   };
   
@@ -98,7 +98,7 @@ s32 CST_BehaviorTracker::UpdateSimInternal()
       if(totalElapsed > kFreeplayLengthSeconds){
         //Final state
         BehaviorStateChange change;
-        change.newBehaviorID = BehaviorID::NoneBehavior;
+        change.newBehaviorID = BehaviorID::Wait;
         change.oldBehaviorID = _stateChangeList.back().newBehaviorID;
         change.elapsedTime = totalElapsed;
         _stateChangeList.push_back(change);

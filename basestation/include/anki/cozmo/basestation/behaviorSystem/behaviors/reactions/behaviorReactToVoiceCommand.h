@@ -26,7 +26,7 @@ class BehaviorReactToVoiceCommand : public IBehavior
 private:
   using super = IBehavior;
   
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorReactToVoiceCommand(Robot& robot, const Json::Value& config);
   
 public:

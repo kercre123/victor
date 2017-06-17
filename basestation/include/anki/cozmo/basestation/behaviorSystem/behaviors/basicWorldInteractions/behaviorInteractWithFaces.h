@@ -43,7 +43,7 @@ class BehaviorInteractWithFaces : public IBehavior
 protected:
     
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;
+  friend class BehaviorContainer;
   BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
     
 public:

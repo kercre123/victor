@@ -19,8 +19,9 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 
-#include "anki/cozmo/basestation/components/cubeLightComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "anki/cozmo/basestation/components/cubeLightComponent.h"
 
 #include "clad/types/activityTypes.h"
 #include "clad/types/behaviorTypes.h"
@@ -46,9 +47,8 @@ namespace Anki {
 namespace Cozmo {
   
 // Forward declaration
-class BehaviorFactory;
+class BehaviorContainer;
 class IActivity;
-class IBehavior;
 class IReactionTriggerStrategy;
 class Robot;
 struct BehaviorRunningAndResumeInfo;
@@ -148,7 +148,7 @@ public:
   void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
   // returns nullptr if there is no current behavior
-  const IBehavior* GetCurrentBehavior() const;
+  const IBehaviorPtr GetCurrentBehavior() const;
   bool CurrentBehaviorTriggeredAsReaction() const;
   ReactionTrigger GetCurrentReactionTrigger() const;
 
@@ -180,12 +180,11 @@ public:
                                bool stopCurrent = true);
 #endif
   
-  
   // Allows other parts of the system to determine whether a reaction is enabled
   bool IsReactionTriggerEnabled(ReactionTrigger reaction) const;
   
-  const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
-        BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
+  IBehaviorPtr FindBehaviorByID(BehaviorID behaviorID) const;
+  IBehaviorPtr FindBehaviorByExecutableType(ExecutableBehaviorType type) const;
 
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
@@ -248,6 +247,11 @@ public:
   
   void OnRobotDelocalized();
   
+protected:
+  // Allow tests to access the behavior container directly so that they
+  // can create test behaviors
+  BehaviorContainer& GetBehaviorContainer(){ assert(_behaviorContainer); return *_behaviorContainer;}
+  
 private:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -256,9 +260,9 @@ private:
   void InitializeEventHandlers();
   
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
-  bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehavior* nextBehavior);
+  bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehaviorPtr nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
-  bool SwitchToVoiceCommandBehavior(IBehavior* nextBehavior);
+  bool SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior);
   
   // checks the chooser and switches to a new behavior if neccesary
   void ChooseNextScoredBehaviorAndSwitch();
@@ -328,7 +332,7 @@ private:
   // - - - - - - - - - - - - - - -
   
   // Factory creates and tracks data-driven behaviors etc
-  BehaviorFactory* _behaviorFactory = nullptr;
+  std::unique_ptr<BehaviorContainer> _behaviorContainer;
   
   // map of reactionTriggers to the associated strategies/behaviors
   // that fire as reactions to events
