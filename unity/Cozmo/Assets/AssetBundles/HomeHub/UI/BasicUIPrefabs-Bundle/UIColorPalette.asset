@@ -20,10 +20,10 @@ MonoBehaviour:
     CannotAffordColor: {r: 0.65882355, g: 0.65882355, b: 0.65882355, a: 1}
   _CompleteTextColor: {r: 0.38039216, g: 0.6862745, b: 0.019607844, a: 1}
   _EnergyTextColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}
-  _NeutralTextColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  _SetupTextColor: {r: 0.03137255, g: 0.27058825, b: 0.5372549, a: 1}
-  _MinigameTextColor: {r: 1, g: 1, b: 1, a: 1}
-  _GameSetupColor: {r: 1, g: 1, b: 1, a: 1}
+  _NeutralTextColor: {r: 1, g: 1, b: 1, a: 1}
+  _SetupTextColor: {r: 0.027450982, g: 0.6666667, b: 0.82745105, a: 1}
+  _MinigameTextColor: {r: 0.027450982, g: 0.6666667, b: 0.82745105, a: 1}
+  _GameSetupColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
   _GameBackgroundColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}
   _FreeplayBehaviorDefaultColor: {r: 0, g: 0.609, b: 1, a: 1}

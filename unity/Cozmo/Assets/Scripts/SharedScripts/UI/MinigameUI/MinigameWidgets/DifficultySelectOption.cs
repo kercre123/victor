@@ -24,7 +24,7 @@ public class DifficultySelectOption : MonoBehaviour {
   private Cozmo.UI.CozmoRadioButton _Button;
 
   [SerializeField]
-  private AnkiTextLegacy _Label;
+  private CozmoText _Label;
 
   [SerializeField]
   private GameObject _DisabledIcon;
@@ -73,12 +73,7 @@ public class DifficultySelectOption : MonoBehaviour {
   public void Initialize(DifficultySelectOptionData data, bool enabled) {
     _Data = data;
     _IsLocked = !enabled;
-    if (_IsLocked) {
-      _Label.gameObject.SetActive(false);
-    }
-    else {
-      _Label.text = _Data.DifficultyName;
-    }
+    _Label.text = _Data.DifficultyName;
     _Button.Initialize(HandleClick, "select_" + _Data.DifficultyName, "difficulty_select_slide");
     _Button.gameObject.name = _Data.DifficultyName + "_Button";
 

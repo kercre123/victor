@@ -16,7 +16,10 @@ namespace Cozmo {
       private HorizontalOrVerticalLayoutGroup _SegmentContainer;
 
       [SerializeField]
-      private Sprite _OffImage;
+      private string _OnImageSkinComponentId;
+
+      [SerializeField]
+      private string _OffImageSkinComponentId;
 
       // Use Unity.UI.Toggles for now as the "segments"
       List<Toggle> _CurrentSegments = new List<Toggle>();
@@ -25,6 +28,16 @@ namespace Cozmo {
         if (maxNumSegments < 0) {
           DAS.Warn("SegmentedBar.SetMaximumSegments.NegativeSegments", "Trying to set a negative number of segments! Clamping to 0.");
           maxNumSegments = 0;
+        }
+
+        //Make sure _CurrentSegments is up to date, object may have been refreshed
+        if (_CurrentSegments.Count == 0 && _SegmentContainer.transform.childCount != _CurrentSegments.Count) {
+          for (int i = 0; i < _SegmentContainer.transform.childCount; i++) {
+            Toggle toggleItem = _SegmentContainer.transform.GetChild(i).GetComponent<Toggle>();
+            if (toggleItem != null) {
+              _CurrentSegments.Add(toggleItem);
+            }
+          }
         }
 
         // Grow the bar if the desired maximum is more than the current max
@@ -55,19 +68,26 @@ namespace Cozmo {
           currentNumSegments = _CurrentSegments.Count;
         }
 
-        // Toggling between a starting an end image
-        if (_OffImage != null) {
+        bool hasOffImage = !string.IsNullOrEmpty(_OffImageSkinComponentId);
+        bool hasOnImage = !string.IsNullOrEmpty(_OnImageSkinComponentId);
+        if (hasOffImage ^ hasOnImage) {
+          DAS.Warn("SegmentedBar.OnlyOneImageSet",
+                   string.Format("{0} needs an id for the OFF and ON image to toggle between", this.name));
+        }
+
+        if (hasOffImage && hasOnImage) {
           for (int i = 0; i < _CurrentSegments.Count; i++) {
-            Image img = _CurrentSegments[i].graphic as Image;
-            // Can only set an image if graphic was an image, otherwise just toggle it off.
-            _CurrentSegments[i].isOn = img != null;
+            CozmoImage img = _CurrentSegments[i].graphic as CozmoImage;
             if (img != null) {
+              _CurrentSegments[i].isOn = true;
               if (i < currentNumSegments) {
-                img.overrideSprite = null;
+                img.LinkedComponentId = _OnImageSkinComponentId;
               }
               else {
-                img.overrideSprite = _OffImage;
+                img.LinkedComponentId = _OffImageSkinComponentId;
               }
+              img.UpdateSkinnableElements();
+              img.SetMaterialDirty();
             }
           }
         }

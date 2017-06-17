@@ -532,6 +532,7 @@ public static class LocalizationKeys {
   public const string kMinigameGuardDogDesc = "minigame.GuardDog.Desc";
   public const string kSpeedTapDriveToCubeFailTitle = "speedTap.driveToCubeFail.title";
   public const string kSpeedTapDriveToCubeFailDescription = "speedTap.driveToCubeFail.description";
+  public const string kMinigameTextYouWin = "minigame.text.youWin";
 
   #endregion
 

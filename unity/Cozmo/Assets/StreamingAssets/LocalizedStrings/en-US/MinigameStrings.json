@@ -145,7 +145,7 @@
     "translation": "Unlock by winning Memory Match VS mode."
   },
   "memoryMatchGame.label.yourTurn": {
-    "translation": "Your turn"
+    "translation": "Your Turn"
   },
   "memoryMatchGame.label.cozmoTurn": {
     "translation": "Cozmo's turn"
@@ -371,5 +371,8 @@
   },
   "speedTap.driveToCubeFail.description": {
     "translation": "Cozmo is having trouble finding his cube. Please make sure Cozmo can see it."
+  },
+  "minigame.text.youWin": {
+    "translation": "You\nWin!"
   }
 }

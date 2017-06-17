@@ -15,7 +15,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private IconProxy _CubePrefab;
 
   [SerializeField]
-  private AnkiTextLegacy _ShowCozmoCubesLabel;
+  private CozmoText _ShowCozmoCubesLabel;
 
   [SerializeField]
   private RectTransform _TransparentCubeContainer;
@@ -78,12 +78,15 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     for (int i = 0; i < _CubeImages.Length; i++) {
       if (i < numberCubes) {
         _CubeImages[i].SetIcon(_InViewColor.uiSprite);
+        _CubeImages[i].IconImage.color = _InViewColor.lightColor;
         _CubeImages[i].SetAlpha(1f);
       }
       else {
         _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
+        _CubeImages[i].IconImage.color = _OutViewColor.lightColor;
         _CubeImages[i].SetAlpha(_OutOfViewAlpha);
       }
+      _CubeImages[i].IconImage.enabled = _CubeImages[i].IconImage.sprite != null;
     }
     _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
   }
@@ -92,12 +95,15 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     for (int i = 0; i < _CubeImages.Length; i++) {
       if (cubeIndices.Contains(i)) {
         _CubeImages[i].SetIcon(_InViewColor.uiSprite);
+        _CubeImages[i].IconImage.color = _InViewColor.lightColor;
         _CubeImages[i].SetAlpha(1f);
       }
       else {
         _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
+        _CubeImages[i].IconImage.color = _OutViewColor.lightColor;
         _CubeImages[i].SetAlpha(_OutOfViewAlpha);
       }
+      _CubeImages[i].IconImage.enabled = _CubeImages[i].IconImage.sprite != null;
     }
     _TransparentCubeContainer.gameObject.SetActive(cubeIndices.Count == 0);
   }
@@ -107,6 +113,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     for (int i = 0; i < _CubeImages.Length; i++) {
       _CubeImages[i] = UIManager.CreateUIElement(_CubePrefab, _CubeContainer.transform).GetComponent<Cozmo.UI.IconProxy>();
       _CubeImages[i].SetIcon(inViewSprite);
+      _CubeImages[i].IconImage.color = _InViewColor.lightColor;
     }
   }
 }

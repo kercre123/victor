@@ -8,18 +8,18 @@ namespace MemoryMatch {
   public class MemoryMatchTurnSlide : MonoBehaviour {
 
     [SerializeField]
-    private Image _CenterImage;
+    private CozmoImage _CenterImage;
 
     [SerializeField]
-    private AnkiTextLegacy _StatusTextLabel;
+    private CozmoText _StatusTextLabel;
 
     [SerializeField]
-    private AnkiTextLegacy _CenterTextLabel;
+    private CozmoText _CenterTextLabel;
 
     [SerializeField]
-    private Sprite _CorrectSprite;
+    private string _CorrectSpriteId;
     [SerializeField]
-    private Sprite _WrongSprite;
+    private string _WrongSpriteId;
 
     [SerializeField]
     private MemoryMatchLivesWidget _PlayerWidget;
@@ -27,7 +27,7 @@ namespace MemoryMatch {
     private MemoryMatchLivesWidget _CozmoWidget;
 
     [SerializeField]
-    private CozmoButtonLegacy _ButtonPlayPattern;
+    private CozmoButton _ButtonPlayPattern;
 
     private UnityEngine.Events.UnityAction _ClickHandler = null;
 
@@ -58,6 +58,11 @@ namespace MemoryMatch {
       else {
         _StatusTextLabel.text = "";
       }
+      //Refresh text object
+      _StatusTextLabel.gameObject.SetActive(false);
+      if (!string.IsNullOrEmpty(status)) {
+        _StatusTextLabel.gameObject.SetActive(true);
+      }
     }
     public void ShowCenterText(string status) {
       if (status != null) {
@@ -83,7 +88,8 @@ namespace MemoryMatch {
 
     public void ShowCenterImage(bool enabled, bool showCorrect) {
       _CenterImage.gameObject.SetActive(enabled);
-      _CenterImage.sprite = showCorrect ? _CorrectSprite : _WrongSprite;
+      _CenterImage.LinkedComponentId = showCorrect ? _CorrectSpriteId : _WrongSpriteId;
+      _CenterImage.UpdateSkinnableElements();
     }
 
     public void ShowPlayPatternButton(UnityEngine.Events.UnityAction ClickHandler) {

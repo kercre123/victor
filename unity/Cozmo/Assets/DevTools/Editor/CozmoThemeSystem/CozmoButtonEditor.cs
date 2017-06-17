@@ -5,7 +5,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace Cozmo.UI {
-  [CustomEditor(typeof(CozmoButton))]
+  [CustomEditor(typeof(CozmoButton), true)]
   [CanEditMultipleObjects]
   public class CozmoButtonEditor : AnkiButtonEditor {
     public override void OnInspectorGUI() {

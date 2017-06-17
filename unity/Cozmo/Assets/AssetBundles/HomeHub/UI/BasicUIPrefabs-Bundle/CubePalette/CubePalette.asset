@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Name: CubePalette
   m_EditorClassIdentifier: 
   _OffColor:
-    uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
+    uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 0, b: 0, a: 1}
   _InViewColor:
-    uiSprite: {fileID: 21300000, guid: d12b27138f0d34b9ab4b69782c7c6c6a, type: 3}
-    lightColor: {r: 1, g: 1, b: 1, a: 1}
+    uiSprite: {fileID: 21300000, guid: 92bc85540ed3a48d69facb4f53766472, type: 3}
+    lightColor: {r: 0.5411765, g: 0.95294124, b: 0.4431373, a: 1}
   _OutOfViewColor:
-    uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
+    uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 0, b: 0, a: 1}
   _ReadyColor:
     uiSprite: {fileID: 0}

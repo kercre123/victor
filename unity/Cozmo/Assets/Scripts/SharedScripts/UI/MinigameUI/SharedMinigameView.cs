@@ -160,7 +160,7 @@ namespace Cozmo {
       private LayoutElement _InfoTitleLayoutElement;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLegacy _InfoTitleTextLabel;
+      private CozmoText _InfoTitleTextLabel;
 
       [SerializeField]
       private LayoutElement _InfoTextSlideLayoutElement;
@@ -175,7 +175,7 @@ namespace Cozmo {
       #region Default Slides
 
       [SerializeField]
-      private Anki.UI.AnkiTextLegacy _InfoTextSlidePrefab;
+      private CozmoText _InfoTextSlidePrefab;
 
       [SerializeField]
       private AnimationSlide _AnimationSlidePrefab;
@@ -844,7 +844,8 @@ namespace Cozmo {
 
       public void ShowWideSlideWithText(string descLocKey, TweenCallback endInTweenCallback) {
         GameObject slide = ShowWideGameStateSlide(_InfoTextSlidePrefab.gameObject, "wide_info_slide_" + descLocKey, endInTweenCallback);
-        Anki.UI.AnkiTextLegacy textLabel = slide.GetComponent<Anki.UI.AnkiTextLegacy>();
+        slide.SetActive(true);
+        CozmoText textLabel = slide.GetComponent<CozmoText>();
         textLabel.text = Localization.Get(descLocKey);
       }
 
@@ -895,7 +896,7 @@ namespace Cozmo {
         _InfoTextSlideLayoutElement.gameObject.SetActive(true);
         GameObject slide = ShowGameStateSlide("info_slide_" + localizationKey, _InfoTextSlidePrefab.gameObject,
                              _InfoTextGameSlideContainer, endInTweenCallback);
-        Anki.UI.AnkiTextLegacy textLabel = slide.GetComponent<Anki.UI.AnkiTextLegacy>();
+        CozmoText textLabel = slide.GetComponent<CozmoText>();
         textLabel.text = Localization.Get(localizationKey);
       }
 

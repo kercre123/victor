@@ -1002,7 +1002,13 @@ public abstract class GameBase : MonoBehaviour {
         winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
       }
       else {
-        winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+        //If the player doesn't have a name, instead of "" WINS!, change the message to YOU WIN!
+        if (!string.IsNullOrEmpty(player.name)) {
+          winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { player.name });
+        }
+        else {
+          winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextYouWin);
+        }
       }
     }
 

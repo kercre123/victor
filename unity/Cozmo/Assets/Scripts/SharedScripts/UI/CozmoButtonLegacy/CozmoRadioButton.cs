@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 
 namespace Cozmo.UI {
-  public class CozmoRadioButton : CozmoButtonLegacy {
+  public class CozmoRadioButton : CozmoButton {
 
     [SerializeField]
     private Image _PressedTintImage;
@@ -28,9 +28,11 @@ namespace Cozmo.UI {
 
     public bool ShowPressedStateOnRelease {
       get { return _ShowPressedStateOnRelease; }
-      set {         _ShowPressedStateOnRelease = value;
+      set {
+        _ShowPressedStateOnRelease = value;
         UpdateVisuals();
-      }     }
+      }
+    }
 
     protected override void Start() {
       base.Start();

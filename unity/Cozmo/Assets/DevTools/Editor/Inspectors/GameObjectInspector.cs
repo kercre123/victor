@@ -142,11 +142,11 @@ namespace UnityEditor {
       if (_EditorGUI_EnumMaskField == null) {
         sDAS.Error("Error Reflecting _EditorGUI_EnumMaskField");
       }
-      _EditorGUIUtility_TempContent = typeof(EditorGUIUtility).GetMethod("TempContent", BindingFlags.NonPublic | BindingFlags.Static, null, new Type[]{ typeof(string) }, null);
+      _EditorGUIUtility_TempContent = typeof(EditorGUIUtility).GetMethod("TempContent", BindingFlags.NonPublic | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
       if (_EditorGUIUtility_TempContent == null) {
         sDAS.Error("Error Reflecting _EditorGUIUtility_TempContent");
       }
-      _EditorGUIUtility_TextContent = typeof(EditorGUIUtility).GetMethod("TextContent", BindingFlags.NonPublic | BindingFlags.Static, null, new Type[]{ typeof(string) }, null);
+      _EditorGUIUtility_TextContent = typeof(EditorGUIUtility).GetMethod("TextContent", BindingFlags.NonPublic | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
       if (_EditorGUIUtility_TextContent == null) {
         sDAS.Error("Error Reflecting _EditorGUIUtility_TextContent");
       }
@@ -184,7 +184,7 @@ namespace UnityEditor {
     }
 
     private static string EditorGUI_DelayedTextField(Rect position, string value, string allowedLetters, GUIStyle style) {
-      
+
       return (string)EditorGUI.DelayedTextField(position, value, allowedLetters, style);
     }
 
@@ -197,11 +197,11 @@ namespace UnityEditor {
     }
 
     private static GUIContent EditorGUIUtility_TempContent(string t) {
-      return (GUIContent)_EditorGUIUtility_TempContent.Invoke(null, new object[]{ t });
+      return (GUIContent)_EditorGUIUtility_TempContent.Invoke(null, new object[] { t });
     }
 
     private static GUIContent EditorGUIUtility_TextContent(string t) {
-      return (GUIContent)_EditorGUIUtility_TextContent.Invoke(null, new object[]{ t });
+      return (GUIContent)_EditorGUIUtility_TextContent.Invoke(null, new object[] { t });
     }
 
     private static GameObjectUtility_ShouldIncludeChildren GameObjectUtility_DisplayUpdateChildrenDialogIfNeeded(IEnumerable<GameObject> gameObjects, string title, string message) {
@@ -217,14 +217,14 @@ namespace UnityEditor {
     }
 
     private static Vector2 PreviewGUI_Drag2D(Vector2 scrollPosition, Rect position) {
-      return (Vector2)_PreviewGUI_Drag2D.Invoke(null, new object[]{ scrollPosition, position });
+      return (Vector2)_PreviewGUI_Drag2D.Invoke(null, new object[] { scrollPosition, position });
     }
 
     private static float HandleUtility_CalcRayPlaceOffset(Transform[] objects, Vector3 normal) {
       return (float)_HandleUtility_CalcRayPlaceOffset.Invoke(null, new object[] { objects, normal });
     }
 
-    public int referenceTargetIndex { 
+    public int referenceTargetIndex {
       get {
         return (int)_Editor_referenceTargetIndex.GetValue(this, null);
       }
@@ -233,7 +233,7 @@ namespace UnityEditor {
       }
     }
 
-    public string targetTitle { 
+    public string targetTitle {
       get {
         return (string)_Editor_targetTitle.GetValue(this, null);
       }
@@ -272,7 +272,7 @@ namespace UnityEditor {
       public Transform SourceTransform;
 
       public GameObject SourcePrefab;
-           
+
       public Transform DestinationTransform;
 
       public GameObject DestinationPrefab;
@@ -383,9 +383,9 @@ namespace UnityEditor {
 
       var len = Mathf.Min(splitFullB.Length, splitFullA.Length);
       int indexOfFirstDifferent = 0;
-      for (; 
+      for (;
         indexOfFirstDifferent < len &&
-      splitFullB[indexOfFirstDifferent] == splitFullA[indexOfFirstDifferent]; 
+      splitFullB[indexOfFirstDifferent] == splitFullA[indexOfFirstDifferent];
         indexOfFirstDifferent++)
         ;
 
@@ -440,6 +440,8 @@ namespace UnityEditor {
 
     private bool GenerateReferenceMappingsRecursiveForField(object obj, object prefabObj, Type type, string typeString, Transform root, Transform node, GameObject prefab, Transform prefabNode, List<LocalPrefabReferenceMapping> localReferences, List<GlobalPrefabReferenceMapping> globalReferences, List<PrefabValueMapping> values, int depth) {
 
+      if (obj == null && prefabObj == null)
+        return false;
       if (depth > 40) {
         throw new Exception("Hit depth 40 " + typeString);
       }
@@ -462,9 +464,18 @@ namespace UnityEditor {
         if (typeof(Object).IsAssignableFrom(field.FieldType)) {
           Transform objectTransform = null;
           Transform prefabObjectTransform = null;
-          var val = (Object)field.GetValue(obj);
-          var prefabVal = prefabObj != null ? (Object)field.GetValue(prefabObj) : null;
 
+          Object val = null;
+          Object prefabVal = null;
+          try {
+            val = (Object)field.GetValue(obj);
+
+            prefabVal = prefabObj != null ? (Object)field.GetValue(prefabObj) : null;
+          }
+          catch (TargetException targetException) {
+            Debug.LogError(string.Format("Error on field {0} in {1}({2}) \n{3}", field.Name, obj, typeString, targetException), node);
+            return false;
+          }
           if (field.FieldType == typeof(GameObject)) {
             var go = (GameObject)val;
 
@@ -557,12 +568,12 @@ namespace UnityEditor {
 
           if (childList != null) {
 
-            for (int i = 0; i < childList.Count; i++) {           
+            for (int i = 0; i < childList.Count; i++) {
               GenerateReferenceMappingsRecursiveForField(
-                childList[i], 
-                childPrefabList != null && i < childPrefabList.Count ? childPrefabList[i] : null, 
-                elementType, 
-                newTypeString + ":" + i, 
+                childList[i],
+                childPrefabList != null && i < childPrefabList.Count ? childPrefabList[i] : null,
+                elementType,
+                newTypeString + ":" + i,
                 root,
                 node,
                 prefab,
@@ -591,12 +602,12 @@ namespace UnityEditor {
           var childObj = field.GetValue(obj);
           var childPrefabObj = prefabObj != null ? field.GetValue(prefabObj) : null;
 
-          bool childFields = 
+          bool childFields =
             GenerateReferenceMappingsRecursiveForField(
-              childObj, 
-              childPrefabObj, 
-              field.FieldType, 
-              newTypeString, 
+              childObj,
+              childPrefabObj,
+              field.FieldType,
+              newTypeString,
               root,
               node,
               prefab,
@@ -604,7 +615,7 @@ namespace UnityEditor {
               localReferences,
               globalReferences,
               values,
-              depth + 1);          
+              depth + 1);
 
           if (!childFields) {
 
@@ -627,7 +638,7 @@ namespace UnityEditor {
       if (!_FieldInfoCache.TryGetValue(type, out fields)) {
         fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
           .Where(f => f.GetCustomAttributes(typeof(NonSerializedAttribute), true).Length == 0).ToArray();
-        
+
         var subType = type;
         // look for inherited serialized fields
         while (subType != null && subType != typeof(System.Object) && subType != typeof(System.Enum)) {
@@ -674,28 +685,28 @@ namespace UnityEditor {
         }
 
         GenerateReferenceMappingsRecursiveForField(
-          component, 
-          prefabComponent, 
-          type, 
-          type.FullName, 
-          root, 
-          node, 
-          prefab, 
-          prefabNode, 
+          component,
+          prefabComponent,
+          type,
+          type.FullName,
+          root,
+          node,
+          prefab,
+          prefabNode,
           localReferences,
-          globalReferences, 
+          globalReferences,
           values,
           1);
       }
 
       for (int i = 0; i < node.childCount; i++) {
         var child = node.GetChild(i);
-        GenerateReferenceMappingsRecursive(root, 
+        GenerateReferenceMappingsRecursive(root,
           node.GetChild(i),
-          nextPrefab, 
-          nextPrefabNode != null ? nextPrefabNode : (prefabNode != null ? prefabNode.FindChild(child.name) : null), 
-          localReferences, 
-          globalReferences, 
+          nextPrefab,
+          nextPrefabNode != null ? nextPrefabNode : (prefabNode != null ? prefabNode.FindChild(child.name) : null),
+          localReferences,
+          globalReferences,
           values);
       }
     }
@@ -717,7 +728,7 @@ namespace UnityEditor {
         GenerateGlobalReferences(prefabProxy, globalReferences);
         GenerateValues(prefabProxy, values);
       }
-      foreach (var prefabProxy in prefabProxies) {          
+      foreach (var prefabProxy in prefabProxies) {
         for (int i = prefabProxy.transform.childCount - 1; i >= 0; i--) {
           GameObject.DestroyImmediate(prefabProxy.transform.GetChild(i).gameObject);
         }

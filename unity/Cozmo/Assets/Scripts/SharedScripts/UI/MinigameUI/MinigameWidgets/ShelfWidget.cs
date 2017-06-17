@@ -28,7 +28,7 @@ namespace Cozmo {
       private RectTransform _CaratContainer;
 
       [SerializeField]
-      private Image _CaratImage;
+      private CozmoImage _CaratImage;
       public Color CaratColor {
         get { return _CaratImage.color; }
         set { _CaratImage.color = value; }
@@ -61,7 +61,7 @@ namespace Cozmo {
       private GameObject _ContentObject = null;
 
       [SerializeField]
-      private Anki.UI.AnkiTextLegacy _ShelfText;
+      private CozmoText _ShelfText;
 
       private void Awake() {
         Color transparent = Color.white;

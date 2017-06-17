@@ -13,7 +13,7 @@ public class VideoSubtitleController : MonoBehaviour {
   private MediaPlayerCtrl _MediaPlayerCtrl;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLegacy _SubtitlesText;
+  private CozmoText _SubtitlesText;
 
   [SerializeField]
   private UnityEngine.UI.Image _SubtitlesBackground;

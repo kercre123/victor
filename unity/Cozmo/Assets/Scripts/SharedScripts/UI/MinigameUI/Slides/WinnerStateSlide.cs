@@ -10,10 +10,10 @@ namespace Cozmo.UI {
     private Image _PortraitImage;
 
     [SerializeField]
-    private AnkiTextLegacy _WinnerLabel;
+    private CozmoText _WinnerLabel;
 
     [SerializeField]
-    private AnkiTextLegacy _FooterLabel;
+    private CozmoText _FooterLabel;
 
     public void Init(Sprite showImage, string winnerText, string footerText) {
       _PortraitImage.sprite = showImage;

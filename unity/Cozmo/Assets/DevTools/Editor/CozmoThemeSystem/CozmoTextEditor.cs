@@ -115,7 +115,53 @@ namespace Cozmo.UI {
     }
 
     public override void UpdateSkinnableElementsForSaving(ref ThemesJson.ThemeComponentObj themeComponentObj) {
-      base.UpdateSkinnableElementsForSaving(ref themeComponentObj);
+
+      themeComponentObj.SkinFontColor = _SavingSkinFaceColor;
+      if (_SavingSkinFaceColor) {
+        themeComponentObj.FontColor = _ScriptTarget.faceColor;
+      }
+
+      themeComponentObj.SkinTMPOutlineColor = _SavingSkinOutlineColor;
+      if (_SavingSkinOutlineColor) {
+        themeComponentObj.TMPOutlineColor = _ScriptTarget.outlineColor;
+      }
+
+      themeComponentObj.SkinTMPOutlineThickness = _SavingSkinOutlineThickness;
+      if (_SavingSkinOutlineThickness) {
+        themeComponentObj.TMPOutlineThickness = _ScriptTarget.outlineWidth;
+      }
+
+      themeComponentObj.SkinFontSize = _SavingSkinFontSize;
+      if (_SavingSkinFontSize) {
+        themeComponentObj.FontSizeOffset = _SavingSkinFontSizeOffset;
+      }
+
+      themeComponentObj.SkinFontStyle = _SavingSkinFontStyle;
+      if (_SavingSkinFontStyle) {
+        themeComponentObj.FontStyle = (int)_ScriptTarget.fontStyle;
+      }
+
+      themeComponentObj.SkinTextAlignment = _SavingTextAlignment;
+      if (_SavingTextAlignment) {
+        themeComponentObj.TextAlignment = (int)_ScriptTarget.alignment;
+      }
+
+      themeComponentObj.SkinTextOverflow = _SavingTextOverflow;
+      if (_SavingTextOverflow) {
+        themeComponentObj.TextOverflow = (int)_ScriptTarget.overflowMode;
+      }
+
+      themeComponentObj.SkinAutoSizing = _SavingAutoSizing;
+      if (_SavingAutoSizing) {
+        themeComponentObj.EnableAutoSizing = _ScriptTarget.enableAutoSizing;
+        themeComponentObj.AutoSizingMin = _ScriptTarget.fontSizeMin;
+        themeComponentObj.AutoSizingMax = _ScriptTarget.fontSizeMax;
+      }
+
+      themeComponentObj.SkinFont = _SavingSkinFont;
+      if (_SavingSkinFont) {
+        themeComponentObj.FontResourceKey = _ScriptTarget.font != null ? CozmoThemeSystemEditorUtils.sInstance.GetAssetResourcesPath(_ScriptTarget.font) : string.Empty;
+      }
     }
 
     private void DrawTMPDefaultSkinningOptions() {

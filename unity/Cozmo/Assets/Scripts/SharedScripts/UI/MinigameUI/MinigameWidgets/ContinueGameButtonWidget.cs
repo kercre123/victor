@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using DG.Tweening;
 using Anki.UI;
+using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -14,13 +15,13 @@ namespace Cozmo {
       public delegate void ContinueButtonClickHandler();
 
       [SerializeField]
-      private Cozmo.UI.CozmoButtonLegacy _ContinueButton;
+      private CozmoButton _ContinueButton;
 
       [SerializeField]
-      private AnkiTextLegacy _ShelfTextLabel;
+      private CozmoText _ShelfTextLabel;
 
       [SerializeField]
-      private AnkiTextLegacy _AmountTextLabel;
+      private CozmoText _AmountTextLabel;
 
       private ContinueButtonClickHandler _OnClickCallback;
 

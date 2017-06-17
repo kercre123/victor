@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -18,13 +19,13 @@ public class ShowCozmoVideo : MonoBehaviour {
   private RawImage _RawImage;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _ReplayButton;
+  private CozmoButton _ReplayButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _ContinueButton;
+  private CozmoButton _ContinueButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _SkipButton;
+  private CozmoButton _SkipButton;
 
   [SerializeField, Range(0f, 1f), Tooltip("Volume level (linear scalar) to which music should fade when video plays")]
   private float _MusicDuckingLevel = 0.5f; // 0.5 volume scalar is about -6dBFS

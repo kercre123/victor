@@ -21,9 +21,6 @@ namespace MemoryMatch {
     private Image _Background;
 
     [SerializeField]
-    private Sprite _ActiveBackground;
-
-    [SerializeField]
     private GameObject _LblMyTurn;
 
     private CanvasGroup _AlphaController;
@@ -41,16 +38,10 @@ namespace MemoryMatch {
       if (isMyTurn) {
         transform.localScale = new Vector3(1, 1, 1);
         _AlphaController.alpha = 1.0f;
-        if (_Background != null && _ActiveBackground != null) {
-          _Background.overrideSprite = _ActiveBackground;
-        }
       }
       else {
         transform.localScale = new Vector3(0.7f, 0.7f, 1);
         _AlphaController.alpha = 0.5f;
-        if (_Background != null) {
-          _Background.overrideSprite = null;
-        }
       }
     }
   }

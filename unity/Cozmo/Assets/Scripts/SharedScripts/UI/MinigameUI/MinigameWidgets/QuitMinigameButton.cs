@@ -19,7 +19,7 @@ namespace Cozmo {
       public event QuitButtonHandler QuitGameConfirmed;
 
       [SerializeField]
-      private CozmoButtonLegacy _QuitButtonInstance;
+      private CozmoButton _QuitButtonInstance;
 
       private AlertModal _QuitPopupInstance;
 
@@ -108,7 +108,9 @@ namespace Cozmo {
       }
 
       public void SetButtonTint(Color tintColor) {
-        _QuitButtonInstance.SetButtonTint(tintColor);
+        var colors = _QuitButtonInstance.colors;
+        colors.normalColor = tintColor;
+        _QuitButtonInstance.colors = colors;
       }
     }
   }
