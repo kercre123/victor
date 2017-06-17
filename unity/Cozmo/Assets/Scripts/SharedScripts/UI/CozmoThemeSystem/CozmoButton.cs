@@ -490,7 +490,12 @@ namespace Cozmo.UI {
     }
 
     private void SkinButtonImageArray(ThemesJson.ThemeComponentObj linkedComponentObj) {
-      for (int i = 0; i < linkedComponentObj.ButtonImageArray.Length; ++i) {
+      int smallerLength = Mathf.Min(linkedComponentObj.ButtonImageArray.Length, ButtonGraphics.Length);
+      if (linkedComponentObj.ButtonImageArray.Length != ButtonGraphics.Length) {
+        DAS.Error("CozmoButton.SkinButtonImageArray", "Image Array Length mismatch! gameObject=" + this.DASEventButtonName
+                  + " view=" + this.DASEventViewController + " skinId=" + linkedComponentObj.Id);
+      }
+      for (int i = 0; i < smallerLength; ++i) {
         ButtonGraphics[i].pressedColor = linkedComponentObj.ButtonImageArray[i].PressedSpriteColor;
         if (!string.IsNullOrEmpty(linkedComponentObj.ButtonImageArray[i].PressedSpriteResourceKey)) {
           ButtonGraphics[i].pressedSprite = ThemeSystemUtils.sInstance.LoadSprite(linkedComponentObj.ButtonImageArray[i].PressedSpriteResourceKey);
@@ -500,7 +505,6 @@ namespace Cozmo.UI {
         if (!string.IsNullOrEmpty(linkedComponentObj.ButtonImageArray[i].DisabledSpriteResourceKey)) {
           ButtonGraphics[i].disabledSprite = ThemeSystemUtils.sInstance.LoadSprite(linkedComponentObj.ButtonImageArray[i].DisabledSpriteResourceKey);
         }
-
       }
     }
 
