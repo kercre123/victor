@@ -122,5 +122,14 @@
   },
   "onboarding.ActivitiesIntro": {
     "translation": "These are special activities that don’t affect Cozmo’s needs or sparks!"
+  },
+  "onboarding.needs.ticker": {
+    "translation": "Analyzing Cozmo needs."
+  },
+  "onboarding.repair.ticker": {
+    "translation": "Cozmo needs to be repaired."
+  },
+  "onboarding.feed.ticker": {
+    "translation": "Cozmo needs to be fed."
   }
 }

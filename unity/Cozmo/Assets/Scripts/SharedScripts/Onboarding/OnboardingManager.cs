@@ -39,6 +39,7 @@ public class OnboardingManager : MonoBehaviour {
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
   public Action<OnboardingPhases> OnOnboardingPhaseCompleted;
+  public Action<string> OnOverrideTickerString;
 
   public bool FirstTime { get; set; }
 

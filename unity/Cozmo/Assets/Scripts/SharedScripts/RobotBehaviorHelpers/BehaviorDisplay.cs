@@ -43,11 +43,14 @@ public class BehaviorDisplay : MonoBehaviour {
     _BehaviorRewardColor = UIColorPalette.FreeplayBehaviorRewardColor;
     SetOverrideString(null);
     RewardedActionManager.Instance.OnFreeplayRewardEvent += HandleFreeplayRewardedAction;
+
+    OnboardingManager.Instance.OnOverrideTickerString += HandleOnboardingStringOverride;
   }
 
   private void OnDestroy() {
     CleanupTween();
     RewardedActionManager.Instance.OnFreeplayRewardEvent -= HandleFreeplayRewardedAction;
+    OnboardingManager.Instance.OnOverrideTickerString -= HandleOnboardingStringOverride;
   }
   private void CleanupTween() {
     if (_FadeTween != null) {
@@ -113,6 +116,10 @@ public class BehaviorDisplay : MonoBehaviour {
       str = "";
     }
     StartFadeTo(str);
+  }
+
+  private void HandleOnboardingStringOverride(string str) {
+    SetOverrideString(str);
   }
 
   private void HandleFreeplayRewardedAction(RewardedActionData reward) {

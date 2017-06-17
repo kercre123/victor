@@ -127,7 +127,7 @@ MonoBehaviour:
   _ReactionsEnabled: 1
   _PlayIdle: 0
   _DASPhaseID: 4
-  _IsLastPhase: 0
+  _OverrideTickerKey: onboarding.repair.ticker
   _ButtonStateDiscover: 1
   _ButtonStateRepair: 2
   _ButtonStateFeed: 1

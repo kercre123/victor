@@ -29,7 +29,7 @@ namespace Onboarding {
     protected int _DASPhaseID = 0;
 
     [SerializeField]
-    protected bool _IsLastPhase = false;
+    protected string _OverrideTickerKey = string.Empty;
 
     // Serialized as an int, do not reorder/delete
     public enum OnboardingButtonStates {
@@ -56,6 +56,21 @@ namespace Onboarding {
         // Really doesn't show a one frame pop to default idle between states
         RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth);
         HandleLoopedAnimationComplete();
+      }
+    }
+
+    public virtual void OnEnable() {
+      if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
+        if (OnboardingManager.Instance.OnOverrideTickerString != null) {
+          OnboardingManager.Instance.OnOverrideTickerString.Invoke(Localization.Get(_OverrideTickerKey));
+        }
+      }
+    }
+    public virtual void OnDisable() {
+      if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
+        if (OnboardingManager.Instance.OnOverrideTickerString != null) {
+          OnboardingManager.Instance.OnOverrideTickerString.Invoke(null);
+        }
       }
     }
 
