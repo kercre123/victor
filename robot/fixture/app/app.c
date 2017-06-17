@@ -229,7 +229,8 @@ bool DetectDevice(void)
     case FIXTURE_FINISH1_TEST:
     case FIXTURE_FINISH2_TEST:
     case FIXTURE_FINISH3_TEST:
-    case FIXTURE_FINISH_TEST:
+    case FIXTURE_FINISHX_TEST:
+    case FIXTURE_EMCUBE_TEST:
       return FinishDetect();
     case FIXTURE_DEBUG:
       return DebugTestDetectDevice();
@@ -460,7 +461,8 @@ static void MainExecution()
     case FIXTURE_FINISH1_TEST:
     case FIXTURE_FINISH2_TEST:
     case FIXTURE_FINISH3_TEST:
-    case FIXTURE_FINISH_TEST:
+    case FIXTURE_FINISHX_TEST:
+    case FIXTURE_EMCUBE_TEST:
       m_functions = GetFinishTestFunctions();
       break;
     case FIXTURE_DEBUG:

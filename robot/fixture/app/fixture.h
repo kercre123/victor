@@ -31,7 +31,7 @@
 #define FIXTURE_FINISH1_TEST   17    
 #define FIXTURE_FINISH2_TEST   18    
 #define FIXTURE_FINISH3_TEST   19    
-#define FIXTURE_FINISH_TEST    20   // Will connect to any type of accessory
+#define FIXTURE_FINISHX_TEST   20   // Will connect to any type of accessory
 
 #define FIXTURE_CUBEX_TEST     21   // Will verify (but not program-from-scratch) any cube type
 
@@ -56,8 +56,9 @@
 #define FIXTURE_COZ187_TEST    32   // murder cozmo, kill code to fac-revert via charge-contact cmd
 
 #define FIXTURE_EMROBOT_TEST   36
+#define FIXTURE_EMCUBE_TEST    37
 
-#define FIXTURE_DEBUG          37   // Should be last ID
+#define FIXTURE_DEBUG          38   // Should be last ID
 
 //DEBUG must always be last entry!!!!!!!!!!!!!!!!!!1
 #define NUM_FIXTYPES  (FIXTURE_DEBUG+1)
@@ -68,7 +69,7 @@ typedef unsigned char FixtureType;
   /*8-15*/  "ROBOT1",   "BODY2",      "MOTOR1L",    "MOTOR2L",  "MOTOR2H",  "BODY3",  "INFO",     "PLAYPEN",  \
   /*16-23*/ "FINISHC",  "FINISH1",    "FINISH2",    "FINISH3",  "FINISHX",  "CUBEX",  "ROBOT2",   "ROBOT3",   \
   /*24-31*/ "PACKOUT",  "LIFETEST",   "RECHARGE",   "JAM",      "HEAD2",    "SOUND",  "MOTOR3L",  "MOTOR3H",  \
-  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "RECHARGE2","EMROBOT",  "DEBUG" }
+  /*32-39*/ "COZ187",   "ROBOT3-CE",  "PACKOUT-CE", "RECHARGE2","EMROBOT",  "EMCUBE", "DEBUG" }
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial();
