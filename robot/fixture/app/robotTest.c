@@ -160,6 +160,7 @@ static void VerifyBodyColor(void)
     throw ERROR_BODYCOLOR_INVALID;
 }
 
+static u32 body_esn = 0;
 void InfoTest(void)
 {
   struct { u32 version[2]; s32 bodycolor[MAX_BODYCOLORS]; } dat;
@@ -177,6 +178,7 @@ void InfoTest(void)
   // Mimic robot format for SMERP
   int unused = dat.version[0]>>16, hwversion = dat.version[0]&0xffff, esn = dat.version[1];
   ConsolePrintf("version,%08d,%08d,%08x,00000000\r\n", unused, hwversion, esn);
+  body_esn = esn;
   
   if (hwversion < BODY_VER_SHIP && !g_allowOutdated)
     throw ERROR_BODY_OUTOFDATE;
@@ -836,7 +838,7 @@ void EmPlaypenDelay(void)
 {
   SendCommand(TEST_POWERON, 10, 0, 0); //keep robot powered through this test
   MicroWait(1*1000*1000);
-  ConsolePrintf("test-head-radio\r\n");
+  ConsolePrintf("test-head-radio,%08x\r\n", body_esn);
   MicroWait(3*1000*1000);
 }
 
