@@ -103,18 +103,20 @@ IBehavior::Status BehaviorDriveToFace::UpdateInternal(Robot& robot)
 void BehaviorDriveToFace::TransitionToTurningTowardsFace(Robot& robot)
 {
   SET_STATE(TurnTowardsFace);
-  CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential(robot);
-  turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(robot, _targetFace));
-  turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(
-                    robot, robot.GetFaceWorld().GetFace(_targetFace)->GetID()));
+  const Vision::TrackedFace* facePtr = robot.GetFaceWorld().GetFace(_targetFace);
+  if(facePtr != nullptr){
+    CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential(robot);
+    turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(robot, _targetFace));
+    turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(robot, facePtr->GetID()));
 
-  
-  StartActing(new TurnTowardsFaceAction(robot, _targetFace),
-              [this, &robot](ActionResult result){
-                if(result == ActionResult::SUCCESS){
-                  TransitionToDrivingToFace(robot);
-                }
-              });
+    
+    StartActing(new TurnTowardsFaceAction(robot, _targetFace),
+                [this, &robot](ActionResult result){
+                  if(result == ActionResult::SUCCESS){
+                    TransitionToDrivingToFace(robot);
+                  }
+                });
+  }
 }
 
   
@@ -156,8 +158,11 @@ void BehaviorDriveToFace::TransitionToTrackingFace(Robot& robot)
   _timeCancelTracking_s = kTimeUntilCancelFaceTrack_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // Runs forever - the behavior will be stopped in the Update loop when the
   // timeout for face tracking is hit
-  const Vision::FaceID_t faceID = robot.GetFaceWorld().GetFace(_targetFace)->GetID();
-  StartActing(new TrackFaceAction(robot, faceID));
+  const Vision::TrackedFace* facePtr = robot.GetFaceWorld().GetFace(_targetFace);
+  if(facePtr != nullptr){
+    const Vision::FaceID_t faceID = facePtr->GetID();
+    StartActing(new TrackFaceAction(robot, faceID));
+  }
 }
   
   
