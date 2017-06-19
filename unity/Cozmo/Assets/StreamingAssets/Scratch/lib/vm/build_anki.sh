@@ -19,9 +19,6 @@ fi
 echo npm install:
 npm install
 
-echo npm run build:
-npm run build
-
 if [ $ENABLE_NODE_MODULE_CACHING != 0 ]
 then
     echo caching node_modules back to home directory out of the way of git

@@ -718,11 +718,11 @@ class Runtime extends EventEmitter {
             // *** ANKI CHANGE ***
             // Code to glow blocks. - msintov, 02/14/17
             // This is adminittedly a bit of a hack.
-            // currentBlockId = poppedThread.peekStack();
-            // poppedThread.previousPreviousBlockGlowInFrame = poppedThread.previousBlockGlowInFrame;
-            // poppedThread.previousBlockGlowInFrame = currentBlockId;
-            // poppedThread.blockGlowInFrame = currentBlockId;
-            // this._updateGlows();
+            let currentBlockId = poppedThread.peekStack();
+            poppedThread.previousPreviousBlockGlowInFrame = poppedThread.previousBlockGlowInFrame;
+            poppedThread.previousBlockGlowInFrame = currentBlockId;
+            poppedThread.blockGlowInFrame = currentBlockId;
+            this._updateGlows();
 
             this._removeThread(poppedThread);
         }
@@ -854,8 +854,8 @@ class Runtime extends EventEmitter {
                 // being executed directly in the toolbox. Currently we see this
                 // only with blocks that have no dropdown selector. Not tested with
                 // vertical grammar. - msintov, 4/5/2017
-                 if (thread.requestScriptGlowInFrame) {
-                //if (1) {
+                //if (thread.requestScriptGlowInFrame) {
+                if (1) {
                     let script = target.blocks.getTopLevelScript(blockForThread);
                     if (!script) {
                         // Attempt to find in flyout blocks.
