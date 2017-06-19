@@ -65,6 +65,10 @@ make copy-clad
 make dist
 popd
 
+#make sure pillow and numpy are installed (for animation test)
+$PIP install numpy
+$PIP install pillow
+
 #install the pulled down repo and clad
 $PIP install -e ./$_COZMO_REPO_DIR
 $PIP install --ignore-installed $_TOPLEVEL_COZMO/tools/sdk/cozmoclad/dist/*.whl

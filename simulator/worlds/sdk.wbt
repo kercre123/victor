@@ -42,6 +42,11 @@ Face {
   image "face02.png"
 }
 Face {
+  translation 0.92260571 -0.023165 0.45
+  rotation 0 0 1 4.71239
+  image "cat06.png"
+}
+Face {
   translation 0.845522 0.29878 0.45
   rotation 0 0 1 4.97419
   image "face03.png"
@@ -79,17 +84,17 @@ DEF CustomCube2 Block1x1 {
 }
 DEF CustomBox1 CustomBox {
   translation 0.3 0.2 0.05
-  markerImg_front "customSDK/SDK_2Hexagons.png"
-  markerImg_back "customSDK/SDK_3Circles.png"
-  markerImg_top "customSDK/SDK_4Circles.png"
-  markerImg_bottom "customSDK/SDK_5Circles.png"
-  markerImg_left "customSDK/SDK_2Triangles.png"
-  markerImg_right "customSDK/SDK_3Triangles.png"
   width 0.14
   height 0.1
   depth 0.06
   markerWidth 0.03
   markerHeight 0.05
+  markerImg_front "customSDK/SDK_2Hexagons.png"
+  markerImg_back "customSDK/SDK_3Circles.png"
+  markerImg_left "customSDK/SDK_2Triangles.png"
+  markerImg_right "customSDK/SDK_3Triangles.png"
+  markerImg_top "customSDK/SDK_4Circles.png"
+  markerImg_bottom "customSDK/SDK_5Circles.png"
 }
 DEF CustomWall1 CustomWall {
   translation 0.35 0.01 0.06
@@ -119,7 +124,7 @@ WebotsKeyboardController {
   userName "Billy"
   unlockName "Workout"
   filterLogs TRUE
-  autoConnect FALSE
+  autoConnect TRUE
 }
 CozmoVizDisplay {
 }

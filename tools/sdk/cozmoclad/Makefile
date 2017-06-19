@@ -1,6 +1,7 @@
 .PHONY: copy-clad license sdist wheel dist
 
 copy-clad:
+	rm -rf dist/*
 	rm -rf src/cozmoclad/clad/*
 	rm -rf src/cozmoclad/msgbuffers/*
 	cp -r ../../../generated/cladPython/clad src/cozmoclad/
