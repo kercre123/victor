@@ -488,7 +488,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 834f3bb186f104a15b2d4c8b159a9399, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventDialogName: 
+  _DASEventDialogName: settings_modal
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
