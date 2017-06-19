@@ -10,6 +10,7 @@
 
     'engine2_source': 'cozmoEngine2.lst',
     'cozmoRobot2_source': 'cozmoRobot2.lst',
+    'androidHAL_source': 'androidHAL.lst',
     'clad_vision_source': '../../generated/clad/vision.lst',
     'clad_common_source': '../../generated/clad/common.lst',
     'clad_engine_source': '../../generated/clad/engine.lst',
@@ -1250,6 +1251,70 @@
 
 
   'targets': [
+    {
+      'target_name': 'androidHAL',
+      'type': 'static_library',
+      'sources': [
+        '<!@(cat <(androidHAL_source))'
+      ],
+      'include_dirs': [
+        '../../androidHAL/include',
+        '../../androidHAL/src',
+        '../../robot/include',
+        '../../generated/clad/engine',
+      ],
+      'dependencies': [
+        '<(ce-util_gyp_path):util',
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+      ],
+      'defines': [
+        'COZMO_BASESTATION',
+        'COZMO_V2',
+      ],
+      'conditions': [
+        [
+          'OS=="mac"',
+          {
+            'defines': [
+              'SIMULATOR'
+            ],
+            'direct_dependent_settings': {
+              'defines': [
+                'SIMULATOR'
+              ]
+            },
+            'sources/': [
+              ['exclude', 'android/'],
+              ['exclude', '_android\\.'],
+            ],
+            'include_dirs' : [
+              '<@(opencv_includes)',
+              '<@(webots_includes)', # After opencv!
+            ],
+        },
+        'OS=="android"',
+        {
+            'sources/': [
+              ['exclude', 'mac/'],
+              ['exclude', '_mac\\.'],
+            ],
+            'include_dirs': [
+              '../../androidHAL/src/anki/cozmo/basestation/androidHAL/android/camera',
+            ],
+            'libraries': [
+              '-llog',
+              '-lOpenSLES',
+              '-landroid',
+              '-lcamera2ndk',
+              '-lmediandk',
+            ]
+        }
+      ]
+    ],
+    },
 
     {
       'target_name': 'cozmoEngine2',
@@ -1316,6 +1381,7 @@
         '<(cg-audio_path):AudioEngine',
         '<(ce-ble_cozmo_path):BLECozmo',
         '<(ce-das_path):DAS',
+        'androidHAL'
       ],
       'conditions': [
         [

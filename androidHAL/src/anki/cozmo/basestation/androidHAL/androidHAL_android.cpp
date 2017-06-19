@@ -19,9 +19,9 @@
 #include <android/sensor.h>
 
 // Android camera
-#include "anki/cozmo/basestation/androidHAL/camera/camera_manager.h"
-#include "anki/cozmo/basestation/androidHAL/camera/image_reader.h"
-#include "anki/cozmo/basestation/androidHAL/camera/utils/native_debug.h"
+#include "anki/cozmo/basestation/androidHAL/android/camera/camera_manager.h"
+#include "anki/cozmo/basestation/androidHAL/android/camera/image_reader.h"
+#include "anki/cozmo/basestation/androidHAL/android/camera/utils/native_debug.h"
 #include "anki/vision/CameraSettings.h"
 
 #include <vector>
