@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: RollCube
-    _EnumValue: 11
+    _EnumValue: 9
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: PounceOnMotionAction
@@ -27,7 +27,9 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  RequestTrickCostAmount: 1
+  _RequestTrickCostAmount:
+    _EnumValueAsString: RollCube
+    _EnumValue: 19
   CoreUpgradeIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0, type: 3}
   CubesRequired: 1
   SortOrder: 400

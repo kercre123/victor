@@ -21,6 +21,7 @@ namespace Cozmo {
         playerInventory.ItemAdded += HandleItemValueChanged;
         playerInventory.ItemRemoved += HandleItemValueChanged;
         playerInventory.ItemCountSet += HandleItemValueChanged;
+        playerInventory.ItemCountUpdated += HandleItemValueChanged;
         SetFormattingArgs(playerInventory.GetItemAmount(_ItemId));
 
         if (_ItemIcon != null) {
@@ -39,6 +40,7 @@ namespace Cozmo {
         playerInventory.ItemAdded -= HandleItemValueChanged;
         playerInventory.ItemRemoved -= HandleItemValueChanged;
         playerInventory.ItemCountSet -= HandleItemValueChanged;
+        playerInventory.ItemCountUpdated -= HandleItemValueChanged;
       }
 
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {

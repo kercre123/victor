@@ -37,11 +37,11 @@ namespace Cozmo {
 namespace {
 
   // Maps a voice command to how many sparks it costs to execute
-  const std::map<VoiceCommand::VoiceCommandType, SparkCosts> kVoiceCommandToSparkCostMap = {
-    {VoiceCommand::VoiceCommandType::DoATrick, SparkCosts::DoATrick},
-    {VoiceCommand::VoiceCommandType::LetsPlay, SparkCosts::PlayAGame},
-    {VoiceCommand::VoiceCommandType::FistBump, SparkCosts::FistBump},
-    {VoiceCommand::VoiceCommandType::PeekABoo, SparkCosts::PeekABoo},
+  const std::map<VoiceCommand::VoiceCommandType, SparkableThings> kVoiceCommandToSparkableThingsMap = {
+    {VoiceCommand::VoiceCommandType::DoATrick, SparkableThings::DoATrick},
+    {VoiceCommand::VoiceCommandType::LetsPlay, SparkableThings::PlayAGame},
+    {VoiceCommand::VoiceCommandType::FistBump, SparkableThings::FistBump},
+    {VoiceCommand::VoiceCommandType::PeekABoo, SparkableThings::PeekABoo},
   };
   
   
@@ -160,6 +160,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       
       const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+      RemoveSparksForCommand(robot, currentCommand);
       
       return _voiceCommandBehavior;
     }
@@ -176,6 +177,9 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
     {
       _doATrickSelector->RequestATrick(robot);
       BeginRespondingToCommand(currentCommand);
+
+      RemoveSparksForCommand(robot, currentCommand);
+
       return emptyPtr;
     }
     case VoiceCommandType::ComeHere:
@@ -200,6 +204,8 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       //Ensure fist bump is runnable
       if(_fistBumpBehavior->IsRunnable(preReqRobot))
       {
+        RemoveSparksForCommand(robot, currentCommand);
+      
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
         _voiceCommandBehavior = emptyPtr;
@@ -220,6 +226,8 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       //Ensure PeekABoo is runnable
       if(_peekABooBehavior->IsRunnable(preReqRobot))
       {
+        RemoveSparksForCommand(robot, currentCommand);
+      
         const bool isSoftSpark = false;
         robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
         _voiceCommandBehavior = emptyPtr;
@@ -269,14 +277,31 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
 
 bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandType command) const
 {
-  const auto& commandToSparkCost = kVoiceCommandToSparkCostMap.find(command);
-  if(commandToSparkCost != kVoiceCommandToSparkCostMap.end())
+  const auto& commandToSparkCost = kVoiceCommandToSparkableThingsMap.find(command);
+  if(commandToSparkCost != kVoiceCommandToSparkableThingsMap.end())
   {
     int curNumSparks = robot.GetInventoryComponent().GetInventoryAmount(InventoryType::Sparks);
-    return (curNumSparks > commandToSparkCost->second);
+    const u32 sparkCost = GetSparkCosts(commandToSparkCost->second, 0);
+    return (curNumSparks >= sparkCost);
   }
   
   return true;
+}
+
+void ActivityVoiceCommand::RemoveSparksForCommand(Robot& robot, VoiceCommandType command)
+{
+  const auto& commandToSparkCost = kVoiceCommandToSparkableThingsMap.find(command);
+  if(commandToSparkCost != kVoiceCommandToSparkableThingsMap.end())
+  {
+    const u32 sparkCost = GetSparkCosts(commandToSparkCost->second, 0);
+    robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("ActivityVoiceCommand.RemoveSparksForCommand.InvalidCommand",
+                        "Command %s was not found in kVoiceCommandToSparkCostMap",
+                        EnumToString(command));
+  }
 }
 
 bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehaviorPtr& outputBehavior) const

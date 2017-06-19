@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PopAWheelieAction
-    _EnumValue: 11
+    _EnumValue: 13
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: KnockOverThreeCubeStack
@@ -27,7 +27,9 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  RequestTrickCostAmount: 2
+  _RequestTrickCostAmount:
+    _EnumValueAsString: PopAWheelie
+    _EnumValue: 17
   CoreUpgradeIcon: {fileID: 21300000, guid: 55d44ac342f9645cc9d7b909952cd412, type: 3}
   CubesRequired: 1
   SortOrder: 600

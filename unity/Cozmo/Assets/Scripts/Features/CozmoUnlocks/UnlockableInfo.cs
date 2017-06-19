@@ -45,7 +45,17 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   [Cozmo.ItemId]
   public string RequestTrickCostItemId;
-  public int RequestTrickCostAmount = 1;
+
+  [SerializeField]
+  private SerializableSparkableThings _RequestTrickCostAmount;
+  public int RequestTrickCostAmount {
+    set {
+      _RequestTrickCostAmount.Value = (Anki.Cozmo.SparkableThings)value;
+    }
+    get {
+      return (int)Anki.Cozmo.EnumConcept.GetSparkCosts(_RequestTrickCostAmount.Value, 0);
+    }
+  }
 
   public Sprite CoreUpgradeIcon;
 
@@ -55,6 +65,11 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {
+
+  }
+
+  [Serializable]
+  public class SerializableSparkableThings : SerializableEnum<Anki.Cozmo.SparkableThings> {
 
   }
 

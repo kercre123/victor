@@ -84,3 +84,15 @@ public class SerializableNeedsActionIdsEnumEditor : PropertyDrawer {
   }
 }
 
+[CustomPropertyDrawer(typeof(UnlockableInfo.SerializableSparkableThings))]
+public class SerializableSparkableThingsEnumEditor : PropertyDrawer {
+
+  private Dictionary<string, int> _EnumStringToValueMap = new Dictionary<string, int>();
+  private bool _EnumStringToValueMapPopulated = false;
+
+  public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+    SerializableEnumDrawingHelper.OnGUIHelper(position, property, label, _EnumStringToValueMap, _EnumStringToValueMapPopulated);
+    _EnumStringToValueMapPopulated = true;
+  }
+}
+

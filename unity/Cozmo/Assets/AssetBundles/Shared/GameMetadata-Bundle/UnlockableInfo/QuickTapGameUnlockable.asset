@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: QuickTapGame
-    _EnumValue: 11
+    _EnumValue: 18
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -25,7 +25,9 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  RequestTrickCostAmount: 1
+  _RequestTrickCostAmount:
+    _EnumValueAsString: QuickTap
+    _EnumValue: 7
   CoreUpgradeIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49, type: 3}
   CubesRequired: 2
   SortOrder: 200

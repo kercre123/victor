@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PeekABoo
-    _EnumValue: 11
+    _EnumValue: 37
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: BuildPyramid
@@ -27,7 +27,9 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  RequestTrickCostAmount: 1
+  _RequestTrickCostAmount:
+    _EnumValueAsString: PeekABoo
+    _EnumValue: 11
   CoreUpgradeIcon: {fileID: 21300000, guid: cf16b5c4c281c4426a9cd0ae1a2ed2d7, type: 3}
   CubesRequired: 0
   SortOrder: 1100

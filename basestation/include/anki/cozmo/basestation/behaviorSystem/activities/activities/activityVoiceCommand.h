@@ -91,6 +91,8 @@ private:
   // Returns whether or not we have enough sparks to execute the command
   bool HasEnoughSparksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command) const;
   
+  void RemoveSparksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command);
+  
   // Setups up the refuse behavior to play the animTrigger
   // Returns true if the outputBehavior has been set to the refuse behavior
   bool CheckAndSetupRefuseBehavior(Robot& robot, BehaviorID whichRefuse, IBehaviorPtr& outputBehavior) const;

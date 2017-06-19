@@ -7,8 +7,8 @@ namespace Cozmo {
 // Do not reorder and always add to the end so can directly read from robots
 enum uint_32 InventoryType
 {
-  Invalid                 = 0,
-  Sparks                  = 1
+  Invalid = 0,
+  Sparks  = 1
 }
 
 
@@ -17,13 +17,67 @@ structure InventoryList {
   int_32 inventoryItemAmount[64]
 }
 
-// How many sparks it costs for various things
-enum no_cpp_class uint_32 SparkCosts
+// Enum of every sparkable thing
+// Unity does not play nicely with enums that have the same value so
+// we use an enum concept to assign the spark costs to each sparkable thing
+// instead of just having an enum of spark costs
+enum int_32 SparkableThings
 {
-  DoATrick = 5,
-  PlayAGame = 5,
-  FistBump = 5,
-  PeekABoo = 5,
+  NoCost,
+
+  DoATrick,
+  PlayAGame,
+
+  CodeLab,
+  CozmoSays,
+  CubePounce,
+  ExplorerMode,
+  QuickTap,
+  MeetCozmo,
+  MemoryMatch,
+
+  FistBump,
+  PeekABoo,
+  BuildPyramid,
+  PickUpCube,
+  StackCubes,
+  PounceOnFingers,
+  KnockOverStack,
+  PopAWheelie,
+  WorkoutWithCubes,
+  RollCube,
+
+}
+
+// How many sparks it costs for various sparkable things
+enum_concept uint_32 GetSparkCosts[SparkableThings]
+{
+  NoCost    = 0,
+
+  // Random
+  DoATrick  = 3,
+  PlayAGame = 3,
+
+  // Games
+  CodeLab      = 5,
+  CozmoSays    = 5,
+  CubePounce   = 5,
+  ExplorerMode = 5,
+  QuickTap     = 5,
+  MeetCozmo    = 5,
+  MemoryMatch  = 5,
+
+  // Sparks
+  FistBump         = 2,
+  PeekABoo         = 1,
+  BuildPyramid     = 3,
+  PickUpCube       = 1,
+  StackCubes       = 1,
+  PounceOnFingers  = 1,
+  KnockOverStack   = 1,
+  PopAWheelie      = 2,
+  WorkoutWithCubes = 2,
+  RollCube         = 1
 }
 
 } // namespace Cozmo

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: StackTwoCubes
-    _EnumValue: 11
+    _EnumValue: 10
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: PickupCube
@@ -27,7 +27,9 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  RequestTrickCostAmount: 1
+  _RequestTrickCostAmount:
+    _EnumValueAsString: StackCubes
+    _EnumValue: 14
   CoreUpgradeIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59, type: 3}
   CubesRequired: 2
   SortOrder: 200
