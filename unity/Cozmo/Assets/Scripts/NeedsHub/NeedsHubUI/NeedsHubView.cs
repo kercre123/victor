@@ -42,10 +42,6 @@ namespace Cozmo.Needs.UI {
     private NeedsEnergyModal _NeedsEnergyModalInstance;
 
     [SerializeField]
-    private NeedsPlayModal _NeedsPlayModalPrefab;
-    private NeedsPlayModal _NeedsPlayModalInstance;
-
-    [SerializeField]
     private CozmoImage _SettingsAlertImage;
 
     public void Start() {
@@ -56,7 +52,6 @@ namespace Cozmo.Needs.UI {
       _MetersWidget.Initialize(enableButtonBasedOnNeeds: true, dasParentDialogName: DASEventDialogName, baseDialog: this);
       _MetersWidget.OnRepairPressed += HandleRepairButton;
       _MetersWidget.OnEnergyPressed += HandleEnergyButton;
-      _MetersWidget.OnPlayPressed += HandlePlayButton;
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedsValue repairValue, energyValue;
@@ -75,7 +70,6 @@ namespace Cozmo.Needs.UI {
     protected override void CleanUp() {
       _MetersWidget.OnRepairPressed -= HandleRepairButton;
       _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
-      _MetersWidget.OnPlayPressed -= HandlePlayButton;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
@@ -124,15 +118,6 @@ namespace Cozmo.Needs.UI {
     private void HandleEnergyModalCreated(BaseModal newModal) {
       _NeedsEnergyModalInstance = (NeedsEnergyModal)newModal;
       _NeedsEnergyModalInstance.InitializeEnergyModal();
-    }
-
-    private void HandlePlayButton() {
-      UIManager.OpenModal(_NeedsPlayModalPrefab, new ModalPriorityData(), HandlePlayModalCreated);
-    }
-
-    private void HandlePlayModalCreated(BaseModal newModal) {
-      _NeedsPlayModalInstance = (NeedsPlayModal)newModal;
-      _NeedsPlayModalInstance.InitializePlayModal();
     }
 
     private void HandleDialogFinishedOpenAnimation() {
