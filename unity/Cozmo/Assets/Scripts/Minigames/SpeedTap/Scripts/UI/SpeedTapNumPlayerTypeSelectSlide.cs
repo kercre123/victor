@@ -19,6 +19,7 @@ namespace SpeedTap {
     private UnityAction _Callback = null;
 
     private SpeedTapGame _Game;
+    private bool _GameStarted = false;
 
     public void Init(UnityAction callback, SpeedTapGame game) {
       _Callback = callback;
@@ -55,12 +56,18 @@ namespace SpeedTap {
     }
 
     private void Handle2PlayerClicked() {
+      if (_GameStarted) {
+        return;
+      }
       _Game.AddPlayer(PlayerType.Cozmo, Localization.Get(LocalizationKeys.kNameCozmo), Color.white);
       _Game.AddPlayer(PlayerType.Human, DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName, Color.white);
       StartGame();
     }
 
     private void HandleMPClicked() {
+      if (_GameStarted) {
+        return;
+      }
       if (IsMPModeUnlocked()) {
         // Requires 3 cubes, not two to play this mode...
         int neededCubes = 3;
@@ -98,6 +105,7 @@ namespace SpeedTap {
     }
 
     private void StartGame() {
+      _GameStarted = true;
       _Game.InitializeAllPlayers();
       if (_Callback != null) {
         _Callback();
