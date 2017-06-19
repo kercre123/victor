@@ -81,10 +81,10 @@
         flyoutWorkspace.addChangeListener(vm.monitorBlockListener);
 
         // Handle VM events
-        vm.on('STACK_GLOW_ON', function(data) {
+        vm.on('SCRIPT_GLOW_ON', function(data) {
             Scratch.workspace.glowStack(data.id, true);
         });
-        vm.on('STACK_GLOW_OFF', function(data) {
+        vm.on('SCRIPT_GLOW_OFF', function(data) {
             Scratch.workspace.glowStack(data.id, false);
         });
         vm.on('BLOCK_GLOW_ON', function(data) {
