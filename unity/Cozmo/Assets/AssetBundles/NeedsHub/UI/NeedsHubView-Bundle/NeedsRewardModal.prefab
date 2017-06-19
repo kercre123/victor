@@ -372,8 +372,9 @@ MonoBehaviour:
     targets: []
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _OptionalCloseDialogCozmoButton: {fileID: 0}
   _PreventForceClose: 0
-  DimBackground: 0
+  DimBackground: 1
   _ContinueButton: {fileID: 114310004952268054}
   _RewardsList: {fileID: 114941969083857434}
 --- !u!114 &114401285021230972
