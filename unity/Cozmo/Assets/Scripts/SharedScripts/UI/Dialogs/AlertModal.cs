@@ -10,25 +10,22 @@ namespace Cozmo {
     public class AlertModal : BaseModal {
 
       [SerializeField]
-      private AnkiTextLegacy _AlertTitleText;
+      private CozmoText _AlertTitleText;
 
       [SerializeField]
-      private AnkiTextLegacy _AlertMessageText;
+      private CozmoText _AlertMessageText;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButtonLegacy _PrimaryButton;
+      private Cozmo.UI.CozmoButton _PrimaryButton;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButtonLegacy _SecondaryButton;
+      private Cozmo.UI.CozmoButton _SecondaryButton;
 
       [SerializeField]
       private LayoutElement _SecondaryButtonLayoutElement;
 
       [SerializeField]
-      private IconProxy _Icon;
-
-      // TODO remove
-      private string _DasEventName;
+      private CozmoImage _Icon;
 
       private string _TitleKey;
       private string _DescriptionKey;
@@ -73,7 +70,6 @@ namespace Cozmo {
 
       public void InitializeAlertData(AlertModalData initializationData) {
         DASEventDialogName = initializationData.DasEventAlertName;
-
         InitializeLocalization(initializationData.TitleLocKey,
                                initializationData.DescriptionLocKey,
                                initializationData.TitleLocArgs,
@@ -96,10 +92,11 @@ namespace Cozmo {
       private void InitializeLocalization(string titleLocKey, string descLocKey, object[] titleLocArgs, object[] descLocArgs) {
         if (_AlertTitleText != null && !string.IsNullOrEmpty(titleLocKey)) {
           _TitleKey = titleLocKey;
-          _AlertTitleText.text = Localization.Get(_TitleKey);
+
           if (titleLocArgs != null) {
             _AlertTitleText.FormattingArgs = titleLocArgs;
           }
+          _AlertTitleText.key = _TitleKey;
         }
         if (_AlertMessageText != null && !string.IsNullOrEmpty(descLocKey)) {
           _DescriptionKey = descLocKey;
@@ -150,7 +147,7 @@ namespace Cozmo {
       private void InitializeIcon(Sprite icon) {
         if (_Icon != null && icon != null) {
           _Icon.gameObject.SetActive(true);
-          _Icon.SetIcon(icon);
+          _Icon.sprite = icon;
         }
       }
 
@@ -159,13 +156,12 @@ namespace Cozmo {
         _SecondaryButton.Interactable = false;
       }
 
-      private void SetupButton(Cozmo.UI.CozmoButtonLegacy button, string dasEventButtonName, string titleKey, Action action,
+      private void SetupButton(Cozmo.UI.CozmoButton button, string dasEventButtonName, string titleKey, Action action,
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           string title = Localization.Get(titleKey);
           button.gameObject.SetActive(true);
           button.Text = title;
-
           button.Initialize(() => {
             if (action != null) {
               action();

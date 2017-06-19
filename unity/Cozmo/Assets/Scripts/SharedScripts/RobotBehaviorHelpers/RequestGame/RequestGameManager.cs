@@ -60,6 +60,7 @@ namespace Cozmo.RequestGame {
 
     private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart messageObject) {
       ChallengeData data = RequestGameManager.Instance.GetDataForGameID(messageObject.gameRequested);
+
       // Do not send the minigame message if the challenge is invalid or currently not unlocked.
       if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
         return;
@@ -68,8 +69,8 @@ namespace Cozmo.RequestGame {
       _RequestGameAlertData = new AlertModalData("request_game_alert",
                 LocalizationKeys.kRequestGameTitle,
                 LocalizationKeys.kRequestGameDescription,
-                new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYes, HandleMiniGameConfirm),
-                new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNo, HandleMiniGameRejection),
+                new AlertModalButtonData("yes_play_game_button", LocalizationKeys.kButtonYesPlease, HandleMiniGameConfirm),
+                new AlertModalButtonData("no_cancel_game_button", LocalizationKeys.kButtonNoThankYou, HandleMiniGameRejection),
                 icon: data.ChallengeIcon,
                 dialogCloseAnimationFinishedCallback: HandleRequestDialogClose,
                 titleLocArgs: new object[] { Localization.Get(data.ChallengeTitleLocKey) });

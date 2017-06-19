@@ -5,12 +5,12 @@ GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Component:
-  - 224: {fileID: 22414586}
-  - 222: {fileID: 22265860}
-  - 114: {fileID: 11471816}
-  - 114: {fileID: 11452812}
+  - component: {fileID: 22414586}
+  - component: {fileID: 22265860}
+  - component: {fileID: 11471816}
+  - component: {fileID: 11452812}
   m_Layer: 5
   m_Name: AnkiInfiniteScrollTextCell
   m_TagString: Untagged
@@ -53,6 +53,7 @@ MonoBehaviour:
   m_Text: Text
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11471816
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -65,7 +66,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 2340
+  m_MinWidth: 2100
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
@@ -86,10 +87,10 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}

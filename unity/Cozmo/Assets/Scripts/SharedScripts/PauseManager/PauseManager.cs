@@ -214,7 +214,7 @@ namespace Cozmo {
     }
 
     public void StartPlayerInducedSleep(bool fromEngineTriggeredSleep) {
-      Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
         robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
       }
@@ -266,7 +266,7 @@ namespace Cozmo {
 
     private void StartIdleTimeout(float sleep_sec, float disconnect_sec) {
       if (!_StartedIdleTimeout) {
-        Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+        IRobot robot = RobotEngineManager.Instance.CurrentRobot;
         if (null != robot) {
           robot.ResetRobotState(null);
           robot.EnableCubeSleep(true);
@@ -281,7 +281,7 @@ namespace Cozmo {
       _StartedIdleTimeout = false;
       RobotEngineManager.Instance.CancelIdleTimeout();
 
-      Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
       }

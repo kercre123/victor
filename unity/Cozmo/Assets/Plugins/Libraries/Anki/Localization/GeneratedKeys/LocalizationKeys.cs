@@ -736,6 +736,8 @@ public static class LocalizationKeys {
   public const string kButtonCancel = "button.cancel";
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
+  public const string kButtonYesPlease = "button.yesPlease";
+  public const string kButtonNoThankYou= "button.noThankYou";
   public const string kButtonContinue = "button.continue";
   public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";

@@ -28,10 +28,21 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
       else if (m_text != value) {
         m_text = value;
         if (SetLocalizedText(m_text)) {
+          m_text = _DisplayText;
           SetVerticesDirty();
           SetLayoutDirty();
         }
       }
+    }
+  }
+
+  public string key {
+    get {
+      return _LocalizedTextKey;
+    }
+    set {
+      _LocalizedTextKey = value;
+      text = Localization.Get(_LocalizedTextKey);
     }
   }
 
@@ -71,7 +82,7 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
       displayText = Localization.GetWithArgs(_LocalizedTextKey, _FormattingArgs);
     }
 
-    if (_DisplayText != displayText) {
+    if (_DisplayText != displayText || _DisplayText != m_text) {
       _DisplayText = displayText;
       return true;
     }

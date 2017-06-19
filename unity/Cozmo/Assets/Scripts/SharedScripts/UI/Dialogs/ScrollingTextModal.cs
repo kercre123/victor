@@ -9,7 +9,7 @@ namespace Cozmo.UI {
     private CanvasGroup _ScrollRectCanvasGroup;
 
     [SerializeField]
-    private AnkiTextLegacy _TitleTextLabel;
+    private CozmoText _TitleTextLabel;
 
     [SerializeField]
     private AnkiInfiniteScrollView _DescriptionTextLabel;

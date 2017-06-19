@@ -31,10 +31,16 @@
     "translation": "CANCEL"
   },
   "button.yes": {
-    "translation": "Yes"
+    "translation": "YES"
+  },
+  "button.yesPlease": {
+    "translation": "YES, PLEASE"
   },
   "button.no": {
-    "translation": "No"
+    "translation": "NO"
+  },
+  "button.noThankYou": {
+    "translation": "NO, THANK YOU"
   },
   "button.continue": {
     "translation": "Continue"
@@ -88,7 +94,7 @@
     "translation": "Cozmo wants to play"
   },
   "label.connect": {
-    "translation": "CONNECT"
+    "translation": "Connect"
   },
   "label.start": {
     "translation": "Start"
@@ -130,7 +136,7 @@
     "translation": "Did you hear the sound?"
   },
   "error.badLight.Top": {
-    "translation": "Cozmo is having trouble seeing"
+    "translation": "Cozmo is having trouble seeing!"
   },
   "error.badLight.Bottom": {
     "translation": "Avoid bright lights and dimly lit spaces"
@@ -145,7 +151,7 @@
     "translation": "Privacy Policy"
   },
   "label.pressAndHoldInstruction": {
-    "translation": "Press and hold {0} to confirm"
+    "translation": "PRESS AND HOLD {0} TO CONFIRM"
   },
   "label.termsOfUse": {
     "translation": "Terms of Use"

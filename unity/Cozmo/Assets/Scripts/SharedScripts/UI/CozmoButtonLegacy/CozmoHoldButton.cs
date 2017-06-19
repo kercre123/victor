@@ -5,10 +5,10 @@ namespace Cozmo.UI {
   public class CozmoHoldButton : MonoBehaviour {
 
     [SerializeField]
-    private CozmoButtonLegacy _Button;
+    private CozmoButton _Button;
 
     [SerializeField]
-    private Image _FillBarImage;
+    private CozmoImage _FillBarImage;
 
     [SerializeField]
     private float _SecondsToFillBar;
