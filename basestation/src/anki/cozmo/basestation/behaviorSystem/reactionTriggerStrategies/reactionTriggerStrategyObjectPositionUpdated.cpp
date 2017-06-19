@@ -49,7 +49,7 @@ void ReactionTriggerStrategyObjectPositionUpdated::SetupForceTriggerBehavior(con
     std::set<s32> targets;
     GetDesiredReactionTargets(robot, targets);
     
-    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets);
+    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets, robot);
     behavior->IsRunnable(acknowledgeObjectPreReqs);
   }
   else
@@ -69,7 +69,7 @@ bool ReactionTriggerStrategyObjectPositionUpdated::ShouldTriggerBehaviorInternal
     std::set<s32> targets;
     GetDesiredReactionTargets(robot, targets);
     
-    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets);
+    BehaviorPreReqAcknowledgeObject acknowledgeObjectPreReqs(targets, robot);
     return behavior->IsRunnable(acknowledgeObjectPreReqs);
   }
   

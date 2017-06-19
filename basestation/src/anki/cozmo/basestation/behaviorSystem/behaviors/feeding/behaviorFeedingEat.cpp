@@ -19,8 +19,9 @@
 #include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -36,7 +37,37 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  40.0f);
+CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  30.0f);
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kDisableCliffWhileEating = {
+  {ReactionTrigger::CliffDetected,                true},
+  {ReactionTrigger::CubeMoved,                    false},
+  {ReactionTrigger::DoubleTapDetected,            false},
+  {ReactionTrigger::FacePositionUpdated,          false},
+  {ReactionTrigger::FistBump,                     false},
+  {ReactionTrigger::Frustration,                  false},
+  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        false},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          false},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      false},
+  {ReactionTrigger::UnexpectedMovement,           false},
+  {ReactionTrigger::VC,                           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableCliffWhileEating),
+              "Reaction triggers duplicate or non-sequential");
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,7 +88,8 @@ bool BehaviorFeedingEat::IsRunnableInternal(const BehaviorPreReqAcknowledgeObjec
                  "Passed in %zu targets",
                  preReqData.GetTargets().size())){
     _targetID = *preReqData.GetTargets().begin();
-    return true;
+    const Robot& robot = preReqData.GetRobot();
+    return robot.GetBlockWorld().GetLocatedObjectByID(_targetID) != nullptr;
   }
   return false;
 }
@@ -65,6 +97,10 @@ bool BehaviorFeedingEat::IsRunnableInternal(const BehaviorPreReqAcknowledgeObjec
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorFeedingEat::InitInternal(Robot& robot)
 {
+  if(robot.GetBlockWorld().GetLocatedObjectByID(_targetID) == nullptr){
+    return Result::RESULT_FAIL;
+  }
+  
   _shouldSendUpdateUI = false;
   TransitionToDrivingToFood(robot);
   return Result::RESULT_OK;
@@ -74,7 +110,6 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
-  SendDelayedUIUpdateIfAppropriate(robot);
 }
 
 
@@ -82,7 +117,8 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
 void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
 {
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
+  const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
+                                                          NeedBracketId::Critical);
   
   AnimationTrigger bestAnim = isNeedSevere ?
                       AnimationTrigger::FeedingPlaceLiftOnCube_Severe :
@@ -104,6 +140,8 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToEating(Robot& robot)
 {
+  SmartDisableReactionsWithLock(GetIDStr(), kDisableCliffWhileEating);
+  
   AnimationTrigger eatingAnim = UpdateNeedsStateAndCalculateAnimation(robot);
   
   uint32_t timeDrainCube_s = 0;
@@ -112,9 +150,12 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
   {
     // Extract the length of time that the animation will be playing for so that
     // it can be passed through to listeners
+    const auto& animStreamer = robot.GetAnimationStreamer();
+    const auto& cannedAnims = robot.GetContext()->GetRobotManager()->GetCannedAnimations();
+    
     const auto& animGroupName = robot_mgr->GetAnimationForTrigger(eatingAnim);
-    const auto& animName = robot.GetAnimationStreamer().GetAnimationNameFromGroup(animGroupName, robot);
-    Animation* eatingAnimRawPointer = robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(animName);
+    const auto& animName = animStreamer.GetAnimationNameFromGroup(animGroupName, robot);
+    const Animation* eatingAnimRawPointer = cannedAnims.GetAnimation(animName);
     const auto& track = eatingAnimRawPointer->GetTrack<EventKeyFrame>();
     if(!track.IsEmpty()){
       // assumes only one keyframe per eating anim
@@ -131,34 +172,44 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
     }
   }
   
-  StartActing(new TriggerAnimationAction(robot, eatingAnim));
+  StartActing(new TriggerAnimationAction(robot, eatingAnim),[this, &robot](ActionResult res){
+    if(res == ActionResult::SUCCESS){
+      // Update
+      robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::FeedBlue);
+    }
+  });
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationTrigger BehaviorFeedingEat::UpdateNeedsStateAndCalculateAnimation(Robot& robot)
 {
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+
   
   // Eating animation is dependent on both the current and post feeding energy level
-  // We will grab the before state, update the needs manager as though cozmo has been
-  // fed, and then grab the resolved state.  However, we don't send the DelayedUIUpdate
-  // message until the actual feeding completes so that the user won't see the updated
-  // energy state until feeding happens
+  // Use PredictNeedsActionResult to estimate the ending needs bracket
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  
   const bool isSeverePreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
   const bool isWarningPreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning);
   
-  robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::FeedBlue);
+  NeedsState predPostFeedNeed;
+  robot.GetContext()->GetNeedsManager()->PredictNeedsActionResult(NeedsActionId::FeedBlue,
+                                                                  predPostFeedNeed);
   
-  const bool isSeverePostFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-  const bool isWarningPostFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning);
+  const bool isSeverePostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
+                                                                    NeedBracketId::Critical);
+  const bool isWarningPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
+                                                                     NeedBracketId::Warning);
+  const bool isNotFullPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
+                                                                     NeedBracketId::Full);
   
   AnimationTrigger bestAnimation;
   if(isSeverePreFeeding && isSeverePostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Severe;
   }else if(isSeverePreFeeding && isWarningPostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteFullEnough_Severe;
-  }else if(isWarningPreFeeding && isWarningPostFeeding){
+  }else if(isWarningPreFeeding && isNotFullPostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Normal;
   }else{
     bestAnimation = AnimationTrigger::FeedingAteFullEnough_Normal;
@@ -166,18 +217,6 @@ AnimationTrigger BehaviorFeedingEat::UpdateNeedsStateAndCalculateAnimation(Robot
   
   _shouldSendUpdateUI = true;
   return bestAnimation;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFeedingEat::SendDelayedUIUpdateIfAppropriate(Robot& robot)
-{
-  if(robot.HasExternalInterface() && _shouldSendUpdateUI){
-    ExternalInterface::DelayedUIUpdateForAction delayedUpdate;
-    delayedUpdate.actionCausingTheUpdate = NeedsActionId::FeedBlue;
-    robot.GetExternalInterface()->BroadcastToGame<
-    ExternalInterface::DelayedUIUpdateForAction>(delayedUpdate);
-  }
 }
 
   

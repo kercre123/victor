@@ -55,9 +55,6 @@ private:
   void TransitionToEating(Robot& robot);
   
   AnimationTrigger UpdateNeedsStateAndCalculateAnimation(Robot& robot);
-
-  void SendDelayedUIUpdateIfAppropriate(Robot& robot);
-
 };
 
 } // namespace Cozmo

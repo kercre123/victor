@@ -173,6 +173,14 @@ void FeedingCubeController::SetControllerState(Robot& robot, ControllerState new
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::InitializeController(Robot& robot)
 {
+  _cubeStateTracker->_currentAnimationTrigger = CubeAnimationTrigger::Count;
+  ReInitializeController(robot);
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void FeedingCubeController::ReInitializeController(Robot& robot)
+{
   _cubeStateTracker->SetChargeState(ChargeState::NoCharge);
   _cubeStateTracker->_timeNextShakeCounts_s = 0.0f;
   _cubeStateTracker->_timeLoseNextCharge_s   = 0.0f;
@@ -181,12 +189,15 @@ void FeedingCubeController::InitializeController(Robot& robot)
   _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::FeedingCyanCycle;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::ClearController(Robot& robot)
 {
-  robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(_cubeStateTracker->_currentAnimationTrigger,
-                                                               _cubeStateTracker->_id);
+  // Re-set lights
+  _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::Count;
+  SetCubeLights(robot);
+  
+  // Re-set shake listener
   robot.GetCubeAccelComponent().RemoveListener(_cubeStateTracker->_id,
                                                _cubeStateTracker->_cubeMovementListener);
   _cubeStateTracker->_cubeMovementListener.reset();
@@ -259,8 +270,7 @@ void FeedingCubeController::CheckForChargeStateChanges(Robot& robot)
     // now check if we're back to waiting or fully charged
     if(didLoseAllCharge){
       // re-initialize to no charge state
-      _cubeStateTracker->SetChargeState(ChargeState::NoCharge);
-      InitializeController(robot);
+      ReInitializeController(robot);
     }else if(didCompleteCharge) {
       if(_cubeStateTracker->_currentChargeLevel == 4*kChargeLevelToFillSide){
         UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Stop);
@@ -453,7 +463,11 @@ void FeedingCubeController::SetCubeLights(Robot& robot)
   if((_cubeStateTracker->_currentAnimationTrigger != _cubeStateTracker->_desiredAnimationTrigger) ||
      _cubeStateTracker->_desiredModifierChanged)
   {
-    if(_cubeStateTracker->_desiredAnimationTrigger != CubeAnimationTrigger::Count)
+    if(_cubeStateTracker->_currentAnimationTrigger == CubeAnimationTrigger::Count){
+      robot.GetCubeLightComponent().PlayLightAnim(_cubeStateTracker->_id,
+                                                  _cubeStateTracker->_desiredAnimationTrigger);
+    }
+    else if(_cubeStateTracker->_desiredAnimationTrigger != CubeAnimationTrigger::Count)
     {
       robot.GetCubeLightComponent().StopAndPlayLightAnim(_cubeStateTracker->_id,
                                                          _cubeStateTracker->_currentAnimationTrigger,

@@ -91,7 +91,7 @@ void ReactionTriggerStrategyCubeMoved::SetupForceTriggerBehavior(const Robot& ro
     }
     
     objIter->ResetObject();
-    BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID());
+    BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID(), robot);
     
     behavior->IsRunnable(preReqData, behavior->IsRunning() );
     return;
@@ -123,7 +123,7 @@ bool ReactionTriggerStrategyCubeMoved::ShouldTriggerBehaviorInternal(const Robot
                                                  false);
       if(!isVisible){
         objIter->ResetObject();
-        BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID());
+        BehaviorPreReqAcknowledgeObject preReqData(objIter->GetObjectID(), robot);
         
         return behavior->IsRunnable(preReqData, behavior->IsRunning() );
       }

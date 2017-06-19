@@ -685,7 +685,7 @@ IBehaviorPtr ActivityBuildPyramid::CheckForShouldThankUser(Robot& robot,
       }
       
       if(!rolledCubeHimself){
-        BehaviorPreReqAcknowledgeObject preReqObj(objectID);
+        BehaviorPreReqAcknowledgeObject preReqObj(objectID, robot);
         if(_behaviorPyramidThankYou->IsRunnable(preReqObj)){
           bestBehavior = _behaviorPyramidThankYou;
         }

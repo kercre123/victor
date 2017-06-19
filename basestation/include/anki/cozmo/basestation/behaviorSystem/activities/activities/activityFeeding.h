@@ -82,6 +82,9 @@ private:
   
   std::vector<Signal::SmartHandle> _eventHandlers;
   
+  // Chooser which manages universal response behaviors
+  IBehaviorChooser* _universalResponseChooser;
+  
   // Behaviors that the chooser calls directly
   IBehaviorPtr _searchingForFaceBehavior;
   IBehaviorPtr _turnToFaceBehavior;
@@ -91,8 +94,11 @@ private:
   
   void UpdateActivityStage(FeedingActivityStage newStage, const std::string& stageName);
   
-  // Sets backpack lights etc for getting into hunger loop
-  void TransitionToBestActivityStage(Robot& robot);
+  // Updates the activity stage to the best thing Cozmo can do right now
+  // e.g. wait for a cube to shake, search for a shaken cube etc.
+  // Returns the behavior to run this tick since this is frequently used
+  // in the middle of the ChooseNextBehavior switch statement
+  IBehaviorPtr TransitionToBestActivityStage(Robot& robot);
   
   // Handle object observations
   void RobotObservedObject(const ObjectID& objID);

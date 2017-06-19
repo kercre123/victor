@@ -14,9 +14,11 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
@@ -37,7 +39,12 @@ namespace{
 #define UPDATE_STAGE(s) UpdateActivityStage(s, #s)
 
 CONSOLE_VAR(float, kTimeSearchForFace, "Behavior.Feeding", 5.0f);
+static const char* kUniversalChooser = "universalChooser";
 
+  // Special version of CYAN to match feeding animations
+static const ColorRGBA FEEDING_CYAN      (0.f, 1.f, 0.7f);
+  
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct BackpackLightMapping{
   BackpackLightMapping(){};
@@ -53,6 +60,36 @@ struct BackpackLightMapping{
 };
   
 BackpackLightMapping kFeedingBackpackLights;
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArray = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       false},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               false},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotPickedUp,                false},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotOnBack,                  false},
+  {ReactionTrigger::RobotOnFace,                  false},
+  {ReactionTrigger::RobotOnSide,                  false},
+  {ReactionTrigger::RobotShaken,                  false},
+  {ReactionTrigger::Sparked,                      true},
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffectedArray),
+              "Reaction triggers duplicate or non-sequential");
   
 } // end namespace
 
@@ -63,6 +100,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
 , _timeFaceSearchShouldEnd_s(0.0f)
 , _eatingComplete(false)
 , _idleAndDrivingSet(false)
+, _universalResponseChooser(nullptr)
 {
   ////////
   /// Grab behaviors
@@ -95,7 +133,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
              _turnToFaceBehavior->GetClass() == BehaviorClass::TurnToFace,
              "ActivityFeeding.TurnToFaceBheavior.IncorrectBehaviorReceievedFromFactory");
   
-  //Create an arbitrary animation behavior
+  // Grab the arbitrary animation behavior
   IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
   _behaviorPlayAnimation = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
   
@@ -104,13 +142,19 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
              "SparksBehaviorChooser.BehaviorPlayAnimPointerNotSet");
   
   ////////
+  /// Setup UniversalChooser
+  ////////
+  const Json::Value& universalChooserJSON = config[kUniversalChooser];
+  _universalResponseChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, universalChooserJSON);
+  DEV_ASSERT(_universalResponseChooser != nullptr, "ActivityFeeding.UniversalChooserNotSpecifed");
+  
+  ////////
   /// Setup Lights
   ////////
-
   
   // These have to be defined within the constructor to allow NamedColors to be used
   static const BackpackLights kPulsingCyanBackpack = {
-    .onColors               = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
+    .onColors               = {{FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN}},
     .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
     .onPeriod_ms            = {{1,1,1,1,1}},
     .offPeriod_ms           = {{1,1,1,1,1}},
@@ -120,7 +164,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   };
   
   static const BackpackLights kLoopingCyanBackpack = {
-    .onColors               = {{NamedColors::BLACK, NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN, NamedColors::BLACK}},
+    .onColors               = {{NamedColors::BLACK, FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       NamedColors::BLACK}},
     .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
     .onPeriod_ms            = {{0,360,360,360,0}},
     .offPeriod_ms           = {{0,1110,1110,1110,0}},
@@ -130,7 +174,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   };
   
   static const BackpackLights kSolidCyanBackpack = {
-    .onColors               = {{NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN, NamedColors::CYAN}},
+    .onColors               = {{FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN}},
     .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
     .onPeriod_ms            = {{1000,1000,1000,1000,1000}},
     .offPeriod_ms           = {{0,0,0,0,0}},
@@ -161,7 +205,7 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
 {
   _eatingComplete = false;
   _chooserStage = FeedingActivityStage::None;
-  SmartDisableReactionsWithLock(robot, GetIDStr(), ReactionTriggerHelpers::kAffectAllArray);
+  SmartDisableReactionsWithLock(robot, GetIDStr(), kFeedingActivityAffectedArray);
   
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   if(currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical)){
@@ -231,7 +275,18 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
   IBehaviorPtr bestBehavior;
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-    
+  
+  // First check for universal responses - eg drive off charger
+  if(_universalResponseChooser){
+    bestBehavior = _universalResponseChooser->ChooseNextBehavior(robot, currentRunningBehavior);
+  }
+  
+  if(bestBehavior != nullptr){
+    return bestBehavior;
+  }
+  
+  // If no universal response, choose the behavior most appropriate to current stage
+
   switch(_chooserStage){
     case FeedingActivityStage::None:
     {
@@ -250,8 +305,7 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
         UPDATE_STAGE(FeedingActivityStage::TurnToFace);
         bestBehavior = _turnToFaceBehavior;
       }else if(currentTime_s > _timeFaceSearchShouldEnd_s){
-        TransitionToBestActivityStage(robot);
-        bestBehavior = _behaviorPlayAnimation;
+        bestBehavior = TransitionToBestActivityStage(robot);
         
         using CS = FeedingCubeController::ControllerState;
         for(auto& entry: _cubeControllerMap){
@@ -267,18 +321,23 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
       if(_turnToFaceBehavior->IsRunning()){
         bestBehavior = _turnToFaceBehavior;
       }else{
-        TransitionToBestActivityStage(robot);
         using CS = FeedingCubeController::ControllerState;
         for(auto& entry: _cubeControllerMap){
           entry.second->SetControllerState(robot, CS::Activated);
         }
-        bestBehavior = _behaviorPlayAnimation;
+        bestBehavior = TransitionToBestActivityStage(robot);
       }
       break;
     }
     case FeedingActivityStage::WaitingForShake:
     {
       // Transition out of this state happens in the update function
+      // Ensure play anim is always initialized properly in case  of interruptes
+      if(!_behaviorPlayAnimation->IsRunning()){
+        TransitionToBestActivityStage(robot);
+        bestBehavior = TransitionToBestActivityStage(robot);
+      }
+      
       bestBehavior = _behaviorPlayAnimation;
       break;
     }
@@ -297,6 +356,9 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
     case FeedingActivityStage::WaitingForFullyCharged:
     {
       // Transition out of this state happens in the update function
+      if(!_behaviorPlayAnimation->IsRunning()){
+        bestBehavior = TransitionToBestActivityStage(robot);
+      }
       bestBehavior = _behaviorPlayAnimation;
       break;
     }
@@ -323,12 +385,13 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
     {
       if(!_behaviorPlayAnimation->IsRunning()){
         // Notify the eat food behavior the ID it should interact with
-        UPDATE_STAGE(FeedingActivityStage::EatFood);
-        BehaviorPreReqAcknowledgeObject preReqData(_interactID);
-        ANKI_VERIFY(_eatFoodBehavior->IsRunnable(preReqData),
-                    "FeedingActivity.EatFood.NotRunnable",
-                    "Eating behavior isn't runnable - feeding will get stuck in infinet loop");
-        bestBehavior = _eatFoodBehavior;
+        BehaviorPreReqAcknowledgeObject preReqData(_interactID, robot);
+        if(_eatFoodBehavior->IsRunnable(preReqData)){
+          UPDATE_STAGE(FeedingActivityStage::EatFood);
+          bestBehavior = _eatFoodBehavior;
+        }else{
+          bestBehavior = TransitionToBestActivityStage(robot);
+        }
       }else{
         bestBehavior = _behaviorPlayAnimation;
       }
@@ -339,8 +402,16 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
       if(_eatFoodBehavior->IsRunning()){
         bestBehavior = _eatFoodBehavior;
       }else{
-        TransitionToBestActivityStage(robot);
-        bestBehavior = _behaviorPlayAnimation;
+        // If an attempt was made to eat the cube and it's no longer fully charged
+        // clear it out for interaction
+        if(_interactID.IsSet() && !_cubeControllerMap[_interactID]->IsCubeCharged()){
+          using CS = FeedingCubeController::ControllerState;
+          _cubeControllerMap[_interactID]->SetControllerState(robot, CS::Deactivated);
+          _cubeControllerMap[_interactID]->SetControllerState(robot, CS::Activated);
+          _interactID.UnSet();
+        }
+        
+        bestBehavior = TransitionToBestActivityStage(robot);
       }
 
       break;
@@ -420,19 +491,11 @@ void ActivityFeeding::UpdateActivityStage(FeedingActivityStage newStage,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
+IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
 {
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
-  
-  if(_interactID.IsSet()){
-    // Clear all data about the cube that we just interacted with
-    using CS = FeedingCubeController::ControllerState;
-    _cubeControllerMap[_interactID]->SetControllerState(robot, CS::Deactivated);
-    _cubeControllerMap[_interactID]->SetControllerState(robot, CS::Activated);
-    _interactID.UnSet();
-  }
-  
+
   // check for cubes that are fully charged or partially charged
   bool anyCubesCharging = false;
   bool anyCubesFullyCharged = false;
@@ -446,14 +509,6 @@ void ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
                       AnimationTrigger::FeedingIdleToFullCube_Normal;
   UpdateAnimationToPlay(bestAnimation, 0);
   
-  if(anyCubesFullyCharged){
-    UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
-  }else if(anyCubesCharging){
-    UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
-  }else{
-    UPDATE_STAGE(FeedingActivityStage::WaitingForShake);
-  }
-
   
   auto& bodyLightComp = robot.GetBodyLightComponent();
   bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._waitingForFoodBackpackLights,
@@ -464,6 +519,21 @@ void ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
     robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     robot.GetAnimationStreamer().PopIdleAnimation();
     _idleAndDrivingSet = false;
+  }
+  
+  if(anyCubesFullyCharged){
+    UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
+    if(_interactID.IsSet() &&
+       (nullptr == robot.GetBlockWorld().GetLocatedObjectByID(_interactID))){
+      _interactID.UnSet();
+    }
+    return _searchForCubeBehavior;
+  }else if(anyCubesCharging){
+    UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
+    return _behaviorPlayAnimation;
+  }else{
+    UPDATE_STAGE(FeedingActivityStage::WaitingForShake);
+    return _behaviorPlayAnimation;
   }
 }
 

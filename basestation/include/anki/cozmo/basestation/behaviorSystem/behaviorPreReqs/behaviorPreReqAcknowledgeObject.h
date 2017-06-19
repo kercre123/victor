@@ -22,19 +22,25 @@ namespace Cozmo {
 
 class BehaviorPreReqAcknowledgeObject{
 public:
-  BehaviorPreReqAcknowledgeObject(const s32 target){
+  BehaviorPreReqAcknowledgeObject(const s32 target, const Robot& robot)
+  :_robot(robot)
+  {
     _targets.clear();
     _targets.emplace(target);
   }
   
-  BehaviorPreReqAcknowledgeObject(const std::set<s32>& targets){
+  BehaviorPreReqAcknowledgeObject(const std::set<s32>& targets, const Robot& robot)
+  : _robot(robot)
+  {
     _targets = targets;
   }
   
   const std::set<s32>& GetTargets() const { return _targets;}
+  const Robot& GetRobot() const { return _robot;}
   
 private:
   std::set<s32> _targets;
+  const Robot&  _robot;
   
 };
 

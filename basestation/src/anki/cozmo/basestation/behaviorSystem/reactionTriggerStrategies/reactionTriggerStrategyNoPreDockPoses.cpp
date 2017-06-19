@@ -49,7 +49,7 @@ bool ReactionTriggerStrategyNoPreDockPoses::ShouldTriggerBehaviorInternal(const 
 {
   const ObjectID& objID = robot.GetAIComponent().GetWhiteboard().GetNoPreDockPosesOnObject();
   if(objID.IsSet()){
-    BehaviorPreReqAcknowledgeObject preReqData(objID.GetValue());
+    BehaviorPreReqAcknowledgeObject preReqData(objID.GetValue(), robot);
     ObjectID unsetObj;
     robot.GetAIComponent().GetNonConstWhiteboard().SetNoPreDockPosesOnObject(unsetObj);
     return behavior->IsRunnable(preReqData);

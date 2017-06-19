@@ -65,6 +65,7 @@ private:
   // Functions which start/stop listening for shakes and
   // set cube lights
   void InitializeController(Robot& robot);
+  void ReInitializeController(Robot& robot);
   void ClearController(Robot& robot);
   
   void CheckForChargeStateChanges(Robot& robot);

@@ -101,6 +101,15 @@
     "activityStrategy":
     {
       "type" : "Simple"
+    },
+    "universalChooser" :
+    {
+      "type" : "StrictPriority",
+      "behaviors" : [
+                      "DriveOffCharger",
+                      "KnockOverCubes",
+                      "PyramidPutDownBlock"
+                    ]
     }
   },
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
