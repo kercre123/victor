@@ -17,6 +17,7 @@ namespace DataPersistence {
     public UnityEngine.SystemLanguage LanguageSettingOverride;
     public bool UseConnectFlowInMock;
     public bool UseVerticalGrammarCodelab;
+    public bool EnableAutoBlockPoolOnStart;
 
     public DebugProfile() {
       LatencyDisplayEnabled = false;
@@ -26,8 +27,10 @@ namespace DataPersistence {
       ShowDroneModeDebugInfo = false;
       UseConnectFlowInMock = false;
       UseVerticalGrammarCodelab = false;
+      EnableAutoBlockPoolOnStart = true;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
+      DebugConsoleData.Instance.AddConsoleVar("EnableAutoBlockPoolOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
       DebugConsoleData.Instance.AddConsoleVar("UseConnectFlowInMock", "UseConnectFlowInMock", this);
       DebugConsoleData.Instance.AddConsoleVar("UseVerticalGrammarCodelab", "CodeLab", this);
@@ -70,12 +73,8 @@ namespace DataPersistence {
         }
         break;
       case "UseFastConnectivityFlow":
-        DataPersistence.DataPersistenceManager.Instance.Save();
-        break;
-      case "UseNeedsHub":
-        DataPersistence.DataPersistenceManager.Instance.Save();
-        break;
       case "UseVerticalGrammarCodelab":
+      case "EnableAutoBlockPoolOnStart":
         DataPersistence.DataPersistenceManager.Instance.Save();
         break;
       }

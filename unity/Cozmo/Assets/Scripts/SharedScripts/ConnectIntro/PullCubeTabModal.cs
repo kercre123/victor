@@ -72,7 +72,12 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
     }
 
     // Enable the automatic block pool
-    RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true, _kMaxDiscoveryTime);
+#if ANKI_DEV_CHEATS
+    RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(
+          DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.EnableAutoBlockPoolOnStart, _kMaxDiscoveryTime);
+#else
+      RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true, _kMaxDiscoveryTime);
+#endif
 
     DasTracker.Instance.TrackCubePromptEntered();
 

@@ -661,7 +661,11 @@ public class ConnectionFlowController : MonoBehaviour {
     // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // Enable the automatic block pool
+#if ANKI_DEV_CHEATS
+      RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.EnableAutoBlockPoolOnStart);
+#else
       RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
+#endif
     }
   }
 
