@@ -115,7 +115,7 @@
     "translation": "Stack Cubes"
   },
   "unlockable.CubeStackAction.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
+    "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Cubes."
   },
   "unlockable.CubeStackAction.SparkedStateDescription": {
     "translation": "Watch Cozmo create a stack of Cubes"
@@ -163,7 +163,7 @@
     "translation": "Knock Over Stacks"
   },
   "unlockable.KnockOverThreeCubeStack.Description": {
-    "translation": "With this Upgrade, any time Cozmo sees a stack of Power Cubes, he may decide to knock them over."
+    "translation": "With this Upgrade, any time Cozmo sees a stack of Cubes, he may decide to knock them over."
   },
   "unlockable.KnockOverThreeCubeStack.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to knock over a stack"
@@ -175,7 +175,7 @@
     "translation": "Pick Up Cube"
   },
   "unlockable.PickupCube.Description": {
-    "translation": "With this Upgrade, Cozmo gains the ability to pick up Power Cubes and carry them around."
+    "translation": "With this Upgrade, Cozmo gains the ability to pick up Cubes and carry them around."
   },
   "unlockable.PickupCube.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to pick up a Cube"
@@ -223,7 +223,7 @@
     "translation": "Not enough Sparks"
   },
   "sparks.NotEnoughSparks.Desc": {
-    "translation": "Earn more by completing Daily Goals"
+    "translation": "Earn more by letting Cozmo Freeplay or in Bonus Boxes"
   },
   "sparks.CubesNeedUpright.Title": {
     "translation": "Make Sure Cubes are Upright"

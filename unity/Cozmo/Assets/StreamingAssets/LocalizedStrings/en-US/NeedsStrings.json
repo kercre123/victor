@@ -55,16 +55,16 @@
     "translation": "Treads aligned"
   },
   "needs.NeedsRepairModal.LiftDamageNotice": {
-    "translation": "Arms need calibration"
+    "translation": "Lift needs calibration"
   },
   "needs.NeedsRepairModal.LiftRepairedNotice": {
-    "translation": "Arms calibrated"
+    "translation": "Lift calibrated"
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction": {
-    "translation": "Tap the regions to be repaired."
+    "translation": "Tap the parts to be tuned up."
   },  
   "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap Calibrate."
+    "translation": ""
   },
   "needs.NeedsRepairModal.NoRepairsNeeded": {
     "translation": "Cozmo is fully tuned up!"
@@ -76,10 +76,10 @@
     "translation": "SCAN COZMO"
   },
   "needs.NeedsRepairModal.AlligningHead": {
-    "translation": "Aligning Head..."
+    "translation": "Adjusting Head..."
   },
   "needs.NeedsRepairModal.AligningLift": {
-    "translation": "Aligning Arms..."
+    "translation": "Calibrating Lift..."
   },
   "needs.NeedsRepairModal.AligningTreads": {
     "translation": "Aligning Treads..."
@@ -88,7 +88,7 @@
     "translation": "CONTINUE"
   },
   "needs.NeedsRepairModal.TuneUpComplete": {
-    "translation": "Cozmo is all tuned up. Come back again when his meter is more empty."
+    "translation": "Cozmo is all tuned up. Come back again when his Tune Up Need is more empty."
   },
   "needs.Done": {
     "translation": "DONE"

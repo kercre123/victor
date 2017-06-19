@@ -40,13 +40,13 @@
     "translation": "Once he's done charging, let Cozmo come to life\nand learn about his new home."
   },
   "onboarding.CozmoNeedsCharge.message3": {
-    "translation": "Cozmo comes with Upgrades that you can unlock.\nEach one gives him a new ability that he'll do on his own."
+    "translation": "Cozmo needs a caring owner.\nCare for his Needs each day, and he'll unlock new Games and Abilities."
   },
   "onboarding.CozmoNeedsCharge.message4": {
     "translation": "You can pick up Cozmo if you need to,\nbut he's happiest when he can drive on his own."
   },
   "onboarding.CozmoNeedsCharge.message5": {
-    "translation": "When you're not playing games with Cozmo,\nit's great to sit back and watch him explore the world."
+    "translation": "When you let Cozmo be, he loves exploring the world on his own in Freeplay.\nHe'll automatically request Games, do Tricks, and occasionally earns Sparks."
   },
   "onboarding.CozmoNeedsCharge.finalMessage": {
     "translation": "Cozmo is ready to play. To completely charge his battery,\nyou can keep him on the charger for another 7 minutes."
@@ -61,7 +61,7 @@
     "translation": "Cozmo is a very special robot who needs a caring owner\n\n Follow the instructions carefully!"
   },
   "onboarding.Phase3.Header1": {
-    "translation": "Place a Power Cube in front of Cozmo"
+    "translation": "Place a Cube in front of Cozmo"
   },
   "onboarding.Phase3.Body1": {
     "translation": "It will turn <color=cyan>blue</color> when he can see it"
@@ -106,30 +106,36 @@
     "translation": "Watch Cozmo come to life"
   },
   "onboarding.MeetCozmoIntro": {
-    "translation": "Cozmo Would like to meet you!"
+    "translation": "Cozmo would like to meet you!"
   },
   "onboarding.NeedsIntro": {
-    "translation": "Cozmo has needs.\n\nTake care of him each day to earn new games and abilities"
+    "translation": "Cozmo has needs.\n\nTake care of him each day to earn new Games and Abilities"
   },
   "onboarding.NeedsIntroReturning": {
-    "translation": "Cozmo has Needs.\n\nTake car of him each day to unlock new games and abilities.\n\nCozmo's app may look a little different but you'll keep your progress of any unlocked games, upgrades, and sparks."
+    "translation": "Cozmo has Needs.\n\nTake care of him each day to earn new Games and Abilities.\n\nCozmo's App may look a little different but you'll keep any unlocked Games, Upgrades, and Sparks you've earned."
   },
   "onboarding.PlayIntro": {
     "translation": "Fill Cozmo’s Play Need each day to earn a Daily Bonus Token."
   },
   "onboarding.RewardsIntro": {
-    "translation": "You’ve earned a Daily Bonus Token by filling Cozmo’s Play Need!\nTokens unlock Bonus Boxes, filled with rewards such as sparks and new abilities!"
+    "translation": "You’ve earned a Daily Bonus Token by filling Cozmo’s Play Need!\nTokens unlock Bonus Boxes, filled with rewards such as Sparks and new Abilities!"
   },
   "onboarding.ActivitiesIntro": {
-    "translation": "These are special activities that don’t affect Cozmo’s needs or sparks!"
+    "translation": "These are special Activities that don’t affect Cozmo’s Needs or Sparks!"
   },
   "onboarding.needs.ticker": {
-    "translation": "Analyzing Cozmo needs."
+    "translation": "Analyzing Cozmo's Needs."
   },
   "onboarding.repair.ticker": {
-    "translation": "Cozmo needs to be repaired."
+    "translation": "Cozmo wants to be Tuned Up."
   },
   "onboarding.feed.ticker": {
-    "translation": "Cozmo needs to be fed."
+    "translation": "Cozmo wants to be Fed."
+  },
+  "onboarding.play.ticker": {
+    "translation": "Cozmo wants to Play."
+  },
+  "onboarding.SparkScreenRollACube": {
+    "translation": "Watch Cozmo Roll a Cube..."
   }
 }

@@ -34,25 +34,25 @@
     "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.KnockOverCubes": {
-    "translation": "Cozmo is Knocking over a Stack of Cubes"
+    "translation": "Cozmo is Knocking Over a Stack of Cubes"
   },
   "behavior.TrackLaser": {
-    "translation": "Cozmo is following a Laser"
+    "translation": "Cozmo is Following a Laser"
   },
   "behavior.PopAWheelie": {
     "translation": "Cozmo is Popping a Wheelie"
   },
   "behavior.PounceOnMotion": {
-    "translation": "Cozmo wants to Pounce on your finger"
+    "translation": "Cozmo wants to Pounce on your Finger"
   },
   "behavior.FistBump": {
-    "translation": "Cozmo wants to fist bump"
+    "translation": "Cozmo wants to Fist Bump"
   },
   "behavior.GuardDog": {
-    "translation": "Cozmo is guarding his Cubes"
+    "translation": "Cozmo is Guarding his Cubes"
   },
   "behavior.RollBlock": {
-    "translation": "Cozmo is rolling a Cube"
+    "translation": "Cozmo is Rolling a Cube"
   },
   "behavior.StackCube": {
     "translation": "Cozmo is creating a Stack of Cubes"
@@ -118,7 +118,7 @@
     "translation": "Cozmo is picking up a Cube"
   },
   "behavior.Workout": {
-    "translation": "Cozmo is doing a workout"
+    "translation": "Cozmo is doing a Workout"
   },
   "behavior.CheckForStackAtInterval": {
     "translation": "Cozmo is looking for a stack"
@@ -175,7 +175,7 @@
     "translation": "Cozmo is singing Twinkle Twinkle Little Star"
   },
   "behavior.singing.FrereJacques": {
-    "translation": "Cozmo is singing Frere Jacques"
+    "translation": "Cozmo is singing Frère Jacques"
   },
   "behavior.singing.MaryHadALittleLamb": {
     "translation": "Cozmo is singing Mary Had a Little Lamb"
@@ -211,7 +211,7 @@
     "translation": "Cozmo is dancing"
   },
   "behavior.singing.LondonBridge": {
-    "translation": "Cozmo is singing London Bridge is Falling Down"
+    "translation": "Cozmo is singing London Bridge Is Falling Down"
   },
   "behavior.singing.CozMambo": {
     "translation": "Cozmo is singing the Cozmo Mambo"
@@ -226,7 +226,7 @@
     "translation": "Cozmo is listening to you"
   },
   "behavior.VC_Refuse_Energy": {
-    "translation": "Cozmo needs Energy"
+    "translation": "Cozmo needs to be Fed"
   },
   "behavior.VC_Refuse_Repair": {
     "translation": "Cozmo needs a Tune Up"
