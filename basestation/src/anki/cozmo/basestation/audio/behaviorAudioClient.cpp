@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
@@ -226,14 +227,82 @@ void BehaviorAudioClient::DeactivateSparkedMusic()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& stateEvent)
 {
+  // Check for changes in "world events" that audio is interested in
+  HandleWorldEventUpdates(stateEvent);
+  
   // Update sparked music if spark ID changed
-  auto sparkID = stateEvent.currentSpark;
+  HandleSparkUpdates(stateEvent);
+  
+  // Handle AI Activity transitions and Guard Dog behavior transitions
+  const auto& currActivity = stateEvent.currentActivity;
+  if (currActivity != _prevActivity) {
+    UpdateActivityMusicState(currActivity);
+    _prevActivity = currActivity;
+  } else {
+    
+    const BehaviorStageStruct& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
+    HandleGuardDogUpdates(currPublicStateStruct);
+    HandleDancingUpdates(currPublicStateStruct);
+    
+    if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Count)
+    {
+      // Update the Activity state to current Activity
+      // This will stop any music currently playing
+      UpdateActivityMusicState(currActivity);
+    }
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleWorldEventUpdates(const RobotPublicState& stateEvent)
+{
+  using AE = AudioMetaData::GameEvent::GenericEvent;
+  
+  if(_isCubeInLift != stateEvent.isCubeInLift){
+    _isCubeInLift = stateEvent.isCubeInLift;
+    
+    if(_isCubeInLift){
+      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Play__Cue_World_Event__Lift_Cube);
+    }else{
+      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Stop__Cue_World_Event__Lift_Cube);
+    }
+  }
+  
+  if(_isRequestingGame != stateEvent.isRequestingGame){
+    _isRequestingGame = stateEvent.isRequestingGame;
+
+    if(_isRequestingGame){
+      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Play__Cue_World_Event__Request_Game);
+    }else{
+      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Stop__Cue_World_Event__Request_Game);
+    }
+  }
+  
+  
+  if(_stackExists != (stateEvent.tallestStackHeight > 1)){
+    _stackExists = (stateEvent.tallestStackHeight > 1);
+    
+    if(_stackExists){
+      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Play__Cue_World_Event__Cubes_Stacked);
+    }else{
+      _robot.GetRobotAudioClient()->PostCozmoEvent(AE::Stop__Cue_World_Event__Cubes_Stacked);
+    }
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleSparkUpdates(const RobotPublicState& stateEvent)
+{
+  const auto& sparkID = stateEvent.currentSpark;
+  
   if(_unlockId != sparkID){
     if(sparkID == UnlockId::Count){
       DeactivateSparkedMusic();
     }else if(_sparkedMusicState == AudioMetaData::SwitchState::Sparked::Invalid){
       PRINT_NAMED_INFO("BehaviorAudioClient.HandleRobotPublicStateChange.InvalidMusicState",
-                        "Attempted to activate sparked music state with invalid music state");
+                       "Attempted to activate sparked music state with invalid music state");
     }else{
       // Special handling for Workout (blergghhhhbleghgh... ahemm, excuse me)
       int startingRound = 0;
@@ -261,60 +330,55 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
       UpdateBehaviorRound(sparkID, behaviorRound);
     }
   }
+}
+
   
-  
-  // Handle AI Activity transitions and Guard Dog behavior transitions
-  const auto& currActivity = stateEvent.currentActivity;
-  if (currActivity != _prevActivity) {
-    UpdateActivityMusicState(currActivity);
-    _prevActivity = currActivity;
-  } else {
-    // Update the Guard Dog music mood/round if appropriate
-    const auto& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
-    if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
-      // Change the freeplay mood to GuardDog if not already active
-      if (!_guardDogActive) {
-        _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
-                                                      static_cast<const GenericSwitch>(Freeplay_Mood::Guard_Dog),
-                                                      AudioMetaData::GameObjectType::Default);
-        _guardDogActive = true;
-      }
-      
-      // Update the GuardDog round if needed
-      if(currPublicStateStruct.currentGuardDogStage != _prevGuardDogStage) {
-        const auto round = Util::EnumToUnderlying(currPublicStateStruct.currentGuardDogStage);
-        DEV_ASSERT_MSG(round < kGameplayRoundMap.size(),
-                       "RobotAudioClient.HandleRobotPublicState.InvalidRound",
-                       "round: %d", round);
-        
-        _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
-                                                      static_cast<const GenericSwitch>(kGameplayRoundMap[round]),
-                                                      AudioMetaData::GameObjectType::Default);
-        
-        _prevGuardDogStage = currPublicStateStruct.currentGuardDogStage;
-      }
-    } else if (_guardDogActive) {
-      // reset GuardDog stuff
-      _guardDogActive = false;
-      _prevGuardDogStage = GuardDogStage::Count;
-    }
-    
-    // If this is dancing then post dancing switch
-    if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Dance)
-    {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct)
+{
+  // Update the Guard Dog music mood/round if appropriate
+  if (currPublicStateStruct.behaviorStageTag == BehaviorStageTag::GuardDog) {
+    // Change the freeplay mood to GuardDog if not already active
+    if (!_guardDogActive) {
       _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
-                                                   static_cast<GenericSwitch>(Freeplay_Mood::Dancing),
-                                                   AudioMetaData::GameObjectType::Default);
+                                                    static_cast<const GenericSwitch>(Freeplay_Mood::Guard_Dog),
+                                                    AudioMetaData::GameObjectType::Default);
+      _guardDogActive = true;
     }
     
-    if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Count)
-    {
-      // Update the Activity state to current Activity
-      // This will stop any music currently playing
-      UpdateActivityMusicState(currActivity);
+    // Update the GuardDog round if needed
+    if(currPublicStateStruct.currentGuardDogStage != _prevGuardDogStage) {
+      const auto round = Util::EnumToUnderlying(currPublicStateStruct.currentGuardDogStage);
+      DEV_ASSERT_MSG(round < kGameplayRoundMap.size(),
+                     "RobotAudioClient.HandleRobotPublicState.InvalidRound",
+                     "round: %d", round);
+      
+      _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+                                                    static_cast<const GenericSwitch>(kGameplayRoundMap[round]),
+                                                    AudioMetaData::GameObjectType::Default);
+      
+      _prevGuardDogStage = currPublicStateStruct.currentGuardDogStage;
     }
+  } else if (_guardDogActive) {
+    // reset GuardDog stuff
+    _guardDogActive = false;
+    _prevGuardDogStage = GuardDogStage::Count;
   }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct)
+{
+  // If this is dancing then post dancing switch
+  if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Dance)
+  {
+    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Freeplay_Mood,
+                                                  static_cast<GenericSwitch>(Freeplay_Mood::Dancing),
+                                                  AudioMetaData::GameObjectType::Default);
+  }
+}
+
 
 
 } // Audio

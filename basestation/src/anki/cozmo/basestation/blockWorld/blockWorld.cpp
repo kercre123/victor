@@ -4065,7 +4065,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     }
     
     //Update  block configurations now that all block poses have been updated
-    _blockConfigurationManager->Update();
+    _blockConfigurationManager->Update(*_robot);
     
     
     Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());

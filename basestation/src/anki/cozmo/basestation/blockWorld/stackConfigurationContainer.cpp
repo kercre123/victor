@@ -34,7 +34,8 @@ std::vector<StackWeakPtr> StackConfigurationContainer::GetWeakStacks() const
   return weakVec;
 }
 
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConfigPtrVec StackConfigurationContainer::AddAllConfigsWithObjectToCache(const Robot& robot, const ObservableObject* object)
 {
   ConfigPtrVec newConfigurations;

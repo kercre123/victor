@@ -35,6 +35,8 @@ structure BehaviorStageStruct{
 no_default_constructor structure RobotPublicState{
   UnlockId currentSpark,
   bool isCubeInLift,
+  bool isRequestingGame,
+  uint_8 tallestStackHeight,
   ActivityID currentActivity,
   ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct

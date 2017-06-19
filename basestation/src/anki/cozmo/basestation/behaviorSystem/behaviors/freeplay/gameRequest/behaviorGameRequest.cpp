@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
@@ -118,6 +119,8 @@ void IBehaviorRequestGame::SendRequest(Robot& robot)
 
   robot.Broadcast( MessageEngineToGame( RequestGameStart(_requestID)) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  robot.GetPublicStateBroadcaster().UpdateRequestingGame(true);
 }
 
 void IBehaviorRequestGame::SendDeny(Robot& robot)
@@ -125,6 +128,7 @@ void IBehaviorRequestGame::SendDeny(Robot& robot)
   using namespace ExternalInterface;
 
   robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
+  robot.GetPublicStateBroadcaster().UpdateRequestingGame(false);
 }
 
 bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const ObservableObject* obj) const
@@ -310,6 +314,7 @@ void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, Ro
 {
   if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
     HandleGameDeniedRequest(robot);
+    robot.GetPublicStateBroadcaster().UpdateRequestingGame(false);
   }
   else if(event.GetData().GetTag() == GameToEngineTag::CanCozmoRequestGame){
     // Behavior game requests can no longer run - if we're running stop the behavior

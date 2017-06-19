@@ -49,7 +49,7 @@ public:
   
   // Checks to see if there are any extant pyramid bases which the object is a top block for
   // returns true if such a base exists and loads it in to pyramidBase, otherwise returns false
-  bool CheckForPyramidBaseBelowObject(const ObservableObject* object, PyramidBaseWeakPtr& pyramidBase) const;
+  bool CheckForPyramidBaseBelowObject(Robot& robot, const ObservableObject* object, PyramidBaseWeakPtr& pyramidBase) const;
 
   // Notify the BlockConfigurationManager that an object's pose has changed and that it should
   // check the object on its next update to see if configurations have been created/destroyed as a result
@@ -60,7 +60,7 @@ public:
   // changes are large enough to justify re-building the configurations
   // and then updates the internal block configuration list and object
   // caches accordingly
-  void Update();
+  void Update(Robot& robot);
   
   const BlockConfigurationContainer& GetCacheByType(ConfigurationType type) const;
   
@@ -72,7 +72,6 @@ public:
   void FlagForRebuild(){ _forceUpdate = true;}
 
 private:
-  const Robot& _robot;
   std::vector<::Signal::SmartHandle> _signalHandles;
   bool _forceUpdate;
   
@@ -93,14 +92,14 @@ private:
   //Update functions
   //////
   // Returns true if any objects moved past threshold
-  bool DidAnyObjectsMovePastThreshold();
+  bool DidAnyObjectsMovePastThreshold(Robot& robot);
   
   // Builds all configurations for all blocks in block world and stores them in _allBlockConfigs
   // any weakPtrs to configurations that still exist are maintained
-  void UpdateAllBlockConfigs();
+  void UpdateAllBlockConfigs(Robot& robot);
   
   // updates the _objectIDToLastPose map's last poses checked
-  void UpdateLastConfigCheckBlockPoses();
+  void UpdateLastConfigCheckBlockPoses(Robot& robot);
 
 }; // class BlockConfigurationManager
 

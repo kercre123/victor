@@ -32,6 +32,8 @@ namespace Cozmo {
 class BehaviorManager;
 class Robot;
 struct RobotPublicState;
+struct BehaviorStageStruct;
+
 
 namespace Audio {
 
@@ -77,6 +79,12 @@ private:
   AudioMetaData::SwitchState::Sparked _sparkedMusicState = AudioMetaData::SwitchState::Sparked::Invalid;
   bool      _isActive = false;
   int       _round    = kBehaviorRound;
+  
+  // World Event tracking
+  bool      _isCubeInLift     = false;
+  bool      _isRequestingGame = false;
+  bool      _stackExists      = false;
+  
   std::vector<::Signal::SmartHandle> _eventHandles;
   
   void SetDefaultBehaviorRound() { _round = kBehaviorRound; }
@@ -91,6 +99,13 @@ private:
   // Keep track of the last GuardDog behavior stage so we can set the
   //  proper audio round when transitioning between stages.
   GuardDogStage _prevGuardDogStage = GuardDogStage::Count;
+  
+  
+  void HandleWorldEventUpdates(const RobotPublicState& stateEvent);
+  void HandleSparkUpdates(const RobotPublicState& stateEvent);
+  void HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct);
+  void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
+  
   
 };
 

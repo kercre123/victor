@@ -266,6 +266,7 @@ void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
 
     SendDeny(robot);
     // action is can canceled automatically by IBehavior
+    
   }
 
   // don't use transition to because we don't want to do anything.
@@ -538,7 +539,9 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
+  SET_STATE(Idle);
   SendRequest(robot);
+  
   
   if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
      && GetFaceID() != Vision::UnknownFaceID){
@@ -555,7 +558,6 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
     StartActing( new HangAction(robot) );
   }
   
-  SET_STATE(Idle);
   BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
 }
 
@@ -568,7 +570,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   SET_STATE(PlayingDenyAnim);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {

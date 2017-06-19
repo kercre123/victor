@@ -16,6 +16,10 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/stackConfigurationContainer.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -34,8 +38,13 @@ PublicStateBroadcaster::PublicStateBroadcaster()
   BehaviorStageStruct empty;
   empty.behaviorStageTag = BehaviorStageTag::Count;
   const bool isCubeInLift = false;
+  const bool isRequestingGame = false;
+  const int  tallestStackHeight = 0;
+
   _currentState.reset(new RobotPublicState(UnlockId::Count,
                                            isCubeInLift,
+                                           isRequestingGame,
+                                           tallestStackHeight,
                                            ActivityID::Invalid,
                                            ReactionTrigger::NoneTrigger,
                                            empty));
@@ -174,6 +183,31 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
 }
 
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PublicStateBroadcaster::UpdateRequestingGame(bool isRequesting)
+{
+  _currentState->isRequestingGame = isRequesting;
+  SendUpdatedState();
+}
+ 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void PublicStateBroadcaster::NotifyBroadcasterOfConfigurationManagerUpdate(const Robot& robot)
+{
+  const auto& tallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack().lock();
+  const bool stackDisappeared = ((tallestStack == nullptr) &&
+                                 (_currentState->tallestStackHeight != 0));
+  const bool stackHeightChanged = (tallestStack != nullptr &&
+                                   (_currentState->tallestStackHeight != tallestStack->GetStackHeight()));
+  
+  if(stackDisappeared || stackHeightChanged){
+    _currentState->tallestStackHeight = (tallestStack != nullptr) ?
+                                           tallestStack->GetStackHeight() : 0;
+    SendUpdatedState();
+  }
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int PublicStateBroadcaster::GetBehaviorRoundFromMessage(const RobotPublicState& stateEvent)
 {
