@@ -40,8 +40,6 @@ static const char* const kIsBlockRotationImportant = "isBlockRotationImportant";
 static const float kMaxDistCozmoIsRollingCube_mm = 120;
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
-CONSOLE_VAR(f32, kBRB_MaxTowardFaceAngle_deg, "Behavior.RollBlock", 90.f);
-CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
   
 }
   
