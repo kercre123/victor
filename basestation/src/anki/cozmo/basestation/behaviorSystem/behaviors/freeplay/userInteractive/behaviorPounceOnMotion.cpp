@@ -147,7 +147,7 @@ void BehaviorPounceOnMotion::InitHelper(Robot& robot)
   _motionObservedNoPounceCount = 0;
   
   // Don't override sparks idle animation
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PounceFace);
     
     robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::PounceDriveStart,
@@ -410,7 +410,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   }
   else {
     // currently equivalent to "isSparked" - don't play failure anim when sparked
-    if(!_shouldStreamline){
+    if(!ShouldStreamline()){
       newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceFail );
     }else{
       newAction = new TriggerAnimationAction(robot, AnimationTrigger::Count);
@@ -643,7 +643,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   _observedY = 0;
   
   // Only pop animations if set within this behavior
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     robot.GetAnimationStreamer().PopIdleAnimation();
     robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   }

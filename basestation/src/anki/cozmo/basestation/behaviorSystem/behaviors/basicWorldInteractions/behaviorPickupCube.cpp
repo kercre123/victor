@@ -78,7 +78,7 @@ bool BehaviorPickUpCube::IsRunnableInternal(const BehaviorPreReqRobot& preReqDat
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPickUpCube::InitInternal(Robot& robot)
 {
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     TransitionToDoingInitialReaction(robot);
   }else{
     TransitionToPickingUpCube(robot);
@@ -176,8 +176,8 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   
   auto& factory = robot.GetAIComponent().GetBehaviorHelperComponent().GetBehaviorHelperFactory();
   PickupBlockParamaters params;
-  params.sayNameBeforePickup = !_shouldStreamline;
-  params.maxTurnTowardsFaceAngle_rad = _shouldStreamline ? 0 : M_PI_2;
+  params.sayNameBeforePickup = !ShouldStreamline();
+  params.maxTurnTowardsFaceAngle_rad = ShouldStreamline() ? 0 : M_PI_2;
   params.allowedToRetryFromDifferentPose = true;
   HelperHandle pickupHelper = factory.CreatePickupBlockHelper(robot, *this, _targetBlockID, params);
   SmartDelegateToHelper(robot, pickupHelper, &BehaviorPickUpCube::TransitionToSuccessReaction);
@@ -187,7 +187,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::TransitionToSuccessReaction(Robot& robot)
 {
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     DEBUG_SET_STATE(DoingFinalReaction);
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess));
   }

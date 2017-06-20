@@ -246,6 +246,7 @@ enum uint_8 BehaviorID {
   VC_RequestKeepAway,
   VC_RequestMemoryMatch,
   VC_RequestSpeedTap,
+  VC_TrackLaser,
 
   Wait
 }

@@ -223,7 +223,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
 
   
   PickupBlockParamaters params;
-  params.maxTurnTowardsFaceAngle_rad = _shouldStreamline ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
+  params.maxTurnTowardsFaceAngle_rad = ShouldStreamline() ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
   HelperHandle pickupHelper = GetBehaviorHelperFactory().
                                       CreatePickupBlockHelper(robot, *this,
                                                               _targetBlockTop, params);
@@ -272,7 +272,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
   SET_STATE(PlayingFinalAnim);
   
   BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
     IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   }

@@ -449,6 +449,7 @@ enum int_32 AnimationTrigger
   Surprise,
   TurtleRoll,  
   UnitTestAnim,
+  VCLookDownNoLaser,
   VCRefuse_energy,
   VCRefuse_repair,
   VCRefuse_sparks,

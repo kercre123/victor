@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
@@ -81,12 +82,32 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
              _fistBumpBehavior->GetClass() == BehaviorClass::FistBump,
              "VoiceCommandBehaviorChooser.FistBump.ImproperClassRetrievedForID");
+
   _peekABooBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FPPeekABoo);
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
   
+  _laserBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_TrackLaser);
+  DEV_ASSERT(_laserBehavior != nullptr &&
+             _laserBehavior->GetClass() == BehaviorClass::TrackLaser,
+             "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
+  
+  //Create an arbitrary animation behavior
+  IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
+  _playAnimBehavior = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
+  
+  DEV_ASSERT(_playAnimBehavior != nullptr &&
+             _playAnimBehavior->GetClass() == BehaviorClass::PlayArbitraryAnim,
+             "VoiceCommandBehaviorChooser.BehaviorPlayAnimPointerNotSet");
+
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
+  
+  if(robot.HasExternalInterface()) {
+    auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::BehaviorObjectiveAchieved>();
+  }
 }
 
 
@@ -98,6 +119,13 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
   if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.ChooseNextBehavior", "VoiceCommandComponent invalid"))
   {
     return emptyPtr;
+  }
+  
+  // Check to see if we should update the _voiceCommandBehavior should we be trying to track a laser
+  const bool didUpdateLaserBehavior = CheckForLaserTrackingChange(robot, currentRunningBehavior);
+  if(didUpdateLaserBehavior)
+  {
+    return _voiceCommandBehavior;
   }
   
   const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
@@ -256,6 +284,24 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       BeginRespondingToCommand(currentCommand);
       return emptyPtr;
     }
+    case VoiceCommandType::LookDown:
+    {
+      BehaviorPreReqRobot preReqRobot(robot);
+      if(_laserBehavior->IsRunnable(preReqRobot))
+      {
+        _waitingForLaser = true;
+        _voiceCommandBehavior = _laserBehavior;
+      }
+      else
+      {
+        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
+      }
+      
+      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+      
+      return _voiceCommandBehavior;
+    }
     
     // Yes Please and No Thank You do not trigger a behavior here
     case VoiceCommandType::YesPlease:
@@ -334,6 +380,7 @@ bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command
     case VoiceCommandType::GoToSleep:
     case VoiceCommandType::YesPlease:
     case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::LookDown:
     {
       return true;
     }
@@ -357,6 +404,7 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
     case VoiceCommandType::ComeHere:
     case VoiceCommandType::FistBump:
     case VoiceCommandType::PeekABoo:
+    case VoiceCommandType::LookDown:
     {
       return true;
     }
@@ -435,6 +483,53 @@ Result ActivityVoiceCommand::Update(Robot& robot)
   }
 
   return Result::RESULT_OK;
+}
+
+bool ActivityVoiceCommand::CheckForLaserTrackingChange(Robot& robot, const IBehaviorPtr curBehavior)
+{
+  // If we are waiting for a laser but are no longer in the wait for laser behavior
+  // then it must have not found a laser so switch to an animation behavior to respond to
+  // not finding a laser
+  if(_waitingForLaser && curBehavior != nullptr && curBehavior->GetID() != BehaviorID::VC_TrackLaser)
+  {
+    // If we are waiting for a laser but have entered a reactionary behavior then stop waiting for
+    // the laser and give up
+    if(robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
+    {
+      _waitingForLaser = false;
+      return false;
+    }
+  
+    _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VCLookDownNoLaser, 1);
+    
+    BehaviorPreReqNone preReq;
+    if(_playAnimBehavior->IsRunnable(preReq))
+    {
+      _voiceCommandBehavior = _playAnimBehavior;
+    }
+    else
+    {
+      CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
+    }
+    
+    _waitingForLaser = false;
+    
+    return true;
+  }
+  
+  return false;
+}
+
+template<>
+void ActivityVoiceCommand::HandleMessage(const ExternalInterface::BehaviorObjectiveAchieved& msg)
+{
+  // If we are waiting for a laser and the TrackLaser behavior successfully tracked a laser then
+  // we are no longer waiting for a laser
+  if(_waitingForLaser &&
+     msg.behaviorObjective == BehaviorObjective::LaserTracked)
+  {
+    _waitingForLaser = false;
+  }
 }
 
 } // namespace Cozmo

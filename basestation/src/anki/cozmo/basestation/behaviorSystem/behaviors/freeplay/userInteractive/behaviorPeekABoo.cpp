@@ -146,7 +146,7 @@ bool BehaviorPeekABoo::IsRunnableInternal(const BehaviorPreReqRobot& preReqData)
 Result BehaviorPeekABoo::InitInternal(Robot& robot)
 {
   // for COZMO-8914
-  if(_shouldStreamline &&
+  if(ShouldStreamline() &&
      (_timeSparkAboutToEnd_Sec == kSparkShouldPlaySparkFailFlag)){
     _timeSparkAboutToEnd_Sec = 0.0f;
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkFailure));

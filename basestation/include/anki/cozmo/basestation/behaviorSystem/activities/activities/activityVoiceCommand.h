@@ -35,6 +35,7 @@ class Robot;
 class CozmoContext;
 class DoATrickSelector;
 class RequestGameSelector;
+class BehaviorPlayArbitraryAnim;
 
 template <typename Type> class AnkiEvent;
 
@@ -46,6 +47,9 @@ public:
   
 
   virtual Result Update(Robot& robot) override;
+  
+  template<typename T>
+  void HandleMessage(const T& msg);
   
 protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,10 +83,15 @@ private:
   IBehaviorPtr          _comeHereBehavior;
   IBehaviorPtr          _fistBumpBehavior;
   IBehaviorPtr          _peekABooBehavior;
+  IBehaviorPtr          _laserBehavior;
+  
+  std::shared_ptr<BehaviorPlayArbitraryAnim> _playAnimBehavior;
   
   std::unique_ptr<DoATrickSelector>    _doATrickSelector;
   std::unique_ptr<RequestGameSelector> _requestGameSelector;
   std::function<void()> _doneRespondingTask;
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -100,6 +109,13 @@ private:
   // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
   // do once we're done responding to the command
   void BeginRespondingToCommand(VoiceCommand::VoiceCommandType command, bool trackResponseLifetime = false);
+  
+  // Whether or not we are waiting to see a laser because a "Look Down" command was heard
+  bool _waitingForLaser = false;
+  
+  // Updates the behavior to run while waiting for a laser
+  // Returns true if voice command behavior was updated
+  bool CheckForLaserTrackingChange(Robot& robot, const IBehaviorPtr curBehavior);
   
   
 };

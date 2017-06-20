@@ -354,7 +354,7 @@ protected:
   
   // Behaviors should call this function when they reach their completion state
   // in order to log das events and notify activity strategies if they listen for the message
-  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true);
+  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true) const;
 
   // Behaviors can call this if there are any needs changes
   void NeedActionCompleted(const NeedsActionId needActionId);
@@ -440,9 +440,7 @@ protected:
   // it's checked in IsRunnableBase
   AIInformationAnalysis::EProcess _requiredProcess;
   
-  //Allows behaviors to skip certain steps when streamlined
-  //Can be set in json (for sparks) or programatically
-  bool _shouldStreamline;
+  bool ShouldStreamline() const { return (_alwaysStreamline || _sparksStreamline); }
   
 private:
   
@@ -509,9 +507,15 @@ private:
   // Handle for SmartDelegateToHelper
   WeakHelperHandle _currentHelperHandle;
 
-
   //A list of object IDs that have had a custom light pattern set
   std::vector<ObjectID> _customLightObjects;
+  
+  // Allows behaviors to skip certain steps when streamlined
+  // Set if this behavior is a sparked behavior
+  bool _sparksStreamline = false;
+  
+  // Whether or not the behavior is always be streamlined (set via json)
+  bool _alwaysStreamline = false;
   
 ////////
 //// Scored Behavior functions

@@ -171,7 +171,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
   
-  if(_shouldStreamline){
+  if(ShouldStreamline()){
     TransitionToBackingUp(robot);
   }
   else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {

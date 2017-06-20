@@ -154,7 +154,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
     return;
   }
 
-  const Radians maxTurnToFaceAngle(_shouldStreamline ? 0 : DEG_TO_RAD(90));
+  const Radians maxTurnToFaceAngle(ShouldStreamline() ? 0 : DEG_TO_RAD(90));
   // always roll to upright, even if orientation isn't important (always prefer it to end upright, even if we
   // will run without it being upright, e.g. Sparks)
   const bool upright = true;
@@ -215,7 +215,7 @@ void BehaviorRollBlock::TransitionToRollSuccess(Robot& robot)
   robot.GetMoodManager().TriggerEmotionEvent("RollSucceeded", MoodManager::GetCurrentTimeInSeconds());
   UpdateTargetsUpAxis(robot);
 
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
   }
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );

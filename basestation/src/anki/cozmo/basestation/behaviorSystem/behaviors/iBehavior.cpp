@@ -59,6 +59,7 @@ static const char* kRequireObjectTappedKey           = "requireObjectTapped";
 static const char* kObjectTapInteractionDisableLock  = "ObjectTapInteraction";
 static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
+static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 
 static const int kMaxResumesFromCliff                = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
@@ -265,6 +266,8 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   
   JsonTools::GetValueOptional(config, kRequireObjectTappedKey, _requireObjectTapped);
   
+  JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
+  
   // Doesn't actually read anything from behavior config, but sets defaults
   // for certain scoring metrics in case no score json is loaded
   return ReadFromScoredJson(config, false);
@@ -356,13 +359,12 @@ Result IBehavior::Init()
                         GetIDStr().c_str(), _robot.GetActionList().GetQueueLength(0));
   }
 
-  
   // Streamline all IBehaviors when a spark is active
   if(_robot.GetBehaviorManager().GetActiveSpark() != UnlockId::Count
      && !_robot.GetBehaviorManager().IsActiveSparkSoft()){
-    _shouldStreamline = true;
-  }else{
-    _shouldStreamline = false;
+    _sparksStreamline = true;
+  } else {
+    _sparksStreamline = false;
   }
   
   _isRunning = true;
@@ -775,7 +777,7 @@ bool IBehavior::StopActing(bool allowCallback, bool allowHelperToContinue)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame)
+void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame) const
 {
   if(broadcastToGame && _robot.HasExternalInterface()){
     _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);

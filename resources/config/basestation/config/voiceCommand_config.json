@@ -57,6 +57,10 @@
         {
           "phrase": "Go To Sleep",
           "commandType": "GoToSleep"
+        },
+        {
+          "phrase": "Look Down",
+          "commandType": "LookDown"
         }
       ]
     },
@@ -237,7 +241,8 @@
         "FistBump",
         "LetsPlay",
         "PeekABoo",
-        "GoToSleep"
+        "GoToSleep",
+        "LookDown"
       ]
     },
     {

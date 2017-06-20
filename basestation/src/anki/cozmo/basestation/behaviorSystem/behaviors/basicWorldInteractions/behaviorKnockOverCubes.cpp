@@ -165,7 +165,7 @@ bool BehaviorKnockOverCubes::IsRunnableInternal(const BehaviorPreReqRobot& preRe
 Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
 {
   if(InitializeMemberVars()){
-    if(!_shouldStreamline){
+    if(!ShouldStreamline()){
       TransitionToReachingForBlock(robot);
     }else{
       TransitionToKnockingOverStack(robot);
@@ -258,7 +258,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   // Setup the flip action
   
   //skips turning towards face if this action is streamlined
-  const f32 angleTurnTowardsFace_rad = (_shouldStreamline || _numRetries > 0) ? 0 : kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad;
+  const f32 angleTurnTowardsFace_rad = (ShouldStreamline() || _numRetries > 0) ? 0 : kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad;
   
   DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _bottomBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
   
@@ -315,7 +315,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   }
   
   // play a reaction if not streamlined
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
   }
 }

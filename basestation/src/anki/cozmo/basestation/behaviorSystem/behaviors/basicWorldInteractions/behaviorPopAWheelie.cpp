@@ -87,7 +87,7 @@ bool BehaviorPopAWheelie::IsRunnableInternal(const BehaviorPreReqRobot& preReqDa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorPopAWheelie::InitInternal(Robot& robot)
 {
-  if(!_shouldStreamline && _lastBlockReactedTo != _targetBlock){
+  if(!ShouldStreamline() && _lastBlockReactedTo != _targetBlock){
     TransitionToReactingToBlock(robot);
   }else{
     TransitionToPerformingAction(robot);
@@ -166,7 +166,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   }
   
   // Only turn towards face if this is _not_ a retry
-  const Radians maxTurnToFaceAngle( (isRetry || _shouldStreamline ? 0 : DEG_TO_RAD(90)) );
+  const Radians maxTurnToFaceAngle( (isRetry || ShouldStreamline() ? 0 : DEG_TO_RAD(90)) );
   DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(robot,
                                                                          _targetBlock,
                                                                          false,

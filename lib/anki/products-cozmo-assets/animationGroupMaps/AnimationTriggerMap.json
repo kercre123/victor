@@ -1725,6 +1725,10 @@
       "AnimName": "ag_askForBlock"
     },
     {
+      "CladEvent": "VCLookDownNoLaser",
+      "AnimName": "ag_explorer_huh"
+    },
+    {
       "CladEvent": "VCRefuse_energy",
       "AnimName": "ag_vc_refuse_energy_01"
     },

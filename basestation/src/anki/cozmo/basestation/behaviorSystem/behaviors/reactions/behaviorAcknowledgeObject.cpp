@@ -182,7 +182,7 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
     action->AddAction(verifyAction);
   }
 
-  if(!_shouldStreamline){
+  if(!ShouldStreamline()){
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
   }
 

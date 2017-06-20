@@ -20,6 +20,7 @@ enum uint_8 VoiceCommandType {
   PeekABoo,
   NoThankYou,
   YesPlease,
+  LookDown,
 
   Count
 }
