@@ -26,6 +26,7 @@ static const std::string kMaxNeedLevelKey = "MaximumNeedLevel";
 static const std::string kDecayPeriodSecondsKey = "DecayPeriodSeconds";
 static const std::string kInitialNeedLevelKey = "InitialNeedLevel";
 static const std::string kBracketLevelKey = "BracketLevel";
+static const std::string kFullnessDecayCooldownKey = "FullnessDecayCooldown";
 static const std::string kBrokenPartThresholdKey = "BrokenPartThreshold";
 
 static const std::string kDecayRatesKey = "DecayRates";
@@ -59,6 +60,7 @@ NeedsConfig::NeedsConfig()
 , _decayPeriod(60.0f)
 , _initialNeedsLevels()
 , _needsBrackets()
+, _fullnessDecayCooldownTimes_s()
 , _brokenPartThresholds()
 , _decayConnected()
 , _decayUnconnected()
@@ -149,6 +151,15 @@ void NeedsConfig::Init(const Json::Value& json)
                    "NeedsConfig.Init",
                    "Last threshold in bracket list should be zero but is %f", thresholds.back());
     _needsBrackets[static_cast<NeedId>(i)] = std::move(thresholds);
+  }
+
+  _fullnessDecayCooldownTimes_s.clear();
+  for (size_t i = 0; i < (size_t)NeedId::Count; i++)
+  {
+    const std::string keyStr = kFullnessDecayCooldownKey + EnumToString(static_cast<NeedId>(i));
+    const auto value = JsonTools::ParseFloat(json, keyStr.c_str(),
+                                             "Failed to parse a fullness cooldown time");
+    _fullnessDecayCooldownTimes_s[static_cast<NeedId>(i)] = value;
   }
 
   _brokenPartThresholds.clear();

@@ -17,6 +17,9 @@
   "BracketLevelPlayNormal": 0.5,
   "BracketLevelPlayWarning": 0.1,
   "BracketLevelPlayCritical": 0,
+  "FullnessDecayCooldownRepair": 120,
+  "FullnessDecayCooldownEnergy": 120,
+  "FullnessDecayCooldownPlay": 120,
   "BrokenPartThreshold0": 0.75,
   "BrokenPartThreshold1": 0.5,
   "BrokenPartThreshold2": 0.25

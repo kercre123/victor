@@ -109,6 +109,7 @@ private:
   void InitAfterReadFromRobotAttempt();
 
   void ApplyDecayAllNeeds();
+  void StartFullnessCooldownForNeed(const NeedId needId);
 
   void RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,
                                             NeedsState& needsState,
@@ -154,6 +155,8 @@ private:
 
   std::array<float, static_cast<size_t>(NeedId::Count)> _lastDecayUpdateTime_s;
   std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenPaused_s;
+  std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenCooldownStarted_s;
+  std::array<float, static_cast<size_t>(NeedId::Count)> _timeWhenCooldownOver_s;
 
   std::array<std::vector<NeedDelta>, static_cast<size_t>(NeedId::Count)> _queuedNeedDeltas;
 

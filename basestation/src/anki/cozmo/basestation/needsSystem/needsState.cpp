@@ -209,8 +209,10 @@ void NeedsState::ApplyDecay(const DecayConfig& decayConfig, const int needIndex,
 }
 
 
-void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause)
+bool NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause)
 {
+  bool startFullnessCooldown = false;
+
   float needLevel = _curNeedsLevels[needId];
 
   const float randDist = _rng->RandDbl(needDelta._randomRange * 2.0f) - needDelta._randomRange;
@@ -218,38 +220,48 @@ void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, con
   needLevel += delta;
   needLevel = Util::Clamp(needLevel, _needsConfig->_minNeedLevel, _needsConfig->_maxNeedLevel);
 
-  if ((needId == NeedId::Repair) && (delta > 0.0f))
+  if (delta > 0.0f)
   {
-    // If Repair level is going up, clamp the delta so that it stays within the range of
-    // thresholds for broken parts, according to the actual current number of broken parts
-    const int numDamagedParts = NumDamagedParts();
-    const static float epsilon = 0.00001f;
-    const size_t numThresholds = _needsConfig->_brokenPartThresholds.size();
-
-    // FIRST:  Clamp against going too high
-    float maxLevel = _needsConfig->_maxNeedLevel;
-    if (numDamagedParts >= numThresholds)
+    // See if this need is now in (or still in) the "full" bracket
+    const auto& bracketThresholds = _needsConfig->_needsBrackets.find(needId)->second;
+    if (needLevel >= bracketThresholds[static_cast<int>(NeedBracketId::Full)])
     {
-      maxLevel = _needsConfig->_brokenPartThresholds[numThresholds - 1];
-    }
-    else if (numDamagedParts > 0)
-    {
-      maxLevel = _needsConfig->_brokenPartThresholds[numDamagedParts - 1];
-    }
-    if (needLevel > maxLevel)
-    {
-      needLevel = maxLevel - epsilon;
+      startFullnessCooldown = true;
     }
 
-    // SECOND:  Clamp against not going high enough
-    float minLevel = _needsConfig->_minNeedLevel;
-    if (numDamagedParts < numThresholds)
+    if (needId == NeedId::Repair)
     {
-      minLevel = _needsConfig->_brokenPartThresholds[numDamagedParts];
-    }
-    if (needLevel < minLevel)
-    {
-      needLevel = minLevel + epsilon;
+      // If Repair level is going up, clamp the delta so that it stays within the range of
+      // thresholds for broken parts, according to the actual current number of broken parts
+      const int numDamagedParts = NumDamagedParts();
+      const static float epsilon = 0.00001f;
+      const size_t numThresholds = _needsConfig->_brokenPartThresholds.size();
+
+      // FIRST:  Clamp against going too high
+      float maxLevel = _needsConfig->_maxNeedLevel;
+      if (numDamagedParts >= numThresholds)
+      {
+        maxLevel = _needsConfig->_brokenPartThresholds[numThresholds - 1];
+      }
+      else if (numDamagedParts > 0)
+      {
+        maxLevel = _needsConfig->_brokenPartThresholds[numDamagedParts - 1];
+      }
+      if (needLevel > maxLevel)
+      {
+        needLevel = maxLevel - epsilon;
+      }
+
+      // SECOND:  Clamp against not going high enough
+      float minLevel = _needsConfig->_minNeedLevel;
+      if (numDamagedParts < numThresholds)
+      {
+        minLevel = _needsConfig->_brokenPartThresholds[numDamagedParts];
+      }
+      if (needLevel < minLevel)
+      {
+        needLevel = minLevel + epsilon;
+      }
     }
   }
 
@@ -260,6 +272,8 @@ void NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, con
   {
     PossiblyDamageParts(cause);
   }
+
+  return startFullnessCooldown;
 }
 
 

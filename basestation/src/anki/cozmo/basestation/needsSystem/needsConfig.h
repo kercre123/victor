@@ -83,6 +83,9 @@ public:
   using NeedsBrackets = std::map<NeedId, BracketThresholds>;
   NeedsBrackets _needsBrackets;
 
+  using FullnessDecayCooldownTimes_s = std::map<NeedId, float>;
+  FullnessDecayCooldownTimes_s _fullnessDecayCooldownTimes_s;
+
   using BrokenPartThresholds = std::vector<float>;
   BrokenPartThresholds _brokenPartThresholds;
 

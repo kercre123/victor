@@ -216,6 +216,8 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _isActionsPausedForNeed()
 , _lastDecayUpdateTime_s()
 , _timeWhenPaused_s()
+, _timeWhenCooldownStarted_s()
+, _timeWhenCooldownOver_s()
 , _queuedNeedDeltas()
 , _currentTime_s(0.0f)
 , _timeForNextPeriodicDecay_s(0.0f)
@@ -231,6 +233,8 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 
     _lastDecayUpdateTime_s[i] = 0.0f;
     _timeWhenPaused_s[i] = 0.0f;
+    _timeWhenCooldownStarted_s[i] = 0.0f;
+    _timeWhenCooldownOver_s[i] = 0.0f;
 
     _queuedNeedDeltas[i].clear();
   }
@@ -267,6 +271,8 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
     _lastDecayUpdateTime_s[i] = _currentTime_s;
+    _timeWhenCooldownStarted_s[i] = 0.0f;
+    _timeWhenCooldownOver_s[i] = 0.0f;
 
     _isDecayPausedForNeed[i] = false;
     _isActionsPausedForNeed[i] = false;
@@ -562,10 +568,16 @@ void NeedsManager::SetPaused(const bool paused)
 
     // Adjust some timers accordingly, so that the overall pause is excluded from
     // things like decay time, and individual needs pausing
-    for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+    for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
     {
-      _lastDecayUpdateTime_s[i] += durationOfPause;
-      _timeWhenPaused_s[i] += durationOfPause;
+      _lastDecayUpdateTime_s[needIndex] += durationOfPause;
+      _timeWhenPaused_s[needIndex] += durationOfPause;
+
+      if (_timeWhenCooldownOver_s[needIndex] != 0.0f)
+      {
+        _timeWhenCooldownOver_s[needIndex] += durationOfPause;
+        _timeWhenCooldownStarted_s[needIndex] += durationOfPause;
+      }
     }
   }
 
@@ -706,9 +718,13 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
     }
     else
     {
-      needsState.ApplyDelta(static_cast<NeedId>(needIndex),
-                            actionDelta._needDeltas[needIndex],
-                            actionCompleted);
+      const NeedId needId = static_cast<NeedId>(needIndex);
+      if (needsState.ApplyDelta(needId,
+                                actionDelta._needDeltas[needIndex],
+                                actionCompleted))
+      {
+        StartFullnessCooldownForNeed(needId);
+      }
     }
   }
 
@@ -807,18 +823,22 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
       }
       else
       {
-        // Apply the decay for the period the need was paused
-        if (!multipliersSet)
+        // (But do nothing if we're in a 'fullness cooldown')
+        if (_timeWhenCooldownOver_s[needIndex] == 0.0f)
         {
-          // Set the multipliers only once even if we're applying decay to mulitiple needs at
-          // once.  This is to make it "fair", as multipliers are set according to need levels
-          multipliersSet = true;
-          _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+          // Apply the decay for the period the need was paused
+          if (!multipliersSet)
+          {
+            // Set the multipliers only once even if we're applying decay to mulitiple needs at
+            // once.  This is to make it "fair", as multipliers are set according to need levels
+            multipliersSet = true;
+            _needsState.SetDecayMultipliers(_needsConfig._decayConnected, multipliers);
+          }
+          const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
+          _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
+          _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+          needToSendNeedsStateToGame = true;
         }
-        const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
-        _needsState.ApplyDecay(_needsConfig._decayConnected, needIndex, duration_s, multipliers);
-        _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
-        needToSendNeedsStateToGame = true;
       }
     }
 
@@ -834,7 +854,11 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
       auto& queuedDeltas = _queuedNeedDeltas[needIndex];
       for (int j = 0; j < queuedDeltas.size(); j++)
       {
-        _needsState.ApplyDelta(static_cast<NeedId>(needIndex), queuedDeltas[j], queuedDeltas[j]._cause);
+        const NeedId needId = static_cast<NeedId>(needIndex);
+        if (_needsState.ApplyDelta(needId, queuedDeltas[j], queuedDeltas[j]._cause))
+        {
+          StartFullnessCooldownForNeed(needId);
+        }
         needToSendNeedsStateToGame = true;
       }
       queuedDeltas.clear();
@@ -1006,13 +1030,43 @@ void NeedsManager::ApplyDecayAllNeeds()
   {
     if (!_isDecayPausedForNeed[needIndex])
     {
-      const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
-      _needsState.ApplyDecay(config, needIndex, duration_s, multipliers);
-      _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+      if (_timeWhenCooldownOver_s[needIndex] != 0.0f &&
+          _currentTime_s > _timeWhenCooldownOver_s[needIndex])
+      {
+        // There was a 'fullness cooldown' for this need, and it has expired;
+        // calculate the amount of decay time we need to adjust for
+        const float cooldownDuration = _timeWhenCooldownOver_s[needIndex] -
+                                       _timeWhenCooldownStarted_s[needIndex];
+        _lastDecayUpdateTime_s[needIndex] += cooldownDuration;
+
+        _timeWhenCooldownOver_s[needIndex] = 0.0f;
+        _timeWhenCooldownStarted_s[needIndex] = 0.0f;
+      }
+
+      if (_timeWhenCooldownOver_s[needIndex] == 0.0f)
+      {
+        const float duration_s = _currentTime_s - _lastDecayUpdateTime_s[needIndex];
+        _needsState.ApplyDecay(config, needIndex, duration_s, multipliers);
+        _lastDecayUpdateTime_s[needIndex] = _currentTime_s;
+      }
     }
   }
 
   DetectBracketChangeForDas();
+}
+
+
+void NeedsManager::StartFullnessCooldownForNeed(const NeedId needId)
+{
+  const int needIndex = static_cast<int>(needId);
+
+  _timeWhenCooldownOver_s[needIndex] = _currentTime_s +
+                                       _needsConfig._fullnessDecayCooldownTimes_s[needId];
+
+  if (_timeWhenCooldownStarted_s[needIndex] == 0.0f)
+  {
+    _timeWhenCooldownStarted_s[needIndex] = _currentTime_s;
+  }
 }
 
 
@@ -1642,7 +1696,10 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
   }
 
   NeedDelta needDelta(delta, 0.0f, NeedsActionId::NoAction);
-  _needsState.ApplyDelta(needId, needDelta, NeedsActionId::NoAction);
+  if (_needsState.ApplyDelta(needId, needDelta, NeedsActionId::NoAction))
+  {
+    StartFullnessCooldownForNeed(needId);
+  }
 
   SendNeedsStateToGame();
 
@@ -1662,6 +1719,11 @@ void NeedsManager::DebugPassTimeMinutes(const float minutes)
     if (!_isDecayPausedForNeed[needIndex])
     {
       _lastDecayUpdateTime_s[needIndex] -= timeElaspsed_s;
+    }
+    if (_timeWhenCooldownOver_s[needIndex] != 0.0f)
+    {
+      _timeWhenCooldownOver_s[needIndex] -= timeElaspsed_s;
+      _timeWhenCooldownStarted_s[needIndex] -= timeElaspsed_s;
     }
   }
 

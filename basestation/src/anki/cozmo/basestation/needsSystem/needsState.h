@@ -60,7 +60,7 @@ public:
   void ApplyDecay(const DecayConfig& decayConfig, const int needIndex, const float timeElasped_s, const NeedsMultipliers& multipliers);
 
   // Apply a given delta to a given need
-  void ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause);
+  bool ApplyDelta(const NeedId needId, const NeedDelta& needDelta, const NeedsActionId cause);
 
 
   float         GetNeedLevel(NeedId need) const;
