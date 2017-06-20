@@ -173,6 +173,7 @@ namespace Cozmo.Hub {
           !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup) &&
         robot != null) {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
+        RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
         robot.SetEnableFreeplayLightStates(true);
         robot.SetEnableFreeplayActivity(true);
         AllowFreeplayUI(true);
