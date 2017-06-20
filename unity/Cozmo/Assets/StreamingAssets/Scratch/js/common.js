@@ -54,16 +54,6 @@
                 controls: false,
                 wheel: false,
                 startScale: 1.2
-            },
-            colours: {
-                workspace: '#535252',
-                flyout: '#283856',
-                scrollbar: '#24324D',
-                scrollbarHover: '#0C111A',
-                insertionMarker: '#FFFFFF',
-                insertionMarkerOpacity: 0.3,
-                fieldShadow: 'rgba(255, 255, 255, 0.3)',
-                dragShadowOpacity: 0.6
             }
         });
         Scratch.workspace = workspace;

@@ -164,6 +164,10 @@ class Runtime extends EventEmitter {
         // Code to handle start/end script events. - mwesley, 05/01/17
         this._ankiAreThreadsRunning = false;
 
+        // *** ANKI CHANGE ***
+        // Code used in _updateGlows method to unglow single block. - msintov, 06/20/17
+        this._lastBlockGlowed = null;
+
         // Register all given block packages.
         this._registerBlockPackages();
 
@@ -846,6 +850,10 @@ class Runtime extends EventEmitter {
                     this.glowBlock(blockForThread, false);
                 }
                 else if (thread.previousBlockGlowInFrame != blockForThread) {
+                    // *** ANKI CHANGE ***
+                    // Code used in _updateGlows method to unglow single block. - msintov, 06/20/17
+                    this._lastBlockGlowed = blockForThread;
+
                     this.glowBlock(blockForThread, true);
                 }
 
@@ -875,6 +883,17 @@ class Runtime extends EventEmitter {
             if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
                 // Glow turned off.
                 this.glowScript(previousFrameGlow, false);
+
+                // *** ANKI CHANGE ***
+                // Fixes COZMO-10610 where currently executing block in toolbox
+                // would remain glowed after the block was tapped a second
+                // time to stop it. Also fixes similar issue where currently
+                // executing block in script would remain glowed after green
+                // flag was tapped to stop script. - msintov, 06/20/17
+                if (!this._ankiAreThreadsRunning && this._lastBlockGlowed != null) {
+                    this.glowBlock(this._lastBlockGlowed, false);
+                    this._lastBlockGlowed = null;
+                }
             } else {
                 // Still glowing.
                 finalScriptGlows.push(previousFrameGlow);

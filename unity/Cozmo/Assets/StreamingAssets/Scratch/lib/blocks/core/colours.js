@@ -84,17 +84,17 @@ Blockly.Colours = {
     "tertiary": "#3f3f3f"
   },
   "text": "#575E75",
-  "workspace": "#F9F9F9",
+  "workspace": "#535252", // *** ANKI CHANGE ***
   "toolboxHover": "#4C97FF",
   "toolboxSelected": "#e9eef2",
   "toolboxText": "#575E75",
   "toolbox": "#FFFFFF",
-  "flyout": "#F9F9F9",
-  "scrollbar": "#CECDCE",
-  "scrollbarHover": '#CECDCE',
+  "flyout": "#F9F9F9",  // *** ANKI CHANGE ***
+  "scrollbar": "#CECDCE",  // *** ANKI CHANGE ***
+  "scrollbarHover": '#CECDCE',  // *** ANKI CHANGE ***
   "textField": "#FFFFFF",
-  "insertionMarker": "#000000",
-  "insertionMarkerOpacity": 0.2,
+  "insertionMarker": "#000000",  // *** ANKI CHANGE ***
+  "insertionMarkerOpacity": 0.2,  // *** ANKI CHANGE ***
   "dragShadowOpacity": 0.3,
   "stackGlow": "#FFF200",
   "stackGlowOpacity": 1,
