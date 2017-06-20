@@ -92,9 +92,10 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
   { "FCC",      0x000000, 0x200000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },
 #else
   { "BOOT",     0x000000, 0x001000, g_EspBootEnd - g_EspBoot,   g_EspBoot,  0 },    //Espressif Flash Map::Bootloader
-  { "USER",     0x080000, 0x048000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
   { "SAFE",     0x0c8000, 0x016000, g_EspSafeEnd - g_EspSafe,   g_EspSafe,  0 },    //Espressif Flash Map::Factory RTIP+Body Firmware
   { "ESP.INIT", 0x1fc000, 0x002000, g_EspInitEnd - g_EspInit,   g_EspInit,  0 },    //Espressif Flash Map::ESP Init Data
+  //Write factory application last - gets checksumed at runtime, which is a great final verification that we finished successfully
+  { "USER",     0x080000, 0x048000, g_EspUserEnd - g_EspUser,   g_EspUser,  0 },    //Espressif Flash Map::Factory WiFi Firmware
 #endif
   { NULL, 0, 0, NULL, 0},
 };
@@ -110,8 +111,8 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 //define regions to erase
 static const FlashLoadLocation ESPRESSIF_ERASE[] =
 {
-  /*/total flash erase (safest/slowest)
-  //{ "ERASE.ALL",0x000000, 0x200000, 0x200000,                   NULL,       0xFF }, //erase delay causes timeouts. break into smaller chunks ->
+  //total flash erase (safest/slowest)
+  /*/{ "ERASE.ALL",0x000000, 0x200000, 0x200000,                   NULL,       0xFF }, //erase delay causes timeouts. break into smaller chunks ->
   { "ERASE.0",  0x000000, 0x080000, 0x080000,                   NULL,       0xFF },
   { "ERASE.1",  0x080000, 0x080000, 0x080000,                   NULL,       0xFF },
   { "ERASE.2",  0x100000, 0x080000, 0x080000,                   NULL,       0xFF },
@@ -119,11 +120,11 @@ static const FlashLoadLocation ESPRESSIF_ERASE[] =
   //-*/
   
   //erase by assigned section (customizable full/partial erase)
-  //{ "BOOT",     0x000000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Bootloader
+  { "BOOT",     0x000000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Bootloader
   { "FAC.DAT",  0x001000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Factory Data
   { "CRASHDMP", 0x002000, 0x001000, ERASE_FULL(0x001000),       NULL,       0xFF }, //Espressif Flash Map::Crash Dumps
   { "APP.A",    0x003000, 0x07D000, ERASE_SIZE(0x07D000),       NULL,       0xFF }, //Espressif Flash Map::Application Code A
-  //{ "USER",     0x080000, 0x048000, ERASE_SIZE(0x048000),       NULL,       0xFF }, //Espressif Flash Map::Factory WiFi Firmware
+  { "USER",     0x080000, 0x048000, ERASE_SIZE(0x048000),       NULL,       0xFF }, //Espressif Flash Map::Factory WiFi Firmware
   //{ "SAFE",     0x0c8000, 0x016000, ERASE_SIZE(0x016000),       NULL,       0xFF }, //Espressif Flash Map::Factory RTIP+Body Firmware
   { "NV.STOR",  0x0de000, 0x01E000, ERASE_SIZE2(0x01E000),      NULL,       0xFF }, //Espressif Flash Map::Factory NV Storage
   { "FIX.STOR", 0x0fc000, 0x004000, ERASE_SIZE(0x004000),       NULL,       0xFF }, //Espressif Flash Map::Factory Fixture Storage
@@ -209,10 +210,6 @@ void DeinitEspressif(void)
   // Make sure PINA_BOOT is low (or not not driven), so power can fade
   PIN_RESET(GPIOA, PINA_BOOT);
 }
-
-static inline int BlockCount(int length) {
-  return (length + ESP_FLASH_BLOCK - 1) / ESP_FLASH_BLOCK;
-};
 
 // Send a character over the test port
 static inline void ESPPutChar(u8 c)
@@ -389,6 +386,27 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   throw ERROR_HEAD_RADIO_TIMEOUT;
 }
 
+static int esptool_get_erase_size(u32 address, int size)
+{
+  //Breif: ESP8266 has a ROM bug, 'Flash Begin' erases more sectors than specified.
+  //  https://blog.cesanta.com/flashing-esp8266-too-many-erased-sectors
+  //  workaround from esptool.py (__version__ = "2.0-beta1")
+  
+  const int sectors_per_block = 16;
+  const int sector_size = SECTOR_SIZE; //4096
+  int num_sectors = (size + sector_size - 1) / sector_size;
+  int start_sector = address / sector_size;
+
+  int head_sectors = sectors_per_block - (start_sector % sectors_per_block);
+  if( num_sectors < head_sectors )
+      head_sectors = num_sectors;
+
+  if( num_sectors < 2 * head_sectors )
+      return (num_sectors + 1) / 2 * sector_size;
+  else
+      return (num_sectors - head_sectors) * sector_size;
+}
+
 bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_static_fill) {
   union {
     uint8_t reply_buffer[0x100];
@@ -413,11 +431,16 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_st
     uint32_t not_reboot;
   };
   
-  int blockCount = BlockCount(length);
+  int blockCount = (length + ESP_FLASH_BLOCK - 1) / ESP_FLASH_BLOCK;
   
-  // esptool.py does bizarre calculations with eraseSize - trying to align erases to 64KB boundaries?
-  // I'm just aligning it to 4KB boundaries and crossing my fingers
-  int eraseSize = ((length + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE;
+  //XXX: esp ROM bug causes more sectors to be erased than specified from FlashBegin cmd
+  //esptool has a compensation algorithm; although only reliable if size >= 2*blockSize (as defined by esp: blockSize=16*sectorSize)
+  int eraseSize;
+  if( length >= 2*(16*SECTOR_SIZE) )
+    eraseSize = esptool_get_erase_size(address, length);
+  else
+    eraseSize = ((length + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE; //'minimum' erase size (will almost certainly erase more than this)
+  
   const FlashBegin begin = { eraseSize, blockCount, ESP_FLASH_BLOCK, address };
   // const FlashEnd finish = { 0 };  // 0 means reboot, 1 means don't - DANGER: flash end locks the chip, making further writes fail
   FlashWrite block = { ESP_FLASH_BLOCK, 0, 0, 0 };
@@ -428,6 +451,17 @@ bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data, bool dat_st
 
   // Write BEGIN command (erase, wait for flash to blank)
   int replySize = Command("Flash Begin", ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  
+  /*/===================DEBUG=====================
+  {
+    #warning "debug printing"
+    int eraseOld = ((length + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE; //"proper" erase size
+    SlowPrintf(".size 0x%06X, blocks 0x%03X, blocksize 0x%03X, address 0x%06X\r\n", begin.size, begin.blocks, begin.blocksize, begin.address);
+    SlowPrintf(".erase-old %d bytes (0x%03X sectors) 0x%06X-0x%06X\r\n", eraseOld,  eraseOld/SECTOR_SIZE,  address, address+eraseOld-1);
+    SlowPrintf(".erase-fix %d bytes (0x%03X sectors) 0x%06X-0x%06X\r\n", eraseSize, eraseSize/SECTOR_SIZE, address, address+eraseSize-1);
+    SlowPrintf(".write     %d bytes (0x%03X sectors) 0x%06X-0x%06X\r\n", length,    length/SECTOR_SIZE,    address, address+length-1);
+  }
+  //============================================*/
   
   if( !(dat_static_fill && *data == 0xFF) ) //skip write phase if we are "writing" all FFs (erase only)
   {
@@ -487,9 +521,8 @@ void ProgramEspressif(int serial)
     bool static_fill = rom->data == NULL; //no ROM image. fill region with provided static value.
     SlowPrintf("Load ROM %s", rom->name);
     SlowPrintf( (static_fill ? ": static fill 0x%02x" : ""), rom->static_fill);
-    SlowPrintf("\n");
+    SlowPrintf(" @ 0x%06X, size 0x%06X of 0x%06X\n", rom->addr, rom->length, rom->max_length);
     
-    SlowPrintf("@ 0x%06X, size 0x%06X of 0x%06X\n", rom->addr, rom->length, rom->max_length);
     if( rom->length > rom->max_length ) {
       SlowPrintf("ROM LENGTH EXCEEDS REGION BY 0x%06X bytes\n", rom->length - rom->max_length);
       throw ERROR_HEAD_ROM_SIZE;
