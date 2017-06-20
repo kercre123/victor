@@ -3,7 +3,7 @@
   
   "behaviorID": "Needs_SevereLowPlayRequest",
   "displayNameKey":"behavior.Needs_SevereLowPlayRequest",
-  "animTrigger": "NeedsSevereLowPlayRequest",  
+  "animTriggers": ["NeedsSevereLowPlayRequest"],
   "need": "Play",
   "needBracket": "Critical",
 

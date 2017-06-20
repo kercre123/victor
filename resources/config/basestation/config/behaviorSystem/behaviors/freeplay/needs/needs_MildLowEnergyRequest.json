@@ -3,7 +3,7 @@
   
   "behaviorID": "Needs_MildLowEnergyRequest",
   "displayNameKey":"behavior.Needs_MildLowEnergyRequest",
-  "animTrigger": "NeedsMildLowEnergyRequest",  
+  "animTriggers": ["NeedsMildLowEnergyRequest"],
   "need": "Energy",
   "needBracket": "Warning",
 

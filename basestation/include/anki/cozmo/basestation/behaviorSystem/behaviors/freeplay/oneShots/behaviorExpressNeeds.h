@@ -60,7 +60,7 @@ private:
   // y = cooldown in seconds
   std::unique_ptr<Util::GraphEvaluator2d> _cooldownEvaluator;
 
-  AnimationTrigger _animTrigger;
+  std::vector<AnimationTrigger> _animTriggers;
 
   //////////
   // Members

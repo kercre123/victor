@@ -3,7 +3,7 @@
   
   "behaviorID": "Needs_MildLowRepairRequest",
   "displayNameKey":"behavior.Needs_MildLowRepairRequest",
-  "animTrigger": "NeedsMildLowRepairRequest",  
+  "animTriggers": ["NeedsMildLowRepairRequest"],
   "need": "Repair",
   "needBracket": "Warning",
 

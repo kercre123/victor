@@ -27,6 +27,8 @@
 namespace Anki {
 namespace Cozmo {
 
+static const char* kAnimTriggersKey = "animTriggers";
+
 BehaviorExpressNeeds::BehaviorExpressNeeds(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _cooldownEvaluator( new Util::GraphEvaluator2d() )
@@ -61,12 +63,20 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(Robot& robot, const Json::Value& conf
     }
   }
 
+  // load anim triggers
+  for (const auto& trigger : config[kAnimTriggersKey])
   {
-    const auto& animTriggerString = JsonTools::ParseString(config,
-                                                           "animTrigger",
-                                                           "BehaviorExpressNeeds.ConfigError.AnimTrigger");
-    _animTrigger = AnimationTriggerFromString(animTriggerString);
+    // make sure each trigger is valid
+    const AnimationTrigger animTrigger = AnimationTriggerFromString(trigger.asString().c_str());
+    DEV_ASSERT_MSG(animTrigger != AnimationTrigger::Count, "BehaviorExpressNeeds.InvalidTriggerString",
+                   "'%s'", trigger.asString().c_str());
+    if (animTrigger != AnimationTrigger::Count) {
+      _animTriggers.emplace_back( animTrigger );
+    }
   }
+  // make sure we loaded at least one trigger
+  DEV_ASSERT_MSG(!_animTriggers.empty(), "BehaviorExpressNeeds.NoTriggers",
+                 "Behavior '%s'", GetIDStr().c_str());  
 }
 
 bool BehaviorExpressNeeds::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
@@ -97,7 +107,9 @@ Result BehaviorExpressNeeds::InitInternal(Robot& robot)
   const bool ignoreFailure = true;
   action->AddAction(new TurnTowardsLastFacePoseAction(robot), ignoreFailure);
 
-  action->AddAction(new TriggerAnimationAction(robot, _animTrigger));
+  for( const auto& trigger : _animTriggers ) {
+    action->AddAction(new TriggerAnimationAction(robot, trigger));
+  }
   
   StartActing(action, [this](ActionResult res) {
       if( IActionRunner::GetActionResultCategory(res) == ActionResultCategory::SUCCESS ) {
