@@ -46,7 +46,7 @@ namespace Cozmo.Needs.Sparks.UI {
     private bool _ConfirmedQuitTrick = false;
     private AlertModal _QuitConfirmAlertModal;
 
-    private HasHiccupsAlertController _HasHiccupsAlertController;
+    private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
 
     private bool _IsSparkingGame = false;
 
@@ -58,8 +58,8 @@ namespace Cozmo.Needs.Sparks.UI {
       if (_QuitConfirmAlertModal != null) {
         UIManager.CloseModalImmediately(_QuitConfirmAlertModal);
       }
-      if (_HasHiccupsAlertController != null) {
-        _HasHiccupsAlertController.Cleanup();
+      if (_EdgeCaseAlertController != null) {
+        _EdgeCaseAlertController.CleanUp();
       }
     }
 
@@ -127,13 +127,18 @@ namespace Cozmo.Needs.Sparks.UI {
       }, "spark_specific_game_button", this.DASEventDialogName);
       InitializeButtonState();
 
-      // Handle edge cases
-      _HasHiccupsAlertController = new HasHiccupsAlertController();
+      // Handle edge cases      
+      ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy | ChallengeEdgeCases.CheckForCubes
+                                                                | ChallengeEdgeCases.CheckForHiccups
+                                                                | ChallengeEdgeCases.CheckForDriveOffCharger
+                                                                | ChallengeEdgeCases.CheckForOnTreads
+                                                                | ChallengeEdgeCases.CheckForOS;
+      _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(this.PriorityData, challengeEdgeCases);
       RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
     }
 
     private void SparkCozmo(ChallengeManager.ChallengeStatePacket challengePacket) {
-      if (ShowEdgeCaseAlertIfNeeded(requireCubes: true)) {
+      if (ShowEdgeCaseAlertIfNeeded()) {
         return;
       }
 
@@ -164,15 +169,20 @@ namespace Cozmo.Needs.Sparks.UI {
       }, "spark_specific_trick_button", this.DASEventDialogName);
       InitializeButtonState();
 
-      // Handle edge cases
-      _HasHiccupsAlertController = new HasHiccupsAlertController();
+      // Handle edge cases; don't check for cubes
+      ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy
+                                    | ChallengeEdgeCases.CheckForHiccups
+                                    | ChallengeEdgeCases.CheckForDriveOffCharger
+                                    | ChallengeEdgeCases.CheckForOnTreads
+                                    | ChallengeEdgeCases.CheckForOS;
+      _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(this.PriorityData, challengeEdgeCases);
       RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.HardSparkEndedByEngine>(HandleSparkEnded);
     }
 
     private void SparkCozmo(UnlockableInfo unlockInfo) {
-      if (ShowEdgeCaseAlertIfNeeded(requireCubes: false)) {
+      if (ShowEdgeCaseAlertIfNeeded()) {
         return;
       }
 
@@ -249,64 +259,11 @@ namespace Cozmo.Needs.Sparks.UI {
 
     #region Edge Cases
 
-    private bool ShowEdgeCaseAlertIfNeeded(bool requireCubes) {
-      bool edgeCaseFound = true;
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        int currentNumCubes = robot.LightCubes.Count;
-        if (requireCubes && currentNumCubes < _UnlockInfo.CubesRequired) {
-          NeedCubesAlertHelper.OpenNeedCubesAlert(currentNumCubes,
-                                                  _UnlockInfo.CubesRequired,
-                                                  Localization.Get(_ChallengeTitleLocKey),
-                                                  this.PriorityData);
-        }
-        else if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.DriveOffCharger) {
-          OpenCozmoNotReadyAlert();
-        }
-        else if (robot.CurrentBehaviorClass == Anki.Cozmo.BehaviorClass.ReactToRobotShaken) {
-          OpenCozmoDizzyAlert();
-        }
-        else if (robot.TreadState != Anki.Cozmo.OffTreadsState.OnTreads) {
-          OpenCozmoNotOnTreadsAlert();
-        }
-        else if (robot.HasHiccups) {
-          _HasHiccupsAlertController.OpenCozmoHasHiccupsAlert(this.PriorityData);
-        }
-        else {
-          edgeCaseFound = false;
-        }
-      }
-
-      return edgeCaseFound;
-    }
-
-    // Cozmo isn't done driving off the charger.
-    private void OpenCozmoNotReadyAlert() {
-      var cozmoNotReadyData = new AlertModalData("cozmo_driving_off_charger_alert",
-                                LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalTitle,
-                                LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalDescription,
-                                new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose),
-                                timeoutSec: 10.0f);
-
-      UIManager.OpenAlert(cozmoNotReadyData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
-    }
-
-    private void OpenCozmoDizzyAlert() {
-      var cozmoDizzyData = new AlertModalData("cozmo_dizzy_alert",
-                             LocalizationKeys.kChallengeDetailsCozmoDizzyTitle,
-                             LocalizationKeys.kChallengeDetailsCozmoDizzyDescription,
-                             new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
-
-      UIManager.OpenAlert(cozmoDizzyData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
-    }
-
-    private void OpenCozmoNotOnTreadsAlert() {
-      var cozmoNotOnTreadsData = new AlertModalData("cozmo_off_treads_alert",
-                                   LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsTitle,
-                                   LocalizationKeys.kChallengeDetailsCozmoNotOnTreadsDescription,
-                                   new AlertModalButtonData("text_close_button", LocalizationKeys.kButtonClose));
-
-      UIManager.OpenAlert(cozmoNotOnTreadsData, ModalPriorityData.CreateSlightlyHigherData(this.PriorityData));
+    private bool ShowEdgeCaseAlertIfNeeded() {
+      return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(_ChallengeTitleLocKey,
+                                                                _UnlockInfo.CubesRequired,
+                                                                UnlockablesManager.Instance.IsOSSupported(_UnlockInfo),
+                                                                _UnlockInfo.AndroidReleaseVersion);
     }
 
     #endregion

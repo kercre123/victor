@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace Cozmo.Needs.Activities.UI {
   public class ActivityCard : MonoBehaviour {
 
-    public delegate void ActivityButtonPressedHandler(string challengeId);
+    public delegate void ActivityButtonPressedHandler(ChallengeData challengeData);
     public event ActivityButtonPressedHandler OnActivityButtonPressed;
 
     [SerializeField]
@@ -26,10 +26,10 @@ namespace Cozmo.Needs.Activities.UI {
     [SerializeField]
     private CozmoImage _ActivityTintedFrame;
 
-    private string _ChallengeId;
+    private ChallengeData _ChallengeData;
 
     public void Initialize(ChallengeData activityData, string parentDialogName) {
-      _ChallengeId = activityData.ChallengeID;
+      _ChallengeData = activityData;
 
       _StartActivityButton.Initialize(HandleStartActivityButtonPressed, "large_start_activity_button", parentDialogName);
 
@@ -44,7 +44,7 @@ namespace Cozmo.Needs.Activities.UI {
 
     private void HandleStartActivityButtonPressed() {
       if (OnActivityButtonPressed != null) {
-        OnActivityButtonPressed(_ChallengeId);
+        OnActivityButtonPressed(_ChallengeData);
       }
     }
   }

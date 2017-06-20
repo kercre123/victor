@@ -109,7 +109,7 @@ namespace Cozmo.Hub {
 
     #region LoadNeedsHub
 
-    private void StartLoadNeedsHubView() {
+    public void StartLoadNeedsHubView() {
       AssetBundleManager.Instance.LoadAssetBundleAsync(_NeedsHubViewPrefabData.AssetBundle, LoadNeedsHubView);
     }
 

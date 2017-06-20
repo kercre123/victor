@@ -18,6 +18,9 @@
       "/{*}"
     ]
   },
+  "unlockable.OSNotSupported.Title": {
+    "translation": "Requirements Not Met"    
+  },
   "unlockable.OSNotSupported.Description": {
     "translation": "Code Lab requires Android {0} or newer."    
   },

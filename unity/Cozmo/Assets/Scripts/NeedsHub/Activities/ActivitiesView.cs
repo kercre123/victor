@@ -27,6 +27,8 @@ namespace Cozmo.Needs.Activities.UI {
     [SerializeField]
     private ScrollRect _ScrollRect;
 
+    private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
+
     public void InitializeActivitiesView(List<ChallengeManager.ChallengeStatePacket> activityData) {
       _BackButton.Initialize(HandleBackButtonPressed, "back_button", DASEventDialogName);
 
@@ -53,9 +55,17 @@ namespace Cozmo.Needs.Activities.UI {
         OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.DiscoverIntro);
       }
 
+      ChallengeEdgeCases edgeCases = ChallengeEdgeCases.CheckForDizzy | ChallengeEdgeCases.CheckForHiccups
+                                                       | ChallengeEdgeCases.CheckForDriveOffCharger
+                                                       | ChallengeEdgeCases.CheckForOnTreads
+                                                       | ChallengeEdgeCases.CheckForOS;
+      _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(new ModalPriorityData(), edgeCases);
     }
 
     protected override void CleanUp() {
+      if (_EdgeCaseAlertController != null) {
+        _EdgeCaseAlertController.CleanUp();
+      }
     }
 
     private void HandleBackButtonPressed() {
@@ -64,9 +74,17 @@ namespace Cozmo.Needs.Activities.UI {
       }
     }
 
-    private void HandleActivityButtonPressed(string challengeId) {
-      if (OnActivityButtonPressed != null) {
-        OnActivityButtonPressed(challengeId);
+    private void HandleActivityButtonPressed(ChallengeData challengeData) {
+      UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(challengeData.UnlockId.Value);
+      bool isOsSupported = UnlockablesManager.Instance.IsOSSupported(unlockInfo);
+      bool edgeCaseFound = _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(challengeData.ChallengeTitleLocKey,
+                                                                              unlockInfo.CubesRequired,
+                                                                              isOsSupported,
+                                                                              unlockInfo.AndroidReleaseVersion);
+      if (!edgeCaseFound) {
+        if (OnActivityButtonPressed != null) {
+          OnActivityButtonPressed(challengeData.ChallengeID);
+        }
       }
     }
   }

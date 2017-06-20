@@ -806,6 +806,7 @@ public static class LocalizationKeys {
 
   #region UnlockStrings
 
+  public const string kUnlockableOSNotSupportedTitle = "unlockable.OSNotSupported.Title";
   public const string kUnlockableOSNotSupportedDescription = "unlockable.OSNotSupported.Description";
   public const string kUnlockableMysteryTitle = "unlockable.Mystery.Title";
   public const string kUnlockableMysteryDescription = "unlockable.Mystery.Description";
