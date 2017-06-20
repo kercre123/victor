@@ -233,5 +233,32 @@
   },
   "behavior.VC_Refuse_Sparks": {
     "translation": "You don't have enough Sparks"
+  },
+  "behavior.Needs_MildLowEnergyRequest": {
+    "translation": "Cozmo is feeling hungry"
+  },
+  "behavior.Needs_MildLowPlayRequest": {
+    "translation": "Cozmo is feeling lonely and wants to play"
+  },
+  "behavior.Needs_MildLowRepairRequest": {
+    "translation": "Cozmo needs a tune-up"
+  },
+  "behavior.Needs_SevereLowEnergyGetIn": {
+    "translation": "Cozmo is feeling very hungry - he really needs some energy!"
+  },
+  "behavior.Needs_SevereLowEnergyRequest": {
+    "translation": "Cozmo is feeling very hungry - he really needs some energy!"
+  },
+  "behavior.Needs_SevereLowPlayBored": {
+    "translation": "Cozmo feels very lonely and frustrated - he really wants to play!"
+  },
+  "behavior.Needs_SevereLowPlayRequest": {
+    "translation": "Cozmo feels very lonely and frustrated - he really wants to play!"
+  },
+  "behavior.Needs_SevereLowRepairGetIn": {
+    "translation": "Cozmo isn't feeling well - he really needs to be tuned up!"
+  },
+  "behavior.Needs_SevereLowRepairRequest": {
+    "translation": "Cozmo isn't feeling well - he really needs to be tuned up!"
   }
 }
