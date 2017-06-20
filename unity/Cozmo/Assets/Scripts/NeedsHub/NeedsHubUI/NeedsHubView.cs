@@ -59,7 +59,9 @@ namespace Cozmo.Needs.UI {
       energyValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
       EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
 
-      RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
+      }
       _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
 
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
