@@ -223,8 +223,6 @@ protected:
     _debugStateName = inName;
   }
   
-  inline void SetExecutableType(ExecutableBehaviorType type) { _executableType = type; }
-    
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot);
   bool IsResuming() { return _isResuming;}

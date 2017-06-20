@@ -26,7 +26,6 @@ private:
   friend class BehaviorContainer;
   BehaviorWait(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
   {
-    SetExecutableType(ExecutableBehaviorType::Wait);
   }
   
 public:
