@@ -60,10 +60,11 @@
   "interludeBehaviorChooser": {
     "type": "StrictPriority",
     "behaviors": [
-      "Needs_MildLowEnergyRequest",
+      "Needs_SevereLowPlayBored",
       "Needs_SevereLowPlayRequest",
-      "Needs_MildLowPlayRequest",
-      "Needs_MildLowRepairRequest"
+      "Needs_MildLowRepairRequest",
+      "Needs_MildLowEnergyRequest",
+      "Needs_MildLowPlayRequest"
     ]
   },
   "activityStrategy":
