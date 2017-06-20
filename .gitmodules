@@ -4,3 +4,6 @@
 [submodule "lib/das-client"]
 	path = lib/das-client
 	url = git@github.com:anki/DAS-Client.git
+[submodule "tools/sdk/cozmo-python-sdk"]
+	path = tools/sdk/cozmo-python-sdk
+	url = git@github.com:anki/cozmo-python-sdk-private.git
