@@ -13,10 +13,11 @@
 
 // Activity strategies
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFPPlayWithHumans.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyNeeds.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyObjectTapInteraction.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyPyramid.h"
-#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySpark.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySimple.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySpark.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "clad/types/activityTypes.h"
@@ -71,6 +72,11 @@ IActivityStrategy* CreateActivityStrategy(Robot& robot, const Json::Value& confi
     case ActivityStrategy::Spark:
     {
       newStrategy = new ActivityStrategySpark(robot, config);
+      break;
+    }
+    case ActivityStrategy::Needs:
+    {
+      newStrategy = new ActivityStrategyNeeds(robot, config);
       break;
     }
     case ActivityStrategy::Count:

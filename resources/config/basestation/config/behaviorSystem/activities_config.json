@@ -136,6 +136,9 @@
     // sub-activities to create - ensure they're in priority order
     "subActivities" :
     [
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Spark activities:
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       { "activityID" : "SparksRollBlock", "activityPriority"      : 0 },
       { "activityID" : "SparksStackBlock", "activityPriority"     : 0 },
       { "activityID" : "SparksPeekABoo", "activityPriority"       : 0 },
@@ -148,6 +151,11 @@
       { "activityID" : "SparksFistBump", "activityPriority"       : 0 },
       { "activityID" : "SparksGatherCubes", "activityPriority"    : 0 },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Needs activities
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      { "activityID": "NeedsSevereLowRepair", "activityPriority"  : 1},
+      { "activityID": "NeedsSevereLowEnergy", "activityPriority"  : 2},
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay activities:
       // objectTapInteraction - when the player has tapped an object and Cozmo will interact with it
       // putDownDispatch      - when Cozmo is put down and wants to figure out what activity to go into
@@ -159,20 +167,17 @@
       // nothingToDo          - fallback when Cozmo can't do anything else
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "activityID" : "ObjectTapInteraction", "activityPriority" : 0},
-      { "activityID" : "PutDownDispatch", "activityPriority"      : 1},
-      { "activityID" : "Socialize", "activityPriority"            : 2},
-      { "activityID" : "Singing", "activityPriority"              : 3},
-      { "activityID" : "PlayWithHumans", "activityPriority"       : 4},
+      { "activityID" : "ObjectTapInteraction", "activityPriority" : 10},
+      { "activityID" : "PutDownDispatch", "activityPriority"      : 11},
+      { "activityID" : "Socialize", "activityPriority"            : 12},
+      { "activityID" : "Singing", "activityPriority"              : 13},
+      { "activityID" : "PlayWithHumans", "activityPriority"       : 14},
       // pyramid is "cooler" than playing alone or hiking for the user, but it
       // has fairly restrictive runnability and a high cooldown
-      { "activityID" : "BuildPyramid", "activityPriority"         : 5},
-      { "activityID" : "PlayAlone", "activityPriority"            : 6},
-      { "activityID" : "Hiking", "activityPriority"               : 7},
-      { "activityID" : "NothingToDo", "activityPriority"          : 8},
-      // ONLY RUNNABLE THROUGH CONSOLE VARS
-      { "activityID": "NeedsSevereLowEnergy", "activityPriority"  :10},
-      { "activityID": "NeedsSevereLowRepair", "activityPriority"  :10}
+      { "activityID" : "BuildPyramid", "activityPriority"         : 15},
+      { "activityID" : "PlayAlone", "activityPriority"            : 16},
+      { "activityID" : "Hiking", "activityPriority"               : 17},
+      { "activityID" : "NothingToDo", "activityPriority"          : 18}
     ]
   }
 ]
