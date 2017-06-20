@@ -439,12 +439,11 @@ IBehaviorPtr ActivitySparked::ChooseNextBehaviorInternal(Robot& robot, const IBe
     }
     case ChooserState::PlayingSparksOutro:
     {
-      bestBehavior = _behaviorPlayAnimation;
-      
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
         CompleteSparkLogic(robot);
+      }else{
+        bestBehavior = _behaviorPlayAnimation;
       }
-      
       break;
     }
     case ChooserState::EndSparkWhenReactionEnds:
