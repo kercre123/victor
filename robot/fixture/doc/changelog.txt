@@ -1,4 +1,12 @@
 ----------------
+Release v104
+----------------
+
+HEAD1:
+-reorder flash operations for integrity: 1. erase bootloader, n. write esp fac app (crc at runtime - must finish successfully)
+-implement esptool's eraseSize workaround for ROM bug (only applies to images >= 0x20 sectors)
+
+----------------
 Release v103
 ----------------
 
