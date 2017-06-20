@@ -36,6 +36,7 @@ namespace Onboarding {
       // Officially done with this phase
       if (_DebugLayer != null) {
         GameObject.Destroy(_DebugLayer);
+        _DebugLayer = null;
       }
     }
 

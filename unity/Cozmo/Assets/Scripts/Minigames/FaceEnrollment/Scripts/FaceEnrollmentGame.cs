@@ -63,6 +63,11 @@ namespace FaceEnrollment {
       set { _ShowDoneShelf = value; }
     }
 
+    public void Awake() {
+      OnSharedMinigameViewInitialized += HandleSharedMinigameViewInitialized;
+      OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
+    }
+
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
 
       FaceEnrollmentGameConfig faceEnrollmentConfig = (FaceEnrollmentGameConfig)challengeConfigData;
@@ -74,7 +79,6 @@ namespace FaceEnrollment {
         if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
           SharedMinigameView.HideQuitButton();
         }
-        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.MeetCozmo);
       }
     }
 
@@ -90,7 +94,14 @@ namespace FaceEnrollment {
       base.SetupViewAfterCozmoReady(newView, data);
 
       RobotEngineManager.Instance.CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.MeetCozmoFindFaces);
+      if (SharedMinigameView.gameObject.activeInHierarchy) {
+        LaunchInitialGameState();
+      }
+    }
 
+    // Since this has some co-routines state can't be run until minigame view is active
+    // don't start until sharedminigame view is active
+    private void LaunchInitialGameState() {
       // if we have no faces enrolled let's skip the face list UI and go directly to enroll a new face
       // with the default profile name pre-populated.
       if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
@@ -99,7 +110,6 @@ namespace FaceEnrollment {
       else {
         _StateMachine.SetNextState(new FaceSlideState());
       }
-
     }
 
     public void EnterNameForNewFace(string preFilledName) {
@@ -159,16 +169,26 @@ namespace FaceEnrollment {
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.MeetCozmo)) {
         OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.MeetCozmo);
       }
+      OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingPhaseComplete;
+    }
+
+    private void HandleSharedMinigameViewInitialized(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      // Onboarding hides meet cozmo so it pops up without loading, reactived on completion see HandleOnboardingPhaseComplete
+      newView.gameObject.SetActive(!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup));
+      OnSharedMinigameViewInitialized -= HandleSharedMinigameViewInitialized;
+    }
+
+    private void HandleOnboardingPhaseComplete(OnboardingManager.OnboardingPhases phase) {
+      if (phase == OnboardingManager.OnboardingPhases.InitialSetup) {
+        if (SharedMinigameView != null) {
+          SharedMinigameView.gameObject.SetActive(true);
+          LaunchInitialGameState();
+        }
+      }
     }
 
     private void HandleNewEnrollmentRequested() {
-      // if this the first name then we should pre-populate the name with the profile name.
-      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
-        EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
-      }
-      else {
-        EnterNameForNewFace("");
-      }
+      EnterNameForNewFace(string.Empty);
     }
 
     protected override void CleanUpOnDestroy() {

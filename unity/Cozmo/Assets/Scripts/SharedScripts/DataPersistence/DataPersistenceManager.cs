@@ -169,10 +169,6 @@ namespace DataPersistence {
         numDays = DataPersistenceManager.Instance.Data.DefaultProfile.TotalSessions;
         if (numDays > 0) {
           lastSession = profile.Sessions[profile.Sessions.Count - 1];
-          // If this is not the first day, consider onboarding complete so we generate new goals
-          if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
-            OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
-          }
         }
       }
 

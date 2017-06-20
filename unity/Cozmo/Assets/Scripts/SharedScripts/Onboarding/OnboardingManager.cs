@@ -167,21 +167,10 @@ public class OnboardingManager : MonoBehaviour {
 
   public void InitInitalOnboarding(NeedsHubView needsHubView) {
     _NeedsHubView = needsHubView;
-    _NeedsHubView.DialogClosed += HandleHomeViewClosed;
     _OnboardingTransform = _NeedsHubView.transform.parent.transform;
 
     if (IsOnboardingRequired(OnboardingPhases.InitialSetup)) {
       StartPhase(OnboardingPhases.InitialSetup);
-    }
-  }
-
-  // Clear out the phase if the homeview closed unexpected like a disconnect.
-  // The UI is destroyed but our save state will reinit us next time.
-  private void HandleHomeViewClosed() {
-    if (_CurrPhase != OnboardingPhases.None) {
-      if (_OnboardingUIInstance != null) {
-        _OnboardingUIInstance.RemoveDebugButtons();
-      }
     }
   }
 
@@ -260,12 +249,12 @@ public class OnboardingManager : MonoBehaviour {
     ShowOutlineRegion(false);
   }
 
-  public void StartAnyPhaseIfNeeded() {
-    if (!IsOnboardingRequired(OnboardingPhases.InitialSetup) && IsOnboardingRequired(OnboardingPhases.MeetCozmo)) {
-      HubWorldBase instance = HubWorldBase.Instance;
-      if (instance != null && instance is Cozmo.Hub.NeedsHub) {
-        Cozmo.Hub.NeedsHub homeHubInstance = (Cozmo.Hub.NeedsHub)instance;
-
+  // Because looking for a face takes awhile time, we try to load this early and invisible
+  public void PrepMeetsCozmoPhase() {
+    HubWorldBase instance = HubWorldBase.Instance;
+    if (instance != null && instance is Cozmo.Hub.NeedsHub) {
+      Cozmo.Hub.NeedsHub homeHubInstance = (Cozmo.Hub.NeedsHub)instance;
+      if (_NeedsHubView != null) {
         ChallengeData data = Array.Find(ChallengeDataList.Instance.ChallengeData,
                                       (ChallengeData obj) => { return obj.UnlockId.Value == UnlockId.MeetCozmoGame; });
         // "FaceEnrollmentTest"
@@ -273,6 +262,12 @@ public class OnboardingManager : MonoBehaviour {
           homeHubInstance.ForceStartChallenge(data.ChallengeID);
         }
       }
+    }
+  }
+  public void StartAnyPhaseIfNeeded() {
+    if (!IsOnboardingRequired(OnboardingPhases.InitialSetup) && IsOnboardingRequired(OnboardingPhases.MeetCozmo)) {
+      PrepMeetsCozmoPhase();
+      StartPhase(OnboardingPhases.MeetCozmo);
     }
 
     if (!IsOnboardingRequired(OnboardingPhases.MeetCozmo) && IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
@@ -419,6 +414,11 @@ public class OnboardingManager : MonoBehaviour {
     // The UI is getting torn down and we're resetting, clear whatever happened.
     if (_CurrPhase != OnboardingPhases.None && _CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
+    }
+    if (_CurrPhase != OnboardingPhases.None) {
+      if (_OnboardingUIInstance != null) {
+        _OnboardingUIInstance.RemoveDebugButtons();
+      }
     }
     _CurrPhase = OnboardingPhases.None;
     if (_DebugDisplayOn && _OnboardingUIInstance != null) {
