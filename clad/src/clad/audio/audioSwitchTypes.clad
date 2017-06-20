@@ -62,6 +62,7 @@ enum uint_32 External
 
 enum uint_32 Freeplay_Mood
 {
+  Arcade = 1946377065,
   Bored = 2890913445,
   Busy = 1427625958,
   Chill = 4294400669,
@@ -73,6 +74,7 @@ enum uint_32 Freeplay_Mood
   Invalid = 0,
   Neutral = 670611050,
   Nurture_Feeding = 2320504975,
+  Nurture_Nirvana = 3261805104,
   Nurture_Severe = 1058497985,
   Nuture_Repair = 2785480036,
   Sleep = 3671647190,

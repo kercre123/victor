@@ -4,6 +4,15 @@ namespace Anki {
 namespace AudioMetaData {
 namespace GameState {
 
+enum uint_32 External_Language
+{
+  English = 3383237639,
+  French = 3133094709,
+  German = 4290373403,
+  Invalid = 0,
+  Japanese = 2008704848,
+}
+
 enum uint_32 External_Name
 {
   Design_Pre_Generated_Name = 309148475,
@@ -68,6 +77,7 @@ enum uint_32 Music
 
 enum uint_32 StateGroupType
 {
+  External_Language = 944413709,
   External_Name = 2869506494,
   Invalid = 0,
   Mood = 3128647864,
