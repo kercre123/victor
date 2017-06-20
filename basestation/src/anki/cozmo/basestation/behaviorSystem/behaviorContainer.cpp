@@ -151,20 +151,23 @@ IBehaviorPtr BehaviorContainer::FindBehaviorByExecutableType(ExecutableBehaviorT
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorContainer::VerifyExecutableBehaviors() const
 {
-  
-  uint8_t numEntriesOfExecutableType[(size_t)ExecutableBehaviorType::Count] = {0};
-  
+
+  std::map< ExecutableBehaviorType, BehaviorID > executableBehaviorMap;
+    
   for( const auto& it : _idToBehaviorMap ) {
     IBehaviorPtr behaviorPtr = it.second;
     const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
-    const size_t eBT = (size_t)executableBehaviorType;
-    if (eBT < (size_t)ExecutableBehaviorType::Count)
+    if( executableBehaviorType != ExecutableBehaviorType::Count )
     {
-      DEV_ASSERT_MSG((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
-                     "Multiple behaviors marked as %s including '%s'",
+#if (DEV_ASSERT_ENABLED)
+      const auto mapIt = executableBehaviorMap.find(executableBehaviorType);      
+      DEV_ASSERT_MSG((mapIt == executableBehaviorMap.end()), "ExecutableBehaviorType.NotUnique",
+                     "Multiple behaviors marked as %s including '%s' and '%s'",
                      EnumToString(executableBehaviorType),
-                     BehaviorIDToString(it.first));
-      ++numEntriesOfExecutableType[eBT];
+                     BehaviorIDToString(it.first),
+                     BehaviorIDToString(mapIt->second));
+#endif
+      executableBehaviorMap[executableBehaviorType] = it.first;
     }
   }
   
@@ -172,9 +175,10 @@ void BehaviorContainer::VerifyExecutableBehaviors() const
     for( size_t i = 0; i < (size_t)ExecutableBehaviorType::Count; ++i)
     {
       const ExecutableBehaviorType executableBehaviorType = (ExecutableBehaviorType)i;
-      DEV_ASSERT_MSG((numEntriesOfExecutableType[i] == 1), "ExecutableBehaviorType.NotExactlyOne",
-                     "Should be exactly 1 behavior marked as %s but found %u",
-                     EnumToString(executableBehaviorType), numEntriesOfExecutableType[i]);
+      const auto mapIt = executableBehaviorMap.find(executableBehaviorType);
+      DEV_ASSERT_MSG((mapIt != executableBehaviorMap.end()), "ExecutableBehaviorType.NoMapping",
+                     "Should be one behavior marked as %s but found none",
+                     EnumToString(executableBehaviorType));
     }
   #endif
 }
