@@ -173,6 +173,18 @@ namespace Cozmo.UI {
     private AnkiAnimateGlint _GlintAnimator;
 
     [SerializeField]
+    private bool _AlwaysShowGlintWhenEnabled = false;
+    public bool AlwaysShowGlintWhenEnabled {
+      get { return _AlwaysShowGlintWhenEnabled; }
+      set {
+        if (value != _AlwaysShowGlintWhenEnabled) {
+          _AlwaysShowGlintWhenEnabled = value;
+          UpdateVisuals();
+        }
+      }
+    }
+
+    [SerializeField]
     private Anki.Cozmo.Audio.AudioEventParameter _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
 
     [SerializeField]
@@ -399,7 +411,7 @@ namespace Cozmo.UI {
         }
 
         ResetTextPosition(TextEnabledColor);
-        ShowGlint(true);
+        ShowGlint(_AlwaysShowGlintWhenEnabled);
       }
 
     }
@@ -423,7 +435,7 @@ namespace Cozmo.UI {
 
           PressTextPosition();
         }
-        ShowGlint(true);
+        ShowGlint(_AlwaysShowGlintWhenEnabled);
       }
     }
 

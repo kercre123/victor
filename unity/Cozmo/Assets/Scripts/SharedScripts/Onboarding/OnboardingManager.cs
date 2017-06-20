@@ -470,6 +470,10 @@ public class OnboardingManager : MonoBehaviour {
     if (buttonState == OnboardingBaseStage.OnboardingButtonStates.Sparkle) {
       SetOutlineRegion(button.transform);
       ShowOutlineRegion(true);
+      button.AlwaysShowGlintWhenEnabled = true;
+    }
+    else {
+      button.AlwaysShowGlintWhenEnabled = false;
     }
   }
 
