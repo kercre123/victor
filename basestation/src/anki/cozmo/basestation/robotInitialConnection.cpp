@@ -23,10 +23,16 @@
 namespace Anki {
 namespace Cozmo {
 
+// Anonymous namespace to hold onto whether we've forced update firmware yet for
+// the robot that we've connected to. Only used in dev builds.
+namespace {
+  bool _robotForcedToFirmwareUpdate = false;
+}
 
 namespace RobotInitialConnectionConsoleVars
 {
   CONSOLE_VAR(bool, kSkipFirmwareAutoUpdate, "Firmware", false);
+  CONSOLE_VAR(bool, kAlwaysDoFirmwareUpdate, "Firmware", false);
 }
   
 using namespace ExternalInterface;
@@ -196,9 +202,26 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
     _validFirmware = false;
     return;
   }
+  
+  bool doForceFirmwareUpdate = false;
+  if (ANKI_DEV_CHEATS && kAlwaysDoFirmwareUpdate)
+  {
+    // If we haven't triggered a forced firmware update yet do it
+    if (!_robotForcedToFirmwareUpdate)
+    {
+      doForceFirmwareUpdate = true;
+      _robotForcedToFirmwareUpdate = true;
+    }
+  }
 
   RobotConnectionResult result;
-  if (robotIsSimulated || kSkipFirmwareAutoUpdate) {
+  if (robotIsSimulated) {
+    result = RobotConnectionResult::Success;
+  }
+  else if (doForceFirmwareUpdate) {
+    result = RobotConnectionResult::OutdatedFirmware;
+  }
+  else if (kSkipFirmwareAutoUpdate) {
     result = RobotConnectionResult::Success;
   }
   else if (robotHasDevFirmware != appHasDevFirmware) {
@@ -243,6 +266,12 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       const auto& payload = message.GetData().Get_mfgId();
       _serialNumber = payload.esn;
       _bodyHWVersion = payload.hw_version;
+      
+      if (ANKI_DEV_CHEATS)
+      {
+        // Once we've successfully connected, reset our forced firmware update tracker
+        _robotForcedToFirmwareUpdate = false;
+      }
       
       const BodyColor bodyColor = static_cast<BodyColor>(payload.body_color);
       if(bodyColor <= BodyColor::UNKNOWN ||
