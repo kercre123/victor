@@ -18,6 +18,18 @@
       "/{*}"
     ]
   },
+  "needs.NeedsHubView.Button.Activities": {
+    "translation": "DISCOVER"
+  },
+  "needs.NeedsHubView.Button.Feed": {
+    "translation": "FEED"
+  },
+  "needs.NeedsHubView.Button.Repair": {
+    "translation": "TUNE UP"
+  },
+  "needs.NeedsHubView.Button.Play": {
+    "translation": "PLAY"
+  },
   "needs.NeedsEnergyModal.Title": {
     "translation": "Feed Cozmo"
   },

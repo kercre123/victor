@@ -538,6 +538,10 @@ public static class LocalizationKeys {
 
   #region NeedsStrings
 
+  public const string kNeedsNeedsHubViewButtonActivities = "needs.NeedsHubView.Button.Activities";
+  public const string kNeedsNeedsHubViewButtonFeed = "needs.NeedsHubView.Button.Feed";
+  public const string kNeedsNeedsHubViewButtonRepair = "needs.NeedsHubView.Button.Repair";
+  public const string kNeedsNeedsHubViewButtonPlay = "needs.NeedsHubView.Button.Play";
   public const string kNeedsNeedsEnergyModalTitle = "needs.NeedsEnergyModal.Title";
   public const string kNeedsNeedsEnergyModalFeedingSummary = "needs.NeedsEnergyModal.FeedingSummary";
   public const string kNeedsNeedsEnergyModalInstruction1 = "needs.NeedsEnergyModal.Instruction1";
@@ -603,6 +607,11 @@ public static class LocalizationKeys {
   public const string kOnboardingPlayIntro = "onboarding.PlayIntro";
   public const string kOnboardingRewardsIntro = "onboarding.RewardsIntro";
   public const string kOnboardingActivitiesIntro = "onboarding.ActivitiesIntro";
+  public const string kOnboardingNeedsTicker = "onboarding.needs.ticker";
+  public const string kOnboardingRepairTicker = "onboarding.repair.ticker";
+  public const string kOnboardingFeedTicker = "onboarding.feed.ticker";
+  public const string kOnboardingPlayTicker = "onboarding.play.ticker";
+  public const string kOnboardingSparkScreenRollACube = "onboarding.SparkScreenRollACube";
 
   #endregion
 
