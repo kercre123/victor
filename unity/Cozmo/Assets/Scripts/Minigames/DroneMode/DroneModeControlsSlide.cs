@@ -89,9 +89,6 @@ namespace Cozmo.Challenge.DroneMode {
     private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButton;
 
     [SerializeField]
-    private CozmoButtonLegacy _QuitDroneModeButtonImage;
-
-    [SerializeField]
     private CozmoButtonLegacy _HowToPlayButton;
 
     [SerializeField]

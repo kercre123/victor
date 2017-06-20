@@ -395,7 +395,7 @@ namespace Cozmo.UI {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic != null) {
               if (IsInitialized(graphic)) {
-                SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor, graphic.ignoreSprite);
+                SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
               }
               else {
                 DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name
@@ -424,7 +424,7 @@ namespace Cozmo.UI {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (IsInitialized(graphic)) {
-              SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
+              SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor);
             }
             else {
               DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
@@ -443,7 +443,7 @@ namespace Cozmo.UI {
       if (ButtonGraphics != null) {
         foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (IsInitialized(graphic)) {
-            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
+            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor);
           }
           else {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
@@ -462,10 +462,8 @@ namespace Cozmo.UI {
       return graphic.targetImage != null && graphic.enabledSprite != null;
     }
 
-    private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {
-      if (!ignoreSprite) {
-        graphic.targetImage.sprite = desiredSprite ?? graphic.enabledSprite;
-      }
+    private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
+      graphic.targetImage.sprite = desiredSprite ?? graphic.enabledSprite;
       graphic.targetImage.color = desiredColor;
     }
 
@@ -523,7 +521,6 @@ namespace Cozmo.UI {
     [Serializable]
     public class AnkiButtonImage {
       public CozmoImage targetImage;
-      public bool ignoreSprite = false;
 
       // we will just grab it from targetImage;
       [NonSerialized]
