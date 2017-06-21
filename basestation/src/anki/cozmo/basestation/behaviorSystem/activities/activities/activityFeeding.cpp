@@ -91,6 +91,11 @@ constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArra
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffectedArray),
               "Reaction triggers duplicate or non-sequential");
   
+const char* kWaitShakeDASKey = "wait_shake";
+const char* kShakeFullDASKey = "shake_full";
+const char* kFindCubeDASKey =  "find_cube";
+const char* kEatingDASKey =  "eating";
+  
 } // end namespace
 
 
@@ -246,6 +251,21 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
         RobotObservedObject(event.GetData().Get_RobotObservedObject().objectID);
       })
   );
+  
+  
+  // DAS Events
+  _DASCubesPerFeeding = 0;
+  _DASFeedingSessionsPerAppRun++;
+  Anki::Util::sEvent("meta.feeding_times_started",
+                     {},
+                     std::to_string(_DASFeedingSessionsPerAppRun).c_str());
+
+  
+  const float needLevel = currNeedState.GetNeedLevel(NeedId::Energy);
+  Anki::Util::sEvent("meta.feeding_energy_at_start",
+                     {},
+                     std::to_string(needLevel).c_str());
+
 }
 
 
@@ -266,6 +286,19 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
   
   robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
   _bodyLightDataLocator = {};
+  
+  
+  // DAS Events
+  const NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
+  const float needLevel = currNeedState.GetNeedLevel(NeedId::Energy);
+  Anki::Util::sEvent("meta.feeding_energy_at_end",
+                     {{DDATA, "energyLevel"}},
+                     std::to_string(needLevel).c_str());
+  
+  Anki::Util::sEvent("meta.feeding_cubes_per_feeding",
+                     {},
+                     std::to_string(_DASCubesPerFeeding).c_str());
+  
 }
 
   
@@ -430,8 +463,20 @@ Result ActivityFeeding::Update(Robot& robot)
   
   // Update the cube controllers if the activity is past the intro/search for faces
   if(_chooserStage >= FeedingActivityStage::WaitingForShake){
+    int countCubesCharged = 0;
     for(auto& entry: _cubeControllerMap){
       entry.second->Update(robot);
+      if(entry.second->IsCubeCharged()){
+        countCubesCharged++;
+      }
+    }
+    
+    // DAS event - track the most cubes charged in parallel each session
+    if(countCubesCharged > _DASMostCubesInParallel){
+      Anki::Util::sEvent("meta.feeding_max_parallelCubes",
+                         {},
+                         std::to_string(countCubesCharged).c_str());
+      _DASMostCubesInParallel = countCubesCharged;
     }
   }
   
@@ -473,19 +518,54 @@ Result ActivityFeeding::Update(Robot& robot)
       UpdateAnimationToPlay(bestTrigger, 1);
     }
   }
-  
+
   return Result::RESULT_OK;
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::UpdateActivityStage(FeedingActivityStage newStage,
-                                  const std::string& stageName)
+                                  const std::string& newStageName)
 {
+  
   PRINT_CH_INFO("Feeding",
                 "ActivityFeeding.UpdateActivityStage",
                 "Entering feeding stage %s",
-                stageName.c_str());
+                newStageName.c_str());
+  
+  // DAS EVENT
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float timeInStage = currentTime - _DASTimeLastFeedingStageStarted;
+  const bool  firstShakeDetected =
+                 (_chooserStage == FeedingActivityStage::WaitingForShake) &&
+                 (newStage == FeedingActivityStage::ReactingToShake);
+  const bool  shakeFinished =
+          (_chooserStage == FeedingActivityStage::WaitingForFullyCharged) &&
+          (newStage == FeedingActivityStage::ReactingToFullyCharged);
+  const bool  searchFinished =
+          (_chooserStage == FeedingActivityStage::SearchingForCube) &&
+          (newStage == FeedingActivityStage::ReactingToCube);
+  const bool  eatingFinished = (_chooserStage == FeedingActivityStage::EatFood);
+  
+  const char* previousStageName = nullptr;
+  
+  if(firstShakeDetected){
+    previousStageName = kWaitShakeDASKey;
+  }else if(shakeFinished){
+    previousStageName = kShakeFullDASKey;
+  }else if(searchFinished){
+    previousStageName = kFindCubeDASKey;
+  }else if(eatingFinished){
+    previousStageName = kEatingDASKey;
+  }
+  
+  if(previousStageName != nullptr){
+    Anki::Util::sEvent("meta.feeding_stage_time",
+                       {{DDATA, previousStageName}},
+                       std::to_string(timeInStage).c_str());
+  }
+  
+  _DASTimeLastFeedingStageStarted = currentTime;
   _chooserStage = newStage;
 }
 
@@ -559,6 +639,7 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 {
   using CS = FeedingCubeController::ControllerState;
   _cubeControllerMap[_interactID]->SetControllerState(robot, CS::DrainCube, duration_s);
+  _DASCubesPerFeeding++;
 }
 
 

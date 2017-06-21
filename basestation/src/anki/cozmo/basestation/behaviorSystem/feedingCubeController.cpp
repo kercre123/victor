@@ -72,7 +72,6 @@ const char* ControllerStateToString(FeedingCubeController::ControllerState state
     case FeedingCubeController::ControllerState::DrainCube:  {return "DrainCube"; break;}
   }
 }
-  
 
 } // namespace
   
@@ -279,6 +278,7 @@ void FeedingCubeController::CheckForChargeStateChanges(Robot& robot)
       
       UpdateChargeLights(robot);
       _cubeStateTracker->SetChargeState(ChargeState::FullyCharged);
+      
     }else if(hasAnyCharge){
       UpdateChargeLights(robot);
     }

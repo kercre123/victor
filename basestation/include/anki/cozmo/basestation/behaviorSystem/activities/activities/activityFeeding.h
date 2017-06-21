@@ -92,7 +92,15 @@ private:
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;
   std::shared_ptr<BehaviorPlayArbitraryAnim> _behaviorPlayAnimation;
   
-  void UpdateActivityStage(FeedingActivityStage newStage, const std::string& stageName);
+  
+  // DAS info trackers
+  int _DASCubesPerFeeding = 0;
+  int _DASFeedingSessionsPerAppRun = 0;
+  float _DASTimeLastFeedingStageStarted = -1.0f;
+  int   _DASMostCubesInParallel = 0;
+  
+  
+  void UpdateActivityStage(FeedingActivityStage newStage, const std::string& newStageName);
   
   // Updates the activity stage to the best thing Cozmo can do right now
   // e.g. wait for a cube to shake, search for a shaken cube etc.
