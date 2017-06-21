@@ -17,6 +17,7 @@ enum uint_8 ActivityType {
   Socialize,
   Sparked,
   VoiceCommand,
+  NeedsExpression,
   Count
 }
 

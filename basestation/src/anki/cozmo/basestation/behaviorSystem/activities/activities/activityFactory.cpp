@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityBehaviorsOnly.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityBuildPyramid.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityExpressNeeds.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFeeding.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityGatherCubes.h"
@@ -72,6 +73,11 @@ IActivity* CreateActivity(Robot& robot, ActivityType activityType, const Json::V
     case ActivityType::VoiceCommand:
     {
       activityPtr = new ActivityVoiceCommand(robot, config);
+      break;
+    }
+    case ActivityType::NeedsExpression:
+    {
+      activityPtr = new ActivityExpressNeeds(robot, config);
       break;
     }
     case ActivityType::Count:

@@ -29,7 +29,7 @@ class ActivityGatherCubes : public IActivity
 {
 public:
   ActivityGatherCubes(Robot& robot, const Json::Value& config);
-  ~ActivityGatherCubes() {};
+  virtual ~ActivityGatherCubes() {};
   
   virtual Result Update(Robot& robot) override;
   

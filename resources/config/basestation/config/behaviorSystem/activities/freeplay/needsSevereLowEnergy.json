@@ -1,6 +1,6 @@
 {
   "activityID": "NeedsSevereLowEnergy",
-  "activityType": "BehaviorsOnly",
+  "activityType": "NeedsExpression",
 
   "driveStartAnimTrigger": "NeedsSevereLowEnergyDrivingStart",
   "driveLoopAnimTrigger": "NeedsSevereLowEnergyDrivingLoop",

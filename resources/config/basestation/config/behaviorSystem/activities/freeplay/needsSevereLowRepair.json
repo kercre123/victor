@@ -1,6 +1,6 @@
 {
   "activityID": "NeedsSevereLowRepair",
-  "activityType": "BehaviorsOnly",
+  "activityType": "NeedsExpression",
 
   "driveStartAnimTrigger": "NeedsSevereLowRepairDrivingStart",
   "driveLoopAnimTrigger": "NeedsSevereLowRepairDrivingLoop",

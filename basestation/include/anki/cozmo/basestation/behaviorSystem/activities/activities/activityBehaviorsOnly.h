@@ -28,7 +28,7 @@ class ActivityBehaviorsOnly : public IActivity
 {
 public:
   ActivityBehaviorsOnly(Robot& robot, const Json::Value& config);
-  ~ActivityBehaviorsOnly() {};
+  virtual ~ActivityBehaviorsOnly() {};
 };
 
 
