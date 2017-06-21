@@ -750,7 +750,7 @@ def main(args):
   parser.add_argument('--configFile',
                       dest='config_file',
                       action='store',
-                      default='sdkTests.cfg',
+                      default='sdkNightlyTests.cfg',
                       type=str,
                       help='Name of .cfg file to use, should be located in the same directory as this file.')
 

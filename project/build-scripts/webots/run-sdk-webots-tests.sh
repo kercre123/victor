@@ -6,12 +6,6 @@
 set -e
 set -u
 
-GIT=`which git`
-if [ -z $GIT ];then
-  echo git not found
-  exit 1
-fi
-
 PIP=`which pip3`
 if [ -z $PIP ];then
   echo pip not found
@@ -28,36 +22,8 @@ export SDK_TCP_PORT=5106
 
 _SCRIPT_PATH=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
 _TOPLEVEL_COZMO=${_SCRIPT_PATH}/../../..
-_COZMO_REPO_DIR=cozmo-python-sdk
-_GIT_COZMO_SDK_URI=https://git@github.com/anki/${_COZMO_REPO_DIR}.git
-_GIT_USERNAME="anki-smartling"
-_GIT_EMAIL="anki-smartling@anki.com"
+_COZMO_REPO_DIR=${_TOPLEVEL_COZMO}/tools/sdk/cozmo-python-sdk
 _SDK_WEBOTS_SCRIPT=${_TOPLEVEL_COZMO}/project/build-scripts/webots/sdkTest.py
-
-_GIT_BRANCH_NAME=nextclad
-if [[ ${SDK_BRANCH:-} ]];then
-  _GIT_BRANCH_NAME=$SDK_BRANCH
-fi
-
-# clone cozmo-python-sdk
-if [ -d $_COZMO_REPO_DIR ]; then
-    pushd $_COZMO_REPO_DIR
-    $GIT fetch -p
-    $GIT checkout master
-    # delete any existing local branches other than master
-    if [ $($GIT branch | wc -l) != 1 ]; then
-        $GIT branch | grep -v '* master' | xargs git branch -D
-    fi
-    $GIT checkout $_GIT_BRANCH_NAME
-    $GIT pull origin $_GIT_BRANCH_NAME
-    popd
-else
-    $GIT clone $_GIT_COZMO_SDK_URI
-    pushd $_COZMO_REPO_DIR
-    $GIT checkout $_GIT_BRANCH_NAME
-    popd
-fi
-
 
 # build the latest clad and SDK
 pushd $_TOPLEVEL_COZMO/tools/sdk/cozmoclad
@@ -70,7 +36,7 @@ $PIP install numpy
 $PIP install pillow
 
 #install the pulled down repo and clad
-$PIP install -e ./$_COZMO_REPO_DIR
+$PIP install -e $_COZMO_REPO_DIR
 $PIP install --ignore-installed $_TOPLEVEL_COZMO/tools/sdk/cozmoclad/dist/*.whl
 
 NUM_RUNS_PARAM=""
@@ -81,5 +47,9 @@ SDK_TIMEOUT_PARAM=""
 if [[ ${SDK_TIMEOUT:-} ]];then
   SDK_TIMEOUT_PARAM="--timeout $SDK_TIMEOUT"
 fi
-$PYTHON $_SDK_WEBOTS_SCRIPT $SDK_TIMEOUT_PARAM $NUM_RUNS_PARAM
+SDK_TEST_CONFIG_PARAM=""
+if [[ ${SDK_TEST_CONFIG:-} ]];then
+  SDK_TEST_CONFIG_PARAM="--configFile $SDK_TEST_CONFIG"
+fi
+$PYTHON $_SDK_WEBOTS_SCRIPT $SDK_TIMEOUT_PARAM $NUM_RUNS_PARAM $SDK_TEST_CONFIG_PARAM
 exit $?
