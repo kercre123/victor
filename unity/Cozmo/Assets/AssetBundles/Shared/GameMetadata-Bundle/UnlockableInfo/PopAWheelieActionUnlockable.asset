@@ -25,7 +25,7 @@ MonoBehaviour:
   SparkButtonDescription: unlockable.PopAWheelieAction.SparkButtonDescription
   SparkedStateDescription: unlockable.PopAWheelieAction.SparkedStateDescription
   SparkedMusicState:
-    _Sparked: 0
+    _Sparked: 982472036
   RequestTrickCostItemId: spark
   _RequestTrickCostAmount:
     _EnumValueAsString: PopAWheelie

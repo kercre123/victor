@@ -25,7 +25,7 @@ MonoBehaviour:
   SparkButtonDescription: unlockable.Workout.SparkButtonDescription
   SparkedStateDescription: unlockable.Workout.SparkedStateDescription
   SparkedMusicState:
-    _Sparked: 0
+    _Sparked: 1875882538
   RequestTrickCostItemId: spark
   _RequestTrickCostAmount:
     _EnumValueAsString: WorkoutWithCubes
