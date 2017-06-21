@@ -1,7 +1,7 @@
 { "actionDeltas":[
   {
     "actionId": "RepairHead",
-    "repairDelta": 0.4,
+    "repairDelta": 0.33,
     "repairRange": 0,
     "energyDelta": -0.02,
     "energyRange": 0.005,
@@ -10,7 +10,7 @@
   },
   {
     "actionId": "RepairLift",
-    "repairDelta": 0.4,
+    "repairDelta": 0.33,
     "repairRange": 0,
     "energyDelta": -0.02,
     "energyRange": 0.005,
@@ -19,7 +19,7 @@
   },
   {
     "actionId": "RepairTreads",
-    "repairDelta": 0.4,
+    "repairDelta": 0.33,
     "repairRange": 0,
     "energyDelta": -0.02,
     "energyRange": 0.005,
@@ -27,28 +27,10 @@
     "playRange": 0.005
   },
   {
-    "actionId": "FeedRed",
-    "repairDelta": 0,
-    "repairRange": 0,
-    "energyDelta": 0.1,
-    "energyRange": 0.005,
-    "playDelta": 0,
-    "playRange": 0
-  },
-  {
     "actionId": "FeedBlue",
     "repairDelta": 0,
     "repairRange": 0,
-    "energyDelta": 0.2,
-    "energyRange": 0.005,
-    "playDelta": 0,
-    "playRange": 0
-  },
-  {
-    "actionId": "FeedGreen",
-    "repairDelta": 0,
-    "repairRange": 0,
-    "energyDelta": 0.3,
+    "energyDelta": 0.33,
     "energyRange": 0.005,
     "playDelta": 0,
     "playRange": 0
@@ -68,7 +50,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.3,
     "playRange": 0
   },
   {
@@ -77,7 +59,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.05,
+    "playDelta": 0.3,
     "playRange": 0
   },
   {
@@ -86,7 +68,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.3,
     "playRange": 0
   },
   {
@@ -95,7 +77,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.05,
+    "playDelta": 0.3,
     "playRange": 0
   },
   {
@@ -104,7 +86,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.3,
     "playRange": 0
   },
   {
@@ -113,7 +95,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.05,
+    "playDelta": 0.3,
     "playRange": 0
   },
   {
@@ -122,17 +104,17 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.05,
     "playRange": 0
   },
   {
     "actionId": "DizzyHard",
-    "repairDelta": -0.15,
+    "repairDelta": -0.3,
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": 0
+    "playRange": -0.1
   },
   {
     "actionId": "DizzyMedium",
@@ -141,7 +123,7 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": 0
+    "playRange": -0.05
   },
   {
     "actionId": "DizzySoft",
@@ -150,7 +132,7 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": 0
+    "playRange": -0.03
   },
   {
     "actionId": "Fall",
@@ -159,7 +141,7 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": 0
+    "playRange": -0.2
   },
   {
     "actionId": "FistBump",
@@ -167,7 +149,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.2,
     "playRange": 0
   },
   {
@@ -203,8 +185,8 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
-    "playRange": 0
+    "playDelta": 0,
+    "playRange": -0.2
   },
   {
     "actionId": "HiccupsEndGood",
@@ -230,7 +212,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.2,
     "playRange": 0
   },
   {
@@ -266,7 +248,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.2,
     "playRange": 0
   },
   {
@@ -275,7 +257,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.05,
     "playRange": 0
   },
   {
@@ -284,7 +266,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.01,
     "playRange": 0
   },
   {
@@ -311,7 +293,7 @@
     "repairRange": 0,
     "energyDelta": -0.01,
     "energyRange": 0,
-    "playDelta": 0.1,
+    "playDelta": 0.01,
     "playRange": 0
   }
 ] }

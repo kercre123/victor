@@ -1,10 +1,10 @@
 {
   "MaximumNeedLevel": 1,
-  "MinimumNeedLevel": 0,
+  "MinimumNeedLevel": 0.03,
   "DecayPeriodSeconds": 60,
-  "InitialNeedLevelRepair": 1,
-  "InitialNeedLevelEnergy": 1,
-  "InitialNeedLevelPlay": 1,
+  "InitialNeedLevelRepair": 0.8,
+  "InitialNeedLevelEnergy": 0.7,
+  "InitialNeedLevelPlay": 0.8,
   "BracketLevelRepairFull": 0.95,
   "BracketLevelRepairNormal": 0.5,
   "BracketLevelRepairWarning": 0.1,
@@ -17,10 +17,10 @@
   "BracketLevelPlayNormal": 0.5,
   "BracketLevelPlayWarning": 0.1,
   "BracketLevelPlayCritical": 0,
-  "FullnessDecayCooldownRepair": 120,
+  "FullnessDecayCooldownRepair": 180,
   "FullnessDecayCooldownEnergy": 120,
   "FullnessDecayCooldownPlay": 120,
-  "BrokenPartThreshold0": 0.75,
-  "BrokenPartThreshold1": 0.5,
-  "BrokenPartThreshold2": 0.25
+  "BrokenPartThreshold0": 0.9,
+  "BrokenPartThreshold1": 0.6,
+  "BrokenPartThreshold2": 0.3
 }

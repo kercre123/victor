@@ -3,85 +3,85 @@
     "ConnectedDecayRatesRepair": [
       {
         "Threshold": 0.5,
-        "DecayPerMinute": 0.01
+        "DecayPerMinute": 0.003
       },
       {
         "Threshold": 0.25,
-        "DecayPerMinute": 0.005
+        "DecayPerMinute": 0.002
       },
       {
-        "Threshold": 0,
-        "DecayPerMinute": 0.002
+        "Threshold": 0.03,
+        "DecayPerMinute": 0.001
       }
     ],
     "ConnectedDecayRatesEnergy": [
       {
-        "Threshold": 0.501,
-        "DecayPerMinute": 0.01
+        "Threshold": 0.5,
+        "DecayPerMinute": 0.003
       },
       {
-        "Threshold": 0.251,
-        "DecayPerMinute": 0.005
-      },
-      {
-        "Threshold": 0.101,
+        "Threshold": 0.25,
         "DecayPerMinute": 0.002
+      },
+      {
+        "Threshold": 0.03,
+        "DecayPerMinute": 0.001
       }
     ],
     "ConnectedDecayRatesPlay": [
       {
-        "Threshold": 0.5001,
-        "DecayPerMinute": 0.01
+        "Threshold": 0.5,
+        "DecayPerMinute": 0.05
       },
       {
-        "Threshold": 0.2501,
-        "DecayPerMinute": 0.005
+        "Threshold": 0.25,
+        "DecayPerMinute": 0.02
       },
       {
-        "Threshold": 0.1001,
-        "DecayPerMinute": 0.002
+        "Threshold": 0.03,
+        "DecayPerMinute": 0.007
       }
     ],
     "UnconnectedDecayRatesRepair": [
       {
         "Threshold": 0.5,
-        "DecayPerMinute": 0.01
+        "DecayPerMinute": 0.0001
       },
       {
         "Threshold": 0.25,
-        "DecayPerMinute": 0.005
+        "DecayPerMinute": 0.0001
       },
       {
-        "Threshold": 0,
-        "DecayPerMinute": 0.002
+        "Threshold": 0.03,
+        "DecayPerMinute": 0.0001
       }
     ],
     "UnconnectedDecayRatesEnergy": [
       {
-        "Threshold": 0.501,
-        "DecayPerMinute": 0.01
+        "Threshold": 0.5,
+        "DecayPerMinute": 0.00025
       },
       {
-        "Threshold": 0.251,
-        "DecayPerMinute": 0.005
+        "Threshold": 0.25,
+        "DecayPerMinute": 0.00025
       },
       {
-        "Threshold": 0.101,
-        "DecayPerMinute": 0.002
+        "Threshold": 0.03,
+        "DecayPerMinute": 0.00025
       }
     ],
     "UnconnectedDecayRatesPlay": [
       {
-        "Threshold": 0.5001,
-        "DecayPerMinute": 0.01
+        "Threshold": 0.5,
+        "DecayPerMinute": 0.0004
       },
       {
-        "Threshold": 0.2501,
-        "DecayPerMinute": 0.005
+        "Threshold": 0.25,
+        "DecayPerMinute": 0.0004
       },
       {
-        "Threshold": 0.1001,
-        "DecayPerMinute": 0.002
+        "Threshold": 0.03,
+        "DecayPerMinute": 0.0004
       }
     ]
   },
@@ -101,7 +101,7 @@
         "OtherNeedsAffected": [
           {
             "OtherNeedID": "Repair",
-            "Multiplier": 1.5
+            "Multiplier": 1
           }
         ]
       },
@@ -110,7 +110,7 @@
         "OtherNeedsAffected": [
           {
             "OtherNeedID": "Repair",
-            "Multiplier": 2
+            "Multiplier": 1
           }
         ]
       },
@@ -119,7 +119,7 @@
         "OtherNeedsAffected": [
           {
             "OtherNeedID": "Repair",
-            "Multiplier": 3
+            "Multiplier": 1
           }
         ]
       }
@@ -143,11 +143,11 @@
         "OtherNeedsAffected": [
           {
             "OtherNeedID": "Energy",
-            "Multiplier": 1.5
+            "Multiplier": 1
           },
           {
             "OtherNeedID": "Play",
-            "Multiplier": 1.25
+            "Multiplier": 1
           }
         ]
       }
