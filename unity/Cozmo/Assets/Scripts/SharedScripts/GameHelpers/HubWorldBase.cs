@@ -12,7 +12,8 @@ public abstract class HubWorldBase : MonoBehaviour {
 
   public abstract GameBase GetChallengeInstance();
 
-  public abstract void CloseChallengeImmediately();
+  public abstract bool CloseChallengeImmediately();
 
   public abstract void StartFreeplay(IRobot robot);
+  public abstract void StartLoadNeedsHubView();
 }

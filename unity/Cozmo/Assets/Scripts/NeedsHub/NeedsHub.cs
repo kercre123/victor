@@ -101,15 +101,16 @@ namespace Cozmo.Hub {
       return null;
     }
 
-    public override void CloseChallengeImmediately() {
+    public override bool CloseChallengeImmediately() {
       if (_ChallengeManager != null) {
-        _ChallengeManager.CloseChallengeImmediately();
+        return _ChallengeManager.CloseChallengeImmediately();
       }
+      return false;
     }
 
     #region LoadNeedsHub
 
-    public void StartLoadNeedsHubView() {
+    public override void StartLoadNeedsHubView() {
       AssetBundleManager.Instance.LoadAssetBundleAsync(_NeedsHubViewPrefabData.AssetBundle, LoadNeedsHubView);
     }
 

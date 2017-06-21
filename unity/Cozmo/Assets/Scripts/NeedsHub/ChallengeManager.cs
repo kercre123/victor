@@ -219,13 +219,16 @@ namespace Cozmo.Challenge {
       }
     }
 
-    public void CloseChallengeImmediately() {
+    public bool CloseChallengeImmediately() {
+      bool closedChallenge = false;
       if (_ChallengeInstance != null) {
         DeregisterChallengeEvents();
         _ChallengeInstance.CloseChallengeImmediately();
         _ChallengeInstance = null;
         UnloadChallengeAssetBundle();
+        closedChallenge = true;
       }
+      return closedChallenge;
     }
 
     private void DeregisterChallengeEvents() {

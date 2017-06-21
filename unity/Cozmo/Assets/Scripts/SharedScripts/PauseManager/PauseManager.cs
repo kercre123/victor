@@ -24,6 +24,7 @@ namespace Cozmo {
     private static PauseManager _Instance;
     public Action OnPauseDialogOpen;
     private bool _IsPaused = false;
+    private bool _ClosedMinigameOnPause = false;
     private AlertModal _GoToSleepDialog = null;
     private bool _EngineTriggeredSleep = false;
     private bool _StartedIdleTimeout = false;
@@ -155,7 +156,10 @@ namespace Cozmo {
 
         HubWorldBase hub = HubWorldBase.Instance;
         if (null != hub) {
-          hub.CloseChallengeImmediately();
+          _ClosedMinigameOnPause = hub.CloseChallengeImmediately();
+        }
+        else {
+          _ClosedMinigameOnPause = false;
         }
 
         _ShouldPlayWakeupTimestamp = -1;
@@ -229,6 +233,12 @@ namespace Cozmo {
       if (null != robot && null != hub) {
         hub.StartFreeplay(robot);
         robot.EnableCubeSleep(false);
+
+        // If we were in the middle of a minigame, return to the main needs view
+        if (_ClosedMinigameOnPause) {
+          hub.StartLoadNeedsHubView();
+          _ClosedMinigameOnPause = false;
+        }
       }
       else {
         // If this is fired because we are returning from backgrounding the app

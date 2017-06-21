@@ -763,6 +763,7 @@ public abstract class GameBase : MonoBehaviour {
     if (CurrentRobot != null) {
       CurrentRobot.SetEnableFreeplayLightStates(true);
     }
+    ResetReactionaryBehaviorsForGameEnd();
 
     // Destroy any active player goals
     for (int i = 0; i < _PlayerInfo.Count; ++i) {
