@@ -92,5 +92,8 @@
   },
   "needs.Done": {
     "translation": "DONE"
+  },
+  "button.DISCOVER": {
+    "translation": "DISCOVER"
   }
 }

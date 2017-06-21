@@ -33,7 +33,7 @@ namespace Cozmo.Needs.Activities.UI {
 
       _StartActivityButton.Initialize(HandleStartActivityButtonPressed, "large_start_activity_button", parentDialogName);
 
-      _ActivityTitleLabel.text = Localization.Get(activityData.ChallengeTitleLocKey);
+	  _ActivityTitleLabel.text = Localization.Get(activityData.ChallengeTitleLocKey).ToUpper();
       _ActivityDescriptionLabel.text = Localization.Get(activityData.ChallengeDescriptionLocKey);
 
       _ActivityTitleLabel.color = activityData.ActivityData.ActivityTitleColor;
