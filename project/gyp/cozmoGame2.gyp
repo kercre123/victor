@@ -458,6 +458,11 @@
     [
       "OS=='mac'",
       {
+        # Mac-specific variables
+        'variables': {
+          'webotsCtrlGameEngine2': '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2',
+        },
+
         'target_defaults': {
           'variables': {
             'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
@@ -481,72 +486,6 @@
             'dependencies': [],
             'actions': [
 
-            # Add assets for webotsCtrlGameEngine
-            {
-                'action_name': 'create_symlink_resources_animations',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(externals_path)/cozmo-assets/animations',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animations',
-                  '--create_folder', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets'
-                ],
-            },
-            {
-                'action_name': 'create_symlink_resources_animationGroups',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(externals_path)/cozmo-assets/animationGroups',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroups'
-                ],
-            },
-            {
-                'action_name': 'create_symlink_resources_faceAnimations',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(externals_path)/cozmo-assets/faceAnimations',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/faceAnimations',
-                ],
-            },
-            {
-                'action_name': 'create_symlink_resources_anim_group_maps',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_asset_path)/animationGroupMaps',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroupMaps'
-                ],
-            },
-            {
-                'action_name': 'create_symlink_resources_cube_anim_group_maps',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_asset_path)/cubeAnimationGroupMaps',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/cubeAnimationGroupMaps'
-                ],
-            },
-            {
-                'action_name': 'create_symlink_resources_sound',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound'
-                ],
-            },
-
             # Add assets for webotsCtrlGameEngine2
             {
                 'action_name': 'create_symlink_resources_animations2',
@@ -555,8 +494,8 @@
                 'action': [
                   '../../tools/build/tools/ankibuild/symlink.py',
                   '--link_target', '<(externals_path)/cozmo-assets/animations',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animations',
-                  '--create_folder', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets'
+                  '--link_name', '<(webotsCtrlGameEngine2)/resources/assets/animations',
+                  '--create_folder', '<(webotsCtrlGameEngine2)/resources/assets'
                 ],
             },
             {
@@ -566,7 +505,7 @@
                 'action': [
                   '../../tools/build/tools/ankibuild/symlink.py',
                   '--link_target', '<(externals_path)/cozmo-assets/animationGroups',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animationGroups'
+                  '--link_name', '<(webotsCtrlGameEngine2)/resources/assets/animationGroups'
                 ],
             },
             {
@@ -579,7 +518,7 @@
                   '-f',
                   '-n',
                   '<(externals_path)/cozmo-assets/faceAnimations',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/faceAnimations',
+                  '<(webotsCtrlGameEngine2)/resources/assets/faceAnimations',
                 ],
             },
             {
@@ -589,7 +528,7 @@
                 'action': [
                   '../../tools/build/tools/ankibuild/symlink.py',
                   '--link_target', '<(cozmo_asset_path)/animationGroupMaps',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/animationGroupMaps'
+                  '--link_name', '<(webotsCtrlGameEngine2)/resources/assets/animationGroupMaps'
                 ],
             },
             {
@@ -599,7 +538,17 @@
                 'action': [
                   '../../tools/build/tools/ankibuild/symlink.py',
                   '--link_target', '<(cozmo_asset_path)/cubeAnimationGroupMaps',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/assets/cubeAnimationGroupMaps'
+                  '--link_name', '<(webotsCtrlGameEngine2)/resources/assets/cubeAnimationGroupMaps'
+                ],
+            },
+            {
+                'action_name': 'create_symlink_resources_voice_command_data2',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                    '../../tools/build/tools/ankibuild/symlink.py',
+                    '--link_target', '<(cozmo_asset_path)/voiceCommand/exports',
+                    '--link_name', '<(webotsCtrlGameEngine2)/resources/assets/voiceCommand'
                 ],
             },
             {
@@ -609,7 +558,7 @@
                 'action': [
                   '../../tools/build/tools/ankibuild/symlink.py',
                   '--link_target', '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
-                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2/resources/sound'
+                  '--link_name', '<(webotsCtrlGameEngine2)/resources/sound'
                 ],
             },
             ]
