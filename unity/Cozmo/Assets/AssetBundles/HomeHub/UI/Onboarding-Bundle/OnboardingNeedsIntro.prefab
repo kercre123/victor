@@ -523,6 +523,9 @@ MonoBehaviour:
   _ActiveMenuContent: 1
   _ReactionsEnabled: 0
   _PlayIdle: 0
+  _CustomIdle:
+    _EnumValueAsString: NeedsMildLowRepairRequest
+    _EnumValue: 233
   _DASPhaseID: 2
   _OverrideTickerKey: onboarding.needs.ticker
   _ButtonStateDiscover: 1

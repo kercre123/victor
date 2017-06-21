@@ -26,6 +26,11 @@ namespace Onboarding {
     protected bool _PlayIdle = false;
 
     [SerializeField]
+    protected SerializableAnimationTrigger _CustomIdle = new SerializableAnimationTrigger();
+    [SerializeField]
+    protected bool _FreeplayEnabledOnExit = false;
+
+    [SerializeField]
     protected int _DASPhaseID = 0;
 
     [SerializeField]
@@ -65,11 +70,29 @@ namespace Onboarding {
           OnboardingManager.Instance.OnOverrideTickerString.Invoke(Localization.Get(_OverrideTickerKey));
         }
       }
+
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
+          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value);
+        }
+      }
     }
     public virtual void OnDisable() {
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
         if (OnboardingManager.Instance.OnOverrideTickerString != null) {
           OnboardingManager.Instance.OnOverrideTickerString.Invoke(null);
+        }
+      }
+
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
+          robot.PopIdleAnimation();
+        }
+        HubWorldBase instance = HubWorldBase.Instance;
+        if (instance != null && _FreeplayEnabledOnExit) {
+          instance.StartFreeplay(robot);
         }
       }
     }

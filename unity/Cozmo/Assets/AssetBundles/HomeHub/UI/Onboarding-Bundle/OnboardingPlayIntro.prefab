@@ -178,6 +178,11 @@ MonoBehaviour:
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
+  _CustomIdle:
+    _EnumValueAsString: NeedsMildLowPlayRequest
+    _EnumValue: 232
+  _FreeplayEnabledOnEnter: 0
+  _FreeplayEnabledOnExit: 1
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.play.ticker
   _ButtonStateDiscover: 1

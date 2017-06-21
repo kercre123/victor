@@ -181,8 +181,8 @@ namespace Cozmo.Hub {
 
     public override void StartFreeplay(IRobot robot) {
       if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
-          !OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup) &&
-        robot != null) {
+          OnboardingManager.Instance.AllowFreeplayOnHubEnter() &&
+          robot != null) {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
         RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
         robot.SetEnableFreeplayLightStates(true);

@@ -7,6 +7,13 @@ using Newtonsoft.Json;
 
 [System.Serializable]
 public class SerializableAnimationTrigger : SerializableEnum<Anki.Cozmo.AnimationTrigger> {
+  public SerializableAnimationTrigger() {
+    Value = AnimationTrigger.Count;
+  }
+
+  public SerializableAnimationTrigger(AnimationTrigger defaultVale) {
+    Value = defaultVale;
+  }
 }
 
 

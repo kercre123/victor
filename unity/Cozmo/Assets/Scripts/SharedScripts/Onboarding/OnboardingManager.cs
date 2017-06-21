@@ -244,7 +244,6 @@ public class OnboardingManager : MonoBehaviour {
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
     Cozmo.Needs.NeedsStateManager.Instance.ResumeAllNeeds();
-    RequestGameManager.Instance.EnableRequestGameBehaviorGroups();
     ShowOutlineRegion(false);
   }
 
@@ -344,6 +343,11 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  public bool AllowFreeplayOnHubEnter() {
+    return !IsOnboardingRequired(OnboardingPhases.InitialSetup) &&
+           !IsOnboardingRequired(OnboardingPhases.PlayIntro);
+  }
+
   private void SetSpecificStage(int nextStage, bool canStartNewPhase = true) {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
@@ -384,10 +388,6 @@ public class OnboardingManager : MonoBehaviour {
       UpdateStage();
       // only Meet Cozmo phase takes us out of pausing inside needshub
       if (completedPhase != OnboardingPhases.MeetCozmo) {
-        HubWorldBase instance = HubWorldBase.Instance;
-        if (instance != null) {
-          instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
-        }
         if (canStartNewPhase) {
           StartAnyPhaseIfNeeded();
         }
