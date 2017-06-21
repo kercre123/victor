@@ -67,12 +67,29 @@ namespace Cozmo.Needs.UI {
       }
     }
 
+    private void PlayMeterMoveSound(float oldVal, float newVal) {
+      if (newVal - oldVal > float.Epsilon) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Up);
+      }
+      else if (newVal - oldVal < -float.Epsilon) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Down);
+      }
+    }
+
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedsValue repairValue, energyValue, playValue;
+      NeedsValue oldRepairValue = nsm.GetCurrentDisplayValue(NeedId.Repair);
+      NeedsValue oldEnergyValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
+      NeedsValue oldPlayValue = nsm.GetCurrentDisplayValue(NeedId.Play);
       repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
       energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
       playValue = nsm.PopLatestEngineValue(NeedId.Play);
+
+      PlayMeterMoveSound(repairValue.Value, oldRepairValue.Value);
+      PlayMeterMoveSound(energyValue.Value, oldEnergyValue.Value);
+      PlayMeterMoveSound(playValue.Value, oldPlayValue.Value);
+
       UpdateMeters(repairValue.Value, energyValue.Value, playValue.Value);
     }
 
@@ -84,12 +101,21 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
-      if (needId == NeedId.Repair || needId == NeedId.Energy) {
-        NeedsStateManager nsm = NeedsStateManager.Instance;
-        NeedsValue repairValue, energyValue;
-        repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
-        energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
-        EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+      NeedsValue repairValue, energyValue;
+      repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
+      energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
+      EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
+      NeedsValue playValue = nsm.PopLatestEngineValue(NeedId.Play);
+      if ((needId == NeedId.Repair && repairValue.Bracket == NeedBracketId.Critical) ||
+          (needId == NeedId.Energy && energyValue.Bracket == NeedBracketId.Critical) ||
+          (needId == NeedId.Play && playValue.Bracket == NeedBracketId.Critical)) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Severe_Start);
+      }
+      if ((needId == NeedId.Repair && repairValue.Bracket == NeedBracketId.Full) ||
+          (needId == NeedId.Energy && energyValue.Bracket == NeedBracketId.Full) ||
+          (needId == NeedId.Play && energyValue.Bracket == NeedBracketId.Full)) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Full);
       }
     }
 

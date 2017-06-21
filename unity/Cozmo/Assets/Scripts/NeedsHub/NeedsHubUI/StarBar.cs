@@ -33,7 +33,7 @@ namespace Cozmo.Needs.UI {
 
     private void HandleStarUnlocked(Anki.Cozmo.ExternalInterface.StarUnlocked message) {
       UpdateBar(message.currentStars, message.maxStarsForLevel);
-
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Token);
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.RewardBox)) {
         OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.RewardBox);
       }
@@ -50,6 +50,7 @@ namespace Cozmo.Needs.UI {
                             NeedsRewardModal needsModal = (NeedsRewardModal)newModal;
                             needsModal.Init(message.rewards);
                           });
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Bonus_Box);
       // TODO: some animation growing the bar exploding and resetting to next level.
       UpdateBar(0, message.starsRequiredForNextUnlock);
     }

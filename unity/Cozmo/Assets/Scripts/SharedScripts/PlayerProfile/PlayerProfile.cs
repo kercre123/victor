@@ -11,8 +11,6 @@ namespace DataPersistence {
 
     public string ProfileName;
 
-    public bool FirstTimeFaceEnrollmentHowToPlay;
-
     public System.DateTime Birthdate;
 
     public List<DataPersistence.TimelineEntryData> Sessions;
@@ -54,7 +52,6 @@ namespace DataPersistence {
       FirstTimeUserFlow = true;
       DataCollectionEnabled = true;
       ProfileCreated = false;
-      FirstTimeFaceEnrollmentHowToPlay = true;
       GameDifficulty = new Dictionary<string, int>();
       HighScores = new Dictionary<string, int>();
       TotalGamesPlayed = new Dictionary<string, int>();

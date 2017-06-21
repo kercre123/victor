@@ -32,6 +32,8 @@ namespace Onboarding {
       if (giveSparksAmount != currentSparks) {
         profile.Inventory.SetItemAmount(itemData.ID, giveSparksAmount);
       }
+
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear);
     }
 
   }
