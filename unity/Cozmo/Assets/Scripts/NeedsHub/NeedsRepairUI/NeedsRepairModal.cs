@@ -173,9 +173,10 @@ namespace Cozmo.Repair.UI {
 
     public void InitializeRepairModal() {
 
+      HubWorldBase.Instance.StopFreeplay();
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        robot.SetEnableFreeplayActivity(false);
+        HubWorldBase.Instance.StopFreeplay();
         robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
       }
 
@@ -248,9 +249,8 @@ namespace Cozmo.Repair.UI {
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        robot.SetEnableFreeplayLightStates(true);
+        HubWorldBase.Instance.StartFreeplay();
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
-        robot.SetEnableFreeplayActivity(true);
       }
 
       base.RaiseDialogClosed();

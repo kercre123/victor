@@ -231,7 +231,7 @@ namespace Cozmo {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
 
       if (null != robot && null != hub) {
-        hub.StartFreeplay(robot);
+        hub.StartFreeplay();
         robot.EnableCubeSleep(false);
 
         // If we were in the middle of a minigame, return to the main needs view

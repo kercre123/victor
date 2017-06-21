@@ -29,10 +29,7 @@ namespace Cozmo.Energy.UI {
     private NeedBracketId _LastNeedBracket = NeedBracketId.Count;
 
     public void InitializeEnergyModal() {
-      var robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        robot.SetEnableFreeplayActivity(false);
-      }
+      HubWorldBase.Instance.StopFreeplay();
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -68,10 +65,7 @@ namespace Cozmo.Energy.UI {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
 
       //RETURN TO FREEPLAY
-      var robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        robot.SetEnableFreeplayActivity(true);
-      }
+      HubWorldBase.Instance.StartFreeplay();
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {

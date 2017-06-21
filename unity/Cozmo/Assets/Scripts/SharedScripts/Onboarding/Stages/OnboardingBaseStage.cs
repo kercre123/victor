@@ -90,10 +90,6 @@ namespace Onboarding {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
           robot.PopIdleAnimation();
         }
-        HubWorldBase instance = HubWorldBase.Instance;
-        if (instance != null && _FreeplayEnabledOnExit) {
-          instance.StartFreeplay(robot);
-        }
       }
     }
 
@@ -102,6 +98,12 @@ namespace Onboarding {
         RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
         RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
       }
+
+      HubWorldBase instance = HubWorldBase.Instance;
+      if (instance != null && _FreeplayEnabledOnExit) {
+        instance.StartFreeplay();
+      }
+
       DAS.Info("DEV onboarding stage.ended", name);
     }
 

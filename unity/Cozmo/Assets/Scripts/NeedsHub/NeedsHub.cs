@@ -172,14 +172,15 @@ namespace Cozmo.Hub {
           robot.ResetRobotState(() => {
             robot.SendAnimationTrigger(_ChallengeGetOutAnimTrigger, (bool success) => {
               _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
-              StartFreeplay(robot);
+              StartFreeplay();
             });
           });
         }
       });
     }
 
-    public override void StartFreeplay(IRobot robot) {
+    public override void StartFreeplay() {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
       if (!DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart &&
           OnboardingManager.Instance.AllowFreeplayOnHubEnter() &&
           robot != null) {
@@ -188,6 +189,17 @@ namespace Cozmo.Hub {
         robot.SetEnableFreeplayLightStates(true);
         robot.SetEnableFreeplayActivity(true);
         AllowFreeplayUI(true);
+      }
+    }
+
+    // Any function calling this will need to set it's own music if unique
+    public override void StopFreeplay() {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
+        robot.SetEnableFreeplayLightStates(false);
+        robot.SetEnableFreeplayActivity(false);
+        AllowFreeplayUI(false);
       }
     }
 
