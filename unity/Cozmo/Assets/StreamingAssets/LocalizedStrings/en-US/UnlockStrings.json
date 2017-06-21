@@ -25,10 +25,10 @@
     "translation": "Code Lab requires Android {0} or newer."    
   },
   "unlockable.Mystery.Title": {
-    "translation": "????"
+    "translation": "Locked Ability"
   },
   "unlockable.Mystery.Description": {
-    "translation": "More great Upgrades coming soon!"
+    "translation": "Opening Bonus Boxes sometimes unlocks new Abilities!"
   },
   "unlockable.FistBump.Title": {
     "translation": "Fist Bump"
@@ -226,7 +226,7 @@
     "translation": "Not enough Sparks"
   },
   "sparks.NotEnoughSparks.Desc": {
-    "translation": "Earn more by letting Cozmo Freeplay or in Bonus Boxes"
+    "translation": "Earn more in Freeplay and Bonus Boxes"
   },
   "sparks.CubesNeedUpright.Title": {
     "translation": "Make Sure Cubes are Upright"

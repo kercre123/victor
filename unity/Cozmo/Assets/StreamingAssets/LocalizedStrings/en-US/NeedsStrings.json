@@ -76,7 +76,7 @@
     "translation": "Tap the parts to be tuned up."
   },  
   "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": ""
+    "translation": " "
   },
   "needs.NeedsRepairModal.NoRepairsNeeded": {
     "translation": "Cozmo is fully tuned up!"
