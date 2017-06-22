@@ -71,7 +71,6 @@ Blockly.Blocks['cozmo_setbackpackcolor'] = {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Light Backpack");
   }
 };
 
@@ -92,7 +91,6 @@ Blockly.Blocks['cozmo_happy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Happy");
   }
 };
 
@@ -113,7 +111,6 @@ Blockly.Blocks['cozmo_victory_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Winner");
   }
 };
 
@@ -134,7 +131,6 @@ Blockly.Blocks['cozmo_unhappy_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Sad");
   }
 };
 
@@ -155,7 +151,6 @@ Blockly.Blocks['cozmo_surprise_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Surprised");
   }
 };
 
@@ -176,7 +171,6 @@ Blockly.Blocks['cozmo_dog_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Dog");
   }
 };
 
@@ -197,7 +191,6 @@ Blockly.Blocks['cozmo_cat_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Like Cat");
   }
 };
 
@@ -218,7 +211,6 @@ Blockly.Blocks['cozmo_sneeze_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Sneeze");
   }
 };
 
@@ -239,7 +231,6 @@ Blockly.Blocks['cozmo_excited_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Excited");
   }
 };
 
@@ -260,7 +251,6 @@ Blockly.Blocks['cozmo_thinking_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Think Hard");
   }
 };
 
@@ -281,7 +271,6 @@ Blockly.Blocks['cozmo_bored_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Bored");
   }
 };
 
@@ -302,7 +291,6 @@ Blockly.Blocks['cozmo_frustrated_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Frustrated");
   }
 };
 
@@ -323,7 +311,6 @@ Blockly.Blocks['cozmo_chatty_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Chatty");
   }
 };
 
@@ -344,7 +331,6 @@ Blockly.Blocks['cozmo_dejected_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Act Disappointed");
   }
 };
 
@@ -365,7 +351,6 @@ Blockly.Blocks['cozmo_sleep_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Snore");
   }
 };
 
@@ -386,7 +371,6 @@ Blockly.Blocks['cozmo_mystery_animation'] = {
       "colourSecondary": Blockly.Colours.actions.secondary,
       "colourTertiary": Blockly.Colours.actions.tertiary
     });
-    this.setTooltip("Mystery Animation");
   }
 };
 
@@ -407,7 +391,6 @@ Blockly.Blocks['cozmo_dock_with_cube'] = {
       "colourSecondary": Blockly.Colours.motion.secondary,
       "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive to Cube");
   }
 };
 
@@ -435,7 +418,6 @@ init: function() {
       "colourSecondary": Blockly.Colours.looks.secondary,
       "colourTertiary": Blockly.Colours.looks.tertiary
     });
-    this.setTooltip("Say");
   }
 };
 
@@ -455,7 +437,6 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Face");
   }
 };
 
@@ -475,7 +456,6 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Smile");
   }
 };
 
@@ -495,7 +475,6 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Frown");
   }
 };
 
@@ -515,7 +494,6 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait to See Cube");
   }
 };
 
@@ -535,7 +513,6 @@ Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
       "colourSecondary": Blockly.Colours.event.secondary,
       "colourTertiary": Blockly.Colours.event.tertiary
     });
-    this.setTooltip("Wait for Cube Tap");
   }
 };
 
@@ -732,7 +709,6 @@ Blockly.Blocks['cozmo_vert_drive'] = {
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive");
   }
 };
 
@@ -767,7 +743,6 @@ Blockly.Blocks['cozmo_vert_path_offset'] = {
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive");
   }
 };
 
@@ -802,7 +777,6 @@ Blockly.Blocks['cozmo_vert_path_to'] = {
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Drive");
   }
 };
 
@@ -833,7 +807,6 @@ Blockly.Blocks['cozmo_vert_turn'] = {
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Turn");
   }
 };
 
@@ -864,7 +837,6 @@ Blockly.Blocks['cozmo_vert_liftheight'] = {
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Lift Height");
   }
 };
 
@@ -896,6 +868,5 @@ Blockly.Blocks['cozmo_vert_headangle'] = {
         "colourSecondary": Blockly.Colours.motion.secondary,
         "colourTertiary": Blockly.Colours.motion.tertiary
     });
-    this.setTooltip("Head Angle");
   }
 };

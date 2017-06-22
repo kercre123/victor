@@ -177,9 +177,11 @@
     };
 
     window.setLocalizedValues = function() {
-        // Set localized value of Cozmo Says default "Hi" text
-        var cozmoSaysText = document.getElementById("cozmo_says_text");
-        cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
+        if (!window.isVertical) {
+            // Set localized value of Cozmo Says horizontal default "Hi" text
+            var cozmoSaysText = document.getElementById("cozmo_says_text");
+            cozmoSaysText.innerHTML = $t('codeLabHorizontal.CozmoSaysBlock.DefaultText');
+        }
     }
 
     /**

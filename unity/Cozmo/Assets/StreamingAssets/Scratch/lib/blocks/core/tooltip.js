@@ -222,6 +222,11 @@ Blockly.Tooltip.onMouseMove_ = function(e) {
     // user gesture, such as a click or drag.
     return;
   }
+
+  // *** ANKI CHANGE ***
+  // Don't show tooltips for vertical
+  if (window.isVertical) return;
+
   if (Blockly.Tooltip.visible) {
     // Compute the distance between the mouse position when the tooltip was
     // shown and the current mouse position.  Pythagorean theorem.
