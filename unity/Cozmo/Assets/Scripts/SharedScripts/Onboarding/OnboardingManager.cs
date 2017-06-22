@@ -62,24 +62,6 @@ public class OnboardingManager : MonoBehaviour {
   private int _CurrDASPhaseID = -1;
   private float _CurrDASPhaseStartTime = 0;
 
-  #region OUTLINEAREA
-  // Attaches a small outline around a region of the UI
-  // So we don't need to do any resolution math in the overlay.
-  private Transform _OutlineRegionTransform;
-  private GameObject _UIOutlineInstance;
-  public void SetOutlineRegion(Transform outlineRegion) {
-    _OutlineRegionTransform = outlineRegion;
-  }
-  public void ShowOutlineRegion(bool enable, bool useLargerOutline = false) {
-    if (_UIOutlineInstance != null) {
-      GameObject.Destroy(_UIOutlineInstance);
-    }
-    if (enable && _OutlineRegionTransform != null) {
-      _UIOutlineInstance = UIManager.CreateUIElement(useLargerOutline ? _OnboardingUIInstance.GetOutlineLargePrefab() : _OnboardingUIInstance.GetOutlinePrefab(), _OutlineRegionTransform);
-    }
-  }
-  #endregion
-
 #if UNITY_EDITOR
   private bool _DebugDisplayOn = true;
 #else
@@ -244,7 +226,6 @@ public class OnboardingManager : MonoBehaviour {
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
     Cozmo.Needs.NeedsStateManager.Instance.ResumeAllNeeds();
-    ShowOutlineRegion(false);
   }
 
   // Because looking for a face takes awhile time, we try to load this early and invisible
@@ -372,8 +353,7 @@ public class OnboardingManager : MonoBehaviour {
         OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
       }
 
-      UpdateStage(stagePrefab.ButtonStateDiscover, stagePrefab.ButtonStateRepair, stagePrefab.ButtonStateFeed,
-                  stagePrefab.ButtonStatePlay, stagePrefab.ActiveMenuContent, stagePrefab.ReactionsEnabled);
+      UpdateStage(stagePrefab);
       // Create the debug layer to have a few buttons to work with on screen easily for QA
       // who will have to see this all the time.
       if (_DebugDisplayOn) {
@@ -463,30 +443,69 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-  private void UpdateButtonState(Cozmo.UI.CozmoButton button, OnboardingBaseStage.OnboardingButtonStates buttonState) {
+  private bool UpdateButtonState(Cozmo.UI.CozmoButton button, OnboardingBaseStage.OnboardingButtonStates buttonState) {
     button.gameObject.SetActive(buttonState != OnboardingBaseStage.OnboardingButtonStates.Hidden);
     button.Interactable = buttonState != OnboardingBaseStage.OnboardingButtonStates.Disabled;
     if (buttonState == OnboardingBaseStage.OnboardingButtonStates.Sparkle) {
-      SetOutlineRegion(button.transform);
-      ShowOutlineRegion(true);
       button.AlwaysShowGlintWhenEnabled = true;
     }
     else {
       button.AlwaysShowGlintWhenEnabled = false;
     }
+    const string kNormalButtonSkinName = "NavHub_Button_Normal";
+    const string kDimmedButtonSkinName = "NavHub_Button_Dimmed";
+    CozmoImage bg = button.GetComponentInChildren<CozmoImage>();
+    if (bg != null) {
+      bg.LinkedComponentId = (buttonState == OnboardingBaseStage.OnboardingButtonStates.Disabled) ?
+                             kDimmedButtonSkinName : kNormalButtonSkinName;
+      bg.UpdateSkinnableElements();
+    }
+
+    return buttonState == OnboardingBaseStage.OnboardingButtonStates.Disabled;
   }
 
-  private void UpdateStage(OnboardingBaseStage.OnboardingButtonStates showButtonDiscover = OnboardingBaseStage.OnboardingButtonStates.Active,
-                            OnboardingBaseStage.OnboardingButtonStates showButtonRepair = OnboardingBaseStage.OnboardingButtonStates.Active,
-                            OnboardingBaseStage.OnboardingButtonStates showButtonFeed = OnboardingBaseStage.OnboardingButtonStates.Active,
-                            OnboardingBaseStage.OnboardingButtonStates showButtonPlay = OnboardingBaseStage.OnboardingButtonStates.Active,
-                            bool showContent = true, bool reactionsEnabled = true) {
+  private void UpdateStage(OnboardingBaseStage stage = null) {
+    // default values for when we just want to reset
+    // When we redo onboarding from scatch again, these should be pulled out into a nonmonobehavior normal class to
+    // create a concept of default UI states.
+    OnboardingBaseStage.OnboardingButtonStates showButtonDiscover = OnboardingBaseStage.OnboardingButtonStates.Active;
+    OnboardingBaseStage.OnboardingButtonStates showButtonRepair = OnboardingBaseStage.OnboardingButtonStates.Active;
+    OnboardingBaseStage.OnboardingButtonStates showButtonFeed = OnboardingBaseStage.OnboardingButtonStates.Active;
+    OnboardingBaseStage.OnboardingButtonStates showButtonPlay = OnboardingBaseStage.OnboardingButtonStates.Active;
+    bool showContent = true;
+    bool reactionsEnabled = true;
+    bool showDimmer = false;
+    List<NeedId> dimmedMeters = new List<NeedId>();
+    if (stage != null) {
+      showButtonDiscover = stage.ButtonStateDiscover;
+      showButtonRepair = stage.ButtonStateRepair;
+      showButtonFeed = stage.ButtonStateFeed;
+      showButtonPlay = stage.ButtonStatePlay;
+      showContent = stage.ActiveMenuContent;
+      reactionsEnabled = stage.ReactionsEnabled;
+      showDimmer = stage.DimBackground;
+      dimmedMeters = stage.DimNeedsMeters;
+    }
+
     if (_NeedsHubView != null) {
       _NeedsHubView.gameObject.SetActive(showContent);
-      UpdateButtonState(_NeedsHubView.DiscoverButton, showButtonDiscover);
-      UpdateButtonState(_NeedsHubView.RepairButton, showButtonRepair);
-      UpdateButtonState(_NeedsHubView.FeedButton, showButtonFeed);
-      UpdateButtonState(_NeedsHubView.PlayButton, showButtonPlay);
+      _NeedsHubView.OnboardingBlockoutImage.gameObject.SetActive(showDimmer);
+      // Last phase, don't dim the reward boxes by placing the blocker behind them
+      if (_CurrPhase == OnboardingPhases.RewardBox) {
+        _NeedsHubView.OnboardingBlockoutImage.transform.SetSiblingIndex(_NeedsHubView.OnboardingBlockoutImage.transform.GetSiblingIndex() - 1);
+      }
+      bool anyDimmed = false;
+      anyDimmed |= UpdateButtonState(_NeedsHubView.DiscoverButton, showButtonDiscover);
+      anyDimmed |= UpdateButtonState(_NeedsHubView.RepairButton, showButtonRepair);
+      anyDimmed |= UpdateButtonState(_NeedsHubView.FeedButton, showButtonFeed);
+      anyDimmed |= UpdateButtonState(_NeedsHubView.PlayButton, showButtonPlay);
+      const string kNormalBGSkinName = "NavHub_Container_BG_Normal";
+      const string kDimmedBGSkinName = "NavHub_Container_BG_Dimmed";
+      _NeedsHubView.NavBackgroundImage.LinkedComponentId = anyDimmed ? kDimmedBGSkinName : kNormalBGSkinName;
+      _NeedsHubView.NavBackgroundImage.UpdateSkinnableElements();
+      _NeedsHubView.MeterBackgroundImage.LinkedComponentId = anyDimmed ? kDimmedBGSkinName : kNormalBGSkinName;
+      _NeedsHubView.MeterBackgroundImage.UpdateSkinnableElements();
+      _NeedsHubView.MetersWidget.DimNeedMeters(dimmedMeters);
     }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       if (reactionsEnabled) {

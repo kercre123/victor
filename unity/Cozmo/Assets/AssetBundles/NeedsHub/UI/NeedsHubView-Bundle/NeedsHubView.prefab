@@ -1694,7 +1694,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: PLAY
+  m_text: '#needs.NeedsHubView.Button.Play'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
@@ -1703,8 +1703,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 3707764735
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.8627451}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -1816,7 +1816,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: FEED
+  m_text: '#needs.NeedsHubView.Button.Feed'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
@@ -1825,8 +1825,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 3707764735
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.8627451}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -2307,6 +2307,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114407009027686870}
   _ProgressBar: {fileID: 114638081964296686}
+  _DimmedImage: {fileID: 114316597935848614}
 --- !u!114 &114227092655652644
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2389,19 +2390,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114640844673797000}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   - targetImage: {fileID: 114952307806984436}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 015def5e932cf481295e82f848c5b8f9, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 015def5e932cf481295e82f848c5b8f9, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.47843137}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -2488,19 +2488,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114846565623639934}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 0d28919a2bb8849159bf142e37a41ec5, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: e467574fd3c874cb98543d5385532ba5, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114273781435500324}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114547925131633744}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -2554,7 +2553,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: REPAIR
+  m_text: '#needs.NeedsHubView.Button.Repair'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
@@ -2621,10 +2620,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114270182097669664}
-    characterCount: 6
+    characterCount: 7
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 1
+    spaceCount: 1
+    wordCount: 2
     linkCount: 0
     lineCount: 1
     pageCount: 1
@@ -2709,19 +2708,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114966243064350592}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   - targetImage: {fileID: 114420920029546428}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 526ae24a7eeda4fa48cf96e4181daa61, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 526ae24a7eeda4fa48cf96e4181daa61, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.584}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -2738,7 +2736,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -2888,7 +2886,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -2988,19 +2986,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114681099647549326}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   - targetImage: {fileID: 114624267912610386}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 85dc0290552e647b7bd0717155418716, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 85dc0290552e647b7bd0717155418716, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.47843137}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -3083,19 +3080,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114672103213358720}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: c250f826e53bc410b8ec572d0fb8d41a, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 5266eb63976e146ccb8dbde779e88399, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114849658332472422}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _OverrideButtonImageArray: 1
   _GlintAnimator: {fileID: 114841521832018294}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -3315,7 +3311,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: '#button.DISCOVER'
+  m_text: '#needs.NeedsHubView.Button.Activities'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
@@ -3324,8 +3320,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 3707764735
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.8627451}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_fontColorGradient:
     topLeft: {r: 1, g: 1, b: 1, a: 1}
@@ -3493,7 +3489,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: 
+  _LinkedComponentId: NavHub_Button_Normal
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114446962315980540
@@ -3548,19 +3544,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114443270529779664}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 0b04a22aa44b04b8f9245ff53062a837, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: ad0c46e4618aa43ba895aed8b757e768, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114353314133499726}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114447464915697926}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -3718,6 +3713,9 @@ MonoBehaviour:
   _NeedsEnergyModalPrefab: {fileID: 114797555182595108, guid: 294291e80354c4086a189f2c0b3b66e4,
     type: 2}
   _SettingsAlertImage: {fileID: 114978780021250782}
+  OnboardingBlockoutImage: {fileID: 114584214458930582}
+  NavBackgroundImage: {fileID: 114557462813288672}
+  MeterBackgroundImage: {fileID: 114909582419808162}
 --- !u!114 &114544536633397314
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3805,7 +3803,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: 
+  _LinkedComponentId: NavHub_Container_BG_Normal
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114570886231652914
@@ -3994,7 +3992,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -4043,6 +4041,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114743978935695850}
   _ProgressBar: {fileID: 114933767909071430}
+  _DimmedImage: {fileID: 114918668060418708}
 --- !u!114 &114624267912610386
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4086,7 +4085,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SegmentPrefab: {fileID: 11499218, guid: 32cc5668dbbae48a58000c423d34fe52, type: 2}
   _SegmentContainer: {fileID: 114916890697281478}
-  _OffImage: {fileID: 0}
+  _OnImageSkinComponentId: 
+  _OffImageSkinComponentId: 
 --- !u!114 &114638081964296686
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4360,19 +4360,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114023108879518188}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: e2b7684f375ad40739fd7ce8d20ff4d5, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 8456bbfa767cf467ab609f197ab5c250, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114594289922117072}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _OverrideButtonImageArray: 1
   _GlintAnimator: {fileID: 114380404641568540}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -4438,6 +4437,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114261238547696976}
   _ProgressBar: {fileID: 114945763666089252}
+  _DimmedImage: {fileID: 114905636424194362}
 --- !u!114 &114829748014932320
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4525,7 +4525,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -4804,19 +4804,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114576719197559344}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 28474e89ed2a34624ba4f869923f6513, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   - targetImage: {fileID: 114945291885300182}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 24a244bf1dc2f4832941a3eb47a215fd, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 24a244bf1dc2f4832941a3eb47a215fd, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.47843137}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -4878,7 +4877,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: 
+  _LinkedComponentId: NavHub_Container_BG_Normal
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114916890697281478

@@ -153,6 +153,12 @@ namespace Cozmo.Needs.UI {
     }
 
     #region Onboarding
+    public CozmoImage OnboardingBlockoutImage;
+    public CozmoImage NavBackgroundImage;
+    public CozmoImage MeterBackgroundImage;
+    public NeedsMetersWidget MetersWidget {
+      get { return _MetersWidget; }
+    }
     public CozmoButton DiscoverButton {
       get { return _ActivitiesButton; }
     }

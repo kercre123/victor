@@ -109,7 +109,7 @@
     "translation": "Cozmo would like to meet you!"
   },
   "onboarding.NeedsIntro": {
-    "translation": "Cozmo has needs.\n\nTake care of him each day to earn new Games and Abilities"
+    "translation": "<b>Cozmo has Needs.</b>\n\nTake care of him each day to earn new Games and Abilities"
   },
   "onboarding.NeedsIntroReturning": {
     "translation": "Cozmo has Needs.\n\nTake care of him each day to earn new Games and Abilities.\n\nCozmo's App may look a little different but you'll keep any unlocked Games, Upgrades, and Sparks you've earned."

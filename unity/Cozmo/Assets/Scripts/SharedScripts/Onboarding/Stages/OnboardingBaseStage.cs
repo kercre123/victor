@@ -1,20 +1,26 @@
 ﻿using Cozmo.UI;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Onboarding {
 
-  // This doesn't use a standard state machine so that data can
-  // Be added in editor
   public class OnboardingBaseStage : MonoBehaviour {
 
     public bool ActiveMenuContent { get { return _ActiveMenuContent; } }
     public bool ReactionsEnabled { get { return _ReactionsEnabled; } }
+    public bool DimBackground { get { return _DimBackground; } }
     public int DASPhaseID { get { return _DASPhaseID; } }
+    public List<Anki.Cozmo.NeedId> DimNeedsMeters {
+      get { return _DimNeedsMeters; }
+    }
 
     public OnboardingButtonStates ButtonStateDiscover { get { return _ButtonStateDiscover; } }
     public OnboardingButtonStates ButtonStateRepair { get { return _ButtonStateRepair; } }
     public OnboardingButtonStates ButtonStateFeed { get { return _ButtonStateFeed; } }
     public OnboardingButtonStates ButtonStatePlay { get { return _ButtonStatePlay; } }
+
+    [SerializeField]
+    protected bool _DimBackground = false;
 
     [SerializeField]
     protected bool _ActiveMenuContent = false;
@@ -35,6 +41,9 @@ namespace Onboarding {
 
     [SerializeField]
     protected string _OverrideTickerKey = string.Empty;
+
+    [SerializeField]
+    protected List<Anki.Cozmo.NeedId> _DimNeedsMeters;
 
     // Serialized as an int, do not reorder/delete
     public enum OnboardingButtonStates {

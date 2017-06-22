@@ -1,6 +1,6 @@
 ﻿using Anki.Cozmo;
 using Cozmo.UI;
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Cozmo.Needs.UI {
@@ -153,6 +153,13 @@ namespace Cozmo.Needs.UI {
     }
 
     #region Onboarding
+
+    public void DimNeedMeters(List<NeedId> dimmedMeters) {
+      _EnergyMeter.Dim = dimmedMeters.Contains(NeedId.Energy);
+      _RepairMeter.Dim = dimmedMeters.Contains(NeedId.Repair);
+      _PlayMeter.Dim = dimmedMeters.Contains(NeedId.Play);
+    }
+
     public CozmoButton RepairButton {
       get {
         return _RepairMeter.Button;

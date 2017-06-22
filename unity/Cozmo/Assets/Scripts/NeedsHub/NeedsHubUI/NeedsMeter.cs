@@ -12,6 +12,17 @@ namespace Cozmo.Needs.UI {
     private ProgressBar _ProgressBar;
     public ProgressBar ProgressBar { get { return _ProgressBar; } }
 
+    [SerializeField]
+    private CozmoImage _DimmedImage;
+
+    public bool Dim {
+      get {
+        return _DimmedImage.gameObject.activeInHierarchy;
+      }
+      set {
+        _DimmedImage.gameObject.SetActive(value);
+      }
+    }
     public bool AllowInput {
       get {
         return _MeterButton.enabled;

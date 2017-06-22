@@ -18,12 +18,6 @@ namespace Onboarding {
     private GameObject _DebugLayer;
 
     [SerializeField]
-    private GameObject _OutlinePrefab;
-
-    [SerializeField]
-    private GameObject _OutlineLargePrefab;
-
-    [SerializeField]
     private List<OnboardingPhasePrefabList> _NurtureStagesPrefabs;
 
     public void AddDebugButtons() {
@@ -38,14 +32,6 @@ namespace Onboarding {
         GameObject.Destroy(_DebugLayer);
         _DebugLayer = null;
       }
-    }
-
-    public GameObject GetOutlinePrefab() {
-      return _OutlinePrefab;
-    }
-
-    public GameObject GetOutlineLargePrefab() {
-      return _OutlineLargePrefab;
     }
 
     public int GetMaxStageInPhase(OnboardingManager.OnboardingPhases phase) {
