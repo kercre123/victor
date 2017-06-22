@@ -38,6 +38,9 @@ if [[ 0 -eq "$NUMIDS" ]]; then
     exit -1;
 fi
 
+# deploy assets to device
+./deploy-assets.sh
+
 # Shell into android device and execute engine
 $ADB shell  "
 logcat -c

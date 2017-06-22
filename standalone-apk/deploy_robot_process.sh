@@ -44,6 +44,14 @@ if [[ 0 -eq "$NUMIDS" ]]; then
     exit -1;
 fi
 
+# Check android version
+DEVICE_API_VERSION=$($ADB shell getprop ro.build.version.sdk | tr -d '\r\n' | xargs printf "%d")
+if [ "$DEVICE_API_VERSION" -lt "24" ]; then
+    echo "Unsupported API version ($DEVICE_API_VERSION)"
+    echo "Cozmo2 requires minimum Android N (7.0) - API 24"
+    exit -1
+fi
+
 # Upload cozmoRobot2 process
 ROBOT_EXEC=../generated/android/out/Debug/cozmoRobot2
 if [ ! -f $ROBOT_EXEC ]; then

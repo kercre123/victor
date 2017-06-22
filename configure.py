@@ -750,10 +750,14 @@ class GamePlatformConfiguration(object):
                 self.move_ndk()
                 # strip libraries and copy into unity
                 self.strip_libs()
-                # Call unity for game
-                self.call_unity_for_android(script_engine)
-                # Fix Unity's inability to generate an APK that reflects the settings we give it
-                self.fix_unity_apk()
+
+                # Skip Unity build steps for cozmo v2
+                if not self.options.engine_v2:
+                    # Call unity for game
+                    self.call_unity_for_android(script_engine)
+
+                    # Fix Unity's inability to generate an APK that reflects the settings we give it
+                    self.fix_unity_apk()
 
                 if self.options.features is not None and 'standalone' in self.options.features[0]:
                     print("Building standalone-apk")
@@ -911,6 +915,7 @@ class GamePlatformConfiguration(object):
             device = get_android_device()
             if len(device) > 0:
                 if self.options.features is not None and 'standalone' in self.options.features[0]:
+                    ankibuild.util.File.execute(['./standalone-apk/deploy-assets.sh'])
                     subprocess.call("{0} install :cozmoengine_standalone_app"
                                     .format(path_to_buck()), shell=True)
                 else:

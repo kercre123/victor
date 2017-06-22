@@ -2,12 +2,15 @@ package com.anki.cozmoengine;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +24,7 @@ import java.util.UUID;
  */
 
 public class Standalone {
+    protected static final String TAG = "CozmoEngine2";//OverDriveActivity.class.getSimpleName();
 
     private Context mContext;
     private UUID mAppRunId;
@@ -29,6 +33,7 @@ public class Standalone {
 
     private File mPersistentDataPath;
     private File mTemporaryCachePath;
+    private File mExternalAssetsPath;
     private File mResourcesBaseFolder;
     private File mResourcesFolder;
 
@@ -43,8 +48,11 @@ public class Standalone {
 
         mPersistentDataPath = context.getFilesDir();
         mTemporaryCachePath = context.getCacheDir();
-        mResourcesBaseFolder = new File(mPersistentDataPath, "cozmo");
-        mResourcesFolder = new File(mResourcesBaseFolder, "cozmo_resources");
+       
+        File externalFilesPath = context.getExternalFilesDir(null);
+        mExternalAssetsPath = new File(externalFilesPath, "assets");
+
+        Log.i(TAG, "ExternalAssetsPath: " + mExternalAssetsPath.getAbsolutePath());
     }
 
     public void Begin() {
@@ -52,14 +60,14 @@ public class Standalone {
             return;
         }
         try {
-            mResourcesFolder.mkdirs();
-            extractCozmoAssets();
+            mExternalAssetsPath.mkdirs();
             String cozmoConfig = getCozmoConfig();
             startCozmoEngine(mContext, cozmoConfig);
             mRunning = true;
         } catch (JSONException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -72,43 +80,46 @@ public class Standalone {
 
     }
 
-    private void extractCozmoAssets() throws IOException{
-        InputStream is = mAssetManager.open("resources.txt");
+    private String getCozmoAssetsRef() throws IOException {
+        InputStream is = mAssetManager.open("cozmo_assets.ref");
         BufferedReader in = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-        String assetPath;
-        while ((assetPath = in.readLine()) != null) {
-            copyAssetToInternalStorage(assetPath);
-        }
-
+        String assetsHash = in.readLine();
+        return assetsHash;
     }
 
-    private void copyAssetToInternalStorage(String assetPath) throws IOException {
-        File file = new File(mResourcesBaseFolder, assetPath);
-        if (assetPath.contains(".")) {
-            InputStream is = mAssetManager.open(assetPath);
-            OutputStream os = new FileOutputStream(file);
-            byte[] buffer = new byte[16384];
-            int read;
-            while ((read = is.read(buffer)) != -1) {
-                os.write(buffer, 0, read);
-            }
-            is.close();
-            os.close();
-
-        } else {
-            file.mkdirs();
+    private File getCozmoAssetsDir() throws IOException {
+        String cozmoAssetsRef = null;
+        try {
+            cozmoAssetsRef = getCozmoAssetsRef();
+        } catch (IOException e) {
+            Log.e(TAG, "getCozmoConfig :: missing cozmo_assets.ref file");
+            throw(e);
         }
+
+        File assetsDir = new File(mExternalAssetsPath, cozmoAssetsRef);
+
+        return assetsDir;
     }
 
-    private String getCozmoConfig() throws JSONException {
+    private String getCozmoConfig() throws JSONException, IOException {
+        File cozmoAssetsDir = getCozmoAssetsDir();
+        if (!cozmoAssetsDir.isDirectory()) {
+            String ref = getCozmoAssetsRef();
+            Log.e(TAG, "getCozmoConfig :: assets not found in: " + cozmoAssetsDir);
+            Log.e(TAG, "getCozmoConfig :: re-deploy assets for hash/ref: " + ref);
+        }
+
+        File cozmoResources = new File(cozmoAssetsDir, "cozmo_resources");
+        Log.i(TAG, "cozmoAssetsDir: " + cozmoAssetsDir);
 
         HashMap<String,String> cozmoConfigMap = new HashMap<String, String>();
         cozmoConfigMap.put("DataPlatformFilesPath", mPersistentDataPath.getAbsolutePath());
         cozmoConfigMap.put("DataPlatformCachePath", mTemporaryCachePath.getAbsolutePath());
         cozmoConfigMap.put("DataPlatformExternalPath", mTemporaryCachePath.getAbsolutePath());
-        cozmoConfigMap.put("DataPlatformResourcesPath", mResourcesFolder.getAbsolutePath());
-        cozmoConfigMap.put("DataPlatformResourcesBasePath", mResourcesBaseFolder.getAbsolutePath());
+        cozmoConfigMap.put("DataPlatformResourcesPath", cozmoResources.getAbsolutePath());
+        cozmoConfigMap.put("DataPlatformResourcesBasePath", cozmoAssetsDir.getAbsolutePath());
         cozmoConfigMap.put("appRunId", mAppRunId.toString());
+
         JSONObject cozmoConfigJsonObject = new JSONObject(cozmoConfigMap);
         cozmoConfigJsonObject = cozmoConfigJsonObject.put("standalone", true);
 

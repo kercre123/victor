@@ -63,7 +63,7 @@ class CopyResources(object):
                         action='store', default=None, help='where engine resources are located')
     parser.add_argument('--unityAssetsPath', dest='unityAssetsPath', required=True,
                         action='store', default=None, help='where unity assets are located')
-    parser.add_argument('--soundBanksPath', dest='soundBanksPath', required=True,
+    parser.add_argument('--soundBanksPath', dest='soundBanksPath', required=False,
                         action='store', default=None, help='where sound banks are located')
     parser.add_argument('--copyMethod', dest='copyMethod', action='store', default='rsync',
                         choices=('rsync', 'copy'), required=True,
@@ -190,21 +190,22 @@ class CopyResources(object):
       return False
 
     # sound banks
-    soundBanksPlatform = ''
-    if self.options.platform == 'ios':
-      soundBanksPlatform = 'iOS'
-    elif self.options.platform == 'mac':
-      soundBanksPlatform = 'Mac'
-    elif self.options.platform == 'android':
-      soundBanksPlatform = 'Android'
+    if self.options.soundBanksPath:
+      soundBanksPlatform = ''
+      if self.options.platform == 'ios':
+        soundBanksPlatform = 'iOS'
+      elif self.options.platform == 'mac':
+        soundBanksPlatform = 'Mac'
+      elif self.options.platform == 'android':
+        soundBanksPlatform = 'Android'
 
-    soundBanksPath = os.path.join(cozmoResourcesPath, 'sound')
-    if os.path.isdir(soundBanksPath):
-      ankibuild.util.File.rm_rf(soundBanksPath)
-    if not ankibuild.util.File.cptree(os.path.join(self.options.soundBanksPath, soundBanksPlatform), soundBanksPath):
-      self.log.error("error copying {0} to {1}".format (
-        os.path.join(self.options.soundBanksPath, soundBanksPlatform), soundBanksPath))
-      return False
+      soundBanksPath = os.path.join(cozmoResourcesPath, 'sound')
+      if os.path.isdir(soundBanksPath):
+        ankibuild.util.File.rm_rf(soundBanksPath)
+      if not ankibuild.util.File.cptree(os.path.join(self.options.soundBanksPath, soundBanksPlatform), soundBanksPath):
+        self.log.error("error copying {0} to {1}".format (
+          os.path.join(self.options.soundBanksPath, soundBanksPlatform), soundBanksPath))
+        return False
 
     return True
 
@@ -262,18 +263,19 @@ class CopyResources(object):
     ankibuild.util.File.execute(args)
 
     # sound banks
-    soundBanksPlatform = ''
-    if self.options.platform == 'ios':
-      soundBanksPlatform = 'iOS/'
-    elif self.options.platform == 'mac':
-      soundBanksPlatform = 'Mac/'
-    elif self.options.platform == 'android':
-      soundBanksPlatform = 'Android/'
-
-    soundBanksPath = os.path.join(cozmoResourcesPath, 'sound')
-    args = baseargs[:]
-    args += [os.path.join(self.options.soundBanksPath, soundBanksPlatform), soundBanksPath]
-    ankibuild.util.File.execute(args)
+    if self.options.soundBanksPath:
+      soundBanksPlatform = ''
+      if self.options.platform == 'ios':
+        soundBanksPlatform = 'iOS/'
+      elif self.options.platform == 'mac':
+        soundBanksPlatform = 'Mac/'
+      elif self.options.platform == 'android':
+        soundBanksPlatform = 'Android/'
+  
+      soundBanksPath = os.path.join(cozmoResourcesPath, 'sound')
+      args = baseargs[:]
+      args += [os.path.join(self.options.soundBanksPath, soundBanksPlatform), soundBanksPath]
+      ankibuild.util.File.execute(args)
 
     return True
 
