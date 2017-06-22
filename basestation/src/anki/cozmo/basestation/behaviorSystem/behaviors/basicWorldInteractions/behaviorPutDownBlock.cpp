@@ -97,6 +97,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
   StartActingExtraScore(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,

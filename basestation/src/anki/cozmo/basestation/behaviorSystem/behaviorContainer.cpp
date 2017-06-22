@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorRollBlock.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorSearchForFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/behaviorWait.h"
@@ -308,6 +309,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::DockingTestSimple:
     {
       newBehavior = IBehaviorPtr(new BehaviorDockingTestSimple(robot, config));
+      break;
+    }
+    case BehaviorClass::SearchForFace:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorSearchForFace(robot, config));
       break;
     }
     case BehaviorClass::StackBlocks:

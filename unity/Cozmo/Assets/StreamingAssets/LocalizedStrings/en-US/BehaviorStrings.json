@@ -234,6 +234,9 @@
   "behavior.VC_Refuse_Sparks": {
     "translation": "You don't have enough Sparks"
   },
+  "behavior.SearchForFace": {
+    "translation": "Cozmo is looking for a face"
+  },
   "behavior.Needs_MildLowEnergyRequest": {
     "translation": "Cozmo is feeling hungry"
   },

@@ -57,6 +57,7 @@ enum uint_8 BehaviorClass {
   RespondPossiblyRoll,
   RespondToRenameFace,
   RollBlock,
+  SearchForFace,
   Singing,
   StackBlocks,
   ThinkAboutBeacons,
@@ -249,6 +250,7 @@ enum uint_8 BehaviorID {
   VC_RequestKeepAway,
   VC_RequestMemoryMatch,
   VC_RequestSpeedTap,
+  VC_SearchForFace,
   VC_TrackLaser,
 
   Wait

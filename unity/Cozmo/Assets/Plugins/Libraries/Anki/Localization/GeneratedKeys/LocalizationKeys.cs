@@ -74,6 +74,8 @@ public static class LocalizationKeys {
   public const string kBehaviorVC_Refuse_Energy = "behavior.VC_Refuse_Energy";
   public const string kBehaviorVC_Refuse_Repair = "behavior.VC_Refuse_Repair";
   public const string kBehaviorVC_Refuse_Sparks = "behavior.VC_Refuse_Sparks";
+  public const string kBehaviorVC_SearchForFace = "behavior.SearchForFace";
+
 
   #endregion
 

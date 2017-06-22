@@ -1,0 +1,5 @@
+{
+  "behaviorClass" : "SearchForFace",
+  "behaviorID" : "VC_SearchForFace",
+  "displayNameKey":"behavior.SearchForFace"
+}

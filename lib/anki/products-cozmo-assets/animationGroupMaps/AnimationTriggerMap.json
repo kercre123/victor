@@ -195,7 +195,19 @@
     {
       "CladEvent": "ConnectWakeUp_SevereRepair",
       "AnimName": "ag_repair_severe_wakeup_01"
-    },      
+    },  
+    {
+      "CladEvent": "ComeHere_AlreadyHere",
+      "AnimName": "ag_vc_reaction_alreadyhere"
+    },  
+    {
+      "CladEvent": "ComeHere_SearchForFace",
+      "AnimName": "ag_vc_reaction_nofaceheardyou"
+    },  
+    {
+      "CladEvent": "ComeHere_SearchForFace_FoundFace",
+      "AnimName": "ag_vc_reaction_nofaceheardyou_getout"
+    },
     {
       "CladEvent": "CozmoSaysGetIn",
       "AnimName": "ag_cozmosays_app_getin"

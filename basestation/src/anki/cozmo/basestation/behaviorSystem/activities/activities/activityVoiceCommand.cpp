@@ -73,10 +73,15 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
-  _comeHereBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_ComeHere);
-  DEV_ASSERT(_comeHereBehavior != nullptr &&
-             _comeHereBehavior->GetClass() == BehaviorClass::DriveToFace,
+  _driveToFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_ComeHere);
+  DEV_ASSERT(_driveToFaceBehavior != nullptr &&
+             _driveToFaceBehavior->GetClass() == BehaviorClass::DriveToFace,
              "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
+  
+  _searchForFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_SearchForFace);
+  DEV_ASSERT(_searchForFaceBehavior != nullptr &&
+             _searchForFaceBehavior->GetClass() == BehaviorClass::SearchForFace,
+             "VoiceCommandBehaviorChooser.SearchForFaceBehavior.ImproperClassRetrievedForName");
   
   _fistBumpBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FistBump);
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
@@ -213,12 +218,17 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
     case VoiceCommandType::ComeHere:
     {
       BehaviorPreReqRobot preReqData(robot);
-      if(_comeHereBehavior->IsRunnable(preReqData)){
-        _voiceCommandBehavior = _comeHereBehavior;
+      if(_driveToFaceBehavior->IsRunnable(preReqData)){
+        _voiceCommandBehavior = _driveToFaceBehavior;
       }
       else
       {
-        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
+        BehaviorPreReqRobot preReqData(robot);
+        if(ANKI_VERIFY(_searchForFaceBehavior->IsRunnable(preReqData),
+                       "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
+                       "No way to respond to the voice command")){
+          _voiceCommandBehavior = _searchForFaceBehavior;
+        }
       }
       
       const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);

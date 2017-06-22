@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveToFace.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackFaceAction.h"
@@ -141,7 +142,8 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(Robot& robot)
       driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
       StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
     }else{
-      TransitionToTrackingFace(robot);
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_AlreadyHere),
+                  &BehaviorDriveToFace::TransitionToTrackingFace);
     }
   }else{
     PRINT_CH_INFO("BehaviorDriveToFace.TransitionToDrivingToFace.NullFace",
@@ -150,7 +152,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace(Robot& robot)
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::TransitionToTrackingFace(Robot& robot)
 {

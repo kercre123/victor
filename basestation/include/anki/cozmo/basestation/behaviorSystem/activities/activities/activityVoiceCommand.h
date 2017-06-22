@@ -80,7 +80,8 @@ private:
 
   IBehaviorPtr          _voiceCommandBehavior;
   IBehaviorPtr          _danceBehavior;
-  IBehaviorPtr          _comeHereBehavior;
+  IBehaviorPtr          _driveToFaceBehavior;
+  IBehaviorPtr          _searchForFaceBehavior;
   IBehaviorPtr          _fistBumpBehavior;
   IBehaviorPtr          _peekABooBehavior;
   IBehaviorPtr          _laserBehavior;
