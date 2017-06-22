@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 0638a1e4b7bdb481cb151e61eb8f2570
-timeCreated: 1486159950
+guid: 1ec52c7073ab8471db4ed852d85163ed
+timeCreated: 1498093572
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -24,7 +24,7 @@ TextureImporter:
   generateCubemap: 6
   cubemapConvolution: 0
   seamlessCubemap: 0
-  textureFormat: -3
+  textureFormat: 1
   maxTextureSize: 2048
   textureSettings:
     filterMode: 1
@@ -62,7 +62,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: minigame_ui_spritesSDAtlas
+  spritePackingTag: nurture_ui_spritesSDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
