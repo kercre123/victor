@@ -126,7 +126,7 @@ namespace Anki {
       
       void OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       void OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-      void DoExitSdkMode();
+      void DoExitSdkMode(bool isExternalSdkMode);
       
       void UpdateSdk();
       void UpdateIsSdkCommunicationEnabled();
@@ -173,6 +173,8 @@ namespace Anki {
       uint32_t                            _hostUiDeviceID = 0;
       
       uint32_t                            _updateCount = 0;
+      
+      UiConnectionType                    _connectionSource = UiConnectionType::Count;  // Connection source currently processing messages
       
       bool                                _isInitialized = false;
 

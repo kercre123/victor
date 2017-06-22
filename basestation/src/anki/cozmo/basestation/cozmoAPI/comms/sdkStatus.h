@@ -51,7 +51,7 @@ public:
   static double GetCurrentTime_s();
   
   void EnterMode(bool isExternalSdkMode);
-  void ExitMode();
+  void ExitMode(bool isExternalSdkMode);
   
   void OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionSuccess& message);
   void OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message);

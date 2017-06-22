@@ -60,7 +60,7 @@ namespace Anki {
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
 #else
-  #define ANKI_ENABLE_SDK_OVER_UDP  1
+  #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
 #endif
     
@@ -92,6 +92,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::SdkOverTcp:  return true;
         default:
         {
+          PRINT_NAMED_ERROR("IsExternalSdkConnection.BadType", "type = %d", (int)type);
           assert(0);
           return false;
         }
@@ -203,6 +204,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DeviceGyroValues, gameToGameCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnableDeviceIMUData, gameToGameCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::IsDeviceIMUSupported, gameToGameCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::GameToGame, gameToGameCallback));
       
       // Subscribe to specific events
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnterSdkMode,
@@ -619,6 +621,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 
         for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
         {
+          _connectionSource = i;
           ISocketComms* socketComms = GetSocketComms(i);
           if (socketComms)
           {
@@ -641,7 +644,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
             }
           }
         }
-        
+        _connectionSource = UiConnectionType::Count;
       }
       
       return retVal;
@@ -943,37 +946,47 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     void UiMessageHandler::HandleGameToGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
+      const bool isFromSdk = IsExternalSdkConnection(_connectionSource);
+      UiConnectionType destType = isFromSdk ? UiConnectionType::UI : UiConnectionType::SdkOverTcp;
+      DestinationId destinationId = (DestinationId)(destType);
+
       // Note we have to copy msg to a non-const temporary as MessageEngineToGame constructor only takes r-values
       switch (event.GetData().GetTag())
       {
         case ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesRaw:
         {
           ExternalInterface::DeviceAccelerometerValuesRaw msg = event.GetData().Get_DeviceAccelerometerValuesRaw();
-          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
           break;
         }
         case ExternalInterface::MessageGameToEngineTag::DeviceAccelerometerValuesUser:
         {
           ExternalInterface::DeviceAccelerometerValuesUser msg = event.GetData().Get_DeviceAccelerometerValuesUser();
-          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
           break;
         }
         case ExternalInterface::MessageGameToEngineTag::DeviceGyroValues:
         {
           ExternalInterface::DeviceGyroValues msg = event.GetData().Get_DeviceGyroValues();
-          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
           break;
         }
         case ExternalInterface::MessageGameToEngineTag::EnableDeviceIMUData:
         {
           ExternalInterface::EnableDeviceIMUData msg = event.GetData().Get_EnableDeviceIMUData();
-          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
           break;
         }
         case ExternalInterface::MessageGameToEngineTag::IsDeviceIMUSupported:
         {
           ExternalInterface::IsDeviceIMUSupported msg = event.GetData().Get_IsDeviceIMUSupported();
-          Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::GameToGame:
+        {
+          ExternalInterface::GameToGame msg = event.GetData().Get_GameToGame();
+          DeliverToGame(ExternalInterface::MessageEngineToGame(std::move(msg)), destinationId);
           break;
         }
         default:
@@ -1000,17 +1013,18 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
+      const ExternalInterface::ExitSdkMode& msg = event.GetData().Get_ExitSdkMode();
       _context->GetNeedsManager()->SetPaused(false);
 
       // Note: Robot's message handler also handles this event, and that disconnects the robot
       //       (that's how we ensure that we restore the robot to a safe default state)
-      DoExitSdkMode();
+      DoExitSdkMode(msg.isExternalSdkMode);
     }
     
     
-    void UiMessageHandler::DoExitSdkMode()
+    void UiMessageHandler::DoExitSdkMode(bool isExternalSdkMode)
     {
-      _sdkStatus.ExitMode();
+      _sdkStatus.ExitMode(isExternalSdkMode);
       UpdateIsSdkCommunicationEnabled();
     }
     
@@ -1050,9 +1064,13 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     
     void UiMessageHandler::OnRobotDisconnected(uint32_t robotID)
     {
-      if (_sdkStatus.IsInAnySdkMode())
+      if (_sdkStatus.IsInInternalSdkMode())
       {
-        DoExitSdkMode();
+        DoExitSdkMode(false);
+      }
+      if (_sdkStatus.IsInExternalSdkMode())
+      {
+        DoExitSdkMode(true);
       }
     }
     

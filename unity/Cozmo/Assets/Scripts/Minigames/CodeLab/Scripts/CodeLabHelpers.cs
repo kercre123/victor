@@ -38,11 +38,11 @@ namespace CodeLab {
 
   public class InProgressScratchBlock {
     private int _RequestId;
-    private WebViewObject _WebViewObjectComponent;
+    private CodeLabGame _CodeLabGame;
 
-    public void Init(int requestId = -1, WebViewObject webViewObjectComponent = null) {
+    public void Init(int requestId = -1, CodeLabGame codeLabGame = null) {
       _RequestId = requestId;
-      _WebViewObjectComponent = webViewObjectComponent;
+      _CodeLabGame = codeLabGame;
     }
 
     public void NeutralFaceThenAdvanceToNextBlock(bool success) {
@@ -73,7 +73,7 @@ namespace CodeLab {
     private void ResolveRequestPromise() {
       if (this._RequestId >= 0) {
         // Calls the JavaScript function resolving the Promise on the block
-        _WebViewObjectComponent.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
+        _CodeLabGame.EvaluateJS(@"window.resolveCommands[" + this._RequestId + "]();");
         this._RequestId = -1;
       }
     }

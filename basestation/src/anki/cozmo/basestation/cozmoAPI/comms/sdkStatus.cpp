@@ -77,8 +77,8 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
     _externalInterface->Broadcast( GToE(ExternalInterface::ActivateHighLevelActivity(HighLevelActivity::Selection)) );
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehaviorByExecutableType(ExecutableBehaviorType::Wait, -1)) );
       
-      ReactionTriggerToBehavior noneTrigger;
-      noneTrigger.trigger = ReactionTrigger::NoneTrigger;
+    ReactionTriggerToBehavior noneTrigger;
+    noneTrigger.trigger = ReactionTrigger::NoneTrigger;
     _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteReactionTrigger(noneTrigger)) );
   }
   
@@ -107,41 +107,54 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
 
 void SdkStatus::EnterMode(bool isExternalSdkMode)
 {
-  DEV_ASSERT(!IsInAnySdkMode(), "SdkStatus.EnterMode.AlreadyInMode");
+  const bool wasAlreadyInSdkMode = IsInAnySdkMode();
   if (isExternalSdkMode)
   {
+    DEV_ASSERT(!_isInExternalSdkMode, "SdkStatus.EnterMode.AlreadyInExternalMode");
     Util::sEventF("robot.sdk_mode_on", {}, "");
-  }
-  
-  ResetRobot(false);
-  
-  if (isExternalSdkMode) {
     _isInExternalSdkMode = true;
   }
-  else {
+  else
+  {
+    DEV_ASSERT(!_isInInternalSdkMode, "SdkStatus.EnterMode.AlreadyInInternalMode");
     _isInInternalSdkMode = true;
     _isConnected = true;
   }
-
-  _enterSdkModeTime_s = GetCurrentTime_s();
+  
+  if (!wasAlreadyInSdkMode)
+  {
+    ResetRobot(false);
+    _enterSdkModeTime_s = GetCurrentTime_s();
+  }
 }
 
 
-void SdkStatus::ExitMode()
+void SdkStatus::ExitMode(bool isExternalSdkMode)
 {
-  DEV_ASSERT(IsInAnySdkMode(), "SdkStatus.ExitMode.NotInMode");
-
-  // Disconnect before sending exit mode event so that all connect/disconnects are wrapped by sdk on/off
-  OnDisconnect(true);
-  
-  if (_isInExternalSdkMode)
+  if (isExternalSdkMode)
   {
-    const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
-    Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
+    DEV_ASSERT(_isInExternalSdkMode, "SdkStatus.ExitMode.NotInExternalMode");
+    _isInExternalSdkMode = false;
   }
-
-  _isInExternalSdkMode = false;
-  _isInInternalSdkMode = false;
+  else
+  {
+    DEV_ASSERT(_isInInternalSdkMode, "SdkStatus.ExitMode.NotInInternalMode");
+    _isInInternalSdkMode = false;
+  }
+  
+  const bool isStillInSdkMode = IsInAnySdkMode();
+  
+  if (!isStillInSdkMode)
+  {
+    // Disconnect before sending exit mode event so that all connect/disconnects are wrapped by sdk on/off
+    OnDisconnect(true);
+    
+    if (isExternalSdkMode)
+    {
+      const double timeInSdkMode = TimeInMode_s(GetCurrentTime_s());
+      Util::sEventF("robot.sdk_mode_off", {{DDATA, std::to_string(timeInSdkMode).c_str()}}, "%d", _numTimesConnected);
+    }
+  }
 }
 
 
@@ -173,7 +186,11 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
   }
   else
   {
-    PRINT_NAMED_ERROR("SdkStatus.OnConnectionSuccess.AlreadyConnected", "");
+    // Multiple connection calls are expected if connected on both sdk modes simultaneously
+    if (!(_isInExternalSdkMode && _isInInternalSdkMode))
+    {
+      PRINT_NAMED_ERROR("SdkStatus.OnConnectionSuccess.AlreadyConnected", "");
+    }
   }
 }
   

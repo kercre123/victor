@@ -119,7 +119,7 @@
 
             var promiseSaveProject = window.promiseWaitForSaveProject();
             promiseSaveProject.then(function(result) {
-                window.Unity.call("{'requestId': '" + -1 + "', 'command': 'cozmoLoadProjectPage'}");
+                window.Unity.call('{"requestId": "-1", "command": "cozmoLoadProjectPage"}');
             });
         });
         closeButton.addEventListener('touchmove', function (e) {
@@ -200,3 +200,64 @@
      */
     window.onload = onLoad;
 })();
+
+var gEnableSdkConnection = false;  // TODO: Enable this automatically when running through sdk
+
+function updateSdk()
+{
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+            // Handle each response in turn?
+            if (xhr.responseText != "OK") {
+                eval(xhr.responseText)
+            }
+        }
+    }
+
+    xhr.open("POST", "poll_sdk", true);
+    xhr.send( null );
+}
+
+// ANKI Code to support running codelab in a remote browser connected via the SDK
+function sdkPostHttpRequest(url, dataSet)
+{
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    xhr.send( JSON.stringify( dataSet ) );
+}
+
+window.Unity = {
+    call: function(msg) {
+        var iframe = document.createElement('IFRAME');
+        iframe.setAttribute('src', 'unity:' + msg);
+        document.documentElement.appendChild(iframe);
+        iframe.parentNode.removeChild(iframe);
+        iframe = null;
+        if (gEnableSdkConnection) {
+            sdkPostHttpRequest("sdk_call", {msg});
+        }
+    }
+}
+
+function updateSdk()
+{
+    if (gEnableSdkConnection) {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                // Handle each response in turn?
+                if (xhr.responseText != "OK") {
+                    eval(xhr.responseText)
+                }
+                //document.getElementById("DebugInfoId").innerHTML = xhr.responseText
+            }
+        }
+
+        xhr.open("POST", "poll_sdk", true);
+        xhr.send( null );
+    }
+}
+if (gEnableSdkConnection) {
+    setInterval(updateSdk , 10);
+}

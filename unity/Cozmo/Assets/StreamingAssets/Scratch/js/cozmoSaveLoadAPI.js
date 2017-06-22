@@ -10,7 +10,7 @@
     // The callback has only been tested with a method on window.
     // Example: window.myCallback(userProjectList, sampleProjectList)
     window.getCozmoUserAndSampleProjectLists = function(callback) {
-        window.Unity.call("{'requestId': '" + -1 + "', 'command': 'getCozmoUserAndSampleProjectLists','argString': '" + callback + "'}");
+        window.Unity.call('{"requestId": "-1", "command": "getCozmoUserAndSampleProjectLists","argString": "' + callback + '"}');
     }
 
     // Delete the project specified by the projectUUID.

@@ -52,6 +52,73 @@ namespace CodeLab {
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
 
+    private class GameToGameConn {
+      private bool _Enabled = false;
+      private string _PendingMessageType = null;
+      private string _PendingMessage = null;
+      private int _PendingMessageNextIndex = -1;
+      private int _PendingMessageCount = -1;
+
+      public void Enable() {
+        _Enabled = true;
+      }
+
+      public bool IsEnabled {
+        get { return _Enabled; }
+      }
+
+      public string PendingMessageType {
+        get { return _PendingMessageType; }
+      }
+
+      public string PendingMessage {
+        get { return _PendingMessage; }
+      }
+
+      public bool HasPendingMessage() {
+        return _PendingMessageNextIndex > 0;
+      }
+
+      public void ResetPendingMessage() {
+        _PendingMessageType = null;
+        _PendingMessage = null;
+        _PendingMessageNextIndex = -1;
+        _PendingMessageCount = -1;
+      }
+
+      private bool IsExpectedPart(GameToGame msg) {
+        if (HasPendingMessage()) {
+          return ((_PendingMessageNextIndex == msg.messagePartIndex) && (_PendingMessageCount == msg.messagePartCount) && (_PendingMessageType == msg.messageType));
+        }
+
+        return (msg.messagePartIndex == 0);
+      }
+
+      public bool AppendMessage(GameToGame msg) {
+        if (!IsExpectedPart(msg)) {
+          DAS.Error("AppendMessage.UnexpectedPart", string.Format("Expected {0}/{1} '{2}', got {3}/{4} '{5}'",
+                                                                  _PendingMessageNextIndex, _PendingMessageCount, _PendingMessageType,
+                                                                  msg.messagePartIndex, msg.messagePartCount, msg.messageType));
+          ResetPendingMessage();
+          return false;
+        }
+        else {
+          if (HasPendingMessage()) {
+            _PendingMessage += msg.payload;
+          }
+          else {
+            _PendingMessageType = msg.messageType;
+            _PendingMessage = msg.payload;
+            _PendingMessageCount = msg.messagePartCount;
+          }
+          _PendingMessageNextIndex = msg.messagePartIndex + 1;
+          return (_PendingMessageNextIndex == _PendingMessageCount);
+        }
+      }
+    }
+
+    private GameToGameConn _GameToGameConn = new GameToGameConn();
+
     private uint _ChallengeBookmark = 1;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
@@ -88,7 +155,34 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       string json = File.ReadAllText(path);
       _CodeLabSampleProjects = JsonConvert.DeserializeObject<List<CodeLabSampleProject>>(json);
 
+      RobotEngineManager.Instance.AddCallback<GameToGame>(HandleGameToGame);
+
       LoadWebView();
+    }
+
+    private void HandleGameToGameContents(string messageType, string payload) {
+      switch (messageType) {
+      case "WebViewCallback":
+        WebViewCallback(payload);
+        break;
+      default:
+        DAS.Error("HandleGameToGameContents.BadType", "Unhandled type: " + messageType);
+        break;
+      }
+    }
+
+    private void HandleGameToGame(GameToGame webToUnity) {
+      // Dev-builds only (no GameToGame or SDK connection possible in Shipping)
+
+      if (webToUnity.messageType == "EnableGameToGame") {
+        _GameToGameConn.Enable();
+      }
+      else if (_GameToGameConn.IsEnabled) {
+        if (_GameToGameConn.AppendMessage(webToUnity)) {
+          HandleGameToGameContents(_GameToGameConn.PendingMessageType, _GameToGameConn.PendingMessage);
+          _GameToGameConn.ResetPendingMessage();
+        }
+      }
     }
 
     protected override void CleanUpOnDestroy() {
@@ -107,6 +201,8 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         _WebViewObject = null;
       }
       UIManager.Instance.HideTouchCatcher();
+
+      RobotEngineManager.Instance.RemoveCallback<GameToGame>(HandleGameToGame);
     }
 
     private CozmoStateForCodeLab _LatestCozmoState = new CozmoStateForCodeLab(); // The latest world state sent to JS
@@ -119,6 +215,31 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       else {
         cubeDest.pos = cubeSrc.WorldPosition;
         cubeDest.isValid = true;
+      }
+    }
+
+    public void EvaluateJS(string text) {
+      _WebViewObjectComponent.EvaluateJS(text);
+      if (_GameToGameConn.IsEnabled) {
+        const string messageType = "EvaluateJS";
+
+        int maxPayloadSize = 2024 - messageType.Length; // 2048 is an engine-side limit for clad messages, reserve an extra 24 for rest of the tags and members
+
+        byte partCount = 1;
+        if (text.Length > maxPayloadSize) {
+          partCount = (byte)(((text.Length - 1) / maxPayloadSize) + 1);
+        }
+
+        var rEM = RobotEngineManager.Instance;
+        for (byte i = 0; i < partCount; ++i) {
+          string textToSend = text;
+          if (textToSend.Length > maxPayloadSize) {
+            textToSend = textToSend.Substring(0, maxPayloadSize);
+            text = text.Substring(maxPayloadSize);
+          }
+          rEM.Message.GameToGame = Singleton<GameToGame>.Instance.Initialize(i, partCount, messageType, textToSend);
+          rEM.SendMessage();
+        }
       }
     }
 
@@ -163,7 +284,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Serialize _LatestCozmoState to JSON and send to Web / Javascript side
 
         string cozmoStateAsJSON = JsonConvert.SerializeObject(_LatestCozmoState);
-        _WebViewObjectComponent.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
+        this.EvaluateJS(@"window.setCozmoState('" + cozmoStateAsJSON + "');");
       }
     }
 
@@ -424,7 +545,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       string sampleProjectsAsJSON = JsonConvert.SerializeObject(copyCodeLabSampleProjectList);
 
       // Call jsCallback with list of serialized Code Lab user projects and sample projects
-      _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
+      this.EvaluateJS(jsCallback + "('" + userProjectsAsJSON + "','" + sampleProjectsAsJSON + "');");
     }
 
     private void OnSetChallengeBookmark(ScratchRequest scratchRequest) {
@@ -439,7 +560,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       // Provide js with current challenge bookmark location
       string jsCallback = scratchRequest.argString;
 
-      _WebViewObjectComponent.EvaluateJS(jsCallback + "('" + _ChallengeBookmark + "');");
+      this.EvaluateJS(jsCallback + "('" + _ChallengeBookmark + "');");
     }
 
     private void OnCozmoSaveUserProject(ScratchRequest scratchRequest) {
@@ -473,7 +594,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           defaultProfile.CodeLabProjects.Add(newProject);
 
           // Inform workspace that the current work on workspace has been saved to a project.
-          _WebViewObjectComponent.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
+          this.EvaluateJS("window.newProjectCreated('" + newProject.ProjectUUID + "','" + newProject.ProjectName + "'); ");
 
           _SessionState.OnCreatedProject(newProject);
         }
@@ -496,7 +617,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         }
       }
 
-      _WebViewObjectComponent.EvaluateJS(@"window.saveProjectCompleted();");
+      this.EvaluateJS(@"window.saveProjectCompleted();");
     }
 
     private void OnCozmoDeleteUserProject(ScratchRequest scratchRequest) {
@@ -638,7 +759,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
     private void HandleBlockScratchRequest(ScratchRequest scratchRequest) {
       InProgressScratchBlock inProgressScratchBlock = InProgressScratchBlockPool.GetInProgressScratchBlock();
-      inProgressScratchBlock.Init(scratchRequest.requestId, _WebViewObjectComponent);
+      inProgressScratchBlock.Init(scratchRequest.requestId, this);
 
       if (scratchRequest.command == "cozVertPathOffset") {
         float offsetX = scratchRequest.argFloat;
@@ -935,7 +1056,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       switch (_RequestToOpenProjectOnWorkspace) {
       case RequestToOpenProjectOnWorkspace.CreateNewProject:
         // Open workspace and display only a green flag on the workspace.
-        _WebViewObjectComponent.EvaluateJS("window.putStarterGreenFlagOnWorkspace();");
+        this.EvaluateJS("window.putStarterGreenFlagOnWorkspace();");
         break;
 
       case RequestToOpenProjectOnWorkspace.DisplayUserProject:
@@ -947,7 +1068,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
             String projectXMLEscaped = projectToOpen.ProjectXML.Replace("\"", "\\\"");
 
             // Open requested project in webview
-            _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
+            this.EvaluateJS("window.openCozmoProject('" + projectToOpen.ProjectUUID + "','" + projectToOpen.ProjectName + "',\"" + projectXMLEscaped + "\",'false');");
           }
         }
         else {
@@ -969,7 +1090,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
           // Open requested project in webview
           String sampleProjectName = Localization.Get(codeLabSampleProject.ProjectName);
-          _WebViewObjectComponent.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectName + "',\"" + projectXMLEscaped + "\",'true');");
+          this.EvaluateJS("window.openCozmoProject('" + codeLabSampleProject.ProjectUUID + "','" + sampleProjectName + "',\"" + projectXMLEscaped + "\",'true');");
         }
         else {
           DAS.Error("CodeLab.NullSampleProject", "Sample project empty for _ProjectUUIDToOpen = '" + _ProjectUUIDToOpen + "'");
