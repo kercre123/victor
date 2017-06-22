@@ -20,7 +20,7 @@ mode_run_now_url = os.environ.get("MODE_RUN_NOW_URL")
 mode_timeout = int(os.environ.get("MODE_TIMEOUT"))
 db_days = os.environ.get("DB_DAYS_INTERVAL")
 cozmo_table = os.environ.get("COZMO_TABLE")
-production_version = os.environ.get("PROD_VERSION") # e.g. "1.0.1"
+applestore_version_url = os.environ.get("APPLESTORE_API_URL")
 
 
 def jira_connect(url, username, password):
@@ -41,6 +41,7 @@ def parse_query(jconn):
   data = response.text
   report_url = data[data.find('https://modeanalytics.com/anki/reports'):data.find('">\n    <meta name="og:title')]
   report_csv = '{}/results/content.csv'.format(report_url.replace('anki', 'api/anki'))
+  production_version = get_production_version()
 
   timeout_counter = 0
   while timeout_counter < mode_timeout:
@@ -85,7 +86,7 @@ def parse_query(jconn):
     jissues = jconn.search_issues('summary ~ "Fix firmware crash {}" ORDER BY created DESC'.format(crash))
 
     if len(jissues) >= 1: # comment on existing issues
-      if jissues[0].fields.status.name == 'Closed' and newer_version(crash, affects_versions_dict):
+      if jissues[0].fields.status.name == 'Closed' and newer_version(affects_versions_dict[crash], production_version):
         try:
           jconn.transition_issue(jissues[0].key, 341)
           print("Re-opening ticket {}".format(jissues[0].key))
@@ -115,19 +116,24 @@ def parse_query(jconn):
 
     else: # create new JIRA issue
       description = build_jira_description(apprun_typestr_registers)
-      affects_versions = build_affects_verions_list(affects_versions_dict, crash)
+      jira_affects_versions = build_affects_verions_list(affects_versions_dict, crash)
 
-      new_issue = jconn.create_issue(project='COZMO',
-                                     summary='Fix firmware crash {}'.format(crash),
-                                     description='{}'.format(description),
-                                     issuetype={'name': 'Bug'},
-                                     components=[{"name": "triage"},{"name": "crashes"}])
-      try:
-        new_issue.update(fields={'versions': affects_versions})
-      except:
-        print("Unable to add Affects Version to {}".format(new_issue.key))
+      if newer_version(affects_versions_dict[crash], production_version):
+        new_issue = jconn.create_issue(project='COZMO',
+                                       summary='Fix firmware crash {}'.format(crash),
+                                       description='{}'.format(description),
+                                       issuetype={'name': 'Bug'},
+                                       components=[{"name": "triage"},{"name": "crashes"}])
+        try:
+          new_issue.update(fields={'versions': jira_affects_versions})
+        except:
+          print("Unable to add Affects Version to {}".format(new_issue.key))
 
-      print("Created new issue: {}".format(new_issue.key))
+        print("Created new issue: {}".format(new_issue.key))
+
+      else:
+        print("Crash is not production or newer, no issue created.")
+
 
 def build_comment(apprun_typestr_registers):
   comment = "{} new occurrences: \n".format(len(apprun_typestr_registers))
@@ -138,14 +144,23 @@ def build_comment(apprun_typestr_registers):
   return comment
 
 
-def newer_version(crash, affects_versions_dict):
-  version = affects_versions_dict[crash][0].split('.')
-  version = StrictVersion("{}.{}.{}".format(version[0],version[1],version[2]))
-  prod_version = StrictVersion(production_version)
-  if version > prod_version:
-    return True
-  else:
-    return False
+def get_production_version():
+  response = requests.get(applestore_version_url)
+  data = response.json()
+  production_version = str(data['results'][0]['version'])
+  return production_version
+
+
+def newer_version(affects_versions, production_version):
+  newer = False
+  for affects_version in affects_versions:
+    version = affects_version.split('.')
+    version = StrictVersion("{}.{}.{}".format(version[0],version[1],version[2]))
+    prod_version = StrictVersion(production_version)
+    if version >= prod_version:
+      newer = True
+
+  return newer
 
 
 def build_affects_verions_list(affects_versions_dict, crash):
