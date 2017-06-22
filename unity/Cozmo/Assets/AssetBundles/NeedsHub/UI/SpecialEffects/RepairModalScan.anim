@@ -660,12 +660,6 @@ AnimationClip:
         outSlope: 0
         tangentMode: 136
       - serializedVersion: 2
-        time: 1.8333334
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 136
-      - serializedVersion: 2
         time: 2
         value: 0
         inSlope: 0
@@ -1384,12 +1378,6 @@ AnimationClip:
       - serializedVersion: 2
         time: 1.6666666
         value: 0.366
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 136
-      - serializedVersion: 2
-        time: 1.8333334
-        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 136

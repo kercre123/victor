@@ -64,13 +64,13 @@
     "translation": "Tap the regions to be repaired."
   },  
   "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap Calibrate."
+    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap SEND."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded": {
     "translation": "Cozmo is fully tuned up!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText": {
-    "translation": "CALIBRATE"
+    "translation": "SEND"
   },
   "needs.NeedsRepairModal.ScanButtonText": {
     "translation": "SCAN COZMO"

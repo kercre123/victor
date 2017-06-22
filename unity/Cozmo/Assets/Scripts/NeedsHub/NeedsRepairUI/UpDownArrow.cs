@@ -49,6 +49,7 @@ namespace Cozmo.Repair.UI {
     }
 
     public void Mismatched(ArrowInput arrow) {
+      HideAll();
       _MismatchedUp.SetActive(arrow == ArrowInput.Up);
       _MismatchedDown.SetActive(arrow == ArrowInput.Down);
     }

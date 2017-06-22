@@ -76,13 +76,13 @@
     "translation": "Tap the parts to be tuned up."
   },  
   "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": " "
+    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap SEND."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded": {
     "translation": "Cozmo is fully tuned up!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText": {
-    "translation": "CALIBRATE"
+    "translation": "SEND"
   },
   "needs.NeedsRepairModal.ScanButtonText": {
     "translation": "SCAN COZMO"

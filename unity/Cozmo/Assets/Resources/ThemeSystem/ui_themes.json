@@ -8377,11 +8377,11 @@
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_on.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_disabled.png",
                                     "DisabledSpriteColor": {
-                                        "r": 0.654411792755127,
-                                        "g": 0.6688473224639893,
-                                        "b": 0.6688473224639893,
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
                                         "a": 1.0
                                     }
                                 },
@@ -8393,12 +8393,12 @@
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_on.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/btn_repairArrowDown_disabled.png",
                                     "DisabledSpriteColor": {
-                                        "r": 0.654411792755127,
-                                        "g": 0.6688473224639893,
-                                        "b": 0.6688473224639893,
-                                        "a": 1.0
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 0.0
                                     }
                                 }
                             ],
@@ -8705,30 +8705,30 @@
                             "SkinButtonImageArray": true,
                             "ButtonImageArray": [
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/icon_repairNeeded_notifTriangle.png",
                                     "PressedSpriteColor": {
-                                        "r": 0.35467126965522768,
-                                        "g": 0.5326247811317444,
-                                        "b": 0.5882352590560913,
+                                        "r": 0.5036764740943909,
+                                        "g": 0.5008753538131714,
+                                        "b": 0.5,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/icon_repairNeeded_notifTriangle.png",
                                     "DisabledSpriteColor": {
-                                        "r": 0.4000000059604645,
-                                        "g": 0.4000000059604645,
-                                        "b": 0.4000000059604645,
-                                        "a": 0.5215686559677124
+                                        "r": 0.5073529481887817,
+                                        "g": 0.514814019203186,
+                                        "b": 0.514814019203186,
+                                        "a": 0.0
                                     }
                                 },
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/icon_repairNeeded_notifTriangle.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
                                         "b": 1.0,
                                         "a": 1.0
                                     },
-                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                                    "DisabledSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/icon_repairNeeded_notifTriangle.png",
                                     "DisabledSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
@@ -8844,7 +8844,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewSprites/repair_needs_sprites-UHD/Packed/img_selectionDotBackground_repair.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/RepairViewButtonSprites/repair_view_button_sprites-UHD/Packed/icon_repairNeeded_notifTriangle.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
@@ -8976,8 +8976,8 @@
                                     "m_DisabledTrigger": "Disabled"
                                 }
                             }
-						},
-						{
+                        },
+                        {
                             "Id": "Screen_Title_Text_White",
                             "Type": 3,
                             "SkinImageColor": false,

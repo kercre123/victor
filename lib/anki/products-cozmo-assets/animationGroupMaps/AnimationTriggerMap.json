@@ -1369,53 +1369,113 @@
       "AnimName": "ag_reactToStop"
     },
     {
-      "CladEvent": "RepairGetReadyMild",
+      "CladEvent": "RepairFixMildGetIn",
+      "AnimName": "ag_repair_fix_getin_01"
+    },
+    {
+      "CladEvent": "RepairFixMildGetOut",
+      "AnimName": "ag_repair_fix_getout_01"
+    },
+    {
+      "CladEvent": "RepairFixMildGetReady",
       "AnimName": "ag_repair_fix_getready_01"
     },
     {
-      "CladEvent": "RepairGetReadyMildLowerLift",
-      "AnimName": "ag_repair_fix_lowerlift_01"
-    },
-    {
-      "CladEvent": "RepairGetReadyMildRaiseLift",
-      "AnimName": "ag_repair_fix_raiselift_01"
-    },
-    {
-      "CladEvent": "RepairGetReadySevere",
-      "AnimName": "ag_repair_severe_fix_getready_01"
-    },
-    {
-      "CladEvent": "RepairGetReadySevereLowerLift",
-      "AnimName": "ag_repair_severe_fix_lowerlift_01"
-    },
-    {
-      "CladEvent": "RepairGetReadySevereRaiseLift",
-      "AnimName": "ag_repair_severe_fix_raiselift_01"
-    },
-    {
-      "CladEvent": "RepairLiftDown",
-      "AnimName": "ag_repair_fix_lift_down_01"
-    },
-    {
-      "CladEvent": "RepairLiftUp",
-      "AnimName": "ag_repair_fix_lift_up_01"
-    },
-    {
-      "CladEvent": "RepairHeadDown",
+      "CladEvent": "RepairFixMildHeadDown",
       "AnimName": "ag_repair_fix_head_down_01"
     },
     {
-      "CladEvent": "RepairHeadUp",
+      "CladEvent": "RepairFixMildHeadUp",
       "AnimName": "ag_repair_fix_head_up_01"
     },
     {
-      "CladEvent": "RepairWheelsBack",
+      "CladEvent": "RepairFixMildIdle",
+      "AnimName": "ag_repair_fix_idle_01"
+    },
+    {
+      "CladEvent": "RepairFixMildLiftDown",
+      "AnimName": "ag_repair_fix_lift_down_01"
+    },
+    {
+      "CladEvent": "RepairFixMildLiftUp",
+      "AnimName": "ag_repair_fix_lift_up_01"
+    },
+    {
+      "CladEvent": "RepairFixMildLowerLift",
+      "AnimName": "ag_repair_fix_lowerlift_01"
+    },
+    {
+      "CladEvent": "RepairFixMildRaiseLift",
+      "AnimName": "ag_repair_fix_raiselift_01"
+    },
+    {
+      "CladEvent": "RepairFixMildRoundReact",
+      "AnimName": "ag_repair_fix_roundreact_01"
+    },
+    {
+      "CladEvent": "RepairFixMildWheelsBack",
       "AnimName": "ag_repair_fix_wheels_back_01"
     },
     {
-      "CladEvent": "RepairWheelsFront",
+      "CladEvent": "RepairFixMildWheelsForward",
       "AnimName": "ag_repair_fix_wheels_forward_01"
-    },        
+    },
+    {
+      "CladEvent": "RepairFixSevereGetIn",
+      "AnimName": "ag_repair_severe_fix_getin_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereGetOut",
+      "AnimName": "ag_repair_severe_fix_getout_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereGetReady",
+      "AnimName": "ag_repair_severe_fix_getready_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereHeadDown",
+      "AnimName": "ag_repair_severe_fix_head_down_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereHeadUp",
+      "AnimName": "ag_repair_severe_fix_head_up_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereIdle",
+      "AnimName": "ag_repair_severe_fix_idle_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereLiftDown",
+      "AnimName": "ag_repair_severe_fix_lift_down_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereLiftUp",
+      "AnimName": "ag_repair_severe_fix_lift_up_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereLowerLift",
+      "AnimName": "ag_repair_severe_fix_lowerlift_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereRaiseLift",
+      "AnimName": "ag_repair_severe_fix_raiselift_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereRoundReact",
+      "AnimName": "ag_repair_severe_fix_roundreaction_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereWheelsBack",
+      "AnimName": "ag_repair_severe_fix_wheels_back_01"
+    },
+    {
+      "CladEvent": "RepairFixSevereWheelsForward",
+      "AnimName": "ag_repair_severe_fix_wheels_forward_01"
+    },
+    {
+      "CladEvent": "RepairIdleFullyRepaired",
+      "AnimName": "ag_repair_fix_idle_fullyfull_01"
+    },
     {
       "CladEvent": "RequestGameSpeedTapDeny0",
       "AnimName": "requestGame_speedTap_deny"
