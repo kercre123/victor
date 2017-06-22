@@ -2439,11 +2439,8 @@ namespace Cozmo {
             
             #ifdef COZMO_V2
             {
-              // Compute FOV from focal length
-              f32 headCamFOV_ver = 2.f * atanf(static_cast<f32>(payload.nrows) / (2.f * payload.focalLength_y));
-              f32 headCamFOV_hor = 2.f * atanf(static_cast<f32>(payload.ncols) / (2.f * payload.focalLength_x));
-             
-              CameraFOVInfo msg(headCamFOV_hor, headCamFOV_ver);
+              // Compute FOV from focal length and send
+              CameraFOVInfo msg(calib.ComputeHorizontalFOV().ToFloat(), calib.ComputeVerticalFOV().ToFloat());
               if (_robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
                 PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
               }
