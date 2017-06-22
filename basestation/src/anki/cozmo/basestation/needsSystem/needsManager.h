@@ -110,7 +110,8 @@ private:
 
   void InitAfterReadFromRobotAttempt();
 
-  void ApplyDecayAllNeeds();
+  void ApplyDecayAllNeeds(bool connected);
+  void ApplyDecayForUnconnectedTime();
   void StartFullnessCooldownForNeed(const NeedId needId);
 
   void RegisterNeedsActionCompletedInternal(const NeedsActionId actionCompleted,

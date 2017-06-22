@@ -316,17 +316,7 @@ void NeedsManager::InitInternal(const float currentTime_s)
       // Save the time this save was made, for later comparison in InitAfterReadFromRobotAttempt
       _savedTimeLastWrittenToDevice = _needsState._timeLastWritten;
 
-      // Calculate time elapsed since last connection
-      const Time now = system_clock::now();
-      const float elasped_s = std::chrono::duration_cast<std::chrono::seconds>(now - _needsState._timeLastWritten).count();
-
-      // Now apply decay according to unconnected config, and elapsed time
-      // First, however, we set the timers as if that much time had elapsed:
-      for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
-      {
-        _lastDecayUpdateTime_s[i] -= elasped_s;
-      }
-      ApplyDecayAllNeeds();
+      ApplyDecayForUnconnectedTime();
 
       appliedDecay = true;
     }
@@ -387,6 +377,8 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
                      {{DDATA, serialNumbers.c_str()}},
                      stream.str().c_str());
 
+  bool useStateFromRobot = false;
+
   if (!_robotHadValidNeedsData && !_deviceHadValidNeedsData)
   {
     PRINT_CH_INFO(kLogChannelName, "NeedsManager.InitAfterReadFromRobotAttempt", "Neither robot nor device has needs data");
@@ -400,8 +392,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // Robot has needs data, but device doesn't
     // (Use case:  Robot has been used with another device)
     needToWriteToDevice = true;
-    // Copy the loaded robot needs state into our device needs state
-    _needsState = _needsStateFromRobot;
+    useStateFromRobot = true;
   }
   else if (!_robotHadValidNeedsData && _deviceHadValidNeedsData)
   {
@@ -433,8 +424,7 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
         // Robot data is newer; possibly someone controlled this robot with another device
         // Go with the robot data
         needToWriteToDevice = true;
-        // Copy the loaded robot needs state into our device needs state
-        _needsState = _needsStateFromRobot;
+        useStateFromRobot = true;
       }
       else if (_savedTimeLastWrittenToDevice > _needsStateFromRobot._timeLastWritten)
       {
@@ -454,9 +444,23 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
       // User has connected to a different robot that has used the needs feature.
       // Use the robot's state; copy it to the device.
       needToWriteToDevice = true;
-      // Copy the loaded robot needs state into our device needs state
-      _needsState = _needsStateFromRobot;
+      useStateFromRobot = true;
+
+      // Notify the game, so it can put up a dialog to notify the user
+      ExternalInterface::ConnectedToDifferentRobot message;
+      const auto& extInt = _cozmoContext->GetExternalInterface();
+      extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
+  }
+
+  if (useStateFromRobot)
+  {
+    // Copy the loaded robot needs state into our device needs state
+    _needsState = _needsStateFromRobot;
+
+    // Now apply decay for the unconnected time for THIS robot
+    // (We did it earlier, in Init, but that was for a different robot)
+    ApplyDecayForUnconnectedTime();
   }
 
   const Time now = system_clock::now();
@@ -526,7 +530,8 @@ void NeedsManager::Update(const float currentTime_s)
   {
     _timeForNextPeriodicDecay_s += _needsConfig._decayPeriod;
 
-    ApplyDecayAllNeeds();
+    const bool connected = _robot != nullptr;
+    ApplyDecayAllNeeds(connected);
 
     SendNeedsStateToGame(NeedsActionId::Decay);
 
@@ -1071,9 +1076,9 @@ void NeedsManager::SendNeedsPauseStatesToGame()
 }
 
 
-void NeedsManager::ApplyDecayAllNeeds()
+void NeedsManager::ApplyDecayAllNeeds(bool connected)
 {
-  const DecayConfig& config = _robot == nullptr ? _needsConfig._decayUnconnected : _needsConfig._decayConnected;
+  const DecayConfig& config = connected ? _needsConfig._decayConnected : _needsConfig._decayUnconnected;
 
   _needsState.SetPrevNeedsBrackets();
 
@@ -1107,6 +1112,24 @@ void NeedsManager::ApplyDecayAllNeeds()
   }
 
   DetectBracketChangeForDas();
+}
+
+
+void NeedsManager::ApplyDecayForUnconnectedTime()
+{
+  // Calculate time elapsed since last connection
+  const Time now = system_clock::now();
+  const float elasped_s = std::chrono::duration_cast<std::chrono::seconds>(now - _needsState._timeLastWritten).count();
+
+  // Now apply decay according to unconnected config, and elapsed time
+  // First, however, we set the timers as if that much time had elapsed:
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    _lastDecayUpdateTime_s[i] = _currentTime_s - elasped_s;
+  }
+
+  static const bool connected = false;
+  ApplyDecayAllNeeds(connected);
 }
 
 
@@ -1781,7 +1804,8 @@ void NeedsManager::DebugPassTimeMinutes(const float minutes)
     }
   }
 
-  ApplyDecayAllNeeds();
+  const bool connected = _robot != nullptr;
+  ApplyDecayAllNeeds(connected);
 
   SendNeedsStateToGame(NeedsActionId::Decay);
 
