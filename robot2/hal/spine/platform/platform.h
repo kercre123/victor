@@ -8,13 +8,13 @@
 #endif
 
 /* Platform selector. **
- * - 
- * Makefile must define exactly one of 
+ * -
+ * Makefile must define exactly one of
  *
  * PLATFORM_ANDRIOD
  * PLATFORM_OSX
  * PLATFORM_SIM ?
- */ 
+ */
 
 #if PLATFORM_ANDROID
 #include "android/spine_logging.h"
@@ -23,7 +23,7 @@
 #include <termios.h>
 
 
-#define SPINE_TTY "/dev/ttyHSL0"
+#define SPINE_TTY "/dev/ttyHSL1"
 #define SPINE_BAUD B3000000
 
 #define static_assert _Static_assert

@@ -10,7 +10,7 @@
 #define HAL_NOT_PROVIDING_CLOCK 1
 #endif
 
-int main (void)
+int main(void)
 {
   printf("Starting robot process\n");
 
@@ -19,14 +19,11 @@ int main (void)
   Anki::Cozmo::Robot::Init();
 
   auto start = std::chrono::steady_clock::now();
-  
-  for(;;)
-  {
-    //HAL::Step should never return !OK, but if it does, best not to trust its data.    
-    if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK)
-    {
-      if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
-      {
+
+  for (;;) {
+    //HAL::Step should never return !OK, but if it does, best not to trust its data.
+    if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
+      if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         printf("ERROR: MainExecution failed\n");
         return -1;
       }
@@ -42,7 +39,7 @@ int main (void)
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
   }
-  
+
   return 0;
 
 }

@@ -21,7 +21,7 @@
 
 namespace Anki {
   namespace Cozmo {
-    
+
     namespace { // "Private members"
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
 
@@ -52,7 +52,7 @@ namespace Anki {
 
     void HAL::RadioUpdateState(u8 wifi)
     {
-      if (wifi == 0) DisconnectRadio();
+      if (wifi == 0) { DisconnectRadio(); }
     }
 
     void HAL::DisconnectRadio(void)
@@ -109,7 +109,8 @@ namespace Anki {
       dataSize = server.Recv((char*)&recvBuf_[recvBufSize_], static_cast<int>(tempSize));
       if (dataSize > 0) {
         recvBufSize_ += dataSize;
-      } else if (dataSize < 0) {
+      }
+      else if (dataSize < 0) {
         // Something went wrong
         HAL::DisconnectRadio();
       }
@@ -153,11 +154,13 @@ namespace Anki {
       int dataLen = server.Recv((char*)recvBuf_, RECV_BUFFER_SIZE);
       if (dataLen > 0) {
         recvBufSize_ = dataLen;
-      } else if (dataLen < 0) {
+      }
+      else if (dataLen < 0) {
         // Something went wrong
         DisconnectRadio();
         return retVal;
-      } else {
+      }
+      else {
         return retVal;
       }
 

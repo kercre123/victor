@@ -45,19 +45,37 @@ enum uint_32 DropSensor {
   DROP_SENSOR_COUNT
 }
 
+// DFU ERASE
+// DFU WRITE
+// (disable 'timeout' on payload)
 enum uint_16 PayloadId {
-   PAYLOAD_MODE_CHANGE = 0x6d64,  //"md"
-   PAYLOAD_DATA_FRAME = 0x6466,   //"df"
-   PAYLOAD_DFU_PACKET = 0x6675,   //"fu"
-   PAYLOAD_TYPE_COUNT = 2,        // INCREMENT THIS for each new type
-   PAYLOAD_INVALID = 0xFFFF,      //-1
-   PAYLOAD_CORRUPT = 0xFFFE,      //-2
+   PAYLOAD_DATA_FRAME  = 0x6466,  //"df" (Body <-> Head data)
+   PAYLOAD_DFU_PACKET  = 0x6675,  //"fu" (Write flash block)  // NOT TESTED FOR POST WRITE
+   PAYLOAD_ACK         = 0x6b61,  //"ak" (Command ack / nack)
+   PAYLOAD_MODE_CHANGE = 0x6d64,  //"md" (Enter application)
+   PAYLOAD_VERSION     = 0x7276,  //"vr" (Application version info)
+   PAYLOAD_VALIDATE    = 0x7374,  //"ts" (Lock application)   // NOT TESTED FOR POST WRITE
+   PAYLOAD_ERASE       = 0x7878,  //"xx" (Wipe application)
+   PAYLOAD_TYPE_COUNT  = 7,       // INCREMENT THIS for each new type
 }
+
+enum int_32 Ack {
+  ACK_PAYLOAD       = 1,
+  NACK_CRC_FAILED   = -1,
+  NACK_NOT_ERASED   = -2,
+  NACK_FLASH_FAILED = -3,
+  NACK_CERT_FAILED  = -4,
+  NACK_BAD_ADDRESS  = -5,
+  NACK_SIZE_ALIGN   = -6,
+  NACK_BAD_COMMAND  = -7,
+  NACK_NOT_VALID    = -7
+}
+
+
 
 enum uint_32 RobotMode {
      IDLE,
      RUN,
-     DFU,
 }
 
 enum uint_32 BatteryFlags {
@@ -97,30 +115,30 @@ enum uint_32 LedIndexes {
 }
 
 enum uint_16 ProxSensorCommands {
-   CMD_STOP,
-   CMD_RUN,
-   CALIBRATE,
-   SET_OFFSET,
-   SET_XTALK,
-   SET_RANGING_TIME,
-   SET_PERIOD,
+  CMD_STOP,
+  CMD_RUN,
+  CALIBRATE,
+  SET_OFFSET,
+  SET_XTALK,
+  SET_RANGING_TIME,
+  SET_PERIOD,
 }
 
 structure MotorPower {
-   int_16 leftWheel,
-   int_16 rightWheel,
-   int_16 liftMotor,
-   int_16 headMotor,
+  int_16 leftWheel,
+  int_16 rightWheel,
+  int_16 liftMotor,
+  int_16 headMotor,
 }
 
 structure BatteryState {
-   int_32 batteryVolts,
-   int_32 chargerVolts,
-   BatteryFlags flags,
+  int_32 batteryVolts,
+  int_32 chargerVolts,
+  BatteryFlags flags,
 }
 
 structure ButtonState {
-   uint_16 level,
+  uint_16 level,
 }
 
 structure RangeData {
@@ -145,38 +163,56 @@ structure ProxControl {
 }
 
 structure MotorState {
-   int_32 position,
-   int_32 delta,
-   uint_32 time,
+  int_32 position,
+  int_32 delta,
+  uint_32 time,
 }
 
 structure SpineMessageHeader {
-   SpineSync sync_bytes,
-   PayloadId payload_type,
-   uint_16   bytes_to_follow,
+  SpineSync sync_bytes,
+  PayloadId payload_type,
+  uint_16   bytes_to_follow,
 }
 
 structure SpineMessageFooter {
   uint_32 checksum,
 }
 
+/// Start Packets
 structure BodyToHead {
-   uint_32 framecounter,
-   MotorState motor[4],
-   uint_16 cliffSense[4],
-   BatteryState battery,
-   ButtonState buttons[4],
-   RangeData proximity,
-   uint_8 audio[640]
+  uint_32 framecounter,
+  MotorState motor[4],
+  uint_16 cliffSense[4],
+  BatteryState battery,
+  ButtonState buttons[4],
+  RangeData proximity,
+  uint_8 audio[640]
 }
 
 structure HeadToBody {
-   uint_32 framecounter,
-   int_16 motorPower[4],
-   uint_8 ledColors[16],
-   ProxControl proxCmd,
-   PowerState powerState,
-   uint_16 spare,
+  uint_32 framecounter,
+  int_16 motorPower[4],
+  uint_8 ledColors[16],
+  ProxControl proxCmd,
+  PowerState powerState,
+  uint_16 spare,
+}
+
+structure AckMessage {
+  Ack status
+}
+
+structure WriteDFU {
+  uint_16 address,
+  uint_16 wordCount,
+  uint_32 data[256]
+}
+
+structure VersionInfo {
+  uint_32 hw_revision,
+  uint_32 hw_model,
+  uint_8  ein[16],
+  uint_8  app_version[16]
 }
 
 }

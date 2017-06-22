@@ -18,12 +18,11 @@
 #include <zlib.h>
 
 typedef uint32_t crc_t;
-typedef uint32_t RobotMode; //TODO fix
 
 
 #define SKIP_CRC_CHECK 0
 
-#define SPINE_MAX_BYTES 1024
+#define SPINE_MAX_BYTES 1048
 
 #define BODY_TAG_PREFIX ((uint8_t*)&SyncKey)
 #define SPINE_TAG_LEN sizeof(SpineSync)
@@ -75,8 +74,8 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
   spine_debug("opening serial port\n");
 
-  gHal.fd = open(devicename, O_RDWR|O_NONBLOCK);
-  if (gHal.fd <0) {
+  gHal.fd = open(devicename, O_RDWR | O_NONBLOCK);
+  if (gHal.fd < 0) {
     return spine_error(err_CANT_OPEN_FILE, "Can't open %s", devicename);
   }
 
@@ -85,8 +84,7 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
   /* Configure device */
   {
     struct termios cfg;
-    if (tcgetattr(gHal.fd, &cfg))
-    {
+    if (tcgetattr(gHal.fd, &cfg)) {
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcgetattr() failed");
     }
@@ -96,12 +94,11 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
     platform_set_baud(gHal.fd, cfg, baudrate);
 
-    cfg.c_cflag |= (CS8 | CSTOPB );   // Use N82 bit words
+    cfg.c_cflag |= (CS8 | CSTOPB);    // Use N82 bit words
 
     LOGD("configuring port %s (fd=%d)", devicename, gHal.fd);
 
-    if (tcsetattr(gHal.fd, TCSANOW, &cfg))
-    {
+    if (tcsetattr(gHal.fd, TCSANOW, &cfg)) {
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcsetattr() failed");
     }
@@ -111,17 +108,22 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 }
 
 
-int hal_serial_read(uint8_t* buffer, int len){  //->bytes_recieved
-  int result = read(gHal.fd,buffer, len);
+int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
+{
+  int result = read(gHal.fd, buffer, len);
   if (result < 0) {
-    result = (errno==EAGAIN) ? 0 : result;  //handle nonblocking no-data.
+    result = (errno == EAGAIN) ? 0 : result; //handle nonblocking no-data.
   }
   return result;
 }
 
 
-int hal_serial_send(const uint8_t* buffer, int len) {
-  return write(gHal.fd, buffer, len);
+int hal_serial_send(const uint8_t* buffer, int len)
+{
+  if (len) {
+    return write(gHal.fd, buffer, len);
+  }
+  return 0;
 }
 
 
@@ -133,19 +135,32 @@ enum MsgDir {
 };
 
 //checks for valid tag, returns expected length, -1 on err
-static int get_payload_len(PayloadId payload_type, enum MsgDir dir) {
+static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
+{
   switch (payload_type) {
-    case PayloadId_PAYLOAD_MODE_CHANGE:
-      return sizeof(RobotMode);
-      break;
-    case PayloadId_PAYLOAD_DATA_FRAME:
-      return (dir==dir_SEND) ? sizeof(HeadToBody) : sizeof(BodyToHead);
-      break;
-    case PayloadId_PAYLOAD_DFU_PACKET:
-      return 0; //TODO: fix
-      break;
-    default:
-      break;
+  case PayloadId_PAYLOAD_MODE_CHANGE:
+    return 0;
+    break;
+  case PayloadId_PAYLOAD_DATA_FRAME:
+    return (dir == dir_SEND) ? sizeof(HeadToBody) : sizeof(BodyToHead);
+    break;
+  case PayloadId_PAYLOAD_VERSION:
+    return (dir == dir_SEND) ? 0 : sizeof(VersionInfo);
+    break;
+  case PayloadId_PAYLOAD_ACK:
+    return sizeof(AckMessage);
+    break;
+  case PayloadId_PAYLOAD_ERASE:
+    return 0;
+    break;
+  case PayloadId_PAYLOAD_VALIDATE:
+    return 0;
+    break;
+  case PayloadId_PAYLOAD_DFU_PACKET:
+    return sizeof(WriteDFU);
+    break;
+  default:
+    break;
   }
   return -1;
 }
@@ -154,7 +169,8 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir) {
 
 
 //Creates header for frame
-static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t payload_len) {
+static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t payload_len)
+{
   int expected_len = get_payload_len(payload_type, dir_SEND);
   assert(expected_len >= 0); //valid type
   assert(expected_len == payload_len);
@@ -172,14 +188,15 @@ static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t p
 //Function: Examines `buf[idx]` and determines if it is part of sync seqence.
 //Prereq: The first `idx` chars in `buf` are partial valid sync sequence.
 //Returns: Length of partial valid sync sequence. possible values = 0..idx+1
-static int spine_sync(const uint8_t* buf, unsigned int idx) {
-  if (idx<SPINE_TAG_LEN) {
+static int spine_sync(const uint8_t* buf, unsigned int idx)
+{
+  if (idx < SPINE_TAG_LEN) {
     if (buf[idx] != BODY_TAG_PREFIX[idx]) {
       return 0; //none of the characters so far are good.
     }
   }
   idx++; //accept rest of characters unless proven otherwise
-  if (idx==SPINE_HEADER_LEN) {
+  if (idx == SPINE_HEADER_LEN) {
     SpineMessageHeader* candidate = (SpineMessageHeader*)buf;
     int expected_len = get_payload_len(candidate->payload_type, dir_READ);
     if (expected_len < 0 || (expected_len != candidate->bytes_to_follow)) {
@@ -189,13 +206,14 @@ static int spine_sync(const uint8_t* buf, unsigned int idx) {
            expected_len);
       //bad header,
       //we need to check the length bytes for the beginning of a sync word
-      unsigned int pos = idx-SPINE_LEN_LEN;
-      int match=0;
-      while (pos<idx) {
-        if (buf[pos]==BODY_TAG_PREFIX[match]) {
-          match++;pos++;
+      unsigned int pos = idx - SPINE_LEN_LEN;
+      int match = 0;
+      while (pos < idx) {
+        if (buf[pos] == BODY_TAG_PREFIX[match]) {
+          match++;
+          pos++;
         }
-        else if (match>0) { match=0; }
+        else if (match > 0) {  match = 0; }
         else { pos++; }
       }
       // at this point we know that the last `match` chars rcvd into length position are a possible sync tag.
@@ -210,7 +228,8 @@ static int spine_sync(const uint8_t* buf, unsigned int idx) {
 
 /************* PUBLIC INTERFACE ***************/
 
-SpineErr hal_init(const char* devicename, long baudrate) {
+SpineErr hal_init(const char* devicename, long baudrate)
+{
   gHal.errcount = 0;
   gHal.fd = 0;
   return hal_serial_open(devicename, baudrate);
@@ -227,13 +246,14 @@ const SpineMessageHeader* hal_read_frame()
   //spin here pulling single characters until whole sync rcvd
   while (index < SPINE_HEADER_LEN) {
 
-    int rslt = hal_serial_read(gHal.inbuffer+index, 1);
-    if (rslt>0) {
-      index = spine_sync(gHal.inbuffer,index);
+    int rslt = hal_serial_read(gHal.inbuffer + index, 1);
+    if (rslt > 0) {
+      index = spine_sync(gHal.inbuffer, index);
     }
     else if (rslt < 0) {
-      gHal.errcount++;   //TODO: at somepoint maybe we handle this?
-      LOGI("spine_read_error %d", rslt);
+      if ((gHal.errcount++ & 0x3FF) == 0) { //TODO: at somepoint maybe we handle this?
+        LOGI("spine_read_error %d", rslt);
+      }
     }
   } //endwhile
 
@@ -241,24 +261,25 @@ const SpineMessageHeader* hal_read_frame()
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
   unsigned int payload_length = ((SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
-  unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN; 
+  unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN;
 
   //spine_debug("%d byte payload\n", payload_length);
 
   while (index < total_message_length) {
-    int rslt = hal_serial_read(gHal.inbuffer+index, total_message_length-index);
+    int rslt = hal_serial_read(gHal.inbuffer + index, total_message_length - index);
     if (rslt >= 0) {
-      index+=rslt;
+      index += rslt;
     }
-    else if (rslt < 0){
-      gHal.errcount++;   //TODO: at somepoint maybe we handle this?
-      LOGI("spine_payload_read_error %d", rslt);
+    else if (rslt < 0) {
+      if ((gHal.errcount++ & 0x3FF) == 0) { //TODO: at somepoint maybe we handle this?
+        LOGI("spine_payload_read_error %d", rslt);
+      }
     }
   }
 
   //now we just have to validate CRC;
-  crc_t expected_crc = *((crc_t*)(gHal.inbuffer+SPINE_HEADER_LEN+payload_length));
-  crc_t true_crc = calc_crc(gHal.inbuffer+SPINE_HEADER_LEN,payload_length);
+  crc_t expected_crc = *((crc_t*)(gHal.inbuffer + SPINE_HEADER_LEN + payload_length));
+  crc_t true_crc = calc_crc(gHal.inbuffer + SPINE_HEADER_LEN, payload_length);
   if (expected_crc != true_crc && !SKIP_CRC_CHECK) {
     //TODO: if we need to recover maximal data after dropped bytes,
     //      then we need to run this whole payload through the sync detector again.
@@ -267,20 +288,18 @@ const SpineMessageHeader* hal_read_frame()
     LOGI("spine_crc_error %08x != %08x", true_crc, expected_crc);
     unsigned int i;
     unsigned int dropped_bytes = 0;
-    for (i=0;i< payload_length+SPINE_CRC_LEN; i++)
-    {
-      spine_debug(" %02x", gHal.inbuffer[i+SPINE_HEADER_LEN]);
-      if (gHal.inbuffer[i+SPINE_HEADER_LEN] == 0xAA) {
+    for (i = 0; i < payload_length + SPINE_CRC_LEN; i++) {
+      spine_debug(" %02x", gHal.inbuffer[i + SPINE_HEADER_LEN]);
+      if (gHal.inbuffer[i + SPINE_HEADER_LEN] == 0xAA) {
         dropped_bytes = i;
       }
     }
-    dropped_bytes = payload_length+SPINE_CRC_LEN - dropped_bytes;
-    spine_debug("\n%d dropped\n",dropped_bytes);
+    dropped_bytes = payload_length + SPINE_CRC_LEN - dropped_bytes;
+    spine_debug("\n%d dropped\n", dropped_bytes);
     return NULL;
   }
 
   //  spine_debug("found frame!\r");
-
   return ((SpineMessageHeader*)gHal.inbuffer);
 }
 
@@ -291,7 +310,8 @@ const void* hal_get_frame(uint16_t type)
   const SpineMessageHeader* hdr;
   do {
     hdr = hal_read_frame();
-  } while (!hdr || hdr->payload_type != type);
+  }
+  while (!hdr || hdr->payload_type != type);
   return hdr;
 }
 
@@ -306,21 +326,8 @@ void hal_send_frame(PayloadId type, const void* data, int len)
   }
 }
 
-void hal_set_mode(int new_mode) {
-
-//--  Not exactly sure yet
-  //either this is a sender only,
-  //or we send until we get a matching message/
-  //or we send until we get an expected frame type.
-
-//    hal_send_frame(PAYLOAD_MODE_CHANGE, &mode, sizeof(RobotMode));
-/*
-  SpineMessageHeader* hdr;
-  do {
-  hal_send_frame(PAYLOAD_MODE_CHANGE, &mode, sizeof(RobotMode));
-  hdr = hal_get_frame();
-  } while (!( hdr &&
-  (hdr->payload_type ==  PAYLOAD_MODE_CHANGE) &&
-  ((*(RobotMode*)(hdr+1)) == mode) ));
-*/
+void hal_set_mode(int new_mode)
+{
+  printf("Sending Mode Change %x\n", PayloadId_PAYLOAD_MODE_CHANGE);
+  hal_send_frame(PayloadId_PAYLOAD_MODE_CHANGE, NULL, 0);
 }

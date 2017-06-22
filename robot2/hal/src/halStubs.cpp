@@ -18,24 +18,30 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine_hal.h"
- 
+
 #include "clad/robotInterface/messageRobotToEngine.h"    //TODO: why do we still need these 2?
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h" 
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/spine/spine_protocol.h"
 
 #define RADIO_IP "127.0.0.1"
 
+#define IMU_WORKING 0
 
 // Debugging Defines
 #define FRAMES_PER_RESPONSE  1  //send response every N input frames
-#define REALTIME_CONSOLE_OUTPUT 0 //Print status to console
+
+#define REALTIME_CONSOLE_OUTPUT 1 //Print status to console
+#define MOTOR_OF_INTEREST MOTOR_LIFT  //print status of this motor
+#define STR(s)  #s
+#define DEFNAME(s) STR(s)
+
 
 #if REALTIME_CONSOLE_OUTPUT > 0
 #define SAVE_MOTOR_POWER(motor, power)  internalData_.motorPower[motor]=power
 #define CONSOLE_DATA(decl) decl
 #else
 #define SAVE_MOTOR_POWER(motor, power)
-#define CONSOLE_DATA(decl) 
+#define CONSOLE_DATA(decl)
 #endif
 
 namespace Anki {
@@ -45,16 +51,16 @@ namespace Anki {
     static_assert(MOTOR_RIGHT_WHEEL == RobotMotor_MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
     static_assert(MOTOR_LIFT == RobotMotor_MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
     static_assert(MOTOR_HEAD == RobotMotor_MOTOR_HEAD, "Robot/Spine CLAD Mimatch");
-    
+
 
     namespace { // "Private members"
 
       //map power -1.0 .. 1.0 to -32767 to 32767
       static const f32 HAL_MOTOR_POWER_SCALE = 0x7FFF;
       static const f32 HAL_MOTOR_POWER_OFFSET = 0;
-      
+
       //convert per syscon tick -> /sec
-      static const f32 HAL_SEC_PER_TICK = (1.0/256)/48000000;
+      static const f32 HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
 
       //encoder counts -> mm or deg
       static const f32 HAL_MOTOR_POSITION_SCALE[RobotMotor_MOTOR_COUNT] = {
@@ -65,10 +71,10 @@ namespace Anki {
       };
 
       s32 robotID_ = -1;
-      
+
       // TimeStamp offset
       std::chrono::steady_clock::time_point timeOffset_ = std::chrono::steady_clock::now();
-      
+
       // Audio
       // (Can't actually play sound in simulator, but proper handling of audio frames is still
       // necessary for proper animation timing)
@@ -79,48 +85,52 @@ namespace Anki {
       BodyToHead* bodyData_; //buffers are owned by the code that fills them. Spine owns this one
       HeadToBody headData_;  //-we own this one.
 
-      #ifdef USING_ANDROID_PHONE
+#ifdef USING_ANDROID_PHONE
       BodyToHead dummyBodyData_ = {
         .cliffSense = {800, 800, 800, 800}
       };
-      #endif
-      
+#endif
+
       struct {
         s32 motorOffset[RobotMotor_MOTOR_COUNT];
         CONSOLE_DATA(f32 motorSpeed[RobotMotor_MOTOR_COUNT]);
         CONSOLE_DATA(f32 motorPower[RobotMotor_MOTOR_COUNT]);
       } internalData_;
-      
+
     } // "private" namespace
 
     // Forward Declarations
     Result InitRadio(const char* advertisementIP);
     void InitIMU();
     void ProcessIMUEvents();
-    
 
-    Result GetSpineDataFrame(void) {
+
+    Result GetSpineDataFrame(void)
+    {
       SpineMessageHeader* hdr = (SpineMessageHeader*) hal_get_frame(PayloadId_PAYLOAD_DATA_FRAME);
       if (hdr->payload_type != PayloadId_PAYLOAD_DATA_FRAME) {
         LOGE("Spine.c data corruption: payload does not match requested");
         return RESULT_FAIL_IO_UNSYNCHRONIZED;
       }
-      bodyData_ = (BodyToHead*)(hdr+1);
+      bodyData_ = (BodyToHead*)(hdr + 1);
       return RESULT_OK;
     }
 
-    Result HAL::Init() {
+    Result HAL::Init()
+    {
       // Set ID
       robotID_ = 1;
 
+#if IMU_WORKING
       InitIMU();
+#endif
 
       if (InitRadio(RADIO_IP) != RESULT_OK) {
         printf("Failed to initialize Radio.\n");
         return RESULT_FAIL;
       }
 
-      #ifndef USING_ANDROID_PHONE
+#ifndef USING_ANDROID_PHONE
       {
         printf("Starting spine hal\n");
 
@@ -129,19 +139,21 @@ namespace Anki {
         if (result != err_OK) {
           return RESULT_FAIL;
         }
+        printf("hal Init OK\nSetting RUN mode\n");
 
         hal_set_mode(RobotMode_RUN);
-        
+
+        printf("Waiting for Data Frame\n");
         while (GetSpineDataFrame() != RESULT_OK) {
           ; //spin on good frame
         }
       }
-      #else
+#else
       bodyData_ = &dummyBodyData_;
-      #endif
+#endif
 
       MotorID m;
-      for (m=MOTOR_LIFT;m<MOTOR_COUNT;m++) {
+      for (m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
         MotorResetPosition(m);
       }
       printf("Hal Init Success\n");
@@ -150,23 +162,26 @@ namespace Anki {
     }  // Init()
 
     // Set the motor power in the unitless range [-1.0, 1.0]
-    void HAL::MotorSetPower(MotorID motor, f32 power) {
-      assert( motor < RobotMotor_MOTOR_COUNT );
-      SAVE_MOTOR_POWER(motor,power);
+    void HAL::MotorSetPower(MotorID motor, f32 power)
+    {
+      assert(motor < RobotMotor_MOTOR_COUNT);
+      SAVE_MOTOR_POWER(motor, power);
       headData_.motorPower[motor] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power;
     }
 
     // Reset the internal position of the specified motor to 0
-    void HAL::MotorResetPosition(MotorID motor) {
-      assert( motor < RobotMotor_MOTOR_COUNT );
-      internalData_.motorOffset[motor]=bodyData_->motor[motor].position;
+    void HAL::MotorResetPosition(MotorID motor)
+    {
+      assert(motor < RobotMotor_MOTOR_COUNT);
+      internalData_.motorOffset[motor] = bodyData_->motor[motor].position;
     }
 
 
     // Returns units based on the specified motor type:
     // Wheels are in mm/s, everything else is in degrees/s.
-    f32 HAL::MotorGetSpeed(MotorID motor) {
-      assert( motor < RobotMotor_MOTOR_COUNT );
+    f32 HAL::MotorGetSpeed(MotorID motor)
+    {
+      assert(motor < RobotMotor_MOTOR_COUNT);
 
       // Every frame, syscon sends the last detected speed as a two part number:
       // `delta` encoder counts, and `time` span for those counts.
@@ -181,38 +196,40 @@ namespace Anki {
 
     // Returns units based on the specified motor type:
     // Wheels are in mm since reset, everything else is in degrees.
-    f32 HAL::MotorGetPosition(MotorID motor) {
-      assert( motor < RobotMotor_MOTOR_COUNT );
+    f32 HAL::MotorGetPosition(MotorID motor)
+    {
+      assert(motor < RobotMotor_MOTOR_COUNT);
       return (bodyData_->motor[motor].position - internalData_.motorOffset[motor]) * HAL_MOTOR_POSITION_SCALE[motor];
     }
 
     void PrintConsoleOutput(void)
     {
-      #if REALTIME_CONSOLE_OUTPUT > 0
+#if REALTIME_CONSOLE_OUTPUT > 0
       {
         printf("FC = %d ", bodyData_->framecounter);
-        printf("Lraw = %d ", bodyData_->motor[MOTOR_LIFT].position);
-        printf("Lpos = %f ", HAL::MotorGetPosition(MOTOR_LIFT));
-        printf("Lspd = %f ", internalData_.motorSpeed[MOTOR_LIFT]);
-        printf(": Lpow = %f ",internalData_.motorPower[MOTOR_LIFT]);
+        printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
+        printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
+        printf("pos = %f ", HAL::MotorGetPosition(MOTOR_OF_INTEREST));
+        printf("spd = %f ", internalData_.motorSpeed[MOTOR_OF_INTEREST]);
+        printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
         printf("\r");
       }
-      #endif
+#endif
     }
-    
+
 
     Result HAL::MonitorConnectionState(void)
     {
       // Send block connection state when engine connects
       static bool wasConnected = false;
       if (!wasConnected && HAL::RadioIsConnected()) {
-        
+
         // Send RobotAvailable indicating sim robot
         RobotInterface::RobotAvailable idMsg;
         idMsg.robotID = 0;
         idMsg.hwRevision = 0;
         RobotInterface::SendMessage(idMsg);
-        
+
         // send firmware info indicating simulated robot
         {
           std::string firmwareJson{"{\"version\":0,\"time\":0,\"sim\":0}"};
@@ -222,29 +239,30 @@ namespace Anki {
           std::memcpy(msg.json, firmwareJson.c_str(), firmwareJson.size() + 1);
           RobotInterface::SendMessage(msg);
         }
-        
+
         wasConnected = true;
-      } else if (wasConnected && !HAL::RadioIsConnected()) {
+      }
+      else if (wasConnected && !HAL::RadioIsConnected()) {
         wasConnected = false;
       }
-      
+
       return RESULT_OK;
-      
+
     } // step()
 
 
-    
+
     Result HAL::Step(void)
     {
       Result result = RESULT_OK;
       TimeStamp_t now = HAL::GetTimeStamp();
-      
+
       // Check if audio frame is done
       if (now >= audioEndTime_) {
         audioReadyForFrame_ = true;
       }
-      
-      #ifndef USING_ANDROID_PHONE
+
+#ifndef USING_ANDROID_PHONE
       {
         static int repeater = FRAMES_PER_RESPONSE;
         if (--repeater <= 0) {
@@ -256,9 +274,11 @@ namespace Anki {
 
         PrintConsoleOutput();
       }
-      #endif
-      
+#endif
+
+#if IMU_WORKING
       ProcessIMUEvents();
+#endif
       MonitorConnectionState();
       return result;
     }
@@ -287,86 +307,100 @@ namespace Anki {
     {
       printf("HAL.SetTimeStamp %d\n", t);
       timeOffset_ = std::chrono::steady_clock::now() - std::chrono::milliseconds(t);
-      
-//      using namespace Anki::Cozmo::RobotInterface;
-//      AdjustTimestamp msg;
-//      msg.timestamp = t;
-//      RobotInterface::SendMessage(msg);
+
+      //      using namespace Anki::Cozmo::RobotInterface;
+      //      AdjustTimestamp msg;
+      //      msg.timestamp = t;
+      //      RobotInterface::SendMessage(msg);
     };
 
-    void HAL::SetLED(LEDId led_id, u16 color) {
+    void HAL::SetLED(LEDId led_id, u16 color)
+    {
     }
 
     u32 HAL::GetID()
     {
       return robotID_;
     }
-    
+
     u16 HAL::GetRawProxData()
     {
       return bodyData_->proximity.rangeMM;
     }
 
-    u16 HAL::GetRawCliffData(const CliffID cliff_id) {
-      assert (cliff_id < DropSensor_DROP_SENSOR_COUNT);
+    u16 HAL::GetRawCliffData(const CliffID cliff_id)
+    {
+      assert(cliff_id < DropSensor_DROP_SENSOR_COUNT);
       return bodyData_->cliffSense[cliff_id];
     }
 
-    u16 HAL::GetCliffOffLevel(const CliffID cliff_id) {
+    u16 HAL::GetCliffOffLevel(const CliffID cliff_id)
+    {
       // This is not supported by V2 hardware
       return 0;
     }
 
-    f32 HAL::BatteryGetVoltage() {
+    f32 HAL::BatteryGetVoltage()
+    {
       return bodyData_->battery.batteryVolts;
     }
 
-    bool HAL::BatteryIsCharging() {
+    bool HAL::BatteryIsCharging()
+    {
       return bodyData_->battery.flags & BatteryFlags_isCharging;
     }
 
-    bool HAL::BatteryIsOnCharger() {
+    bool HAL::BatteryIsOnCharger()
+    {
       return bodyData_->battery.flags & BatteryFlags_isOnCharger;
     }
 
-    bool HAL::BatteryIsChargerOOS() {
+    bool HAL::BatteryIsChargerOOS()
+    {
       return bodyData_->battery.flags & BatteryFlags_chargerOOS;
     }
 
-    Result HAL::SetBlockLight(const u32 activeID, const u16* colors) {
+    Result HAL::SetBlockLight(const u32 activeID, const u16* colors)
+    {
       // Not implemented in HAL in V2
       return RESULT_OK;
     }
 
-    Result HAL::StreamObjectAccel(const u32 activeID, const bool enable) {
+    Result HAL::StreamObjectAccel(const u32 activeID, const bool enable)
+    {
       // Not implemented in HAL in V2
       return RESULT_OK;
     }
 
-    Result HAL::AssignSlot(u32 slot_id, u32 factory_id) {
+    Result HAL::AssignSlot(u32 slot_id, u32 factory_id)
+    {
       // Not implemented in HAL in V2
       return RESULT_OK;
     }
 
-    u8 HAL::GetWatchdogResetCounter() {
+    u8 HAL::GetWatchdogResetCounter()
+    {
       // not (yet) implemented in HAL in V2
       return 0;//bodyData_->status.watchdogCount;
     }
 
     // @return true if the audio clock says it is time for the next frame
-    bool HAL::AudioReady() {
+    bool HAL::AudioReady()
+    {
       // Not implemented in HAL in V2
       return audioReadyForFrame_;
     }
 
-    void HAL::AudioPlaySilence() {
+    void HAL::AudioPlaySilence()
+    {
       // Not implemented in HAL in V2
       AudioPlayFrame(nullptr);
     }
 
     // Play one frame of audio or silence
     // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(AnimKeyFrame::AudioSample *msg) {
+    void HAL::AudioPlayFrame(AnimKeyFrame::AudioSample *msg)
+    {
       // Not implemented in HAL in V2
       if (audioEndTime_ == 0) {
         audioEndTime_ = HAL::GetTimeStamp();
@@ -374,7 +408,7 @@ namespace Anki {
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
     }
-    
-    
+
+
   } // namespace Cozmo
 } // namespace Anki

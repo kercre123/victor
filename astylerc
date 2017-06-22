@@ -1,8 +1,8 @@
 # Artistic Style code formatter configuration options
 # Use google style braces for compatibility with cpplint
---style=google
+--style=k&r
 # Explicitly select 4 space indent, convert random tabs found into spaces
---indent=spaces=4
+--indent=spaces=2
 --convert-tabs
 # Remove extra padding inside parenthesis but make sure there is padding after `if` etc. around operators and after commas
 --unpad-paren
@@ -10,3 +10,5 @@
 --pad-oper
 # Force add braces to one line statements -- this may be controversial
 --add-one-line-braces
+--break-closing-braces
+--attach-namespaces

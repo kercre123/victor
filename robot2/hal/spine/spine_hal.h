@@ -8,19 +8,19 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif   
+#endif
 
 
-typedef enum SpineErr_t
-{
-   err_OK,
-   err_BAD_CHECKSUM = 0x8001,
-   err_INVALID_FRAME_LEN,
-   err_UNKNOWN_MSG,
-   err_CANT_OPEN_FILE,
-   err_TERMIOS_FAIL,
-   err_BAD_ARGUMENT,
-   err_ALREADY_OPEN,
+typedef enum SpineErr_t {
+  err_OK,
+  err_BAD_CHECKSUM = 0x8001,
+  err_INVALID_FRAME_LEN,
+  err_UNKNOWN_MSG,
+  err_CANT_OPEN_FILE,
+  err_TERMIOS_FAIL,
+  err_BAD_ARGUMENT,
+  err_ALREADY_OPEN,
+  err_FILE_READ_ERROR,
 } SpineErr;
 
 
@@ -38,6 +38,6 @@ void hal_set_mode(int new_mode);
 
 #ifdef __cplusplus
 }
-#endif   
+#endif
 
 #endif//SPINE_HAL_H

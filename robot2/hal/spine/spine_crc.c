@@ -37,11 +37,12 @@ static const crc_t crc_table[256] = {
   0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-crc_t calc_crc(const uint8_t* buf, int len) {
+crc_t calc_crc(const uint8_t* buf, int len)
+{
   crc_t crc = 0xFFFFffff;
   while (len--) {
-     uint8_t idx = (crc ^ *buf++) & 0xff;
-     crc = (crc_table[idx] ^ (crc >> 8));
+    uint8_t idx = (crc ^ *buf++) & 0xff;
+    crc = (crc_table[idx] ^ (crc >> 8));
   }
   return crc;
 }
