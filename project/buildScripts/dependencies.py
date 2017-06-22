@@ -443,7 +443,7 @@ def teamcity_package(tc_dict):
                 print err
                 if os.path.isfile(dist):
                     os.remove(dist)
-                print "ERROR {0}ing {1}.  Please try again.".format(tool, package)
+                sys.exit( "ERROR {0}ing {1}.  Please try again.".format(tool, package))
             else:
                 print "{0} Downloaded.  New version {1} ".format(build.title(), version)
         else:
