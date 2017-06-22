@@ -1214,7 +1214,13 @@ namespace Cozmo {
       msg.nrows = calib.GetNrows();
       msg.ncols = calib.GetNcols();
       msg.skew = calib.GetSkew();
-      msg.distCoeffs = calib.GetDistortionCoeffs();
+      
+      DEV_ASSERT_MSG(msg.distCoeffs.size() == calib.GetDistortionCoeffs().size(),
+                     "VisionComponent.UpdateComputedCalibration.WrongNumDistCoeffs",
+                     "Message expects %zu, got %zu", msg.distCoeffs.size(), calib.GetDistortionCoeffs().size());
+      
+      std::copy(calib.GetDistortionCoeffs().begin(), calib.GetDistortionCoeffs().end(), msg.distCoeffs.begin());
+      
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
   
@@ -2292,6 +2298,15 @@ namespace Cozmo {
       // Create ImageRGB object from image buffer
       Vision::ImageRGB imgRGB(numRows, numCols, buffer);
       
+      
+      
+      // DEBUG Distortion coeffs
+      Vision::ImageRGB imgUndistorted(numRows,numCols);
+      cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
+                    _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+                    _camera.GetCalibration()->GetDistortionCoeffs());
+      imgUndistorted.Display("UndistortedImage");
+      
       // Create EncodedImage with proper imageID and timestamp
       // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******
       TimeStamp_t ts = AndroidHAL::getInstance()->GetTimeStamp() - BS_TIME_STEP;
@@ -2455,12 +2470,12 @@ namespace Cozmo {
 #ifdef COZMO_V2
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
-          std::array<float,8> junkArr;
+          std::array<float,8> distCoeffs{{0.2f,0.1f,0.05f,0.025f,0.f,0.f,0.f,0.f}};
           Vision::CameraCalibration calib(240, 320,
                                           280, 280,
                                           160, 120,
                                           0,
-                                          junkArr);
+                                          distCoeffs);
           SetCameraCalibration(calib);
 #endif
           
