@@ -475,6 +475,12 @@ class GamePlatformConfiguration(object):
         if self.platform == 'android' and self.options.logcat:
             subprocess.call("./tools/android/logcatAllDevices.sh", shell=True)
 
+    def generate_assets(self):
+      # Update unity assets, eg Acknowledgements.txt
+      print_status('Generating assets')
+      exe = os.path.join('.', 'project', 'build-scripts', 'generate-assets.sh')
+      ankibuild.util.File.execute([exe])
+
     def generate(self):
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
@@ -528,6 +534,9 @@ class GamePlatformConfiguration(object):
 
         ankibuild.util.File.update_if_changed(build_flags_final_path, build_flags_temp_path)
         # NEED OF DEMO BUILD
+
+        # Generate unity assets
+        self.generate_assets()
 
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)

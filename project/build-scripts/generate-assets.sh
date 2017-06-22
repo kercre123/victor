@@ -1,8 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# cozmo-one/project/build-scripts/generate-assets.sh
+#
+# Helper script to create unity assets such as Acknowledgements.txt.
+# Run (once) by top-level configure.py during generate step.
+#
 
 set -e
 set -u
-
 
 GIT=`which git`
 if [ -z $GIT ];then
@@ -16,13 +21,13 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 #
 
 ACKNOWLEDGEMENTS_BUILD_FILE="${TOPLEVEL}/unity/Cozmo/Assets/Resources/Acknowledgements.txt"
-SEPERATOR="\n--------------------------\n"
+SEPARATOR="\n--------------------------\n"
 rm -f "${ACKNOWLEDGEMENTS_BUILD_FILE}"
 # can add  ${TOPLEVEL}/licenses/${PLATFORM}/*.license; if platform specific
 for license in ${TOPLEVEL}/licenses/*.license
 do
     if [ -e "$license" ]; then
         cat $license >> $ACKNOWLEDGEMENTS_BUILD_FILE
-        printf $SEPERATOR >> $ACKNOWLEDGEMENTS_BUILD_FILE
+        printf $SEPARATOR >> $ACKNOWLEDGEMENTS_BUILD_FILE
     fi
 done
