@@ -939,6 +939,14 @@ message RegisterNeedsActionCompleted {
 message GetWantsNeedsOnboarding {
 }
 
+// Wipes all needs data on the robot
+message WipeRobotNeedsData {
+}
+
+// Wipes all needs data on the device
+message WipeDeviceNeedsData {
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////////

@@ -2201,6 +2201,16 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void WipeRobotNeedsData() {
+    RobotEngineManager.Instance.Message.WipeRobotNeedsData = Singleton<WipeRobotNeedsData>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void WipeDeviceNeedsData() {
+    RobotEngineManager.Instance.Message.WipeDeviceNeedsData = Singleton<WipeDeviceNeedsData>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void RequestRobotRestoreData() {
     RobotEngineManager.Instance.Message.RequestRobotRestoreData = Singleton<RequestRobotRestoreData>.Instance;
     RobotEngineManager.Instance.SendMessage();

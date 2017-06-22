@@ -263,21 +263,6 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
 
   _actionsConfig.Init(inActionsJson);
 
-  const u32 uninitializedSerialNumber = 0;
-  _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
-
-  _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
-
-  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
-  {
-    _lastDecayUpdateTime_s[i] = _currentTime_s;
-    _timeWhenCooldownStarted_s[i] = 0.0f;
-    _timeWhenCooldownOver_s[i] = 0.0f;
-
-    _isDecayPausedForNeed[i] = false;
-    _isActionsPausedForNeed[i] = false;
-  }
-
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {
     auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
@@ -291,6 +276,30 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableDroneMode>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetWantsNeedsOnboarding>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeDeviceNeedsData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotNeedsData>();
+  }
+
+  InitInternal(currentTime_s);
+}
+
+
+void NeedsManager::InitInternal(const float currentTime_s)
+{
+  const u32 uninitializedSerialNumber = 0;
+  _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
+
+  _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
+
+  for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
+  {
+    _lastDecayUpdateTime_s[i] = _currentTime_s;
+    _timeWhenCooldownStarted_s[i] = 0.0f;
+    _timeWhenCooldownOver_s[i] = 0.0f;
+
+    _isDecayPausedForNeed[i] = false;
+    _isActionsPausedForNeed[i] = false;
   }
 
   // Read needs data from device storage, if it exists
@@ -882,13 +891,58 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseStates& m
 {
   SendNeedsPauseStatesToGame();
 }
-  
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetWantsNeedsOnboarding& msg)
 {
   ExternalInterface::WantsNeedsOnboarding message(!_robotHadValidNeedsData);
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::WipeDeviceNeedsData& msg)
+{
+  Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotGameData& msg)
+{
+  // When the debug 'erase everything' button is pressed, that means we also need
+  // to re-initialize the needs levels
+  InitInternal(_currentTime_s);
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::WipeRobotNeedsData& msg)
+{
+  if (!_robot->GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_NurtureGameData,
+                                             [this](NVStorage::NVResult res)
+                                             {
+                                               bool success;
+                                               if(res < NVStorage::NVResult::NV_OKAY)
+                                               {
+                                                 success = false;
+                                                 PRINT_NAMED_WARNING("NeedsManager.WipeRobotNeedsData",
+                                                                     "Erase of needs data failed with %s",
+                                                                     EnumToString(res));
+                                               }
+                                               else
+                                               {
+                                                 success = true;
+                                                 PRINT_NAMED_INFO("NeedsManager.WipeRobotNeedsData",
+                                                                  "Erase of needs complete!");
+                                               }
+                                               const auto& extInt = _cozmoContext->GetExternalInterface();
+                                               extInt->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(true, success)));
+
+                                               InitInternal(_currentTime_s);
+                                             }))
+  {
+    PRINT_NAMED_ERROR("NeedsManager.WipeRobotNeedsData.EraseFailed", "Erase failed");
+    _robotStorageState = RobotStorageState::Inactive;
+  }
 }
 
 template<>
@@ -1391,7 +1445,7 @@ void NeedsManager::StartWriteToRobot()
                                              FinishWriteToRobot(res, startTime);
                                            }))
   {
-    PRINT_NAMED_ERROR("NeedsState.StartWriteToRobot.WriteFailed", "Write failed");
+    PRINT_NAMED_ERROR("NeedsManager.StartWriteToRobot.WriteFailed", "Write failed");
     _robotStorageState = RobotStorageState::Inactive;
   }
 }
@@ -1408,7 +1462,7 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
 
   if (res < NVStorage::NVResult::NV_OKAY)
   {
-    PRINT_NAMED_ERROR("NeedsState.FinishWriteToRobot.WriteFailed", "Write failed with %s", EnumToString(res));
+    PRINT_NAMED_ERROR("NeedsManager.FinishWriteToRobot.WriteFailed", "Write failed with %s", EnumToString(res));
   }
   else
   {

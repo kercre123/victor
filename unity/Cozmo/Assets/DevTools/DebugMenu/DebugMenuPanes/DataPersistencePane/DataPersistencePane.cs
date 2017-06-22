@@ -10,6 +10,8 @@ namespace DataPersistence {
     private Button _ResetSaveDataButton;
     [SerializeField]
     private Button _ResetEverythingButton;
+    [SerializeField]
+    private Button _ResetNeedsButton;
 
     [SerializeField]
     private Button _StartNewSessionButton;
@@ -32,6 +34,7 @@ namespace DataPersistence {
     [SerializeField]
     private Text _LblStatus;
     private bool _IsResettingEverything = false;
+    private bool _IsResettingNeeds = false;
 
     private void Start() {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
@@ -39,6 +42,7 @@ namespace DataPersistence {
 
       _SubmitSkillsButton.onClick.AddListener(SubmitSkillsButtonClicked);
       _ResetEverythingButton.onClick.AddListener(SubmitResetEverythingData);
+      _ResetNeedsButton.onClick.AddListener(SubmitResetNeedsData);
       _LblStatus.text = "";
       InitSkills();
 
@@ -62,6 +66,11 @@ namespace DataPersistence {
       Anki.Cozmo.ExternalInterface.BlockPoolResetMessage blockPoolResetMessage = new Anki.Cozmo.ExternalInterface.BlockPoolResetMessage();
       RobotEngineManager.Instance.Message.BlockPoolResetMessage = blockPoolResetMessage;
       RobotEngineManager.Instance.SendMessage();
+
+      // Delete the needs state data from device
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData();
+      }
     }
 
     private void StartNewSessionButtonClicked() {
@@ -98,31 +107,56 @@ namespace DataPersistence {
     }
 
     private void SubmitResetEverythingData() {
-      if (!_IsResettingEverything) {
-        _IsResettingEverything = true;
+      if (!_IsResettingEverything && !_IsResettingNeeds) {
         if (RobotEngineManager.Instance.CurrentRobot == null) {
           _LblStatus.text = "Error: Not connected to the robot!";
           _LblStatus.color = Color.red;
         }
         else {
+          _IsResettingEverything = true;
           _LblStatus.text = "THINKING. Stop touching things.";
           _LblStatus.color = Color.blue;
+          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData();
           RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
+        }
+      }
+    }
+
+    private void SubmitResetNeedsData() {
+      if (!_IsResettingEverything && !_IsResettingNeeds) {
+        if (RobotEngineManager.Instance.CurrentRobot == null) {
+          _LblStatus.text = "Error: Not connected to the robot!";
+          _LblStatus.color = Color.red;
+        }
+        else {
+          _IsResettingNeeds = true;
+          _LblStatus.text = "THINKING. Stop touching things.";
+          _LblStatus.color = Color.blue;
+          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData();
+          RobotEngineManager.Instance.CurrentRobot.WipeRobotNeedsData();
         }
       }
     }
 
     private void HandleRestoreStatus(Anki.Cozmo.ExternalInterface.RestoreRobotStatus status) {
       if (status.isWipe) {
-        _IsResettingEverything = false;
         if (status.success) {
-          HandleResetSaveDataButtonClicked();
+          if (_IsResettingEverything) {
+            HandleResetSaveDataButtonClicked();
+          }
+          else {
+            if (NeedsConnectionManager.Instance != null) {
+              NeedsConnectionManager.Instance.ForceBoot();
+            }
+          }
           DebugMenuManager.Instance.CloseDebugMenuDialog();
         }
         else {
           _LblStatus.text = "Error: Robot Data clear failed!";
           _LblStatus.color = Color.red;
         }
+        _IsResettingEverything = false;
+        _IsResettingNeeds = false;
       }
     }
 

@@ -1031,6 +1031,12 @@ public class MockRobot : IRobot {
   public void WipeRobotGameData() {
   }
 
+  public void WipeRobotNeedsData() {
+  }
+
+  public void WipeDeviceNeedsData() {
+  }
+
   public void RequestRobotRestoreData() {
   }
 

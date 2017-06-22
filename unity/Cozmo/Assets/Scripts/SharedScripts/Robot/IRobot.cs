@@ -373,6 +373,10 @@ public interface IRobot : IDisposable {
 
   void WipeRobotGameData();
 
+  void WipeRobotNeedsData();
+
+  void WipeDeviceNeedsData();
+
   void RequestRobotRestoreData();
 
   void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, byte[] data, byte index = 0, byte numTotalBlobs = 1);

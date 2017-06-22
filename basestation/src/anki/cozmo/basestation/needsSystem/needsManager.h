@@ -93,6 +93,8 @@ public:
 
 private:
 
+  void InitInternal(const float currentTime_s);
+
   bool DeviceHasNeedsState();
   void PossiblyWriteToDevice();
   void WriteToDevice(bool stampWithNowTime = true);
