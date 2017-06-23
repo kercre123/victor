@@ -24,6 +24,10 @@
  */
 'use strict';
 
+/**
+ * @name Blockly.Css
+ * @namespace
+ */
 goog.provide('Blockly.Css');
 
 goog.require('Blockly.Colours');
@@ -106,52 +110,17 @@ Blockly.Css.inject = function(hasCss, pathToMedia) {
   var cssTextNode = document.createTextNode(text);
   cssNode.appendChild(cssTextNode);
   Blockly.Css.styleSheet_ = cssNode.sheet;
-  Blockly.Css.setCursor(Blockly.Css.Cursor.OPEN);
 };
 
 /**
  * Set the cursor to be displayed when over something draggable.
+ * See See https://github.com/google/blockly/issues/981 for context.
  * @param {Blockly.Css.Cursor} cursor Enum.
+ * @deprecated April 2017.
  */
 Blockly.Css.setCursor = function(cursor) {
-  if (goog.userAgent.MOBILE || goog.userAgent.ANDROID || goog.userAgent.IPAD) {
-    // Don't try to switch the mouse cursor on a mobile device.
-    // This is an optimization - since we almost never have cursors on mobile anyway.
-    return;
-  }
-  if (Blockly.Css.currentCursor_ == cursor) {
-    return;
-  }
-  Blockly.Css.currentCursor_ = cursor;
-  var url;
-  if (cursor == Blockly.Css.Cursor.OPEN) {
-    // Scratch-specific: use CSS default cursor instead of "open hand."
-    url = 'default';
-  } else {
-    url = 'url(' + Blockly.Css.mediaPath_ + '/' + cursor + '.cur), auto';
-  }
-  // There are potentially hundreds of draggable objects.  Changing their style
-  // properties individually is too slow, so change the CSS rule instead.
-  var rule = '.blocklyDraggable {\n  cursor: ' + url + ';\n}\n';
-  Blockly.Css.styleSheet_.deleteRule(0);
-  Blockly.Css.styleSheet_.insertRule(rule, 0);
-  // There is probably only one toolbox, so just change its style property.
-  var toolboxen = document.getElementsByClassName('blocklyToolboxDiv');
-  for (var i = 0, toolbox; toolbox = toolboxen[i]; i++) {
-    if (cursor == Blockly.Css.Cursor.DELETE) {
-      toolbox.style.cursor = url;
-    } else {
-      toolbox.style.cursor = '';
-    }
-  }
-  // Set cursor on the whole document, so that rapid movements
-  // don't result in cursor changing to an arrow momentarily.
-  var html = document.body.parentNode;
-  if (cursor == Blockly.Css.Cursor.OPEN) {
-    html.style.cursor = '';
-  } else {
-    html.style.cursor = url;
-  }
+  console.warn('Deprecated call to Blockly.Css.setCursor.' +
+    'See https://github.com/google/blockly/issues/981 for context');
 };
 
 /**
@@ -183,6 +152,7 @@ Blockly.Css.CONTENT = [
     'height: 100%;',
     'position: relative;',
     'overflow: hidden;', /* So blocks in drag surface disappear at edges */
+    'touch-action: none',
   '}',
 
   '.blocklyNonSelectable {',
@@ -229,8 +199,25 @@ Blockly.Css.CONTENT = [
     'right: 0;',
     'bottom: 0;',
     'overflow: visible !important;',
-    'z-index: 5000;',
+    'z-index: 50;', /* Display above the toolbox */
   '}',
+
+  /*
+  // *** ANKI CHANGE ***
+  '.blocklyTooltipDiv {',
+    'background-color: #ffffc7;',
+    'border: 1px solid #ddc;',
+    'box-shadow: 4px 4px 20px 1px rgba(0,0,0,.15);',
+    'color: #000;',
+    'display: none;',
+    'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'font-size: 9pt;',
+    'opacity: 0.9;',
+    'padding: 2px;',
+    'position: absolute;',
+    'z-index: 100000;',
+  '}',
+  */
 
   '.blocklyDropDownDiv {',
     'position: fixed;',
@@ -241,7 +228,8 @@ Blockly.Css.CONTENT = [
     'border: 1px solid;',
     'border-radius: 4px;',
     'box-shadow: 0px 0px 8px 1px ' + Blockly.Colours.dropDownShadow + ';',
-    'padding: 1px;',
+    'padding: 1px;', // *** ANKI CHANGE ***
+    //'padding: 4px;',
     '-webkit-user-select: none;',
   '}',
 
@@ -308,12 +296,16 @@ Blockly.Css.CONTENT = [
     'border: 1px solid $colour_numPadBorder;',
     'cursor: pointer;',
     'font-weight: 600;',
-    'font-family: "Avenir Next Bold";',
+    'font-family: "Avenir Next Bold";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
     'font-size: 12pt;',
     '-webkit-tap-highlight-color: rgba(0,0,0,0);',
   '}',
 
-'.blocklyNumPadButtonPhone {',
+  // *** ANKI CHANGE ***
+  // Fixes bug where the drive distance dropdown pops down on phones
+  // when the blocks are in the toolbar. Instead we want it to pop up.
+  '.blocklyNumPadButtonPhone {',
     'display: inline-block;',
     'float: left;',
     'padding: 0;',
@@ -362,7 +354,8 @@ Blockly.Css.CONTENT = [
     'overflow: auto;',
     'word-wrap: break-word;',
     'text-align: center;',
-    'font-family: "Avenir Next";',
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
     'font-size: .8em;',
   '}',
 
@@ -388,13 +381,71 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyPath {',
-    'stroke-width: .5px;',
+    'stroke-width: .5px;', // *** ANKI CHANGE ***
+    //'stroke-width: 1px;',
   '}',
 
   '.blocklySelected>.blocklyPath {',
     // 'stroke: #fc3;',
     // 'stroke-width: 3px;',
   '}',
+
+  '.blocklySelected>.blocklyPathLight {',
+    'display: none;',
+  '}',
+
+  '.blocklyDraggable {',
+    /* backup for browsers (e.g. IE11) that don't support grab */
+    'cursor: url("<<<PATH>>>/handopen.cur"), auto;',
+    'cursor: grab;',
+    'cursor: -webkit-grab;',
+    'cursor: -moz-grab;',
+  '}',
+
+   '.blocklyDragging {',
+    /* backup for browsers (e.g. IE11) that don't support grabbing */
+    'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',
+    'cursor: grabbing;',
+    'cursor: -webkit-grabbing;',
+    'cursor: -moz-grabbing;',
+  '}',
+  /* Changes cursor on mouse down. Not effective in Firefox because of
+    https://bugzilla.mozilla.org/show_bug.cgi?id=771241 */
+  '.blocklyDraggable:active {',
+    /* backup for browsers (e.g. IE11) that don't support grabbing */
+    'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',
+    'cursor: grabbing;',
+    'cursor: -webkit-grabbing;',
+    'cursor: -moz-grabbing;',
+  '}',
+  /* Change the cursor on the whole drag surface in case the mouse gets
+     ahead of block during a drag. This way the cursor is still a closed hand.
+   */
+  '.blocklyBlockDragSurface .blocklyDraggable {',
+    /* backup for browsers (e.g. IE11) that don't support grabbing */
+    'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',
+    'cursor: grabbing;',
+    'cursor: -webkit-grabbing;',
+    'cursor: -moz-grabbing;',
+  '}',
+
+  '.blocklyDragging.blocklyDraggingDelete {',
+    'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',
+  '}',
+
+  '.blocklyToolboxDelete {',
+    'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',
+  '}',
+
+  // ** ANKI CHANGE **
+  // Turn off these settings
+  /*
+  '.blocklyDragging>.blocklyPath,',
+  '.blocklyDragging>.blocklyPathLight {',
+    'fill-opacity: .8;',
+    'stroke-opacity: .8;',
+  '}',
+  */
 
   '.blocklyDragging>.blocklyPath {',
   '}',
@@ -404,9 +455,14 @@ Blockly.Css.CONTENT = [
     'stroke-opacity: .5;',
   '}',
 
+  '.blocklyInsertionMarker>.blocklyPath {',
+    'stroke: none;',
+  '}',
+
   '.blocklyText {',
     'fill: #fff;',
-    'font-family: "Avenir Next";',
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
     'font-size: 12pt;',
     'font-weight: 500;',
   '}',
@@ -436,16 +492,24 @@ Blockly.Css.CONTENT = [
     'z-index: 20;',
   '}',
   '.blocklyFlyoutButton {',
-    'fill: #888;',
-    'cursor: default;',
+    'fill: none;',
+  '}',
+
+  '.blocklyFlyoutButtonBackground {',
+      'stroke: #c6c6c6;',
+  '}',
+
+  '.blocklyFlyoutButton .blocklyText {',
+    'fill: $colour_text;',
   '}',
 
   '.blocklyFlyoutButtonShadow {',
-    'fill: #666;',
+    'fill: none;',
   '}',
 
   '.blocklyFlyoutButton:hover {',
-    'fill: #aaa;',
+    'fill: white;',
+    'cursor: pointer;',
   '}',
 
   '.blocklyFlyoutLabel {',
@@ -513,7 +577,8 @@ Blockly.Css.CONTENT = [
 
   '.blocklyHtmlInput {',
     'border: none;',
-    'font-family: "Avenir Next";',
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
     'font-size: 12pt;',
     'height: 100%;',
     'margin: 0;',
@@ -537,13 +602,23 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutBackground {',
-    'fill: #58595a;',
+    'fill: #58595a;', // *** ANKI CHANGE ***
+    //'fill: $colour_flyout;',
+    'fill-opacity: .8;', // *** ANKI CHANGE ***
+  '}',
+
+  '.blocklyMainWorkspaceScrollbar {',
+    'z-index: 20;',
+  '}',
+
+  '.blocklyFlyoutScrollbar {',
+    'z-index: 30;',
   '}',
 
   '.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {',
     'position: absolute;',
     'outline: none;',
-    'z-index: 30;',
+    'z-index: 30;', // *** ANKI CHANGE ***
   '}',
 
   '.blocklyScrollbarBackground {',
@@ -560,15 +635,7 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyZoom>image {',
-    'opacity: .4;',
-  '}',
-
-  '.blocklyZoom>image:hover {',
-    'opacity: .6;',
-  '}',
-
-  '.blocklyZoom>image:active {',
-    'opacity: .8;',
+    'opacity: 1;',
   '}',
 
   /* Darken flyout scrollbars due to being on a grey background. */
@@ -607,6 +674,7 @@ Blockly.Css.CONTENT = [
     'stroke: #f00;',
     'stroke-width: 2;',
     'stroke-linecap: round;',
+    'pointer-events: none;',
   '}',
 
   '.blocklyContextMenu {',
@@ -629,13 +697,15 @@ Blockly.Css.CONTENT = [
 
   /* Category tree in Toolbox. */
   '.blocklyToolboxDiv {',
-    'background-color: #535252;',
+    'background-color: #535252;', // ANKI CHANGE ***
+    //'background-color: $colour_toolbox;',
     'color: $colour_toolboxText;',
     'overflow-x: visible;',
     'overflow-y: auto;',
     'position: absolute;',
-    'font-family: "Avenir Next";',
-    'z-index: 70;', /* so blocks go under toolbox when dragging */
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'z-index: 40;', /* so blocks go over toolbox when dragging */
   '}',
 
   '.blocklyTreeRoot {',
@@ -723,7 +793,8 @@ Blockly.Css.CONTENT = [
 
   '.blocklyTreeLabel {',
     'cursor: default;',
-    'font-family: "Avenir Next";',
+    'font-family: "Avenir Next";', // *** ANKI CHANGE ***
+    //'font-family: "Helvetica Neue", Helvetica, sans-serif;',
     'font-size: 16px;',
     'padding: 0 3px;',
     'vertical-align: middle;',
@@ -803,20 +874,21 @@ Blockly.Css.CONTENT = [
     'border-style: solid;',
     'border-width: 1px;',
     'cursor: default;',
-    'font: normal 13px "Avenir Next";',
+    'font: normal 13px "Avenir Next";', // *** ANKI CHANGE ***
+    //'font: normal 13px "Helvetica Neue", Helvetica, sans-serif;',
     'margin: 0;',
     'outline: none;',
     'padding: 4px 0;',
     'position: absolute;',
     'overflow-y: auto;',
     'overflow-x: hidden;',
-    'max-height: 100%;',
     'z-index: 20000;',  /* Arbitrary, but some apps depend on it... */
   '}',
 
   '.blocklyDropDownDiv .goog-menu {',
     'cursor: default;',
-    'font: normal 13px "Avenir Next";',
+    'font: normal 13px "Avenir Next";', // *** ANKI CHANGE ***
+    //'font: normal 13px "Helvetica Neue", Helvetica, sans-serif;',
     'outline: none;',
     'z-index: 20000;',  /* Arbitrary, but some apps depend on it... */
   '}',
@@ -852,7 +924,8 @@ Blockly.Css.CONTENT = [
    */
   '.blocklyWidgetDiv .goog-menuitem {',
     'color: #000;',
-    'font: normal 13px "Avenir Next";',
+    'font: normal 13px "Avenir Next";', // *** ANKI CHANGE ***
+    //'font: normal 13px "Helvetica Neue", Helvetica, sans-serif;',
     'list-style: none;',
     'margin: 0;',
      /* 28px on the left for icon or checkbox; 7em on the right for shortcut. */
@@ -862,7 +935,8 @@ Blockly.Css.CONTENT = [
 
   '.blocklyDropDownDiv .goog-menuitem {',
     'color: #fff;',
-    'font: normal 13px "Avenir Next";',
+    'font: normal 13px "Avenir Next";', // *** ANKI CHANGE ***
+    //'font: normal 13px "Helvetica Neue", Helvetica, sans-serif;',
     'font-weight: bold;',
     'list-style: none;',
     'margin: 0;',
@@ -900,7 +974,8 @@ Blockly.Css.CONTENT = [
   '.blocklyWidgetDiv .goog-menuitem-content ',
   '.blocklyDropDownDiv .goog-menuitem-content {',
     'color: #000;',
-    'font: normal 13px "Avenir Next";',
+    'font: normal 13px "Avenir Next";', // ANKI CHANGE ***
+    //'font: normal 13px "Helvetica Neue", Helvetica, sans-serif;',
   '}',
 
   /* State: disabled. */
@@ -1031,16 +1106,39 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutCheckbox {',
-    'fill: red;',
+    'fill: white;',
+    'stroke: #c8c8c8;',
   '}',
 
   '.blocklyFlyoutCheckbox.checked {',
-    'fill: blue;',
+    'fill: ' + Blockly.Colours.motion.primary + ';',
+    'stroke: ' + Blockly.Colours.motion.tertiary + ';',
+  '}',
+
+  '.blocklyFlyoutCheckboxPath {',
+    'stroke: white;',
+    'stroke-width: 3;',
+    'stroke-linecap: round;',
+    'stroke-linejoin: round;',
+  '}',
+
+  // *** ANKI CHANGE ***
+  // Settings specific to horizontal categories
+  '.scratchCategoryMenuHorizontal {',
+    'width: 250px;',
+    'background-color: #535252;',
+    'color: $colour_toolboxText;',
+    'font-size: .9em;',
+    'user-select: none;',
+    '-webkit-user-select: none;',
+    '-moz-user-select: none;',
+    '-ms-user-select: none;',
   '}',
 
   '.scratchCategoryMenu {',
     'width: 250px;',
-    'background-color: #535252;',
+    'background-color: #ffffff;', // *** ANKI CHANGE ***
+    //'background: $colour_toolbox;',
     'color: $colour_toolboxText;',
     'font-size: .9em;',
     'user-select: none;',
@@ -1053,18 +1151,31 @@ Blockly.Css.CONTENT = [
     'width: 50%;',
   '}',
 
+  // *** ANKI CHANGE ***
+  // Horizontal-specific version of scratchCategoryMenuItem
   '.scratchCategoryMenuItem {',
     'padding: 2px;',
     'width: 25%;',
     'cursor: pointer;',
   '}',
 
+  // *** ANKI CHANGE ***
+  // Vertical-specific version of scratchCategoryMenuItem
+  '.scratchCategoryMenuItemVertical {',
+    'padding: 4px;',
+    'width: 50%;',
+    'cursor: pointer;',
+  '}',
+
   '.scratchCategoryMenuItem.categorySelected {',
-    'background: #ffffff;',
+    'background: #ffffff;', // *** ANKI CHANGE ***
+    //'background: $colour_toolboxSelected;',
     'border-radius: 16px;',
   '}',
 
-  '.scratchCategoryItemBubbleLTR {',
+  // *** ANKI CHANGE ***
+  // Horizontal-specific version of scratchCategoryItemBubbleLTR
+  '.scratchCategoryItemBubbleLTRHorizontal {',
     'width: 87px;',
     'height: 20px;',
     'border-radius: 20px;',
@@ -1077,6 +1188,15 @@ Blockly.Css.CONTENT = [
     '-moz-user-select: none;',
     '-ms-user-select: none;',
     'padding-top: 12px',
+  '}',
+
+  '.scratchCategoryItemBubbleLTR {',
+    'width: 14px;',
+    'height: 14px;',
+    'border: 1px solid;',
+    'border-radius: 8px;',
+    'float: left;',
+    'margin-right: 8px;',
   '}',
 
   '.scratchCategoryItemBubbleRTL {',
@@ -1092,14 +1212,15 @@ Blockly.Css.CONTENT = [
     'color: $colour_toolboxHover !important;',
   '}',
 
-
-'@font-face {',
-  'font-family: "Avenir Next Bold";',
-  'src: url("../../../fonts/Fonts-latin/AvenirLTStd-Heavy.otf");',
-'}',
-'@font-face {',
-  'font-family: "Avenir Next";',
-  'src: url("../../../fonts/Fonts-latin/AvenirLTStd-Medium.otf");',
+  // *** ANKI CHANGE ***
+  // Include Cozmo Avenir fonts
+  '@font-face {',
+    'font-family: "Avenir Next Bold";',
+    'src: url("../../../fonts/Fonts-latin/AvenirLTStd-Heavy.otf");',
   '}',
+  '@font-face {',
+    'font-family: "Avenir Next";',
+    'src: url("../../../fonts/Fonts-latin/AvenirLTStd-Medium.otf");',
+    '}',
   ''
 ];

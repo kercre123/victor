@@ -41,19 +41,31 @@
         var toolbox = document.getElementById('toolbox');
         window.toolbox = toolbox;
 
+        var toolboxPosition = 'end';
+        var controls = false;
+        var startScale = 1.2;
+        if (window.isVertical) {
+            toolboxPosition = 'start';
+            controls = true;
+            startScale = 0.75;
+        }
+
         // Instantiate scratch-blocks and attach it to the DOM.
         var workspace = window.Blockly.inject('blocks', {
             media: './lib/blocks/media/',
             scrollbars: true,
             trashcan: false,
-            horizontalLayout: true,
+            horizontalLayout: !window.isVertical,
             toolbox: window.toolbox,
-            toolboxPosition: 'end',
+            toolboxPosition: toolboxPosition,
             sounds: true,
             zoom: {
-                controls: false,
+                controls: controls,
                 wheel: false,
-                startScale: 1.2
+                startScale: startScale,
+                maxScale: 2,
+                minScale: 0.5,
+                scaleSpeed: 1.1
             }
         });
         Scratch.workspace = workspace;
@@ -168,11 +180,13 @@
         //
         // Also see CSS height column here: https://mydevice.io/devices/
 
-        if (window.innerWidth < window.TABLET_WIDTH) {
-            Scratch.workspace.setScale(0.70);
-            //document.getElementById('navigation').style.zoom = "80%"
-        }else{
-            Scratch.workspace.setScale(1.2);
+        if (!window.isVertical) {
+            if (window.innerWidth < window.TABLET_WIDTH) {
+                Scratch.workspace.setScale(0.70);
+                //document.getElementById('navigation').style.zoom = "80%"
+            }else{
+                Scratch.workspace.setScale(1.2);
+            }
         }
     };
 

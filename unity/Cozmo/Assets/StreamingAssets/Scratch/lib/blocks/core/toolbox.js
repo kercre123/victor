@@ -180,10 +180,6 @@ Blockly.Toolbox.prototype.createFlyout_ = function() {
  */
 Blockly.Toolbox.prototype.populate_ = function(newTree) {
   this.categoryMenu_.populate(newTree);
-
-  // *** ANKI CHANGE ***
-  // Hack to set default category
-  // Here we set the default category to the motion blocks category.
   this.setSelectedItem(this.categoryMenu_.categories_[0]);
 };
 
@@ -296,10 +292,13 @@ Blockly.Toolbox.prototype.getClientRect = function() {
 
   var x = toolboxRect.left;
 
-  // *** ANKI CHANGE ***
-  // After adding categories, delete area was not tall enough.
-  // Here we increase it by adding the flyout height plus some extra.
-  var y = toolboxRect.top - 1.25*this.flyout_.getHeight(); 
+  var y = toolboxRect.top;
+  if (!window.isVertical) {
+    // *** ANKI CHANGE ***
+    // After adding categories, delete area was not tall enough.
+    // Here we increase it by adding the flyout height plus some extra.
+    y = toolboxRect.top - 1.25*this.flyout_.getHeight(); 
+  }
 
   var width = toolboxRect.width;
   var height = toolboxRect.height;
@@ -343,7 +342,6 @@ Blockly.Toolbox.prototype.getSelectedItem = function() {
  * @param {Blockly.Toolbox.Category} item The category to select.
  */
 Blockly.Toolbox.prototype.setSelectedItem = function(item) {
-
   if (this.selectedItem_) {
     // Don't do anything if they selected the already-open category.
     if (this.selectedItem_ == item) {
@@ -407,7 +405,17 @@ Blockly.Toolbox.CategoryMenu.prototype.createDom = function() {
   <table class="scratchCategoryMenu">
   </table>
   */
-  this.table = goog.dom.createDom('table', 'scratchCategoryMenu');
+
+  // *** ANKI CHANGE ***
+  // Use different scratchCategoryMenu css settings for vertical versus horizontal
+  // in order to set background color
+  if (!window.isVertical) {
+    this.table = goog.dom.createDom('table', 'scratchCategoryMenuHorizontal');
+  }
+  else {
+    this.table = goog.dom.createDom('table', 'scratchCategoryMenu');    
+  }
+
   this.parentHtml_.appendChild(this.table);
 };
 
@@ -434,36 +442,36 @@ Blockly.Toolbox.CategoryMenu.prototype.populate = function(domTree) {
   }
 
   // *** ANKI CHANGE ***
-  // Create 1 row for categories
-  var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
-  this.table.appendChild(row);
-  for (var a = 0; a < categories.length; a ++) {
-    child = categories[a];
-    if (child) {
-      this.categories_.push(new Blockly.Toolbox.Category(this, row,
-          child));
-    }
-  }
-  
-
-/*
-  // Create categories one row at a time.
-  // Note that this involves skipping around by `columnSeparator` in the DOM tree.
-  var columnSeparator = Math.ceil(categories.length / 2);
-  for (var i = 0; i < columnSeparator; i += 1) {
-    child = categories[i];
+  // Create 1 row of categories for horizontal.
+  if (!window.isVertical) {
     var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
     this.table.appendChild(row);
-    if (child) {
-      this.categories_.push(new Blockly.Toolbox.Category(this, row,
-          child));
-    }
-    if (categories[i + columnSeparator]) {
-      this.categories_.push(new Blockly.Toolbox.Category(this, row,
-          categories[i + columnSeparator]));
+    for (var a = 0; a < categories.length; a ++) {
+      child = categories[a];
+      if (child) {
+        this.categories_.push(new Blockly.Toolbox.Category(this, row,
+            child));
+      }
     }
   }
-  */
+  else {
+    // Create categories one row at a time.
+    // Note that this involves skipping around by `columnSeparator` in the DOM tree.
+    var columnSeparator = Math.ceil(categories.length / 2);
+    for (var i = 0; i < columnSeparator; i += 1) {
+      child = categories[i];
+      var row = goog.dom.createDom('tr', 'scratchCategoryMenuRow');
+      this.table.appendChild(row);
+      if (child) {
+        this.categories_.push(new Blockly.Toolbox.Category(this, row,
+            child));
+      }
+      if (categories[i + columnSeparator]) {
+        this.categories_.push(new Blockly.Toolbox.Category(this, row,
+            categories[i + columnSeparator]));
+      }
+    }
+  }
   this.height_ = this.table.offsetHeight;
 };
 
@@ -495,9 +503,14 @@ Blockly.Toolbox.Category = function(parent, parentHtml, domTree) {
   this.parent_ = parent;
   this.parentHtml_ = parentHtml;
 
-  // ANKI CHANGE: Look up category name using localized keys
-  var key = domTree.getAttribute('name');
-  this.name_ = $t(key);
+  if (!window.isVertical) {
+    // ANKI CHANGE: Look up category name using localized keys
+    var key = domTree.getAttribute('name');
+    this.name_ = $t(key);
+  }
+  else {
+    this.name_ = domTree.getAttribute('name');
+  }
 
   this.setColour(domTree);
   this.custom_ = domTree.getAttribute('custom');
@@ -526,16 +539,30 @@ Blockly.Toolbox.Category.prototype.dispose = function() {
  */
 Blockly.Toolbox.Category.prototype.createDom = function() {
   var toolbox = this.parent_.parent_;
-  this.item_ = goog.dom.createDom('td',
-      {'class': 'scratchCategoryMenuItem'}); // *** ANKI CHANGE ***
-  this.bubble_ = goog.dom.createDom('div', {
-    'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
-    'scratchCategoryItemBubbleLTR'}, this.name_.toUpperCase()); // *** ANKI CHANGE ***
+
+  // *** ANKI CHANGE ***
+  // Set up horizontal categories.
+  if (!window.isVertical) {
+    this.item_ = goog.dom.createDom('td',
+      {'class': 'scratchCategoryMenuItem'});
+    this.bubble_ = goog.dom.createDom('div', {
+      'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
+      'scratchCategoryItemBubbleLTRHorizontal'}, this.name_.toUpperCase());
+  }
+  else {
+    this.item_ = goog.dom.createDom('td',
+        {'class': 'scratchCategoryMenuItemVertical'},
+        this.name_);
+    this.bubble_ = goog.dom.createDom('div', {
+      'class': (toolbox.RTL) ? 'scratchCategoryItemBubbleRTL' :
+      'scratchCategoryItemBubbleLTR'});
+  }
+
   this.bubble_.style.backgroundColor = this.colour_;
   this.bubble_.style.borderColor = this.secondaryColour_;
-  
+
   // *** ANKI CHANGE ***
-  if (window.innerWidth > window.TABLET_WIDTH) {
+  if (!window.isVertical && window.innerWidth > window.TABLET_WIDTH) {
     this.bubble_.style.fontSize = "14px";
     this.bubble_.style.width = "130px";
     this.bubble_.style.paddingTop = "7.5px";
