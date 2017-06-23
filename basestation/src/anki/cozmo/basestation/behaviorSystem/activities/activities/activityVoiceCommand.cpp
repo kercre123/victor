@@ -313,15 +313,10 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       return _voiceCommandBehavior;
     }
     
-    // Yes Please and No Thank You do not trigger a behavior here
+    // These commands will never be handled by this chooser:
     case VoiceCommandType::YesPlease:
     case VoiceCommandType::NoThankYou:
-    {
-      BeginRespondingToCommand(currentCommand);
-      // NOTE INTENTIONAL FALLTHROUGH
-    }
-    
-    // These two commands will never be handled by this chooser:
+    case VoiceCommandType::Continue:
     case VoiceCommandType::HeyCozmo:
     case VoiceCommandType::Count:
     {
@@ -388,14 +383,16 @@ bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command
     case VoiceCommandType::FistBump:
     case VoiceCommandType::PeekABoo:
     case VoiceCommandType::GoToSleep:
-    case VoiceCommandType::YesPlease:
-    case VoiceCommandType::NoThankYou:
+
     case VoiceCommandType::LookDown:
     {
       return true;
     }
-    // These two commands will never be handled by this chooser:
+    // These commands will never be handled by this chooser:
+    case VoiceCommandType::Continue:
     case VoiceCommandType::HeyCozmo:
+    case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::YesPlease:
     case VoiceCommandType::Count:
     {
       // We're intentionally not handling these types in ActivityVoiceCommand
@@ -420,10 +417,11 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
     }
 
     // These commands are special; we don't care what our needs are when handling them
-    case VoiceCommandType::GoToSleep:
-    case VoiceCommandType::YesPlease:
-    case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::Continue:
     case VoiceCommandType::HeyCozmo:
+    case VoiceCommandType::GoToSleep:
+    case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::YesPlease:
     case VoiceCommandType::Count:
     {
       return false;
@@ -485,11 +483,18 @@ Result ActivityVoiceCommand::Update(Robot& robot)
   {
     voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(true));
     voiceCommandComponent->ClearHeardCommand();
+    BeginRespondingToCommand(currentCommand);
   }
   else if (currentCommand == VoiceCommandType::NoThankYou)
   {
     voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(false));
     voiceCommandComponent->ClearHeardCommand();
+    BeginRespondingToCommand(currentCommand);
+  }else if ( currentCommand == VoiceCommandType::Continue){
+    // The continue command is handled by the VC Component and doesn't require
+    // data to be sent up - so go ahead and clear the command
+    voiceCommandComponent->ClearHeardCommand();
+    BeginRespondingToCommand(currentCommand);
   }
 
   return Result::RESULT_OK;

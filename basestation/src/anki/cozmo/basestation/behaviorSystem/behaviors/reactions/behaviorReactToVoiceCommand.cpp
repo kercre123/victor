@@ -131,7 +131,7 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   
 void BehaviorReactToVoiceCommand::StopInternal(Robot& robot)
 {
-  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::Keyphrase);
+  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
   using namespace ::Anki::Cozmo::VoiceCommand;
   robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandEnd(VoiceCommandType::HeyCozmo));

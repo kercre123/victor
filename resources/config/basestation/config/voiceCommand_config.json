@@ -26,6 +26,10 @@
           "minRecogScore": 3.0
         },
         {
+          "phrase": "Continue",
+          "commandType": "Continue"
+        },
+        {
           "phrase": "Come Over Here",
           "commandType": "ComeHere"
         },
@@ -223,7 +227,15 @@
 
   "contextDataMap": [
     {
-      "contextType": "Keyphrase",
+      "contextType": "ContinuePrompt",
+      "contextIsPhraseSpotted": true,
+      "contextAllowsFollowup": false,
+      "contextCommandList": [
+        "Continue"
+      ]
+    },
+    {
+      "contextType": "TriggerPhrase",
       "contextIsPhraseSpotted": true,
       "contextAllowsFollowup": true,
       "contextCommandList": [
@@ -231,7 +243,7 @@
       ]
     },
     {
-      "contextType": "Freeplay",
+      "contextType": "CommandList",
       "contextIsPhraseSpotted": false,
       "contextAllowsFollowup": false,
       "contextCommandList": [

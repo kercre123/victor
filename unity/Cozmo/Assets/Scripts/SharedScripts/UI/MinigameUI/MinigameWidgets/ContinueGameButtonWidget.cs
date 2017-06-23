@@ -56,7 +56,7 @@ namespace Cozmo {
         }
       }
 
-      private void HandleContinueButtonClicked() {
+      public void HandleContinueButtonClicked() {
         if (_OnClickCallback != null) {
           _OnClickCallback();
         }
@@ -64,6 +64,10 @@ namespace Cozmo {
 
       public void SetButtonInteractivity(bool enableButton) {
         _ContinueButton.Interactable = enableButton;
+      }
+
+      public bool GetButtonInteractivity() {
+        return _ContinueButton.Interactable;
       }
 
       #region IMinigameWidget

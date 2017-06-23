@@ -349,7 +349,7 @@ void IBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::RobotDelet
 
 void IBehaviorRequestGame::StopInternal(Robot& robot)
 {
-  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::Keyphrase);
+  robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::TriggerPhrase);
   
   RequestGame_StopInternal(robot);
 }

@@ -40,6 +40,7 @@ namespace Anki.Cozmo.VoiceCommand {
 
     public event Action<RespondingToCommandStart> RespondingToCommandStartCallback;
     public event Action<RespondingToCommandEnd> RespondingToCommandEndCallback;
+    public event Action<RespondingToCommand> RespondingToCommand;
     public event Action<Anki.Cozmo.VoiceCommand.StateData> StateDataCallback;
 
     private float _VolumeLevelToRestore = -1.0f;
@@ -58,6 +59,7 @@ namespace Anki.Cozmo.VoiceCommand {
 
       RespondingToCommandStartCallback += HandleRespondCommandStart;
       RespondingToCommandEndCallback += HandleRespondCommandEnd;
+
     }
 
     private void HandleVoiceCommandEvent(Anki.Cozmo.VoiceCommand.VoiceCommandEvent voiceCommandEvent) {
@@ -73,6 +75,12 @@ namespace Anki.Cozmo.VoiceCommand {
       case VoiceCommandEventUnion.Tag.respondingToCommandEnd: {
           if (RespondingToCommandEndCallback != null) {
             RespondingToCommandEndCallback(eventData.respondingToCommandEnd);
+          }
+          break;
+        }
+      case VoiceCommandEventUnion.Tag.respondingToCommand: {
+          if (RespondingToCommand != null) {
+            RespondingToCommand(eventData.respondingToCommand);
           }
           break;
         }

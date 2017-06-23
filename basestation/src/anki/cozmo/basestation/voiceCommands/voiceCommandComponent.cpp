@@ -213,9 +213,9 @@ void VoiceCommandComponent::UpdateContextForRecognizer()
     _recognizer->SetRecognizerIndex(newIndex);
     
     // When we switch back to the keyphrase context, also update the follow index
-    if (_listenContext == VoiceCommandListenContext::Keyphrase)
+    if (_listenContext == VoiceCommandListenContext::TriggerPhrase)
     {
-      const auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::Freeplay);
+      const auto freeplayIndex = Util::EnumToUnderlying(VoiceCommandListenContext::CommandList);
       _recognizer->SetRecognizerFollowupIndex(freeplayIndex);
     }
   }
@@ -418,19 +418,19 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
       // Intentionally ignore commands when there is no context to handle them
       break;
     }
-    case VoiceCommandListenContext::Keyphrase:
+    case VoiceCommandListenContext::TriggerPhrase:
     {
       _pendingHeardCommand = command;
       updatedHeardCommand = true;
-      SetListenContext(VoiceCommandListenContext::Freeplay);
+      SetListenContext(VoiceCommandListenContext::CommandList);
       
       break;
     }
-    case VoiceCommandListenContext::Freeplay:
+    case VoiceCommandListenContext::CommandList:
     {
       _pendingHeardCommand = command;
       updatedHeardCommand = true;
-      SetListenContext(VoiceCommandListenContext::Keyphrase);
+      SetListenContext(VoiceCommandListenContext::TriggerPhrase);
       
       break;
     }
@@ -441,6 +441,12 @@ bool VoiceCommandComponent::HandleCommand(const VoiceCommandType& command)
       
       // Note we don't update the listen context here; we expect simpleprompt to transition
       // to another context from the same place that put us into this context in the first place
+      break;
+    }
+    case VoiceCommandListenContext::ContinuePrompt:
+    {
+      _pendingHeardCommand = command;
+      updatedHeardCommand = true;
       break;
     }
     default:
@@ -543,12 +549,18 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
       }
       break;
     }
+    case VoiceCommandEventUnionTag::changeContext:
+    {
+      ForceListenContext(vcEventUnion.Get_changeContext().newContext);
+      break;
+    }
     default:
     {
       break;
     }
   }
 }
+  
 
 void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
 {
@@ -608,6 +620,7 @@ void VoiceCommandComponent::DoForceHeardPhrase(VoiceCommandType commandType)
     
   recogTHF->SetForceHeardPhrase(phrase);
 }
+
 
 } // namespace VoiceCommand
 } // namespace Cozmo

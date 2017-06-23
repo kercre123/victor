@@ -82,8 +82,8 @@ private:
   std::unique_ptr<CommandPhraseData>                    _phraseData;
   BackpackLightDataLocator                              _bodyLightDataLocator{};
   float                                                 _commandLightTimeRemaining_s = -1.f;
-  VoiceCommandListenContext                             _listenContext = VoiceCommandListenContext::Keyphrase;
-  VoiceCommandListenContext                             _lastListenContext = VoiceCommandListenContext::Keyphrase;
+  VoiceCommandListenContext                             _listenContext = VoiceCommandListenContext::TriggerPhrase;
+  VoiceCommandListenContext                             _lastListenContext = VoiceCommandListenContext::TriggerPhrase;
   VoiceCommandType                                      _pendingHeardCommand = VoiceCommandType::Count;
   bool                                                  _initialized = false;
   bool                                                  _commandRecogEnabled = false;

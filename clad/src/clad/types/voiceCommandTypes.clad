@@ -10,6 +10,7 @@ namespace VoiceCommand {
 
 // ------------  Enum types used across messages  ------------ //
 enum uint_8 VoiceCommandType {
+  Continue,
   ComeHere,
   DoADance,
   DoATrick,
@@ -26,8 +27,9 @@ enum uint_8 VoiceCommandType {
 }
 
 enum uint_8 VoiceCommandListenContext {
-  Keyphrase,
-  Freeplay,
+  ContinuePrompt,
+  TriggerPhrase,
+  CommandList,
   SimplePrompt,
 
   Count
@@ -85,6 +87,11 @@ structure ChangeEnabledStatus {
 }
 
 
+structure ChangeContext {
+  VoiceCommandListenContext  newContext
+}
+
+
 
 // ------------  Message organization definitions  ------------ //
 // NOTE this clad file is included in both messageEngineToGame and messageGameToEngine.
@@ -100,7 +107,8 @@ union VoiceCommandEventUnion {
   StateData                   stateData,
   UserResponseToPrompt        responseToPrompt,
   RequestStatusUpdate         requestStatusUpdate,
-  ChangeEnabledStatus         changeEnabledStatus
+  ChangeEnabledStatus         changeEnabledStatus,
+  ChangeContext               changeContext
 }
 
 message VoiceCommandEvent {

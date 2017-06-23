@@ -4,6 +4,7 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Anki.Cozmo.VoiceCommand;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -255,6 +256,7 @@ namespace Cozmo {
         HideNarrowInfoTextSlide();
         _IsMinigame = data.IsMinigame;
         _ChallengeData = data;
+        VoiceCommandManager.Instance.RespondingToCommand += HandleRespondingToCommand;
       }
 
       #region Base View
@@ -302,6 +304,10 @@ namespace Cozmo {
           kvp.Value.Kill();
         }
         _AddWidgetSequences.Clear();
+
+
+        UpdateVoiceCommandContext(false);
+        VoiceCommandManager.Instance.RespondingToCommand -= HandleRespondingToCommand;
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -345,6 +351,16 @@ namespace Cozmo {
         return sequenceToUse;
       }
 
+      private void HandleRespondingToCommand(RespondingToCommand commandHeard){
+        if(commandHeard.voiceCommandType == VoiceCommandType.Continue) {
+          if (_ContinueButtonInstance != null) {
+            _ContinueButtonInstance.HandleContinueButtonClicked();
+          }
+        }
+
+
+      }
+
       #endregion
 
       private void Awake() {
@@ -352,6 +368,7 @@ namespace Cozmo {
         // by default.
         _InfoTitleLayoutElement.gameObject.SetActive(false);
       }
+        
 
       private bool CreateWidgetIfNull<T>(ref T widgetInstance, MonoBehaviour widgetPrefab, ContentLayer layer = ContentLayer.Overlay) where T : MinigameWidget {
         if (widgetInstance != null) {
@@ -766,13 +783,19 @@ namespace Cozmo {
       }
 
       public void HideContinueButton() {
+        if(_ContinueButtonInstance.GetButtonInteractivity ()) {
+          
+        }
+
         HideWidget(_ContinueButtonInstance);
         _ContinueButtonInstance = null;
+        UpdateVoiceCommandContext(false);
       }
 
       public void EnableContinueButton(bool enable) {
         if (_ContinueButtonInstance != null) {
           _ContinueButtonInstance.SetButtonInteractivity(enable);
+          UpdateVoiceCommandContext(enable);
         }
       }
 
@@ -780,6 +803,27 @@ namespace Cozmo {
         if (_ContinueButtonInstance != null) {
           _ContinueButtonInstance.SetShelfText(text, color);
         }
+      }
+
+      private bool _inContinueContext = false;
+
+      private void UpdateVoiceCommandContext(bool shouldAllowContinueVC){
+        if (shouldAllowContinueVC == _inContinueContext) {
+          return;
+        }
+
+        VoiceCommandListenContext newContext;
+        if (shouldAllowContinueVC) {
+          newContext = VoiceCommandListenContext.ContinuePrompt;
+        } else {
+          newContext = VoiceCommandListenContext.TriggerPhrase;
+        }
+        // Let engine know about Continue button interactivity for Voice Commands
+        VoiceCommandManager.SendVoiceCommandEvent<ChangeContext>(
+          Singleton<ChangeContext>.Instance.Initialize(newContext));
+
+
+        _inContinueContext = shouldAllowContinueVC;
       }
 
       #endregion
