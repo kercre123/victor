@@ -249,8 +249,15 @@ Blockly.Tooltip.onMouseMove_ = function(e) {
 
     // *** ANKI CHANGE ***
     // The following two lines were set to e.pageX and e.pageY but those values are undefined for mobile.
-    Blockly.Tooltip.lastX_ = e.changedTouches[0].clientX;
-    Blockly.Tooltip.lastY_ = e.changedTouches[0].clientY - yOffset;
+    // changedTouches is undefined when running in e.g. Chrome on a computer, so fall back to the original pageX code in that case.
+    if ("changedTouches" in e) {
+      Blockly.Tooltip.lastX_ = e.changedTouches[0].clientX;
+      Blockly.Tooltip.lastY_ = e.changedTouches[0].clientY - yOffset;
+    }
+    else {
+      Blockly.Tooltip.lastX_ = e.pageX;
+      Blockly.Tooltip.lastY_ = e.pageY - yOffset;
+    }
 
     Blockly.Tooltip.showPid_ =
         setTimeout(Blockly.Tooltip.show_, Blockly.Tooltip.HOVER_MS);
