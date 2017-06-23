@@ -916,8 +916,6 @@ public abstract class GameBase : MonoBehaviour {
       RewardedActionManager.Instance.ResetPendingRewards();
     }
 
-    UpdatePlayNeed();
-
     QuitChallenge();
   }
 
