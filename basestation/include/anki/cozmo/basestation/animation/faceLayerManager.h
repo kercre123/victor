@@ -100,13 +100,12 @@ private:
   s32            _nextEyeDart_ms       = 0;
   Tag            _eyeDartTag           = NotAnimatingTag;
   
-  // Face Glitches
-  f32 _nextFaceRepair_sec = 0.f;
-  
   Util::RandomGenerator& _rng;
   
   Tag _layerTagCtr = 0;
   void IncrementLayerTagCtr();
+
+  void AddFaceDistortion(float distortionDegree);
 };
   
 } // namespace Cozmo

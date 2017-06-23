@@ -81,16 +81,17 @@ public:
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
   // robot configuration json files
-  const Json::Value& GetRobotMoodConfig() const         { return _robotMoodConfig; }
-  const Json::Value& GetRobotActivitiesConfig() const   { return _robotActivitiesConfig; }
-  const Json::Value& GetRobotWorkoutConfig() const      { return _robotWorkoutConfig; }
-  const Json::Value& GetRobotVisionConfig() const       { return _robotVisionConfig; }
-  const Json::Value& GetReactionTriggerMap() const      { return _reactionTriggerMap; }
-  const Json::Value& GetVoiceCommandConfig() const      { return _voiceCommandConfig; }
-  const Json::Value& GetRobotNeedsConfig() const        { return _needsSystemConfig; }
-  const Json::Value& GetStarRewardsConfig() const       { return _starRewardsConfig; }
-  const Json::Value& GetRobotNeedsActionsConfig() const { return _needsActionConfig; }
-  const Json::Value& GetRobotNeedsDecayConfig() const   { return _needsDecayConfig; }
+  const Json::Value& GetRobotMoodConfig() const          { return _robotMoodConfig; }
+  const Json::Value& GetRobotActivitiesConfig() const    { return _robotActivitiesConfig; }
+  const Json::Value& GetRobotWorkoutConfig() const       { return _robotWorkoutConfig; }
+  const Json::Value& GetRobotVisionConfig() const        { return _robotVisionConfig; }
+  const Json::Value& GetReactionTriggerMap() const       { return _reactionTriggerMap; }
+  const Json::Value& GetVoiceCommandConfig() const       { return _voiceCommandConfig; }
+  const Json::Value& GetRobotNeedsConfig() const         { return _needsSystemConfig; }
+  const Json::Value& GetStarRewardsConfig() const        { return _starRewardsConfig; }
+  const Json::Value& GetRobotNeedsActionsConfig() const  { return _needsActionConfig; }
+  const Json::Value& GetRobotNeedsDecayConfig() const    { return _needsDecayConfig; }
+  const Json::Value& GetRobotNeedsHandlersConfig() const { return _needsHandlersConfig; }
 
   
   // voice command configs
@@ -169,6 +170,7 @@ private:
   Json::Value _starRewardsConfig;
   Json::Value _needsActionConfig;
   Json::Value _needsDecayConfig;
+  Json::Value _needsHandlersConfig;
   
   // voice command configs
   Json::Value _letsPlayWeights;

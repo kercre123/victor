@@ -762,6 +762,18 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
 
+  // needs "handlers" config (e.g. eye procedural glitches for low repair)
+  {
+    std::string jsonFilename = "config/basestation/config/needs_handlers_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsHandlersConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.NeedsHandlersConfigJsonNotFound",
+                        "Needs System Handlers Json config file %s not found or failed to parse.",
+                        jsonFilename.c_str());
+    }
+  }
+  
   // feature gate
   {
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};

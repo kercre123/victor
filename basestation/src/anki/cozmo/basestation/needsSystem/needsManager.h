@@ -23,6 +23,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
 #include <chrono>
+#include <memory>
 
 namespace Anki {
 namespace Cozmo {
@@ -35,6 +36,8 @@ namespace RobotInterface {
 }
 
 class Robot;
+class CozmoContext;
+class DesiredFaceDistortionComponent;
 
 enum class RobotStorageState
 {
@@ -52,7 +55,7 @@ public:
 
   void Init(const float currentTime_s, const Json::Value& inJson,
             const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-            const Json::Value& inDecayJson);
+            const Json::Value& inDecayJson, const Json::Value& inHandlersJson);
   void InitAfterConnection();
   void InitAfterSerialNumberAcquired(u32 serialNumber);
 
@@ -68,6 +71,16 @@ public:
 
   void RegisterNeedsActionCompleted(const NeedsActionId actionCompleted);
   void PredictNeedsActionResult(const NeedsActionId actionCompleted, NeedsState& outNeedsState);
+
+  // Needs "handlers". Currently the only one is the eye glitch based on repair need:
+  DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() {
+    assert(_faceDistortionComponent);
+    return *_faceDistortionComponent;
+  }
+  const DesiredFaceDistortionComponent& GetDesiredFaceDistortionComponent() const  {
+    assert(_faceDistortionComponent);
+    return *_faceDistortionComponent;
+  }
 
   static const char* kLogChannelName;
 
@@ -172,6 +185,10 @@ private:
   const std::string kPathToSavedStateFile;
 
   RobotStorageState _robotStorageState = RobotStorageState::Inactive;
+
+  // component to figure out what the current face distortion level should be
+  // This gets instantiated when Init is called
+  std::unique_ptr<DesiredFaceDistortionComponent> _faceDistortionComponent;
 };
 
 

@@ -15,6 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/components/desiredFaceDistortionComponent.h"
 #include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -225,6 +226,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _signalHandles()
 , kPathToSavedStateFile((cozmoContext->GetDataPlatform() != nullptr ? cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetNurtureFolder()) : ""))
 , _robotStorageState(RobotStorageState::Inactive)
+, _faceDistortionComponent(new DesiredFaceDistortionComponent(*this))
 {
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
@@ -251,7 +253,7 @@ NeedsManager::~NeedsManager()
 
 void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
                         const Json::Value& inStarsJson, const Json::Value& inActionsJson,
-                        const Json::Value& inDecayJson)
+                        const Json::Value& inDecayJson, const Json::Value& inHandlersJson)
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.Init", "Starting Init of NeedsManager");
 
@@ -262,6 +264,12 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
   _starRewardsConfig->Init(inStarsJson);
 
   _actionsConfig.Init(inActionsJson);
+
+  if( ANKI_VERIFY(_cozmoContext->GetRandom() != nullptr,
+                  "NeedsManager.Init.NoRNG",
+                  "Can't create needs handler for face glitches because there is no RNG in cozmo context") ) {
+    _faceDistortionComponent->Init(inHandlersJson, _cozmoContext->GetRandom());
+  }
 
   if (_cozmoContext->GetExternalInterface() != nullptr)
   {

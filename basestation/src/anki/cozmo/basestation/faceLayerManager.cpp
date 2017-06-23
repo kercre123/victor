@@ -17,6 +17,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 
+#include "anki/cozmo/basestation/components/desiredFaceDistortionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -32,6 +33,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 #define DEBUG_FACE_LAYERING 0
 
@@ -43,23 +45,28 @@ namespace Cozmo {
 namespace {
   
   CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, CONSOLE_GROUP_NAME, 30000);
-  
-  CONSOLE_VAR(bool, kNeeds_ShowFaceRepairGlitches, CONSOLE_GROUP_NAME, false);
-  
-  // Face repair degree chosen randomly b/w these two values
-  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMin, CONSOLE_GROUP_NAME, 0.75f);
-  CONSOLE_VAR(f32, kNeeds_FaceRepairDegreeMax, CONSOLE_GROUP_NAME, 3.00f);
-  
-  // Face repair frequence chosen randomly between these two values
-  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMin_sec, CONSOLE_GROUP_NAME, 0.5f);
-  CONSOLE_VAR(f32, kNeeds_FaceRepairSpacingMax_sec, CONSOLE_GROUP_NAME, 1.5f);
-  
+
+  // Turn on dev testing of face glitches (not used in prod, but useful for tuning the glitch params)
+  CONSOLE_VAR(bool, kNeeds_TestFaceGlitches, CONSOLE_GROUP_NAME, false);  
+  CONSOLE_VAR(f32, kNeeds_TestFaceGlitchesDegree, CONSOLE_GROUP_NAME, 1.0f);
+  CONSOLE_VAR(f32, kNeeds_TestFaceGlitchesSpacing_sec, CONSOLE_GROUP_NAME, 0.75f);
+
+#if REMOTE_CONSOLE_ENABLED
+// For tuning only
+static f32 g_testFaceGlitchNext_sec = 0.f;
+#endif
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 FaceLayerManager::FaceLayerManager(const CozmoContext* context)
 : _rng(*context->GetRandom())
 {
+  
+#if REMOTE_CONSOLE_ENABLED
+  // for debug tuning with console var
+  g_testFaceGlitchNext_sec = 0.0f;
+#endif
   
 }
 
@@ -375,44 +382,50 @@ void FaceLayerManager::KeepFaceAlive(Robot& robot, const std::map<LiveIdleAnimat
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result FaceLayerManager::Update(const Robot& robot)
 {
-  // For prototyping. Eventually driven by actual needs system, not console var
-  // E.g. something like if(robot.GetContext()->GetNeedsManager().GetCurNeedsState().DoesFaceNeedRepair())
-  // Alternatively, just add a setter to FaceLayerManager for letting an external component
-  // specify the next glitch time and its "degree" (and move the Rand() calls to that
-  // component. The advantage of the latter is that it doesn't need to know about the Needs
-  // system at all.
-  if(kNeeds_ShowFaceRepairGlitches)
+  
+#if REMOTE_CONSOLE_ENABLED
+  if(kNeeds_TestFaceGlitches)
   {
+    // Helpful for tuning face glitch levels, not used in Production    
     const f32 currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    if(currentTime_s > _nextFaceRepair_sec)
+    if(currentTime_s > g_testFaceGlitchNext_sec)
     {
-      // TODO: Perhaps tie degree to current amount of repair need instead of being random
-      const f32 distortionDegree = _rng.RandDblInRange(kNeeds_FaceRepairDegreeMin, kNeeds_FaceRepairDegreeMax);
-      
-      ProceduralFace repairFace;
-      
-      AnimationStreamer::FaceTrack faceTrack;
-      TimeStamp_t totalOffset = 0;
-      bool moreDistortionFrames = false;
-      do {
-        TimeStamp_t timeInc;
-        moreDistortionFrames = ScanlineDistorter::GetNextDistortionFrame(distortionDegree, repairFace, timeInc);
-        totalOffset += timeInc;
-        faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(repairFace, totalOffset));
-      } while(moreDistortionFrames);
-      
-      AddLayer("ScanlineDistortion", std::move(faceTrack));
-      
-      // TODO: Perhaps tie frequency of showing this to amount of repair need instead of being random
-      _nextFaceRepair_sec = currentTime_s + _rng.RandDblInRange(kNeeds_FaceRepairSpacingMin_sec,
-                                                                kNeeds_FaceRepairSpacingMax_sec);
+      AddFaceDistortion(kNeeds_TestFaceGlitchesDegree);
+            
+      g_testFaceGlitchNext_sec = currentTime_s + kNeeds_TestFaceGlitchesSpacing_sec;
     }
+  }
+#endif
+
+  // Get the desired face glitches from the needs system
+  auto& desiredGlitchComponent = robot.GetContext()->GetNeedsManager()->GetDesiredFaceDistortionComponent();
+  const float desiredGlitchDegree = desiredGlitchComponent.GetCurrentDesiredDistortion();
+  if( Util::IsFltGTZero( desiredGlitchDegree ) ) {
+    AddFaceDistortion(desiredGlitchDegree);
   }
   
   return RESULT_OK;
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void FaceLayerManager::AddFaceDistortion(float distortionDegree)
+{
+  ProceduralFace repairFace;
+      
+  AnimationStreamer::FaceTrack faceTrack;
+  TimeStamp_t totalOffset = 0;
+  bool moreDistortionFrames = false;
+  do {
+    TimeStamp_t timeInc;
+    moreDistortionFrames = ScanlineDistorter::GetNextDistortionFrame(distortionDegree, repairFace, timeInc);
+    totalOffset += timeInc;
+    faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(repairFace, totalOffset));
+  } while(moreDistortionFrames);
+      
+  AddLayer("ScanlineDistortion", std::move(faceTrack));
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool FaceLayerManager::UpdateFace(ProceduralFace& procFace)
 {
