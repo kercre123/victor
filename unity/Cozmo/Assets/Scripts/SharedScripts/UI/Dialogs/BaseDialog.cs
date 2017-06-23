@@ -80,9 +80,10 @@ namespace Cozmo {
 
       public void Initialize() {
         CheckDASEventName();
-
         _CurrentDialogState = DialogState.Initialized;
+      }
 
+      public void StartOpen() {
         RaiseDialogOpened();
         PlayOpenSound();
         PlayOpenAnimations();

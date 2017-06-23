@@ -365,12 +365,15 @@ public class UIManager : MonoBehaviour {
     BaseView viewScript = newView.GetComponent<BaseView>();
     _CurrentView = viewScript;
 
+    // Check DAS name and initialize
+    viewScript.Initialize();
+
     if (creationSuccessCallback != null) {
       creationSuccessCallback(viewScript);
     }
 
-    // Check DAS name and play open animations
-    viewScript.Initialize();
+    // Play open animations
+    viewScript.StartOpen();
 
     SendDasEventForDialogOpen(viewScript);
   }
@@ -477,11 +480,13 @@ public class UIManager : MonoBehaviour {
     newModal.transform.SetParent(targetCanvas, false);
 
     BaseModal modalScript = newModal.GetComponent<BaseModal>();
+    modalScript.Initialize(priorityData, overrideCloseOnTouchOutside);
+
     if (creationSuccessCallback != null) {
       creationSuccessCallback(modalScript);
     }
 
-    modalScript.Initialize(priorityData, overrideCloseOnTouchOutside);
+    modalScript.StartOpen();
 
     SendDasEventForDialogOpen(modalScript);
 
