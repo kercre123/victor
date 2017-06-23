@@ -6,7 +6,7 @@ namespace Onboarding {
   public class ShowContinueStage : OnboardingBaseStage {
 
     [SerializeField]
-    private CozmoButtonLegacy _ContinueButtonInstance;
+    private CozmoButton _ContinueButtonInstance;
 
     protected virtual void Awake() {
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");

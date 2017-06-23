@@ -63,14 +63,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56d841ee39b9949258160d7ba69cc525, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _ActiveTopBar: 0
-  _ActiveBotBar: 0
-  _ActiveTabButtons: 0
+  _DimBackground: 0
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
+  _CustomIdle:
+    _EnumValueAsString: Count
+    _EnumValue: 478
+  _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
-  _IsLastPhase: 0
+  _OverrideTickerKey: 
+  _DimNeedsMeters: 
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
   _ButtonStateFeed: 3

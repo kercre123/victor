@@ -1,4 +1,5 @@
 using UnityEngine;
+using Cozmo.UI;
 
 namespace Onboarding {
 
@@ -8,10 +9,10 @@ namespace Onboarding {
     private Transform _RedTableOutline;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _TextfieldHeader;
+    private CozmoText _TextfieldHeader;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _TextfieldFooter;
+    private CozmoText _TextfieldFooter;
 
     private int _Step = 0;
 

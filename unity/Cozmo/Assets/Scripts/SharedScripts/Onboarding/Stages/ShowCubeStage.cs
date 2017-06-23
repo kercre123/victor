@@ -8,13 +8,13 @@ namespace Onboarding {
   public class ShowCubeStage : OnboardingBaseStage {
 
     [SerializeField]
-    private AnkiTextLegacy _ShowCozmoCubesLabel;
+    private CozmoText _ShowCozmoCubesLabel;
 
     [SerializeField]
-    private AnkiTextLegacy _FullScreenLabel;
+    private CozmoText _FullScreenLabel;
 
     [SerializeField]
-    private AnkiTextLegacy _ShowShelfTextLabel;
+    private CozmoText _ShowShelfTextLabel;
 
     [SerializeField]
     private RectTransform _CozmoImageTransform;
@@ -28,7 +28,7 @@ namespace Onboarding {
     private RectTransform _ImageCubeLights;
 
     [SerializeField]
-    private CozmoButtonLegacy _ContinueButtonInstance;
+    private CozmoButton _ContinueButtonInstance;
 
     private int _CubesFoundTimes = 0;
     private float _StartTime;

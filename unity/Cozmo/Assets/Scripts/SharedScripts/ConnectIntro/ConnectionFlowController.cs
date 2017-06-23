@@ -494,6 +494,7 @@ public class ConnectionFlowController : MonoBehaviour {
     }
     // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
     else if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup)) {
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.StartSleeping);
       FinishConnectionFlow();
     }
     // normal flow

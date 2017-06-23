@@ -1141,6 +1141,18 @@
       "AnimName": "ag_launch_idle_01"
     },
     {
+      "CladEvent": "OnboardingIdleEnergy",
+      "AnimName": "ag_launch_energy_idle_01"
+    },
+    {
+      "CladEvent": "OnboardingIdlePlay",
+      "AnimName": "ag_launch_play_idle_01"
+    },
+    {
+      "CladEvent": "OnboardingIdleRepair",
+      "AnimName": "ag_launch_repair_idle_01"
+    },
+    {
       "CladEvent": "OnboardingHelloPlayer",
       "AnimName": "ag_launch_firsttimewakeup_helloplayer"
     },

@@ -64,7 +64,7 @@
     "translation": "Place a Cube in front of Cozmo"
   },
   "onboarding.Phase3.Body1": {
-    "translation": "It will turn <color=cyan>blue</color> when he can see it"
+    "translation": "It will turn <color=#00FFFF>blue</color> when he can see it"
   },
   "onboarding.Phase3.Body2": {
     "translation": "<b>Great!</b>\nJust like you, if the Cube is too close it's hard to see."
@@ -137,5 +137,11 @@
   },
   "onboarding.SparkScreenRollACube": {
     "translation": "Watch Cozmo Roll a Cube..."
+  },
+  "onboarding.RepairIntro": {
+    "translation": "(FPO) Cozmo needs a tune up. Click the thingy."
+  },
+  "onboarding.FeedIntro": {
+    "translation": "(FPO) Cozmo needs food badly. Click the glinty button."
   }
 }

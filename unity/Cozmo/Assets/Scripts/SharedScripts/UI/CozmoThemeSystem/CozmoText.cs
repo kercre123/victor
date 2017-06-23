@@ -24,6 +24,7 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
         m_text = "";
         _DisplayText = "";
         SetVerticesDirty();
+        SetLayoutDirty();
       }
       else if (m_text != value) {
         m_text = value;
@@ -92,6 +93,7 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
   protected override void GenerateTextMesh() {
     // don't do any extra work if m_text is not a loc key
     if (!Localization.IsLocalizationKey(m_text)) {
+      ParseInputText();
       base.GenerateTextMesh();
       return;
     }

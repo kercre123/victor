@@ -32,8 +32,24 @@ namespace Onboarding {
       if (giveSparksAmount != currentSparks) {
         profile.Inventory.SetItemAmount(itemData.ID, giveSparksAmount);
       }
-
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Appear);
+    }
+
+    public override void Start() {
+      base.Start();
+      // Usually not having completed onboarding prevents freeplay.
+      // this stage is the exception, and we still dont want freeplay music, etc.
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.SetEnableFreeplayActivity(true);
+      }
+    }
+    public override void OnDestroy() {
+      base.OnDestroy();
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.SetEnableFreeplayActivity(false);
+      }
     }
 
   }
