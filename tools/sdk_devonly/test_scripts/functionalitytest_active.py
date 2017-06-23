@@ -16,7 +16,9 @@
 
 '''Run through commands on cozmo related to behavior and object interaction.
 
-Make sure none of them throw errors.
+These behaviors are more involved than I felt would make sense for the smoke test.
+We should make sure nothing in this process throws errors.
+@TODO: add more mechanisms to verify the desired behavior worked properly.
 '''
 
 import time
@@ -25,16 +27,9 @@ import cozmo
 from cozmo.util import degrees, distance_mm, speed_mmps
 
 def run(robot: cozmo.robot.Robot):
-    robot.backup_onto_charger(max_drive_time=2.0)
+    robot.set_head_angle(degrees(8)).wait_for_completed()
 
-    robot.drive_straight(distance_mm(-100), speed_mmps(100))
-
-    robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, 1.0)
-    time.sleep(1.25)
-
-    lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
     cubes = robot.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=60)
-    lookaround.stop()
 
     #@TODO: Place the cube manipulation code up top, and ensure the wbt world is set up so that 
     #       cozmo is guaranteed to see 2 cubes on startup.
@@ -46,12 +41,24 @@ def run(robot: cozmo.robot.Robot):
         robot.go_to_object(cubes[1], distance_mm(100)).wait_for_completed()
         robot.pickup_object(cubes[0]).wait_for_completed()
         robot.place_on_object(cubes[1]).wait_for_completed()
-        robot.drive_straight(distance_mm(-150), speed_mmps(100)).wait_for_completed()
+        #TODO: verify that the block is on top of the other block
+        robot.drive_straight(distance_mm(-150), speed_mmps(200)).wait_for_completed()
         robot.pickup_object(cubes[0]).wait_for_completed()
-        robot.drive_straight(distance_mm(-150), speed_mmps(100)).wait_for_completed()
+        robot.drive_straight(distance_mm(-150), speed_mmps(200)).wait_for_completed()
         robot.place_object_on_ground_here(cubes[0]).wait_for_completed()
+        #TODO: verify that all blocks are on the ground
 
-        #@TODO: have cozmo drive forward, and call "abort_all_actions", and make sure his pose updated roughly the right amount
+    # verify that both types of behavior calls execute without throwing any errors.
+    # its not of particular concern if they find anything for now.
+    robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, 0.5)
+
+    lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
+    time.sleep(0.5)
+    lookaround.stop()
+
+    robot.backup_onto_charger(max_drive_time=2.0)
+
+    #@TODO: have cozmo drive forward, and call "abort_all_actions", and make sure his pose updated roughly the right amount
 
 if __name__ == '__main__':
     cozmo.run_program(run)
