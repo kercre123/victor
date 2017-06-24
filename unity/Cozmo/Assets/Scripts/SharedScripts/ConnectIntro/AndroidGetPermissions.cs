@@ -16,13 +16,13 @@ using System;
 public class AndroidGetPermissions : AndroidConnectionFlowStage {
 
   [SerializeField]
-  private AnkiTextLegacy _Instructions;
+  private CozmoText _Instructions;
 
   [SerializeField]
-  private CozmoButtonLegacy _ExecuteButton;
+  private CozmoButton _ExecuteButton;
 
   [SerializeField]
-  private CozmoButtonLegacy _CancelButton;
+  private CozmoButton _CancelButton;
 
   private void Start() {
     _CancelButton.Initialize(AndroidConnectionFlow.Instance.UseOldFlow, "cancel_button", "android_get_permissions");
@@ -109,7 +109,8 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
     // don't bother with new UI and just ask them immediately
     if (didGetPermissions) {
       stageAction();
-    } else {
+    }
+    else {
       InitStage(LocalizationKeys.kWifiEnableLocation, () => {
         SetWaitingLabel();
         stageAction();

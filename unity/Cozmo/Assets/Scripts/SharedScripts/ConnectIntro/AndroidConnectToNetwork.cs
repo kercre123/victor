@@ -1,6 +1,6 @@
-﻿using Anki.UI;
-using UnityEngine;
+﻿using UnityEngine;
 using System;
+using Cozmo.UI;
 
 // Screen used to display status while waiting for wifi connection
 // to complete
@@ -15,13 +15,13 @@ public class AndroidConnectToNetwork : AndroidConnectionFlowStage {
   private const double kAutoFailureTimeSeconds = 30.0;
 
   [SerializeField]
-  private AnkiTextLegacy _SSIDLabel;
+  private CozmoText _SSIDLabel;
 
   [SerializeField]
-  private AnkiTextLegacy _StatusLabel;
+  private CozmoText _StatusLabel;
 
   [SerializeField]
-  private AnkiButtonLegacy _CancelButton;
+  private CozmoButton _CancelButton;
 
   private int _ConnectCount = 1;
   private DateTime _StartTime;

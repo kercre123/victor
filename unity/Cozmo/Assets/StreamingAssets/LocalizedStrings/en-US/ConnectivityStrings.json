@@ -95,5 +95,8 @@
   },
   "needs.unconnected.needToConnect.description": {
     "translation": "In order to care for Cozmo and check on his needs, you must first connect to him. "
+  },
+  "label.cancelText": {
+    "translation": "Cancel"
   }
 }

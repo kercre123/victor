@@ -7,16 +7,13 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
   private WheelDatePicker _BirthDatePicker;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _ContinueButton;
+  private Cozmo.UI.CozmoButton _ContinueButton;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLegacy _BirthdateLabel;
+  private CozmoText _BirthdateLabel;
 
   [SerializeField]
-  private GameObject _SkipBirthdateEntryButtonContainer;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _SkipBirthdateEntryButton;
+  private Cozmo.UI.CozmoButton _SkipBirthdateEntryButton;
 
   private void Awake() {
     DAS.Debug("ProfileCreationView.Awake", "Enter Awake");
@@ -38,9 +35,9 @@ public class ProfileCreationModal : Cozmo.UI.BaseModal {
 
     // See COZMO-10878, COZMO-10973 for history of this feature
 #if ENABLE_BIRTHDATE_SKIP
-    _SkipBirthdateEntryButtonContainer.SetActive(show);
+    _SkipBirthdateEntryButton.gameObject.SetActive(show);
 #else
-    _SkipBirthdateEntryButtonContainer.SetActive(false);
+    _SkipBirthdateEntryButton.gameObject.SetActive(false);
 #endif
 
     _ContinueButton.Interactable = false;

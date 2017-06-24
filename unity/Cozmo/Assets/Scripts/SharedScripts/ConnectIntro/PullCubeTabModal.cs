@@ -16,7 +16,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
   private const float _kTimeBetweenObjectsConnected = 1.5f;
 
   [SerializeField]
-  private CozmoButtonLegacy _ContinueButton;
+  private CozmoButton _ContinueButton;
 
   [SerializeField]
   private Anki.Cozmo.ObjectType[] _ObjectConnectedTypeList;

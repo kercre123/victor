@@ -8,7 +8,7 @@ public class FirstTimeConnectView : BaseView {
   public System.Action ConnectionFlowQuit;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _StartButton;
+  private CozmoButton _StartButton;
 
   [SerializeField]
   private ConnectionFlowController _ConnectionFlowPrefab;
@@ -27,13 +27,13 @@ public class FirstTimeConnectView : BaseView {
   private ProfileCreationModal _ProfileCreationModalInstance;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _PrivacyPolicyButton;
+  private CozmoButton _PrivacyPolicyButton;
 
   [SerializeField]
   private string _PrivacyPolicyFileName;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _TermsOfUseButton;
+  private CozmoButton _TermsOfUseButton;
 
   [SerializeField]
   private string _TermsOfUseFileName;

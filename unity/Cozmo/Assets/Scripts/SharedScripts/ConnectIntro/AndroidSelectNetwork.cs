@@ -15,13 +15,13 @@ using UnityEngine;
 public class AndroidSelectNetwork : AndroidConnectionFlowStage {
 
   [SerializeField]
-  private AnkiTextLegacy _InstructionsLabel;
+  private CozmoText _InstructionsLabel;
 
   [SerializeField]
-  private CozmoButtonLegacy _ContinueButton;
+  private CozmoButton _ContinueButton;
 
   [SerializeField]
-  private AnkiButtonLegacy _CancelButton;
+  private CozmoButton _CancelButton;
 
   [SerializeField]
   private AndroidNetworkCell _NetworkCellPrefab;

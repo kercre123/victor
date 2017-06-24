@@ -4,7 +4,7 @@ using Cozmo.UI;
 public class WifiInstructionsModal : Cozmo.UI.BaseModal {
 
   [SerializeField]
-  private CozmoButtonLegacy _HelpButton;
+  private CozmoButton _HelpButton;
 
   [SerializeField]
   private BaseModal _WifiGetHelpModalPrefab;

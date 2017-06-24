@@ -49,7 +49,7 @@
     "translation": "Okay"
   },
   "button.again": {
-    "translation": "Play Again"
+    "translation": "PLAY AGAIN"
   },
   "button.refresh": {
     "translation": "Refresh"
@@ -61,22 +61,22 @@
     "translation": "Done"
   },
   "button.play": {
-    "translation": "Play"
+    "translation": "PLAY"
   },
   "button.leave": {
     "translation": "Leave"
   },
   "button.back": {
-    "translation": "Back"
+    "translation": "BACK"
   },
   "button.next": {
-    "translation": "Next"
+    "translation": "NEXT"
   },
   "button.staySparked": {
     "translation": "Stay Sparked"
   },
   "button.soundsGood": {
-    "translation": "Sounds Good"
+    "translation": "SOUNDS GOOD"
   },
   "label.plusCount": {
     "translation": "+{0}"
@@ -112,7 +112,7 @@
     "translation": "Get A Cozmo"
   },
   "button.start": {
-    "translation": "Start"
+    "translation": "START"
   },
   "button.begin": {
     "translation": "Let's Begin"
@@ -170,5 +170,8 @@
   },
   "label.basicCozmo": {
     "translation": "Big Brain. Bigger Personality."
+  },
+  "label.currentPage": {
+    "translation": "{0} of {1}"
   }
 }

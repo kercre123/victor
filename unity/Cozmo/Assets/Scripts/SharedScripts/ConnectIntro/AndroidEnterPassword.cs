@@ -7,22 +7,22 @@ using UnityEngine.UI;
 public class AndroidEnterPassword : AndroidConnectionFlowStage {
 
   [SerializeField]
-  private AnkiTextLegacy _InstructionsLabel;
+  private CozmoText _InstructionsLabel;
 
   [SerializeField]
   private InputField _PasswordField;
 
   [SerializeField]
-  private AnkiTextLegacy _ErrorLabel;
+  private CozmoText _ErrorLabel;
 
   [SerializeField]
-  private CozmoButtonLegacy _ContinueButton;
+  private CozmoButton _ContinueButton;
 
   [SerializeField]
-  private CozmoButtonLegacy _WrongCozmoButton;
+  private CozmoButton _WrongCozmoButton;
 
   [SerializeField]
-  private AnkiTextLegacy _WrongPasswordLabel;
+  private CozmoText _WrongPasswordLabel;
 
   public bool WrongPassword { set { _WrongPasswordLabel.gameObject.SetActive(value); } }
 
@@ -31,6 +31,7 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
     _PasswordField.onValidateInput = ValidateCharacter;
     _InstructionsLabel.FormattingArgs = new object[] { AndroidConnectionFlow.Instance.SelectedSSID };
     _ErrorLabel.gameObject.SetActive(false);
+    _WrongPasswordLabel.gameObject.SetActive(false);
 
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "android_enter_password");
     _ContinueButton.Interactable = false;
@@ -39,11 +40,11 @@ public class AndroidEnterPassword : AndroidConnectionFlowStage {
   }
 
   private void HandlePasswordChanged(string password) {
-		bool validPassword = (password.Length == 12) || (password.Length == 17);
+    bool validPassword = (password.Length == 12) || (password.Length == 17);
     if (validPassword) {
       // see if characters are valid
       foreach (char c in password) {
-		if (!(char.IsLetterOrDigit(c) || c.Equals('-'))) {
+        if (!(char.IsLetterOrDigit(c) || c.Equals('-'))) {
           validPassword = false;
           break;
         }
