@@ -85,6 +85,7 @@ private:
   IBehaviorPtr          _fistBumpBehavior;
   IBehaviorPtr          _peekABooBehavior;
   IBehaviorPtr          _laserBehavior;
+  IBehaviorPtr          _pounceBehavior;
   
   std::shared_ptr<BehaviorPlayArbitraryAnim> _playAnimBehavior;
   
@@ -111,8 +112,14 @@ private:
   // do once we're done responding to the command
   void BeginRespondingToCommand(VoiceCommand::VoiceCommandType command, bool trackResponseLifetime = false);
   
-  // Whether or not we are waiting to see a laser because a "Look Down" command was heard
-  bool _waitingForLaser = false;
+  // States to keep track of if we are waiting to see a laser or motion because a "Look Down" command was heard
+  enum LookDownState {
+    NONE,
+    WAITING_FOR_LASER,
+    WAITING_FOR_MOTION,
+  };
+  
+  LookDownState _lookDownState = LookDownState::NONE;
   
   // Updates the behavior to run while waiting for a laser
   // Returns true if voice command behavior was updated

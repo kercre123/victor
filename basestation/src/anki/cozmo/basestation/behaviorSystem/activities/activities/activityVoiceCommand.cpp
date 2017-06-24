@@ -98,6 +98,11 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
              _laserBehavior->GetClass() == BehaviorClass::TrackLaser,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
   
+  _pounceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_PounceOnMotion);
+  DEV_ASSERT(_pounceBehavior != nullptr &&
+             _pounceBehavior->GetClass() == BehaviorClass::PounceOnMotion,
+             "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForID");
+  
   //Create an arbitrary animation behavior
   IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
   _playAnimBehavior = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
@@ -299,7 +304,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       BehaviorPreReqRobot preReqRobot(robot);
       if(_laserBehavior->IsRunnable(preReqRobot))
       {
-        _waitingForLaser = true;
+        _lookDownState = LookDownState::WAITING_FOR_LASER;
         _voiceCommandBehavior = _laserBehavior;
       }
       else
@@ -502,34 +507,50 @@ Result ActivityVoiceCommand::Update(Robot& robot)
 
 bool ActivityVoiceCommand::CheckForLaserTrackingChange(Robot& robot, const IBehaviorPtr curBehavior)
 {
-  // If we are waiting for a laser but are no longer in the wait for laser behavior
-  // then it must have not found a laser so switch to an animation behavior to respond to
-  // not finding a laser
-  if(_waitingForLaser && curBehavior != nullptr && curBehavior->GetID() != BehaviorID::VC_TrackLaser)
+  // If we are waiting for a laser or motion but have entered a reactionary behavior then stop waiting for
+  // the laser or motion and give up
+  if(_lookDownState != LookDownState::NONE &&
+     robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
   {
-    // If we are waiting for a laser but have entered a reactionary behavior then stop waiting for
-    // the laser and give up
-    if(robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
-    {
-      _waitingForLaser = false;
-      return false;
-    }
+    _lookDownState = LookDownState::NONE;
+    return false;
+  }
   
-    _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VCLookDownNoLaser, 1);
-    
-    BehaviorPreReqNone preReq;
-    if(_playAnimBehavior->IsRunnable(preReq))
+  if(curBehavior != nullptr)
+  {
+    // If we are waiting for a laser but are no longer in the wait for laser behavior
+    // then it must have not found a laser so switch to looking for motion with the PounceOnMotion
+    // behavior
+    if(_lookDownState == LookDownState::WAITING_FOR_LASER &&
+       curBehavior->GetID() != BehaviorID::VC_TrackLaser)
     {
-      _voiceCommandBehavior = _playAnimBehavior;
+      BehaviorPreReqNone preReq;
+      if(_pounceBehavior->IsRunnable(preReq))
+      {
+        _voiceCommandBehavior = _pounceBehavior;
+      }
+      
+      _lookDownState = LookDownState::WAITING_FOR_MOTION;
+      
+      return true;
     }
-    else
+    // Otherwise if we are waiting for motion but are no longer in the wait for motion behavior
+    // then it must have not found motion so switch to playing a "nothing was found" animation
+    else if(_lookDownState == LookDownState::WAITING_FOR_MOTION &&
+            curBehavior->GetID() != BehaviorID::VC_PounceOnMotion)
     {
-      CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
+      _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VCLookDownNoLaser, 1);
+      
+      BehaviorPreReqNone preReq;
+      if(_playAnimBehavior->IsRunnable(preReq))
+      {
+        _voiceCommandBehavior = _playAnimBehavior;
+      }
+      
+      _lookDownState = LookDownState::NONE;
+      
+      return true;
     }
-    
-    _waitingForLaser = false;
-    
-    return true;
   }
   
   return false;
@@ -540,10 +561,15 @@ void ActivityVoiceCommand::HandleMessage(const ExternalInterface::BehaviorObject
 {
   // If we are waiting for a laser and the TrackLaser behavior successfully tracked a laser then
   // we are no longer waiting for a laser
-  if(_waitingForLaser &&
+  if(_lookDownState == LookDownState::WAITING_FOR_LASER &&
      msg.behaviorObjective == BehaviorObjective::LaserTracked)
   {
-    _waitingForLaser = false;
+    _lookDownState = LookDownState::NONE;
+  }
+  else if(_lookDownState == LookDownState::WAITING_FOR_MOTION &&
+          msg.behaviorObjective == BehaviorObjective::PouncedAndCaught)
+  {
+    _lookDownState = LookDownState::NONE;
   }
 }
 

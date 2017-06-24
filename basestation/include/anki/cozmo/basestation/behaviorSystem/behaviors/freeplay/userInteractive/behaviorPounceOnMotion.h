@@ -95,6 +95,7 @@ private:
   float _startedBehaviorTime_sec = 0.0f;
   State _state = State::Inactive;
   bool  _relaxedLift = false;
+  bool  _skipGetOutAnim = false;
   
   float _backUpDistance = 0.f;
   float GetDriveDistance();

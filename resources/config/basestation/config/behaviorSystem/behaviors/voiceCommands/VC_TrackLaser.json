@@ -1,9 +1,10 @@
 {
   "behaviorClass": "TrackLaser",
   "behaviorID": "VC_TrackLaser",
-  "displayNameKey":"behavior.TrackLaser",
+  "displayNameKey":"behavior.VC_TrackLaser",
 
   "alwaysStreamline": true,
+  "skipGetOutAnim": true,
   
   "startIfLaserSeenWithin_sec": 1.0,
   "maxDistToGetAttention_mm": 120.0,

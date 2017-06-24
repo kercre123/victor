@@ -263,5 +263,8 @@
   },
   "behavior.Needs_SevereLowRepairRequest": {
     "translation": "Cozmo isn't feeling well - he really needs to be tuned up!"
-  }
+  },
+  "behavior.VC_TrackLaser": {
+    "translation": "Cozmo is looking for a Laser"
+  },
 }

@@ -46,7 +46,8 @@ using namespace ExternalInterface;
   
 namespace {
   
-static const constexpr char* const kLogChannelName = "Behaviors";
+static const constexpr char* const kLogChannelName    = "Behaviors";
+static const constexpr char* const kSkipGetOutAnimKey = "skipGetOutAnim";
   
 } 
   
@@ -112,6 +113,8 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
   SET_FLOAT_HELPER(maxTimeToReachLaser_sec);
   SET_FLOAT_HELPER(predictionDuration_sec);
   SET_FLOAT_HELPER(trackingTimeToAchieveObjective_sec);
+  
+  JsonTools::GetValueOptional(config, kSkipGetOutAnimKey, _params.skipGetOutAnim);
   
 # undef SET_FLOAT_HELPER
   
@@ -620,10 +623,17 @@ void BehaviorTrackLaser::TransitionToGetOutBored(Robot& robot)
   
   StopActing(false);
   
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::LaserGetOut),
-              [this]() {
-                SET_STATE(WaitForStop);
-              });
+  auto callback = [this](){ SET_STATE(WaitForStop); };
+  
+  // Call callback immediately if not playing the get out anim
+  if(_params.skipGetOutAnim)
+  {
+    callback();
+  }
+  else
+  {
+    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::LaserGetOut), callback);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

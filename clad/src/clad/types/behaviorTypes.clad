@@ -244,6 +244,7 @@ enum uint_8 BehaviorID {
   TrackLaser,
 
   VC_ComeHere,
+  VC_PounceOnMotion,
   VC_Refuse_Energy,
   VC_Refuse_Repair,
   VC_Refuse_Sparks,

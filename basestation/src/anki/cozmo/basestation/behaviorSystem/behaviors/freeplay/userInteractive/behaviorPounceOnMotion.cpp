@@ -43,6 +43,7 @@ static const char* kTimeBeforeRotate_Sec                  = "timeBeforeRotate_Se
 static const char* kOddsOfPouncingOnTurn                  = "oddsOfPouncingOnTurn";
 static const char* kBoredomMultiplier                     = "boredomMultiplier";
 static const char* kSearchAmplitudeDeg                    = "searchAmplitudeDeg";
+static const char* kSkipGetOutAnim                        = "skipGetOutAnim";
 static float kBoredomMultiplierDefault = 0.8f;
 
 // combination of offset between lift and robot orign and motion built into animation
@@ -97,6 +98,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   _maxTimeBeforeRotate = config.get(kTimeBeforeRotate_Sec, _maxTimeBeforeRotate).asFloat();
   _oddsOfPouncingOnTurn = config.get(kOddsOfPouncingOnTurn, 0.0).asFloat();
   _searchAmplitude_rad = Radians(DEG_TO_RAD(config.get(kSearchAmplitudeDeg, 45).asFloat()));
+  _skipGetOutAnim = config.get(kSkipGetOutAnim, false).asBool();
 
   SET_STATE(Inactive);
   _lastMotionTime = -1000.f;
@@ -181,7 +183,15 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(Robot& robot)
     potentialCliffSafetyTurn = new PanAndTiltAction(robot, bodyPan, headTilt, false, false);
   }
   
-  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToInitialReaction, potentialCliffSafetyTurn);
+  // Skip the initial pounce and go straight to search if streamlined
+  if(ShouldStreamline())
+  {
+    TransitionToInitialSearch(robot);
+  }
+  else
+  {
+    PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToInitialReaction, potentialCliffSafetyTurn);
+  }
 }
   
 bool BehaviorPounceOnMotion::IsFingerCaught(Robot& robot)
@@ -447,7 +457,10 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToGetOutBored(Robot& robot)
 {
   SET_STATE(GetOutBored);
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceGetOut));
+  if(!_skipGetOutAnim)
+  {
+    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceGetOut));
+  }
 }
 
   

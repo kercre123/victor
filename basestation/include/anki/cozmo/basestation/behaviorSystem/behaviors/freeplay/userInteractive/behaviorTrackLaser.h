@@ -124,6 +124,8 @@ private:
     // If we track the laser for this long, we achieve the LaserTracked objective
     float    trackingTimeToAchieveObjective_sec;  // E.g. 5sec
     
+    bool     skipGetOutAnim = false;
+    
   } _params;
   
   struct LaserObservation {
