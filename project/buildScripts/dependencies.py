@@ -19,6 +19,7 @@ import validate_anim_data
 VERBOSE = True
 # Replace True for name of log file if desired.
 REPORT_ERRORS = True
+RETRIES = 10
 SVN_INFO_CMD = "svn info %s %s --xml"
 SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trust-server-cert"
 RELATIVE_DEPS_FILE = "../../DEPS"
@@ -435,17 +436,20 @@ def teamcity_package(tc_dict):
                 new_version = False
 
         if new_version and os.path.isdir(loc):
-            pipe = subprocess.Popen(pull_down, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-            curl_info, err = pipe.communicate()
-            status = pipe.poll()
-
-            if status != 0:
-                print err
-                if os.path.isfile(dist):
-                    os.remove(dist)
-                sys.exit( "ERROR {0}ing {1}.  Please try again.".format(tool, package))
+            for n in range(RETRIES):
+                pipe = subprocess.Popen(pull_down, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                curl_info, err = pipe.communicate()
+                status = pipe.poll()
+                if status == 0:
+                    print "{0} Downloaded.  New version {1} ".format(build.title(), version)
+                    break
+                else:
+                    print err
+                    if os.path.isfile(dist):
+                        os.remove(dist)
+                    print( "ERROR {0}ing {1}.  {2} of {3} attempts.".format(tool, package, n+1, RETRIES))
             else:
-                print "{0} Downloaded.  New version {1} ".format(build.title(), version)
+                sys.exit( "ERROR {0}ing {1}.  Please rerun configure.".format(tool, package))
         else:
             print "{0} does not need to be updated.  Current version {1}".format(build.title(), version)
         if os.path.isfile(dist):
