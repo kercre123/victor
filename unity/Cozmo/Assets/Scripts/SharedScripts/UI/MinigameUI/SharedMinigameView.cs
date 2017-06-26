@@ -351,8 +351,8 @@ namespace Cozmo {
         return sequenceToUse;
       }
 
-      private void HandleRespondingToCommand(RespondingToCommand commandHeard){
-        if(commandHeard.voiceCommandType == VoiceCommandType.Continue) {
+      private void HandleRespondingToCommand(RespondingToCommand commandHeard) {
+        if (commandHeard.voiceCommandType == VoiceCommandType.Continue) {
           if (_ContinueButtonInstance != null) {
             _ContinueButtonInstance.HandleContinueButtonClicked();
           }
@@ -368,7 +368,7 @@ namespace Cozmo {
         // by default.
         _InfoTitleLayoutElement.gameObject.SetActive(false);
       }
-        
+
 
       private bool CreateWidgetIfNull<T>(ref T widgetInstance, MonoBehaviour widgetPrefab, ContentLayer layer = ContentLayer.Overlay) where T : MinigameWidget {
         if (widgetInstance != null) {
@@ -783,8 +783,12 @@ namespace Cozmo {
       }
 
       public void HideContinueButton() {
-        if(_ContinueButtonInstance.GetButtonInteractivity ()) {
-          
+        if (_ContinueButtonInstance == null) {
+          return;
+        }
+
+        if (_ContinueButtonInstance.GetButtonInteractivity()) {
+
         }
 
         HideWidget(_ContinueButtonInstance);
@@ -807,7 +811,7 @@ namespace Cozmo {
 
       private bool _inContinueContext = false;
 
-      private void UpdateVoiceCommandContext(bool shouldAllowContinueVC){
+      private void UpdateVoiceCommandContext(bool shouldAllowContinueVC) {
         if (shouldAllowContinueVC == _inContinueContext) {
           return;
         }
@@ -815,7 +819,8 @@ namespace Cozmo {
         VoiceCommandListenContext newContext;
         if (shouldAllowContinueVC) {
           newContext = VoiceCommandListenContext.ContinuePrompt;
-        } else {
+        }
+        else {
           newContext = VoiceCommandListenContext.TriggerPhrase;
         }
         // Let engine know about Continue button interactivity for Voice Commands
