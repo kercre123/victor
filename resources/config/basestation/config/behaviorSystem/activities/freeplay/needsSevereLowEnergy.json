@@ -26,6 +26,14 @@
     
     "behaviors" : [
       {
+        "behaviorID": "DriveOffCharger",
+        "scoring": { "flatScore": 1000 }
+      },
+      {
+        "behaviorID": "PutDownBlock",
+        "scoring": { "flatScore": 0.1 }
+      },
+      {
         "behaviorID": "Needs_SevereLowEnergyGetIn",
         "scoring": { "flatScore": 1.0 }
       },
