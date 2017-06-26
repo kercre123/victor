@@ -204,7 +204,12 @@ namespace Anki {
       }
       
       
-      Result UpdatePoseWithKeyframe(PoseOriginID_t originID, PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle)
+      Result UpdatePoseWithKeyframe(PoseOriginID_t originID,
+                                    PoseFrameID_t frameID,
+                                    TimeStamp_t t,
+                                    const f32 x,
+                                    const f32 y,
+                                    const f32 angle)
       {
         // Update frameID
         frameId_ = frameID;
@@ -222,11 +227,6 @@ namespace Anki {
           return RESULT_FAIL;
         }
 
-
-        // TODO: Replace lastKeyFrameUpdate with actually computing
-        // pDiff by chaining pDiffs per frame all the way up to current frame.
-        // The frame distance between the historical pose and current pose depends on the comms latency!
-        // ... as well as how often the mat markers are sent, obviously.
         if (lastKeyframeUpdate_ > t) {
           // We last updated our pose at lastKeyFrameUpdate. Ignore any new information
           // timestamped older than lastKeyFrameUpdate.
@@ -236,27 +236,65 @@ namespace Anki {
           return RESULT_OK;
         }
 
-
+        // If origins match, then chain historical poses per frame up to the current pose
         if ( hist_[i].originID == originID )
         {
-          // Compute new pose based on key frame pose and the diff between the historical
-          // pose at time t and the latest pose.
+          // Start at the absolute localization pose we have recieved and add any pose information
+          // added to history since its timestamp. This is done by chaining together the total pose
+          // tranformations within each pose frame in history (time t to current).
+          Embedded::Pose2d chainedPose(x, y, angle);
 
-          // Historical pose
-          Embedded::Pose2d histPose( hist_[i].x, hist_[i].y, hist_[i].angle);
+          Embedded::Pose2d poseAtStartOfFrame;
+          Embedded::Pose2d poseAtEndOfFrame;
+        
+          u16 idx = i;
+          PoseFrameID_t prevFrame = 0;
+          // History is stored in a circular buffer so make sure idxAfterEnd will be valid
+          const u16 idxAfterEnd = (hEnd_ == POSE_HISTORY_SIZE - 1 ? 0 : hEnd_ + 1);
           
-          // Current pose
-          Embedded::Pose2d currPose( x_, y_, orientation_.ToFloat() );
+          // Starting at time t go through history and find the starting and ending pose for each
+          // frameID in history
+          while(idx != idxAfterEnd)
+          {
+            poseAtStartOfFrame.x() = hist_[idx].x;
+            poseAtStartOfFrame.y() = hist_[idx].y;
+            poseAtStartOfFrame.angle() = hist_[idx].angle;
+            
+            // Increment idx until frameIDs in history change or we reach the end of history
+            prevFrame = hist_[idx].frame;
+            while(hist_[idx].frame == prevFrame && idx != idxAfterEnd)
+            {
+              prevFrame = hist_[idx].frame;
+              
+              if(++idx == POSE_HISTORY_SIZE)
+              {
+                idx = 0;
+              }
+            }
+            
+            // If we have reached the end of history then use our current pose
+            if(idx == idxAfterEnd)
+            {
+              poseAtEndOfFrame.x() = x_;
+              poseAtEndOfFrame.y() = y_;
+              poseAtEndOfFrame.angle() = orientation_.ToFloat();
+            }
+            // Otherwise use the pose at the end of this frame
+            else
+            {
+              // idx is pointing to the entry that has the incremented frameID so we need to subtract one to
+              // point to the last entry for this frame. We also have to account for the fact that history
+              // is stored in a circular buffer
+              const u16 idxAtEndOfFrame = (idx == 0 ? POSE_HISTORY_SIZE - 1 : idx - 1);
+              poseAtEndOfFrame.x() = hist_[idxAtEndOfFrame].x;
+              poseAtEndOfFrame.y() = hist_[idxAtEndOfFrame].y;
+              poseAtEndOfFrame.angle() = hist_[idxAtEndOfFrame].angle;
+            }
+            
+            chainedPose = poseAtStartOfFrame.GetWithRespectTo(poseAtEndOfFrame) * chainedPose;
+          }
           
-          // Compute the difference between the historical pose and the current pose
-          Embedded::Pose2d currPoseWrtHistPose = currPose.GetWithRespectTo(histPose);
-          
-          // Compute pose of the keyframe
-          Embedded::Pose2d keyPose(x, y, angle );
-
-          // Apply the pose diff to the keyframe pose to get the new curr pose
-          Embedded::Pose2d newCurrPose = currPoseWrtHistPose * keyPose;
-          SetCurrentMatPose(newCurrPose.GetX(), newCurrPose.GetY(), newCurrPose.GetAngle());
+          SetCurrentMatPose(chainedPose.GetX(), chainedPose.GetY(), chainedPose.GetAngle());
         }
         else
         {
@@ -264,7 +302,7 @@ namespace Anki {
           AddPoseToHist(); // Make sure this origin ID gets put in history
         }
 
-        // we need to rely on t because we can receive several messages for the same t with minor HAL timer
+        // We need to rely on t because we can receive several messages for the same t with minor HAL timer
         // differences. We want to process those messages as if they were of the same time (t)
         lastKeyframeUpdate_ = t;
 
