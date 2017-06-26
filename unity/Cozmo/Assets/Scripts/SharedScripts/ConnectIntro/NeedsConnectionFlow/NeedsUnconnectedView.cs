@@ -47,14 +47,6 @@ namespace Cozmo.ConnectionFlow.UI {
       _MetersWidget.OnRepairPressed -= HandleMeterPressed;
     }
 
-    protected override void ConstructOpenAnimation(Sequence openAnimation) {
-      ConstructDefaultFadeOpenAnimation(openAnimation);
-    }
-
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-      ConstructDefaultFadeCloseAnimation(closeAnimation);
-    }
-
     private void HandleConnectButtonPressed() {
       if (OnConnectButtonPressed != null) {
         OnConnectButtonPressed();

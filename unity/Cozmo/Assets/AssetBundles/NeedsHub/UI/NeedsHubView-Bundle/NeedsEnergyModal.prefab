@@ -1742,10 +1742,10 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114219074989881776}
-    pressedSprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+    pressedSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
-    disabledColor: {r: 0.86764705, g: 0.86764705, b: 0.86764705, a: 1}
+    disabledColor: {r: 0.86764705, g: 0.86764705, b: 0.86764705, a: 0.691}
   - targetImage: {fileID: 114262333548501458}
     pressedSprite: {fileID: 0}
     pressedColor: {r: 0, g: 0, b: 0, a: 0}
@@ -4555,6 +4555,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114399655451981562}
   _ProgressBar: {fileID: 114460047238660836}
+  _DimmedImage: {fileID: 0}
 --- !u!114 &114925978978780542
 MonoBehaviour:
   m_ObjectHideFlags: 1

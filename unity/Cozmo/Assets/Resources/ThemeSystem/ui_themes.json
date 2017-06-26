@@ -2855,7 +2855,7 @@
                                     "m_DisabledTrigger": "Disabled"
                                 }
                             }
-                        },                        
+                        },
                         {
                             "Id": "CozmoButton_Primary_GreyBackground",
                             "Type": 1,
@@ -3640,7 +3640,7 @@
                             "FontResourceKey": "",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
-                            "SkinButtonTransition": false,
+                            "SkinButtonTransition": true,
                             "SkinRectTF": false,
                             "SkinShrinkOnClick": false,
                             "ShrinkOnClick": false,
@@ -3737,7 +3737,7 @@
                                 }
                             },
                             "ButtonTransition": {
-                                "Type": 0,
+                                "Type": 1,
                                 "SpriteBlock": {
                                     "HighlightedImageResourceKey": "",
                                     "PressedImageResourceKey": "",
@@ -3745,31 +3745,31 @@
                                 },
                                 "ColorBlock": {
                                     "m_NormalColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
                                     },
                                     "m_HighlightedColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 0.9607843160629273,
+                                        "g": 0.9607843160629273,
+                                        "b": 0.9607843160629273,
+                                        "a": 1.0
                                     },
                                     "m_PressedColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 0.7843137383460999,
+                                        "g": 0.7843137383460999,
+                                        "b": 0.7843137383460999,
+                                        "a": 1.0
                                     },
                                     "m_DisabledColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 0.7843137383460999,
+                                        "g": 0.7843137383460999,
+                                        "b": 0.7843137383460999,
+                                        "a": 0.501960813999176
                                     },
-                                    "m_ColorMultiplier": 0.0,
-                                    "m_FadeDuration": 0.0
+                                    "m_ColorMultiplier": 1.0,
+                                    "m_FadeDuration": 0.10000000149011612
                                 },
                                 "AnimationTriggers": {
                                     "m_NormalTrigger": "Normal",
@@ -3808,7 +3808,7 @@
                             "FontResourceKey": "",
                             "SkinFontSize": false,
                             "FontSizeOffset": 0,
-                            "SkinButtonTransition": false,
+                            "SkinButtonTransition": true,
                             "SkinRectTF": false,
                             "SkinShrinkOnClick": false,
                             "ShrinkOnClick": false,
@@ -3905,7 +3905,7 @@
                                 }
                             },
                             "ButtonTransition": {
-                                "Type": 0,
+                                "Type": 1,
                                 "SpriteBlock": {
                                     "HighlightedImageResourceKey": "",
                                     "PressedImageResourceKey": "",
@@ -3913,31 +3913,31 @@
                                 },
                                 "ColorBlock": {
                                     "m_NormalColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 1.0,
+                                        "g": 1.0,
+                                        "b": 1.0,
+                                        "a": 1.0
                                     },
                                     "m_HighlightedColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 0.9607843160629273,
+                                        "g": 0.9607843160629273,
+                                        "b": 0.9607843160629273,
+                                        "a": 1.0
                                     },
                                     "m_PressedColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 0.7843137383460999,
+                                        "g": 0.7843137383460999,
+                                        "b": 0.7843137383460999,
+                                        "a": 1.0
                                     },
                                     "m_DisabledColor": {
-                                        "r": 0.0,
-                                        "g": 0.0,
-                                        "b": 0.0,
-                                        "a": 0.0
+                                        "r": 0.7843137383460999,
+                                        "g": 0.7843137383460999,
+                                        "b": 0.7843137383460999,
+                                        "a": 0.501960813999176
                                     },
-                                    "m_ColorMultiplier": 0.0,
-                                    "m_FadeDuration": 0.0
+                                    "m_ColorMultiplier": 1.0,
+                                    "m_FadeDuration": 0.10000000149011612
                                 },
                                 "AnimationTriggers": {
                                     "m_NormalTrigger": "Normal",

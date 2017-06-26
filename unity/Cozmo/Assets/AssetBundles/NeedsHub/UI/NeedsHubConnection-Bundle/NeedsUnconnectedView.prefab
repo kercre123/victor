@@ -719,7 +719,7 @@ Animator:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1765508409557634}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 0}
   m_CullingMode: 0
@@ -900,8 +900,32 @@ MonoBehaviour:
   _AlphaController: {fileID: 225538496009147026}
   _MoveTweenSettings:
     staggerType: 1
-    uniformStagger_sec: 0.5
+    uniformStagger_sec: 0.1
     targets:
+    - target: {fileID: 224935591794980766}
+      originOffset: {x: 150, y: 0}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 1
+        duration_sec: 0.1
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+    - target: {fileID: 224657410857645004}
+      originOffset: {x: -150, y: 0}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 1
+        duration_sec: 0.1
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
     - target: {fileID: 224883601388909382}
       originOffset: {x: 900, y: 0}
       openSetting:
@@ -919,31 +943,7 @@ MonoBehaviour:
       openSetting:
         startTime_sec: 0
         useCustom: 1
-        duration_sec: 0.5
-        easing: 0
-      closeSetting:
-        startTime_sec: 0
-        useCustom: 0
-        duration_sec: 0
-        easing: 0
-    - target: {fileID: 224935591794980766}
-      originOffset: {x: 200, y: 0}
-      openSetting:
-        startTime_sec: 0
-        useCustom: 1
-        duration_sec: 0.5
-        easing: 0
-      closeSetting:
-        startTime_sec: 0
-        useCustom: 0
-        duration_sec: 0
-        easing: 0
-    - target: {fileID: 224657410857645004}
-      originOffset: {x: -200, y: 0}
-      openSetting:
-        startTime_sec: 0
-        useCustom: 1
-        duration_sec: 0.5
+        duration_sec: 0.4
         easing: 0
       closeSetting:
         startTime_sec: 0
@@ -1263,6 +1263,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114718602853896368}
   _ProgressBar: {fileID: 114775677290202674}
+  _DimmedImage: {fileID: 0}
 --- !u!114 &114289632433458782
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2284,6 +2285,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114201348403897468}
   _ProgressBar: {fileID: 114435340378400402}
+  _DimmedImage: {fileID: 0}
 --- !u!114 &114923151535770956
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2357,6 +2359,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MeterButton: {fileID: 114736810070085544}
   _ProgressBar: {fileID: 114363594198142852}
+  _DimmedImage: {fileID: 0}
 --- !u!222 &222095938175479038
 CanvasRenderer:
   m_ObjectHideFlags: 1
