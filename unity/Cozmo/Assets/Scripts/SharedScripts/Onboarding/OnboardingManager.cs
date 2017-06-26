@@ -38,6 +38,7 @@ public class OnboardingManager : MonoBehaviour {
                                     OnboardingPhases.VoiceCommands };
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
+  public Action<OnboardingPhases> OnOnboardingPhaseStarted;
   public Action<OnboardingPhases> OnOnboardingPhaseCompleted;
   public Action<string> OnOverrideTickerString;
 
@@ -194,6 +195,9 @@ public class OnboardingManager : MonoBehaviour {
     RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
     Cozmo.Needs.NeedsStateManager.Instance.PauseExceptForNeed(NeedId.Count);
+    if (OnOnboardingPhaseStarted != null) {
+      OnOnboardingPhaseStarted.Invoke(_CurrPhase);
+    }
 
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
@@ -491,8 +495,8 @@ public class OnboardingManager : MonoBehaviour {
       _NeedsHubView.gameObject.SetActive(showContent);
       _NeedsHubView.OnboardingBlockoutImage.gameObject.SetActive(showDimmer);
       // Last phase, don't dim the reward boxes by placing the blocker behind them
-      if (_CurrPhase == OnboardingPhases.RewardBox) {
-        _NeedsHubView.OnboardingBlockoutImage.transform.SetSiblingIndex(_NeedsHubView.OnboardingBlockoutImage.transform.GetSiblingIndex() - 1);
+      if (_CurrPhase == OnboardingPhases.RewardBox || _CurrPhase == OnboardingPhases.PlayIntro) {
+        _NeedsHubView.OnboardingBlockoutImage.transform.SetSiblingIndex(_NeedsHubView.RewardBar.transform.GetSiblingIndex());
       }
       bool anyDimmed = false;
       anyDimmed |= UpdateButtonState(_NeedsHubView.DiscoverButton, showButtonDiscover);

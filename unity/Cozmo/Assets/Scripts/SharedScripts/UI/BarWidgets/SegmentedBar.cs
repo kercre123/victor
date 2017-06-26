@@ -22,7 +22,7 @@ namespace Cozmo {
       private string _OffImageSkinComponentId;
 
       // Use Unity.UI.Toggles for now as the "segments"
-      List<Toggle> _CurrentSegments = new List<Toggle>();
+      protected List<Toggle> _CurrentSegments = new List<Toggle>();
 
       public void SetMaximumSegments(int maxNumSegments) {
         if (maxNumSegments < 0) {

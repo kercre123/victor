@@ -171,6 +171,9 @@ namespace Cozmo.Needs.UI {
     public CozmoButton PlayButton {
       get { return _SparksButton; }
     }
+    public StarBar RewardBar {
+      get { return _StarBar; }
+    }
     #endregion
   }
 }
