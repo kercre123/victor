@@ -106,6 +106,7 @@ namespace Anki {
       
         const DrivingAnimations kDefaultDrivingAnimations;
         const DrivingAnimations kAngryDrivingAnimations;
+        const DrivingAnimations kHappyDrivingAnimations;
       
         u32 _actionTag;
         u8 _tracksToUnlock = (u8)AnimTrackFlag::NO_TRACKS;

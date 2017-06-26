@@ -365,6 +365,10 @@
       "AnimName": "ag_driving01_endDriving"
     },
     {
+      "CladEvent": "DriveEndHappy",
+      "AnimName": "ag_play_needisfull_enddriving"
+    },
+    {
       "CladEvent": "DriveEndLaunch",
       "AnimName": "ag_driving01_endDriving"
     },
@@ -377,6 +381,10 @@
       "AnimName": "ag_driving01_drivingLoop"
     },
     {
+      "CladEvent": "DriveLoopHappy",
+      "AnimName": "ag_play_needisfull_drivingloop"
+    },
+    {
       "CladEvent": "DriveLoopLaunch",
       "AnimName": "ag_driving01_drivingLoop"
     },
@@ -387,6 +395,10 @@
     {
       "CladEvent": "DriveStartDefault",
       "AnimName": "ag_driving01_startDriving"
+    },
+    {
+      "CladEvent": "DriveStartHappy",
+      "AnimName": "ag_play_needisfull_startdriving"
     },
     {
       "CladEvent": "DriveStartLaunch",

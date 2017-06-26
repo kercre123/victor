@@ -22,6 +22,15 @@ enum int_32 NeedBracketId
   Count
 }
 
+enum_concept bool IsNeedBracketMet[NeedBracketId]
+{
+  Full = 1,
+  Normal = 1,
+  Warning = 0,
+  Critical = 0,
+  Count = 0
+}
+
 enum int_32 RepairablePartId
 {
   Head    = 0,

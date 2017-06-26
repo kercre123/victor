@@ -69,6 +69,9 @@ public:
   float         GetNeedLevelByIndex(size_t i)     { return _curNeedsLevels[static_cast<NeedId>(i)]; }
   NeedBracketId GetNeedBracketByIndex(size_t i);
   bool          GetPartIsDamagedByIndex(size_t i) { return _partIsDamaged[static_cast<RepairablePartId>(i)]; };
+
+  // Return true if all needs are "met"
+  bool AreNeedsMet();
   
   // Set current needs bracket levels from current levels
   void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);

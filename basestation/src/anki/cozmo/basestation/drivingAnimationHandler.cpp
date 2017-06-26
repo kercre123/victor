@@ -16,9 +16,12 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
@@ -37,6 +40,9 @@ namespace Anki {
     , kAngryDrivingAnimations({AnimationTrigger::DriveStartAngry,
                                AnimationTrigger::DriveLoopAngry,
                                AnimationTrigger::DriveEndAngry})
+    , kHappyDrivingAnimations({AnimationTrigger::DriveStartHappy,
+                               AnimationTrigger::DriveLoopHappy,
+                               AnimationTrigger::DriveEndHappy})
     {
 
       _currDrivingAnimations = kDefaultDrivingAnimations;
@@ -106,12 +112,18 @@ namespace Anki {
     void DrivingAnimationHandler::UpdateCurrDrivingAnimations()
     {
       if( _drivingAnimationStack.empty() ) {
-        // use mood to determine which anims to play
+        // use mood and needs to determine which anims to play
         if( _robot.GetMoodManager().GetSimpleMood() == SimpleMoodType::Sad ) {
           _currDrivingAnimations = kAngryDrivingAnimations;
         }
         else {
-          _currDrivingAnimations = kDefaultDrivingAnimations;
+          NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+          if( currNeedState.AreNeedsMet() ) {
+            _currDrivingAnimations = kHappyDrivingAnimations;
+          }
+          else {
+            _currDrivingAnimations = kDefaultDrivingAnimations;
+          }
         }
       }
       else {

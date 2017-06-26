@@ -284,6 +284,21 @@ NeedBracketId NeedsState::GetNeedBracketByIndex(size_t i)
   return _curNeedsBracketsCache[static_cast<NeedId>(i)];
 }
 
+bool NeedsState::AreNeedsMet()
+{
+  UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
+
+  for( size_t needIndex = 0; needIndex < static_cast<size_t>(NeedId::Count); needIndex++ ) {
+    const NeedBracketId bracketId = _curNeedsBracketsCache[static_cast<NeedId>(needIndex)];
+    const bool defaultVal = false;
+    if( ! IsNeedBracketMet( bracketId, defaultVal  ) ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 
 void NeedsState::SetStarLevel(int newLevel)
 {
