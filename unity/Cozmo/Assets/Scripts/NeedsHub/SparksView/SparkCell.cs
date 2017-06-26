@@ -72,7 +72,7 @@ namespace Cozmo.Needs.Sparks.UI {
       // pop up sparks modal
       UIManager.OpenModal(_SparksDetailModalPrefab, new ModalPriorityData(), (obj) => {
         SparksDetailModal sparksDetailModal = (SparksDetailModal)obj;
-        sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo);
+        sparksDetailModal.InitializeSparksDetailModal(_UnlockInfo, isEngineDriven: false);
       });
     }
   }

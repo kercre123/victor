@@ -33,7 +33,6 @@ class IBehavior;
 class MoodManager;
 class Robot;
 class CozmoContext;
-class DoATrickSelector;
 class RequestGameSelector;
 class BehaviorPlayArbitraryAnim;
 
@@ -90,7 +89,6 @@ private:
   
   std::shared_ptr<BehaviorPlayArbitraryAnim> _playAnimBehavior;
   
-  std::unique_ptr<DoATrickSelector>    _doATrickSelector;
   std::unique_ptr<RequestGameSelector> _requestGameSelector;
   std::function<void()> _doneRespondingTask;
   

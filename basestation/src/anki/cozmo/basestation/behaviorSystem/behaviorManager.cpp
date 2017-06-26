@@ -14,23 +14,26 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
+#include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFreeplay.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorContainer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
+#include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -1103,6 +1106,18 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
       SetRequestedSpark(msg.behaviorSpark, true);
       break;
     }
+    
+    // User asked for a random trick via UI
+    case ExternalInterface::BehaviorManagerMessageUnionTag::DoATrickRequest:
+    {
+      _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
+      
+      // We already check that the player can afford the cost Game side
+      const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
+      _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+    
+      break;
+    }
 
     default:
     {
@@ -1150,7 +1165,6 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
                 UnlockIdToString(_lastRequestedSpark));
 }
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::IsReactionTriggerEnabled(ReactionTrigger reaction) const
 {

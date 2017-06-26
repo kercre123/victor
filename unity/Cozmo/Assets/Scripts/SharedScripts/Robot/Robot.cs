@@ -1852,9 +1852,22 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+  public void DoRandomSpark() {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage =
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID,
+      Singleton<DoATrickRequest>.Instance
+      );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetCurrentSpark(UnlockId id) {
     IsSparked = (id != UnlockId.Count);
     SparkUnlockId = id;
+  }
+
+  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+    SetCurrentSpark(id);
 
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(

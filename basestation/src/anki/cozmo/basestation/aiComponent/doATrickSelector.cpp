@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
+#include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"

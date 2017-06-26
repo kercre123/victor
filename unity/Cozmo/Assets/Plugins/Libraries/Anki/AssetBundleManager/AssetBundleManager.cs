@@ -679,6 +679,10 @@ namespace Anki {
             dataLoadedCallback(dataInstance);
           });
       }
+
+      public override string ToString() {
+        return string.Format("[AssetBundleAssetLink: AssetBundle={0} AssetDataName=]", AssetBundle, _AssetDataName);
+      }
     }
 
     [Serializable]

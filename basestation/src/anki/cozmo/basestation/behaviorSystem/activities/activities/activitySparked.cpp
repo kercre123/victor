@@ -189,6 +189,11 @@ void ActivitySparked::OnSelectedInternal(Robot& robot)
                             _bodyLightDataLocator);
     
     _idleAnimationsSet = true;
+    
+    // Notify the game that the spark has started
+    ExternalInterface::HardSparkStartedByEngine sparkStarted;
+    sparkStarted.sparkStarted = mngr.GetRequestedSpark();
+    robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::HardSparkStartedByEngine>(sparkStarted);
   }
   
   // Turn off reactionary behaviors that could interrupt the spark

@@ -13,12 +13,13 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
-#include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/doATrickSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -64,7 +65,6 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
 :IActivity(robot, config)
 , _context(robot.GetContext())
 , _voiceCommandBehavior(nullptr)
-, _doATrickSelector(new DoATrickSelector(robot))
 , _requestGameSelector(new RequestGameSelector(robot))
 {
   // TODO: Will need to change how this works should we add more dance behaviors
@@ -218,7 +218,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
     }
     case VoiceCommandType::DoATrick:
     {
-      _doATrickSelector->RequestATrick(robot);
+      robot.GetAIComponent().GetDoATrickSelector().RequestATrick(robot);
       BeginRespondingToCommand(currentCommand);
 
       RemoveSparksForCommand(robot, currentCommand);

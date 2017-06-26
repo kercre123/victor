@@ -23,8 +23,6 @@ public class UnlockablesManager : MonoBehaviour {
     }
   }
 
-  public Action<UnlockId> OnSparkStarted;
-  public Action OnSparkComplete;
   public Action<UnlockId> OnUnlockComplete;
 
   public bool UnlocksLoaded { get { return _UnlocksLoaded; } }

@@ -143,9 +143,17 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+  public void DoRandomSpark() {
+    // Do nothing 
+  }
+
+  public void SetCurrentSpark(UnlockId id) {
     IsSparked = (id != UnlockId.Count);
     SparkUnlockId = id;
+  }
+
+  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+    SetCurrentSpark(id);
   }
 
   public void StopSparkUnlock() {

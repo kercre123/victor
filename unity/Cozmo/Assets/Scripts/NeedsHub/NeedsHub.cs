@@ -1,5 +1,6 @@
 using Anki.Assets;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 using Cozmo.Challenge;
 using Cozmo.Needs.Activities.UI;
 using Cozmo.Needs.Sparks.UI;
@@ -19,8 +20,6 @@ namespace Cozmo.Hub {
     [SerializeField]
     private GameObjectDataLink _NeedsHubViewPrefabData;
 
-    private NeedsHubView _NeedsViewHubInstance;
-
     [SerializeField]
     private GameObjectDataLink _ActivitiesViewPrefabData;
 
@@ -28,13 +27,20 @@ namespace Cozmo.Hub {
     private GameObjectDataLink _SparksViewPrefabData;
 
     [SerializeField]
+    private GameObjectDataLink _SparksDetailModalPrefabData;
+
+    [SerializeField]
     private Cozmo.UI.BadLightAlertConroller _BadLightAlertController;
 
     [SerializeField]
     private Cozmo.Upgrades.GuardDog.GuardDogController _GuardDogController;
 
+    private NeedsHubView _NeedsViewHubInstance;
     private ActivitiesView _ActivitiesViewInstance;
     private SparksView _SparksViewInstance;
+
+    private UnlockableInfo _OfferedSparkUnlockInfo;
+    private SparksDetailModal _SparksDetailModalInstance;
 
     private AnimationTrigger _ChallengeGetOutAnimTrigger = AnimationTrigger.Count;
 
@@ -54,8 +60,10 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeCompleted += HandleChallengeComplete;
       _ChallengeManager.OnChallengeFinishedLoading += HandleChallengeFinishedLoading;
 
+      UI.BaseModal.BaseModalOpened += HandleModalOpened;
       SparksDetailModal.OnSparkGameClicked += HandleStartChallengePressed;
       RequestGameManager.Instance.OnRequestGameConfirmed += HandleStartChallengeRequest;
+      RobotEngineManager.Instance.AddCallback<HardSparkStartedByEngine>(HandleRandomTrickStarted);
 
       PlayNeedsMeterAppearingSound = true;
       _Instance = this;
@@ -72,8 +80,10 @@ namespace Cozmo.Hub {
       _ChallengeManager.OnChallengeCompleted -= HandleChallengeComplete;
       _ChallengeManager.OnChallengeFinishedLoading -= HandleChallengeFinishedLoading;
 
+      UI.BaseModal.BaseModalOpened -= HandleModalOpened;
       SparksDetailModal.OnSparkGameClicked -= HandleStartChallengePressed;
       RequestGameManager.Instance.OnRequestGameConfirmed -= HandleStartChallengeRequest;
+      RobotEngineManager.Instance.RemoveCallback<HardSparkStartedByEngine>(HandleRandomTrickStarted);
 
       // Deregister events
       if (_NeedsViewHubInstance != null) {
@@ -114,27 +124,10 @@ namespace Cozmo.Hub {
     #region LoadNeedsHub
 
     public override void StartLoadNeedsHubView() {
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_NeedsHubViewPrefabData.AssetBundle, LoadNeedsHubView);
-    }
-
-    private void LoadNeedsHubView(bool assetBundleSuccess) {
-      if (assetBundleSuccess) {
-        _NeedsHubViewPrefabData.LoadAssetData((GameObject needsHubViewPrefab) => {
-          // this can be null if, by the time this callback is called, NeedsHub has been destroyed.
-          // This seems to be happening in some disconnection cases and a NRE is thrown
-          if (this != null) {
-            if (needsHubViewPrefab != null) {
-              StartCoroutine(ShowNeedsHubViewAfterOtherViewClosed(needsHubViewPrefab));
-            }
-            else {
-              DAS.Error("NeedsHub.LoadNeedsHubView", "needsHubViewPrefab is null");
-            }
-          }
-        });
-      }
-      else {
-        DAS.Error("NeedsHub.LoadNeedsHubView", "Failed to load asset bundle " + _NeedsHubViewPrefabData.AssetBundle);
-      }
+      System.Action<GameObject> needsHubViewPrefabLoaded = (GameObject needsHubViewPrefab) => {
+        StartCoroutine(ShowNeedsHubViewAfterOtherViewClosed(needsHubViewPrefab));
+      };
+      LoadGameObjectData(_NeedsHubViewPrefabData, needsHubViewPrefabLoaded);
     }
 
     private IEnumerator ShowNeedsHubViewAfterOtherViewClosed(GameObject needsHubViewPrefab) {
@@ -328,27 +321,7 @@ namespace Cozmo.Hub {
     private void HandleActivitiesButtonClicked() {
       DeregisterNeedsViewEvents();
       // Start load activities view
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_ActivitiesViewPrefabData.AssetBundle, LoadActivitiesView);
-    }
-
-    private void LoadActivitiesView(bool assetBundleSuccess) {
-      if (assetBundleSuccess) {
-        _ActivitiesViewPrefabData.LoadAssetData((GameObject activitiesViewPrefab) => {
-          // this can be null if, by the time this callback is called, NeedsHub has been destroyed.
-          // This seems to be happening in some disconnection cases and a NRE is thrown
-          if (this != null) {
-            if (activitiesViewPrefab != null) {
-              ShowActivitiesView(activitiesViewPrefab);
-            }
-            else {
-              DAS.Error("NeedsHub.LoadActivitiesView", "activitiesViewPrefab is null");
-            }
-          }
-        });
-      }
-      else {
-        DAS.Error("NeedsHub.LoadActivitiesView", "Failed to load asset bundle " + _ActivitiesViewPrefabData.AssetBundle);
-      }
+      LoadGameObjectData(_ActivitiesViewPrefabData, ShowActivitiesView);
     }
 
     private void ShowActivitiesView(GameObject activitiesViewPrefab) {
@@ -387,27 +360,7 @@ namespace Cozmo.Hub {
     private void HandleSparksButtonClicked() {
       DeregisterNeedsViewEvents();
       // Start load sparks view
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_SparksViewPrefabData.AssetBundle, LoadSparksView);
-    }
-
-    private void LoadSparksView(bool assetBundleSuccess) {
-      if (assetBundleSuccess) {
-        _SparksViewPrefabData.LoadAssetData((GameObject sparksViewPrefab) => {
-          // this can be null if, by the time this callback is called, NeedsHub has been destroyed.
-          // This seems to be happening in some disconnection cases and a NRE is thrown
-          if (this != null) {
-            if (sparksViewPrefab != null) {
-              ShowSparksView(sparksViewPrefab);
-            }
-            else {
-              DAS.Error("NeedsHub.LoadSparksView", "sparksViewPrefab is null");
-            }
-          }
-        });
-      }
-      else {
-        DAS.Error("NeedsHub.LoadSparksView", "Failed to load asset bundle " + _SparksViewPrefabData.AssetBundle);
-      }
+      LoadGameObjectData(_SparksViewPrefabData, ShowSparksView);
     }
 
     private void ShowSparksView(GameObject sparksViewPrefab) {
@@ -430,12 +383,85 @@ namespace Cozmo.Hub {
 
     #endregion
 
+    #region Open Sparks Detail View from VC/Random
+
+    private void HandleRandomTrickStarted(HardSparkStartedByEngine sparkStartedMsg) {
+      // Open the SparksDetailView if it was from VC or random "Do A Trick", not from specific UI interaction
+      bool playerSparksModalNotOpen = (_SparksDetailModalInstance == null);
+
+      // When sparks are started by engine via VC or offer flow, HardSparkStartedByEngine is sent
+      // before robot.IsSparked is updated. However, in the player driven "specific spark" flow, 
+      // robot.IsSparked is updated before this message is recieved. 
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        bool playerSparkInProgress = robot.IsSparked;
+
+        if (playerSparksModalNotOpen || !playerSparkInProgress) {
+          UnlockableInfo offeredSparkInfo = UnlockablesManager.Instance.GetUnlockableInfo(sparkStartedMsg.sparkStarted);
+          if (offeredSparkInfo != null && RobotEngineManager.Instance.CurrentRobot != null) {
+            // Close player driven modal if it exists
+            if (_SparksDetailModalInstance != null) {
+              _SparksDetailModalInstance.CloseAndSkipEngineCleanup();
+            }
+
+            _OfferedSparkUnlockInfo = offeredSparkInfo;
+            LoadGameObjectData(_SparksDetailModalPrefabData, ShowSparksDetailModal);
+          }
+        }
+      }
+    }
+
+    private void ShowSparksDetailModal(GameObject sparksDetailModalPrefab) {
+      UIManager.OpenModal(sparksDetailModalPrefab.GetComponent<SparksDetailModal>(), new UI.ModalPriorityData(),
+                          HandleSparksDetailModalCreated);
+    }
+
+    private void HandleSparksDetailModalCreated(UI.BaseModal sparksDetailModal) {
+      RobotEngineManager.Instance.CurrentRobot.SetCurrentSpark(_OfferedSparkUnlockInfo.Id.Value);
+      SparksDetailModal newSparksDetailModal = (SparksDetailModal)sparksDetailModal;
+      newSparksDetailModal.InitializeSparksDetailModal(_OfferedSparkUnlockInfo, isEngineDriven: true);
+    }
+
+    private void HandleModalOpened(UI.BaseModal modalOpened) {
+      if (modalOpened is SparksDetailModal) {
+        SparksDetailModal sparkModal = (SparksDetailModal)modalOpened;
+        if (_SparksDetailModalInstance == null) {
+          _SparksDetailModalInstance = sparkModal;
+        }
+      }
+    }
+
+    #endregion
+
     // Every _kConnectedTimeIntervalCheck seconds, fire the OnConnectedInterval event for designer goals
     protected void Update() {
       if (Time.time - _ConnectedTimeIntervalLastTimestamp > _kConnectedTimeIntervalCheck) {
         _ConnectedTimeIntervalLastTimestamp = Time.time;
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnConnectedInterval, Time.time - _ConnectedTimeStartedTimestamp));
       }
+    }
+
+    private void LoadGameObjectData(GameObjectDataLink dataLink, System.Action<GameObject> successCallback) {
+      System.Action<bool> assetBundleLoaded = (bool success) => {
+        if (success) {
+          dataLink.LoadAssetData((GameObject loadedGameObject) => {
+            // this can be null if, by the time this callback is called, NeedsHub has been destroyed.
+            // This seems to be happening in some disconnection cases and a NRE is thrown
+            if (this != null) {
+              if (loadedGameObject != null) {
+                successCallback(loadedGameObject);
+              }
+              else {
+                DAS.Error("NeedsHub.LoadGameObjectData", "loadedGameObject is null dataLink=" + dataLink);
+              }
+            }
+          });
+        }
+        else {
+          DAS.Error("NeedsHub.LoadGameObjectData", "Failed to load asset bundle " + dataLink.AssetBundle);
+        }
+      };
+      AssetBundleManager.Instance.LoadAssetBundleAsync(dataLink.AssetBundle, assetBundleLoaded);
     }
   }
 }

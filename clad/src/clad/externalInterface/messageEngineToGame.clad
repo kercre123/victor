@@ -749,6 +749,13 @@ message RequestGameStart {
   UnlockId gameRequested
 }
 
+// Game asked for a random trick; respond with which trick started
+// to update UI
+message HardSparkStartedByEngine {
+  UnlockId sparkStarted
+}
+
+// Spark was ended by Engine (due to success or timeout)
 message HardSparkEndedByEngine {
   bool success
 }

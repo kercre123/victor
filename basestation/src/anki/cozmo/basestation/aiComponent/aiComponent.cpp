@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorEventAnimResponseDirector.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
 #include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
 #include "anki/cozmo/basestation/aiComponent/workoutComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -33,6 +34,7 @@ AIComponent::AIComponent(Robot& robot)
 , _aiInformationAnalyzer( new AIInformationAnalyzer() )
 , _behaviorEventAnimResponseDirector(new BehaviorEventAnimResponseDirector())
 , _behaviorHelperComponent( new BehaviorHelperComponent())
+, _doATrickSelector(new DoATrickSelector(robot))
 , _objectInteractionInfoCache(new ObjectInteractionInfoCache(robot))
 , _whiteboard( new AIWhiteboard(robot) )
 , _workoutComponent( new WorkoutComponent(robot) )

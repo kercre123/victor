@@ -192,6 +192,10 @@ public interface IRobot : IDisposable {
 
   void SetEnableCliffSensor(bool enabled);
 
+  void DoRandomSpark();
+
+  void SetCurrentSpark(UnlockId id);
+
   void EnableSparkUnlock(Anki.Cozmo.UnlockId id);
 
   void StopSparkUnlock();
