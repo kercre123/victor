@@ -25,6 +25,7 @@
 
 #include "clad/robotInterface/messageFromActiveObject.h"
 
+#include <list>
 #include <map>
 
 static const Anki::TimeStamp_t kDefaultWindowSize_ms = 50;
@@ -58,6 +59,9 @@ public:
   // Exposed for debug purposes - should not be called directly
   // whichLightCubeType should be 1, 2, or 3 for LightCube1, 2, or 3
   void Dev_HandleObjectAccel(const u32 whichLightCubeType, ObjectAccel& accel);
+  
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
   
@@ -84,7 +88,7 @@ private:
   
   std::map<ObjectID, AccelHistory> _objectAccelHistory;
   
-  Signal::SmartHandle _eventHandler;
+  std::list<Signal::SmartHandle> _eventHandlers;
   
 };
 

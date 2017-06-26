@@ -1127,6 +1127,16 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
   return SetLights(activeCube, rotationPeriod_ms);
 }
 
+  
+bool CubeLightComponent::CanEngineSetLightsOnCube(const ObjectID& objectID)
+{
+  const auto& info = _objectInfo.find(objectID);
+  if(info != _objectInfo.end()){
+    return !info->second.isOnlyGameLayerEnabled;
+  }
+  return false;
+}
+
 
 Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotationPeriod_ms)
 {

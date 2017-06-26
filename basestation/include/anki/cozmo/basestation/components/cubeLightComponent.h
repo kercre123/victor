@@ -158,6 +158,14 @@ public:
                          const Point2f& relativeToPoint,
                          const u32 rotationPeriod_ms);
   
+  // We don't want to expose Animation layers outside of the cubeLightComponent
+  // but there are scenarios where game takes over control of lights and clears
+  // out engine lights, or new cubes connect while game is in control of lights
+  // In these scenarios engine may need to check whether it can set lights or not
+  // to ensure that a StopAndPlay was not cancelled before another one was called
+  // which will hit an assert
+  bool CanEngineSetLightsOnCube(const ObjectID& objectID);
+  
 private:
 
   // Animations can be played on three different layers: User, Engine, or Default

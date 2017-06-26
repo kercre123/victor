@@ -82,9 +82,17 @@ CONSOLE_FUNC(FakeCubeShake, "CubeAccelComponent.FakeAccel");
 CubeAccelComponent::CubeAccelComponent(Robot& robot)
 : _robot(robot)
 {
-  _eventHandler = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
+  _eventHandlers.push_back(robot.GetRobotMessageHandler()->Subscribe(robot.GetID(),
                                                             RobotInterface::RobotToEngineTag::objectAccel,
-                                                            std::bind(&CubeAccelComponent::ReceiveObjectAccelData, this, std::placeholders::_1));
+                                                            std::bind(&CubeAccelComponent::ReceiveObjectAccelData, this, std::placeholders::_1)));
+  
+  // Subscribe to messages
+  if( _robot.HasExternalInterface() ) {
+    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandlers);
+    using namespace ExternalInterface;
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
+  }
+  
   sThis = this;
 }
 
@@ -259,6 +267,21 @@ void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, Obj
       objectAccel.objectID = object->GetID();
       HandleObjectAccel(objectAccel);
     }
+  }
+}
+  
+  
+template<>
+void CubeAccelComponent::HandleMessage(const ObjectConnectionState& msg)
+{
+  if(msg.connected)
+  {
+    auto iter = _objectAccelHistory.find(msg.objectID);
+    DEV_ASSERT_MSG((iter == _objectAccelHistory.end()) ||
+                   iter->second.listeners.empty(),
+                   "CubeAccelComponent.HandleMessage.ObjectConnectionState",
+                   "Connecting to object %d which has a dangling listener",
+                   msg.objectID);
   }
 }
   

@@ -30,6 +30,8 @@
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
 
+
+#include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -43,24 +45,6 @@ static const char* kUniversalChooser = "universalChooser";
 
   // Special version of CYAN to match feeding animations
 static const ColorRGBA FEEDING_CYAN      (0.f, 1.f, 0.7f);
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct BackpackLightMapping{
-  BackpackLightMapping(){};
-  BackpackLightMapping(const BackpackLights& waitingForFoodBackpackLights,
-                       const BackpackLights& eatingBackpackLights,
-                       const BackpackLights& solidBackpackLights)
-  : _waitingForFoodBackpackLights(waitingForFoodBackpackLights)
-  , _eatingBackpackLights(eatingBackpackLights)
-  , _solidBackpackLights(solidBackpackLights){}
-  BackpackLights       _waitingForFoodBackpackLights;
-  BackpackLights       _eatingBackpackLights;
-  BackpackLights       _solidBackpackLights;
-};
-  
-BackpackLightMapping kFeedingBackpackLights;
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArray = {
@@ -157,41 +141,6 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
   /// Setup Lights
   ////////
   
-  // These have to be defined within the constructor to allow NamedColors to be used
-  static const BackpackLights kPulsingCyanBackpack = {
-    .onColors               = {{FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{1,1,1,1,1}},
-    .offPeriod_ms           = {{1,1,1,1,1}},
-    .transitionOnPeriod_ms  = {{2000,2000,2000,2000,2000}},
-    .transitionOffPeriod_ms = {{2000,2000,2000,2000,2000}},
-    .offset                 = {{0,0,0,0,0}}
-  };
-  
-  static const BackpackLights kLoopingCyanBackpack = {
-    .onColors               = {{NamedColors::BLACK, FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       NamedColors::BLACK}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{0,360,360,360,0}},
-    .offPeriod_ms           = {{0,1110,1110,1110,0}},
-    .transitionOnPeriod_ms  = {{0,0,0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0,0,0}},
-    .offset                 = {{0,240,120,0,0}}
-  };
-  
-  static const BackpackLights kSolidCyanBackpack = {
-    .onColors               = {{FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN,       FEEDING_CYAN}},
-    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-    .onPeriod_ms            = {{1000,1000,1000,1000,1000}},
-    .offPeriod_ms           = {{0,0,0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0,0,0}},
-    .offset                 = {{0,0,0,0,0}}
-  };
-  
-  kFeedingBackpackLights = BackpackLightMapping(kPulsingCyanBackpack,
-                                               kLoopingCyanBackpack,
-                                               kSolidCyanBackpack);
-  
   // Make the activity a listener for the eating behavior so that it's notified
   // when the eating process starts
   _eatFoodBehavior->AddListener(static_cast<IFeedingListener*>(this));
@@ -251,6 +200,14 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
         RobotObservedObject(event.GetData().Get_RobotObservedObject().objectID);
       })
   );
+
+  _eventHandlers.push_back(robot.GetExternalInterface()->Subscribe(
+     ExternalInterface::MessageEngineToGameTag::ObjectConnectionState,
+     [this, &robot] (const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+     {
+       HandleObjectConnectionStateChange(robot, event.GetData().Get_ObjectConnectionState());
+     })
+  );
   
   
   // DAS Events
@@ -283,9 +240,6 @@ void ActivityFeeding::OnDeselectedInternal(Robot& robot)
   }
   _cubeControllerMap.clear();
   _eventHandlers.clear();
-  
-  robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
-  _bodyLightDataLocator = {};
   
   
   // DAS Events
@@ -589,12 +543,6 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
                       AnimationTrigger::FeedingIdleToFullCube_Normal;
   UpdateAnimationToPlay(bestAnimation, 0);
   
-  
-  auto& bodyLightComp = robot.GetBodyLightComponent();
-  bodyLightComp.StartLoopingBackpackLights(kFeedingBackpackLights._waitingForFoodBackpackLights,
-                                           BackpackLightSource::Behavior,
-                                           _bodyLightDataLocator);
-  
   if(_idleAndDrivingSet && !isNeedSevere){
     robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     robot.GetAnimationStreamer().PopIdleAnimation();
@@ -646,9 +594,47 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions)
 {
+  const bool animWasPlaying = _behaviorPlayAnimation->IsRunning();
+  
   _behaviorPlayAnimation->Stop();
   _behaviorPlayAnimation->SetAnimationTrigger(animTrigger, repetitions);
-  _behaviorPlayAnimation->Init();
+  
+  // If the behavior stays the same the behavior manager has no way to know that
+  // it needs to be re-initialized, so initialize here
+  if(animWasPlaying){
+    _behaviorPlayAnimation->Init();
+  }
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState)
+{
+  using CS = FeedingCubeController::ControllerState;
+  const ObjectID& objID = connectionState.objectID;
+  auto mapObjIter = _cubeControllerMap.find(objID);
+  
+  
+  if(connectionState.connected){
+    const auto& emplaceRes = _cubeControllerMap.emplace(
+            std::make_pair(objID,
+                            std::make_unique<FeedingCubeController>(robot,
+                                                                    objID)));
+    
+    // Activate the cube if emplace succeeded and
+    // past the appropriate activity stage
+    if(emplaceRes.second &&
+       (_chooserStage >= FeedingActivityStage::WaitingForShake)){
+      mapObjIter = emplaceRes.first;
+      mapObjIter->second->SetControllerState(robot, CS::Activated);
+    }
+  }else{
+    if(mapObjIter != _cubeControllerMap.end()){
+      mapObjIter->second->SetControllerState(robot,CS::Deactivated);
+      _cubeControllerMap.erase(objID);
+    }
+  }
+  
 }
 
   

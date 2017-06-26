@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -37,9 +38,11 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  30.0f);
+CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  45.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Disable reactions that interrupt Cozmo's eating animation when he lifts himself
+// up on top of cube
 constexpr ReactionTriggerHelpers::FullReactionArray kDisableCliffWhileEating = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    false},
@@ -53,9 +56,9 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableCliffWhileEating = {
   {ReactionTrigger::ObjectPositionUpdated,        false},
   {ReactionTrigger::PlacedOnCharger,              false},
   {ReactionTrigger::PetInitialDetection,          false},
-  {ReactionTrigger::RobotPickedUp,                false},
-  {ReactionTrigger::RobotPlacedOnSlope,           false},
-  {ReactionTrigger::ReturnedToTreads,             false},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           true},
+  {ReactionTrigger::ReturnedToTreads,             true},
   {ReactionTrigger::RobotOnBack,                  false},
   {ReactionTrigger::RobotOnFace,                  false},
   {ReactionTrigger::RobotOnSide,                  false},
@@ -73,7 +76,7 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableCliffWhileEating
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFeedingEat::BehaviorFeedingEat(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _shouldSendUpdateUI(false)
+, _timeCubeIsSuccessfullyDrained_sec(FLT_MAX)
 {  
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject
@@ -101,7 +104,8 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
     return Result::RESULT_FAIL;
   }
   
-  _shouldSendUpdateUI = false;
+  _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
+  
   TransitionToDrivingToFood(robot);
   return Result::RESULT_OK;
 }
@@ -110,12 +114,32 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
+  robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
+    RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
+  
+  
+  // Feeding should be considered "complete" so long as the animation has reached
+  // the point where all light has been drained from the cube.  If the behavior
+  // is interrupted after that point in the animation or the animation completes
+  // successfully, register the action as complete.  If it's interrupted before
+  // reaching that time (indicated by _timeCubeIsSuccessfullyDrained_sec) then
+  // Cozmo didn't successfully finish "eating" and doesn't get the energy for it
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if(currentTime_s > _timeCubeIsSuccessfullyDrained_sec){
+    robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::FeedBlue);
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
 {
+  const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
+  if((obj == nullptr) || !obj->IsPoseStateKnown()){
+    return;
+  }
+  
+  
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy,
                                                           NeedBracketId::Critical);
@@ -140,7 +164,11 @@ void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingEat::TransitionToEating(Robot& robot)
 {
+  // Disable reactions and StopOnCliff so that when cozmo lifts himself up on
+  // the cube during an animation the animation isn't interrupted
   SmartDisableReactionsWithLock(GetIDStr(), kDisableCliffWhileEating);
+  robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
+    RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   
   AnimationTrigger eatingAnim = UpdateNeedsStateAndCalculateAnimation(robot);
   
@@ -172,20 +200,16 @@ void BehaviorFeedingEat::TransitionToEating(Robot& robot)
     }
   }
   
-  StartActing(new TriggerAnimationAction(robot, eatingAnim),[this, &robot](ActionResult res){
-    if(res == ActionResult::SUCCESS){
-      // Update
-      robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::FeedBlue);
-    }
-  });
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _timeCubeIsSuccessfullyDrained_sec = currentTime_s + timeDrainCube_s;
+  
+  StartActing(new TriggerAnimationAction(robot, eatingAnim));
 }
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationTrigger BehaviorFeedingEat::UpdateNeedsStateAndCalculateAnimation(Robot& robot)
 {
-
-  
   // Eating animation is dependent on both the current and post feeding energy level
   // Use PredictNeedsActionResult to estimate the ending needs bracket
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
@@ -201,21 +225,27 @@ AnimationTrigger BehaviorFeedingEat::UpdateNeedsStateAndCalculateAnimation(Robot
                                                                     NeedBracketId::Critical);
   const bool isWarningPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
                                                                      NeedBracketId::Warning);
-  const bool isNotFullPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
-                                                                     NeedBracketId::Full);
+  const bool isFullPostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,
+                                                                  NeedBracketId::Full);
   
   AnimationTrigger bestAnimation;
   if(isSeverePreFeeding && isSeverePostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Severe;
   }else if(isSeverePreFeeding && isWarningPostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteFullEnough_Severe;
-  }else if(isWarningPreFeeding && isNotFullPostFeeding){
+  }else if(isWarningPreFeeding && !isFullPostFeeding){
     bestAnimation = AnimationTrigger::FeedingAteNotFullEnough_Normal;
   }else{
     bestAnimation = AnimationTrigger::FeedingAteFullEnough_Normal;
   }
   
-  _shouldSendUpdateUI = true;
+  PRINT_CH_INFO("Feeding",
+                "BehaviorFeedingEat.UpdateNeedsStateCalcAnim.AnimationSelected",
+                "AnimationTrigger: %s SeverePreFeeding: %d severePostFeeding: %d warningPreFeeding: %d fullyFullPost: %d ",
+                AnimationTriggerToString(bestAnimation),
+                isSeverePreFeeding, isSeverePostFeeding,
+                isWarningPreFeeding, isFullPostFeeding);
+  
   return bestAnimation;
 }
 

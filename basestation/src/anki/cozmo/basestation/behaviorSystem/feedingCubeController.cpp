@@ -459,31 +459,43 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::SetCubeLights(Robot& robot)
 {
+  // If engine isn't in control of lights, the current animation will always be count
+  if(!robot.GetCubeLightComponent().CanEngineSetLightsOnCube(_cubeStateTracker->_id)){
+    _cubeStateTracker->_currentAnimationTrigger = CubeAnimationTrigger::Count;
+    return;
+  }
+  
   // Remove any lights that are currently set
   if((_cubeStateTracker->_currentAnimationTrigger != _cubeStateTracker->_desiredAnimationTrigger) ||
      _cubeStateTracker->_desiredModifierChanged)
   {
+    bool wasLightTransitionSuccessful = false;
     if(_cubeStateTracker->_currentAnimationTrigger == CubeAnimationTrigger::Count){
-      robot.GetCubeLightComponent().PlayLightAnim(_cubeStateTracker->_id,
-                                                  _cubeStateTracker->_desiredAnimationTrigger);
+      wasLightTransitionSuccessful = robot.GetCubeLightComponent().PlayLightAnim(
+                                       _cubeStateTracker->_id,
+                                       _cubeStateTracker->_desiredAnimationTrigger);
     }
     else if(_cubeStateTracker->_desiredAnimationTrigger != CubeAnimationTrigger::Count)
     {
-      robot.GetCubeLightComponent().StopAndPlayLightAnim(_cubeStateTracker->_id,
-                                                         _cubeStateTracker->_currentAnimationTrigger,
-                                                         _cubeStateTracker->_desiredAnimationTrigger,
-                                                         nullptr,
-                                                         _cubeStateTracker->_desiredModifierChanged,
-                                                         _cubeStateTracker->_desiredModifier);
+      wasLightTransitionSuccessful = robot.GetCubeLightComponent().StopAndPlayLightAnim(
+                                       _cubeStateTracker->_id,
+                                       _cubeStateTracker->_currentAnimationTrigger,
+                                       _cubeStateTracker->_desiredAnimationTrigger,
+                                       nullptr,
+                                       _cubeStateTracker->_desiredModifierChanged,
+                                       _cubeStateTracker->_desiredModifier);
     }
     else
     {
-      robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(_cubeStateTracker->_currentAnimationTrigger,
-                                                                   _cubeStateTracker->_id);
+      wasLightTransitionSuccessful = robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(
+                                       _cubeStateTracker->_currentAnimationTrigger,
+                                       _cubeStateTracker->_id);
     }
     
-    _cubeStateTracker->_currentAnimationTrigger = _cubeStateTracker->_desiredAnimationTrigger;
-    _cubeStateTracker->_desiredModifierChanged = false;
+    if(wasLightTransitionSuccessful){
+      _cubeStateTracker->_currentAnimationTrigger = _cubeStateTracker->_desiredAnimationTrigger;
+      _cubeStateTracker->_desiredModifierChanged = false;
+    }
   }
 }
 

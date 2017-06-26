@@ -31,6 +31,7 @@ namespace Cozmo {
 class BehaviorFeedingEat;
 class BehaviorPlayArbitraryAnim;
 class FeedingCubeController;
+struct ObjectConnectionState;
 
 class ActivityFeeding : public IActivity, public IFeedingListener
 {
@@ -68,9 +69,6 @@ private:
   float _timeFaceSearchShouldEnd_s;
   
   std::map<ObjectID, std::unique_ptr<FeedingCubeController>> _cubeControllerMap;
-  
-  // Control cozmo's backpack lights throughout feeding
-  BackpackLightDataLocator  _bodyLightDataLocator{};
   
   // The object cozmo should eat once he's seen that it's fully charged
   ObjectID _interactID;
@@ -112,6 +110,8 @@ private:
   void RobotObservedObject(const ObjectID& objID);
   
   void UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions);
+  
+  void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
 
 };
 

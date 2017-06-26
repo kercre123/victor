@@ -48,7 +48,7 @@ protected:
 private:
   mutable ObjectID _targetID;
   std::vector<IFeedingListener*> _feedingListeners;
-  bool _shouldSendUpdateUI;
+  float _timeCubeIsSuccessfullyDrained_sec;
   
   void TransitionToReactingToFood(Robot& robot);
   void TransitionToDrivingToFood(Robot& robot);
