@@ -4,7 +4,7 @@
   "DecayPeriodSeconds": 60,
   "InitialNeedLevelRepair": 0.8,
   "InitialNeedLevelEnergy": 0.7,
-  "InitialNeedLevelPlay": 0.8,
+  "InitialNeedLevelPlay": 0.95,
   "BracketLevelRepairFull": 0.95,
   "BracketLevelRepairNormal": 0.5,
   "BracketLevelRepairWarning": 0.1,
