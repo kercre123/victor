@@ -199,10 +199,10 @@ Blockly.Blocks['data_listcontents'] = {
           "name": "LIST"
         }
       ],
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary,
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary,
       "output": "String",
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
       "checkboxInFlyout": true
@@ -290,10 +290,10 @@ Blockly.Blocks['data_addtolist'] = {
       ],
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };
@@ -318,10 +318,10 @@ Blockly.Blocks['data_deleteoflist'] = {
       ],
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };
@@ -350,10 +350,10 @@ Blockly.Blocks['data_insertatlist'] = {
       ],
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };
@@ -382,10 +382,10 @@ Blockly.Blocks['data_replaceitemoflist'] = {
       ],
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };
@@ -409,10 +409,10 @@ Blockly.Blocks['data_itemoflist'] = {
         }
       ],
       "output": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary,
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary,
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND
     });
   }
@@ -433,10 +433,10 @@ Blockly.Blocks['data_lengthoflist'] = {
         }
       ],
       "output": "Number",
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary,
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary,
       "outputShape": Blockly.OUTPUT_SHAPE_ROUND
     });
   }
@@ -462,10 +462,10 @@ Blockly.Blocks['data_listcontainsitem'] = {
       ],
       "output": "Boolean",
       "outputShape": Blockly.OUTPUT_SHAPE_HEXAGONAL,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };
@@ -486,10 +486,10 @@ Blockly.Blocks['data_showlist'] = {
       ],
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };
@@ -510,10 +510,10 @@ Blockly.Blocks['data_hidelist'] = {
       ],
       "previousStatement": null,
       "nextStatement": null,
-      "category": Blockly.Categories.data,
-      "colour": Blockly.Colours.data.primary,
-      "colourSecondary": Blockly.Colours.data.secondary,
-      "colourTertiary": Blockly.Colours.data.tertiary
+      "category": Blockly.Categories.lists,
+      "colour": Blockly.Colours.lists.primary,
+      "colourSecondary": Blockly.Colours.lists.secondary,
+      "colourTertiary": Blockly.Colours.lists.tertiary
     });
   }
 };

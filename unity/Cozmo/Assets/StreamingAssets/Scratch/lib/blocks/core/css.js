@@ -500,7 +500,8 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutButton .blocklyText {',
-    'fill: $colour_text;',
+    //'fill: $colour_text;',
+    'fill: #ffffff;', // *** ANKI CHANGE ***
   '}',
 
   '.blocklyFlyoutButtonShadow {',
@@ -508,7 +509,8 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutButton:hover {',
-    'fill: white;',
+    //'fill: white;', // *** ANKI CHANGE ***
+    'fill: grey;',
     'cursor: pointer;',
   '}',
 
@@ -1135,8 +1137,9 @@ Blockly.Css.CONTENT = [
     '-ms-user-select: none;',
   '}',
 
+  // Used for vertical
   '.scratchCategoryMenu {',
-    'width: 250px;',
+    'width: 295px;', // *** ANKI CHANGE ***
     'background-color: #ffffff;', // *** ANKI CHANGE ***
     //'background: $colour_toolbox;',
     'color: $colour_toolboxText;',

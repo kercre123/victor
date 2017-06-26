@@ -551,7 +551,7 @@ Blockly.Blocks['cozmo_vert_cube_position'] = {
         ],
         "inputsInline": true,
         "output": "Number",
-        "colour": Blockly.Colours.sensing.secondary,
+        "colour": Blockly.Colours.sensing.primary,
         "colourSecondary": Blockly.Colours.sensing.secondary,
         "colourTertiary": Blockly.Colours.sensing.tertiary,
         "outputShape": Blockly.OUTPUT_SHAPE_ROUND
@@ -581,7 +581,7 @@ Blockly.Blocks['cozmo_vert_position'] = {
         ],
         "inputsInline": true,
         "output": "Number",
-        "colour": Blockly.Colours.sensing.secondary,
+        "colour": Blockly.Colours.sensing.primary,
         "colourSecondary": Blockly.Colours.sensing.secondary,
         "colourTertiary": Blockly.Colours.sensing.tertiary,
         "outputShape": Blockly.OUTPUT_SHAPE_ROUND
@@ -645,7 +645,7 @@ Blockly.Blocks['cozmo_vert_face_2d'] = {
         ],
         "inputsInline": true,
         "output": "Number",
-        "colour": Blockly.Colours.sensing.secondary,
+        "colour": Blockly.Colours.sensing.primary,
         "colourSecondary": Blockly.Colours.sensing.secondary,
         "colourTertiary": Blockly.Colours.sensing.tertiary,
         "outputShape": Blockly.OUTPUT_SHAPE_ROUND
@@ -674,7 +674,7 @@ Blockly.Blocks['cozmo_vert_face_3d'] = {
         ],
         "inputsInline": true,
         "output": "Number",
-        "colour": Blockly.Colours.sensing.secondary,
+        "colour": Blockly.Colours.sensing.primary,
         "colourSecondary": Blockly.Colours.sensing.secondary,
         "colourTertiary": Blockly.Colours.sensing.tertiary,
         "outputShape": Blockly.OUTPUT_SHAPE_ROUND
@@ -832,10 +832,10 @@ Blockly.Blocks['cozmo_vert_liftheight'] = {
         "inputsInline": true,
         "previousStatement": null,
         "nextStatement": null,
-        "category": Blockly.Categories.motion,
-        "colour": Blockly.Colours.motion.primary,
-        "colourSecondary": Blockly.Colours.motion.secondary,
-        "colourTertiary": Blockly.Colours.motion.tertiary
+        "category": Blockly.Categories.looks,
+        "colour": Blockly.Colours.looks.primary,
+        "colourSecondary": Blockly.Colours.looks.secondary,
+        "colourTertiary": Blockly.Colours.looks.tertiary
     });
   }
 };
@@ -863,10 +863,10 @@ Blockly.Blocks['cozmo_vert_headangle'] = {
         "inputsInline": true,
         "previousStatement": null,
         "nextStatement": null,
-        "category": Blockly.Categories.motion,
-        "colour": Blockly.Colours.motion.primary,
-        "colourSecondary": Blockly.Colours.motion.secondary,
-        "colourTertiary": Blockly.Colours.motion.tertiary
+        "category": Blockly.Categories.looks,
+        "colour": Blockly.Colours.looks.primary,
+        "colourSecondary": Blockly.Colours.looks.secondary,
+        "colourTertiary": Blockly.Colours.looks.tertiary
     });
   }
 };
