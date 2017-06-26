@@ -42,7 +42,7 @@ static const std::string kOtherNeedsAffectedKey = "OtherNeedsAffected";
 static const std::string kOtherNeedIDKey = "OtherNeedID";
 static const std::string kMultiplierKey = "Multiplier";
 
-static const std::string kInitialUnlockLevelsArrayKey = "UnlockLevels";
+static const std::string kInitialUnlockLevelsArrayKey = "unlockLevels";
 
 static const std::string kActionDeltasKey = "actionDeltas";
 static const std::string kActionIDKey = "actionId";
@@ -71,7 +71,7 @@ void StarRewardsConfig::Init(const Json::Value& json)
 {
   _UnlockLevels.clear();
   const auto& jsonInitialUnlockLevels = json[kInitialUnlockLevelsArrayKey];
-  if( jsonInitialUnlockLevels.isArray())
+  if( jsonInitialUnlockLevels.isArray() )
   {
     const s32 numEntries = jsonInitialUnlockLevels.size();
     _UnlockLevels.reserve(numEntries);
@@ -85,7 +85,7 @@ void StarRewardsConfig::Init(const Json::Value& json)
     }
   }
 }
-  
+
 int StarRewardsConfig::GetMaxStarsForLevel(int level)
 {
   if( level < _UnlockLevels.size() )
@@ -113,7 +113,6 @@ void StarRewardsConfig::GetRewardsForLevel(int level, std::vector<NeedsReward>& 
     rewards = _UnlockLevels[_UnlockLevels.size() - 1].rewards;
   }
 }
-
 
 void NeedsConfig::Init(const Json::Value& json)
 {

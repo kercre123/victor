@@ -475,8 +475,6 @@ void NeedsState::SetPrevNeedsBrackets()
 #if ANKI_DEV_CHEATS
 void NeedsState::DebugFillNeedMeters()
 {
-  Reset();
-
   for (int i = 0; i < static_cast<int>(NeedId::Count); i++)
   {
     _curNeedsLevels[static_cast<NeedId>(i)] = _needsConfig->_maxNeedLevel;

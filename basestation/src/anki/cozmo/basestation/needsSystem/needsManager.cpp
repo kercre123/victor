@@ -1155,17 +1155,19 @@ void NeedsManager::StartFullnessCooldownForNeed(const NeedId needId)
 }
 
 
-void NeedsManager::UpdateStarsState()
+void NeedsManager::UpdateStarsState(bool cheatGiveStar)
 {
   // If "Play" level has transitioned to Full
-  if ((_needsState.GetPrevNeedBracketByIndex((size_t)NeedId::Play) != NeedBracketId::Full) &&
-      (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full))
+  if (((_needsState.GetPrevNeedBracketByIndex((size_t)NeedId::Play) != NeedBracketId::Full) &&
+       (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full)) ||
+       (cheatGiveStar))
   {
     // Now see if they've already received the star award today:
-    Time nowTime = std::chrono::system_clock::now();
     std::time_t lastStarTime = std::chrono::system_clock::to_time_t( _needsState._timeLastStarAwarded );
     std::tm lastLocalTime;
     localtime_r(&lastStarTime, &lastLocalTime);
+
+    Time nowTime = std::chrono::system_clock::now();
     std::time_t nowTimeT = std::chrono::system_clock::to_time_t( nowTime );
     std::tm nowLocalTime;
     localtime_r(&nowTimeT, &nowLocalTime);
@@ -1187,8 +1189,7 @@ void NeedsManager::UpdateStarsState()
       
       _needsState._timeLastStarAwarded = nowTime;
       _needsState._numStarsAwarded++;
-      // StarUnlocked message
-      SendSingleStarAddedToGame();
+      SendStarUnlockedToGame();
       
       // Completed a set
       if (_needsState._numStarsAwarded >= _needsState._numStarsForNextUnlock)
@@ -1210,48 +1211,144 @@ void NeedsManager::UpdateStarsState()
 
 void NeedsManager::SendStarLevelCompletedToGame()
 {
-  // Get rewards for current level first
+  // Since the rewards config can be changed after this feature is launched,
+  // we want to be able to give users the unlocks they might have missed if
+  // they are past a level that has been modified to have an unlock that they
+  // don't have.  But we also limit the number of these 'prior level unlocks'
+  // so we don't overwhelm them with a ton on any single level unlock.
+
   std::vector<NeedsReward> rewards;
-  _starRewardsConfig->GetRewardsForLevel(_needsState._curNeedsUnlockLevel, rewards);
+
+  // First, see about any prior level unlocks that have not occurred due to a
+  // change in the rewards config as described above:
+  int allowedPriorUnlocks = _starRewardsConfig->GetMaxPriorUnlocksForLevel(_needsState._curNeedsUnlockLevel);
+  static const bool unlocksOnly = true;
+  for (int level = 0; level < _needsState._curNeedsUnlockLevel; level++)
+  {
+    if (allowedPriorUnlocks <= 0)
+    {
+      break;
+    }
+    ProcessLevelRewards(level, rewards, unlocksOnly, &allowedPriorUnlocks);
+  }
+
+  // Now get the rewards for the level they are unlocking
+  ProcessLevelRewards(_needsState._curNeedsUnlockLevel, rewards);
+
   // level up
   _needsState.SetStarLevel(_needsState._curNeedsUnlockLevel + 1);
-  
+
   ExternalInterface::StarLevelCompleted message(_needsState._curNeedsUnlockLevel,
                                                 _needsState._numStarsForNextUnlock,
                                                 std::move(rewards));
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-  
-  // Issue rewards in inventory
-  for( int i = 0; i < rewards.size(); ++i )
-  {
-    switch(rewards[i].rewardType)
-    {
-      case NeedsRewardType::Unlock:
-      {
-        UnlockId id = UnlockIdFromString(rewards[i].data);
-        _robot->GetProgressionUnlockComponent().SetUnlock(id, true);
-        break;
-      }
-      case NeedsRewardType::Sparks:
-      {
-        int sparksAdded = std::stoi(rewards[i].data);
-        _robot->GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks,sparksAdded);
-        break;
-      }
-      default:
-        // TODO: support songs and memories
-        break;
-    }
-  }
-  
+
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendStarLevelCompletedToGame","CurrUnlockLevel: %d, stars for next: %d, currStars: %d",
                       _needsState._curNeedsUnlockLevel,_needsState._numStarsForNextUnlock, _needsState._numStarsAwarded);
   
   // Save is forced after this function is called.
 }
 
-void NeedsManager::SendSingleStarAddedToGame()
+
+void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewards,
+                                       bool unlocksOnly, int* allowedPriorUnlocks)
+{
+  std::vector<NeedsReward> rewardsThisLevel;
+  _starRewardsConfig->GetRewardsForLevel(level, rewardsThisLevel);
+
+  // Issue rewards in inventory
+  for (int rewardIndex = 0; rewardIndex < rewardsThisLevel.size(); ++rewardIndex)
+  {
+    switch(rewardsThisLevel[rewardIndex].rewardType)
+    {
+      case NeedsRewardType::Sparks:
+      {
+        if (unlocksOnly)
+        {
+          continue;
+        }
+
+        auto& ic = _robot->GetInventoryComponent();
+        const int curSparks = ic.GetInventoryAmount(InventoryType::Sparks);
+        const int delta = _starRewardsConfig->GetTargetSparksTotalForLevel(level) - curSparks;
+        int min = ((delta * _starRewardsConfig->GetMinSparksPctForLevel(level)) + 0.5f);
+        int max = ((delta * _starRewardsConfig->GetMaxSparksPctForLevel(level)) + 0.5f);
+
+        if (min < _starRewardsConfig->GetMinSparksForLevel(level))
+        {
+          min = _starRewardsConfig->GetMinSparksForLevel(level);
+        }
+        if (max < _starRewardsConfig->GetMinMaxSparksForLevel(level))
+        {
+          max = _starRewardsConfig->GetMinMaxSparksForLevel(level);
+        }
+        const int sparksAdded = _cozmoContext->GetRandom()->RandIntInRange(min, max);
+
+        ic.AddInventoryAmount(InventoryType::Sparks, sparksAdded);
+
+        rewards.push_back(rewardsThisLevel[rewardIndex]);
+
+        // Put the actual number of sparks awarded into the rewards data that we're about
+        // to send to the game, so game will know how many sparks were actually awarded
+        rewards.back().data = std::to_string(sparksAdded);
+        break;
+      }
+      // Songs are treated exactly the same as any other unlock
+      case NeedsRewardType::Unlock:
+      case NeedsRewardType::Song:
+      {
+        const UnlockId id = UnlockIdFromString(rewardsThisLevel[rewardIndex].data);
+        if (id != UnlockId::Invalid)
+        {
+          auto& puc = _robot->GetProgressionUnlockComponent();
+          if (!puc.IsUnlocked(id))
+          {
+            _robot->GetProgressionUnlockComponent().SetUnlock(id, true);
+            rewards.push_back(rewardsThisLevel[rewardIndex]);
+            if (allowedPriorUnlocks != nullptr)
+            {
+              (*allowedPriorUnlocks)--;
+              if (*allowedPriorUnlocks <= 0)
+              {
+                break;
+              }
+            }
+          }
+          else
+          {
+            // This is probably not an error case, because of post-launch 'prior level'
+            // unlocks that can occur if/when we change the reward level unlock config
+            if (!unlocksOnly)
+            {
+              PRINT_NAMED_WARNING("NeedsManager.ProcessLevelRewards",
+                                  "Level reward is already unlocked: %s",
+                                  UnlockIdToString(id));
+            }
+          }
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("NeedsManager.ProcessLevelRewards",
+                            "Level reward has invalid ID: %s",
+                            rewardsThisLevel[rewardIndex].data.c_str());
+        }
+        break;
+      }
+      case NeedsRewardType::MemoryBadge:
+      {
+        // TODO: support memory badges in the future
+        rewards.push_back(rewardsThisLevel[rewardIndex]);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+}
+
+
+void NeedsManager::SendStarUnlockedToGame()
 {
   ExternalInterface::StarUnlocked message(_needsState._curNeedsUnlockLevel,
                                           _needsState._numStarsForNextUnlock,
@@ -1652,7 +1749,7 @@ void NeedsManager::DebugGiveStar()
 {
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
   DebugCompleteDay();
-  DebugFillNeedMeters();
+  UpdateStarsState(true);
 }
 
 void NeedsManager::DebugCompleteDay()
@@ -1660,17 +1757,9 @@ void NeedsManager::DebugCompleteDay()
   // Push the last given star back 24 hours
   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
   std::time_t yesterdayTime = std::chrono::system_clock::to_time_t(now - std::chrono::hours(25));
-  
-  
-  std::tm yesterdayTimeLocal;
-  localtime_r(&yesterdayTime, &yesterdayTimeLocal);
-  std::time_t nowTime = std::chrono::system_clock::to_time_t( now );
-  std::tm nowLocalTime;
-  localtime_r(&nowTime, &nowLocalTime);
-  
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugCompleteDay","");
   _needsState._timeLastStarAwarded = std::chrono::system_clock::from_time_t(yesterdayTime);
 
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugCompleteDay","");
 }
 
 void NeedsManager::DebugResetNeeds()

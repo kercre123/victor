@@ -118,7 +118,6 @@ public:
 
 #if ANKI_DEV_CHEATS
   void DebugFillNeedMeters();
-  // TODO: more granular settings
 #endif
 
 private:

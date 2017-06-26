@@ -107,6 +107,13 @@ public:
   int GetMaxStarsForLevel(int level);
   
   void GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards);
+
+  int GetTargetSparksTotalForLevel(int level) const { return _UnlockLevels[level].targetSparksTotal; }
+  int GetMaxPriorUnlocksForLevel(int level)   const { return _UnlockLevels[level].maxPriorLevelUnlocks; }
+  float GetMinSparksPctForLevel(int level)    const { return _UnlockLevels[level].minSparksPct; }
+  float GetMaxSparksPctForLevel(int level)    const { return _UnlockLevels[level].maxSparksPct; }
+  int GetMinSparksForLevel(int level)         const { return _UnlockLevels[level].minSparks; }
+  int GetMinMaxSparksForLevel(int level)      const { return _UnlockLevels[level].minMaxSparks; }
 private:
   std::vector<UnlockLevel> _UnlockLevels;
 };

@@ -131,11 +131,17 @@ structure NeedsStateOnRobot_v01
   bool    partIsDamaged[32]   // MAX_REPAIRABLE_PARTS
 }
 
-// Final one will just repeat...
+// Final level will just repeat...
 structure UnlockLevel
 {
   NeedsReward rewards[uint_8],
   int_32      numStarsToUnlock,
+  int_32      targetSparksTotal,
+  int_32      maxPriorLevelUnlocks,
+  float_32    minSparksPct,
+  float_32    maxSparksPct,
+  int_32      minSparks,
+  int_32      minMaxSparks
 }
 
 } // namespace Cozmo

@@ -726,14 +726,14 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
   
-  // star rewards config
+  // needs level (star rewards) config
   {
-    std::string jsonFilename = "config/basestation/config/star_config.json";
+    std::string jsonFilename = "config/basestation/config/needs_level_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
-                        "Star Rewards Json config file %s not found or failed to parse.",
+                        "Needs Level (star rewards) Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
     }
   }

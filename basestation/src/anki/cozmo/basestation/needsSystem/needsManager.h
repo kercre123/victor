@@ -131,7 +131,7 @@ private:
                                             NeedsState& needsState,
                                             bool predictionOnly);
 
-  void UpdateStarsState();
+  void UpdateStarsState(bool cheatGiveStar = false);
 
   void DetectBracketChangeForDas();
   void SendRepairDasEvent(const NeedsState& needsState,
@@ -142,8 +142,11 @@ private:
   void SendNeedsPauseStateToGame();
   void SendNeedsPauseStatesToGame();
   void SendStarLevelCompletedToGame();
-  void SendSingleStarAddedToGame();
+  void SendStarUnlockedToGame();
   void SendNeedsDebugVizString(const NeedsActionId actionCausingTheUpdate);
+
+  void ProcessLevelRewards(int level, std::vector<NeedsReward>& rewards,
+                           bool unlocksOnly = false, int* allowedPriorUnlocks = nullptr);
 
   const CozmoContext* _cozmoContext;
   Robot*        _robot;
