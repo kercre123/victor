@@ -85,6 +85,7 @@ private:
   IBehaviorPtr          _fistBumpBehavior;
   IBehaviorPtr          _peekABooBehavior;
   IBehaviorPtr          _laserBehavior;
+  IBehaviorPtr          _goToSleepBehavior;
   IBehaviorPtr          _pounceBehavior;
   
   std::shared_ptr<BehaviorPlayArbitraryAnim> _playAnimBehavior;

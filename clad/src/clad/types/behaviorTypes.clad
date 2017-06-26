@@ -183,6 +183,7 @@ enum uint_8 BehaviorID {
   ReactToStackOfCubes,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
+  ReactToVoiceCommand_Wakeup,
 
   RequestKeepAway,
   RequestMemoryMatch,
@@ -244,6 +245,7 @@ enum uint_8 BehaviorID {
   TrackLaser,
 
   VC_ComeHere,
+  VC_GoToSleep,
   VC_PounceOnMotion,
   VC_Refuse_Energy,
   VC_Refuse_Repair,

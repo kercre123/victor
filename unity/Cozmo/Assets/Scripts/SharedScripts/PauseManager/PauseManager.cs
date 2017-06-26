@@ -48,6 +48,8 @@ namespace Cozmo {
       set { _IdleTimeOutEnabled = value; }
     }
 
+    private bool _SleepTriggeredFromVoiceCommand = false;
+
     [SerializeField]
     private AlertModal _LowBatteryAlertPrefab;
 
@@ -137,10 +139,13 @@ namespace Cozmo {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
-      // Stop sleeping if a reactionary behavior other than PlacedOnCharger runs 
-      if (IsConfirmSleepDialogOpen && message.newTrigger != Anki.Cozmo.ReactionTrigger.PlacedOnCharger) {
+      // Stop sleeping if the sleep dialog is open or sleep was triggered from a voice command and a reactionary behavior other than PlacedOnCharger runs 
+      if ((IsConfirmSleepDialogOpen || _SleepTriggeredFromVoiceCommand) &&
+          message.newTrigger != Anki.Cozmo.ReactionTrigger.PlacedOnCharger &&
+          message.newTrigger != Anki.Cozmo.ReactionTrigger.NoneTrigger) {
         StopIdleTimeout();
         _EngineTriggeredSleep = false;
+        _SleepTriggeredFromVoiceCommand = false;
         CloseGoToSleepDialog();
         CloseConfirmSleepDialog();
 
@@ -220,7 +225,15 @@ namespace Cozmo {
     public void StartPlayerInducedSleep(bool fromEngineTriggeredSleep) {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
-        robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
+        // If sleep was triggered from a voice command then disable all reactions except for the voice command reaction so that sleep can be cancelled
+        // by saying "Hey Cozmo"
+        if (_SleepTriggeredFromVoiceCommand) {
+          robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId, ReactionaryBehaviorEnableGroups.kVoiceCommandSleepTriggers);
+        }
+        // Otherwise disable all reactions
+        else {
+          robot.DisableAllReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
+        }
       }
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
@@ -258,7 +271,15 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       _EngineTriggeredSleep = true;
-      OpenConfirmSleepCozmoDialog(handleSleepCancel: true);
+      _SleepTriggeredFromVoiceCommand = msg.triggeredFromVoiceCommand;
+
+      // If sleep was triggered from a voice command skip the confirm dialog and go straight to sleeping
+      if (msg.triggeredFromVoiceCommand) {
+        StartPlayerInducedSleep(true);
+      }
+      else {
+        OpenConfirmSleepCozmoDialog(handleSleepCancel: true);
+      }
     }
 
     private void HandleDisconnectionMessage(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
@@ -278,7 +299,7 @@ namespace Cozmo {
       if (!_StartedIdleTimeout) {
         IRobot robot = RobotEngineManager.Instance.CurrentRobot;
         if (null != robot) {
-          robot.ResetRobotState(null);
+          robot.ResetRobotState(null, !_SleepTriggeredFromVoiceCommand);
           robot.EnableCubeSleep(true);
         }
 
@@ -294,6 +315,7 @@ namespace Cozmo {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
+        robot.RobotResumeFromIdle(true);
       }
     }
 

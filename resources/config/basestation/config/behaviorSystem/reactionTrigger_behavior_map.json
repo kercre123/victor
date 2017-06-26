@@ -201,7 +201,17 @@
     },
     {
       "reactionTrigger": "VC",
-      "behaviorID": "ReactToVoiceCommand"
+      "behaviorID": "ReactToVoiceCommand",
+      "voiceCommandParams" : {
+        "isWakeUpReaction": false
+      }
+    },
+    {
+      "reactionTrigger": "VC",
+      "behaviorID": "ReactToVoiceCommand_Wakeup",
+      "voiceCommandParams" : {
+        "isWakeUpReaction": true
+      }
     }
   ]
 }

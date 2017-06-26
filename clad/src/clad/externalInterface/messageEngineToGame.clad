@@ -110,6 +110,7 @@ message FeatureToggles {
 }
 
 message GoingToSleep {
+  bool triggeredFromVoiceCommand = 0
 }
 
 message EngineLoadingDataStatus {

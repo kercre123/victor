@@ -35,6 +35,8 @@ public:
   
   static IActionRunner* CreateGoToSleepAnimSequence(Robot& robot);
   
+  bool IdleTimeoutSet() const { return _disconnectTimeout_s > 0; }
+  
 private:
   Robot& _robot;
   

@@ -292,6 +292,15 @@ public:
     assert(_carryingComponent);
     return *_carryingComponent;
   }
+  
+  inline RobotIdleTimeoutComponent& GetIdleTimeoutComponent() {
+    assert(_robotIdleTimeoutComponent);
+    return *_robotIdleTimeoutComponent;
+  }
+  inline const RobotIdleTimeoutComponent& GetIdleTimeoutComponent() const {
+    assert(_robotIdleTimeoutComponent);
+    return *_robotIdleTimeoutComponent;
+  }
 
   inline const PathComponent& GetPathComponent() const { return *_pathComponent; }
   inline       PathComponent& GetPathComponent()       { return *_pathComponent; }

@@ -110,6 +110,11 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   DEV_ASSERT(_playAnimBehavior != nullptr &&
              _playAnimBehavior->GetClass() == BehaviorClass::PlayArbitraryAnim,
              "VoiceCommandBehaviorChooser.BehaviorPlayAnimPointerNotSet");
+  
+  _goToSleepBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_GoToSleep);
+  DEV_ASSERT(_goToSleepBehavior != nullptr &&
+             _goToSleepBehavior->GetClass() == BehaviorClass::ReactToOnCharger,
+             "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
 
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
   
@@ -287,17 +292,18 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
     }
     case VoiceCommandType::GoToSleep:
     {
-      // Force execute the PlacedOnCharger/ReactToOnCharger behavior which will send appropriate
-      // messages to game triggering the sleep modal
-      ExternalInterface::ExecuteReactionTrigger r;
-      r.reactionTriggerToBehaviorEntry.behaviorID = BehaviorID::ReactToOnCharger;
-      r.reactionTriggerToBehaviorEntry.trigger = ReactionTrigger::PlacedOnCharger;
-      ExternalInterface::MessageGameToEngine m;
-      m.Set_ExecuteReactionTrigger(std::move(r));
-      robot.GetExternalInterface()->Broadcast(std::move(m));
+      BehaviorPreReqNone req;
+      if(_goToSleepBehavior->IsRunnable(req))
+      {
+        _voiceCommandBehavior = _goToSleepBehavior;
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("ActivityVoiceCommand.ChooseNextBehaviorInternal.GoToSleepBehaviorNotRunnable", "");
+      }
       
       BeginRespondingToCommand(currentCommand);
-      return emptyPtr;
+      return _voiceCommandBehavior;
     }
     case VoiceCommandType::LookDown:
     {

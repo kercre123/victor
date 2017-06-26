@@ -164,9 +164,9 @@ public interface IRobot : IDisposable {
 
   bool IsLightCubeInPickupRange(LightCube lightCube);
 
-  void ResetRobotState(Action onComplete = null);
+  void ResetRobotState(Action onComplete = null, bool disableFreeplay = true);
 
-  void RobotStartIdle();
+  void RobotStartIdle(bool disableFreeplay = true);
 
   void RobotResumeFromIdle(bool freePlay);
 

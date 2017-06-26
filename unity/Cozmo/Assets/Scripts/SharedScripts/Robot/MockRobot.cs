@@ -70,14 +70,14 @@ public class MockRobot : IRobot {
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
 
-  public void ResetRobotState(System.Action onComplete = null) {
+  public void ResetRobotState(System.Action onComplete = null, bool disableFreeplay = true) {
     if (onComplete != null) {
       onComplete();
     }
   }
 
 
-  public void RobotStartIdle() {
+  public void RobotStartIdle(bool disableFreeplay = true) {
   }
 
   public void RobotResumeFromIdle(bool freePlay) {

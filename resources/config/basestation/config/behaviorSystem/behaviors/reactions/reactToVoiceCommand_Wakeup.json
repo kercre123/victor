@@ -1,0 +1,6 @@
+{
+  "behaviorClass": "PlayAnim",
+  "behaviorID": "ReactToVoiceCommand_Wakeup",
+  "displayNameKey":"behavior.ReactToVoiceCommand",
+  "animTriggers": ["ConnectWakeUp"]
+}

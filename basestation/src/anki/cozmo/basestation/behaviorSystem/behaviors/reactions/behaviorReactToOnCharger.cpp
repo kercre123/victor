@@ -15,10 +15,12 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToOnCharger.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
+#include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -29,6 +31,7 @@ using namespace ExternalInterface;
 namespace {
 static const char* kTimeTilSleepAnimationKey = "timeTilSleepAnimation_s";
 static const char* kTimeTilDisconnectionKey = "timeTilDisconnection_s";
+static const char* kTriggeredFromVoiceCommandKey = "triggeredFromVoiceCommand";
 
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersOnCharger = {
   {ReactionTrigger::CliffDetected,                false},
@@ -65,10 +68,6 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
 , _onChargerCanceled(false)
 {
   SubscribeToTags({
-    EngineToGameTag::ChargerEvent,
-  });
-  
-  SubscribeToTags({
     GameToEngineTag::CancelIdleTimeout
   });
   
@@ -81,6 +80,8 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   {
     PRINT_NAMED_ERROR("BehaviorReactToOnCharger.Constructor", "Config missing value for key: %s", kTimeTilDisconnectionKey);
   }
+  
+  JsonTools::GetValueOptional(config, kTriggeredFromVoiceCommandKey, _triggerableFromVoiceCommand);
 }
   
 bool BehaviorReactToOnCharger::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
@@ -92,7 +93,7 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersOnCharger);
 
-  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
+  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
   robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
   
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));

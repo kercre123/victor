@@ -322,4 +322,29 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     vc: true
   );
 
+  // triggers disabled during sleep sequence.
+  public static Anki.Cozmo.AllTriggersConsidered kVoiceCommandSleepTriggers = new Anki.Cozmo.AllTriggersConsidered(
+    cliffDetected: true,
+    cubeMoved: true,
+    doubleTapDetected: true,
+    facePositionUpdated: true,
+    fistBump: true,
+    frustration: true,
+    hiccup: true,
+    motorCalibration: true,
+    noPreDockPoses: true,
+    objectPositionUpdated: true,
+    placedOnCharger: false,
+    petInitialDetection: true,
+    robotPickedUp: true,
+    robotPlacedOnSlope: true,
+    returnedToTreads: true,
+    robotOnBack: true,
+    robotOnFace: true,
+    robotOnSide: true,
+    robotShaken: true,
+    sparked: true,
+    unexpectedMovement: true,
+    vc: false
+  );
 }

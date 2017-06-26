@@ -588,11 +588,11 @@ public class Robot : IRobot {
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
 
-  public void ResetRobotState(Action onComplete = null) {
+  public void ResetRobotState(Action onComplete = null, bool disableFreeplay = true) {
     DriveWheels(0.0f, 0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
-    RobotStartIdle();
+    RobotStartIdle(disableFreeplay);
     SetNightVision(false);
 
     SetBackpackLEDs(Color.black.ToUInt());
@@ -601,8 +601,10 @@ public class Robot : IRobot {
     TryResetHeadAndLift(onComplete);
   }
 
-  public void RobotStartIdle() {
-    SetEnableFreeplayActivity(false);
+  public void RobotStartIdle(bool disableFreeplay = true) {
+    if (disableFreeplay) {
+      SetEnableFreeplayActivity(false);
+    }
     SetIdleAnimation(AnimationTrigger.Count);
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
     float[] paramValues = { };

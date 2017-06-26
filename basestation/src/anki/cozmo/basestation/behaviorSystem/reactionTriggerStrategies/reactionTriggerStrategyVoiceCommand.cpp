@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
 #include "util/console/consoleInterface.h"
 
@@ -32,11 +33,16 @@ using namespace ExternalInterface;
 
 namespace{
 static const char* kTriggerStrategyName = "Trigger Strategy Voice Command";
+
+static const char* kVoiceCommandParamsKey = "voiceCommandParams";
+static const char* kIsWakeUpReaction      = "isWakeUpReaction";
 }
   
 ReactionTriggerStrategyVoiceCommand::ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
 {
+  const auto& params = config[kVoiceCommandParamsKey];
+  JsonTools::GetValueOptional(params, kIsWakeUpReaction, _isWakeUpReaction);
 }
 
 void ReactionTriggerStrategyVoiceCommand::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
@@ -58,21 +64,40 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Ro
   
   if(voiceCommandComponent->KeyPhraseWasHeard())
   {
-    voiceCommandComponent->ClearHeardCommand();
-    
-    Vision::FaceID_t desiredFace = GetDesiredFace(robot);
-    
-    if (Vision::UnknownFaceID != desiredFace)
+    const bool robotHasIdleTimeout = robot.GetIdleTimeoutComponent().IdleTimeoutSet();
+   
+    // If the robot has an idle timeout set (game sets this when Cozmo is going to sleep) and this is
+    // the strategy instance that is responsible for managing the "Hey Cozmo" wake up from/cancel sleep
+    // behavior then that behavior should run
+    if(robotHasIdleTimeout && _isWakeUpReaction)
     {
-      _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      voiceCommandComponent->ClearHeardCommand();
+      
+      DEV_ASSERT(behavior->GetID() == BehaviorID::ReactToVoiceCommand_Wakeup,
+                 "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.ExpectedWakeUpReaction");
+    
+      BehaviorPreReqNone req;
+      return behavior->IsRunnable(req);
     }
-    
-    std::set<Vision::FaceID_t> targets;
-    targets.insert(desiredFace);
-    BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
-    
-    LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.DesiredFace", "DesiredFaceID: %d", desiredFace);
-    return behavior->IsRunnable(acknowledgeFacePreReqs);
+    // Otherwise Cozmo is not going to sleep so the normal "Hey Cozmo" reaction can run
+    else if(!robotHasIdleTimeout && !_isWakeUpReaction)
+    {
+      voiceCommandComponent->ClearHeardCommand();
+      
+      Vision::FaceID_t desiredFace = GetDesiredFace(robot);
+      
+      if (Vision::UnknownFaceID != desiredFace)
+      {
+        _lookedAtTimesMap[desiredFace] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      }
+      
+      std::set<Vision::FaceID_t> targets;
+      targets.insert(desiredFace);
+      BehaviorPreReqAcknowledgeFace acknowledgeFacePreReqs(targets, robot);
+      
+      LOG_INFO("ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.DesiredFace", "DesiredFaceID: %d", desiredFace);
+      return behavior->IsRunnable(acknowledgeFacePreReqs);
+    }
   }
   
   return false;

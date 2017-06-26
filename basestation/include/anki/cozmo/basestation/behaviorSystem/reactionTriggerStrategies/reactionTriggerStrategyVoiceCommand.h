@@ -41,6 +41,9 @@ private:
   std::map<Vision::FaceID_t, float>     _lookedAtTimesMap;
   
   Vision::FaceID_t GetDesiredFace(const Robot& robot) const;
+  
+  // Json params
+  bool _isWakeUpReaction = false;
 };
 
 

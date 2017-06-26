@@ -1,0 +1,8 @@
+{
+  "behaviorClass": "ReactToOnCharger",
+  "behaviorID": "VC_GoToSleep",
+  "displayNameKey":"behavior.ReactToOnCharger",
+  "timeTilSleepAnimation_s": 300.0,
+  "timeTilDisconnection_s": 330.0,
+  "triggeredFromVoiceCommand": true
+}
