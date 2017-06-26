@@ -12,7 +12,9 @@
   {
     "type" : "Needs",
     "need": "Energy",
-    "needBracket": "Critical"
+    "needBracket": "Critical",
+    // never wants to end based on time
+    "activityShouldEndDurationSecs": -1.0
   },
   
   "behaviorChooser" :
