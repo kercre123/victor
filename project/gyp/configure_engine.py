@@ -45,6 +45,8 @@ def main(scriptArgs):
                       help='Use anki-util repo checked out at ANKI_UTIL_PATH')
   parser.add_argument('--webots', metavar='WEBOTS_PATH', dest='webotsPath', action='store', default=None,
                       help='Use webots aplication at WEBOTS_PATH')
+  parser.add_argument('--externals', metavar='EXTERNALS_DIR', dest='externalsPath', action='store', default=None,
+                      help='Use repos checked out at EXTERNALS_DIR')
   parser.add_argument('--coretechExternal', metavar='CORETECH_EXTERNAL_DIR', dest='coretechExternalPath', action='store', default=None,
                       help='Use coretech-external repo checked out at CORETECH_EXTERNAL_DIR')
   parser.add_argument('--coretechInternal', metavar='CORETECH_INTERNAL_DIR', dest='coretechInternalPath', action='store', default=None,
@@ -162,6 +164,11 @@ def main(scriptArgs):
 
   # do not check for coretech external, and gyp if we are only updating list files
   if not options.updateListsOnly:
+
+    externalsPath = options.externalsPath
+    if not externalsPath or not os.path.exists(externalsPath):
+      UtilLog.error('externals path not found [%s]' % (externalsPath))
+      return False
 
     if not options.coretechExternalPath or not os.path.exists(options.coretechExternalPath):
       UtilLog.error('coretech-external not found [%s]' % (options.coretechExternalPath) )
@@ -304,6 +311,7 @@ def main(scriptArgs):
     'libwebp_library_type': 'static_library',
     'use_libwebp': 0,
     'ndk_root': 'INVALID',
+    'externals_path': externalsPath,
     'coretech_external_path': coretechExternalPath,
     'webots_path': webotsPath,
     'cti-gtest_path': ctiGtestPath,
