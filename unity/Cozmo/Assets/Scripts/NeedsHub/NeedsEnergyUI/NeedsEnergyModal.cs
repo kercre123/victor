@@ -36,6 +36,7 @@ namespace Cozmo.Energy.UI {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.SetEnableFreeplayActivity(false);
+        robot.SetEnableFreeplayLightStates(true);
       }
 
 

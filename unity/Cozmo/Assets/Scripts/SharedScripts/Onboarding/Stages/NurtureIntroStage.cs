@@ -41,14 +41,20 @@ namespace Onboarding {
       // this stage is the exception, and we still dont want freeplay music, etc.
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        robot.SetEnableFreeplayActivity(true);
+        if (robot.Faces.Count > 0) {
+          robot.TurnTowardsLastFacePose(Mathf.PI);
+        }
+        else {
+          robot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Selection);
+          robot.ExecuteBehaviorByID(Anki.Cozmo.BehaviorID.FindFaces_socialize);
+        }
       }
     }
     public override void OnDestroy() {
       base.OnDestroy();
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        robot.SetEnableFreeplayActivity(false);
+        robot.ExecuteBehaviorByID(Anki.Cozmo.BehaviorID.Wait);
       }
     }
 
