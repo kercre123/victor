@@ -2221,8 +2221,9 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void WipeDeviceNeedsData() {
+  public void WipeDeviceNeedsData(bool reinitializeNeeds) {
     RobotEngineManager.Instance.Message.WipeDeviceNeedsData = Singleton<WipeDeviceNeedsData>.Instance;
+    RobotEngineManager.Instance.Message.WipeDeviceNeedsData.reinitializeNeeds = reinitializeNeeds;
     RobotEngineManager.Instance.SendMessage();
   }
 

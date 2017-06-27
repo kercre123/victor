@@ -379,7 +379,7 @@ public interface IRobot : IDisposable {
 
   void WipeRobotNeedsData();
 
-  void WipeDeviceNeedsData();
+  void WipeDeviceNeedsData(bool reinitializeNeeds);
 
   void RequestRobotRestoreData();
 

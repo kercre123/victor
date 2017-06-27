@@ -945,6 +945,7 @@ message WipeRobotNeedsData {
 
 // Wipes all needs data on the device
 message WipeDeviceNeedsData {
+  bool reinitializeNeeds
 }
 
 ///////////////////////////////////////////////////////////////////////////////

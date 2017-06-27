@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using Cozmo.Challenge;
 using Cozmo.ConnectionFlow;
@@ -58,18 +58,20 @@ namespace DataPersistence {
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
       DataPersistenceManager.Instance.Save();
 
-      if (NeedsConnectionManager.Instance != null) {
-        NeedsConnectionManager.Instance.ForceBoot();
-      }
-
       // Clear the block pool
       Anki.Cozmo.ExternalInterface.BlockPoolResetMessage blockPoolResetMessage = new Anki.Cozmo.ExternalInterface.BlockPoolResetMessage();
       RobotEngineManager.Instance.Message.BlockPoolResetMessage = blockPoolResetMessage;
       RobotEngineManager.Instance.SendMessage();
 
-      // Delete the needs state data from device
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData();
+      if (!_IsResettingEverything) {
+        // Delete the needs state data from device
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData(true);
+        }
+      }
+
+      if (NeedsConnectionManager.Instance != null) {
+        NeedsConnectionManager.Instance.ForceBoot();
       }
     }
 
@@ -116,7 +118,9 @@ namespace DataPersistence {
           _IsResettingEverything = true;
           _LblStatus.text = "THINKING. Stop touching things.";
           _LblStatus.color = Color.blue;
-          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData();
+          // Passing false here because WipeRobotGameData will do the initialization
+          // (Avoid doing it twice)
+          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData(false);
           RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
         }
       }
@@ -132,7 +136,9 @@ namespace DataPersistence {
           _IsResettingNeeds = true;
           _LblStatus.text = "THINKING. Stop touching things.";
           _LblStatus.color = Color.blue;
-          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData();
+          // Passing false here because WipeRobotGameData will do the initialization
+          // (Avoid doing it twice)
+          RobotEngineManager.Instance.CurrentRobot.WipeDeviceNeedsData(false);
           RobotEngineManager.Instance.CurrentRobot.WipeRobotNeedsData();
         }
       }

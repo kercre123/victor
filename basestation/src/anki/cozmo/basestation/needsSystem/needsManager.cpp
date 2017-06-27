@@ -917,6 +917,11 @@ template<>
 void NeedsManager::HandleMessage(const ExternalInterface::WipeDeviceNeedsData& msg)
 {
   Util::FileUtils::DeleteFile(kPathToSavedStateFile + kNeedsStateFile);
+
+  if (msg.reinitializeNeeds)
+  {
+    InitInternal(_currentTime_s);
+  }
 }
 
 template<>

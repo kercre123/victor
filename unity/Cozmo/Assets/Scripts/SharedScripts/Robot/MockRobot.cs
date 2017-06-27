@@ -1042,7 +1042,7 @@ public class MockRobot : IRobot {
   public void WipeRobotNeedsData() {
   }
 
-  public void WipeDeviceNeedsData() {
+  public void WipeDeviceNeedsData(bool reinitializeNeeds) {
   }
 
   public void RequestRobotRestoreData() {
