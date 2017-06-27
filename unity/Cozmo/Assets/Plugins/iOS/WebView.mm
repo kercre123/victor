@@ -241,6 +241,30 @@ extern "C" void UnitySendMessage(const char *, const char *, const char *);
     }
 }
 
+// *** ANKI CHANGE ***
+// When JavaScript requests a pop-up text input panel via window.prompt, display UIAlertController.
+// Used by Code Lab vertical workspace's "Create Variable..." button.
+- (void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString *result))completionHandler
+{
+  UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:prompt preferredStyle:UIAlertControllerStyleAlert];
+
+  [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+    textField.placeholder = prompt;
+    textField.secureTextEntry = NO;
+  }];
+  
+  // ANKI TODO: Must translate "Cancel" and "OK" below.
+  [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", nil) style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+    completionHandler(nil);
+  }]];
+  
+  [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"OK", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    completionHandler([alert.textFields.firstObject text]);
+  }]];
+  
+  [UnityGetGLViewController() presentViewController:alert animated:YES completion:nil];
+}
+
 - (void)setFrame:(NSInteger)x positionY:(NSInteger)y width:(NSInteger)width height:(NSInteger)height
 {
     if (webView == nil)
