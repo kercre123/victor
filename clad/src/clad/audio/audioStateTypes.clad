@@ -75,6 +75,13 @@ enum uint_32 Music
   Spark = 155090436,
 }
 
+enum uint_32 Music_Dimmer
+{
+  Invalid = 0,
+  Music_Dimmed = 920031429,
+  Music_Full = 2880332950,
+}
+
 enum uint_32 StateGroupType
 {
   External_Language = 944413709,
@@ -82,6 +89,7 @@ enum uint_32 StateGroupType
   Invalid = 0,
   Mood = 3128647864,
   Music = 3991942870,
+  Music_Dimmer = 920031443,
 }
 
 } // GameState

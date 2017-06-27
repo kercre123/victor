@@ -73,6 +73,8 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_1K_1Sec = 4068444155,
   Play__Dev_Robot__Tone_1K_5Sec = 1034417959,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
+  Play__Music__Dimmer_Off = 1018726600,
+  Play__Music__Dimmer_On = 403765586,
   Play__Music__Play = 2748524418,
   Play__Robot_Sfx__Arcade_Bouncer_Bounce = 2333331537,
   Play__Robot_Sfx__Arcade_Bouncer_Bounce_Paddle = 1207847204,
@@ -100,6 +102,9 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Mvt_Tread_Spin_Loop_Play = 1721811722,
   Play__Robot_Sfx__Mvt_Tread_Spin_Start = 952401069,
   Play__Robot_Sfx__Mvt_Tread_Spin_Stop = 2338140655,
+  Play__Robot_Sfx__Nurture_Feeding_Slurp_1 = 1851457030,
+  Play__Robot_Sfx__Nurture_Feeding_Slurp_2 = 1851457029,
+  Play__Robot_Sfx__Nurture_Feeding_Slurp_3 = 1851457028,
   Play__Robot_Sfx__Onboarding_Power_On = 3840096848,
   Play__Robot_Sfx__Purr_Test_01 = 3486629323,
   Play__Robot_Sfx__Purr_Test_02 = 3486629320,
@@ -579,6 +584,8 @@ enum uint_32 GenericEvent
 
 enum uint_32 Music
 {
+  Dimmer_Off = 1018726600,
+  Dimmer_On = 403765586,
   Invalid = 0,  // Use this to check for Invalid events
   Play = 2748524418,
   Stop = 148746486,
@@ -621,6 +628,9 @@ enum uint_32 Robot_Sfx
   Mvt_Tread_Spin_Loop_Stop = 3541928210,
   Mvt_Tread_Spin_Start = 952401069,
   Mvt_Tread_Spin_Stop = 2338140655,
+  Nurture_Feeding_Slurp_1 = 1851457030,
+  Nurture_Feeding_Slurp_2 = 1851457029,
+  Nurture_Feeding_Slurp_3 = 1851457028,
   Onboarding_Power_On = 3840096848,
   Purr_Test_01 = 3486629323,
   Purr_Test_02 = 3486629320,

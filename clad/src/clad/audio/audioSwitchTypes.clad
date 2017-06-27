@@ -76,7 +76,6 @@ enum uint_32 Freeplay_Mood
   Nurture_Feeding = 2320504975,
   Nurture_Nirvana = 3261805104,
   Nurture_Severe = 1058497985,
-  Nuture_Repair = 2785480036,
   Sleep = 3671647190,
 }
 
