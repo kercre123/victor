@@ -55,6 +55,7 @@ namespace Anki {
         const f32 PITCH_FILT_COEFF      = 0.98f;  // Filter to combine gyro and accel for smooth pitch estimation
                                                   // The higher this value, the slower it approaches accel-based pitch,
                                                   // but the less noisy it is.
+        const f32 PITCH_FILT_COEFF_MOVING = 0.998f;  // Same as above, but used when the robot's wheels are moving
         const f32 UNINIT_HEAD_ANGLE     = 10000;  // Just has to be some not physically possible value
         f32 prevHeadAngle_              = UNINIT_HEAD_ANGLE;
         
@@ -726,14 +727,13 @@ namespace Anki {
           const f32 gyroBasedPitch = pitch_ - (gyro_robot_frame[1] * CONTROL_DT) - (headAngle - prevHeadAngle_);
           
           // Complementary filter to mostly trust gyro integration for current pitch in the short term
-          // but always approach accelerometer-based pitch in the "long" term.
-          // UPDATE: Because of things like keepaway and pounce which require fast and somewhat accurate measurements of pitch
-          //         we fully trust gyro-based pitch while wheels are moving.
-          if (WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving()) {
-            pitch_ = gyroBasedPitch;
-          } else {
-            pitch_ = (PITCH_FILT_COEFF * gyroBasedPitch) + ((1.f - PITCH_FILT_COEFF) * accelBasedPitch);
-          }
+          // but always approach accelerometer-based pitch in the "long" term. Because of things like
+          // keepaway and pounce which require fast and somewhat accurate measurements of pitch, use
+          // a different coefficient while the wheels are moving.
+          const f32 coeff = (WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving()) ?
+                              PITCH_FILT_COEFF_MOVING :
+                              PITCH_FILT_COEFF;
+          pitch_ = (coeff * gyroBasedPitch) + ((1.f - coeff) * accelBasedPitch);
         }
         
         prevHeadAngle_ = headAngle;
