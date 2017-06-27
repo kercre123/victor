@@ -50,6 +50,11 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
 
     _StateImages[currentState].SetActive(false);
     _InProgressIndicators[currentState].SetActive(true);
+
+    // mark previous state complete: we can go straight from its failure to in progress on this one
+    if (currentState > 0) {
+      SetStateVisualComplete(currentState - 1);
+    }
   }
 
   private void SetProgressSpinner() {
@@ -69,15 +74,20 @@ public class ConnectionFlowBackgroundModal : Cozmo.UI.BaseModal {
     CancelInvoke();
   }
 
+  public void SetStateVisualComplete(int completedState) {
+    _FailureIndicators[completedState].SetActive(false);
+    _StateImages[completedState].SetActive(false);
+    _InProgressIndicators[completedState].SetActive(false);
+    _SuccessIndicators[completedState].SetActive(true);
+    _InProgressSpinners[completedState].gameObject.SetActive(false);
+  }
+
   public void SetStateComplete(int completedState) {
     Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Connect);
     if (completedState < 0 || completedState >= _StateImages.Length) {
       DAS.Error("ConnectionFlowBackground.SetStateComplete", "Setting current state out of range");
     }
-    _StateImages[completedState].SetActive(false);
-    _InProgressIndicators[completedState].SetActive(false);
-    _SuccessIndicators[completedState].SetActive(true);
-    _InProgressSpinners[completedState].gameObject.SetActive(false);
+    SetStateVisualComplete(completedState);
 
     CancelInvoke();
   }
