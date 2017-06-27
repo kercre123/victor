@@ -1073,12 +1073,14 @@ namespace Cozmo {
         _ShowCozmoVideoInstance.transform.SetParent(transform, false);
         _ShowCozmoVideoInstance.OnContinueButton += onVideoContinue;
         _ShowCozmoVideoInstance.OnContinueButton += DestroyVideo;
+        EnableContinueButton(false);
       }
 
       private void DestroyVideo() {
         if (_ShowCozmoVideoInstance != null) {
           GameObject.Destroy(_ShowCozmoVideoInstance.gameObject);
         }
+        EnableContinueButton(true);
       }
     }
   }
