@@ -1857,6 +1857,10 @@
       "AnimName": "ag_vc_refuse_nosparks_01"
     },
     {
+      "CladEvent": "VC_StartledWakeup",
+      "AnimName": "ag_vc_startledwakeup_01"
+    },
+    {
       "CladEvent": "WaitOnSideLoop",
       "AnimName": "ag_reacttocliff_wait"
     },    
