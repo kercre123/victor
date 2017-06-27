@@ -75,6 +75,37 @@ constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArra
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffectedArray),
               "Reaction triggers duplicate or non-sequential");
   
+
+constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
+  {ReactionTrigger::CliffDetected,                false},
+  {ReactionTrigger::CubeMoved,                    true},
+  {ReactionTrigger::DoubleTapDetected,            true},
+  {ReactionTrigger::FacePositionUpdated,          true},
+  {ReactionTrigger::FistBump,                     true},
+  {ReactionTrigger::Frustration,                  true},
+  {ReactionTrigger::Hiccup,                       true},
+  {ReactionTrigger::MotorCalibration,             false},
+  {ReactionTrigger::NoPreDockPoses,               true},
+  {ReactionTrigger::ObjectPositionUpdated,        true},
+  {ReactionTrigger::PlacedOnCharger,              false},
+  {ReactionTrigger::PetInitialDetection,          true},
+  {ReactionTrigger::RobotPickedUp,                true},
+  {ReactionTrigger::RobotPlacedOnSlope,           false},
+  {ReactionTrigger::ReturnedToTreads,             true},
+  {ReactionTrigger::RobotOnBack,                  true},
+  {ReactionTrigger::RobotOnFace,                  true},
+  {ReactionTrigger::RobotOnSide,                  true},
+  {ReactionTrigger::RobotShaken,                  true},
+  {ReactionTrigger::Sparked,                      true},
+  {ReactionTrigger::UnexpectedMovement,           true},
+  {ReactionTrigger::VC,                           false}
+};
+
+static_assert(ReactionTriggerHelpers::IsSequentialArray(kSevereFeedingDisables),
+              "Reaction triggers duplicate or non-sequential");
+  
+  
+const char* kSevereFeedingDisableLock = "feeding_severe_disables";
 const char* kWaitShakeDASKey = "wait_shake";
 const char* kShakeFullDASKey = "shake_full";
 const char* kFindCubeDASKey =  "find_cube";
@@ -88,7 +119,7 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
 , _timeFaceSearchShouldEnd_s(0.0f)
 , _eatingComplete(false)
-, _idleAndDrivingSet(false)
+, _severeAnimsSet(false)
 , _universalResponseChooser(nullptr)
 {
   ////////
@@ -167,9 +198,10 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
       AnimationTrigger::FeedingDrivingLoop_Severe,
       AnimationTrigger::FeedingDrivingGetOut_Severe});
     robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::FeedingIdleToFullCube_Severe);
-    _idleAndDrivingSet = true;
+    SmartDisableReactionsWithLock(robot, kSevereFeedingDisableLock, kSevereFeedingDisables);
+    _severeAnimsSet = true;
   }else{
-    _idleAndDrivingSet = false;
+    _severeAnimsSet = false;
   }
   
   // Set up _cubeControllerMap with all connected cubes
@@ -229,9 +261,8 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::OnDeselectedInternal(Robot& robot)
 {
-  if(_idleAndDrivingSet){
-    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-    robot.GetAnimationStreamer().PopIdleAnimation();
+  if(_severeAnimsSet){
+    ClearSevereAnims(robot);
   }
   
   for(auto& entry: _cubeControllerMap){
@@ -543,10 +574,8 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
                       AnimationTrigger::FeedingIdleToFullCube_Normal;
   UpdateAnimationToPlay(bestAnimation, 0);
   
-  if(_idleAndDrivingSet && !isNeedSevere){
-    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-    robot.GetAnimationStreamer().PopIdleAnimation();
-    _idleAndDrivingSet = false;
+  if(_severeAnimsSet && !isNeedSevere){
+    ClearSevereAnims(robot);
   }
   
   if(anyCubesFullyCharged){
@@ -635,6 +664,16 @@ void ActivityFeeding::HandleObjectConnectionStateChange(Robot& robot, const Obje
     }
   }
   
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::ClearSevereAnims(Robot& robot)
+{
+  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  robot.GetAnimationStreamer().PopIdleAnimation();
+  SmartRemoveDisableReactionsLock(robot, kSevereFeedingDisableLock);
+  _severeAnimsSet = false;
 }
 
   

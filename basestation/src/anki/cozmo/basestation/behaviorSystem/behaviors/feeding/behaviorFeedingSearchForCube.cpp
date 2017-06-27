@@ -16,7 +16,10 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -49,7 +52,21 @@ Result BehaviorFeedingSearchForCube::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFeedingSearchForCube::TransitionWaitForFood(Robot& robot)
 {
-  StartActing(new SearchForNearbyObjectAction(robot),
+  
+  AnimationTrigger searchIdle = AnimationTrigger::Count;
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  if(currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical)){
+    searchIdle = AnimationTrigger::FeedingIdleSearch_Severe;
+  }else{
+    searchIdle = AnimationTrigger::FeedingIdleSearch_Normal;
+  }
+  
+  IActionRunner* searchAction = new CompoundActionParallel(robot, {
+    new SearchForNearbyObjectAction(robot),
+    new TriggerAnimationAction(robot, searchIdle)
+  });
+  
+  StartActing(searchAction,
               &BehaviorFeedingSearchForCube::TransitionWaitForFood);
 }
 

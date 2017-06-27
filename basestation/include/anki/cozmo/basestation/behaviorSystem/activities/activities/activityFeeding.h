@@ -76,7 +76,7 @@ private:
   // Bool that will be set by a behavior listener callback when the behavior has
   bool _eatingComplete;
   
-  bool _idleAndDrivingSet;
+  bool _severeAnimsSet;
   
   std::vector<Signal::SmartHandle> _eventHandlers;
   
@@ -112,6 +112,8 @@ private:
   void UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions);
   
   void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
+  
+  void ClearSevereAnims(Robot& robot);
 
 };
 

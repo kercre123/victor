@@ -501,6 +501,14 @@
       "AnimName": "ag_energy_liftoncubelvl2"
     },
     {
+      "CladEvent": "FeedingIdleSearch_Normal",
+      "AnimName": "ag_energy_idle_l1_searchforcube"
+    },
+    {
+      "CladEvent": "FeedingIdleSearch_Severe",
+      "AnimName": "ag_energy_idle_l2_searchforcube"
+    },
+    {
       "CladEvent": "FeedingIdleToFullCube_Normal",
       "AnimName": "ag_energy_idle_01"
     },

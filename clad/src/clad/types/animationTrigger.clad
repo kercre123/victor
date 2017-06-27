@@ -139,6 +139,8 @@ enum int_32 AnimationTrigger
   FeedingDrivingLoop_Severe,
   FeedingPlaceLiftOnCube_Normal,
   FeedingPlaceLiftOnCube_Severe,
+  FeedingIdleSearch_Normal,
+  FeedingIdleSearch_Severe,
   FeedingIdleToFullCube_Normal,
   FeedingIdleToFullCube_Severe,
   FeedingReactToFullCube_Normal,
