@@ -1,9 +1,10 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using Cozmo.Needs;
 using Cozmo.Needs.UI;
 using Cozmo.UI;
 using DG.Tweening;
 using UnityEngine;
+using Anki.Cozmo.ExternalInterface;
 
 namespace Cozmo.Energy.UI {
   public class NeedsEnergyModal : BaseModal {
@@ -27,6 +28,9 @@ namespace Cozmo.Energy.UI {
     private Sequence _FullAnimation = null;
 
     private NeedBracketId _LastNeedBracket = NeedBracketId.Count;
+    private bool? _WasFull = null;
+    private bool _WaitForDropCube = false;
+    private AlertModal _InterruptedAlert = null;
 
     public void InitializeEnergyModal() {
 
@@ -35,10 +39,21 @@ namespace Cozmo.Energy.UI {
       // Game requests are automatically avoided due to switching to a different activity
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.CancelAllCallbacks();
+        robot.CancelAction(RobotActionType.UNKNOWN);
         robot.SetEnableFreeplayActivity(false);
         robot.SetEnableFreeplayLightStates(true);
+
+        if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+          _WaitForDropCube = true;
+          robot.PlaceObjectOnGroundHere((success) => {
+            _WaitForDropCube = false;
+            StartFeedingActivity();
+          });
+        }
       }
 
+      RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -68,10 +83,24 @@ namespace Cozmo.Energy.UI {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
     }
 
-    private void OnDestroy() {
+    protected override void RaiseDialogOpenAnimationFinished() {
+      base.RaiseDialogOpenAnimationFinished();
+      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+
+      StartFeedingActivity();
+    }
+
+    protected override void RaiseDialogClosed() {
+      base.RaiseDialogClosed();
+
+      if (_LastNeedBracket != NeedBracketId.Count) {
+        AnimateElements(fullElements: _LastNeedBracket == NeedBracketId.Full, hide: true);
+      }
+
       NeedsStateManager.Instance.ResumeAllNeeds();
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
+      RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -83,27 +112,11 @@ namespace Cozmo.Energy.UI {
           robot.ActivateHighLevelActivity(HighLevelActivity.Selection);
         }
       }
-
     }
 
-    protected override void RaiseDialogOpenAnimationFinished() {
-      base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
-
-      var robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        robot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
-      }
-    }
-
-    protected override void RaiseDialogClosed() {
-      base.RaiseDialogClosed();
-
-      if (_LastNeedBracket != NeedBracketId.Count) {
-        AnimateElements(fullElements: _LastNeedBracket == NeedBracketId.Full, hide: true);
-      }
-
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+    private void OnApplicationPause(bool pauseStatus) {
+      DAS.Debug("NeedsEnergyModal.OnApplicationPause", "Application pause: " + pauseStatus);
+      HandleUserClose();
     }
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
@@ -120,10 +133,14 @@ namespace Cozmo.Energy.UI {
       //only hide/show elements if bracket has changed
       if (_LastNeedBracket != newNeedBracket) {
         bool cozmoIsFull = newNeedBracket == NeedBracketId.Full;
-        //first hide unwanted elements, snap hidden if this is initial bracket assignment
-        AnimateElements(fullElements: !cozmoIsFull, hide: true, snap: _LastNeedBracket == NeedBracketId.Count);
-        //then show wanted elements
-        AnimateElements(fullElements: cozmoIsFull, hide: false);
+
+        if (_WasFull == null || _WasFull.Value != cozmoIsFull) {
+          //first hide unwanted elements, snap hidden if this is initial bracket assignment
+          AnimateElements(fullElements: !cozmoIsFull, hide: true, snap: _LastNeedBracket == NeedBracketId.Count);
+          //then show wanted elements
+          AnimateElements(fullElements: cozmoIsFull, hide: false);
+          _WasFull = cozmoIsFull;
+        }
         _LastNeedBracket = newNeedBracket;
       }
     }
@@ -184,5 +201,83 @@ namespace Cozmo.Energy.UI {
         }
       }
     }
+
+    private void StartFeedingActivity() {
+      if (!_WaitForDropCube) {
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
+        }
+      }
+    }
+
+
+    private void HandleRobotReactionaryBehavior(object messageObject) {
+      ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
+      if (behaviorTransition.newTrigger == ReactionTrigger.ReturnedToTreads) {
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.TryResetHeadAndLift(null);
+        }
+      }
+
+      //only let certain reactions interrupt this modal
+      if (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger) {
+        switch (behaviorTransition.newTrigger) {
+        case ReactionTrigger.RobotPickedUp:
+        case ReactionTrigger.PlacedOnCharger:
+        case ReactionTrigger.RobotOnBack:
+        case ReactionTrigger.RobotOnFace:
+        case ReactionTrigger.RobotOnSide:
+          DAS.Event("robot.interrupt", DASEventDialogName,
+                  DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
+          ShowDontMoveCozmoAlert();
+          break;
+        }
+      }
+    }
+
+    private void ShowDontMoveCozmoAlert() {
+      ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
+                         LocalizationKeys.kMinigameDontMoveCozmoDescription);
+    }
+
+    private void ShowInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
+      CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
+    }
+
+    private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
+      if (_InterruptedAlert == null) {
+        var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
+                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
+                           clickCallback: CloseInterruptionAlert));
+
+        var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
+                       LowPriorityModalAction.Queue,
+                       HighPriorityModalAction.Stack);
+
+        System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
+          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += CloseInterruptionAlert;
+          alertModal.ModalForceClosedAnimationFinished += () => {
+            _InterruptedAlert = null;
+            CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
+          };
+          _InterruptedAlert = alertModal;
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
+        };
+
+        UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,
+              overrideCloseOnTouchOutside: false);
+      }
+    }
+
+    private void CloseInterruptionAlert() {
+      if (_InterruptedAlert != null) {
+        UIManager.CloseModal(_InterruptedAlert);
+        _InterruptedAlert = null;
+      }
+      HandleUserClose();
+    }
+
   }
 }

@@ -133,25 +133,26 @@ namespace Cozmo.Repair.UI {
 
     #region NON-SERIALIZED FIELDS
 
-    private NeedBracketId _LastRepairBracket = NeedBracketId.Full;
+    private NeedBracketId _LastBracket = NeedBracketId.Count;
 
     private RepairModalState _CurrentModalState = RepairModalState.PRE_SCAN;
     private float _TimeInModalState = 0f;
 
     //framewise inputs to compartmentalize transition logic
-    private bool bOpeningTweenComplete = false;
-    private bool bScanRequested = false;
-    private bool bRepairNeeded = false;
-    private bool bRepairRequested = false;
-    private bool bRepairCompleted = false;
+    private bool _OpeningTweenComplete = false;
+    private bool _ScanRequested = false;
+    private bool _RepairNeeded = false;
+    private bool _RepairRequested = false;
+    private bool _RepairCompleted = false;
+    private bool _RepairInterrupted = false;
 
     private TuneUpState _CurrentTuneUpState = TuneUpState.INTRO;
     private float _TimeInTuneUpState = 0f;
 
-    private bool bMismatchDetected = false;
-    private bool bFullPatternMatched = false;
-    private bool bCalibrationRequested = false;
-    private bool bRobotResponseDone = false;
+    private bool _MismatchDetected = false;
+    private bool _FullPatternMatched = false;
+    private bool _CalibrationRequested = false;
+    private bool _RobotResponseDone = false;
 
     private RepairablePartId _PartToRepair = RepairablePartId.Head;
     private NeedsActionId _PartRepairAction = NeedsActionId.RepairHead;
@@ -169,23 +170,40 @@ namespace Cozmo.Repair.UI {
     private List<UpDownArrow> _UpDownArrows = new List<UpDownArrow>();
 
     private bool _Closed = false; //no need to refresh state logic after dialog close
-    AlertModal _InterruptedAlertView = null;
+    private AlertModal _InterruptedAlert = null;
+
+    private bool _MeterPaused = false; //pause meter in certain states
+    private bool _WaitForDropCube = false;
 
     #endregion
 
     #region LIFE SPAN
 
     public void InitializeRepairModal() {
-
       HubWorldBase.Instance.StopFreeplay();
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        HubWorldBase.Instance.StopFreeplay();
-        robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId, ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
-      }
-      RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+        robot.CancelAllCallbacks();
+        robot.CancelAction(RobotActionType.UNKNOWN);
 
-      PlayRobotRepairIdleAnim();
+        HubWorldBase.Instance.StopFreeplay();
+
+        robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kMinigameId,
+                                       ReactionaryBehaviorEnableGroups.kDefaultMinigameTriggers);
+
+        if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+          _WaitForDropCube = true;
+          robot.PlaceObjectOnGroundHere((success) => {
+            _WaitForDropCube = false;
+            PlayRobotRepairIdleAnim();
+          });
+        }
+        else {
+          PlayRobotRepairIdleAnim();
+        }
+      }
+
+      RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Repair);
@@ -236,9 +254,12 @@ namespace Cozmo.Repair.UI {
 
     protected override void RaiseDialogOpenAnimationFinished() {
       base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+      if (nsm != null) {
+        nsm.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+      }
       HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
-      bOpeningTweenComplete = true;
+      _OpeningTweenComplete = true;
     }
 
     private void Update() {
@@ -249,6 +270,9 @@ namespace Cozmo.Repair.UI {
       ExitModalState(); //ensure that we do any state clean up before killing our fsm
       _Closed = true;
 
+      _ModalStateAnimator.SetInteger("ModalState", 0);
+      _ModalStateAnimator.SetTrigger("StateChange");
+
       while (_RoundProgressPips.Count > 0) {
         GameObject.Destroy(_RoundProgressPips[0].gameObject);
         _RoundProgressPips.RemoveAt(0);
@@ -256,9 +280,13 @@ namespace Cozmo.Repair.UI {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.ResumeAllNeeds();
       nsm.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+
       //RETURN TO FREEPLAY
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+        PlayGetOutAnim(_LastBracket);
+        robot.SetIdleAnimation(AnimationTrigger.Count);
         HubWorldBase.Instance.StartFreeplay();
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
       }
@@ -266,6 +294,11 @@ namespace Cozmo.Repair.UI {
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       base.RaiseDialogClosed();
+    }
+
+    private void OnApplicationPause(bool pauseStatus) {
+      DAS.Debug("NeedsRepairModal.OnApplicationPause", "Application pause: " + pauseStatus);
+      HandleUserClose();
     }
 
     #endregion
@@ -283,42 +316,43 @@ namespace Cozmo.Repair.UI {
     }
 
     private void RefreshModalStateInputs() {
-      bRepairCompleted = _CurrentModalState == RepairModalState.TUNE_UP && _CurrentTuneUpState == TuneUpState.TUNE_UP_COMPLETE;
+      _RepairCompleted = _CurrentModalState == RepairModalState.TUNE_UP && _CurrentTuneUpState == TuneUpState.TUNE_UP_COMPLETE;
     }
 
     private void ClearModalStateInputs() {
-      bOpeningTweenComplete = false;
-      bScanRequested = false;
-      bRepairRequested = false;
-      bRepairCompleted = false;
+      _OpeningTweenComplete = false;
+      _ScanRequested = false;
+      _RepairRequested = false;
+      _RepairCompleted = false;
+      _RepairInterrupted = false;
     }
 
     //transitions can ONLY happen within this method
     private bool ModalStateTransition() {
       switch (_CurrentModalState) {
       case RepairModalState.OPENING:
-        if (bOpeningTweenComplete) {
+        if (_OpeningTweenComplete) {
           return ChangeModalState(RepairModalState.PRE_SCAN);
         }
         break;
       case RepairModalState.PRE_SCAN:
-        if (bScanRequested) {
+        if (_ScanRequested) {
           return ChangeModalState(RepairModalState.SCAN);
         }
         break;
       case RepairModalState.SCAN:
         if (_TimeInModalState >= _ScanDuration) {
-          if (!bRepairNeeded) {
+          if (!_RepairNeeded) {
             return ChangeModalState(RepairModalState.REPAIRED);
           }
         }
-        if (bRepairRequested) {
+        if (_RepairRequested) {
           return ChangeModalState(RepairModalState.TUNE_UP);
         }
         break;
       case RepairModalState.TUNE_UP:
-        if (bRepairCompleted) {
-          if (!bRepairNeeded) {
+        if (_RepairCompleted || _RepairInterrupted) {
+          if (!_RepairNeeded) {
             return ChangeModalState(RepairModalState.REPAIRED);
           }
 
@@ -326,7 +360,7 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.REPAIRED:
-        if (bRepairNeeded) {
+        if (_RepairNeeded) {
           return ChangeModalState(RepairModalState.SCAN);
         }
         break;
@@ -358,10 +392,12 @@ namespace Cozmo.Repair.UI {
         _ScanButton.interactable = true;
         break;
       case RepairModalState.SCAN:
+        _MeterPaused = true;
         RefreshAllPartElements();
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Scan, Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete, ScanSoundComplete);
         break;
       case RepairModalState.TUNE_UP:
+        _MeterPaused = true;
         _TuneUpValuesEntered.Clear();
         _RoundIndex = 0;
 
@@ -379,6 +415,7 @@ namespace Cozmo.Repair.UI {
         EnterTuneUpState();
         break;
       case RepairModalState.REPAIRED:
+        HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Level_Success);
         break;
       }
@@ -388,7 +425,12 @@ namespace Cozmo.Repair.UI {
       _TimeInModalState += deltaTime;
       switch (_CurrentModalState) {
       case RepairModalState.PRE_SCAN: break;
-      case RepairModalState.SCAN: break;
+      case RepairModalState.SCAN:
+        if (_MeterPaused && _TimeInModalState >= _ScanDuration) {
+          _MeterPaused = false;
+          HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
+        }
+        break;
       case RepairModalState.TUNE_UP:
         RefreshTuneUpStateLogic(deltaTime);
         break;
@@ -402,6 +444,8 @@ namespace Cozmo.Repair.UI {
         _ScanButton.gameObject.SetActive(false);
         break;
       case RepairModalState.SCAN:
+        _MeterPaused = false;
+        HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
         break;
       case RepairModalState.TUNE_UP:
         ExitTuneUpState();
@@ -410,6 +454,7 @@ namespace Cozmo.Repair.UI {
           GameObject.Destroy(_UpDownArrows[0].gameObject);
           _UpDownArrows.RemoveAt(0);
         }
+        _MeterPaused = false;
         break;
       case RepairModalState.REPAIRED:
         break;
@@ -432,25 +477,25 @@ namespace Cozmo.Repair.UI {
     }
 
     private void RefreshTuneUpInputs() {
-      bFullPatternMatched = false;
+      _FullPatternMatched = false;
       if (_CurrentTuneUpState == TuneUpState.ENTER_SYMBOLS) {
-        bFullPatternMatched = _TuneUpValuesEntered.SequenceEqual(_TuneUpPatternToMatch);
+        _FullPatternMatched = _TuneUpValuesEntered.SequenceEqual(_TuneUpPatternToMatch);
       }
 
-      bMismatchDetected = false;
+      _MismatchDetected = false;
       for (int i = 0; i < _TuneUpValuesEntered.Count; i++) {
         if (_TuneUpValuesEntered[i] == _TuneUpPatternToMatch[i]) continue;
-        bMismatchDetected = true;
+        _MismatchDetected = true;
         break;
       }
 
     }
 
     private void ClearTuneUpInputs() {
-      bMismatchDetected = false;
-      bFullPatternMatched = false;
-      bCalibrationRequested = false;
-      bRobotResponseDone = false;
+      _MismatchDetected = false;
+      _FullPatternMatched = false;
+      _CalibrationRequested = false;
+      _RobotResponseDone = false;
     }
 
     //transitions can ONLY happen within this method
@@ -467,10 +512,10 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case TuneUpState.ENTER_SYMBOLS:
-        if (bMismatchDetected) {
+        if (_MismatchDetected) {
           return ChangeTuneUpState(TuneUpState.PATTERN_MISMATCH);
         }
-        if (bFullPatternMatched) {
+        if (_FullPatternMatched) {
           return ChangeTuneUpState(TuneUpState.PATTERN_MATCHED);
         }
         break;
@@ -480,12 +525,12 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case TuneUpState.PATTERN_MATCHED:
-        if (bCalibrationRequested) {
+        if (_CalibrationRequested) {
           return ChangeTuneUpState(TuneUpState.ROBOT_RESPONSE);
         }
         break;
       case TuneUpState.ROBOT_RESPONSE:
-        if (bRobotResponseDone || _TimeInTuneUpState >= _RobotResponseMaxTime) {
+        if (_RobotResponseDone || _TimeInTuneUpState >= _RobotResponseMaxTime) {
           if (_RoundIndex < _RoundData.Length - 1) {
             return ChangeTuneUpState(TuneUpState.REVEAL_SYMBOLS);
           }
@@ -659,6 +704,7 @@ namespace Cozmo.Repair.UI {
           robot.CancelCallback(HandleCalibrateAnimMiddle);
           robot.CancelCallback(HandleRobotResponseDone);
         }
+        PlayRobotRepairIdleAnim();
         break;
       case TuneUpState.TUNE_UP_COMPLETE:
         break;
@@ -669,40 +715,27 @@ namespace Cozmo.Repair.UI {
 
     #region BUTTON CLICK HANDLERS
 
-    private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
-      NeedsStateManager nsm = NeedsStateManager.Instance;
-      _RepairMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Repair).Value);
-      NeedBracketId newBracket = nsm.PopLatestEngineValue(NeedId.Repair).Bracket;
-
-      RefreshAllPartElements();
-
-      if (newBracket != _LastRepairBracket) {
-        PlayRobotRepairIdleAnim(skipGetIn: true);
-        _LastRepairBracket = newBracket;
-      }
-    }
-
     private void HandleScanButtonPressed() {
-      bScanRequested = true;
+      _ScanRequested = true;
     }
 
     private void HandleRepairHeadButtonPressed() {
       DisableAllRepairButtons();
-      bRepairRequested = true;
+      _RepairRequested = true;
       _PartToRepair = RepairablePartId.Head;
       _PartRepairAction = NeedsActionId.RepairHead;
     }
 
     private void HandleRepairLiftButtonPressed() {
       DisableAllRepairButtons();
-      bRepairRequested = true;
+      _RepairRequested = true;
       _PartToRepair = RepairablePartId.Lift;
       _PartRepairAction = NeedsActionId.RepairLift;
     }
 
     private void HandleRepairTreadsButtonPressed() {
       DisableAllRepairButtons();
-      bRepairRequested = true;
+      _RepairRequested = true;
       _PartToRepair = RepairablePartId.Treads;
       _PartRepairAction = NeedsActionId.RepairTreads;
     }
@@ -716,7 +749,43 @@ namespace Cozmo.Repair.UI {
     }
 
     private void HandleCalibrateButtonPressed() {
-      bCalibrationRequested = true;
+      _CalibrationRequested = true;
+    }
+
+    #endregion
+
+    #region ROBOT CALLBACK HANDLERS
+
+    private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+
+      PlayRobotRepairIdleAnim();
+
+      RefreshAllPartElements();
+
+      if (!_MeterPaused) {
+        _RepairMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Repair).Value);
+      }
+    }
+
+    // light up the next arrow, note: this may be removed if deemed too distracting by design
+    private void HandleCalibrateAnimMiddle(bool success) {
+      if (_RobotResponseIndex < _UpDownArrows.Count) {
+        _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch[_RobotResponseIndex]);
+      }
+      _RobotResponseIndex++;
+
+      if (_RobotResponseIndex >= _UpDownArrows.Count && _RoundIndex >= _RoundData.Length - 1) {
+        NeedsStateManager nsm = NeedsStateManager.Instance;
+        bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
+        if (severe) {
+          HandleRobotResponseDone(true);
+        }
+      }
+    }
+
+    private void HandleRobotResponseDone(bool success) {
+      _RobotResponseDone = true;
     }
 
     #endregion
@@ -801,9 +870,9 @@ namespace Cozmo.Repair.UI {
       bool treadsBroken = NeedsStateManager.Instance.PopLatestEnginePartIsBroken(RepairablePartId.Treads);
       RefreshPartElements(treadsBroken, _TreadsElements);
 
-      bRepairNeeded = headBroken || liftBroken || treadsBroken;
-      _RepairButtonsInstruction.gameObject.SetActive(bRepairNeeded);
-      _NoRepairsNeededNotice.gameObject.SetActive(!bRepairNeeded);
+      _RepairNeeded = headBroken || liftBroken || treadsBroken;
+      _RepairButtonsInstruction.gameObject.SetActive(_RepairNeeded);
+      _NoRepairsNeededNotice.gameObject.SetActive(!_RepairNeeded);
     }
 
     private void RefreshPartElements(bool partBroken, RepairPartElements elements) {
@@ -845,15 +914,17 @@ namespace Cozmo.Repair.UI {
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
 
+        robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+
         //start with intro anims
         NeedsStateManager nsm = NeedsStateManager.Instance;
         bool severe = nsm.PopLatestEngineValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
 
         if (severe) {
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady, null, QueueActionPosition.NEXT);
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetReady, null, QueueActionPosition.AT_END);
         }
         else {
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetReady, null, QueueActionPosition.NEXT);
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetReady, null, QueueActionPosition.AT_END);
         }
 
         switch (_PartToRepair) {
@@ -861,69 +932,69 @@ namespace Cozmo.Repair.UI {
           for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
             if (_TuneUpPatternToMatch[i] == ArrowInput.Up) {
               if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereHeadUp, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereHeadUp, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
               else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildHeadUp, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildHeadUp, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
             }
             else {
               if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereHeadDown, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereHeadDown, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
               else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildHeadDown, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildHeadDown, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
             }
           }
-          robot.SetHeadAngle(0.0f, null, QueueActionPosition.NEXT);
+          robot.SetHeadAngle(0.0f, null, QueueActionPosition.AT_END);
           break;
         case RepairablePartId.Lift:
 
           //fix lift height
           if (severe) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereRaiseLift, null, QueueActionPosition.NEXT);
+            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereRaiseLift, null, QueueActionPosition.AT_END);
           }
           else {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildRaiseLift, null, QueueActionPosition.NEXT);
+            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildRaiseLift, null, QueueActionPosition.AT_END);
           }
 
           for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
             if (_TuneUpPatternToMatch[i] == ArrowInput.Up) {
               if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereLiftUp, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereLiftUp, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
               else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildLiftUp, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildLiftUp, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
             }
             else {
               if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereLiftDown, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereLiftDown, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
               else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildLiftDown, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildLiftDown, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
             }
           }
-          robot.SetLiftHeight(0.0f, null, QueueActionPosition.NEXT);
+          robot.SetLiftHeight(0.0f, null, QueueActionPosition.AT_END);
           break;
         case RepairablePartId.Treads:
           for (int i = 0; i < _TuneUpPatternToMatch.Count; ++i) {
             if (_TuneUpPatternToMatch[i] == ArrowInput.Up) {
               if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereWheelsForward, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereWheelsForward, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
               else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildWheelsForward, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildWheelsForward, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
             }
             else {
               if (severe) {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereWheelsBack, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereWheelsBack, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
               else {
-                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildWheelsBack, HandleCalibrateAnimMiddle, QueueActionPosition.NEXT);
+                robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildWheelsBack, HandleCalibrateAnimMiddle, QueueActionPosition.AT_END);
               }
             }
           }
@@ -932,57 +1003,81 @@ namespace Cozmo.Repair.UI {
 
         // Always end with a victory...
         if (severe) {
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereRoundReact, HandleRobotResponseDone, QueueActionPosition.AT_END);
+          if (_RoundIndex < _RoundData.Length - 1) {
+            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereRoundReact, HandleRobotResponseDone, QueueActionPosition.AT_END);
+          }
         }
         else {
           robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildRoundReact, HandleRobotResponseDone, QueueActionPosition.AT_END);
         }
       }
-
-      PlayRobotRepairIdleAnim(skipGetIn: true);
     }
 
-    private void PlayRobotRepairIdleAnim(bool skipGetIn = false) {
+    private void PlayRobotRepairIdleAnim() {
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
+      if (!_WaitForDropCube && robot != null) {
 
         NeedsStateManager nsm = NeedsStateManager.Instance;
         NeedBracketId bracket = nsm.PopLatestEngineValue(NeedId.Repair).Bracket;
 
+        bool severityChanged = _LastBracket != bracket;
+        //for animation purposees, warning and normal brackets are both mild
+        if ((_LastBracket == NeedBracketId.Warning && bracket == NeedBracketId.Normal)
+            || (bracket == NeedBracketId.Warning && _LastBracket == NeedBracketId.Normal)) {
+          severityChanged = false;
+        }
+
+        //if our severity has changed, play get out and get in anims
+        if (severityChanged) {
+          PlayGetOutAnim(_LastBracket);
+          PlayGetInAnim(bracket);
+        }
+
+        AnimationTrigger idle = AnimationTrigger.RepairFixMildIdle;
         switch (bracket) {
         case NeedBracketId.Full:
-          if (!skipGetIn) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetIn, null, QueueActionPosition.AT_END);
-          }
-          robot.SendAnimationTrigger(AnimationTrigger.RepairIdleFullyRepaired, null, QueueActionPosition.AT_END);
+          idle = AnimationTrigger.RepairIdleFullyRepaired;
           break;
         case NeedBracketId.Critical:
-          if (!skipGetIn) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetIn, null, QueueActionPosition.AT_END);
-          }
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereIdle, null, QueueActionPosition.AT_END);
+          idle = AnimationTrigger.RepairFixSevereIdle;
           break;
-        default:
-          if (!skipGetIn) {
-            robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetIn, null, QueueActionPosition.AT_END);
-          }
-          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildIdle, null, QueueActionPosition.AT_END);
+        }
+
+        robot.SetIdleAnimation(idle);
+
+        _LastBracket = bracket;
+      }
+    }
+
+    private void PlayGetOutAnim(NeedBracketId bracket) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        switch (bracket) {
+        case NeedBracketId.Critical:
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetOut, null, QueueActionPosition.AT_END);
+          break;
+        case NeedBracketId.Normal:
+        case NeedBracketId.Warning:
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetOut, null, QueueActionPosition.AT_END);
           break;
         }
       }
     }
 
-    // light up the next arrow, note: this may be removed if deemed too distracting by design
-    private void HandleCalibrateAnimMiddle(bool success) {
-      if (_RobotResponseIndex < _UpDownArrows.Count) {
-        _UpDownArrows[_RobotResponseIndex].Calibrated(_TuneUpPatternToMatch[_RobotResponseIndex]);
+    private void PlayGetInAnim(NeedBracketId bracket) {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        switch (bracket) {
+        case NeedBracketId.Critical:
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixSevereGetIn, null, QueueActionPosition.AT_END);
+          break;
+        case NeedBracketId.Normal:
+        case NeedBracketId.Warning:
+          robot.SendAnimationTrigger(AnimationTrigger.RepairFixMildGetIn, null, QueueActionPosition.AT_END);
+          break;
+        }
       }
-      _RobotResponseIndex++;
-    }
-
-    private void HandleRobotResponseDone(bool success) {
-      bRobotResponseDone = true;
     }
 
     private ArrowInput GetNextSequenceRand() {
@@ -1022,48 +1117,54 @@ namespace Cozmo.Repair.UI {
         case ReactionTrigger.RobotOnBack:
         case ReactionTrigger.RobotOnFace:
         case ReactionTrigger.RobotOnSide:
-
           DAS.Event("robot.interrupt", DASEventDialogName,
                         DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
-          ShowDontMoveCozmoAlertView();
+          ShowDontMoveCozmoAlert();
           break;
-
         }
       }
     }
 
-    private void ShowDontMoveCozmoAlertView() {
-      ShowInterruptionQuitGameView("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
-                                   LocalizationKeys.kMinigameDontMoveCozmoDescription);
+    private void ShowDontMoveCozmoAlert() {
+      ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
+                                         LocalizationKeys.kMinigameDontMoveCozmoDescription);
     }
 
-    private void ShowInterruptionQuitGameView(string dasAlertName, string titleKey, string descriptionKey) {
-      CreateInterruptionQuitRepairView(dasAlertName, titleKey, descriptionKey);
+    private void ShowInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
+      CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
     }
 
-    private void CreateInterruptionQuitRepairView(string dasAlertName, string titleKey, string descriptionKey) {
-      if (_InterruptedAlertView == null) {
+    private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
+      if (_InterruptedAlert == null) {
         var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
                                 new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
-                                             clickCallback: HandleUserClose));
+                                             clickCallback: CloseInterruptionAlert));
 
         var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
                                      LowPriorityModalAction.Queue,
-                                     HighPriorityModalAction.ForceCloseOthersAndOpen);
+                                     HighPriorityModalAction.Stack);
 
         System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
-          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += HandleUserClose;
+          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += CloseInterruptionAlert;
           alertModal.ModalForceClosedAnimationFinished += () => {
-            _InterruptedAlertView = null;
-            CreateInterruptionQuitRepairView(dasAlertName, titleKey, descriptionKey);
+            _InterruptedAlert = null;
+            CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
           };
-          _InterruptedAlertView = alertModal;
+          _InterruptedAlert = alertModal;
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
         };
 
         UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,
                   overrideCloseOnTouchOutside: false);
       }
+    }
+
+    private void CloseInterruptionAlert() {
+      if (_InterruptedAlert != null) {
+        UIManager.CloseModal(_InterruptedAlert);
+        _InterruptedAlert = null;
+      }
+      _RepairInterrupted = true;
     }
 
     #endregion
