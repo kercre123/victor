@@ -63,6 +63,10 @@
           "commandType": "GoToSleep"
         },
         {
+          "phrase": "How are you feeling",
+          "commandType": "HowAreYouDoing"
+        },
+        {
           "phrase": "Look Down",
           "commandType": "LookDown"
         }
@@ -116,6 +120,10 @@
         {
           "phrase": "Geh schlafen",
           "commandType": "GoToSleep"
+        },
+        {
+          "phrase": "Wie geht es dir",
+          "commandType": "HowAreYouDoing"
         }
       ]
     },
@@ -170,6 +178,10 @@
         {
           "phrase": "Va dormir",
           "commandType": "GoToSleep"
+        },
+        {
+          "phrase": "Ça va",
+          "commandType": "HowAreYouDoing"
         }
       ]
     },
@@ -220,6 +232,10 @@
         {
           "phrase": "Nerujikan dayo",
           "commandType": "GoToSleep"
+        },
+        {
+          "phrase": "Genki",
+          "commandType": "HowAreYouDoing"
         }
       ]
     }
@@ -251,6 +267,7 @@
         "DoADance",
         "DoATrick",
         "FistBump",
+        "HowAreYouDoing",
         "LetsPlay",
         "PeekABoo",
         "GoToSleep",

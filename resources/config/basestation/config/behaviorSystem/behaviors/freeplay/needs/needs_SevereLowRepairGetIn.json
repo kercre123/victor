@@ -1,5 +1,5 @@
 {
-  "behaviorClass": "PlanAnimWithFace",
+  "behaviorClass": "PlayAnimWithFace",
   "behaviorID": "Needs_SevereLowRepairGetIn",
   "displayNameKey":"behavior.Needs_SevereLowRepairGetIn",
   "animTriggers": ["NeedsSevereLowRepairGetIn"],

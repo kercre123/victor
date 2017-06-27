@@ -471,6 +471,23 @@ void NeedsState::SetPrevNeedsBrackets()
   _prevNeedsBracketsCache = _curNeedsBracketsCache;
 }
 
+void NeedsState::GetLowestNeedAndBracket(NeedId& lowestNeedId, NeedBracketId& lowestNeedBracketId) const
+{
+  float lowestNeedValue = std::numeric_limits<float>::max();
+  for(const auto& need : _curNeedsLevels)
+  {
+    if(need.second < lowestNeedValue)
+    {
+      lowestNeedId = need.first;
+      lowestNeedValue = need.second;
+    }
+  }
+  
+  const auto& needsBracket = _curNeedsBracketsCache.find(lowestNeedId);
+  DEV_ASSERT(needsBracket != _curNeedsBracketsCache.end(),
+             "NeedsState.GetLowestNeed.UnknownNeedId");
+  lowestNeedBracketId = needsBracket->second;
+}
 
 #if ANKI_DEV_CHEATS
 void NeedsState::DebugFillNeedMeters()

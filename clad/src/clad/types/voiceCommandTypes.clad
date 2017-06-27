@@ -17,6 +17,7 @@ enum uint_8 VoiceCommandType {
   FistBump,
   GoToSleep,
   HeyCozmo,
+  HowAreYouDoing,
   LetsPlay,
   PeekABoo,
   NoThankYou,

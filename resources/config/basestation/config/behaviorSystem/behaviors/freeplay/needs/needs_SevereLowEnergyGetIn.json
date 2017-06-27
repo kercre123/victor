@@ -1,5 +1,5 @@
 {
-  "behaviorClass": "PlanAnimWithFace",
+  "behaviorClass": "PlayAnimWithFace",
   "behaviorID": "Needs_SevereLowEnergyGetIn",
   "displayNameKey":"behavior.Needs_SevereLowEnergyGetIn",
   "animTriggers": ["NeedsSevereLowEnergyGetIn"],

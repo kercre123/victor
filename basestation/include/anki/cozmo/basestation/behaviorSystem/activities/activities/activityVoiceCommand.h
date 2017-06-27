@@ -110,7 +110,10 @@ private:
   // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
   // do once we're done responding to the command
   void BeginRespondingToCommand(VoiceCommand::VoiceCommandType command, bool trackResponseLifetime = false);
-  
+
+  // Handles what response to do for the "How are you doing" command based on Cozmo's current needs
+  void HandleHowAreYouDoingCommand(Robot& robot, IBehaviorPtr& outputBehavior);
+
   // States to keep track of if we are waiting to see a laser or motion because a "Look Down" command was heard
   enum LookDownState {
     NONE,

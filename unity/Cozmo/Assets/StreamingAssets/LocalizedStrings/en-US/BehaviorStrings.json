@@ -234,6 +234,9 @@
   "behavior.VC_Refuse_Sparks": {
     "translation": "You don't have enough Sparks"
   },
+  "behavior.VC_HowAreYouDoing_AllGood": {
+    "translation": "Cozmo is feeling good"
+  },
   "behavior.SearchForFace": {
     "translation": "Cozmo is looking for a face"
   },

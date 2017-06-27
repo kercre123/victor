@@ -226,7 +226,7 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
       newBehavior = IBehaviorPtr(new BehaviorPlayAnimSequence(robot, config));
       break;
     }
-    case BehaviorClass::PlanAnimWithFace:
+    case BehaviorClass::PlayAnimWithFace:
     {
       newBehavior = IBehaviorPtr(new BehaviorPlayAnimSequenceWithFace(robot, config));
       break;

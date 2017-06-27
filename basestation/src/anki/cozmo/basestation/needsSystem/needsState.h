@@ -74,6 +74,10 @@ public:
   void UpdateCurNeedsBrackets(const NeedsBrackets& needsBrackets);
 
   bool IsNeedAtBracket(const NeedId need, const NeedBracketId bracket);
+  
+  // Get the lowest need and what bracket it is in
+  // Lowest need is based on which need has the lowest actual value
+  void GetLowestNeedAndBracket(NeedId& lowestNeedId, NeedBracketId& lowestNeedBracketId) const;
 
   void SetNeedsBracketsDirty() { _needsBracketsDirty = true; };
 

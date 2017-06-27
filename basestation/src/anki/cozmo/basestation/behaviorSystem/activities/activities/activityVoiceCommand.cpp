@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -305,6 +306,12 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       BeginRespondingToCommand(currentCommand);
       return _voiceCommandBehavior;
     }
+    case VoiceCommandType::HowAreYouDoing:
+    {
+      HandleHowAreYouDoingCommand(robot, _voiceCommandBehavior);
+      BeginRespondingToCommand(currentCommand);
+      return _voiceCommandBehavior;
+    }
     case VoiceCommandType::LookDown:
     {
       BehaviorPreReqRobot preReqRobot(robot);
@@ -320,9 +327,10 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       
       const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      
+     
       return _voiceCommandBehavior;
     }
+      
     
     // These commands will never be handled by this chooser:
     case VoiceCommandType::YesPlease:
@@ -394,7 +402,7 @@ bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command
     case VoiceCommandType::FistBump:
     case VoiceCommandType::PeekABoo:
     case VoiceCommandType::GoToSleep:
-
+    case VoiceCommandType::HowAreYouDoing:
     case VoiceCommandType::LookDown:
     {
       return true;
@@ -432,6 +440,7 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
     case VoiceCommandType::HeyCozmo:
     case VoiceCommandType::GoToSleep:
     case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::HowAreYouDoing:
     case VoiceCommandType::YesPlease:
     case VoiceCommandType::Count:
     {
@@ -511,6 +520,89 @@ Result ActivityVoiceCommand::Update(Robot& robot)
   return Result::RESULT_OK;
 }
 
+void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, IBehaviorPtr& outputBehavior)
+{
+  // Maps a need and bracket to a behavior and animations
+  static const std::map<std::pair<NeedId, NeedBracketId>,
+                        std::pair<BehaviorID, std::vector<AnimationTrigger>>> kNeedStateToBehaviorMap = {
+    {{NeedId::Energy, NeedBracketId::Warning},
+     {BehaviorID::VC_HowAreYouDoing_Energy, {AnimationTrigger::NeedsMildLowEnergyRequest}}},
+    {{NeedId::Energy, NeedBracketId::Critical},
+     {BehaviorID::VC_HowAreYouDoing_Energy, {AnimationTrigger::NeedsSevereLowEnergyRequest}}},
+
+    {{NeedId::Play, NeedBracketId::Warning},
+      {BehaviorID::VC_HowAreYouDoing_Play, {AnimationTrigger::NeedsMildLowPlayRequest}}},
+    {{NeedId::Play, NeedBracketId::Critical},
+      {BehaviorID::VC_HowAreYouDoing_Play, {AnimationTrigger::NothingToDoBoredIntro,
+                                            AnimationTrigger::NothingToDoBoredEvent,
+                                            AnimationTrigger::NothingToDoBoredOutro}}},
+    
+    {{NeedId::Repair, NeedBracketId::Warning},
+      {BehaviorID::VC_HowAreYouDoing_Repair, {AnimationTrigger::NeedsMildLowRepairRequest}}},
+    {{NeedId::Repair, NeedBracketId::Critical},
+      {BehaviorID::VC_HowAreYouDoing_Repair, {AnimationTrigger::NeedsSevereLowRepairRequest}}},
+  };
+
+  // Get the lowest need and what bracket it is in
+  Anki::Cozmo::NeedsState curNeeds = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+  NeedId need;
+  NeedBracketId bracket;
+  curNeeds.GetLowestNeedAndBracket(need, bracket);
+  
+  IBehaviorPtr howAreYouDoingBehavior;
+  std::vector<AnimationTrigger> howAreYouDoingAnims;
+  
+  // If we have a matching entry for the need and bracket then setup the behavior
+  // to play the specified animations
+  const auto& behaviorAndAnims = kNeedStateToBehaviorMap.find({need, bracket});
+  if(behaviorAndAnims != kNeedStateToBehaviorMap.end())
+  {
+    const BehaviorID& behaviorID = behaviorAndAnims->second.first;
+    const std::vector<AnimationTrigger>& anims = behaviorAndAnims->second.second;
+    
+    IBehaviorPtr behavior = robot.GetBehaviorManager().FindBehaviorByID(behaviorID);
+    DEV_ASSERT(behavior != nullptr,
+               "ActivityVoiceCommand.HandleHowAreYouDoingCommand.NullBehavior");
+    
+    if(ANKI_DEV_CHEATS)
+    {
+      std::shared_ptr<BehaviorPlayAnimSequenceWithFace> playAnimBehavior =
+        std::static_pointer_cast<BehaviorPlayAnimSequenceWithFace>(behavior);
+      DEV_ASSERT(playAnimBehavior != nullptr &&
+                 playAnimBehavior->GetClass() == BehaviorClass::PlayAnimWithFace,
+                 "ActivityVoiceCommand.HandleHowAreYouDoingCommand.ImproperClassRetrievedForID");
+    }
+    
+    howAreYouDoingBehavior = behavior;
+    howAreYouDoingAnims = anims;
+  }
+  // Otherwise, based on the map, all needs are at least normal so respond with the "all good" behavior
+  // and animation
+  else
+  {
+    DEV_ASSERT((bracket == NeedBracketId::Full ||
+                bracket == NeedBracketId::Normal),
+               "ActivityVoiceCommand.HandleHowAreYouDoingCommand.NeedsBracketExpectedFullOrNormal");
+    
+    IBehaviorPtr behavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_HowAreYouDoing_AllGood);
+    DEV_ASSERT(behavior != nullptr,
+               "ActivityVoiceCommand.HandleHowAreYouDoingCommand.AllGood.NullBehavior");
+    
+    howAreYouDoingBehavior = behavior;
+    howAreYouDoingAnims = {AnimationTrigger::VC_HowAreYouDoing_AllGood};
+  }
+  
+  BehaviorPreReqAnimSequence preReq(howAreYouDoingAnims);
+  if(howAreYouDoingBehavior->IsRunnable(preReq))
+  {
+    outputBehavior = howAreYouDoingBehavior;
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("ActivityVoiceCommand.HandleHowAreYouDoingCommand.BehaviorNotRunnable", "");
+  }
+}
+
 bool ActivityVoiceCommand::CheckForLaserTrackingChange(Robot& robot, const IBehaviorPtr curBehavior)
 {
   // If we are waiting for a laser or motion but have entered a reactionary behavior then stop waiting for
@@ -545,7 +637,7 @@ bool ActivityVoiceCommand::CheckForLaserTrackingChange(Robot& robot, const IBeha
     else if(_lookDownState == LookDownState::WAITING_FOR_MOTION &&
             curBehavior->GetID() != BehaviorID::VC_PounceOnMotion)
     {
-      _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VCLookDownNoLaser, 1);
+      _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VC_LookDownNoLaser, 1);
       
       BehaviorPreReqNone preReq;
       if(_playAnimBehavior->IsRunnable(preReq))

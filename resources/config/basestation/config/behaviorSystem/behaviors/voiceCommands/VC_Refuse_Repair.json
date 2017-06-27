@@ -2,5 +2,5 @@
   "behaviorClass" : "PlayAnim",
   "behaviorID" : "VC_Refuse_Repair",
   "displayNameKey":"behavior.VC_Refuse_Repair",
-  "animTriggers": ["VCRefuse_repair"]
+  "animTriggers": ["VC_Refuse_repair"]
 }

@@ -1817,19 +1817,23 @@
       "AnimName": "ag_askForBlock"
     },
     {
-      "CladEvent": "VCLookDownNoLaser",
+      "CladEvent": "VC_HowAreYouDoing_AllGood",
+      "AnimName": "ag_vc_reaction_feeling_good_01"
+    },
+    {
+      "CladEvent": "VC_LookDownNoLaser",
       "AnimName": "ag_explorer_huh"
     },
     {
-      "CladEvent": "VCRefuse_energy",
+      "CladEvent": "VC_Refuse_energy",
       "AnimName": "ag_vc_refuse_energy_01"
     },
     {
-      "CladEvent": "VCRefuse_repair",
+      "CladEvent": "VC_Refuse_repair",
       "AnimName": "ag_vc_refuse_repair_01"
     },
     {
-      "CladEvent": "VCRefuse_sparks",
+      "CladEvent": "VC_Refuse_sparks",
       "AnimName": "ag_vc_refuse_nosparks_01"
     },
     {
