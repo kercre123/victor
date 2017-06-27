@@ -3608,8 +3608,11 @@ MonoBehaviour:
   _ActivitiesButton: {fileID: 114446962315980540}
   _SettingsButton: {fileID: 114273081088830324}
   _SparksButton: {fileID: 114407009027686870}
+  _HelpButton: {fileID: 114905935062576232}
   _StarBar: {fileID: 114566856538031404}
   _SettingsModalPrefab: {fileID: 114595580861209808, guid: 5ffefb52ea4cf4db7924a2c00b6d5ac7,
+    type: 2}
+  _HelpTipsModalPrefab: {fileID: 11489240, guid: e8253b38997414ae39d897571e6d7ed8,
     type: 2}
   _MetersWidget: {fileID: 114995038753719054}
   _NeedsRepairModalPrefab: {fileID: 114408098354157378, guid: 7250cf8f5adbb4616abccb9472c64c37,
@@ -4668,7 +4671,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1491514112191390}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04aa69c625a594415940896ee2c4d961, type: 3}
   m_Name: 

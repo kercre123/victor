@@ -24,11 +24,18 @@ namespace Cozmo.Needs.UI {
     private CozmoButton _SparksButton;
 
     [SerializeField]
+    private CozmoButton _HelpButton;
+
+    [SerializeField]
     private StarBar _StarBar;
 
     [SerializeField]
     private SettingsModal _SettingsModalPrefab;
     private SettingsModal _SettingsModalInstance;
+
+    [SerializeField]
+    private BaseModal _HelpTipsModalPrefab;
+    private BaseModal _HelpTipsModalInstance;
 
     [SerializeField]
     private NeedsMetersWidget _MetersWidget;
@@ -48,6 +55,7 @@ namespace Cozmo.Needs.UI {
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
+      _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
 
       _MetersWidget.Initialize(enableButtonBasedOnNeeds: true, dasParentDialogName: DASEventDialogName, baseDialog: this);
       _MetersWidget.OnRepairPressed += HandleRepairButton;
@@ -120,6 +128,15 @@ namespace Cozmo.Needs.UI {
     private void HandleEnergyModalCreated(BaseModal newModal) {
       _NeedsEnergyModalInstance = (NeedsEnergyModal)newModal;
       _NeedsEnergyModalInstance.InitializeEnergyModal();
+    }
+
+    private void HandleHelpButton() {
+      UIManager.OpenModal(_HelpTipsModalPrefab, new ModalPriorityData(), HandleHelpModalCreated);
+    }
+
+    private void HandleHelpModalCreated(BaseModal newModal) {
+      _HelpTipsModalInstance = newModal;
+      _HelpTipsModalInstance.Initialize();
     }
 
     private void HandleDialogFinishedOpenAnimation() {
