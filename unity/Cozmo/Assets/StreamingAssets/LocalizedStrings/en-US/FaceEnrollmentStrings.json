@@ -67,10 +67,10 @@
     "translation": "Scan {0} Again"
   },
   "faceEnrollment.label.dayCount.singular": {
-    "translation": "Day Ago"
+    "translation": "{0} Day Ago"
   },
   "faceEnrollment.label.dayCount.plural": {
-    "translation": "Days Ago"
+    "translation": "{0} Days Ago"
   },
   "faceEnrollment.label.HelpCozmoRecognize": {
     "translation": "Help Cozmo recognize you more easily"
@@ -83,5 +83,8 @@
   },
   "faceEnrollment.label.today": {
     "translation": "Today"
+  },
+  "error.TooManyFaces": {
+    "translation": "Make sure Cozmo only sees one face"
   }
 }

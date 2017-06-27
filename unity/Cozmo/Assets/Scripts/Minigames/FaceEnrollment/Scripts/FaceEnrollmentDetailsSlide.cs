@@ -26,7 +26,6 @@ namespace FaceEnrollment {
       _NameForFace.text = nameForFace;
       _ReEnrollFaceButton.Text = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentButtonScanAgain, nameForFace);
 
-      string lastEnrolledLocKey = "faceEnrollment.label.dayCount";
       const int secondsInADay = 86400;
       int daysCount = (int)((Time.time - RobotEngineManager.Instance.CurrentRobot.EnrolledFacesLastEnrolledTime[faceID]) / secondsInADay);
 
@@ -34,7 +33,12 @@ namespace FaceEnrollment {
         _LastEnrolledText.text = Localization.Get(LocalizationKeys.kFaceEnrollmentLabelToday);
       }
       else {
-        _LastEnrolledText.text = Localization.GetCountLabel(lastEnrolledLocKey, daysCount);
+        if (daysCount == 1) {
+          _LastEnrolledText.text = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentLabelDayCountSingular, daysCount);
+        }
+        else {
+          _LastEnrolledText.text = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentLabelDayCountPlural, daysCount);
+        }
       }
 
 

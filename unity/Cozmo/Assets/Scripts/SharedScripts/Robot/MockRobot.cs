@@ -17,10 +17,12 @@ public class MockRobot : IRobot {
   public event System.Action<ObservableObject> OnCarryingObjectSet;
 
   public event System.Action<ObservableObject> OnHeadTrackingObjectSet;
+
+  public event System.Action<FaceEnrollmentCompleted> OnEnrolledFaceComplete;
+
   // Event is never used warning surpression.
 #pragma warning disable 0067
   public event System.Action<int> OnNumBlocksConnectedChanged;
-  public event System.Action<FaceEnrollmentCompleted> OnEnrolledFaceComplete;
 #pragma warning restore 0067
 
   public MockRobot(byte id) {
@@ -46,6 +48,7 @@ public class MockRobot : IRobot {
     PetFaces = new List<PetFace>();
     CurrentBehaviorDisplayNameKey = string.Empty;
     CurrentReactionTrigger = ReactionTrigger.NoneTrigger;
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
   }
 
   public bool Status(Anki.Cozmo.RobotStatusFlag s) {
@@ -985,6 +988,7 @@ public class MockRobot : IRobot {
   #region IDisposable implementation
 
   public void Dispose() {
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FaceEnrollmentCompleted>(HandleEnrolledFace);
   }
 
   #endregion
@@ -1011,6 +1015,32 @@ public class MockRobot : IRobot {
     EnrolledFaces[faceID] = newFaceName;
     if (OnEnrolledFaceRenamed != null) {
       OnEnrolledFaceRenamed(faceID, newFaceName);
+    }
+  }
+
+  private void HandleEnrolledFace(FaceEnrollmentCompleted message) {
+    if (message.result == Anki.Cozmo.FaceEnrollmentResult.Success) {
+      if (EnrolledFaces.ContainsKey(message.faceID)) {
+        DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(message.name));
+        EnrolledFaces[message.faceID] = message.name;
+        EnrolledFacesLastEnrolledTime[message.faceID] = Time.time;
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnReEnrollFace);
+      }
+      else {
+        EnrolledFaces.Add(message.faceID, message.name);
+        EnrolledFacesLastEnrolledTime.Add(message.faceID, 0);
+        EnrolledFacesLastSeenTime.Add(message.faceID, 0);
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
+        DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(message.name));
+
+        // log using up another face slot to das
+        DAS.Event("robot.face_slots_used", EnrolledFaces.Count.ToString(),
+          DASUtil.FormatExtraData("1"));
+      }
+    }
+
+    if (OnEnrolledFaceComplete != null) {
+      OnEnrolledFaceComplete(message);
     }
   }
 

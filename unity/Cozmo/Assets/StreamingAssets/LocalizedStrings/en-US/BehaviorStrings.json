@@ -129,9 +129,6 @@
   "behavior.RamIntoBlock": {
     "translation": " "
   },
-  "error.TooManyFaces": {
-    "translation": "Make sure Cozmo only sees"
-  },
   "behavior.BuildPyramid": {
     "translation": "Cozmo is Building a Pyramid"
   },
