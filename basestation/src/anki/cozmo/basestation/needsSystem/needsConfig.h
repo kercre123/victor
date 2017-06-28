@@ -132,6 +132,7 @@ struct NeedDelta
 struct ActionDelta
 {
   std::array<NeedDelta, static_cast<size_t>(NeedId::Count)> _needDeltas;
+  float _cooldown_s;
 };
 
 class ActionsConfig

@@ -52,6 +52,7 @@ static const std::string kEnergyDeltaKey = "energyDelta";
 static const std::string kEnergyRangeKey = "energyRange";
 static const std::string kPlayDeltaKey = "playDelta";
 static const std::string kPlayRangeKey = "playRange";
+static const std::string kCooldownSecsKey = "cooldownSecs";
 
 
 NeedsConfig::NeedsConfig()
@@ -308,6 +309,8 @@ void ActionsConfig::Init(const Json::Value& json)
                                                     "Failed to parse a play delta");
     const float playRange = JsonTools::ParseFloat(item, kPlayRangeKey.c_str(),
                                                     "Failed to parse a play range");
+    const float cooldownSecs = JsonTools::ParseFloat(item, kCooldownSecsKey.c_str(),
+                                                    "Failed to parse an action cooldown time");
 
     ActionDelta& actionDelta = _actionDeltas[static_cast<int>(actionId)];
     actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._delta = repairDelta;
@@ -319,6 +322,7 @@ void ActionsConfig::Init(const Json::Value& json)
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._delta = playDelta;
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._randomRange = playRange;
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._cause = NeedsActionId::NoAction;
+    actionDelta._cooldown_s = cooldownSecs;
   }
 }
 

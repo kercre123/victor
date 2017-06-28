@@ -6,7 +6,8 @@
     "energyDelta": -0.02,
     "energyRange": 0.005,
     "playDelta": -0.1,
-    "playRange": 0.005
+    "playRange": 0.005,
+    "cooldownSecs": 0
   },
   {
     "actionId": "RepairLift",
@@ -15,7 +16,8 @@
     "energyDelta": -0.02,
     "energyRange": 0.005,
     "playDelta": -0.1,
-    "playRange": 0.005
+    "playRange": 0.005,
+    "cooldownSecs": 0
   },
   {
     "actionId": "RepairTreads",
@@ -24,7 +26,8 @@
     "energyDelta": -0.02,
     "energyRange": 0.005,
     "playDelta": -0.1,
-    "playRange": 0.005
+    "playRange": 0.005,
+    "cooldownSecs": 0
   },
   {
     "actionId": "FeedBlue",
@@ -33,7 +36,8 @@
     "energyDelta": 0.33,
     "energyRange": 0.005,
     "playDelta": 0,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "Play",
@@ -42,7 +46,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "KeepAwayWin",
@@ -51,7 +56,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.3,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "KeepAwayLose",
@@ -60,7 +66,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.3,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "MemoryMatchWin",
@@ -69,7 +76,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.3,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "MemoryMatchLose",
@@ -78,7 +86,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.3,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "QuickTapWin",
@@ -87,7 +96,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.3,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "QuickTapLose",
@@ -96,7 +106,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.3,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "CozmoSings",
@@ -105,7 +116,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.05,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "DizzyHard",
@@ -114,7 +126,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": -0.1
+    "playRange": -0.1,
+    "cooldownSecs": 0
   },
   {
     "actionId": "DizzyMedium",
@@ -123,7 +136,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": -0.05
+    "playRange": -0.05,
+    "cooldownSecs": 0
   },
   {
     "actionId": "DizzySoft",
@@ -132,7 +146,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": -0.03
+    "playRange": -0.03,
+    "cooldownSecs": 0
   },
   {
     "actionId": "Fall",
@@ -141,7 +156,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": -0.2
+    "playRange": -0.2,
+    "cooldownSecs": 0
   },
   {
     "actionId": "FistBump",
@@ -150,7 +166,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.2,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "GatherCubes",
@@ -159,7 +176,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "GuardDogLose",
@@ -168,7 +186,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "GuardDogWin",
@@ -177,7 +196,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "HiccupsEndBad",
@@ -186,7 +206,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0,
-    "playRange": -0.2
+    "playRange": -0.2,
+    "cooldownSecs": 0
   },
   {
     "actionId": "HiccupsEndGood",
@@ -195,7 +216,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "KnockDownCubes",
@@ -204,7 +226,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "PeekAboo",
@@ -213,7 +236,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.2,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "PickupCube",
@@ -222,7 +246,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "PopAWheelie",
@@ -231,7 +256,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "Pounce",
@@ -240,7 +266,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "PyramidCompleted",
@@ -249,7 +276,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.2,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "RollACube",
@@ -258,7 +286,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.05,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "SayName",
@@ -267,7 +296,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.01,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "StackCube",
@@ -276,7 +306,8 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "Workout",
@@ -285,7 +316,8 @@
     "energyDelta": -0.2,
     "energyRange": 0,
     "playDelta": 0.1,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 0
   },
   {
     "actionId": "SeeFace",
@@ -294,6 +326,7 @@
     "energyDelta": -0.01,
     "energyRange": 0,
     "playDelta": 0.01,
-    "playRange": 0
+    "playRange": 0,
+    "cooldownSecs": 60
   }
 ] }

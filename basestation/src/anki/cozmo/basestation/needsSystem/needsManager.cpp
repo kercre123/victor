@@ -220,6 +220,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _timeWhenCooldownStarted_s()
 , _timeWhenCooldownOver_s()
 , _queuedNeedDeltas()
+, _actionCooldown_s()
 , _currentTime_s(0.0f)
 , _timeForNextPeriodicDecay_s(0.0f)
 , _pausedDurRemainingPeriodicDecay(0.0f)
@@ -239,6 +240,11 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
     _timeWhenCooldownOver_s[i] = 0.0f;
 
     _queuedNeedDeltas[i].clear();
+  }
+
+  for (int i = 0; i < static_cast<int>(NeedsActionId::Count); i++)
+  {
+    _actionCooldown_s[i] = 0.0f;
   }
 }
 
@@ -308,6 +314,11 @@ void NeedsManager::InitInternal(const float currentTime_s)
 
     _isDecayPausedForNeed[i] = false;
     _isActionsPausedForNeed[i] = false;
+  }
+
+  for (int i = 0; i < static_cast<int>(NeedsActionId::Count); i++)
+  {
+    _actionCooldown_s[i] = 0.0f;
   }
 
   // Read needs data from device storage, if it exists
@@ -624,6 +635,22 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 {
   if (_isPausedOverall) {
     return;
+  }
+
+  const int actionIndex = static_cast<int>(actionCompleted);
+  if (_currentTime_s < _actionCooldown_s[actionIndex])
+  {
+    // DAS Event: "needs.action_completed_ignored"
+    // s_val: The needs action being completed
+    // data: Unused
+    Anki::Util::sEvent("needs.action_completed_ignored", {},
+                       NeedsActionIdToString(actionCompleted));
+    return;
+  }
+  const auto& actionDelta = _actionsConfig._actionDeltas[actionIndex];
+  if (!Util::IsNearZero(actionDelta._cooldown_s))
+  {
+    _actionCooldown_s[actionIndex] = _currentTime_s + actionDelta._cooldown_s;
   }
 
   NeedsState::CurNeedsMap prevNeedsLevels = _needsState._curNeedsLevels;
