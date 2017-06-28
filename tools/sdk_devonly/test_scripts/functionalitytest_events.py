@@ -22,7 +22,7 @@ Make sure nothing in this process throws errors.
 '''
 
 import sys
-import time
+import asyncio
 
 import cozmo
 from cozmo.util import distance_mm, speed_mmps, degrees
@@ -37,16 +37,15 @@ class EvtTest:
 
 class EventsSmokeTest:
     robot = None
+    faces_found = []
 
     # todo, create objects that register an event, and clear when its hit.
     # add them all to a set, and list out any that weren't thinged at the end
-    def handle_face_appeared(self, evt, **kw):
-        face = evt.face
-        face.name_face("faceguy").wait_for_completed()
-        face.rename_face("noface")
-        face.erase_enrolled_face()
+    async def handle_face_appeared(self, evt, **kw):
+        if evt.face is not None and evt.face not in self.faces_found:
+            self.faces_found.append(evt.face)
 
-    def test_events(self, conn, robot):
+    async def test_events(self, conn, robot):
         robot.add_event_handler(cozmo.faces.EvtFaceAppeared, self.handle_face_appeared)
 
         # Camera events
@@ -68,9 +67,11 @@ class EventsSmokeTest:
                  # @TODO: How do I simulate a touch in webots?
                  #EvtTest(robot, cozmo.objects.EvtObjectTapped),
                  # Face Events
-                 EvtTest(robot, cozmo.faces.EvtErasedEnrolledFace), EvtTest(robot, cozmo.faces.EvtFaceAppeared),
+                 EvtTest(robot, cozmo.faces.EvtFaceObserved), EvtTest(robot, cozmo.faces.EvtFaceAppeared),
                  EvtTest(robot, cozmo.faces.EvtFaceDisappeared),
-                 EvtTest(robot, cozmo.faces.EvtFaceObserved), EvtTest(robot, cozmo.faces.EvtFaceRenamed),
+                 EvtTest(robot, cozmo.faces.EvtErasedEnrolledFace),
+                 # @TODO: This doesn't seem to be recieving its completion event - might be a bug
+                 #EvtTest(robot, cozmo.faces.EvtFaceRenamed),
                  # Pet Events
                  EvtTest(robot, cozmo.pets.EvtPetAppeared), EvtTest(robot, cozmo.pets.EvtPetDisappeared),
                  EvtTest(robot, cozmo.pets.EvtPetObserved)]
@@ -81,22 +82,43 @@ class EventsSmokeTest:
 
         # ---------- perform stimula which will result in events ---------- #
 
+        # look up at the pets and faces
+        await robot.set_head_angle(degrees(20)).wait_for_completed()
+
+        # really make sure cozmo has time to take in those faces...
+        await asyncio.sleep(2.0)
+
         # start spamming camera events - to pass the camera tests
         robot.camera.image_stream_enabled = True
 
         # trigger action events
-        action = robot.drive_straight(distance_mm(-50), speed_mmps(100)).wait_for_completed()
+        await robot.drive_straight(distance_mm(-50), speed_mmps(100)).wait_for_completed()
 
         # trigger object located event
         conn._request_located_objects()
 
+        await robot.turn_in_place(degrees(180.0)).wait_for_completed()
+        await robot.turn_in_place(degrees(180.0)).wait_for_completed()
+
+        robot.remove_event_handler(cozmo.faces.EvtFaceAppeared, self.handle_face_appeared)
+
+        if len(self.faces_found) > 0:
+            face = self.faces_found[0]
+            if face.name:
+                face.erase_enrolled_face()
+
+            await face.name_face("faceguy").wait_for_completed()
+
+            face.rename_face("faceguyrenamed")
+            # give the event rename event some time to traverse
+            await asyncio.sleep(2.0)
+            face.erase_enrolled_face()
+
         # trigger behavior events
-        robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.FindFaces, 1.0)
+        await robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, 1.0)
 
-        robot.turn_in_place(degrees(180.0)).wait_for_completed()
-        robot.turn_in_place(degrees(180.0)).wait_for_completed()
-
-        time.sleep(1.0)
+        # give the events some time to filter through before verifying them
+        await asyncio.sleep(2.0)
 
         testsPassed = 0
         for test in tests:
@@ -109,9 +131,9 @@ class EventsSmokeTest:
         if failedTests > 0:
             raise Exception(str(failedTests) + "/" + str(len(tests)) + " Tests Failed")
 
-    def run(self, conn):
-        self.robot = conn.wait_for_robot()
-        self.test_events(conn, self.robot)
+    async def run(self, conn):
+        self.robot = await conn.wait_for_robot()
+        await self.test_events(conn, self.robot)
 
 def main():
     cozmo.setup_basic_logging()

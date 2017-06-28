@@ -21,15 +21,15 @@ We should make sure nothing in this process throws errors.
 @TODO: add more mechanisms to verify the desired behavior worked properly.
 '''
 
-import time
+import asyncio
 
 import cozmo
 from cozmo.util import degrees, distance_mm, speed_mmps
 
-def run(robot: cozmo.robot.Robot):
-    robot.set_head_angle(degrees(8)).wait_for_completed()
+async def run(robot: cozmo.robot.Robot):
+    await robot.set_head_angle(degrees(8)).wait_for_completed()
 
-    cubes = robot.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=60)
+    cubes = await robot.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=60)
 
     #@TODO: Place the cube manipulation code up top, and ensure the wbt world is set up so that 
     #       cozmo is guaranteed to see 2 cubes on startup.
@@ -38,25 +38,25 @@ def run(robot: cozmo.robot.Robot):
     # we may want to modify this so he's a little more guaranteed to hit the proper flow.
     # For now my priority is to avoid sending false fails on the nightly tests.
     if len(cubes) > 1:
-        robot.go_to_object(cubes[1], distance_mm(100)).wait_for_completed()
-        robot.pickup_object(cubes[0]).wait_for_completed()
-        robot.place_on_object(cubes[1]).wait_for_completed()
+        await robot.go_to_object(cubes[1], distance_mm(100)).wait_for_completed()
+        await robot.pickup_object(cubes[0]).wait_for_completed()
+        await robot.place_on_object(cubes[1]).wait_for_completed()
         #TODO: verify that the block is on top of the other block
-        robot.drive_straight(distance_mm(-150), speed_mmps(200)).wait_for_completed()
-        robot.pickup_object(cubes[0]).wait_for_completed()
-        robot.drive_straight(distance_mm(-150), speed_mmps(200)).wait_for_completed()
-        robot.place_object_on_ground_here(cubes[0]).wait_for_completed()
+        await robot.drive_straight(distance_mm(-150), speed_mmps(200)).wait_for_completed()
+        await robot.pickup_object(cubes[0]).wait_for_completed()
+        await robot.drive_straight(distance_mm(-150), speed_mmps(200)).wait_for_completed()
+        await robot.place_object_on_ground_here(cubes[0]).wait_for_completed()
         #TODO: verify that all blocks are on the ground
 
     # verify that both types of behavior calls execute without throwing any errors.
     # its not of particular concern if they find anything for now.
-    robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, 0.5)
+    await robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, 0.5)
 
     lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
-    time.sleep(0.5)
+    await asyncio.sleep(0.5)
     lookaround.stop()
 
-    robot.backup_onto_charger(max_drive_time=2.0)
+    await robot.backup_onto_charger(max_drive_time=2.0)
 
     #@TODO: have cozmo drive forward, and call "abort_all_actions", and make sure his pose updated roughly the right amount
 
