@@ -3266,6 +3266,7 @@ RobotState Robot::GetDefaultRobotState()
                          kDefaultStatus, //uint32_t status,
                          0, //uint16_t lastPathID,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
+                         0, //uint16_t distanceSensor_mm
                          -1); //int8_t currPathSegment
   
   return state;

@@ -600,6 +600,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
           payload.state.cliffDataRaw[3],
           cliffDetected ? "CLIFF DETECTED" : "");
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
+
+  sprintf(txt, "Dist: %3u mm (%s)",
+          payload.state.distanceSensor_mm,
+          payload.state.distanceSensor_mm < FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM ? "OBJ DETECTED" : "CLEAR");
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_DIST, Anki::NamedColors::GREEN, txt);
+
 #else
   sprintf(txt, "Cliff: %4u %s",
           payload.state.cliffDataRaw[0],

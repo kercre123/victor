@@ -91,6 +91,7 @@ structure RobotState
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 lastPathID,
   uint_16 cliffDataRaw[4],
+  uint_16 distanceSensor_mm,
   int_8   currPathSegment, // -1 if not traversing a path
 }
 

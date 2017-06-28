@@ -13,7 +13,6 @@
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-
 namespace Anki {
   namespace Cozmo {
     namespace ProxSensors {
@@ -46,13 +45,6 @@ namespace Anki {
         CliffEvent _cliffMsg;
         TimeStamp_t _pendingCliffEvent = 0;
         TimeStamp_t _pendingUncliffEvent = 0;
-        
-        #ifdef SIMULATOR
-        // Forward prox sensor
-        u8 _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
-        const u32 PROX_EVENT_CYCLE_PERIOD = 6;
-        #endif
-        
       } // "private" namespace
 
       void QueueCliffEvent() {
@@ -94,6 +86,14 @@ namespace Anki {
         #endif // COZMO_V2
       }
       
+      u16 GetRawProxValue()
+      {
+        #ifdef COZMO_V2
+        return HAL::GetRawProxData();
+        #else
+        return 0;
+        #endif // COZMO_V2
+      }
       // Stops robot if cliff detected as wheels are driving forward.
       // Delays cliff event to allow pickup event to cancel it in case the
       // reason for the cliff was actually a pickup.
@@ -233,47 +233,14 @@ namespace Anki {
         }
       }
       
-      
       Result Update()
       {
         Result retVal = RESULT_OK;
-
-        // FAKING obstacle detection via prox sensor.
-        // TODO: This will eventually be done entirely on the engine using images.
-        #ifdef SIMULATOR
-        {
-          
-          if ( HAL::RadioIsConnected() )
-          {
-            static u32 proxCycleCnt = 0;
-            if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
-              u16 proxVal = HAL::GetRawProxData();
-              const bool eventChanged = (proxVal != _lastForwardObstacleDetectedDist);
-              if ( eventChanged )
-              {
-                // send changes in events
-                ProxObsDetection msg;
-                msg.distance_mm = proxVal;
-                RobotInterface::SendMessage(msg);
-                _lastForwardObstacleDetectedDist = proxVal;
-              }
-              proxCycleCnt = 0;
-            } // period
-          }
-          else {
-            // reset last since we are not connected anymore
-            _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
-          }
-          
-        }
-        #endif
-
         UpdateCliff();
-        
+
         return retVal;
 
-      } // Update()
-
+      } // Update()  
 
       bool IsAnyCliffDetected()
       {

@@ -129,16 +129,17 @@ Supervisor {
         }        
         
 
-        # if you modify the length, you need to update FORWARD_COLLISION_SENSOR_LENGTH_MM
+        # if you modify the length, you need to update FORWARD_RANGE_SENSOR_MIN/MAX_DISTANCE_MM
         DistanceSensor {
           name "forwardProxSensor"
-          translation 0.04 0 0
+          translation 0.01 0 0
           rotation 0 1 0 0
           type "generic"
-          lookupTable [ 0.0     40   0,
-                        0.120   160  0] # offset for its own translation
+          lookupTable [ 0.015    25  .0,
+                        0.400   410  .0,
+                        1.200  1210  .0] # offset for its own translation
           numberOfRays 1
-          aperture 0.1
+          aperture 0.01
         }
 
         %{ end }%  # vizMode

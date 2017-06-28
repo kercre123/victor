@@ -56,8 +56,9 @@ namespace Cozmo {
   // the drive center is the location between the two wheels)
   const f32 DRIVE_CENTER_OFFSET = -20.f;
   
-  // Length of the forward collision sensor (with respect to origin)
-  const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
+  // Length of the forward range sensor (with respect to origin)
+  const u16 FORWARD_RANGE_SENSOR_MIN_DISTANCE_MM = 25;
+  const u16 FORWARD_RANGE_SENSOR_MAX_DISTANCE_MM = 410;
   
   // The height of the lift at various configurations
   // Actual limit in proto is closer to 20.4mm, but there is a weird

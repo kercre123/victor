@@ -52,9 +52,6 @@
 
 #include <functional>
 
-// Whether or not to handle prox obstacle events
-#define HANDLE_PROX_OBSTACLES 0
-
 // Prints the IDs of the active blocks that are on but not currently
 // talking to a robot whose rssi is less than this threshold.
 // Prints roughly once/sec.
@@ -114,7 +111,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotStopped,                   &RobotToEngineImplMessaging::HandleRobotStopped);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::cliffEvent,                     &RobotToEngineImplMessaging::HandleCliffEvent);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::potentialCliff,                 &RobotToEngineImplMessaging::HandlePotentialCliffEvent);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObsDetection,                          &RobotToEngineImplMessaging::HandleProxObstacle);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::image,                          &RobotToEngineImplMessaging::HandleImageChunk);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imageGyro,                      &RobotToEngineImplMessaging::HandleImageImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
@@ -882,40 +878,6 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));
 }
-
-void RobotToEngineImplMessaging::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-#if(HANDLE_PROX_OBSTACLES)
-  ANKI_CPU_PROFILE("Robot::HandleProxObstacle");
-  
-  ProxObstacle proxObs = message.GetData().Get_proxObstacle();
-  const bool obstacleDetected = proxObs.distance_mm < FORWARD_COLLISION_SENSOR_LENGTH_MM;
-  if ( obstacleDetected )
-  {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Detected", "at dist %d mm",
-                     proxObs.distance_mm);
-    
-    // Compute location of obstacle
-    // NOTE: This should actually depend on a historical pose, but this is all changing eventually anyway...
-    f32 heading = GetPose().GetRotationAngle<'Z'>().ToFloat();
-    Vec3f newPt(GetPose().GetTranslation());
-    newPt.x() += proxObs.distance_mm * cosf(heading);
-    newPt.y() += proxObs.distance_mm * sinf(heading);
-    Pose3d obsPose(heading, Z_AXIS_3D(), newPt, GetWorldOrigin());
-    
-    // Add prox obstacle
-    _blockWorld.AddProxObstacle(obsPose);
-    
-  } else {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Undetected", "max len %d mm", proxObs.distance_mm);
-  }
-  
-  // always update the value
-  SetForwardSensorValue(proxObs.distance_mm);
-  
-#endif
-}
-
 
 // For processing image chunks arriving from robot.
 // Sends complete images to VizManager for visualization (and possible saving).
