@@ -138,6 +138,9 @@ private:
                           const NeedsActionId cause,
                           const RepairablePartId part);
 
+  void FormatStringOldAndNewLevels(std::ostringstream& stream,
+                                   NeedsState::CurNeedsMap& prevNeedsLevels);
+
   void SendNeedsStateToGame(const NeedsActionId actionCausingTheUpdate = NeedsActionId::NoAction);
   void SendNeedsPauseStateToGame();
   void SendNeedsPauseStatesToGame();

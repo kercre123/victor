@@ -916,6 +916,10 @@ message MoodMessage {
 message GetNeedsState {
 }
 
+message ForceSetNeedsLevels {
+  float_32 newNeedLevel[uint_8]
+}
+
 message SetNeedsPauseState {
   bool pause
 }

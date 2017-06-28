@@ -282,6 +282,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     auto helper = MakeAnkiEventUtil(*_cozmoContext->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetNeedsLevels>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseStates>();
@@ -663,20 +664,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   // data: The needs levels before the completion, followed by the needs levels after
   //       the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
   std::ostringstream stream;
-  stream.precision(5);
-  stream << std::fixed;
-  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
-  {
-    if (needIndex > 0)
-    {
-      stream << ":";
-    }
-    stream << prevNeedsLevels[static_cast<NeedId>(needIndex)];
-  }
-  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
-  {
-    stream << ":" << _needsState.GetNeedLevelByIndex(needIndex);
-  }
+  FormatStringOldAndNewLevels(stream, prevNeedsLevels);
   Anki::Util::sEvent("needs.action_completed",
                      {{DDATA, stream.str().c_str()}},
                      NeedsActionIdToString(actionCompleted));
@@ -813,10 +801,59 @@ void NeedsManager::SendRepairDasEvent(const NeedsState& needsState,
 }
 
 
+void NeedsManager::FormatStringOldAndNewLevels(std::ostringstream& stream,
+                                               NeedsState::CurNeedsMap& prevNeedsLevels)
+{
+  stream.precision(5);
+  stream << std::fixed;
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    if (needIndex > 0)
+    {
+      stream << ":";
+    }
+    stream << prevNeedsLevels[static_cast<NeedId>(needIndex)];
+  }
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    stream << ":" << _needsState.GetNeedLevelByIndex(needIndex);
+  }
+}
+
+
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 {
   SendNeedsStateToGame();
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& msg)
+{
+  DEV_ASSERT_MSG(_isPausedOverall, "NeedsManager.HandleMessage.ForceSetNeedsLevels",
+                 "Message received when NeedsManager is not paused");
+
+  NeedsState::CurNeedsMap prevNeedsLevels = _needsState._curNeedsLevels;
+
+  for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
+  {
+    float newLevel = msg.newNeedLevel[needIndex];
+    newLevel = Util::Clamp(newLevel, _needsConfig._minNeedLevel, _needsConfig._maxNeedLevel);
+    _needsState._curNeedsLevels[static_cast<NeedId>(needIndex)] = newLevel;
+  }
+  // Note that we don't set the appropriate number of broken parts here, because we're
+  // just using this to fake needs levels during onboarding, and we will fully initialize
+  // after onboarding completes.
+
+  SendNeedsStateToGame();
+
+  // DAS Event: "needs.force_set_needs_levels"
+  // s_val: The needs levels before the completion, followed by the needs levels after
+  //       the completion, all colon-separated (e.g. "1.0000:0.6000:0.7242:0.6000:0.5990:0.7202"
+  // data: Unused
+  std::ostringstream stream;
+  FormatStringOldAndNewLevels(stream, prevNeedsLevels);
+  Anki::Util::sEvent("needs.force_set_needs_levels", {}, stream.str().c_str());
 }
 
 template<>
