@@ -278,6 +278,12 @@ Blockly.Block.prototype.dispose = function(healStack) {
     }
   } finally {
     Blockly.Events.enable();
+
+    // *** ANKI CHANGE ***
+    // Put a green flag back on the workspace if no green flag is there.
+    setTimeout(function() {
+      window.ensureGreenFlagIsOnWorkspace();
+    }, 0);
   }
 };
 

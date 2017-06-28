@@ -28,19 +28,35 @@
         return point;
     }
 
-    // Put only green flag on the workspace to help the user start a script.
-    // This is for newly-opened workspaces with no existing user project.
-    window.putStarterGreenFlagOnWorkspace = function() {
-        var point = window.getScriptStartingPoint();
-        var greenFlagXML = '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="event_whenflagclicked" id="RqohItYC/XpjZ2]xiar5" x="' + point.x + '" y="' + point.y +'"></block></xml>';
-        window.openCozmoProject(null, null, greenFlagXML, false);
+    // Put green flag in its location in the upper left corner of the workspace if no green flag is on workspace.
+    window.ensureGreenFlagIsOnWorkspace = function () {
+      var point = window.getScriptStartingPoint();
+      var greenFlagXML = '<block type="event_whenflagclicked" id="RqohItYC/XpjZ2]xiar5" x="' + point.x + '" y="' + point.y +'"></block>';
+
+      var xmlStart = '<xml xmlns="http://www.w3.org/1999/xhtml">';
+      var xmlEnd = '</xml>';
+
+      if (window.getNodes().length <= 0) {
+        // No other blocks are on the workspace so put green flag back on workspace by itself.
+        var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
+        window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+      }
+      else {
+        if (!window.isGreenFlagOnWorkspace()) {
+          // There is a program on the workspace but no green flag. Get existing program and append green flag xml to beginning.
+          var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
+          var xmlText = Blockly.Xml.domToText(xml);
+          var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlText.substring(xmlStart.length, xmlText.length);
+
+          window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+        }
+      }
     }
 
     // Check that there is a script on the workspace and it contains
     // more than just the green flag.
     window.hasUserAddedBlocks = function() {
-        var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
-        var nodes = xml.getElementsByTagName('block');
+        var nodes = window.getNodes();
         var greenFlagType = 'event_whenflagclicked';
         var hasUserAddedBlocks = false;
         if (nodes.length > 0) {
@@ -52,7 +68,26 @@
             }
         }
 
-        return hasUserAddedBlocks;        
+        return hasUserAddedBlocks;
+    }
+
+    window.isGreenFlagOnWorkspace = function() {
+        var nodes = window.getNodes();
+        var greenFlagType = 'event_whenflagclicked';
+        for(var i = 0; i < nodes.length; i++) { //loop thru the nodes
+            if (nodes[i].getAttribute("type") == greenFlagType) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // A node is a block representation on the workspace.
+    window.getNodes = function() {
+        var xml = Blockly.Xml.workspaceToDom(Scratch.workspace);
+        var nodes = xml.getElementsByTagName('block');
+        return nodes;
     }
 
     /* Save all scripts currently on the workspace into a Cozmo Code Lab user project in the Unity user profile.

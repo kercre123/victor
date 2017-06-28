@@ -1056,7 +1056,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       switch (_RequestToOpenProjectOnWorkspace) {
       case RequestToOpenProjectOnWorkspace.CreateNewProject:
         // Open workspace and display only a green flag on the workspace.
-        this.EvaluateJS("window.putStarterGreenFlagOnWorkspace();");
+        this.EvaluateJS("window.ensureGreenFlagIsOnWorkspace();");
         break;
 
       case RequestToOpenProjectOnWorkspace.DisplayUserProject:
