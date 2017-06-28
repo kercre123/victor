@@ -2,7 +2,7 @@
   "behaviorClass" : "RequestGameSimple",
   "behaviorID" : "VC_RequestSpeedTap",
   "displayNameKey":"behavior.RequestToPlay",
-  "unlockID": "QuickTapGame",
+  "requiredUnlockId": "QuickTapGame",
   "use_block" : false,
   
   "zero_block_config": {

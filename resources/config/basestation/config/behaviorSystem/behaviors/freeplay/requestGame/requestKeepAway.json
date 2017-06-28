@@ -2,7 +2,7 @@
   "behaviorClass" : "RequestGameSimple",
   "behaviorID" : "RequestKeepAway",
   "displayNameKey":"behavior.RequestToPlay",
-  "unlockID": "KeepawayGame",
+  "requiredUnlockId": "KeepawayGame",
   
   "zero_block_config": {
     "initial_animName" : "RequestGameKeepAwayInitial0",

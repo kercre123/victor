@@ -595,14 +595,14 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
   
   // Configuration for "lets play" game selection
   {
-    std::string jsonFilename = "config/basestation/config/voiceCommands/lets_play_weights.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _letsPlayWeights);
+    std::string jsonFilename = "config/basestation/config/game_request_weights.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _gameRequestWeights);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
                         "Lets play Json config file %s not found or failed to parse.",
                         jsonFilename.c_str());
-      _letsPlayWeights.clear();
+      _gameRequestWeights.clear();
     }
   }
   

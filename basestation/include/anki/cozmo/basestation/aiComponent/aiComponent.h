@@ -29,6 +29,7 @@ class BehaviorEventAnimResponseDirector;
 class BehaviorHelperComponent;
 class DoATrickSelector;
 class ObjectInteractionInfoCache;
+class RequestGameComponent;
 class Robot;
 class WorkoutComponent;
   
@@ -61,7 +62,6 @@ public:
   inline const BehaviorHelperComponent& GetBehaviorHelperComponent() const { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   inline BehaviorHelperComponent&       GetBehaviorHelperComponent()       { assert(_behaviorHelperComponent); return *_behaviorHelperComponent; }
   
-  inline DoATrickSelector& GetDoATrickSelector()  { assert(_doATrickSelector); return *_doATrickSelector; }
   
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
   inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       { assert(_objectInteractionInfoCache); return *_objectInteractionInfoCache; }
@@ -72,6 +72,12 @@ public:
   
   inline const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
   inline WorkoutComponent&       GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
+  
+  inline RequestGameComponent& GetRequestGameComponent()  { assert(_requestGameComponent); return *_requestGameComponent;}
+  inline RequestGameComponent& GetNonConstRequestGameComponent() const { assert(_requestGameComponent); return *_requestGameComponent;}
+
+  inline DoATrickSelector& GetDoATrickSelector()  { assert(_doATrickSelector); return *_doATrickSelector; }
+
   
   ////////////////////////////////////////////////////////////////////////////////
   // Update and init
@@ -101,9 +107,7 @@ private:
   
   // component which behaviors can delegate to for automatic action error handling
   std::unique_ptr<BehaviorHelperComponent> _behaviorHelperComponent;
-  
-  // component which behaviors can delegate to for selecting a random Trick / Spark
-  std::unique_ptr<DoATrickSelector>    _doATrickSelector;
+
   
   // Component which tracks and caches the best objects to use for certain interactions
   std::unique_ptr<ObjectInteractionInfoCache> _objectInteractionInfoCache;
@@ -113,6 +117,13 @@ private:
   
   // component for tracking cozmo's work-out behaviors
   std::unique_ptr< WorkoutComponent >      _workoutComponent;
+  
+  // component for keeping track of what game cozmo should request next
+  std::unique_ptr<RequestGameComponent> _requestGameComponent;
+  
+  // component which behaviors can delegate to for selecting a random Trick / Spark
+  std::unique_ptr<DoATrickSelector>    _doATrickSelector;
+
 };
 
 }

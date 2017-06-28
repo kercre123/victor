@@ -108,7 +108,6 @@ private:
   bool       _hasBlockPose = false;
   Pose3d     _lastBlockPose;
   ObjectID   _robotsBlockID;
-  UnlockId   _requestID;
   bool       _canRequestGame;
 
   std::set<ObjectID> _badBlocks;

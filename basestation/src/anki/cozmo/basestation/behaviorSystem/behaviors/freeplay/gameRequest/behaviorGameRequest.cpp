@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/requestGameComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
@@ -33,7 +34,6 @@ namespace Cozmo {
 #define DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE 0
 
 static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
-static const char* kUnlockIDKey   = "unlockID";
 
 
 IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& config)
@@ -62,9 +62,6 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
                                                     this,
                                                     &robot,
                                                     std::placeholders::_1) );
-  _requestID = UnlockIdFromString(JsonTools::ParseString(config,
-                                                         kUnlockIDKey,
-                                                         GetIDStr() + ".NoUnlockSpecified"));
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedFace,
@@ -80,15 +77,6 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
 bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
-  
-  if(!robot.GetProgressionUnlockComponent().IsUnlocked(_requestID)){
-    if ( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
-      PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable", "'%s': GameFlag not available (%s). Behavior not runnable",
-                        GetIDStr().c_str(), UnlockIdToString(_requestID));
-    }
-    return false;
-  }
-
   const bool hasFace = HasFace(robot);
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
@@ -117,9 +105,11 @@ void IBehaviorRequestGame::SendRequest(Robot& robot)
   
   robot.GetContext()->GetVoiceCommandComponent()->ForceListenContext(VoiceCommand::VoiceCommandListenContext::SimplePrompt);
 
-  robot.Broadcast( MessageEngineToGame( RequestGameStart(_requestID)) );
+  robot.Broadcast( MessageEngineToGame( RequestGameStart(GetRequiredUnlockID())) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
+  
+  robot.GetAIComponent().GetRequestGameComponent().RegisterRequestingGameType(GetRequiredUnlockID());
   robot.GetPublicStateBroadcaster().UpdateRequestingGame(true);
 }
 

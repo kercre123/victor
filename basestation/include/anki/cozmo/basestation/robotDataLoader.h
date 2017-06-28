@@ -96,7 +96,7 @@ public:
 
   
   // voice command configs
-  const Json::Value& GetLetsPlayWeightsConfig() const { return _letsPlayWeights; }
+  const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
   const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
 
   bool IsCustomAnimLoadEnabled() const;
@@ -173,7 +173,7 @@ private:
   Json::Value _needsHandlersConfig;
   
   // voice command configs
-  Json::Value _letsPlayWeights;
+  Json::Value _gameRequestWeights;
   Json::Value _doATrickWeights;
   
   bool                  _isNonConfigDataLoaded = false;

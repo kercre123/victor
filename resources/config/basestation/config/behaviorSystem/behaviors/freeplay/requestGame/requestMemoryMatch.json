@@ -2,7 +2,7 @@
   "behaviorClass" : "RequestGameSimple",
   "behaviorID" : "RequestMemoryMatch",
   "displayNameKey":"behavior.RequestToPlay",
-  "unlockID": "MemoryMatchGame",
+  "requiredUnlockId": "MemoryMatchGame",
   
   "zero_block_config": {
     "initial_animName" : "RequestGameMemoryMatchInitial0",

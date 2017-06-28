@@ -12,6 +12,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFPPlayWithHumans.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/requestGameComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -28,14 +30,12 @@ namespace Cozmo {
 ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(Robot& robot, const Json::Value& config)
 : Anki::Cozmo::IActivityStrategy(config)
 , _lastGameRequestTimestampSec(0.0f)
-, _canRequestGame(false)
 {
 
   // register to receive notifications of game requests
   if ( robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _eventHandles);
     helper.SubscribeEngineToGame<ExternalInterface::MessageEngineToGameTag::RequestGameStart>();
-    helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::CanCozmoRequestGame>();
   }
 }
 
@@ -48,7 +48,8 @@ bool ActivityStrategyFPPlayWithHumans::WantsToStartInternal(const Robot& robot, 
   // checks here for whether we should start
   
   // In any case, at least having games available is a requirement
-  return _canRequestGame;
+  UnlockId nextRequest = robot.GetAIComponent().GetNonConstRequestGameComponent().IdentifyNextGameTypeToRequest(robot);
+  return nextRequest != UnlockId::Count;
 }
 
 
@@ -62,7 +63,8 @@ bool ActivityStrategyFPPlayWithHumans::WantsToEndInternal(const Robot& robot, fl
     return true;
   }
 
-  return !_canRequestGame;
+  UnlockId nextRequest = robot.GetAIComponent().GetNonConstRequestGameComponent().IdentifyNextGameTypeToRequest(robot);
+  return nextRequest == UnlockId::Count;
 }
 
   
@@ -75,13 +77,7 @@ void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::Re
 }
  
   
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void ActivityStrategyFPPlayWithHumans::HandleMessage(const ExternalInterface::CanCozmoRequestGame& msg)
-{
-  // set whether Cozmo is currently allowed to request games or not
-  _canRequestGame = msg.canRequest;
-}
+
 
 
 } // namespace

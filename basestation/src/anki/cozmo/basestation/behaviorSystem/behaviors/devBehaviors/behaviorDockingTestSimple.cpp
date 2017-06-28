@@ -115,7 +115,6 @@ namespace Anki {
     : IBehavior(robot, config)
     , _initialVisionMarker(Vision::MARKER_UNKNOWN)
     , _markerBeingSeen(Vision::MARKER_UNKNOWN)
-    , _cubePlacementPose(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin())
     , _logger(nullptr, robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
     {
       
@@ -146,6 +145,8 @@ namespace Anki {
     
     Result BehaviorDockingTestSimple::InitInternal(Robot& robot)
     {
+      _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin());
+      
       robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
                                                          ReactionTriggerHelpers::kAffectAllArray);
       

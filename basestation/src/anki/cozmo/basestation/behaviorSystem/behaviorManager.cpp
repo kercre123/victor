@@ -239,6 +239,8 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _behaviorThatSetLights(BehaviorClass::Wait)
 , _behaviorStateLightsPersistOnReaction(false)
 {
+  // Load all behavior files into the factory
+  LoadBehaviorsIntoFactory();
 }
 
   
@@ -267,9 +269,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &activitiesConfig)
   // potentially double Init was never supported
   DEV_ASSERT(!_isInitialized, "BehaviorManager.InitConfiguration.AlreadyInitialized");
   
-  // Load all behavior files into the factory
-  LoadBehaviorsIntoFactory();
-
   // create activities
   if ( !activitiesConfig.isNull() )
   {

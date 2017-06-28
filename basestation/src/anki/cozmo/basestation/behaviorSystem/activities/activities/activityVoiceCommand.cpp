@@ -15,12 +15,12 @@
 
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
+#include "anki/cozmo/basestation/aiComponent/requestGameComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
-#include "anki/cozmo/basestation/behaviorSystem/voiceCommandUtils/requestGameSelector.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -66,59 +66,78 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
 :IActivity(robot, config)
 , _context(robot.GetContext())
 , _voiceCommandBehavior(nullptr)
-, _requestGameSelector(new RequestGameSelector(robot))
 {
+  
+  const auto& BM = robot.GetBehaviorManager();
   // TODO: Will need to change how this works should we add more dance behaviors
-  _danceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::Dance_Mambo);
+  _danceBehavior = BM.FindBehaviorByID(BehaviorID::Dance_Mambo);
   DEV_ASSERT(_danceBehavior != nullptr &&
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
-  _driveToFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_ComeHere);
+  _driveToFaceBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
   DEV_ASSERT(_driveToFaceBehavior != nullptr &&
              _driveToFaceBehavior->GetClass() == BehaviorClass::DriveToFace,
              "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
   
-  _searchForFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_SearchForFace);
+  _searchForFaceBehavior = BM.FindBehaviorByID(BehaviorID::VC_SearchForFace);
   DEV_ASSERT(_searchForFaceBehavior != nullptr &&
              _searchForFaceBehavior->GetClass() == BehaviorClass::SearchForFace,
              "VoiceCommandBehaviorChooser.SearchForFaceBehavior.ImproperClassRetrievedForName");
   
-  _fistBumpBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FistBump);
+  _fistBumpBehavior = BM.FindBehaviorByID(BehaviorID::FistBump);
   DEV_ASSERT(_fistBumpBehavior != nullptr &&
              _fistBumpBehavior->GetClass() == BehaviorClass::FistBump,
              "VoiceCommandBehaviorChooser.FistBump.ImproperClassRetrievedForID");
 
-  _peekABooBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FPPeekABoo);
+  _peekABooBehavior = BM.FindBehaviorByID(BehaviorID::FPPeekABoo);
   DEV_ASSERT(_peekABooBehavior != nullptr &&
              _peekABooBehavior->GetClass() == BehaviorClass::PeekABoo,
              "VoiceCommandBehaviorChooser.PeekABoo.ImproperClassRetrievedForID");
   
-  _laserBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_TrackLaser);
+  _laserBehavior = BM.FindBehaviorByID(BehaviorID::VC_TrackLaser);
   DEV_ASSERT(_laserBehavior != nullptr &&
              _laserBehavior->GetClass() == BehaviorClass::TrackLaser,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
   
-  _pounceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_PounceOnMotion);
+  _pounceBehavior = BM.FindBehaviorByID(BehaviorID::VC_PounceOnMotion);
   DEV_ASSERT(_pounceBehavior != nullptr &&
              _pounceBehavior->GetClass() == BehaviorClass::PounceOnMotion,
              "VoiceCommandBehaviorChooser.PounceOnMotion.ImproperClassRetrievedForID");
   
   //Create an arbitrary animation behavior
-  IBehaviorPtr playAnimPtr = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
+  IBehaviorPtr playAnimPtr = BM.FindBehaviorByID(BehaviorID::PlayArbitraryAnim);
   _playAnimBehavior = std::static_pointer_cast<BehaviorPlayArbitraryAnim>(playAnimPtr);
   
   DEV_ASSERT(_playAnimBehavior != nullptr &&
              _playAnimBehavior->GetClass() == BehaviorClass::PlayArbitraryAnim,
              "VoiceCommandBehaviorChooser.BehaviorPlayAnimPointerNotSet");
   
-  _goToSleepBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::VC_GoToSleep);
+  _goToSleepBehavior = BM.FindBehaviorByID(BehaviorID::VC_GoToSleep);
   DEV_ASSERT(_goToSleepBehavior != nullptr &&
              _goToSleepBehavior->GetClass() == BehaviorClass::ReactToOnCharger,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
 
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
   
+  // setup the let's play map
+  IBehaviorPtr VC_Keepaway = BM.FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
+  IBehaviorPtr VC_QT = BM.FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
+  IBehaviorPtr VC_MM = BM.FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
+
+  _letsPlayMap.insert(std::make_pair(UnlockId::KeepawayGame, VC_Keepaway));
+  _letsPlayMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));
+  _letsPlayMap.insert(std::make_pair(UnlockId::MemoryMatchGame, VC_MM));
+  
+  for(const auto& entry: _letsPlayMap){
+    DEV_ASSERT_MSG(entry.second != nullptr &&
+                   entry.second->GetClass() == BehaviorClass::RequestGameSimple,
+                   "VoiceCommandBehaviorChooser.LetsPlayMap.InvalidBehavior",
+                   "nullptr or wrong class for unlockID %s",
+                   UnlockIdToString(entry.first));
+  }
+  
+  // setup messaging
   if(robot.HasExternalInterface()) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
@@ -176,7 +195,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       const bool shouldRefuse = CheckRefusalDueToNeeds(robot, _voiceCommandBehavior);
       if(shouldRefuse)
       {
-        const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+        const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
         BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
         return _voiceCommandBehavior;
@@ -188,7 +207,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
     {
       CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
@@ -199,20 +218,30 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
   {
     case VoiceCommandType::LetsPlay:
     {
-      _voiceCommandBehavior = _requestGameSelector->
-                        GetNextRequestGameBehavior(robot, currentRunningBehavior);
+      auto& gameSelector = robot.GetAIComponent().GetRequestGameComponent();
+      UnlockId requestGameID = gameSelector.IdentifyNextGameTypeToRequest(robot);
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      RemoveSparksForCommand(robot, currentCommand);
-      
+      if(requestGameID != UnlockId::Count){
+        const auto& iter = _letsPlayMap.find(requestGameID);
+        if(ANKI_VERIFY(iter != _letsPlayMap.end(),
+                       "ActivityVoiceCommand.ChooseNextBehaviorInternal.LetsPlay",
+                       "Unlock ID %s not found in map",
+                       UnlockIdToString(requestGameID))){
+          _voiceCommandBehavior = iter->second;
+          
+          const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+          BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+          RemoveSparksForCommand(robot, currentCommand);
+          
+        }
+      }
       return _voiceCommandBehavior;
     }
     case VoiceCommandType::DoADance:
     {
       _voiceCommandBehavior = _danceBehavior;
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
@@ -242,7 +271,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
         }
       }
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
@@ -264,7 +293,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
         CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       }
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
 
       return _voiceCommandBehavior;
@@ -286,7 +315,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
         CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       }
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
       
       return _voiceCommandBehavior;
@@ -325,7 +354,7 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
         CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
       }
       
-      const bool& shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
+      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
       BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
      
       return _voiceCommandBehavior;

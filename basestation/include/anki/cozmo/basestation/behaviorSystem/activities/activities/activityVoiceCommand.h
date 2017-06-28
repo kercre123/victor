@@ -33,7 +33,6 @@ class IBehavior;
 class MoodManager;
 class Robot;
 class CozmoContext;
-class RequestGameSelector;
 class BehaviorPlayArbitraryAnim;
 
 template <typename Type> class AnkiEvent;
@@ -87,11 +86,10 @@ private:
   IBehaviorPtr          _goToSleepBehavior;
   IBehaviorPtr          _pounceBehavior;
   
+  std::map<UnlockId, IBehaviorPtr> _letsPlayMap;
+  
   std::shared_ptr<BehaviorPlayArbitraryAnim> _playAnimBehavior;
-  
-  std::unique_ptr<RequestGameSelector> _requestGameSelector;
   std::function<void()> _doneRespondingTask;
-  
   std::vector<Signal::SmartHandle> _signalHandles;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
