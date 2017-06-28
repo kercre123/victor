@@ -124,10 +124,16 @@ namespace Cozmo.Repair.UI {
     private float _ScanDuration = 3f; //in seconds
 
     [SerializeField]
-    private float _MismatchDisplayDuration = 2f;
+    private float _MismatchDisplayDuration = 2f; //in seconds
 
     [SerializeField]
-    private float _RobotResponseMaxTime = 10f;
+    private float _RobotResponseMaxTime = 10f; //in seconds
+
+    [SerializeField]
+    private float _InactivityTimeOut = 300f; //in seconds
+
+    [SerializeField]
+    private bool _CozmoMovedReactionsInterrupt = false;
 
     #endregion
 
@@ -175,6 +181,10 @@ namespace Cozmo.Repair.UI {
     private bool _MeterPaused = false; //pause meter in certain states
     private bool _WaitForDropCube = false;
 
+    //when this timer reaches zero, the modal will close
+    //refreshes to _InactivityTimeOut on any touch or state change
+    private float _InactivityTimer = float.MaxValue;
+
     #endregion
 
     #region LIFE SPAN
@@ -202,8 +212,6 @@ namespace Cozmo.Repair.UI {
           PlayRobotRepairIdleAnim();
         }
       }
-
-      RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Repair);
@@ -263,7 +271,28 @@ namespace Cozmo.Repair.UI {
     }
 
     private void Update() {
-      if (!_Closed) RefreshModalStateLogic(Time.deltaTime);
+      if (!_Closed) {
+        RefreshModalStateLogic(Time.deltaTime);
+
+        bool interactionDetected = false;
+        if (Input.touchSupported) {
+          interactionDetected = Input.GetTouch(0).phase == TouchPhase.Began;
+        }
+        else {
+          interactionDetected = Input.GetMouseButtonDown(0);
+        }
+
+        if (interactionDetected) {
+          _InactivityTimer = _InactivityTimeOut;
+        }
+        else {
+          _InactivityTimer -= Time.deltaTime;
+
+          if (_InactivityTimer <= 0f) {
+            HandleUserClose();
+          }
+        }
+      }
     }
 
     protected override void RaiseDialogClosed() {
@@ -290,8 +319,6 @@ namespace Cozmo.Repair.UI {
         HubWorldBase.Instance.StartFreeplay();
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
       }
-
-      RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       base.RaiseDialogClosed();
     }
@@ -383,6 +410,8 @@ namespace Cozmo.Repair.UI {
     private void EnterModalState() {
       _TimeInModalState = 0f;
 
+      _InactivityTimer = _InactivityTimeOut;
+
       _ModalStateAnimator.SetInteger("ModalState", (int)_CurrentModalState);
       _ModalStateAnimator.SetTrigger("StateChange");
 
@@ -397,7 +426,6 @@ namespace Cozmo.Repair.UI {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Scan, Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete, ScanSoundComplete);
         break;
       case RepairModalState.TUNE_UP:
-        _MeterPaused = true;
         _TuneUpValuesEntered.Clear();
         _RoundIndex = 0;
 
@@ -412,6 +440,9 @@ namespace Cozmo.Repair.UI {
         _TreadsElements.TuneUpTitle.gameObject.SetActive(_PartToRepair == RepairablePartId.Treads);
 
         _CurrentTuneUpState = TuneUpState.INTRO;
+
+        RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+
         EnterTuneUpState();
         break;
       case RepairModalState.REPAIRED:
@@ -432,7 +463,10 @@ namespace Cozmo.Repair.UI {
         }
         break;
       case RepairModalState.TUNE_UP:
-        RefreshTuneUpStateLogic(deltaTime);
+        //pausing tune up activity when interrupt widget open
+        if (_InterruptedAlert == null) {
+          RefreshTuneUpStateLogic(deltaTime);
+        }
         break;
       case RepairModalState.REPAIRED: break;
       }
@@ -450,11 +484,17 @@ namespace Cozmo.Repair.UI {
       case RepairModalState.TUNE_UP:
         ExitTuneUpState();
 
+        RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+
         while (_UpDownArrows.Count > 0) {
           GameObject.Destroy(_UpDownArrows[0].gameObject);
           _UpDownArrows.RemoveAt(0);
         }
-        _MeterPaused = false;
+
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.TryResetHeadAndLift(null);
+        }
         break;
       case RepairModalState.REPAIRED:
         break;
@@ -489,6 +529,10 @@ namespace Cozmo.Repair.UI {
         break;
       }
 
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null && ShowReactionAlert(robot.CurrentReactionTrigger)) {
+        _RepairInterrupted = true;
+      }
     }
 
     private void ClearTuneUpInputs() {
@@ -556,6 +600,9 @@ namespace Cozmo.Repair.UI {
 
     private void EnterTuneUpState() {
       _TimeInTuneUpState = 0f;
+
+      _InactivityTimer = _InactivityTimeOut;
+
       switch (_CurrentTuneUpState) {
       case TuneUpState.INTRO:
         //let's get our initial symbols spawned early so they can transition on nicely
@@ -622,6 +669,7 @@ namespace Cozmo.Repair.UI {
         break;
       case TuneUpState.TUNE_UP_COMPLETE:
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Success_Complete);
+        _MeterPaused = true;
         NeedsStateManager.Instance.RegisterNeedActionCompleted(_PartRepairAction);
         break;
       }
@@ -788,6 +836,21 @@ namespace Cozmo.Repair.UI {
       _RobotResponseDone = true;
     }
 
+    private void HandleRobotReactionaryBehavior(object messageObject) {
+      ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
+      if (behaviorTransition.newTrigger == ReactionTrigger.ReturnedToTreads) {
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.TryResetHeadAndLift(null);
+        }
+      }
+
+      //only let certain reactions interrupt this modal
+      if (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger) {
+        ShowReactionAlert(behaviorTransition.newTrigger);
+      }
+    }
+
     #endregion
 
     #region MISC HELPER METHODS
@@ -805,45 +868,45 @@ namespace Cozmo.Repair.UI {
     }
 
     private void AppendTuneUpEntry(ArrowInput arrow) {
-      if (_CurrentModalState != RepairModalState.TUNE_UP) return;
-      if (_CurrentTuneUpState != TuneUpState.ENTER_SYMBOLS) return;
-      if (_TuneUpValuesEntered.Count >= _TuneUpPatternToMatch.Count) return;
+      if (_CurrentModalState == RepairModalState.TUNE_UP
+          && _CurrentTuneUpState == TuneUpState.ENTER_SYMBOLS
+          && _TuneUpValuesEntered.Count < _TuneUpPatternToMatch.Count) {
 
-      _TuneUpValuesEntered.Add(arrow);
+        _TuneUpValuesEntered.Add(arrow);
 
-      int indexLatest = _TuneUpValuesEntered.Count - 1;
-      bool match = _TuneUpPatternToMatch[indexLatest] == _TuneUpValuesEntered[indexLatest];
+        int indexLatest = _TuneUpValuesEntered.Count - 1;
+        bool match = _TuneUpPatternToMatch[indexLatest] == _TuneUpValuesEntered[indexLatest];
 
-      //if a match, turn correct arrow green
-      if (match) {
-        _UpDownArrows[indexLatest].Matched(_TuneUpValuesEntered[indexLatest]);
+        //if a match, turn correct arrow green
+        if (match) {
+          _UpDownArrows[indexLatest].Matched(_TuneUpValuesEntered[indexLatest]);
 
-        if (arrow == ArrowInput.Up) {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Up);
+          if (arrow == ArrowInput.Up) {
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Up);
+          }
+          else {
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Down);
+          }
+
         }
         else {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Down);
-        }
+          //if a mismatch, turn the chosen incorrect arrow orange, hide the rest
+          for (int i = 0; i < _UpDownArrows.Count; i++) {
+            if (i != indexLatest) {
+              _UpDownArrows[i].HideAll();
+            }
+          }
 
-      }
-      else {
-        //if a mismatch, turn the chosen incorrect arrow orange, hide the rest
-        for (int i = 0; i < _UpDownArrows.Count; i++) {
-          if (i != indexLatest) {
-            _UpDownArrows[i].HideAll();
+          _UpDownArrows[indexLatest].Mismatched(_TuneUpValuesEntered[indexLatest]);
+
+          if (arrow == ArrowInput.Up) {
+            _UpButtonWrongIndicator.SetActive(true);
+          }
+          else {
+            _DownButtonWrongIndicator.SetActive(true);
           }
         }
-
-        _UpDownArrows[indexLatest].Mismatched(_TuneUpValuesEntered[indexLatest]);
-
-        if (arrow == ArrowInput.Up) {
-          _UpButtonWrongIndicator.SetActive(true);
-        }
-        else {
-          _DownButtonWrongIndicator.SetActive(true);
-        }
       }
-
     }
 
     private void InitializePartElements(UnityAction action, string analyticsKey, RepairPartElements elements) {
@@ -889,8 +952,7 @@ namespace Cozmo.Repair.UI {
       }
     }
 
-    private void RefreshSymbols(float symbolsThisRound) {
-
+    private void RefreshSymbols(int symbolsThisRound) {
       while (_UpDownArrows.Count < symbolsThisRound) {
         GameObject obj = GameObject.Instantiate(_UpdownArrowPrefab, _UpdownArrowAnchor);
         _UpDownArrows.Add(obj.GetComponent<UpDownArrow>());
@@ -1100,34 +1162,29 @@ namespace Cozmo.Repair.UI {
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Scan_Complete);
     }
 
-    private void HandleRobotReactionaryBehavior(object messageObject) {
-      ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
-      if (behaviorTransition.newTrigger == ReactionTrigger.ReturnedToTreads) {
-        var robot = RobotEngineManager.Instance.CurrentRobot;
-        if (robot != null) {
-          robot.TryResetHeadAndLift(null);
-        }
-      }
+    private bool ShowReactionAlert(ReactionTrigger trigger) {
 
-      //only let certain reactions interrupt this modal
-      if (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger) {
-        switch (behaviorTransition.newTrigger) {
+      if (_CozmoMovedReactionsInterrupt) {
+        switch (trigger) {
         case ReactionTrigger.RobotPickedUp:
         case ReactionTrigger.PlacedOnCharger:
         case ReactionTrigger.RobotOnBack:
         case ReactionTrigger.RobotOnFace:
         case ReactionTrigger.RobotOnSide:
-          DAS.Event("robot.interrupt", DASEventDialogName,
-                        DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
+          DAS.Event("robot.interrupt", DASEventDialogName, DASUtil.FormatExtraData(trigger.ToString()));
           ShowDontMoveCozmoAlert();
-          break;
+          return true;
         }
       }
+
+      return false;
     }
 
     private void ShowDontMoveCozmoAlert() {
-      ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
-                                         LocalizationKeys.kMinigameDontMoveCozmoDescription);
+      if (_InterruptedAlert == null) {
+        ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
+                                           LocalizationKeys.kMinigameDontMoveCozmoDescription);
+      }
     }
 
     private void ShowInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {

@@ -9,6 +9,8 @@ using Anki.Cozmo.ExternalInterface;
 namespace Cozmo.Energy.UI {
   public class NeedsEnergyModal : BaseModal {
 
+    #region SERIALIZED FIELDS
+
     [SerializeField]
     private CozmoText[] _InstructionNumberTexts;
 
@@ -24,16 +26,29 @@ namespace Cozmo.Energy.UI {
     [SerializeField]
     private RepeatableMoveTweenSettings _TweenSettings_CozmoFullElements = null;
 
+    [SerializeField]
+    private float _InactivityTimeOut = 300f; //in seconds
+
+    #endregion
+
+    #region NON-SERIALIZED FIELDS
+
     private Sequence _HungryAnimation = null;
     private Sequence _FullAnimation = null;
 
     private NeedBracketId _LastNeedBracket = NeedBracketId.Count;
     private bool? _WasFull = null;
     private bool _WaitForDropCube = false;
-    private AlertModal _InterruptedAlert = null;
+
+    //when this timer reaches zero, the modal will close
+    //refreshes to _InactivityTimeOut on any touch or feeding
+    private float _InactivityTimer = float.MaxValue;
+
+    #endregion
+
+    #region LIFE SPAN
 
     public void InitializeEnergyModal() {
-
       // This avoids calling HubWorldBase.Instance.StopFreeplay();
       // because it doesn't want side effects like turning off the lights
       // Game requests are automatically avoided due to switching to a different activity
@@ -54,6 +69,7 @@ namespace Cozmo.Energy.UI {
       }
 
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
+      RobotEngineManager.Instance.AddCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
@@ -76,11 +92,12 @@ namespace Cozmo.Energy.UI {
         _DoneCozmoButton.Initialize(HandleUserClose, "done_button", DASEventDialogName);
       }
 
+      _InactivityTimer = _InactivityTimeOut;
+
       //animate our display energy to the engine energy
       HandleLatestNeedsLevelChanged(NeedsActionId.FeedBlue);
 
       RefreshForCurrentBracket(nsm);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -88,6 +105,27 @@ namespace Cozmo.Energy.UI {
       NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
 
       StartFeedingActivity();
+    }
+
+    private void Update() {
+      bool interactionDetected = false;
+      if (Input.touchSupported) {
+        interactionDetected = Input.GetTouch(0).phase == TouchPhase.Began;
+      }
+      else {
+        interactionDetected = Input.GetMouseButtonDown(0);
+      }
+
+      if (interactionDetected) {
+        _InactivityTimer = _InactivityTimeOut;
+      }
+      else {
+        _InactivityTimer -= Time.deltaTime;
+
+        if (_InactivityTimer <= 0f) {
+          HandleUserClose();
+        }
+      }
     }
 
     protected override void RaiseDialogClosed() {
@@ -99,7 +137,7 @@ namespace Cozmo.Energy.UI {
 
       NeedsStateManager.Instance.ResumeAllNeeds();
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
+      RobotEngineManager.Instance.RemoveCallback<FeedingSFXStageUpdate>(HandleFeedingSFXStageUpdate);
       RobotEngineManager.Instance.RemoveCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
 
       //RETURN TO FREEPLAY
@@ -119,14 +157,60 @@ namespace Cozmo.Energy.UI {
       HandleUserClose();
     }
 
+    #endregion
+
+    #region ROBOT CALLBACK HANDLERS
+
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
-      //if (actionId == NeedsActionId.FeedBlue) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       float engineEnergy = nsm.PopLatestEngineValue(NeedId.Energy).Value;
       _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineEnergy);
       RefreshForCurrentBracket(nsm);
-      //}
+
+      if (actionId == NeedsActionId.FeedBlue) {
+        _InactivityTimer = _InactivityTimeOut;
+      }
     }
+
+    private void HandleRobotReactionaryBehavior(object messageObject) {
+      ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
+      if (behaviorTransition.newTrigger == ReactionTrigger.ReturnedToTreads) {
+        var robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          robot.TryResetHeadAndLift(null);
+        }
+      }
+    }
+
+    private void HandleFeedingSFXStageUpdate(FeedingSFXStageUpdate message) {
+      uint stageNum = message.stage;
+      switch (stageNum) {
+      case 0: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
+          break;
+        }
+      case 1: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
+          break;
+        }
+      case 2: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
+          break;
+        }
+      case 3: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
+          break;
+        }
+      case 4: {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
+          break;
+        }
+      }
+    }
+
+    #endregion
+
+    #region MISC HELPER METHODS
 
     private void RefreshForCurrentBracket(NeedsStateManager nsm) {
       NeedBracketId newNeedBracket = nsm.PopLatestEngineValue(NeedId.Energy).Bracket;
@@ -176,32 +260,6 @@ namespace Cozmo.Energy.UI {
       }
     }
 
-    private void HandleFeedingSFXStageUpdate(Anki.Cozmo.ExternalInterface.FeedingSFXStageUpdate message) {
-      uint stageNum = message.stage;
-      switch (stageNum) {
-      case 0: {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Play);
-          break;
-        }
-      case 1: {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Up);
-          break;
-        }
-      case 2: {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Down);
-          break;
-        }
-      case 3: {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Success);
-          break;
-        }
-      case 4: {
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
-          break;
-        }
-      }
-    }
-
     private void StartFeedingActivity() {
       if (!_WaitForDropCube) {
         var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -211,73 +269,7 @@ namespace Cozmo.Energy.UI {
       }
     }
 
-
-    private void HandleRobotReactionaryBehavior(object messageObject) {
-      ReactionTriggerTransition behaviorTransition = messageObject as ReactionTriggerTransition;
-      if (behaviorTransition.newTrigger == ReactionTrigger.ReturnedToTreads) {
-        var robot = RobotEngineManager.Instance.CurrentRobot;
-        if (robot != null) {
-          robot.TryResetHeadAndLift(null);
-        }
-      }
-
-      //only let certain reactions interrupt this modal
-      if (behaviorTransition.oldTrigger == ReactionTrigger.NoneTrigger) {
-        switch (behaviorTransition.newTrigger) {
-        case ReactionTrigger.RobotPickedUp:
-        case ReactionTrigger.PlacedOnCharger:
-        case ReactionTrigger.RobotOnBack:
-        case ReactionTrigger.RobotOnFace:
-        case ReactionTrigger.RobotOnSide:
-          DAS.Event("robot.interrupt", DASEventDialogName,
-                  DASUtil.FormatExtraData(behaviorTransition.newTrigger.ToString()));
-          ShowDontMoveCozmoAlert();
-          break;
-        }
-      }
-    }
-
-    private void ShowDontMoveCozmoAlert() {
-      ShowInterruptionAlert("cozmo_moved_by_user_alert", LocalizationKeys.kMinigameDontMoveCozmoTitle,
-                         LocalizationKeys.kMinigameDontMoveCozmoDescription);
-    }
-
-    private void ShowInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
-      CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
-    }
-
-    private void CreateInterruptionAlert(string dasAlertName, string titleKey, string descriptionKey) {
-      if (_InterruptedAlert == null) {
-        var interruptedAlertData = new AlertModalData(dasAlertName, titleKey, descriptionKey,
-                    new AlertModalButtonData("okay_button", LocalizationKeys.kButtonOkay,
-                           clickCallback: CloseInterruptionAlert));
-
-        var interruptedAlertPriorityData = new ModalPriorityData(ModalPriorityLayer.High, 0,
-                       LowPriorityModalAction.Queue,
-                       HighPriorityModalAction.Stack);
-
-        System.Action<AlertModal> interruptedAlertCreated = (alertModal) => {
-          alertModal.ModalClosedWithCloseButtonOrOutsideAnimationFinished += CloseInterruptionAlert;
-          alertModal.ModalForceClosedAnimationFinished += () => {
-            _InterruptedAlert = null;
-            CreateInterruptionAlert(dasAlertName, titleKey, descriptionKey);
-          };
-          _InterruptedAlert = alertModal;
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Game_End);
-        };
-
-        UIManager.OpenAlert(interruptedAlertData, interruptedAlertPriorityData, interruptedAlertCreated,
-              overrideCloseOnTouchOutside: false);
-      }
-    }
-
-    private void CloseInterruptionAlert() {
-      if (_InterruptedAlert != null) {
-        UIManager.CloseModal(_InterruptedAlert);
-        _InterruptedAlert = null;
-      }
-      HandleUserClose();
-    }
+    #endregion
 
   }
 }
