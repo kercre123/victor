@@ -444,7 +444,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224648134096718330}
   - component: {fileID: 114644930400515884}
-  - component: {fileID: 114789451854721226}
+  - component: {fileID: 114021718973783112}
   m_Layer: 5
   m_Name: SegmentedBar
   m_TagString: Untagged
@@ -1549,6 +1549,21 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
+--- !u!114 &114021718973783112
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1203093359438310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d37561d0eb89449ab33f38ecb7bd8ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _SegmentPrefab: {fileID: 11499218, guid: 32cc5668dbbae48a58000c423d34fe52, type: 2}
+  _SegmentContainer: {fileID: 114493011476301438}
+  _OnImageSkinComponentId: 
+  _OffImageSkinComponentId: 
 --- !u!114 &114023108879518188
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2711,7 +2726,6 @@ MonoBehaviour:
   _CountLabel: {fileID: 114880814084252638}
   _ItemIcon: {fileID: 0}
   _ItemId: spark
-  _CountOnly: 1
 --- !u!114 &114316597935848614
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3746,7 +3760,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f97d99ab930064122a762c9b39a93466, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SegmentedBar: {fileID: 114789451854721226}
+  _SegmentedBar: {fileID: 114021718973783112}
   _RewardModalPrefab: {fileID: 114384868453747056, guid: 5f46ab2cc797f43498a5b4e4250bb425,
     type: 2}
 --- !u!114 &114570886231652914
@@ -4322,21 +4336,6 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
---- !u!114 &114789451854721226
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1203093359438310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c31fb7dc6f2d54b7b9830e29405d3fb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _SegmentPrefab: {fileID: 11499218, guid: 32cc5668dbbae48a58000c423d34fe52, type: 2}
-  _SegmentContainer: {fileID: 114493011476301438}
-  _OnImageSkinComponentId: 
-  _OffImageSkinComponentId: 
 --- !u!114 &114792931054783300
 MonoBehaviour:
   m_ObjectHideFlags: 1

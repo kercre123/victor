@@ -495,8 +495,8 @@ public class OnboardingManager : MonoBehaviour {
       _NeedsHubView.gameObject.SetActive(showContent);
       _NeedsHubView.OnboardingBlockoutImage.gameObject.SetActive(showDimmer);
       // Last phase, don't dim the reward boxes by placing the blocker behind them
-      if (_CurrPhase == OnboardingPhases.RewardBox || _CurrPhase == OnboardingPhases.PlayIntro) {
-        _NeedsHubView.OnboardingBlockoutImage.transform.SetSiblingIndex(_NeedsHubView.RewardBar.transform.GetSiblingIndex());
+      if (_CurrPhase == OnboardingPhases.RewardBox) {
+        _NeedsHubView.OnboardingBlockoutImage.transform.SetSiblingIndex(_NeedsHubView.OnboardingBlockoutImage.transform.GetSiblingIndex() - 1);
       }
       bool anyDimmed = false;
       anyDimmed |= UpdateButtonState(_NeedsHubView.DiscoverButton, showButtonDiscover);

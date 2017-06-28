@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Cozmo.Needs.UI {
   public class StarBar : MonoBehaviour {
     [SerializeField]
-    private SegmentedBarAnimated _SegmentedBar;
+    private SegmentedBar _SegmentedBar;
 
     [SerializeField]
     private NeedsRewardModal _RewardModalPrefab;
@@ -18,29 +18,17 @@ namespace Cozmo.Needs.UI {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NeedsState>(HandleGotNeedsState);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.StarLevelCompleted>(HandleStarLevelCompleted);
 
-      // Requested GetNeedsState would do this automatically
-      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
-        const int kCurrStarsMock = 0;
-        const int kMaxStarsMock = 3;
-        UpdateBar(kCurrStarsMock, kMaxStarsMock);
-      }
       // Make really sure we have up to date info
       RobotEngineManager.Instance.Message.GetNeedsState = Singleton<Anki.Cozmo.ExternalInterface.GetNeedsState>.Instance;
       RobotEngineManager.Instance.SendMessage();
-
-      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.RewardBox)) {
-        OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
-        OnboardingManager.Instance.OnOnboardingPhaseStarted += HandleOnboardingPhaseStarted;
-      }
+      // Hide until we get the first need state update
+      _SegmentedBar.gameObject.SetActive(false);
     }
 
     public void OnDestroy() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.StarUnlocked>(HandleStarUnlocked);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NeedsState>(HandleGotNeedsState);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.StarLevelCompleted>(HandleStarLevelCompleted);
-
-      OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingPhaseComplete;
-      OnboardingManager.Instance.OnOnboardingPhaseStarted -= HandleOnboardingPhaseStarted;
     }
 
     private void HandleStarUnlocked(Anki.Cozmo.ExternalInterface.StarUnlocked message) {
@@ -54,6 +42,7 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleGotNeedsState(Anki.Cozmo.ExternalInterface.NeedsState message) {
+      _SegmentedBar.gameObject.SetActive(true);
       UpdateBar(message.numStarsAwarded, message.numStarsForNextUnlock);
     }
 
@@ -73,20 +62,6 @@ namespace Cozmo.Needs.UI {
       _SegmentedBar.SetCurrentNumSegments(currSegments);
     }
 
-    #region Onboarding
-    private void HandleOnboardingPhaseComplete(OnboardingManager.OnboardingPhases phase) {
-      SetHighlight(false);
-    }
-    private void HandleOnboardingPhaseStarted(OnboardingManager.OnboardingPhases phase) {
-      if (phase == OnboardingManager.OnboardingPhases.PlayIntro ||
-          phase == OnboardingManager.OnboardingPhases.RewardBox) {
-        SetHighlight(true);
-      }
-    }
-    private void SetHighlight(bool highlight) {
-      _SegmentedBar.SetBoolAnimParam("Highlighted", highlight);
-    }
-    #endregion
 
   }
 }
