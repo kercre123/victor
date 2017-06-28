@@ -270,7 +270,6 @@
       "contextAllowsFollowup": false,
       "contextCommandList": [
         "ComeHere",
-        "DoADance",
         "DoATrick",
         "FistBump",
         "HowAreYouDoing",
