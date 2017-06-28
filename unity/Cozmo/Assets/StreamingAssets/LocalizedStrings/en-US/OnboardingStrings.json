@@ -67,7 +67,7 @@
     "translation": "It will turn <color=#00FFFF>blue</color> when he can see it"
   },
   "onboarding.Phase3.Body2": {
-    "translation": "<b>Great!</b>\nJust like you, if the Cube is too close it's hard to see."
+    "translation": "<b>Great!</b>\nIf the Cube is too close, it's hard for Cozmo to see it."
   },
   "onboarding.Phase3.Header3": {
     "translation": "He'll tell you when he's ready to proceed..."
@@ -76,7 +76,7 @@
     "translation": "Let Cozmo inspect the Cube on his own"
   },
   "onboarding.Phase3.Body4": {
-    "translation": "Well done!\nCozmo is ready to play!"
+    "translation": "Well done!"
   },
   "onboarding.Phase3.ErrorCube": {
     "translation": "The Cube has moved!"
@@ -109,39 +109,39 @@
     "translation": "Cozmo would like to meet you!"
   },
   "onboarding.NeedsIntro": {
-    "translation": "<b>Cozmo has Needs.</b>\n\nTake care of him each day to earn new Games and Abilities"
+    "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy."
   },
   "onboarding.NeedsIntroReturning": {
-    "translation": "Cozmo has Needs.\n\nTake care of him each day to earn new Games and Abilities.\n\nCozmo's App may look a little different but you'll keep any unlocked Games, Upgrades, and Sparks you've earned."
+    "translation": "<b>Cozmo has Needs.</b>\n\nCare for him each day to keep him happy.\n\nCozmo's App may look a little different but you'll keep any unlocked Games, Upgrades, or Sparks you've earned."
   },
   "onboarding.PlayIntro": {
-    "translation": "Fill Cozmo’s Play Need each day to earn a Daily Bonus Token."
+    "translation": "<b>Cozmo needs to play.</b>\n\nEach day you fully fill his Play Need, you'll earn a Bonus Token."
   },
   "onboarding.RewardsIntro": {
-    "translation": "You’ve earned a Daily Bonus Token by filling Cozmo’s Play Need!\nTokens unlock Bonus Boxes, filled with rewards such as Sparks and new Abilities!"
+    "translation": "<b>You’ve earned a Bonus Token.</b>\n\nTokens unlock Bonus Boxes, filled with rewards like Sparks and new abilities."
   },
   "onboarding.ActivitiesIntro": {
-    "translation": "These are special Activities that don’t affect Cozmo’s Needs or Sparks!"
+    "translation": "Discover Activities are special and don't affect Cozmo’s Needs or cost Sparks."
   },
   "onboarding.needs.ticker": {
-    "translation": "Analyzing Cozmo's Needs."
+    "translation": "Analyzing Cozmo's Needs..."
   },
   "onboarding.repair.ticker": {
-    "translation": "Cozmo wants to be Tuned Up."
+    "translation": "Cozmo wants to be tuned up..."
   },
   "onboarding.feed.ticker": {
-    "translation": "Cozmo wants to be Fed."
+    "translation": "Cozmo wants to be fed..."
   },
   "onboarding.play.ticker": {
-    "translation": "Cozmo wants to Play."
+    "translation": "Cozmo wants to play..."
   },
   "onboarding.SparkScreenRollACube": {
     "translation": "Watch Cozmo Roll a Cube..."
   },
   "onboarding.RepairIntro": {
-    "translation": "(FPO) Cozmo needs a tune up. Click the thingy."
+    "translation": "<b>Cozmo will let you know what he needs.</b>\n\nRight now, the red light on his back means he wants tuned up."
   },
   "onboarding.FeedIntro": {
-    "translation": "(FPO) Cozmo needs food badly. Click the glinty button."
+    "translation": "<b>Cozmo needs to be fed.</b>\n\nThe blue light on his back means his Feed Need is low."
   }
 }

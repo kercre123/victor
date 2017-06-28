@@ -34,7 +34,7 @@
     "translation": "Feed Cozmo"
   },
   "needs.NeedsEnergyModal.FeedingSummary": {
-    "translation": "Cozmo needs to be fed to keep him healthy."
+    "translation": "Cozmo needs to be fed to stay energized and upbeat."
   },
   "needs.NeedsEnergyModal.Instruction1": {
     "translation": "Grab any Cube that is pulsing blue."
@@ -46,13 +46,13 @@
     "translation": "Place the Cube in front of Cozmo."
   },
   "needs.NeedsEnergyModal.FeedingComplete": {
-    "translation": "Cozmo is fed! Now he is ready to play."
+    "translation": "Cozmo is fully fed!"
   },
   "needs.NeedsRepairModal.Title": {
     "translation": "Tune Up Cozmo"
   },
   "needs.NeedsRepairModal.RepairSummary": {
-    "translation": "Cozmo needs to be tuned up in order to keep him healthy."
+    "translation": "Cozmo needs to be tuned up to stay optimized and on-the-move."
   },
   "needs.NeedsRepairModal.HeadDamageNotice": {
     "translation": "Head needs adjustment"
@@ -100,7 +100,7 @@
     "translation": "CONTINUE"
   },
   "needs.NeedsRepairModal.TuneUpComplete": {
-    "translation": "Cozmo is all tuned up. Come back again when his Tune Up Need is more empty."
+    "translation": "Cozmo is fully tuned up!"
   },
   "needs.Done": {
     "translation": "DONE"
