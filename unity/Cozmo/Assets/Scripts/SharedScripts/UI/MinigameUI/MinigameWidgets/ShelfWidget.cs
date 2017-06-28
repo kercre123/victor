@@ -63,11 +63,17 @@ namespace Cozmo {
       [SerializeField]
       private CozmoText _ShelfText;
 
+      [SerializeField]
+      private CozmoText _RoundText;
+
       private void Awake() {
         Color transparent = Color.white;
         transparent.a = 0f;
         _ShelfText.gameObject.SetActive(false);
         _ShelfText.text = "";
+        if (_RoundText != null) {
+          _RoundText.gameObject.SetActive(false);
+        }
       }
 
       private void Start() {
@@ -81,8 +87,19 @@ namespace Cozmo {
       }
 
       public void SetWidgetText(string widgetText) {
+        if (_RoundText != null) {
+          _RoundText.gameObject.SetActive(false);
+        }
         _ShelfText.gameObject.SetActive(widgetText != string.Empty);
         _ShelfText.text = widgetText;
+      }
+
+      public void SetMinigameText(string widgetText) {
+        _ShelfText.gameObject.SetActive(false);
+        if (_RoundText != null) {
+          _RoundText.gameObject.SetActive(widgetText != string.Empty);
+          _RoundText.text = widgetText;
+        }
       }
 
       public void GrowShelfBackground() {

@@ -8,6 +8,9 @@ namespace Cozmo.UI {
     private Image[] _LightSpritesClockwise;
 
     [SerializeField]
+    private Image[] _LightSpritesSignalClockwise;
+
+    [SerializeField]
     private Image _CubeIcon;
 
     [SerializeField]
@@ -55,8 +58,8 @@ namespace Cozmo.UI {
     }
 
     public void SetColor(Color color) {
-      foreach (Image image in _LightSpritesClockwise) {
-        SetLightSpriteColor(image, color);
+      for (int i = 0; i < _LightSpritesClockwise.Length; i++) {
+        SetLightSpriteColor(i, color);
       }
     }
 
@@ -64,7 +67,7 @@ namespace Cozmo.UI {
       Color targetColor;
       for (int i = 0; i < _LightSpritesClockwise.Length; i++) {
         targetColor = colors[i % colors.Length];
-        SetLightSpriteColor(_LightSpritesClockwise[i], targetColor);
+        SetLightSpriteColor(i, targetColor);
       }
     }
 
@@ -112,7 +115,7 @@ namespace Cozmo.UI {
         Color offColor = targetLight.OffColor.ToColor();
 
         Color colorToShow = (onColor == Color.black && offColor != Color.black) ? offColor : onColor;
-        SetLightSpriteColor(_LightSpritesClockwise[i], colorToShow);
+        SetLightSpriteColor(i, colorToShow);
 
         // TODO - Polish: If requested, handle pulsing/rotation here, since engine doesn't send us
         // pulsing frame by frame we have to use the light data to pulse it ourselves.
@@ -138,18 +141,34 @@ namespace Cozmo.UI {
         // ushorts are from engine; Show colors at full brightness even if lights are half bright IRL
         colorToShow *= 2;
 
-        SetLightSpriteColor(_LightSpritesClockwise[i], colorToShow);
+        SetLightSpriteColor(i, colorToShow);
 
         // TODO - Polish: If requested, handle pulsing/rotation here, since engine doesn't send us
         // pulsing frame by frame we have to use the light data to pulse it ourselves.
       }
     }
 
-    private void SetLightSpriteColor(Image image, Color color) {
-      if (image != null) {
-        image.gameObject.SetActive(color != Color.black);
-        image.color = color;
+    private void SetLightSpriteColor(int index, Color color) {
+      if (_LightSpritesClockwise.Length > index) {
+        var image = _LightSpritesClockwise[index];
+        if (image != null) {
+          image.gameObject.SetActive(color != Color.black);
+          image.color = color;
+          if (_LightSpritesSignalClockwise.Length > index) {
+            var signalImage = _LightSpritesSignalClockwise[index];
+            if (signalImage != null) {
+              signalImage.gameObject.SetActive(color != Color.black);
+              //Brighten color for signal tint
+              float h, s, v;
+              Color.RGBToHSV(color, out h, out s, out v);
+              s -= 0.2f;
+              signalImage.color = Color.HSVToRGB(h, s, v);
+            }
+          }
+        }
       }
+
     }
+
   }
 }

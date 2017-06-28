@@ -78,7 +78,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &184292
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,6 +134,7 @@ MonoBehaviour:
   _ContentFadeTweenDurationSeconds: 0.2
   _ContentTweenXOffset: -100
   _ShelfText: {fileID: 114401961557328850}
+  _RoundText: {fileID: 114916943105515558}
 --- !u!222 &22234518
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -393,7 +394,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1981261741787056
 GameObject:
   m_ObjectHideFlags: 1
@@ -644,8 +645,8 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_text: '#speedTap.roundsText'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
-  m_sharedMaterial: {fileID: 2104588, guid: 0b6aa85afe92e45bf9a025cadaf21f75, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
+  m_sharedMaterial: {fileID: 2134148, guid: 7753509296fb8408fa24490c7b8cc5e2, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -672,10 +673,10 @@ MonoBehaviour:
   m_fontSize: 120
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 120
-  m_fontSizeMax: 120
-  m_fontStyle: 1
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 118
+  m_fontSizeMax: 118
+  m_fontStyle: 0
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
@@ -735,7 +736,7 @@ MonoBehaviour:
   - {fileID: 0}
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
-  _LinkedComponentId: CozmoText_Settings_Title
+  _LinkedComponentId: Minigame_Winner_Text
   _OverrideSkinFont: 0
   _OverrideSkinFaceTint: 0
   _OverrideOutlineColor: 0
@@ -744,7 +745,7 @@ MonoBehaviour:
   _OverrideSkinFontStyle: 0
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
-  _OverrideSkinAutoSizing: 0
+  _OverrideSkinAutoSizing: 1
 --- !u!222 &222126462758981164
 CanvasRenderer:
   m_ObjectHideFlags: 1

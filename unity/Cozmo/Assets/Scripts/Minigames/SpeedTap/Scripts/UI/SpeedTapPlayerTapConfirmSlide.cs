@@ -22,7 +22,7 @@ namespace SpeedTap {
 
     // This field changes iff we're using this for MP multiround selection
     [SerializeField]
-    private AnkiTextLegacy _MPTapPlayer1Text;
+    private CozmoText _MPTapPlayer1Text;
 
     public void Init(int numPlayers, int playerIndex = 0, int roundsPlayed = 0) {
       _SPContainer.SetActive(numPlayers <= 2);

@@ -207,6 +207,29 @@ public static class LocalizationEditorUtility {
     return null;
   }
 
+  //Returns first 50 keys that start with the search string
+  //[0] = key [1] = translation
+  public static string[] FindTranslatedMatches(string searchString) {
+    const int maxResults = 50;
+    List<string> ret = new List<string>();
+    if (!string.IsNullOrEmpty(searchString)) {
+      for (int i = 0; i < LocalizationKeys.Length && ret.Count < maxResults * 2; i++) {
+        string key = LocalizationKeys[i];
+        if (string.IsNullOrEmpty(key))
+          continue;
+        string filename = GetLocalizationFileForLocalizedKey(key);
+        if (string.IsNullOrEmpty(filename))
+          continue;
+        string translation = LocalizationEditorUtility.GetTranslation(filename, key);
+        if (translation.StartsWith(searchString, StringComparison.CurrentCultureIgnoreCase)) {
+          ret.Add(key);
+          ret.Add(translation);
+        }
+      }
+    }
+    return ret.ToArray();
+  }
+
   [MenuItem("Cozmo/Localization/Reload Localization Files")]
   public static void Reload() {
     _LocalizationDictionaries.Clear();
@@ -284,6 +307,10 @@ public static class LocalizationEditorUtility {
       return dict.Translations.ContainsKey(key);
     }
     return false;
+  }
+
+  public static bool KeyExists(string key) {
+    return LocalizationKeys.Contains(key);
   }
 
   public static void SetTranslation(string fileName, string key, string translation) {

@@ -273,6 +273,18 @@ public static class EditorDrawingUtility {
 
     position.y += lineHeight;
 
+    if (!string.IsNullOrEmpty(localizationKey) && !LocalizationEditorUtility.KeyExists(localizationKey)) {
+      if (GUI.Button(position, new GUIContent("Search", "Prints keys that start with the english text in the Localized text field"))) {
+        string[] results = LocalizationEditorUtility.FindTranslatedMatches(localizationKey);
+        string displayString = string.Format("{0} Search Results for {1}:\n", results.Length / 2, localizationKey);
+        for (int i = 0; i < results.Length; i += 2) {
+          displayString += string.Format("{0} ({1})\n", results[i], results[i + 1].Replace("\n", "\n\t"));
+        }
+        Debug.Log(displayString);
+      }
+      position.y += lineHeight;
+    }
+
 
     string[] localizationKeys;
     //Get Options for current localization file

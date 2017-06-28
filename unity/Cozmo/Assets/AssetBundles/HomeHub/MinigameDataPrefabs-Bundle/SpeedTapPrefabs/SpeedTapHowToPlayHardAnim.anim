@@ -47,10 +47,10 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_Color.a
+    attribute: m_fontColor.a
     path: MatchText
     classID: 114
-    script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+    script: {fileID: 11500000, guid: 536e1313d5f4d468aa914f435f9173fd, type: 3}
   - curve:
       serializedVersion: 2
       m_Curve:
@@ -3297,10 +3297,10 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_Color.a
+    attribute: m_fontColor.a
     path: DontSlapText
     classID: 114
-    script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+    script: {fileID: 11500000, guid: 536e1313d5f4d468aa914f435f9173fd, type: 3}
   - curve:
       serializedVersion: 2
       m_Curve:
@@ -3332,10 +3332,10 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_Color.a
+    attribute: m_fontColor.a
     path: NoMatchText
     classID: 114
-    script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+    script: {fileID: 11500000, guid: 536e1313d5f4d468aa914f435f9173fd, type: 3}
   - curve:
       serializedVersion: 2
       m_Curve:
@@ -3757,10 +3757,10 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_Color.a
+    attribute: m_fontColor.a
     path: MatchText
     classID: 114
-    script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+    script: {fileID: 11500000, guid: 536e1313d5f4d468aa914f435f9173fd, type: 3}
   - curve:
       serializedVersion: 2
       m_Curve:
@@ -7007,10 +7007,10 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_Color.a
+    attribute: m_fontColor.a
     path: DontSlapText
     classID: 114
-    script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+    script: {fileID: 11500000, guid: 536e1313d5f4d468aa914f435f9173fd, type: 3}
   - curve:
       serializedVersion: 2
       m_Curve:
@@ -7042,10 +7042,10 @@ AnimationClip:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_Color.a
+    attribute: m_fontColor.a
     path: NoMatchText
     classID: 114
-    script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+    script: {fileID: 11500000, guid: 536e1313d5f4d468aa914f435f9173fd, type: 3}
   - curve:
       serializedVersion: 2
       m_Curve:

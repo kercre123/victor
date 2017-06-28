@@ -161,7 +161,13 @@ namespace Cozmo {
       private LayoutElement _InfoTitleLayoutElement;
 
       [SerializeField]
+      private LayoutElement _InfoRoundLayoutElement;
+
+      [SerializeField]
       private CozmoText _InfoTitleTextLabel;
+
+      [SerializeField]
+      private CozmoText _InfoRoundTextLabel;
 
       [SerializeField]
       private LayoutElement _InfoTextSlideLayoutElement;
@@ -193,6 +199,8 @@ namespace Cozmo {
 
       [SerializeField]
       private ScoreWidget _ScoreWidgetPrefab;
+      [SerializeField]
+      private ScoreWidget _ShortScoreWidgetPrefab;
 
       private ScoreWidget _CozmoScoreWidgetInstance;
       private ScoreWidget _PlayerScoreWidgetInstance;
@@ -525,9 +533,6 @@ namespace Cozmo {
 
       // Revert Title Text to MinigameTitle Color when hiding MiddleBackground
       public void HideMiddleBackground() {
-        if (_TitleWidgetInstance != null) {
-          _TitleWidgetInstance.TitleTextColor = UIColorPalette.MinigameTextColor;
-        }
         HideBackground(ref _IsShowingMiddle, ref _MiddleBackgroundTween, _MiddleBackgroundImage);
       }
 
@@ -654,7 +659,14 @@ namespace Cozmo {
 
       private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
                                             Sprite portrait, bool isPlayer) {
-        GameObject widgetObj = UIManager.CreateUIElement(_ScoreWidgetPrefab.gameObject, widgetParent);
+        ScoreWidget scoreWidgetPrefab;
+        if (this._ShelfWidgetInstance == null) {
+          scoreWidgetPrefab = _ScoreWidgetPrefab;
+        }
+        else { //Get the shorter version if there is a Shelf in use.
+          scoreWidgetPrefab = _ShortScoreWidgetPrefab;
+        }
+        GameObject widgetObj = UIManager.CreateUIElement(scoreWidgetPrefab.gameObject, widgetParent);
         ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
         instance.AnimationXOffset = animationOffset;
         instance.Portrait = portrait;
@@ -936,8 +948,19 @@ namespace Cozmo {
       public string InfoTitleText {
         get { return _InfoTitleTextLabel.text; }
         set {
+          _InfoRoundLayoutElement.gameObject.SetActive(false);
           _InfoTitleLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
           _InfoTitleTextLabel.text = value;
+        }
+      }
+
+      //Only one of these labels can be active, setting one disables the other.
+      public string InfoRoundText {
+        get { return _InfoRoundTextLabel.text; }
+        set {
+          _InfoTitleLayoutElement.gameObject.SetActive(false);
+          _InfoRoundLayoutElement.gameObject.SetActive(!string.IsNullOrEmpty(value));
+          _InfoRoundTextLabel.text = value;
         }
       }
 
@@ -1060,8 +1083,10 @@ namespace Cozmo {
       }
 
       public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f, bool playSound = true) {
+
         if (_BannerWidgetInstance == null) {
           _BannerWidgetInstance = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer).GetComponent<Banner>();
+          _BannerWidgetInstance.Init();
         }
         _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds, playSound);
       }

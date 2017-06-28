@@ -8,10 +8,10 @@ namespace SpeedTap {
   public class SpeedTapNumPlayerTypeSelectSlide : MonoBehaviour {
 
     [SerializeField]
-    private CozmoButtonLegacy _HumanVCozmoBtn;
+    private CozmoButton _HumanVCozmoBtn;
 
     [SerializeField]
-    private CozmoButtonLegacy _HumanVHumanVCozmoBtn;
+    private CozmoButton _HumanVHumanVCozmoBtn;
 
     [SerializeField]
     private GameObject _LockOverlay;

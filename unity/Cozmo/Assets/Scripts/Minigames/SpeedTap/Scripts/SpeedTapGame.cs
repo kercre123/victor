@@ -261,6 +261,17 @@ namespace SpeedTap {
     }
 
     protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
+      //Only show Winner Slide if 1 on 1
+      _ShowEndWinnerSlide = GetPlayerCount() == 2;
+      if (_ShowEndWinnerSlide) {
+        SharedMinigameView.HideCozmoScoreboard();
+        SharedMinigameView.HidePlayerScoreboard();
+        SharedMinigameView.HidePlayer2Scoreboard();
+        SharedMinigameView.HideShelf();
+        footerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
+                            HumanRoundsWon, CozmoRoundsWon);
+      }
+
       base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText, GetPlayerCount() > 2);
     }
 
@@ -271,6 +282,35 @@ namespace SpeedTap {
       int roundsPlayedTotal = 0;
       int numHumans = 0;
       int playerCount = GetPlayerCount();
+
+      //Get rounds played
+      for (int i = 0; i < playerCount; ++i) {
+        roundsPlayedTotal += ((SpeedTapPlayerInfo)GetPlayerByIndex(i)).playerRoundsWon;
+      }
+
+      //Moved this before getting player info in order to create the ShelfWidget so that the correctly sized Score Widget is used.
+      if (playerCount > 2) {
+        // Display the current round
+        if (WantsHideRoundLabel) {
+          SharedMinigameView.ShelfWidget.SetMinigameText("");
+        }
+        else if (IsOvertime()) {
+          SharedMinigameView.ShelfWidget.SetMinigameText(Localization.Get(LocalizationKeys.kSpeedTapMultiplayerOverTime));
+        }
+        else {
+          SharedMinigameView.ShelfWidget.SetMinigameText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1));
+        }
+      }
+      else {
+        if (WantsHideRoundLabel) {
+          SharedMinigameView.InfoRoundText = "";
+          SharedMinigameView.InfoTitleText = "";
+        }
+        else {
+          SharedMinigameView.InfoRoundText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
+        }
+      }
+
       for (int i = 0; i < playerCount; ++i) {
         SpeedTapPlayerInfo playerInfo = (SpeedTapPlayerInfo)GetPlayerByIndex(i);
         // Because creation involves an animation, can't create these on player creation
@@ -304,28 +344,8 @@ namespace SpeedTap {
         playerInfo.scoreWidget.Score = playerInfo.playerScoreRound;
         playerInfo.scoreWidget.MaxRounds = halfTotalRounds;
         playerInfo.scoreWidget.RoundsWon = playerInfo.playerRoundsWon;
-        roundsPlayedTotal += playerInfo.playerRoundsWon;
       }
-      if (GetPlayerCount() > 2) {
-        // Display the current round
-        if (WantsHideRoundLabel) {
-          SharedMinigameView.ShelfWidget.SetWidgetText("");
-        }
-        else if (IsOvertime()) {
-          SharedMinigameView.ShelfWidget.SetWidgetText(Localization.Get(LocalizationKeys.kSpeedTapMultiplayerOverTime));
-        }
-        else {
-          SharedMinigameView.ShelfWidget.SetWidgetText(Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1));
-        }
-      }
-      else {
-        if (WantsHideRoundLabel) {
-          SharedMinigameView.InfoTitleText = "";
-        }
-        else {
-          SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, roundsPlayedTotal + 1);
-        }
-      }
+
     }
 
     private List<PlayerInfo> GetPlayersMostPointsWon() {

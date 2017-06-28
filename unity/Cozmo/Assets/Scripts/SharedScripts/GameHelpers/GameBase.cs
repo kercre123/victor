@@ -1014,10 +1014,11 @@ public abstract class GameBase : MonoBehaviour {
     if (_ShowEndWinnerSlide) {
       winnerText = winnerText.Replace("\n", " ");
       SharedMinigameView.ShowWinnerStateSlide(DidHumanWin(), winnerText, footerText);
+      SharedMinigameView.HideTitleWidget();
     }
     else {
       if (showWinnerTextInShelf) {
-        SharedMinigameView.ShelfWidget.SetWidgetText(winnerText);
+        SharedMinigameView.ShelfWidget.SetMinigameText(winnerText);
       }
       else {
         SharedMinigameView.InfoTitleText = winnerText;
