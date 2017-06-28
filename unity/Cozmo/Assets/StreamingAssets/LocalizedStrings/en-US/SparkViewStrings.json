@@ -35,5 +35,8 @@
   },
   "sparksView.sparkCount.label": {
     "translation": "Sparks Available"
+  },
+  "sparksView.sparksRewarded.label": {
+    "translation": "SPARKS"
   }
 }

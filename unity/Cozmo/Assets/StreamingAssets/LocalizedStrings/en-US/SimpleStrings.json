@@ -173,5 +173,8 @@
   },
   "label.currentPage": {
     "translation": "{0} of {1}"
+  },
+  "label.RewardHeader": {
+    "translation": "REWARDS"
   }
 }
