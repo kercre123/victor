@@ -201,6 +201,8 @@ namespace Cozmo {
       private ScoreWidget _ScoreWidgetPrefab;
       [SerializeField]
       private ScoreWidget _ShortScoreWidgetPrefab;
+      [SerializeField]
+      private ScoreWidget _SlimScoreWidgetPrefab;
 
       private ScoreWidget _CozmoScoreWidgetInstance;
       private ScoreWidget _PlayerScoreWidgetInstance;
@@ -657,15 +659,41 @@ namespace Cozmo {
         _Player2ScoreWidgetInstance = null;
       }
 
+      public enum ScoreBoardType {
+        Normal,
+        Short,
+        Slim
+      }
+      private ScoreBoardType _ScoreBoardType = ScoreBoardType.Normal;
+      public ScoreBoardType CurrentScoreBoardType {
+        get {
+          return _ScoreBoardType;
+        }
+        set {
+          _ScoreBoardType = value;
+        }
+      }
+
       private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
                                             Sprite portrait, bool isPlayer) {
         ScoreWidget scoreWidgetPrefab;
-        if (this._ShelfWidgetInstance == null) {
+
+        switch (_ScoreBoardType) {
+        case ScoreBoardType.Normal:
           scoreWidgetPrefab = _ScoreWidgetPrefab;
-        }
-        else { //Get the shorter version if there is a Shelf in use.
+          break;
+        case ScoreBoardType.Slim:
+          scoreWidgetPrefab = _SlimScoreWidgetPrefab;
+          break;
+        case ScoreBoardType.Short:
           scoreWidgetPrefab = _ShortScoreWidgetPrefab;
+          break;
+        default:
+          DAS.Error(this, "ScoreBoardType is unknown - " + _ScoreBoardType);
+          scoreWidgetPrefab = _ScoreWidgetPrefab;
+          break;
         }
+
         GameObject widgetObj = UIManager.CreateUIElement(scoreWidgetPrefab.gameObject, widgetParent);
         ScoreWidget instance = widgetObj.GetComponent<ScoreWidget>();
         instance.AnimationXOffset = animationOffset;

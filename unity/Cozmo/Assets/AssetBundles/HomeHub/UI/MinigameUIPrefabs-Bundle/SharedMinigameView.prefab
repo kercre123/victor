@@ -547,6 +547,8 @@ MonoBehaviour:
   _ScoreWidgetPrefab: {fileID: 11470090, guid: b9e65c08e72f64c788a56c09874e1484, type: 2}
   _ShortScoreWidgetPrefab: {fileID: 11470090, guid: d281413eb3ae042fcb9c4cc8cfe8ea7d,
     type: 2}
+  _SlimScoreWidgetPrefab: {fileID: 11470090, guid: 348b0a1f03c4f4a648427771a7de6395,
+    type: 2}
   _ScoreEnterAnimationXOffset: 600
   _CozmoScoreContainer: {fileID: 22442982}
   _PlayerScoreContainer: {fileID: 22497620}
@@ -559,6 +561,7 @@ MonoBehaviour:
     type: 2}
   _ShowCozmoVideoPrefab: {fileID: 11464060, guid: 40ed55f641e834c7ea15be34f60efeff,
     type: 2}
+  scoreBoardType: 0
 --- !u!222 &22229442
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -620,8 +623,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 3, y: 100}
-  m_SizeDelta: {x: -885, y: -640}
+  m_AnchoredPosition: {x: 5, y: 100}
+  m_SizeDelta: {x: -1553, y: -640}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22406250
 RectTransform:
@@ -792,8 +795,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 923.1494, y: -672.2667}
-  m_SizeDelta: {x: 1846.2988, y: 448.17783}
+  m_AnchoredPosition: {x: 589.5, y: -672.5625}
+  m_SizeDelta: {x: 1179, y: 448.375}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22455776
 RectTransform:
@@ -1320,7 +1323,7 @@ MonoBehaviour:
     spaceCount: 1
     wordCount: 2
     linkCount: 0
-    lineCount: 1
+    lineCount: 2
     pageCount: 1
     materialCount: 1
   m_havePropertiesChanged: 1
@@ -1610,5 +1613,5 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -40, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

@@ -62,6 +62,8 @@ namespace Cozmo.Challenge.CubePounce {
       InitializeChallengeObjects(GameConfig.NumCubesRequired());
       LightCube.OnMovedAction += HandleCubeMoved;
       LightCube.OnStoppedAction += HandleCubeStopped;
+      _ShowEndWinnerSlide = true;
+      SharedMinigameView.CurrentScoreBoardType = MinigameWidgets.SharedMinigameView.ScoreBoardType.Slim;
     }
 
     protected void InitializeChallengeObjects(int numCubes) {
@@ -297,14 +299,10 @@ namespace Cozmo.Challenge.CubePounce {
     }
 
     protected override void ShowWinnerState(int currentEndIndex, string overrideWinnerText = null, string footerText = "", bool showWinnerTextInShelf = false) {
+      footerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore, HumanScore, CozmoScore);
+      SharedMinigameView.HideCozmoScoreboard();
+      SharedMinigameView.HidePlayerScoreboard();
       base.ShowWinnerState(currentEndIndex, overrideWinnerText, footerText, showWinnerTextInShelf);
-
-      if (DidHumanWin()) {
-        SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
-      }
-      else {
-        SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
-      }
     }
   }
 }
