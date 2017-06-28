@@ -108,6 +108,12 @@
         var greenFlag = document.querySelector('#greenflag');
         var stop = document.querySelector('#stop');
 
+        // TODO Temporary hack to make close button visible
+        if (window.isVertical) {
+            var close = document.querySelector('#close');
+            close.style.left = 290 + "px";
+        }
+
         window.resolvePromiseWaitForSaveProject = null;
         window.saveProjectCompleted = function () {
             // If we have a Promise to resolve, resolve it
