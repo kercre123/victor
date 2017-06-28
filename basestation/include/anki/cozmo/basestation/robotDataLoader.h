@@ -64,6 +64,7 @@ public:
   void LoadAnimations();
   void LoadFaceAnimations();
   void LoadRobotConfigs();
+  void LoadVoiceCommandConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
@@ -127,7 +128,6 @@ private:
   void LoadEmotionEvents();
   void LoadBehaviors();
   void LoadActivities();
-  void LoadVoiceCommandConfigs();
   void LoadReactionTriggerMap();
 
   const CozmoContext* const _context;

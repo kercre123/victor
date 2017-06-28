@@ -48,6 +48,7 @@ public:
   using CountryType = Anki::Util::Locale::CountryISO2;
   
   std::vector<PhraseDataSharedPtr> GetPhraseDataList(LanguageType languageType, VoiceCommandListenContext context) const;
+  std::vector<PhraseDataSharedPtr> GetPhraseDataList(LanguageType languageType, const std::set<VoiceCommandType>& typeSet) const;
   
   PhraseDataSharedPtr GetDataForPhrase(LanguageType languageType, const std::string& phrase) const;
   const char* GetFirstPhraseForCommand(LanguageType languageType, VoiceCommandType commandType) const;

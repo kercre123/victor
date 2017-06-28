@@ -19,10 +19,7 @@ namespace Anki {
 namespace AudioUtil {
   
 
-AudioRecognizerProcessor::AudioRecognizerProcessor()
-: _captureSystem(new AudioCaptureSystem())
-{
-}
+AudioRecognizerProcessor::AudioRecognizerProcessor() = default;
 
 AudioRecognizerProcessor::~AudioRecognizerProcessor()
 {
@@ -45,18 +42,18 @@ void AudioRecognizerProcessor::SetSpeechRecognizer(SpeechRecognizer* newRecog)
 }
 
 
-void AudioRecognizerProcessor::SetAudioCaptureSystem(AudioCaptureSystem* newCaptureSystem)
+void AudioRecognizerProcessor::SetAudioInputSource(IAudioInputSource* audioInputSource)
 {
   std::lock_guard<std::mutex> lock(_componentsMutex);
-  if (_captureSystem)
+  if (_audioInputSource)
   {
-    _captureSystem->SetCallback();
+    _audioInputSource->SetCallback(IAudioInputSource::DataCallback{});
   }
   
-  _captureSystem = newCaptureSystem;
-  if (_captureSystem)
+  _audioInputSource = audioInputSource;
+  if (_audioInputSource)
   {
-    _captureSystem->SetCallback(std::bind(&AudioRecognizerProcessor::AudioSamplesCallback, this, std::placeholders::_1, std::placeholders::_2));
+    _audioInputSource->SetCallback(std::bind(&AudioRecognizerProcessor::AudioSamplesCallback, this, std::placeholders::_1, std::placeholders::_2));
   }
 }
 

@@ -22,8 +22,7 @@
         },
         {
           "phrase": "Do A Dance",
-          "commandType": "DoADance",
-          "minRecogScore": 3.0
+          "commandType": "DoADance"
         },
         {
           "phrase": "Continue",
@@ -43,7 +42,7 @@
           "minRecogScore": 1.75
         },
         {
-          "phrase": "Do You Want To Play",
+          "phrase": "Lets Play A Game",
           "commandType": "LetsPlay"
         },
         {
@@ -51,7 +50,7 @@
           "commandType": "NoThankYou"
         },
         {
-          "phrase": "Peek a Boo",
+          "phrase": "PeekaBoo",
           "commandType": "PeekABoo"
         },
         {
@@ -82,7 +81,7 @@
           "phrase": "Hey Cozmo",
           "commandType": "HeyCozmo",
           "paramA": -300,
-          "paramB": 850
+          "paramB": 900
         },
         {
           "phrase": "Tanze",
@@ -102,12 +101,13 @@
         },
         {
           "phrase": "Lass Uns Spielen",
-          "commandType": "LetsPlay",
-          "minRecogScore": 2.0
+          "commandType": "LetsPlay"
         },
         {
           "phrase": "Nein Danke",
-          "commandType": "NoThankYou"
+          "commandType": "NoThankYou",
+          "paramA": -926,
+          "paramB": 737
         },
         {
           "phrase": "Kuckuck",
@@ -115,7 +115,9 @@
         },
         {
           "phrase": "Ja Bitte",
-          "commandType": "YesPlease"
+          "commandType": "YesPlease",
+          "paramA": -884,
+          "paramB": 799
         },
         {
           "phrase": "Geh schlafen",
@@ -136,13 +138,12 @@
         {
           "phrase": "Hé Cozmo",
           "commandType": "HeyCozmo",
-          "paramA": -600,
-          "paramB": 700
+          "paramA": -867,
+          "paramB": 982
         },
         {
           "phrase": "Danse un peu",
-          "commandType": "DoADance",
-          "minRecogScore": 3.5
+          "commandType": "DoADance"
         },
         {
           "phrase": "Viens là",
@@ -150,13 +151,11 @@
         },
         {
           "phrase": "Fais moi un tour",
-          "commandType": "DoATrick",
-          "minRecogScore": 2.0
+          "commandType": "DoATrick"
         },
         {
           "phrase": "Poing à poing",
-          "commandType": "FistBump",
-          "minRecogScore": 3.0
+          "commandType": "FistBump"
         },
         {
           "phrase": "Viens jouer",
@@ -164,16 +163,19 @@
         },
         {
           "phrase": "Non merci",
-          "commandType": "NoThankYou"
+          "commandType": "NoThankYou",
+          "paramA": -1031,
+          "paramB": 861
         },
         {
           "phrase": "Coucou",
-          "commandType": "PeekABoo",
-          "minRecogScore": 4.0
+          "commandType": "PeekABoo"
         },
         {
           "phrase": "Oui s'il te plait",
-          "commandType": "YesPlease"
+          "commandType": "YesPlease",
+          "paramA": -1106,
+          "paramB": 748
         },
         {
           "phrase": "Va dormir",
@@ -192,7 +194,7 @@
       "ltsFilename" : "lts_ja_6.7.12.raw",
       "phraseCommandsMap": [
         {
-          "phrase": "Ne kozumo",
+          "phrase": "Ne kozmo",
           "commandType": "HeyCozmo",
           "paramA": -900,
           "paramB": 600
@@ -218,8 +220,10 @@
           "commandType": "LetsPlay"
         },
         {
-          "phrase": "Iranai",
-          "commandType": "NoThankYou"
+          "phrase": "Iyada",
+          "commandType": "NoThankYou",
+          "paramA": -952,
+          "paramB": 696
         },
         {
           "phrase": "Inai inai ba",
@@ -227,7 +231,9 @@
         },
         {
           "phrase": "Onegai",
-          "commandType": "YesPlease"
+          "commandType": "YesPlease",
+          "paramA": -877,
+          "paramB": 791
         },
         {
           "phrase": "Nerujikan dayo",

@@ -48,6 +48,7 @@ public:
   bool AddPhraseCommandMap(const Json::Value& dataObject);
   
   std::vector<PhraseDataSharedPtr> GetPhraseDataList(const std::set<VoiceCommandType>& typeSet) const;
+  std::vector<PhraseDataSharedPtr> GetPhraseDataList(VoiceCommandType commandType) const;
   PhraseDataSharedPtr GetDataForPhrase(const std::string& phrase) const;
   const char* GetFirstPhraseForCommand(VoiceCommandType commandType) const;
   

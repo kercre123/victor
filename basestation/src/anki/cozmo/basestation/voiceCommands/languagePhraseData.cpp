@@ -226,16 +226,25 @@ std::vector<PhraseDataSharedPtr> LanguagePhraseData::GetPhraseDataList(const std
   std::vector<PhraseDataSharedPtr> returnList;
   for (const auto& commandType : typeSet)
   {
-    const auto& iter = _commandToPhraseDataMap.find(commandType);
-    if (iter != _commandToPhraseDataMap.end() && iter->second.size() > 0)
-    {
-      for (const auto& listItem : iter->second)
-      {
-        returnList.push_back(listItem);
-      }
-    }
+    auto resultVector = GetPhraseDataList(commandType);
+    returnList.insert(returnList.end(),
+                      std::make_move_iterator(resultVector.begin()),
+                      std::make_move_iterator(resultVector.end()));
   }
 
+  return returnList;
+}
+
+std::vector<PhraseDataSharedPtr> LanguagePhraseData::GetPhraseDataList(VoiceCommandType commandType) const
+{
+  std::vector<PhraseDataSharedPtr> returnList;
+  const auto& iter = _commandToPhraseDataMap.find(commandType);
+  if (iter != _commandToPhraseDataMap.end() && iter->second.size() > 0)
+  {
+    returnList.insert(returnList.end(),
+                      iter->second.begin(),
+                      iter->second.end());
+  }
   return returnList;
 }
 

@@ -46,6 +46,10 @@ bool AudioFileReader::TrimPrimingAndRemainder(const NativeAudioFileData& fileDat
 
   return true;
 }
+
+void AudioFileReader::DeliverAudio(bool doRealTime)
+{
   
+}
 } // namespace AudioUtil
 } // namespace Anki

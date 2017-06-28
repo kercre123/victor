@@ -58,7 +58,11 @@ namespace {
 struct SpeechRecognizerTHF::SpeechRecognizerTHFData
 {
   thf_t*      _thfSession = nullptr;
-  pronuns_t*  _thfPronun = nullptr;
+  
+  // We intentionally don't store off and reuse the pronun object. Attempting to do so during testing resulted in
+  // crashes when calling into thfSearchCreateFromGrammar and passing in a common pronun object. The safe way to use
+  // the pronun object appears to be creating, using, and then destroying it each time a search object is to be created.
+  std::string _thfPronunPath;
   
   IndexType                         _thfCurrentRecog = InvalidIndex;
   IndexType                         _thfFollowupRecog = InvalidIndex;
@@ -67,7 +71,7 @@ struct SpeechRecognizerTHF::SpeechRecognizerTHFData
   const recog_t*                    _lastUsedRecognizer = nullptr;
   
   const RecogDataSP RetrieveDataForIndex(IndexType index) const;
-  searchs_t* CreatePhraseSpottedSearch(recog_t* createdRecognizer,
+  searchs_t* CreatePhraseSpottedSearch(recog_t* createdRecognizer, pronuns_t* createdPronunciation,
                                        const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList) const;
 };
   
@@ -153,7 +157,7 @@ bool SpeechRecognizerTHF::Init(const std::string& pronunPath)
   
   /* Create SDK session */
   thf_t* createdSession = thfSessionCreate();
-  if(!createdSession)
+  if(nullptr == createdSession)
   {
     /* as of SDK 3.0.9 thfGetLastError(NULL) will return a valid string */
     const char *err=thfGetLastError(NULL) ? thfGetLastError(NULL) : "could not find dll or out of memory";
@@ -163,14 +167,8 @@ bool SpeechRecognizerTHF::Init(const std::string& pronunPath)
   }
   _impl->_thfSession = createdSession;
   
-  /* Create pronunciation */
-  pronuns_t* createdPronunciation = thfPronunCreateFromFile(_impl->_thfSession, pronunPath.c_str(), 0);
-  if(!createdPronunciation)
-  {
-    HandleInitFail(std::string("ERROR thfPronunCreateFromFile ") + thfGetLastError(_impl->_thfSession));
-    return false;
-  }
-  _impl->_thfPronun = createdPronunciation;
+  // Store the pronunciation file path
+  _impl->_thfPronunPath = pronunPath;
   
   return true;
 }
@@ -215,16 +213,23 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
   /* Create recognizer */
   auto doSpeechDetect = isPhraseSpotted ? NO_SDET : SDET;
   createdRecognizer = thfRecogCreateFromFile(_impl->_thfSession, nnFilePath.c_str(), bufferSizeInSamples, -1, doSpeechDetect);
-  if(!createdRecognizer)
+  if(nullptr == createdRecognizer)
   {
     cleanupAfterFailure("ERROR thfRecogCreateFromFile");
+    return false;
+  }
+  
+  pronuns_t* createdPronunciation = thfPronunCreateFromFile(_impl->_thfSession, _impl->_thfPronunPath.c_str(), 0);
+  if(nullptr == createdPronunciation)
+  {
+    cleanupAfterFailure(std::string("ERROR thfPronunCreateFromFile ") + thfGetLastError(_impl->_thfSession));
     return false;
   }
   
   /* Create search */
   if (isPhraseSpotted)
   {
-    createdSearch = _impl->CreatePhraseSpottedSearch(createdRecognizer, phraseList);
+    createdSearch = _impl->CreatePhraseSpottedSearch(createdRecognizer, createdPronunciation, phraseList);
   }
   else
   {
@@ -239,11 +244,13 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
     const auto& itemList = static_cast<const char**>(recogList.data());
     const auto& numItems = Util::numeric_cast<unsigned short>(recogList.size());
     constexpr unsigned short numBestResultsToReturn = 1;
-    createdSearch = thfSearchCreateFromList(_impl->_thfSession, createdRecognizer, _impl->_thfPronun,
+    createdSearch = thfSearchCreateFromList(_impl->_thfSession, createdRecognizer, createdPronunciation,
                                             itemList, NULL, numItems,
                                             numBestResultsToReturn);
   }
-  if(!createdSearch)
+  thfPronunDestroy(createdPronunciation);
+  
+  if(nullptr == createdSearch)
   {
     const char *err = thfGetLastError(_impl->_thfSession);
     std::string searchMethod = isPhraseSpotted ? "thfPhrasespotCreateFromList " : "thfSearchCreateFromList ";
@@ -290,7 +297,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
   return true;
 }
 
-searchs_t* SpeechRecognizerTHF::SpeechRecognizerTHFData::CreatePhraseSpottedSearch(recog_t* createdRecognizer,
+searchs_t* SpeechRecognizerTHF::SpeechRecognizerTHFData::CreatePhraseSpottedSearch(recog_t* createdRecognizer, pronuns_t* createdPronunciation,
                                                                                    const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList) const
 {
   if (nullptr == createdRecognizer)
@@ -300,8 +307,6 @@ searchs_t* SpeechRecognizerTHF::SpeechRecognizerTHFData::CreatePhraseSpottedSear
 
   // Go through list of phrases, pull out all unique words, and grab their pronunciation
   std::map<std::string, std::string> wordToPronunMap;
-  std::vector<const char*> wordList;
-  std::vector<const char*> pronunList;
   for (const auto& phrase : phraseList)
   {
     std::istringstream wordStream = std::istringstream(phrase->GetPhrase());
@@ -311,14 +316,18 @@ searchs_t* SpeechRecognizerTHF::SpeechRecognizerTHFData::CreatePhraseSpottedSear
       if (iter == wordToPronunMap.end())
       {
         const auto& numResultsDesired = static_cast<unsigned short>( 1 );
-        const char* pronun = thfPronunCompute(_thfSession, _thfPronun, word.c_str(), numResultsDesired, nullptr, nullptr);
+        const char* pronun = thfPronunCompute(_thfSession, createdPronunciation, word.c_str(), numResultsDesired, nullptr, nullptr);
         wordToPronunMap[word] = pronun;
-        
-        auto newIter = wordToPronunMap.find(word);
-        wordList.push_back(newIter->first.c_str());
-        pronunList.push_back(newIter->second.c_str());
       }
     }
+  }
+  
+  std::vector<const char*> wordList;
+  std::vector<const char*> pronunList;
+  for (const auto& iter : wordToPronunMap)
+  {
+    wordList.push_back(iter.first.c_str());
+    pronunList.push_back(iter.second.c_str());
   }
   
   // Compose the grammar for this list
@@ -373,7 +382,7 @@ searchs_t* SpeechRecognizerTHF::SpeechRecognizerTHFData::CreatePhraseSpottedSear
   const auto& numResultsDesired = static_cast<unsigned short>( 1 );
   
   // Use the grammar, wordlist, and pronunlist to set up the phrasespotted search
-  return thfSearchCreateFromGrammar(_thfSession, createdRecognizer, _thfPronun, grammarString.c_str(), wordList.data(), pronunList.data(), numItems, numResultsDesired, PHRASESPOTTING);
+  return thfSearchCreateFromGrammar(_thfSession, createdRecognizer, createdPronunciation, grammarString.c_str(), wordList.data(), pronunList.data(), numItems, numResultsDesired, PHRASESPOTTING);
 }
 
 bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
@@ -409,7 +418,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   /* Create recognizer */
   auto doSpeechDetect = isPhraseSpotted ? NO_SDET : SDET;
   createdRecognizer = thfRecogCreateFromFile(_impl->_thfSession, nnFilePath.c_str(), bufferSizeInSamples, -1, doSpeechDetect);
-  if(!createdRecognizer)
+  if(nullptr == createdRecognizer)
   {
     cleanupAfterFailure("ERROR thfRecogCreateFromFile");
     return false;
@@ -418,7 +427,7 @@ bool SpeechRecognizerTHF::AddRecognitionDataFromFile(IndexType index,
   /* Create search */
   constexpr unsigned short numBestResultsToReturn = 1;
   createdSearch = thfSearchCreateFromFile(_impl->_thfSession, createdRecognizer, searchFilePath.c_str(), numBestResultsToReturn);
-  if(!createdSearch)
+  if(nullptr == createdSearch)
   {
     const char *err = thfGetLastError(_impl->_thfSession);
     std::string errorMessage = std::string("ERROR thfSearchCreateFromFile ") + err;
@@ -468,12 +477,6 @@ void SpeechRecognizerTHF::Cleanup()
 {
   _impl->_thfAllRecogs.clear();
   
-  if (_impl->_thfPronun)
-  {
-    thfPronunDestroy(_impl->_thfPronun);
-    _impl->_thfPronun = nullptr;
-  }
-  
   if (_impl->_thfSession)
   {
     thfSessionDestroy(_impl->_thfSession);
@@ -508,7 +511,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
   
   // Intentionally make a local copy of the shared ptr with the current recog data
   const RecogDataSP currentRecogSP = _impl->RetrieveDataForIndex(GetRecognizerIndex());
-  if (!currentRecogSP)
+  if (nullptr == currentRecogSP)
   {
     return;
   }

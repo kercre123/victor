@@ -34,9 +34,8 @@ namespace AudioUtil {
   
 struct AudioCaptureSystemData
 {
-  AudioCaptureSystem::DataCallback  _dataCallback;
+  AudioCaptureSystem*               _captureSystem = nullptr;
   bool                              _recording = false;
-  mutable std::mutex                _dataMutex;
   
   // Pair of audio sample buffers to hold recorded audio
   AudioChunk                        _inputBuffers[2] = { AudioChunk(kSamplesPerChunk), AudioChunk(kSamplesPerChunk) };
@@ -60,10 +59,10 @@ struct AudioCaptureSystemData
       _enqueuedBuffer = (0 == _enqueuedBuffer) ? 1 : 0;
       (*_recorderBufferQueue)->Enqueue(_recorderBufferQueue, _inputBuffers[_enqueuedBuffer].data(), kBytesPerChunk);
       
-      std::lock_guard<std::mutex> lock(_dataMutex);
-      if (_dataCallback)
+      auto dataCallback = _captureSystem->GetDataCallback();
+      if (dataCallback)
       {
-        _dataCallback(_inputBuffers[fullBuffer].data(), kSamplesPerChunk);
+        dataCallback(_inputBuffers[fullBuffer].data(), kSamplesPerChunk);
       }
     }
   }
@@ -105,6 +104,7 @@ void AudioCaptureSystem::Init()
   }
   
   _impl.reset(new AudioCaptureSystemData{});
+  _impl->_captureSystem = this;
   
   using SetupStep = std::pair<std::string, std::function<SLuint32()>>;
   std::vector<SetupStep> setupSteps;
@@ -269,15 +269,6 @@ void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallba
 AudioCaptureSystem::~AudioCaptureSystem()
 {
   StopRecording();
-}
-  
-void AudioCaptureSystem::SetCallback(DataCallback newCallback)
-{
-  if (_impl)
-  {
-    std::lock_guard<std::mutex> lock(_impl->_dataMutex);
-    _impl->_dataCallback = newCallback;
-  }
 }
   
 void AudioCaptureSystem::StartRecording()

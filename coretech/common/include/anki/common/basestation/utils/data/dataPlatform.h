@@ -37,7 +37,7 @@ public:
   bool readAsJson(const Scope& resourceScope, const std::string& resourceName, Json::Value& data) const;
 
   // reads resource as json file. returns true if successful.
-  bool readAsJson(const std::string& resourceName, Json::Value& data) const;
+  static bool readAsJson(const std::string& resourceName, Json::Value& data);
 
   // write dat to json file. returns true if successful.
   bool writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const;

@@ -14,6 +14,8 @@
 #ifndef __Anki_AudioUtil_AudioFileReader_H_
 #define __Anki_AudioUtil_AudioFileReader_H_
 
+#include "audioUtil/iAudioInputSource.h"
+
 #include "audioDataTypes.h"
 
 #include <string>
@@ -21,11 +23,13 @@
 namespace Anki {
 namespace AudioUtil {
 
-class AudioFileReader {
+class AudioFileReader : public IAudioInputSource {
 public:
   bool ReadFile(const std::string& audioFilePath);
   const AudioChunkList& GetAudioSamples() const { return _audioSamples; }
   void ClearAudio() { _audioSamples.clear(); }
+  
+  void DeliverAudio(bool doRealTime);
   
 private:
   AudioChunkList  _audioSamples;

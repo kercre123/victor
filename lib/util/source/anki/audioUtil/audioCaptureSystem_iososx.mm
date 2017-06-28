@@ -38,11 +38,10 @@ namespace AudioUtil {
   
 struct AudioCaptureSystemData
 {
-  AudioCaptureSystem::DataCallback  _dataCallback;
+  AudioCaptureSystem*               _captureSystem = nullptr;
   AudioQueueRef                     _queue = nullptr;
   AudioQueueBufferRef               _buffers[NUM_BUFFERS];
   bool                              _recording = false;
-  mutable std::mutex                _dataMutex;
   
   void HandleCallback(AudioQueueRef                                   inAQ,
                       AudioQueueBufferRef                             inBuffer,
@@ -50,13 +49,13 @@ struct AudioCaptureSystemData
                       UInt32                                          inNumberPackets,
                       const AudioStreamPacketDescription * __nullable inPacketDescs)
   {
-    std::lock_guard<std::mutex> lock(_dataMutex);
     if(_recording)
     {
-      if (_dataCallback)
+      auto dataCallback = _captureSystem->GetDataCallback();
+      if (dataCallback)
       {
         const auto* const dataStart = static_cast<AudioSample*>(inBuffer->mAudioData);
-        _dataCallback(dataStart, inNumberPackets);
+        dataCallback(dataStart, inNumberPackets);
       }
       
       AudioQueueEnqueueBuffer(_queue, inBuffer, 0, NULL);
@@ -77,6 +76,7 @@ struct AudioCaptureSystemData
       
       AudioQueueDispose(_queue, true);
     }
+    _captureSystem = nullptr;
   }
 };
   
@@ -99,6 +99,7 @@ void AudioCaptureSystem::Init()
   if (!_impl && GetPermissionState() == PermissionState::Granted)
   {
     _impl.reset(new AudioCaptureSystemData{});
+    _impl->_captureSystem = this;
     
     AudioStreamBasicDescription standardAudioFormat;
     GetStandardAudioDescriptionFormat(standardAudioFormat);
@@ -126,15 +127,6 @@ void AudioCaptureSystem::Init()
 AudioCaptureSystem::~AudioCaptureSystem()
 {
   StopRecording();
-}
-  
-void AudioCaptureSystem::SetCallback(DataCallback newCallback)
-{
-  if (_impl)
-  {
-    std::lock_guard<std::mutex> lock(_impl->_dataMutex);
-    _impl->_dataCallback = newCallback;
-  }
 }
  
 #if IPHONE_TYPE

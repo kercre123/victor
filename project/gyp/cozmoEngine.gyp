@@ -1222,6 +1222,18 @@
                   }],
                 ], # conditions
               },
+              
+              {
+                'action_name': 'create_symlink_resources_voice_command_data',
+                'inputs': [],
+                'outputs': [],
+                'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(cozmo_engine_path)/lib/anki/products-cozmo-assets/voiceCommand/exports',
+                '--link_name', '<(PRODUCT_DIR)/resources/assets/voiceCommand',
+                '--create_folder', '<(PRODUCT_DIR)/resources/assets'
+                ],
+              },
 
             ], #end actions
           }, # end unittest target

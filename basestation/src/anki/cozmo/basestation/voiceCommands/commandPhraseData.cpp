@@ -230,6 +230,17 @@ std::vector<PhraseDataSharedPtr> CommandPhraseData::GetPhraseDataList(LanguageTy
   return iter->second->GetPhraseDataList(contextIter->second._commandsSet);
 }
 
+std::vector<PhraseDataSharedPtr> CommandPhraseData::GetPhraseDataList(LanguageType languageType, const std::set<VoiceCommandType>& typeSet) const
+{
+  const auto& iter = _languagePhraseDataMap.find(languageType);
+  if (iter != _languagePhraseDataMap.end())
+  {
+    return iter->second->GetPhraseDataList(typeSet);
+  }
+  
+  return std::vector<PhraseDataSharedPtr>{};
+}
+
 PhraseDataSharedPtr CommandPhraseData::GetDataForPhrase(LanguageType languageType, const std::string& phrase) const
 {
   const auto& iter = _languagePhraseDataMap.find(languageType);

@@ -95,7 +95,7 @@ bool DataPlatform::readAsJson(const Scope& resourceScope, const std::string& res
 }
 
 // reads resource as json file. returns true if successful.
-bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data) const
+bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data)
 {
   std::ifstream jsonFile(resourceName);
   Json::Reader reader;

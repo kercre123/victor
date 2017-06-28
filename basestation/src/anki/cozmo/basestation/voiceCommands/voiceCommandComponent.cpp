@@ -73,12 +73,6 @@ VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
 , _captureSystem(new AudioUtil::AudioCaptureSystem{})
 , _phraseData(new CommandPhraseData())
 {
-  if (!_recogProcessor->IsValid())
-  {
-    _recogProcessor.reset();
-    PRINT_NAMED_ERROR("VoiceCommandComponent.RecogProcessorSetupFail", "Likely error setting up AudioCaptureSystem on this platform.");
-  }
-  
   auto* extInterface = _context.GetExternalInterface();
   if (nullptr != extInterface)
   {
@@ -174,7 +168,7 @@ bool VoiceCommandComponent::Init()
     }
     
     _recogProcessor->SetSpeechRecognizer(_recognizer.get());
-    _recogProcessor->SetAudioCaptureSystem(_captureSystem.get());
+    _recogProcessor->SetAudioInputSource(_captureSystem.get());
     _recogProcessor->Start();
   }
   

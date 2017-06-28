@@ -24,7 +24,7 @@
 namespace Anki {
 namespace AudioUtil {
   
-class AudioCaptureSystem;
+class IAudioInputSource;
 class SpeechRecognizer;
   
 class AudioRecognizerProcessor
@@ -36,9 +36,8 @@ public:
   AudioRecognizerProcessor& operator=(AudioRecognizerProcessor&& other) = delete;
   AudioRecognizerProcessor(const AudioRecognizerProcessor& other) = delete;
   AudioRecognizerProcessor& operator=(const AudioRecognizerProcessor& other) = delete;
-  bool IsValid() const { return _captureSystem != nullptr; }
   
-  void SetAudioCaptureSystem(AudioCaptureSystem* newCaptureSystem);
+  void SetAudioInputSource(IAudioInputSource* newCaptureSystem);
   void SetSpeechRecognizer(SpeechRecognizer* newRecog);
   void Start();
   void Stop();
@@ -49,7 +48,7 @@ public:
   
 private:
   SpeechRecognizer*                       _recognizer = nullptr;
-  AudioCaptureSystem*                     _captureSystem = nullptr;
+  IAudioInputSource*                      _audioInputSource = nullptr;
   bool                                    _capturingAudio = false;
   std::mutex                              _componentsMutex;
   mutable std::mutex                      _resultMutex;
