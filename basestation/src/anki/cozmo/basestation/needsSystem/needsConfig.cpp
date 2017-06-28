@@ -314,13 +314,13 @@ void ActionsConfig::Init(const Json::Value& json)
 
     ActionDelta& actionDelta = _actionDeltas[static_cast<int>(actionId)];
     actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._delta = repairDelta;
-    actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._randomRange = repairRange;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._randomRange = std::abs(repairRange);
     actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._cause = NeedsActionId::NoAction;
     actionDelta._needDeltas[static_cast<int>(NeedId::Energy)]._delta = energyDelta;
-    actionDelta._needDeltas[static_cast<int>(NeedId::Energy)]._randomRange = energyRange;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Energy)]._randomRange = std::abs(energyRange);
     actionDelta._needDeltas[static_cast<int>(NeedId::Energy)]._cause = NeedsActionId::NoAction;
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._delta = playDelta;
-    actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._randomRange = playRange;
+    actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._randomRange = std::abs(playRange);
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._cause = NeedsActionId::NoAction;
     actionDelta._cooldown_s = cooldownSecs;
   }
