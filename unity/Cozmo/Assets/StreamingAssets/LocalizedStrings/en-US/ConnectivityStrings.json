@@ -98,5 +98,8 @@
   },
   "label.cancelText": {
     "translation": "Cancel"
+  },
+  "label.liquidMetalCozmo": {
+    "translation": "Special Edition: Liquid Metal"
   }
 }
