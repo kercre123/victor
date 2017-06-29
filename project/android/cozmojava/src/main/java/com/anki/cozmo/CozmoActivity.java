@@ -76,6 +76,10 @@ public class CozmoActivity extends HackUnityPlayerActivity implements ActivityCo
     return android.os.Build.VERSION.RELEASE;
   }
 
+  public int getSDKVersion() {
+    return android.os.Build.VERSION.SDK_INT;
+  }
+  
   // request a permission and specify the game object/method name in unity to receive the results
   public void unityRequestPermission(final String permission, final String gameObject, final String methodCallback) {
     AnkitivityDispatcher.PermissionListener listener = new AnkitivityDispatcher.PermissionListener() {

@@ -34,3 +34,4 @@ MonoBehaviour:
   CubesRequired: 0
   SortOrder: 300
   AndroidReleaseVersion: 5.0
+  AndroidSDKVersion: 21
