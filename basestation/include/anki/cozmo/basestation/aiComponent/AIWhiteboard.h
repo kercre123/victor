@@ -15,9 +15,11 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
+
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+#include "clad/types/needsSystemTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -244,7 +246,23 @@ public:
   bool HasHiccups() const { return _hasHiccups; }
   void SetHasHiccups(bool hasHiccups) { _hasHiccups = hasHiccups; }
   
-  
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Needs states
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // Indicates which severe needs state is currently being _expressed_ in freeplay, or to Count if no severe
+  // states are being expressed. Note that this is different from the current values of the needs from the
+  // needs manager because the activity system usually takes some time to transition into / out of a given
+  // activity, so even though the current value may be critical for a need, the behavior system may still be
+  // expressing the previous state. This value will automatically be cleared to Count if the needs system says
+  // the given need is no longer critically low
+  NeedId GetSevereNeedExpression() const { return _severeNeedExpression; }
+  bool HasSevereNeedExpression() const { return _severeNeedExpression != NeedId::Count; }
+
+  void SetSevereNeedExpression(NeedId need);
+  void ClearSevereNeedExpression();
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -351,6 +369,9 @@ private:
   
   // Whether or not Cozmo has the hiccups
   bool _hasHiccups = false;
+
+  // current severe need based on activity expression (may differ from needs manager state)
+  NeedId _severeNeedExpression = NeedId::Count;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

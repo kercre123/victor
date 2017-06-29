@@ -153,8 +153,9 @@
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Needs activities
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      { "activityID": "NeedsSevereLowRepair", "activityPriority"  : 1},
-      { "activityID": "NeedsSevereLowEnergy", "activityPriority"  : 2},
+      { "activityID": "NeedsSevereLowRepair",    "activityPriority" : 1},
+      { "activityID": "NeedsSevereLowEnergy",    "activityPriority" : 2},
+      { "activityID": "NeedsSevereLowPlayGetIn", "activityPriority" : 3},
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Freeplay activities:
       // objectTapInteraction - when the player has tapped an object and Cozmo will interact with it

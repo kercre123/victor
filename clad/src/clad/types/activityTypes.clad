@@ -34,6 +34,7 @@ enum uint_8 ActivityID {
   MeetCozmo,
   NeedsSevereLowEnergy,
   NeedsSevereLowRepair,
+  NeedsSevereLowPlayGetIn,
   NothingToDo,
   ObjectTapInteraction,
   PlayAlone,
@@ -64,6 +65,7 @@ enum uint_8 ActivityStrategy {
   Simple,
   Spark,
   Needs,
+  SevereNeedTransition,
   Count
 }
 

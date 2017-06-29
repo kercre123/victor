@@ -1,5 +1,5 @@
 /**
- * File: activityStrategyNeeds.cpp
+ * File: activityStrategySevereNeedsTransition.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-06-20
@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyNeeds.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySevereNeedsTransition.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
@@ -26,43 +26,39 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ActivityStrategyNeeds::ActivityStrategyNeeds(Robot& robot, const Json::Value& config)
+ActivityStrategySevereNeedsTransition::ActivityStrategySevereNeedsTransition(Robot& robot, const Json::Value& config)
   : Anki::Cozmo::IActivityStrategy(config)
 {
   {
     const auto& needStr = JsonTools::ParseString(config,
                                                  "need",
-                                                 "ActivityStrategyNeeds.ConfigError.Need");
+                                                 "ActivityStrategySevereNeedsTransition.ConfigError.Need");
     _need = NeedIdFromString(needStr);
   }
-
-  {
-    const auto& needBracketStr = JsonTools::ParseString(config,
-                                                        "needBracket",
-                                                        "ActivityStrategyNeeds.ConfigError.NeedLevel");
-    _requiredBracket = NeedBracketIdFromString(needBracketStr);
-  }
 }
 
-bool ActivityStrategyNeeds::WantsToStartInternal(const Robot& robot, float lastTimeActivityRanSec) const
-{  
-  const bool inBracket = InRequiredNeedBracket(robot);
-  return inBracket;
+bool ActivityStrategySevereNeedsTransition::WantsToStartInternal(const Robot& robot, float lastTimeActivityRanSec) const
+{
+  const auto& whiteboard = robot.GetAIComponent().GetWhiteboard();
+
+  const bool inBracket = InRequiredNeedBracket(robot);  
+  const bool isBeingExpressed = whiteboard.GetSevereNeedExpression() == _need;
+
+  return inBracket && !isBeingExpressed;
 }
 
-bool ActivityStrategyNeeds::WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const
+bool ActivityStrategySevereNeedsTransition::WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const
 {
   const bool inBracket = InRequiredNeedBracket(robot);
   return !inBracket;
 }
 
-bool ActivityStrategyNeeds::InRequiredNeedBracket(const Robot& robot) const
+bool ActivityStrategySevereNeedsTransition::InRequiredNeedBracket(const Robot& robot) const
 {
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool inBracket = currNeedState.IsNeedAtBracket(_need, _requiredBracket);
+  const bool inBracket = currNeedState.IsNeedAtBracket(_need, NeedBracketId::Critical);
   return inBracket;
 }
-
 
 }
 }

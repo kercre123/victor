@@ -7,6 +7,9 @@
   "need": "Play",
   "needBracket": "Critical",
 
+  // only run if the severe state is being expressed
+  "requiredSevereNeedsState": "Play",
+
   "cooldown": {
     "nodes": [
       // x = needs level

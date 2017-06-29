@@ -57,6 +57,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // 'hiking'          - when Cozmo is exploring its surroundings on his own
 // 'needsSevereLowEnergy' - when Cozmo's needstate is severely low energy
 // 'needsSevereLowRepair' - when Cozmo's needstate is severely low repair
+// 'needsSevereLowPlayGetIn' - when Cozmo is transitioning into severely low play state
 // 'objectTapInteraction' - when Cozmo is interacting with a double tapped cube
 // 'playWithHumans'  - when Cozmo requests games to play with the player
 // 'playAlone'       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
@@ -66,18 +67,19 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 // 'nothingToDo'     - fallback when Cozmo can't do anything else
 const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
 {
-  { ActivityID::BuildPyramid,         AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::Feeding,              AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::Hiking,               AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
-  { ActivityID::ObjectTapInteraction, AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::NeedsSevereLowEnergy, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::NeedsSevereLowRepair, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::PlayWithHumans,       AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::PlayAlone,            AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::PutDownDispatch,      AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::Singing,              AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::Socialize,            AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
-  { ActivityID::NothingToDo,          AudioMetaData::SwitchState::Freeplay_Mood::Bored }
+  { ActivityID::BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
+  { ActivityID::ObjectTapInteraction,    AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::NeedsSevereLowRepair,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::NeedsSevereLowPlayGetIn, AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::PlayWithHumans,          AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::PlayAlone,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::PutDownDispatch,         AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::Singing,                 AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Socialize,               AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
+  { ActivityID::NothingToDo,             AudioMetaData::SwitchState::Freeplay_Mood::Bored }
 };
   
 } // end anonymous namespace

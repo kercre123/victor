@@ -252,6 +252,9 @@
   "behavior.Needs_SevereLowEnergyRequest": {
     "translation": "Cozmo is feeling very hungry - he really needs some energy!"
   },
+  "behavior.Needs_SevereLowPlayGetIn": {
+    "translation": "Cozmo feels very lonely and frustrated - he really wants to play!"
+  },
   "behavior.Needs_SevereLowPlayBored": {
     "translation": "Cozmo feels very lonely and frustrated - he really wants to play!"
   },

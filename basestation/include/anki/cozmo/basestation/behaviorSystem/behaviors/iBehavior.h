@@ -32,6 +32,7 @@
 #include "clad/types/behaviorObjectives.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
+#include "clad/types/needsSystemTypes.h"
 #include "clad/types/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
@@ -186,6 +187,9 @@ public:
   
   // returns the required unlockID for the behavior
   const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
+
+  // returns the need id of the severe need state that must be expressed (see AIWhiteboard), or Count if none
+  NeedId GetRequiredSevereNeedExpression() const { return _requiredSevereNeed; }
 
   // Force a behavior to update its target blocks but only if it is in a state where it can
   void UpdateTargetBlocks(const Robot& robot) const { UpdateTargetBlocksInternal(robot); }
@@ -471,6 +475,9 @@ private:
   
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
+
+  // required severe needs expression to run this activity
+  NeedId _requiredSevereNeed;
   
   // if _requiredRecentDriveOffCharger_sec is greater than 0, this behavior is only runnable if last time the robot got off the charger by
   // itself was less than this time ago. Eg, a value of 1 means if we got off the charger less than 1 second ago

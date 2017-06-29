@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyNeeds.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyObjectTapInteraction.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyPyramid.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySevereNeedsTransition.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySimple.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySpark.h"
 
@@ -79,6 +80,11 @@ IActivityStrategy* CreateActivityStrategy(Robot& robot, const Json::Value& confi
       newStrategy = new ActivityStrategyNeeds(robot, config);
       break;
     }
+    case ActivityStrategy::SevereNeedTransition:
+    {
+      newStrategy = new ActivityStrategySevereNeedsTransition(robot, config);
+      break;
+    }     
     case ActivityStrategy::Count:
     {
       DEV_ASSERT(false,

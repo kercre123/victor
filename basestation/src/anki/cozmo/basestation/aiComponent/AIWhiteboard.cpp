@@ -14,9 +14,9 @@
 #include "anki/common/basestation/math/poseOriginList.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/activeObject.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/objectInteractionInfoCache.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
@@ -26,6 +26,8 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
+#include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
@@ -133,6 +135,16 @@ void AIWhiteboard::Init()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::Update()
 {
+  if( HasSevereNeedExpression() ) {
+    NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+    if( !currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical) ) {
+      PRINT_CH_INFO("AIWhiteboard", "SevereNeedsState.AutoClear",
+                    "Automatically clearing currently expressed severe needs state. Was '%s'",
+                    NeedIdToString(_severeNeedExpression));
+
+      ClearSevereNeedExpression();
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -998,7 +1010,27 @@ void AIWhiteboard::UpdateBeaconRender()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetSevereNeedExpression(NeedId need) {
+  PRINT_CH_DEBUG("AIWhiteboard",
+                 "AIWhiteboard.SevereNeedExpression.Set",
+                 "Set to %s (was %s)",
+                 NeedIdToString(need),
+                 NeedIdToString(_severeNeedExpression));
   
+  _severeNeedExpression = need;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::ClearSevereNeedExpression() {
+  PRINT_CH_DEBUG("AIWhiteboard",
+                 "AIWhiteboard.SevereNeedExpression.Clear",
+                 "Cleared. (was %s)",
+                 NeedIdToString(_severeNeedExpression));
+  
+  _severeNeedExpression = NeedId::Count;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
 {

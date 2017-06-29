@@ -52,6 +52,7 @@ static const char* kBehaviorIDConfigKey              = "behaviorID";
 static const char* kDisplayNameKey                   = "displayNameKey";
 
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
+static const char* kRequiredSevereNeedsStateKey      = "requiredSevereNeedsState";
 static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
@@ -183,6 +184,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _executableType(ExecutableBehaviorType::Count)
 , _requiredUnlockId( UnlockId::Count )
+, _requiredSevereNeed( NeedId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isRunning(false)
@@ -239,6 +241,21 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     }
   }
 
+  // - - - - - - - - - - - - - -
+  // Required severe needs state
+  // - - - - - - - - - - - - - -
+  const Json::Value& requiredSevereNeedJson = config[kRequiredSevereNeedsStateKey];
+  if( !requiredSevereNeedJson.isNull() ) {
+    DEV_ASSERT(requiredSevereNeedJson.isString(), "IBehavior.ReadFromJson.NonStringRequiredNeedsState");
+
+    _requiredSevereNeed = NeedIdFromString(requiredSevereNeedJson.asString());
+    ANKI_VERIFY(_requiredSevereNeed != NeedId::Count,
+                "IBehavior.ReadFromJson.ConfigError.InvalidRequiredSevereNeed",
+                "%s: Required severe need '%s' converted to Count. This field is optional",
+                GetIDStr().c_str(),
+                requiredSevereNeedJson.asCString());
+  }
+  
   // - - - - - - - - - -
   // Got off charger timer
   const Json::Value& requiredDriveOffChargerJson = config[kRequiredDriveOffChargerKey];
@@ -522,6 +539,13 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
         GetIDStr().c_str());
       return false;
     }
+  }
+
+  // check if a severe needs state is required
+  if( _requiredSevereNeed != NeedId::Count &&
+      _requiredSevereNeed != robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression() ) {
+    // not in the correct state
+    return false;
   }
 
   const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

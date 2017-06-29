@@ -11,15 +11,17 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityExpressNeeds.h"
-#include "anki/cozmo/basestation/robot.h"
+
+#include "anki/common/basestation/jsonTools.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-
-static const char* kLockToDisableTriggers = "lockTriggersFullPyramid";
 
 constexpr ReactionTriggerHelpers::FullReactionArray kTriggersToDisable = {
   {ReactionTrigger::CliffDetected,                false},
@@ -53,17 +55,44 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kTriggersToDisable),
 
 ActivityExpressNeeds::ActivityExpressNeeds(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
+, _params(config)
 {
+}
+
+ActivityExpressNeeds::Params::Params(const Json::Value& config)
+{
+  _severeNeedExpression = NeedIdFromString(
+    JsonTools::ParseString(config, "severeNeedExpression", "ActivityExpressNeeds.ConfigError.SevereNeedExpressed"));
+
+  _clearSevereNeedExpressionOnExit = JsonTools::ParseBool(config,
+                                                        "clearSevereNeedExpressionOnExit",
+                                                        "ActivityExpressNeeds.ConfigError.clearStateOnExit");
+  _shouldDisableReactions = JsonTools::ParseBool(config,
+                                                 "disableReactionTriggers",
+                                                 "ActivityExpressNeeds.ConfigError.disableReactionTrigger");
 }
 
 void ActivityExpressNeeds::OnSelectedInternal(Robot& robot)
 {
-  robot.GetBehaviorManager().DisableReactionsWithLock(kLockToDisableTriggers, kTriggersToDisable);
+    // set severe needs expression
+  if( _params._severeNeedExpression != NeedId::Count ) {
+    robot.GetAIComponent().GetWhiteboard().SetSevereNeedExpression( _params._severeNeedExpression );
+  }
+
+  if( _params._shouldDisableReactions ) {
+    robot.GetBehaviorManager().DisableReactionsWithLock(GetIDStr(), kTriggersToDisable);
+  }
 }
 
 void ActivityExpressNeeds::OnDeselectedInternal(Robot& robot)
 {
-  robot.GetBehaviorManager().RemoveDisableReactionsLock(kLockToDisableTriggers);
+  if( _params._shouldDisableReactions ) {
+    robot.GetBehaviorManager().RemoveDisableReactionsLock(GetIDStr());
+  }
+
+  if( _params._severeNeedExpression != NeedId::Count && _params._clearSevereNeedExpressionOnExit ) {
+    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+  }
 }
 
 }
