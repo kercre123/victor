@@ -18651,6 +18651,21 @@ var Scratch3EventBlocks = function () {
                 },
                 event_whenbroadcastreceived: {
                     restartExistingThreads: true
+                },
+                cozmo_event_on_face: {
+                    restartExistingThreads: false
+                },
+                cozmo_event_on_happy_face: {
+                    restartExistingThreads: false
+                },
+                cozmo_event_on_sad_face: {
+                    restartExistingThreads: false
+                },
+                cozmo_event_on_see_cube: {
+                    restartExistingThreads: false
+                },
+                cozmo_event_on_cube_tap: {
+                    restartExistingThreads: false
                 }
             };
         }

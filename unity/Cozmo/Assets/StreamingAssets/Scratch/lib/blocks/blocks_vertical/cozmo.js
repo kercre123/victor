@@ -421,16 +421,16 @@ init: function() {
   }
 };
 
-Blockly.Blocks['cozmo_wait_for_face'] = {
+Blockly.Blocks['cozmo_event_on_face'] = {
   /**
    * Block to wait until a Cozmo sees a face.
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Wait until See Face",
+      "id": "cozmo_event_on_face",
+      "message0": "When See Face",
       "inputsInline": true,
-      "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.event,
       "colour": Blockly.Colours.event.primary,
@@ -440,16 +440,16 @@ Blockly.Blocks['cozmo_wait_for_face'] = {
   }
 };
 
-Blockly.Blocks['cozmo_wait_for_happy_face'] = {
+Blockly.Blocks['cozmo_event_on_happy_face'] = {
   /**
    * Block to wait until a Cozmo sees a happy face.
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Wait for Happy Face",
+      "id": "cozmo_event_on_happy_face",
+      "message0": "When See Happy Face",
       "inputsInline": true,
-      "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.event,
       "colour": Blockly.Colours.event.primary,
@@ -459,16 +459,16 @@ Blockly.Blocks['cozmo_wait_for_happy_face'] = {
   }
 };
 
-Blockly.Blocks['cozmo_wait_for_sad_face'] = {
+Blockly.Blocks['cozmo_event_on_sad_face'] = {
   /**
    * Block to wait until a Cozmo sees a sad face.
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Wait for Sad Face",
+      "id": "cozmo_event_on_sad_face",
+      "message0": "When See Sad Face",
       "inputsInline": true,
-      "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.event,
       "colour": Blockly.Colours.event.primary,
@@ -478,16 +478,16 @@ Blockly.Blocks['cozmo_wait_for_sad_face'] = {
   }
 };
 
-Blockly.Blocks['cozmo_wait_until_see_cube'] = {
+Blockly.Blocks['cozmo_event_on_see_cube'] = {
   /**
    * Block to wait until a Cozmo sees a cube.
    * @this Blockly.Block
    */
   init: function() {
     this.jsonInit({
-      "message0": "Wait until see Cube",
+      "id": "cozmo_event_on_see_cube",
+      "message0": "When See Cube",
       "inputsInline": true,
-      "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.event,
       "colour": Blockly.Colours.event.primary,
@@ -497,16 +497,16 @@ Blockly.Blocks['cozmo_wait_until_see_cube'] = {
   }
 };
 
-Blockly.Blocks['cozmo_wait_for_cube_tap'] = {
+Blockly.Blocks['cozmo_event_on_cube_tap'] = {
   /**
    * Block to wait until a cube that Cozmo can see is tapped.
    * @this Blockly.Block
   */
   init: function() {
     this.jsonInit({
-      "message0": "Wait for Cube Tap",
+      "id": "cozmo_event_on_cube_tap",
+      "message0": "When Cube is Tapped",
       "inputsInline": true,
-      "previousStatement": null,
       "nextStatement": null,
       "category": Blockly.Categories.event,
       "colour": Blockly.Colours.event.primary,

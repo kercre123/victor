@@ -196,6 +196,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
       }
+
+      StopVerticalHatBlockListeners();
+
       if (_WebViewObject != null) {
         GameObject.Destroy(_WebViewObject);
         _WebViewObject = null;
@@ -634,6 +637,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void OnCozmoLoadProjectPage() {
       DAS.Info("Codelab.OnCozmoLoadProjectPage", "");
       SessionState.DAS_Event("robot.code_lab.load_project_page", "");
+
+      OnExitWorkspace();
+
       LoadURL("extra/projects.html");
     }
 
@@ -992,6 +998,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       _WebViewObjectComponent.LoadURL(indexFile);
     }
 
+    private void OnExitWorkspace() {
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        StopVerticalHatBlockListeners();
+      }
+    }
+
     private void SetRequestToOpenProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {
       _RequestToOpenProjectOnWorkspace = request;
       _ProjectUUIDToOpen = projectUUID;
@@ -1113,6 +1125,62 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 #endif
       }
       Invoke("UnhideWebView", delayInSeconds);
+
+      if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
+        StartVerticalHatBlockListeners();
+      }
+    }
+
+    private void StartVerticalHatBlockListeners() {
+      // Listen for face events so that we can kick off vertical face hat blocks
+      // (including wait for happy, frown and any face)
+      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(VisionMode.EstimatingFacialExpression, true);
+      RobotEngineManager.Instance.AddCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
+
+      // Listen for "robot saw a cube" events so we can kick off vertical "wait until see cube" hat block
+      RobotEngineManager.Instance.AddCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
+
+      // Listen for cube tapped events so we can kick off vertical "wait for cube tap" hat block
+      LightCube.TappedAction += CubeTappedVerticalHatBlock;
+    }
+
+    private void StopVerticalHatBlockListeners() {
+      RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedFaceVerticalHatBlock);
+      RobotEngineManager.Instance.RemoveCallback<RobotObservedObject>(RobotObservedObjectVerticalHatBlock);
+      LightCube.TappedAction -= CubeTappedVerticalHatBlock;
+    }
+
+    public void RobotObservedFaceVerticalHatBlock(RobotObservedFace message) {
+      if (message.expression == Anki.Vision.FacialExpression.Happiness) {
+        EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_happy_face', null);");
+      }
+      else if (FaceIsSad(message)) {
+        EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_sad_face', null);");
+      }
+
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_face', null);");
+    }
+
+    public bool FaceIsSad(RobotObservedFace message) {
+      // Match on Angry or Sad, and only if score is high (minimize false positives)
+      if ((message.expression == Anki.Vision.FacialExpression.Anger) ||
+        (message.expression == Anki.Vision.FacialExpression.Sadness)) {
+        var expressionScore = message.expressionValues[(int)message.expression];
+        const int kMinSadExpressionScore = 75;
+        if (expressionScore >= kMinSadExpressionScore) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    public void RobotObservedObjectVerticalHatBlock(RobotObservedObject message) {
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_see_cube', null);");
+    }
+
+    public void CubeTappedVerticalHatBlock(int id, int tappedTimes, float timeStamp) {
+      EvaluateJS("window.Scratch.vm.runtime.startHats('cozmo_event_on_cube_tap', null);");
     }
 
     void UnhideWebView() {
@@ -1123,7 +1191,6 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       SharedMinigameView.HideSpinnerWidget();
 
       _WebViewObjectComponent.SetVisibility(true);
-
     }
   }
 }

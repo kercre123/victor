@@ -116,15 +116,9 @@ namespace CodeLab {
     }
 
     public void RobotObservedSadFace(RobotObservedFace message) {
-      // Match on Angry or Sad, and only if score is high (minimize false positives)
-      if ((message.expression == Anki.Vision.FacialExpression.Anger) ||
-          (message.expression == Anki.Vision.FacialExpression.Sadness)) {
-        var expressionScore = message.expressionValues[(int)message.expression];
-        const int kMinSadExpressionScore = 75;
-        if (expressionScore >= kMinSadExpressionScore) {
-          RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
-          AdvanceToNextBlock(true);
-        }
+      if (_CodeLabGame.FaceIsSad(message)) {
+        RobotEngineManager.Instance.RemoveCallback<RobotObservedFace>(RobotObservedSadFace);
+        AdvanceToNextBlock(true);
       }
     }
 
