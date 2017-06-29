@@ -136,7 +136,7 @@
     "translation": "Cozmo is preparing his Cubes"
   },
   "behavior.PeekAboo": {
-      "translation": "Cozmo wants to play Peekaboo"
+    "translation": "Cozmo wants to play Peekaboo"
   },
   "behavior.LookInPlaceForCube": {
     "translation": "Cozmo is looking for a Cube"
@@ -267,4 +267,7 @@
   "behavior.VC_TrackLaser": {
     "translation": "Cozmo is looking for a Laser"
   },
+  "button.CONTINUE.caps": {
+    "translation": "CONTINUE"
+  }
 }
