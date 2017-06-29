@@ -143,5 +143,8 @@
   },
   "onboarding.FeedIntro": {
     "translation": "<b>Cozmo needs to be fed.</b>\n\nThe blue light on his back means his Feed Need is low."
+  },
+  "onboarding.DoATrickDesc": {
+    "translation": "With this trick, watch Cozmo discover a cube and roll it.\n\nMake sure there’s a cube he can see."
   }
 }

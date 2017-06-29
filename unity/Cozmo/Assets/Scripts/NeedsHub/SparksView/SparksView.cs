@@ -36,6 +36,9 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoButton _ListAbilitiesButton;
 
     [SerializeField]
+    private GameObject _OnboardingDimmer;
+
+    [SerializeField]
     private SparksListModal _SparksListModalPrefab;
     private SparksListModal _SparksListModalInstance;
 
@@ -65,6 +68,12 @@ namespace Cozmo.Needs.Sparks.UI {
 
       VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
       VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
+
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
+        _OnboardingDimmer.SetActive(true);
+        _BackButton.gameObject.SetActive(false);
+        OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
+      }
     }
 
     protected override void CleanUp() {
@@ -75,6 +84,7 @@ namespace Cozmo.Needs.Sparks.UI {
       playerInventory.ItemCountUpdated -= HandleItemValueChanged;
 
       VoiceCommandManager.Instance.StateDataCallback -= UpdateStateData;
+      OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingPhaseComplete;
     }
 
     private void HandleBackButtonPressed() {
@@ -83,10 +93,19 @@ namespace Cozmo.Needs.Sparks.UI {
       }
     }
 
+    private void HandleOnboardingPhaseComplete(OnboardingManager.OnboardingPhases phase) {
+      if (phase == OnboardingManager.OnboardingPhases.PlayIntro) {
+        HandleBackButtonPressed();
+      }
+    }
+
     private void HandleAskForTrickButtonPressed() {
       // Decrementing spark cost will be handled by engine
       // Showing details modal is done by NeedsHub to account for VC
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
+        OnboardingManager.Instance.GoToNextStage();
+      }
+      else if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.DoRandomSpark();
       }
     }

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 22277488}
   - component: {fileID: 114297680771573382}
   m_Layer: 5
-  m_Name: OnboardingNoUI
+  m_Name: OnboardingSparksView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -68,8 +68,8 @@ MonoBehaviour:
   _ReactionsEnabled: 1
   _PlayIdle: 0
   _CustomIdle:
-    _EnumValueAsString: Count
-    _EnumValue: 488
+    _EnumValueAsString: OnboardingIdlePlay
+    _EnumValue: 294
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: 

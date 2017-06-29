@@ -157,6 +157,11 @@ public class MockRobot : IRobot {
 
   public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
     SetCurrentSpark(id);
+
+    MessageEngineToGame messageEngineToGame = new MessageEngineToGame();
+    HardSparkEndedByEngine sparkEndedMsg = new HardSparkEndedByEngine();
+    messageEngineToGame.HardSparkEndedByEngine = sparkEndedMsg;
+    RobotEngineManager.Instance.MockCallback(messageEngineToGame, 10.0f);
   }
 
   public void StopSparkUnlock() {

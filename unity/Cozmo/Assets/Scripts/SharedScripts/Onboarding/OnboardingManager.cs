@@ -194,7 +194,7 @@ public class OnboardingManager : MonoBehaviour {
     } // end first phase complete
     RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
-    Cozmo.Needs.NeedsStateManager.Instance.PauseExceptForNeed(NeedId.Count);
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
     if (OnOnboardingPhaseStarted != null) {
       OnOnboardingPhaseStarted.Invoke(_CurrPhase);
     }
@@ -229,7 +229,7 @@ public class OnboardingManager : MonoBehaviour {
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
-    Cozmo.Needs.NeedsStateManager.Instance.ResumeAllNeeds();
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
   }
 
   // Because looking for a face takes awhile time, we try to load this early and invisible

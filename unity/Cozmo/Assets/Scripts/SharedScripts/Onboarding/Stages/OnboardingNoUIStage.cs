@@ -2,7 +2,7 @@ using Cozmo.MinigameWidgets;
 
 namespace Onboarding {
 
-  public class OnboardingMeetCozmoStage : OnboardingBaseStage {
+  public class OnboardingNoUIStage : OnboardingBaseStage {
 
     public override void SkipPressed() {
 

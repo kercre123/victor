@@ -101,6 +101,14 @@ namespace Cozmo.Needs {
       RobotEngineManager.Instance.SendMessage();
     }
 
+    // This will throw out any actions during state
+    public void SetFullPause(bool fullPause) {
+      SetNeedsPauseState pauseStateMessage = new SetNeedsPauseState();
+      pauseStateMessage.pause = fullPause;
+      RobotEngineManager.Instance.Message.SetNeedsPauseState = pauseStateMessage;
+      RobotEngineManager.Instance.SendMessage();
+    }
+
     public void ResumeAllNeeds() {
       SetNeedsPauseStates pauseStatesMessage = new SetNeedsPauseStates();
       pauseStatesMessage.decayPause = new bool[] { false, false, false };

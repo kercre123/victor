@@ -43,9 +43,9 @@ MonoBehaviour:
   _OnboardingUIPrefabData:
     _AssetBundle:
       _EnumValueAsString: onboarding_ui_prefabs
-      _EnumValue: 18
+      _EnumValue: 13
     _AssetDataName: OnboardingUIWrapper
-  _NumOnboardingStages: 07000000010000000300000002000000010000000100000001000000
+  _NumOnboardingStages: 07000000010000000300000002000000030000000100000001000000
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

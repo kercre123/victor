@@ -388,6 +388,10 @@ namespace Cozmo.Hub {
     private void HandleRandomTrickStarted(HardSparkStartedByEngine sparkStartedMsg) {
       // Open the SparksDetailView if it was from VC or random "Do A Trick", not from specific UI interaction
       bool playerSparksModalNotOpen = (_SparksDetailModalInstance == null);
+      // Onboarding is using it's own screen that removes all this functionality.
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
+        return;
+      }
 
       // When sparks are started by engine via VC or offer flow, HardSparkStartedByEngine is sent
       // before robot.IsSparked is updated. However, in the player driven "specific spark" flow, 
