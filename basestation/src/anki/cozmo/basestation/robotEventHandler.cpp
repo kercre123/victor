@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -1292,7 +1293,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor
   if (nullptr != robot)
   {
     PRINT_NAMED_INFO("RobotEventHandler.HandleMessage.EnableCliffSensor","Setting to %s", msg.enable ? "true" : "false");
-    robot->SetEnableCliffSensor(msg.enable);
+    robot->GetCliffSensorComponent().SetEnableCliffSensor(msg.enable);
   }
 }
 

@@ -32,6 +32,7 @@
 #include "anki/cozmo/basestation/bridge.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -1393,7 +1394,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
         robotPoseWrtOrigin.ApplyTo(cliffquad, cliffquad);
 
         // depending on cliff on/off, add as ClearOfCliff or as Cliff
-        if ( _robot->IsCliffDetected() )
+        if ( _robot->GetCliffSensorComponent().IsCliffDetected() )
         {
           // build data we want to embed for this quad
           NavMemoryMapQuadData_Cliff cliffData;

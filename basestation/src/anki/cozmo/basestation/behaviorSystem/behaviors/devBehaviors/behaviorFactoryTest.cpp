@@ -33,6 +33,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -803,7 +804,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         }
         */
         
-        if (robot.IsCliffSensorOn()) {
+        if (robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn()) {
           END_TEST(FactoryTestResultCode::CLIFF_UNEXPECTED);
         }
         
@@ -952,7 +953,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
           }
           
           // Make sure cliff (and pickup) detection is enabled
-          robot.SetEnableCliffSensor(true);
+          robot.GetCliffSensorComponent().SetEnableCliffSensor(true);
         
           // 1) Drive off charger towards slot.
           // 2) Move head down slowly. If head is stiff, hopefully this will catch it
@@ -976,7 +977,8 @@ static const char* kBehaviorTestName = "Behavior factory test";
       // - - - - - - - - - - - - - - DRIVE TO SLOT - - - - - - - - - - - - - - -
       case FactoryTestState::DriveToSlot:
       {
-        if (!robot.IsCliffSensorOn() || robot.GetMoveComponent().IsMoving() ) {
+        const bool cliffDetected = robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn();
+        if (!cliffDetected || robot.GetMoveComponent().IsMoving() ) {
           if (currentTime_sec > _holdUntilTime) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
             END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
@@ -985,7 +987,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         }
         
         // Record cliff sensor value over drop
-        const CliffSensorValue cliffVal(robot.GetCliffDataRaw());
+        const CliffSensorValue cliffVal(robot.GetCliffSensorComponent().GetCliffDataRaw());
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.CliffOnDrop", "%u", cliffVal.val);
         
         // Write cliff val to log on device
@@ -998,8 +1000,9 @@ static const char* kBehaviorTestName = "Behavior factory test";
         
         
         // Check cliff sensor value
-        if (robot.GetCliffDataRaw() > _kMaxCliffValueOverDrop) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOverDropTooHigh", "Val: %d", robot.GetCliffDataRaw());
+        const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
+        if (cliffDataRaw > _kMaxCliffValueOverDrop) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOverDropTooHigh", "Val: %d", cliffDataRaw);
           END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_HIGH);
         }
         
@@ -1039,7 +1042,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
       case FactoryTestState::GotoCalibrationPose:
       {
         // Record cliff sensor value over ground
-        const CliffSensorValue cliffVal(robot.GetCliffDataRaw());
+        const CliffSensorValue cliffVal(robot.GetCliffSensorComponent().GetCliffDataRaw());
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.CliffOnGround", "%u", cliffVal.val);
         
         // Write cliff val to log on device
@@ -1051,8 +1054,9 @@ static const char* kBehaviorTestName = "Behavior factory test";
         QueueWriteToRobot(robot, NVStorage::NVEntryTag::NVEntry_CliffValOnGround, buf, numBytes);
         
         // Check cliff sensor value
-        if (robot.GetCliffDataRaw() < _kMinCliffValueOnGround) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOnGroundTooLow", "Val: %d", robot.GetCliffDataRaw());
+        const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
+        if (cliffDataRaw < _kMinCliffValueOnGround) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CliffValueOnGroundTooLow", "Val: %d", cliffDataRaw);
           END_TEST(FactoryTestResultCode::CLIFF_VALUE_TOO_LOW);
         }
         

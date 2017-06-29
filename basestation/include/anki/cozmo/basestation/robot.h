@@ -96,6 +96,7 @@ struct RobotState;
 class PathComponent;
 class DockingComponent;
 class CarryingComponent;
+class CliffSensorComponent;
 
 namespace Audio {
 class RobotAudioClient;
@@ -305,6 +306,9 @@ public:
   inline const PathComponent& GetPathComponent() const { return *_pathComponent; }
   inline       PathComponent& GetPathComponent()       { return *_pathComponent; }
   
+  inline const CliffSensorComponent& GetCliffSensorComponent() const { return *_cliffSensorComponent; }
+  inline       CliffSensorComponent& GetCliffSensorComponent()       { return *_cliffSensorComponent; }
+  
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return *_drivingAnimationHandler; }
   
@@ -474,7 +478,9 @@ public:
   void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
   
   EncodedImage& GetEncodedImage() { return _encodedImage; }
-    
+  
+  bool IsPickedUp() const { return _isPickedUp; }
+  
   /*
   // =========== Proximity Sensors ===========
   u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
@@ -484,38 +490,10 @@ public:
   // obstacles are detected by proximity sensors
   static const Pose3d ProxDetectTransform[NUM_PROX];
   */
-
-  void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
-  bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
-  
-  // Returns true if a cliff event was detected
-  void SetCliffDetected(const bool isCliffDetected) { _isCliffDetected = isCliffDetected; }
-  bool IsCliffDetected() const { return _isCliffDetected; }
-  bool IsCliffSensorOn() const { return _isCliffSensorOn; }
-  
-  bool IsPickedUp() const { return _isPickedUp; }
-  
-  // index corresponds to CliffSensor enum
-  u16  GetCliffDataRaw(unsigned int ind = 0) const;
   
   // sets distance detected by forward proximity sensor
   void SetForwardSensorValue(u16 value_mm)       { _forwardSensorValue_mm = value_mm; }
   u16  GetForwardSensorValue()             const { return _forwardSensorValue_mm; }
-
-  // Evaluate how suspicious the cliff that caused robot to stop is based on how much the reading
-  // actually rises while it's stopping in reaction to the supposed cliff.
-  void EvaluateCliffSuspiciousnessWhenStopped();
-  
-  // Returns true if floor is suspiciously cliff-y looking based on variance of cliff readings
-  bool IsFloorSuspiciouslyCliffy() const;
-  
-  // Returns current threshold for cliff detection
-  u16 GetCliffDetectThreshold() const { return _cliffDetectThreshold; }
-  
-  // Get the mean/variance of cliff readings over the past few seconds. (See kCliffSensorRunningStatsWindowSize)
-  f32  GetCliffRunningMean() const { return _cliffRunningMean; }
-  f32  GetCliffRunningVar()  const { return _cliffRunningVar; }
-  void ClearCliffRunningStats();
   
   // =========== IMU Data =============
   
@@ -817,6 +795,7 @@ protected:
   std::unique_ptr<RobotGyroDriftDetector> _gyroDriftDetector;
   std::unique_ptr<DockingComponent>       _dockingComponent;
   std::unique_ptr<CarryingComponent>      _carryingComponent;
+  std::unique_ptr<CliffSensorComponent>   _cliffSensorComponent;
 
   // Hash to not spam debug messages
   size_t _lastDebugStringHash;
@@ -884,13 +863,9 @@ protected:
   bool             _chargerOOS            = false;
   f32              _battVoltage           = 5;
   ImageSendMode    _imageSendMode         = ImageSendMode::Off;
-  bool             _enableCliffSensor     = true;
   u32              _lastSentImageID       = 0;
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isPickedUp            = false;
-  bool             _isCliffDetected       = false;
-  bool             _isCliffSensorOn       = false;
-  std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> _cliffDataRaw; // initialized in constructor
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;
@@ -898,25 +873,7 @@ protected:
   u8               _setBodyModeTicDelay   = 0;
   bool             _gotStateMsgAfterTimeSync = false;
   
-  u32              _suspiciousCliffCnt = 0;
-  u16              _cliffDetectThreshold;
-  u32              _cliffStartTimestamp = 0;
-  
   u32              _lastStatusFlags       = 0;
-  
-  // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
-  void IncrementSuspiciousCliffCount();
-  
-  // Assesses suspiciousness of current cliff and adjusts cliff threshold if necessary
-  void UpdateCliffDetectThreshold();
-  
-  // Cliff-yness tracking
-  std::deque<u16> _cliffDataQueue;
-  f32             _cliffRunningMean;
-  f32             _cliffRunningVar;
-  f32             _cliffRunningVar_acc;
-  void UpdateCliffRunningStats(const RobotState& msg);
-  
 
   OffTreadsState    _offTreadsState  = OffTreadsState::OnTreads;
   OffTreadsState    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
@@ -1047,8 +1004,6 @@ protected:
   Result SendIMURequest(const u32 length_ms) const;
 
   Result SendAbortAnimation();
-  
-  void SetCliffDetectThreshold(u16 thresh);
   
   // Total distance travelled
   f32 _totalDistanceTravelled_mm = -1.f;

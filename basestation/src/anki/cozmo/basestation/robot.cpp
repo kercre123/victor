@@ -39,6 +39,7 @@
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/cubeAccelComponent.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
@@ -101,10 +102,6 @@ CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 // if false, vision system keeps running while picked up, on side, etc.
 CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
-// Whether or not to lower the cliff detection threshold on the robot
-// whenever a suspicious cliff is encountered.
-CONSOLE_VAR(bool, kDoProgressiveThresholdAdjustOnSuspiciousCliff, "Robot", true);
-
 // Play an animation by name from the debug console.
 // Note: If COZMO-11199 is implemented (more user-friendly playing animations by name
 //   on the Unity side), then this console func can be removed.
@@ -158,26 +155,6 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
   0,             -0.9976f,  -0.0698f,
 });
 
-  
-  
-// Minimum value that cliff detection threshold can be dynamically lowered to
-static const u32 kCliffSensorMinDetectionThresh = 150;
-
-// Amount by which cliff detection level can be lowered when suspiciously cliff-y floor detected
-static const u32 kCliffSensorDetectionThreshStep = 250;
-
-// Number of suspicious cliffs that must be encountered before detection threshold is lowered
-static const u32 kCliffSensorSuspiciousCliffCount = 1;
-
-// Size of running window of cliff data for computing running mean/variance in number of RobotState messages (which arrive every 30ms)
-static const u32 kCliffSensorRunningStatsWindowSize = 100;
-  
-// Cliff variance threshold for detecting suspiciously cliffy floor/carpet
-static const f32 kCliffSensorSuspiciouslyCliffyFloorThresh = 10000;
-  
-// The minimum amount by which the cliff data must be above the minimum value observed since stopping
-// began in order to be considered a suspicious cliff. (i.e. We might be on crazy carpet)
-static const u16 kMinRiseDuringStopForSuspiciousCliff = 15;
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   : _context(context)
@@ -209,6 +186,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _gyroDriftDetector(std::make_unique<RobotGyroDriftDetector>(*this))
   , _dockingComponent(new DockingComponent(*this))
   , _carryingComponent(new CarryingComponent(*this))
+  , _cliffSensorComponent(std::make_unique<CliffSensorComponent>(*this))
   , _poseOriginList(new PoseOriginList())
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -218,7 +196,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
                   {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
-  , _cliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
   , _inventoryComponent(new InventoryComponent(*this))
@@ -245,8 +222,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _frameId = 0;
   _stateHistory->Clear();
   _needToSendLocalizationUpdate = false;
-  
-  _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
 
   _robotToEngineImplMessaging->InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID, this);
       
@@ -390,114 +365,9 @@ void Robot::SetOnChargerPlatform(bool onPlatform)
       );
     
     const u32 thresh = (onPlatform ? CLIFF_SENSOR_UNDROP_LEVEL_MIN : CLIFF_SENSOR_DROP_LEVEL);
-    SetCliffDetectThreshold(thresh);
+    _cliffSensorComponent->SendCliffDetectThresholdToRobot(thresh);
   }
 }
-  
-u16 Robot::GetCliffDataRaw(unsigned int ind) const
-{
-  #ifdef COZMO_V2
-  DEV_ASSERT(ind < Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT), "Robot.GetCliffDataRaw.InvalidIndex");
-  #else
-  // For pre-V2 robots, there is only one cliff sensor, so index should be 0.
-  DEV_ASSERT(ind == 0, "Robot.GetCliffDataRaw.InvalidIndex");
-  #endif // COZMO_V2
-  
-  return _cliffDataRaw[ind];
-}
-  
-void Robot::IncrementSuspiciousCliffCount()
-{
-  if (_cliffDetectThreshold > kCliffSensorMinDetectionThresh) {
-    ++_suspiciousCliffCnt;
-    LOG_EVENT("IncrementSuspiciousCliffCount.Count", "%d", _suspiciousCliffCnt);
-    if (_suspiciousCliffCnt >= kCliffSensorSuspiciousCliffCount) {
-      _cliffDetectThreshold = MAX(_cliffDetectThreshold - kCliffSensorDetectionThreshStep, kCliffSensorMinDetectionThresh);
-      LOG_EVENT("IncrementSuspiciousCliffCount.NewThreshold", "%d", _cliffDetectThreshold);
-      SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
-      _suspiciousCliffCnt = 0;
-    }
-  }
-}
-
-void Robot::EvaluateCliffSuspiciousnessWhenStopped() {
-  if (kDoProgressiveThresholdAdjustOnSuspiciousCliff) {
-    _cliffStartTimestamp = GetLastMsgTimestamp();
-  }
-}
-  
-// Updates mean and variance of cliff readings observed in last kCliffSensorRunningStatsWindowSize RobotState msgs.
-// Based on Welford Algorithm. See http://stackoverflow.com/questions/5147378/rolling-variance-algorithm
-void Robot::UpdateCliffRunningStats(const RobotState& msg) {
-  // TODO: update this to support multiple cliff sensors
-  u16 obs = msg.cliffDataRaw[0];
-  if (GetMoveComponent().AreWheelsMoving() && (GetOffTreadsState() == OffTreadsState::OnTreads) && obs > (_cliffDetectThreshold)) {
-
-    _cliffDataQueue.push_back(obs);
-    if (_cliffDataQueue.size() > kCliffSensorRunningStatsWindowSize) {
-      // Popping oldest value. Update stats.
-      f32 oldestObs = _cliffDataQueue.front();
-      _cliffDataQueue.pop_front();
-      f32 prevMean = _cliffRunningMean;
-      _cliffRunningMean += (obs - oldestObs) / kCliffSensorRunningStatsWindowSize;
-      _cliffRunningVar_acc += (obs - prevMean) * (obs - _cliffRunningMean) - (oldestObs - prevMean) * (oldestObs - _cliffRunningMean);
-    } else {
-      // Queue not full yet. Just update stats
-      f32 delta = obs - _cliffRunningMean;
-      _cliffRunningMean += delta / _cliffDataQueue.size();
-      _cliffRunningVar_acc += delta * (obs - _cliffRunningMean);
-    }
-    
-    // Compute running variance based on number of samples in queue/window
-    if (_cliffDataQueue.size() > 1) {
-      _cliffRunningVar = _cliffRunningVar_acc / (_cliffDataQueue.size() - 1);
-    }
-  }
-}
-  
-
-void Robot::ClearCliffRunningStats() {
-  _cliffDataQueue.clear();
-  _cliffRunningMean = 0;
-  _cliffRunningVar = 0;
-  _cliffRunningVar_acc = 0;
-}
-
-void Robot::UpdateCliffDetectThreshold() {
-  // Check pose history for cliff readings to see if cliff readings went up
-  // after stopping indicating a suspicious cliff.
-  if (_cliffStartTimestamp > 0) {
-    if( !GetMoveComponent().AreWheelsMoving() ) {
-      
-      auto poseMap = GetStateHistory()->GetRawPoses();
-      u16 minVal = std::numeric_limits<u16>::max();
-      for (auto startIt = poseMap.lower_bound(_cliffStartTimestamp); startIt != poseMap.end(); ++startIt) {
-        u16 currVal = startIt->second.GetCliffData();
-        PRINT_NAMED_DEBUG("Robot.UpdateCliffRunningStats.CliffValueWhileStopping", "%d - %d", startIt->first, currVal);
-        
-        if (minVal > currVal) {
-          minVal = currVal;
-        }
-        
-        // If a cliff reading is ever more than a certain amount above the minimum observed value since
-        // it began stopping, the cliff it is reacting to is suspect (probably carpet) so don't bother doing the reaction.
-        // Note: This is mostly from testing on the office carpet.
-        if (IsFloorSuspiciouslyCliffy() && (currVal > minVal + kMinRiseDuringStopForSuspiciousCliff)) {
-          IncrementSuspiciousCliffCount();
-        }
-      }
-      
-      _cliffStartTimestamp = 0;
-    }
-  }
-}
-
-  
-// The variance of the recent cliff readings is what we use to determine the cliffyness of the floor
-bool Robot::IsFloorSuspiciouslyCliffy() const {
-  return (_cliffRunningVar > kCliffSensorSuspiciouslyCliffyFloorThresh);
-}
-
   
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
@@ -697,15 +567,7 @@ void Robot::Delocalize(bool isCarryingObject)
   _localizedToFixedObject = false;
   _localizedMarkerDistToCameraSq = -1.f;
   
-  // Reset cliff threshold
-  _suspiciousCliffCnt = 0;
-  if (_cliffDetectThreshold != CLIFF_SENSOR_DROP_LEVEL) {
-    _cliffDetectThreshold = CLIFF_SENSOR_DROP_LEVEL;
-    LOG_EVENT("Robot.Delocalize.RestoringCliffDetectThreshold", "%d", _cliffDetectThreshold);
-    SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(_cliffDetectThreshold);
-  }
-  
-  ClearCliffRunningStats();
+  _cliffSensorComponent->ClearCliffRunningStats();
 
   // NOTE: no longer doing this here because Delocalize() can be called by
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -901,9 +763,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       
   // Update robot pitch angle
   _pitchAngle = Radians(msg.pose.pitch_angle);
-            
-  // Raw cliff data
-  _cliffDataRaw = msg.cliffDataRaw;
+  
+  // Update cliff sensor component
+  _cliffSensorComponent->UpdateRobotData(msg);
 
   // update path following variables
   _pathComponent->UpdateRobotData(msg.currPathSegment, msg.lastPathID);
@@ -936,7 +798,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
-  _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
   _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
@@ -950,8 +811,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE, 0)));
     _setBodyModeTicDelay = 0;
   }
-
-
 
   GetMoveComponent().Update(msg);
       
@@ -1105,7 +964,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
         // has driven a certain distance. This is to prevent Cozmo from detecting a cliff while
         // driving off chargers (specificly 1.5 chargers). The cliff threshold should still be high
         // enough to detect real cliffs
-        SetCliffDetectThreshold(CLIFF_SENSOR_UNDROP_LEVEL_MIN);
+        _cliffSensorComponent->SendCliffDetectThresholdToRobot(CLIFF_SENSOR_UNDROP_LEVEL_MIN);
       }
     
       // Update total distance travelled only when this state message is from the current frameId
@@ -1123,7 +982,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       {
         // Reset cliff detect threshold back to default after travelling a distance of
         // kDistanceTravelledToReEnableCliffs_mm
-        SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
+        _cliffSensorComponent->SendCliffDetectThresholdToRobot(CLIFF_SENSOR_DROP_LEVEL);
         
         _pastDistanceToReEnableCliffs = true;
       }
@@ -1160,8 +1019,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _gyroDriftDetector->DetectGyroDrift(msg);
   _gyroDriftDetector->DetectBias(msg);
   
-  UpdateCliffRunningStats(msg);
-  UpdateCliffDetectThreshold();
+  _cliffSensorComponent->UpdateCliffRunningStats(msg);
+  _cliffSensorComponent->UpdateCliffDetectThreshold();
   
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
@@ -3440,11 +3299,6 @@ void Robot::SetBodyColor(const s32 color)
   }
   
   _bodyColor = bodyColor;
-}
-
-void Robot::SetCliffDetectThreshold(u16 thresh)
-{
-  SendRobotMessage<RobotInterface::SetCliffDetectThreshold>(thresh);
 }
 
 void Robot::ObjectToConnectToInfo::Reset()

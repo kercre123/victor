@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -799,14 +800,14 @@ void RobotToEngineImplMessaging::HandleRobotStopped(const AnkiEvent<RobotInterfa
   
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   Util::sEventF("RobotImplMessaging.HandleRobotStopped",
-                {{DDATA, std::to_string(robot->GetCliffRunningVar()).c_str()}},
+                {{DDATA, std::to_string(robot->GetCliffSensorComponent().GetCliffRunningVar()).c_str()}},
                 "%d", payload.reason);
   
-  robot->EvaluateCliffSuspiciousnessWhenStopped();
+  robot->GetCliffSensorComponent().EvaluateCliffSuspiciousnessWhenStopped();
   
   // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
   // trigger this RobotStopped message so it's not too crazy.
-  if( !(robot->IsCliffSensorEnabled()) ) {
+  if( !(robot->GetCliffSensorComponent().IsCliffSensorEnabled()) ) {
     return;
   }
   
@@ -847,8 +848,8 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   
   CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
   // always listen to events which say we aren't on a cliff, but ignore ones which say we are (so we don't
-  // get "stuck" om a cliff
-  if( !robot->IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0) ) {
+  // get "stuck" on a cliff
+  if( !robot->GetCliffSensorComponent().IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0) ) {
     return;
   }
   
@@ -873,7 +874,7 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
   
-  robot->SetCliffDetected(cliffEvent.detectedFlags != 0);
+  robot->GetCliffSensorComponent().SetCliffDetected(cliffEvent.detectedFlags != 0);
   
   // Forward on with EngineToGame event
   robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(cliffEvent)));

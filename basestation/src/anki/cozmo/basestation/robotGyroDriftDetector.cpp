@@ -7,6 +7,7 @@
 
 #include "anki/cozmo/basestation/robotGyroDriftDetector.h"
 
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -50,7 +51,7 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
     // 5) Drift detector started but the raw gyro reading deviated too much from starting values, indicating motion.
     if (_robot.GetMoveComponent().IsMoving() ||
         (std::fabsf(gyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
-        _robot.IsCliffDetected() ||
+        _robot.GetCliffSensorComponent().IsCliffDetected() ||
         !_robot.IsHeadCalibrated() ||
         
         ((_startTime_ms != 0) &&

@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -550,7 +551,7 @@ bool BehaviorEnrollFace::CanMoveTreads(const Robot& robot) const
     return false;
   }
  
-  if(robot.IsCliffDetected())
+  if(robot.GetCliffSensorComponent().IsCliffDetected())
   {
     return false;
   }

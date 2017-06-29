@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -99,7 +100,7 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
     case State::PlayingStopReaction:
     {
       // Record cliff detection threshold before at start of stop
-      _cliffDetectThresholdAtStart = robot.GetCliffDetectThreshold();
+      _cliffDetectThresholdAtStart = robot.GetCliffSensorComponent().GetCliffDetectThreshold();
       
       // Wait function for determining if the cliff is suspicious
       auto waitForStopLambda = [this](Robot& robot) {
@@ -107,7 +108,7 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
           return false;
         }
         
-        if (_cliffDetectThresholdAtStart != robot.GetCliffDetectThreshold()) {
+        if (_cliffDetectThresholdAtStart != robot.GetCliffSensorComponent().GetCliffDetectThreshold()) {
           // There was a change in the cliff detection threshold so assuming
           // it was a false cliff and aborting reaction
           PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");
@@ -188,7 +189,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
 void BehaviorReactToCliff::TransitionToBackingUp(Robot& robot)
 {
   // if the animation doesn't drive us backwards enough, do it manually
-  if( robot.IsCliffDetected() ) {
+  if( robot.GetCliffSensorComponent().IsCliffDetected() ) {
       StartActing(new DriveStraightAction(robot, -kCliffBackupDist_mm, kCliffBackupSpeed_mmps),
                   [this,&robot](){
                       SendFinishedReactToCliffMessage(robot);

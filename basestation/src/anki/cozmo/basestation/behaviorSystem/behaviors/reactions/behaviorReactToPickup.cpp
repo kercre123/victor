@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/components/cliffSensorComponent.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -161,10 +162,11 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (currentTime > _nextRepeatAnimationTime)
     {
-      if (robot.GetCliffDataRaw() < CLIFF_SENSOR_DROP_LEVEL) {
+      const auto cliffDataRaw = robot.GetCliffSensorComponent().GetCliffDataRaw();
+      if (cliffDataRaw < CLIFF_SENSOR_DROP_LEVEL) {
         StartAnim(robot);
       } else {
-        LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d", robot.GetCliffDataRaw());
+        LOG_EVENT("BehaviorReactToPickup.CalibratingHead", "%d", cliffDataRaw);
         StartActing(new CalibrateMotorAction(robot, true, false));
       }
     }
