@@ -106,6 +106,7 @@ public:
 
 private:
 
+  void InitReset(const float currentTime_s, const u32 serialNumber);
   void InitInternal(const float currentTime_s);
 
   bool DeviceHasNeedsState();

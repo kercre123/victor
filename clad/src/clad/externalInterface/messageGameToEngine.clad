@@ -920,6 +920,17 @@ message ForceSetNeedsLevels {
   float_32 newNeedLevel[uint_8]
 }
 
+// In this message, I had to add a second, unused field to get CLAD to compile.
+// This is because of a conflict with the constructor that takes uint_8* and
+// length.
+message ForceSetDamagedParts {
+  bool partIsDamaged[uint_8],
+  bool dummyVarToCompileCLAD
+}
+
+message RegisterOnboardingComplete {
+}
+
 message SetNeedsPauseState {
   bool pause
 }

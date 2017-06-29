@@ -283,6 +283,8 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetNeedsLevels>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetDamagedParts>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterOnboardingComplete>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseStates>();
@@ -300,10 +302,9 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
 }
 
 
-void NeedsManager::InitInternal(const float currentTime_s)
+void NeedsManager::InitReset(const float currentTime_s, const u32 serialNumber)
 {
-  const u32 uninitializedSerialNumber = 0;
-  _needsState.Init(_needsConfig, uninitializedSerialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
+  _needsState.Init(_needsConfig, serialNumber, _starRewardsConfig, _cozmoContext->GetRandom());
 
   _timeForNextPeriodicDecay_s = currentTime_s + _needsConfig._decayPeriod;
 
@@ -321,6 +322,13 @@ void NeedsManager::InitInternal(const float currentTime_s)
   {
     _actionCooldown_s[i] = 0.0f;
   }
+}
+
+
+void NeedsManager::InitInternal(const float currentTime_s)
+{
+  const u32 uninitializedSerialNumber = 0;
+  InitReset(currentTime_s, uninitializedSerialNumber);
 
   // Read needs data from device storage, if it exists
   _deviceHadValidNeedsData = false;
@@ -843,7 +851,8 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
   }
   // Note that we don't set the appropriate number of broken parts here, because we're
   // just using this to fake needs levels during onboarding, and we will fully initialize
-  // after onboarding completes.
+  // after onboarding completes.  The ForceSetDamagedParts message below can be used to
+  // set whether each part is damaged.
 
   SendNeedsStateToGame();
 
@@ -854,6 +863,55 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
   std::ostringstream stream;
   FormatStringOldAndNewLevels(stream, prevNeedsLevels);
   Anki::Util::sEvent("needs.force_set_needs_levels", {}, stream.str().c_str());
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::ForceSetDamagedParts& msg)
+{
+  DEV_ASSERT_MSG(_isPausedOverall, "NeedsManager.HandleMessage.ForceSetDamagedParts",
+                 "Message received when NeedsManager is not paused");
+
+  for (size_t i = 0; i < static_cast<size_t>(RepairablePartId::Count); i++)
+  {
+    _needsState._partIsDamaged[static_cast<RepairablePartId>(i)] = msg.partIsDamaged[i];
+  }
+
+  SendNeedsStateToGame();
+
+  // DAS Event: "needs.force_set_damaged_parts"
+  // s_val: Colon-separated list of bools (expressed as 1 or 0) for whether each
+  //        repairable part is damaged
+  // data: Unused
+  std::ostringstream stream;
+  for (size_t i = 0; i < static_cast<size_t>(RepairablePartId::Count); i++)
+  {
+    if (i > 0)
+    {
+      stream << ":";
+    }
+    stream << (msg.partIsDamaged[i] ? "1" : "0");
+  }
+  Anki::Util::sEvent("needs.force_set_damaged_parts", {}, stream.str().c_str());
+}
+
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComplete& msg)
+{
+  // Reset cozmo's need levels to their starting points, and reset timers
+  InitReset(_currentTime_s, _needsState._robotSerialNumber);
+
+  // Un-pause the needs system if we are not already
+  if (_isPausedOverall)
+  {
+    SetPaused(false);
+  }
+
+  SendNeedsStateToGame();
+
+  // DAS Event: "needs.onboarding_completed"
+  // s_val: Unused
+  // data: Unused
+  Anki::Util::sEvent("needs.onboarding_completed", {}, "");
 }
 
 template<>
@@ -1273,8 +1331,10 @@ void NeedsManager::UpdateStarsState(bool cheatGiveStar)
 
     // DAS Event: "needs.play_need_filled"
     // s_val: Whether a daily star was awarded (1 or 0)
-    // data: Unused
-    Anki::Util::sEvent("needs.play_need_filled", {}, starAwarded ? "1" : "0");
+    // data: New current level
+    Anki::Util::sEvent("needs.play_need_filled",
+                       {{DDATA, std::to_string(_needsState._curNeedsUnlockLevel).c_str()}},
+                       starAwarded ? "1" : "0");
   }
 }
 
