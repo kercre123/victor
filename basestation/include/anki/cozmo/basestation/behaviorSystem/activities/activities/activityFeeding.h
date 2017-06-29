@@ -66,6 +66,7 @@ private:
   
   
   FeedingActivityStage _chooserStage;
+  float _lastStageChangeTime_s;
   float _timeFaceSearchShouldEnd_s;
   
   std::map<ObjectID, std::unique_ptr<FeedingCubeController>> _cubeControllerMap;
@@ -97,7 +98,6 @@ private:
   float _DASTimeLastFeedingStageStarted = -1.0f;
   int   _DASMostCubesInParallel = 0;
   
-  
   void UpdateActivityStage(FeedingActivityStage newStage, const std::string& newStageName);
   
   // Updates the activity stage to the best thing Cozmo can do right now
@@ -109,11 +109,13 @@ private:
   // Handle object observations
   void RobotObservedObject(const ObjectID& objID);
   
-  void UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions);
+  void UpdateAnimationToPlay(AnimationTrigger animTrigger);
   
   void HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState);
   
   void ClearSevereAnims(Robot& robot);
+  
+  bool HasSingleBehaviorStageStarted(IBehaviorPtr behavior);
 
 };
 

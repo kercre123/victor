@@ -54,6 +54,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 
 // Mapping from ActivityId to FreeplayMood for music states
 // 'buildPyramid'    - when Cozmo is building a pyramid (manages its own music states)
+// 'feeding'         - when Cozmo is being fed cubes by the user to refil his energy need
 // 'hiking'          - when Cozmo is exploring its surroundings on his own
 // 'needsSevereLowEnergy' - when Cozmo's needstate is severely low energy
 // 'needsSevereLowRepair' - when Cozmo's needstate is severely low repair
@@ -68,7 +69,7 @@ const std::array<AudioMetaData::SwitchState::Gameplay_Round, 11> kGameplayRoundM
 const std::unordered_map<ActivityID, Freeplay_Mood> freeplayStateMap
 {
   { ActivityID::BuildPyramid,            AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
-  { ActivityID::Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
+  { ActivityID::Feeding,                 AudioMetaData::SwitchState::Freeplay_Mood::Nurture_Feeding },
   { ActivityID::Hiking,                  AudioMetaData::SwitchState::Freeplay_Mood::Hiking },
   { ActivityID::ObjectTapInteraction,    AudioMetaData::SwitchState::Freeplay_Mood::Neutral },
   { ActivityID::NeedsSevereLowEnergy,    AudioMetaData::SwitchState::Freeplay_Mood::Invalid },
@@ -245,7 +246,8 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
     const BehaviorStageStruct& currPublicStateStruct = stateEvent.userFacingBehaviorStageStruct;
     HandleGuardDogUpdates(currPublicStateStruct);
     HandleDancingUpdates(currPublicStateStruct);
-    
+    HandleFeedingUpdates(currPublicStateStruct);
+
     if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Count)
     {
       // Update the Activity state to current Activity
@@ -381,6 +383,17 @@ void BehaviorAudioClient::HandleDancingUpdates(const BehaviorStageStruct& currPu
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct)
+{
+  if(currPublicStateStruct.behaviorStageTag == BehaviorStageTag::Feeding){
+    const int roundIdx =  static_cast<int>(currPublicStateStruct.currentFeedingStage);
+    _robot.GetRobotAudioClient()->PostSwitchState(SwitchGroupType::Gameplay_Round,
+                                                  static_cast<const GenericSwitch>(kGameplayRoundMap[roundIdx]),
+                                                  AudioMetaData::GameObjectType::Default);
+  }
+}
 
 
 } // Audio

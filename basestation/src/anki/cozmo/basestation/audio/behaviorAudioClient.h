@@ -105,7 +105,8 @@ private:
   void HandleSparkUpdates(const RobotPublicState& stateEvent);
   void HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
-  
+  void HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct);
+
   
 };
 

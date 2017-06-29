@@ -38,7 +38,6 @@ namespace Cozmo.Energy.UI {
 
     private NeedBracketId _LastNeedBracket = NeedBracketId.Count;
     private bool? _WasFull = null;
-    private bool _WaitForDropCube = false;
 
     //when this timer reaches zero, the modal will close
     //refreshes to _InactivityTimeOut on any touch or feeding
@@ -56,16 +55,7 @@ namespace Cozmo.Energy.UI {
       if (robot != null) {
         robot.CancelAllCallbacks();
         robot.CancelAction(RobotActionType.UNKNOWN);
-        robot.SetEnableFreeplayActivity(false);
         robot.SetEnableFreeplayLightStates(true);
-
-        if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
-          _WaitForDropCube = true;
-          robot.PlaceObjectOnGroundHere((success) => {
-            _WaitForDropCube = false;
-            StartFeedingActivity();
-          });
-        }
       }
 
       RobotEngineManager.Instance.AddCallback<ReactionTriggerTransition>(HandleRobotReactionaryBehavior);
@@ -261,11 +251,9 @@ namespace Cozmo.Energy.UI {
     }
 
     private void StartFeedingActivity() {
-      if (!_WaitForDropCube) {
-        var robot = RobotEngineManager.Instance.CurrentRobot;
-        if (robot != null) {
-          robot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
-        }
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ActivateHighLevelActivity(HighLevelActivity.Feeding);
       }
     }
 

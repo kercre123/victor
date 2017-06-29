@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
@@ -117,6 +118,8 @@ const char* kEatingDASKey =  "eating";
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
 : IActivity(robot, config)
+, _chooserStage(FeedingActivityStage::None)
+, _lastStageChangeTime_s(0)
 , _timeFaceSearchShouldEnd_s(0.0f)
 , _eatingComplete(false)
 , _severeAnimsSet(false)
@@ -198,9 +201,13 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
       AnimationTrigger::FeedingDrivingLoop_Severe,
       AnimationTrigger::FeedingDrivingGetOut_Severe});
     robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::FeedingIdleToFullCube_Severe);
+    robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+            BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::SevereEnergy));
     SmartDisableReactionsWithLock(robot, kSevereFeedingDisableLock, kSevereFeedingDisables);
     _severeAnimsSet = true;
   }else{
+    robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+            BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
     _severeAnimsSet = false;
   }
   
@@ -350,23 +357,24 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
     case FeedingActivityStage::WaitingForShake:
     {
       // Transition out of this state happens in the update function
-      // Ensure play anim is always initialized properly in case  of interruptes
-      if(!_behaviorPlayAnimation->IsRunning()){
-        TransitionToBestActivityStage(robot);
+      // Ensure play anim is always initialized properly in case  of interrupts
+      if(HasSingleBehaviorStageStarted(_behaviorPlayAnimation) &&
+         !_behaviorPlayAnimation->IsRunning()){
         bestBehavior = TransitionToBestActivityStage(robot);
+      }else{
+        bestBehavior = _behaviorPlayAnimation;
       }
-      
-      bestBehavior = _behaviorPlayAnimation;
       break;
     }
     case FeedingActivityStage::ReactingToShake:
     {
-      if(!_behaviorPlayAnimation->IsRunning()){
+      if(HasSingleBehaviorStageStarted(_behaviorPlayAnimation) &&
+         !_behaviorPlayAnimation->IsRunning()){
         UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
         AnimationTrigger bestAnimation = isNeedSevere ?
                             AnimationTrigger::FeedingIdleToFullCube_Severe :
                             AnimationTrigger::FeedingIdleToFullCube_Normal;
-        UpdateAnimationToPlay(bestAnimation, 0);
+        UpdateAnimationToPlay(bestAnimation);
       }
       bestBehavior = _behaviorPlayAnimation;
       break;
@@ -374,20 +382,23 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
     case FeedingActivityStage::WaitingForFullyCharged:
     {
       // Transition out of this state happens in the update function
-      if(!_behaviorPlayAnimation->IsRunning()){
+      if(HasSingleBehaviorStageStarted(_behaviorPlayAnimation) &&
+         !_behaviorPlayAnimation->IsRunning()){
         bestBehavior = TransitionToBestActivityStage(robot);
+      }else{
+        bestBehavior = _behaviorPlayAnimation;
       }
-      bestBehavior = _behaviorPlayAnimation;
       break;
     }
     case FeedingActivityStage::ReactingToFullyCharged:
     {
-      if(!_behaviorPlayAnimation->IsRunning()){
+      if(HasSingleBehaviorStageStarted(_behaviorPlayAnimation) &&
+         !_behaviorPlayAnimation->IsRunning()){
         UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
         AnimationTrigger bestAnimation = isNeedSevere ?
                             AnimationTrigger::FeedingReactToFullCube_Severe :
                             AnimationTrigger::FeedingIdleToFullCube_Normal;
-        UpdateAnimationToPlay(bestAnimation, 0);
+        UpdateAnimationToPlay(bestAnimation);
       }
       bestBehavior = _behaviorPlayAnimation;
       break;
@@ -401,7 +412,8 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
     }
     case FeedingActivityStage::ReactingToCube:
     {
-      if(!_behaviorPlayAnimation->IsRunning()){
+      if(HasSingleBehaviorStageStarted(_behaviorPlayAnimation) &&
+         !_behaviorPlayAnimation->IsRunning()){
         // Notify the eat food behavior the ID it should interact with
         BehaviorPreReqAcknowledgeObject preReqData(_interactID, robot);
         if(_eatFoodBehavior->IsRunnable(preReqData)){
@@ -417,7 +429,8 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
     }
     case FeedingActivityStage::EatFood:
     {
-      if(_eatFoodBehavior->IsRunning()){
+      if(!HasSingleBehaviorStageStarted(_eatFoodBehavior) ||
+         _eatFoodBehavior->IsRunning()){
         bestBehavior = _eatFoodBehavior;
       }else{
         // If an attempt was made to eat the cube and it's no longer fully charged
@@ -475,7 +488,7 @@ Result ActivityFeeding::Update(Robot& robot)
       AnimationTrigger bestAnimation = isNeedSevere ?
                           AnimationTrigger::FeedingReactToShake_Severe :
                           AnimationTrigger::FeedingReactToShake_Normal;
-      UpdateAnimationToPlay(bestAnimation, 1);
+      UpdateAnimationToPlay(bestAnimation);
     }
   }
   
@@ -489,7 +502,7 @@ Result ActivityFeeding::Update(Robot& robot)
       AnimationTrigger bestAnimation = isNeedSevere ?
                           AnimationTrigger::FeedingReactToFullCube_Severe :
                           AnimationTrigger::FeedingReactToFullCube_Normal;
-      UpdateAnimationToPlay(bestAnimation, 1);
+      UpdateAnimationToPlay(bestAnimation);
     }
   }
   
@@ -500,7 +513,7 @@ Result ActivityFeeding::Update(Robot& robot)
       AnimationTrigger bestTrigger = isNeedSevere ?
                                        AnimationTrigger::FeedingReactToSeeCube_Severe :
                                        AnimationTrigger::FeedingReactToSeeCube_Normal;
-      UpdateAnimationToPlay(bestTrigger, 1);
+      UpdateAnimationToPlay(bestTrigger);
     }
   }
 
@@ -552,6 +565,7 @@ void ActivityFeeding::UpdateActivityStage(FeedingActivityStage newStage,
   
   _DASTimeLastFeedingStageStarted = currentTime;
   _chooserStage = newStage;
+  _lastStageChangeTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 
@@ -572,7 +586,7 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
   AnimationTrigger bestAnimation = isNeedSevere ?
                       AnimationTrigger::FeedingIdleToFullCube_Severe :
                       AnimationTrigger::FeedingIdleToFullCube_Normal;
-  UpdateAnimationToPlay(bestAnimation, 0);
+  UpdateAnimationToPlay(bestAnimation);
   
   if(_severeAnimsSet && !isNeedSevere){
     ClearSevereAnims(robot);
@@ -621,8 +635,11 @@ void ActivityFeeding::StartedEating(Robot& robot, const int duration_s)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::UpdateAnimationToPlay(AnimationTrigger animTrigger, int repetitions)
+void ActivityFeeding::UpdateAnimationToPlay(AnimationTrigger animTrigger)
 {
+  // Animations should play once and then allow the activity to re-evaluate
+  // what to do next
+  const int repetitions = 1;
   const bool animWasPlaying = _behaviorPlayAnimation->IsRunning();
   
   _behaviorPlayAnimation->Stop();
@@ -635,7 +652,7 @@ void ActivityFeeding::UpdateAnimationToPlay(AnimationTrigger animTrigger, int re
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityFeeding::HandleObjectConnectionStateChange(Robot& robot, const ObjectConnectionState& connectionState)
 {
@@ -672,8 +689,20 @@ void ActivityFeeding::ClearSevereAnims(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   robot.GetAnimationStreamer().PopIdleAnimation();
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+          BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
   SmartRemoveDisableReactionsLock(robot, kSevereFeedingDisableLock);
   _severeAnimsSet = false;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ActivityFeeding::HasSingleBehaviorStageStarted(IBehaviorPtr behavior)
+{
+  if(behavior != nullptr){
+    return behavior->GetTimeStartedRunning_s() >= _lastStageChangeTime_s;
+  }
+  return false;
 }
 
   

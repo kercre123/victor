@@ -155,14 +155,19 @@ void PublicStateBroadcaster::UpdateBroadcastBehaviorStage(BehaviorStageTag stage
   
   BehaviorStageStruct newStruct;
   switch(stageType){
-    case BehaviorStageTag::PyramidConstruction:
+    case BehaviorStageTag::Feeding:
     {
-      newStruct.currentPyramidConstruction = static_cast<PyramidConstructionStage>(stage);
+      newStruct.currentFeedingStage = static_cast<FeedingStage>(stage);
       break;
     }
     case BehaviorStageTag::GuardDog:
     {
       newStruct.currentGuardDogStage = static_cast<GuardDogStage>(stage);
+      break;
+    }
+    case BehaviorStageTag::PyramidConstruction:
+    {
+      newStruct.currentPyramidConstructionStage = static_cast<PyramidConstructionStage>(stage);
       break;
     }
     case BehaviorStageTag::Workout:
@@ -220,13 +225,17 @@ int PublicStateBroadcaster::GetBehaviorRoundFromMessage(const RobotPublicState& 
 int PublicStateBroadcaster::GetStageForBehaviorStageType(BehaviorStageTag stageType,
                                                          const BehaviorStageStruct& stageStruct){
   switch(stageType){
-    case BehaviorStageTag::PyramidConstruction:
+    case BehaviorStageTag::Feeding:
     {
-      return Util::EnumToUnderlying(stageStruct.currentPyramidConstruction);
+      return Util::EnumToUnderlying(stageStruct.currentFeedingStage);
     }
     case BehaviorStageTag::GuardDog:
     {
       return Util::EnumToUnderlying(stageStruct.currentGuardDogStage);
+    }
+    case BehaviorStageTag::PyramidConstruction:
+    {
+      return Util::EnumToUnderlying(stageStruct.currentPyramidConstructionStage);
     }
     case BehaviorStageTag::Workout:
     {
