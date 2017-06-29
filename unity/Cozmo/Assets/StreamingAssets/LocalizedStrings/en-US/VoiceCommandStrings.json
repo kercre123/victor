@@ -1,4 +1,4 @@
-window._$translations = {
+{
     "smartling": {
         "translate_paths": [
             "*/translation"

@@ -39,7 +39,6 @@ public static class LocalizationKeys {
   public const string kBehaviorCheckForStackAtInterval = "behavior.CheckForStackAtInterval";
   public const string kBehaviorLookForFaceAndCube = "behavior.LookForFaceAndCube";
   public const string kBehaviorRamIntoBlock = "behavior.RamIntoBlock";
-  public const string kErrorTooManyFaces = "error.TooManyFaces";
   public const string kBehaviorBuildPyramid = "behavior.BuildPyramid";
   public const string kBehaviorPrepareCubes = "behavior.PrepareCubes";
   public const string kBehaviorPeekAboo = "behavior.PeekAboo";
@@ -74,8 +73,19 @@ public static class LocalizationKeys {
   public const string kBehaviorVC_Refuse_Energy = "behavior.VC_Refuse_Energy";
   public const string kBehaviorVC_Refuse_Repair = "behavior.VC_Refuse_Repair";
   public const string kBehaviorVC_Refuse_Sparks = "behavior.VC_Refuse_Sparks";
-  public const string kBehaviorVC_SearchForFace = "behavior.SearchForFace";
-
+  public const string kBehaviorVC_HowAreYouDoing_AllGood = "behavior.VC_HowAreYouDoing_AllGood";
+  public const string kBehaviorSearchForFace = "behavior.SearchForFace";
+  public const string kBehaviorNeeds_MildLowEnergyRequest = "behavior.Needs_MildLowEnergyRequest";
+  public const string kBehaviorNeeds_MildLowPlayRequest = "behavior.Needs_MildLowPlayRequest";
+  public const string kBehaviorNeeds_MildLowRepairRequest = "behavior.Needs_MildLowRepairRequest";
+  public const string kBehaviorNeeds_SevereLowEnergyGetIn = "behavior.Needs_SevereLowEnergyGetIn";
+  public const string kBehaviorNeeds_SevereLowEnergyRequest = "behavior.Needs_SevereLowEnergyRequest";
+  public const string kBehaviorNeeds_SevereLowPlayBored = "behavior.Needs_SevereLowPlayBored";
+  public const string kBehaviorNeeds_SevereLowPlayRequest = "behavior.Needs_SevereLowPlayRequest";
+  public const string kBehaviorNeeds_SevereLowRepairGetIn = "behavior.Needs_SevereLowRepairGetIn";
+  public const string kBehaviorNeeds_SevereLowRepairRequest = "behavior.Needs_SevereLowRepairRequest";
+  public const string kBehaviorVC_TrackLaser = "behavior.VC_TrackLaser";
+  public const string kButtonCONTINUECaps = "button.CONTINUE.caps";
 
   #endregion
 
@@ -326,6 +336,7 @@ public static class LocalizationKeys {
   public const string kConnectivityConnectionRejectedTitle = "connectivity.connectionRejected.title";
   public const string kNeedsUnconnectedNeedToConnectTitle = "needs.unconnected.needToConnect.title";
   public const string kNeedsUnconnectedNeedToConnectDescription = "needs.unconnected.needToConnect.description";
+  public const string kLabelCancelText = "label.cancelText";
 
   #endregion
 
@@ -367,6 +378,7 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentLabelLastScanned = "faceEnrollment.label.lastScanned";
   public const string kFaceEnrollmentLabelCozmoPrep = "faceEnrollment.label.cozmoPrep";
   public const string kFaceEnrollmentLabelToday = "faceEnrollment.label.today";
+  public const string kErrorTooManyFaces = "error.TooManyFaces";
 
   #endregion
 
@@ -614,6 +626,9 @@ public static class LocalizationKeys {
   public const string kOnboardingFeedTicker = "onboarding.feed.ticker";
   public const string kOnboardingPlayTicker = "onboarding.play.ticker";
   public const string kOnboardingSparkScreenRollACube = "onboarding.SparkScreenRollACube";
+  public const string kOnboardingRepairIntro = "onboarding.RepairIntro";
+  public const string kOnboardingFeedIntro = "onboarding.FeedIntro";
+  public const string kOnboardingDoATrickDesc = "onboarding.DoATrickDesc";
 
   #endregion
 
@@ -746,9 +761,9 @@ public static class LocalizationKeys {
   public const string kButtonQuit = "button.quit";
   public const string kButtonCancel = "button.cancel";
   public const string kButtonYes = "button.yes";
-  public const string kButtonNo = "button.no";
   public const string kButtonYesPlease = "button.yesPlease";
-  public const string kButtonNoThankYou= "button.noThankYou";
+  public const string kButtonNo = "button.no";
+  public const string kButtonNoThankYou = "button.noThankYou";
   public const string kButtonContinue = "button.continue";
   public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";
@@ -777,7 +792,6 @@ public static class LocalizationKeys {
   public const string kSoundcheckDescription = "soundcheck.description";
   public const string kRefreshCubesPromptDescription = "refreshCubesPrompt.description";
   public const string kButtonReplay = "button.replay";
-  public const string kLabelTo = "label.to";
   public const string kButtonSkip = "button.skip";
   public const string kSoundcheckDescriptionConfirm = "soundcheck.description.confirm";
   public const string kErrorBadLightTop = "error.badLight.Top";
@@ -790,8 +804,9 @@ public static class LocalizationKeys {
   public const string kLabelTotalSparks = "label.totalSparks";
   public const string kLabelTermsInstructions = "label.termsInstructions";
   public const string kLabelSimpleCount = "label.simpleCount";
-  public const string kButtonTemp = "button.temp";
   public const string kLabelBasicCozmo = "label.basicCozmo";
+  public const string kLabelCurrentPage = "label.currentPage";
+  public const string kLabelRewardHeader = "label.RewardHeader";
 
   #endregion
 
@@ -803,6 +818,7 @@ public static class LocalizationKeys {
   public const string kSparksViewListAbilitiesCardTitle = "sparksView.listAbilitiesCard.title";
   public const string kSparksViewListAbilitiesCardDescription = "sparksView.listAbilitiesCard.description";
   public const string kSparksViewSparkCountLabel = "sparksView.sparkCount.label";
+  public const string kSparksViewSparksRewardedLabel = "sparksView.sparksRewarded.label";
 
   #endregion
 
@@ -909,6 +925,50 @@ public static class LocalizationKeys {
   public const string kVideoSubtitlesMemoryMatchEighth = "videoSubtitles.memoryMatch.eighth";
   public const string kVideoSubtitlesMemoryMatchNineth = "videoSubtitles.memoryMatch.nineth";
   public const string kVideoSubtitlesMemoryMatchTenth = "videoSubtitles.memoryMatch.tenth";
+
+  #endregion
+
+  #region VoiceCommandStrings
+
+  public const string kVoiceCommandsTutorialTextEnableMicPrePrompt = "voiceCommands.tutorialText.EnableMicPrePrompt";
+  public const string kVoiceCommandsTutorialTextEnableMicPrompt_primary = "voiceCommands.tutorialText.EnableMicPrompt_primary";
+  public const string kVoiceCommandsTutorialTextEnableMicPrompt_secondary = "voiceCommands.tutorialText.EnableMicPrompt_secondary";
+  public const string kVoiceCommandsTutorialTextMicCheck = "voiceCommands.tutorialText.MicCheck";
+  public const string kVoiceCommandsTutorialTextSpeakClearlyDesc = "voiceCommands.tutorialText.SpeakClearlyDesc";
+  public const string kVoiceCommandsTutorialTextSayHeyCozmo = "voiceCommands.tutorialText.SayHeyCozmo";
+  public const string kVoiceCommandsTutorialTextConfirmMicWorking = "voiceCommands.tutorialText.ConfirmMicWorking";
+  public const string kVoiceCommandsMainPageTextGifDescription = "voiceCommands.mainPageText.GifDescription";
+  public const string kVoiceCommandsMainPageTextVoiceCommandTitle = "voiceCommands.mainPageText.VoiceCommandTitle";
+  public const string kVoiceCommandsMainPageTextEnabled = "voiceCommands.mainPageText.Enabled";
+  public const string kVoiceCommandsMainPageTextDisabled = "voiceCommands.mainPageText.Disabled";
+  public const string kVoiceCommandsMainPageTextCannotHear = "voiceCommands.mainPageText.CannotHear";
+  public const string kVoiceCommandsMainPageTextCanHear = "voiceCommands.mainPageText.CanHear";
+  public const string kVoiceCommandsLearnCommandsComeHere_command = "voiceCommands.learnCommands.ComeHere_command";
+  public const string kVoiceCommandsLearnCommandsComeHere_desc = "voiceCommands.learnCommands.ComeHere_desc";
+  public const string kVoiceCommandsLearnCommandsGoToSleep_command = "voiceCommands.learnCommands.GoToSleep_command";
+  public const string kVoiceCommandsLearnCommandsGoToSleep_desc = "voiceCommands.learnCommands.GoToSleep_desc";
+  public const string kVoiceCommandsLearnCommandsAskHungry_command = "voiceCommands.learnCommands.AskHungry_command";
+  public const string kVoiceCommandsLearnCommandsAskHungry_desc = "voiceCommands.learnCommands.AskHungry_desc";
+  public const string kVoiceCommandsLearnCommandsHowAreYouDoing_command = "voiceCommands.learnCommands.HowAreYouDoing_command";
+  public const string kVoiceCommandsLearnCommandsHowAreYouDoing_desc = "voiceCommands.learnCommands.HowAreYouDoing_desc";
+  public const string kVoiceCommandsLearnCommandsPeekABoo_command = "voiceCommands.learnCommands.PeekABoo_command";
+  public const string kVoiceCommandsLearnCommandsPeekABoo_desc = "voiceCommands.learnCommands.PeekABoo_desc";
+  public const string kVoiceCommandsLearnCommandsLookDown_command = "voiceCommands.learnCommands.LookDown_command";
+  public const string kVoiceCommandsLearnCommandsLookDown_desc = "voiceCommands.learnCommands.LookDown_desc";
+  public const string kVoiceCommandsLearnCommandsFistBump_command = "voiceCommands.learnCommands.FistBump_command";
+  public const string kVoiceCommandsLearnCommandsFistBump_desc = "voiceCommands.learnCommands.FistBump_desc";
+  public const string kVoiceCommandsLearnCommandsLearnVoiceCommandTitle = "voiceCommands.learnCommands.LearnVoiceCommandTitle";
+  public const string kVoiceCommandsLearnCommandsRememberPhrases = "voiceCommands.learnCommands.RememberPhrases";
+  public const string kVoiceCommandsLearnCommandsSpecialPhrases = "voiceCommands.learnCommands.Special Phrases";
+  public const string kVoiceCommandsLearnCommandsDoATrick = "voiceCommands.learnCommands.DoATrick";
+  public const string kVoiceCommandsLearnCommandsLetsPlay = "voiceCommands.learnCommands.LetsPlay";
+  public const string kVoiceCommandsLearnCommandsExplainMicIcon = "voiceCommands.learnCommands.ExplainMicIcon";
+  public const string kVoiceCommandsTutorialButtonStartMicCheckButton = "voiceCommands.tutorialButton.StartMicCheckButton";
+  public const string kVoiceCommandsMainPageButtonLearnCommandsButton = "voiceCommands.mainPageButton.LearnCommandsButton";
+  public const string kVoiceCommandsTutorialButtonMaybeLaterButton = "voiceCommands.tutorialButton.MaybeLaterButton";
+  public const string kVoiceCommandsMainPageButtonAppSettingsButton = "voiceCommands.mainPageButton.AppSettingsButton";
+  public const string kVoiceCommandsCommandNoThankYou = "voiceCommands.command.NoThankYou";
+  public const string kVoiceCommandsCommandYesPlease = "voiceCommands.command.YesPlease";
 
   #endregion
 
