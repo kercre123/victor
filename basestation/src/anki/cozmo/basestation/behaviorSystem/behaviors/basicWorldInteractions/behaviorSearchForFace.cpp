@@ -40,7 +40,7 @@ bool BehaviorSearchForFace::IsRunnableInternal(const BehaviorPreReqRobot& preReq
 {
   // For the time being this behavior is designed under the assumption that
   // no faces are known and we're searching for a new face
-  return preReqData.GetRobot().GetFaceWorld().HasAnyFaces();
+  return !preReqData.GetRobot().GetFaceWorld().HasAnyFaces();
 }
 
 
