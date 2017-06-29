@@ -439,6 +439,9 @@ namespace Cozmo {
       if (null != _GoToSleepDialog) {
         _GoToSleepDialog.CloseDialog();
         _GoToSleepDialog = null;
+
+        // Set Music State back to freeplay
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
       }
     }
 
