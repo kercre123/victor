@@ -126,9 +126,6 @@
   "button.replay": {
     "translation": "Replay"
   },
-  "label.to": {
-    "translation": "To:"
-  },
   "button.skip": {
     "translation": "Skip"
   },
@@ -164,9 +161,6 @@
   },
   "label.simpleCount": {
     "translation": "{0} {1}"
-  },
-  "button.temp": {
-    "translation": "Temp"
   },
   "label.basicCozmo": {
     "translation": "Big Brain. Bigger Personality."
