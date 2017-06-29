@@ -43,7 +43,7 @@
     "translation": "Shake that Cube until all lights glow brightly."
   },
   "needs.NeedsEnergyModal.Instruction3": {
-    "translation": "Place the Cube in front of Cozmo."
+    "translation": "Place the Cube where Cozmo can see it, so he can feed himself."
   },
   "needs.NeedsEnergyModal.FeedingComplete": {
     "translation": "Cozmo is fully fed!"
