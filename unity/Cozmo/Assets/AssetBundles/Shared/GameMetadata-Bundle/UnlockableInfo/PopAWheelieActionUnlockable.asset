@@ -27,10 +27,11 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 982472036
   RequestTrickCostItemId: spark
-  _RequestTrickCostAmount:
+  _SparkableThingID:
     _EnumValueAsString: PopAWheelie
     _EnumValue: 17
   CoreUpgradeIcon: {fileID: 21300000, guid: 55d44ac342f9645cc9d7b909952cd412, type: 3}
   CubesRequired: 1
   SortOrder: 600
   AndroidReleaseVersion: 
+  AndroidSDKVersion: 0

@@ -47,13 +47,15 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   public string RequestTrickCostItemId;
 
   [SerializeField]
-  private SerializableSparkableThings _RequestTrickCostAmount;
+  private SerializableSparkableThings _SparkableThingID;
+
+  public Anki.Cozmo.SparkableThings SparkableThingID {
+    get { return _SparkableThingID.Value; }
+  }
+
   public int RequestTrickCostAmount {
-    set {
-      _RequestTrickCostAmount.Value = (Anki.Cozmo.SparkableThings)value;
-    }
     get {
-      return (int)Anki.Cozmo.EnumConcept.GetSparkCosts(_RequestTrickCostAmount.Value, 0);
+      return (int)Anki.Cozmo.EnumConcept.GetSparkCosts(_SparkableThingID.Value, 0);
     }
   }
 

@@ -27,10 +27,11 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  _RequestTrickCostAmount:
+  _SparkableThingID:
     _EnumValueAsString: RollCube
     _EnumValue: 19
   CoreUpgradeIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0, type: 3}
   CubesRequired: 1
   SortOrder: 400
   AndroidReleaseVersion: 
+  AndroidSDKVersion: 0

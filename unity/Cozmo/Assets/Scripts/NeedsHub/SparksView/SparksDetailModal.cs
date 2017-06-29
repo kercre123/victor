@@ -1,3 +1,4 @@
+using Anki.Cozmo;
 using Cozmo.Challenge;
 using Cozmo.RequestGame;
 using Cozmo.UI;
@@ -111,7 +112,9 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void InitializeUnlockInfo() {
       this.DASEventDialogName = this.DASEventDialogName + "_" + _UnlockInfo.DASName;
-      _SparksCostText.text = Localization.GetNumber(_UnlockInfo.RequestTrickCostAmount);
+      int sparkCost = _IsEngineDrivenTrick ? (int)EnumConcept.GetSparkCosts(SparkableThings.DoATrick, 0)
+                                                      : _UnlockInfo.RequestTrickCostAmount;
+      _SparksCostText.text = Localization.GetNumber(sparkCost);
       _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
         _UnlockInfo.CubesRequired,
         ItemDataConfig.GetCubeData().GetAmountName(_UnlockInfo.CubesRequired));

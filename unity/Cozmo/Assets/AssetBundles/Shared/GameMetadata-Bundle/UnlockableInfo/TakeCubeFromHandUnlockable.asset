@@ -25,8 +25,11 @@ MonoBehaviour:
   SparkedMusicState:
     _Sparked: 0
   RequestTrickCostItemId: spark
-  RequestTrickCostAmount: 2
+  _SparkableThingID:
+    _EnumValueAsString: NoCost
+    _EnumValue: 0
   CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   CubesRequired: 1
   SortOrder: 1000
   AndroidReleaseVersion: 
+  AndroidSDKVersion: 0

@@ -147,7 +147,15 @@ public class MockRobot : IRobot {
   }
 
   public void DoRandomSpark() {
-    // Do nothing 
+    MessageEngineToGame metgSparkStarted = new MessageEngineToGame();
+    HardSparkStartedByEngine sparkStartedMsg = new HardSparkStartedByEngine(UnlockId.RollCube);
+    metgSparkStarted.HardSparkStartedByEngine = sparkStartedMsg;
+    RobotEngineManager.Instance.MockCallback(metgSparkStarted, 0.0f);
+
+    MessageEngineToGame metgSparkEnded = new MessageEngineToGame();
+    HardSparkEndedByEngine sparkEndedMsg = new HardSparkEndedByEngine();
+    metgSparkEnded.HardSparkEndedByEngine = sparkEndedMsg;
+    RobotEngineManager.Instance.MockCallback(metgSparkEnded, 10.0f);
   }
 
   public void SetCurrentSpark(UnlockId id) {
