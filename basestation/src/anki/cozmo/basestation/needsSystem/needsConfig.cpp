@@ -87,7 +87,7 @@ void StarRewardsConfig::Init(const Json::Value& json)
   }
 }
 
-int StarRewardsConfig::GetMaxStarsForLevel(int level)
+int StarRewardsConfig::GetMaxStarsForLevel(int level) const
 {
   if( level < _UnlockLevels.size() )
   {
@@ -102,8 +102,8 @@ int StarRewardsConfig::GetMaxStarsForLevel(int level)
   }
   return 0;
 }
-  
-void StarRewardsConfig::GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards)
+
+void StarRewardsConfig::GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards) const
 {
   if( level < _UnlockLevels.size() )
   {
@@ -114,6 +114,19 @@ void StarRewardsConfig::GetRewardsForLevel(int level, std::vector<NeedsReward>& 
     rewards = _UnlockLevels[_UnlockLevels.size() - 1].rewards;
   }
 }
+
+const UnlockLevel& StarRewardsConfig::GetLevelOrLastLevel(int level) const
+{
+  if (level < _UnlockLevels.size())
+  {
+    return _UnlockLevels[level];
+  }
+  else
+  {
+    return _UnlockLevels[_UnlockLevels.size() - 1];
+  }
+}
+
 
 void NeedsConfig::Init(const Json::Value& json)
 {

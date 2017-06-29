@@ -104,17 +104,19 @@ class StarRewardsConfig
 public:
   void Init(const Json::Value& json);
   
-  int GetMaxStarsForLevel(int level);
+  int GetMaxStarsForLevel(int level) const;
   
-  void GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards);
+  void GetRewardsForLevel(int level, std::vector<NeedsReward>& rewards) const;
 
-  int GetTargetSparksTotalForLevel(int level) const { return _UnlockLevels[level].targetSparksTotal; }
-  int GetMaxPriorUnlocksForLevel(int level)   const { return _UnlockLevels[level].maxPriorLevelUnlocks; }
-  float GetMinSparksPctForLevel(int level)    const { return _UnlockLevels[level].minSparksPct; }
-  float GetMaxSparksPctForLevel(int level)    const { return _UnlockLevels[level].maxSparksPct; }
-  int GetMinSparksForLevel(int level)         const { return _UnlockLevels[level].minSparks; }
-  int GetMinMaxSparksForLevel(int level)      const { return _UnlockLevels[level].minMaxSparks; }
+  int GetTargetSparksTotalForLevel(int level) const { return GetLevelOrLastLevel(level).targetSparksTotal; }
+  int GetMaxPriorUnlocksForLevel(int level)   const { return GetLevelOrLastLevel(level).maxPriorLevelUnlocks; }
+  float GetMinSparksPctForLevel(int level)    const { return GetLevelOrLastLevel(level).minSparksPct; }
+  float GetMaxSparksPctForLevel(int level)    const { return GetLevelOrLastLevel(level).maxSparksPct; }
+  int GetMinSparksForLevel(int level)         const { return GetLevelOrLastLevel(level).minSparks; }
+  int GetMinMaxSparksForLevel(int level)      const { return GetLevelOrLastLevel(level).minMaxSparks; }
 private:
+  const UnlockLevel& GetLevelOrLastLevel(int level) const;
+
   std::vector<UnlockLevel> _UnlockLevels;
 };
 
