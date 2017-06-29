@@ -55,13 +55,13 @@ AnimationClip:
         tangentMode: 0
       - serializedVersion: 2
         time: 1.3833333
-        value: 160
+        value: 42
         inSlope: 0
         outSlope: 0
         tangentMode: 0
       - serializedVersion: 2
         time: 2.2
-        value: 160
+        value: 42
         inSlope: 2.3840275
         outSlope: 2.3840275
         tangentMode: 0
@@ -551,13 +551,13 @@ AnimationClip:
         tangentMode: 0
       - serializedVersion: 2
         time: 1.3833333
-        value: 160
+        value: 42
         inSlope: 0
         outSlope: 0
         tangentMode: 0
       - serializedVersion: 2
         time: 2.2
-        value: 160
+        value: 42
         inSlope: 2.3840275
         outSlope: 2.3840275
         tangentMode: 0
