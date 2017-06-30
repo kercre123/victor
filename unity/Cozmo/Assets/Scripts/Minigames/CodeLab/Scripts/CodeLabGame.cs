@@ -1058,7 +1058,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void WebViewError(string text) {
-      Debug.LogError(string.Format("CallOnError[{0}]", text));
+      DAS.Error("Codelab.WebViewError", string.Format("CallOnError[{0}]", text));
     }
 
     private void WebViewLoaded(string text) {
