@@ -146,6 +146,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void RequestRandomGame() {
+    // Do nothing
+  }
+
   public void DoRandomSpark() {
     MessageEngineToGame metgSparkStarted = new MessageEngineToGame();
     HardSparkStartedByEngine sparkStartedMsg = new HardSparkStartedByEngine(UnlockId.RollCube);

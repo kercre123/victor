@@ -111,7 +111,10 @@ namespace Cozmo.Needs.Sparks.UI {
     }
 
     private void HandleAskForGameButtonPressed() {
-      // TODO: Will be implemented as part of COZMO-11581 Random Game flow
+      // Decrementing spark cost will be handled by engine
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.RequestRandomGame();
+      }
     }
 
     private void HandleListAbilitiesButtonPressed() {
@@ -149,9 +152,7 @@ namespace Cozmo.Needs.Sparks.UI {
 
     private void UpdateStateData(StateData stateData) {
       _AskForTrickMicIcon.gameObject.SetActive(stateData.isVCEnabled);
-
-      // TODO: Will be implemented as part of COZMO-11581 Random Game flow
-      _AskForGameMicIcon.gameObject.SetActive(false);
+      _AskForGameMicIcon.gameObject.SetActive(stateData.isVCEnabled);
     }
   }
 }

@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
+#include "anki/cozmo/basestation/aiComponent/requestGameComponent.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
@@ -233,6 +234,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _defaultLiftHeight(kIgnoreDefaultHeadAndLiftState)
 , _runningAndResumeInfo(new BehaviorRunningAndResumeInfo())
 , _currentHighLevelActivity(HighLevelActivity::Count)
+, _uiRequestGameBehavior(nullptr)
 , _behaviorContainer(std::unique_ptr<BehaviorContainer>(new BehaviorContainer(robot)))
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
@@ -241,6 +243,25 @@ BehaviorManager::BehaviorManager(Robot& robot)
 {
   // Load all behavior files into the factory
   LoadBehaviorsIntoFactory();
+  
+  // Setup the UnlockID to game request behavior map for ui driven requests
+  IBehaviorPtr VC_Keepaway = FindBehaviorByID(BehaviorID::VC_RequestKeepAway);
+  IBehaviorPtr VC_QT = FindBehaviorByID(BehaviorID::VC_RequestSpeedTap);
+  IBehaviorPtr VC_MM = FindBehaviorByID(BehaviorID::VC_RequestMemoryMatch);
+
+  _uiGameRequestMap.insert(std::make_pair(UnlockId::KeepawayGame, VC_Keepaway));
+  _uiGameRequestMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));
+  _uiGameRequestMap.insert(std::make_pair(UnlockId::MemoryMatchGame, VC_MM));
+  
+  if (ANKI_DEV_CHEATS && !_behaviorContainer->GetBehaviorMap().empty()){
+    for(const auto& entry: _uiGameRequestMap){
+      DEV_ASSERT_MSG(entry.second != nullptr &&
+                     entry.second->GetClass() == BehaviorClass::RequestGameSimple,
+                     "BehaviorManager.Constructor.UIGameRequestMap",
+                     "nullptr or wrong class for unlockID %s",
+                     UnlockIdToString(entry.first));
+    }
+  }
 }
 
   
@@ -669,6 +690,15 @@ bool BehaviorManager::SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior)
   return SwitchToBehaviorBase(newBehaviorInfo);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SwitchToUIGameRequestBehavior()
+{
+  BehaviorRunningAndResumeInfo newBehaviorInfo;
+  newBehaviorInfo.SetCurrentBehavior(_uiRequestGameBehavior);
+  SwitchToBehaviorBase(newBehaviorInfo);
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::ChooseNextScoredBehaviorAndSwitch()
@@ -817,13 +847,24 @@ Result BehaviorManager::Update(Robot& robot)
   
   UpdateTappedObject();
   
+  // Make sure to clear the current flags if we are in a reactionary behavior
+  if (GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) {
+    EnsureRequestGameIsClear();
+  }
+  
   // check for voice commands
   _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update(robot);
   // Identify whether there is a voice command-response behavior we want to be running
   IBehaviorPtr voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
                  ChooseNextBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
+  
+  if ((voiceCommandBehavior == nullptr) && _shouldRequestGame){
+    // Set IBehaviorPtr for requested game
+    SelectUIRequestGameBehavior();
+    _shouldRequestGame = false;
+  }
 
-  if (voiceCommandBehavior == nullptr)
+  if ((voiceCommandBehavior == nullptr) && (_uiRequestGameBehavior == nullptr))
   {
     // Update the current behavior if a new object was double tapped
     if(_needToHandleObjectTapped)
@@ -844,30 +885,36 @@ Result BehaviorManager::Update(Robot& robot)
   // Allow reactionary behaviors to request a switch without a message
   const bool switchedFromReactionTrigger = CheckReactionTriggerStrategies();
   
-  // Reaction triggers we just switched to take priority over commands
+  // Reaction triggers we just switched to take priority over voice commands and ui requests
   if (!switchedFromReactionTrigger &&
-      (voiceCommandBehavior != nullptr))
+      ((voiceCommandBehavior != nullptr) || (_uiRequestGameBehavior != nullptr)))
   {
     // TODO: Note this won't work with switching between multiple behaviors that are all part of the same response.
     // The interface to the voice command behavior chooser will need to be updated so that the behavior manager knows whether
     // this new behavior is a brand new voice command response that needs to be 'switched' to, or simply a different behavior
     // in a line of behavior responses that can be used in the normal way (ie switched to using logic below).
     // TODO: figure out if the above TODO's assumptions are true...
-    if (GetRunningAndResumeInfo().GetCurrentBehavior() != voiceCommandBehavior)
+    auto currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
+    if ((voiceCommandBehavior != nullptr) && (currentBehavior != voiceCommandBehavior))
     {
       SwitchToVoiceCommandBehavior(voiceCommandBehavior);
+      EnsureRequestGameIsClear();
+    }
+    // Switch into the request game behavior if we haven't already
+    else if ((_uiRequestGameBehavior != nullptr) && (currentBehavior != _uiRequestGameBehavior)){
+      SwitchToUIGameRequestBehavior();
     }
   }
   
-  IBehaviorPtr activeBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
-  if (activeBehavior !=  nullptr) {
+  auto currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
+  if (currentBehavior != nullptr) {
     
     const bool shouldAttemptResume =
-      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger ||
-      voiceCommandBehavior;
+      (GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) ||
+      (voiceCommandBehavior != nullptr);
     
     // We have a current behavior, update it.
-    const IBehavior::Status status = activeBehavior->Update();
+    const IBehavior::Status status = currentBehavior->Update();
      
     switch(status)
     {
@@ -880,28 +927,16 @@ Result BehaviorManager::Update(Robot& robot)
         // switch now to give the last behavior a chance to resume (if appropriate)
         PRINT_CH_DEBUG("Behaviors", "BehaviorManager.Update.BehaviorComplete",
                        "Behavior '%s' returned  Status::Complete",
-                       BehaviorIDToString(activeBehavior->GetID()));
-        if (shouldAttemptResume) {
-          TryToResumeBehavior();
-        }
-        else {
-          BehaviorRunningAndResumeInfo nullInfo;
-          SwitchToBehaviorBase(nullInfo);
-        }
+                       BehaviorIDToString(currentBehavior->GetID()));
+        FinishCurrentBehavior(currentBehavior, shouldAttemptResume);
         break;
           
       case IBehavior::Status::Failure:
         PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                           "Behavior '%s' failed to Update().",
-                          BehaviorIDToString(activeBehavior->GetID()));
+                          BehaviorIDToString(currentBehavior->GetID()));
         // same as the Complete case
-        if(shouldAttemptResume) {
-          TryToResumeBehavior();
-        }
-        else {
-          BehaviorRunningAndResumeInfo nullInfo;
-          SwitchToBehaviorBase(nullInfo);
-        }
+        FinishCurrentBehavior(currentBehavior, shouldAttemptResume);
         break;
     } // switch(status)
   }
@@ -985,7 +1020,6 @@ void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& st
 }
 
 
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopAndNullifyCurrentBehavior()
 {
@@ -997,6 +1031,64 @@ void BehaviorManager::StopAndNullifyCurrentBehavior()
   
   GetRunningAndResumeInfo().SetCurrentBehavior(nullptr);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::FinishCurrentBehavior(IBehaviorPtr currentBehavior, bool shouldAttemptResume)
+{
+  // Currently we assume that game requests do not have a resume behavior, so we should
+  // not attempt to resume if _uiRequestGameBehavior is non-null and just finished
+  DEV_ASSERT(!(shouldAttemptResume &&
+              ((_uiRequestGameBehavior != nullptr) && (currentBehavior == _uiRequestGameBehavior))),
+             "BehaviorManager.FinishCurrentBehavior.ResumingRequestGame");
+  
+  if (shouldAttemptResume) {
+    TryToResumeBehavior();
+  }
+  else {
+    // Make sure the request behavior is cleared out after it finishes
+    // running so that we can pick a new behavior
+    if ((_uiRequestGameBehavior != nullptr) && (currentBehavior == _uiRequestGameBehavior)) {
+      EnsureRequestGameIsClear();
+    }
+        
+    BehaviorRunningAndResumeInfo nullInfo;
+    SwitchToBehaviorBase(nullInfo);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SelectUIRequestGameBehavior()
+{
+  auto& gameSelector = _robot.GetAIComponent().GetRequestGameComponent();
+  UnlockId gameRequestID = gameSelector.IdentifyNextGameTypeToRequest(_robot);
+  if(gameRequestID != UnlockId::Count) {
+    const auto& iter = _uiGameRequestMap.find(gameRequestID);
+    if(ANKI_VERIFY(iter != _uiGameRequestMap.end(),
+                     "BehaviorManager.Update.ChooseNextRequestBehaviorInternal",
+                     "Unlock ID %s not found in ui game request map",
+                     UnlockIdToString(gameRequestID))) {
+      _uiRequestGameBehavior = iter->second;
+      
+      // We already check that the player can afford the cost Game side
+      const u32 sparkCost = GetSparkCosts(SparkableThings::PlayAGame, 0);
+      _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+    }
+  }
+  else {
+    _uiRequestGameBehavior = nullptr;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::EnsureRequestGameIsClear()
+{
+  _uiRequestGameBehavior = nullptr;
+  _shouldRequestGame = false;
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorManager::CheckReactionTriggerStrategies()
@@ -1109,12 +1201,30 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     // User asked for a random trick via UI
     case ExternalInterface::BehaviorManagerMessageUnionTag::DoATrickRequest:
     {
-      _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
+      // It's possible to mash the Play a Game button and then the Do A Trick button
+      // and get multiple messages in a row; this avoids disabling buttons in the UI
+      // and getting into a weird state where the app may be locked out from listening
+      // for a game request pop-up to open that will not happen because of a reactionary behavior
+      if (_uiRequestGameBehavior == nullptr){
+        _robot.GetAIComponent().GetDoATrickSelector().RequestATrick(_robot);
       
-      // We already check that the player can afford the cost Game side
-      const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
-      _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+        // We already check that the player can afford the cost Game side
+        const u32 sparkCost = GetSparkCosts(SparkableThings::DoATrick, 0);
+        _robot.GetInventoryComponent().AddInventoryAmount(InventoryType::Sparks, -sparkCost);
+      }
+      break;
+    }
     
+    // User asked for a random game via UI
+    case ExternalInterface::BehaviorManagerMessageUnionTag::PlayAGameRequest:
+    {
+      // It's possible to mash the button and get multiple messages in a row;
+      // this avoids disabling buttons in the UI and getting into a weird state where
+      // the app may be locked out from listening for a game request pop-up to open
+      // that will not happen because of a reactionary behavior
+      if (_uiRequestGameBehavior == nullptr) {
+        _shouldRequestGame = true;
+      }
       break;
     }
 

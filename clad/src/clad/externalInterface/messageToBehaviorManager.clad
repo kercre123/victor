@@ -27,18 +27,24 @@ structure SparkUnlocked
   UnlockId behaviorSpark,
 }
 
-// Tells the behavior manager that a random trick was requested
+// Tells the behavior manager that a random trick was requested by the player
 structure DoATrickRequest
 {
   // Doesn't need any data
 }
 
+// Tells the behavior manager that a random game was requested by the player
+structure PlayAGameRequest
+{
+  // Doesn't need any data
+}
 
 
 union BehaviorManagerMessageUnion {
   ActivateSpark ActivateSpark,
   SparkUnlocked SparkUnlocked,
-  DoATrickRequest DoATrickRequest
+  DoATrickRequest DoATrickRequest,
+  PlayAGameRequest PlayAGameRequest
 }
 
 } // namespace U2G

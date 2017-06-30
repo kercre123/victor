@@ -263,6 +263,7 @@ private:
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehaviorPtr nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
   bool SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior);
+  void SwitchToUIGameRequestBehavior();
   
   // checks the chooser and switches to a new behavior if neccesary
   void ChooseNextScoredBehaviorAndSwitch();
@@ -273,6 +274,9 @@ private:
 
   // stop the current behavior if it is non-null and running (i.e. Init was called)
   void StopAndNullifyCurrentBehavior();
+  
+  // Called at the Complete or Failed state of a behavior in order to switch to a new one
+  void FinishCurrentBehavior(IBehaviorPtr activeBehavior, bool shouldAttemptResume);
   
   // Allow reactionary behaviors to request a switch without a message
   bool CheckReactionTriggerStrategies();
@@ -301,6 +305,12 @@ private:
   // can respond appropriately to switching between reactions/resumes
   BehaviorRunningAndResumeInfo& GetRunningAndResumeInfo() const {assert(_runningAndResumeInfo); return *_runningAndResumeInfo;}
   void SetRunningAndResumeInfo(const BehaviorRunningAndResumeInfo& newInfo);
+  
+  // Selects a game request behavior to run
+  void SelectUIRequestGameBehavior();
+  
+  // Clears flags and attributes related to running a ui-driven game request
+  void EnsureRequestGameIsClear();
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -314,6 +324,9 @@ private:
   f32 _defaultHeadAngle;
   f32 _defaultLiftHeight;
   
+  // Maps UnlockIds to the appropriate request behavior to play when the ui requests it
+  std::map<UnlockId, IBehaviorPtr> _uiGameRequestMap;
+  
   // - - - - - - - - - - - - - - -
   // current running behavior
   // - - - - - - - - - - - - - - -
@@ -326,6 +339,10 @@ private:
   
   // Maps activity types
   std::map<HighLevelActivity, std::shared_ptr<IActivity>> _highLevelActivityMap;
+  
+  // Pointer to current request game behavior driven by UI, if any
+  IBehaviorPtr _uiRequestGameBehavior;
+  bool _shouldRequestGame = false;
   
   // - - - - - - - - - - - - - - -
   // factory & choosers

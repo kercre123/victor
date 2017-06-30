@@ -192,6 +192,8 @@ public interface IRobot : IDisposable {
 
   void SetEnableCliffSensor(bool enabled);
 
+  void RequestRandomGame();
+
   void DoRandomSpark();
 
   void SetCurrentSpark(UnlockId id);

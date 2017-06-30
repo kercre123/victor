@@ -1852,6 +1852,15 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void RequestRandomGame() {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage =
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID,
+      Singleton<PlayAGameRequest>.Instance
+      );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void DoRandomSpark() {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
