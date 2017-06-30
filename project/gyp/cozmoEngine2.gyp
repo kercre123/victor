@@ -507,6 +507,24 @@
         'targets': [
 
           {
+            'target_name': 'cozmoEngine2_resources',
+            'type': 'none',
+            'actions': [
+              {
+                'action_name': 'cozmoEngine2_resources_create_symlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '<(PRODUCT_DIR)/resources/config',
+                  '--create_folder', '<(PRODUCT_DIR)/resources'
+                ],
+              },
+            ],
+          },
+
+          {
             'target_name': 'cozmo_physics',
             'type': 'shared_library',
             'include_dirs': [
@@ -1116,6 +1134,7 @@
             ],
             'dependencies': [
               'cozmoEngine2',
+              'cozmoEngine2_resources',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -1127,8 +1146,8 @@
               '<(ce-util_gyp_path):util',
               '<(cg-audio_path):AudioEngine',
             ],
-            'defines': [                                                                            
-              'SIMULATOR'                                                                           
+            'defines': [
+              'SIMULATOR'
             ], 
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -1176,19 +1195,6 @@
 
               # These have empty inputs and outputs and are instead in the action
               # so gyp doesn't think that they're dupes
-              {
-                'action_name': 'create_symlink_resources_configs',
-                'inputs':[],
-                'outputs':[],
-                #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_engine_path)/resources/config',
-                  '--link_name', '<(PRODUCT_DIR)/resources/config',
-                  '--create_folder', '<(PRODUCT_DIR)/resources'
-                ],
-              },
-
               {
                 'action_name': 'create_symlink_resources_test',
                 'inputs': [],

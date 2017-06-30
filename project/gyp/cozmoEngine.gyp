@@ -505,6 +505,23 @@
 
 
         'targets': [
+          {
+            'target_name': 'cozmoEngine_resources',
+            'type': 'none',
+            'actions': [
+              {
+                'action_name': 'cozmoEngine_resources_create_symlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '<(PRODUCT_DIR)/resources/config',
+                  '--create_folder', '<(PRODUCT_DIR)/resources'
+                ],
+              },
+            ],
+          },
 
           {
             'target_name': 'cozmo_physics',
@@ -1107,6 +1124,7 @@
             ],
             'dependencies': [
               'cozmoEngine',
+              'cozmoEngine_resources',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -1172,19 +1190,6 @@
               # These have empty inputs and outputs and are instead in the action
               # so gyp doesn't think that they're dupes
               {
-                'action_name': 'create_symlink_resources_configs',
-                'inputs':[],
-                'outputs':[],
-                #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_engine_path)/resources/config',
-                  '--link_name', '<(PRODUCT_DIR)/resources/config',
-                  '--create_folder', '<(PRODUCT_DIR)/resources'
-                ],
-              },
-
-              {
                 'action_name': 'create_symlink_resources_test',
                 'inputs': [],
                 'outputs': [],
@@ -1247,6 +1252,7 @@
             ],
             'dependencies': [
               'cozmoEngine',
+              'cozmoEngine_resources',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -1284,22 +1290,6 @@
               ],
             ],
 
-            'actions': [
-              #These have empty inputs and outputs and are instead in the action
-              #so gyp doesn't think that they're dupes
-              {
-                'action_name': 'create_symlink_resources_configs',
-                'inputs':[],
-                'outputs':[],
-                #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
-                'action': [
-                  '../../tools/build/tools/ankibuild/symlink.py',
-                  '--link_target', '<(cozmo_engine_path)/resources/config',
-                  '--link_name', '<(PRODUCT_DIR)/resources/config',
-                  '--create_folder', '<(PRODUCT_DIR)/resources'
-                ],
-              },
-            ], #end actions
           }, # end recognizeFacesTool target
 
         ], # end targets
