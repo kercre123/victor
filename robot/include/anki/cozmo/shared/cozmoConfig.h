@@ -220,6 +220,10 @@ namespace Cozmo {
   // how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
   const u32 CLIFF_EVENT_DELAY_MS = 500;
   
+  
+  // Belongs somewhere else?
+  const s32 ANIM_TIME_STEP = 33; //ms
+  
   /***************************************************************************
    *
    *                          Streaming Animation
@@ -254,9 +258,12 @@ namespace Cozmo {
   const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
   const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
   
-  // The base listening port for robot TCP server.
+  // The base listening port for robot UDP server.
   // Each robot listens on port (ROBOT_RADIO_BASE_PORT + ROBOT_ID)
   const u16 ROBOT_RADIO_BASE_PORT = 5551;
+  
+  // The base listening port for anim process UDP server
+  const u16 ANIM_PROCESS_SERVER_BASE_PORT = 5600;
   
   /*
    THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h

@@ -282,6 +282,20 @@ Supervisor {
                   numberOfRotations 1
                 }
 
+                # Connects CozmoAnim to CozmoBot2
+                Connector {
+                  name "animConnector"
+                  model "animConnector"
+                  type "symmetric"
+                  isLocked TRUE
+                  autoLock TRUE
+                  distanceTolerance 0.1
+                  axisTolerance 3.14
+                  rotationTolerance 3.14
+                  numberOfRotations 1
+                  translation 0.0001 0.0001 0
+                }
+
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
                 # as way to simulate access to the same IMU from both the robot and engine processes 
                 # which we might in theory be able to eventually do via AndroidHAL.

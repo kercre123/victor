@@ -231,6 +231,11 @@ def main(scriptArgs):
                            'basestation/include/anki/cozmo',
                            'include', 'resources'],
                           ['project/gyp/cozmoEngine2.lst'])
+  generator.processFolder(['animProcess/src/cozmoAnim', 
+                           'robot/transport',
+                           'include', 'resources'],
+                          ['project/gyp/cozmoAnim.lst'],
+                          ['reliableSequenceId.c', 'reliableMessageTypes.c']),
   generator.processFolder(['androidHAL/include/anki/cozmo',
                            'androidHAL/src/anki/cozmo'],
                           ['project/gyp/androidHAL.lst'])
@@ -238,10 +243,10 @@ def main(scriptArgs):
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
                           ['project/gyp/ctrlRobot.lst'],
                           ['reliableSequenceId.c', 'reliableMessageTypes.c'])
-  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'robot/transport', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot2'],
+  generator.processFolder(['robot2/hal/sim/src', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot2'],
                           ['project/gyp/ctrlRobot2.lst'],
-                          ['reliableSequenceId.c', 'reliableMessageTypes.c', 'nvStorage.*'])
-  generator.processFolder(['robot2/hal/src', 'robot2/hal/spine', 'robot/supervisor/src', 'robot/transport'],
+                          ['nvStorage.*'])
+  generator.processFolder(['robot2/hal/src', 'robot2/hal/spine', 'robot/supervisor/src'],
                           ['project/gyp/cozmoRobot2.lst'],
                           ['matlabVisionProcessor.*', 'matlabVisualization.*', 'nvStorage.*'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
@@ -251,6 +256,7 @@ def main(scriptArgs):
   generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'], ['*.dylib'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine2'], ['project/gyp/ctrlGameEngine2.lst'], ['*.dylib'])
+  generator.processFolder(['simulator/controllers/webotsCtrlAnim'], ['project/gyp/ctrlAnim.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlDevLog'], ['project/gyp/ctrlDevLog.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')

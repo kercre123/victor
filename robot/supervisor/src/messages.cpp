@@ -7,14 +7,6 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/types/fwTestMessages.h"
 
-#ifndef TARGET_K02
-#include "anki/cozmo/transport/IUnreliableTransport.h"
-#include "anki/cozmo/transport/IReceiver.h"
-#include "anki/cozmo/transport/reliableTransport.h"
-#ifndef COZMO_V2
-#include "nvStorage.h"
-#endif // #ifndef COZMO_V2
-#endif // #ifndef TARGET_K02
 #include <string.h>
 
 #include "blockLightController.h"
@@ -31,16 +23,9 @@
 #include "testModeController.h"
 #include "wheelController.h"
 
-#ifdef TARGET_K02
-#include "hal/dac.h"
-#include "hal/uart.h"
-#include "hal/imu.h"
-#include "hal/wifi.h"
-#include "hal/spine.h"
-#else
 #include <stdio.h>
 #include "animationController.h"
-#endif
+
 #include "anki/cozmo/robot/logging.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -48,15 +33,12 @@ extern void GenerateTestTone(void);
 
 namespace Anki {
   namespace Cozmo {
-#ifndef TARGET_K02
-    ReliableConnection connection;
-#endif
     namespace Messages {
 
       namespace {
-#ifndef TARGET_K02
+
         u8 pktBuffer_[2048];
-#endif
+
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
         RobotInterface::EngineToRobot::Tag lookForID_ = RobotInterface::EngineToRobot::INVALID;
@@ -96,19 +78,10 @@ namespace Anki {
       Result Init()
       {
 #ifndef TARGET_K02
-        ReliableTransport_Init();
-        ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-
         // In sim we don't expect to get the PowerState message which normally sets this
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
 #endif
         ResetMissedLogCount();
-#ifndef COZMO_V2
-        // For pre-V2 robots, only the 0th entry of cliffDataRaw is used, so initialize the other entries
-        for (int i=0 ; i<CLIFF_COUNT ; i++) {
-          robotState_.cliffDataRaw[i] = 0;
-        }
-#endif
         return RESULT_OK;
       }
 
@@ -198,14 +171,10 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
-#ifdef COZMO_V2
         for (int i=0 ; i < CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
         }
         robotState_.distanceSensor_mm = ProxSensors::GetRawProxValue();
-#else
-        robotState_.cliffDataRaw[0] = ProxSensors::GetRawCliffValue(0);
-#endif
         
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
@@ -364,29 +333,29 @@ namespace Anki {
 
 
         // Process incoming messages
-#ifndef TARGET_K02
         u32 dataLen;
 
-        //ReliableConnection_printState(&connection);
-
+        // Each packet is a single message
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
-          if (res < 0)
+          Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
+          
+          // Copy into structured memory
+          memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
+          if (!msgBuf.IsValid())
           {
-            AnkiWarn( 1205, "ReliableTransport.PacketNotAccepted", 347, "%d", 1, res);
+            AnkiWarn( 119, "Receiver.ReceiveData.Invalid", 367, "Receiver got %02x[%d] invalid", 2, pktBuffer_[0], dataLen);
+          }
+          else if (msgBuf.Size() != dataLen)
+          {
+            AnkiWarn( 120, "Receiver.ReceiveData.SizeError", 368, "Parsed message size error %d != %d", 2, dataLen, msgBuf.Size());
+          }
+          else
+          {
+            Anki::Cozmo::Messages::ProcessMessage(msgBuf);
           }
         }
 
-        if (HAL::RadioIsConnected())
-        {
-          if (ReliableTransport_Update(&connection) == false) // Connection has timed out
-          {
-            Receiver_OnDisconnect(&connection);
-						// Can't print anything because we have no where to send it
-					}
-        }
-#endif
       }
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
@@ -558,48 +527,22 @@ namespace Anki {
 
       void Process_imageRequest(const RobotInterface::ImageRequest& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1206, "Messages.Process_imageRequest.Unsupported", 305, "", 0);
-        #else
-        AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
-        HAL::SetImageSendMode(msg.sendMode, msg.resolution);
-        #endif // ifdef COZMO_V2
       }
 
       void Process_enableColorImages(const RobotInterface::EnableColorImages& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1197, "Messages.Process_enableColorImages.Unsupported", 305, "", 0);
-        #else
-        HAL::CameraSetColorEnabled(msg.enable);
-        #endif  // ifdef COZMO_V2
       }
 
       void Process_setCameraParams(const SetCameraParams& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1198, "Messages.Process_setCameraParams.Unsupported", 305, "", 0);
-        #else
-        if(msg.requestDefaultParams)
-        {
-          DefaultCameraParams params;
-          HAL::CameraGetDefaultParameters(params);
-          RobotInterface::SendMessage(params);
-        }
-        else
-        {
-          HAL::CameraSetParameters(msg.exposure_ms, msg.gain);
-        }
-        #endif // ifdef COZMO_V2
       }
 
       void Process_cameraFOVInfo(const CameraFOVInfo& msg)
       {
-        #ifdef COZMO_V2
         DockingController::SetCameraFieldOfView(msg.horizontalFOV, msg.verticalFOV);
-        #else
-        AnkiWarn( 1200, "Messages.Process_cameraFOVInfo.Unsupported", 305, "", 0);
-        #endif
       }
 
       void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
@@ -781,12 +724,7 @@ namespace Anki {
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1207, "Messages.Process_flashObjectIDs.Unsupported", 305, "", 0);
-        #else
-        // Start flash pattern on blocks
-        HAL::FlashBlockIDs();
-        #endif
       }
 
       void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
@@ -944,14 +882,7 @@ namespace Anki {
       /// Stub message handlers to satisfy simulator build
       void Process_commandNV(NVStorage::NVCommand const& msg)
       {
-        #ifdef COZMO_V2
         AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
-        #else
-        auto callback = [](NVStorage::NVOpResult& res) {
-          RobotInterface::SendMessage(res);
-        };
-        NVStorage::Command(msg, callback);
-        #endif   // ifdef COZMO_V2
       }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
@@ -1201,11 +1132,6 @@ namespace Anki {
       {
         initReceived_ = false;
         syncTimeAckSent_ = false;
-        #ifdef SIMULATOR
-        #ifndef COZMO_V2
-        HAL::SetImageSendMode(Stream, QVGA);
-        #endif
-        #endif
       }
 
     } // namespace Messages
@@ -1249,119 +1175,22 @@ namespace Anki {
     } // namespace RobotInterface
 
     namespace HAL {
-#ifdef TARGET_K02
-      f32 BatteryGetVoltage()
-      {
-        return Messages::robotState_.batteryVoltage;
-      }
-      bool BatteryIsCharging()
-      {
-        return Messages::isCharging_;
-      }
-      bool BatteryIsOnCharger()
-      {
-        return Messages::onCharger_;
-      }
-      bool BatteryIsChargerOOS()
-      {
-        return Messages::chargerOOS_;
-      }
-#else
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
-        const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
-        const bool hot = false;
-        if (RadioIsConnected())
-        {
-          if (reliable)
-          {
-            if (ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
-            {
-              // Have to drop the connection
-              //PRINT("Dropping connection because can't queue reliable messages\r\n");
-              ReliableTransport_Disconnect(&connection);
-              Receiver_OnDisconnect(&connection);
-              return false;
-            }
-            else
-            {
-              return true;
-            }
-          }
-          else
-          {
-            return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleUnreliableMessage, hot, msgID);
-          }
-        }
-        else
-        {
-          return false;
-        }
+        //Stuff msgID up front
+        int newSize = size + 1;
+        u8 buf[newSize];
+        
+        memcpy(buf, &msgID, 1);
+        memcpy(buf + 1, buffer, size);
+        
+        fprintf(stderr, "RadioSendMsg: %02x [%d]", msgID, newSize);
+        
+        return HAL::RadioSendPacket(buf, newSize);
       }
-#endif
 
-#ifndef SIMULATOR
-      void FlashBlockIDs()
-      {
-        // THIS DOESN'T WORK FOR now
-      }
-#endif
 
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki
 
-#ifndef TARGET_K02
-// Shim for reliable transport
-bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
-{
-  return Anki::Cozmo::HAL::RadioSendPacket(buffer, bufferSize);
-}
-
-void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
-{
-  Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
-
-  // Copy into structured memory
-  memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
-  if (!msgBuf.IsValid())
-  {
-    AnkiWarn( 119, "Receiver.ReceiveData.Invalid", 367, "Receiver got %02x[%d] invalid", 2, buffer[0], bufferSize);
-  }
-  else if (msgBuf.Size() != bufferSize)
-  {
-    AnkiWarn( 120, "Receiver.ReceiveData.SizeError", 368, "Parsed message size error %d != %d", 2, bufferSize, msgBuf.Size());
-  }
-  else
-  {
-    Anki::Cozmo::Messages::ProcessMessage(msgBuf);
-  }
-}
-
-void Receiver_OnConnectionRequest(ReliableConnection* connection)
-{
-  ReliableTransport_FinishConnection(connection); // Accept the connection
-  AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1);
-}
-
-void Receiver_OnConnected(ReliableConnection* connection)
-{
-  AnkiInfo( 122, "Receiver_OnConnected", 370, "ReliableTransport connection completed", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1);
-}
-
-void Receiver_OnDisconnect(ReliableConnection* connection)
-{
-  Anki::Cozmo::HAL::RadioUpdateState(0);   // Must mark connection disconnected BEFORE trying to print
-  AnkiInfo( 123, "Receiver_OnDisconnect", 371, "ReliableTransport disconnected", 0);
-  ReliableConnection_Init(connection, NULL); // Reset the connection
-  Anki::Cozmo::HAL::RadioUpdateState(0);
-}
-
-int Anki::Cozmo::HAL::RadioQueueAvailable()
-{
-  return ReliableConnection_GetReliableQueueAvailable(&Anki::Cozmo::connection);
-}
-
-#endif

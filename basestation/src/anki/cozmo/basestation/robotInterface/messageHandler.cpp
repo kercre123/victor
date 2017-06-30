@@ -204,7 +204,12 @@ void MessageHandler::Broadcast(const uint32_t robotId, RobotInterface::RobotToEn
   
 Result MessageHandler::AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg)
 {
+#ifdef COZMO_V2
+  int port = !connectMsg.isSimulated ? Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT : Anki::Cozmo::ANIM_PROCESS_SERVER_BASE_PORT + connectMsg.robotID;
+  PRINT_NAMED_WARNING("AddRobotConnection", "%s:%d", (const char*)connectMsg.ipAddress.data(), port);
+#else
   int port = !connectMsg.isSimulated ? Anki::Cozmo::ROBOT_RADIO_BASE_PORT : Anki::Cozmo::ROBOT_RADIO_BASE_PORT + connectMsg.robotID;
+#endif
   Anki::Util::TransportAddress address((const char*)connectMsg.ipAddress.data(), static_cast<uint16_t>(port));
   _robotConnectionManager->Connect(address);
   

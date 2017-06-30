@@ -56,11 +56,14 @@ int main(int argc, char **argv)
   << "translation " << robotPosition[0] << " " << robotPosition[1] << " " << robotPosition[2] + kApproxCameraHeight << " "
   << "rotation "    << robotRotation[0] << " " << robotRotation[1] << " " << robotRotation[2] << " " << robotRotation[3] << " }";
   
-  // Import CozmoEngine2 into scene tree
+  ss << "CozmoAnim{"
+  << "translation " << robotPosition[0] << " " << robotPosition[1] << " " << robotPosition[2] + kApproxCameraHeight << " "
+  << "rotation "    << robotRotation[0] << " " << robotRotation[1] << " " << robotRotation[2] << " " << robotRotation[3] << " }";
+
+  // Import CozmoEngine2 and CozmoAnim into scene tree
   webots::Node* root = Sim::CozmoBot->getRoot();
   webots::Field* root_children_field = root->getField("children");
   root_children_field->importMFNodeFromString(0, ss.str() );
-  
   
   
   if(Robot::Init() != Anki::RESULT_OK) {
