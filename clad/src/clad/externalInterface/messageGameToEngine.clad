@@ -947,6 +947,12 @@ message SetNeedsPauseStates {
 message GetNeedsPauseStates {
 }
 
+// Only want to accept certain needs
+message SetNeedsActionWhitelist {
+  bool enable,
+  NeedsActionId whitelistedActions[uint_8],
+}
+
 message RegisterNeedsActionCompleted {
   NeedsActionId actionCompleted
 }

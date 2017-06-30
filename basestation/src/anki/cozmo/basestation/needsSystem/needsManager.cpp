@@ -221,6 +221,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _timeWhenCooldownOver_s()
 , _queuedNeedDeltas()
 , _actionCooldown_s()
+, _onlyWhiteListedActionsEnabled(false)
 , _currentTime_s(0.0f)
 , _timeForNextPeriodicDecay_s(0.0f)
 , _pausedDurRemainingPeriodicDecay(0.0f)
@@ -284,6 +285,7 @@ void NeedsManager::Init(const float currentTime_s, const Json::Value& inJson,
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetNeedsLevels>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceSetDamagedParts>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsActionWhitelist>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RegisterOnboardingComplete>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetNeedsPauseState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::GetNeedsPauseState>();
@@ -645,6 +647,14 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
   if (_isPausedOverall) {
     return;
   }
+  // Only accept certain types of events
+  if( _onlyWhiteListedActionsEnabled )
+  {
+    if( _whiteListedActions.find(actionCompleted) == _whiteListedActions.end() )
+    {
+      return;
+    }
+  }
 
   const int actionIndex = static_cast<int>(actionCompleted);
   if (_currentTime_s < _actionCooldown_s[actionIndex])
@@ -838,9 +848,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsState& msg)
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& msg)
 {
-  DEV_ASSERT_MSG(_isPausedOverall, "NeedsManager.HandleMessage.ForceSetNeedsLevels",
-                 "Message received when NeedsManager is not paused");
-
   NeedsState::CurNeedsMap prevNeedsLevels = _needsState._curNeedsLevels;
 
   for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
@@ -868,9 +875,6 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::ForceSetDamagedParts& msg)
 {
-  DEV_ASSERT_MSG(_isPausedOverall, "NeedsManager.HandleMessage.ForceSetDamagedParts",
-                 "Message received when NeedsManager is not paused");
-
   for (size_t i = 0; i < static_cast<size_t>(RepairablePartId::Count); i++)
   {
     _needsState._partIsDamaged[static_cast<RepairablePartId>(i)] = msg.partIsDamaged[i];
@@ -893,13 +897,27 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetDamagedParts& 
   }
   Anki::Util::sEvent("needs.force_set_damaged_parts", {}, stream.str().c_str());
 }
+  
+template<>
+void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsActionWhitelist& msg)
+{
+  _onlyWhiteListedActionsEnabled = msg.enable;
+  _whiteListedActions.clear();
+  if( _onlyWhiteListedActionsEnabled )
+  {
+    std::copy(msg.whitelistedActions.begin(), msg.whitelistedActions.end(),
+              std::inserter(_whiteListedActions, _whiteListedActions.end()));
+  }
+}
 
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComplete& msg)
 {
   // Reset cozmo's need levels to their starting points, and reset timers
   InitReset(_currentTime_s, _needsState._robotSerialNumber);
-
+  // onboarding unlocks one star.
+  _needsState._numStarsAwarded = 1;
+  
   // Un-pause the needs system if we are not already
   if (_isPausedOverall)
   {

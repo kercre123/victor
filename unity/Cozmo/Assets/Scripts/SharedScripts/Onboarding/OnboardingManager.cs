@@ -194,7 +194,6 @@ public class OnboardingManager : MonoBehaviour {
     } // end first phase complete
     RequestGameManager.Instance.DisableRequestGameBehaviorGroups();
 
-    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
     if (OnOnboardingPhaseStarted != null) {
       OnOnboardingPhaseStarted.Invoke(_CurrPhase);
     }
@@ -203,6 +202,11 @@ public class OnboardingManager : MonoBehaviour {
     // It should always be loaded now
     if (PreloadOnboarding()) {
       SetSpecificStage(startStage);
+    }
+    // Because sparks are now saved on the robot they could have changed robots between these checkpoints.
+    // Make sure they have a min number of sparks for places right before required to spend them.
+    if (_CurrPhase == OnboardingPhases.PlayIntro || _CurrPhase == OnboardingPhases.NurtureIntro) {
+      GiveStartingInventory();
     }
 #endif
   }
@@ -229,7 +233,12 @@ public class OnboardingManager : MonoBehaviour {
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
-    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
+
+    if (_CurrPhase == OnboardingPhases.PlayIntro) {
+      // TODO: add more fields so partial checkpoints can be saved on the robot fixing COZMO-12453 and COZMO-12684
+      RobotEngineManager.Instance.Message.RegisterOnboardingComplete = new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete();
+      RobotEngineManager.Instance.SendMessage();
+    }
   }
 
   // Because looking for a face takes awhile time, we try to load this early and invisible
@@ -263,6 +272,12 @@ public class OnboardingManager : MonoBehaviour {
 
     if (!IsOnboardingRequired(OnboardingPhases.FeedIntro) && IsOnboardingRequired(OnboardingPhases.PlayIntro)) {
       StartPhase(OnboardingPhases.PlayIntro);
+    }
+
+    if (Cozmo.Needs.NeedsStateManager.Instance.GetLatestStarAwardedFromEngine() > 0) {
+      if (!IsOnboardingRequired(OnboardingPhases.PlayIntro) && IsOnboardingRequired(OnboardingPhases.RewardBox)) {
+        StartPhase(OnboardingPhases.RewardBox);
+      }
     }
   }
 
@@ -446,6 +461,25 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
   #endregion
+
+  private void GiveStartingInventory() {
+    PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
+    Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(Cozmo.UI.GenericRewardsConfig.Instance.SparkID);
+    int giveSparksAmount = itemData.StartingAmount;
+    // If the robot has a lot of sparks give them that value.
+    int currentSparks = profile.Inventory.GetItemAmount(Cozmo.UI.GenericRewardsConfig.Instance.SparkID);
+    // If they have old "treats" saved on the app, which are now sparks, Give them those.
+    int oldSparksAmount = profile.Inventory.GetItemAmount(Cozmo.UI.GenericRewardsConfig.Instance.TreatID);
+    // We just want to be generious so they either get:
+    // 1. An old user from the old app, give them treat sparks
+    // 2. A brand new user gets a default amount of start sparks
+    // 3. A device connecting to a robot that has had some nurture on it already might have that value if it's large.
+    //      Since new sparks are saved on the robot.
+    giveSparksAmount = Mathf.Max(oldSparksAmount, giveSparksAmount, currentSparks);
+    if (giveSparksAmount != currentSparks) {
+      profile.Inventory.SetItemAmount(itemData.ID, giveSparksAmount);
+    }
+  }
 
   private bool UpdateButtonState(Cozmo.UI.CozmoButton button, OnboardingBaseStage.OnboardingButtonStates buttonState) {
     button.gameObject.SetActive(buttonState != OnboardingBaseStage.OnboardingButtonStates.Hidden);

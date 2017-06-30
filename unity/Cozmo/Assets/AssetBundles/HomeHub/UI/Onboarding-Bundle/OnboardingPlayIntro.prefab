@@ -214,6 +214,17 @@ MonoBehaviour:
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.play.ticker
   _DimNeedsMeters: 0000000001000000
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions: []
+  _ForceNeedValuesOnStart:
+  - 1
+  - 1
+  - 0.92
+  _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _UnPausedNeedMeter: 3
   _ButtonStateDiscover: 1
   _ButtonStateRepair: 1
   _ButtonStateFeed: 1

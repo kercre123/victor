@@ -34,11 +34,6 @@ namespace Cozmo.Needs.UI {
     private void HandleStarUnlocked(Anki.Cozmo.ExternalInterface.StarUnlocked message) {
       UpdateBar(message.currentStars, message.maxStarsForLevel);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Token);
-
-      if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro) &&
-           OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.RewardBox)) {
-        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.RewardBox);
-      }
     }
 
     private void HandleGotNeedsState(Anki.Cozmo.ExternalInterface.NeedsState message) {

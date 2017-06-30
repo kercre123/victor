@@ -87,11 +87,22 @@ MonoBehaviour:
   _PlayIdle: 0
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleRepair
-    _EnumValue: 290
+    _EnumValue: 295
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.repair.ticker
   _DimNeedsMeters: 0100000002000000
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions: []
+  _ForceNeedValuesOnStart:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _UnPausedNeedMeter: 3
   _ButtonStateDiscover: 1
   _ButtonStateRepair: 2
   _ButtonStateFeed: 1

@@ -498,6 +498,11 @@ MonoBehaviour:
   _DASPhaseID: 0
   _OverrideTickerKey: 
   _DimNeedsMeters: 
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions:
+  - _EnumValueAsString: RollACube
+    _EnumValue: 32
+  _UnPausedNeedMeter: 2
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
   _ButtonStateFeed: 3

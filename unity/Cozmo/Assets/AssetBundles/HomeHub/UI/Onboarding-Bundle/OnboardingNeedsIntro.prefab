@@ -540,11 +540,22 @@ MonoBehaviour:
   _PlayIdle: 0
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 478
+    _EnumValue: 488
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: onboarding.needs.ticker
   _DimNeedsMeters: 
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions: []
+  _ForceNeedValuesOnStart:
+  - 0.8
+  - 0.85
+  - 0.9
+  _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _UnPausedNeedMeter: 3
   _ButtonStateDiscover: 1
   _ButtonStateRepair: 1
   _ButtonStateFeed: 1

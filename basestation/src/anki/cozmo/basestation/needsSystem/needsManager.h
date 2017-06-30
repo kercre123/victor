@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <chrono>
 #include <memory>
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -184,6 +185,9 @@ private:
   std::array<std::vector<NeedDelta>, static_cast<size_t>(NeedId::Count)> _queuedNeedDeltas;
 
   std::array<float, static_cast<size_t>(NeedsActionId::Count)> _actionCooldown_s;
+  
+  bool _onlyWhiteListedActionsEnabled;
+  std::set<NeedsActionId> _whiteListedActions;
 
   float         _currentTime_s;
   float         _timeForNextPeriodicDecay_s;

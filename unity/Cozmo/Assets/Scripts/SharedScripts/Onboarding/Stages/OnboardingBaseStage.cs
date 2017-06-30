@@ -1,6 +1,8 @@
 ﻿using Cozmo.UI;
 using UnityEngine;
 using System.Collections.Generic;
+using Cozmo.Needs;
+using Anki.Cozmo.ExternalInterface;
 
 namespace Onboarding {
 
@@ -45,6 +47,22 @@ namespace Onboarding {
     [SerializeField]
     protected List<Anki.Cozmo.NeedId> _DimNeedsMeters;
 
+    // Only let certain actions through
+    [SerializeField]
+    protected bool _EnableWhiteListOnly = true;
+    [SerializeField]
+    protected List<NeedsStateManager.SerializableNeedsActionIds> _WhiteListedActions;
+
+    [SerializeField]
+    protected float[] _ForceNeedValuesOnStart = new float[3] { -1.0f, -1.0f, -1.0f };
+
+    [SerializeField]
+    protected float[] _ForceNeedValuesOnEnd = new float[3] { -1.0f, -1.0f, -1.0f };
+
+    // By default they are all paused during onboarding from decay
+    [SerializeField]
+    protected Anki.Cozmo.NeedId _UnPausedNeedMeter = Anki.Cozmo.NeedId.Count;
+
     // Serialized as an int, do not reorder/delete
     public enum OnboardingButtonStates {
       Hidden,
@@ -86,6 +104,16 @@ namespace Onboarding {
           RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value);
         }
       }
+
+      // Force needs level set as a group to make sure no weird quiting or different robot connecting has happened
+      if (System.Array.TrueForAll(_ForceNeedValuesOnStart, (float obj) => { return obj >= 0.0f; })) {
+        RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
+                                Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnStart);
+        RobotEngineManager.Instance.SendMessage();
+      }
+      SetNeedsActionWhitelist(_EnableWhiteListOnly);
+      NeedsStateManager.Instance.PauseExceptForNeed(_UnPausedNeedMeter);
+
     }
     public virtual void OnDisable() {
       if (!string.IsNullOrEmpty(_OverrideTickerKey)) {
@@ -100,6 +128,29 @@ namespace Onboarding {
           robot.PopIdleAnimation();
         }
       }
+      // Clean up needs manager
+      SetNeedsActionWhitelist(false);
+      NeedsStateManager.Instance.ResumeAllNeeds();
+
+      // forced end levels of needs
+      if (System.Array.TrueForAll(_ForceNeedValuesOnEnd, (float obj) => { return obj >= 0.0f; })) {
+        RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
+                                Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEnd);
+        RobotEngineManager.Instance.SendMessage();
+      }
+    }
+
+    public void SetNeedsActionWhitelist(bool listenOnlyForWhitelist) {
+      Anki.Cozmo.NeedsActionId[] actionIds = null;
+      if (_WhiteListedActions.Count > 0) {
+        actionIds = new Anki.Cozmo.NeedsActionId[_WhiteListedActions.Count];
+        for (int i = 0; i < actionIds.Length; ++i) {
+          actionIds[i] = _WhiteListedActions[i].Value;
+        }
+      }
+      RobotEngineManager.Instance.Message.SetNeedsActionWhitelist =
+                        Singleton<SetNeedsActionWhitelist>.Instance.Initialize(listenOnlyForWhitelist, actionIds);
+      RobotEngineManager.Instance.SendMessage();
     }
 
     public virtual void OnDestroy() {

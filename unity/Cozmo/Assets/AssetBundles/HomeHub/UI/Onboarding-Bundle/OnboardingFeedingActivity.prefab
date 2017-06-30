@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 22277488}
   - component: {fileID: 114884972346539074}
   m_Layer: 5
-  m_Name: OnboardingWaitDialogClosed
+  m_Name: OnboardingFeedingActivity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -69,11 +69,28 @@ MonoBehaviour:
   _PlayIdle: 0
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 478
+    _EnumValue: 488
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: 
   _DimNeedsMeters: 
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions:
+  - _EnumValueAsString: FeedRed
+    _EnumValue: 5
+  - _EnumValueAsString: FeedBlue
+    _EnumValue: 6
+  - _EnumValueAsString: FeedGreen
+    _EnumValue: 7
+  _ForceNeedValuesOnStart:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEnd:
+  - 1
+  - 1
+  - 0.9
+  _UnPausedNeedMeter: 1
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
   _ButtonStateFeed: 3
