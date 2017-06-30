@@ -175,7 +175,6 @@ namespace Cozmo.Repair.UI {
     private List<RoundProgressPip> _RoundProgressPips = new List<RoundProgressPip>();
     private List<UpDownArrow> _UpDownArrows = new List<UpDownArrow>();
 
-    private bool _Closed = false; //no need to refresh state logic after dialog close
     private AlertModal _InterruptedAlert = null;
 
     private bool _MeterPaused = false; //pause meter in certain states
@@ -271,7 +270,7 @@ namespace Cozmo.Repair.UI {
     }
 
     private void Update() {
-      if (!_Closed) {
+      if (!IsClosed) {
         RefreshModalStateLogic(Time.deltaTime);
 
         bool interactionDetected = false;
@@ -297,7 +296,6 @@ namespace Cozmo.Repair.UI {
 
     protected override void RaiseDialogClosed() {
       ExitModalState(); //ensure that we do any state clean up before killing our fsm
-      _Closed = true;
 
       _ModalStateAnimator.SetInteger("ModalState", 0);
       _ModalStateAnimator.SetTrigger("StateChange");
@@ -306,6 +304,7 @@ namespace Cozmo.Repair.UI {
         GameObject.Destroy(_RoundProgressPips[0].gameObject);
         _RoundProgressPips.RemoveAt(0);
       }
+
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.ResumeAllNeeds();
       nsm.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
@@ -321,6 +320,10 @@ namespace Cozmo.Repair.UI {
       }
 
       base.RaiseDialogClosed();
+    }
+
+    protected override void CleanUp() {
+      CloseInterruptionAlert();
     }
 
     private void OnApplicationPause(bool pauseStatus) {
@@ -1225,6 +1228,5 @@ namespace Cozmo.Repair.UI {
     }
 
     #endregion
-
   }
 }
