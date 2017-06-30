@@ -224,7 +224,8 @@ bool NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, con
   {
     // See if this need is now in (or still in) the "full" bracket
     const auto& bracketThresholds = _needsConfig->_needsBrackets.find(needId)->second;
-    if (needLevel >= bracketThresholds[static_cast<int>(NeedBracketId::Full)])
+    const float fullThreshold = bracketThresholds[static_cast<int>(NeedBracketId::Full)];
+    if (needLevel >= fullThreshold)
     {
       startFullnessCooldown = true;
     }
@@ -261,6 +262,15 @@ bool NeedsState::ApplyDelta(const NeedId needId, const NeedDelta& needDelta, con
       if (needLevel < minLevel)
       {
         needLevel = minLevel + epsilon;
+      }
+    }
+
+    if (needId == NeedId::Energy)
+    {
+      // If transitioning into 'full' Energy bracket, set Energy to max
+      if ((_curNeedsLevels[needId] < fullThreshold) && (needLevel >= fullThreshold))
+      {
+        needLevel = _needsConfig->_maxNeedLevel;
       }
     }
   }
