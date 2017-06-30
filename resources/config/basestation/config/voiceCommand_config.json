@@ -38,8 +38,7 @@
         },
         {
           "phrase": "Fist Bump",
-          "commandType": "FistBump",
-          "minRecogScore": 1.75
+          "commandType": "FistBump"
         },
         {
           "phrase": "Lets Play A Game",
