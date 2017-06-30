@@ -208,13 +208,17 @@ void ActivityFreeplay::HandleMessage(const ExternalInterface::RobotOffTreadsStat
   const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
   if ( onTreads )
   {
-    if ( _currentActivityPtr )
+    if ( _currentActivityPtr != nullptr)
     {
       const UnlockId curActivitySpark = _currentActivityPtr->GetRequiredSpark();
       const bool isSparkless = (curActivitySpark == UnlockId::Count);
       const bool isRunningDebugActivity = (_currentActivityPtr->GetID() ==
                                                  _debugConsoleRequestedActivity);
-      if ( isSparkless && !isRunningDebugActivity )
+      const bool isSevereNeedsActivity =
+                      (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowEnergy) ||
+                      (_currentActivityPtr->GetID() == ActivityID::NeedsSevereLowRepair);
+      
+      if ( isSparkless && !isRunningDebugActivity && !isSevereNeedsActivity)
       {
         PRINT_CH_INFO("Behaviors", "ActivityFreeplay.RobotOffTreadsStateChanged.KickingOutActivityOnPutDown",
                       "Kicking out '%s' on put down so we pick up a new one",

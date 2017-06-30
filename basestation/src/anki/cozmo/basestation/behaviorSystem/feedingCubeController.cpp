@@ -42,16 +42,17 @@ enum class ChargeState{
 };
 
   
-CONSOLE_VAR(f32, kTimeBetweenShakes_s,            "Behavior.Feeding", 0.1f);
-CONSOLE_VAR(f32, kTimeBeforeStartLosingCharge_s,  "Behavior.Feeding", 1.0f);
-CONSOLE_VAR(f32, kTimeBetweenLoosingCharge_s,     "Behavior.Feeding", 0.1f);
-CONSOLE_VAR(f32, kChargeLevelToFillSide,          "Behavior.Feeding", 4.0f);
+const char * kConsoleVarChan = "Activity.Feeding";
+CONSOLE_VAR(f32, kTimeBetweenShakes_s,            kConsoleVarChan, 0.1f);
+CONSOLE_VAR(f32, kTimeBeforeStartLosingCharge_s,  kConsoleVarChan, 1.0f);
+CONSOLE_VAR(f32, kTimeBetweenLoosingCharge_s,     kConsoleVarChan, 0.1f);
+CONSOLE_VAR(f32, kChargeLevelToFillSide,          kConsoleVarChan, 4.0f);
+CONSOLE_VAR(f32, kShakeMinThresh,                 kConsoleVarChan, 1500.f);
 
 // Constants for the Shake Component MovementListener:
 const float kHighPassFiltCoef    = 0.4f;
 const float kHighPassLowerThresh = 2.5f;
 const float kHighPassUpperThresh = 3.9f;
-const float kShakeMinThresh      = 3000.f;
 
 ObjectLights kFillingBlockLights;
   
@@ -192,6 +193,11 @@ void FeedingCubeController::ReInitializeController(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::ClearController(Robot& robot)
 {
+  // Re-set music
+  if(_cubeStateTracker->_currentChargeLevel > 0){
+    UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Stop);
+  }
+  
   // Re-set lights
   _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::Count;
   SetCubeLights(robot);
@@ -425,9 +431,10 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
      (_cubeStateTracker->_timeNextShakeCounts_s < currentTime_s)){
     
     // send updates to the audio system
-    if(_cubeStateTracker->_currentChargeLevel > 0){
+    if(_cubeStateTracker->_currentChargeLevel > 1){
       // Currently audio has 30 steps while lights only have 16 - so increments
-      // and decrements come in pairs
+      // and decrements come in pairs, and we skip the first shake since it might
+      // be a false positive
       UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Up);
       UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Up);
       
@@ -436,7 +443,7 @@ void FeedingCubeController::ShakeDetected(Robot& robot, const float shakeScore)
                     "Cube with id %d now has %d shakes",
                     _cubeStateTracker->_id.GetValue(),
                     _cubeStateTracker->_currentChargeLevel);
-    }else{
+    }else if(_cubeStateTracker->_currentChargeLevel == 1){
       UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Start);
     }
     

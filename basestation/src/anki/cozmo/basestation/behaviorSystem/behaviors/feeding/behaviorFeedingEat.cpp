@@ -135,7 +135,7 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
 void BehaviorFeedingEat::TransitionToDrivingToFood(Robot& robot)
 {
   const ObservableObject* obj = robot.GetBlockWorld().GetLocatedObjectByID(_targetID);
-  if((obj == nullptr) || !obj->IsPoseStateKnown()){
+  if(obj == nullptr){
     return;
   }
   

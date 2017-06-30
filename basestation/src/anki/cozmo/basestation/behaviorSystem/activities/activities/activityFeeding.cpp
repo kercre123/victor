@@ -41,7 +41,7 @@ namespace Cozmo {
 namespace{
 #define UPDATE_STAGE(s) UpdateActivityStage(s, #s)
 
-CONSOLE_VAR(float, kTimeSearchForFace, "Behavior.Feeding", 5.0f);
+CONSOLE_VAR(float, kTimeSearchForFace, "Activity.Feeding", 5.0f);
 static const char* kUniversalChooser = "universalChooser";
 
   // Special version of CYAN to match feeding animations
@@ -506,8 +506,17 @@ Result ActivityFeeding::Update(Robot& robot)
     }
   }
   
-  // Transition out of hunger loop if an interactable object has been located
+  // Transition out of hunger loop if an interactable object has been located or
+  // charged cube has disconnected
   if(_chooserStage == FeedingActivityStage::SearchingForCube){
+    bool anyCubesCharged = false;
+    for(const auto& entry: _cubeControllerMap){
+      anyCubesCharged = anyCubesCharged || entry.second->IsCubeCharged();
+    }
+    if(!anyCubesCharged){
+      TransitionToBestActivityStage(robot);
+    }
+    
     if(_interactID.IsSet()){
       UPDATE_STAGE(FeedingActivityStage::ReactingToCube);
       AnimationTrigger bestTrigger = isNeedSevere ?
@@ -678,6 +687,10 @@ void ActivityFeeding::HandleObjectConnectionStateChange(Robot& robot, const Obje
     if(mapObjIter != _cubeControllerMap.end()){
       mapObjIter->second->SetControllerState(robot,CS::Deactivated);
       _cubeControllerMap.erase(objID);
+    }
+    
+    if(_interactID.GetValue() == connectionState.objectID){
+      _interactID.UnSet();
     }
   }
   
