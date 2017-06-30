@@ -568,27 +568,6 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
     // first, check if we are well-clear of everything, and can skip this check
     bool possibleObstacle = false;
 
-    if( env.obstacleBounds_.empty() && ! env.obstaclesPerAngle_[0].empty() ) {
-      // unit tests might do this
-      PRINT_NAMED_WARNING("xythetaEnvironment.Successor.NoBounds",
-                          "missing obstacle bounding boxes! Did you call env.PrepareForPlanning()???");
-      possibleObstacle = true;      
-    }
-    else {
-      for( const auto& bound : env.obstacleBounds_ ) {
-        if( prim->maxX < bound.minX ||
-            prim->minX > bound.maxX ||
-            prim->maxY < bound.minY ||
-            prim->minY > bound.maxY ) {
-          // can't possibly be a collision
-          continue;
-        }
-        // otherwise, we need to do a full check
-        possibleObstacle = true;
-        break;
-      }
-    }
-
     State_c primtiveOffset = start_c_;
 
     State result(start_);
@@ -601,6 +580,33 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
       primtiveOffset = env.State2State_c(result);
     }
 
+    float minPrimX = prim->minX + primtiveOffset.x_mm;
+    float maxPrimX = prim->maxX + primtiveOffset.x_mm;
+    float minPrimY = prim->minY + primtiveOffset.y_mm;
+    float maxPrimY = prim->maxY + primtiveOffset.y_mm;
+
+    if( env.obstacleBounds_.empty() && ! env.obstaclesPerAngle_[0].empty() ) {
+      // unit tests might do this
+      PRINT_NAMED_WARNING("xythetaEnvironment.Successor.NoBounds",
+                          "missing obstacle bounding boxes! Did you call env.PrepareForPlanning()???");
+      possibleObstacle = true;      
+    }
+    else {
+      for( const auto& bound : env.obstacleBounds_ ) {
+        if( maxPrimX < bound.minX ||
+            minPrimX > bound.maxX ||
+            maxPrimY < bound.minY ||
+            minPrimY > bound.maxY ) {
+          // can't possibly be a collision
+          continue;
+        }
+        // otherwise, we need to do a full check
+        possibleObstacle = true;
+        break;
+      }
+    }
+
+    
     if( possibleObstacle ) {
 
       // two collision check cases. If the angle is changing, then we'll need to potentially switch which
@@ -611,10 +617,10 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
       if( prim->endStateOffset.theta == prim->startTheta ) {
         for( const auto& obs : env.obstaclesPerAngle_[prim->startTheta] ) {
 
-          if( prim->maxX < obs.first.GetMinX() ||
-              prim->minX > obs.first.GetMaxX() ||
-              prim->maxY < obs.first.GetMinY() ||
-              prim->minY > obs.first.GetMaxY() ) {
+          if( maxPrimX < obs.first.GetMinX() ||
+              minPrimX > obs.first.GetMaxX() ||
+              maxPrimY < obs.first.GetMinY() ||
+              minPrimY > obs.first.GetMaxY() ) {
             // can't possibly be a collision, rule out this whole obstacle
             continue;
           }
@@ -646,7 +652,6 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
           StateTheta angle = prim->intermediatePositions[pointIdx].nearestTheta;
           for( const auto& obs : env.obstaclesPerAngle_[angle] ) {
-
             if( obs.first.Contains(
                   primtiveOffset.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
                   primtiveOffset.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
@@ -1511,10 +1516,10 @@ bool MotionPrimitive::Import(const Json::Value& config)
 
 void MotionPrimitive::CacheBoundingBox()
 {
-  minX = -999999.9f;
-  maxX = 999999.9f;
-  minY = -999999.9f;
-  maxY = 999999.9f;
+  minX = numeric_limits<decltype(minX)>::max();
+  maxX = numeric_limits<decltype(maxX)>::min();
+  minY = numeric_limits<decltype(minY)>::max();
+  maxY = numeric_limits<decltype(maxY)>::min();
 
   for( const auto& pt : intermediatePositions ) {
     if( pt.position.x_mm < minX ) {
