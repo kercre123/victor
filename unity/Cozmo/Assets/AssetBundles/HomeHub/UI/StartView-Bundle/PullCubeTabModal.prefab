@@ -203,6 +203,9 @@ MonoBehaviour:
   _PreventForceClose: 0
   DimBackground: 0
   _ContinueButton: {fileID: 114510541418076648}
+  _CubeHelpModalPrefab: {fileID: 11489240, guid: bbf4f5e51da9f4783b86a0fff9369348,
+    type: 2}
+  _ShowCubeHelpButton: {fileID: 114319387444198986}
   _ObjectConnectedTypeList: 010000000200000003000000
   _ObjectConnectedSpriteContainers:
   - {fileID: 187292}

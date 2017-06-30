@@ -19,6 +19,14 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
   private CozmoButton _ContinueButton;
 
   [SerializeField]
+  private BaseModal _CubeHelpModalPrefab;
+
+  [SerializeField]
+  private CozmoButton _ShowCubeHelpButton;
+
+  private BaseModal _SettingsCubeHelpDialogInstance;
+
+  [SerializeField]
   private Anki.Cozmo.ObjectType[] _ObjectConnectedTypeList;
 
   [SerializeField]
@@ -49,6 +57,7 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
   private void Awake() {
     _ContinueButton.Initialize(HandleContinueButton, "pull_cube_tab_continue_button", this.DASEventDialogName);
     _ContinueButton.gameObject.SetActive(false);
+    _ShowCubeHelpButton.Initialize(HandleOpenCubeHelpViewTapped, "pull_cube_tab_show_help_button", this.DASEventDialogName);
     _StartTime = Time.time;
 
     _ObjectConnectedSprites = new LightCubeSprite[_ObjectConnectedSpriteContainers.Length];
@@ -148,6 +157,14 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
     this.CloseDialog();
   }
 
+  private void HandleOpenCubeHelpViewTapped() {
+    if (_SettingsCubeHelpDialogInstance == null) {
+      UIManager.OpenModal(_CubeHelpModalPrefab, SettingsModal.SettingsSubModalPriorityData(), (newView) => {
+        _SettingsCubeHelpDialogInstance = newView;
+      });
+    }
+  }
+
   protected override void CleanUp() {
     // Turn off cube lights
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
@@ -155,6 +172,9 @@ public class PullCubeTabModal : Cozmo.UI.BaseModal {
       foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
         kvp.Value.SetLEDsOff();
       }
+    }
+    if (_SettingsCubeHelpDialogInstance != null) {
+      _SettingsCubeHelpDialogInstance.CloseDialogImmediately();
     }
   }
 }
