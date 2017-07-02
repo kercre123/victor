@@ -16,7 +16,7 @@ MonoBehaviour:
     lightColor: {r: 0, g: 0, b: 0, a: 1}
   _InViewColor:
     uiSprite: {fileID: 21300000, guid: 92bc85540ed3a48d69facb4f53766472, type: 3}
-    lightColor: {r: 0.5411765, g: 0.95294124, b: 0.4431373, a: 1}
+    lightColor: {r: 0.283002, g: 0.934, b: 0.36830527, a: 1}
   _OutOfViewColor:
     uiSprite: {fileID: 0}
     lightColor: {r: 0, g: 0, b: 0, a: 1}

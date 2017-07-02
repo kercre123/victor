@@ -23,6 +23,9 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   [SerializeField]
   private RectTransform _CozmoImageTransform;
 
+  [SerializeField]
+  private float _UILightColorAlphaOverride = 0.7f;
+
   private IconProxy[] _CubeImages;
 
   private float _OutOfViewAlpha = 0.5f;
@@ -78,7 +81,9 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
     for (int i = 0; i < _CubeImages.Length; i++) {
       if (i < numberCubes) {
         _CubeImages[i].SetIcon(_InViewColor.uiSprite);
-        _CubeImages[i].IconImage.color = _InViewColor.lightColor;
+        Color lightColor = _InViewColor.lightColor;
+        lightColor.a = _UILightColorAlphaOverride;
+        _CubeImages[i].IconImage.color = lightColor;
         _CubeImages[i].SetAlpha(1f);
       }
       else {
