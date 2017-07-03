@@ -79,7 +79,7 @@ namespace Cozmo {
     }
 
     private void OnToggleButton() {
-      VoiceCommandManager.SendVoiceCommandEvent<ChangeEnabledStatus>(Singleton<ChangeEnabledStatus>.Instance.Initialize(!_IsEnabled));
+      VoiceCommandManager.SetVoiceCommandEnabled(!_IsEnabled);
     }
 
     private void OnMicIgnoredToggle(bool newValue) {
