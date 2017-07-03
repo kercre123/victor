@@ -49,10 +49,6 @@ enum uint_8 AudioCapturePermissionState {
 
 
 // ------------  Structures sent Engine -> Game  ------------ //
-structure CommandHeardEvent {
-  VoiceCommandType            voiceCommandType,
-}
-
 structure RespondingToCommand {
   VoiceCommandType            voiceCommandType,
 }
@@ -101,7 +97,6 @@ structure ChangeContext {
 
 // Use tag to determine what struct to use
 union VoiceCommandEventUnion {
-  CommandHeardEvent           commandHeardEvent,
   RespondingToCommand         respondingToCommand,
   RespondingToCommandStart    respondingToCommandStart,
   RespondingToCommandEnd      respondingToCommandEnd,

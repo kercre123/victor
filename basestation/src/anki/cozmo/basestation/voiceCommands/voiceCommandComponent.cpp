@@ -220,6 +220,8 @@ bool VoiceCommandComponent::RequestEnableVoiceCommand(AudioCaptureSystem::Permis
 {
   std::lock_guard<std::recursive_mutex> lock(_permissionCallbackLock);
   
+  Anki::Util::sEvent("voice_command.mic_capture_permission.state", {},
+                     EnumToString(ConvertAudioCapturePermission(permissionState)));
   switch (permissionState)
   {
     case AudioCaptureSystem::PermissionState::Granted:
@@ -263,6 +265,7 @@ bool VoiceCommandComponent::RequestEnableVoiceCommand(AudioCaptureSystem::Permis
           
           _recordPermissionBeingRequested = false;
         };
+        Anki::Util::sEvent("voice_command.mic_capture_permission.requested", {}, "");
         _captureSystem->RequestCapturePermission(callback);
       }
       return false;
@@ -298,6 +301,7 @@ void VoiceCommandComponent::Update()
     PRINT_NAMED_WARNING("VoiceCommandComponent.Update.OldCommandBeingCleared",
                         "A pending command (%s) was not used, so being cleared now.",
                         VoiceCommandTypeToString(_pendingHeardCommand));
+    Anki::Util::sEvent("voice_command.command_unhandled", {}, EnumToString(_pendingHeardCommand));
     ClearHeardCommand();
     if (_lastListenContext != _listenContext)
     {
@@ -328,10 +332,10 @@ void VoiceCommandComponent::Update()
       continue;
     }
     
+    const auto& phraseScore = nextResult.second;
     if (commandDataFound->HasDataValueSet(PhraseData::DataValueType::MinRecogScore))
     {
       const auto& minScore = commandDataFound->GetMinRecogScore();
-      const auto& phraseScore = nextResult.second;
       // Negative scores are from forced commands, so let those pass through
       if (phraseScore > 0.0f && phraseScore < minScore)
       {
@@ -346,17 +350,14 @@ void VoiceCommandComponent::Update()
     // If we updated the pending, heard command, leave the rest of the results for later
     if (heardCommandUpdated)
     {
-      LOG_INFO("VoiceCommandComponent.HeardCommand", "%s", EnumToString(commandType));
+      Anki::Util::sEvent("voice_command.command_heard",
+                         {{DDATA, std::to_string(phraseScore).c_str()}},
+                         EnumToString(commandType));
       break;
     }
   }
   
   UpdateCommandLight(heardCommandUpdated);
-  
-  if (heardCommandUpdated)
-  {
-    BroadcastVoiceEvent(CommandHeardEvent(_pendingHeardCommand));
-  }
 }
 
 void VoiceCommandComponent::ForceListenContext(VoiceCommandListenContext listenContext)
@@ -374,6 +375,9 @@ void VoiceCommandComponent::SetListenContext(VoiceCommandListenContext listenCon
   
   LOG_INFO("VoiceCommandComponent.SetListenContext", "%s -> %s",
            EnumToString(_listenContext), EnumToString(listenContext));
+  Anki::Util::sEvent("voice_command.context_changed",
+                     {{DDATA, EnumToString(_listenContext)}},
+                     EnumToString(listenContext));
   _lastListenContext = _listenContext;
   _listenContext = listenContext;
   
@@ -521,7 +525,10 @@ void VoiceCommandComponent::HandleMessage(const VoiceCommandEvent& event)
     }
     case VoiceCommandEventUnionTag::changeEnabledStatus:
     {
-      if (vcEventUnion.Get_changeEnabledStatus().isVCEnabled)
+      const auto& desiredEnabledState = vcEventUnion.Get_changeEnabledStatus().isVCEnabled;
+      Anki::Util::sEvent("voice_command.request_change_enabled_state", {}, std::to_string(desiredEnabledState).c_str());
+      
+      if (desiredEnabledState)
       {
         // First request enabling based on current permission state
         _commandRecogEnabled = RequestEnableVoiceCommand(_captureSystem->GetPermissionState(_permRequestAlreadyDenied));

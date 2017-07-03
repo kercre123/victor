@@ -124,6 +124,9 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
   StartActing(actionSeries);
   
   using namespace ::Anki::Cozmo::VoiceCommand;
+  
+  Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
+  robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
   robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
   
   return RESULT_OK;
