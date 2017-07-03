@@ -98,18 +98,7 @@ namespace Cozmo.Energy.UI {
     }
 
     private void Update() {
-      bool interactionDetected = false;
-      if (Input.touchSupported) {
-        interactionDetected = Input.GetTouch(0).phase == TouchPhase.Began;
-      }
-      else {
-        interactionDetected = Input.GetMouseButtonDown(0);
-      }
-
-      if (interactionDetected) {
-        _InactivityTimer = _InactivityTimeOut;
-      }
-      else {
+      if (_InactivityTimer > 0f) {
         _InactivityTimer -= Time.deltaTime;
 
         if (_InactivityTimer <= 0f) {

@@ -182,6 +182,7 @@ namespace Cozmo.Repair.UI {
 
     //when this timer reaches zero, the modal will close
     //refreshes to _InactivityTimeOut on any touch or state change
+    private bool _InteractionDetected = false;
     private float _InactivityTimer = float.MaxValue;
 
     #endregion
@@ -273,24 +274,19 @@ namespace Cozmo.Repair.UI {
       if (!IsClosed) {
         RefreshModalStateLogic(Time.deltaTime);
 
-        bool interactionDetected = false;
-        if (Input.touchSupported) {
-          interactionDetected = Input.GetTouch(0).phase == TouchPhase.Began;
-        }
-        else {
-          interactionDetected = Input.GetMouseButtonDown(0);
-        }
-
-        if (interactionDetected) {
+        if (_InteractionDetected) {
           _InactivityTimer = _InactivityTimeOut;
         }
-        else {
+        else if (_InactivityTimer > 0f) {
+
           _InactivityTimer -= Time.deltaTime;
 
           if (_InactivityTimer <= 0f) {
             HandleUserClose();
           }
         }
+
+        _InteractionDetected = false;
       }
     }
 
@@ -793,14 +789,17 @@ namespace Cozmo.Repair.UI {
 
     private void HandleUpButtonPressed() {
       AppendTuneUpEntry(ArrowInput.Up);
+      _InteractionDetected = true;
     }
 
     private void HandleDownButtonPressed() {
       AppendTuneUpEntry(ArrowInput.Down);
+      _InteractionDetected = true;
     }
 
     private void HandleCalibrateButtonPressed() {
       _CalibrationRequested = true;
+      _InteractionDetected = true;
     }
 
     #endregion
