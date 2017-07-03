@@ -86,7 +86,12 @@ DesiredFaceDistortionComponent::Params::~Params()
 float DesiredFaceDistortionComponent::GetCurrentDesiredDistortion()
 {
   if( _params != nullptr && _rng != nullptr ) {
-  
+
+    // if the needs manager is paused overall, then "pause" the distortions as well
+    if( _needsManager.GetPaused() ) {
+      return -1.0f;
+    }
+    
     // if it's time to distort again, or we've never distorted, calculate a desired distortion
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
