@@ -500,6 +500,7 @@ void ActivityVoiceCommand::BeginRespondingToCommand(VoiceCommand::VoiceCommandTy
 {
   auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
   
+  Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(command));
   voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommand(command));
   
   // If we don't care about the lifetime of this command response, just send out the response event
