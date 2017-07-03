@@ -22,7 +22,7 @@ class BehaviorSearchForFace : public IBehavior
 {
 protected:
   using base = IBehavior;
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorSearchForFace(Robot& robot, const Json::Value& config);
   

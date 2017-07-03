@@ -28,7 +28,7 @@ class Robot;
 class BehaviorStackBlocks : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorStackBlocks(Robot& robot, const Json::Value& config);
 

@@ -5,11 +5,6 @@
   // leave reactions enabled for play (e.g. saw face, pet)
   "disableReactionTriggers": false,
 
-  // Set the whiteboard flag that we are expressing the play need, but don't clear it when we exit (since this
-  // activity is just a get-in). This will automatically be cleared by the whiteboard if we leave low play
-  "severeNeedExpression": "Play",
-  "clearSevereNeedExpressionOnExit": false,
-
   "activityStrategy":
   {
     // runs when the needs brackets are severe, but the "severe needs expression" from the whiteboard isn't

@@ -26,7 +26,7 @@ namespace Cozmo {
 class BehaviorCheckForStackAtInterval : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorCheckForStackAtInterval(Robot& robot, const Json::Value& config);
 

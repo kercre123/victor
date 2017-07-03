@@ -28,7 +28,7 @@ class BehaviorGuardDog : public IBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorGuardDog(Robot& robot, const Json::Value& config);
   

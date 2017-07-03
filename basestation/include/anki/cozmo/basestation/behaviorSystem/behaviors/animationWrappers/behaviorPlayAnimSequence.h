@@ -23,7 +23,7 @@ class BehaviorPlayAnimSequence : public IBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPlayAnimSequence(Robot& robot, const Json::Value& config, bool triggerRequired = true);
   
@@ -31,7 +31,7 @@ public:
   
   virtual ~BehaviorPlayAnimSequence();
   
-  virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
   virtual bool IsRunnableInternal(const BehaviorPreReqAnimSequence& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
   
@@ -39,6 +39,8 @@ public:
   void StartPlayingAnimations(Robot& robot);
 
 protected:
+  
+  virtual bool IsRunnableAnimSeqInternal(const BehaviorPreReqRobot& preReqData) const { return true;}
   
   virtual Result InitInternal(Robot& robot) override;
 

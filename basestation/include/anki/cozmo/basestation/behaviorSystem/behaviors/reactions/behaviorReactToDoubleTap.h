@@ -22,7 +22,7 @@ namespace Cozmo {
 class BehaviorReactToDoubleTap : public IBehavior
 {
 private:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToDoubleTap(Robot& robot, const Json::Value& config);
   

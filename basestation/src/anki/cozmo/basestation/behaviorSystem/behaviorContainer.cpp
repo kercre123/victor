@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorContainer.h"
 
 // Behaviors:
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimOnNeedsChange.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
@@ -475,6 +476,11 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::ExpressNeeds:
     {
       newBehavior = IBehaviorPtr(new BehaviorExpressNeeds(robot, config));
+      break;
+    }
+    case BehaviorClass::PlayAnimOnNeedsChange:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorPlayAnimOnNeedsChange(robot, config));
       break;
     }
     

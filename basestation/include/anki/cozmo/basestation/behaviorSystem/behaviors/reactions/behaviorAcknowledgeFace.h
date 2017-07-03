@@ -48,7 +48,7 @@ public:
 
   
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorAcknowledgeFace(Robot& robot, const Json::Value& config);
 

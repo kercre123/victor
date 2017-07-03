@@ -28,7 +28,7 @@ public:
   static IActionRunner* CreateLookAfterPlaceAction(Robot& robot, bool doLookAtFaceAfter=true);
 
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPutDownBlock(Robot& robot, const Json::Value& config);
 

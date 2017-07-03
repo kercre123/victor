@@ -25,7 +25,7 @@ class IFrustrationListener;
 class BehaviorReactToFrustration : public IBehavior
 {
 private:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToFrustration(Robot& robot, const Json::Value& config);
 

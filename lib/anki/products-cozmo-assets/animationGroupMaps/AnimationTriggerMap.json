@@ -508,14 +508,25 @@
       "CladEvent": "FeedingIdleSearch_Severe",
       "AnimName": "ag_energy_idle_l2_searchforcube"
     },
+
     {
-      "CladEvent": "FeedingIdleToFullCube_Normal",
+      "CladEvent": "FeedingIdleWaitForFullCube_Normal",
       "AnimName": "ag_energy_idle_01"
     },
     {
-      "CladEvent": "FeedingIdleToFullCube_Severe",
+      "CladEvent": "FeedingIdleWaitForFullCube_Severe",
       "AnimName": "ag_energy_idlefeeding"
     },
+    {
+      "CladEvent": "FeedingIdleWaitForShake_Normal",
+      "AnimName": "ag_energy_idle_l1_searchforcube"
+    },
+    {
+      "CladEvent": "FeedingIdleWaitForShake_Severe",
+      "AnimName": "ag_energy_idle_02"
+    },
+
+
     {
       "CladEvent": "FeedingReactToFullCube_Normal",
       "AnimName": "ag_energy_cubetone"

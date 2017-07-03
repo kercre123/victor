@@ -22,12 +22,16 @@ namespace Cozmo {
 
 class BehaviorPreReqAnimSequence {
 public:
-  BehaviorPreReqAnimSequence(const std::vector<AnimationTrigger>& anims)
-  :_anims(anims){}
+  BehaviorPreReqAnimSequence(const Robot& robot,
+                             const std::vector<AnimationTrigger>& anims)
+  : _robot(robot)
+  , _anims(anims){}
   
   const std::vector<AnimationTrigger>& GetAnims() const { return _anims;}
+  const Robot& GetRobot() const { return _robot;}
   
 private:
+  const Robot& _robot;
   const std::vector<AnimationTrigger> _anims;
   
 };

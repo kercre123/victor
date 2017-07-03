@@ -116,6 +116,8 @@ private:
   void ClearSevereAnims(Robot& robot);
   
   bool HasSingleBehaviorStageStarted(IBehaviorPtr behavior);
+  
+  void SetupSevereAnims(Robot& robot);
 
 };
 

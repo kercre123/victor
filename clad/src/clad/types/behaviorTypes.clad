@@ -48,6 +48,7 @@ enum uint_8 BehaviorClass {
   PickUpCube,
   PlayAnimWithFace,
   PlayAnim,
+  PlayAnimOnNeedsChange,
   PlayArbitraryAnim,
   PopAWheelie,
   PounceOnMotion,

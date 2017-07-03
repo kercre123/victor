@@ -100,7 +100,7 @@ ReactionTriggerStrategyHiccup::~ReactionTriggerStrategyHiccup()
 
 void ReactionTriggerStrategyHiccup::SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior)
 {
-  BehaviorPreReqAnimSequence req(GetHiccupAnim());
+  BehaviorPreReqAnimSequence req(robot, GetHiccupAnim());
   behavior->IsRunnable(req);
 }
   
@@ -139,7 +139,7 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
     
     // Make sure that we only consider ourselves cured once the get out animation plays
     // Otherwise we could be cured but the player never saw the get out
-    BehaviorPreReqAnimSequence req(anim);
+    BehaviorPreReqAnimSequence req(robot, anim);
     if(behavior->IsRunnable(req))
     {
       _hiccupsCured = HiccupsCured::NotCured;
@@ -188,7 +188,7 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
         }
       }
       
-      BehaviorPreReqAnimSequence req(GetHiccupAnim());
+      BehaviorPreReqAnimSequence req(robot, GetHiccupAnim());
       const bool isRunnable = behavior->IsRunnable(req);
 
       if(!isRunnable)

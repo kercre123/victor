@@ -30,7 +30,7 @@ class BehaviorRollBlock : public IBehavior
 {
 protected:
   using base = IBehavior;
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorRollBlock(Robot& robot, const Json::Value& config);
 

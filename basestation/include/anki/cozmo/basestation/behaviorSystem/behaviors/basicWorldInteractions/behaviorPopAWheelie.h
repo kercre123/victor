@@ -29,7 +29,7 @@ namespace Anki {
     class BehaviorPopAWheelie : public IBehavior
     {
     protected:
-      // Enforce creation through BehaviorFactory
+      // Enforce creation through BehaviorContainer
       friend class BehaviorContainer;
       BehaviorPopAWheelie(Robot& robot, const Json::Value& config);
       

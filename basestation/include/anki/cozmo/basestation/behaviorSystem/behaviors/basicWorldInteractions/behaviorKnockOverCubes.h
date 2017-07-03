@@ -29,7 +29,7 @@ class Robot;
 class BehaviorKnockOverCubes : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorKnockOverCubes(Robot& robot, const Json::Value& config);
 

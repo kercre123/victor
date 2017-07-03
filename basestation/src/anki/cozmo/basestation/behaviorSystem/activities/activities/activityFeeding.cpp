@@ -13,7 +13,10 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/activityFeeding.h"
 
 #include "anki/common/basestation/utils/timer.h"
+
 #include "anki/cozmo/basestation/activeObject.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingEat.h"
@@ -26,7 +29,6 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/publicStateBroadcaster.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -195,16 +197,9 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
   _chooserStage = FeedingActivityStage::None;
   SmartDisableReactionsWithLock(robot, GetIDStr(), kFeedingActivityAffectedArray);
   
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  if(currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical)){
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::FeedingDrivingGetIn_Severe,
-      AnimationTrigger::FeedingDrivingLoop_Severe,
-      AnimationTrigger::FeedingDrivingGetOut_Severe});
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::FeedingIdleToFullCube_Severe);
-    robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
-            BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::SevereEnergy));
-    SmartDisableReactionsWithLock(robot, kSevereFeedingDisableLock, kSevereFeedingDisables);
-    _severeAnimsSet = true;
+  NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  if(currentSevereExpression == NeedId::Energy){
+    SetupSevereAnims(robot);
   }else{
     robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
             BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
@@ -256,7 +251,7 @@ void ActivityFeeding::OnSelectedInternal(Robot& robot)
                      {},
                      std::to_string(_DASFeedingSessionsPerAppRun).c_str());
 
-  
+  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const float needLevel = currNeedState.GetNeedLevel(NeedId::Energy);
   Anki::Util::sEvent("meta.feeding_energy_at_start",
                      {},
@@ -372,8 +367,8 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
          !_behaviorPlayAnimation->IsRunning()){
         UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
         AnimationTrigger bestAnimation = isNeedSevere ?
-                            AnimationTrigger::FeedingIdleToFullCube_Severe :
-                            AnimationTrigger::FeedingIdleToFullCube_Normal;
+                            AnimationTrigger::FeedingIdleWaitForFullCube_Severe :
+                            AnimationTrigger::FeedingIdleWaitForFullCube_Normal;
         UpdateAnimationToPlay(bestAnimation);
       }
       bestBehavior = _behaviorPlayAnimation;
@@ -397,7 +392,7 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
         UPDATE_STAGE(FeedingActivityStage::SearchingForCube);
         AnimationTrigger bestAnimation = isNeedSevere ?
                             AnimationTrigger::FeedingReactToFullCube_Severe :
-                            AnimationTrigger::FeedingIdleToFullCube_Normal;
+                            AnimationTrigger::FeedingReactToFullCube_Normal;
         UpdateAnimationToPlay(bestAnimation);
       }
       bestBehavior = _behaviorPlayAnimation;
@@ -456,6 +451,12 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ActivityFeeding::Update(Robot& robot)
 {
+  NeedId currentSevereExpression = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  if(!_severeAnimsSet &&
+     (currentSevereExpression == NeedId::Energy)){
+    SetupSevereAnims(robot);
+  }
+  
   NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   const bool isNeedSevere = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical);
   
@@ -592,10 +593,7 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
     anyCubesCharging = anyCubesCharging || entry.second->IsCubeCharging();
   }
   
-  AnimationTrigger bestAnimation = isNeedSevere ?
-                      AnimationTrigger::FeedingIdleToFullCube_Severe :
-                      AnimationTrigger::FeedingIdleToFullCube_Normal;
-  UpdateAnimationToPlay(bestAnimation);
+  AnimationTrigger bestAnimation = AnimationTrigger::Count;
   
   if(_severeAnimsSet && !isNeedSevere){
     ClearSevereAnims(robot);
@@ -610,11 +608,19 @@ IBehaviorPtr ActivityFeeding::TransitionToBestActivityStage(Robot& robot)
     return _searchForCubeBehavior;
   }else if(anyCubesCharging){
     UPDATE_STAGE(FeedingActivityStage::WaitingForFullyCharged);
-    return _behaviorPlayAnimation;
+    bestAnimation = isNeedSevere ?
+                        AnimationTrigger::FeedingIdleWaitForFullCube_Severe :
+                        AnimationTrigger::FeedingIdleWaitForFullCube_Normal;
+    
   }else{
     UPDATE_STAGE(FeedingActivityStage::WaitingForShake);
-    return _behaviorPlayAnimation;
+    bestAnimation = isNeedSevere ?
+                        AnimationTrigger::FeedingIdleWaitForShake_Severe  :
+                        AnimationTrigger::FeedingIdleWaitForShake_Normal;
   }
+  
+  UpdateAnimationToPlay(bestAnimation);
+  return _behaviorPlayAnimation;
 }
 
 
@@ -698,18 +704,6 @@ void ActivityFeeding::HandleObjectConnectionStateChange(Robot& robot, const Obje
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityFeeding::ClearSevereAnims(Robot& robot)
-{
-  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  robot.GetAnimationStreamer().PopIdleAnimation();
-  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
-          BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
-  SmartRemoveDisableReactionsLock(robot, kSevereFeedingDisableLock);
-  _severeAnimsSet = false;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityFeeding::HasSingleBehaviorStageStarted(IBehaviorPtr behavior)
 {
   if(behavior != nullptr){
@@ -718,7 +712,26 @@ bool ActivityFeeding::HasSingleBehaviorStageStarted(IBehaviorPtr behavior)
   return false;
 }
 
-  
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::SetupSevereAnims(Robot& robot)
+{
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+       BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::SevereEnergy));
+  SmartDisableReactionsWithLock(robot, kSevereFeedingDisableLock, kSevereFeedingDisables);
+  _severeAnimsSet = true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityFeeding::ClearSevereAnims(Robot& robot)
+{
+  robot.GetPublicStateBroadcaster().UpdateBroadcastBehaviorStage(
+       BehaviorStageTag::Feeding, static_cast<int>(FeedingStage::MildEnergy));
+  SmartRemoveDisableReactionsLock(robot, kSevereFeedingDisableLock);
+  _severeAnimsSet = false;
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

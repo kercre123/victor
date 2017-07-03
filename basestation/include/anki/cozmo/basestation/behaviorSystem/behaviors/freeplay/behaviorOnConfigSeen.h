@@ -27,7 +27,7 @@ enum class ConfigurationType;
 class BehaviorOnConfigSeen: public IBehavior
 {
 private:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorOnConfigSeen(Robot& robot, const Json::Value& config);
   

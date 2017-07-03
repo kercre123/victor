@@ -21,7 +21,7 @@ class BehaviorDance : public BehaviorPlayAnimSequence
 {
 protected:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorDance(Robot& robot, const Json::Value& config);
   

@@ -21,9 +21,9 @@ namespace Cozmo {
 class BehaviorPlayAnimSequenceWithFace : public BehaviorPlayAnimSequence
 {
 using BaseClass = BehaviorPlayAnimSequence;
-private:
+protected:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPlayAnimSequenceWithFace(Robot& robot, const Json::Value& config);
 

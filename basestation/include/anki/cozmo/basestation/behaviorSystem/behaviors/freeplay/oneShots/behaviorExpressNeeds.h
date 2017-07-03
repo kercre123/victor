@@ -33,7 +33,7 @@ class Robot;
 class BehaviorExpressNeeds : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorExpressNeeds(Robot& robot, const Json::Value& config);
 

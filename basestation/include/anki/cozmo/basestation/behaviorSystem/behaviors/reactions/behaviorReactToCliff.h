@@ -26,7 +26,7 @@ class BehaviorReactToCliff : public IBehavior
 private:
   using super = IBehavior;
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToCliff(Robot& robot, const Json::Value& config);
   

@@ -34,7 +34,7 @@ public:
   virtual bool CarryingObjectHandledInternally() const override { return false; }
 
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToPet(Robot& robot, const Json::Value& config);
   

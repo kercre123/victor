@@ -54,7 +54,7 @@ protected:
   
   void LoadConfig(const Json::Value& config);
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config);
 

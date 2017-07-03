@@ -108,7 +108,8 @@
       "behaviors" : [
                       "DriveOffCharger",
                       "KnockOverCubes",
-                      "PyramidPutDownBlock"
+                      "PyramidPutDownBlock",
+                      "Needs_SevereLowEnergyGetIn"
                     ]
     }
   },

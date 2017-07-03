@@ -21,7 +21,7 @@ namespace Cozmo {
 class BehaviorReactToStackOfCubes : public IBehavior
 {
 private:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToStackOfCubes(Robot& robot, const Json::Value& config);
 

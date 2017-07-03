@@ -24,7 +24,7 @@ namespace Cozmo {
 class BehaviorTurnToFace : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorTurnToFace(Robot& robot, const Json::Value& config);
   

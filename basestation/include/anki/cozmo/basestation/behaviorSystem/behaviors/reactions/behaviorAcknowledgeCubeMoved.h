@@ -28,7 +28,7 @@ class BehaviorAcknowledgeCubeMoved : public IBehavior
 {
   
 private:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorAcknowledgeCubeMoved(Robot& robot, const Json::Value& config);
 

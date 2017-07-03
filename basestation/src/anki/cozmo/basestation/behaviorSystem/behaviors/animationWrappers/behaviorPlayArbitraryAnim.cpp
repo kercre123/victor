@@ -40,10 +40,9 @@ BehaviorPlayArbitraryAnim::~BehaviorPlayArbitraryAnim()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
+bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  BehaviorPreReqNone noPreReqs;
-  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(noPreReqs);
+  const bool retVal = _numLoops >= 0 && BaseClass::IsRunnableInternal(preReqData);
   return retVal;
 }
   

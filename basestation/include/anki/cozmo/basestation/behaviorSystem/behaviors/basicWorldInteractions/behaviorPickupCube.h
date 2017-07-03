@@ -39,7 +39,7 @@ class BehaviorPickUpCube : public IBehavior
 {
 using super = IBehavior;
 protected:  
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPickUpCube(Robot& robot, const Json::Value& config);
 

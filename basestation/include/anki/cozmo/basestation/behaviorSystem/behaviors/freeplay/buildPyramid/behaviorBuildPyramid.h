@@ -29,7 +29,7 @@ enum class AnimationTrigger;
 class BehaviorBuildPyramid : public BehaviorBuildPyramidBase
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorBuildPyramid(Robot& robot, const Json::Value& config);
   

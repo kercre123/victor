@@ -23,7 +23,7 @@ class BehaviorFistBump : public IBehavior
 {
 private:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorFistBump(Robot& robot, const Json::Value& config);
   

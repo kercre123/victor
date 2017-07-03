@@ -29,7 +29,7 @@ namespace Cozmo {
 class BehaviorFeedingEat : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
   BehaviorFeedingEat(Robot& robot, const Json::Value& config);
 

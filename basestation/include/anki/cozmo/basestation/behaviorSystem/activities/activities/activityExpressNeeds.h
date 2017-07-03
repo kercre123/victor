@@ -36,13 +36,6 @@ private:
 
   struct Params {
     Params(const Json::Value& config);
-    
-    // If this activity expresses a severe needs state, this will be set to non-Count and flagged in the
-    // whiteboard when this activity starts or stops
-    NeedId _severeNeedExpression = NeedId::Count;
-
-    // whether or not to clear the expressed need when this activity exits.
-    bool _clearSevereNeedExpressionOnExit = false;
 
     bool _shouldDisableReactions = false;
   };

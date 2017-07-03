@@ -27,7 +27,7 @@ class Robot;
 class BehaviorCantHandleTallStack : public IBehavior
 {
 protected:
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorCantHandleTallStack(Robot& robot, const Json::Value& config);
 

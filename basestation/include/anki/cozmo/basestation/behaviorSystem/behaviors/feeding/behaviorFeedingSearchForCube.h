@@ -23,7 +23,7 @@ class BehaviorFeedingSearchForCube : public IBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorFeedingSearchForCube(Robot& robot, const Json::Value& config);
   

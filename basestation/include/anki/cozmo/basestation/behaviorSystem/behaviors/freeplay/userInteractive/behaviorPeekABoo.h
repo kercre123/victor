@@ -43,7 +43,7 @@ protected:
     DoingFinalReaction
   };
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorPeekABoo(Robot& robot, const Json::Value& config);
 

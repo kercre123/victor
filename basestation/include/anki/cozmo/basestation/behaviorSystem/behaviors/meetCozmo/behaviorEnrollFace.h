@@ -44,7 +44,7 @@ class BehaviorEnrollFace : public IBehavior
 {
 protected:
     
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorEnrollFace(Robot& robot, const Json::Value& config);
     

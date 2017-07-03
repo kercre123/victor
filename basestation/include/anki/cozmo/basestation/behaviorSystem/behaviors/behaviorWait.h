@@ -22,7 +22,7 @@ class BehaviorWait: public IBehavior
 {
 private:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorWait(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
   {

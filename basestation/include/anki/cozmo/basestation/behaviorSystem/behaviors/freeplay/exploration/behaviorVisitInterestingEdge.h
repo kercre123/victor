@@ -31,7 +31,7 @@ private:
   
   using BaseClass = IBehavior;
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorVisitInterestingEdge(Robot& robot, const Json::Value& config);
   

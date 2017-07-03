@@ -2,18 +2,8 @@
   "activityID": "NeedsSevereLowEnergy",
   "activityType": "NeedsExpression",
 
-  "driveStartAnimTrigger": "NeedsSevereLowEnergyDrivingStart",
-  "driveLoopAnimTrigger": "NeedsSevereLowEnergyDrivingLoop",
-  "driveEndAnimTrigger": "NeedsSevereLowEnergyDrivingEnd",
-
-  "idleAnimTrigger": "NeedsSevereLowEnergyIdle",
-
   // disable reactions that don't make sense in a severe needs state
   "disableReactionTriggers": true,
-
-  // Set the whiteboard flag that we are expressing the need, and clear it when we leave this activity
-  "severeNeedExpression": "Energy",
-  "clearSevereNeedExpressionOnExit": true,
 
   "activityStrategy":
   {

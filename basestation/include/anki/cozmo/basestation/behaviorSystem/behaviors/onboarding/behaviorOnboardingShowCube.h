@@ -31,7 +31,7 @@ class BehaviorOnboardingShowCube : public IBehavior
   
 protected:
 
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;  
   BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config);
 

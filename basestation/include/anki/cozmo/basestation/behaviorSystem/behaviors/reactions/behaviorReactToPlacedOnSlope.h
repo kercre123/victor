@@ -22,7 +22,7 @@ class BehaviorReactToPlacedOnSlope : public IBehavior
 {
 private:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorReactToPlacedOnSlope(Robot& robot, const Json::Value& config);
   

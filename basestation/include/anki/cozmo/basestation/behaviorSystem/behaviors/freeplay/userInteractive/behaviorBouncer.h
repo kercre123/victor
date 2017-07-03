@@ -28,7 +28,7 @@ public:
   
 protected:
   
-  // Enforce creation through BehaviorFactory
+  // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
   BehaviorBouncer(Robot& robot, const Json::Value& config);
   

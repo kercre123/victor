@@ -61,12 +61,6 @@ ActivityExpressNeeds::ActivityExpressNeeds(Robot& robot, const Json::Value& conf
 
 ActivityExpressNeeds::Params::Params(const Json::Value& config)
 {
-  _severeNeedExpression = NeedIdFromString(
-    JsonTools::ParseString(config, "severeNeedExpression", "ActivityExpressNeeds.ConfigError.SevereNeedExpressed"));
-
-  _clearSevereNeedExpressionOnExit = JsonTools::ParseBool(config,
-                                                        "clearSevereNeedExpressionOnExit",
-                                                        "ActivityExpressNeeds.ConfigError.clearStateOnExit");
   _shouldDisableReactions = JsonTools::ParseBool(config,
                                                  "disableReactionTriggers",
                                                  "ActivityExpressNeeds.ConfigError.disableReactionTrigger");
@@ -74,11 +68,6 @@ ActivityExpressNeeds::Params::Params(const Json::Value& config)
 
 void ActivityExpressNeeds::OnSelectedInternal(Robot& robot)
 {
-    // set severe needs expression
-  if( _params._severeNeedExpression != NeedId::Count ) {
-    robot.GetAIComponent().GetWhiteboard().SetSevereNeedExpression( _params._severeNeedExpression );
-  }
-
   if( _params._shouldDisableReactions ) {
     robot.GetBehaviorManager().DisableReactionsWithLock(GetIDStr(), kTriggersToDisable);
   }
@@ -88,10 +77,6 @@ void ActivityExpressNeeds::OnDeselectedInternal(Robot& robot)
 {
   if( _params._shouldDisableReactions ) {
     robot.GetBehaviorManager().RemoveDisableReactionsLock(GetIDStr());
-  }
-
-  if( _params._severeNeedExpression != NeedId::Count && _params._clearSevereNeedExpressionOnExit ) {
-    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
   }
 }
 

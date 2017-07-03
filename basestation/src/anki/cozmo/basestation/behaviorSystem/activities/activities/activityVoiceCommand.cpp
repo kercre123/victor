@@ -622,7 +622,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, IBehaviorPt
     howAreYouDoingAnims = {AnimationTrigger::VC_HowAreYouDoing_AllGood};
   }
   
-  BehaviorPreReqAnimSequence preReq(howAreYouDoingAnims);
+  BehaviorPreReqAnimSequence preReq(robot, howAreYouDoingAnims);
   if(howAreYouDoingBehavior->IsRunnable(preReq))
   {
     outputBehavior = howAreYouDoingBehavior;
