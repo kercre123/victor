@@ -28,10 +28,10 @@
     "translation": "ASK COZMO FOR A TRICK"
   },
   "sparksView.listAbilitiesCard.title": {
-    "translation": "LIST ABILITIES"
+    "translation": "VIEW ALL ABILITIES"
   },
   "sparksView.listAbilitiesCard.description": {
-    "translation": "List abilities description FPO"
+    "translation": "Ask Cozmo to perform a specific game or trick"
   },
   "sparksView.sparkCount.label": {
     "translation": "Sparks Available"
