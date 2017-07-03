@@ -44,6 +44,8 @@ namespace DataPersistence {
 
     public Dictionary<OnboardingManager.OnboardingPhases, int> OnboardingStages;
 
+    public Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState VoiceCommandEnabledState;
+
     public static int kSaveVersionCurrent = 1;
     // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
     public int SaveVersion = kSaveVersionCurrent;
@@ -70,6 +72,7 @@ namespace DataPersistence {
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       PreviousTags = new List<string>();
+      VoiceCommandEnabledState = Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState.Unknown;
     }
   }
 }

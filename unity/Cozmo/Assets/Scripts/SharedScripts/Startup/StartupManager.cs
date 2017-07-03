@@ -271,6 +271,9 @@ public class StartupManager : MonoBehaviour {
     // Load main scene
     LoadMainScene(assetBundleManager);
 
+    // Now that the scene is loaded, init voice commands
+    Anki.Cozmo.VoiceCommand.VoiceCommandManager.Instance.Init();
+
     int startSeed = System.Environment.TickCount;
     UnityEngine.Random.InitState(startSeed);
     DAS.Info("Random.StartSeed", startSeed.ToString());

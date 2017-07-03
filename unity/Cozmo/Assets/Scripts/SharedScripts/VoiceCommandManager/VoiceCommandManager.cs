@@ -9,6 +9,13 @@ using Anki.Cozmo.Audio.VolumeParameters;
 using System.Collections.Generic;
 
 namespace Anki.Cozmo.VoiceCommand {
+
+  public enum VoiceCommandEnabledState {
+    Unknown,
+    Enabled,
+    Disabled
+  };
+
   public class VoiceCommandManager {
 
     public delegate void UserResponseToPromptHandler(bool positiveResponse);
@@ -59,7 +66,13 @@ namespace Anki.Cozmo.VoiceCommand {
 
       RespondingToCommandStartCallback += HandleRespondCommandStart;
       RespondingToCommandEndCallback += HandleRespondCommandEnd;
+    }
 
+    public void Init() {
+      VoiceCommandEnabledState enabledState = DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState;
+      if (enabledState == VoiceCommandEnabledState.Enabled) {
+        SetVoiceCommandEnabled(true);
+      }
     }
 
     private void HandleVoiceCommandEvent(Anki.Cozmo.VoiceCommand.VoiceCommandEvent voiceCommandEvent) {
@@ -135,6 +148,17 @@ namespace Anki.Cozmo.VoiceCommand {
         GameAudioClient.SetVolumeValue(VolumeType.Music, _VolumeLevelToRestore);
         _VolumeLevelToRestore = -1.0f;
       }
+    }
+
+    public static void SetVoiceCommandEnabled(bool enabledStatus) {
+      SendVoiceCommandEvent<ChangeEnabledStatus>(Singleton<ChangeEnabledStatus>.Instance.Initialize(enabledStatus));
+
+      if (enabledStatus) {
+        DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState = VoiceCommandEnabledState.Enabled;
+      } else {
+        DataPersistenceManager.Instance.Data.DefaultProfile.VoiceCommandEnabledState = VoiceCommandEnabledState.Disabled;
+      }
+      DataPersistenceManager.Instance.Save();
     }
   }
 }
