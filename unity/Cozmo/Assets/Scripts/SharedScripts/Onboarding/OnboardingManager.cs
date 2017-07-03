@@ -262,7 +262,8 @@ public class OnboardingManager : MonoBehaviour {
       StartPhase(OnboardingPhases.MeetCozmo);
     }
 
-    if (!IsOnboardingRequired(OnboardingPhases.MeetCozmo) && IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
+    if (!IsOnboardingRequired(OnboardingPhases.InitialSetup) && !IsOnboardingRequired(OnboardingPhases.MeetCozmo) &&
+        IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
       StartPhase(OnboardingPhases.NurtureIntro);
     }
 

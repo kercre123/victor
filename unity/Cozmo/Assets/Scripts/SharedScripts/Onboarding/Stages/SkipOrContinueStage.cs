@@ -93,6 +93,7 @@ namespace Onboarding {
     private void HandleWakeAnimationComplete(bool success) {
       // Complete and shut down onboarding current phase.
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.InitialSetup);
+      HubWorldBase.Instance.StartFreeplay();
     }
 
     protected override void HandleLoopedAnimationComplete(bool success = true) {

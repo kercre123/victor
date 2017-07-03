@@ -166,7 +166,8 @@ namespace FaceEnrollment {
     }
 
     public void CompleteMeetCozmoOnboarding() {
-      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.MeetCozmo)) {
+      if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.InitialSetup) &&
+          OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.MeetCozmo)) {
         OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.MeetCozmo);
       }
       OnboardingManager.Instance.OnOnboardingPhaseCompleted -= HandleOnboardingPhaseComplete;

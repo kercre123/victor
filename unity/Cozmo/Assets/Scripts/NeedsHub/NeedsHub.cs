@@ -153,7 +153,7 @@ namespace Cozmo.Hub {
 
         var robot = RobotEngineManager.Instance.CurrentRobot;
 
-        if (robot != null && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
+        if (robot != null && OnboardingManager.Instance.AllowFreeplayOnHubEnter()) {
           // Display Cozmo's default face
           robot.DisplayProceduralFace(
             0,
