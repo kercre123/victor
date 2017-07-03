@@ -42,7 +42,6 @@ enum class ChargeState{
 };
 
   
-const char * kConsoleVarChan = "Activity.Feeding";
 CONSOLE_VAR(f32, kTimeBetweenShakes_s,            kConsoleVarChan, 0.1f);
 CONSOLE_VAR(f32, kTimeBeforeStartLosingCharge_s,  kConsoleVarChan, 1.0f);
 CONSOLE_VAR(f32, kTimeBetweenLoosingCharge_s,     kConsoleVarChan, 0.1f);
