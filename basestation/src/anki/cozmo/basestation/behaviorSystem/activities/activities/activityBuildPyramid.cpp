@@ -1170,10 +1170,15 @@ void ActivityBuildPyramid::SetCubeLights(Robot& robot)
        entry.second.GetDesiredLightModifier() != kEmptyObjectLights)
     {
       const bool shouldSetForOnSide = IsPyramidHardSpark(robot) ||
-      !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
+             !IsAnOnSideCubeLight(entry.second.GetDesiredLightTrigger());
+      const bool areLightsPlayingAlready = entry.second.GetCurrentLightTrigger() != CubeAnimationTrigger::Count;
+      const bool shouldLightsTransition = entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count;
       
-      if(entry.second.GetDesiredLightTrigger() != CubeAnimationTrigger::Count &&
-         shouldSetForOnSide)
+      
+      if(!areLightsPlayingAlready && shouldSetForOnSide){
+        _robot.GetCubeLightComponent().PlayLightAnim(entry.second.GetObjectID(), entry.second.GetDesiredLightTrigger());
+      }
+      else if(shouldLightsTransition && shouldSetForOnSide)
       {
         _robot.GetCubeLightComponent().StopAndPlayLightAnim(entry.second.GetObjectID(),
                                                             entry.second.GetCurrentLightTrigger(),
