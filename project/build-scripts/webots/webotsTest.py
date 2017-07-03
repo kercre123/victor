@@ -466,19 +466,23 @@ def get_tests(config_file_path):
                       test_controller=test_controller))
       assert config.has_option(test_controller, 'world_file')
 
-    tests[test_controller] = json.JSONDecoder().decode(config.get(test_controller, 'world_file'))
+    tests[test_controller] = {}
+    tests[test_controller]['world_file'] = json.JSONDecoder().decode(config.get(test_controller, 'world_file'))
+    if config.has_option(test_controller, 'timeout'):
+      tests[test_controller]['timeout'] = config.getfloat(test_controller, 'timeout')
 
   return tests
 
 
-def run_tests(tests, log_folder, show_graphics, cozmo_version, timeout, forward_webots_log_level, num_retries = 0,
+def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, forward_webots_log_level, num_retries = 0,
               fail_on_error=False):
   """Run webots tests and store the logs.
 
   Args:
     tests (dict) --
-      dictionary of tests to run and webots worlds to run them in. See get_tests() return value.
-      test controller (key) -> list of worlds to run test controller in (value, list of strings)
+      dictionary of tests to run and parameters for running them. See get_tests() return value.
+      test controller (key) -> 'world_file' (key) -> list of worlds to run test controller in
+                               'timeout' (key)    -> timeout to use for the test (default is used if this key doesn't exist)
 
     log_folder (string) --
       Path of directory to keep the webots logs
@@ -491,8 +495,9 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, timeout, forward_
       Shows the webots gui and runs simulation at regular speed if true; hides gui and runs in fast
       mode if false
 
-    timeout (int) --
-      Max time to allow each test case to run before force quitting it and declaring test case as failure.
+    default_timeout (int) --
+      Default max time to allow each test case to run before force quitting it and declaring
+      test case as failure (this is overridden if a timeout is specified in the config file)
 
     forward_webots_log_level (ForwardWebotsLogLevel enum) --
       How much of the webots logs to forward to this script's stdout.
@@ -521,7 +526,9 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, timeout, forward_
   cur_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S')
   GENERATED_FILE_PATH = get_subpath("simulator/worlds", GENERATED_WORLD_FILE_NAME)
 
-  for test_controller, worlds in tests.items():
+  for test_controller, params in tests.items():
+    worlds = params['world_file']
+    timeout = params.get('timeout', default_timeout)
     test_statuses[test_controller] = {}
     # Loop through all the webots worlds this test controller should run in.
     for world_file in worlds:
@@ -787,11 +794,12 @@ def main(args):
                       help="""Control how much of the webots logs to forward to the console stdout here.""")
 
   parser.add_argument('--timeout',
-                      dest='timeout',
+                      dest='default_timeout',
                       action='store',
                       default=180,
                       type=int,
-                      help="""Time limit for each webots test before marking it as failure and killing the webots instance.""")
+                      help="""Default time limit for each webots test before marking it as failure and killing the webots instance.
+                      This can be overridden in the configuration file for each individual test.""")
 
   parser.add_argument('--cozmoVersion',
                       dest='cozmo_version',
@@ -857,7 +865,7 @@ def main(args):
     test_results, total_error_count, total_warning_count = run_tests(tests, build_folder,
                                                                      options.show_graphics,
                                                                      options.cozmo_version,
-                                                                     options.timeout,
+                                                                     options.default_timeout,
                                                                      options.log_level,
                                                                      options.num_retries,
                                                                      options.fail_on_error)
