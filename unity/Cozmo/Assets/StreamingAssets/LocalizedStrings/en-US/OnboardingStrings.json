@@ -139,10 +139,10 @@
     "translation": "Watch Cozmo Roll a Cube..."
   },
   "onboarding.RepairIntro": {
-    "translation": "<b>Cozmo will let you know what he needs.</b>\n\nRight now, the red light on his back means he wants tuned up."
+    "translation": "<b>Cozmo needs a tune-up.</b>\n\nWhen the red bar is low, it means Cozmo needs to be tuned up. Tap the TUNE UP button."
   },
   "onboarding.FeedIntro": {
-    "translation": "<b>Cozmo needs to be fed.</b>\n\nThe blue light on his back means his Feed Need is low."
+    "translation": "<b>Cozmo needs to be fed.</b>\n\nWhen the blue bar is low, it means Cozmo is hungry. Tap the FEED button."
   },
   "onboarding.DoATrickDesc": {
     "translation": "With this trick, watch Cozmo discover a cube and roll it.\n\nMake sure there’s a cube he can see."
