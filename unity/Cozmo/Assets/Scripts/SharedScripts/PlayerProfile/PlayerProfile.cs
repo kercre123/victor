@@ -72,7 +72,7 @@ namespace DataPersistence {
       CodeLabProjects = new List<DataPersistence.CodeLabProject>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
       PreviousTags = new List<string>();
-      VoiceCommandEnabledState = Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState.Unknown;
+      VoiceCommandEnabledState = Anki.Cozmo.VoiceCommand.VoiceCommandEnabledState.Enabled;
     }
   }
 }
