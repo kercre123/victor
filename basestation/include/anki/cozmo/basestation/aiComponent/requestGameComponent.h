@@ -63,6 +63,7 @@ private:
   std::vector<Signal::SmartHandle> _eventHandles;
   
   std::map<UnlockId, GameRequestData> _gameRequests;
+  std::map<UnlockId, GameRequestData> _defaultGameRequests;
   // track the last game that was requested so that we don't request the same
   // game over and over again
   UnlockId _lastGameRequested;

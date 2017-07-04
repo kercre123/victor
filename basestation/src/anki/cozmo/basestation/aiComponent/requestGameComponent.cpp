@@ -54,11 +54,13 @@ RequestGameComponent::RequestGameComponent(Robot& robot)
           std::make_pair(unlockID,
               GameRequestData(unlockID, weight)));
   }
+  _defaultGameRequests = _gameRequests;
   
   // register to receive notification from the game about when game requests are allowed
   if ( robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _eventHandles);
     helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::CanCozmoRequestGame>();
+    helper.SubscribeGameToEngine<ExternalInterface::MessageGameToEngineTag::SetOverrideGameRequestWeights>();
   }
 }
 
@@ -140,6 +142,29 @@ void RequestGameComponent::HandleMessage(const ExternalInterface::CanCozmoReques
   // set whether Cozmo is currently allowed to request games or not
   _canRequestGame = msg.canRequest;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RequestGameComponent::HandleMessage(const ExternalInterface::SetOverrideGameRequestWeights& msg)
+{
+  if( msg.useDefaults )
+  {
+    _gameRequests = _defaultGameRequests;
+  }
+  else
+  {
+    DEV_ASSERT(msg.unlockIDs.size() == msg.weights.size(), "RequestGameComponent.HandleMessage.SetOverrideGameRequestWeights");
+    
+    _gameRequests.clear();
+    auto lenRequests = msg.unlockIDs.size();
+    for( int i = 0; i < lenRequests; ++i )
+    {
+      _gameRequests.insert(std::make_pair(msg.unlockIDs[i],
+                          GameRequestData(msg.unlockIDs[i],msg.weights[i])));
+    }
+  }
+}
+
 
 
 } // namespace Cozmo

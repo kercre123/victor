@@ -22,6 +22,7 @@ public class OnboardingManager : MonoBehaviour {
     PlayIntro,
     RewardBox,
     DiscoverIntro,
+    GameRequests,
     VoiceCommands,
     // Start OLD
     Home,
@@ -78,6 +79,9 @@ public class OnboardingManager : MonoBehaviour {
     else {
       Instance = this;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnected);
+      if (IsOnboardingRequired(OnboardingPhases.GameRequests)) {
+        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
+      }
 #if ENABLE_DEBUG_PANEL
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Complete All Onboarding", "Onboarding", DebugCompleteAllOnboarding);
@@ -151,6 +155,16 @@ public class OnboardingManager : MonoBehaviour {
   public void InitInitalOnboarding(NeedsHubView needsHubView) {
     _NeedsHubView = needsHubView;
     _OnboardingTransform = _NeedsHubView.transform.parent.transform;
+
+    if (IsOnboardingRequired(OnboardingPhases.GameRequests)) {
+      // Only request quicktap if nothing has been requested before.
+      UnlockId[] firstRequest = { UnlockId.QuickTapGame };
+      int[] firstWeight = { 100 };
+      RobotEngineManager.Instance.Message.SetOverrideGameRequestWeights =
+                Singleton<Anki.Cozmo.ExternalInterface.SetOverrideGameRequestWeights>.Instance.Initialize(
+                            false, firstRequest, firstWeight);
+      RobotEngineManager.Instance.SendMessage();
+    }
 
     if (IsOnboardingRequired(OnboardingPhases.InitialSetup)) {
       StartPhase(OnboardingPhases.InitialSetup);
@@ -407,6 +421,18 @@ public class OnboardingManager : MonoBehaviour {
       _CurrDASPhaseID = nextDASPhaseID;
     }
     DataPersistenceManager.Instance.Save();
+  }
+
+  private void HandleAskForMinigame(Anki.Cozmo.ExternalInterface.RequestGameStart messageObject) {
+    // First time they see this, thats all.
+    if (IsOnboardingRequired(OnboardingPhases.GameRequests)) {
+      CompletePhase(OnboardingPhases.GameRequests);
+      // reset back to using the default weights for next request
+      RobotEngineManager.Instance.Message.SetOverrideGameRequestWeights =
+          Singleton<Anki.Cozmo.ExternalInterface.SetOverrideGameRequestWeights>.Instance.Initialize(true, null, null);
+      RobotEngineManager.Instance.SendMessage();
+    }
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
   }
 
   private void HandleRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {

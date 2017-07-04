@@ -35,6 +35,11 @@ namespace Onboarding {
     }
 
     public int GetMaxStageInPhase(OnboardingManager.OnboardingPhases phase) {
+      // UI-less phases, binary for completed or not.
+      if (phase == OnboardingManager.OnboardingPhases.GameRequests) {
+        return 1;
+      }
+      // Old phases, no need to know exact length anymore
       if ((int)phase >= _NurtureStagesPrefabs.Count) {
         return 0;
       }
