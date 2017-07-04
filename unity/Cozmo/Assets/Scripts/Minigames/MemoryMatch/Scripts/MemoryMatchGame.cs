@@ -438,6 +438,12 @@ namespace MemoryMatch {
         _BannerAnimationDurationSeconds);
     }
 
+    public void ShowBanner(string bannerKey, Color bannerColor) {
+      string bannerText = Localization.Get(bannerKey);
+      SharedMinigameView.PlayBannerAnimation(bannerText, bannerColor, null,
+        _BannerAnimationDurationSeconds);
+    }
+
     protected override void SendCustomEndGameDasEvents() {
       DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
     }

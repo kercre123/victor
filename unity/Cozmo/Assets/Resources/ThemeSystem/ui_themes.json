@@ -11435,7 +11435,7 @@
                                 "b": 1.0,
                                 "a": 1.0
                             },
-                            "SkinFontColor": false,
+                            "SkinFontColor": true,
                             "FontColor": {
                                 "r": 1.0,
                                 "g": 1.0,
@@ -11448,7 +11448,7 @@
                             "SkinFontStyle": true,
                             "FontStyle": 0,
                             "SkinTextAlignment": true,
-                            "TextAlignment": 516,
+                            "TextAlignment": 514,
                             "SkinTextOverflow": true,
                             "TextOverflow": 3,
                             "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Black SDF.asset",
@@ -11489,8 +11489,8 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 140.0,
-                            "AutoSizingMax": 140.0,
+                            "AutoSizingMin": 130.0,
+                            "AutoSizingMax": 130.0,
                             "RectTF": {
                                 "AnchoredPosition": {
                                     "x": 0.0,
@@ -12947,21 +12947,21 @@
                             },
                             "SkinFontColor": true,
                             "FontColor": {
-                                "r": 0.11372549086809159,
-                                "g": 0.6666666865348816,
-                                "b": 0.8196078538894653,
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
                                 "a": 1.0
                             },
                             "SkinImage": false,
                             "ImageResourceKey": "",
                             "SkinFont": true,
                             "SkinFontStyle": true,
-                            "FontStyle": 16,
+                            "FontStyle": 0,
                             "SkinTextAlignment": true,
                             "TextAlignment": 514,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Black SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
                             "SkinFontSize": true,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -14445,7 +14445,7 @@
                                 }
                             }
                         },
-                        {                      
+                        {
                             "Id": "Announcement_Banner",
                             "Type": 1,
                             "SkinImageColor": true,
@@ -14463,7 +14463,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/MinigameViewSprites/minigame_view_sprites-UHD/Packed/ui_announcement_banner_blue.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/MinigameViewSprites/minigame_view_sprites-UHD/Packed/ui_announcement_banner_white.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,

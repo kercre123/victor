@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo.Audio;
 using Anki.Cozmo;
+using Cozmo.UI;
 
 namespace MemoryMatch {
   public class WaitForPlayerGuessMemoryMatchState : CanTimeoutState {
@@ -89,6 +90,8 @@ namespace MemoryMatch {
       AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerLoseHandSolo : AnimationTrigger.MemoryMatchPlayerLoseHand;
       _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerLoseAnimationDone);
       _SubState = SubState.WaitForTurnOverAnim;
+
+      _GameInstance.ShowBanner(LocalizationKeys.kMemoryMatchGameLabelIncorrect, UIColorPalette.WrongBannerColor);
     }
 
     private void PlayerWinHand() {
@@ -107,7 +110,7 @@ namespace MemoryMatch {
       _GameInstance.AddPoint(true);
       _SubState = SubState.WaitForTurnOverAnim;
 
-      _GameInstance.ShowBanner(LocalizationKeys.kMemoryMatchGameLabelCorrect);
+      _GameInstance.ShowBanner(LocalizationKeys.kMemoryMatchGameLabelCorrect, UIColorPalette.CorrectBannerColor);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {

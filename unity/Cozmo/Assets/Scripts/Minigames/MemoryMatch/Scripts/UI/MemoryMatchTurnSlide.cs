@@ -11,6 +11,9 @@ namespace MemoryMatch {
     private CozmoImage _CenterImage;
 
     [SerializeField]
+    private GameObject _CenterImageContainer;
+
+    [SerializeField]
     private CozmoText _StatusTextLabel;
 
     [SerializeField]
@@ -35,6 +38,7 @@ namespace MemoryMatch {
       _PlayerWidget.gameObject.SetActive(false);
       _CozmoWidget.gameObject.SetActive(false);
       _CenterImage.gameObject.SetActive(false);
+      _CenterImageContainer.SetActive(false);
       _StatusTextLabel.text = "";
     }
 
@@ -42,11 +46,13 @@ namespace MemoryMatch {
       _PlayerWidget.gameObject.SetActive(false);
       _CozmoWidget.gameObject.SetActive(false);
       if (portraitSprite) {
+        _CenterImageContainer.SetActive(true);
         _CenterImage.gameObject.SetActive(true);
         _CenterImage.sprite = portraitSprite;
       }
       else {
         _CenterImage.gameObject.SetActive(false);
+        _CenterImageContainer.SetActive(false);
       }
       ShowStatusText("");
     }
@@ -87,6 +93,7 @@ namespace MemoryMatch {
     }
 
     public void ShowCenterImage(bool enabled, bool showCorrect) {
+      _CenterImageContainer.SetActive(enabled);
       _CenterImage.gameObject.SetActive(enabled);
       _CenterImage.LinkedComponentId = showCorrect ? _CorrectSpriteId : _WrongSpriteId;
       _CenterImage.UpdateSkinnableElements();

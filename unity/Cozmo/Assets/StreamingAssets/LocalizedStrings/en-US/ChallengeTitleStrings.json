@@ -93,7 +93,10 @@
   "codeLab.description": {
     "translation": "Use your creativity to program Cozmo and explore fun things he can do!"
   },
-  "activityView.title":{
+  "activityView.title": {
     "translation": "Explore"
+  },
+  "memoryMatchGame.label.incorrect": {
+    "translation": "INCORRECT"
   }
 }

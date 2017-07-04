@@ -80,6 +80,7 @@ public static class LocalizationKeys {
   public const string kBehaviorNeeds_MildLowRepairRequest = "behavior.Needs_MildLowRepairRequest";
   public const string kBehaviorNeeds_SevereLowEnergyGetIn = "behavior.Needs_SevereLowEnergyGetIn";
   public const string kBehaviorNeeds_SevereLowEnergyRequest = "behavior.Needs_SevereLowEnergyRequest";
+  public const string kBehaviorNeeds_SevereLowPlayGetIn = "behavior.Needs_SevereLowPlayGetIn";
   public const string kBehaviorNeeds_SevereLowPlayBored = "behavior.Needs_SevereLowPlayBored";
   public const string kBehaviorNeeds_SevereLowPlayRequest = "behavior.Needs_SevereLowPlayRequest";
   public const string kBehaviorNeeds_SevereLowRepairGetIn = "behavior.Needs_SevereLowRepairGetIn";
@@ -130,6 +131,7 @@ public static class LocalizationKeys {
   public const string kCodeLabTitle = "codeLab.title";
   public const string kCodeLabDescription = "codeLab.description";
   public const string kActivityViewTitle = "activityView.title";
+  public const string kMemoryMatchGameLabelIncorrect = "memoryMatchGame.label.incorrect";
 
   #endregion
 
@@ -337,6 +339,7 @@ public static class LocalizationKeys {
   public const string kNeedsUnconnectedNeedToConnectTitle = "needs.unconnected.needToConnect.title";
   public const string kNeedsUnconnectedNeedToConnectDescription = "needs.unconnected.needToConnect.description";
   public const string kLabelCancelText = "label.cancelText";
+  public const string kLabelLiquidMetalCozmo = "label.liquidMetalCozmo";
 
   #endregion
 

@@ -111,6 +111,27 @@ namespace Cozmo {
       public static Color FreeplayBehaviorRewardColor {
         get { return Instance._FreeplayBehaviorRewardColor; }
       }
+
+      [SerializeField]
+      private Color _DefaultBannerColor;
+
+      public static Color DefaultBannerColor {
+        get { return Instance._DefaultBannerColor; }
+      }
+
+      [SerializeField]
+      private Color _CorrectBannerColor;
+
+      public static Color CorrectBannerColor {
+        get { return Instance._CorrectBannerColor; }
+      }
+
+      [SerializeField]
+      private Color _WrongBannerColor;
+
+      public static Color WrongBannerColor {
+        get { return Instance._WrongBannerColor; }
+      }
     }
   }
 }

@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using DG.Tweening;
 using Anki.UI;
+using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
@@ -14,6 +15,9 @@ namespace Cozmo {
 
       [SerializeField]
       private RectTransform _BannerContainer;
+
+      [SerializeField]
+      private CozmoImage _BannerGraphic;
 
       [SerializeField]
       private CozmoText _BannerTextLabel;
@@ -49,9 +53,15 @@ namespace Cozmo {
         }
       }
 
+      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null,
+                                      float customSlowDurationSeconds = 0f, bool playSound = true) {
+        PlayBannerAnimation(textToDisplay, UIColorPalette.DefaultBannerColor, animationEndCallback,
+                            customSlowDurationSeconds, playSound);
+      }
 
-      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f, bool playSound = true) {
+      public void PlayBannerAnimation(string textToDisplay, Color bannerColor, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f, bool playSound = true) {
         _BannerContainer.gameObject.SetActive(true);
+        _BannerGraphic.color = bannerColor;
         Vector3 localPos = _BannerContainer.gameObject.transform.localPosition;
         localPos.x = _BannerLeftOffscreenLocalXPos;
         _BannerContainer.gameObject.transform.localPosition = localPos;

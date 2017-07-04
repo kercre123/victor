@@ -1110,13 +1110,27 @@ namespace Cozmo {
         _SpinnerWidgetInstance = null;
       }
 
-      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f, bool playSound = true) {
+      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null,
+                                      float customSlowDurationSeconds = 0f, bool playSound = true) {
 
         if (_BannerWidgetInstance == null) {
-          _BannerWidgetInstance = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer).GetComponent<Banner>();
+          _BannerWidgetInstance = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject,
+                                                            _BannerContainer).GetComponent<Banner>();
           _BannerWidgetInstance.Init();
         }
-        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds, playSound);
+        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback,
+                                                  customSlowDurationSeconds, playSound);
+      }
+
+      public void PlayBannerAnimation(string textToDisplay, Color bannerColor, TweenCallback animationEndCallback = null,
+                                      float customSlowDurationSeconds = 0f, bool playSound = true) {
+        if (_BannerWidgetInstance == null) {
+          _BannerWidgetInstance = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject,
+                                                            _BannerContainer).GetComponent<Banner>();
+          _BannerWidgetInstance.Init();
+        }
+        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, bannerColor, animationEndCallback,
+                                                  customSlowDurationSeconds, playSound);
       }
 
       public void PlayVideo(string videoPath, System.Action onVideoContinue, bool showSkipButton = false) {
