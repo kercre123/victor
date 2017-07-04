@@ -46,14 +46,14 @@ namespace {
   
   CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, CONSOLE_GROUP_NAME, 30000);
 
+#if REMOTE_CONSOLE_ENABLED
   // Turn on dev testing of face glitches (not used in prod, but useful for tuning the glitch params)
   CONSOLE_VAR(bool, kNeeds_TestFaceGlitches, CONSOLE_GROUP_NAME, false);  
   CONSOLE_VAR(f32, kNeeds_TestFaceGlitchesDegree, CONSOLE_GROUP_NAME, 1.0f);
   CONSOLE_VAR(f32, kNeeds_TestFaceGlitchesSpacing_sec, CONSOLE_GROUP_NAME, 0.75f);
 
-#if REMOTE_CONSOLE_ENABLED
-// For tuning only
-static f32 g_testFaceGlitchNext_sec = 0.f;
+  // For tuning only
+  static f32 g_testFaceGlitchNext_sec = 0.f;
 #endif
 
 }

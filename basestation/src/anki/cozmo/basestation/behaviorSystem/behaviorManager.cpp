@@ -253,7 +253,8 @@ BehaviorManager::BehaviorManager(Robot& robot)
   _uiGameRequestMap.insert(std::make_pair(UnlockId::QuickTapGame, VC_QT));
   _uiGameRequestMap.insert(std::make_pair(UnlockId::MemoryMatchGame, VC_MM));
   
-  if (ANKI_DEV_CHEATS && !_behaviorContainer->GetBehaviorMap().empty()){
+#if ANKI_DEV_CHEATS
+  if (!_behaviorContainer->GetBehaviorMap().empty()){
     for(const auto& entry: _uiGameRequestMap){
       DEV_ASSERT_MSG(entry.second != nullptr &&
                      entry.second->GetClass() == BehaviorClass::RequestGameSimple,
@@ -262,6 +263,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
                      UnlockIdToString(entry.first));
     }
   }
+#endif
 }
 
   
