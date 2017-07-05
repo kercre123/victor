@@ -121,9 +121,18 @@ Result BehaviorReactToVoiceCommand::InitInternal(Robot& robot)
     actionSeries->AddAction(turnAction);
   }
   
-  StartActing(actionSeries);
-  
   using namespace ::Anki::Cozmo::VoiceCommand;
+  
+  auto completionCallback = [] (const ExternalInterface::RobotCompletedAction& completedActionInfo) {
+    // If we got to the end of this series of actions without a command (or anything else) interrupting
+    if (Anki::Cozmo::ActionResult::SUCCESS == completedActionInfo.result)
+    {
+      Anki::Util::sEvent("voice_command.no_observed_command_for_context", {},
+                         EnumToString(VoiceCommandListenContext::CommandList));
+    }
+  };
+  
+  StartActing(actionSeries, completionCallback);
   
   Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
   robot.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
