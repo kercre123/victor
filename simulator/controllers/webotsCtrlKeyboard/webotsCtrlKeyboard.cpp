@@ -370,6 +370,7 @@ namespace Anki {
         printf("       Unlock progression unlock:  n\n");
         printf("         Lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
+        printf("               Fill needs meters:  Alt+Shift+n\n");
         printf("             Flip selected block:  y\n");
         printf("                Set robot volume:  v\n");
         printf("      Toggle vision while moving:  V\n");
@@ -2322,8 +2323,15 @@ namespace Anki {
 
               case (s32)'N':
               {
-                if( altKeyPressed ) {
+                if( altKeyPressed && !shiftKeyPressed ) {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
+                }
+                else if (altKeyPressed && shiftKeyPressed) {
+                  // Fill needs meters
+                  ExternalInterface::RunDebugConsoleFuncMessage msg;
+                  msg.funcName = "DebugFillNeedMeters";
+                  msg.funcArgs = "";
+                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
                 }
                 else {
                   webots::Field* unlockNameField = root_->getField("unlockName");
