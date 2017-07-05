@@ -1,6 +1,7 @@
 {
   "behaviorClass": "FistBump",
   "behaviorID": "FistBump",
+  "needsActionID": "FistBump",
   "executableBehaviorType": "FistBump",
   "displayNameKey": "behavior.FistBump",
   "requiredUnlockId": "FistBump",

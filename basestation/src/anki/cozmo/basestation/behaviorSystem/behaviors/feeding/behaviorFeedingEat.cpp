@@ -126,7 +126,7 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
   // Cozmo didn't successfully finish "eating" and doesn't get the energy for it
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_s > _timeCubeIsSuccessfullyDrained_sec){
-    robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::FeedBlue);
+    robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Feed);
   }
 }
 
@@ -218,7 +218,7 @@ AnimationTrigger BehaviorFeedingEat::UpdateNeedsStateAndCalculateAnimation(Robot
   const bool isWarningPreFeeding = currNeedState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Warning);
   
   NeedsState predPostFeedNeed;
-  robot.GetContext()->GetNeedsManager()->PredictNeedsActionResult(NeedsActionId::FeedBlue,
+  robot.GetContext()->GetNeedsManager()->PredictNeedsActionResult(NeedsActionId::Feed,
                                                                   predPostFeedNeed);
   
   const bool isSeverePostFeeding = predPostFeedNeed.IsNeedAtBracket(NeedId::Energy,

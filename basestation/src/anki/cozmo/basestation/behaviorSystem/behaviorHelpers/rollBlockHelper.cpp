@@ -281,7 +281,6 @@ void RollBlockHelper::RespondToRollingResult(ActionResult result, Robot& robot)
   switch(result){
     case ActionResult::SUCCESS:
     {
-      robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::RollACube);
       _status = BehaviorStatus::Complete;
       break;
     }

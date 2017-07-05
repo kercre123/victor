@@ -1,6 +1,7 @@
 {
   "behaviorClass": "PickUpAndPutDownCube",
   "behaviorID": "SparksPickUpCube",
+  "needsActionID": "PickupCube_Sparked",
   "displayNameKey":"behavior.PickupCube",
   "requiredUnlockId": "PickupCube"
 }

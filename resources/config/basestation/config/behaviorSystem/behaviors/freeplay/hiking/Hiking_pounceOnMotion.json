@@ -1,6 +1,7 @@
 {
   "behaviorClass": "PounceOnMotion",
   "behaviorID": "Hiking_PounceOnMotion",
+  "needsActionID": "Pounce",
   "displayNameKey":"behavior.PounceOnMotion",
   "requiredUnlockId": "PounceOnMotionAction",
   // very short times to boredom in this behavior, to let other stuff run

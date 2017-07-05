@@ -49,6 +49,7 @@ namespace Cozmo {
 namespace {
 static const char* kBehaviorClassKey                 = "behaviorClass";
 static const char* kBehaviorIDConfigKey              = "behaviorID";
+static const char* kNeedsActionIDKey                 = "needsActionID";
 static const char* kDisplayNameKey                   = "displayNameKey";
 
 static const char* kRequiredUnlockKey                = "requiredUnlockId";
@@ -161,8 +162,8 @@ BehaviorID IBehavior::ExtractBehaviorIDFromConfig(const Json::Value& config,
   
   return BehaviorIDFromString(behaviorID_str);
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorClass IBehavior::ExtractBehaviorClassFromConfig(const Json::Value& config)
 {
@@ -172,7 +173,20 @@ BehaviorClass IBehavior::ExtractBehaviorClassFromConfig(const Json::Value& confi
 }
 
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NeedsActionId IBehavior::ExtractNeedsActionIDFromConfig(const Json::Value& config)
+{
+  const Json::Value& needsActionIDJson = config[kNeedsActionIDKey];
+  const char* needsActionIDString = needsActionIDJson.isString() ? needsActionIDJson.asCString() : "";
+  if (!needsActionIDString[0])
+  {
+    return NeedsActionId::NoAction;
+  }
+  return NeedsActionIdFromString(needsActionIDString);
+}
+
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
@@ -182,6 +196,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
+, _needsActionID(ExtractNeedsActionIDFromConfig(config))
 , _executableType(ExecutableBehaviorType::Count)
 , _requiredUnlockId( UnlockId::Count )
 , _requiredSevereNeed( NeedId::Count )
@@ -815,9 +830,14 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, b
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IBehavior::NeedActionCompleted(const NeedsActionId needActionId)
+void IBehavior::NeedActionCompleted(NeedsActionId needsActionId)
 {
-  _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needActionId);
+  if (needsActionId == NeedsActionId::NoAction)
+  {
+    needsActionId = _needsActionID;
+  }
+
+  _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needsActionId);
 }
   
   

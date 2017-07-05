@@ -85,7 +85,7 @@ namespace Cozmo.Energy.UI {
       _InactivityTimer = _InactivityTimeOut;
 
       //animate our display energy to the engine energy
-      HandleLatestNeedsLevelChanged(NeedsActionId.FeedBlue);
+      HandleLatestNeedsLevelChanged(NeedsActionId.Feed);
 
       RefreshForCurrentBracket(nsm);
     }
@@ -146,7 +146,7 @@ namespace Cozmo.Energy.UI {
       _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineEnergy);
       RefreshForCurrentBracket(nsm);
 
-      if (actionId == NeedsActionId.FeedBlue) {
+      if (actionId == NeedsActionId.Feed) {
         _InactivityTimer = _InactivityTimeOut;
       }
     }

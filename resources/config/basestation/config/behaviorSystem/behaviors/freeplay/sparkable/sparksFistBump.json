@@ -1,6 +1,7 @@
 {
   "behaviorClass": "FistBump",
   "behaviorID": "SparksFistBump",
+  "needsActionID": "FistBump_Sparked",
   "displayNameKey":"behavior.FistBump",
   "requiredUnlockId": "FistBump",
   "maxTimeToLookForFace_s": 5.0,

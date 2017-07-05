@@ -339,7 +339,9 @@ void ActivityBuildPyramid::OnSelectedInternal(Robot& robot)
                                                        kAffectFullPyramidProcessArray);
   
   _forceLightMusicUpdate = true;
-  
+
+  _behaviorBuildPyramid->SetNeedsActionID(_needsActionId);
+
   UpdateChooserPhase(_robot);
   Update(_robot);
 }

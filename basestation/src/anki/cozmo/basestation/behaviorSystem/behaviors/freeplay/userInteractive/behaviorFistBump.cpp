@@ -271,7 +271,7 @@ IBehavior::Status BehaviorFistBump::UpdateInternal(Robot& robot)
     }
     case State::CompleteSuccess:
     {
-      NeedActionCompleted(NeedsActionId::FistBump);
+      NeedActionCompleted();
       // Fall through
     }
     case State::CompleteFail:

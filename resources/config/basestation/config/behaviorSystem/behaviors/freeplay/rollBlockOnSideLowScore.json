@@ -1,6 +1,7 @@
 {
   "behaviorClass": "RollBlock",
   "behaviorID": "RollBlockOnSideLowScore",
+  "needsActionID": "RollACube",
   "displayNameKey":"behavior.RollBlock",
   "requiredUnlockId": "RollCube"
 }

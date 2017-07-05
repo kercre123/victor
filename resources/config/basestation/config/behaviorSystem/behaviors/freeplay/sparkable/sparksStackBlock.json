@@ -1,6 +1,7 @@
 {
   "behaviorClass": "StackBlocks",
   "behaviorID": "SparksStackBlock",
+  "needsActionID": "StackCube_Sparked",
   "displayNameKey":"behavior.StackCube",
   "requiredUnlockId": "StackTwoCubes",
   "stackInAnyOrientation" : true

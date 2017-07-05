@@ -1,6 +1,7 @@
 {
   "behaviorClass": "PounceOnMotion",
   "behaviorID": "SparksPounceOnMotion",
+  "needsActionID": "Pounce_Sparked",
   "executableBehaviorType": "PounceOnMotion",
   "displayNameKey":"behavior.PounceOnMotion",
   "maxNoGroundMotionBeforeBored_running_Sec": 60.0,

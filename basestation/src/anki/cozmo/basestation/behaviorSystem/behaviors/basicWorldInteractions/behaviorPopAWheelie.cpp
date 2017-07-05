@@ -208,7 +208,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                     _lastBlockReactedTo.UnSet();
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
-                    NeedActionCompleted(NeedsActionId::PopAWheelie);
+                    NeedActionCompleted();
                     break;
                   }
                   case ActionResultCategory::RETRY:

@@ -46,6 +46,7 @@ namespace Cozmo {
 namespace {
 static const char* kActivityIDConfigKey               = "activityID";
 static const char* kActivityTypeConfigKey             = "activityType";
+static const char* kNeedsActionIDKey                  = "needsActionID";
 static const char* kBehaviorChooserConfigKey          = "behaviorChooser";
 static const char* kInterludeBehaviorChooserConfigKey = "interludeBehaviorChooser";
 static const char* kStrategyConfigKey                 = "activityStrategy";
@@ -114,10 +115,27 @@ ActivityType IActivity::ExtractActivityTypeFromConfig(const Json::Value& config)
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NeedsActionId IActivity::ExtractNeedsActionIDFromConfig(const Json::Value& config)
+{
+  std::string needsActionIDString;
+  if (JsonTools::GetValueOptional(config, kNeedsActionIDKey, needsActionIDString))
+  {
+    return NeedsActionIdFromString(needsActionIDString);
+  }
+  else
+  {
+    return NeedsActionId::NoAction;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IActivity::ReadConfig(Robot& robot, const Json::Value& config)
 {
   // read info from config
   _id = ExtractActivityIDFromConfig(config);
+
+  _needsActionId = ExtractNeedsActionIDFromConfig(config);
   
   // - - - - - - - - - -
   // Needs Sparks

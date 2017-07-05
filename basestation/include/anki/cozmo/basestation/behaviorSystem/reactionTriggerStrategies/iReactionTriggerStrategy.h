@@ -113,7 +113,7 @@ protected:
   virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior){}
   
   // Behaviors can call this if there are any needs changes
-  void NeedActionCompleted(const NeedsActionId needActionId);
+  void NeedActionCompleted(NeedsActionId needsActionId);
 
 private:
   Robot& _robot;

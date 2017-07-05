@@ -93,7 +93,7 @@ void BehaviorPickUpAndPutDownCube::TransitionToPutDownCube(Robot& robot)
   StartActing(action, [this]()
                       {
                         BehaviorObjectiveAchieved(BehaviorObjective::PickedUpAndPutDownBlock);
-                        NeedActionCompleted(NeedsActionId::PickupCube);
+                        NeedActionCompleted();
                       });
 }
 

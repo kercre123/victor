@@ -16,6 +16,7 @@
   {
     "activityID" : "BuildPyramid",
     "activityType" : "BuildPyramid",
+    "needsActionID": "PyramidCompleted_Sparked",
     "name" : "sparksBuildPyramid",
     "activityStrategy": // not actually used, but required
     {

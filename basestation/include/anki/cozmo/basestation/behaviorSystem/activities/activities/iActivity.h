@@ -21,6 +21,7 @@
 #include "anki/common/types.h"
 #include "clad/types/activityTypes.h"
 #include "clad/types/animationTrigger.h"
+#include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"
 #include "json/json-forwards.h"
 
@@ -123,7 +124,10 @@ protected:
                                     const std::string& lockID,
                                     const ReactionTrigger& trigger);
 #endif
-  
+
+  // Needs action ID that optionally gets registered with the needs manager
+  NeedsActionId _needsActionId;
+
 private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Constants and types
@@ -137,6 +141,8 @@ private:
   bool HasDrivingAnimTriggers() const { return _driveStartAnimTrigger != AnimationTrigger::Count; } // checking one is checking all
   
   void ReadConfig(Robot& robot, const Json::Value& config);
+
+  NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -162,7 +168,7 @@ private:
   
   // activity name - defined in config or passed up from sub-activity
   ActivityID _id;
-  
+
   // optional driving animations associated to this activity
   AnimationTrigger _driveStartAnimTrigger;
   AnimationTrigger _driveLoopAnimTrigger;

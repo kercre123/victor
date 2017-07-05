@@ -53,9 +53,7 @@ enum int_32 NeedsActionId
   RepairTreads,
 
   // Feeding actions
-  FeedRed,
-  FeedBlue,
-  FeedGreen,
+  Feed,
 
   // Other actions (this will be a big and ever-growing list)
   Play, // Generic prototypes
@@ -73,21 +71,31 @@ enum int_32 NeedsActionId
   DizzySoft,
   Fall,
   FistBump,
+  FistBump_Sparked,
   GatherCubes,
+  GatherCubes_Sparked,
   GuardDogLose,
   GuardDogWin,
   HiccupsEndBad,
   HiccupsEndGood,
   KnockDownCubes,
+  KnockDownCubes_Sparked,
   PeekAboo,
   PickupCube,
+  PickupCube_Sparked,
   PopAWheelie,
+  PopAWheelie_Sparked,
   Pounce,
+  Pounce_Sparked,
   PyramidCompleted,
+  PyramidCompleted_Sparked,
   RollACube,
+  RollACube_Sparked,
   SayName,
   StackCube,
+  StackCube_Sparked,
   Workout,
+  Workout_Sparked,
   SeeFace,
 
   Count

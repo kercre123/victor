@@ -1,6 +1,7 @@
 {
   "behaviorClass": "StackBlocks",
   "behaviorID": "StackBlocks",
+  "needsActionID": "StackCube",
   "executableBehaviorType": "StackBlocks",
   "displayNameKey":"behavior.StackCube",
   "requiredUnlockId": "StackTwoCubes"

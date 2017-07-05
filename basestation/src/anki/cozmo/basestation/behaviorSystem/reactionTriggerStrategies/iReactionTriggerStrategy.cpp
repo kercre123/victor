@@ -130,9 +130,9 @@ bool IReactionTriggerStrategy::ShouldTriggerBehavior(const Robot& robot, const I
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IReactionTriggerStrategy::NeedActionCompleted(const NeedsActionId needActionId)
+void IReactionTriggerStrategy::NeedActionCompleted(NeedsActionId needsActionId)
 {
-  _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needActionId);
+  _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needsActionId);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -220,6 +220,7 @@ void BehaviorRollBlock::TransitionToRollSuccess(Robot& robot)
   }
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
+  NeedActionCompleted();
 }
 
   

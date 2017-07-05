@@ -1,6 +1,7 @@
 {
   "behaviorClass": "KnockOverCubes",
   "behaviorID": "SparksKnockOverCubes",
+  "needsActionID": "KnockDownCubes_Sparked",
   "executableBehaviorType": "KnockOverCubes",
   "displayNameKey":"behavior.KnockOverCubes",
   "requiredUnlockId": "KnockOverThreeCubeStack",

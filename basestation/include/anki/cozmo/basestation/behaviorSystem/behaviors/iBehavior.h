@@ -160,6 +160,8 @@ public:
   BehaviorID         GetID()      const { return _id; }
   const std::string& GetIDStr()   const { return _idString; }
 
+  void SetNeedsActionID(NeedsActionId needsActionID) { _needsActionID = needsActionID; }
+
   const std::string& GetDisplayNameKey() const { return _displayNameKey; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
@@ -358,9 +360,10 @@ protected:
   // in order to log das events and notify activity strategies if they listen for the message
   void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved, bool broadcastToGame = true) const;
 
-  // Behaviors can call this if there are any needs changes
-  void NeedActionCompleted(const NeedsActionId needActionId);
-  
+  // Behaviors can call this to register a needs action with the needs system
+  // If needActionId is not specified, the previously-initialized _needActionId will be used
+  void NeedActionCompleted(NeedsActionId needsActionId = NeedsActionId::NoAction);
+
   /////////////
   /// "Smart" helpers - Behaviors can call these functions to set properties that
   /// need to be cleared when the behavior stops.  IBehavior will hold the reference
@@ -446,6 +449,8 @@ protected:
   
 private:
   
+  NeedsActionId ExtractNeedsActionIDFromConfig(const Json::Value& config);
+
   std::vector<::Signal::SmartHandle> _eventHandles;
   Robot& _robot;
   float _lastRunTime_s;
@@ -471,6 +476,7 @@ private:
   std::string _displayNameKey = "";
   std::string _debugStateName = "";
   BehaviorClass _behaviorClassID;
+  NeedsActionId _needsActionID;
   ExecutableBehaviorType _executableType;
   
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
