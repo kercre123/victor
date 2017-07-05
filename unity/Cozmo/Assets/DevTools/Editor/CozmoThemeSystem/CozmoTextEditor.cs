@@ -97,6 +97,7 @@ namespace Cozmo.UI {
         _ScriptTarget.fontSizeMin = EditorGUILayout.FloatField("Auto Size Min", _ScriptTarget.fontSizeMin);
         _ScriptTarget.fontSizeMax = EditorGUILayout.FloatField("Auto Size Max", _ScriptTarget.fontSizeMax);
       }
+      _ScriptTarget.raycastTarget = EditorGUILayout.Toggle("Raycast Target?", _ScriptTarget.raycastTarget);
 
       DrawTMPDefaultSkinningOptions();
 
