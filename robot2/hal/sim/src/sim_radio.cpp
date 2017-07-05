@@ -138,10 +138,12 @@ namespace Anki {
       //       We also assume that when working with simluated robots on Webots, the advertisement service is running on the same host.
       advRegClient.Connect(advertisementIP, ROBOT_ADVERTISEMENT_REGISTRATION_PORT);
 
-
+      
+      // TODO: The advertisement stuff should probably move to animProcess
       // Fill in advertisement registration message
       regMsg.id = HAL::GetID();
-      regMsg.toEnginePort = ROBOT_RADIO_BASE_PORT + regMsg.id;
+      //regMsg.toEnginePort = ROBOT_RADIO_BASE_PORT + regMsg.id;
+      regMsg.toEnginePort = ANIM_PROCESS_SERVER_BASE_PORT + regMsg.id;
       regMsg.fromEnginePort = regMsg.toEnginePort;
       
       #if !USE_UDP_ROBOT_COMMS

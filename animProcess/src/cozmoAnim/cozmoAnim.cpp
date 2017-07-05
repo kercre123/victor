@@ -24,12 +24,9 @@
 //#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 //#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-//#include "anki/cozmo/basestation/viz/vizManager.h"
-//#include "anki/cozmo/basestation/robot.h"
 //#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 //#include "audioEngine/multiplexer/audioMultiplexer.h"
-//#include "clad/externalInterface/messageGameToEngine.h"
 //#include "util/console/consoleInterface.h"
 //#include "util/cpuProfiler/cpuProfiler.h"
 //#include "util/global/globalDefinitions.h"
@@ -175,8 +172,9 @@ Result CozmoAnim::Update(const BaseStationTime_t currTime_nanosec)
   }
 #endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   
-  
+  BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
   Messages::Update();
+  
   
 //  // Handle UI
 //  Result lastResult = _uiMsgHandler->Update();

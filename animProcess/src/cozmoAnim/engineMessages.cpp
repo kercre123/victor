@@ -1,8 +1,22 @@
+/**
+ * File: engineMessages.cpp
+ *
+ * Author: Kevin Yoon
+ * Created: 6/30/2017
+ *
+ * Description: Shuttles messages between engine and robot processes.
+ *              Responds to engine messages pertaining to animations
+ *              and inserts messages as appropriate into robot-bound stream.
+ *
+ * Copyright: Anki, Inc. 2017
+ **/
+
 #include "engineMessages.h"
 
-#include "clad/robotInterface/messageEngineToRobotTag.h"
-#include "clad/robotInterface/messageRobotToEngineTag.h"
+#include "anki/common/basestation/utils/timer.h"
+
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
@@ -23,11 +37,6 @@
 #include <math.h>
 
 
-#ifdef SIMULATOR
-#include <webots/Supervisor.hpp>
-extern webots::Supervisor animSupervisor;
-#endif
-
 namespace Anki {
   namespace Cozmo {
     
@@ -36,6 +45,7 @@ namespace Anki {
     namespace Messages {
 
       namespace {
+        
         const int MAX_PACKET_BUFFER_SIZE = 2048;
         u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
       } // private namespace
@@ -56,27 +66,25 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
-        PRINT_NAMED_WARNING("ProcessMessage.EngineToRobot", "%d", msg.tag);
+        //PRINT_NAMED_WARNING("ProcessMessage.EngineToRobot", "%d", msg.tag);
         
         switch(msg.tag)
         {
           //#include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
             
-          case (int)Anki::Cozmo::RobotInterface::EngineToRobotTag::enableAnimTracks:
+          case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableAnimTracks:
           {
             // Do something
             // ...
             
             break;
           }
-          default:
-          {
-            // Send message along to robot
-            HAL::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
-            break;
-          }
 
         }
+
+        // Send message along to robot
+        HAL::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+
       } // ProcessMessage()
 
 
@@ -163,13 +171,8 @@ namespace Anki {
           }
           else
           {
-            //Anki::Cozmo::Messages::ProcessMessage(msgBuf);
-            
-            PRINT_NAMED_WARNING("ProcessMessage.RobotToEngine", "%02x", msgBuf.tag);
-            
             // Send up to engine
             ::Anki::Cozmo::HAL::RadioSendMessage(msgBuf.GetBuffer()+1, msgBuf.Size()-1, msgBuf.tag);
-
           }
           
         }
@@ -184,12 +187,7 @@ namespace Anki {
 
       TimeStamp_t GetTimeStamp()
       {
-#ifdef SIMULATOR
-        return animSupervisor.getTime() * 1000;
-#else
-        auto currTime = std::chrono::steady_clock::now();
-        return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime - _timeOffset).count());
-#endif
+        return BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       }
       
       

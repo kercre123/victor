@@ -1708,8 +1708,6 @@
       '<@(flatbuffers_include)',
       '<@(text_to_speech_include_dirs)',
       '<@(routing_http_server_include)',
-      #'../../generated/clad/game',
-      #'<@(libarchive_include)',
       '<@(das_include)',
       ],
       'direct_dependent_settings': {
@@ -1719,32 +1717,28 @@
         '../../robot/include',
         '../../robot/generated/clad/robot',  # for clad
         #'../../generated/clad/engine',
-        #'../../basestation/src',
-        #'../../generated/clad/game',
         ],
         'defines': [
-        'COZMO_BASESTATION',
-        'COZMO_V2',
+          'COZMO_BASESTATION',
+          'COZMO_V2',
         ],
       },
       'defines': [
-      'COZMO_BASESTATION',
-      'COZMO_V2',
+        'COZMO_BASESTATION',
+        'COZMO_V2',
       ],
       'dependencies': [
       '<(ce-util_gyp_path):util',
       '<(ce-util_gyp_path):audioUtil',
       '<(ce-cti_gyp_path):ctiCommon',
-      '<(ce-cti_gyp_path):ctiMessaging',
-      '<(ce-cti_gyp_path):ctiVision',
+      #'<(ce-cti_gyp_path):ctiMessaging',
+      #'<(ce-cti_gyp_path):ctiVision',
       
-      '<(ce-cti_gyp_path):ctiCommonRobot',
-      '<(ce-cti_gyp_path):ctiVisionRobot',
+      #'<(ce-cti_gyp_path):ctiCommonRobot',
+      #'<(ce-cti_gyp_path):ctiVisionRobot',
       '<(ce-cti_gyp_path):ctiMessagingRobot',
 
-      #'<(ce-cti_gyp_path):ctiVisionRobot',
       '<(cg-audio_path):AudioEngine',
-      #'<(ce-ble_cozmo_path):BLECozmo',
       '<(ce-das_path):DAS',
       'androidHAL',
       'robotClad'
@@ -1766,7 +1760,6 @@
         ['exclude', '.androidHAL/src/anki/cozmo/.'],
         ['exclude', '_android\\.'],
         ['exclude', '(linux)'],
-        ['exclude', '../../basestation/src/anki/cozmo/basestation/cozmoAPI/csharp-binding/ios'],
         ['exclude', 'main.cpp']
         ],
         'include_dirs' : [
@@ -1779,18 +1772,16 @@
         '<@(flatbuffers_libs)',
         '<@(text_to_speech_libraries)',
         '<@(routing_http_server_libs)',
-        #'<@(libarchive_libs)',
         ],
       },
       'OS=="android"',
       {
-        'type': 'shared_library',
+        #'type': 'shared_library',
+        'type': 'executable',
         'library_dirs':
         [
         #these are empty?!?!
         #'<(opencv_lib_search_path_debug)',
-        #'<(face_library_lib_path)',
-        '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
         '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
         ],
         
@@ -1810,7 +1801,6 @@
         '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
         '<(crash_path)/Breakpad/libs/armeabi-v7a/libbreakpad_client.a',   # Google Breakpad
         # does not work with ninja?!?!
-        # '<@(face_library_libs)',
         # '<@(opencv_libs)',
         '<@(flatbuffers_libs_android)',
         '<@(text_to_speech_libraries)',
@@ -1822,25 +1812,25 @@
         '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibpng.a',
         '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibtiff.a',
         '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibwebp.a',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_calib3d.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_core.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_features2d.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_flann.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_highgui.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgcodecs.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgproc.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_java3.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ml.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_objdetect.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_photo.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_shape.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_stitching.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_superres.so',
-        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ts.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_video.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videoio.so',
-        '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videostab.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_calib3d.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_core.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_features2d.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_flann.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_highgui.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgcodecs.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgproc.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_java3.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ml.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_objdetect.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_photo.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_shape.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_stitching.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_superres.so',
+        ##'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ts.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_video.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videoio.so',
+        #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videostab.so',
         
         '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libCommunicationCentral.a',
         '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkStreamMgr.a',
@@ -1887,6 +1877,29 @@
         'defines': [
         'USE_GOOGLE_BREAKPAD=1',
         ],
+        'conditions': [
+        [
+      	  'OS=="android"',
+          {
+            #'type': 'shared_library',
+            'libraries': [
+              '-landroid',
+            ],
+
+            # Compile as position-independent executable (PIE)
+            'cflags': [
+              '-fPIE'
+            ],
+            'cflags_cc': [
+              '-fPIE'
+            ],
+            'ldflags': [
+              '-fPIE',
+              '-pie'
+            ],
+          },
+        ],
+      ],
       }
       ],
       ] #'conditions'

@@ -1,26 +1,14 @@
 /**
- * File: messages.h  (was messageProtocol.h)
+ * File: engineMessages.h
  *
  * Author: Kevin Yoon
- * Created: 9/24/2013
+ * Created: 6/30/2017
  *
- * Major overhaul to use macros for generating message defintions
- * Author: Andrew Stein
- * Date:   10/13/2013
+ * Description: Shuttles messages between engine and robot processes. 
+ *              Responds to engine messages pertaining to animations 
+ *              and inserts messages as appropriate into robot-bound stream.
  *
- * Description: This files uses the information and macros in the
- *              MessageDefinitions.h to create the typedef'd message
- *              structs passed via USB / BTLE and between main and
- *              long execution "threads".  It also creates the enumerated
- *              list of message IDs.  Everything in this file is independent
- *              of specific message definitions -- those are defined in
- *              MessageDefinitions.h.
- *
- * Major overhaul to use CLAD generated messages and function definitions and to split between the Espressif and K02
- * Author: Daniel Casner
- * 10/22/2015
- *
- * Copyright: Anki, Inc. 2015
+ * Copyright: Anki, Inc. 2017
  **/
 
 #ifndef COZMO_ANIM_ENGINE_MSG_HANDLER_H
