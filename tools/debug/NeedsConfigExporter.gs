@@ -25,7 +25,12 @@ function comment(sheetName) {
   comment += "// (Sheet name: \"" + sheetName + "\")\n";
   var now = new Date();
   comment += "// Exported on " + now.getMonth() + "/" + now.getDate() + "/" + now.getFullYear();
-  comment += " at " + now.getHours() + ":" + now.getMinutes() + "\n\n";
+  var mins = now.getMinutes();
+  comment += " at " + now.getHours() + ":";
+  if (mins < 10) {
+    comment += '0';
+  }
+  comment += mins + "\n\n";
   return comment;
 }
 
@@ -77,9 +82,25 @@ function exportActionConfigSheet(e) {
   var sheetName = "ActionConfig";
   var sheet = ss.getSheetByName(sheetName);
   var rowsData = getRowsData_(sheet);
+  // Error-checking:  Ensure 'range' columns are non-negative:
+  for (var i = 0; i < rowsData.length; i++) {
+    if (rowsData[i]["repairRange"] < 0) {
+      return displayText_(rangeError(rowsData[i]["actionId"], "repairRange"));
+    }
+    if (rowsData[i]["energyRange"] < 0) {
+      return displayText_(rangeError(rowsData[i]["actionId"], "energyRange"));
+    }
+    if (rowsData[i]["playRange"] < 0) {
+      return displayText_(rangeError(rowsData[i]["actionId"], "playRange"));
+    }
+  }
   var json = makeJSON_(rowsData, getExportOptions(e));
   json = comment(sheetName) + '{ "actionDeltas":' + json + ' }\n';
   return displayText_(json);
+}
+
+function rangeError(actionIdName, fieldName) {
+  return "Error: For actionId " + actionIdName + ", " + fieldName + " cannot be negative.";
 }
 
 function exportDecayConfigSheet(e) {
@@ -244,8 +265,8 @@ function getDecayData_(sheet) {
 // Parse the rewards config sheet
 function getRewardsData_(sheet) {
   Logger.log("We're inside getRewardsData_");
-  var maxColumn = 100;
-  var dataRange = sheet.getRange(3, 1, sheet.getMaxRows(), maxColumn);
+  var maxColumn = 120;
+  var dataRange = sheet.getRange(4, 1, sheet.getMaxRows(), maxColumn);
   var data = dataRange.getValues();
   var levels = [];
   for (var row = 0; row < data.length; ++row) {
@@ -256,15 +277,21 @@ function getRewardsData_(sheet) {
       break;  // First blank 'line' indicates end of table
     }
     var object = {};
-    object["numStarsToUnlock"] = col1Data;
-    object["targetSparksTotal"] = col2Data;
-    object["maxPriorLevelUnlocks"] = data[row][3];
-    object["minSparksPct"] = data[row][4];
-    object["maxSparksPct"] = data[row][5];
-    object["minSparks"] = data[row][6];
-    object["minMaxSparks"] = data[row][7];
+    object["freeplayTargetSparksTotal"] = col1Data;
+    object["freeplayMinSparksRewardPct"] = col2Data;
+    object["freeplayMinSparksPct"] = data[row][3];
+    object["freeplayMaxSparksPct"] = data[row][4];
+    object["freeplayMinSparks"] = data[row][5];
+    object["freeplayMinMaxSparks"] = data[row][6];    
+    object["numStarsToUnlock"] = data[row][7];
+    object["targetSparksTotal"] = data[row][8];
+    object["minSparksPct"] = data[row][9];
+    object["maxSparksPct"] = data[row][10];
+    object["minSparks"] = data[row][11];
+    object["minMaxSparks"] = data[row][12];
+    object["maxPriorLevelUnlocks"] = data[row][13];
     var rewards = [];
-    for (var col = 8; col <= maxColumn; col += 2) {
+    for (var col = 14; col <= maxColumn; col += 2) {
       var rewardTypeData = data[row][col];
       var rewardData = data[row][col + 1];
       if (isCellEmpty_(rewardTypeData)) {
