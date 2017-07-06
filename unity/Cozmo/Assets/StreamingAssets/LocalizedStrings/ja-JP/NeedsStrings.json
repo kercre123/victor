@@ -6,88 +6,91 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "needs.NeedsHubView.Button.Activities": {
-    "translation": "DISCOVER"
+  "needs.NeedsHubView.Button.Activities" : {
+    "translation" : "発見"
   },
-  "needs.NeedsHubView.Button.Feed": {
-    "translation": "FEED"
+  "needs.NeedsHubView.Button.Feed" : {
+    "translation" : "チャージ"
   },
-  "needs.NeedsHubView.Button.Repair": {
-    "translation": "TUNE UP"
+  "needs.NeedsHubView.Button.Repair" : {
+    "translation" : "チューンアップ"
   },
-  "needs.NeedsHubView.Button.Play": {
-    "translation": "PLAY"
+  "needs.NeedsHubView.Button.Play" : {
+    "translation" : "プレイ"
   },
-  "needs.NeedsEnergyModal.Title": {
-    "translation": "Feed Cozmo"
+  "needs.NeedsEnergyModal.Title" : {
+    "translation" : "フィードCozmo"
   },
-  "needs.NeedsEnergyModal.FeedingSummary": {
-    "translation": "Cozmo needs to be fed to keep him healthy."
+  "needs.NeedsEnergyModal.FeedingSummary" : {
+    "translation" : "Cozmoは活力を得て明るみを取り戻すために給餌する必要があります。"
   },
-  "needs.NeedsEnergyModal.Instruction1": {
-    "translation": "Grab any Cube that is pulsing blue."
+  "needs.NeedsEnergyModal.Instruction1" : {
+    "translation" : "青を脈打つキューブを掴む。"
   },
-  "needs.NeedsEnergyModal.Instruction2": {
-    "translation": "Shake that Cube until all lights glow brightly."
+  "needs.NeedsEnergyModal.Instruction2" : {
+    "translation" : "すべてのライトが明るく輝くまでキューブを振ってください。"
   },
-  "needs.NeedsEnergyModal.Instruction3": {
-    "translation": "Place the Cube in front of Cozmo."
+  "needs.NeedsEnergyModal.Instruction3" : {
+    "translation" : "キューブをCozmoの前に置きます。"
   },
-  "needs.NeedsEnergyModal.FeedingComplete": {
-    "translation": "Cozmo is fed! Now he is ready to play."
+  "needs.NeedsEnergyModal.FeedingComplete" : {
+    "translation" : "Cozmoは完全に供給されています！"
   },
-  "needs.NeedsRepairModal.Title": {
-    "translation": "Tune Up Cozmo"
+  "needs.NeedsRepairModal.Title" : {
+    "translation" : "Cozmoを調整する"
   },
-  "needs.NeedsRepairModal.RepairSummary": {
-    "translation": "Cozmo needs to be tuned up in order to keep him healthy."
+  "needs.NeedsRepairModal.RepairSummary" : {
+    "translation" : "Cozmoは最適化され、移動中に調整される必要があります。"
   },
-  "needs.NeedsRepairModal.HeadDamageNotice": {
-    "translation": "Head needs adjustment"
+  "needs.NeedsRepairModal.HeadDamageNotice" : {
+    "translation" : "頭は調整が必要"
   },
-  "needs.NeedsRepairModal.HeadRepairedNotice": {
-    "translation": "Head adjusted"
+  "needs.NeedsRepairModal.HeadRepairedNotice" : {
+    "translation" : "ヘッド調整済み"
   },
-  "needs.NeedsRepairModal.TreadsDamageNotice": {
-    "translation": "Treads require alignment"
+  "needs.NeedsRepairModal.TreadsDamageNotice" : {
+    "translation" : "トレッドにはアライメントが必要です"
   },
-  "needs.NeedsRepairModal.TreadsRepairedNotice": {
-    "translation": "Treads aligned"
+  "needs.NeedsRepairModal.TreadsRepairedNotice" : {
+    "translation" : "トレッドの位置合わせ"
   },
-  "needs.NeedsRepairModal.LiftDamageNotice": {
-    "translation": "Arms need calibration"
+  "needs.NeedsRepairModal.LiftDamageNotice" : {
+    "translation" : "リフトには較正が必要です"
   },
-  "needs.NeedsRepairModal.LiftRepairedNotice": {
-    "translation": "Arms calibrated"
+  "needs.NeedsRepairModal.LiftRepairedNotice" : {
+    "translation" : "リフト校正済み"
   },
-  "needs.NeedsRepairModal.RepairButtonsInstruction": {
-    "translation": "Tap the regions to be repaired."
-  },  
-  "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap SEND."
+  "needs.NeedsRepairModal.RepairButtonsInstruction" : {
+    "translation" : "チューンアップするパートをタップします。"
   },
-  "needs.NeedsRepairModal.NoRepairsNeeded": {
-    "translation": "Cozmo is fully tuned up!"
+  "needs.NeedsRepairModal.TuneUpInstruction" : {
+    "translation" : "矢印パターンを再作成するには、右のボタンを使用します。それからSENDをタップします。"
   },
-  "needs.NeedsRepairModal.CalibrateButtonText": {
-    "translation": "SEND"
+  "needs.NeedsRepairModal.NoRepairsNeeded" : {
+    "translation" : "Cozmoは完全に調整されています！"
   },
-  "needs.NeedsRepairModal.ScanButtonText": {
-    "translation": "SCAN COZMO"
+  "needs.NeedsRepairModal.CalibrateButtonText" : {
+    "translation" : "SEND"
   },
-  "needs.NeedsRepairModal.AlligningHead": {
-    "translation": "Aligning Head..."
+  "needs.NeedsRepairModal.ScanButtonText" : {
+    "translation" : "SCAN COZMO"
   },
-  "needs.NeedsRepairModal.AligningLift": {
-    "translation": "Aligning Arms..."
+  "needs.NeedsRepairModal.AlligningHead" : {
+    "translation" : "頭を調整する..."
   },
-  "needs.NeedsRepairModal.AligningTreads": {
-    "translation": "Aligning Treads..."
+  "needs.NeedsRepairModal.AligningLift" : {
+    "translation" : "リフトのキャリブレーション..."
   },
-  "needs.ContinueButtonText": {
-    "translation": "CONTINUE"
+  "needs.NeedsRepairModal.AligningTreads" : {
+    "translation" : "トレッドを整列..."
   },
-  "needs.NeedsRepairModal.TuneUpComplete": {
-    "translation": "Cozmo is all tuned up. Come back again when his meter is more empty."
+  "needs.ContinueButtonText" : {
+    "translation" : "持続する"
+  },
+  "needs.NeedsRepairModal.TuneUpComplete" : {
+    "translation" : "Cozmoは完全に調整されています！"
+  },
+  "needs.Done" : {
+    "translation" : "完了"
   }
 }

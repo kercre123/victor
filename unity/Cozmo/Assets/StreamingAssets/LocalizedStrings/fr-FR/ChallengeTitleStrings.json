@@ -19,10 +19,10 @@
     "translation" : "S'il vous plaît aider Cozmo obtenir debout et prêt à jouer."
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "Cozmo est étourdi"
+    "translation" : "Cozmo est Dizzy"
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "Attendez que Cozmo a récupéré d'être étourdi et est prêt à jouer."
+    "translation" : "Attendez jusqu'à ce que Cozmo ait récupéré d'être Dizzy et est prêt à jouer."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "Cozmo se réveille"
@@ -40,7 +40,7 @@
     "translation" : "Essayez d'aider Cozmo en le mettant à l'envers."
   },
   "cubeSlap.title" : {
-    "translation" : "Tenir à l'écart"
+    "translation" : "Pas touche"
   },
   "cubeSlap.description" : {
     "translation" : "Allécher Cozmo à bondir sur un cube, puis retirez-le avant qu'il peut!"
@@ -52,25 +52,25 @@
     "translation" : "Cozmo vous permet de prendre le contrôle et d'explorer le monde à travers ses yeux."
   },
   "faceEnrollment.title" : {
-    "translation" : "Rencontrez Cozmo"
+    "translation" : "Première rencontre"
   },
   "faceEnrollment.description" : {
     "translation" : "Introduire Cozmo à de nouvelles personnes afin qu'il puisse apprendre à dire leur nom."
   },
   "memoryMatchGame.title" : {
-    "translation" : "Memory match"
+    "translation" : "Jeu de mémoire"
   },
   "memoryMatchGame.description" : {
-    "translation" : "Un jeu de motif qui teste votre mémoire. Regardez les cubes et écoutez attentivement!"
+    "translation" : "Un jeu de modèle qui teste votre mémoire. Regardez les cubes et écoutez attentivement!"
   },
   "speedTap.title" : {
-    "translation" : "Quick Tap"
+    "translation" : "Réflexe"
   },
   "speedTap.description" : {
     "translation" : "Un jeu de correspondance des couleurs des réflexes rapides et esprits pointus."
   },
   "cozmoSays.title" : {
-    "translation" : "Cozmo Says"
+    "translation" : "La parole à Cozmo"
   },
   "cozmoSays.description" : {
     "translation" : "En échange d'une Spark, Cozmo va essayer de dire un mot ou une phrase!"
@@ -80,5 +80,8 @@
   },
   "codeLab.description" : {
     "translation" : "Utilisez votre créativité pour programmer Cozmo et d'explorer des choses amusantes qu'il peut faire!"
+  },
+  "activityView.title" : {
+    "translation" : "Explorer"
   }
 }

@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "Cozmo kann nicht die gesamte Leistung Cubes hören. Legen Sie sie in der Nähe von ihm."
+    "translation" : "Cozmo kann nicht alle Cubes hören. Lege sie ihm nahe"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
     "translation" : "Tippen Sie auf Weiter, wenn Sie immer noch Schwierigkeiten haben"

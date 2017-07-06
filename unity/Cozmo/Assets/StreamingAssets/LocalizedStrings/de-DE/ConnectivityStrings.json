@@ -13,7 +13,7 @@
     "translation" : "Sie müssen Cozmo verbinden"
   },
   "connectivity.moreInfo" : {
-    "translation" : "Mehr Infos"
+    "translation" : "MEHR INFO"
   },
   "connectivity.turnCozmoOn" : {
     "translation" : "Drehen Sie Cozmo On"
@@ -39,26 +39,14 @@
   "connectivity.updatingFirmwareFooter" : {
     "translation" : "Sie müssen Cozmo WiFi wieder zu verbinden, nachdem das Update abgeschlossen ist"
   },
-  "connectivity.pairingPinTitle" : {
-    "translation" : "Geben Sie den Stift gezeigt auf Ihrem Cozmo"
-  },
-  "connectivity.invalidPinTitle" : {
-    "translation" : "Ungültige Pin"
-  },
   "connectivity.updateApp" : {
     "translation" : "Sie müssen Ihre Cozmo App um fortzufahren"
   },
   "connectivity.pullTabsTitle" : {
-    "translation" : "Ziehen Sie die Laschen an Ihren Power Cubes"
+    "translation" : "Ziehen Sie die Laschen auf Ihre Cubes"
   },
   "connectivity.enterDOB" : {
     "translation" : "Geben Sie Ihren Geburtstag"
-  },
-  "connectivity.enterName" : {
-    "translation" : "Geben Sie Ihren Vornamen ein"
-  },
-  "connectivity.pairingDesc" : {
-    "translation" : "Dieser Schritt ist erforderlich, wenn von einem neuen Gerät anschließen"
   },
   "connectivity.cozmoSleepTitle" : {
     "translation" : "Schlafen gehen"
@@ -67,7 +55,7 @@
     "translation" : "Cozmo geht zu schlafen und wird bald trennen"
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Cozmo ist niedrig auf Batterie"
+    "translation" : "Cozmo ist auf Batterie schwach"
   },
   "connectivity.cozmoLowBatteryDesc" : {
     "translation" : "Bitte legen Sie Cozmo auf seinem Ladegerät"
@@ -89,5 +77,14 @@
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "Ein anderes Gerät ist an Cozmo verbunden trennen Sie bitte, dass Geräte und versuchen Sie es erneut"
+  },
+  "needs.unconnected.needToConnect.title" : {
+    "translation" : "Cozmo ist nicht verbunden"
+  },
+  "needs.unconnected.needToConnect.description" : {
+    "translation" : "Um sich um Cozmo zu kümmern und auf seine Bedürfnisse zu achten, musst du zuerst mit ihm in Verbindung treten. "
+  },
+  "label.cancelText" : {
+    "translation" : "Stornieren"
   }
 }

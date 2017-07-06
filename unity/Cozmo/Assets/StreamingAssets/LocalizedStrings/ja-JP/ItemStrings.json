@@ -6,23 +6,11 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "item.experience.singular" : {
-    "translation" : "エネルギー"
-  },
-  "item.experience.plural" : {
-    "translation" : "エネルギー"
-  },
   "item.treat.singular" : {
     "translation" : "スパーク"
   },
   "item.treat.plural" : {
     "translation" : "スパークス"
-  },
-  "item.genericHex.singular" : {
-    "translation" : "ビット"
-  },
-  "item.genericHex.plural" : {
-    "translation" : "ビット"
   },
   "item.cube.singular" : {
     "translation" : "キューブ"

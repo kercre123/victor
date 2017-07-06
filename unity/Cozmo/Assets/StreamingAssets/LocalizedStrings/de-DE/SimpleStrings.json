@@ -16,13 +16,19 @@
     "translation" : "Verlassen"
   },
   "button.cancel" : {
-    "translation" : "Stornieren"
+    "translation" : "STORNIEREN"
   },
   "button.yes" : {
-    "translation" : "Ja"
+    "translation" : "JA"
+  },
+  "button.yesPlease" : {
+    "translation" : "JA BITTE"
   },
   "button.no" : {
-    "translation" : "Nein"
+    "translation" : "NEIN"
+  },
+  "button.noThankYou" : {
+    "translation" : "NEIN DANKE"
   },
   "button.continue" : {
     "translation" : "Fortsetzen"
@@ -31,7 +37,7 @@
     "translation" : "okay"
   },
   "button.again" : {
-    "translation" : "Spiel nochmal"
+    "translation" : "SPIEL NOCHMAL"
   },
   "button.refresh" : {
     "translation" : "auffrischen"
@@ -43,34 +49,25 @@
     "translation" : "Erledigt"
   },
   "button.play" : {
-    "translation" : "Spielen"
+    "translation" : "SPIELEN"
   },
   "button.leave" : {
     "translation" : "Verlassen"
   },
   "button.back" : {
-    "translation" : "Zurück"
+    "translation" : "ZURÜCK"
   },
   "button.next" : {
-    "translation" : "Nächster"
+    "translation" : "NÄCHSTER"
   },
   "button.staySparked" : {
     "translation" : "Bleiben Ausgelöst"
   },
   "button.soundsGood" : {
-    "translation" : "Hört sich gut an"
+    "translation" : "HÖRT SICH GUT AN"
   },
   "label.plusCount" : {
     "translation" : "+ {0}"
-  },
-  "label.xCount" : {
-    "translation" : "x {0}"
-  },
-  "label.totalCount" : {
-    "translation" : "Ihre {0} : {1}"
-  },
-  "label.fractionCount" : {
-    "translation" : "{0} / {1}"
   },
   "label.dayCount" : {
     "translation" : "Tag {0}"
@@ -84,38 +81,14 @@
   "requestGame.description" : {
     "translation" : "Cozmo will spielen"
   },
-  "dailyGoal.title" : {
-    "translation" : "Die heutige Tore"
-  },
-  "dailyGoal.FriendBonus" : {
-    "translation" : "Freund Bonus"
-  },
   "label.connect" : {
     "translation" : "Verbinden"
   },
   "label.start" : {
     "translation" : "Anfang"
   },
-  "cozmoTab.title" : {
-    "translation" : "Upgrades"
-  },
-  "cozmoTab.subTitle" : {
-    "translation" : ": Erweitern Fähigkeiten Cozmo des"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0}{1} Erforderlich"
-  },
-  "loot.Start" : {
-    "translation" : "Tippen Sie wiederholt!"
-  },
-  "loot.Mid" : {
-    "translation" : "Mach weiter!"
-  },
-  "loot.Almost" : {
-    "translation" : "Fast dort!"
-  },
-  "loot.Announce" : {
-    "translation" : "Emotion Chip Charged!"
   },
   "label.emptyWithArg" : {
     "translation" : "{0}"
@@ -127,7 +100,7 @@
     "translation" : "Get A Cozmo"
   },
   "button.start" : {
-    "translation" : "Anfang"
+    "translation" : "ANFANG"
   },
   "button.begin" : {
     "translation" : "Lass uns anfangen"
@@ -137,9 +110,6 @@
   },
   "refreshCubesPrompt.description" : {
     "translation" : "Setzen Sie einen einzelnen Cube neben Cozmo und tippen Sie \"Aktualisieren\". Cozmo wird eine Verbindung mit der 3, dass er denkt, dass am nächsten sind."
-  },
-  "label.available" : {
-    "translation" : "Verfügbar!"
   },
   "button.replay" : {
     "translation" : "Wiederholung"
@@ -154,7 +124,7 @@
     "translation" : "Hörten Sie den Ton?"
   },
   "error.badLight.Top" : {
-    "translation" : "Cozmo hat Schwierigkeiten zu sehen"
+    "translation" : "Cozmo hat Schwierigkeiten zu sehen!"
   },
   "error.badLight.Bottom" : {
     "translation" : "Vermeiden Sie helles Licht und schwach beleuchteten Räumen"
@@ -168,23 +138,8 @@
   "label.privacyPolicy" : {
     "translation" : "Datenschutz-Bestimmungen"
   },
-  "button.openEnvelope" : {
-    "translation" : "ANTIPPEN ZUM ÖFFNEN"
-  },
   "label.pressAndHoldInstruction" : {
-    "translation" : "drücken und halten {0} bestätigen"
-  },
-  "label.activePlayer" : {
-    "translation" : "Aktive Spieler:"
-  },
-  "label.streaksCount" : {
-    "translation" : "Längste Tages in Serie:"
-  },
-  "label.goalsCompleted" : {
-    "translation" : "Tore Abgeschlossen:"
-  },
-  "label.daysWithCozmo" : {
-    "translation" : "Tage spielte mit Cozmo:"
+    "translation" : "DRÜCKEN UND HALTEN {0} BESTÄTIGEN"
   },
   "label.termsOfUse" : {
     "translation" : "Nutzungsbedingungen"
@@ -197,5 +152,14 @@
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
+  },
+  "button.temp" : {
+    "translation" : "Temp"
+  },
+  "label.basicCozmo" : {
+    "translation" : "Großes Gehirn. Größere Persönlichkeit."
+  },
+  "label.currentPage" : {
+    "translation" : "{0} von {1}"
   }
 }

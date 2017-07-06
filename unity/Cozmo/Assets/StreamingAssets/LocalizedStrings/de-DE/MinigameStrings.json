@@ -28,7 +28,7 @@
     "translation" : "Ergebnis"
   },
   "minigame.text.score.player" : {
-    "translation" : "Ihr Ergebnis"
+    "translation" : "Spieler Punktzahl"
   },
   "minigame.text.score.cozmo" : {
     "translation" : "Cozmo Score"
@@ -51,9 +51,6 @@
   "minigame.label.cubesReady.plural" : {
     "translation" : "{0} Cubes fertig!"
   },
-  "minigames.label.gamesAndActivities" : {
-    "translation" : "Cozmo Apps"
-  },
   "minigame.label.cozmoPrep" : {
     "translation" : "Cozmo ist immer bereit zu spielen ..."
   },
@@ -67,10 +64,10 @@
     "translation" : "Mensch"
   },
   "droneMode.chargerReticleLabel" : {
-    "translation" : "Ladegerät"
+    "translation" : "Ladestation"
   },
   "droneMode.cubeReticleLabel" : {
-    "translation" : "Power Cube"
+    "translation" : "Cube"
   },
   "droneMode.petLabel" : {
     "translation" : "Haustier"
@@ -280,7 +277,7 @@
     "translation" : "Nur für Experten! Cubes können nun bis zu vier Farben auf einmal haben, herausfordernd, auch die besten Spieler."
   },
   "button.retry" : {
-    "translation" : "Versuch es noch einmal"
+    "translation" : "VERSUCH ES NOCH EINMAL"
   },
   "speedTap.text.waitForCozmo" : {
     "translation" : "Cozmo ist immer bereit, ..."
@@ -350,5 +347,20 @@
   },
   "speedTap.tapBlock2" : {
     "translation" : "Tippen Sie auf das blinkende Würfel"
+  },
+  "minigame.GuardDog.Title" : {
+    "translation" : "Cozmo bewahrt seine Würfel"
+  },
+  "minigame.GuardDog.Desc" : {
+    "translation" : "Versuchen Sie, alle Cozmo-Würfel langsam und sorgfältig umzukehren, ohne ihn aufzuwachen. Vorsicht ... Cozmo kann spüren, wann seine Würfel sich bewegen!"
+  },
+  "speedTap.driveToCubeFail.title" : {
+    "translation" : "Cozmo kann seinen Würfel nicht finden!"
+  },
+  "speedTap.driveToCubeFail.description" : {
+    "translation" : "Cozmo hat Schwierigkeiten, seinen Würfel zu finden. Bitte stellen Sie sicher, dass Cozmo es sehen kann."
+  },
+  "minigame.text.youWin" : {
+    "translation" : "Du gewinnst!"
   }
 }

@@ -6,44 +6,20 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "unlockable.Unlock" : {
-    "translation" : "アンロック"
+  "unlockable.OSNotSupported.Title" : {
+    "translation" : "要件が満たされない"
   },
-  "unlockable.Locked" : {
-    "translation" : "ロック"
-  },
-  "unlockable.App" : {
-    "translation" : "アプリ"
-  },
-  "unlockable.Upgrade" : {
-    "translation" : "アップグレード"
-  },
-  "unlockable.Available" : {
-    "translation" : "利用可能："
-  },
-  "unlockable.PreReqNeeded.Description" : {
-    "translation" : "あなたがロックを解除する必要があります{0}{1}最初！"
-  },
-  "unlockable.BitsRequired.Title" : {
-    "translation" : "十分ではないビット"
-  },
-  "unlockable.CurrencyRequired" : {
-    "translation" : "十分ではない{0}"
-  },
-  "unlockable.BitsRequired.Description" : {
-    "translation" : "つかいます{0}{1}ロックを解除します"
-  },
-  "unlockable.BitsRequired.EarnMore" : {
-    "translation" : "毎日の目標を完了することによって、よりを獲得"
+  "unlockable.OSNotSupported.Description" : {
+    "translation" : "コードラボにはAndroidが必要です{0}またはより新しい。"
   },
   "unlockable.Mystery.Title" : {
-    "translation" : "????"
+    "translation" : "ロックされた能力"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "すぐに来るより多くの偉大なアップグレード！"
+    "translation" : "オープニングボーナスボックスは時々新しい能力を解放する！"
   },
   "unlockable.FistBump.Title" : {
-    "translation" : "拳バンプ"
+    "translation" : "グータッチ"
   },
   "unlockable.FistBump.Description" : {
     "translation" : "あなたは彼の誇りに思っていることコズモを表示したいですか？彼は少し拳バンプ与えます！このアップグレードにより、コズモは、空気中の彼のリフトを保持し、あなたがそれをバンプするのを待ちます。"
@@ -67,7 +43,7 @@
     "translation" : "まずいないいないばあそして、あなたの顔を隠します！"
   },
   "unlockable.Workout.Title" : {
-    "translation" : "キューブとのワークアウト"
+    "translation" : "キューブでエクササイズ"
   },
   "unlockable.Workout.Description" : {
     "translation" : "でもロボットが行使する必要があります！このアップグレードにより、コズモは上の形に滞在するキューブでワークアウトに学習します。"
@@ -79,19 +55,19 @@
     "translation" : "ウォッチコズモは、キューブやワークアウトを見つけます"
   },
   "unlockable.CubePounce.Title" : {
-    "translation" : "遠ざける"
+    "translation" : "キープアウェー"
   },
   "unlockable.CubePounce.Description" : {
     "translation" : "このアップグレードにより、コズモはキープアウエー、反射神経と反応時間のゲームをプレイする方法を学習します。"
   },
   "unlockable.FaceEnrollment.Title" : {
-    "translation" : "ミートコズモ"
+    "translation" : "顔認識"
   },
   "unlockable.FaceEnrollment.Description" : {
     "translation" : "このアップグレードにより、コズモは顔を覚えていると名前を話すことを学習します。ミートコズモ活動でこれを見つけます。"
   },
   "unlockable.MemoryMatch.Title" : {
-    "translation" : "メモリマッチ"
+    "translation" : "記憶ゲーム"
   },
   "unlockable.MemoryMatch.Description" : {
     "translation" : "このアップグレードにより、コズモはメモリマッチゲームをプレイする方法を学習します。"
@@ -105,14 +81,11 @@
   "unlockable.CodeLab.Title" : {
     "translation" : "コードラボ"
   },
-  "unlockable.CodeLab.Description" : {
-    "translation" : "コードラボの説明！"
-  },
   "unlockable.cozmoSays.Title" : {
-    "translation" : "コズモは言います"
+    "translation" : "Cozmoトーク"
   },
   "unlockable.CubeRollAction.Title" : {
-    "translation" : "キューブを転がし"
+    "translation" : "ドリブル"
   },
   "unlockable.CubeRollAction.Description" : {
     "translation" : "コズモは右サイドアップであるとキューブを好みます。このアップグレードは、彼らが彼らの側にある場合は特に、彼はキューブをロールバックすることができます。"
@@ -124,16 +97,16 @@
     "translation" : "コズモロールに彼が見た最初のキューブを見ます"
   },
   "unlockable.DroneMode.Title" : {
-    "translation" : "エクスプローラモード"
+    "translation" : "リモコンモード"
   },
   "unlockable.DroneMode.Description" : {
     "translation" : "このアップグレードにより、コズモはエクスプローラモードで彼を操縦することができます。"
   },
   "unlockable.CubeStackAction.Title" : {
-    "translation" : "スタックキューブ"
+    "translation" : "キューブを重ねる"
   },
   "unlockable.CubeStackAction.Description" : {
-    "translation" : "このアップグレードにより、コズモは2パワーキューブのスタックを作成する能力を得ます。"
+    "translation" : "このアップグレードにより、Cozmoは2つのキューブのスタックを作成できます。"
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
     "translation" : "ウォッチコズモは、キューブのスタックを作成します"
@@ -142,7 +115,7 @@
     "translation" : "2キューブを積み重ねることコズモを依頼するタップ"
   },
   "unlockable.PounceOnMotionAction.Title" : {
-    "translation" : "指に襲い掛かります"
+    "translation" : "指にアタック"
   },
   "unlockable.PounceOnMotionAction.Description" : {
     "translation" : "コズモが指など、彼の前に地面に動きを見て、このアップグレード、で、彼はふざけて、それに襲い掛かるでしょう！"
@@ -154,7 +127,7 @@
     "translation" : "コズモは、彼が見ている任意の動きに襲い掛かるだろう"
   },
   "unlockable.BuildPyramid.Title" : {
-    "translation" : "ピラミッドを構築"
+    "translation" : "ピラミッド作り"
   },
   "unlockable.BuildPyramid.Description" : {
     "translation" : "このアップグレードにより、コズモは3直立キューブのうちピラミッドを構築する能力を得ます。"
@@ -166,7 +139,7 @@
     "translation" : "ウォッチコズモは3キューブの外にピラミッドを構築します"
   },
   "unlockable.PopAWheelieAction.Title" : {
-    "translation" : "ウイリーポップ"
+    "translation" : "ウィーリー"
   },
   "unlockable.PopAWheelieAction.Description" : {
     "translation" : "コズモは新しいトリックを獲得します！このアップグレードで、彼は自分自身を後押しするためにキューブを使用して、ウイリーを開くことができます。"
@@ -178,10 +151,10 @@
     "translation" : "ウォッチコズモはキューブからウイリーをポップ"
   },
   "unlockable.KnockOverThreeCubeStack.Title" : {
-    "translation" : "スタックひっくり返します"
+    "translation" : "キューブに突撃"
   },
   "unlockable.KnockOverThreeCubeStack.Description" : {
-    "translation" : "このアップグレードにより、コズモはパワーキューブのスタックを見て、任意の時間が、彼はそれをひっくり返すことを決定することができます。"
+    "translation" : "このアップグレードでは、Cozmoはキューブのスタックを見るたびに、それらをノックすることにします。"
   },
   "unlockable.KnockOverThreeCubeStack.SparkButtonDescription" : {
     "translation" : "スタックをひっくり返すためにコズモを依頼するタップ"
@@ -190,10 +163,10 @@
     "translation" : "コズモが転倒するキューブのスタックを構築します"
   },
   "unlockable.PickupCube.Title" : {
-    "translation" : "キューブをピックアップ"
+    "translation" : "キューブを拾う"
   },
   "unlockable.PickupCube.Description" : {
-    "translation" : "このアップグレードにより、コズモはパワーキューブをピックアップし、それらを持ち歩くする能力を得ます。"
+    "translation" : "このアップグレードにより、Cozmoはキューブをピックアップして運ぶことができます。"
   },
   "unlockable.PickupCube.SparkButtonDescription" : {
     "translation" : "キューブをピックアップするコズモを依頼するタップ"
@@ -217,7 +190,7 @@
     "translation" : "近日公開！"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "さらにお得なアップグレード、アプリ、および楽しいコズモの機能のために戻って確認してください"
+    "translation" : "オープニングボーナスボックスは、新しい能力を解き放つ可能性があります！"
   },
   "sparks.Sparked" : {
     "translation" : "コズモがきっかけされています。"
@@ -231,9 +204,6 @@
   "sparks.Spark.plural" : {
     "translation" : "スパークス"
   },
-  "unlockable.Unavailable.Description" : {
-    "translation" : "あなたがロックを解除することができます前に、より多くのアップグレードのロックを解除{0} 。"
-  },
   "sparks.Spark.ConfirmQuit" : {
     "translation" : "コズモがきっかけです！"
   },
@@ -244,7 +214,7 @@
     "translation" : "十分ではありませんスパークス"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "毎日の目標を完了することによって、よりを獲得"
+    "translation" : "フリープレイとボーナスボックスでさらに獲得"
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "キューブが直立していることを確認します"

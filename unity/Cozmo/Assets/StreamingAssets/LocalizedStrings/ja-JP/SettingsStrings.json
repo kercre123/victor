@@ -57,9 +57,6 @@
   "settings.sdkPanel.sdkConnected.text" : {
     "translation" : "SDKプログラムの実行中"
   },
-  "settings.sdkPanel.sdkUrl.label" : {
-    "translation" : "コズモSDKの訪問について学ぶために：go.anki.com/cozmo-app-sdk"
-  },
   "settings.sdkPanel.sdkNotConnected.text" : {
     "translation" : "いいえSDKプログラムが動作していません"
   },
@@ -181,18 +178,18 @@
     "translation" : "高い"
   },
   "settings.volumePanel.robotToggle.medium" : {
-    "translation" : "中"
+    "translation" : "MED"
   },
   "settings.acknowledgementsPanel.title" : {
     "translation" : "法的"
   },
-  "settings.modalTitle": {
-    "translation": "General Settings"
+  "settings.modalTitle" : {
+    "translation" : "一般設定"
   },
-  "settings.sdkPanel.sdkUrl.preface": {
-    "translation": "コズモSDKの訪問について学ぶために："
+  "settings.sdkPanel.sdkUrl.preface" : {
+    "translation" : "Cozmo SDKについては、次をご覧ください。"
   },
-  "settings.sdkPanel.sdkUrl.address": {
-    "translation": "go.anki.com/cozmo-app-sdk"
+  "settings.sdkPanel.sdkUrl.address" : {
+    "translation" : "go.anki.com/cozmo-app-sdk"
   }
 }

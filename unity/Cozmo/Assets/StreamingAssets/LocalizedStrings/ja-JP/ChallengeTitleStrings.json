@@ -19,10 +19,10 @@
     "translation" : "コズモが直立して再生する準備を手伝ってください。"
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "コズモは、めまいです"
+    "translation" : "コズモはめまいです"
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "コズモはめまいとプレーする準備ができていることから回復するまで待ってください。"
+    "translation" : "Cozmoがめまいから回復し、プレイする準備が整うまで待ってください。"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "コズモが目覚めるれます"
@@ -40,28 +40,28 @@
     "translation" : "彼に逆さまに置くことによってコズモを助けるようにしてください。"
   },
   "cubeSlap.title" : {
-    "translation" : "遠ざける"
+    "translation" : "キープアウェー"
   },
   "cubeSlap.description" : {
     "translation" : "彼ができる前にそれを引き離した後、キューブに襲い掛かるためにコズモを誘惑！"
   },
   "droneMode.title" : {
-    "translation" : "エクスプローラモード"
+    "translation" : "リモコンモード"
   },
   "droneMode.description" : {
     "translation" : "コズモは、あなたがコントロールを取ると、彼の目を通して世界を探索することができます。"
   },
   "faceEnrollment.title" : {
-    "translation" : "ミートコズモ"
+    "translation" : "顔認識"
   },
   "faceEnrollment.description" : {
     "translation" : "彼は自分の名前を言うことを学ぶことができるように、新しい人々にコズモを紹介します。"
   },
   "memoryMatchGame.title" : {
-    "translation" : "メモリマッチ"
+    "translation" : "記憶ゲーム"
   },
   "memoryMatchGame.description" : {
-    "translation" : "あなたの記憶をテストパターンゲーム。キューブを見て、慎重に耳を傾けます！"
+    "translation" : "あなたの記憶をテストするパターンゲーム。キューブを見て、慎重に聞いてください！"
   },
   "speedTap.title" : {
     "translation" : "クイックタップ"
@@ -70,7 +70,7 @@
     "translation" : "高速反射神経と鋭いウィットのカラーマッチングゲーム。"
   },
   "cozmoSays.title" : {
-    "translation" : "コズモは言います"
+    "translation" : "Cozmoトーク"
   },
   "cozmoSays.description" : {
     "translation" : "スパークと引き換えに、コズモは、単語やフレーズを言うしようとします！"
@@ -80,5 +80,8 @@
   },
   "codeLab.description" : {
     "translation" : "コズモをプログラムし、彼が行うことができます楽しいことを探求するためにあなたの創造性を使用してください！"
+  },
+  "activityView.title" : {
+    "translation" : "探検する"
   }
 }

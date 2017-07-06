@@ -13,7 +13,7 @@
     "translation" : "あなたはコズモに接続する必要があります"
   },
   "connectivity.moreInfo" : {
-    "translation" : "詳細"
+    "translation" : "詳細情報"
   },
   "connectivity.turnCozmoOn" : {
     "translation" : "コズモを入に"
@@ -39,26 +39,14 @@
   "connectivity.updatingFirmwareFooter" : {
     "translation" : "更新が完了した後は、コズモの無線LANに再接続する必要があります。"
   },
-  "connectivity.pairingPinTitle" : {
-    "translation" : "あなたのコズモに示すピンを入力してください"
-  },
-  "connectivity.invalidPinTitle" : {
-    "translation" : "無効なピン"
-  },
   "connectivity.updateApp" : {
     "translation" : "続行するにはあなたのコズモアプリを更新する必要があります"
   },
   "connectivity.pullTabsTitle" : {
-    "translation" : "あなたのパワーキューブのタブを引いて"
+    "translation" : "あなたのキューブのタブを引っ張りなさい"
   },
   "connectivity.enterDOB" : {
     "translation" : "あなたの誕生日を入力してください"
-  },
-  "connectivity.enterName" : {
-    "translation" : "あなたの最初の名前を入力します。"
-  },
-  "connectivity.pairingDesc" : {
-    "translation" : "新しいデバイスから接続する場合は、このステップが必要です"
   },
   "connectivity.cozmoSleepTitle" : {
     "translation" : "寝る"
@@ -67,7 +55,7 @@
     "translation" : "コズモはスリープ状態になるだろうとすぐに切断されます"
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "コズモは、バッテリーが不足しています"
+    "translation" : "Cozmoのバッテリー残量が少ない"
   },
   "connectivity.cozmoLowBatteryDesc" : {
     "translation" : "彼の充電器にコズモを配置してください。"
@@ -89,5 +77,14 @@
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "別のデバイスは、そのデバイスを取り外して、もう一度お試しくださいコズモに接続されています"
+  },
+  "needs.unconnected.needToConnect.title" : {
+    "translation" : "Cozmoが接続されていない"
+  },
+  "needs.unconnected.needToConnect.description" : {
+    "translation" : "Cozmoを気遣い、彼のニーズをチェックするには、まず彼に連絡しなければなりません。 "
+  },
+  "label.cancelText" : {
+    "translation" : "キャンセル"
   }
 }

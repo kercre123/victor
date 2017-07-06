@@ -6,26 +6,14 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "item.experience.singular" : {
-    "translation" : "Énergie"
-  },
-  "item.experience.plural" : {
-    "translation" : "Énergie"
-  },
   "item.treat.singular" : {
     "translation" : "Étincelle"
   },
   "item.treat.plural" : {
     "translation" : "Sparks"
   },
-  "item.genericHex.singular" : {
-    "translation" : "Bit"
-  },
-  "item.genericHex.plural" : {
-    "translation" : "Morceaux"
-  },
   "item.cube.singular" : {
-    "translation" : "cube"
+    "translation" : "Cube"
   },
   "item.cube.plural" : {
     "translation" : "Cubes"

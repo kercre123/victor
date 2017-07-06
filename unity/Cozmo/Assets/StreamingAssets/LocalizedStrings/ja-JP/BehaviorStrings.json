@@ -9,9 +9,6 @@
   "behavior.BringCubeToBeacon" : {
     "translation" : "コズモは彼のキューブを収集しています"
   },
-  "behavior.ExploreVisitPossibleMarker" : {
-    "translation" : "コズモは、彼の周辺を模索しています"
-  },
   "behavior.LookInPlaceMemoryMap" : {
     "translation" : "コズモは、彼の周辺を模索しています"
   },
@@ -25,28 +22,28 @@
     "translation" : "コズモは、彼の周辺を模索しています"
   },
   "behavior.KnockOverCubes" : {
-    "translation" : "コズモは、キューブの積み重ねの上にノックされ、"
+    "translation" : "コズモはキューブのスタックをノックしています"
   },
   "behavior.TrackLaser" : {
-    "translation" : "コズモは、レーザーを以下れます"
+    "translation" : "Cozmoはレーザーに従っています"
   },
   "behavior.PopAWheelie" : {
-    "translation" : "コズモはウイリーをポップされ、"
+    "translation" : "コズモはウィリーをポップしています"
   },
   "behavior.PounceOnMotion" : {
-    "translation" : "コズモは、あなたの指に襲い掛かることを望みます"
+    "translation" : "Cozmoはあなたの指を動かそうとしています"
   },
   "behavior.FistBump" : {
-    "translation" : "コズモは、バンプを拳たいです"
+    "translation" : "コズモは拳を拳にしたい"
   },
   "behavior.GuardDog" : {
-    "translation" : "コズモは彼のキューブを守っています"
+    "translation" : "Cozmoが彼のキューブを守っている"
   },
   "behavior.RollBlock" : {
-    "translation" : "コズモは、キューブを展開して"
+    "translation" : "Cozmoはキューブを転がしています"
   },
   "behavior.StackCube" : {
-    "translation" : "コズモは、キューブのスタックを作成しています"
+    "translation" : "Cozmoはキューブのスタックを作成しています"
   },
   "behavior.LookingForFaces" : {
     "translation" : "コズモは、周りを見ています"
@@ -79,7 +76,7 @@
     "translation" : ""
   },
   "behavior.ReactToShaken" : {
-    "translation" : "コズモは、めまいです"
+    "translation" : "コズモはめまいです"
   },
   "behavior.RequestToPlay" : {
     "translation" : "コズモは、ゲームを設定されています"
@@ -106,10 +103,10 @@
     "translation" : "コズモは目覚め"
   },
   "behavior.PickupCube" : {
-    "translation" : "コズモは、キューブを拾っています"
+    "translation" : "Cozmoがキューブをピックアップしています"
   },
   "behavior.Workout" : {
-    "translation" : "コズモは、トレーニングを行っています"
+    "translation" : "Cozmoはトレーニングをしています"
   },
   "behavior.CheckForStackAtInterval" : {
     "translation" : "コズモは、スタックを探しています"
@@ -124,21 +121,132 @@
     "translation" : "コズモだけ見ていることを確認します"
   },
   "behavior.BuildPyramid" : {
-    "translation" : "コズモはピラミッドを構築しています"
+    "translation" : "コズモはピラミッドを建てています"
   },
   "behavior.PrepareCubes" : {
-    "translation" : "コズモは彼のキューブを準備しています"
+    "translation" : "コズモがキューブを準備中"
   },
   "behavior.PeekAboo" : {
     "translation" : "コズモは、いないいないばあを再生したいです"
   },
   "behavior.LookInPlaceForCube" : {
-    "translation" : "コズモは、キューブを探しています"
+    "translation" : "Cozmoがキューブを探しています"
   },
   "behavior.Hiccup" : {
-    "translation" : "コズモはしゃっくりを持っています"
+    "translation" : "Cozmoには困惑があります"
   },
   "button.clearThisSlot" : {
     "translation" : "このスロットをクリア"
+  },
+  "behavior.singing.Camptown" : {
+    "translation" : "Cozmoが歌うCamptown Races"
+  },
+  "behavior.singing.ItsyBitsySpider" : {
+    "translation" : "CozmoはItsy Bitsy Spiderを歌います"
+  },
+  "behavior.singing.Beethovens5th" : {
+    "translation" : "コズモはベートーヴェンの第5回シンフォニー"
+  },
+  "behavior.singing.PopGoesTheWeasel" : {
+    "translation" : "Cozmoが歌っているPop Goes The Weasel"
+  },
+  "behavior.singing.RowYourBoat" : {
+    "translation" : "CozmoがRow Your Boatを歌っています"
+  },
+  "behavior.singing.PachebelCanon" : {
+    "translation" : "コズモはパッヘルベルのキヤノンを歌います"
+  },
+  "behavior.singing.OdeToJoy" : {
+    "translation" : "コズモはベートーヴェンの第9回シンフォニー"
+  },
+  "behavior.singing.TwinkleTwinkle" : {
+    "translation" : "Cozmoが歌うTwinkle Twinkle Little Star"
+  },
+  "behavior.singing.FrereJacques" : {
+    "translation" : "Cozmoがフレール・ジャックを歌います"
+  },
+  "behavior.singing.MaryHadALittleLamb" : {
+    "translation" : "CozmoはMaryを歌っていましたLittle Lamb"
+  },
+  "behavior.singing.TakeMeOutToTheBallgame" : {
+    "translation" : "CozmoはBallgameに私を連れて行く"
+  },
+  "behavior.singing.WilliamTell" : {
+    "translation" : "CozmoがWilliam Tell Overtureを歌っています"
+  },
+  "behavior.singing.YankeeDoodle" : {
+    "translation" : "CozmoがYankee Doodleを歌っています"
+  },
+  "behavior.singing.BeautifulDreamer" : {
+    "translation" : "Cozmoは美しい夢想家を歌っています"
+  },
+  "behavior.singing.MountainKing" : {
+    "translation" : "Cozmoは山の王のホールを歌っています"
+  },
+  "behavior.singing.TaRaRaBoom" : {
+    "translation" : "CozmoはTa Ra Ra Boom De Ayを歌います"
+  },
+  "behavior.singing.EntryOfTheGladiators" : {
+    "translation" : "コズモは「剣闘士たちの入り口」を歌っている"
+  },
+  "behavior.singing.HelloMyBaby" : {
+    "translation" : "Cozmoが歌っているHello My Baby"
+  },
+  "behavior.singing.TurkeyInTheStraw" : {
+    "translation" : "コズモはストローでトルコを歌っている"
+  },
+  "behavior.Dance" : {
+    "translation" : "コズモが踊っている"
+  },
+  "behavior.singing.LondonBridge" : {
+    "translation" : "Cozmoが歌っているLondon Bridge Is Falling Down"
+  },
+  "behavior.singing.CozMambo" : {
+    "translation" : "CozmoはCozmo Mamboを歌います"
+  },
+  "behavior.singing.Sakura" : {
+    "translation" : "コズモがサクラを歌っている"
+  },
+  "behavior.singing.MussIDenn" : {
+    "translation" : "CozmoはMuss I Dennを歌います"
+  },
+  "behavior.ReactToVoiceCommand" : {
+    "translation" : "Cozmoがあなたに耳を傾けています"
+  },
+  "behavior.VC_Refuse_Energy" : {
+    "translation" : "Cozmoは連邦準備制度に加入する必要があります"
+  },
+  "behavior.VC_Refuse_Repair" : {
+    "translation" : "Cozmoにはチューンアップが必要"
+  },
+  "behavior.VC_Refuse_Sparks" : {
+    "translation" : "あなたはスパークが足りません"
+  },
+  "behavior.Needs_MildLowEnergyRequest" : {
+    "translation" : "コズモは空腹感がある"
+  },
+  "behavior.Needs_MildLowPlayRequest" : {
+    "translation" : "コズモは孤独感があり、遊びたい"
+  },
+  "behavior.Needs_MildLowRepairRequest" : {
+    "translation" : "Cozmoはチューンアップが必要"
+  },
+  "behavior.Needs_SevereLowEnergyGetIn" : {
+    "translation" : "Cozmoはとても空腹感があります - 本当にエネルギーが必要です！"
+  },
+  "behavior.Needs_SevereLowEnergyRequest" : {
+    "translation" : "Cozmoはとても空腹感があります - 本当にエネルギーが必要です！"
+  },
+  "behavior.Needs_SevereLowPlayBored" : {
+    "translation" : "Cozmoはとても寂しく感じていて、彼は本当にプレーしたい！"
+  },
+  "behavior.Needs_SevereLowPlayRequest" : {
+    "translation" : "Cozmoは非常に寂しく感じています。彼は本当にプレーしたい！"
+  },
+  "behavior.Needs_SevereLowRepairGetIn" : {
+    "translation" : "Cozmoはうまく感じません - 彼は本当に調整する必要があります！"
+  },
+  "behavior.Needs_SevereLowRepairRequest" : {
+    "translation" : "Cozmoはうまく感じません - 彼は本当に調整する必要があります！"
   }
 }

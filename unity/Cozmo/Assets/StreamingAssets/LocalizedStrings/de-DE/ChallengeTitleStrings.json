@@ -19,10 +19,10 @@
     "translation" : "Bitte helfen Cozmo aufrecht und bereit zu spielen."
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "Cozmo ist schwindlig"
+    "translation" : "Cozmo ist schwindelig"
   },
   "challengeDetails.cozmoDizzy.description" : {
-    "translation" : "Warten Sie, bis Cozmo vom Sein schwindlig erholt hat und bereit ist, zu spielen."
+    "translation" : "Warten Sie, bis Cozmo sich von Schwindel erholt hat und bereit ist zu spielen."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
     "translation" : "Cozmo erwacht"
@@ -40,37 +40,37 @@
     "translation" : "Versuchen Sie Cozmo zu helfen, indem sie ihm den Kopf nach unten setzen."
   },
   "cubeSlap.title" : {
-    "translation" : "Bleib weg"
+    "translation" : "Fernhalten"
   },
   "cubeSlap.description" : {
     "translation" : "Verführen Cozmo auf einem Cube zu stürzen, dann ziehen sie weg, bevor er kann!"
   },
   "droneMode.title" : {
-    "translation" : "Explorer-Modus"
+    "translation" : "Erkundungsmodus"
   },
   "droneMode.description" : {
     "translation" : "Cozmo ermöglicht Ihnen, die Kontrolle zu übernehmen und die Welt durch seine Augen zu erkunden."
   },
   "faceEnrollment.title" : {
-    "translation" : "Treffen Sie Cozmo"
+    "translation" : "Kennenlernen"
   },
   "faceEnrollment.description" : {
     "translation" : "Einführung Cozmo, um neue Leute, damit er lernen kann, ihren Namen zu sagen."
   },
   "memoryMatchGame.title" : {
-    "translation" : "Memory Match"
+    "translation" : "Gedächtnisspiel"
   },
   "memoryMatchGame.description" : {
-    "translation" : "Ein Muster-Spiel, das Ihr Gedächtnis testet. Beobachten Sie die Würfel und hören Sie aufmerksam!"
+    "translation" : "Ein Musterspiel, das dein Gedächtnis testet. Beobachte die Cubes und höre genau zu!"
   },
   "speedTap.title" : {
-    "translation" : "Schnell Tap"
+    "translation" : "Geschwindigkeitsspiel"
   },
   "speedTap.description" : {
     "translation" : "Ein Farbabstimmung Spiel der schnellen Reflexe und scharfen Verstand."
   },
   "cozmoSays.title" : {
-    "translation" : "Cozmo Says"
+    "translation" : "Sprachausgabe"
   },
   "cozmoSays.description" : {
     "translation" : "Im Gegenzug für eine Spark, wird Cozmo versuchen, ein Wort oder einen Satz zu sagen!"
@@ -80,5 +80,8 @@
   },
   "codeLab.description" : {
     "translation" : "Nutzen Sie Ihre Kreativität Cozmo zu programmieren und erforschen Spaß Dinge, die er tun kann!"
+  },
+  "activityView.title" : {
+    "translation" : "Erforschen"
   }
 }

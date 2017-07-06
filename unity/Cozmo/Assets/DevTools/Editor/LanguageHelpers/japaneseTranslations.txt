@@ -1,46 +1,82 @@
+Cozmoがフレール・ジャックを歌います
 コズモは、彼の周辺を模索しています
+CozmoはMuss I Dennを歌います
+Cozmoはとても空腹感があります - 本当にエネルギーが必要です！
+CozmoはTa Ra Ra Boom De Ayを歌います
 コズモは、顔を見て
 コズモは、周りを見ています
 コズモは目覚め
+CozmoがRow Your Boatを歌っています
 コズモだけ見ていることを確認します
-コズモは彼のキューブを準備しています
-コズモは、キューブのスタックを作成しています
+コズモはベートーヴェンの第9回シンフォニー
+CozmoがYankee Doodleを歌っています
+コズモはベートーヴェンの第5回シンフォニー
+コズモがキューブを準備中
+コズモはストローでトルコを歌っている
+Cozmoはキューブのスタックを作成しています
 
+コズモがサクラを歌っている
+あなたはスパークが足りません
 このスロットをクリア
-コズモは彼のキューブを守っています
-コズモは、トレーニングを行っています
+Cozmoが彼のキューブを守っている
+Cozmoはトレーニングをしています
+コズモは空腹感がある
 コズモは退屈です
-コズモはしゃっくりを持っています
+Cozmoには困惑があります
  
-コズモは、レーザーを以下れます
+Cozmoはレーザーに従っています
 コズモは直立置くことがしたいです
  
-コズモはピラミッドを構築しています
+コズモはピラミッドを建てています
 
-コズモは、めまいです
-コズモは、キューブを展開して
-コズモは、キューブを拾っています
-コズモは、バンプを拳たいです
+コズモは孤独感があり、遊びたい
+コズモが踊っている
+コズモはめまいです
+Cozmoは美しい夢想家を歌っています
+Cozmoはキューブを転がしています
+Cozmoが歌っているLondon Bridge Is Falling Down
+Cozmoがキューブをピックアップしています
+CozmoはCozmo Mamboを歌います
+CozmoはItsy Bitsy Spiderを歌います
+コズモは拳を拳にしたい
+コズモは「剣闘士たちの入り口」を歌っている
+Cozmoがあなたに耳を傾けています
+CozmoがWilliam Tell Overtureを歌っています
 コズモは、ゲームを設定されています
+CozmoはMaryを歌っていましたLittle Lamb
+Cozmoは山の王のホールを歌っています
 
+Cozmoはうまく感じません - 彼は本当に調整する必要があります！
+コズモはパッヘルベルのキヤノンを歌います
 
+Cozmoは非常に寂しく感じています。彼は本当にプレーしたい！
 コズモは下に置くことを望ん
 
+Cozmoはとても空腹感があります - 本当にエネルギーが必要です！
 コズモは、いないいないばあを再生したいです
+Cozmoはとても寂しく感じていて、彼は本当にプレーしたい！
+CozmoはBallgameに私を連れて行く
+Cozmoが歌うCamptown Races
+Cozmoにはチューンアップが必要
 コズモは彼のキューブを収集しています
-コズモは、キューブの積み重ねの上にノックされ、
+コズモはキューブのスタックをノックしています
 コズモは、彼の周辺を模索しています
-コズモは、彼の周辺を模索しています
-コズモは、あなたの指に襲い掛かることを望みます
+Cozmoはうまく感じません - 彼は本当に調整する必要があります！
+Cozmoはチューンアップが必要
+Cozmoはあなたの指を動かそうとしています
 コズモはペットを見て
+Cozmoが歌っているHello My Baby
 
  
-コズモは、キューブを探しています
+Cozmoがキューブを探しています
 コズモは怒っています
+Cozmoは連邦準備制度に加入する必要があります
 コズモは、スタックを探しています
-コズモはウイリーをポップされ、
+コズモはウィリーをポップしています
 コズモは、彼の周辺を模索しています
+Cozmoが歌うTwinkle Twinkle Little Star
 コズモはスリープ状態になるだろう
+Cozmoが歌っているPop Goes The Weasel
 コズモは、周りを見ています
 コズモは、彼の周辺を模索しています
 設定
@@ -53,22 +89,23 @@
 デバイスID： {0}
 コズモをプログラムし、彼が行うことができます楽しいことを探求するためにあなたの創造性を使用してください！
 コズモが直立して再生する準備を手伝ってください。
-遠ざける
+キープアウェー
 どうするか教えて
 コズモが目覚めるれます
-メモリマッチ
-コズモは言います
-エクスプローラモード
-コズモはめまいとプレーする準備ができていることから回復するまで待ってください。
+記憶ゲーム
+Cozmoトーク
+リモコンモード
+Cozmoがめまいから回復し、プレイする準備が整うまで待ってください。
 コズモのニーズ{0}もっと{1}開始するには{2} 。
 コードラボ
 コズモの準備ができていません
 高速反射神経と鋭いウィットのカラーマッチングゲーム。
-ミートコズモ
+顔認識
 ノット・イナフキューブ
-あなたの記憶をテストパターンゲーム。キューブを見て、慎重に耳を傾けます！
+探検する
+あなたの記憶をテストするパターンゲーム。キューブを見て、慎重に聞いてください！
 彼に逆さまに置くことによってコズモを助けるようにしてください。
-コズモは、めまいです
+コズモはめまいです
 彼ができる前にそれを引き離した後、キューブに襲い掛かるためにコズモを誘惑！
 コズモは、あなたがコントロールを取ると、彼の目を通して世界を探索することができます。
 スパークと引き換えに、コズモは、単語やフレーズを言うしようとします！
@@ -76,115 +113,227 @@
 彼は自分の名前を言うことを学ぶことができるように、新しい人々にコズモを紹介します。
 コズモはしゃっくりを持っています
 コズモが目を覚ますと、彼の充電器のオフに駆動するまでお待ちください。
+Challenge 31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>
+Act Excited
+Tap Cube for Mystery Animation
+Act Like Winner
+Challenges
+Answer 9
+Try the challenge first, then tap NEXT to check your answer!
+Repeat Forever
+Answer 13
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 17: <span class='purple'>LIFT</span> a cube.
+Yes, Delete
+Try the challenge first, then tap NEXT to check your answer!
+Events
+Snore
+Try the challenge first, then tap NEXT to check your answer!
+Workout with Cube
+Try the challenge first, then tap NEXT to check your answer!
+Act Disappointed
+Challenge 1: <span class='blue'>DRIVE FORWARD</span> 4.
+Try the challenge first, then tap NEXT to check your answer!
+No, Cancel
+Act Like Dog
+Answer 19
+Always place a green flag BLOCK first. That way, the green flag BUTTON starts your program!
+Say
+{0} of {1}
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 26: Stack 2 cubes.
+Answer 18
+Act Frustrated
+Answer 32
+Answer 25
+Cancel
+Light Backpack
+Answer 5
+Challenge 24: <span class='purple'>SAY,</span> "Smile!" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>
+Code Lab Tutorial
+Wait to See Smile
+Challenge 18: Workout with cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>
+Challenge 23: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>
+Wait to See Face
+Back
+Try the challenge first, then tap NEXT to check your answer!
+Drive
+Challenge 19: <span class='blue'>DRIVE FAST</span> in a square.
+Challenge 28: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around.
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 27: Stack 2 cubes, then tip them over.
+Challenge 16: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>
+Push Cube
+Act Happy
+Turn Right
+Tutorial
+Challenge 15: Push a cube.
+Challenge 3: <span class='blue'>DRIVE</span> in a square.
+Act Surprised
+Try the challenge first, then tap NEXT to check your answer!
+Answer 21
+Actions
+Try the challenge first, then tap NEXT to check your answer!
+Drag code blocks together to make a program.
+Drive Backward Fast
+Answer 20
+Rainbow Backpack
+Answer 15
+Challenge 2: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='violet'>SNEEZE.</span>
+Drive Forward Fast
+Drive In Square
+Answer 29
+Wait for Cube Tap
+Try the challenge first, then tap NEXT to check your answer!
+Answer 7
+My Project
+Answer 22
+Challenge 10: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>
+Act Chatty
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around.
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 9: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>
+Intruder Alarm!
+Move Lift
+Challenge 7: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color.
+Try the challenge first, then tap NEXT to check your answer!
+Quit
+Try the challenge first, then tap NEXT to check your answer!
+Peekaboo
+Challenge 5: <span class='purple'>SAY</span> "Hi."
+Answer 1
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Delete \'{0}\'?
+Drive Backward
+Answer 2
+Challenge 14: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>
+Personal
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Quit Activity?
+Challenge 8: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> "I see you."
+Answer 26
+Answer 30
+Answer 14
+Challenge 22: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>
+Challenge 13: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>
+Start Program Here
+Answer 10
+Are you sure you want to delete this project?
+Try the challenge first, then tap NEXT to check your answer!
+Answer 6
+Try the challenge first, then tap NEXT to check your answer!
+Drive In Square: Advanced
+Challenge 4: <span class='blue'>DRIVE BACKWARD</span> in a square.
+Mystery Animation
+Animations
+Challenge 21: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>
+Answer 12
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 25: Play Peekaboo. (<span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span> <span class='orange'>REPEAT FOREVER.</span>)
+Think Hard
+Act Sad
+Challenge 12: <span class='yellow'>WHEN CUBE IS TAPPED, </span>do <span class='violet'>MYSTERY ANIMATION.</span>
+Answer 11
+Wait to See Frown
+Answer 17
+Challenge 11: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color.
+Answer 27
+Try the challenge first, then tap NEXT to check your answer!
+Challenge 30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>
+Cozmo Code Lab
+Hi
+Try the challenge first, then tap NEXT to check your answer!
+Try the challenge first, then tap NEXT to check your answer!
+Answer 4
+Turn Left
+Try the challenge first, then tap NEXT to check your answer!
+Sneeze
+New Project
+Answer 23
+Stop Program
+Driving and Sneezing
+Repeat
+Challenge 6: <span class='purple'>LIGHT BACKPACK</span> green.
+Drive to Cube
+Try the challenge first, then tap NEXT to check your answer!
+Control
+Answer 8
+Code Lab lets you program Cozmo.
+Next
+Answer 31
+Act Bored
+Act Like Cat
+Drive Forward
+Wait to See Cube
+Answer 3
+Challenge 20: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks.
+Answer 16
+Challenge 32: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> "Intruder!" and blink <span class='purple'>BACKPACK</span> off.
+Answer 28
+Sample
+You can tap a code block to see what it does.
+Turn left
+Done
+Move Head
+Answer 24
 彼の充電器にコズモを配置してください。
 あなたのコズモに接続しています...
 あなたの接続を保護します...
 WiFiの設定で接続します
-無効なピン
 キューブは動作していませんか？
 寝る
-詳細
+詳細情報
 コズモはスリープ状態になるだろうとすぐに切断されます
 あなたのコズモを更新しています...
 続行するにはあなたのコズモアプリを更新する必要があります
-あなたの最初の名前を入力します。
 別のデバイスは、そのデバイスを取り外して、もう一度お試しくださいコズモに接続されています
-彼の充電器にコズモを保管してください
-あなたのパワーキューブのタブを引いて
-コズモは、バッテリーが不足しています
+Cozmoを気遣い、彼のニーズをチェックするには、まず彼に連絡しなければなりません。 
+彼の充電器にコズモを配置
+あなたのキューブのタブを引っ張りなさい
+Cozmoのバッテリー残量が少ない
 彼の充電器にコズモを取り外して交換
-あなたのコズモに示すピンを入力してください
 更新が完了した後は、コズモの無線LANに再接続する必要があります。
+Cozmoが接続されていない
 コズモを目覚めます...
+キャンセル
 あなたの誕生日を入力してください
 コズモの検索...
-新しいデバイスから接続する場合は、このステップが必要です
 助けを得ます
 セットアップ中に、彼の充電器にコズモを残してください
 あなたはコズモに接続する必要があります
 コズモを入に
-彼の充電器にコズモを配置
+彼の充電器にコズモを保管してください
 カバーを取り付け、軽く締め
 新鮮なN個のセルとバッテリーを交換
 次は、あなたのキューブのバッテリーを変更してみましょう
-コズモはパワーキューブのすべてを聞くことはできません。彼の近くに配置します。
+Cozmoはすべてのキューブを聞くことができません。それらを彼の近くに置きなさい。
 新しい電池の正（+）終わるを挿入
 それでも問題が解決しない場合は[次へ]をタップし
 カバーはキューブと一致していることを確認します。今では点灯します！
 まず、最新の情報に更新キューブをタップし、次に[設定]
 それを逆さまに置き、カバーを外し
-コズモのロックを解除<b>クイックタップ</b>アプリ
-の二つのゲームをプレイ<b>クイックタップ</b>
-のゲームをプレイ<b>クイックタップ</b> 2色モードで
-スパーク<b>スタックひっくり返します</b>アップグレード
-{0} / {1}コンプリート
-スパーク<b>ウイリーポップ</b>アップグレード
-コズモのロックを解除<b>キューブとワークアウト</b>アップグレード
-スパーク<b>スタックキューブ</b>アップグレード
-使用<b>コズモは言います</b>アプリ
-のゲームをプレイ<b>クイックタップ</b> 4色モードで
-のゲームに勝ちます<b>遠ざける</b> 5~0
-コズモのロックを解除<b>遠ざける</b>アプリ
-のゲームに勝ちます<b>クイックタップ</b>より良いよりも75％の精度で
-スパーク<b>キューブとワークアウト</b>アップグレード
-のゲームに勝ちます<b>クイックタップ</b>より良好な50％の精度で
-アンロック<b>コズモは言います</b>アプリ
-30分間コズモと遊びます
-のゲームに勝ちます<b>メモリマッチ</b>対モードで
-コズモのロックを解除<b>メモリマッチ</b>アプリ
-のゲームに勝ちます<b>遠ざける</b> 4 4に縛られた後
-のゲームに勝ちます<b>クイックタップ</b> 2色モードで
-のゲームに勝ちます<b>クイックタップ</b>三色のモードで
-のゲームに勝ちます<b>クイックタップ</b> 4色モードで
-のゲームに勝ちます<b>クイックタップ</b>
-顔を更新<b>ミートコズモ</b>アプリ
-で10光パターンを完了<b>メモリマッチ</b>ソロモード
-のゲームをプレイ<b>メモリマッチ</b>ソロモードで
-コズモのロックを解除<b>キューブをピックアップ</b>アップグレード
-のゲームをプレイ<b>メモリマッチ</b>対モードで
-スパーク<b>ピラミッドを構築</b>アップグレード
-コズモのロックを解除<b>スタックひっくり返します</b>アップグレード
-スパーク<b>キューブをピックアップ</b>アップグレード
-のゲームに勝ちます<b>遠ざける</b>
-コズモのロックを解除<b>スタックキューブ</b>アップグレード
-コズモのロックを解除<b>キューブを転がし</b>アップグレード
-で新しい人を紹介します<b>ミートコズモ</b>アプリ
-コズモのロックを解除<b>ウイリーポップ</b>アップグレード
-勝つ<b>メモリマッチ</b>対モードでない命が失われませんで
-コズモのロックを解除<b>エクスプローラモード</b>アプリ
-の二つのゲームをプレイ<b>遠ざける</b>
-コズモ年代にソロモードのロックを解除<b>メモリマッチ</b>アプリ
-スパーク<b>キューブを転がし</b>アップグレード
-5光パターンを完了<b>メモリマッチ</b>ソロモード
-コズモのロックを解除<b>指に襲い掛かります</b>アップグレード
-に2色のゲームモードのロックを解除<b>クイックタップ</b>
-コズモのロックを解除<b>指に襲い掛かります</b>アップグレード
-スパーク<b>指に襲い掛かります</b>アップグレード
-のラウンドを獲得<b>クイックタップ</b> 5~0
-の4色のゲームモードのロックを解除<b>クイックタップ</b>
-8光パターンを完了<b>メモリマッチ</b>ソロモード
-のゲームをプレイ<b>クイックタップ</b>三色のモードで
-あなたの最初のゲームをプレイ<b>クイックタップ</b>
-コズモのロックを解除<b>ピラミッドを構築</b>アップグレード
-のゲームに勝ちます<b>クイックタップ</b> 100％の精度で
-コズモが10分間中断せず遊んでみよう
-演奏する<b>エクスプローラモード</b> 10分間のApp
-の3色のゲームモードのロックを解除<b>クイックタップ</b>
-とコズモあなたの名前を教えます<b>ミートコズモ</b>アプリ
-のラウンドを獲得<b>クイックタップ</b> 4 4に縛られた後
 スキャン{0}再び
 今日
 すべての変更が保存されました。
 削除
+Cozmoには1つの顔しか見えないようにする
 コズモはトラブルあなたを見てをしています
-日前
+{0}前日
 削除{0} ？
 まっすぐにコズモを見て、まだホールド
 コズモがあなたを認識するように教える、または他の誰か！
 コズモはあなたの顔を認識するように学習していると、彼はあなたを見ているときに自分の名前を言うかもしれません。より多くの友人に彼を紹介するために再び会うコズモを使用してください。
 最終スキャン：
 コズモがより簡単にあなたを認識しやすく
-数日前
+コズモは準備中です...
+{0}数日前
 あなたの最初の名前を入力します。
 コズモが完了すると、彼は自分の名前を言いますよ
 あなたは明るい部屋にいるとコズモの顔と整合していることを確認します。コズモは平らで安定した面にする必要があります。
@@ -223,13 +372,9 @@ WiFiの設定で接続します
 ビット
 エネルギー
 コズモと彼のカメラは、安心・安全です。いいえ画像や動画は、これまでにオンラインまたはオフライン、保存されません。コズモは、あなたが承認デバイスに話をします。
-ビット
-ビット
-キューブ
 スパークス
-エネルギー
 キューブ
-エネルギー
+キューブ
 スパーク
 ドロップキューブ
 ロックされました！
@@ -237,10 +382,11 @@ WiFiの設定で接続します
 さらに離れキューブを移動します。
 コズモの頭を移動したり、リフトアップするためにドラッグして、ダウン
 あなたが一緒にプレイしたい点滅キューブをタップします
+Cozmoは彼のキューブを見つけることができません！
 単語や語句を入力し、コズモがそれを言うのを聞きます
 点滅キューブをタップします
 パターンが一致したときに最初にあなたのキューブをタップしますが、キューブは現在、1または2のいずれかの色を有することができます。
-コズモアプリ
+ドラッグアンド前方または後方コズモを移動するために保持します。停止するように行ってみましょう。
 コズモは移動しました！
 キューブ切断
 アウトラインは、選択したオブジェクトの周囲に表示されます。
@@ -259,11 +405,11 @@ WiFiの設定で接続します
 聴く...
 安全なプレイ：
 クイックタップのロックを解除することによってロックを解除します。
-あなたのスコア
+プレーヤースコア
 {2} ： {3} - {4} ： {5} - {0} ： {1}
 彼はあなたのためにあまりにも高速でした！
 ゲームタイプを選択します
-充電器
+チャージャー
 コズモのターン
 - よく明るい空間で屋内探検 - 平らな面にドライブ - エッジの脱落にご注意ください - 最高の経験のためコズモの近くに滞在
 暗視装置オンまたはオフを切り替えるにはタップ
@@ -278,9 +424,10 @@ WiFiの設定で接続します
 あなたとコズモが交代します。キューブのフラッシュのように、パターンを覚えます。そして、それを繰り返すためにキューブをタップします。
 ロールキューブ
 いう
-パワーキューブ
+キューブ
 <b>勝者： </b>最高{0}ラウンド
 遊び方：
+ゆっくりと注意深くCozmoのキューブをすべて目を覚ますことなく上下逆さまにしてみてください。慎重に...コスモはキューブが動いている時を感知することができます！
 挨拶します
 あなたはコズモのためにあまりにも速かったです！
 パターンを再生します
@@ -288,10 +435,10 @@ WiFiの設定で接続します
 ペット
 キューブを待っています...
 三色
-ドラッグアンド前方または後方コズモを移動するために保持します。停止するように行ってみましょう。
 パターンの長さ： {0}
 四色
 コズモ対人間
+あなた勝つ！
 あなたVSコズモ
 よくやった！
 コズモ勝利します！
@@ -322,6 +469,8 @@ WiFiの設定で接続します
 コズモが移動していると、ゲームを続行することはできません。
 コズモは、オブジェクトを選択すると、あなたはここでそれを見ることができます
 ゲームオーバー
+コズモはキュービッドを守っている
+Cozmoはキューブを見つけるのが難しい。 Cozmoがそれを見ることができることを確認してください。
 リフトキューブ
 円形{0:N0}
 ラウンドを取ります{0} ！
@@ -346,47 +495,76 @@ VS
 コズモは、キューブをチェックしています...
 センターキューブを見に待っています...
 コズモが見ている間あなたが再生されます。キューブが点滅するように、パターンを記憶し、それを繰り返します。
+SCAN COZMO
+矢印パターンを再作成するには、右のボタンを使用します。それからSENDをタップします。
+頭は調整が必要
+チューンアップ
+頭を調整する...
+ヘッド調整済み
+リフト校正済み
+Cozmoは活力を得て明るみを取り戻すために給餌する必要があります。
+Cozmoは完全に調整されています！
+リフトのキャリブレーション...
+トレッドの位置合わせ
+すべてのライトが明るく輝くまでキューブを振ってください。
+キューブをCozmoの前に置きます。
+Cozmoは完全に調整されています！
+青を脈打つキューブを掴む。
+完了
+Cozmoは完全に供給されています！
+フィードCozmo
+持続する
+発見
+Cozmoは最適化され、移動中に調整される必要があります。
+トレッドを整列...
+Cozmoを調整する
+プレイ
+リフトには較正が必要です
+SEND
+トレッドにはアライメントが必要です
+チャージ
+チューンアップするパートをタップします。
 充電器に彼を保ちます
 コズモは準備ができています！
+Cozmoがあなたに会いたいです！
 ライトはアップ側！
-あなたはコズモのエモーションチップを請求しました！それは彼が特別で生きて作るものです
-あなたはコズモと遊ぶより、より速くそれが充電されます
+<b> Cozmoは給餌する必要があります。 </b>彼の背中の青い光は、彼の給餌ニーズが低いことを意味する。
+<b> Cozmoは彼に必要なものを教えてくれます。 </b>今、彼の背中の赤い光は、彼が調整したいということを意味します。
 コズモは、思いやりのある所有者が慎重に指示に従ってください必要がある非常に特別なロボットです！
 作ります<b>すばらしいです</b>遊び場 
-コズモは、世界を探検キューブとの相互作用、およびちょうどぶらぶら時間を過ごすのが大好き！あなたはここで、コズモが何をしているか見ることができます
-コズモは転倒しないようにしようとしますが、ちょうどペットのように、彼はあなたの助けが必要になる場合があります。
 左秒...
-今コズモは、キューブをスタックすることができます！彼は今彼の新しいスキルを試して見てください...
-それでは、スタックキューブのロックを解除してみましょうコズモに新しいスキルや能力を与えるためにアップグレードのロックを解除！
+<b> Cozmoには必要があります。 </b>彼を毎日気遣い、彼を幸せに保ちます。
+よく明るい部屋で清潔、オープンテーブルの上にコズモを入れて
 コズモはプレーする準備ができています。完全に彼のバッテリーを充電するには、別の7分間の充電器に彼を保つことができます。
-<b>すばらしいです！ </b>キューブが近すぎる場合はちょうどあなたのように、それが参照するのは難しいです。
+<b>すばらしいです！ </b>キューブが近すぎると、Cozmoがそれを見るのは難しいです。
 コズモは自分でキューブを調べてみましょう
-それは変わります<color=cyan>青</color>彼はそれを見ることができるとき
-あなたはこれらの完了目標の新しいセットを取得します毎日あなたのコズモを改善する最も簡単な方法です！
-よくやった！コズモはプレーする準備ができています！
-...多くを得るためにそれを開きます<color=#fe8f00ff>ビット</color> ＆ <color=#11a2f0ff>スパークス</color> ！
+それは変わるでしょう<color=#00FFFF>青</color>彼がそれを見ることができるとき
+時計Cozmoキューブロール...
+よくやった！
 コズモ安全を保ちます
 <b>ようこそ！ </b>
+<b> Cozmoには必要があります。 </b>彼を毎日気遣い、彼を幸せに保ちます。 Cozmoのアプリは少し違って見えるかもしれませんが、獲得したロックされていないゲーム、アップグレード、またはスパークは保管しておきます。
 <b>チュートリアル一時停止</b>コズモは安定した、平らな表面上にあるように、自分で探索する必要があります。
+コズモは餌を与えたい...
 ウォッチコズモは生命に来ます
-つかいます<color=#fe8f00ff>ビット</color>新しいアップグレードのロックを解除するには
-チップが完全に充電されると...
+Cozmoのニーズを分析する...
 このコズモはすでにチュートリアルを完了したものです。あなたはそれをスキップする、またはそれを再度起動しますか？
 コズモが充電されます
-コズモの準備が整い、遊ぶのを待っています
-コズモの前にパワーキューブを配置
+Cozmoの前に立方体を置く
 彼は続行する準備ができているとき、彼はあなたを教えてあげましょう...
-つかいます<color=#11a2f0ff>スパークス</color>トリックを実行するためにコズモを依頼します
-コズモアプリは、あなたがコズモと遊ぶことができるゲーム＆アクティビティです
+<b>ボーナストークンを獲得しました。 </b>トークンは、Sparksや新しい能力のような報酬で満たされたBonus Boxのロックを解除します。
 充電器に戻ってコズモを入れてください
-よく明るい部屋で清潔、オープンテーブルの上にコズモを入れて
+コズモは転倒しないようにしようとしますが、ちょうどペットのように、彼はあなたの助けが必要になる場合があります。
+ディスカバーアクティビティは特別で、Cozmo's NeedsやSparksの費用には影響しません。
 <b>問題がありますか？ </b>コズモはフラット、きれいなテーブルの上にあることを確認します。コズモは、ガラス表面上に苦労することができます。それでも問題が解決しない場合は、訪問<b> support.anki.com </b>別のデバイス上。
-あなたはコズモでゲームをプレイしていないときは、後ろに座ると、彼は世界を探検見るのは素晴らしいことです。
+あなたはCozmoをさせるとき、彼はFreeplayで自分自身で世界を探検するのが大好きです。彼は自動的にゲームを要求し、トリックを行い、スパークを得ることがあります。
 あなたがする必要がある場合には、コズモを拾うことができますが、彼は自分で駆動することができたときに彼が最も幸せです。
-遊ぼう
 あなたはコズモに接続している、と彼はほとんど準備ができています！彼はただ充電する瞬間を必要とします。
-コズモは、あなたがロックを解除することができアップグレードが付属しています。一人一人が彼に彼が自分でやるという新たな機能を提供します。
+コズモは遊びたい...
+Cozmoは配慮している所有者が必要です。毎日彼のニーズに気を配り、彼は新しいゲームと能力を解放するでしょう。
 彼は充電完了だ後は、コズモは生命に来て、彼の新しい家について学びましょう。
+コズモは調整されたい...
+<b>コズモはプレーする必要があります。 </b>プレイの必要性を満たすために毎日ボーナストークンを獲得します。
 キューブは移動しました！
 個人情報保護方針
 対にメモリマッチのゲームをプレイしましたモード
@@ -437,7 +615,7 @@ VS
 以下のために接続されました： {0}
 コズモを復元しますか？
 液体金属
-中
+MED
 ロー
 サポート
 いいえメッセージが受信されません
@@ -449,7 +627,9 @@ VS
 ボディHWバージョン： {0}
 警告：このオプションは、バックアップからコズモを復元し、ロボットにゲームの進行に置き換えられます。あなたは新しいものを使用してコズモを交換した場合は、このオプションを使用します。
 消します
+Cozmo SDKについては、次をご覧ください。
 あなたのコズモを復元しています...
+一般設定
 コズモを消去？
 無効にするSDK
 以下のためのSDKモードの場合： {0}
@@ -484,6 +664,7 @@ support.anki.com
 コズモシリアル： {0}
 （キューブを見つけるためにタップ）
 SDKモードをアクティブに？
+go.anki.com/cozmo-app-sdk
 約
 （あなたのコズモにこのプロファイルからアンロックを再適用されます）
 いいえSDKプログラムが動作していません
@@ -491,155 +672,134 @@ SDKモードをアクティブに？
 コマンド： {0}
 サポート問い合わせ先
 アプリの実行ID： {0}
-コズモSDKの訪問について学ぶために：go.anki.com/cozmo-app-sdk
 最終コマンド： {0:n1}秒前（アイドル？）
-開くにはTAP
 に：
 コズモを取得
 コズモは、再生したいです
 コズモに次の各キューブの1を入れて、「更新」をタップします。コズモは、彼が最も近いと考えて3に接続します。
 はい
-フレンドボーナス
 利用規約
-{0}
+いいえ、結構です
 いいですね
 あなたは音を聞きましたか？
 バック
-いいえ
-完成目標：
+はい、お願いします
+NO
 コズモID： {0}
-コズモ
+Cozmo
 開始
 終了する
 スキップ
-アップグレード
-コズモトラブル見をしています
-コズモと遊ん日：
-キャンセル
+明るい光と薄暗いスペースを避けます
+Cozmoが見苦しいです！
 はい
 次
 個人情報保護方針
 再びプレー
+Temp
 持続する
 終わりました
 リフレッシュ
-感情チップは荷電します！
 プレーヤー
-繰り返しタップします！
 {0}{1}必須
 さぁ、始めよう
-利用可能！
 滞在きっかけ
-立ち止まるな！
 音量チェック
-最長デイリーストリーク：
 日{0}
 開始
-明るい光と薄暗いスペースを避けます
 {0} {1}
 お使いのデバイスのサウンドがオンになっていることを確認してください
 リプレイ
 「スタート」をタップすると、あなたは以下の条件に同意します：
-今日の目標
 閉じる
 残します
-：コズモの能力を拡大
-ほとんどそこに！
+ビッグブレイン。より大きな人格。
+{0}
 押したまま{0}確認するために
 デバイスID： {0}
 待っています...
 合計スパークス： {0}
 遊びます
 接続します
-バツ{0}
-{0} / {1}
-きみの{0} ： {1}
+キャンセル
+{0}の{1}
 {0} ！
 + {0}
-アクティブプレーヤー：
-興奮
-ノベルティ
-ボンド
-デフォルト
-遠ざける
-このアップグレードにより、コズモはパワーキューブのスタックを見て、任意の時間が、彼はそれをひっくり返すことを決定することができます。
+トリックのためにコスモを尋ねる
+ゲームのためにコスモを尋ねる
+リスト能力
+リスト能力の説明FPO
+プレイ
+使用可能なスパーク
+キープアウェー
 キューブをピックアップするコズモを依頼するタップ
 コズモは右サイドアップであるとキューブを好みます。このアップグレードは、彼らが彼らの側にある場合は特に、彼はキューブをロールバックすることができます。
-十分ではないビット
-キューブを転がし
+ドリブル
 コズモロールに彼が見た最初のキューブを見ます
 キューブがアップ彼らのライトで直立している場合、コズモは、より迅速に構築することができます。
-拳バンプ
+グータッチ
 コズモが転倒するキューブのスタックを構築します
-ピラミッドを構築
-ロック
-キューブをピックアップ
-このアップグレードにより、コズモは2パワーキューブのスタックを作成する能力を得ます。
+彼が行われる前にあなたがままにしておくと、コズモはもはやきっかけません。
+このアップグレードにより、コズモはエクスプローラモードで彼を操縦することができます。
+キューブを拾う
+このアップグレードにより、Cozmoは2つのキューブのスタックを作成できます。
 ピラミッドを構築するためにコズモを依頼するタップ
-つかいます{0}{1}ロックを解除します
-エクスプローラモード
+指に襲い掛かるためにコズモを依頼するタップ
+リモコンモード
 このアップグレードにより、コズモはメモリマッチゲームをプレイする方法を学習します。
 でもロボットが行使する必要があります！このアップグレードにより、コズモは上の形に滞在するキューブでワークアウトに学習します。
-スタックをひっくり返すためにコズモを依頼するタップ
-毎日の目標を完了することによって、よりを獲得
+フリープレイとボーナスボックスでさらに獲得
 コズモが指など、彼の前に地面に動きを見て、このアップグレード、で、彼はふざけて、それに襲い掛かるでしょう！
 ウイリーをポップするコズモを依頼するタップ
 ウォッチコズモは、キューブを拾います
-クイックタップ
 ウォッチコズモはキューブからウイリーをポップ
-ミートコズモ
+顔認識
 キューブをロールコズモを依頼するタップ
-コズモがきっかけです！
 このアップグレードにより、コズモは3直立キューブのうちピラミッドを構築する能力を得ます。
 スパークス
 彼は準備ができたとき、拳はコズモバンプ
-スタックキューブ
-利用可能：
-コズモは新しいトリックを獲得します！このアップグレードで、彼は自分自身を後押しするためにキューブを使用して、ウイリーを開くことができます。
+このアップグレードでは、Cozmoはキューブのスタックを見るたびに、それらをノックすることにします。
 近日公開！
-指に襲い掛かるためにコズモを依頼するタップ
-指に襲い掛かります
-アンロック
-コズモは言います
+コズモは新しいトリックを獲得します！このアップグレードで、彼は自分自身を後押しするためにキューブを使用して、ウイリーを開くことができます。
+指にアタック
+キューブのタイトルを収集<placeholder>
+Cozmoトーク
 いないいないばあを再生するにはコズモを依頼するタップ
-毎日の目標を完了することによって、よりを獲得
+要件が満たされない
 いないいないばあ
-コードラボの説明！
+このアップグレードにより、Cozmoはキューブをピックアップして運ぶことができます。
 十分ではありませんスパークス
 スパーク
-このアップグレードにより、コズモはパワーキューブをピックアップし、それらを持ち歩くする能力を得ます。
-スタックひっくり返します
-メモリマッチ
+キューブに突撃
+記憶ゲーム
 2キューブを積み重ねることコズモを依頼するタップ
-ウイリーポップ
+ウィーリー
 キューブの説明を収集<placeholder>
+コードラボにはAndroidが必要です{0}またはより新しい。
 コズモスパーク
 コズモは、彼が見ている任意の動きに襲い掛かるだろう
-????
-あなたがロックを解除する必要があります{0}{1}最初！
+ロックされた能力
+クイックタップ
 キューブが直立していることを確認します
 いないいないばあは、私はあなたを参照してください！このアップグレードでは、あなたの手の後ろにあなたの顔を隠すことで、コズモでいないいないばあを果たし、その後、彼を驚かせるもう一度あなたの顔を示しています。
-彼が行われる前にあなたがままにしておくと、コズモはもはやきっかけません。
 まずいないいないばあそして、あなたの顔を隠します！
-すぐに来るより多くの偉大なアップグレード！
+オープニングボーナスボックスは時々新しい能力を解放する！
 キューブスパークボタンを収集<placeholder>
 コズモがきっかけされています。
-このアップグレードにより、コズモはエクスプローラモードで彼を操縦することができます。
-アップグレード
-アプリ
+スタックをひっくり返すためにコズモを依頼するタップ
+コズモがきっかけです！
+キューブを重ねる
 このアップグレードにより、コズモはキープアウエー、反射神経と反応時間のゲームをプレイする方法を学習します。
 あなたは彼の誇りに思っていることコズモを表示したいですか？彼は少し拳バンプ与えます！このアップグレードにより、コズモは、空気中の彼のリフトを保持し、あなたがそれをバンプするのを待ちます。
 コードラボ
 このアップグレードにより、コズモは顔を覚えていると名前を話すことを学習します。ミートコズモ活動でこれを見つけます。
 このアップグレードにより、コズモはゲームクイックタップを再生する方法を学習します。時間が経つにつれて、彼のスキルが改善されます！
-さらにお得なアップグレード、アプリ、および楽しいコズモの機能のために戻って確認してください
+オープニングボーナスボックスは、新しい能力を解き放つ可能性があります！
 バンプの拳するコズモを依頼するタップ
 ウォッチコズモは、キューブやワークアウトを見つけます
-あなたがロックを解除することができます前に、より多くのアップグレードのロックを解除{0} 。
-キューブとのワークアウト
+キューブでエクササイズ
 ワークアウトにコズモを依頼するタップ
-キューブのタイトルを収集<placeholder>
-十分ではない{0}
+ピラミッド作り
 ウォッチコズモは3キューブの外にピラミッドを構築します
 キューブスパーク状態を収集<placeholder>
 ウォッチコズモは、キューブのスタックを作成します

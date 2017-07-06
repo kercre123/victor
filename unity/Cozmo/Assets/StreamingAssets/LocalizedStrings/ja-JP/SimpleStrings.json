@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "name.cozmo" : {
-    "translation" : "コズモ"
+    "translation" : "Cozmo"
   },
   "name.player" : {
     "translation" : "プレーヤー"
@@ -21,8 +21,14 @@
   "button.yes" : {
     "translation" : "はい"
   },
+  "button.yesPlease" : {
+    "translation" : "はい、お願いします"
+  },
   "button.no" : {
-    "translation" : "いいえ"
+    "translation" : "NO"
+  },
+  "button.noThankYou" : {
+    "translation" : "いいえ、結構です"
   },
   "button.continue" : {
     "translation" : "持続する"
@@ -63,15 +69,6 @@
   "label.plusCount" : {
     "translation" : "+ {0}"
   },
-  "label.xCount" : {
-    "translation" : "バツ{0}"
-  },
-  "label.totalCount" : {
-    "translation" : "きみの{0} ： {1}"
-  },
-  "label.fractionCount" : {
-    "translation" : "{0} / {1}"
-  },
   "label.dayCount" : {
     "translation" : "日{0}"
   },
@@ -84,38 +81,14 @@
   "requestGame.description" : {
     "translation" : "コズモは、再生したいです"
   },
-  "dailyGoal.title" : {
-    "translation" : "今日の目標"
-  },
-  "dailyGoal.FriendBonus" : {
-    "translation" : "フレンドボーナス"
-  },
   "label.connect" : {
     "translation" : "接続します"
   },
   "label.start" : {
     "translation" : "開始"
   },
-  "cozmoTab.title" : {
-    "translation" : "アップグレード"
-  },
-  "cozmoTab.subTitle" : {
-    "translation" : "：コズモの能力を拡大"
-  },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0}{1}必須"
-  },
-  "loot.Start" : {
-    "translation" : "繰り返しタップします！"
-  },
-  "loot.Mid" : {
-    "translation" : "立ち止まるな！"
-  },
-  "loot.Almost" : {
-    "translation" : "ほとんどそこに！"
-  },
-  "loot.Announce" : {
-    "translation" : "感情チップは荷電します！"
   },
   "label.emptyWithArg" : {
     "translation" : "{0}"
@@ -138,9 +111,6 @@
   "refreshCubesPrompt.description" : {
     "translation" : "コズモに次の各キューブの1を入れて、「更新」をタップします。コズモは、彼が最も近いと考えて3に接続します。"
   },
-  "label.available" : {
-    "translation" : "利用可能！"
-  },
   "button.replay" : {
     "translation" : "リプレイ"
   },
@@ -154,7 +124,7 @@
     "translation" : "あなたは音を聞きましたか？"
   },
   "error.badLight.Top" : {
-    "translation" : "コズモトラブル見をしています"
+    "translation" : "Cozmoが見苦しいです！"
   },
   "error.badLight.Bottom" : {
     "translation" : "明るい光と薄暗いスペースを避けます"
@@ -168,23 +138,8 @@
   "label.privacyPolicy" : {
     "translation" : "個人情報保護方針"
   },
-  "button.openEnvelope" : {
-    "translation" : "開くにはTAP"
-  },
   "label.pressAndHoldInstruction" : {
     "translation" : "押したまま{0}確認するために"
-  },
-  "label.activePlayer" : {
-    "translation" : "アクティブプレーヤー："
-  },
-  "label.streaksCount" : {
-    "translation" : "最長デイリーストリーク："
-  },
-  "label.goalsCompleted" : {
-    "translation" : "完成目標："
-  },
-  "label.daysWithCozmo" : {
-    "translation" : "コズモと遊ん日："
   },
   "label.termsOfUse" : {
     "translation" : "利用規約"
@@ -197,5 +152,14 @@
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
+  },
+  "button.temp" : {
+    "translation" : "Temp"
+  },
+  "label.basicCozmo" : {
+    "translation" : "ビッグブレイン。より大きな人格。"
+  },
+  "label.currentPage" : {
+    "translation" : "{0}の{1}"
   }
 }

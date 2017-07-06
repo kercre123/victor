@@ -55,10 +55,10 @@
     "translation" : "Scan {0} Nochmals"
   },
   "faceEnrollment.label.dayCount.singular" : {
-    "translation" : "Vor einem Tag"
+    "translation" : "{0} Vor einem Tag"
   },
   "faceEnrollment.label.dayCount.plural" : {
-    "translation" : "Vor Tagen"
+    "translation" : "{0} Vor Tagen"
   },
   "faceEnrollment.label.HelpCozmoRecognize" : {
     "translation" : "Hilfe Cozmo erkennen Sie leichter"
@@ -66,7 +66,13 @@
   "faceEnrollment.label.lastScanned" : {
     "translation" : "Letzte Gescannte:"
   },
+  "faceEnrollment.label.cozmoPrep" : {
+    "translation" : "Cozmo macht sich bereit ..."
+  },
   "faceEnrollment.label.today" : {
     "translation" : "Heute"
+  },
+  "error.TooManyFaces" : {
+    "translation" : "Stellen Sie sicher, dass Cozmo nur ein Gesicht sieht"
   }
 }

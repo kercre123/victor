@@ -28,7 +28,7 @@
     "translation" : "スコア"
   },
   "minigame.text.score.player" : {
-    "translation" : "あなたのスコア"
+    "translation" : "プレーヤースコア"
   },
   "minigame.text.score.cozmo" : {
     "translation" : "コズモスコア"
@@ -51,9 +51,6 @@
   "minigame.label.cubesReady.plural" : {
     "translation" : "{0}キューブの準備を！"
   },
-  "minigames.label.gamesAndActivities" : {
-    "translation" : "コズモアプリ"
-  },
   "minigame.label.cozmoPrep" : {
     "translation" : "コズモはプレーする準備をしています..."
   },
@@ -67,10 +64,10 @@
     "translation" : "人間"
   },
   "droneMode.chargerReticleLabel" : {
-    "translation" : "充電器"
+    "translation" : "チャージャー"
   },
   "droneMode.cubeReticleLabel" : {
-    "translation" : "パワーキューブ"
+    "translation" : "キューブ"
   },
   "droneMode.petLabel" : {
     "translation" : "ペット"
@@ -350,5 +347,20 @@
   },
   "speedTap.tapBlock2" : {
     "translation" : "点滅キューブをタップします"
+  },
+  "minigame.GuardDog.Title" : {
+    "translation" : "コズモはキュービッドを守っている"
+  },
+  "minigame.GuardDog.Desc" : {
+    "translation" : "ゆっくりと注意深くCozmoのキューブをすべて目を覚ますことなく上下逆さまにしてみてください。慎重に...コスモはキューブが動いている時を感知することができます！"
+  },
+  "speedTap.driveToCubeFail.title" : {
+    "translation" : "Cozmoは彼のキューブを見つけることができません！"
+  },
+  "speedTap.driveToCubeFail.description" : {
+    "translation" : "Cozmoはキューブを見つけるのが難しい。 Cozmoがそれを見ることができることを確認してください。"
+  },
+  "minigame.text.youWin" : {
+    "translation" : "あなた勝つ！"
   }
 }

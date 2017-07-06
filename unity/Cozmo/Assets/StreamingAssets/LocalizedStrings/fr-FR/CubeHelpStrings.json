@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "Cozmo ne peut pas entendre tous les Power Cubes. Placez-les près de lui."
+    "translation" : "Cozmo ne peut pas entendre tous les cubes. Placez-les près de lui."
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
     "translation" : "Appuyez sur Suivant si vous rencontrez toujours des difficultés"

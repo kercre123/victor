@@ -28,13 +28,13 @@
     "translation" : "Sobald er Aufladen fertig ist, lassen Sie Cozmo zum Leben und über seine neue Heimat zu lernen."
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "Cozmo kommt mit Upgrades, die Sie freischalten können. Jeder gibt ihm eine neue Fähigkeit, dass er auf seinem eigenen tun werde."
+    "translation" : "Cozmo braucht einen fürsorglichen Besitzer. Sorge für seine Bedürfnisse jeden Tag, und er wird neue Spiele und Fähigkeiten freischalten."
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "Sie können bis Cozmo holen, wenn es nötig ist, aber er ist am glücklichsten, wenn er auf seinem eigenen fahren kann."
   },
   "onboarding.CozmoNeedsCharge.message5" : {
-    "translation" : "Wenn Sie nicht Spiele mit Cozmo spielen, ist es großartig, zurück zu sitzen und zusehen, wie er die Welt zu erkunden."
+    "translation" : "Wenn du Cozmo lassst, liebt er es, die Welt auf eigene Faust in Freeplay zu erforschen. Er wird automatisch Spiele anfordern, Tricks machen und gelegentlich Sparks verdienen."
   },
   "onboarding.CozmoNeedsCharge.finalMessage" : {
     "translation" : "Cozmo ist bereit zu spielen. Um vollständig zu sein Akku aufladen, können Sie ihn am Ladegerät für weitere 7 Minuten beträgt."
@@ -49,13 +49,13 @@
     "translation" : "Cozmo ist ein ganz besonderer Roboter, der eine fürsorgliche Besitzer die Anweisungen sorgfältig befolgen muss!"
   },
   "onboarding.Phase3.Header1" : {
-    "translation" : "Legen Sie ein Power Cube vor Cozmo"
+    "translation" : "Lege einen Würfel vor Cozmo"
   },
   "onboarding.Phase3.Body1" : {
-    "translation" : "Es wird sich zeigen <color=cyan> blau </color> wenn er es sehen können"
+    "translation" : "Es wird sich umdrehen <color=#00FFFF> blau </color> Wenn er es sehen kann"
   },
   "onboarding.Phase3.Body2" : {
-    "translation" : "<b> Groß! </b> Genau wie Sie, wenn der Cube zu nah ist, es ist schwer zu sehen."
+    "translation" : "<b> Groß! </b> Wenn der Würfel zu nahe ist, ist es schwer für Cozmo, es zu sehen."
   },
   "onboarding.Phase3.Header3" : {
     "translation" : "Er wird Ihnen sagen, wenn er bereit ist zu gehen ..."
@@ -64,7 +64,7 @@
     "translation" : "Lassen Sie Cozmo den Cube auf seinem eigenen inspizieren"
   },
   "onboarding.Phase3.Body4" : {
-    "translation" : "Gut gemacht! Cozmo ist bereit zu spielen!"
+    "translation" : "Gut gemacht!"
   },
   "onboarding.Phase3.ErrorCube" : {
     "translation" : "Der Cube ist umgezogen!"
@@ -78,39 +78,6 @@
   "onboarding.Phase3.ErrorFinal" : {
     "translation" : "<b> Probleme haben? </b> Stellen Sie sicher, Cozmo auf einer flachen, sauberen Tisch ist. Cozmo auf Glasoberflächen kämpfen können. Wenn Sie noch Fragen haben, besuchen Sie <b> support.anki.com </b> auf einem anderen Gerät."
   },
-  "onboarding.Phase4.Body1a" : {
-    "translation" : "Sie haben Cozmo die Emotion Chip geladen! Es ist, was macht ihn besonders und lebendig"
-  },
-  "onboarding.Phase4.Body1b" : {
-    "translation" : "Je mehr Sie mit Cozmo spielen, desto schneller wird es aufladen"
-  },
-  "onboarding.Phase4.Body2a" : {
-    "translation" : "Wenn der Chip voll geladen ..."
-  },
-  "onboarding.Phase4.Body2b" : {
-    "translation" : "... Öffnen mehr zu bekommen <color=#fe8f00ff> Bits </color> &amp; <color=#11a2f0ff> Sparks </color> !"
-  },
-  "onboarding.Phase4.Body3bits" : {
-    "translation" : "Benutzen <color=#fe8f00ff> Bits </color> zu entsperren neue Upgrades"
-  },
-  "onboarding.Phase4.Body3sparks" : {
-    "translation" : "Benutzen <color=#11a2f0ff> Sparks </color> fragen Cozmo Tricks ausführen"
-  },
-  "onboarding.Phase4.Body4" : {
-    "translation" : "Schalte Upgrades Cozmo neue Fertigkeiten und Fähigkeiten wir entsperren Stapel Würfel jetzt macht!"
-  },
-  "onboarding.Phase5.Body2" : {
-    "translation" : "Jeden Tag werden Sie einen neuen Satz von Tore bekommen Abschluss dieser ist der schnellste Weg, um Ihre Cozmo zu verbessern!"
-  },
-  "onboarding.Phase5.Body3" : {
-    "translation" : "Cozmo Apps sind Spiele und Aktivitäten, die Sie mit Cozmo spielen"
-  },
-  "onboarding.Phase5.Body4" : {
-    "translation" : "Cozmo liebt Zeit die Erkundung der Welt, die Interaktion mit Cubes zu verbringen, und gerade heraus hängen! Sie können sehen, was Cozmo tut, hier"
-  },
-  "onboarding.Phase5.FinalButton" : {
-    "translation" : "Lass uns spielen"
-  },
   "onboarding.Slide0a" : {
     "translation" : "Setzen Sie Cozmo auf eine saubere, offene Tisch in einem gut beleuchteten Raum"
   },
@@ -123,13 +90,46 @@
   "onboarding.OldRobotSkip" : {
     "translation" : "Diese Cozmo wurde bereits durch das Tutorial. Würden Sie es überspringen möchte, oder es wieder starten?"
   },
-  "onboarding.FreeplayStringFakeOnboarding" : {
-    "translation" : "Cozmo ist bereit und wartet darauf zu spielen"
-  },
   "onboarding.BirthWait" : {
     "translation" : "Uhr Cozmo zum Leben erweckt"
   },
-  "onboarding.Phase4.Body5" : {
-    "translation" : "Jetzt können Cozmo Stack-Würfel! Beobachten Sie ihn versuchen, seine neue Fähigkeit heraus jetzt ..."
+  "onboarding.MeetCozmoIntro" : {
+    "translation" : "Cozmo würde dich gerne treffen!"
+  },
+  "onboarding.NeedsIntro" : {
+    "translation" : "<b> Cozmo hat Bedürfnisse. </b> Sorge für ihn jeden Tag, um ihn glücklich zu halten"
+  },
+  "onboarding.NeedsIntroReturning" : {
+    "translation" : "<b> Cozmo hat Bedürfnisse. </b> Sorge für ihn jeden Tag, um ihn glücklich zu halten Cozmos App kann ein bisschen anders aussehen, aber du wirst irgendwelche freischaltete Spiele, Upgrades oder Sparks behalten, die du verdient hast."
+  },
+  "onboarding.PlayIntro" : {
+    "translation" : "<b> Cozmo muss spielen. </b> Jeden Tag, den du vollkommen füllst, nimmst du ein Bonus-Token."
+  },
+  "onboarding.RewardsIntro" : {
+    "translation" : "<b> Sie haben ein Bonus-Token verdient. </b> Token entsperren Bonus-Boxen, gefüllt mit Belohnungen wie Sparks und neue Fähigkeiten."
+  },
+  "onboarding.ActivitiesIntro" : {
+    "translation" : "Entdecken Aktivitäten sind besonders und beeinflussen nicht Cozmos Bedürfnisse oder kosten Sparks."
+  },
+  "onboarding.needs.ticker" : {
+    "translation" : "Analysieren Cozmos Bedürfnisse ..."
+  },
+  "onboarding.repair.ticker" : {
+    "translation" : "Cozmo will abgestimmt werden ..."
+  },
+  "onboarding.feed.ticker" : {
+    "translation" : "Cozmo will gefüttert werden ..."
+  },
+  "onboarding.play.ticker" : {
+    "translation" : "Cozmo will spielen ..."
+  },
+  "onboarding.SparkScreenRollACube" : {
+    "translation" : "Schauen Sie sich Cozmo Roll a Cube ..."
+  },
+  "onboarding.RepairIntro" : {
+    "translation" : "<b> Cozmo wird Sie wissen lassen, was er braucht. </b> Im Augenblick bedeutet das rote Licht auf dem Rücken, dass er sich abgestimmt hat."
+  },
+  "onboarding.FeedIntro" : {
+    "translation" : "<b> Cozmo muss gefüttert werden. </b> Das blaue Licht auf dem Rücken bedeutet, dass sein Feed Need niedrig ist."
   }
 }

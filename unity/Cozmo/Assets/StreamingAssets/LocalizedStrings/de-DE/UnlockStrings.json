@@ -6,41 +6,17 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "unlockable.Unlock" : {
-    "translation" : "aufschließen"
+  "unlockable.OSNotSupported.Title" : {
+    "translation" : "Anforderungen nicht erfüllt"
   },
-  "unlockable.Locked" : {
-    "translation" : "Eingesperrt"
-  },
-  "unlockable.App" : {
-    "translation" : "App"
-  },
-  "unlockable.Upgrade" : {
-    "translation" : "Aktualisierung"
-  },
-  "unlockable.Available" : {
-    "translation" : "Verfügbar:"
-  },
-  "unlockable.PreReqNeeded.Description" : {
-    "translation" : "Sie müssen die zu entsperren {0}{1} zuerst!"
-  },
-  "unlockable.BitsRequired.Title" : {
-    "translation" : "Nicht genügend Bits"
-  },
-  "unlockable.CurrencyRequired" : {
-    "translation" : "Nicht genug {0}"
-  },
-  "unlockable.BitsRequired.Description" : {
-    "translation" : "Benutzen {0}{1} Aufschließen"
-  },
-  "unlockable.BitsRequired.EarnMore" : {
-    "translation" : "Verdienen Sie mehr von Daily Tore Abschluss"
+  "unlockable.OSNotSupported.Description" : {
+    "translation" : "Code Lab benötigt Android {0} oder neuer."
   },
   "unlockable.Mystery.Title" : {
-    "translation" : "????"
+    "translation" : "Gesperrte Fähigkeit"
   },
   "unlockable.Mystery.Description" : {
-    "translation" : "Weitere große Upgrades folgen in Kürze!"
+    "translation" : "Eröffnungsbonus Boxen schaltet manchmal neue Fähigkeiten!"
   },
   "unlockable.FistBump.Title" : {
     "translation" : "Fauststoß"
@@ -55,7 +31,7 @@
     "translation" : "Als er fertig ist, Faust Cozmo Beule"
   },
   "unlockable.PeekABoo.Title" : {
-    "translation" : "Guck-Guck"
+    "translation" : "Kuckuck"
   },
   "unlockable.PeekABoo.Description" : {
     "translation" : "Peekaboo, sehe ich Sie! Mit diesem Upgrade spielt Peekaboo mit Cozmo von Ihrem Gesicht hinter den Händen versteckt, dann zeigen Sie Ihr Gesicht wieder, ihn zu überraschen."
@@ -67,7 +43,7 @@
     "translation" : "Zuerst verstecken Ihr Gesicht, dann Peekaboo!"
   },
   "unlockable.Workout.Title" : {
-    "translation" : "Workout mit Cubes"
+    "translation" : "Training mit Cubes"
   },
   "unlockable.Workout.Description" : {
     "translation" : "Auch Roboter üben müssen! Mit diesem Upgrade lernt Cozmo mit einem Cube zum Training in Top-Form zu bleiben."
@@ -79,25 +55,25 @@
     "translation" : "Schauen Sie Cozmo einen Cube und Training finden"
   },
   "unlockable.CubePounce.Title" : {
-    "translation" : "Bleib weg"
+    "translation" : "Fernhalten"
   },
   "unlockable.CubePounce.Description" : {
     "translation" : "Mit diesem Upgrade lernt Cozmo wie Keepaway, ein Spiel der Reflexe und Reaktionszeit zu spielen."
   },
   "unlockable.FaceEnrollment.Title" : {
-    "translation" : "Treffen Sie Cozmo"
+    "translation" : "Kennenlernen"
   },
   "unlockable.FaceEnrollment.Description" : {
     "translation" : "Mit diesem Upgrade lernt Cozmo Gesichter zu merken und Namen sprechen. So finden Sie in Meet Cozmo Aktivität."
   },
   "unlockable.MemoryMatch.Title" : {
-    "translation" : "Memory Match"
+    "translation" : "Gedächtnisspiel"
   },
   "unlockable.MemoryMatch.Description" : {
     "translation" : "Mit diesem Upgrade lernt Cozmo, wie das Memory Match Spiel zu spielen."
   },
   "unlockable.SpeedTap.Title" : {
-    "translation" : "Schnell Tap"
+    "translation" : "Geschwindigkeitsspiel"
   },
   "unlockable.SpeedTap.Description" : {
     "translation" : "Mit diesem Upgrade lernt Cozmo, wie Sie das Spiel Quick Tap zu spielen. Im Laufe der Zeit verbessern wird seine Fähigkeiten!"
@@ -105,14 +81,11 @@
   "unlockable.CodeLab.Title" : {
     "translation" : "Code Lab"
   },
-  "unlockable.CodeLab.Description" : {
-    "translation" : "Code Lab Beschreibung!"
-  },
   "unlockable.cozmoSays.Title" : {
-    "translation" : "Cozmo Says"
+    "translation" : "Sprachausgabe"
   },
   "unlockable.CubeRollAction.Title" : {
-    "translation" : "Wirf einen Würfel"
+    "translation" : "Cube rollen"
   },
   "unlockable.CubeRollAction.Description" : {
     "translation" : "Cozmo bevorzugt Cubes rechten Seite nach oben zu sein. Dieses Upgrade ermöglicht ihm Würfel zu rollen, vor allem, wenn sie auf ihrer Seite sind."
@@ -124,16 +97,16 @@
     "translation" : "Sehen Sie Cozmo den ersten Würfel rollen er sieht,"
   },
   "unlockable.DroneMode.Title" : {
-    "translation" : "Explorer-Modus"
+    "translation" : "Erkundungsmodus"
   },
   "unlockable.DroneMode.Description" : {
     "translation" : "Mit diesem Upgrade wird Cozmo können Sie ihn im Explorer-Modus zu steuern."
   },
   "unlockable.CubeStackAction.Title" : {
-    "translation" : "Stapel Würfel"
+    "translation" : "Cubes stapeln"
   },
   "unlockable.CubeStackAction.Description" : {
-    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, einen Stapel von zwei Power-Cubes zu erstellen."
+    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, einen Stapel von zwei Cubes zu erstellen."
   },
   "unlockable.CubeStackAction.SparkedStateDescription" : {
     "translation" : "Uhr Cozmo erstellen einen Stapel von Cubes"
@@ -142,7 +115,7 @@
     "translation" : "Tippen Sie Cozmo fragen zwei Würfel zu stapeln"
   },
   "unlockable.PounceOnMotionAction.Title" : {
-    "translation" : "Anspringen Auf Fingern"
+    "translation" : "Finger fangen"
   },
   "unlockable.PounceOnMotionAction.Description" : {
     "translation" : "Mit diesem Upgrade, wenn Cozmo Bewegung auf dem Boden vor sich sieht, wie ein Finger, so wird er spielerisch auf sie stürzen!"
@@ -154,7 +127,7 @@
     "translation" : "Cozmo wird auf jede Bewegung stürzen sieht er"
   },
   "unlockable.BuildPyramid.Title" : {
-    "translation" : "Bauen Sie eine Pyramide"
+    "translation" : "Pyramide bauen"
   },
   "unlockable.BuildPyramid.Description" : {
     "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, eine Pyramide aus drei aufrecht Würfel zu bauen."
@@ -166,7 +139,7 @@
     "translation" : "Uhr Cozmo bauen eine Pyramide aus drei Würfel"
   },
   "unlockable.PopAWheelieAction.Title" : {
-    "translation" : "Pop einen Wheelie"
+    "translation" : "Wheelie machen"
   },
   "unlockable.PopAWheelieAction.Description" : {
     "translation" : "Cozmo gewinnt einen neuen Trick! Mit diesem Upgrade kann er einen Würfel benutzen, sich zu steigern und einen Wheelie Pop."
@@ -178,10 +151,10 @@
     "translation" : "Sehen Sie Cozmo einen Wheelie aus einem Cube Pop"
   },
   "unlockable.KnockOverThreeCubeStack.Title" : {
-    "translation" : "Umstoßen Stacks"
+    "translation" : "Stapel umwerfen"
   },
   "unlockable.KnockOverThreeCubeStack.Description" : {
-    "translation" : "Mit diesem Upgrade sieht jederzeit Cozmo einen Stapel von Power-Cubes, so kann er sich entscheiden, sie umzuwerfen."
+    "translation" : "Mit diesem Upgrade, wenn Cozmo einen Stapel von Cubes sieht, kann er beschließen, sie zu klopfen."
   },
   "unlockable.KnockOverThreeCubeStack.SparkButtonDescription" : {
     "translation" : "Tippen Sie Cozmo zu bitten, einen Stapel umstoßen"
@@ -190,10 +163,10 @@
     "translation" : "Erstellen Sie einen Stapel von Cubes für Cozmo umkippen"
   },
   "unlockable.PickupCube.Title" : {
-    "translation" : "Pick Up Cube"
+    "translation" : "Cube aufheben"
   },
   "unlockable.PickupCube.Description" : {
-    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, Energie-Würfel zu holen und tragen sie herum."
+    "translation" : "Mit diesem Upgrade gewinnt Cozmo die Fähigkeit, Cubes abzuholen und herum zu tragen."
   },
   "unlockable.PickupCube.SparkButtonDescription" : {
     "translation" : "Tippen Sie Cozmo zu bitten, einen Würfel zu holen"
@@ -217,7 +190,7 @@
     "translation" : "Demnächst!"
   },
   "unlockable.ComingSoon.Description" : {
-    "translation" : "Überprüfen Sie für weitere große Upgrades zurück, Apps und Spaß Cozmo Funktionen"
+    "translation" : "Opening Bonus Boxes hat die Möglichkeit, neue Fähigkeiten zu entschlüsseln!"
   },
   "sparks.Sparked" : {
     "translation" : "Cozmo wird ausgelöst:"
@@ -226,13 +199,10 @@
     "translation" : "funken~~POS=TRUNC Cozmo"
   },
   "sparks.Spark" : {
-    "translation" : "Funke"
+    "translation" : "Spark"
   },
   "sparks.Spark.plural" : {
     "translation" : "Sparks"
-  },
-  "unlockable.Unavailable.Description" : {
-    "translation" : "Schalte mehr Upgrades, bevor Sie freischalten können {0} ."
   },
   "sparks.Spark.ConfirmQuit" : {
     "translation" : "Cozmo ist Sparked!"
@@ -244,7 +214,7 @@
     "translation" : "Nicht genug Sparks"
   },
   "sparks.NotEnoughSparks.Desc" : {
-    "translation" : "Verdienen Sie mehr von Daily Tore Abschluss"
+    "translation" : "Verdienen Sie mehr in Freeplay und Bonus Boxes"
   },
   "sparks.CubesNeedUpright.Title" : {
     "translation" : "Stellen Sie sicher, Würfel sind Upright"

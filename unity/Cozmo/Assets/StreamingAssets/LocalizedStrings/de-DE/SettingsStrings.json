@@ -57,9 +57,6 @@
   "settings.sdkPanel.sdkConnected.text" : {
     "translation" : "SDK-Programm ausführen"
   },
-  "settings.sdkPanel.sdkUrl.label" : {
-    "translation" : "Um zu erfahren, über den Besuch Cozmo SDK: go.anki.com/cozmo-app-sdk"
-  },
   "settings.sdkPanel.sdkNotConnected.text" : {
     "translation" : "Kein SDK laufende Programm"
   },
@@ -181,18 +178,18 @@
     "translation" : "Hoch"
   },
   "settings.volumePanel.robotToggle.medium" : {
-    "translation" : "Mittel"
+    "translation" : "MED"
   },
   "settings.acknowledgementsPanel.title" : {
     "translation" : "Rechts-"
   },
-  "settings.modalTitle": {
-    "translation": "General Settings"
+  "settings.modalTitle" : {
+    "translation" : "Allgemeine Einstellungen"
   },
-  "settings.sdkPanel.sdkUrl.preface": {
-    "translation": "Um zu erfahren, über den Besuch Cozmo SDK:"
+  "settings.sdkPanel.sdkUrl.preface" : {
+    "translation" : "Um über den Cozmo SDK zu erfahren, besuchen Sie:"
   },
-  "settings.sdkPanel.sdkUrl.address": {
-    "translation": "go.anki.com/cozmo-app-sdk"
+  "settings.sdkPanel.sdkUrl.address" : {
+    "translation" : "Go.anki.com/cozmo-app-sdk"
   }
 }

@@ -13,7 +13,7 @@
     "translation" : "Vous devez vous connecter à Cozmo"
   },
   "connectivity.moreInfo" : {
-    "translation" : "Plus d'informations"
+    "translation" : "PLUS D'INFORMATIONS"
   },
   "connectivity.turnCozmoOn" : {
     "translation" : "Tournez Cozmo Sur"
@@ -39,26 +39,14 @@
   "connectivity.updatingFirmwareFooter" : {
     "translation" : "Vous aurez besoin de se reconnecter au WiFi de Cozmo après la mise à jour terminée"
   },
-  "connectivity.pairingPinTitle" : {
-    "translation" : "Entrez la broche indiquée sur votre Cozmo"
-  },
-  "connectivity.invalidPinTitle" : {
-    "translation" : "Pin non valide"
-  },
   "connectivity.updateApp" : {
     "translation" : "Vous devez mettre à jour votre application Cozmo pour continuer"
   },
   "connectivity.pullTabsTitle" : {
-    "translation" : "Tirez les onglets sur votre Power Cubes"
+    "translation" : "Tirez les onglets de vos Cubes"
   },
   "connectivity.enterDOB" : {
     "translation" : "Entrez votre anniversaire"
-  },
-  "connectivity.enterName" : {
-    "translation" : "Entrez votre prénom"
-  },
-  "connectivity.pairingDesc" : {
-    "translation" : "Cette étape est nécessaire lors de la connexion d'un nouveau périphérique"
   },
   "connectivity.cozmoSleepTitle" : {
     "translation" : "Aller dormir"
@@ -67,7 +55,7 @@
     "translation" : "Cozmo va dormir et se déconnecter rapidement"
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Cozmo est faible sur la batterie"
+    "translation" : "Cozmo a peu de batterie"
   },
   "connectivity.cozmoLowBatteryDesc" : {
     "translation" : "S'il vous plaît placer Cozmo sur son chargeur"
@@ -89,5 +77,14 @@
   },
   "connectivity.connectionRejected.title" : {
     "translation" : "Un autre appareil est connecté à Cozmo S'il vous plaît déconnectez que l'appareil et essayez à nouveau"
+  },
+  "needs.unconnected.needToConnect.title" : {
+    "translation" : "Cozmo n'est pas connecté"
+  },
+  "needs.unconnected.needToConnect.description" : {
+    "translation" : "Afin de prendre soin de Cozmo et de vérifier ses besoins, vous devez d'abord vous connecter. "
+  },
+  "label.cancelText" : {
+    "translation" : "Annuler"
   }
 }

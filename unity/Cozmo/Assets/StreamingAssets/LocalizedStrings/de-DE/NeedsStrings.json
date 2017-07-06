@@ -6,88 +6,91 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "needs.NeedsHubView.Button.Activities": {
-    "translation": "DISCOVER"
+  "needs.NeedsHubView.Button.Activities" : {
+    "translation" : "Entdecken"
   },
-  "needs.NeedsHubView.Button.Feed": {
-    "translation": "FEED"
+  "needs.NeedsHubView.Button.Feed" : {
+    "translation" : "Füttern"
   },
-  "needs.NeedsHubView.Button.Repair": {
-    "translation": "TUNE UP"
+  "needs.NeedsHubView.Button.Repair" : {
+    "translation" : "Tuning"
   },
-  "needs.NeedsHubView.Button.Play": {
-    "translation": "PLAY"
+  "needs.NeedsHubView.Button.Play" : {
+    "translation" : "Spielen"
   },
-  "needs.NeedsEnergyModal.Title": {
-    "translation": "Feed Cozmo"
+  "needs.NeedsEnergyModal.Title" : {
+    "translation" : "Feed Cozmo"
   },
-  "needs.NeedsEnergyModal.FeedingSummary": {
-    "translation": "Cozmo needs to be fed to keep him healthy."
+  "needs.NeedsEnergyModal.FeedingSummary" : {
+    "translation" : "Cozmo muss gefüttert werden, um energisch und fröhlich zu bleiben."
   },
-  "needs.NeedsEnergyModal.Instruction1": {
-    "translation": "Grab any Cube that is pulsing blue."
+  "needs.NeedsEnergyModal.Instruction1" : {
+    "translation" : "Ergreife jeden Würfel, der blau pulsiert."
   },
-  "needs.NeedsEnergyModal.Instruction2": {
-    "translation": "Shake that Cube until all lights glow brightly."
+  "needs.NeedsEnergyModal.Instruction2" : {
+    "translation" : "Schütt den Würfel, bis alle Lichter hell leuchten."
   },
-  "needs.NeedsEnergyModal.Instruction3": {
-    "translation": "Place the Cube in front of Cozmo."
+  "needs.NeedsEnergyModal.Instruction3" : {
+    "translation" : "Lege den Würfel vor Cozmo."
   },
-  "needs.NeedsEnergyModal.FeedingComplete": {
-    "translation": "Cozmo is fed! Now he is ready to play."
+  "needs.NeedsEnergyModal.FeedingComplete" : {
+    "translation" : "Cozmo ist voll gefüttert!"
   },
-  "needs.NeedsRepairModal.Title": {
-    "translation": "Tune Up Cozmo"
+  "needs.NeedsRepairModal.Title" : {
+    "translation" : "Tausende Cozmo"
   },
-  "needs.NeedsRepairModal.RepairSummary": {
-    "translation": "Cozmo needs to be tuned up in order to keep him healthy."
+  "needs.NeedsRepairModal.RepairSummary" : {
+    "translation" : "Cozmo muss abgestimmt werden, um optimiert und on-the-move zu bleiben."
   },
-  "needs.NeedsRepairModal.HeadDamageNotice": {
-    "translation": "Head needs adjustment"
+  "needs.NeedsRepairModal.HeadDamageNotice" : {
+    "translation" : "Kopf braucht Anpassung"
   },
-  "needs.NeedsRepairModal.HeadRepairedNotice": {
-    "translation": "Head adjusted"
+  "needs.NeedsRepairModal.HeadRepairedNotice" : {
+    "translation" : "Kopf eingestellt"
   },
-  "needs.NeedsRepairModal.TreadsDamageNotice": {
-    "translation": "Treads require alignment"
+  "needs.NeedsRepairModal.TreadsDamageNotice" : {
+    "translation" : "Treppen benötigen Ausrichtung"
   },
-  "needs.NeedsRepairModal.TreadsRepairedNotice": {
-    "translation": "Treads aligned"
+  "needs.NeedsRepairModal.TreadsRepairedNotice" : {
+    "translation" : "Stufen ausgerichtet"
   },
-  "needs.NeedsRepairModal.LiftDamageNotice": {
-    "translation": "Arms need calibration"
+  "needs.NeedsRepairModal.LiftDamageNotice" : {
+    "translation" : "Lift benötigt Kalibrierung"
   },
-  "needs.NeedsRepairModal.LiftRepairedNotice": {
-    "translation": "Arms calibrated"
+  "needs.NeedsRepairModal.LiftRepairedNotice" : {
+    "translation" : "Aufzug kalibriert"
   },
-  "needs.NeedsRepairModal.RepairButtonsInstruction": {
-    "translation": "Tap the regions to be repaired."
-  },  
-  "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap SEND."
+  "needs.NeedsRepairModal.RepairButtonsInstruction" : {
+    "translation" : "Tippen Sie auf die zu stimmenden Teile."
   },
-  "needs.NeedsRepairModal.NoRepairsNeeded": {
-    "translation": "Cozmo is fully tuned up!"
+  "needs.NeedsRepairModal.TuneUpInstruction" : {
+    "translation" : "Verwenden Sie die Schaltflächen auf der rechten Seite, um das Pfeilmuster neu zu erstellen. Tippen Sie dann auf SENDEN."
   },
-  "needs.NeedsRepairModal.CalibrateButtonText": {
-    "translation": "SEND"
+  "needs.NeedsRepairModal.NoRepairsNeeded" : {
+    "translation" : "Cozmo ist voll eingestellt!"
   },
-  "needs.NeedsRepairModal.ScanButtonText": {
-    "translation": "SCAN COZMO"
+  "needs.NeedsRepairModal.CalibrateButtonText" : {
+    "translation" : "SENDEN"
   },
-  "needs.NeedsRepairModal.AlligningHead": {
-    "translation": "Aligning Head..."
+  "needs.NeedsRepairModal.ScanButtonText" : {
+    "translation" : "SCAN COZMO"
   },
-  "needs.NeedsRepairModal.AligningLift": {
-    "translation": "Aligning Arms..."
+  "needs.NeedsRepairModal.AlligningHead" : {
+    "translation" : "Einstellkopf ..."
   },
-  "needs.NeedsRepairModal.AligningTreads": {
-    "translation": "Aligning Treads..."
+  "needs.NeedsRepairModal.AligningLift" : {
+    "translation" : "Kalibrieren ..."
   },
-  "needs.ContinueButtonText": {
-    "translation": "CONTINUE"
+  "needs.NeedsRepairModal.AligningTreads" : {
+    "translation" : "Ausrichten von ..."
   },
-  "needs.NeedsRepairModal.TuneUpComplete": {
-    "translation": "Cozmo is all tuned up. Come back again when his meter is more empty."
+  "needs.ContinueButtonText" : {
+    "translation" : "FORTSETZEN"
+  },
+  "needs.NeedsRepairModal.TuneUpComplete" : {
+    "translation" : "Cozmo ist voll eingestellt!"
+  },
+  "needs.Done" : {
+    "translation" : "ERLEDIGT"
   }
 }

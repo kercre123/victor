@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "cubeHelpStrings.Instructions.Slide0" : {
-    "translation" : "コズモはパワーキューブのすべてを聞くことはできません。彼の近くに配置します。"
+    "translation" : "Cozmoはすべてのキューブを聞くことができません。それらを彼の近くに置きなさい。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
     "translation" : "それでも問題が解決しない場合は[次へ]をタップし"

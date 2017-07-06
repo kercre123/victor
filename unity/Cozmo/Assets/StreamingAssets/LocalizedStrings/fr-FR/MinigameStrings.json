@@ -28,7 +28,7 @@
     "translation" : "But"
   },
   "minigame.text.score.player" : {
-    "translation" : "Ton score"
+    "translation" : "Score du Joueur"
   },
   "minigame.text.score.cozmo" : {
     "translation" : "Cozmo Score"
@@ -51,9 +51,6 @@
   "minigame.label.cubesReady.plural" : {
     "translation" : "{0} Cubes prêt!"
   },
-  "minigames.label.gamesAndActivities" : {
-    "translation" : "Cozmo Apps"
-  },
   "minigame.label.cozmoPrep" : {
     "translation" : "Cozmo se prépare à jouer ..."
   },
@@ -70,7 +67,7 @@
     "translation" : "Chargeur"
   },
   "droneMode.cubeReticleLabel" : {
-    "translation" : "Power Cube"
+    "translation" : "Cube"
   },
   "droneMode.petLabel" : {
     "translation" : "Animal de compagnie"
@@ -280,7 +277,7 @@
     "translation" : "Experts seulement! Cubes peuvent maintenant avoir jusqu'à 4 couleurs à la fois, défiant même les meilleurs joueurs."
   },
   "button.retry" : {
-    "translation" : "Réessayer"
+    "translation" : "RÉESSAYER"
   },
   "speedTap.text.waitForCozmo" : {
     "translation" : "Cozmo se prépare ..."
@@ -350,5 +347,20 @@
   },
   "speedTap.tapBlock2" : {
     "translation" : "Appuyez sur le Cube clignotant"
+  },
+  "minigame.GuardDog.Title" : {
+    "translation" : "Cozmo garde ses cubes"
+  },
+  "minigame.GuardDog.Desc" : {
+    "translation" : "Essayez lentement et soigneusement de tourner tous les cubes de Cozmo sans le réveiller. Attention ... Cozmo peut sentir quand ses cubes se déplacent!"
+  },
+  "speedTap.driveToCubeFail.title" : {
+    "translation" : "Cozmo ne peut pas trouver son cube!"
+  },
+  "speedTap.driveToCubeFail.description" : {
+    "translation" : "Cozmo a du mal à trouver son cube. Assurez-vous que Cozmo peut le voir."
+  },
+  "minigame.text.youWin" : {
+    "translation" : "Vous gagnez!"
   }
 }

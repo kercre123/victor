@@ -28,13 +28,13 @@
     "translation" : "彼は充電完了だ後は、コズモは生命に来て、彼の新しい家について学びましょう。"
   },
   "onboarding.CozmoNeedsCharge.message3" : {
-    "translation" : "コズモは、あなたがロックを解除することができアップグレードが付属しています。一人一人が彼に彼が自分でやるという新たな機能を提供します。"
+    "translation" : "Cozmoは配慮している所有者が必要です。毎日彼のニーズに気を配り、彼は新しいゲームと能力を解放するでしょう。"
   },
   "onboarding.CozmoNeedsCharge.message4" : {
     "translation" : "あなたがする必要がある場合には、コズモを拾うことができますが、彼は自分で駆動することができたときに彼が最も幸せです。"
   },
   "onboarding.CozmoNeedsCharge.message5" : {
-    "translation" : "あなたはコズモでゲームをプレイしていないときは、後ろに座ると、彼は世界を探検見るのは素晴らしいことです。"
+    "translation" : "あなたはCozmoをさせるとき、彼はFreeplayで自分自身で世界を探検するのが大好きです。彼は自動的にゲームを要求し、トリックを行い、スパークを得ることがあります。"
   },
   "onboarding.CozmoNeedsCharge.finalMessage" : {
     "translation" : "コズモはプレーする準備ができています。完全に彼のバッテリーを充電するには、別の7分間の充電器に彼を保つことができます。"
@@ -49,13 +49,13 @@
     "translation" : "コズモは、思いやりのある所有者が慎重に指示に従ってください必要がある非常に特別なロボットです！"
   },
   "onboarding.Phase3.Header1" : {
-    "translation" : "コズモの前にパワーキューブを配置"
+    "translation" : "Cozmoの前に立方体を置く"
   },
   "onboarding.Phase3.Body1" : {
-    "translation" : "それは変わります<color=cyan>青</color>彼はそれを見ることができるとき"
+    "translation" : "それは変わるでしょう<color=#00FFFF>青</color>彼がそれを見ることができるとき"
   },
   "onboarding.Phase3.Body2" : {
-    "translation" : "<b>すばらしいです！ </b>キューブが近すぎる場合はちょうどあなたのように、それが参照するのは難しいです。"
+    "translation" : "<b>すばらしいです！ </b>キューブが近すぎると、Cozmoがそれを見るのは難しいです。"
   },
   "onboarding.Phase3.Header3" : {
     "translation" : "彼は続行する準備ができているとき、彼はあなたを教えてあげましょう..."
@@ -64,7 +64,7 @@
     "translation" : "コズモは自分でキューブを調べてみましょう"
   },
   "onboarding.Phase3.Body4" : {
-    "translation" : "よくやった！コズモはプレーする準備ができています！"
+    "translation" : "よくやった！"
   },
   "onboarding.Phase3.ErrorCube" : {
     "translation" : "キューブは移動しました！"
@@ -78,39 +78,6 @@
   "onboarding.Phase3.ErrorFinal" : {
     "translation" : "<b>問題がありますか？ </b>コズモはフラット、きれいなテーブルの上にあることを確認します。コズモは、ガラス表面上に苦労することができます。それでも問題が解決しない場合は、訪問<b> support.anki.com </b>別のデバイス上。"
   },
-  "onboarding.Phase4.Body1a" : {
-    "translation" : "あなたはコズモのエモーションチップを請求しました！それは彼が特別で生きて作るものです"
-  },
-  "onboarding.Phase4.Body1b" : {
-    "translation" : "あなたはコズモと遊ぶより、より速くそれが充電されます"
-  },
-  "onboarding.Phase4.Body2a" : {
-    "translation" : "チップが完全に充電されると..."
-  },
-  "onboarding.Phase4.Body2b" : {
-    "translation" : "...多くを得るためにそれを開きます<color=#fe8f00ff>ビット</color> ＆ <color=#11a2f0ff>スパークス</color> ！"
-  },
-  "onboarding.Phase4.Body3bits" : {
-    "translation" : "つかいます<color=#fe8f00ff>ビット</color>新しいアップグレードのロックを解除するには"
-  },
-  "onboarding.Phase4.Body3sparks" : {
-    "translation" : "つかいます<color=#11a2f0ff>スパークス</color>トリックを実行するためにコズモを依頼します"
-  },
-  "onboarding.Phase4.Body4" : {
-    "translation" : "それでは、スタックキューブのロックを解除してみましょうコズモに新しいスキルや能力を与えるためにアップグレードのロックを解除！"
-  },
-  "onboarding.Phase5.Body2" : {
-    "translation" : "あなたはこれらの完了目標の新しいセットを取得します毎日あなたのコズモを改善する最も簡単な方法です！"
-  },
-  "onboarding.Phase5.Body3" : {
-    "translation" : "コズモアプリは、あなたがコズモと遊ぶことができるゲーム＆アクティビティです"
-  },
-  "onboarding.Phase5.Body4" : {
-    "translation" : "コズモは、世界を探検キューブとの相互作用、およびちょうどぶらぶら時間を過ごすのが大好き！あなたはここで、コズモが何をしているか見ることができます"
-  },
-  "onboarding.Phase5.FinalButton" : {
-    "translation" : "遊ぼう"
-  },
   "onboarding.Slide0a" : {
     "translation" : "よく明るい部屋で清潔、オープンテーブルの上にコズモを入れて"
   },
@@ -123,13 +90,46 @@
   "onboarding.OldRobotSkip" : {
     "translation" : "このコズモはすでにチュートリアルを完了したものです。あなたはそれをスキップする、またはそれを再度起動しますか？"
   },
-  "onboarding.FreeplayStringFakeOnboarding" : {
-    "translation" : "コズモの準備が整い、遊ぶのを待っています"
-  },
   "onboarding.BirthWait" : {
     "translation" : "ウォッチコズモは生命に来ます"
   },
-  "onboarding.Phase4.Body5" : {
-    "translation" : "今コズモは、キューブをスタックすることができます！彼は今彼の新しいスキルを試して見てください..."
+  "onboarding.MeetCozmoIntro" : {
+    "translation" : "Cozmoがあなたに会いたいです！"
+  },
+  "onboarding.NeedsIntro" : {
+    "translation" : "<b> Cozmoには必要があります。 </b>彼を毎日気遣い、彼を幸せに保ちます。"
+  },
+  "onboarding.NeedsIntroReturning" : {
+    "translation" : "<b> Cozmoには必要があります。 </b>彼を毎日気遣い、彼を幸せに保ちます。 Cozmoのアプリは少し違って見えるかもしれませんが、獲得したロックされていないゲーム、アップグレード、またはスパークは保管しておきます。"
+  },
+  "onboarding.PlayIntro" : {
+    "translation" : "<b>コズモはプレーする必要があります。 </b>プレイの必要性を満たすために毎日ボーナストークンを獲得します。"
+  },
+  "onboarding.RewardsIntro" : {
+    "translation" : "<b>ボーナストークンを獲得しました。 </b>トークンは、Sparksや新しい能力のような報酬で満たされたBonus Boxのロックを解除します。"
+  },
+  "onboarding.ActivitiesIntro" : {
+    "translation" : "ディスカバーアクティビティは特別で、Cozmo's NeedsやSparksの費用には影響しません。"
+  },
+  "onboarding.needs.ticker" : {
+    "translation" : "Cozmoのニーズを分析する..."
+  },
+  "onboarding.repair.ticker" : {
+    "translation" : "コズモは調整されたい..."
+  },
+  "onboarding.feed.ticker" : {
+    "translation" : "コズモは餌を与えたい..."
+  },
+  "onboarding.play.ticker" : {
+    "translation" : "コズモは遊びたい..."
+  },
+  "onboarding.SparkScreenRollACube" : {
+    "translation" : "時計Cozmoキューブロール..."
+  },
+  "onboarding.RepairIntro" : {
+    "translation" : "<b> Cozmoは彼に必要なものを教えてくれます。 </b>今、彼の背中の赤い光は、彼が調整したいということを意味します。"
+  },
+  "onboarding.FeedIntro" : {
+    "translation" : "<b> Cozmoは給餌する必要があります。 </b>彼の背中の青い光は、彼の給餌ニーズが低いことを意味する。"
   }
 }
