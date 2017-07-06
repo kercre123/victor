@@ -499,6 +499,11 @@ namespace Cozmo.UI {
       }
     }
 
+    public void UpdateSkinnableElements() {
+      UpdateSkinnableElements(CozmoThemeSystemUtils.sInstance.GetCurrentThemeId(),
+                              CozmoThemeSystemUtils.sInstance.GetCurrentSkinId());
+    }
+
     private void SkinButtonImageArray(ThemesJson.ThemeComponentObj linkedComponentObj) {
       int smallerLength = Mathf.Min(linkedComponentObj.ButtonImageArray.Length, ButtonGraphics.Length);
       if (linkedComponentObj.ButtonImageArray.Length != ButtonGraphics.Length) {

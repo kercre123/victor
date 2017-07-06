@@ -11,6 +11,18 @@ namespace Cozmo.UI {
     public override void OnInspectorGUI() {
       serializedObject.UpdateIfRequiredOrScript();
 
+      //Get Target Script
+      if (_ScriptTarget == null) {
+        _ScriptTarget = (AnkiButton)target;
+      }
+
+      //Show the button here so it's at the top of the inspector.
+      //Delay the action till after the other properties are applied.
+      bool createDefaultComponents = false;
+      if (_ScriptTarget.transform.childCount == 0) {
+        createDefaultComponents = GUILayout.Button("Create Default Button");
+      }
+
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextEnabledColor"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextPressedColor"));
       EditorGUILayout.PropertyField(serializedObject.FindProperty("TextDisabledColor"));
@@ -23,9 +35,10 @@ namespace Cozmo.UI {
       EditorGUILayout.PropertyField(serializedObject.FindProperty("ButtonGraphics"), true);
       serializedObject.ApplyModifiedProperties();
 
-      //Get Target Script
-      if (_ScriptTarget == null) {
-        _ScriptTarget = (AnkiButton)target;
+
+
+      if (createDefaultComponents) {
+        CreateDefaultComponents();
       }
 
       ThemeSystemEditorUtils.sInstance.DrawSkinningOptionsHeader();
@@ -80,6 +93,67 @@ namespace Cozmo.UI {
       EditorGUILayout.Space();
 
     }
+
+    //Creates default children and components for Button Image, Glint, and Text Label
+    private void CreateDefaultComponents() {
+      if (_ScriptTarget == null) {
+        _ScriptTarget = (AnkiButton)target;
+      }
+      CozmoButton button = _ScriptTarget as CozmoButton;
+      CozmoButton.AnkiButtonImage[] buttonGraphics = new CozmoButton.AnkiButtonImage[2];
+      GameObject go;
+      RectTransform rt;
+      go = new GameObject("ButtonImage", typeof(CozmoImage));
+      CozmoImage buttonImage = go.GetComponent<CozmoImage>();
+      go.transform.SetParent(button.transform, false);
+      buttonGraphics[0] = new CozmoButton.AnkiButtonImage() {
+        targetImage = buttonImage
+      };
+      rt = go.transform as RectTransform;
+      rt.anchorMax = Vector2.one;
+      rt.anchorMin = Vector2.zero;
+      rt.offsetMax = Vector2.zero;
+      rt.offsetMin = Vector2.zero;
+
+      go = new GameObject("ButtonGlint", typeof(AnkiAnimateGlint), typeof(CozmoImage));
+      go.transform.SetParent(button.transform, false);
+      CozmoImage buttonGlint = go.GetComponent<CozmoImage>();
+      buttonGlint.enabled = false;
+      buttonGraphics[1] = new CozmoButton.AnkiButtonImage() {
+        targetImage = buttonGlint
+      };
+      rt = go.transform as RectTransform;
+      rt.anchorMax = Vector2.one;
+      rt.anchorMin = Vector2.zero;
+      rt.offsetMax = Vector2.zero;
+      rt.offsetMin = Vector2.zero;
+      AnkiAnimateGlint glint = go.GetComponent<AnkiAnimateGlint>();
+      serializedObject.FindProperty("_GlintAnimator").objectReferenceValue = glint;
+      SerializedObject glintSO = new SerializedObject(glint);
+      glintSO.FindProperty("_MaskImage").objectReferenceValue = buttonGraphics[1].targetImage;
+      glintSO.ApplyModifiedProperties();
+
+
+      go = new GameObject("ButtonText", typeof(CozmoText));
+      go.transform.SetParent(button.transform, false);
+      rt = go.transform as RectTransform;
+      rt.anchorMax = Vector2.one;
+      rt.anchorMin = Vector2.zero;
+      rt.offsetMax = Vector2.zero;
+      rt.offsetMin = Vector2.zero;
+      CozmoText ct = go.GetComponent<CozmoText>();
+      ct.text = "Tap Me!";
+      ct.LinkedComponentId = "CozmoButton_Primary_Text";
+      ct.UpdateSkinnableElements(CozmoThemeSystemUtils.sInstance.GetCurrentThemeId(), CozmoThemeSystemUtils.sInstance.GetCurrentSkinId());
+      serializedObject.FindProperty("_TextLabel").objectReferenceValue = ct;
+
+      SerializedProperty buttonGraphicsArray = serializedObject.FindProperty("ButtonGraphics");
+      buttonGraphicsArray.ClearArray();
+
+      serializedObject.ApplyModifiedProperties();
+      button.ButtonGraphics = buttonGraphics;
+    }
+
   }
 
 }

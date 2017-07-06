@@ -4,7 +4,7 @@ namespace FaceEnrollment {
   public class FaceEnrollmentInstructionsModal : Cozmo.UI.BaseModal {
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _NameForFaceLabel;
+    private CozmoText _NameForFaceLabel;
 
     protected override void RaiseDialogOpened() {
       base.RaiseDialogOpened();

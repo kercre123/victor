@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Cozmo.UI;
 
 namespace FaceEnrollment {
   public class FaceSlidesShelfContent : MonoBehaviour {
@@ -7,13 +8,13 @@ namespace FaceEnrollment {
     public System.Action GameDoneButtonPressed;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _ShelfText;
+    private CozmoText _ShelfText;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButtonLegacy _AddNewPersonButton;
+    private CozmoButton _AddNewPersonButton;
 
     [SerializeField]
-    private Cozmo.UI.CozmoButtonLegacy _DoneButton;
+    private CozmoButton _DoneButton;
 
     private void Awake() {
       _AddNewPersonButton.Initialize(() => {

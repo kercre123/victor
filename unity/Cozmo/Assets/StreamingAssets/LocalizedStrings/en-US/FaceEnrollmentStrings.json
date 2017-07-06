@@ -85,6 +85,6 @@
     "translation": "Today"
   },
   "error.TooManyFaces": {
-    "translation": "Make sure Cozmo only sees one face"
+    "translation": "Make sure Cozmo only sees {0}"
   }
 }

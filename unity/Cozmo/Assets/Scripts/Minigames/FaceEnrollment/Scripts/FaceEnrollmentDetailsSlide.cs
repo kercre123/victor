@@ -7,13 +7,13 @@ namespace FaceEnrollment {
     public System.Action<int, string> OnRequestReEnrollFace;
 
     [SerializeField]
-    private CozmoButtonLegacy _ReEnrollFaceButton;
+    private CozmoButton _ReEnrollFaceButton;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _NameForFace;
+    private CozmoText _NameForFace;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _LastEnrolledText;
+    private CozmoText _LastEnrolledText;
 
     public void Initialize(int faceID, string nameForFace) {
 

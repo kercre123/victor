@@ -127,7 +127,8 @@ namespace Cozmo {
 
       private void InitializePrimaryButton(AlertModalButtonData buttonData, object[] primaryButtonLocArgs) {
         if (buttonData != null) {
-          SetupButton(_PrimaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey, buttonData.ClickCallback, buttonData.ClickSoundEffect);
+          SetupButton(_PrimaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey,
+                      buttonData.ClickCallback, buttonData.ClickSoundEffect, buttonData.themeType);
           if (primaryButtonLocArgs != null) {
             _PrimaryButton.FormattingArgs = primaryButtonLocArgs;
           }
@@ -136,7 +137,8 @@ namespace Cozmo {
 
       private void InitializeSecondaryButton(AlertModalButtonData buttonData) {
         if (buttonData != null) {
-          SetupButton(_SecondaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey, buttonData.ClickCallback, buttonData.ClickSoundEffect);
+          SetupButton(_SecondaryButton, buttonData.DasEventButtonName, buttonData.LabelLocKey,
+                      buttonData.ClickCallback, buttonData.ClickSoundEffect, buttonData.themeType);
 
           if (_SecondaryButtonLayoutElement != null) {
             _SecondaryButtonLayoutElement.gameObject.SetActive(true);
@@ -157,7 +159,8 @@ namespace Cozmo {
       }
 
       private void SetupButton(Cozmo.UI.CozmoButton button, string dasEventButtonName, string titleKey, Action action,
-                               Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                               Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter),
+                               AlertModalButtonData.ThemeType themeType = AlertModalButtonData.ThemeType.Default) {
         if (button != null) {
           string title = Localization.Get(titleKey);
           button.gameObject.SetActive(true);
@@ -175,9 +178,42 @@ namespace Cozmo {
           else {
             button.SoundEvent = AudioEventParameter.DefaultClick;
           }
+          SetupButtonTheme(button, themeType);
         }
         else {
           DAS.Warn("AlertModal.SetupButton.TargetButtonNull", "Tried to set up a button that doesn't exist in this AlertModal! " + gameObject.name);
+        }
+      }
+
+      private void SetupButtonTheme(CozmoButton button, AlertModalButtonData.ThemeType themeType) {
+        if (themeType != AlertModalButtonData.ThemeType.Default) {
+          CozmoImage mainGraphic = button.ButtonGraphics[0].targetImage;
+          switch (themeType) {
+          case AlertModalButtonData.ThemeType.Negative:
+            button.LinkedComponentId = ThemeKeys.Cozmo.Button.kCozmoButtonPrimaryRed;
+            mainGraphic.LinkedComponentId = ThemeKeys.Cozmo.Image.kCozmoButtonPrimaryRedBackground;
+            break;
+          case AlertModalButtonData.ThemeType.Neutral:
+            button.LinkedComponentId = ThemeKeys.Cozmo.Button.kCozmoButtonPrimaryGrey;
+            mainGraphic.LinkedComponentId = ThemeKeys.Cozmo.Image.kCozmoButtonPrimaryGreyBackground;
+            break;
+          case AlertModalButtonData.ThemeType.Positive:
+            button.LinkedComponentId = ThemeKeys.Cozmo.Button.kCozmoButtonPrimaryBlue;
+            mainGraphic.LinkedComponentId = ThemeKeys.Cozmo.Image.kCozmoButtonPrimaryBlueBackground;
+            break;
+          case AlertModalButtonData.ThemeType.Reward:
+            button.LinkedComponentId = ThemeKeys.Cozmo.Button.kCozmoButtonPrimaryGold;
+            mainGraphic.LinkedComponentId = ThemeKeys.Cozmo.Image.kCozmoButtonPrimaryGoldBackground;
+            break;
+          default:
+            DAS.Error(this, "No theme data setup for " + themeType);
+            return;
+          }
+          button.UpdateSkinnableElements();
+          mainGraphic.UpdateSkinnableElements();
+          //Enabled sprite is not set in json but loaded from prefab, 
+          //have to force it to update or the button won't be right.
+          button.ButtonGraphics[0].enabledSprite = mainGraphic.sprite;
         }
       }
 
@@ -244,6 +280,14 @@ namespace Cozmo {
     }
 
     public class AlertModalButtonData {
+      public enum ThemeType {
+        Default,
+        Negative,
+        Neutral,
+        Positive,
+        Reward
+      }
+      public readonly ThemeType themeType;
       public readonly string DasEventButtonName;
       public readonly string LabelLocKey;
       public readonly Action ClickCallback;
@@ -252,10 +296,12 @@ namespace Cozmo {
       public AlertModalButtonData(string dasEventButtonName,
                                   string labelLocKey,
                                   Action clickCallback = null,
-                                  AudioEventParameter clickSoundEffect = default(AudioEventParameter)) {
+                                  AudioEventParameter clickSoundEffect = default(AudioEventParameter),
+                                 ThemeType themeType = ThemeType.Default) {
         this.DasEventButtonName = dasEventButtonName;
         this.LabelLocKey = labelLocKey;
         this.ClickCallback = clickCallback;
+        this.themeType = themeType;
         this.ClickSoundEffect = clickSoundEffect;
       }
     }

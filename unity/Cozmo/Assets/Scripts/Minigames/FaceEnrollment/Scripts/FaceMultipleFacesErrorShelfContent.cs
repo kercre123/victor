@@ -1,18 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Cozmo.UI;
 
 public class FaceMultipleFacesErrorShelfContent : MonoBehaviour {
 
   public System.Action OnRetryButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButtonLegacy _RetryButton;
+  private CozmoButton _RetryButton;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLegacy _NameLabel;
+  private CozmoText _NameLabel;
 
   public void SetNameLabel(string name) {
-    _NameLabel.text = name;
+    _NameLabel.FormattingArgs = new string[] { name };
   }
 
   private void Start() {

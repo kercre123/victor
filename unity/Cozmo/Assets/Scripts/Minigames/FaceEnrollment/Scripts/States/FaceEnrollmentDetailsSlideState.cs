@@ -73,11 +73,13 @@ namespace FaceEnrollment {
       AlertModalButtonData primaryButtonData = new AlertModalButtonData("confirm_delete_button",
                                                                         LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton,
                                                                         () => HandleDeleteEnrolledFaceConfirmButton(faceID));
-
+      AlertModalButtonData cancelButtonData = new AlertModalButtonData("cancel_button",
+                                                                       LocalizationKeys.kButtonCancel,
+                                                                       themeType: AlertModalButtonData.ThemeType.Neutral);
       AlertModalData requestDeleteEnrolledData = new AlertModalData("delete_enrolled_face_alert",
                                                                     LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle,
                                                                     primaryButtonData: primaryButtonData,
-                                                                    secondaryButtonData: new AlertModalButtonData("cancel_button", LocalizationKeys.kButtonCancel),
+                                                                    secondaryButtonData: cancelButtonData,
                                                                     titleLocArgs: new object[] { _CurrentRobot.EnrolledFaces[faceID] });
 
       UIManager.OpenAlert(requestDeleteEnrolledData, new ModalPriorityData(), (alertModal) => {

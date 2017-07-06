@@ -4,7 +4,7 @@ using System.Collections;
 public class CozmoNameFilter : MonoBehaviour {
 
   [SerializeField]
-  private UnityEngine.UI.InputField _NameInputField;
+  private TMPro.TMP_InputField _NameInputField;
 
   private void Awake() {
     _NameInputField.onValidateInput += ValidateNameField;

@@ -10,10 +10,10 @@ namespace FaceEnrollment {
     private int _FaceID;
 
     [SerializeField]
-    private Anki.UI.AnkiTextLegacy _NameLabel;
+    private CozmoText _NameLabel;
 
     [SerializeField]
-    private CozmoButtonLegacy _FaceCellButton;
+    private CozmoButton _FaceCellButton;
 
     public void Initialize(int faceID, string nameForFace) {
       _NameForFace = nameForFace;

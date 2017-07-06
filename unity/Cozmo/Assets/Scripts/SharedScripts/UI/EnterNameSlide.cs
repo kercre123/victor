@@ -7,10 +7,10 @@ public class EnterNameSlide : MonoBehaviour {
   public System.Action<string> OnNameEntered;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SubmitName;
+  private CozmoButton _SubmitName;
 
   [SerializeField]
-  private UnityEngine.UI.InputField _NameInputField;
+  private TMPro.TMP_InputField _NameInputField;
 
   private IEnumerator _ActivateInputFieldCoroutine;
 
