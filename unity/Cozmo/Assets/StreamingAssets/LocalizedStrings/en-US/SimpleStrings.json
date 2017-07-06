@@ -94,7 +94,7 @@
     "translation": "Cozmo wants to play"
   },
   "label.connect": {
-    "translation": "Connect"
+    "translation": "CONNECT"
   },
   "label.start": {
     "translation": "Start"
@@ -157,7 +157,7 @@
     "translation": "Total Sparks: {0}"
   },
   "label.termsInstructions": {
-    "translation": "By tapping \"Start\", you agree to the terms below:"
+    "translation": "By tapping \"<color=#11a2f0ff>CONNECT</color>\", you agree to the following terms:"
   },
   "label.simpleCount": {
     "translation": "{0} {1}"
@@ -170,5 +170,8 @@
   },
   "label.RewardHeader": {
     "translation": "REWARDS"
+  },
+  "button.buyACozmo": {
+    "translation": "BUY A COZMO"
   }
 }

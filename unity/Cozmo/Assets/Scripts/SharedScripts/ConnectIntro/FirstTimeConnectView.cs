@@ -38,6 +38,18 @@ public class FirstTimeConnectView : BaseView {
   [SerializeField]
   private string _TermsOfUseFileName;
 
+  [SerializeField]
+  private CozmoButton _BuyCozmoButton;
+
+  [SerializeField]
+  private GameObject _DataCollectionPanel;
+
+  [SerializeField]
+  private CozmoButton _DataCollectionToggleButton;
+
+  [SerializeField]
+  private GameObject _DataCollectionIndicator;
+
   private void Awake() {
 
     DasTracker.Instance.TrackFirstTimeConnectStarted();
@@ -52,7 +64,10 @@ public class FirstTimeConnectView : BaseView {
     InitializePrivacyPolicyButton();
     InitializeTermsOfUseButton();
 
-    _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
+    _BuyCozmoButton.Initialize(HandleBuyCozmoButton, "buy_cozmo_button", "first_time_connect_dialog");
+
+    // hide data collection panel, unhide it later if locale wants it
+    _DataCollectionPanel.gameObject.SetActive(false);
 
     // Request Locale gives us ability to get real platform dependent locale
     // whereas unity just gives us the language
@@ -67,6 +82,14 @@ public class FirstTimeConnectView : BaseView {
       // by default on so only needs to get set if false.
       SetDataCollection(dataCollectionEnabled);
     }
+    // test code for fake german locale
+#if UNITY_EDITOR
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.FakeGermanLocale) {
+        Invoke("ShowDataCollectionPanel", 0.3f);
+      }
+    }
+#endif
   }
 
   private void InitializePrivacyPolicyButton() {
@@ -218,11 +241,18 @@ public class FirstTimeConnectView : BaseView {
     // Only german displays the option to opt out.
     if (splitString.Length >= 2) {
       if (splitString[1].ToLower().Equals("de")) {
-        // TODO:FRG enable prefab showing a checkbox option, mockups COZMO-10495
-        // Should hook into below SetDataCollection
-        //SetDataCollection(false);
+        ShowDataCollectionPanel();
       }
     }
+  }
+
+  private void ShowDataCollectionPanel() {
+    _DataCollectionPanel.gameObject.SetActive(true);
+    _DataCollectionToggleButton.Initialize(HandleDataCollectionToggle, "data_collection_toggle", "first_time_connect_dialog");
+  }
+
+  private void HandleDataCollectionToggle() {
+    SetDataCollection(!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.DataCollectionEnabled);
   }
 
   private void SetDataCollection(bool val) {
@@ -230,5 +260,10 @@ public class FirstTimeConnectView : BaseView {
     RobotEngineManager.Instance.Message.RequestDataCollectionOption =
                       Singleton<Anki.Cozmo.ExternalInterface.RequestDataCollectionOption>.Instance.Initialize(val);
     RobotEngineManager.Instance.SendMessage();
+    _DataCollectionIndicator.gameObject.SetActive(val);
+  }
+
+  private void HandleBuyCozmoButton() {
+    Application.OpenURL(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.GetACozmoURL);
   }
 }

@@ -82,8 +82,16 @@ namespace Cozmo.ConnectionFlow {
       AndroidConnectionFlow.StartPingTest();
     }
 #endif
+      bool firstTime = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow;
+#if UNITY_EDITOR
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.ForceFirstTimeConnectFlow) {
+          firstTime = true;
+        }
+      }
+#endif
       OnboardingManager.Instance.PreloadOnboarding();
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+      if (firstTime) {
         ShowFirstTimeFlow();
       }
       else {

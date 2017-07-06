@@ -16,6 +16,8 @@ namespace DataPersistence {
     public bool OverrideLanguage;
     public UnityEngine.SystemLanguage LanguageSettingOverride;
     public bool UseConnectFlowInMock;
+    public bool ForceFirstTimeConnectFlow;
+    public bool FakeGermanLocale;
     public bool UseVerticalGrammarCodelab;
     public bool EnableAutoBlockPoolOnStart;
 
@@ -26,13 +28,20 @@ namespace DataPersistence {
       NoFreeplayOnStart = false;
       ShowDroneModeDebugInfo = false;
       UseConnectFlowInMock = false;
+      ForceFirstTimeConnectFlow = false;
+      FakeGermanLocale = false;
       UseVerticalGrammarCodelab = false;
       EnableAutoBlockPoolOnStart = true;
 
       DebugConsoleData.Instance.AddConsoleVar("NoFreeplayOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("EnableAutoBlockPoolOnStart", "Animator", this);
       DebugConsoleData.Instance.AddConsoleVar("UseFastConnectivityFlow", "QA", this);
-      DebugConsoleData.Instance.AddConsoleVar("UseConnectFlowInMock", "UseConnectFlowInMock", this);
+      // editor-only ui debug options
+#if UNITY_EDITOR 
+      DebugConsoleData.Instance.AddConsoleVar("UseConnectFlowInMock", "UIMockFlow", this);
+      DebugConsoleData.Instance.AddConsoleVar("ForceFirstTimeConnectFlow", "UIMockFlow", this);
+      DebugConsoleData.Instance.AddConsoleVar("FakeGermanLocale", "UIMockFlow", this);
+#endif
       DebugConsoleData.Instance.AddConsoleVar("UseVerticalGrammarCodelab", "CodeLab", this);
 
       DebugConsoleData.Instance.AddConsoleFunction("UseSystemSettings", "Language", (str) => {
