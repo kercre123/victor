@@ -29,7 +29,7 @@ The firmware build supports multiple build "flavors", at time of this writing th
 The flavor is defined at the start of the build process and should apply to all the firmware images build until 
 the flavor is reconfigured.
 
-["Feature Flags"](https://ankiinc.atlassian.net/wiki/display/COZMO/Cozmo+Feature+Flags) are turned on or off by the
+["Feature Flags"](https://ankiinc.atlassian.net/wiki/display/COZMO/Cozmo+Feature+Gate+Flags) are turned on or off by the
 build flavor and will cause some code to be compiled in or out. See below for more details.
 
 -------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ The server build process goes roughly as follows
 
 ## Feature flags
 The firmware now supports compile time feature flags similar to the ones in engine. See the
-[engine documentation](https://ankiinc.atlassian.net/wiki/display/COZMO/Cozmo+Feature+Flags)
+[engine documentation](https://ankiinc.atlassian.net/wiki/display/COZMO/Cozmo+Feature+Gate+Flags)
 for an introduction. The flags are defined in the file
 ```
 robot/include/anki/cozmo/robot/buildTypes.h
