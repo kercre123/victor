@@ -30,6 +30,7 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
+class IWantsToRunStrategy;
 
 namespace ReactionTriggerConst{
 static const BehaviorPreReqNone kNoPreReqs;
@@ -78,6 +79,9 @@ protected:
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
   using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
+  
+  
+  IWantsToRunStrategy* _wantsToRunStrategy;
   
   // Derived classes should use these methods to subscribe to any tags they
   // are interested in handling.

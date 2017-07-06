@@ -16,6 +16,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
@@ -27,42 +28,33 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityStrategyNeeds::ActivityStrategyNeeds(Robot& robot, const Json::Value& config)
-  : Anki::Cozmo::IActivityStrategy(config)
+: IActivityStrategy(robot, config)
 {
-  {
-    const auto& needStr = JsonTools::ParseString(config,
-                                                 "need",
-                                                 "ActivityStrategyNeeds.ConfigError.Need");
-    _need = NeedIdFromString(needStr);
-  }
-
-  {
-    const auto& needBracketStr = JsonTools::ParseString(config,
-                                                        "needBracket",
-                                                        "ActivityStrategyNeeds.ConfigError.NeedLevel");
-    _requiredBracket = NeedBracketIdFromString(needBracketStr);
-  }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyNeeds::WantsToStartInternal(const Robot& robot, float lastTimeActivityRanSec) const
-{  
-  const bool inBracket = InRequiredNeedBracket(robot);
-  return inBracket;
+{
+  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+                 "ActivityStrategyNeeds.WantsToStartInternal",
+                 "WantsToRunStrategyNotSpecified")){
+    return _wantsToRunStrategy->WantsToRun(robot);
+  }
+  return false;
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityStrategyNeeds::WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const
 {
-  const bool inBracket = InRequiredNeedBracket(robot);
-  return !inBracket;
+  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+                 "ActivityStrategyNeeds.WantsToEndInternal",
+                 "WantsToRunStrategyNotSpecified")){
+    return !_wantsToRunStrategy->WantsToRun(robot);
+  }
+  return true;
 }
 
-bool ActivityStrategyNeeds::InRequiredNeedBracket(const Robot& robot) const
-{
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  const bool inBracket = currNeedState.IsNeedAtBracket(_need, _requiredBracket);
-  return inBracket;
-}
-
-
-}
-}
+} // namespace Cozmo
+} // namespace Anki

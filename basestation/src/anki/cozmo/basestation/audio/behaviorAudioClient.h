@@ -20,8 +20,8 @@
 
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
-#include "clad/types/activityTypes.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/activityTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
 

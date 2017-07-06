@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Activities_Activities_ActivityFactory_H__
 #define __Cozmo_Basestation_BehaviorSystem_Activities_Activities_ActivityFactory_H__
 
-#include "clad/types/activityTypes.h"
+#include "clad/types/behaviorSystem/activityTypes.h"
 
 namespace Json {
 class Value;

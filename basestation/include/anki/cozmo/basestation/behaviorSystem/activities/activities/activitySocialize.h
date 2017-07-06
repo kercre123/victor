@@ -15,8 +15,8 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/activities/activities/iActivity.h"
 
-#include "clad/types/behaviorTypes.h"
-#include "clad/types/behaviorObjectives.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorObjectives.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <map>
 #include <vector>

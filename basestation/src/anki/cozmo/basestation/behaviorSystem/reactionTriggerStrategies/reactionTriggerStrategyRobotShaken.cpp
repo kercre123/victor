@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotShaken.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -22,8 +23,6 @@ namespace Cozmo {
 namespace{
 static const char* kTriggerStrategyName = "Trigger strategy robot shaken";
 }
-
-const float ReactionTriggerStrategyRobotShaken::_kAccelMagnitudeShakingStartedThreshold = 16000.f;
   
 ReactionTriggerStrategyRobotShaken::ReactionTriggerStrategyRobotShaken(Robot& robot, const Json::Value& config)
 : IReactionTriggerStrategy(robot, config, kTriggerStrategyName)
@@ -37,15 +36,15 @@ void ReactionTriggerStrategyRobotShaken::SetupForceTriggerBehavior(const Robot& 
   
 bool ReactionTriggerStrategyRobotShaken::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
-  // ensure behavior is runnable (it is if already running - otherwise IsRunnable will assert):
-  const bool isRunnable = behavior->IsRunning() || behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+                 "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
+                 "WantsToRunStrategyNotSpecified")){
+    const bool isRunnable = behavior->IsRunning() || behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
+
+    return _wantsToRunStrategy->WantsToRun(robot) && isRunnable;
+  }
   
-  // trigger this behavior when the filtered total accelerometer magnitude data exceeds a threshold
-  bool shouldTrigger = (robot.GetHeadAccelMagnitudeFiltered() > _kAccelMagnitudeShakingStartedThreshold);
-  
-  // add a check for offTreadsState?
-  
-  return (shouldTrigger && isRunnable);
+  return false;
 }
 
 } // namespace Cozmo

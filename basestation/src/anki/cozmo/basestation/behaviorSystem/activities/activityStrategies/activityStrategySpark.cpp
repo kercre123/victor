@@ -20,7 +20,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityStrategySpark::ActivityStrategySpark(Robot& robot, const Json::Value& config)
-: Anki::Cozmo::IActivityStrategy(config)
+: IActivityStrategy(robot, config)
 {
   SetActivityShouldEndSecs(FLT_MAX);
 }

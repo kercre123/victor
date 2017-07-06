@@ -18,7 +18,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
 
-#include "clad/types/behaviorObjectives.h"
+#include "clad/types/behaviorSystem/behaviorObjectives.h"
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
@@ -32,7 +32,7 @@ static const float  kUpdateRunnabilityInterval_s = 300;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityStrategyPyramid::ActivityStrategyPyramid(Robot& robot, const Json::Value& config)
-: IActivityStrategy(config)
+: IActivityStrategy(robot, config)
 , _nextTimeUpdateRunability_s(0)
 , _wantsToRunRandomized(false)
 , _pyramidBuilt(false)

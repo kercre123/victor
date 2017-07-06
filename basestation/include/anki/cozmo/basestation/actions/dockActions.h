@@ -21,7 +21,7 @@
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/dockingSignals.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/reactionTriggers.h"
+#include "clad/types/behaviorSystem/reactionTriggers.h"
 
 
 #include "util/helpers/templateHelpers.h"

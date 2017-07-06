@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace{
@@ -47,12 +48,10 @@ void ReactionTriggerStrategyNoPreDockPoses::SetupForceTriggerBehavior(const Robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ReactionTriggerStrategyNoPreDockPoses::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
-  const ObjectID& objID = robot.GetAIComponent().GetWhiteboard().GetNoPreDockPosesOnObject();
-  if(objID.IsSet()){
-    BehaviorPreReqAcknowledgeObject preReqData(objID.GetValue(), robot);
-    ObjectID unsetObj;
-    robot.GetAIComponent().GetNonConstWhiteboard().SetNoPreDockPosesOnObject(unsetObj);
-    return behavior->IsRunnable(preReqData);
+  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+                 "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
+                 "WantsToRunStrategyNotSpecified")){
+    return _wantsToRunStrategy->WantsToRun(robot);
   }
   return false;
 }

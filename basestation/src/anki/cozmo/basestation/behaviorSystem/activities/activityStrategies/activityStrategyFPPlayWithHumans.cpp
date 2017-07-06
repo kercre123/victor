@@ -28,7 +28,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityStrategyFPPlayWithHumans::ActivityStrategyFPPlayWithHumans(Robot& robot, const Json::Value& config)
-: Anki::Cozmo::IActivityStrategy(config)
+: IActivityStrategy(robot, config)
 , _lastGameRequestTimestampSec(0.0f)
 {
 

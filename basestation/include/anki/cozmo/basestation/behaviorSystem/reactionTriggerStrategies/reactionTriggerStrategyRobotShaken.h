@@ -30,10 +30,6 @@ protected:
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
 
-private:
-  
-  // Accelerometer magnitude threshold which corresponds to 'shaking' the robot:
-  static const float _kAccelMagnitudeShakingStartedThreshold;
 };
 
 

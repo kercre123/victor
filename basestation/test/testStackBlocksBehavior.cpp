@@ -27,7 +27,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoAPI/comms/uiMessageHandler.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 

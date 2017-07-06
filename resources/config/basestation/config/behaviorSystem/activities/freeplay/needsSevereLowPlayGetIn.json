@@ -10,7 +10,10 @@
     // runs when the needs brackets are severe, but the "severe needs expression" from the whiteboard isn't
     // set (yet)
     "type" : "SevereNeedTransition",
-    "need": "Play",
+    "wantsToRunStrategyConfig": {
+      "strategyType" : "ExpressNeedsTransition",
+      "need": "Play"
+    },
       
     // This one wants to end immediately, so it ends after the get-in animation is played
     "activityShouldEndDurationSecs": 0.01

@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include <memory>
 #include <set>
 #include <string>

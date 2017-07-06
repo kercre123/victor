@@ -8,8 +8,11 @@
   "activityStrategy":
   {
     "type" : "Needs",
-    "need": "Repair",
-    "needBracket": "Critical",
+    "wantsToRunStrategyConfig": {
+      "strategyType" : "InNeedsBracket",
+      "need": "Repair",
+      "needBracket": "Critical"
+    },
     // never wants to end based on time
     "activityShouldEndDurationSecs": -1.0
   },

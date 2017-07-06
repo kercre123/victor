@@ -17,7 +17,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorObjectives.h"
+#include "clad/types/behaviorSystem/behaviorObjectives.h"
 #include "json/json.h"
 #include <string>
 #include <vector>

@@ -129,11 +129,17 @@
     },
     {
       "reactionTrigger": "NoPreDockPoses",
-      "behaviorID": "RamIntoBlock"
+      "behaviorID": "RamIntoBlock",
+      "wantsToRunStrategyConfig": {
+        "strategyType" : "NoPreDockPoses"
+      }
     },
     {
       "reactionTrigger": "PlacedOnCharger",
-      "behaviorID": "ReactToOnCharger"
+      "behaviorID": "ReactToOnCharger",
+      "wantsToRunStrategyConfig": {
+        "strategyType" : "PlacedOnCharger"
+      }
     },
     {
       "reactionTrigger": "PetInitialDetection",
@@ -149,7 +155,10 @@
     },
     {
       "reactionTrigger": "RobotPlacedOnSlope",
-      "behaviorID": "ReactToPlacedOnSlope"
+      "behaviorID": "ReactToPlacedOnSlope",
+      "wantsToRunStrategyConfig": {
+        "strategyType" : "RobotPlacedOnSlope"
+      }
     },
     {
       "reactionTrigger": "ReturnedToTreads",
@@ -185,7 +194,10 @@
     },
     {
       "reactionTrigger": "RobotShaken",
-      "behaviorID": "ReactToRobotShaken"
+      "behaviorID": "ReactToRobotShaken",
+      "wantsToRunStrategyConfig": {
+        "strategyType" : "RobotShaken"
+      }
     },
     {
       "reactionTrigger": "Sparked",

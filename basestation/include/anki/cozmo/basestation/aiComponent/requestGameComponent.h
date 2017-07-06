@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/signals/simpleSignal_fwd.h"

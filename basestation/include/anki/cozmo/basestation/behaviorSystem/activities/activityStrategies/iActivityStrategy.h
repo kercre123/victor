@@ -25,6 +25,7 @@ namespace Anki {
 namespace Cozmo {
 
 template<typename TYPE> class AnkiEvent;
+class IWantsToRunStrategy;
 class MoodScorer;
 class Robot;
 
@@ -33,7 +34,7 @@ class IActivityStrategy
 public:
 
   // construction/destruction
-  IActivityStrategy(const Json::Value& config);
+  IActivityStrategy(Robot& robot, const Json::Value& config);
   virtual ~IActivityStrategy();
 
   // true when this activity would be happy to start, false if it doens't want to be fired now
@@ -60,7 +61,8 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+  IWantsToRunStrategy* _wantsToRunStrategy;
+  
   // signal handles for events strategies register to
   std::vector<Signal::SmartHandle> _eventHandles;
 

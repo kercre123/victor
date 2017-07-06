@@ -23,8 +23,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 
-#include "clad/types/activityTypes.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/activityTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 
 #include "util/helpers/templateHelpers.h"

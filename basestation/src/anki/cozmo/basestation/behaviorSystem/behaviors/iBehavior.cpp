@@ -10,17 +10,20 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
-#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/behaviorHelperComponent.h"
+#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
@@ -62,6 +65,8 @@ static const char* kObjectTapInteractionDisableLock  = "ObjectTapInteraction";
 static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
+static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+
 
 static const int kMaxResumesFromCliff                = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
@@ -193,6 +198,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 , _robot(robot)
 , _lastRunTime_s(0.0f)
 , _startedRunningTime_s(0.0f)
+, _wantsToRunStrategy(nullptr)
 , _id(ExtractBehaviorIDFromConfig(config))
 , _idString(BehaviorIDToString(_id))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
@@ -299,6 +305,11 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   JsonTools::GetValueOptional(config, kRequireObjectTappedKey, _requireObjectTapped);
   
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
+  
+  if(config.isMember(kWantsToRunStrategyConfigKey)){
+    const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
+    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(_robot, wantsToRunConfig);
+  }
   
   // Doesn't actually read anything from behavior config, but sets defaults
   // for certain scoring metrics in case no score json is loaded
@@ -637,6 +648,11 @@ bool IBehavior::IsRunnableBase(const Robot& robot, bool allowWhileRunning) const
     }
   }
   
+  if((_wantsToRunStrategy != nullptr) &&
+     !_wantsToRunStrategy->WantsToRun(robot)){
+    return false;
+  }
+     
   BehaviorPreReqNone preReqData;
   return IsRunnableScored(preReqData);
 }

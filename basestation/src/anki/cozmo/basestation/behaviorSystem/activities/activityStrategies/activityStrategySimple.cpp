@@ -20,7 +20,7 @@ namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityStrategySimple::ActivityStrategySimple(Robot& robot, const Json::Value& config)
-  : Anki::Cozmo::IActivityStrategy(config)
+: IActivityStrategy(robot, config)
 {
 }
 

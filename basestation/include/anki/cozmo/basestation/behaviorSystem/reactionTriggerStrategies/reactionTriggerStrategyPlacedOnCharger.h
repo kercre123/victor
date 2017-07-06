@@ -26,18 +26,8 @@ public:
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
 
 protected:
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
-
-  virtual void EnabledStateChanged(bool enabled) override
-                 {_shouldTrigger = false;}
-  
-private:
-  bool _shouldTrigger = false;
-  
-  // prevent Cozmo from asking to go to sleep for a period of time after connection
-  mutable float _dontRunUntilTime_sec;
 
 };
 

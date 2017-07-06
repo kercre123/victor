@@ -31,7 +31,7 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 
 #include "util/console/consoleInterface.h"
 

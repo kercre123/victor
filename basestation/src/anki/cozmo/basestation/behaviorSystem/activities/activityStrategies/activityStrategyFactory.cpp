@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySpark.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "clad/types/activityTypes.h"
+#include "clad/types/behaviorSystem/activityTypes.h"
 #include "json/json.h"
 
 #include "util/logging/logging.h"

@@ -18,7 +18,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior_fwd.h"
 
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"

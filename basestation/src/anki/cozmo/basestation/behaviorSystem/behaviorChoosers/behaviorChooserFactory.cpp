@@ -19,7 +19,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 
-#include "clad/types/behaviorChooserTypes.h"
+#include "clad/types/behaviorSystem/behaviorChooserTypes.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"

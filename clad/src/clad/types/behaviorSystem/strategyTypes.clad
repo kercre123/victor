@@ -1,0 +1,24 @@
+// File: strategyTypes
+// Author: Kevin M. Karol
+// Created: 7/5/2017
+// Copyright: Anki, inc. 2017
+
+namespace Anki {
+namespace Cozmo {
+
+// Identifies the WantsToRunStrategy type
+// PLEASE KEEP ALPHABETIZED
+enum uint_8 WantsToRunStrategyType {
+  Invalid,
+
+  AlwaysRun,
+  ExpressNeedsTransition,
+  InNeedsBracket,
+  NoPreDockPoses,
+  PlacedOnCharger,
+  RobotPlacedOnSlope,
+  RobotShaken
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -18,7 +18,7 @@
 #include "anki/common/basestation/objectIDs.h"
 
 #include "anki/cozmo/basestation/components/bodyLightComponentTypes.h"
-#include "clad/types/behaviorObjectives.h"
+#include "clad/types/behaviorSystem/behaviorObjectives.h"
 #include "util/signals/simpleSignal.hpp"
 
 namespace Json {

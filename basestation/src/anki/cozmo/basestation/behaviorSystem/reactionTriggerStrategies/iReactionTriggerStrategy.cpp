@@ -12,30 +12,42 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
-#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
+#include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
-
+#include "clad/types/behaviorSystem/strategyTypes.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
 using namespace ExternalInterface;
+static const char* kWantsToRunStrategyConfigKey = "wantsToRunStrategyConfig";
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IReactionTriggerStrategy::IReactionTriggerStrategy(Robot& robot, const Json::Value& config, const std::string& strategyName)
-: _robot(robot)
+: _wantsToRunStrategy(nullptr)
+, _robot(robot)
 , _strategyName(strategyName)
 , _userForcingTrigger(false)
 {
   SubscribeToTags({GameToEngineTag::ExecuteReactionTrigger});
+  
+  
+  if(config.isMember(kWantsToRunStrategyConfigKey)){
+    const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
+    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, wantsToRunConfig);
+  }
+  
+  
 }
 
 

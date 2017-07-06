@@ -29,11 +29,11 @@
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/actionResults.h"
-#include "clad/types/behaviorObjectives.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorObjectives.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/needsSystemTypes.h"
-#include "clad/types/reactionTriggers.h"
+#include "clad/types/behaviorSystem/reactionTriggers.h"
 #include "clad/types/unlockTypes.h"
 #include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -62,6 +62,7 @@ class ActionableObject;
 class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
+class IWantsToRunStrategy;
 enum class ObjectInteractionIntention;
   
 class BehaviorPreReqNone;
@@ -455,6 +456,8 @@ private:
   Robot& _robot;
   float _lastRunTime_s;
   float _startedRunningTime_s;
+  
+  IWantsToRunStrategy* _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;

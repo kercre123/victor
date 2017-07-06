@@ -29,25 +29,6 @@ public:
 protected:
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
-
-private:
-  
-  // Last time the robot was moving and picked up:
-  double _lastMovingTime = 0.0;
-  double _lastPickedUpTime = 0.0;
-
-  // pitch angle thresholds between which robot is considered "OnIncline"
-  const float _kOnInclinePitchThresholdLow_deg = 10.f;
-  const float _kOnInclinePitchThresholdHigh_deg = 55.f;
-
-  // if any gyro reading is above this threshold, robot is considered "moving"
-  const float _kIsMovingNowGyroThreshold_degPerSec = 0.01f;
-  
-  // time for which robot must not be moving at all to be considered "stationary"
-  const double _kIsStationaryTimeThreshold_sec = 0.40;
-  
-  // time after transition from PickedUp to not PickedUp for which robot is consider "just transitioned to not PickedUp"
-  const double _kTransitionToNotPickedUpTimeThreshold_sec = 1.5;
   
 };
 

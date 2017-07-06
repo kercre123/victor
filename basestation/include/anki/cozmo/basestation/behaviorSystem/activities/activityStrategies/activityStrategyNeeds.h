@@ -24,19 +24,11 @@ namespace Cozmo {
 class ActivityStrategyNeeds : public IActivityStrategy
 {
 public:
-
   ActivityStrategyNeeds(Robot& robot, const Json::Value& config);
 
   // Wants to run when in the specified needs bracket, and wants to end once it's not in that bracket anymore
   virtual bool WantsToStartInternal(const Robot& robot, float lastTimeActivityRanSec) const override;
   virtual bool WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const override;
-
-private:
-
-  NeedId _need;
-  NeedBracketId _requiredBracket;
-
-  bool InRequiredNeedBracket(const Robot& robot) const;
 
 };
 

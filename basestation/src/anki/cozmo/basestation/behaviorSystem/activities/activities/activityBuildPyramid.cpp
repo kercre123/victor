@@ -35,7 +35,7 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 
 
 namespace Anki {

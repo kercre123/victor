@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 
 #include "anki/common/types.h"
-#include "clad/types/activityTypes.h"
+#include "clad/types/behaviorSystem/activityTypes.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/needsSystemTypes.h"
 #include "clad/types/unlockTypes.h"

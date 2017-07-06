@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -31,6 +32,7 @@ namespace Cozmo {
 namespace {
 CONSOLE_VAR(float, kDefaultActivityMaxDurationSecs, "IActivityStrategy", 60.0f);
 CONSOLE_VAR(float, kShortFailureCooldownSecs, "IActivityStrategy", 3.0f);
+static const char* kWantsToRunStrategyConfigKey   = "wantsToRunStrategyConfig";
 static const char* kStartMoodScorerConfigKey      = "startMoodScorer";
 static const char* kActivityCanEndConfigKey       = "activityCanEndDurationSecs";
 static const char* kActivityShouldEndConfigKey    = "activityShouldEndDurationSecs";
@@ -42,8 +44,9 @@ static const char* kActivityFeatureGate           = "featureGate";
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IActivityStrategy::IActivityStrategy(const Json::Value& config)
-: _activityCanEndSecs(-1.0f)
+IActivityStrategy::IActivityStrategy(Robot& robot, const Json::Value& config)
+: _wantsToRunStrategy(nullptr)
+, _activityCanEndSecs(-1.0f)
 , _activityShouldEndSecs(-1.0f)
 , _baseCooldownSecs(-1.0f)
 , _cooldownSecs(-1.0f)
@@ -100,6 +103,12 @@ IActivityStrategy::IActivityStrategy(const Json::Value& config)
   {
     _featureGate = FeatureTypeFromString(featureGate);
   }
+  
+  if(config.isMember(kWantsToRunStrategyConfigKey)){
+    const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
+    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, wantsToRunConfig);
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

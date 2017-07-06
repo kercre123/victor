@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorChoosers_SelectionBehaviorChooser_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
-#include "clad/types/behaviorTypes.h"
+#include "clad/types/behaviorSystem/behaviorTypes.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
