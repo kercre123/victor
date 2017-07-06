@@ -62,7 +62,7 @@ using namespace AudioMetaData;
   
 #if USE_AUDIO_ENGINE
 // Resolve audio asset file path
-static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
+static bool ResolvePathToAudioFile( const std::string&, const std::string&, std::string& );
 
 // Setup Ak Logging callback
 static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlayingId, AudioGameObject );
@@ -102,7 +102,7 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
     config.assetFilePath = assetPath;
     // Path resolver function
     config.pathResolver = std::bind(&ResolvePathToAudioFile, assetPath,
-                                    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+                                    std::placeholders::_1, std::placeholders::_2);
     
     // Add Assets Zips to list.
 #ifdef ANDROID
@@ -175,7 +175,7 @@ CozmoAudioController::CozmoAudioController( const CozmoContext* context )
 #endif
     
     // Set Local
-    config.audioLocal = AudioLocaleType::EnglishUS;
+    config.audioLocale = AudioLocaleType::EnglishUS;
     // Engine Memory
     config.defaultMemoryPoolSize      = ( 2 * 1024 * 1024 );      // 2 MB
     config.defaultLEMemoryPoolSize    = ( 1024 * 1024 );          // 1 MB
@@ -403,22 +403,18 @@ void CozmoAudioController::SetupPlugins()
 #if USE_AUDIO_ENGINE
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ResolvePathToAudioFile( const std::string& dataPlatformResourcePath,
-                            const char* inName,
-                            char* outPath,
-                            const size_t outPathLen )
+                             const std::string& in_name,
+                             std::string& out_path )
 {
-  if (!inName || !outPath || !outPathLen) {
-    return false;
-  }
-  *outPath = '\0';
+  out_path.clear();
   if (dataPlatformResourcePath.empty()) {
     return false;
   }
-  std::string path = dataPlatformResourcePath + std::string(inName);
-  if (path.empty()) {
+  
+  out_path = dataPlatformResourcePath + in_name;
+  if ( out_path.empty() ) {
     return false;
   }
-  (void) strncpy(outPath, path.c_str(), outPathLen);
   return true;
 }
 
