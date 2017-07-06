@@ -389,8 +389,7 @@ ActionResult FlipBlockAction::CheckIfDone()
   if(p.GetTranslation().Length() < kDistToObjectToFlip_mm && _flipTag == -1)
   {
     IAction* action = new MoveLiftToHeightAction(_robot, MoveLiftToHeightAction::Preset::CARRY);
-    action->ShouldEmitCompletionSignal(false);
-    
+
     // FlipBlockAction is already locking all tracks so this lift action doesn't need to lock
     action->ShouldSuppressTrackLocking(true);
     _flipTag = action->GetTag();

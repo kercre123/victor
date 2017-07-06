@@ -589,7 +589,6 @@ namespace Anki {
                           "Playing animation %s ",
                           EnumToString(_liftMovingAnimation));
             IActionRunner* animAction = new TriggerLiftSafeAnimationAction(_robot, _liftMovingAnimation, 1, false);
-            animAction->ShouldEmitCompletionSignal(false);
             _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
           } else {
             PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
@@ -838,8 +837,7 @@ namespace Anki {
     void IDockAction::SetupTurnAndVerifyAction(const ObservableObject* dockObject)
     {
       _faceAndVerifyAction.reset(new CompoundActionSequential(_robot,{}));
-      
-      _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
+
       _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
     
       // If we are checking to see if there is an object on top of our dockObject then
@@ -861,7 +859,6 @@ namespace Anki {
         verifyNoObjectOnTopOfAction->AddIgnoreID(dockObject->GetID());
         
         // Disable the visual verification from issuing a completion signal
-        verifyNoObjectOnTopOfAction->ShouldEmitCompletionSignal(false);
         verifyNoObjectOnTopOfAction->ShouldSuppressTrackLocking(true);
         
         _faceAndVerifyAction->AddAction(verifyNoObjectOnTopOfAction);
@@ -878,7 +875,6 @@ namespace Anki {
                                                                            0, true, false);
         
         // Disable the turn towards action from issuing a completion signal
-        turnTowardsDockObjectAction->ShouldEmitCompletionSignal(false);
         turnTowardsDockObjectAction->ShouldSuppressTrackLocking(true);
         
         _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
@@ -1451,7 +1447,6 @@ namespace Anki {
       if(_verifyAction == nullptr)
       {
         _verifyAction.reset(new TurnTowardsPoseAction(_robot, _dockObjectOrigPose, 0));
-        _verifyAction->ShouldEmitCompletionSignal(false);
         _verifyAction->ShouldSuppressTrackLocking(true);
         _verifyActionDone = false;
       }
@@ -1641,8 +1636,7 @@ namespace Anki {
                                                                _carryingObjectID,
                                                                carryObjectMarkerCode,
                                                                0, true, false));
-        
-        _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
+
         _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
         
       } // if/else IsCarryingObject()
@@ -1917,10 +1911,7 @@ namespace Anki {
                                                                        false));
               _placementVerifyAction->ShouldSuppressTrackLocking(true);
               _verifyComplete = false;
-              
-              // Disable completion signals since this is inside another action
-              _placementVerifyAction->ShouldEmitCompletionSignal(false);
-              
+
               // Go ahead do the first update of the FaceObjectAction to get the
               // init "out of the way" rather than wasting a tick here
               result = _placementVerifyAction->Update();
@@ -1957,10 +1948,7 @@ namespace Anki {
                   _placementVerifyAction.reset(new MoveLiftToHeightAction(_robot,
                                                                           MoveLiftToHeightAction::Preset::LOW_DOCK));
                   _placementVerifyAction->ShouldSuppressTrackLocking(true);
-                  
-                  // Disable completion signals since this is inside another action
-                  _placementVerifyAction->ShouldEmitCompletionSignal(false);
-                  
+
                   result = ActionResult::RUNNING;
                 }
                 
@@ -2482,10 +2470,7 @@ namespace Anki {
               }));
               
               _rollVerifyAction->ShouldSuppressTrackLocking(true);
-              
-              // Disable completion signals since this is inside another action
-              _rollVerifyAction->ShouldEmitCompletionSignal(false);
-              
+
               // Do one update step immediately after creating the action to get Init done
               result = _rollVerifyAction->Update();
             }

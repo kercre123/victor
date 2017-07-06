@@ -460,10 +460,7 @@ namespace Anki {
       _compoundAction.AddAction(turn1);
 
       _compoundAction.AddAction(new WaitAction(_robot, afterSecondTurnWait_s));
-      
-      // Prevent the compound action from signaling completion
-      _compoundAction.ShouldEmitCompletionSignal(false);
-      
+
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
       _compoundAction.ShouldSuppressTrackLocking(true);
 
@@ -1174,10 +1171,7 @@ namespace Anki {
       headAction->SetAccel(_tiltAccel_radPerSec2);
       headAction->SetMoveEyes(_moveEyes);
       _compoundAction.AddAction(headAction);
-      
-      // Prevent the compound action from signaling completion
-      _compoundAction.ShouldEmitCompletionSignal(false);
-      
+
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
       _compoundAction.ShouldSuppressTrackLocking(true);
       
@@ -1422,7 +1416,6 @@ namespace Anki {
             _visuallyVerifyAction.reset(action);
             
             // Disable completion signals since this is inside another action
-            _visuallyVerifyAction->ShouldEmitCompletionSignal(false);
             _visuallyVerifyAction->ShouldSuppressTrackLocking(true);
             
             // Go ahead and do a first tick of visual verification's Update, to
@@ -1738,7 +1731,6 @@ namespace Anki {
       }
       _action.reset(action);
       if(nullptr != _action) {
-        _action->ShouldEmitCompletionSignal(false);
         _action->ShouldSuppressTrackLocking(true);
       }
     }

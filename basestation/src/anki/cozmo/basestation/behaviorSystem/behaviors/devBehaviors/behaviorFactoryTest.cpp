@@ -963,7 +963,6 @@ static const char* kBehaviorTestName = "Behavior factory test";
           auto liftAction = new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK);
           headAction->SetMaxSpeed(DEG_TO_RAD(20.f));
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
-          compoundAction->ShouldEmitCompletionSignal(true);
           
           StartActing(compoundAction,
                       [this,&robot](ActionResult result){

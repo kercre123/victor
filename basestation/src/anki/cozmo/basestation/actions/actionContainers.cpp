@@ -670,7 +670,6 @@ namespace Anki {
           IExternalInterface* externalInterface = nullptr;
           ExternalInterface::RobotCompletedAction rca;
           if(action->GetRobot().HasExternalInterface() &&
-             action->GetEmitCompletionSignal() &&
              action->GetState() != ActionResult::INTERRUPTED)
           {
             action->GetRobotCompletedActionMessage(rca);

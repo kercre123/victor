@@ -291,9 +291,7 @@ namespace Anki {
                             turnTowardsObjectAction->GetName().c_str());
           _compoundAction.AddAction(turnTowardsObjectAction);
         }
-        
-        _compoundAction.ShouldEmitCompletionSignal(false);
-        
+
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it
         result = _compoundAction.Update();

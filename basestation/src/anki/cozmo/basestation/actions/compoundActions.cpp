@@ -88,12 +88,6 @@ namespace Anki {
       // compound action in which they are included
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
 
-      // sometimes we want to block completion signals
-      // TODO:(bn) figure out why. This seems dirty to me because we may miss things (e.g. some code which is
-      // listening for any RollBlock actions which fail might not run if that roll block were part of a
-      // compound action)
-      action->ShouldEmitCompletionSignal(emitCompletionSignal);
-      
       std::shared_ptr<IActionRunner> sharedPtr(action);
       
       _actions.emplace_back(sharedPtr);

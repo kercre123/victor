@@ -52,8 +52,7 @@ namespace Cozmo {
     }));
     
     _compoundAction->ShouldSuppressTrackLocking(true);
-    _compoundAction->ShouldEmitCompletionSignal(false);
-    
+
     return InitInternal();
   }
   
@@ -295,8 +294,7 @@ ActionResult VisuallyVerifyNoObjectAtPoseAction::Init()
     _waitForImagesAction->PrepForCompletion();
   }
   _waitForImagesAction.reset(new WaitForImagesAction(_robot, _numImagesToWaitFor, VisionMode::DetectingMarkers));
-  
-  _turnTowardsPoseAction->ShouldEmitCompletionSignal(false);
+
   _turnTowardsPoseAction->ShouldSuppressTrackLocking(true);
   
   return ActionResult::SUCCESS;

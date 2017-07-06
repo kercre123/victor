@@ -134,10 +134,7 @@ namespace Anki {
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
       bool IsMessageDisplayEnabled() const { return _displayMessages; }
-      
-      void ShouldEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
-      bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
-      
+
       // Called when the action stops running and sets varibles needed for completion.
       // This calls the overload-able GetCompletionUnion() method above.
       void PrepForCompletion();
@@ -191,7 +188,6 @@ namespace Anki {
       bool          _preppedForCompletion   = false;
       bool          _suppressTrackLocking   = false;
       bool          _displayMessages        = true;
-      bool          _emitCompletionSignal   = true;
       
       // Auto-generated tag
       u32           _idTag;
