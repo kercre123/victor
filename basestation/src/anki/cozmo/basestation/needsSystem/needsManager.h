@@ -148,6 +148,7 @@ private:
   void SendNeedsPauseStatesToGame();
   void SendStarLevelCompletedToGame();
   void SendStarUnlockedToGame();
+  void SendNeedsOnboardingToGame();
   void SendNeedsDebugVizString(const NeedsActionId actionCausingTheUpdate);
 
   void ProcessLevelRewards(int level, std::vector<NeedsReward>& rewards,
@@ -170,6 +171,7 @@ private:
   bool          _robotNeedsVersionUpdate;
   bool          _deviceNeedsVersionUpdate;
   u32           _previousRobotSerialNumber;
+  int           _robotOnboardingStageCompleted;
 
   bool          _isPausedOverall;
   float         _timeWhenPausedOverall_s;

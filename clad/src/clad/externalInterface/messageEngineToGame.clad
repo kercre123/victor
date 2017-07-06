@@ -555,7 +555,7 @@ message StarUnlocked {
 }
 
 message WantsNeedsOnboarding {
-  bool wantsNeedsOnboarding
+  int_32 onboardingStageCompleted
 }
 
 message ConnectedToDifferentRobot {

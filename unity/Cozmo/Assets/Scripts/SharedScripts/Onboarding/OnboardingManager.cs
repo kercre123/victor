@@ -52,6 +52,7 @@ public class OnboardingManager : MonoBehaviour {
   private Transform _OnboardingTransform;
 
   private bool _StageDisabledReactionaryBehaviors = false;
+  private int _LastOnboardingPhaseCompletedRobot = 0;
 
   [SerializeField]
   private GameObjectDataLink _OnboardingUIPrefabData;
@@ -93,6 +94,8 @@ public class OnboardingManager : MonoBehaviour {
         profile.OnboardingStages[OnboardingPhases.MeetCozmo] = GetMaxStageInPhase(OnboardingPhases.MeetCozmo);
       }
 
+      // This is sent when needs manager connects to a robot, lets us know if it's an "old robot" that can skip onboarding.
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding>(HandleGetWantsNeedsOnboarding);
     }
   }
 
@@ -152,6 +155,16 @@ public class OnboardingManager : MonoBehaviour {
     return false;
   }
 
+  public bool IsOldRobot() {
+    // Pounce is the first thing unlocked in the new nurture unlock order.
+    return _LastOnboardingPhaseCompletedRobot > 0 ||
+           UnlockablesManager.Instance.IsUnlocked(UnlockId.PounceOnMotionAction);
+  }
+
+  private void HandleGetWantsNeedsOnboarding(Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding message) {
+    _LastOnboardingPhaseCompletedRobot = message.onboardingStageCompleted;
+  }
+
   public void InitInitalOnboarding(NeedsHubView needsHubView) {
     _NeedsHubView = needsHubView;
     _OnboardingTransform = _NeedsHubView.transform.parent.transform;
@@ -175,6 +188,9 @@ public class OnboardingManager : MonoBehaviour {
 #if SDK_ONLY
     return;
 #else
+    if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+      return;
+    }
     // End any previous phase, can only highlight one thing at once
     if (_CurrPhase != OnboardingPhases.None) {
       // None means we just want to clear everything so don't start something new
@@ -198,7 +214,7 @@ public class OnboardingManager : MonoBehaviour {
       // in the event they've ever booted the app before, or it's an old robot.
       // Skip the holding on charger phase because it is the worst and only should be a problem
       // for fresh from factory robots
-      if (!FirstTime) {
+      if (!FirstTime || IsOldRobot()) {
         startStage = 1;
       }
       // In demo mode skip to wake up
@@ -248,11 +264,10 @@ public class OnboardingManager : MonoBehaviour {
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
 
-    if (_CurrPhase == OnboardingPhases.PlayIntro) {
-      // TODO: add more fields so partial checkpoints can be saved on the robot fixing COZMO-12453 and COZMO-12684
-      RobotEngineManager.Instance.Message.RegisterOnboardingComplete = new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete();
-      RobotEngineManager.Instance.SendMessage();
-    }
+    RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
+           new Anki.Cozmo.ExternalInterface.RegisterOnboardingComplete((int)_CurrPhase,
+                                                                     _CurrPhase == OnboardingPhases.PlayIntro);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   // Because looking for a face takes awhile time, we try to load this early and invisible

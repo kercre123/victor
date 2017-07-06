@@ -98,7 +98,7 @@ public:
   // because it serializes a CLAD structure, so for backward compatibility we'd have
   // to preserve older versions of that CLAD structure.
   static const int kDeviceStorageVersion = 2;
-  static const int kRobotStorageVersion = 2;
+  static const int kRobotStorageVersion = 3;
 
   Time _timeLastWritten;
 

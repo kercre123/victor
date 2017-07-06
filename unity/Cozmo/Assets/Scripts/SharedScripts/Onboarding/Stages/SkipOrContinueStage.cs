@@ -29,34 +29,11 @@ namespace Onboarding {
 
     protected override void Awake() {
       base.Awake();
-      _OldRobotViewInstance.SetActive(false);
-      _NewRobotViewInstance.SetActive(false);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding>(HandleGetWantsNeedsUpdate);
 
-      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
-        MessageEngineToGame messageEngineToGame = new MessageEngineToGame();
-        messageEngineToGame.WantsNeedsOnboarding = new WantsNeedsOnboarding(false);
-        RobotEngineManager.Instance.MockCallback(messageEngineToGame);
-      }
-      else {
-        RobotEngineManager.Instance.Message.GetWantsNeedsOnboarding = Singleton<Anki.Cozmo.ExternalInterface.GetWantsNeedsOnboarding>.Instance;
-        RobotEngineManager.Instance.SendMessage();
-      }
-
-    }
-
-    public override void OnDestroy() {
-      base.OnDestroy();
-
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding>(HandleGetWantsNeedsUpdate);
-    }
-
-    private void HandleGetWantsNeedsUpdate(Anki.Cozmo.ExternalInterface.WantsNeedsOnboarding message) {
-      // This robot has seen this before, give option to skip everything.
-      bool wantsNeedsOnboarding = message.wantsNeedsOnboarding;
-      _OldRobotViewInstance.SetActive(!wantsNeedsOnboarding);
-      _NewRobotViewInstance.SetActive(wantsNeedsOnboarding);
-      if (!wantsNeedsOnboarding) {
+      bool oldRobot = OnboardingManager.Instance.IsOldRobot();
+      _OldRobotViewInstance.SetActive(oldRobot);
+      _NewRobotViewInstance.SetActive(!oldRobot);
+      if (oldRobot) {
         _OldRobotContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
         _SkipButtonInstance.Initialize(HandleSkipClicked, "Onboarding." + name + ".skip", "Onboarding");
       }

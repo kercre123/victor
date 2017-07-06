@@ -211,6 +211,7 @@ NeedsManager::NeedsManager(const CozmoContext* cozmoContext)
 , _robotNeedsVersionUpdate(false)
 , _deviceNeedsVersionUpdate(false)
 , _previousRobotSerialNumber(0)
+, _robotOnboardingStageCompleted(0)
 , _isPausedOverall(false)
 , _timeWhenPausedOverall_s(0.0f)
 , _isDecayPausedForNeed()
@@ -492,6 +493,9 @@ void NeedsManager::InitAfterReadFromRobotAttempt()
     // (We did it earlier, in Init, but that was for a different robot)
     ApplyDecayForUnconnectedTime();
   }
+  
+  // Update Game on Robot's last state
+  SendNeedsOnboardingToGame();
 
   const Time now = system_clock::now();
 
@@ -913,23 +917,29 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsActionWhitelis
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComplete& msg)
 {
-  // Reset cozmo's need levels to their starting points, and reset timers
-  InitReset(_currentTime_s, _needsState._robotSerialNumber);
-  // onboarding unlocks one star.
-  _needsState._numStarsAwarded = 1;
-  
-  // Un-pause the needs system if we are not already
-  if (_isPausedOverall)
+  _robotOnboardingStageCompleted = msg.onboardingStage;
+  // phase 1 is just the first part showing the needs hub.
+  if( msg.finalStage )
   {
-    SetPaused(false);
+    // Reset cozmo's need levels to their starting points, and reset timers
+    InitReset(_currentTime_s, _needsState._robotSerialNumber);
+    // onboarding unlocks one star.
+    _needsState._numStarsAwarded = 1;
+    
+    // Un-pause the needs system if we are not already
+    if (_isPausedOverall)
+    {
+      SetPaused(false);
+    }
+
+    SendNeedsStateToGame();
+
+    // DAS Event: "needs.onboarding_completed"
+    // s_val: Unused
+    // data: Unused
+    Anki::Util::sEvent("needs.onboarding_completed", {}, "");
   }
-
-  SendNeedsStateToGame();
-
-  // DAS Event: "needs.onboarding_completed"
-  // s_val: Unused
-  // data: Unused
-  Anki::Util::sEvent("needs.onboarding_completed", {}, "");
+  PossiblyStartWriteToRobot();
 }
 
 template<>
@@ -1048,9 +1058,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::GetNeedsPauseStates& m
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::GetWantsNeedsOnboarding& msg)
 {
-  ExternalInterface::WantsNeedsOnboarding message(!_robotHadValidNeedsData);
-  const auto& extInt = _cozmoContext->GetExternalInterface();
-  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  SendNeedsOnboardingToGame();
 }
 
 template<>
@@ -1504,6 +1512,13 @@ void NeedsManager::SendStarUnlockedToGame()
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 }
 
+void NeedsManager::SendNeedsOnboardingToGame()
+{
+  ExternalInterface::WantsNeedsOnboarding message(_robotOnboardingStageCompleted);
+  const auto& extInt = _cozmoContext->GetExternalInterface();
+  extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+}
+
 void NeedsManager::DetectBracketChangeForDas()
 {
   for (int needIndex = 0; needIndex < static_cast<int>(NeedId::Count); needIndex++)
@@ -1710,7 +1725,8 @@ void NeedsManager::StartWriteToRobot()
   const auto timeLastStarAwarded = Util::numeric_cast<uint64_t>(timeLastStarAwarded_s);
 
   NeedsStateOnRobot stateForRobot(NeedsState::kRobotStorageVersion, timeLastWritten, curNeedLevels,
-                                  _needsState._curNeedsUnlockLevel, _needsState._numStarsAwarded, partIsDamaged, timeLastStarAwarded);
+                                  _needsState._curNeedsUnlockLevel, _needsState._numStarsAwarded,
+                                  partIsDamaged, timeLastStarAwarded, _robotOnboardingStageCompleted);
 
   std::vector<u8> stateVec(stateForRobot.Size());
   stateForRobot.Pack(stateVec.data(), stateForRobot.Size());
@@ -1836,6 +1852,26 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
 
         // Version 2 added this variable:
         stateOnRobot.timeLastStarAwarded = 0;
+        // Version 3 added this variable
+        stateOnRobot.onboardingStageCompleted = 0;
+        break;
+      }
+      case 2:
+      {
+        NeedsStateOnRobot_v02 stateOnRobot_v02;
+        stateOnRobot_v02.Unpack(data, size);
+        
+        stateOnRobot.version = NeedsState::kRobotStorageVersion;
+        stateOnRobot.timeLastWritten = stateOnRobot_v02.timeLastWritten;
+        for (int i = 0; i < MAX_NEEDS; i++)
+          stateOnRobot.curNeedLevel[i] = stateOnRobot_v02.curNeedLevel[i];
+        stateOnRobot.curNeedsUnlockLevel = stateOnRobot_v02.curNeedsUnlockLevel;
+        stateOnRobot.numStarsAwarded = stateOnRobot_v02.numStarsAwarded;
+        for (int i = 0; i < MAX_REPAIRABLE_PARTS; i++)
+          stateOnRobot.partIsDamaged[i] = stateOnRobot_v02.partIsDamaged[i];
+        stateOnRobot.timeLastStarAwarded = stateOnRobot_v02.timeLastStarAwarded;
+        // Version 3 added this variable
+        stateOnRobot.onboardingStageCompleted = 0;
         break;
       }
       default:
@@ -1878,7 +1914,8 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
   _needsStateFromRobot._rng = _cozmoContext->GetRandom();
   _needsStateFromRobot.SetNeedsBracketsDirty();
   _needsStateFromRobot.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
-
+  _robotOnboardingStageCompleted = stateOnRobot.onboardingStageCompleted;
+  
   return true;
 }
 
