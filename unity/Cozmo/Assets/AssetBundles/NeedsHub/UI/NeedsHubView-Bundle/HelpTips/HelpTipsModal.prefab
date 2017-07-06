@@ -464,7 +464,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -730,7 +730,6 @@ MonoBehaviour:
   - {fileID: 134696, guid: d2b27b8f6ed134b29a38d06fe8976bc8, type: 2}
   - {fileID: 134696, guid: 39a9bc463d8a8440689e2c207573c297, type: 2}
   - {fileID: 134696, guid: 3ebbd2c87099141cab88389f20ed6bdd, type: 2}
-  - {fileID: 134696, guid: 02ab2d60f1f1040a2a6d748625b5c700, type: 2}
   - {fileID: 134696, guid: 846c4601b83ef4b4a94344eec1290696, type: 2}
   - {fileID: 134696, guid: 536154de1f5704286b4ed7967715eea7, type: 2}
   - {fileID: 134696, guid: b5ffee7de8d6b4ed99ef72cb50b13598, type: 2}
