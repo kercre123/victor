@@ -134,5 +134,8 @@
     }, 
     "voiceCommands.command.YesPlease": {
         "translation": "YES, PLEASE"
+    },
+    "voiceCommands.GoToSleepCancel": {
+        "translation": "Say \"<b>Hey, Cozmo</b>\" to cancel"
     }
 }

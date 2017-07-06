@@ -41,6 +41,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ListeningForBatteryLevel: 0
+  _VoiceCommandGoToSleepDialogPrefab: {fileID: 114854286057164106, guid: b856b6e96e68c496a84dd1d9aac145d5,
+    type: 2}
   _LowBatteryAlertPrefab: {fileID: 11497196, guid: 585c3cec3fa734ad99af4d59195a2742,
     type: 2}
 --- !u!1001 &100100000
