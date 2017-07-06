@@ -99,6 +99,9 @@ private:
   // Returns whether or not we have enough sparks to execute the command
   bool HasEnoughSparksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command) const;
   
+  // Returns whether or not the unlockID a behavior requires for a voice command is unlocked
+  bool HasAppropriateUnlocksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command) const;
+  
   void RemoveSparksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command);
   
   // Setups up the refuse behavior to play the animTrigger

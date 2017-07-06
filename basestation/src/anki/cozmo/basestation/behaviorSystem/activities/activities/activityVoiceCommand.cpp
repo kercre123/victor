@@ -212,6 +212,12 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
       
       return _voiceCommandBehavior;
     }
+    
+    if(!HasAppropriateUnlocksForCommand(robot, currentCommand))
+    {
+      _voiceCommandBehavior = emptyPtr;
+      return _voiceCommandBehavior;
+    }
   }
   
   switch (currentCommand)
@@ -382,6 +388,36 @@ bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandT
     int curNumSparks = robot.GetInventoryComponent().GetInventoryAmount(InventoryType::Sparks);
     const u32 sparkCost = GetSparkCosts(commandToSparkCost->second, 0);
     return (curNumSparks >= sparkCost);
+  }
+  
+  return true;
+}
+  
+bool ActivityVoiceCommand::HasAppropriateUnlocksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command) const
+{
+  UnlockId requiredID = UnlockId::Count;
+  
+  // If this continues to expand explore the possibility of using a VCType -> behavior
+  // map for extracting the required unlock ID types
+  switch(command){
+    case VoiceCommandType::FistBump:
+    {
+      requiredID = _fistBumpBehavior->GetRequiredUnlockID();
+      break;
+    }
+    case VoiceCommandType::PeekABoo:
+    {
+      requiredID = _peekABooBehavior->GetRequiredUnlockID();
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+  
+  if(requiredID != UnlockId::Count){
+    return robot.GetProgressionUnlockComponent().IsUnlocked(requiredID);
   }
   
   return true;
