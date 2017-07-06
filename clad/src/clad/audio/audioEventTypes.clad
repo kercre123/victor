@@ -4,6 +4,13 @@ namespace Anki {
 namespace AudioMetaData {
 namespace GameEvent {
 
+enum uint_32 App
+{
+  Invalid = 0,  // Use this to check for Invalid events
+  Music_Dim_Off = 1721389992,
+  Music_Dim_On = 3577443762,
+}
+
 enum uint_32 Coz_App
 {
   Enter_Background = 2017190380,
@@ -42,6 +49,7 @@ enum uint_32 Dev_Robot
 
 enum uint_32 EventGroupType
 {
+  App,
   Coz_App,
   Cue_World_Event,
   Dev_Device,
@@ -57,6 +65,8 @@ enum uint_32 EventGroupType
 enum uint_32 GenericEvent
 {
   Invalid = 0,  // Use this to check for Invalid events
+  Play__App__Music_Dim_Off = 1721389992,
+  Play__App__Music_Dim_On = 3577443762,
   Play__Coz_App__Enter_Background = 2017190380,
   Play__Coz_App__Enter_Foreground = 1225777195,
   Play__Cue_World_Event__Cubes_Stacked = 3962867948,
@@ -73,8 +83,6 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_1K_1Sec = 4068444155,
   Play__Dev_Robot__Tone_1K_5Sec = 1034417959,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
-  Play__Music__Dimmer_Off = 1018726600,
-  Play__Music__Dimmer_On = 403765586,
   Play__Music__Play = 2748524418,
   Play__Robot_Sfx__Arcade_Bouncer_Bounce = 2333331537,
   Play__Robot_Sfx__Arcade_Bouncer_Bounce_Paddle = 1207847204,
@@ -102,10 +110,13 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Mvt_Tread_Spin_Loop_Play = 1721811722,
   Play__Robot_Sfx__Mvt_Tread_Spin_Start = 952401069,
   Play__Robot_Sfx__Mvt_Tread_Spin_Stop = 2338140655,
+  Play__Robot_Sfx__Nurture_Feeding_Severe_Slurp_1 = 2997826879,
+  Play__Robot_Sfx__Nurture_Feeding_Severe_Slurp_2 = 2997826876,
   Play__Robot_Sfx__Nurture_Feeding_Slurp_1 = 1851457030,
   Play__Robot_Sfx__Nurture_Feeding_Slurp_2 = 1851457029,
   Play__Robot_Sfx__Nurture_Feeding_Slurp_3 = 1851457028,
   Play__Robot_Sfx__Nurture_Feeding_Slurp_End = 724172172,
+  Play__Robot_Sfx__Nurture_Feeding_Slurp_Severe_End = 2493765627,
   Play__Robot_Sfx__Onboarding_Power_On = 3840096848,
   Play__Robot_Sfx__Purr_Test_01 = 3486629323,
   Play__Robot_Sfx__Purr_Test_02 = 3486629320,
@@ -282,6 +293,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Nurture_Play_Pouty = 1845501759,
   Play__Robot_Vo__Nurture_Repair_Down = 4222762077,
   Play__Robot_Vo__Nurture_Repair_Down_Severe = 1553453500,
+  Play__Robot_Vo__Nurture_Repair_Fix_Round_Severe = 1492901078,
   Play__Robot_Vo__Nurture_Repair_Jolt_Medium = 3545035822,
   Play__Robot_Vo__Nurture_Repair_Jolt_Small = 1583427256,
   Play__Robot_Vo__Nurture_Repair_Severe_Sad_Small = 229901416,
@@ -586,8 +598,6 @@ enum uint_32 GenericEvent
 
 enum uint_32 Music
 {
-  Dimmer_Off = 1018726600,
-  Dimmer_On = 403765586,
   Invalid = 0,  // Use this to check for Invalid events
   Play = 2748524418,
   Stop = 148746486,
@@ -630,10 +640,13 @@ enum uint_32 Robot_Sfx
   Mvt_Tread_Spin_Loop_Stop = 3541928210,
   Mvt_Tread_Spin_Start = 952401069,
   Mvt_Tread_Spin_Stop = 2338140655,
+  Nurture_Feeding_Severe_Slurp_1 = 2997826879,
+  Nurture_Feeding_Severe_Slurp_2 = 2997826876,
   Nurture_Feeding_Slurp_1 = 1851457030,
   Nurture_Feeding_Slurp_2 = 1851457029,
   Nurture_Feeding_Slurp_3 = 1851457028,
   Nurture_Feeding_Slurp_End = 724172172,
+  Nurture_Feeding_Slurp_Severe_End = 2493765627,
   Onboarding_Power_On = 3840096848,
   Purr_Test_01 = 3486629323,
   Purr_Test_02 = 3486629320,
@@ -825,6 +838,7 @@ enum uint_32 Robot_Vo
   Nurture_Play_Pouty = 1845501759,
   Nurture_Repair_Down = 4222762077,
   Nurture_Repair_Down_Severe = 1553453500,
+  Nurture_Repair_Fix_Round_Severe = 1492901078,
   Nurture_Repair_Jolt_Medium = 3545035822,
   Nurture_Repair_Jolt_Small = 1583427256,
   Nurture_Repair_Severe_Sad_Small = 229901416,
