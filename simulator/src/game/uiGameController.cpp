@@ -1588,6 +1588,15 @@ namespace Anki {
       message.Set_IMURequest(m);
       SendMessage(message);
     }
+    
+    void UiGameController::SendLogCliffDataRequest(const u32 length_ms)
+    {
+      ExternalInterface::LogRawCliffData m;
+      m.length_ms = length_ms;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_LogRawCliffData(m);
+      SendMessage(message);
+    }
 
     void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {

@@ -22,17 +22,21 @@
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
+namespace Util {
+  class RollingFileLogger;
+}
 namespace Cozmo {
 
 class Robot;
 struct RobotState;
-  
+
 class CliffSensorComponent : private Util::noncopyable
 {
 public:
 
-  // constructor
+  // constructor/destructor
   CliffSensorComponent(Robot& robot);
+  ~CliffSensorComponent();
 
   void UpdateRobotData(const RobotState& msg);
   
@@ -66,13 +70,25 @@ public:
   // actually rises while it's stopping in reaction to the supposed cliff.
   void EvaluateCliffSuspiciousnessWhenStopped();
   
+  void EnableRawDataLogging(const uint32_t duration_ms);
+  
+  uint32_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; };
+  
 private:
   
   // Returns true if floor is suspiciously cliff-y looking based on variance of cliff readings
   bool IsFloorSuspiciouslyCliffy() const;
   
   // Increments count of suspicious cliff. (i.e. Cliff was detected but data looks like maybe it's not real.)
-  void IncrementSuspiciousCliffCount();  
+  void IncrementSuspiciousCliffCount();
+  
+  void LogRawData();
+  
+#ifdef COZMO_V2
+  static unsigned int GetNumCliffSensors() { return Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); }
+#else
+  static unsigned int GetNumCliffSensors() { return 1U; }
+#endif
   
 // members:
   
@@ -83,6 +99,8 @@ private:
   
   // True if the robot is reporting CLIFF_DETECTED in its status message
   bool _cliffDetectedStatusBitOn = false;
+  
+  uint32_t _lastMsgTimestamp = 0;
   
   u16 _cliffDetectThreshold;
   
@@ -96,6 +114,11 @@ private:
   f32             _cliffRunningMean    = 0.f;
   f32             _cliffRunningVar     = 0.f;
   f32             _cliffRunningVar_acc = 0.f;
+  
+  
+  std::unique_ptr<Util::RollingFileLogger> _rawDataLogger;
+  bool _loggingRawData = false;
+  float _logRawDataUntil_s = 0.f;
   
 };
 

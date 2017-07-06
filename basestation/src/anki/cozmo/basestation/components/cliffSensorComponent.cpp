@@ -18,11 +18,15 @@
 #include "anki/cozmo/basestation/robotStateHistory.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
+
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+#include "util/logging/rollingFileLogger.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -52,6 +56,8 @@ const f32 kCliffSensorSuspiciouslyCliffyFloorThresh = 10000;
 // began in order to be considered a suspicious cliff. (i.e. We might be on crazy carpet)
 const u16 kMinRiseDuringStopForSuspiciousCliff = 15;
 
+const std::string kLogDirectory = "sensorData/cliffSensors";
+  
 } // end anonymous namespace
 
   
@@ -62,11 +68,26 @@ CliffSensorComponent::CliffSensorComponent(Robot& robot)
   _cliffDataRaw.fill(std::numeric_limits<uint16_t>::max());
 }
   
+CliffSensorComponent::~CliffSensorComponent() = default;
+  
 void CliffSensorComponent::UpdateRobotData(const RobotState& msg)
 {
   _cliffDataRaw = msg.cliffDataRaw;
   
   _cliffDetectedStatusBitOn = (msg.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED) != 0;
+  
+  _lastMsgTimestamp = msg.timestamp;
+  
+  // Log stuff if appropriate:
+  if (_loggingRawData) {
+    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (now < _logRawDataUntil_s) {
+      LogRawData();
+    } else {
+      _loggingRawData = false;
+      _logRawDataUntil_s = 0.f;
+    }
+  }
 }
   
 void CliffSensorComponent::SendCliffDetectThresholdToRobot(const u16 thresh)
@@ -81,12 +102,7 @@ void CliffSensorComponent::SendCliffDetectThresholdToRobot(const u16 thresh)
 
 u16 CliffSensorComponent::GetCliffDataRaw(unsigned int ind) const
 {
-#ifdef COZMO_V2
-  DEV_ASSERT(ind < Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT), "CliffSensorComponent.GetCliffDataRaw.InvalidIndex");
-#else
-  // For pre-V2 robots, there is only one cliff sensor, so index should be 0.
-  DEV_ASSERT(ind == 0, "CliffSensorComponent.GetCliffDataRaw.InvalidIndex");
-#endif // COZMO_V2
+  DEV_ASSERT(ind < GetNumCliffSensors(), "CliffSensorComponent.GetCliffDataRaw.InvalidIndex");
   
   return _cliffDataRaw[ind];
 }
@@ -126,6 +142,7 @@ void CliffSensorComponent::UpdateCliffDetectThreshold()
 void CliffSensorComponent::UpdateCliffRunningStats(const RobotState& msg)
 {
   // TODO: update this to support multiple cliff sensors
+  // Note: This may not be necessary for V2 cliff sensors since they don't exhibit as much variance on carpets
   u16 obs = msg.cliffDataRaw[0];
   if (_robot.GetMoveComponent().AreWheelsMoving() && (_robot.GetOffTreadsState() == OffTreadsState::OnTreads) && obs > (_cliffDetectThreshold)) {
     
@@ -193,7 +210,40 @@ void CliffSensorComponent::IncrementSuspiciousCliffCount()
     }
   }
 }
+  
+void CliffSensorComponent::EnableRawDataLogging(const uint32_t duration_ms)
+{
+  if (!_loggingRawData) {
+    _loggingRawData = true;
+    const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _logRawDataUntil_s = now + static_cast<float>(duration_ms)/1000.f;
+    PRINT_NAMED_INFO("CliffSensorComponent.EnableRawDataLogging", "Starting raw cliff data logging, duration %d ms (log will appear in '%s')",
+                     duration_ms,
+                     _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory).c_str());
+  }
+}
 
+void CliffSensorComponent::LogRawData()
+{
+  // Instantiate the logger if it doesn't exist yet
+  if (_rawDataLogger == nullptr) {
+    _rawDataLogger = std::make_unique<Util::RollingFileLogger>(nullptr, _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory));
+  }
+  
+  std::string str;
+  str += std::to_string(GetLastMsgTimestamp()) + ", ";
+  const auto nSensors = GetNumCliffSensors();
+  for (int i=0 ; i < nSensors ; i++) {
+    str += std::to_string(GetCliffDataRaw(i));
+    // comma separate
+    if (i < nSensors - 1) {
+      str += ", ";
+    }
+  }
+  str += "\n";
+  _rawDataLogger->Write(str);
+}
+  
   
 } // Cozmo namespace
 } // Anki namespace

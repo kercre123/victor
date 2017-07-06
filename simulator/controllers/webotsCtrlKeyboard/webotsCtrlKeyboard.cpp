@@ -336,8 +336,6 @@ namespace Anki {
         printf("Goto/place object at pose marker:  g\n");
         printf("         Toggle pose marker mode:  Shift+g\n");
         printf("              Cycle block select:  .\n");
-        printf("              Clear known blocks:  c\n");
-        printf("         Clear all known objects:  Alt+c\n");
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
@@ -346,6 +344,7 @@ namespace Anki {
         printf("                Abort everything:  Shift+q\n");
         printf("           Cancel current action:  Alt+q\n");
         printf("         Update controller gains:  k\n");
+        printf("        Request cliff sensor log:  c\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f\n");
         printf(" Assign userName to current face:  Shift+f\n");
@@ -1182,20 +1181,13 @@ namespace Anki {
                 }
                 else if(altKeyPressed)
                 {
-                  // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
-                  // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
-                  // I can't keep supporting all current features in the refactor.
-                  
-                  // SendClearAllObjects();
+                  // available!
                 }
                 else
                 {
-                  // rsam: Clear and Delete have change its meaning. Removing until someone complains that it's gone,
-                  // at which point we can evaluate what they need. Sorry if this causes interruptions, unfortunately
-                  // I can't keep supporting all current features in the refactor.
-                
-                  // 'c' without SHIFT
-                  // SendClearAllBlocks();
+                  // 'c' without SHIFT or ALT
+                  // Send a request to log raw cliff sensor data
+                  SendLogCliffDataRequest(2000);
                 }
                 break;
               }
