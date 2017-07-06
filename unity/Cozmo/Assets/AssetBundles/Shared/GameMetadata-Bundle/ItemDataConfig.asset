@@ -20,7 +20,7 @@ MonoBehaviour:
   - _ItemId: spark
     _LocKey: item.treat
     _ItemIcon: {fileID: 0}
-    _StartingAmount: 36
+    _StartingAmount: 100 
     _DemoStartingAmount: 200
   - _ItemId: TestHexItem0
     _LocKey: item.genericHex
