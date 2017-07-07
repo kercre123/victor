@@ -58,24 +58,28 @@ namespace Cozmo.Settings {
     }
 
     private void Start() {
-      RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
-      RobotEngineManager.Instance.AddCallback<RestoreRobotOptions>(HandleRestoreRobotOptions);
-      RobotEngineManager.Instance.SendRequestDeviceData();
+      if (RobotEngineManager.Instance != null) {
+        RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
+        RobotEngineManager.Instance.AddCallback<RestoreRobotOptions>(HandleRestoreRobotOptions);
+        RobotEngineManager.Instance.SendRequestDeviceData();
 
-      // Fill out Cozmo version args
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      _CozmoVersionLabel.FormattingArgs = new object[] { ShortenData(robot.FirmwareVersion.ToString()) };
+        // Fill out Cozmo version args
+        IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          _CozmoVersionLabel.FormattingArgs = new object[] { ShortenData(robot.FirmwareVersion.ToString()) };
 
-      // Fill out Serial number args
-      _SerialNumberLabel.FormattingArgs = new object[] { robot.SerialNumber.ToString("X8") };
+          // Fill out Serial number args
+          _SerialNumberLabel.FormattingArgs = new object[] { robot.SerialNumber.ToString("X8") };
 
-      // Fill out Cozmo color args
-      _CozmoColorLabel.FormattingArgs = new object[] { ShortenData(BodyColorToString(robot.BodyColor)) };
+          // Fill out Cozmo color args
+          _CozmoColorLabel.FormattingArgs = new object[] { ShortenData(BodyColorToString(robot.BodyColor)) };
 
-      // Fill out Body HW version args
-      _BodyHWVersionLabel.FormattingArgs = new object[] { ShortenData(BodyHWVersionToString(robot.BodyHWVersion)) };
+          // Fill out Body HW version args
+          _BodyHWVersionLabel.FormattingArgs = new object[] { ShortenData(BodyHWVersionToString(robot.BodyHWVersion)) };
 
-      robot.RequestRobotRestoreData();
+          robot.RequestRobotRestoreData();
+        }
+      }
     }
 
     private void OnDestroy() {
