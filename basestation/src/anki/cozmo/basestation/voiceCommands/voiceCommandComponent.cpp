@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/components/bodyLightComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotManager.h"
@@ -69,7 +70,10 @@ CONSOLE_FUNC(HearVoiceCommand, "VoiceCommand", int command);
   
 VoiceCommandComponent::VoiceCommandComponent(const CozmoContext& context)
 : _context(context)
-, _recogProcessor(new AudioUtil::AudioRecognizerProcessor{})
+, _recogProcessor(new AudioUtil::AudioRecognizerProcessor{
+  DevLoggingSystem::GetInstance() ?
+  Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), "capturedAudio"} ):
+  "" })
 , _captureSystem(new AudioUtil::AudioCaptureSystem{})
 , _phraseData(new CommandPhraseData())
 {

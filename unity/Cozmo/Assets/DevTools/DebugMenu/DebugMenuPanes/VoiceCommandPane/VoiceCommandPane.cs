@@ -29,6 +29,9 @@ namespace Cozmo {
     [SerializeField]
     private Button _IssueVoiceCommandButton;
 
+    [SerializeField]
+    private Button _RecordAudioClipButton;
+
 
     // Local variable defaults to false until it gets updated by a message from the engine, which is requested in Start()
     private bool _IsEnabled = false;
@@ -40,6 +43,7 @@ namespace Cozmo {
 
     private const string _kIgnoreMicKey = "IgnoreMicInput";
     private const string _kIssueCommandFuncKey = "HearVoiceCommand";
+    private const string _kRecordAudioFuncKey = "RecordAudioInput";
 
     // Use this for initialization
     void Start() {
@@ -47,6 +51,7 @@ namespace Cozmo {
       _ToggleMicIgnored.onValueChanged.AddListener(OnMicIgnoredToggle);
       _HeyCozmoButton.onClick.AddListener(OnHeyCozmoButton);
       _IssueVoiceCommandButton.onClick.AddListener(OnHearVoiceCommandButton);
+      _RecordAudioClipButton.onClick.AddListener(OnRecordAudioClipButton);
 
       VoiceCommandManager.Instance.StateDataCallback += UpdateStateData;
       VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
@@ -62,6 +67,7 @@ namespace Cozmo {
       VoiceCommandManager.Instance.StateDataCallback -= UpdateStateData;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleIgnoreMicInput);
 
+      _RecordAudioClipButton.onClick.RemoveListener(OnRecordAudioClipButton);
       _IssueVoiceCommandButton.onClick.RemoveListener(OnHearVoiceCommandButton);
       _HeyCozmoButton.onClick.RemoveListener(OnHeyCozmoButton);
       _ToggleMicIgnored.onValueChanged.RemoveListener(OnMicIgnoredToggle);
@@ -92,6 +98,10 @@ namespace Cozmo {
 
     private void OnHeyCozmoButton() {
       IssueVoiceCommand(VoiceCommandType.HeyCozmo);
+    }
+
+    private void OnRecordAudioClipButton() {
+      RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kRecordAudioFuncKey, "");
     }
 
     private void IssueVoiceCommand(VoiceCommandType commandType) {

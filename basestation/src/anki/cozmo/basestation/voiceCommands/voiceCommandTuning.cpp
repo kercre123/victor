@@ -68,7 +68,7 @@ VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatf
   _audioInput.reset(new AudioUtil::AudioFileReader{});
   
   // Set up processor
-  _recogProcessor.reset(new AudioUtil::AudioRecognizerProcessor{});
+  _recogProcessor.reset(new AudioUtil::AudioRecognizerProcessor{""});
   _recogProcessor->SetSpeechRecognizer(_recognizer.get());
   _recogProcessor->SetAudioInputSource(_audioInput.get());
   _recogProcessor->Start();

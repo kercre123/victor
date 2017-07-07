@@ -30,7 +30,7 @@ class SpeechRecognizer;
 class AudioRecognizerProcessor
 {
 public:
-  AudioRecognizerProcessor();
+  AudioRecognizerProcessor(const std::string& savedAudioDir);
   virtual ~AudioRecognizerProcessor();
   AudioRecognizerProcessor(AudioRecognizerProcessor&& other) = delete;
   AudioRecognizerProcessor& operator=(AudioRecognizerProcessor&& other) = delete;

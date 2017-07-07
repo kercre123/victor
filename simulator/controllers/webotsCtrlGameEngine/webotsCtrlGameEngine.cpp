@@ -105,10 +105,10 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine");
   
-  
+  Util::IFormattedLoggerProvider* unityLoggerProvider = nullptr;
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), "mac");
-  Util::IFormattedLoggerProvider* unityLoggerProvider = new CLADLoggerProvider();
+  unityLoggerProvider = new CLADLoggerProvider();
 #endif
 
   // - create and set logger
