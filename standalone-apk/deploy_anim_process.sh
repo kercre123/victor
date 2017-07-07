@@ -47,7 +47,7 @@ if [ "$DEVICE_API_VERSION" -lt "24" ]; then
     exit -1
 fi
 
-# Upload cozmoRobot2 process
+# Upload cozmoAnim process
 ANIM_EXEC=../generated/android/out/Debug/cozmoAnim
 if [ ! -f $ANIM_EXEC ]; then
     echo "ERROR: " $ANIM_EXEC " not found! Did you build it?"
@@ -55,21 +55,38 @@ if [ ! -f $ANIM_EXEC ]; then
 fi
 $ADB push $ANIM_EXEC /data/local/tmp
 
-# Upload C++ lib
-CPP_LIB=../build/android/libs/armeabi-v7a/libc++_shared.so
-if [ ! -f $CPP_LIB ]; then
-    echo "ERROR: " $CPP_LIB " not found!"
-    exit -2
-fi
-$ADB push $CPP_LIB /data/local/tmp
+# Upload libs
+CTE_PATH=../EXTERNALS/coretech_external
+CTE_OPENCV_PATH=$CTE_PATH/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a
+declare -a LIBS=("../build/android/libs/armeabi-v7a/libc++_shared.so" \
+                 "../generated/android/out/Debug/lib/libDAS.so" \
+                 "$CTE_OPENCV_PATH/libopencv_calib3d.so" \
+                 "$CTE_OPENCV_PATH/libopencv_core.so" \
+                 "$CTE_OPENCV_PATH/libopencv_features2d.so" \
+                 "$CTE_OPENCV_PATH/libopencv_flann.so" \
+                 "$CTE_OPENCV_PATH/libopencv_ml.so" \
+                 "$CTE_OPENCV_PATH/libopencv_highgui.so" \
+                 "$CTE_OPENCV_PATH/libopencv_videoio.so" \
+                 "$CTE_OPENCV_PATH/libopencv_imgcodecs.so" \
+                 "$CTE_OPENCV_PATH/libopencv_imgproc.so" \
+                 "$CTE_OPENCV_PATH/libtbb.so" \
+                )
+for lib in "${LIBS[@]}"
+do
+  # Check if lib is empty/spaces
+  if [[ -z "${lib// }" ]]; then
+    continue  
+  fi
 
-# Upload DAS lib
-DAS_LIB=../generated/android/out/Debug/lib/libDAS.so
-if [ ! -f $DAS_LIB ]; then
-    echo "ERROR: " $DAS_LIB " not found!"
-    exit -2
-fi
-$ADB push $DAS_LIB /data/local/tmp
+  # Check if file exists
+  if [ ! -f $lib ]; then
+    echo "ERROR: " $lib " not found!"
+    continue
+  fi
+
+  echo "Uploading $lib"
+  $ADB push $lib /data/local/tmp
+done
 
 # Shell into android device and execute robot process
 $ADB shell -x "

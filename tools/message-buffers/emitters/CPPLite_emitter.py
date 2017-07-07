@@ -598,7 +598,12 @@ class HUnionEmitter(BaseEmitter):
     
     def emitConstructors(self, node, globals):
         self.output.write('{object_name}(): tag(INVALID) {{ }}\n\n'.format(**globals))
-    
+        
+        if node.members():
+          for member in node.members():
+            self.output.write('{object_name}( {member_type} msg ): tag({tag_name}_{member_name}), {member_name}(msg) {{ }}\n'.format(member_type=cpplite_mutable_type(member.type), member_name=member.name, **globals))
+
+
     def emitCast(self, node, globals):
         self.output.write(textwrap.dedent('''\
             /**** Cast to byte buffer, adjusting any padding. ****/

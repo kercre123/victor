@@ -461,6 +461,7 @@
         # Mac-specific variables
         'variables': {
           'webotsCtrlGameEngine2': '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine2',
+          'webotsCtrlAnim': '<(cozmo_engine_path)/simulator/controllers/webotsCtrlAnim',
         },
 
         'target_defaults': {
@@ -561,6 +562,45 @@
                   '--link_name', '<(webotsCtrlGameEngine2)/resources/sound'
                 ],
             },
+            
+            
+            # Add assets for webotsCtrlAnim
+            {
+              'action_name': 'create_symlink_resources_animations_anim',
+              'inputs': [],
+              'outputs': [],
+              'action': [
+              '../../tools/build/tools/ankibuild/symlink.py',
+              '--link_target', '<(externals_path)/cozmo-assets/animations',
+              '--link_name', '<(webotsCtrlAnim)/resources/assets/animations',
+              '--create_folder', '<(webotsCtrlAnim)/resources/assets'
+              ],
+            },
+            {
+              'action_name': 'create_symlink_resources_faceAnimations_anim',
+              'inputs': [],
+              'outputs': [],
+              'action': [
+              'ln',
+              '-s',
+              '-f',
+              '-n',
+              '<(externals_path)/cozmo-assets/faceAnimations',
+              '<(webotsCtrlAnim)/resources/assets/faceAnimations',
+              ],
+            },
+            {
+              'action_name': 'create_symlink_resources_sound_anim',
+              'inputs': [],
+              'outputs': [],
+              'action': [
+              '../../tools/build/tools/ankibuild/symlink.py',
+              '--link_target', '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+              '--link_name', '<(webotsCtrlAnim)/resources/sound'
+              ],
+            },
+
+
             ]
           },
 

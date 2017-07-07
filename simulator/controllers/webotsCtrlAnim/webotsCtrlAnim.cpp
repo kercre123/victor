@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     const std::string& consoleFilterConfigPath = "config/basestation/config/console_filter_config.json";
     if (!dataPlatform.readAsJson(Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
-      PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+      PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
     
     // initialize console filter for this platform
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    PRINT_CH_INFO("LOG", "webotsCtrlGameEngine.main", "Console will not be filtered due to program args");
+    PRINT_CH_INFO("LOG", "webotsCtrlAnim.main", "Console will not be filtered due to program args");
   }
 
   // Start with a step so that we can attach to the process here for debugging
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 
   if (!dataPlatform.readAsJson(Util::Data::Scope::Resources,
                                "config/basestation/config/configuration.json", config)) {
-    PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConfig", "Failed to parse Json file config/basestation/config/configuration.json");
+    PRINT_NAMED_ERROR("webotsCtrlAnim.main.loadConfig", "Failed to parse Json file config/basestation/config/configuration.json");
   }
 
 //  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 //  if (numUIsField) {
 //    numUIDevicesToWaitFor = numUIsField->getSFInt32();
 //  } else {
-//    PRINT_NAMED_WARNING("webotsCtrlGameEngine.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
+//    PRINT_NAMED_WARNING("webotsCtrlAnim.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
 //  }
   
 //  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;

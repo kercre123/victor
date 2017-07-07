@@ -33,15 +33,15 @@ namespace Anki {
 namespace Cozmo {
   
 // Forward declarations
-class CozmoContext;
-  
+//class CozmoContext;
+class RobotDataLoader;  // TODO: Rename to AssetLoader?  (Anims and sounds)
   
 class CozmoAnim
 {
 public:
 
   CozmoAnim(Util::Data::DataPlatform* dataPlatform);
-  virtual ~CozmoAnim();
+  ~CozmoAnim();
 
   Result Init(const Json::Value& config);
 
@@ -54,6 +54,8 @@ protected:
   Json::Value        _config;
 
   virtual Result InitInternal();
+  
+  std::unique_ptr<RobotDataLoader> _assetLoader;
   
 }; // class CozmoAnim
   

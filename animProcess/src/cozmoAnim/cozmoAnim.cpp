@@ -24,7 +24,7 @@
 //#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 //#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-//#include "anki/cozmo/basestation/robotDataLoader.h"
+#include "cozmoAnim/robotDataLoader.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 //#include "audioEngine/multiplexer/audioMultiplexer.h"
 //#include "util/console/consoleInterface.h"
@@ -62,6 +62,8 @@ namespace Anki {
 namespace Cozmo {
 
 CozmoAnim::CozmoAnim(Util::Data::DataPlatform* dataPlatform)
+  : _isInitialized(false)
+  , _assetLoader(std::make_unique<RobotDataLoader>(dataPlatform))
 {
   
   if (Anki::Util::gTickTimeProvider == nullptr) {
@@ -83,8 +85,6 @@ Result CozmoAnim::Init(const Json::Value& config) {
   if(_isInitialized) {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
   }
-  
-  _isInitialized = false;
 
   _config = config;
   
@@ -109,6 +109,10 @@ Result CozmoAnim::Init(const Json::Value& config) {
 //    PRINT_NAMED_ERROR("CozmoEngine.Init","Error initializing UIMessageHandler");
 //    return lastResult;
 //  }
+  
+  
+  _assetLoader->LoadNonConfigData();
+  
   
   Messages::Init();
   
