@@ -51,6 +51,11 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private CozmoImage _SettingsAlertImage;
 
+    [SerializeField]
+    private GameObject _StandardTitle;
+    [SerializeField]
+    private GameObject _LiquidMetalTitle;
+
     public void Start() {
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
@@ -67,9 +72,18 @@ namespace Cozmo.Needs.UI {
       energyValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
       EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
 
+      bool liquidMetal = false;
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.OnNumBlocksConnectedChanged += HandleBlockConnectivityChanged;
+        BodyColor robotBodyColor = RobotEngineManager.Instance.CurrentRobot.BodyColor;
+        if (robotBodyColor == BodyColor.CE_LM_v15) {
+          liquidMetal = true;
+        }
       }
+
+      _StandardTitle.SetActive(!liquidMetal);
+      _LiquidMetalTitle.SetActive(liquidMetal);
+
       _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
 
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;

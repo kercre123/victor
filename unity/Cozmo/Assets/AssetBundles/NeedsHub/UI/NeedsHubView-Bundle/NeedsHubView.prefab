@@ -3852,6 +3852,8 @@ MonoBehaviour:
   _NeedsEnergyModalPrefab: {fileID: 114797555182595108, guid: 294291e80354c4086a189f2c0b3b66e4,
     type: 2}
   _SettingsAlertImage: {fileID: 114978780021250782}
+  _StandardTitle: {fileID: 1843939994309810}
+  _LiquidMetalTitle: {fileID: 1295979929001860}
   OnboardingBlockoutImage: {fileID: 114584214458930582}
   NavBackgroundImage: {fileID: 114557462813288672}
   MeterBackgroundImage: {fileID: 114909582419808162}
