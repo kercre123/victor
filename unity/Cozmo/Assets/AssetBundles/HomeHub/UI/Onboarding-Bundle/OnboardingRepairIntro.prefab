@@ -87,7 +87,7 @@ MonoBehaviour:
   _PlayIdle: 0
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleRepair
-    _EnumValue: 295
+    _EnumValue: 297
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.repair.ticker
@@ -120,7 +120,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -193,10 +193,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114691997309426434}
-    characterCount: 101
+    characterCount: 109
     spriteCount: 0
-    spaceCount: 21
-    wordCount: 21
+    spaceCount: 23
+    wordCount: 23
     linkCount: 0
     lineCount: 6
     pageCount: 1
