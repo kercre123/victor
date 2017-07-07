@@ -114,6 +114,13 @@ public:
   float GetMaxSparksPctForLevel(int level)    const { return GetLevelOrLastLevel(level).maxSparksPct; }
   int GetMinSparksForLevel(int level)         const { return GetLevelOrLastLevel(level).minSparks; }
   int GetMinMaxSparksForLevel(int level)      const { return GetLevelOrLastLevel(level).minMaxSparks; }
+  int GetFreeplayTargetSparksTotalForLevel(int level)    const { return GetLevelOrLastLevel(level).freeplayTargetSparksTotal; }
+  float GetFreeplayMinSparksRewardPctForLevel(int level) const { return GetLevelOrLastLevel(level).freeplayMinSparksRewardPct; }
+  float GetFreeplayMinSparksPctForLevel(int level)       const { return GetLevelOrLastLevel(level).freeplayMinSparksPct; }
+  float GetFreeplayMaxSparksPctForLevel(int level)       const { return GetLevelOrLastLevel(level).freeplayMaxSparksPct; }
+  int GetFreeplayMinSparksForLevel(int level)            const { return GetLevelOrLastLevel(level).freeplayMinSparks; }
+  int GetFreeplayMinMaxSparksForLevel(int level)         const { return GetLevelOrLastLevel(level).freeplayMinMaxSparks; }
+
 private:
   const UnlockLevel& GetLevelOrLastLevel(int level) const;
 
@@ -133,8 +140,11 @@ struct NeedDelta
 
 struct ActionDelta
 {
+  ActionDelta() : _cooldown_s(0.0f), _freeplaySparksRewardWeight(0.0f) {}
+
   std::array<NeedDelta, static_cast<size_t>(NeedId::Count)> _needDeltas;
   float _cooldown_s;
+  float _freeplaySparksRewardWeight;
 };
 
 class ActionsConfig

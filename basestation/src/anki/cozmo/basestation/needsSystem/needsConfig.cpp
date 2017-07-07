@@ -53,6 +53,7 @@ static const std::string kEnergyRangeKey = "energyRange";
 static const std::string kPlayDeltaKey = "playDelta";
 static const std::string kPlayRangeKey = "playRange";
 static const std::string kCooldownSecsKey = "cooldownSecs";
+static const std::string kFreeplaySparksRewardWeight = "freeplaySparksRewardWeight";
 
 
 NeedsConfig::NeedsConfig()
@@ -324,6 +325,8 @@ void ActionsConfig::Init(const Json::Value& json)
                                                     "Failed to parse a play range");
     const float cooldownSecs = JsonTools::ParseFloat(item, kCooldownSecsKey.c_str(),
                                                     "Failed to parse an action cooldown time");
+    const float freeplaySparksRewardWeight = JsonTools::ParseFloat(item, kFreeplaySparksRewardWeight.c_str(),
+                                                    "Failed to parse a freeplay sparks reward weight");
 
     ActionDelta& actionDelta = _actionDeltas[static_cast<int>(actionId)];
     actionDelta._needDeltas[static_cast<int>(NeedId::Repair)]._delta = repairDelta;
@@ -336,6 +339,7 @@ void ActionsConfig::Init(const Json::Value& json)
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._randomRange = std::abs(playRange);
     actionDelta._needDeltas[static_cast<int>(NeedId::Play)]._cause = NeedsActionId::NoAction;
     actionDelta._cooldown_s = cooldownSecs;
+    actionDelta._freeplaySparksRewardWeight = freeplaySparksRewardWeight;
   }
 }
 

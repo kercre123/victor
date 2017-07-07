@@ -133,7 +133,12 @@ private:
                                             NeedsState& needsState,
                                             bool predictionOnly);
 
-  void UpdateStarsState(bool cheatGiveStar = false);
+  bool ShouldRewardSparksForFreeplay();
+  int  RewardSparksForFreeplay();
+  int  AwardSparks(int targetSparks, float minPct, float maxPct,
+                   int minSparks, int minMaxSparks);
+
+  bool UpdateStarsState(bool cheatGiveStar = false);
 
   void DetectBracketChangeForDas();
   void SendRepairDasEvent(const NeedsState& needsState,

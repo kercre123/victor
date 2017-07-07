@@ -542,6 +542,13 @@ message NeedsPauseStates {
   bool actionPause[uint_8]
 }
 
+message FreeplaySparksAwarded {
+  int_32        sparksAwarded,
+  int_32        sparksTotal,
+  NeedsActionId needsActionId,
+  string        sparksAwardedDisplayKey
+}
+
 message StarLevelCompleted {
   int_32      unlockLevelCompleted,
   int_32      starsRequiredForNextUnlock,

@@ -170,7 +170,13 @@ structure UnlockLevel
   float_32    minSparksPct,
   float_32    maxSparksPct,
   int_32      minSparks,
-  int_32      minMaxSparks
+  int_32      minMaxSparks,
+  int_32      freeplayTargetSparksTotal,
+  float_32    freeplayMinSparksRewardPct,
+  float_32    freeplayMinSparksPct,
+  float_32    freeplayMaxSparksPct,
+  int_32      freeplayMinSparks,
+  int_32      freeplayMinMaxSparks,
 }
 
 } // namespace Cozmo

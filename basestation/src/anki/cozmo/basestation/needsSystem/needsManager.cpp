@@ -57,6 +57,8 @@ static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 
+static const std::string kFreeplaySparksRewardStringKey = "needs.FreeplaySparksReward";
+
 static const float kNeedLevelStorageMultiplier = 100000.0f;
 
 static const int kMinimumTimeBetweenDeviceSaves_sec = 60;
@@ -632,7 +634,7 @@ void NeedsManager::SetPaused(const bool paused)
   SendNeedsPauseStateToGame();
 }
 
-  
+
 NeedsState& NeedsManager::GetCurNeedsStateMutable()
 {
   _needsState.UpdateCurNeedsBrackets(_needsConfig._needsBrackets);
@@ -652,9 +654,9 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
     return;
   }
   // Only accept certain types of events
-  if( _onlyWhiteListedActionsEnabled )
+  if (_onlyWhiteListedActionsEnabled)
   {
-    if( _whiteListedActions.find(actionCompleted) == _whiteListedActions.end() )
+    if (_whiteListedActions.find(actionCompleted) == _whiteListedActions.end())
     {
       return;
     }
@@ -693,7 +695,30 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 
   SendNeedsStateToGame(actionCompleted);
 
-  UpdateStarsState();
+  bool starAwarded = UpdateStarsState();
+
+  // If no daily star was awarded, possibly award sparks for freeplay activities
+  if (!starAwarded)
+  {
+    if (!Util::IsNearZero(actionDelta._freeplaySparksRewardWeight))
+    {
+      if (ShouldRewardSparksForFreeplay())
+      {
+        const int sparksAwarded = RewardSparksForFreeplay();
+
+        // Tell game that sparks were awarded, and how many, and the new total
+        auto& ic = _robot->GetInventoryComponent();
+        const int sparksTotal = ic.GetInventoryAmount(InventoryType::Sparks);
+        ExternalInterface::FreeplaySparksAwarded msg;
+        msg.sparksAwarded = sparksAwarded;
+        msg.sparksTotal = sparksTotal;
+        msg.needsActionId = actionCompleted;
+        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey;
+        const auto& extInt = _cozmoContext->GetExternalInterface();
+        extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
+    }
+  }
 
   DetectBracketChangeForDas();
 
@@ -806,6 +831,63 @@ void NeedsManager::RegisterNeedsActionCompletedInternal(const NeedsActionId acti
       break;
   }
 }
+
+
+bool NeedsManager::ShouldRewardSparksForFreeplay()
+{
+  auto& ic = _robot->GetInventoryComponent();
+  const int curSparks = ic.GetInventoryAmount(InventoryType::Sparks);
+  const int level = _needsState._curNeedsUnlockLevel;
+  const float targetRatio = (Util::numeric_cast<float>(curSparks) /
+                             _starRewardsConfig->GetFreeplayTargetSparksTotalForLevel(level));
+  float rewardChancePct = 1.0f - targetRatio;
+  const float minPct = _starRewardsConfig->GetFreeplayMinSparksRewardPctForLevel(level);
+  if (rewardChancePct < minPct)
+  {
+    rewardChancePct = minPct;
+  }
+
+  return (_cozmoContext->GetRandom()->RandDbl() < rewardChancePct);
+}
+
+
+int NeedsManager::RewardSparksForFreeplay()
+{
+  const int level = _needsState._curNeedsUnlockLevel;
+  const int sparksAdded = AwardSparks(_starRewardsConfig->GetFreeplayTargetSparksTotalForLevel(level),
+                                      _starRewardsConfig->GetFreeplayMinSparksPctForLevel(level),
+                                      _starRewardsConfig->GetFreeplayMaxSparksPctForLevel(level),
+                                      _starRewardsConfig->GetFreeplayMinSparksForLevel(level),
+                                      _starRewardsConfig->GetFreeplayMinMaxSparksForLevel(level));
+
+  return sparksAdded;
+}
+
+
+int NeedsManager::AwardSparks(int targetSparks, float minPct, float maxPct,
+                              int minSparks, int minMaxSparks)
+{
+  auto& ic = _robot->GetInventoryComponent();
+  const int curSparks = ic.GetInventoryAmount(InventoryType::Sparks);
+  const int delta = targetSparks - curSparks;
+  int min = ((delta * minPct) + 0.5f);
+  int max = ((delta * maxPct) + 0.5f);
+
+  if (min < minSparks)
+  {
+    min = minSparks;
+  }
+  if (max < minMaxSparks)
+  {
+    max = minMaxSparks;
+  }
+  const int sparksAdded = _cozmoContext->GetRandom()->RandIntInRange(min, max);
+
+  ic.AddInventoryAmount(InventoryType::Sparks, sparksAdded);
+
+  return sparksAdded;
+}
+
 
 void NeedsManager::SendRepairDasEvent(const NeedsState& needsState,
                                       const NeedsActionId cause,
@@ -1308,8 +1390,10 @@ void NeedsManager::StartFullnessCooldownForNeed(const NeedId needId)
 }
 
 
-void NeedsManager::UpdateStarsState(bool cheatGiveStar)
+bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
 {
+  bool starAwarded = false;
+
   // If "Play" level has transitioned to Full
   if (((_needsState.GetPrevNeedBracketByIndex((size_t)NeedId::Play) != NeedBracketId::Full) &&
        (_needsState.GetNeedBracketByIndex((size_t)NeedId::Play) == NeedBracketId::Full)) ||
@@ -1329,8 +1413,6 @@ void NeedsManager::UpdateStarsState(bool cheatGiveStar)
                   "Local time gmt offset %ld",
                   nowLocalTime.tm_gmtoff);
 
-    bool starAwarded = false;
-    
     // Is it past midnight (a different day-of-year (0-365), or a different year)
     if (nowLocalTime.tm_yday != lastLocalTime.tm_yday || nowLocalTime.tm_year != lastLocalTime.tm_year)
     {
@@ -1362,6 +1444,8 @@ void NeedsManager::UpdateStarsState(bool cheatGiveStar)
                        {{DDATA, std::to_string(_needsState._curNeedsUnlockLevel).c_str()}},
                        starAwarded ? "1" : "0");
   }
+
+  return starAwarded;
 }
 
 void NeedsManager::SendStarLevelCompletedToGame()
@@ -1424,23 +1508,11 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
           continue;
         }
 
-        auto& ic = _robot->GetInventoryComponent();
-        const int curSparks = ic.GetInventoryAmount(InventoryType::Sparks);
-        const int delta = _starRewardsConfig->GetTargetSparksTotalForLevel(level) - curSparks;
-        int min = ((delta * _starRewardsConfig->GetMinSparksPctForLevel(level)) + 0.5f);
-        int max = ((delta * _starRewardsConfig->GetMaxSparksPctForLevel(level)) + 0.5f);
-
-        if (min < _starRewardsConfig->GetMinSparksForLevel(level))
-        {
-          min = _starRewardsConfig->GetMinSparksForLevel(level);
-        }
-        if (max < _starRewardsConfig->GetMinMaxSparksForLevel(level))
-        {
-          max = _starRewardsConfig->GetMinMaxSparksForLevel(level);
-        }
-        const int sparksAdded = _cozmoContext->GetRandom()->RandIntInRange(min, max);
-
-        ic.AddInventoryAmount(InventoryType::Sparks, sparksAdded);
+        const int sparksAdded = AwardSparks(_starRewardsConfig->GetTargetSparksTotalForLevel(level),
+                                            _starRewardsConfig->GetMinSparksPctForLevel(level),
+                                            _starRewardsConfig->GetMaxSparksPctForLevel(level),
+                                            _starRewardsConfig->GetMinSparksForLevel(level),
+                                            _starRewardsConfig->GetMinMaxSparksForLevel(level));
 
         rewards.push_back(rewardsThisLevel[rewardIndex]);
 
