@@ -93,26 +93,26 @@ def parse_query(jconn):
         except:
           print("Unable to re-open {}".format(jissues[0].key))
 
-      for i in jissues:
+      for issue in jissues:
         comment = build_comment(apprun_typestr_registers)
 
         try:
-          jconn.add_comment(i.key, comment)
-          print("Added comment to {}".format(i.key))
+          jconn.add_comment(issue.key, comment)
+          print("Added comment to {}".format(issue.key))
         except:
-          print("Unable to add comment on {}".format(i.key))
+          print("Unable to add comment on {}".format(issue.key))
 
-        affects_versions = build_affects_verions_list(affects_versions_dict, crash)
-
-        try:
-          i.update(fields={'versions': affects_versions})
-        except:
-          print("Unable to add Affects Version to {}".format(i.key))
+        affects_versions = build_affects_verions_list(affects_versions_dict, crash, issue)
 
         try:
-          i.update(fields={'components': [{"name": "crashes"}]})
+          issue.update(fields={'versions': affects_versions})
         except:
-          print("Unable to add crash component to {}".format(i.key))
+          print("Unable to add Affects Version to {}".format(issue.key))
+
+        try:
+          issue.update(fields={'components': [{"name": "crashes"}]})
+        except:
+          print("Unable to add crash component to {}".format(issue.key))
 
     else: # create new JIRA issue
       description = build_jira_description(apprun_typestr_registers)
@@ -163,8 +163,13 @@ def newer_version(affects_versions, production_version):
   return newer
 
 
-def build_affects_verions_list(affects_versions_dict, crash):
+def build_affects_verions_list(affects_versions_dict, crash, issue=None):
   affects_versions = []
+
+  if issue is not None:
+    for version in issue.raw['fields']['versions']:
+        affects_versions.append({"name": version['name']})
+
   for version in set(affects_versions_dict[crash]):
     if version is not None:
       arr = str(version).split(".")
