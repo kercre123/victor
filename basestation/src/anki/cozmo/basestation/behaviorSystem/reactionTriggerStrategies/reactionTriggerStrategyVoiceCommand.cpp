@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -76,7 +77,7 @@ bool ReactionTriggerStrategyVoiceCommand::ShouldTriggerBehaviorInternal(const Ro
       DEV_ASSERT(behavior->GetID() == BehaviorID::ReactToVoiceCommand_Wakeup,
                  "ReactionTriggerStrategyVoiceCommand.ShouldTriggerBehaviorInternal.ExpectedWakeUpReaction");
     
-      BehaviorPreReqNone req;
+      BehaviorPreReqRobot req(robot);
       return behavior->IsRunnable(req);
     }
     // Otherwise Cozmo is not going to sleep so the normal "Hey Cozmo" reaction can run

@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/aiComponent/requestGameComponent.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
@@ -523,8 +522,8 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
              refuseBehavior->GetClass() == BehaviorClass::PlayAnim,
              "VoiceCommandBehaviorChooser.Refuse.ImproperClassRetrievedForID");
   
-  BehaviorPreReqNone preReq;
-  if(refuseBehavior->IsRunnable(preReq))
+  BehaviorPreReqRobot preReqRobot(robot);
+  if(refuseBehavior->IsRunnable(preReqRobot))
   {
     outputBehavior = refuseBehavior;
     return true;
