@@ -47,11 +47,11 @@ namespace Cozmo {
       }
 
       private void SetCountText(int newCount) {
-		_CountLabel.text = Localization.GetNumber(newCount);
+        _CountLabel.text = Localization.GetNumber(newCount);
 
-		// Force the rect transform to update for use with ContentSizeFitters
-		_CountLabel.gameObject.SetActive(false);
-		_CountLabel.gameObject.SetActive(true);
+        // Force the rect transform to update for use with ContentSizeFitters
+        _CountLabel.gameObject.SetActive(false);
+        _CountLabel.gameObject.SetActive(true);
       }
 
       private string GetItemNamePlural() {

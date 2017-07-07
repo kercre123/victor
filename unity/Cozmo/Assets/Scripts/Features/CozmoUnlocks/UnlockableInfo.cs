@@ -4,8 +4,7 @@ using System;
 
 public enum UnlockableType {
   Game,
-  Action,
-  UnlockableFaceSlot
+  Action
 }
 
 [Serializable]
@@ -13,12 +12,6 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   public SerializableUnlockIds Id;
 
   public UnlockableType UnlockableType;
-
-  // used for serializing enums as strings instead of integers.
-  public SerializableUnlockIds[] Prerequisites;
-
-  [Tooltip("If true, any prereq filled will make this unlock available. If false, all prereqs must be filled to make this unlock available.")]
-  public bool AnyPrereqUnlock;
 
   [SerializeField, Tooltip("Will never leave the 'locked' state and shows a 'Coming Soon' graphic")]
   private bool _ComingSoon;

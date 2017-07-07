@@ -104,5 +104,14 @@
   },
   "needs.Done": {
     "translation": "DONE"
+  },
+  "needs.RewardsDialog.SparksEarned": {
+    "translation": "You've earned more Sparks!"
+  },
+  "needs.RewardsDialog.TrickUnlocked": {
+    "translation": "You've unlocked {0}!"
+  },
+  "needs.RewardsDialog.SongUnlocked": {
+    "translation": "You've unlocked {0}!"
   }
 }

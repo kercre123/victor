@@ -36,7 +36,7 @@ public class UnlockablesManager : MonoBehaviour {
 
   // index is the face slot, value is the unlockID;
   [SerializeField]
-  private int[] _FaceSlotUnlockMap;
+  private int _NumFaceSlots;
 
   public bool IsNewUnlock(Anki.Cozmo.UnlockId uID) {
     // In the case that you're connected to a cozmo that unlocked something and then connect to another cozmo with same device.
@@ -91,27 +91,9 @@ public class UnlockablesManager : MonoBehaviour {
     return true;
   }
 
-  public bool IsFaceSlotUnlocked(int faceSlot) {
-    if (faceSlot >= _FaceSlotUnlockMap.Length) {
-      DAS.Error("UnlockablesManager.IsFaceSlotUnlocked", "Face slot out of range " + faceSlot);
-    }
-    return IsUnlocked((Anki.Cozmo.UnlockId)_FaceSlotUnlockMap[faceSlot]);
-  }
-
   public int FaceSlotsSize() {
-    return _FaceSlotUnlockMap.Length;
+    return _NumFaceSlots;
   }
-
-  public void UnlockNextAvailableFaceSlot() {
-    for (int i = 0; i < _FaceSlotUnlockMap.Length; ++i) {
-      if (!IsUnlocked((Anki.Cozmo.UnlockId)_FaceSlotUnlockMap[i])) {
-        TrySetUnlocked((UnlockId)_FaceSlotUnlockMap[i], true);
-        return;
-      }
-    }
-    DAS.Warn("UnlockablesManager.UnlockNextAvailableFaceSlot", "No slots left!");
-  }
-
 
   // Should only be called before connecting to robot, robot will overwrite these
   public void InitializeUnlockablesState() {
@@ -211,19 +193,6 @@ public class UnlockablesManager : MonoBehaviour {
 
     if (unlockableInfo.ComingSoon || !unlockableInfo.FeatureIsEnabled) {
       return false;
-    }
-
-    for (int i = 0; i < unlockableInfo.Prerequisites.Length; ++i) {
-      if (!_UnlockablesState[unlockableInfo.Prerequisites[i].Value]) {
-        if (unlockableInfo.AnyPrereqUnlock == false) {
-          return false;
-        }
-      }
-      else {
-        if (unlockableInfo.AnyPrereqUnlock) {
-          return true;
-        }
-      }
     }
 
     return true;

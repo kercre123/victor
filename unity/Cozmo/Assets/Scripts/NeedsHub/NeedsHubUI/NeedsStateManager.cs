@@ -87,6 +87,10 @@ namespace Cozmo.Needs {
       return _LatestStateFromEngine.numStarsAwarded;
     }
 
+    public int GetLatestStarForNextUnlockFromEngine() {
+      return _LatestStateFromEngine.numStarsForNextUnlock;
+    }
+
     public void RegisterNeedActionCompleted(NeedsActionId actionIdToComplete) {
       RobotEngineManager.Instance.Message.RegisterNeedsActionCompleted =
                           Singleton<RegisterNeedsActionCompleted>.Instance.Initialize(actionIdToComplete);

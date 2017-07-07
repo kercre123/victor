@@ -584,6 +584,9 @@ public static class LocalizationKeys {
   public const string kNeedsContinueButtonText = "needs.ContinueButtonText";
   public const string kNeedsNeedsRepairModalTuneUpComplete = "needs.NeedsRepairModal.TuneUpComplete";
   public const string kNeedsDone = "needs.Done";
+  public const string kNeedsRewardsDialogSparksEarned = "needs.RewardsDialog.SparksEarned";
+  public const string kNeedsRewardsDialogTrickUnlocked = "needs.RewardsDialog.TrickUnlocked";
+  public const string kNeedsRewardsDialogSongUnlocked = "needs.RewardsDialog.SongUnlocked";
 
   #endregion
 
@@ -810,6 +813,33 @@ public static class LocalizationKeys {
   public const string kLabelBasicCozmo = "label.basicCozmo";
   public const string kLabelCurrentPage = "label.currentPage";
   public const string kLabelRewardHeader = "label.RewardHeader";
+
+  #endregion
+
+  #region SongTitleStrings
+
+  public const string kSongTitleCamptown = "song.title.camptown";
+  public const string kSongTitleItsyBitsySpider = "song.title.itsyBitsySpider";
+  public const string kSongTitleBeethoven = "song.title.beethoven";
+  public const string kSongTitlePopGoesTheWeasel = "song.title.popGoesTheWeasel";
+  public const string kSongTitleRowYourBoat = "song.title.rowYourBoat";
+  public const string kSongTitlePachebelCanon = "song.title.pachebelCanon";
+  public const string kSongTitleOdeToJoy = "song.title.odeToJoy";
+  public const string kSongTitleTwinkleTwinkle = "song.title.twinkleTwinkle";
+  public const string kSongTitleFrereJaqcues = "song.title.frereJaqcues";
+  public const string kSongTitleMaryHadALittleLamb = "song.title.maryHadALittleLamb";
+  public const string kSongTitleTakeMeOutToTheBallgame = "song.title.takeMeOutToTheBallgame";
+  public const string kSongTitleWilliamTell = "song.title.williamTell";
+  public const string kSongTitleYankeeDoodle = "song.title.yankeeDoodle";
+  public const string kSongTitleBeautifulDreamer = "song.title.beautifulDreamer";
+  public const string kSongTitleMountainKing = "song.title.mountainKing";
+  public const string kSongTitleTaRaRaBoom = "song.title.taRaRaBoom";
+  public const string kSongTitleEntryOfTheGladiators = "song.title.entryOfTheGladiators";
+  public const string kSongTitleHelloMyBaby = "song.title.helloMyBaby";
+  public const string kSongTitleTurkeyInTheStraw = "song.title.turkeyInTheStraw";
+  public const string kSongTitleLondonBridge = "song.title.londonBridge";
+  public const string kSongTitleSakura = "song.title.sakura";
+  public const string kSongTitleMussIDenn = "song.title.mussIDenn";
 
   #endregion
 

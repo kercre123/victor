@@ -1,7 +1,8 @@
-using UnityEngine;
-using System.Linq;
-using UnityEngine.UI;
 using Anki.Cozmo.ExternalInterface;
+using Cozmo.Needs;
+using UnityEngine;
+using UnityEngine.UI;
+using System.Linq;
 
 public class NeedsPane : MonoBehaviour {
 
@@ -12,6 +13,9 @@ public class NeedsPane : MonoBehaviour {
 
   [SerializeField]
   private Button _GiveStarButton;
+
+  [SerializeField]
+  private Button _ShowRewardDialogButton;
 
   [SerializeField]
   private InputField _LevelEnergyInput;
@@ -40,15 +44,17 @@ public class NeedsPane : MonoBehaviour {
   // Use this for initialization
   void Start() {
     _GiveStarButton.onClick.AddListener(HandleGiveStarTap);
-    _PassTimeApplyButton.onClick.AddListener(HandlePassTimeTap);
-    _NeedsActionApplyButton.onClick.AddListener(HandleNeedsActionCompleteTap);
-    _PassTimeInput.text = "1";
+    _ShowRewardDialogButton.onClick.AddListener(HandleShowRewardDialogTap);
 
     _LevelApplyButton.onClick.AddListener(HandleSetNeedsMeterLevelsTap);
+
+    _PassTimeApplyButton.onClick.AddListener(HandlePassTimeTap);
+    _PassTimeInput.text = "1";
 
     _NeedsActionCompletedDropDown.ClearOptions();
     var needsActionArray = System.Enum.GetNames(typeof(Anki.Cozmo.NeedsActionId)).ToList();
     _NeedsActionCompletedDropDown.AddOptions(needsActionArray);
+    _NeedsActionApplyButton.onClick.AddListener(HandleNeedsActionCompleteTap);
 
     RobotEngineManager.Instance.AddCallback<NeedsState>(HandleNeedsStateFromEngine);
     RobotEngineManager.Instance.Message.GetNeedsState = new GetNeedsState();
@@ -77,9 +83,37 @@ public class NeedsPane : MonoBehaviour {
       RobotEngineManager.Instance.MockCallback(messageEngineToGame);
     }
   }
+
+  private void HandleShowRewardDialogTap() {
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+      MessageEngineToGame messageEngineToGame = new MessageEngineToGame();
+      StarLevelCompleted starLevelCompleted = new StarLevelCompleted();
+      Anki.Cozmo.NeedsReward[] needsRewards = new Anki.Cozmo.NeedsReward[3];
+      // Test one and two digit numbers
+      needsRewards[0] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Sparks, Random.Range(9, 11).ToString());
+      // Test game and trick unlocks
+      Anki.Cozmo.UnlockId newUnlock = (Random.Range(0f, 1f) > 0.5f)
+        ? Anki.Cozmo.UnlockId.QuickTapGame : Anki.Cozmo.UnlockId.RollCube;
+      needsRewards[1] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Unlock, newUnlock.ToString());
+      needsRewards[2] = new Anki.Cozmo.NeedsReward(Anki.Cozmo.NeedsRewardType.Song,
+                                                   Anki.Cozmo.UnlockId.Singing_TakeMeOutToTheBallgame.ToString());
+      starLevelCompleted.Initialize(1, 3, needsRewards);
+      messageEngineToGame.StarLevelCompleted = starLevelCompleted;
+      RobotEngineManager.Instance.MockCallback(messageEngineToGame);
+    }
+    else {
+      int starsToGrant = NeedsStateManager.Instance.GetLatestStarForNextUnlockFromEngine()
+                                          - NeedsStateManager.Instance.GetLatestStarAwardedFromEngine();
+      for (int i = 0; i < starsToGrant; i++) {
+        RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugGiveStarKey, "");
+      }
+    }
+  }
+
   private void HandlePassTimeTap() {
     RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_kDebugPassTimeMinutesKey, _PassTimeInput.text);
   }
+
   private void HandleNeedsActionCompleteTap() {
     string actionSelected = _NeedsActionCompletedDropDown.options[_NeedsActionCompletedDropDown.value].text;
     try {

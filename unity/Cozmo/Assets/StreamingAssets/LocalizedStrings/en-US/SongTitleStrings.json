@@ -1,0 +1,87 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "song.title.camptown": {
+    "translation": "Camptown Races"
+  },
+  "song.title.itsyBitsySpider": {
+    "translation": "Itsy Bitsy Spider"
+  },
+  "song.title.beethoven": {
+    "translation": "Beethoven's 5th Symphony"
+  },
+  "song.title.popGoesTheWeasel": {
+    "translation": "Pop Goes the Weasel"
+  },
+  "song.title.rowYourBoat": {
+    "translation": "Row Your Boat"
+  },
+  "song.title.pachebelCanon": {
+    "translation": "Pachelbel's Canon"
+  },
+  "song.title.odeToJoy": {
+    "translation": "Beethoven's 9th Symphony"
+  },
+  "song.title.twinkleTwinkle": {
+    "translation": "Twinkle Twinkle Little Star"
+  },
+  "song.title.frereJaqcues": {
+    "translation": "Frère Jacques"
+  },
+  "song.title.maryHadALittleLamb": {
+    "translation": "Mary Had a Little Lamb"
+  },
+  "song.title.takeMeOutToTheBallgame": {
+    "translation": "Take Me Out to the Ballgame"
+  },
+  "song.title.williamTell": {
+    "translation": "William Tell Overture"
+  },
+  "song.title.yankeeDoodle": {
+    "translation": "Yankee Doodle"
+  },
+  "song.title.beautifulDreamer": {
+    "translation": "Beautiful Dreamer"
+  },
+  "song.title.mountainKing": {
+    "translation": "Hall of the Mountain King"
+  },
+  "song.title.taRaRaBoom": {
+    "translation": "Ta Ra Ra Boom De Ay"
+  },
+  "song.title.entryOfTheGladiators": {
+    "translation": "Entry of the Gladiators"
+  },
+  "song.title.helloMyBaby": {
+    "translation": "Hello My Baby"
+  },
+  "song.title.turkeyInTheStraw": {
+    "translation": "Turkey In The Straw"
+  },
+  "song.title.londonBridge": {
+    "translation": "London Bridge is Falling Down"
+  },
+  "song.title.sakura": {
+    "translation": "Sakura"
+  },
+  "song.title.mussIDenn": {
+    "translation": "Muss I Denn"
+  }
+}

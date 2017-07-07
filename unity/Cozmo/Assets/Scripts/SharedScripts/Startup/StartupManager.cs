@@ -471,49 +471,44 @@ public class StartupManager : MonoBehaviour {
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
     assetBundleManager.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName,
-      "ShaderHolder", (Cozmo.ShaderHolder sh) => {
-        Cozmo.ShaderHolder.SetInstance(sh);
-      });
+                                                          "ShaderHolder",
+                                                          Cozmo.ShaderHolder.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.AlertModalLoader>(_BasicUIPrefabAssetBundleName,
-      "AlertModalLoader", (Cozmo.UI.AlertModalLoader avl) => {
-        Cozmo.UI.AlertModalLoader.SetInstance(avl);
-      });
+                                                          "AlertModalLoader",
+                                                          Cozmo.UI.AlertModalLoader.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName,
-      "UIColorPalette", (Cozmo.UI.UIColorPalette colorP) => {
-        Cozmo.UI.UIColorPalette.SetInstance(colorP);
-      });
+                                                          "UIColorPalette",
+                                                          Cozmo.UI.UIColorPalette.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.UIDefaultTransitionSettings>(_BasicUIPrefabAssetBundleName,
-      "UIDefaultTransitionSettings", (Cozmo.UI.UIDefaultTransitionSettings colorP) => {
-        Cozmo.UI.UIDefaultTransitionSettings.SetInstance(colorP);
-      });
+                                                          "UIDefaultTransitionSettings",
+                                                          Cozmo.UI.UIDefaultTransitionSettings.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName,
-      "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
-        Cozmo.ItemDataConfig.SetInstance(idc);
-      });
+                                                          "ItemDataConfig",
+                                                          Cozmo.ItemDataConfig.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.Challenge.ChallengeDataList>(_GameMetadataAssetBundleName,
-      "ChallengeList", (Cozmo.Challenge.ChallengeDataList cd) => {
-        Cozmo.Challenge.ChallengeDataList.SetInstance(cd);
-      });
+                                                          "ChallengeList",
+                                                          Cozmo.Challenge.ChallengeDataList.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.GenericRewardsConfig>(_GameMetadataAssetBundleName,
-      "GenericRewardsConfig", (Cozmo.UI.GenericRewardsConfig cd) => {
-        Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
-      });
+                                                          "GenericRewardsConfig",
+                                                          Cozmo.UI.GenericRewardsConfig.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.Settings.DefaultSettingsValuesConfig>(_GameMetadataAssetBundleName,
-      "DefaultSettingsValuesConfig", (Cozmo.Settings.DefaultSettingsValuesConfig dsvc) => {
-        Cozmo.Settings.DefaultSettingsValuesConfig.SetInstance(dsvc);
-      });
+                                                          "DefaultSettingsValuesConfig",
+                                                          Cozmo.Settings.DefaultSettingsValuesConfig.SetInstance);
 
     assetBundleManager.LoadAssetAsync<Cozmo.RequestGame.RequestGameListConfig>(_GameMetadataAssetBundleName,
-      "RequestGameList", (Cozmo.RequestGame.RequestGameListConfig rglc) => {
-        Cozmo.RequestGame.RequestGameListConfig.SetInstance(rglc);
-      });
+                                                          "RequestGameList",
+                                                          Cozmo.RequestGame.RequestGameListConfig.SetInstance);
+
+    assetBundleManager.LoadAssetAsync<Cozmo.Songs.SongLocMap>(_GameMetadataAssetBundleName,
+                                                          "SongLocMap",
+                                                          Cozmo.Songs.SongLocMap.SetInstance);
 
     Cozmo.UI.CubePalette.LoadCubePalette(_BasicUIPrefabAssetBundleName);
 
