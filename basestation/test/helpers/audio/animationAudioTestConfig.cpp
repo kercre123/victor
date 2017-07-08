@@ -12,7 +12,7 @@
  */
 
 #include "helpers/audio/streamingAnimationTest.h"
-#include "anki/cozmo/basestation/animation/animation.h"
+#include "anki/cozmo/basestation/animations/animation.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "helpers/audio/animationAudioTestConfig.h"

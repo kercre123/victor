@@ -17,7 +17,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/animations/faceAnimationManager.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"

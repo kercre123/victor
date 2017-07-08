@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/proceduralFaceDrawer.h"
+#include "anki/cozmo/basestation/animations/proceduralFaceDrawer.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 // Sweep all parameters and make sure we don't trigger an assert or crash when

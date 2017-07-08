@@ -16,7 +16,7 @@
 #define __Anki_Cozmo_Actions_SayTextAction_H__
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/animationStreamer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "clad/types/sayTextStyles.h"
 #include "clad/types/animationTrigger.h"

@@ -15,8 +15,8 @@
 
 #include "util/math/math.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroup.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/animations/animationGroup/animationGroup.h"
+#include "anki/cozmo/basestation/animations/animationGroup/animationGroupContainer.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 #include "json/json.h"

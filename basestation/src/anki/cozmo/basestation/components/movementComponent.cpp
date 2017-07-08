@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/trackLayerComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -83,7 +84,7 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     FaceLayerToRemove & layer = layerIter->second;
     if(_isHeadMoving && false == layer.headWasMoving) {
       // Wait for transition from stopped to moving again
-      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(layerIter->first, layer.duration_ms);
+      _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(layerIter->first, layer.duration_ms);
       layerIter = _faceLayerTagsToRemoveOnHeadMovement.erase(layerIter);
     } else {
       layer.headWasMoving = _isHeadMoving;

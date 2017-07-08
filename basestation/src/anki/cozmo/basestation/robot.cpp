@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
+#include "anki/cozmo/basestation/animations/proceduralFace.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
@@ -58,7 +59,6 @@
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/basestation/petWorld.h"
-#include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotGyroDriftDetector.h"
@@ -1664,38 +1664,9 @@ Radians Robot::GetPitchAngle() const
   return _pitchAngle;
 }
   
-
-
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 {
   return _tapFilterComponent->ShouldIgnoreMovementDueToDoubleTap(objectID);
-}
-    
-void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
-                      TimeStamp_t duration_ms, const std::string& name)
-{
-  ProceduralFace procFace;
-  ProceduralFace::Value xMin=0, xMax=0, yMin=0, yMax=0;
-  procFace.GetEyeBoundingBox(xMin, xMax, yMin, yMax);
-  procFace.LookAt(xPix, yPix,
-                  std::max(xMin, ProceduralFace::WIDTH-xMax),
-                  std::max(yMin, ProceduralFace::HEIGHT-yMax),
-                  1.1f, 0.85f, 0.1f);
-      
-  ProceduralFaceKeyFrame keyframe(procFace, duration_ms);
-      
-  if(AnimationStreamer::NotAnimatingTag == tag) {
-    AnimationStreamer::FaceTrack faceTrack;
-    if(duration_ms > 0) {
-      // Add an initial no-adjustment frame so we have something to interpolate
-      // from on our way to the specified shift
-      faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame());
-    }
-    faceTrack.AddKeyFrameToBack(std::move(keyframe));
-    tag = GetAnimationStreamer().AddPersistentFaceLayer(name, std::move(faceTrack));
-  } else {
-    GetAnimationStreamer().AddToPersistentFaceLayer(tag, std::move(keyframe));
-  }
 }
 
 void Robot::LoadEmotionEvents()

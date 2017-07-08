@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/cozmo/basestation/keyframe.h"
-#include "anki/cozmo/basestation/animation/animation.h"
+#include "anki/cozmo/basestation/animations/animation.h"
 #include "clad/audio/audioCallbackMessage.h"
 #include "clad/audio/messageAudioClient.h"
 #include "audioEngine/audioCallback.h"

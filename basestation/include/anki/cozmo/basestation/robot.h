@@ -22,7 +22,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/animationStreamer.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -551,14 +551,6 @@ public:
   void IncrementNumAnimationBytesStreamed(s32 num);
   void IncrementNumAnimationAudioFramesStreamed(s32 num);
   
-  // Tell the animation streamer to move the eyes by this x,y amount over the
-  // specified duration (layered on top of any other animation that's playing).
-  // Use tag = AnimationStreamer::NotAnimatingTag to start a new layer (in which
-  // case tag will be set to the new layer's tag), or use an existing tag
-  // to add the shift to that layer.
-  void ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
-                 TimeStamp_t duration_ms, const std::string& name = "ShiftEyes");
-  
   void SetNumAnimationBytesPlayed(s32 numAnimationsBytesPlayed) {
     _numAnimationBytesPlayed = numAnimationsBytesPlayed;
   }
@@ -590,6 +582,7 @@ public:
   
   // =========== Audio =============
   Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
+  const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient.get(); }
   
   // =========== Mood =============
 

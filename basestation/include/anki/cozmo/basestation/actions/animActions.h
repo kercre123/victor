@@ -20,7 +20,7 @@
 #include "clad/types/animationTrigger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/animationStreamer.h"
 #include "clad/types/animationKeyFrames.h"
 
 

@@ -16,7 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/animationStreamer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <list>

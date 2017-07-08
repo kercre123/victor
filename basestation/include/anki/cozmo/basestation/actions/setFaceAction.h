@@ -15,8 +15,8 @@
 #define __Anki_Cozmo_Actions_SetFaceAction_H__
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
-#include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/animations/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/proceduralFace.h"
 
 #include "anki/vision/basestation/image.h"
 #include "util/math/math.h"

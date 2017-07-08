@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  */
 
-#include "anki/cozmo/basestation/animation/animation.h"
+#include "anki/cozmo/basestation/animations/animation.h"
 #include "anki/cozmo/basestation/animations/animationSelector.h"
 #include "anki/cozmo/basestation/animations/streamingAnimation.h"
 

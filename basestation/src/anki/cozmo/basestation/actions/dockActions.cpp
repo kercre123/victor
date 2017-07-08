@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/components/dockingComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/pathComponent.h"
+#include "anki/cozmo/basestation/components/trackLayerComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
@@ -211,7 +212,7 @@ namespace Anki {
       }
       
       // Stop squinting
-      _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
+      _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
       
       if(_faceAndVerifyAction != nullptr)
       {
@@ -695,7 +696,7 @@ namespace Anki {
       
       // If this is a reset clear the _squintLayerTag
       if(_squintLayerTag != AnimationStreamer::NotAnimatingTag){
-        _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
+        _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveSquint(_squintLayerTag, 250);
         _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       }
       
@@ -789,18 +790,13 @@ namespace Anki {
         
         if(_wasPickingOrPlacing) {
           // Apply continuous eye squint if we have just now started picking and placing
-          AnimationStreamer::FaceTrack squintLayer;
-          ProceduralFace squintFace;
-          
-          const f32 DockSquintScaleY = 0.35f;
           const f32 DockSquintScaleX = 1.05f;
-          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
-          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::EyeScaleX, DockSquintScaleX);
-          squintFace.SetParameterBothEyes(ProceduralFace::Parameter::UpperLidAngle, -10);
-          
-          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame()); // need start frame at t=0 to get interpolation
-          squintLayer.AddKeyFrameToBack(ProceduralFaceKeyFrame(squintFace, 250));
-          _squintLayerTag = _robot.GetAnimationStreamer().AddPersistentFaceLayer("DockSquint", std::move(squintLayer));
+          const f32 DockSquintScaleY = 0.35f;
+          const f32 DockSquintUpperLidAngle = -10.f;
+          _squintLayerTag = _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddSquint("DockSquint",
+                                                                                              DockSquintScaleX,
+                                                                                              DockSquintScaleY,
+                                                                                              DockSquintUpperLidAngle);
         }
       }
       else if (!_dockingComponentRef.IsPickingOrPlacing() && !_robot.GetMoveComponent().IsMoving())

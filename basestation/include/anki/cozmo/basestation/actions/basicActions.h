@@ -16,7 +16,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
-#include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animations/animationStreamer.h"
 #include "anki/cozmo/basestation/smartFaceId.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -94,7 +94,7 @@ namespace Cozmo {
       u32 _relocalizedCnt = 0;
       
       bool    _moveEyes = true;
-      AnimationStreamer::Tag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
+      AnimationTag _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
       
     }; // class TurnInPlaceAction
 

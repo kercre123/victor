@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/scanlineDistorter.h"
 
 #include "anki/cozmo/basestation/keyframe.h"
-#include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/animations/proceduralFace.h"
 
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/vision/basestation/image.h" 

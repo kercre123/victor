@@ -85,13 +85,18 @@ DesiredFaceDistortionComponent::Params::~Params()
 
 float DesiredFaceDistortionComponent::GetCurrentDesiredDistortion()
 {
-  if( _params != nullptr && _rng != nullptr ) {
+  // Return the same distortion value for the duration of the tick
+  const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
+  if(tickCount == _prevTickCount)
+  {
+    return _curDistortion;
+  }
+  
+  _curDistortion = -1.f;
+  _prevTickCount = tickCount;
+  
+  if( _params != nullptr && _rng != nullptr && !_needsManager.GetPaused()) {
 
-    // if the needs manager is paused overall, then "pause" the distortions as well
-    if( _needsManager.GetPaused() ) {
-      return -1.0f;
-    }
-    
     // if it's time to distort again, or we've never distorted, calculate a desired distortion
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
@@ -139,7 +144,8 @@ float DesiredFaceDistortionComponent::GetCurrentDesiredDistortion()
                        cooldownTime_max_s);
 
         _nextTimeToDistort_s = currTime_s + cooldownTime_s;
-        return degree;
+        _curDistortion = degree;
+        return _curDistortion;
       }
     }
     

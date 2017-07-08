@@ -72,6 +72,9 @@ private:
   
   NeedsManager& _needsManager;
   Util::RandomGenerator* _rng = nullptr;
+  
+  float  _curDistortion = -1.f;
+  size_t _prevTickCount = 0;
 };
 
 

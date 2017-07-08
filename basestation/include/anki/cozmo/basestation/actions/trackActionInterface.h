@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/animations/animation.h"
 
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationTrigger.h"
@@ -158,9 +159,9 @@ private:
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
   
-  u32      _eyeShiftTag;
-  bool     _moveEyes    = false;
-  f32      _originalEyeDartDist;
+  AnimationTag _eyeShiftTag = NotAnimatingTag;
+  bool         _moveEyes    = false;
+  f32          _originalEyeDartDist;
   
   bool     _shouldPlayDrivingAnimation = false;
   

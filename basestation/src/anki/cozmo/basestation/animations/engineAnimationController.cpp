@@ -25,7 +25,7 @@
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
-#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animations/animationContainers/cannedAnimationContainer.h"
 
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -219,42 +219,6 @@ Result EngineAnimationController::PopIdleAnimation()
 {
   DEV_ASSERT(false, "EngineAnimationController.PopIdleAnimation.NotImplemented");
   return RESULT_FAIL_INVALID_OBJECT;
-}
-  
-// Add a procedural face "layer" to be combined with whatever is streaming
-Result EngineAnimationController::AddFaceLayer(const std::string& name, FaceTrack&& faceTrack, TimeStamp_t delay_ms)
-{
-  DEV_ASSERT(false, "EngineAnimationController.AddFaceLayer.NotImplemented");
-  return RESULT_FAIL_INVALID_OBJECT;
-}
-  
-// Add a procedural face "layer" that is applied and then has its final
-// adjustment "held" until removed.
-// A handle/tag for the layer is returned, which is needed for removal.
-IAnimationStreamer::Tag EngineAnimationController::AddPersistentFaceLayer(const std::string& name, FaceTrack&& faceTrack)
-{
-  DEV_ASSERT(false, "EngineAnimationController.AddPersistentFaceLayer.NotImplemented");
-  return INVALID_TAG;
-}
-  
-// Remove a previously-added persistent face layer using its tag.
-// If duration > 0, that amount of time will be used to transition back
-// to no adjustment
-void EngineAnimationController::RemovePersistentFaceLayer(Tag tag, s32 duration_ms)
-{
-  DEV_ASSERT(false, "EngineAnimationController.RemovePersistentFaceLayer.NotImplemented");
-}
-  
-// Add a keyframe to the end of an existing persistent face layer
-void EngineAnimationController::AddToPersistentFaceLayer(Tag tag, ProceduralFaceKeyFrame&& keyframe)
-{
-  DEV_ASSERT(false, "EngineAnimationController.AddToPersistentFaceLayer.NotImplemented");
-}
-  
-// Remove any existing procedural eye dart created by KeepFaceAlive
-void EngineAnimationController::RemoveKeepAliveEyeDart(s32 duration_ms)
-{
-  DEV_ASSERT(false, "EngineAnimationController.RemoveKeepAliveEyeDart.NotImplemented");
 }
   
 const Animation* EngineAnimationController::GetStreamingAnimation() const

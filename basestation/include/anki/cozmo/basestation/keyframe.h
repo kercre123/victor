@@ -18,7 +18,7 @@
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
 #include "anki/common/basestation/colorRGBA.h"
-#include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/animations/proceduralFace.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 #include "clad/audio/audioEventTypes.h"
@@ -455,6 +455,8 @@ namespace Cozmo {
     virtual bool IsDone() override;
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
+    
+    void SetLights(const AnimKeyFrame::BackpackLights& lights) { _streamMsg = lights; };
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;

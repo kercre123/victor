@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "anki/cozmo/basestation/animationContainers/cannedAnimationContainer.h"
-#include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/animations/animationContainers/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animations/animationContainers/cubeLightAnimationContainer.h"
+#include "anki/cozmo/basestation/animations/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

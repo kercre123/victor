@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/trackLayerComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -52,7 +53,7 @@ ITrackAction::~ITrackAction()
 {
   if(_eyeShiftTag != AnimationStreamer::NotAnimatingTag) {
     // Make sure any eye shift gets removed
-    _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+    _robot.GetAnimationStreamer().GetTrackLayerComponent()->RemoveEyeShift(_eyeShiftTag);
     _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
   }
 
@@ -588,22 +589,18 @@ ActionResult ITrackAction::CheckIfDone()
         const f32 kMaxLookUpScale   = 1.1f;
         const f32 kMinLookDownScale = 0.8f;
         const f32 kOuterEyeScaleIncrease = 0.1f;
+        const f32 kXMax = static_cast<f32>(ProceduralFace::WIDTH/4);
+        const f32 kYMax = static_cast<f32>(ProceduralFace::HEIGHT/4);
         
-        ProceduralFace procFace;
-        procFace.LookAt(eyeShiftX, eyeShiftY,
-                        static_cast<f32>(ProceduralFace::WIDTH/4),
-                        static_cast<f32>(ProceduralFace::HEIGHT/4),
-                        kMaxLookUpScale, kMinLookDownScale, kOuterEyeScaleIncrease);
-        
-        if(_eyeShiftTag == AnimationStreamer::NotAnimatingTag) {
-          // Start a new eye shift layer
-          AnimationStreamer::FaceTrack faceTrack;
-          faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
-          _eyeShiftTag = _robot.GetAnimationStreamer().AddPersistentFaceLayer("TrackActionEyeShift", std::move(faceTrack));
-        } else {
-          // Augment existing eye shift layer
-          _robot.GetAnimationStreamer().AddToPersistentFaceLayer(_eyeShiftTag, ProceduralFaceKeyFrame(procFace, BS_TIME_STEP));
-        }
+        _robot.GetAnimationStreamer().GetTrackLayerComponent()->AddOrUpdateEyeShift(_eyeShiftTag,
+                                                                                    "TrackActionEyeShift",
+                                                                                    eyeShiftX, eyeShiftY,
+                                                                                    BS_TIME_STEP,
+                                                                                    kXMax,
+                                                                                    kYMax,
+                                                                                    kMaxLookUpScale,
+                                                                                    kMinLookDownScale,
+                                                                                    kOuterEyeScaleIncrease);
       } // if(_moveEyes)
       
       // Can't meet stop criteria based on predicted updates (as opposed to actual observations)

@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/activeObjectHelpers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "anki/cozmo/basestation/animationContainers/cubeLightAnimationContainer.h"
+#include "anki/cozmo/basestation/animations/animationContainers/cubeLightAnimationContainer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"

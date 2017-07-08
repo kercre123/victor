@@ -5,7 +5,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/array2d_impl.h"
-#include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/animations/faceAnimationManager.h"
 #include "anki/vision/basestation/image.h"
 
 #define SHOW_IMAGES 0
