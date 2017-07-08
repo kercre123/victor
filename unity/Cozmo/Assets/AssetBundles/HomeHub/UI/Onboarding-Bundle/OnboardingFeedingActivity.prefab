@@ -69,19 +69,15 @@ MonoBehaviour:
   _PlayIdle: 0
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 488
+    _EnumValue: 490
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: 
   _DimNeedsMeters: 
   _EnableWhiteListOnly: 1
   _WhiteListedActions:
-  - _EnumValueAsString: FeedRed
+  - _EnumValueAsString: Feed
     _EnumValue: 5
-  - _EnumValueAsString: FeedBlue
-    _EnumValue: 6
-  - _EnumValueAsString: FeedGreen
-    _EnumValue: 7
   _ForceNeedValuesOnStart:
   - -1
   - -1
