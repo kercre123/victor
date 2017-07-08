@@ -4,6 +4,9 @@ namespace Cozmo {
   namespace Challenge {
     namespace DroneMode {
       public class DroneModeShowInstructionsState : State {
+        private const string idleAnimLock = "DroneModeShowInstructions";
+
+
         public override void Enter() {
           GameBase game = _StateMachine.GetGame();
           game.SharedMinigameView.ShowContinueButtonOffset(HandleContinueButtonClicked,
@@ -15,7 +18,7 @@ namespace Cozmo {
           _CurrentRobot.SetLiftHeight(0);
 
           // Push neutral idle
-          _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.DroneModeIdle);
+          _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.DroneModeIdle, idleAnimLock);
 
           // Show instructions slide
           game.SharedMinigameView.ShowWideAnimationSlide(LocalizationKeys.kDroneModeSafePlayDescription, "drone_mode_safe_play",
@@ -28,7 +31,7 @@ namespace Cozmo {
         public override void Exit() {
           base.Exit();
           if (_CurrentRobot != null) {
-            _CurrentRobot.PopIdleAnimation();
+            _CurrentRobot.RemoveIdleAnimation(idleAnimLock);
           }
         }
 

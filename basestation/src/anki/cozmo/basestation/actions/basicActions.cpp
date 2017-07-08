@@ -38,6 +38,8 @@
 namespace Anki {
   
   namespace Cozmo {
+    
+    const char* kIdleAnimLock = "basic_actions_anim_lock";
   
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
@@ -401,7 +403,7 @@ namespace Anki {
     SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
     {
       if( _shouldPopIdle ) {
-        _robot.GetAnimationStreamer().PopIdleAnimation();
+        _robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleAnimLock);
         _shouldPopIdle = false;
       }
       _compoundAction.PrepForCompletion();
@@ -473,7 +475,7 @@ namespace Anki {
       // disable the live idle animation, so we aren't moving during the "wait" sections
       if( ! _shouldPopIdle ) {
         _shouldPopIdle = true;
-        _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+        _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, kIdleAnimLock);
       }
       
       // Go ahead and do the first Update for the compound action so we don't

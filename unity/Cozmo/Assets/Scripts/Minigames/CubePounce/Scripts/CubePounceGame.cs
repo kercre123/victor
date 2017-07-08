@@ -77,7 +77,6 @@ namespace Cozmo.Challenge.CubePounce {
     protected override void CleanUpOnDestroy() {
       if (null != CurrentRobot) {
         CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
-        CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
       }
       LightCube.OnMovedAction -= HandleCubeMoved;
       LightCube.OnStoppedAction -= HandleCubeStopped;

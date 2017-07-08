@@ -55,7 +55,7 @@ BehaviorReactToFrustration::BehaviorReactToFrustration(Robot& robot, const Json:
 Result BehaviorReactToFrustration::InitInternal(Robot& robot)
 {
   // push driving animations in case we decide to drive
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims);
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims, GetIDStr());
   
   if(_animToPlay != AnimationTrigger::Count) {
     TransitionToReaction(robot);
@@ -70,7 +70,7 @@ Result BehaviorReactToFrustration::InitInternal(Robot& robot)
 
 void BehaviorReactToFrustration::StopInternal(Robot& robot)
 {
-  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
 }
 
 void BehaviorReactToFrustration::TransitionToReaction(Robot& robot)

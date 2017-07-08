@@ -228,14 +228,16 @@ void IActivity::OnSelected(Robot& robot)
   // set driving animations for this activity if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
   if ( hasDrivingAnims ) {
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations( {_driveStartAnimTrigger,
-                                                               _driveLoopAnimTrigger,
-                                                               _driveEndAnimTrigger} );
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+      {_driveStartAnimTrigger,
+       _driveLoopAnimTrigger,
+       _driveEndAnimTrigger},
+        GetIDStr());
   }
 
   // Set idle animation if desired
   if( _idleAnimTrigger != AnimationTrigger::Count ) {
-    robot.GetAnimationStreamer().PushIdleAnimation(_idleAnimTrigger);
+    robot.GetAnimationStreamer().PushIdleAnimation(_idleAnimTrigger, GetIDStr());
   }
   
   // request analyzer process
@@ -260,13 +262,13 @@ void IActivity::OnDeselected(Robot& robot)
   // clear idle if it was set
   if( _idleAnimTrigger != AnimationTrigger::Count ) {
     // NOTE: assumes _idleAnimTrigger doesn't change while this was running
-    robot.GetAnimationStreamer().PopIdleAnimation();
+    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
   }      
   
   // clear driving animations for this activity if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
   if ( hasDrivingAnims ) {
-    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   }
   
   // (un)request analyzer process

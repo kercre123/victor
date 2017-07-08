@@ -541,10 +541,12 @@ namespace Anki {
             _drivingStartAnim = drivingStartAnim;
             _drivingLoopAnim = drivingLoopAnim;
             _drivingEndAnim = drivingEndAnim;
-          
+            
+            static const char* kWebotsDrivingLock = "webots_driving_lock";
             // Pop whatever driving animations were being used and push the new ones
             ExternalInterface::MessageGameToEngine msg1;
-            msg1.Set_PopDrivingAnimations(ExternalInterface::PopDrivingAnimations());
+            msg1.Set_RemoveDrivingAnimations(
+              ExternalInterface::RemoveDrivingAnimations(kWebotsDrivingLock));
             SendMessage(msg1);
           
             ExternalInterface::PushDrivingAnimations m;
@@ -2073,12 +2075,15 @@ namespace Anki {
                     break;
                   }
                   std::string idleAnimToSendName = idleAnimToSendField->getSFString();
+                  static const char* kWebotsIdleLock = "webots_idle_lock";
                   
                   using namespace ExternalInterface;
                   if(idleAnimToSendName.empty()) {
-                    SendMessage(MessageGameToEngine(PopIdleAnimation()));
+                    SendMessage(MessageGameToEngine(RemoveIdleAnimation(kWebotsIdleLock)));
                   } else {
-                    SendMessage(MessageGameToEngine(PushIdleAnimation(AnimationTriggerFromString(idleAnimToSendName.c_str()))));
+                    SendMessage(MessageGameToEngine(
+                      PushIdleAnimation(AnimationTriggerFromString(idleAnimToSendName.c_str()),
+                                        kWebotsIdleLock)));
                   }
 
                 }

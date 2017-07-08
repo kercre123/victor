@@ -65,6 +65,8 @@ public class OnboardingManager : MonoBehaviour {
   private int _CurrDASPhaseID = -1;
   private float _CurrDASPhaseStartTime = 0;
 
+  private const string kOnboardingManagerIdleLock = "onboarding_manager_idle";
+
 #if UNITY_EDITOR
   private bool _DebugDisplayOn = true;
 #else
@@ -206,7 +208,7 @@ public class OnboardingManager : MonoBehaviour {
     int startStage = 0;
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
-      CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+      CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
       RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
 
@@ -259,7 +261,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
-        RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+        RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }

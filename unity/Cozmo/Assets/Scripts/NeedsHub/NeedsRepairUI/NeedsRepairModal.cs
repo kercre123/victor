@@ -53,6 +53,8 @@ namespace Cozmo.Repair.UI {
       public CozmoText TuneUpTitle = null;
     }
 
+    private const string kNeedsRepairIdleLock = "needs_repair_idle";
+
     #endregion
 
     #region SERIALIZED FIELDS
@@ -310,7 +312,6 @@ namespace Cozmo.Repair.UI {
       if (robot != null) {
         robot.CancelAction(RobotActionType.PLAY_ANIMATION);
         PlayGetOutAnim(_LastBracket);
-        robot.SetIdleAnimation(AnimationTrigger.Count);
         HubWorldBase.Instance.StartFreeplay();
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
       }
@@ -1108,7 +1109,8 @@ namespace Cozmo.Repair.UI {
           break;
         }
 
-        robot.SetIdleAnimation(idle);
+        robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
+        robot.PushIdleAnimation(idle, kNeedsRepairIdleLock);
 
         _LastBracket = bracket;
       }

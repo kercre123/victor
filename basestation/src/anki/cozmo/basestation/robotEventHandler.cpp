@@ -57,6 +57,10 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace{
+const int kBoundedWhileIdlePopLimit = 1000;
+}
+  
 u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
   
 // =====================================================================================================================
@@ -1674,9 +1678,14 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
   else
   {
     robot->GetActionList().Cancel();
-    robot->GetAnimationStreamer().SetIdleAnimation(AnimationTrigger::Count);
     robot->GetMoveComponent().StopAllMotors();
     robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
+    
+    // Clear out all idle animations set by the sdk
+    IAnimationStreamer& animStreamer = robot->GetAnimationStreamer();
+    BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
+                  RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
+    }
   }
 }
 

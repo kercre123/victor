@@ -195,18 +195,11 @@ IAnimationStreamer::Tag EngineAnimationController::SetStreamingAnimation(Animati
   DEV_ASSERT(false, "EngineAnimationController.SetStreamingAnimation.NotImplemented");
   return INVALID_TAG;
 }
-  
-// Set the animation to be played when no other animation has been specified.  Use the empty string to
-// disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-Result EngineAnimationController::SetIdleAnimation(AnimationTrigger animName)
-{
-  DEV_ASSERT(false, "EngineAnimationController.SetIdleAnimation.NotImplemented");
-  return RESULT_FAIL_INVALID_OBJECT;
-}
+
   
 // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
 // idle (even if it came from SetIdleAnimation) is always on the stack
-Result EngineAnimationController::PushIdleAnimation(AnimationTrigger animName)
+Result EngineAnimationController::PushIdleAnimation(AnimationTrigger animName, const std::string& lockName)
 {
   DEV_ASSERT(false, "EngineAnimationController.PushIdleAnimation.NotImplemented");
   return RESULT_FAIL_INVALID_OBJECT;
@@ -215,7 +208,7 @@ Result EngineAnimationController::PushIdleAnimation(AnimationTrigger animName)
 // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
 // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
 // Will not pop the last idle off the stack.
-Result EngineAnimationController::PopIdleAnimation()
+Result EngineAnimationController::RemoveIdleAnimation(const std::string& lockName)
 {
   DEV_ASSERT(false, "EngineAnimationController.PopIdleAnimation.NotImplemented");
   return RESULT_FAIL_INVALID_OBJECT;

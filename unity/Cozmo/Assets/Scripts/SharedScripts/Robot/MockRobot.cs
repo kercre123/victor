@@ -326,11 +326,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void PushIdleAnimation(AnimationTrigger default_anim) {
+  public void PushIdleAnimation(AnimationTrigger default_anim, string lockName) {
     // Do nothing
   }
 
-  public void PopIdleAnimation() {
+  public void RemoveIdleAnimation(string lockName) {
     // Do nothing
   }
 
@@ -338,11 +338,11 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void PopDrivingAnimations() {
+  public void RemoveDrivingAnimations(string lockName) {
     // Do nothing
   }
 
-  public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim) {
+  public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName) {
     // Do nothing
   }
 

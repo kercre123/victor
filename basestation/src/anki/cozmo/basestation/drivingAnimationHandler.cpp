@@ -30,7 +30,7 @@ namespace Anki {
 
     // Which docking method actions should use
     CONSOLE_VAR(bool, kEnableDrivingAnimations, "DrivingAnimationHandler", true);
-    
+    const int kBoundedWhileRemoveIdleMax = 1000;
     
     DrivingAnimationHandler::DrivingAnimationHandler(Robot& robot)
     : _robot(robot)
@@ -63,29 +63,30 @@ namespace Anki {
         [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
         {
           auto const& payload = event.GetData().Get_PushDrivingAnimations();
-          PushDrivingAnimations({payload.drivingStartAnim, payload.drivingLoopAnim, payload.drivingEndAnim});
+          PushDrivingAnimations({payload.drivingStartAnim, payload.drivingLoopAnim, payload.drivingEndAnim},
+                                payload.lockName);
         }));
         
         _signalHandles.push_back(_robot.GetExternalInterface()->Subscribe(
-                                   ExternalInterface::MessageGameToEngineTag::PopDrivingAnimations,
+                                   ExternalInterface::MessageGameToEngineTag::RemoveDrivingAnimations,
         [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
         {
-          PopDrivingAnimations();
+          RemoveDrivingAnimations(event.GetData().Get_RemoveDrivingAnimations().lockName);
         }));
       }
     }
     
-    void DrivingAnimationHandler::PushDrivingAnimations(const DrivingAnimations& drivingAnimations)
+    void DrivingAnimationHandler::PushDrivingAnimations(const DrivingAnimations& drivingAnimations, const std::string& lockName)
     {
       if(_state != AnimState::ActionDestroyed)
       {
         PRINT_NAMED_WARNING("DrivingAnimationHandler.PushDrivingAnimations",
                             "Pushing new animations while currently playing");
       }
-      _drivingAnimationStack.push_back(drivingAnimations);
+      _drivingAnimationStack.push_back(std::make_pair(drivingAnimations, lockName));
     }
     
-    void DrivingAnimationHandler::PopDrivingAnimations()
+    void DrivingAnimationHandler::RemoveDrivingAnimations(const std::string& lockName)
     {
       if(_state != AnimState::ActionDestroyed)
       {
@@ -100,13 +101,18 @@ namespace Anki {
       }
       else
       {
-        _drivingAnimationStack.pop_back();
+        
+        // find the driving animation with the matching lock name in the driving animation stack
+        auto drivingAnimIter = _drivingAnimationStack.begin();
+        BOUNDED_WHILE(kBoundedWhileRemoveIdleMax, drivingAnimIter != _drivingAnimationStack.end()){
+          if(drivingAnimIter->second == lockName){
+            _drivingAnimationStack.erase(drivingAnimIter);
+            break;
+          }else{
+            ++drivingAnimIter;
+          }
+        }
       }
-    }
-
-    void DrivingAnimationHandler::ClearAllDrivingAnimations()
-    {
-      _drivingAnimationStack.clear();
     }
 
     void DrivingAnimationHandler::UpdateCurrDrivingAnimations()
@@ -127,7 +133,7 @@ namespace Anki {
         }
       }
       else {
-        _currDrivingAnimations = _drivingAnimationStack.back();
+        _currDrivingAnimations = _drivingAnimationStack.back().first;
       }
     }
 

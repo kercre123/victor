@@ -179,10 +179,12 @@ void ActivitySparked::OnSelectedInternal(Robot& robot)
   
   if(!mngr.IsRequestedSparkSoft()){
     // Set the idle driving animations to sparks driving anims
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+     {AnimationTrigger::SparkDrivingStart,
       AnimationTrigger::SparkDrivingLoop,
-      AnimationTrigger::SparkDrivingStop});
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
+      AnimationTrigger::SparkDrivingStop},
+      GetIDStr());
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle, GetIDStr());
     robot.GetBodyLightComponent().StartLoopingBackpackLights(
                             kLoopingSparkLights,
                             BackpackLightSource::Behavior,
@@ -292,8 +294,8 @@ void ActivitySparked::ResetLightsAndAnimations(Robot& robot)
 {
   if(_idleAnimationsSet){
     // Revert to driving anims
-    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-    robot.GetAnimationStreamer().PopIdleAnimation();
+    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
     robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }

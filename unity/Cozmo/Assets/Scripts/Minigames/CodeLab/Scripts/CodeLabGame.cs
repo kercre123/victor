@@ -52,6 +52,8 @@ namespace CodeLab {
     private bool _HasQueuedResetToHomePose = false;
     private bool _RequiresResetToNeutralFace = false;
 
+    private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
+
     private class GameToGameConn {
       private bool _Enabled = false;
       private string _PendingMessageType = null;
@@ -191,7 +193,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.CancelAction(RobotActionType.UNKNOWN);  // Cancel all current actions
-        robot.PopDrivingAnimations();
+        robot.RemoveDrivingAnimations(kCodeLabGameDrivingAnimLock);
         _SessionState.EndSession();
         robot.ExitSDKMode(false);
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
@@ -317,7 +319,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         bool useVertical = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.UseVerticalGrammarCodelab;
         GrammarMode grammarMode = useVertical ? GrammarMode.Vertical : GrammarMode.Horizontal;
         _SessionState.StartSession(grammarMode);
-        robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count);
+        robot.PushDrivingAnimations(AnimationTrigger.Count, AnimationTrigger.Count, AnimationTrigger.Count, kCodeLabGameDrivingAnimLock);
         robot.EnterSDKMode(false);
         robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CodeLabEnter);
       }

@@ -44,11 +44,8 @@ namespace Anki {
         };
       
         // Sets the driving animations
-        void PushDrivingAnimations(const DrivingAnimations& drivingAnimations);
-        void PopDrivingAnimations();
-
-        // Resets the driving animations to default
-        void ClearAllDrivingAnimations();
+        void PushDrivingAnimations(const DrivingAnimations& drivingAnimations, const std::string& lockName);
+        void RemoveDrivingAnimations(const std::string& lockName);
       
         // Returns true if the drivingEnd animation is currently playing
         // Calling action should return ActionResult::RUNNING as long as this is true.
@@ -101,7 +98,7 @@ namespace Anki {
       
         Robot& _robot;
       
-        std::vector<DrivingAnimations> _drivingAnimationStack;
+        std::vector<std::pair<DrivingAnimations, std::string>> _drivingAnimationStack;
         DrivingAnimations _currDrivingAnimations;
       
         const DrivingAnimations kDefaultDrivingAnimations;

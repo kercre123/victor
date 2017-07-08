@@ -8,6 +8,8 @@ namespace CozmoSays {
     private SayTextSlide _SayTextSlidePrefab;
     private SayTextSlide _SayTextSlideInstance;
 
+    private const string idleAnimLock = "CozmoSaysGame";
+
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, callback: (success) => {
         TurnTowardsLastFaceDone();
@@ -23,13 +25,13 @@ namespace CozmoSays {
 
     private void TurnTowardsLastFaceDone() {
       if (CurrentRobot != null) {
-        CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CozmoSaysIdle);
+        CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CozmoSaysIdle, idleAnimLock);
       }
     }
 
     protected override void CleanUpOnDestroy() {
       if (CurrentRobot != null) {
-        CurrentRobot.PopIdleAnimation();
+        CurrentRobot.RemoveIdleAnimation(idleAnimLock);
       }
     }
   }

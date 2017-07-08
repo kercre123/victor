@@ -98,7 +98,7 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersWorkoutArray);
 
   // disable idle
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
 
   const auto& currWorkout = robot.GetAIComponent().GetWorkoutComponent().GetCurrentWorkout();  
   _numStrongLiftsToDo = currWorkout.GetNumStrongLifts(robot);
@@ -125,7 +125,7 @@ Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
 void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
 {
   // restore previous idle
-  robot.GetAnimationStreamer().PopIdleAnimation();
+  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
   
   // Ensure the cube workout lights are not set
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Workout, _targetBlockID);

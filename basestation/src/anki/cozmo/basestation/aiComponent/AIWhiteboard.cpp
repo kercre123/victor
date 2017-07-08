@@ -63,6 +63,8 @@ CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 // face tracking
 CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
 CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
+  
+const char* kSevereNeedStateLock = "AIWhiteboard_severe_need";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)
@@ -1080,12 +1082,14 @@ void AIWhiteboard::SetSevereNeedExpression(NeedId need) {
     _robot.GetDrivingAnimationHandler().PushDrivingAnimations({
       drivingIter->second._getIn,
       drivingIter->second._loop,
-      drivingIter->second._getOut});
+      drivingIter->second._getOut},
+      kSevereNeedStateLock);
   }
   
   const auto& idleIter = idleAnimation.find(need);
   if(idleIter != idleAnimation.end()){
-    _robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second);
+    _robot.GetAnimationStreamer().PushIdleAnimation(idleIter->second,
+                                                    kSevereNeedStateLock);
   }
   
   _severeNeedExpression = need;
@@ -1102,8 +1106,8 @@ void AIWhiteboard::ClearSevereNeedExpression() {
   DEV_ASSERT(_severeNeedExpression != NeedId::Count,
              "AIWhiteboard.ClearSevereNeedExpression.ExpressionNotSet");
   
-  _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  _robot.GetAnimationStreamer().PopIdleAnimation();
+  _robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(kSevereNeedStateLock);
+  _robot.GetAnimationStreamer().RemoveIdleAnimation(kSevereNeedStateLock);
 
   _severeNeedExpression = NeedId::Count;
 }

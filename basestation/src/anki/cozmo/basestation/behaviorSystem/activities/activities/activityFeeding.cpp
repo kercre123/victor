@@ -702,7 +702,7 @@ void ActivityFeeding::HandleObjectConnectionStateChange(Robot& robot, const Obje
   
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityFeeding::HasSingleBehaviorStageStarted(IBehaviorPtr behavior)
 {

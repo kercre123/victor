@@ -94,7 +94,7 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersOnCharger);
 
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
   
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
   robot.GetExternalInterface()->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
@@ -103,7 +103,7 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
   
 void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
-  robot.GetAnimationStreamer().PopIdleAnimation();
+  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
 }
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)

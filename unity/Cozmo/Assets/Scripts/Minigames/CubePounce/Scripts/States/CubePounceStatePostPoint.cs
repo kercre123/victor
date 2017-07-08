@@ -15,6 +15,8 @@ namespace Cozmo.Challenge.CubePounce {
 
     private Anki.Cozmo.CubeAnimationTrigger _CubeAnim;
 
+    private const string kCubePounceIdle = "cube_pounce_idle";
+
     public override void Enter() {
       base.Enter();
 
@@ -96,7 +98,7 @@ namespace Cozmo.Challenge.CubePounce {
       _CubePounceGame.StartRoundBasedGameEnd();
       _CubePounceGame.UpdateUIForGameEnd();
       _CurrentRobot.TryResetHeadAndLift(null);
-      _CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
+      _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown, kCubePounceIdle);
     }
 
     public override void Exit() {
@@ -111,6 +113,7 @@ namespace Cozmo.Challenge.CubePounce {
         _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
         _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
         _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
+        _CurrentRobot.RemoveIdleAnimation(kCubePounceIdle);
 
         _CurrentRobot.SetEnableCliffSensor(true);
       }

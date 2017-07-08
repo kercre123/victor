@@ -104,9 +104,11 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   //Disable Cliff Reaction during behavior
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersDriveOffChargerArray);
 
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
-                                                            AnimationTrigger::DriveLoopLaunch,
-                                                            AnimationTrigger::DriveEndLaunch});
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+    {AnimationTrigger::DriveStartLaunch,
+     AnimationTrigger::DriveLoopLaunch,
+     AnimationTrigger::DriveEndLaunch},
+      GetIDStr());
 
   const bool onTreads = robot.GetOffTreadsState() == OffTreadsState::OnTreads;
   if( onTreads ) {
@@ -123,7 +125,7 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::StopInternal(Robot& robot)
 {
-  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

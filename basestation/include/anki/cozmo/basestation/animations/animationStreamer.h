@@ -70,19 +70,15 @@ namespace Cozmo {
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
     virtual Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) = 0;
-
-    // Set the animation to be played when no other animation has been specified.  Use the empty string to
-    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-    virtual Result SetIdleAnimation(AnimationTrigger animName) = 0;
-
+    
     // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
     // idle (even if it came from SetIdleAnimation) is always on the stack
-    virtual Result PushIdleAnimation(AnimationTrigger animName) = 0;
+    virtual Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName) = 0;
     
     // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
     // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
     // Will not pop the last idle off the stack.
-    virtual Result PopIdleAnimation() = 0;
+    virtual Result RemoveIdleAnimation(const std::string& lockName) = 0;
     
     // If any animation is set for streaming and isn't done yet, stream it.
     virtual Result Update(Robot& robot) = 0;
@@ -123,18 +119,14 @@ namespace Cozmo {
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
     Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) override;
     
-    // Set the animation to be played when no other animation has been specified.  Use the empty string to
-    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-    Result SetIdleAnimation(AnimationTrigger animName) override;
-    
     // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
     // idle (even if it came from SetIdleAnimation) is always on the stack
-    Result PushIdleAnimation(AnimationTrigger animName) override;
+    Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName) override;
     
     // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
     // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
     // Will not pop the last idle off the stack.
-    Result PopIdleAnimation() override;
+    Result RemoveIdleAnimation(const std::string& lockName) override;
 
     const std::string& GetIdleAnimationName() const;
     
@@ -216,7 +208,7 @@ namespace Cozmo {
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
-    std::vector<AnimationTrigger> _idleAnimationNameStack;
+    std::vector<std::pair<AnimationTrigger, std::string>> _idleAnimationNameStack;
 
     std::string _lastPlayedAnimationId;
 

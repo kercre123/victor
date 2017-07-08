@@ -14,6 +14,8 @@ public class InitialCubesState : State {
 
   private bool _IsPlayingReactionAnim = false;
 
+  private const string kInitialCubesStateIdleLock = "initial_cubes_state";
+
   public InitialCubesState(State nextState, int cubesRequired) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
@@ -67,6 +69,7 @@ public class InitialCubesState : State {
     if (!_PushedIdleAnimation) {
       Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
       pushIdleAnimMsg.animTrigger = Anki.Cozmo.AnimationTrigger.GameSetupIdle;
+      pushIdleAnimMsg.lockName = kInitialCubesStateIdleLock;
       RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
       RobotEngineManager.Instance.SendMessage();
       _PushedIdleAnimation = true;
@@ -75,7 +78,7 @@ public class InitialCubesState : State {
 
   protected void PopIdleAnimation() {
     if (_PushedIdleAnimation) {
-      RobotEngineManager.Instance.Message.PopIdleAnimation = new Anki.Cozmo.ExternalInterface.PopIdleAnimation();
+      RobotEngineManager.Instance.Message.RemoveIdleAnimation = new Anki.Cozmo.ExternalInterface.RemoveIdleAnimation(kInitialCubesStateIdleLock);
       RobotEngineManager.Instance.SendMessage();
       _PushedIdleAnimation = false;
     }

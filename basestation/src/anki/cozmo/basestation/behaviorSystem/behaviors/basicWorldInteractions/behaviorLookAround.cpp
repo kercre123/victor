@@ -28,8 +28,6 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include <cmath>
 
-#define DISABLE_IDLE_DURING_LOOK_AROUND 0
-
 #define SAFE_ZONE_VIZ 0 // (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
 
 #if SAFE_ZONE_VIZ
@@ -141,10 +139,6 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robo
 
 Result BehaviorLookAround::ResumeInternal(Robot& robot)
 {
-  if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
-  }
-    
   TransitionToWaitForOtherActions(robot);
   
   return Result::RESULT_OK;
@@ -399,9 +393,6 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   
 void BehaviorLookAround::StopInternal(Robot& robot)
 {
-  if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.GetAnimationStreamer().PopIdleAnimation();
-  }
   ResetBehavior(robot);
 }
   

@@ -187,7 +187,7 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   // disable idle animation, but save the old one on the stack
   if( ! _shouldPopIdle ) {
     _shouldPopIdle = true;
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
   }
 
   if( GetNumBlocks(robot) == 0 ) {
@@ -275,7 +275,7 @@ void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
 
   if( _shouldPopIdle ) {
     _shouldPopIdle = false;
-    robot.GetAnimationStreamer().PopIdleAnimation();
+    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
   }
 }
 

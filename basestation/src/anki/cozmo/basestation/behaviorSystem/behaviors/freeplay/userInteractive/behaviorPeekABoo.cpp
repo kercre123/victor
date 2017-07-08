@@ -159,7 +159,7 @@ Result BehaviorPeekABoo::InitInternal(Robot& robot)
   
   _numPeeksTotal = _numPeeksRemaining = robot.GetRNG().RandIntInRange(_params.minPeeks, _params.maxPeeks);
   // Disable idle so it doesn't move the head down
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersPeekABooArray);
   
   
@@ -204,7 +204,7 @@ IBehavior::Status BehaviorPeekABoo::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPeekABoo::StopInternal(Robot& robot)
 {
-  robot.GetAnimationStreamer().PopIdleAnimation();
+  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
   _nextTimeIsRunnable_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _params.minCoolDown_Sec;
 }
 

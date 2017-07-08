@@ -1678,15 +1678,6 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetIdleAnimation(const std::string &animName) {
-      ExternalInterface::SetIdleAnimation msg;
-      msg.robotID = 1;
-      msg.animTrigger = AnimationTriggerFromString(animName.c_str());
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetIdleAnimation(msg);
-      SendMessage(message);
-    }
-    
     uint32_t UiGameController::SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
       ExternalInterface::QueueSingleAction msg;
       msg.robotID = 1;

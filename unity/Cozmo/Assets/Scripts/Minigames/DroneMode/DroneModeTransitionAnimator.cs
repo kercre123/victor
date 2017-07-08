@@ -16,6 +16,8 @@ namespace Cozmo.Challenge.DroneMode {
 
     private bool _AllowIdleAnimation = true;
 
+    private const string kDroneModeIdle = "drone_mode_transition_idle";
+
     public enum TransitionAnimationState {
       IN,
       OUT,
@@ -193,12 +195,12 @@ namespace Cozmo.Challenge.DroneMode {
     }
 
     private void PushRobotIdleAnimation(AnimationTrigger animation) {
-      _RobotToAnimate.PushIdleAnimation(animation);
+      _RobotToAnimate.PushIdleAnimation(animation, kDroneModeIdle);
       _IdleAnimationStack.Push(animation);
     }
 
     private void PopRobotIdleAnimation() {
-      _RobotToAnimate.PopIdleAnimation();
+      _RobotToAnimate.RemoveIdleAnimation(kDroneModeIdle);
       _IdleAnimationStack.Pop();
     }
 

@@ -150,11 +150,13 @@ void BehaviorPounceOnMotion::InitHelper(Robot& robot)
   
   // Don't override sparks idle animation
   if(!ShouldStreamline()){
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PounceFace);
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PounceFace, GetIDStr());
     
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::PounceDriveStart,
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+     {AnimationTrigger::PounceDriveStart,
       AnimationTrigger::PounceDriveLoop,
-      AnimationTrigger::PounceDriveEnd});
+      AnimationTrigger::PounceDriveEnd},
+        GetIDStr());
   }
   
 }
@@ -657,8 +659,8 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   
   // Only pop animations if set within this behavior
   if(!ShouldStreamline()){
-    robot.GetAnimationStreamer().PopIdleAnimation();
-    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   }
 }
   

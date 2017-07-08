@@ -717,27 +717,19 @@ message ReplayLastAnimation {
     uint_32 numLoops
 }
 
-// SetIdleAnimation
-//  Set the animation group that will be played (in a continuous loop) if no other
-//  animation has been set using PlayAnimation above.
-//  Use Count to disable the idle animation.
-message SetIdleAnimation {
-    uint_8 robotID,
-    AnimationTrigger animTrigger
-}
-
 // PushIdleAnimation
 //  Switches the idle animation (the one played in a continuous loop while no other
 //  animation is requested via PlayAnimation) to the one specified.
 message PushIdleAnimation {
-    AnimationTrigger animTrigger
+  AnimationTrigger animTrigger,
+  string lockName
 }
 
 // PopIdleAnimation
 //  Stops using the last pushed idle animation and goes back to whatever was
 //  previously the idle.
-message PopIdleAnimation {
-
+message RemoveIdleAnimation {
+  string lockName
 }
 
 // ReadFaceAnimationDir
@@ -769,11 +761,12 @@ message SetLiveIdleAnimationParameters {
 message PushDrivingAnimations {
     AnimationTrigger drivingStartAnim,
     AnimationTrigger drivingLoopAnim,
-    AnimationTrigger drivingEndAnim
+    AnimationTrigger drivingEndAnim,
+    string lockName
 }
 
-message PopDrivingAnimations {
-
+message RemoveDrivingAnimations {
+  string lockName
 }
 
 

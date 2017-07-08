@@ -80,13 +80,16 @@ namespace Onboarding {
     [SerializeField]
     protected OnboardingButtonStates _ButtonStatePlay = OnboardingButtonStates.Active;
 
+
+    private const string kOnboardingIdleAnimLock = "onboarding_base_stage";
+
     public virtual void Start() {
       DAS.Info("DEV onboarding stage.started", name);
 
       // Early idle states need to loop the loading animation.
       if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
         // Really doesn't show a one frame pop to default idle between states
-        RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth);
+        RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth, kOnboardingIdleAnimLock);
         HandleLoopedAnimationComplete();
       }
     }
@@ -101,7 +104,7 @@ namespace Onboarding {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value);
+          RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(_CustomIdle.Value, kOnboardingIdleAnimLock);
         }
       }
 
@@ -125,7 +128,7 @@ namespace Onboarding {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          robot.PopIdleAnimation();
+          robot.RemoveIdleAnimation(kOnboardingIdleAnimLock);
         }
       }
       // Clean up needs manager
@@ -155,7 +158,7 @@ namespace Onboarding {
 
     public virtual void OnDestroy() {
       if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+        RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(kOnboardingIdleAnimLock);
         RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
       }
 

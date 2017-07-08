@@ -232,15 +232,13 @@ public interface IRobot : IDisposable {
 
   void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false);
 
-  void SetIdleAnimation(AnimationTrigger default_anim);
+  void PushIdleAnimation(AnimationTrigger default_anim, string lockName);
 
-  void PushIdleAnimation(AnimationTrigger default_anim);
+  void RemoveIdleAnimation(string lockName);
 
-  void PopIdleAnimation();
+  void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName);
 
-  void PopDrivingAnimations();
-
-  void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim);
+  void RemoveDrivingAnimations(string lockName);
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
 

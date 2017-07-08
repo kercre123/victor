@@ -504,13 +504,13 @@ void BehaviorTrackLaser::TransitionToTrackLaser(Robot& robot)
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
   if(!ShouldStreamline() && !_haveAdjustedAnimations)
   {
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::LaserFace);
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::LaserFace, GetIDStr());
     
-    robot.GetDrivingAnimationHandler().PushDrivingAnimations({
-      AnimationTrigger::LaserDriveStart,
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+     {AnimationTrigger::LaserDriveStart,
       AnimationTrigger::LaserDriveLoop,
-      AnimationTrigger::LaserDriveEnd
-    });
+      AnimationTrigger::LaserDriveEnd},
+       GetIDStr());
     
     _haveAdjustedAnimations = true;
   }
@@ -755,8 +755,8 @@ void BehaviorTrackLaser::Cleanup(Robot& robot)
   // Only pop animations if set within this behavior
   if(_haveAdjustedAnimations)
   {
-    robot.GetAnimationStreamer().PopIdleAnimation();
-    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
     _haveAdjustedAnimations = false;
   }
 }

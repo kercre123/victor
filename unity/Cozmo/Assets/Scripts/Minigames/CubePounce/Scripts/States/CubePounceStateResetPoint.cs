@@ -15,6 +15,8 @@ namespace Cozmo.Challenge.CubePounce {
     private float _CubeCreepTimerStart_s = -1f;
     private bool _LookForCubeInProgress = false;
 
+    private const string kCubePounceResetPoint = "cube_pounce_satte_reset_point";
+
     public CubePounceStateResetPoint(bool overrideReadyAnimComplete = false) {
       _GetReadyAnimCompleted = overrideReadyAnimComplete;
     }
@@ -74,7 +76,8 @@ namespace Cozmo.Challenge.CubePounce {
 
     private void ReactToCubeInRange() {
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetReady, HandleGetInAnimFinish);
-      _CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp);
+      _CurrentRobot.RemoveIdleAnimation(kCubePounceResetPoint);
+      _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp, kCubePounceResetPoint);
 
       _GetReadyAnimInProgress = true;
 
@@ -90,7 +93,8 @@ namespace Cozmo.Challenge.CubePounce {
 
     private void ReactToCubeOutOfRange() {
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetUnready, HandleGetUnreadyDone);
-      _CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
+      _CurrentRobot.RemoveIdleAnimation(kCubePounceResetPoint);
+      _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown, kCubePounceResetPoint);
 
       _GetReadyAnimCompleted = false;
       _GetUnreadyInProgress = true;

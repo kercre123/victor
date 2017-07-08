@@ -277,7 +277,6 @@ namespace Cozmo.Hub {
 
     private void HandleChallengeFinishedLoading(AnimationTrigger getOutAnim) {
       _ChallengeGetOutAnimTrigger = getOutAnim;
-      RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
     }
 
     #endregion

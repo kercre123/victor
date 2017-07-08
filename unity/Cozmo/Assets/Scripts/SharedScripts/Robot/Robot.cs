@@ -605,7 +605,6 @@ public class Robot : IRobot {
     if (disableFreeplay) {
       SetEnableFreeplayActivity(false);
     }
-    SetIdleAnimation(AnimationTrigger.Count);
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
     float[] paramValues = { };
     SetLiveIdleAnimationParameters(paramNames, paramValues, true);
@@ -1378,23 +1377,15 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
   }
 
-  public void SetIdleAnimation(AnimationTrigger default_anim) {
-
-    DAS.Debug("Robot.SetIdleAnimation", "Setting idle animation to " + default_anim);
-
-    RobotEngineManager.Instance.Message.SetIdleAnimation = Singleton<SetIdleAnimation>.Instance.Initialize(ID, default_anim);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void PushIdleAnimation(AnimationTrigger default_anim) {
+  public void PushIdleAnimation(AnimationTrigger default_anim, string lockName) {
     DAS.Debug("Robot.PushIdleAnimation", "Pushing idle animation to " + default_anim);
-    RobotEngineManager.Instance.Message.PushIdleAnimation = Singleton<PushIdleAnimation>.Instance.Initialize(default_anim);
+    RobotEngineManager.Instance.Message.PushIdleAnimation = Singleton<PushIdleAnimation>.Instance.Initialize(default_anim, "unity_" + lockName);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PopIdleAnimation() {
+  public void RemoveIdleAnimation(string lockName) {
     DAS.Debug("Robot.PopIdleAnimation", "Popping idle animation");
-    RobotEngineManager.Instance.Message.PopIdleAnimation = Singleton<PopIdleAnimation>.Instance;
+    RobotEngineManager.Instance.Message.RemoveIdleAnimation = Singleton<RemoveIdleAnimation>.Instance.Initialize("unity_" + lockName);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1406,14 +1397,14 @@ public class Robot : IRobot {
 
   }
 
-  public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim) {
+  public void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName) {
     RobotEngineManager.Instance.Message.PushDrivingAnimations =
-      Singleton<PushDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+      Singleton<PushDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim, lockName);
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PopDrivingAnimations() {
-    RobotEngineManager.Instance.Message.PopDrivingAnimations = Singleton<PopDrivingAnimations>.Instance;
+  public void RemoveDrivingAnimations(string lockName) {
+    RobotEngineManager.Instance.Message.RemoveDrivingAnimations = Singleton<RemoveDrivingAnimations>.Instance.Initialize(lockName);
     RobotEngineManager.Instance.SendMessage();
   }
 

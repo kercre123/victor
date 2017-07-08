@@ -106,7 +106,7 @@ Result BehaviorFistBump::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersFistBumpArray);
 
   // Disable idle animation
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
   
   _fistBumpRequestCnt = 0;
   _startLookingForFaceTime_s = 0.f;
@@ -299,7 +299,7 @@ void BehaviorFistBump::StopInternal(Robot& robot)
   robot.GetMoveComponent().EnableLiftPower(true);
   robot.GetMoveComponent().EnableHeadPower(true);
   
-  robot.GetAnimationStreamer().PopIdleAnimation();
+  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
 
   // Make sure trigger is reset if behavior is interrupted
   ResetTrigger(false);

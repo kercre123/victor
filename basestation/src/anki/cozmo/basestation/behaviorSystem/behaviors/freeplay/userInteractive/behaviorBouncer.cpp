@@ -305,7 +305,7 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
   
   // Disable idle animation
   auto & animationStreamer = robot.GetAnimationStreamer();
-  animationStreamer.PushIdleAnimation(AnimationTrigger::Count);
+  animationStreamer.PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
   
   // Stash robot parameters
   _displayWidth_px = robot.GetDisplayWidthInPixels();
@@ -593,7 +593,7 @@ void BehaviorBouncer::StopInternal(Robot& robot)
  
   // Restore idle animation
   auto & animationStreamer = robot.GetAnimationStreamer();
-  animationStreamer.PopIdleAnimation();
+  animationStreamer.RemoveIdleAnimation(GetIDStr());
 }
   
 } // namespace Cozmo

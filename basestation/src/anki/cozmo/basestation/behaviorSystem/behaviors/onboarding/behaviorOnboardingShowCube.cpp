@@ -103,9 +103,12 @@ bool BehaviorOnboardingShowCube::IsRunnableInternal(const BehaviorPreReqNone& pr
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
 {
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+   {AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
-    AnimationTrigger::OnboardingDriveEnd});
+    AnimationTrigger::OnboardingDriveEnd},
+      GetIDStr());
+  
   SmartDisableReactionsWithLock(GetIDStr(), kOnboardingTriggerAffectedArray);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
@@ -124,7 +127,7 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
-  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
   robot.GetCubeLightComponent().StopLightAnimAndResumePrevious(CubeAnimationTrigger::Onboarding);
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }

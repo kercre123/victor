@@ -14,10 +14,16 @@ namespace SpeedTap {
     private int _kMaxRetries = 5;
     private int _numRetries = 0;
 
+    private const string kSpeedTapGoalDrivingAnimLock = "speed_tap_player_goal";
+
     public override void Enter() {
       base.Enter();
       DAS.Debug("SpeedTapPlayerGoalCozmoSelectCube", "Enter");
       TryDrivingToCube(forceRaiseLift: false);
+    }
+
+    public override void Exit(){
+      _CurrentRobot.RemoveDrivingAnimations (kSpeedTapGoalDrivingAnimLock);
     }
 
     private void TryDrivingToCube(bool forceRaiseLift) {
@@ -25,7 +31,7 @@ namespace SpeedTap {
       _ForceRaiseLift = forceRaiseLift;
       _CurrentRobot.SearchForCube(_BlockID, HandleSearchForCubeEnd);
       _CurrentRobot.PushDrivingAnimations(Anki.Cozmo.AnimationTrigger.SpeedTapDrivingStart,
-        Anki.Cozmo.AnimationTrigger.SpeedTapDrivingLoop, Anki.Cozmo.AnimationTrigger.Count);
+        Anki.Cozmo.AnimationTrigger.SpeedTapDrivingLoop, Anki.Cozmo.AnimationTrigger.Count, kSpeedTapGoalDrivingAnimLock);
     }
 
     private void HandleSearchForCubeEnd(bool success) {
