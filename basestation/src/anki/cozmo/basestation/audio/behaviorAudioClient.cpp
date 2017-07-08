@@ -236,6 +236,9 @@ void BehaviorAudioClient::HandleRobotPublicStateChange(const RobotPublicState& s
   // Update sparked music if spark ID changed
   HandleSparkUpdates(stateEvent);
   
+  // Inform the audio engine of changes in needs levels
+  HandleNeedsUpdates(stateEvent.needsLevels);
+  
   // Handle AI Activity transitions and Guard Dog behavior transitions
   const auto& currActivity = stateEvent.currentActivity;
   if (currActivity != _prevActivity) {
@@ -395,7 +398,32 @@ void BehaviorAudioClient::HandleFeedingUpdates(const BehaviorStageStruct& currPu
   }
 }
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAudioClient::HandleNeedsUpdates(const NeedsLevels& needsLevel)
+{
+  if(!FLT_NEAR(needsLevel.energy, _needsLevel.energy)){
+    _needsLevel.energy = needsLevel.energy;
+    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Energy,
+                                                _needsLevel.energy);
+  }
+  
+  if(!FLT_NEAR(needsLevel.repair, _needsLevel.repair)){
+    _needsLevel.repair = needsLevel.repair;
+    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Repair,
+                                                _needsLevel.repair);
+  }
+  
+  if(!FLT_NEAR(needsLevel.play, _needsLevel.play)){
+    _needsLevel.play = needsLevel.play;
+    _robot.GetRobotAudioClient()->PostParameter(AudioMetaData::GameParameter::ParameterType::Nurture_Play,
+                                                _needsLevel.play);
+  }
+  
+}
 
+  
+  
 } // Audio
 } // Cozmo
 } // Anki

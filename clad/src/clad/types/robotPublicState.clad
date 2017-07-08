@@ -32,6 +32,12 @@ structure BehaviorStageStruct{
   WorkoutStage currentWorkoutStage
 }
 
+structure NeedsLevels{
+  float_32 energy,
+  float_32 repair,
+  float_32 play
+}
+
 // Structure which enumerates all relevant PublicStateBroadcaster information
 // to provide full state updates to interested systems
 no_default_constructor structure RobotPublicState{
@@ -39,6 +45,7 @@ no_default_constructor structure RobotPublicState{
   bool isCubeInLift,
   bool isRequestingGame,
   uint_8 tallestStackHeight,
+  NeedsLevels needsLevels,
   ActivityID currentActivity,
   ReactionTrigger currentReactionTrigger,
   BehaviorStageStruct userFacingBehaviorStageStruct

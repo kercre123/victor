@@ -22,6 +22,7 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/types/behaviorSystem/activityTypes.h"
 #include "clad/types/behaviorSystem/behaviorTypes.h"
+#include "clad/types/robotPublicState.h"
 #include "clad/types/unlockTypes.h"
 
 
@@ -31,9 +32,6 @@ namespace Anki {
 namespace Cozmo {
 class BehaviorManager;
 class Robot;
-struct RobotPublicState;
-struct BehaviorStageStruct;
-
 
 namespace Audio {
 
@@ -100,12 +98,16 @@ private:
   //  proper audio round when transitioning between stages.
   GuardDogStage _prevGuardDogStage = GuardDogStage::Count;
   
+  // Keep track of the last needs levels so we can broadcast when they change
+  NeedsLevels _needsLevel;
+  
   
   void HandleWorldEventUpdates(const RobotPublicState& stateEvent);
   void HandleSparkUpdates(const RobotPublicState& stateEvent);
   void HandleGuardDogUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleDancingUpdates(const BehaviorStageStruct& currPublicStateStruct);
   void HandleFeedingUpdates(const BehaviorStageStruct& currPublicStateStruct);
+  void HandleNeedsUpdates(const NeedsLevels& needsLevel);
 
   
 };

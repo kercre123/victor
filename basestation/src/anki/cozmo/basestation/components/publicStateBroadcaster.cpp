@@ -21,6 +21,8 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorld/stackConfigurationContainer.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 
 
@@ -40,11 +42,13 @@ PublicStateBroadcaster::PublicStateBroadcaster()
   const bool isCubeInLift = false;
   const bool isRequestingGame = false;
   const int  tallestStackHeight = 0;
-
+  const NeedsLevels needsLevels(0,0,0);
+  
   _currentState.reset(new RobotPublicState(UnlockId::Count,
                                            isCubeInLift,
                                            isRequestingGame,
                                            tallestStackHeight,
+                                           needsLevels,
                                            ActivityID::Invalid,
                                            ReactionTrigger::NoneTrigger,
                                            empty));
@@ -107,6 +111,29 @@ void PublicStateBroadcaster::Update(Robot& robot)
                   "Robot is now reacting to trigger %s",
                   EnumToString(_currentState->currentReactionTrigger)
                   );
+  }
+  
+  // check for changes to needs level
+  if((robot.GetContext() != nullptr) &&
+     (robot.GetContext()->GetNeedsManager() != nullptr)){
+    const NeedsState& needsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsState();
+    
+    const float energy = needsState.GetNeedLevel(NeedId::Energy);
+    const float repair = needsState.GetNeedLevel(NeedId::Repair);
+    const float play = needsState.GetNeedLevel(NeedId::Play);
+
+    if(!FLT_NEAR(_currentState->needsLevels.energy, energy)){
+      _currentState->needsLevels.energy = energy;
+      currentStateUpdated = true;
+    }
+    if(!FLT_NEAR(_currentState->needsLevels.repair, repair)){
+      _currentState->needsLevels.repair = repair;
+      currentStateUpdated = true;
+    }
+    if(!FLT_NEAR(_currentState->needsLevels.play, play)){
+      _currentState->needsLevels.play = play;
+      currentStateUpdated = true;
+    }
   }
 
   
