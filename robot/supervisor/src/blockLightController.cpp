@@ -25,8 +25,10 @@ namespace BlockLightController {
   namespace {
 
     // Assumes a block comms resolution of TIME_STEP
-    const u8 MAX_NUM_CUBES = 4; // This whole module needs to be refactored. Hard code this for now
 
+    constexpr auto NUM_CUBE_LEDS = EnumToUnderlyingType(ActiveObjectConstants::NUM_CUBE_LEDS);
+    constexpr auto MAX_NUM_CUBES = EnumToUnderlyingType(ActiveObjectConstants::MAX_NUM_CUBES);
+    
     // Parameters for each LED on each block
     LightState _ledParams[MAX_NUM_CUBES][NUM_CUBE_LEDS];
     // Keep track of where we are in the phase cycle for each LED

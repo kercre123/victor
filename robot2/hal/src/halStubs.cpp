@@ -47,6 +47,12 @@
 namespace Anki {
   namespace Cozmo {
 
+    static constexpr auto MOTOR_LEFT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL);
+    static constexpr auto MOTOR_RIGHT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_RIGHT_WHEEL);
+    static constexpr auto MOTOR_LIFT = EnumToUnderlyingType(MotorID::MOTOR_LIFT);
+    static constexpr auto MOTOR_HEAD = EnumToUnderlyingType(MotorID::MOTOR_HEAD);
+    static constexpr auto MOTOR_COUNT = EnumToUnderlyingType(MotorID::MOTOR_COUNT);
+    
     static_assert(MOTOR_LEFT_WHEEL == RobotMotor_MOTOR_LEFT, "Robot/Spine CLAD Mimatch");
     static_assert(MOTOR_RIGHT_WHEEL == RobotMotor_MOTOR_RIGHT, "Robot/Spine CLAD Mimatch");
     static_assert(MOTOR_LIFT == RobotMotor_MOTOR_LIFT, "Robot/Spine CLAD Mimatch");
@@ -152,9 +158,8 @@ namespace Anki {
       bodyData_ = &dummyBodyData_;
 #endif
 
-      MotorID m;
-      for (m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
-        MotorResetPosition(m);
+      for (auto m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
+        MotorResetPosition((MotorID)m);
       }
       printf("Hal Init Success\n");
 
@@ -164,16 +169,18 @@ namespace Anki {
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
-      SAVE_MOTOR_POWER(motor, power);
-      headData_.motorPower[motor] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power;
+      auto m = EnumToUnderlyingType(motor);
+      assert(m < RobotMotor_MOTOR_COUNT);
+      SAVE_MOTOR_POWER(m, power);
+      headData_.motorPower[m] = HAL_MOTOR_POWER_OFFSET + HAL_MOTOR_POWER_SCALE * power;
     }
 
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
-      internalData_.motorOffset[motor] = bodyData_->motor[motor].position;
+      auto m = EnumToUnderlyingType(motor);
+      assert(m < RobotMotor_MOTOR_COUNT);
+      internalData_.motorOffset[m] = bodyData_->motor[m].position;
     }
 
 
@@ -181,15 +188,16 @@ namespace Anki {
     // Wheels are in mm/s, everything else is in degrees/s.
     f32 HAL::MotorGetSpeed(MotorID motor)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
+      auto m = EnumToUnderlyingType(motor);
+      assert(m < RobotMotor_MOTOR_COUNT);
 
       // Every frame, syscon sends the last detected speed as a two part number:
       // `delta` encoder counts, and `time` span for those counts.
       // syscon only changes the value when counts are detected
       // if no counts for ~25ms, will report 0/0
-      if (bodyData_->motor[motor].time != 0) {
-        float countsPerTick = (float)bodyData_->motor[motor].delta / bodyData_->motor[motor].time;
-        return (countsPerTick / HAL_SEC_PER_TICK) * HAL_MOTOR_POSITION_SCALE[motor];
+      if (bodyData_->motor[m].time != 0) {
+        float countsPerTick = (float)bodyData_->motor[m].delta / bodyData_->motor[m].time;
+        return (countsPerTick / HAL_SEC_PER_TICK) * HAL_MOTOR_POSITION_SCALE[m];
       }
       return 0.0; //if time is 0, it's not moving.
     }
@@ -198,8 +206,9 @@ namespace Anki {
     // Wheels are in mm since reset, everything else is in degrees.
     f32 HAL::MotorGetPosition(MotorID motor)
     {
-      assert(motor < RobotMotor_MOTOR_COUNT);
-      return (bodyData_->motor[motor].position - internalData_.motorOffset[motor]) * HAL_MOTOR_POSITION_SCALE[motor];
+      auto m = EnumToUnderlyingType(motor);
+      assert(m < RobotMotor_MOTOR_COUNT);
+      return (bodyData_->motor[m].position - internalData_.motorOffset[m]) * HAL_MOTOR_POSITION_SCALE[m];
     }
 
     void PrintConsoleOutput(void)
@@ -209,7 +218,7 @@ namespace Anki {
         printf("FC = %d ", bodyData_->framecounter);
         printf("%s: ", DEFNAME(MOTOR_OF_INTEREST));
         printf("raw = %d ", bodyData_->motor[MOTOR_OF_INTEREST].position);
-        printf("pos = %f ", HAL::MotorGetPosition(MOTOR_OF_INTEREST));
+        printf("pos = %f ", HAL::MotorGetPosition(MotorID::MOTOR_OF_INTEREST));
         printf("spd = %f ", internalData_.motorSpeed[MOTOR_OF_INTEREST]);
         printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
         printf("\r");

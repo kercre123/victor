@@ -204,7 +204,7 @@ namespace Anki {
           angleErrorSum_ = 0.f;
 
           power_ = 0;
-          HAL::MotorSetPower(MOTOR_LIFT, power_);
+          HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
           
           potentialBurnoutStartTime_ms_ = 0;
           bracing_ = false;
@@ -223,8 +223,8 @@ namespace Anki {
         currDesiredAngle_ = currentAngle_.ToFloat();
         desiredHeight_ = GetHeightMM();
 
-        HAL::MotorResetPosition(MOTOR_LIFT);
-        prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
+        HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
         isCalibrated_ = true;
       }
 
@@ -234,7 +234,7 @@ namespace Anki {
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         potentialBurnoutStartTime_ms_ = 0;
-        Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
+        Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, true, autoStarted);
         angleErrorSum_ = 0.f;
       }
 
@@ -270,7 +270,7 @@ namespace Anki {
 
             case LCS_LOWER_LIFT:
               power_ = -0.3f;
-              HAL::MotorSetPower(MOTOR_LIFT, power_);
+              HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
               calState_ = LCS_WAIT_FOR_STOP;
               break;
@@ -282,7 +282,7 @@ namespace Anki {
                 if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_STOP_TIME_MS) {
                   // Turn off motor
                   power_ = 0;  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
-                  HAL::MotorSetPower(MOTOR_LIFT, power_);
+                  HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
 
                   // Set timestamp to be used in next state to wait for motor to "relax"
                   lastLiftMovedTime_ms = HAL::GetTimeStamp();
@@ -300,7 +300,7 @@ namespace Anki {
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT_RAD);
                 calState_ = LCS_IDLE;
-                Messages::SendMotorCalibrationMsg(MOTOR_LIFT, false);
+                Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
               }
               break;
           }
@@ -365,20 +365,20 @@ namespace Anki {
       void PoseAndSpeedFilterUpdate()
       {
         // Get encoder speed measurements
-        f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MOTOR_LIFT);
+        f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
 
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
                      (radSpeed_ * SPEED_FILTERING_COEFF));
 
         // Update position
-        currentAngle_ += (HAL::MotorGetPosition(MOTOR_LIFT) - prevHalPos_);
+        currentAngle_ += (HAL::MotorGetPosition(MotorID::MOTOR_LIFT) - prevHalPos_);
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebug( 16, "LiftController", 308, "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n", 6,
-              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MOTOR_LIFT), prevHalPos_, power_);
+              measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MotorID::MOTOR_LIFT), prevHalPos_, power_);
 #endif
-        prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
+        prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
       }
 
       void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
@@ -530,7 +530,7 @@ namespace Anki {
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
           if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
-            Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, false);
+            Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
             Disable(true);
           } else {
             // Burnout protection triggered. Recalibrating.
@@ -572,7 +572,7 @@ namespace Anki {
             enableAtTime_ms_ = currTime + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
           } else if (currTime >= enableAtTime_ms_) {
-            Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, true);
+            Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, true);
             Enable();
           } else {
             return RESULT_OK;
@@ -617,7 +617,7 @@ namespace Anki {
           } else {
             // Make sure motor is unpowered while checking for load
             power_ = 0;
-            HAL::MotorSetPower(MOTOR_LIFT, power_);
+            HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
             return RESULT_OK;
           }
         }
@@ -704,7 +704,7 @@ namespace Anki {
 #endif
 
         power_ = CLIP(power_, -1.0, 1.0);
-        HAL::MotorSetPower(MOTOR_LIFT, power_);
+        HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
 
         return RESULT_OK;
       }

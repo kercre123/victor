@@ -686,11 +686,11 @@ if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
 }                                                                       \
 _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
 
-      GET_COLOR_FROM_JSON(Back, LED_BACKPACK_BACK);
-      GET_COLOR_FROM_JSON(Front, LED_BACKPACK_FRONT);
-      GET_COLOR_FROM_JSON(Middle, LED_BACKPACK_MIDDLE);
-      GET_COLOR_FROM_JSON(Left, LED_BACKPACK_LEFT);
-      GET_COLOR_FROM_JSON(Right, LED_BACKPACK_RIGHT);
+      GET_COLOR_FROM_JSON(Back, (int)LEDId::LED_BACKPACK_BACK);
+      GET_COLOR_FROM_JSON(Front, (int)LEDId::LED_BACKPACK_FRONT);
+      GET_COLOR_FROM_JSON(Middle, (int)LEDId::LED_BACKPACK_MIDDLE);
+      GET_COLOR_FROM_JSON(Left, (int)LEDId::LED_BACKPACK_LEFT);
+      GET_COLOR_FROM_JSON(Right, (int)LEDId::LED_BACKPACK_RIGHT);
       
       GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
       

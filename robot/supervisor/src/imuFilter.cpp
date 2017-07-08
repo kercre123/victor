@@ -101,7 +101,7 @@ namespace Anki {
         u8 putdownCnt_               = 0;
         
 #ifdef COZMO_V2
-        u16 cliffValsWhileNotMoving_[CLIFF_COUNT] = {0};
+        u16 cliffValsWhileNotMoving_[HAL::CLIFF_COUNT] = {0};
 #else
         u16 cliffValWhileNotMoving_ = 0;
 #endif
@@ -279,7 +279,7 @@ namespace Anki {
       void ResetPickupVars() {
         pickedUp_ = 0;
 #ifdef COZMO_V2
-        for (int i=0 ; i < CLIFF_COUNT ; i++) {
+        for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           cliffValsWhileNotMoving_[i] = 0;
         }
 #else
@@ -536,7 +536,7 @@ namespace Anki {
             s16 maxCliffDelta = 0;
             
 #ifdef COZMO_V2
-            for (int i=0 ; i < CLIFF_COUNT ; i++) {
+            for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               if (cliffValsWhileNotMoving_[i] == 0) {
                 cliffValsWhileNotMoving_[i] = ProxSensors::GetRawCliffValue(i);
               } else {
@@ -560,7 +560,7 @@ namespace Anki {
             
           } else {
 #ifdef COZMO_V2
-            for (int i=0 ; i < CLIFF_COUNT ; i++) {
+            for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
               cliffValsWhileNotMoving_[i] = 0;
             }
 #else

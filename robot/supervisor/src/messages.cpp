@@ -37,6 +37,22 @@ namespace Anki {
 
       namespace {
 
+        
+        constexpr auto IS_MOVING = EnumToUnderlyingType(RobotStatusFlag::IS_MOVING);
+        constexpr auto IS_CARRYING_BLOCK = EnumToUnderlyingType(RobotStatusFlag::IS_CARRYING_BLOCK);
+        constexpr auto IS_PICKING_OR_PLACING = EnumToUnderlyingType(RobotStatusFlag::IS_PICKING_OR_PLACING);
+        constexpr auto IS_PICKED_UP = EnumToUnderlyingType(RobotStatusFlag::IS_PICKED_UP);
+        constexpr auto IS_BODY_ACC_MODE = EnumToUnderlyingType(RobotStatusFlag::IS_BODY_ACC_MODE);
+        constexpr auto IS_FALLING = EnumToUnderlyingType(RobotStatusFlag::IS_FALLING);
+        constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
+        constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
+        constexpr auto HEAD_IN_POS = EnumToUnderlyingType(RobotStatusFlag::HEAD_IN_POS);
+        constexpr auto IS_ON_CHARGER = EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER);
+        constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
+        constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
+        constexpr auto ARE_WHEELS_MOVING = EnumToUnderlyingType(RobotStatusFlag::ARE_WHEELS_MOVING);
+        constexpr auto IS_CHARGER_OOS = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGER_OOS);
+        
         u8 pktBuffer_[2048];
 
         // For waiting for a particular message ID
@@ -63,7 +79,7 @@ namespace Anki {
         bool onCharger_;
         bool isCharging_;
         bool chargerOOS_;
-        BodyRadioMode bodyRadioMode_ = BODY_LOW_POWER_OPERATING_MODE;
+        BodyRadioMode bodyRadioMode_ = BodyRadioMode::BODY_LOW_POWER_OPERATING_MODE;
 
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
@@ -79,7 +95,7 @@ namespace Anki {
       {
 #ifndef TARGET_K02
         // In sim we don't expect to get the PowerState message which normally sets this
-        bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
+        bodyRadioMode_ = BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE;
 #endif
         ResetMissedLogCount();
         return RESULT_OK;
@@ -171,7 +187,7 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
-        for (int i=0 ; i < CLIFF_COUNT ; i++) {
+        for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetRawCliffValue(i);
         }
         robotState_.distanceSensor_mm = ProxSensors::GetRawProxValue();
@@ -195,7 +211,7 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
-        robotState_.status |= bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
+        robotState_.status |= bodyRadioMode_ == BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
         robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
 #ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
@@ -272,7 +288,7 @@ namespace Anki {
         // Don't modify localization while running path following test.
         // The point of the test is to see how well it follows a path
         // assuming perfect localization.
-        if (TestModeController::GetMode() == TM_PATH_FOLLOW) {
+        if (TestModeController::GetMode() == TestMode::TM_PATH_FOLLOW) {
           return;
         }
 
@@ -393,7 +409,7 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( 422, "Messages.Process_dockWithObject.Recvd", 630, "action %d, dockMethod %d, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7,
+        AnkiInfo( 1237, "Messages.Process_dockWithObject.Recvd", 652, "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f, manualSpeed %d", 7, 
                  msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
@@ -562,34 +578,34 @@ namespace Anki {
       void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
         switch (msg.controller)
         {
-          case controller_wheel:
+          case ControllerChannel::controller_wheel:
           {
             WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
             break;
           }
-          case controller_head:
+          case ControllerChannel::controller_head:
           {
             HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case controller_lift:
+          case ControllerChannel::controller_lift:
           {
             LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case controller_steering:
+          case ControllerChannel::controller_steering:
           {
             SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
             break;
           }
-          case controller_pointTurn:
+          case ControllerChannel::controller_pointTurn:
           {
             SteeringController::SetPointTurnGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
           default:
           {
-            AnkiWarn( 114, "Messages.Process_setControllerGains.InvalidController", 362, "controller: %d", 1, msg.controller);
+            AnkiWarn( 1236, "Messages.Process_setControllerGains.InvalidController", 651, "controller: %hhu", 1,  msg.controller);
           }
         }
       }
@@ -657,7 +673,7 @@ namespace Anki {
       void Process_enableMotorPower(const RobotInterface::EnableMotorPower& msg)
       {
         switch(msg.motorID) {
-          case MOTOR_HEAD:
+          case MotorID::MOTOR_HEAD:
           {
             if (msg.enable) {
               HeadController::Enable();
@@ -666,7 +682,7 @@ namespace Anki {
             }
             break;
           }
-          case MOTOR_LIFT:
+          case MotorID::MOTOR_LIFT:
           {
             if (msg.enable) {
               LiftController::Enable();
@@ -677,7 +693,7 @@ namespace Anki {
           }
           default:
           {
-            AnkiWarn( 1195, "Messages.enableMotorPower.UnhandledMotorID", 347, "%d", 1, msg.motorID);
+            AnkiWarn( 1195, "Messages.enableMotorPower.UnhandledMotorID", 648, "%hhu", 1, msg.motorID);
             break;
           }
         }
@@ -689,18 +705,18 @@ namespace Anki {
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MOTOR_HEAD, p);
+          HAL::MotorSetPower(MotorID::MOTOR_HEAD, p);
 
           LiftController::Disable();
           p = CLIP(msg.liftPower, -0.5f, 0.5f);
-          HAL::MotorSetPower(MOTOR_LIFT, p);
+          HAL::MotorSetPower(MotorID::MOTOR_LIFT, p);
 
         } else {
 
-          HAL::MotorSetPower(MOTOR_HEAD, 0);
+          HAL::MotorSetPower(MotorID::MOTOR_HEAD, 0);
           HeadController::Enable();
 
-          HAL::MotorSetPower(MOTOR_LIFT, 0);
+          HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0);
           LiftController::Enable();
         }
       }
@@ -842,7 +858,7 @@ namespace Anki {
 
         if (bodyRadioMode_ != msg.operatingMode) {
           bodyRadioMode_ = msg.operatingMode;
-          if (bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ) {
+          if (bodyRadioMode_ == BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE ) {
             LiftController::Enable();
             LiftController::StartCalibrationRoutine();
             HeadController::Enable();
@@ -1117,7 +1133,7 @@ namespace Anki {
 
       int SendText(const char *format, va_list vaList)
       {
-        return SendText(RobotInterface::ANKI_LOG_LEVEL_PRINT, format, vaList);
+        return SendText(RobotInterface::LogLevel::ANKI_LOG_LEVEL_PRINT, format, vaList);
       }
 #endif
 
@@ -1143,7 +1159,7 @@ namespace Anki {
         PrintTrace m;
         if (Messages::missedLogs_ > 0)
         {
-          m.level = ANKI_LOG_LEVEL_EVENT;
+          m.level = LogLevel::ANKI_LOG_LEVEL_EVENT;
           m.name  = 2;
           m.stringId = 1;
           m.value_length = 1;
@@ -1184,7 +1200,7 @@ namespace Anki {
         memcpy(buf, &msgID, 1);
         memcpy(buf + 1, buffer, size);
         
-        fprintf(stderr, "RadioSendMsg: %02x [%d]", msgID, newSize);
+        //fprintf(stderr, "RadioSendMsg: %02x [%d]", msgID, newSize);
         
         return HAL::RadioSendPacket(buf, newSize);
       }

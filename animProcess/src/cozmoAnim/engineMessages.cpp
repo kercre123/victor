@@ -194,7 +194,7 @@ namespace Anki {
       // TODO: RENAME !
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
-        const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
+        const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
         const bool hot = false;
         if (::Anki::Cozmo::HAL::RadioIsConnected())
         {

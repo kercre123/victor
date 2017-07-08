@@ -316,15 +316,31 @@ class HEnumEmitter(BaseEmitter):
         self.emitFooter(node, globals)
         self.emitSuffix(node, globals)
         
-    def emitHeader(self, node, globals):
-        self.output.write(textwrap.dedent('''\
-            // ENUM {enum_name}
-            enum {{
-            ''').format(**globals));
+    #def emitHeader(self, node, globals):
+    #    self.output.write(textwrap.dedent('''\
+    #        // ENUM {enum_name}
+    #        enum {{
+    #        ''').format(**globals));
     
+    #def emitFooter(self, node, globals):
+    #    self.output.write('};\n')
+    #    self.output.write('typedef {enum_storage_type} {enum_name};\n\n'.format(**globals))
+    
+    def emitHeader(self, node, globals):
+        if (node.cpp_class):
+            self.output.write(textwrap.dedent('''\
+                // ENUM {enum_name}
+                enum class {enum_name} : {enum_storage_type} {{
+                ''').format(**globals));
+        else:
+            self.output.write(textwrap.dedent('''\
+                // ENUM {enum_name}
+                enum {enum_name} : {enum_storage_type} {{
+                ''').format(**globals));
+
+
     def emitFooter(self, node, globals):
-        self.output.write('};\n')
-        self.output.write('typedef {enum_storage_type} {enum_name};\n\n'.format(**globals))
+        self.output.write('};\n\n')
     
     def emitMembers(self, node, globals):
         with self.output.indent(1):
@@ -341,6 +357,13 @@ class HEnumEmitter(BaseEmitter):
 
     def emitSuffix(self, node, globals):
         with self.output.reset_indent():
+            self.output.write(textwrap.dedent('''\
+              constexpr {enum_storage_type} EnumToUnderlyingType({enum_name} e)
+              {{
+                return static_cast<{enum_storage_type}>(e);
+              }}
+              ''').format(**globals));
+            
             self.output.write('#ifdef CLAD_DEBUG\n')
         
         self.output.write('const char* {enum_name}ToString({enum_name} m);\n'.format(**globals))

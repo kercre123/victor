@@ -56,7 +56,11 @@ int main(void)
   
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
   
+  // Create and init CozmoAnim
   CozmoAnim cozmoAnim(dataPlatform);
+  
+  Json::Value dummyJson;
+  cozmoAnim.Init(dummyJson);
   
   auto start = std::chrono::steady_clock::now();
   auto timeOffset = start;
@@ -71,7 +75,7 @@ int main(void)
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::chrono::duration<int, std::micro> sleepTime = std::chrono::milliseconds(TIC_TIME_MS) - elapsed;
     std::this_thread::sleep_for(sleepTime);
-    printf("CozmoAnim: currTime: %d us, elapsed: %lld us, Sleep time: %d us\n", static_cast<u32>(0.001 * currTime_ns.count()), elapsed.count(), sleepTime.count());
+    //printf("CozmoAnim: currTime: %d us, elapsed: %lld us, Sleep time: %d us\n", static_cast<u32>(0.001 * currTime_ns.count()), elapsed.count(), sleepTime.count());
 
     start = std::chrono::steady_clock::now();
 

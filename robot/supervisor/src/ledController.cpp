@@ -15,9 +15,9 @@
 
 #include <cassert>
 
-#define GET_RED(color) ((color & LED_ENC_RED) >> LED_ENC_RED_SHIFT)
-#define GET_GRN(color) ((color & LED_ENC_GRN) >> LED_ENC_GRN_SHIFT)
-#define GET_BLU(color) ((color & LED_ENC_BLU) >> LED_ENC_BLU_SHIFT)
+#define GET_RED(color) ((color & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_RED)) >> EnumToUnderlyingType(LEDColorEncodedShifts::LED_ENC_RED_SHIFT))
+#define GET_GRN(color) ((color & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_GRN)) >> EnumToUnderlyingType(LEDColorEncodedShifts::LED_ENC_GRN_SHIFT))
+#define GET_BLU(color) ((color & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_BLU)) >> EnumToUnderlyingType(LEDColorEncodedShifts::LED_ENC_BLU_SHIFT))
 
 
 namespace Anki {
@@ -32,10 +32,10 @@ namespace Cozmo {
     const float offBlu = GET_BLU(offColor);
     const float invAlpha = 1.0f - alpha;
 
-    return ((u16)int(onRed * alpha + offRed * invAlpha)) << LED_ENC_RED_SHIFT |
-           ((u16)int(onGrn * alpha + offGrn * invAlpha)) << LED_ENC_GRN_SHIFT |
-           ((u16)int(onBlu * alpha + offBlu * invAlpha)) << LED_ENC_BLU_SHIFT |
-           (alpha >= 0.5f ? onColor & LED_ENC_IR : offColor & LED_ENC_IR);
+    return ((u16)int(onRed * alpha + offRed * invAlpha)) << EnumToUnderlyingType(LEDColorEncodedShifts::LED_ENC_RED_SHIFT) |
+           ((u16)int(onGrn * alpha + offGrn * invAlpha)) << EnumToUnderlyingType(LEDColorEncodedShifts::LED_ENC_GRN_SHIFT) |
+           ((u16)int(onBlu * alpha + offBlu * invAlpha)) << EnumToUnderlyingType(LEDColorEncodedShifts::LED_ENC_BLU_SHIFT) |
+           (alpha >= 0.5f ? onColor & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_IR) : offColor & EnumToUnderlyingType(LEDColorEncoded::LED_ENC_IR));
   }
 
   bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,

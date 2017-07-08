@@ -48,7 +48,7 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      ImageResolution captureResolution_ = QVGA;
+      ImageResolution captureResolution_ = ImageResolution::QVGA;
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
@@ -221,7 +221,7 @@ namespace Anki {
           PathFollower::Init();
           SteeringController::ExecuteDirectDrive(0,0);
           PickAndPlaceController::Reset();
-          PickAndPlaceController::SetCarryState(CARRY_NONE);
+          PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetCliffDetectThreshold(CLIFF_SENSOR_DROP_LEVEL);
           #ifndef COZMO_V2
@@ -245,8 +245,8 @@ namespace Anki {
           mode_ = INIT_MOTOR_CALIBRATION;
 
 #ifdef SIMULATOR
-          TestModeController::Start(TM_NONE);
-          AnimationController::EnableTracks(ALL_TRACKS);
+          TestModeController::Start(TestMode::TM_NONE);
+          AnimationController::EnableTracks( EnumToUnderlyingType(AnimTrackFlag::ALL_TRACKS));
 #endif
 
           wasConnected_ = false;
@@ -366,6 +366,11 @@ namespace Anki {
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
+          
+          // TODO: Can this just be a log in V2? Why send to engine first?
+          AnkiWarn( 1240, "CozmoBot.MainCycleTimeError", 657, "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us", 4,
+                   mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
+          
           RobotInterface::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;

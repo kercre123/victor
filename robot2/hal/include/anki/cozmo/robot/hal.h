@@ -241,6 +241,8 @@ namespace Anki
         LED_BACKPACK_FRONT = 0, ///< Front / top most backpack LED
         LED_BACKPACK_MIDDLE,    ///< Middle backpack LED
         LED_BACKPACK_BACK,      ///< Back / bottom most backpack LED. Includes IR channel
+        LED_BACKPACK_LEFT,      ///< There is no LEFT light in 2.0 but there are more inline lights. Just here for compatibility. Rename later.
+        LED_BACKPACK_RIGHT,     ///< There is no RIGHT light in 2.0 but there are more inline lights. Just here for compatibility. Rename later.
         LED_HEADLIGHT,          ///< Forward facing IR illuminator
         LED_COUNT
       } LEDId;

@@ -110,7 +110,7 @@ namespace HeadController {
         enable_ = true;
         enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
         power_ = 0;
-        HAL::MotorSetPower(MOTOR_HEAD, power_);
+        HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
       }
     }
 
@@ -127,7 +127,7 @@ namespace HeadController {
         bracing_ = false;
         
         power_ = 0;
-        HAL::MotorSetPower(MOTOR_HEAD, power_);
+        HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
         
         if (autoReEnable) {
           enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
@@ -142,7 +142,7 @@ namespace HeadController {
       potentialBurnoutStartTime_ms_ = 0;
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
-      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
+      Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, true, autoStarted);
     }
 
     bool IsCalibrated()
@@ -163,8 +163,8 @@ namespace HeadController {
     void ResetLowAnglePosition()
     {
       currentAngle_ = MIN_HEAD_ANGLE;
-      HAL::MotorResetPosition(MOTOR_HEAD);
-      prevHalPos_ = HAL::MotorGetPosition(MOTOR_HEAD);
+      HAL::MotorResetPosition(MotorID::MOTOR_HEAD);
+      prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_HEAD);
       isCalibrated_ = true;
     }
 
@@ -189,7 +189,7 @@ namespace HeadController {
 
           case HCS_LOWER_HEAD:
             power_ = -HEAD_CALIB_POWER;
-            HAL::MotorSetPower(MOTOR_HEAD, power_);
+            HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;
             break;
@@ -201,13 +201,13 @@ namespace HeadController {
               if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
                 // Turn off motor
                 power_ = 0.0;
-                HAL::MotorSetPower(MOTOR_HEAD, power_);
+                HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
 
 #ifdef          CALIB_WHILE_APPLYING_POWER
                 AnkiInfo( 282, "HeadController.CalibratedWhileApplyingPower", 305, "", 0);
                 ResetLowAnglePosition();
                 calState_ = HCS_IDLE;
-                Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
+                Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
                 break;
 #else
                 // Set timestamp to be used in next state to wait for motor to "relax"
@@ -227,7 +227,7 @@ namespace HeadController {
               AnkiInfo( 283, "HeadController.Calibrated", 305, "", 0);
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
-              Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
+              Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
             }
             break;
         }
@@ -264,20 +264,20 @@ namespace HeadController {
     void PoseAndSpeedFilterUpdate()
     {
       // Get encoder speed measurements
-      f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MOTOR_HEAD);
+      f32 measuredSpeed = Cozmo::HAL::MotorGetSpeed(MotorID::MOTOR_HEAD);
 
       radSpeed_ = (measuredSpeed *
                    (1.0f - SPEED_FILTERING_COEFF) +
                    (radSpeed_ * SPEED_FILTERING_COEFF));
 
       // Update position
-      currentAngle_ += (HAL::MotorGetPosition(MOTOR_HEAD) - prevHalPos_);
+      currentAngle_ += (HAL::MotorGetPosition(MotorID::MOTOR_HEAD) - prevHalPos_);
 
 #if(DEBUG_HEAD_CONTROLLER)
       AnkiDebug( 7, "HeadController", 92, "HEAD FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f", 6,
             measuredSpeed, radSpeed_, currentAngle_.ToFloat(), HAL::MotorGetPosition(MOTOR_HEAD), prevHalPos_, power_);
 #endif
-      prevHalPos_ = HAL::MotorGetPosition(MOTOR_HEAD);
+      prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_HEAD);
     }
 
     f32 GetAngularVelocity()
@@ -339,7 +339,7 @@ namespace HeadController {
         #if(DEBUG_HEAD_CONTROLLER)
         AnkiDebug( 7, "HeadController", 93, "Already at desired angle %f degrees", 1, RAD_TO_DEG_F32(angle));
         #endif
-        HAL::MotorSetPower(MOTOR_HEAD,0);
+        HAL::MotorSetPower(MotorID::MOTOR_HEAD,0);
         return;
       }
 
@@ -362,7 +362,7 @@ namespace HeadController {
           #if(DEBUG_HEAD_CONTROLLER)
           AnkiDebug( 7, "HeadController", 95, "(fixedDuration): Already at desired position", 0);
           #endif
-          HAL::MotorSetPower(MOTOR_HEAD,0);
+          HAL::MotorSetPower(MotorID::MOTOR_HEAD,0);
           return;
         }
 
@@ -452,7 +452,7 @@ namespace HeadController {
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
         if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
           // Stop messing with the head! Going limp until you do!
-          Messages::SendMotorAutoEnabledMsg(MOTOR_HEAD, false);
+          Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_HEAD, false);
           Disable(true);
         } else {
           // Burnout protection triggered. Recalibrating.
@@ -491,7 +491,7 @@ namespace HeadController {
           enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
           return RESULT_OK;
         } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
-          Messages::SendMotorAutoEnabledMsg(MOTOR_HEAD, true);
+          Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_HEAD, true);
           Enable();
         } else {
           return RESULT_OK;
@@ -565,7 +565,7 @@ namespace HeadController {
         power_ = CLIP(power_, -1.0, 1.0);
 
 
-        HAL::MotorSetPower(MOTOR_HEAD, power_);
+        HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
       } // if not in position
 
       return RESULT_OK;

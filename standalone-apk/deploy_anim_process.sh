@@ -4,6 +4,26 @@
 #
 # Must first build the cozmoAnim binary using configure.py build -p android -2 --features standalone.
 
+SKIP_LIBS=0
+
+# Parse args
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+  -s|--skiplibs)
+  echo "Skipping upload of libraries"
+  SKIP_LIBS=1
+  ;;
+  *)
+  echo "Unknown arg: $key"
+  ;;
+esac
+shift
+done
+
+
 # Go to directory of this script
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
 GIT=`which git`
@@ -56,6 +76,7 @@ fi
 $ADB push $ANIM_EXEC /data/local/tmp
 
 # Upload libs
+if [[ 0 -eq "$SKIP_LIBS" ]]; then
 CTE_PATH=../EXTERNALS/coretech_external
 CTE_OPENCV_PATH=$CTE_PATH/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a
 declare -a LIBS=("../build/android/libs/armeabi-v7a/libc++_shared.so" \
@@ -87,6 +108,7 @@ do
   echo "Uploading $lib"
   $ADB push $lib /data/local/tmp
 done
+fi  # if not SKIP_LIBS
 
 # Shell into android device and execute robot process
 $ADB shell -x "
