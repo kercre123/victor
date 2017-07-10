@@ -23,8 +23,8 @@ MonoBehaviour:
   _NeutralTextColor: {r: 1, g: 1, b: 1, a: 1}
   _SetupTextColor: {r: 0.027450982, g: 0.6666667, b: 0.82745105, a: 1}
   _MinigameTextColor: {r: 1, g: 1, b: 1, a: 1}
-  _GameSetupColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
-  _GameBackgroundColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
+  _GameSetupColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 0}
+  _GameBackgroundColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 0}
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}
   _FreeplayBehaviorDefaultColor: {r: 0.9264706, g: 0.9264706, b: 0.9264706, a: 1}
   _FreeplayBehaviorRewardColor: {r: 0.38039216, g: 0.6862745, b: 0.019607844, a: 1}
