@@ -131,7 +131,7 @@ namespace Cozmo {
       _ItemIdToCount[itemId] = oldValue - count;
 
       if (ItemRemoved != null) {
-        ItemRemoved(itemId, count, _ItemIdToCount[itemId]);
+        ItemRemoved(itemId, -count, _ItemIdToCount[itemId]);
       }
       int delta = -count;
       DAS.Event("meta.inventory.change", itemId, DASUtil.FormatExtraData(delta.ToString()));

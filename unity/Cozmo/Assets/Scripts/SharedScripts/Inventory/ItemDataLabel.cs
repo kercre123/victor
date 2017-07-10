@@ -4,14 +4,29 @@ using System.Collections;
 namespace Cozmo {
   namespace UI {
     public class ItemDataLabel : MonoBehaviour {
+      [SerializeField, Cozmo.ItemId]
+      private string _ItemId;
+
       [SerializeField]
       private CozmoText _CountLabel;
 
       [SerializeField]
       private UnityEngine.UI.Image _ItemIcon;
 
-      [SerializeField, Cozmo.ItemId]
-      private string _ItemId;
+      [SerializeField]
+      private GameObject _ItemIconAnimatorPrefab;
+
+      [SerializeField]
+      private Transform _ItemIconAnimatorContainer;
+
+      [SerializeField]
+      private float _ItemIconAnimatorLocalScale = 1f;
+
+      [SerializeField]
+      private string _ItemIconBurstAnimStateName;
+
+      private int _ItemIconBurstAnimHash;
+      private Animator _ItemIconAnimatorInstance;
 
       private void Start() {
         Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
@@ -19,6 +34,7 @@ namespace Cozmo {
         playerInventory.ItemRemoved += HandleItemValueChanged;
         playerInventory.ItemCountSet += HandleItemValueChanged;
         playerInventory.ItemCountUpdated += HandleItemValueChanged;
+
         SetCountText(playerInventory.GetItemAmount(_ItemId));
 
         if (_ItemIcon != null) {
@@ -29,6 +45,29 @@ namespace Cozmo {
           else {
             _ItemIcon.enabled = false;
           }
+        }
+
+        if (_ItemIconAnimatorPrefab != null
+            && _ItemIconAnimatorContainer != null
+            && !string.IsNullOrEmpty(_ItemIconBurstAnimStateName)) {
+          GameObject newIconAnimator = UIManager.CreateUIElement(_ItemIconAnimatorPrefab, _ItemIconAnimatorContainer);
+          _ItemIconAnimatorInstance = newIconAnimator.GetComponent<Animator>();
+          _ItemIconBurstAnimHash = Animator.StringToHash(_ItemIconBurstAnimStateName);
+          if (_ItemIconAnimatorInstance != null) {
+            _ItemIconAnimatorInstance.transform.localScale = Vector3.one * _ItemIconAnimatorLocalScale;
+          }
+          else {
+            DAS.Error("ItemDataLabel.Start.AnimatorNotFound",
+                      "_ItemIconAnimatorPrefab needs to have an Animator component!",
+                      new System.Collections.Generic.Dictionary<string, string>() { { "gameObject", gameObject.name } });
+          }
+        }
+        else if (!(_ItemIconAnimatorPrefab == null
+                   && _ItemIconAnimatorContainer == null
+                   && string.IsNullOrEmpty(_ItemIconBurstAnimStateName))) {
+          DAS.Error("ItemDataLabel.Start.AnimatorCreatePartNull",
+                    "Animator prefab, Transform container, and Anim State name need to be assigned for Animation!",
+                    new System.Collections.Generic.Dictionary<string, string>() { { "gameObject", gameObject.name } });
         }
       }
 
@@ -42,6 +81,9 @@ namespace Cozmo {
 
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {
         if (itemId == _ItemId) {
+          if (delta > 0) {
+            _ItemIconAnimatorInstance.Play(_ItemIconBurstAnimHash);
+          }
           SetCountText(newCount);
         }
       }
@@ -52,15 +94,6 @@ namespace Cozmo {
         // Force the rect transform to update for use with ContentSizeFitters
         _CountLabel.gameObject.SetActive(false);
         _CountLabel.gameObject.SetActive(true);
-      }
-
-      private string GetItemNamePlural() {
-        ItemData itemData = ItemDataConfig.GetData(_ItemId);
-        string itemName = "(null)";
-        if (itemData != null) {
-          itemName = itemData.GetPluralName();
-        }
-        return itemName;
       }
     }
   }

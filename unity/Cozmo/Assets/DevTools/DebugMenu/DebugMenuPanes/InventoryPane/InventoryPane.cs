@@ -4,13 +4,14 @@ using DataPersistence;
 
 public class InventoryPane : MonoBehaviour {
 
+  private static GameObject _sTrayInstance;
+
   [SerializeField]
   UnityEngine.UI.Button _QuickAddTreatButton;
 
   [SerializeField]
   UnityEngine.UI.Button _QuickRemoveTreatButton;
 
-  // TODO: Validate id
   [SerializeField]
   UnityEngine.UI.Dropdown _ItemIdDropdown;
 
@@ -32,11 +33,18 @@ public class InventoryPane : MonoBehaviour {
   [SerializeField]
   UnityEngine.UI.Button _SetItemAmountButton;
 
+  [SerializeField]
+  private UnityEngine.UI.Button _CreateInventoryTrayButton;
+
+  [SerializeField]
+  private UnityEngine.UI.Button _RemoveInventoryTrayButton;
+
+  [SerializeField]
+  private GameObject _InventoryTrayPrefab;
+
   private Cozmo.Inventory _PlayerInventory;
 
-  // TODO: Allow add / remove any item
-  // TODO: Add shortcut buttons for common items (treats, experience)
-  void Start() {
+  private void Start() {
     _PlayerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
     _QuickAddTreatButton.onClick.AddListener(HandleQuickAddTreatsClicked);
@@ -57,6 +65,19 @@ public class InventoryPane : MonoBehaviour {
     _NumToSetInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
     _NumToSetInputField.text = defaultValue;
     _SetItemAmountButton.onClick.AddListener(HandleSetItemAmountClicked);
+
+    _CreateInventoryTrayButton.onClick.AddListener(HandleCreateInventoryTrayButtonClicked);
+    _RemoveInventoryTrayButton.onClick.AddListener(HandleRemoveInventoryTrayButtonClicked);
+  }
+
+  private void OnDestroy() {
+    _QuickAddTreatButton.onClick.RemoveListener(HandleQuickAddTreatsClicked);
+    _QuickRemoveTreatButton.onClick.RemoveListener(HandleQuickRemoveTreatsClicked);
+    _AddItemButton.onClick.RemoveListener(HandleAddItemClicked);
+    _RemoveItemButton.onClick.RemoveListener(HandleRemoveItemClicked);
+    _SetItemAmountButton.onClick.RemoveListener(HandleSetItemAmountClicked);
+    _CreateInventoryTrayButton.onClick.RemoveListener(HandleCreateInventoryTrayButtonClicked);
+    _RemoveInventoryTrayButton.onClick.RemoveListener(HandleRemoveInventoryTrayButtonClicked);
   }
 
   private void HandleQuickAddTreatsClicked() {
@@ -111,5 +132,27 @@ public class InventoryPane : MonoBehaviour {
       inputField.text = "0";
     }
     return validInt;
+  }
+
+  private void HandleCreateInventoryTrayButtonClicked() {
+    if (_sTrayInstance == null) {
+      _sTrayInstance = UIManager.CreateUIElement(_InventoryTrayPrefab, FindDebugCanvasParent(transform));
+    }
+  }
+
+  private Transform FindDebugCanvasParent(Transform target) {
+    if (target == null) {
+      return null;
+    }
+    if (target.name == "DebugMenuCanvas") {
+      return target;
+    }
+    return FindDebugCanvasParent(target.parent);
+  }
+
+  private void HandleRemoveInventoryTrayButtonClicked() {
+    if (_sTrayInstance != null) {
+      Destroy(_sTrayInstance);
+    }
   }
 }
