@@ -939,7 +939,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1009,19 +1009,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114200311071808678}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 0b04a22aa44b04b8f9245ff53062a837, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: ad0c46e4618aa43ba895aed8b757e768, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114531558936236212}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114217744331390392}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -1038,7 +1037,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1138,19 +1137,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114901933081753634}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 942b55f1352c04f71ba096f2c3c58295, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 03a7f97be37e64d34b32b5671289ec74, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 114646012780594192}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
     disabledSprite: {fileID: 21300000, guid: 15c1ead4da8f242a486c1f0ff3ced551, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 114225830320705664}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -1481,19 +1479,18 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114719355150663490}
-    ignoreSprite: 1
-    pressedSprite: {fileID: 0}
+    pressedSprite: {fileID: 21300000, guid: 9f3c3dba3515d4350aa4db11ed5739e9, type: 3}
     pressedColor: {r: 0.53676474, g: 0.53676474, b: 0.53676474, a: 1}
-    disabledSprite: {fileID: 0}
+    disabledSprite: {fileID: 21300000, guid: 9f3c3dba3515d4350aa4db11ed5739e9, type: 3}
     disabledColor: {r: 0.1397059, g: 0.1397059, b: 0.1397059, a: 1}
   - targetImage: {fileID: 114282850729874152}
-    ignoreSprite: 1
-    pressedSprite: {fileID: 0}
+    pressedSprite: {fileID: 21300000, guid: cf6a33e2339794279b2f0e6783f3c429, type: 3}
     pressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    disabledSprite: {fileID: 0}
+    disabledSprite: {fileID: 21300000, guid: cf6a33e2339794279b2f0e6783f3c429, type: 3}
     disabledColor: {r: 0.1397059, g: 0.1397059, b: 0.1397059, a: 1}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui

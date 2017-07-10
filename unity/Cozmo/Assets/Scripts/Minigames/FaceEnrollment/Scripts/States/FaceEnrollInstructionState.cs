@@ -109,7 +109,6 @@ namespace FaceEnrollment {
 
     private void HandleEnrolledFace(FaceEnrollmentCompleted message) {
       _EnrollingFace = false;
-
       if (message.result == Anki.Cozmo.FaceEnrollmentResult.Success) {
         HandleSuccessfulEnrollment(message);
       }
@@ -130,7 +129,8 @@ namespace FaceEnrollment {
         // multiple faces error is a modal instead of a pop up alert.
         DestroyInstructionsModal();
         _FaceEnrollmentGame.SharedMinigameView.HideTitleWidget();
-        _FaceEnrollmentGame.SharedMinigameView.ShowFullScreenGameStateSlide(_FaceEnrollmentGame.FaceEnrollmentMultipleFacesErrorSlidePrefab, "multiple_faces_error");
+        _FaceEnrollmentGame.SharedMinigameView.ShowFullScreenGameStateSlide(
+          _FaceEnrollmentGame.FaceEnrollmentMultipleFacesErrorSlidePrefab, "multiple_faces_error");
         _FaceEnrollmentGame.ShowMultipleFacesErrorShelf(_NameForFace, CreateInstructionsModal);
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.AudioMetaData.GameEvent.Ui.Cozmo_Error);
       }

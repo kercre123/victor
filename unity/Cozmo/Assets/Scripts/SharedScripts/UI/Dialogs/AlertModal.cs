@@ -100,7 +100,7 @@ namespace Cozmo {
         }
         if (_AlertMessageText != null && !string.IsNullOrEmpty(descLocKey)) {
           _DescriptionKey = descLocKey;
-          _AlertMessageText.text = Localization.Get(_DescriptionKey);
+          _AlertMessageText.key = _DescriptionKey;
           if (descLocArgs != null) {
             _AlertMessageText.FormattingArgs = descLocArgs;
           }

@@ -132,6 +132,7 @@ public class InitialCubesState : State {
 
     // Possible to play reaction on cubes 1 and 2, but we require 3
     if (_Game.CubeIdsForGame.Count >= _CubesRequired) {
+      _Game.SharedMinigameView.SetContinueButtonSupplementText(null, Cozmo.UI.UIColorPalette.NeutralTextColor);
       _Game.SharedMinigameView.EnableContinueButton(true);
     }
   }

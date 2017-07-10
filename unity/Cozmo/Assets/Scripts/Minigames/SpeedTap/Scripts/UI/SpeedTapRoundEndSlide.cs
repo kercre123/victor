@@ -8,13 +8,13 @@ namespace SpeedTap {
   public class SpeedTapRoundEndSlide : MonoBehaviour {
 
     [SerializeField]
-    private Image _PortraitImage;
+    private CozmoImage _PortraitImage;
 
     [SerializeField]
-    private AnkiTextLegacy _WinnerNameTextLabel;
+    private CozmoText _WinnerNameTextLabel;
 
     [SerializeField]
-    private AnkiTextLegacy _CurrentRoundTextLabel;
+    private CozmoText _CurrentRoundTextLabel;
 
     [SerializeField]
     private SegmentedBar _RoundCountBar;

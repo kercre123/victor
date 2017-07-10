@@ -3674,7 +3674,7 @@
                             "SkinButtonImageArray": true,
                             "ButtonImageArray": [
                                 {
-                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_backIcon_on.png",
+                                    "PressedSpriteResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_backIcon_down.png",
                                     "PressedSpriteColor": {
                                         "r": 1.0,
                                         "g": 1.0,
@@ -4148,7 +4148,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
@@ -15502,7 +15502,7 @@
                                 }
                             }
                         },
-						{
+                        {
                             "Id": "Empty_Slot",
                             "Type": 1,
                             "SkinImageColor": true,
@@ -15802,7 +15802,7 @@
                                     "m_PressedTrigger": "Pressed",
                                     "m_DisabledTrigger": "Disabled"
                                 }
-                            }                        
+                            }
                         },
                         {
                             "Id": "CozmoButton_Arrow_Previous",

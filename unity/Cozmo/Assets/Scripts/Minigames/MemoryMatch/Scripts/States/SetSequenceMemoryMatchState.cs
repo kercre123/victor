@@ -36,7 +36,7 @@ namespace MemoryMatch {
       _InCountdown = true;
       // Start Sequence after audio completes
       GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Mm_Pattern_Start);
-      if (SequenceGrown) {
+      if (SequenceGrown && sequenceLength > _GameInstance.MinSequenceLength) {
         _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelNextRound), null, 0.0f, false);
       }
       if (_CountdownCoroutine == null) {

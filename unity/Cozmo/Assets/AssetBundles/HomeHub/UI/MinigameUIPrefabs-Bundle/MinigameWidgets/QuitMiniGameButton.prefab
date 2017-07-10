@@ -151,8 +151,8 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -203,25 +203,25 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
-  _LinkedComponentId: CozmoButton_Back
+  _LinkedComponentId: CozmoButton_Close
   _OverrideSkinTransition: 0
   _Interactable: 1
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextPressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+  TextDisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 114854158381169900}
-    pressedSprite: {fileID: 21300000, guid: f96b4b4d3bc4d4d3db6d2d86a0bc794c, type: 3}
+    pressedSprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: f96b4b4d3bc4d4d3db6d2d86a0bc794c, type: 3}
-    disabledColor: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 0.7058824}
+    disabledSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
+    disabledColor: {r: 0.86764705, g: 0.86764705, b: 0.86764705, a: 1}
   - targetImage: {fileID: 114555615538211984}
-    pressedSprite: {fileID: 0}
+    pressedSprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 0}
-    disabledSprite: {fileID: 0}
+    disabledSprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
@@ -249,7 +249,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 861c1a327a4af455bb2989d5764ec941, type: 3}
+  m_Sprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -257,7 +257,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: CozmoButton_Back_Background
+  _LinkedComponentId: CozmoButton_Close_Background
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!222 &222148894779299938
