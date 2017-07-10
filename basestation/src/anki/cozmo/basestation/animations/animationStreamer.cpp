@@ -352,7 +352,7 @@ namespace Cozmo {
   Result AnimationStreamer::RemoveIdleAnimation(const std::string& lockName)
   {
     if(_idleAnimationNameStack.size() == 1) {
-      PRINT_NAMED_ERROR("AnimationStreamer.RemoveIdleAnimation.WillNotPopLast",
+      PRINT_NAMED_WARNING("AnimationStreamer.RemoveIdleAnimation.WillNotPopLast",
                         "Refusing to pop default idle animation '%s' for lockName %s",
                          AnimationTriggerToString(_idleAnimationNameStack.back().first),
                          lockName.c_str());
