@@ -20,7 +20,7 @@
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 //#include "anki/cozmo/basestation/cozmoContext.h"
 //#include "anki/cozmo/basestation/faceAnimationManager.h"
-//#include "cozmoAnim/proceduralFace.h"
+#include "cozmoAnim/proceduralFace.h"
 #include "cozmo_anim_generated.h"
 
 #include "util/console/consoleInterface.h"
@@ -146,7 +146,7 @@ void RobotDataLoader::LoadAnimationsInternal()
 
   // Disable super-verbose warnings about clipping face parameters in json files
   // To help find bad/deprecated animations, try removing this.
-//  ProceduralFace::EnableClippingWarning(false);
+  ProceduralFace::EnableClippingWarning(false);
   
   using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
   MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadAnimationFile, this, std::placeholders::_1);
@@ -171,7 +171,7 @@ void RobotDataLoader::LoadAnimationsInternal()
   _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
   myWorker.Process();
 
-//  ProceduralFace::EnableClippingWarning(true);
+  ProceduralFace::EnableClippingWarning(true);
 
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;

@@ -18,7 +18,7 @@
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
 #include "anki/common/basestation/colorRGBA.h"
-//#include "cozmoAnim/proceduralFace.h"
+#include "cozmoAnim/proceduralFace.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 //#include "clad/audio/audioEventTypes.h"
@@ -353,7 +353,7 @@ namespace Cozmo {
   {
   public:
     ProceduralFaceKeyFrame() { }
-//    ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0);
+    ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0);
 
     Result DefineFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug);
     
@@ -363,11 +363,11 @@ namespace Cozmo {
     
     // Returns message for the face interpolated between the stored face in this
     // keyframe and the one in the next keyframe.
-    //RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
+    RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
     
     // Returns the interpolated face between the current keyframe and the next.
     // If the nextFrame is nullptr, then this frame's procedural face are returned.
-//    ProceduralFace GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
+    ProceduralFace GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
     
     static const std::string& GetClassName() {
       static const std::string ClassName("ProceduralFaceKeyFrame");
@@ -376,7 +376,7 @@ namespace Cozmo {
     
     virtual bool IsDone() override;
     
-//    const ProceduralFace& GetFace() const { return _procFace; }
+    const ProceduralFace& GetFace() const { return _procFace; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
 
@@ -385,26 +385,26 @@ namespace Cozmo {
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug = "");
     
   private:
-//    ProceduralFace  _procFace;
+    ProceduralFace  _procFace;
     bool            _isDone = false;
   
     //AnimKeyFrame::FaceImage _faceImageMsg;
     
     // This is what actually populates the message to stream, and is used
     // by GetStreamMessage() and GetInterpolatedStreamMessage().
-    //RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
+    RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
     
     void Reset();
     
   }; // class ProceduralFaceKeyFrame
   
-//  inline ProceduralFaceKeyFrame::ProceduralFaceKeyFrame(const ProceduralFace& face,
-//                                                        TimeStamp_t triggerTime)
-//  : _procFace(face)
-//  {
-//    SetTriggerTime(triggerTime);
-//    Reset();
-//  }
+  inline ProceduralFaceKeyFrame::ProceduralFaceKeyFrame(const ProceduralFace& face,
+                                                        TimeStamp_t triggerTime)
+  : _procFace(face)
+  {
+    SetTriggerTime(triggerTime);
+    Reset();
+  }
 
   
   // An EventKeyFrame simply returns an AnimEvent message from the robot

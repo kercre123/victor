@@ -406,14 +406,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
     Result ProceduralFaceKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe, const std::string& animNameDebug)
     {
-      //_procFace.SetFromFlatBuf(procFaceKeyframe);
+      _procFace.SetFromFlatBuf(procFaceKeyframe);
       Reset();
       return RESULT_OK;
     }
 
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-//      _procFace.SetFromJson(jsonRoot);
+      _procFace.SetFromJson(jsonRoot);
       Reset();
       return RESULT_OK;
     }
@@ -433,19 +433,19 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return retVal;
     }
 
-//    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
-//    {
-//      // The interpolation fraction is how far along in time we are from this frame's
-//      // trigger time (which currentTime was initialized to) and the next frame's
-//      // trigger time.
-//      const f32 fraction = std::min(1.f, static_cast<f32>(currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
-//      
-//      ProceduralFace interpFace;
-//      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
-//      
-//      return interpFace;
-//    }
-//    
+    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
+    {
+      // The interpolation fraction is how far along in time we are from this frame's
+      // trigger time (which currentTime was initialized to) and the next frame's
+      // trigger time.
+      const f32 fraction = std::min(1.f, static_cast<f32>(currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
+      
+      ProceduralFace interpFace;
+      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      
+      return interpFace;
+    }
+    
 #pragma mark -
 #pragma mark RobotAudioKeyFrame
     

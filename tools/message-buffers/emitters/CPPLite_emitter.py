@@ -362,25 +362,16 @@ class HEnumEmitter(BaseEmitter):
               {{
                 return static_cast<{enum_storage_type}>(e);
               }}
+              
               ''').format(**globals));
-            
-            self.output.write('#ifdef CLAD_DEBUG\n')
         
-        self.output.write('const char* {enum_name}ToString({enum_name} m);\n'.format(**globals))
-        
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
-        
-        self.output.write('\n')
+        self.output.write('const char* EnumToString({enum_name} m);\n'.format(**globals))
 
 class CPPEnumEmitter(HEnumEmitter):
     
     def emitHeader(self, node, globals):
-        with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
-        
         self.output.write(textwrap.dedent('''\
-            const char* {enum_name}ToString({enum_name} m)
+            const char* EnumToString({enum_name} m)
             {{
             \tswitch(m) {{
             ''').format(**globals))
@@ -391,21 +382,17 @@ class CPPEnumEmitter(HEnumEmitter):
             \t\t\treturn 0;
             \t}
             }
+            
             '''))
-        
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
-        
-        self.output.write('\n')
     
     def emitMembers(self, node, globals):
         with self.output.indent(2):
             for member in node.members():
                 if not member.is_duplicate:
                     self.output.write(textwrap.dedent('''\
-                        case {member_name}:
+                        case {enum_name}::{member_name}:
                         \treturn "{member_name}";
-                        ''').format(member_name=member.name))
+                        ''').format(member_name=member.name, **globals))
     
     def emitSuffix(self, node, globals):
         pass
