@@ -199,6 +199,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         robot.SetVisionMode(Anki.Cozmo.VisionMode.EstimatingFacialExpression, false);
       }
 
+      InProgressScratchBlockPool.ReleaseAllInUse();
       StopVerticalHatBlockListeners();
 
       if (_WebViewObject != null) {
@@ -224,8 +225,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     public void EvaluateJS(string text) {
-      _WebViewObjectComponent.EvaluateJS(text);
-      if (_GameToGameConn.IsEnabled) {
+      if (_WebViewObjectComponent != null) {
+        _WebViewObjectComponent.EvaluateJS(text);
+      }
+      if ((_GameToGameConn != null) && _GameToGameConn.IsEnabled) {
         const string messageType = "EvaluateJS";
 
         int maxPayloadSize = 2024 - messageType.Length; // 2048 is an engine-side limit for clad messages, reserve an extra 24 for rest of the tags and members
@@ -735,6 +738,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           catch (Exception exceptionUnescape) {
             if (exceptionUnescape is JsonReaderException || exceptionUnescape is JsonSerializationException) {
               DAS.Error("CodeLabGame.WebViewCallbackUnescape", "JSON exception with text: " + logJSONStringFromJS);
+              return;
             }
             else {
               throw;
