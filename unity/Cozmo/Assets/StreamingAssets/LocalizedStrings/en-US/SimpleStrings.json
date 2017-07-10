@@ -25,7 +25,7 @@
     "translation": "Player"
   },
   "button.quit": {
-    "translation": "Quit"
+    "translation": "QUIT"
   },
   "button.cancel": {
     "translation": "CANCEL"
@@ -46,16 +46,16 @@
     "translation": "CONTINUE"
   },
   "button.okay": {
-    "translation": "Okay"
+    "translation": "OKAY"
   },
   "button.again": {
     "translation": "PLAY AGAIN"
   },
   "button.refresh": {
-    "translation": "Refresh"
+    "translation": "REFRESH"
   },
   "button.close": {
-    "translation": "Close"
+    "translation": "CLOSE"
   },
   "button.done": {
     "translation": "DONE"
@@ -64,7 +64,7 @@
     "translation": "PLAY"
   },
   "button.leave": {
-    "translation": "Leave"
+    "translation": "LEAVE"
   },
   "button.back": {
     "translation": "BACK"
@@ -73,7 +73,7 @@
     "translation": "NEXT"
   },
   "button.staySparked": {
-    "translation": "Stay Sparked"
+    "translation": "STAY SPARKED"
   },
   "button.soundsGood": {
     "translation": "SOUNDS GOOD"
@@ -109,13 +109,13 @@
     "translation": "Sound Check"
   },
   "button.GetACozmo": {
-    "translation": "Get A Cozmo"
+    "translation": "GET A COZMO"
   },
   "button.start": {
     "translation": "START"
   },
   "button.begin": {
-    "translation": "Let's Begin"
+    "translation": "LET'S BEGIN"
   },
   "soundcheck.description": {
     "translation": "Please make sure your device's sound is turned on"
@@ -124,10 +124,10 @@
     "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
   },
   "button.replay": {
-    "translation": "Replay"
+    "translation": "REPLAY"
   },
   "button.skip": {
-    "translation": "Skip"
+    "translation": "SKIP"
   },
   "soundcheck.description.confirm": {
     "translation": "Did you hear the sound?"

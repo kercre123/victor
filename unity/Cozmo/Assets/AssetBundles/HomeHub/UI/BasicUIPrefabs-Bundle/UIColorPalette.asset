@@ -26,8 +26,8 @@ MonoBehaviour:
   _GameSetupColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
   _GameBackgroundColor: {r: 0.36862746, g: 0.36862746, b: 0.36862746, a: 1}
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}
-  _FreeplayBehaviorDefaultColor: {r: 0, g: 0.609, b: 1, a: 1}
+  _FreeplayBehaviorDefaultColor: {r: 0.9264706, g: 0.9264706, b: 0.9264706, a: 1}
   _FreeplayBehaviorRewardColor: {r: 0.38039216, g: 0.6862745, b: 0.019607844, a: 1}
-  _DefaultBannerColor: {r: 0.11764707, g: 0.6666667, b: 0.8196079, a: 1}
+  _DefaultBannerColor: {r: 0.8897059, g: 0.8897059, b: 0.8897059, a: 1}
   _CorrectBannerColor: {r: 0.41568628, g: 0.7607843, b: 0, a: 1}
   _WrongBannerColor: {r: 0.9843137, g: 0.39215687, b: 0.15686275, a: 1}

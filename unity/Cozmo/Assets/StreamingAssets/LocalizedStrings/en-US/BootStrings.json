@@ -31,7 +31,7 @@
     "translation": "The Cozmo App needs to access game files on your device in order to run. Use the link below to visit the Cozmo App Settings, and tap <b>Permissions > Storage</b> to enable this."
   },
   "boot.continue": {
-    "translation": "Continue"
+    "translation": "CONTINUE"
   },
   "boot.settings": {
     "translation": "Settings"

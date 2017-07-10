@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 894fdd7fd34ee4bd1ace71aa14b8e4e5
-timeCreated: 1495667789
+guid: 0f8265458af474d30a5591f47c5c3228
+timeCreated: 1499442326
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -39,7 +39,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteBorder: {x: 278, y: 278, z: 278, w: 278}
   spritePixelsToUnits: 50
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -62,7 +62,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: common_icon_spritesHDAtlas
+  spritePackingTag: nurture_ui_spritesHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

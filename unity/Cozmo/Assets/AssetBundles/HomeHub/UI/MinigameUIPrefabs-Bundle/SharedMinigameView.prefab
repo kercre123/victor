@@ -561,7 +561,6 @@ MonoBehaviour:
     type: 2}
   _ShowCozmoVideoPrefab: {fileID: 11464060, guid: 40ed55f641e834c7ea15be34f60efeff,
     type: 2}
-  scoreBoardType: 0
 --- !u!222 &22229442
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -758,7 +757,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -503.8, y: 0}
+  m_AnchoredPosition: {x: -503.80078, y: 0}
   m_SizeDelta: {x: 739, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22444798

@@ -61,7 +61,7 @@
     "translation": "Cozmo has learned to recognize your face and may say your name when he sees you. Use Meet Cozmo again to introduce him to more friends."
   },
   "faceEnrollment.button.addNewPerson": {
-    "translation": "Add New Person"
+    "translation": "ADD NEW PERSON"
   },
   "faceEnrollment.button.scanAgain": {
     "translation": "Scan {0} Again"

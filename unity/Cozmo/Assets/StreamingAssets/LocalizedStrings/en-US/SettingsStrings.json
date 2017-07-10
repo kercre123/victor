@@ -184,10 +184,10 @@
     "translation": "Volume & General"
   },
   "settings.volumePanel.robotToggle.low": {
-    "translation": "Low"
+    "translation": "LOW"
   },
   "settings.volumePanel.robotToggle.high": {
-    "translation": "High"
+    "translation": "HIGH"
   },
   "settings.volumePanel.robotToggle.medium": {
     "translation": "MED"
