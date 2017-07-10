@@ -379,10 +379,10 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 114009974650160324}
-    characterCount: 12
+    characterCount: 4
     spriteCount: 0
     spaceCount: 0
-    wordCount: 2
+    wordCount: 1
     linkCount: 0
     lineCount: 1
     pageCount: 1
@@ -549,7 +549,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -649,7 +649,7 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 45
   m_fontSizeMax: 70
-  m_fontStyle: 0
+  m_fontStyle: 16
   m_textAlignment: 514
   m_isAlignmentEnumConverted: 1
   m_characterSpacing: 0
@@ -715,7 +715,7 @@ MonoBehaviour:
   _OverrideOutlineColor: 0
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
-  _OverrideSkinFontStyle: 0
+  _OverrideSkinFontStyle: 1
   _OverrideSkinTextAlignment: 0
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0

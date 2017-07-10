@@ -74,8 +74,7 @@ namespace FaceEnrollment {
                                                                         LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton,
                                                                         () => HandleDeleteEnrolledFaceConfirmButton(faceID));
       AlertModalButtonData cancelButtonData = new AlertModalButtonData("cancel_button",
-                                                                       LocalizationKeys.kButtonCancel,
-                                                                       themeType: AlertModalButtonData.ThemeType.Neutral);
+                                                                       LocalizationKeys.kButtonCancel);
       AlertModalData requestDeleteEnrolledData = new AlertModalData("delete_enrolled_face_alert",
                                                                     LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle,
                                                                     primaryButtonData: primaryButtonData,
