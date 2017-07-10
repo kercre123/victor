@@ -1053,17 +1053,17 @@ public abstract class GameBase : MonoBehaviour {
   // if there are none, close the view.
   private void HandleChallengeResultAdvance() {
     _AutoAdvanceTimestamp = -1;
-    if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
+    if (RewardedActionManager.Instance.NewDifficultyPending
+        || RewardedActionManager.Instance.NewSkillChangePending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HidePlayer2Scoreboard();
       SharedMinigameView.HideCozmoScoreboard();
       DASReportPendingActionRewards();
-      SharedMinigameView.ShowContinueButtonReward(HandleChallengeResultViewClosed,
-        Localization.Get(LocalizationKeys.kRewardCollectCollectEnergyButton),
-        null,
-        UIColorPalette.EnergyTextColor,
-        "game_results_continue_button",
-        RewardedActionManager.Instance.TotalPendingEnergy);
+      SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
+                                                  Localization.Get(LocalizationKeys.kButtonContinue),
+                                                  string.Empty,
+                                                  Color.clear,
+                                                  "game_results_continue_button");
       _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(_ChallengeData);
       _ChallengeEndViewInstance.DisplayRewards();
     }
@@ -1088,9 +1088,6 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     // Close challenge UI
-    if (_ChallengeEndViewInstance != null) {
-      _ChallengeEndViewInstance.HideScrollRectGradients();
-    }
     CloseChallenge();
 
     if (DidHumanWin()) {

@@ -18,9 +18,6 @@
       "/{*}"
     ]
   },
-  "reward.description.Missing": {
-    "translation": "Missing description"
-  },
   "reward.description.Freeplay.Spark": {
     "translation": "Spark an Upgrade"
   },
