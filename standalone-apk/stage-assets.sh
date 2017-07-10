@@ -73,7 +73,8 @@ LOGv "Run copyResources.py"
     --rewardedActionsPath lib/anki/products-cozmo-assets/RewardedActions/ \
     --engineResourcesPath resources/config/ \
     --unityAssetsPath unity/Cozmo/Assets/StreamingAssets/ \
-    --voiceCommandResourcesPath lib/anki/products-cozmo-assets/voiceCommand/exports/
+    --voiceCommandResourcesPath lib/anki/products-cozmo-assets/voiceCommand/exports/ \
+    --ttsResourcesPath generated/android/resources/tts/
 
     # Do not copy sound banks
     #--soundBanksPath EXTERNALS/cozmosoundbanks/GeneratedSoundBanks \

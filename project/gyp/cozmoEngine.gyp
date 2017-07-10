@@ -1000,6 +1000,16 @@
                   '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/resources/test'
                 ],
               },
+              {
+                'action_name': 'create_symlink_resources_tts',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '../../generated/<(OS)/resources/tts',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/resources/tts'
+                ],
+              },
 
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlRobot
@@ -1534,8 +1544,38 @@
           'sources/': [
             ['exclude', '(android|ios|mac)']
           ]
+        }], # end condition
+        ['OS=="mac"', {
+          'actions': [
+            {
+              'action_name': 'create_symlink_resources_tts',
+              'inputs':['<(text_to_speech_resources_tts)'],
+              'outputs':['../../generated/<(OS)/resources/tts'],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(_inputs)',
+                '--link_name', '<(_outputs)',
+                '--create_folder', '../../generated/<(OS)/resources',
+              ],
+            }, # end action
+          ], # end actions
         }],
-      ] #'conditions'
+        ['OS=="ios" or OS=="android"', {
+          'actions': [
+            {
+              'action_name': 'create_symlink_resources_tts_voices',
+              'inputs':['<(text_to_speech_resources_tts_voices)'],
+              'outputs':['../../generated/<(OS)/resources/tts/Voices'],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(_inputs)',
+                '--link_name', '<(_outputs)',
+                '--create_folder', '../../generated/<(OS)/resources/tts',
+              ],
+            }, # end action
+          ], # end actions
+        }], #end condition
+      ] # end conditions
 
     }, # end engine target
 

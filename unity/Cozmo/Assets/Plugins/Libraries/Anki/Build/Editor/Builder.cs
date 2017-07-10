@@ -220,6 +220,11 @@ namespace Anki {
                                                    assetFolder + "/assets/voiceCommand");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
 
+        // Copy generated platform resources
+        string platform = Assets.AssetBundleManager.GetPlatformName(buildTarget);
+        string generatedResources = "../../generated/" + platform + "/resources";
+        FileUtil.CopyFileOrDirectoryFollowSymlinks(generatedResources + "/tts", assetFolder + "/tts");
+
         // Delete compressed animation files that we don't need
         string[] tarFiles = Directory.GetFiles(assetFolder + "/assets/animations", "*.tar", SearchOption.AllDirectories);
         foreach (string tf in tarFiles) {
@@ -595,7 +600,7 @@ namespace Anki {
 
         string[] directories = Directory.GetDirectories(resourcesDirectory, "*", SearchOption.AllDirectories);
         foreach (string d in directories) {
-          // Only add the folder if it is not in the list of exclussions
+          // Only add the folder if it is not in the list of exclusions
           if (string.IsNullOrEmpty(Array.Find(_kDirectoryExclusions, (string exclusion) => {
             return d.Contains(exclusion);
           }))) {
@@ -613,7 +618,7 @@ namespace Anki {
       private static void AddFilesToResourcesManifestList(string directory, int substringIndex, List<string> fileList) {
         string[] files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
         foreach (string f in files) {
-          // Only add the file if it is not in the list of exclussions
+          // Only add the file if it is not in the list of exclusions
           if (string.IsNullOrEmpty(Array.Find(_kFileExclusions, (string exclusion) => {
             return f.Contains(exclusion);
           }))) {

@@ -1008,6 +1008,16 @@
                   '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/resources/test'
                 ],
               },
+              {
+                'action_name': 'create_symlink_resources_tts2',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '../../generated/<(OS)/resources/tts',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine2/resources/tts'
+                ],
+              },
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # webotsCtrlRobot2
@@ -1528,8 +1538,41 @@
               'USE_GOOGLE_BREAKPAD=1',
             ],
           }
-        ],
-      ] #'conditions'
+        ], # end condition
+
+        ['OS=="mac"', {
+          'actions': [
+            {
+              'action_name': 'create_symlink_resources_tts2',
+              'inputs':['<(text_to_speech_resources_tts)'],
+              'outputs':['../../generated/<(OS)/resources/tts'],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(_inputs)',
+                '--link_name', '<(_outputs)',
+                '--create_folder', '../../generated/<(OS)/resources'
+              ],
+            }, # end action
+          ], # end actions
+        }], # end condition
+
+        ['OS=="ios" or OS=="android"', {
+          'actions': [
+            {
+              'action_name': 'create_symlink_resources_tts_voices2',
+              'inputs': ['<(text_to_speech_resources_tts_voices)'],
+              'outputs': ['../../generated/<(OS)/resources/tts/Voices'],
+              'action': [
+                '../../tools/build/tools/ankibuild/symlink.py',
+                '--link_target', '<(_inputs)',
+                '--link_name', '<(_outputs)',
+                '--create_folder', '../../generated/<(OS)/resources/tts'
+              ],
+            }, # end action
+          ], # end actions
+        }], # end condition
+        
+      ] # end conditions
 
     }, # end engine2 target
 

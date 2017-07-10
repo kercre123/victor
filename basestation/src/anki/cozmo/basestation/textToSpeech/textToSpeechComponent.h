@@ -6,15 +6,15 @@
 *
 * Overhaul: Andrew Stein / Jordan Rivas, 08/18/16
 *
-* Description: Flite wrapper to generate, cache and use wave data from a given string and style.
+* Description: Component wrapper to generate, cache and use wave data from a given string and style.
 *
-* Copyright: Anki, inc. 2016
+* Copyright: Anki, Inc. 2016
 *
 */
 
 
-#ifndef __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
-#define __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
+#ifndef __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
+#define __Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "anki/common/types.h"
@@ -25,26 +25,26 @@
 #include <mutex>
 #include <unordered_map>
 
-
-// Forward decl for f-lite
-struct cst_voice_struct;
+// Forward declarations
+namespace Anki {
+  namespace AudioEngine {
+    class AudioEngineController;
+  }
+  namespace Util {
+    namespace Dispatch {
+      class Queue;
+    }
+  }
+  namespace Cozmo {
+    class CozmoContext;
+    namespace TextToSpeech {
+      class TextToSpeechProvider;
+    }
+  }
+}
 
 namespace Anki {
-  
-namespace AudioEngine {
-class AudioEngineController;
-}
-
-// Forward declaration
-namespace Util {
-namespace Dispatch {
-  class Queue;
-}
-}
-  
 namespace Cozmo {
-  
-class CozmoContext;
   
 class TextToSpeechComponent
 {
@@ -106,13 +106,14 @@ private:
   
   AudioEngine::AudioEngineController* _audioController  = nullptr;
   Util::Dispatch::Queue* _dispatchQueue                 = nullptr;
-  cst_voice_struct* _voice                              = nullptr;
   
   std::unordered_map<OperationId, TtsBundle> _ttsWaveDataMap;
   
   OperationId                     _prevOperationId = kInvalidOperationId;
   
   mutable std::mutex _lock;
+  
+  std::unique_ptr<Anki::Cozmo::TextToSpeech::TextToSpeechProvider> _pvdr;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Private Methods
@@ -126,14 +127,14 @@ private:
   const TtsBundle* GetTtsBundle(const OperationId operationId) const;
   TtsBundle* GetTtsBundle(const OperationId operationId);
   
-  // Increament the opeation Id
+  // Increment the operation Id
   OperationId GetNextOperationId();
   
-}; // class TextToSpeech
+}; // class TextToSpeechComponent
 
 
 } // end namespace Cozmo
 } // end namespace Anki
 
 
-#endif //__Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
+#endif //__Anki_cozmo_basestation_textToSpeech_textToSpeechComponent_H__

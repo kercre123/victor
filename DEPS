@@ -3,6 +3,10 @@
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
+	    "anki-thirdparty": {
+	        "branch": "branches/cozmo",
+		"version": "18"
+	    },
             "cozmo-assets": {
                 "allow_extra_files": "True",
                 "extract_types_from_tar": [
@@ -49,3 +53,4 @@
         "root_url": "https://build.ankicore.com/"
     }
 }
+

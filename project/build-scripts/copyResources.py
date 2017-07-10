@@ -61,6 +61,8 @@ class CopyResources(object):
                         action='store', default=None, help='Where voice command resources are located')
     parser.add_argument('--engineResourcesPath', dest='engineResourcesPath', required=True,
                         action='store', default=None, help='where engine resources are located')
+    parser.add_argument('--ttsResourcesPath', dest='ttsResourcesPath', required=True,
+                        action='store', default=None, help='where TTS resources are located')
     parser.add_argument('--unityAssetsPath', dest='unityAssetsPath', required=True,
                         action='store', default=None, help='where unity assets are located')
     parser.add_argument('--soundBanksPath', dest='soundBanksPath', required=False,
@@ -189,6 +191,14 @@ class CopyResources(object):
       self.log.error("error copying {0} to {1}".format (self.options.engineResourcesPath, engineResourcesPath))
       return False
 
+    # tts resources
+    ttsResourcesPath = os.path.join(cozmoResourcesPath, 'tts')
+    if os.path.isdir(ttsResourcesPath):
+      ankibuild.util.File.rm_rf(ttsResourcesPath)
+    if not ankibuild.util.File.cptree(self.options.ttsResourcesPath, ttsResourcesPath):
+      self.log.error("error copying {0} to {1}".format (self.options.ttsResourcesPath, ttsResourcesPath))
+      return False
+
     # sound banks
     if self.options.soundBanksPath:
       soundBanksPlatform = ''
@@ -260,6 +270,12 @@ class CopyResources(object):
     engineResourcesPath = os.path.join(cozmoResourcesPath, 'config')
     args = baseargs[:]
     args += [self.options.engineResourcesPath, engineResourcesPath]
+    ankibuild.util.File.execute(args)
+
+    # tts resources
+    ttsResourcesPath = os.path.join(cozmoResourcesPath, 'tts')
+    args = baseargs[:]
+    args += [self.options.ttsResourcesPath, ttsResourcesPath]
     ankibuild.util.File.execute(args)
 
     # sound banks
