@@ -92,7 +92,7 @@ ReactionTriggerStrategyHiccup::~ReactionTriggerStrategyHiccup()
 {
   if(HasHiccups())
   {
-    CureHiccups(false);
+    SendDasEvent(false);
   }
   
   _this = nullptr;
@@ -268,20 +268,7 @@ bool ReactionTriggerStrategyHiccup::CanHiccup(const Robot& robot) const
 
 void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
 {
-  // Log an event to DAS before reseting
-  const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  TimeStamp_t hiccupsDuration = curTime - _firstHiccupStartTime;
-  
-  // If for some reason we have not yet actually hiccuped but are being cured report a duration of 0
-  // I don't think this is possible during normal execution but can happen when force triggering hiccups
-  if(_firstHiccupStartTime == 0)
-  {
-    hiccupsDuration = 0;
-  }
-  
-  Util::sEventF("robot.hiccups.ended",
-                {{DDATA, std::to_string(hiccupsDuration).c_str()}},
-                "%s", (playerCured ? "PLAYER_CURED" : "SELF_CURED"));
+  SendDasEvent(playerCured);
 
   ResetHiccups();
   
@@ -298,6 +285,24 @@ void ReactionTriggerStrategyHiccup::CureHiccups(bool playerCured)
   {
     NeedActionCompleted(NeedsActionId::HiccupsEndBad);
   }
+}
+
+void ReactionTriggerStrategyHiccup::SendDasEvent(bool playerCured)
+{
+  // Log an event to DAS before resetting
+  const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  TimeStamp_t hiccupsDuration = curTime - _firstHiccupStartTime;
+
+  // If for some reason we have not yet actually hiccupped but are being cured report a duration of 0
+  // I don't think this is possible during normal execution but can happen when force triggering hiccups
+  if(_firstHiccupStartTime == 0)
+  {
+    hiccupsDuration = 0;
+  }
+
+  Util::sEventF("robot.hiccups.ended",
+                {{DDATA, std::to_string(hiccupsDuration).c_str()}},
+                "%s", (playerCured ? "PLAYER_CURED" : "SELF_CURED"));
 }
 
 void ReactionTriggerStrategyHiccup::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)

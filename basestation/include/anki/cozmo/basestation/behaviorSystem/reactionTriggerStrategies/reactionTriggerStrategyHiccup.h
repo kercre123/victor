@@ -52,6 +52,9 @@ private:
   
   // Resets hiccups and applies hiccupsWontOccurAfterBeingCuredTime
   void CureHiccups(bool playerCured);
+
+  // Send Das event when hiccups end
+  void SendDasEvent(bool playerCured);
   
   // Returns which animation to play depending on our state
   std::vector<AnimationTrigger> GetHiccupAnim() const;
