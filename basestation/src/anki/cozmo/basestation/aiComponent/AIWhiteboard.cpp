@@ -159,8 +159,11 @@ void AIWhiteboard::Init()
 void AIWhiteboard::Update()
 {
   if( HasSevereNeedExpression() ) {
+    const bool needsPaused = _robot.GetContext()->GetNeedsManager()->GetPaused();
     NeedsState& currNeedState = _robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-    if( !currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical) ) {
+    // If needs are paused or the current severeNeedExpression is no longer critical, clear the severe expression
+    if(needsPaused ||
+       !currNeedState.IsNeedAtBracket(_severeNeedExpression, NeedBracketId::Critical)) {
       PRINT_CH_INFO("AIWhiteboard", "SevereNeedsState.AutoClear",
                     "Automatically clearing currently expressed severe needs state. Was '%s'",
                     NeedIdToString(_severeNeedExpression));
