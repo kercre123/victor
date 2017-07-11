@@ -42,19 +42,33 @@ public:
   };
   
 protected:
+  using base = IBehavior;
   virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
 private:
+  enum class State{
+    DrivingToFood,
+    Eating,
+    ReactingToInterruption
+  };
+  
   mutable ObjectID _targetID;
   std::vector<IFeedingListener*> _feedingListeners;
   float _timeCubeIsSuccessfullyDrained_sec;
+  bool  _hasRegisteredActionComplete;
   
-  void TransitionToReactingToFood(Robot& robot);
+  State _currentState;
+  
   void TransitionToDrivingToFood(Robot& robot);
   void TransitionToEating(Robot& robot);
+  void TransitionToReactingToInterruption(Robot& robot);
+
   
-  AnimationTrigger UpdateNeedsStateAndCalculateAnimation(Robot& robot);
+  AnimationTrigger CheckNeedsStateAndCalculateAnimation(Robot& robot);
+  void SetState_internal(State state, const std::string& stateName);
+  
 };
 
 } // namespace Cozmo

@@ -145,6 +145,8 @@ enum int_32 AnimationTrigger
   FeedingIdleWaitForFullCube_Severe,
   FeedingIdleWaitForShake_Normal,
   FeedingIdleWaitForShake_Severe,
+  FeedingInterrupted,
+  FeedingInterrupted_Severe,
   FeedingReactToFullCube_Normal,
   FeedingReactToFullCube_Severe,
   FeedingReactToSeeCube_Normal,

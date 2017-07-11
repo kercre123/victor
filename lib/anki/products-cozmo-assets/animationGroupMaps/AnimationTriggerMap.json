@@ -525,8 +525,14 @@
       "CladEvent": "FeedingIdleWaitForShake_Severe",
       "AnimName": "ag_energy_idle_02"
     },
-
-
+    {
+      "CladEvent": "FeedingInterrupted",
+      "AnimName": "ag_energy_interruptions"
+    },
+    {
+      "CladEvent": "FeedingInterrupted_Severe",
+      "AnimName": "ag_energy_interruptions"
+    },
     {
       "CladEvent": "FeedingReactToFullCube_Normal",
       "AnimName": "ag_energy_cubetone"
