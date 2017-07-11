@@ -71,6 +71,13 @@ namespace Cozmo {
     {
       const Anki::Cozmo::ExternalInterface::TransferFile& msg = event.GetData().Get_TransferFile();
       
+      if ((msg.fileType != ExternalInterface::FileType::Animation) &&
+          (msg.fileType != ExternalInterface::FileType::FaceImg))
+      {
+        // File type is handled elsewhere
+        return;
+      }
+      
       // Verify this is the chunk we're waiting for.
       if( _expectedNextChunk == msg.filePart)
       {

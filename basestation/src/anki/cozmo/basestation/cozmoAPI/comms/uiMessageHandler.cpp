@@ -30,6 +30,7 @@
 #include "anki/cozmo/basestation/buildVersion.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -43,6 +44,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/enums/enumOperators.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
@@ -58,7 +60,11 @@ namespace Anki {
     
 #if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
-  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
+  #if defined(SHIPPING)
+    CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
+  #else
+    CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
+  #endif
 #else
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
@@ -194,6 +200,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetShouldAutoConnectToCubesAtStart, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetShouldAutoDisconnectFromCubesAtEnd, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::TransferFile, commonCallback));
       
       // We'll use this callback for game to game events we care about (SDK to Unity or vice versa)
       auto gameToGameCallback = std::bind(&UiMessageHandler::HandleGameToGameEvents, this, std::placeholders::_1);
@@ -859,6 +866,65 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       return success;
     }
     
+    void TransferCodeLabFile(const ExternalInterface::TransferFile& msg, Util::Data::DataPlatform* dataPlatform)
+    {
+    #if ANKI_DEV_CHEATS
+      DEV_ASSERT_MSG((msg.fileType == ExternalInterface::FileType::CodeLab), "TransferCodeLabFile.WrongFileType",
+                     "Incorrect FileType %d '%s'", (int)msg.fileType, EnumToString(msg.fileType));
+      
+      static uint16_t sExpectedNextPart = std::numeric_limits<uint16_t>::max();
+      static uint16_t sExpectedPartCount = std::numeric_limits<uint16_t>::max();
+      
+      std::string full_path = dataPlatform->pathToResource(Util::Data::Scope::Cache, msg.filename);
+      
+      // Special signal for CodeLab to nuke the directory
+      if ((msg.filePart == 0) && (msg.numFileParts == 0) && (msg.fileBytes.size() == 0))
+      {
+        PRINT_NAMED_INFO("TransferCodeLabFile.DeleteCache", "Delete Cache '%s'", full_path.c_str());
+        Util::FileUtils::RemoveDirectory(full_path);
+        return;
+      }
+      
+      // Verify this is the chunk we're waiting for.
+      if( sExpectedNextPart == msg.filePart)
+      {
+        ++sExpectedNextPart;
+      }
+      else if( msg.filePart == 0 )
+      {
+        if (sExpectedNextPart != sExpectedPartCount)
+        {
+          PRINT_NAMED_ERROR("TransferCodeLabFile.FailedToComplete", "Got: 0, Expected: %u/%u", sExpectedNextPart, sExpectedPartCount);
+        }
+        
+        // New file - delete it if it already exists
+        if( Util::FileUtils::FileExists(full_path))
+        {
+          Util::FileUtils::DeleteFile(full_path);
+        }
+        sExpectedNextPart = 1;
+        sExpectedPartCount = msg.numFileParts;
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("TransferCodeLabFile.UnexpectedPart", "Got: %d, Expected: %d", (int)msg.filePart, (int)sExpectedNextPart);
+        return;
+      }
+      
+      const bool append = msg.filePart != 0;
+      const bool res1 = Util::FileUtils::CreateDirectory(full_path, true, true);
+      const bool res2 = Util::FileUtils::WriteFile(full_path, msg.fileBytes, append);
+      if (!res1 || !res2)
+      {
+        PRINT_NAMED_WARNING("TransferCodeLabFile.WriteFailed", "load '%s' dir_res=%d write_res=%d part %u of %u", full_path.c_str(), (int)res1, (int)res2, msg.filePart, msg.numFileParts);
+      }
+      else if (sExpectedNextPart == sExpectedPartCount)
+      {
+        // This was the last part - file is loaded
+        PRINT_NAMED_INFO("TransferCodeLabFile.Complete", "Loaded all %u parts of '%s'", msg.numFileParts, full_path.c_str());
+      }
+    #endif // ANKI_DEV_CHEATS
+    }
     
     void UiMessageHandler::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
@@ -935,6 +1001,15 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         {
           const ExternalInterface::SetShouldAutoDisconnectFromCubesAtEnd& msg = event.GetData().Get_SetShouldAutoDisconnectFromCubesAtEnd();
           _sdkStatus.SetShouldAutoDisconnectFromCubes(msg.doAutoDisconnect);
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::TransferFile:
+        {
+          const ExternalInterface::TransferFile& msg = event.GetData().Get_TransferFile();
+          if( msg.fileType == ExternalInterface::FileType::CodeLab)
+          {
+            TransferCodeLabFile(msg, _context->GetDataPlatform());
+          }
           break;
         }
         default:

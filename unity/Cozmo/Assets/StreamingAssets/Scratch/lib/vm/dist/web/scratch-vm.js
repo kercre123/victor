@@ -13730,66 +13730,7 @@ function CorkedRequest(state) {
 /* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* eslint-disable node/no-deprecated-api */
-var buffer = __webpack_require__(3)
-var Buffer = buffer.Buffer
-
-if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
-  module.exports = buffer
-} else {
-  // Copy properties from require('buffer')
-  Object.keys(buffer).forEach(function (prop) {
-    exports[prop] = buffer[prop]
-  })
-  exports.Buffer = SafeBuffer
-}
-
-function SafeBuffer (arg, encodingOrOffset, length) {
-  return Buffer(arg, encodingOrOffset, length)
-}
-
-// Copy static methods from Buffer
-Object.keys(Buffer).forEach(function (prop) {
-  SafeBuffer[prop] = Buffer[prop]
-})
-
-SafeBuffer.from = function (arg, encodingOrOffset, length) {
-  if (typeof arg === 'number') {
-    throw new TypeError('Argument must not be a number')
-  }
-  return Buffer(arg, encodingOrOffset, length)
-}
-
-SafeBuffer.alloc = function (size, fill, encoding) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  var buf = Buffer(size)
-  if (fill !== undefined) {
-    if (typeof encoding === 'string') {
-      buf.fill(fill, encoding)
-    } else {
-      buf.fill(fill)
-    }
-  } else {
-    buf.fill(0)
-  }
-  return buf
-}
-
-SafeBuffer.allocUnsafe = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  return Buffer(size)
-}
-
-SafeBuffer.allocUnsafeSlow = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
-  }
-  return buffer.SlowBuffer(size)
-}
+module.exports = __webpack_require__(3)
 
 
 /***/ }),
@@ -28720,7 +28661,7 @@ module.exports = {
 				"spec": "5.7.1",
 				"type": "version"
 			},
-			"/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"
+			"/Users/mwesley/zGitRepos2/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm"
 		]
 	],
 	"_from": "got@5.7.1",
@@ -28755,7 +28696,7 @@ module.exports = {
 	"_shasum": "5f81635a61e4a6589f180569ea4e381680a51f35",
 	"_shrinkwrap": null,
 	"_spec": "got@5.7.1",
-	"_where": "/Users/michelle/src/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm",
+	"_where": "/Users/mwesley/zGitRepos2/cozmo-one/unity/Cozmo/Assets/StreamingAssets/Scratch/lib/vm",
 	"browser": {
 		"unzip-response": false
 	},

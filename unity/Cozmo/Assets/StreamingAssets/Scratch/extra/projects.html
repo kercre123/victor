@@ -17,17 +17,8 @@
     <link rel="prefetch" href="images/icon_block_pink.svg"/>
     <link rel="prefetch" href="images/icon_block_purple.svg"/>
     <link rel="prefetch" href="images/icon_block_yellow.svg"/>
-    <script>
-    window.Unity = {
-      call: function(msg) {
-        var iframe = document.createElement('IFRAME');
-        iframe.setAttribute('src', 'unity:' + msg);
-        document.documentElement.appendChild(iframe);
-        iframe.parentNode.removeChild(iframe);
-        iframe = null;
-      }
-    }
-    </script>
+    <script src="../js/anki_comms_settings.js"></script>
+    <script src="../js/anki_comms.js"></script>
   </head>
   <body>
 

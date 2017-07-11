@@ -54,6 +54,7 @@ namespace CodeLab {
 
     private const string kCodeLabGameDrivingAnimLock = "code_lab_game";
 
+    // GameToGameConn is used by dev-builds only (no GameToGame or SDK connection possible in CodeLab in Shipping builds)
     private class GameToGameConn {
       private bool _Enabled = false;
       private string _PendingMessageType = null;
@@ -119,7 +120,10 @@ namespace CodeLab {
       }
     }
 
-    private GameToGameConn _GameToGameConn = new GameToGameConn();
+    private GameToGameConn _GameToGameConn = new GameToGameConn(); // Dev-Connection for non-SHIPPING builds
+    private string _CurrentURLFilename = null; // The currently displayed URL (used for hot-reloading)
+    private string _DevLoadPath = null; // Custom path for loading assets in dev builds
+    private bool _DevLoadPathFirstRequest = true;
 
     private uint _ChallengeBookmark = 1;
 
@@ -130,6 +134,9 @@ namespace CodeLab {
     private const float kToleranceAngle = 10.0f * Mathf.Deg2Rad;
     private const float kLiftSpeed_rps = 2.0f;
     private const float kTimeoutForResetToHomePose_s = 3.0f;
+
+    private const string kHorizontalIndexFilename = "index.html";
+    private const string kVerticalIndexFilename = "index_vertical.html";
 
     protected override void InitializeGame(ChallengeConfigBase challengeConfigData) {
       SetRequestToOpenProject(RequestToOpenProjectOnWorkspace.DisplayNoProject, null);
@@ -163,9 +170,42 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void HandleGameToGameContents(string messageType, string payload) {
+      // Used by dev-builds only (no GameToGame or SDK connection possible in CodeLab in Shipping builds)
+      // This is used by the codelab.py script to support various debug/dev features including:
+      // 1: hot-reloading of assets
+      // 2: running Scratch in a remote server on a host computer in e.g. Chrome
       switch (messageType) {
       case "WebViewCallback":
         WebViewCallback(payload);
+        break;
+      case "UseHorizontalGrammar":
+        _SessionState.SetGrammarMode(GrammarMode.Horizontal);
+        if (_CurrentURLFilename == kVerticalIndexFilename) {
+          LoadURL(kHorizontalIndexFilename);
+        }
+        break;
+      case "UseVerticalGrammar":
+        _SessionState.SetGrammarMode(GrammarMode.Vertical);
+        if (_CurrentURLFilename == kHorizontalIndexFilename) {
+          LoadURL(kVerticalIndexFilename);
+        }
+        break;
+      case "LoadURL":
+        LoadURL(payload);
+        break;
+      case "ReloadURL":
+        // Re-opens the current page (but potentially from a different file location - cache vs assets etc.)
+        if (_CurrentURLFilename != null) {
+          LoadURL(_CurrentURLFilename);
+        }
+        break;
+      case "SetAppPath":
+        _DevLoadPath = null;
+        DAS.Info("CodeLab.SetAppPath", "_DevLoadPath = null");
+        break;
+      case "SetCachePath":
+        _DevLoadPath = Application.temporaryCachePath + payload;
+        DAS.Info("CodeLab.SetCachePath", "_DevLoadPath = '" + _DevLoadPath + "'");
         break;
       default:
         DAS.Error("HandleGameToGameContents.BadType", "Unhandled type: " + messageType);
@@ -174,15 +214,19 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void HandleGameToGame(GameToGame webToUnity) {
-      // Dev-builds only (no GameToGame or SDK connection possible in Shipping)
+      // Used by dev-builds only (no GameToGame or SDK connection possible in CodeLab in Shipping builds)
 
       if (webToUnity.messageType == "EnableGameToGame") {
         _GameToGameConn.Enable();
       }
       else if (_GameToGameConn.IsEnabled) {
         if (_GameToGameConn.AppendMessage(webToUnity)) {
-          HandleGameToGameContents(_GameToGameConn.PendingMessageType, _GameToGameConn.PendingMessage);
-          _GameToGameConn.ResetPendingMessage();
+          try {
+            HandleGameToGameContents(_GameToGameConn.PendingMessageType, _GameToGameConn.PendingMessage);
+          }
+          finally {
+            _GameToGameConn.ResetPendingMessage();
+          }
         }
       }
     }
@@ -1000,10 +1044,10 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       SetRequestToOpenProject(request, projectUUID);
       ShowGettingReadyScreen();
       if (_SessionState.GetGrammarMode() == GrammarMode.Vertical) {
-        LoadURL("index_vertical.html");
+        LoadURL(kVerticalIndexFilename);
       }
       else {
-        LoadURL("index.html");
+        LoadURL(kHorizontalIndexFilename);
       }
     }
 
@@ -1021,6 +1065,35 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       SharedMinigameView.ShowSpinnerWidget();
     }
 
+    private string GetRootPath() {
+      if (_DevLoadPath != null) {
+        // Loading assets from a cache path instead of the baked-in assets
+        return _DevLoadPath;
+      }
+      else {
+#if UNITY_EDITOR
+        return Application.streamingAssetsPath + "/Scratch/";
+#else
+        return PlatformUtil.GetResourcesBaseFolder() + "/Scratch/";
+#endif
+      }
+    }
+
+    private string GetUrlPath(string filename) {
+#if UNITY_EDITOR
+      return filename;
+#else
+      string urlProtocol = "file://";
+      if ((_DevLoadPath != null) && _DevLoadPathFirstRequest) {
+#if UNITY_IOS
+        // For some odd reason iOS will only load from cache after a (failed) initial request at "file:////var..."
+        urlProtocol += "/";
+#endif
+      }
+      return urlProtocol + filename;
+#endif // UNITY_EDITOR
+    }
+
     private void LoadURL(string scratchPathToHTML) {
       if (_SessionState.IsProgramRunning()) {
         // Program is currently running and we won't receive OnScriptStopped notification
@@ -1029,13 +1102,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         OnScriptStopped();
       }
 
-#if UNITY_EDITOR
-      string indexFile = Application.streamingAssetsPath + "/Scratch/" + scratchPathToHTML;
-#else
-      string indexFile = "file://" + PlatformUtil.GetResourcesBaseFolder() + "/Scratch/" + scratchPathToHTML;
-#endif
+      string baseFilename = GetRootPath() + scratchPathToHTML;
+      string urlPath = GetUrlPath(baseFilename);
 
-      _WebViewObjectComponent.LoadURL(indexFile);
+      DAS.Info("CodeLab.LoadURL", "urlPath = '" + urlPath + "'");
+
+      _CurrentURLFilename = scratchPathToHTML;
+      _WebViewObjectComponent.LoadURL(urlPath);
+      if ((_DevLoadPath != null) && _DevLoadPathFirstRequest) {
+        _DevLoadPathFirstRequest = false;
+      }
     }
 
     private void OnExitWorkspace() {
@@ -1102,7 +1178,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void WebViewLoaded(string text) {
-      Debug.Log(string.Format("CallOnLoaded[{0}]", text));
+      DAS.Info("Codelab.WebViewLoaded", string.Format("CallOnLoaded[{0}]", text));
       RequestToOpenProjectOnWorkspace cachedRequestToOpenProject = _RequestToOpenProjectOnWorkspace;
 
       switch (_RequestToOpenProjectOnWorkspace) {
