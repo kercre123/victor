@@ -177,8 +177,12 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
   }
   else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sEvent("robot.cliff_detected", {}, "");
+#ifdef COZMO_V2
     auto action = GetCliffPreReactAction(robot, _detectedFlags);
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliff));
+#else
+    auto action = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliff);
+#endif
     StartActing(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now
@@ -293,6 +297,7 @@ void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Ro
   }
 }
   
+#ifdef COZMO_V2
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(Robot& robot, uint8_t cliffDetectedFlags)
 {
@@ -312,11 +317,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(Robot& ro
   switch (cliffDetectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on. Play stop reaction and move on
-      // Note: This is the only case that will get triggered for pre-V2 robots. For pre-V2 robots,
-      // the ReactToCliffDetectorStop animation will have already been played, so don't queue it.
-      #ifdef COZMO_V2
       action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop));
-      #endif
       break;
     case FL:
       // Play stop reaction animation and turn CCW a bit
@@ -388,6 +389,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(Robot& ro
   
   return action;
 }
+#endif // COZMO_V2
 
 } // namespace Cozmo
 } // namespace Anki
