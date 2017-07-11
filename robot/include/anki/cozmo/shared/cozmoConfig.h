@@ -168,6 +168,12 @@ namespace Cozmo {
   const u32 CLIFF_SENSOR_UNDROP_LEVEL = 600;
   const u32 CLIFF_SENSOR_UNDROP_LEVEL_MIN = 50;
   
+  // V2 cliff sensors (assumes 4 cliff sensors are arranged in a rectangle symmetric about the robot x axis)
+  // NOTE: These values are approximate and should be verified for final V2 design.
+  const f32 kCliffSensorYOffset_mm      = 14.f;  // y (lateral) distance from robot origin to the cliff sensors
+  const f32 kCliffSensorXOffsetFront_mm = 2.f;   // x (longitudinal) offset from robot origin to front cliff sensors
+  const f32 kCliffSensorXOffsetRear_mm  = -50.f; // x (longitudinal) offset from robot origin to rear cliff sensors
+  
   
   /***************************************************************************
    *

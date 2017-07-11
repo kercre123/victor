@@ -25,6 +25,7 @@ namespace Anki {
 namespace Util {
   class RollingFileLogger;
 }
+class Pose3d;
 namespace Cozmo {
 
 class Robot;
@@ -73,6 +74,8 @@ public:
   void EnableRawDataLogging(const uint32_t duration_ms);
   
   uint32_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; };
+  
+  bool ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d& cliffPose) const;
   
 private:
   

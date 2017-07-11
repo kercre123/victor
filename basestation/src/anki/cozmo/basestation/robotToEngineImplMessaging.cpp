@@ -854,21 +854,15 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   }
   
   if (cliffEvent.detectedFlags != 0) {
-    // grab historical state at the time the cliff was detected
-    HistRobotState histState;
-    TimeStamp_t histTimestamp;
-    const bool useInterp = true;
-    if (robot->GetStateHistory()->ComputeStateAt(cliffEvent.timestamp, histTimestamp, histState, useInterp) == RESULT_OK) {
-      // TODO: The cliff pose should be computed more intelligently for multiple cliff sensor scenario (COZMO-12243)
-      Pose3d cliffPose = histState.GetPose();
-      PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
-                       cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
+    Pose3d cliffPose;
+    if (robot->GetCliffSensorComponent().ComputeCliffPose(cliffEvent, cliffPose)) {
       // Add cliff obstacle
       robot->GetBlockWorld().AddCliff(cliffPose);
+      PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
+                       cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
     } else {
-      PRINT_NAMED_ERROR("RobotImplMessaging.HandleCliffEvent.NoHistoricalPose",
-                        "Could not retrieve historical pose for timestamp %u",
-                        cliffEvent.timestamp);
+      PRINT_NAMED_ERROR("RobotImplMessaging.HandleCliffEvent.ComputeCliffPoseFailed",
+                        "Failed computing cliff pose!");
     }
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
