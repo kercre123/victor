@@ -942,6 +942,9 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
     newLevel = Util::Clamp(newLevel, _needsConfig._minNeedLevel, _needsConfig._maxNeedLevel);
     _needsState._curNeedsLevels[static_cast<NeedId>(needIndex)] = newLevel;
   }
+
+  _needsState.SetNeedsBracketsDirty();
+
   // Note that we don't set the appropriate number of broken parts here, because we're
   // just using this to fake needs levels during onboarding, and we will fully initialize
   // after onboarding completes.  The ForceSetDamagedParts message below can be used to
@@ -999,15 +1002,21 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsActionWhitelis
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComplete& msg)
 {
+  bool forceWriteToRobot = false;
+
   _robotOnboardingStageCompleted = msg.onboardingStage;
+
   // phase 1 is just the first part showing the needs hub.
   if( msg.finalStage )
   {
     // Reset cozmo's need levels to their starting points, and reset timers
     InitReset(_currentTime_s, _needsState._robotSerialNumber);
+
     // onboarding unlocks one star.
     _needsState._numStarsAwarded = 1;
-    
+    const Time nowTime = system_clock::now();
+    _needsState._timeLastStarAwarded = nowTime;
+
     // Un-pause the needs system if we are not already
     if (_isPausedOverall)
     {
@@ -1020,8 +1029,11 @@ void NeedsManager::HandleMessage(const ExternalInterface::RegisterOnboardingComp
     // s_val: Unused
     // data: Unused
     Anki::Util::sEvent("needs.onboarding_completed", {}, "");
+
+    forceWriteToRobot = true;
   }
-  PossiblyStartWriteToRobot();
+
+  PossiblyStartWriteToRobot(forceWriteToRobot);
 }
 
 template<>
@@ -1362,7 +1374,7 @@ void NeedsManager::ApplyDecayForUnconnectedTime()
 {
   // Calculate time elapsed since last connection
   const Time now = system_clock::now();
-  const float elasped_s = std::chrono::duration_cast<std::chrono::seconds>(now - _needsState._timeLastWritten).count();
+  const float elasped_s = duration_cast<seconds>(now - _needsState._timeLastWritten).count();
 
   // Now apply decay according to unconnected config, and elapsed time
   // First, however, we set the timers as if that much time had elapsed:
@@ -1400,12 +1412,12 @@ bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
        (cheatGiveStar))
   {
     // Now see if they've already received the star award today:
-    std::time_t lastStarTime = std::chrono::system_clock::to_time_t( _needsState._timeLastStarAwarded );
+    const std::time_t lastStarTime = system_clock::to_time_t( _needsState._timeLastStarAwarded );
     std::tm lastLocalTime;
     localtime_r(&lastStarTime, &lastLocalTime);
 
-    Time nowTime = std::chrono::system_clock::now();
-    std::time_t nowTimeT = std::chrono::system_clock::to_time_t( nowTime );
+    const Time nowTime = system_clock::now();
+    const std::time_t nowTimeT = system_clock::to_time_t( nowTime );
     std::tm nowLocalTime;
     localtime_r(&nowTimeT, &nowLocalTime);
     
@@ -1633,7 +1645,7 @@ void NeedsManager::PossiblyWriteToDevice()
 
 void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
 {
-  const auto startTime = std::chrono::system_clock::now();
+  const auto startTime = system_clock::now();
 
   if (stampWithNowTime)
   {
@@ -1666,14 +1678,14 @@ void NeedsManager::WriteToDevice(bool stampWithNowTime /* = true */)
   const auto timeStarAwarded_s = duration_cast<seconds>(_needsState._timeLastStarAwarded.time_since_epoch()).count();
   state[kTimeLastStarAwardedKey] = Util::numeric_cast<Json::LargestInt>(timeStarAwarded_s);
 
-  const auto midTime = std::chrono::system_clock::now();
+  const auto midTime = system_clock::now();
   if (!_cozmoContext->GetDataPlatform()->writeAsJson(Util::Data::Scope::Persistent, GetNurtureFolder() + kNeedsStateFile, state))
   {
     PRINT_NAMED_ERROR("NeedsManager.WriteToDevice.WriteStateFailed", "Failed to write needs state file");
   }
-  const auto endTime = std::chrono::system_clock::now();
-  const auto microsecsMid =std::chrono::duration_cast<std::chrono::microseconds>(endTime - midTime);
-  const auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+  const auto endTime = system_clock::now();
+  const auto microsecsMid = duration_cast<microseconds>(endTime - midTime);
+  const auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.WriteToDevice",
                 "Write to device took %lld microseconds total; %lld microseconds for the actual write",
                 microsecs.count(), microsecsMid.count());
@@ -1773,7 +1785,7 @@ void NeedsManager::StartWriteToRobot()
     return;
 
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.StartWriteToRobot", "Writing to robot...");
-  const auto startTime = std::chrono::system_clock::now();
+  const auto startTime = system_clock::now();
 
   _robotStorageState = RobotStorageState::Writing;
 
@@ -1819,8 +1831,8 @@ void NeedsManager::FinishWriteToRobot(const NVStorage::NVResult res, const Time 
               "Robot storage state should be Writing but instead is %d", _robotStorageState);
   _robotStorageState = RobotStorageState::Inactive;
 
-  auto endTime = std::chrono::system_clock::now();
-  auto microsecs = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+  auto endTime = system_clock::now();
+  auto microsecs = duration_cast<microseconds>(endTime - startTime);
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.FinishWriteToRobot", "Write to robot AFTER CALLBACK took %lld microseconds", microsecs.count());
 
   if (res < NVStorage::NVResult::NV_OKAY)
@@ -2011,9 +2023,9 @@ void NeedsManager::DebugGiveStar()
 void NeedsManager::DebugCompleteDay()
 {
   // Push the last given star back 24 hours
-  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-  std::time_t yesterdayTime = std::chrono::system_clock::to_time_t(now - std::chrono::hours(25));
-  _needsState._timeLastStarAwarded = std::chrono::system_clock::from_time_t(yesterdayTime);
+  system_clock::time_point now = system_clock::now();
+  std::time_t yesterdayTime = system_clock::to_time_t(now - hours(25));
+  _needsState._timeLastStarAwarded = system_clock::from_time_t(yesterdayTime);
 
   PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugCompleteDay","");
 }
