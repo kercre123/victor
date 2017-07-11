@@ -77,6 +77,15 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
 bool IBehaviorRequestGame::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
   const Robot& robot = preReqData.GetRobot();
+  
+  // Save some computation by checking wether this request is the one the request component
+  // wants next first
+  RequestGameComponent& requestComponent = robot.GetAIComponent().GetNonConstRequestGameComponent();
+  UnlockId nextRequest = requestComponent.IdentifyNextGameTypeToRequest(robot);
+  if(nextRequest != GetRequiredUnlockID()){
+    return false;
+  }
+  
   const bool hasFace = HasFace(robot);
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
