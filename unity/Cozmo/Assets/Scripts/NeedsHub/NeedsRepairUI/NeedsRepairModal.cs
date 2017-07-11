@@ -216,6 +216,9 @@ namespace Cozmo.Repair.UI {
       }
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Nurture_Repair);
+
       nsm.PauseExceptForNeed(NeedId.Repair);
 
       _RepairMeter.Initialize(allowInput: false,
@@ -228,6 +231,8 @@ namespace Cozmo.Repair.UI {
       InitializePartElements(HandleRepairHeadButtonPressed, "repair_head_button", _HeadElements);
       InitializePartElements(HandleRepairLiftButtonPressed, "repair_lift_button", _LiftElements);
       InitializePartElements(HandleRepairTreadsButtonPressed, "repair_treads_button", _TreadsElements);
+
+      RefreshAllPartElements();
 
       //start in scanner mode
       _ScanButton.Initialize(HandleScanButtonPressed, "scan_button", DASEventDialogName);
@@ -939,6 +944,18 @@ namespace Cozmo.Repair.UI {
       _RepairNeeded = headBroken || liftBroken || treadsBroken;
       _RepairButtonsInstruction.gameObject.SetActive(_RepairNeeded);
       _NoRepairsNeededNotice.gameObject.SetActive(!_RepairNeeded);
+
+      int partsBroken = 0;
+      if (headBroken) {
+        partsBroken++;
+      }
+      if (liftBroken) {
+        partsBroken++;
+      }
+      if (treadsBroken) {
+        partsBroken++;
+      }
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicRoundState(Mathf.Max(1, partsBroken));
     }
 
     private void RefreshPartElements(bool partBroken, RepairPartElements elements) {
