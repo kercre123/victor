@@ -192,8 +192,16 @@ bool TcpSocketComms::ExtractNextMessage(std::vector<uint8_t>& outBuffer)
     
     if (sizeofMessageAndHeader <= _receivedBuffer.size())
     {
-      const uint8_t* sourceBuffer = &_receivedBuffer[sizeof(MessageSizeType)];
-      outBuffer = {sourceBuffer, sourceBuffer+sizeofMessage};
+      if( sizeofMessage == 0 )
+      {
+        PRINT_NAMED_WARNING("TcpSocketComms.ExtractNextMessage", "Ignoring recieved message with zero size");
+        outBuffer.clear();
+      }
+      else
+      {
+        const uint8_t* sourceBuffer = &_receivedBuffer[sizeof(MessageSizeType)];
+        outBuffer = {sourceBuffer, sourceBuffer+sizeofMessage};
+      }
       _receivedBuffer.erase(_receivedBuffer.begin(), _receivedBuffer.begin() + sizeofMessageAndHeader);
       return true;
     }
