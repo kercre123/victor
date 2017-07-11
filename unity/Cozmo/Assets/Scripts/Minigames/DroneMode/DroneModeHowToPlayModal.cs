@@ -12,10 +12,10 @@ namespace Cozmo.Challenge.DroneMode {
     private int _SlideIndexToAlwaysAnimate = 0;
 
     [SerializeField]
-    private CozmoButtonLegacy _PreviousSlideButton;
+    private CozmoButton _PreviousSlideButton;
 
     [SerializeField]
-    private CozmoButtonLegacy _NextSlideButton;
+    private CozmoButton _NextSlideButton;
 
     private int _CurrentSlideIndex;
     private bool _IsPlayingAnimations = false;

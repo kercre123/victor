@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: f2bd68a7c4cb2474e9450ba708104f16
-timeCreated: 1478294178
+guid: 6bcd7fd1380fc4b06a84a79946f4d1cd
+timeCreated: 1499211717
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -24,7 +24,7 @@ TextureImporter:
   generateCubemap: 6
   cubemapConvolution: 0
   seamlessCubemap: 0
-  textureFormat: -3
+  textureFormat: 1
   maxTextureSize: 2048
   textureSettings:
     filterMode: 1
@@ -62,7 +62,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: minigame_ui_spritesUHDAtlas
+  spritePackingTag: minigame_ui_spritesHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

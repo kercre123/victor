@@ -25,6 +25,8 @@ namespace Cozmo {
       public string SubtitleText {
         set {
           _ChallengeSubtitleLabel.text = value;
+          // this gives the subtitle the proper size before layout happens, otherwise it's width 0 and wraps
+          _ChallengeSubtitleLabel.ForceMeshUpdate();
         }
       }
 

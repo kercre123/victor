@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 894fdd7fd34ee4bd1ace71aa14b8e4e5
-timeCreated: 1495667789
+guid: 350fb0758492a47b287a2cf8dede0664
+timeCreated: 1499211717
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -62,7 +62,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: common_icon_spritesHDAtlas
+  spritePackingTag: minigame_ui_spritesSDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

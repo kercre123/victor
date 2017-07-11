@@ -87,9 +87,13 @@ namespace Cozmo.Challenge.DroneMode {
 
     [SerializeField]
     private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButton;
+    [SerializeField]
+    private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButtonNight;
 
     [SerializeField]
-    private CozmoButtonLegacy _HowToPlayButton;
+    private CozmoButton _HowToPlayButton;
+    [SerializeField]
+    private CozmoButton _HowToPlayButtonNight;
 
     [SerializeField]
     private DroneModeHowToPlayModal _HowToPlayModalPrefab;
@@ -162,6 +166,7 @@ namespace Cozmo.Challenge.DroneMode {
 
     private void Awake() {
       _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", _kDasViewControllerName);
+      _HowToPlayButtonNight.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", _kDasViewControllerName);
       _NightVisionButton.Initialize(HandleNightVisionButtonClicked, "night_vision_toggle_button", _kDasViewControllerName);
       _HeadLiftToggleButton.Initialize(null, "head_lift_toggle_button", _kDasViewControllerName);
       _ContextualButtons = new List<DroneModeActionButton>();
@@ -169,6 +174,9 @@ namespace Cozmo.Challenge.DroneMode {
       _QuitDroneModeButton.Initialize(false);
       _QuitDroneModeButton.DASEventViewController = _kDasViewControllerName;
       _QuitDroneModeButton.QuitGameConfirmed += HandleQuitConfirmed;
+      _QuitDroneModeButtonNight.Initialize(false);
+      _QuitDroneModeButtonNight.DASEventViewController = _kDasViewControllerName;
+      _QuitDroneModeButtonNight.QuitGameConfirmed += HandleQuitConfirmed;
     }
 
     private void Start() {
@@ -318,14 +326,17 @@ namespace Cozmo.Challenge.DroneMode {
 
     public void OpenHowToPlayModal(bool showCloseButton, bool playAnimations) {
       _HowToPlayButton.Interactable = false;
+      _HowToPlayButtonNight.Interactable = false;
 
       System.Action<BaseModal> howToPlayModalCreatedCallback = (howToPlayModal) => {
         _HowToPlayButton.Interactable = true;
+        _HowToPlayButtonNight.Interactable = true;
         _HowToPlayModalInstance = (DroneModeHowToPlayModal)howToPlayModal;
         _HowToPlayModalInstance.Initialize(showCloseButton, playAnimations);
         if (showCloseButton) {
           _HowToPlayModalInstance.DialogClosed += HandleHowToPlayModalClosed;
           _HowToPlayButton.gameObject.SetActive(false);
+          _HowToPlayButtonNight.gameObject.SetActive(false);
         }
 
         _SpeedThrottle.SetToRest();
@@ -334,7 +345,12 @@ namespace Cozmo.Challenge.DroneMode {
     }
 
     private void HandleHowToPlayModalClosed() {
-      _HowToPlayButton.gameObject.SetActive(true);
+      if (_IsNightVisionEnabled) {
+        _HowToPlayButtonNight.gameObject.SetActive(true);
+      }
+      else {
+        _HowToPlayButton.gameObject.SetActive(true);
+      }
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {
@@ -521,9 +537,6 @@ namespace Cozmo.Challenge.DroneMode {
 
     private void SetUIToColorSet(DroneModeColorSet colorSet, bool showReticles) {
       _CameraFeed.SetCameraFeedColor(colorSet, showReticles);
-
-      _QuitDroneModeButton.SetButtonTint(colorSet.ButtonColor);
-      _HowToPlayButton.SetButtonTint(colorSet.ButtonColor);
 
       _SpeedThrottle.image.sprite = colorSet.SpeedSliderHandleSprites.highlightedSprite;
       _SpeedThrottle.spriteState = colorSet.SpeedSliderHandleSprites;
