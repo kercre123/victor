@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToCliff.h"
@@ -117,8 +118,14 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
         return true;
       };
       
+      auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
+      // skip the "huh" animation if in severe energy
+      if(NeedId::Energy == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+        callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
+      }
+      
       WaitForLambdaAction* waitForStopAction = new WaitForLambdaAction(robot, waitForStopLambda);
-      StartActing(waitForStopAction, &BehaviorReactToCliff::TransitionToPlayingStopReaction);
+      StartActing(waitForStopAction, callbackFunc);
       break;
     }
     case State::PlayingCliffReaction:
@@ -177,12 +184,25 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
   }
   else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sEvent("robot.cliff_detected", {}, "");
+    
+    
+    AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
+    
+    // special animations for maintaining eye shape in severe need states
+    const NeedId severeExpressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+    if(NeedId::Energy == severeExpressedNeed){
+      reactionAnim = AnimationTrigger::NeedsSevereLowEnergyCliffReact;
+    }else if(NeedId::Repair == severeExpressedNeed){
+      reactionAnim = AnimationTrigger::NeedsSevereLowRepairCliffReact;
+    }
+    
 #ifdef COZMO_V2
     auto action = GetCliffPreReactAction(robot, _detectedFlags);
-    action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliff));
+    action->AddAction(new TriggerLiftSafeAnimationAction(robot, reactionAnim));
 #else
-    auto action = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliff);
+    auto action = new TriggerLiftSafeAnimationAction(robot, reactionAnim);
 #endif
+    
     StartActing(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now

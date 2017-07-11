@@ -86,6 +86,7 @@ private:
   
   // Behaviors that the chooser calls directly
   IBehaviorPtr _searchingForFaceBehavior;
+  IBehaviorPtr _searchingForFaceBehavior_Severe;
   IBehaviorPtr _turnToFaceBehavior;
   IBehaviorPtr _searchForCubeBehavior;
   std::shared_ptr<BehaviorFeedingEat> _eatFoodBehavior;

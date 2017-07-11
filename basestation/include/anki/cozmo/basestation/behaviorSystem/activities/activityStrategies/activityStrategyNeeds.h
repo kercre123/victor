@@ -30,6 +30,9 @@ public:
   virtual bool WantsToStartInternal(const Robot& robot, float lastTimeActivityRanSec) const override;
   virtual bool WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const override;
 
+private:
+  IWantsToRunStrategy* _higherPriorityWantsToRunStrategy;
+  
 };
 
 }

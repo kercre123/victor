@@ -14,6 +14,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToRobotShaken.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -72,6 +74,9 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
 {
   // Disable some IMU-related behaviors
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRobotShakenArray);
+  
+  // Clear severe needs expression since eyes are being re-set
+  robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
   
   // Reset variables:
   _maxShakingAccelMag = 0.f;

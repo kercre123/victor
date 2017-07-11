@@ -14,6 +14,13 @@
       "needBracket": "Critical"
     },
     
+    "higherPriorityStrategyConfig": {
+      "strategyType" : "InNeedsBracket",
+      "need": "Repair",
+      "needBracket": "Critical"
+    },
+    
+    
     // never wants to end based on time
     "activityShouldEndDurationSecs": -1.0
   },

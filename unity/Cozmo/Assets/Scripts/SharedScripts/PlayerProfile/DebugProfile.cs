@@ -7,6 +7,7 @@ namespace DataPersistence {
   // things that go here should be the exceptions.
   [System.Serializable]
   public class DebugProfile {
+    public static string kNoFreelpayOnStartLock = "no_freeplay_on_start";
     public bool LatencyDisplayEnabled;
     public bool DebugPauseEnabled;
     public Dictionary<string, List<FakeTouch>> FakeTouchRecordings;
@@ -79,6 +80,13 @@ namespace DataPersistence {
         DataPersistence.DataPersistenceManager.Instance.Save();
         if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(!NoFreeplayOnStart);
+          // Ensure freeplay idles are disabled
+          if (DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
+            RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation (Anki.Cozmo.AnimationTrigger.Count, 
+                                                                        DebugProfile.kNoFreelpayOnStartLock);
+          }else {
+            RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(DebugProfile.kNoFreelpayOnStartLock);
+          }
         }
         break;
       case "UseFastConnectivityFlow":

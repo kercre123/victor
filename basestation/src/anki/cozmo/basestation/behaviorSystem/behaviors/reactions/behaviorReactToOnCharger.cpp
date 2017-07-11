@@ -12,6 +12,8 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToOnCharger.h"
@@ -61,11 +63,17 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersOnCharger = {
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersOnCharger),
               "Reaction triggers duplicate or non-sequential");
 
-}
+} // namespace
 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _onChargerCanceled(false)
+, _timeTilSleepAnimation_s(-1.0)
+, _timeTilDisconnect_s(0.0)
+, _triggerableFromVoiceCommand(false)
+, _pushedIdleAnimation(false)
 {
   SubscribeToTags({
     GameToEngineTag::CancelIdleTimeout
@@ -83,29 +91,43 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   
   JsonTools::GetValueOptional(config, kTriggeredFromVoiceCommandKey, _triggerableFromVoiceCommand);
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToOnCharger::IsRunnableInternal(const BehaviorPreReqNone& preReqData) const
 {
   return true;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 {
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersOnCharger);
 
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
   
+  _pushedIdleAnimation = false;
+  if(NeedId::Count == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
+    _pushedIdleAnimation = true;
+  }
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
   robot.GetExternalInterface()->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
   return Result::RESULT_OK;
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
-  robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+  if(_pushedIdleAnimation){
+    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
+  }
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
 {
   if( _onChargerCanceled )
@@ -116,8 +138,9 @@ IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
   
   return Status::Running;
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
 {
   switch (event.GetData().GetTag())

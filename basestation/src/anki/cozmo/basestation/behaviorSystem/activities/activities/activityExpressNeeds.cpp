@@ -42,7 +42,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kTriggersToDisable = {
   {ReactionTrigger::RobotOnBack,                  true},
   {ReactionTrigger::RobotOnFace,                  true},
   {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  true},
+  {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
   {ReactionTrigger::VC,                           false}

@@ -13,6 +13,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToPlacedOnSlope.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -83,7 +85,19 @@ Result BehaviorReactToPlacedOnSlope::InitInternal(Robot& robot)
     _endedOnInclineLastTime = false;
   } else {
     // Play the animation then check if we're still on a slope or if we were perched on something:
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToPerchedOnBlock), &BehaviorReactToPlacedOnSlope::CheckPitch);
+    
+    AnimationTrigger reactionAnim = AnimationTrigger::ReactToPerchedOnBlock;
+    
+    // special animations for maintaining eye shape in severe need states
+    const NeedId severeNeedExpressed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+    if(NeedId::Energy == severeNeedExpressed){
+      reactionAnim = AnimationTrigger::NeedsSevereLowEnergySlopeReact;
+    }else if(NeedId::Repair == severeNeedExpressed){
+      reactionAnim = AnimationTrigger::NeedsSevereLowRepairSlopeReact;
+    }
+    
+    StartActing(new TriggerAnimationAction(robot, reactionAnim),
+                &BehaviorReactToPlacedOnSlope::CheckPitch);
   }
 
   _lastBehaviorTime = now;

@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/behaviorSystem/strategyTypes.h"
 #include "json/json-forwards.h"
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -41,6 +42,10 @@ public:
   // A random number generator all subclasses can share
   Util::RandomGenerator& GetRNG() const;
   
+  WantsToRunStrategyType GetStrategyType(){return _strategyType;}
+  
+  static WantsToRunStrategyType ExtractStrategyType(const Json::Value& config);
+  
 protected:
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
   using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
@@ -60,6 +65,7 @@ protected:
 private:
   Robot& _robot;
   std::vector<::Signal::SmartHandle> _eventHandles;
+  WantsToRunStrategyType _strategyType;
 
   void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot);
   void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot);

@@ -61,6 +61,10 @@ private:
   std::unique_ptr<Util::GraphEvaluator2d> _cooldownEvaluator;
 
   std::vector<AnimationTrigger> _animTriggers;
+  
+  bool _shouldClearExpressedState;
+  bool _caresAboutExpressedState;
+
 
   //////////
   // Members

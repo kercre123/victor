@@ -1,0 +1,18 @@
+{
+  "behaviorClass": "ExpressNeeds",
+  
+  "behaviorID": "Needs_SevereLowEnergyForcedGetOut",
+  "animTriggers": ["NeedsSevereLowEnergyForceGetOut"],
+  "need": "Energy",
+  "needBracket": "Critical",
+  "shouldClearExpressedState": true,
+  "caresAboutExpressedState": true,
+  "cooldown": {
+    "nodes": [
+      {
+        "x": 0.0,
+        "y": 0.0
+      }
+    ]
+  }
+}

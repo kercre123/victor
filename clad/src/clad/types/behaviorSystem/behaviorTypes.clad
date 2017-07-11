@@ -115,6 +115,7 @@ enum uint_8 BehaviorID {
   FactoryCentroidExtractor,
   FactoryTest,
   FeedingEat,
+  FeedingFindFacesSevere,
   FeedingSearchForCube,
   FeedingTurnToFace,
   FindFaces_socialize,
@@ -138,6 +139,7 @@ enum uint_8 BehaviorID {
   MeetCozmo_FindFaces_Socialize,
   MeetCozmo_InteractWithFaces,
 
+  Needs_SevereLowEnergyForcedGetOut,
   Needs_SevereLowEnergyGetIn,
   Needs_SevereLowEnergyRequest,
   Needs_SevereLowRepairGetIn,

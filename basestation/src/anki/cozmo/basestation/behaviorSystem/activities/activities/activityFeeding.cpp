@@ -98,7 +98,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
   {ReactionTrigger::RobotOnBack,                  true},
   {ReactionTrigger::RobotOnFace,                  true},
   {ReactionTrigger::RobotOnSide,                  true},
-  {ReactionTrigger::RobotShaken,                  true},
+  {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
   {ReactionTrigger::VC,                           false}
@@ -149,6 +149,11 @@ ActivityFeeding::ActivityFeeding(Robot& robot, const Json::Value& config)
 
   // Get the searching for face behavior
   _searchingForFaceBehavior = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FindFaces_socialize);
+  DEV_ASSERT(_searchingForFaceBehavior != nullptr &&
+             _searchingForFaceBehavior->GetClass() == BehaviorClass::FindFaces,
+             "ActivityFeeding.FeedingFoodReady.IncorrectBehaviorReceivedFromFactory");
+  
+  _searchingForFaceBehavior_Severe = robot.GetBehaviorManager().FindBehaviorByID(BehaviorID::FeedingFindFacesSevere);
   DEV_ASSERT(_searchingForFaceBehavior != nullptr &&
              _searchingForFaceBehavior->GetClass() == BehaviorClass::FindFaces,
              "ActivityFeeding.FeedingFoodReady.IncorrectBehaviorReceivedFromFactory");
@@ -310,7 +315,11 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
   switch(_chooserStage){
     case FeedingActivityStage::None:
     {
-      bestBehavior = _searchingForFaceBehavior;
+      if(isNeedSevere){
+        bestBehavior = _searchingForFaceBehavior_Severe;
+      }else{
+        bestBehavior = _searchingForFaceBehavior;
+      }
       UPDATE_STAGE(FeedingActivityStage::SearchForFace);
       
       const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -332,7 +341,12 @@ IBehaviorPtr ActivityFeeding::ChooseNextBehaviorInternal(Robot& robot, const IBe
           entry.second->SetControllerState(robot, CS::Activated);
         }
       }else{
-        bestBehavior = _searchingForFaceBehavior;
+        if(isNeedSevere){
+          bestBehavior = _searchingForFaceBehavior_Severe;
+        }else{
+          bestBehavior = _searchingForFaceBehavior;
+
+        }
       }
       break;
     }

@@ -33,7 +33,7 @@ CONSOLE_VAR(f32, kHeadUpHeadTurnSpeed_degPerSec, "Behavior.FindFaces", 90.0f);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
-  : BaseClass(robot, config)
+: BaseClass(robot, config)
 {
 
   JsonTools::GetValueOptional(config, "maxFaceAgeToLook_ms", _maxFaceAgeToLook_ms);

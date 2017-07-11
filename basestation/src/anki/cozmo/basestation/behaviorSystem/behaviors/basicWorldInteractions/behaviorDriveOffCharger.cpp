@@ -103,12 +103,16 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 {
   //Disable Cliff Reaction during behavior
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersDriveOffChargerArray);
-
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations(
-    {AnimationTrigger::DriveStartLaunch,
-     AnimationTrigger::DriveLoopLaunch,
-     AnimationTrigger::DriveEndLaunch},
-      GetIDStr());
+  
+  _pushedIdleAnimation = false;
+  if(NeedId::Count == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations(
+           {AnimationTrigger::DriveStartLaunch,
+            AnimationTrigger::DriveLoopLaunch,
+            AnimationTrigger::DriveEndLaunch},
+           GetIDStr());
+    _pushedIdleAnimation = true;
+  }
 
   const bool onTreads = robot.GetOffTreadsState() == OffTreadsState::OnTreads;
   if( onTreads ) {
@@ -125,7 +129,9 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::StopInternal(Robot& robot)
 {
-  robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+  if(_pushedIdleAnimation){
+    robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
+  }
 }
     
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

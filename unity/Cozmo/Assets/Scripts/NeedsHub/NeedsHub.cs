@@ -183,6 +183,12 @@ namespace Cozmo.Hub {
         robot.SetEnableFreeplayActivity(true);
         AllowFreeplayUI(true);
       }
+
+      // If we're not starting freeplay, make sure idles are turned off by default
+      if(DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
+        robot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.Count, 
+                                DebugProfile.kNoFreelpayOnStartLock);
+      }
     }
 
     // Any function calling this will need to set it's own music if unique

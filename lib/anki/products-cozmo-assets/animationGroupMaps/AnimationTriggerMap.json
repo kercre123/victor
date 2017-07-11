@@ -986,6 +986,10 @@
       "AnimName": "ag_repair_reaction_01"
     },
     {
+      "CladEvent": "NeedsSevereLowEnergyCliffReact",
+      "AnimName": "ag_energy_reacttocliff_lvl2"
+    },
+    {
       "CladEvent": "NeedsSevereLowEnergyDrivingEnd",
       "AnimName": "ag_energy_drivegetout"
     },
@@ -996,6 +1000,10 @@
     {
       "CladEvent": "NeedsSevereLowEnergyDrivingStart",
       "AnimName": "ag_energy_drivegetin"
+    },
+    {
+      "CladEvent": "NeedsSevereLowEnergyForceGetOut",
+      "AnimName" : "ag_energy_getout"
     },
     {
       "CladEvent": "NeedsSevereLowEnergyGetIn",
@@ -1010,12 +1018,20 @@
       "AnimName": "ag_energy_requestsevere"
     },
     {
+      "CladEvent": "NeedsSevereLowEnergySlopeReact",
+      "AnimName": "ag_energy_stuckonblock_lvl2"
+    },
+    {
       "CladEvent": "NeedsSevereLowPlayGetIn",
       "AnimName": "ag_play_getin"
     },
     {
       "CladEvent": "NeedsSevereLowPlayRequest",
       "AnimName": "ag_play_requestplay_level2_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairCliffReact",
+      "AnimName": "ag_repair_severe_interruptions_edge"
     },
     {
       "CladEvent": "NeedsSevereLowRepairDrivingEnd",
@@ -1030,6 +1046,10 @@
       "AnimName": "ag_repair_severe_driving_start_01"
     },
     {
+      "CladEvent": "NeedsSevereLowRepairForceGetOut",
+      "AnimName" : "ag_repair_severe_getout_01"
+    },
+    {
       "CladEvent": "NeedsSevereLowRepairGetIn",
       "AnimName" : "ag_repair_severe_getin_01"
     },
@@ -1040,6 +1060,10 @@
     {
       "CladEvent": "NeedsSevereLowRepairRequest",
       "AnimName": "ag_repair_severe_reaction_01"
+    },
+    {
+      "CladEvent": "NeedsSevereLowRepairSlopeReact",
+      "AnimName": "ag_repair_severe_interruptions_stuckoncube"
     },
     {
       "CladEvent": "NeutralFace",

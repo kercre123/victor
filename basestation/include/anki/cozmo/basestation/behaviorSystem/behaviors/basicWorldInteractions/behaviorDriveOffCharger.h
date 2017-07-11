@@ -67,6 +67,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   float _distToDrive_mm = 0.0f;
+  bool _pushedIdleAnimation = false;
 
 };
 

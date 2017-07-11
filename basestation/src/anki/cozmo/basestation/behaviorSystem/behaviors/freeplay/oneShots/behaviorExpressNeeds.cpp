@@ -16,6 +16,8 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/needsSystem/needsState.h"
@@ -27,28 +29,45 @@
 namespace Anki {
 namespace Cozmo {
 
-static const char* kAnimTriggersKey = "animTriggers";
+namespace{
+static const char* kAnimTriggersKey              = "animTriggers";
+static const char* kNeedConfigKey                = "need";
+static const char* kNeedBracketConfigKey         = "needBracket";
+static const char* kCooldownConfigKey            = "cooldown";
+
+static const char* kClearExpressedStateConfigKey      = "shouldClearExpressedState";
+static const char* kCaresAboutExpressedStateConfigKey = "caresAboutExpressedState";
+}
 
 BehaviorExpressNeeds::BehaviorExpressNeeds(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
-  , _cooldownEvaluator( new Util::GraphEvaluator2d() )
+: IBehavior(robot, config)
+, _need(NeedId::Count)
+, _requiredBracket(NeedBracketId::Count)
+, _cooldownEvaluator( new Util::GraphEvaluator2d() )
+, _shouldClearExpressedState(false)
+, _caresAboutExpressedState(false)
 {
   {
     const auto& needStr = JsonTools::ParseString(config,
-                                                 "need",
+                                                 kNeedConfigKey,
                                                  "BehaviorExpressNeeds.ConfigError.Need");
     _need = NeedIdFromString(needStr);
+    ANKI_VERIFY(_need != NeedId::Count,
+                "BehaviorExpressNeeds.Constructor.InvalidNeed",
+                "Need should not be count for behavior %s",
+                GetIDStr().c_str());
+
   }
 
   {
     const auto& needBracketStr = JsonTools::ParseString(config,
-                                                        "needBracket",
+                                                        kNeedBracketConfigKey,
                                                         "BehaviorExpressNeeds.ConfigError.NeedLevel");
     _requiredBracket = NeedBracketIdFromString(needBracketStr);
   }
 
   {
-    const Json::Value& cooldownEvaluatorConfig = config["cooldown"];
+    const Json::Value& cooldownEvaluatorConfig = config[kCooldownConfigKey];
     if( ANKI_VERIFY( !cooldownEvaluatorConfig.isNull(),
                      "BehaviorExpressNeeds.ConfigError.NoCooldownConfig",
                      "Behavior %s did not specify a cooldown config",
@@ -62,7 +81,12 @@ BehaviorExpressNeeds::BehaviorExpressNeeds(Robot& robot, const Json::Value& conf
       }
     }
   }
+  
+  // Check should clear expressed state
+  JsonTools::GetValueOptional(config, kClearExpressedStateConfigKey, _shouldClearExpressedState);
 
+  JsonTools::GetValueOptional(config, kCaresAboutExpressedStateConfigKey, _caresAboutExpressedState);
+  
   // load anim triggers
   for (const auto& trigger : config[kAnimTriggersKey])
   {
@@ -83,10 +107,17 @@ bool BehaviorExpressNeeds::IsRunnableInternal(const BehaviorPreReqRobot& preReqD
 {
   const Robot& robot = preReqData.GetRobot();
 
-  // first check if we are in the right needs bracket
-  NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
-  if( !currNeedState.IsNeedAtBracket(_need, _requiredBracket) ) {
-    return false;
+  if(_caresAboutExpressedState &&
+     (_requiredBracket == NeedBracketId::Critical)){
+    if(_need != robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+      return false;
+    }
+  }else{
+    // first check if we are in the right needs bracket
+    NeedsState& currNeedState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
+    if( !currNeedState.IsNeedAtBracket(_need, _requiredBracket) ) {
+      return false;
+    }
   }
 
   // now check if we're on cooldown
@@ -130,6 +161,9 @@ Result BehaviorExpressNeeds::ResumeInternal(Robot& robot)
 
 void BehaviorExpressNeeds::StopInternal(Robot& robot)
 {
+  if(_shouldClearExpressedState){
+    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+  }
 
 }
 

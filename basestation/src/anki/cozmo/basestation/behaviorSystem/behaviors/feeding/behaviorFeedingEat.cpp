@@ -83,12 +83,13 @@ BehaviorFeedingEat::BehaviorFeedingEat(Robot& robot, const Json::Value& config)
 , _timeCubeIsSuccessfullyDrained_sec(FLT_MAX)
 , _hasRegisteredActionComplete(false)
 , _currentState(State::DrivingToFood)
-{  
+{
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject
   });
 }
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFeedingEat::IsRunnableInternal(const BehaviorPreReqAcknowledgeObject& preReqData ) const
 {
@@ -103,6 +104,7 @@ bool BehaviorFeedingEat::IsRunnableInternal(const BehaviorPreReqAcknowledgeObjec
   return false;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorFeedingEat::InitInternal(Robot& robot)
 {
@@ -111,6 +113,7 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
   }
   
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
+  _hasRegisteredActionComplete = false;
   
   TransitionToDrivingToFood(robot);
   return Result::RESULT_OK;
@@ -120,8 +123,6 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
 {
-  
-  
   // Feeding should be considered "complete" so long as the animation has reached
   // the point where all light has been drained from the cube.  If the behavior
   // is interrupted after that point in the animation or the animation completes
@@ -134,7 +135,7 @@ IBehavior::Status BehaviorFeedingEat::UpdateInternal(Robot& robot)
     _hasRegisteredActionComplete = true;
     robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::Feed);
   }
-  
+
   
   if((_currentState != State::ReactingToInterruption) &&
      (robot.GetOffTreadsState() != OffTreadsState::OnTreads) &&
@@ -151,7 +152,6 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
-
 }
 
 

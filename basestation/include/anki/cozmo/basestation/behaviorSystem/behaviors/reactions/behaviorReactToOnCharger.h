@@ -42,9 +42,11 @@ protected:
   
 private:
   bool _onChargerCanceled;
-  float _timeTilSleepAnimation_s = -1.0;
-  float _timeTilDisconnect_s = 0.0;
-  bool _triggerableFromVoiceCommand = false;
+  float _timeTilSleepAnimation_s;
+  float _timeTilDisconnect_s;
+  bool _triggerableFromVoiceCommand;
+  
+  bool _pushedIdleAnimation;
   
 
   

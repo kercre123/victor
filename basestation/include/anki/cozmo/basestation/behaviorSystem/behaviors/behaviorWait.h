@@ -37,6 +37,8 @@ public:
   //
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override { return true; }
   virtual bool CarryingObjectHandledInternally() const override { return true;}
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
+
   
 protected:
   

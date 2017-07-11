@@ -58,7 +58,7 @@ private:
   std::vector<IFeedingListener*> _feedingListeners;
   float _timeCubeIsSuccessfullyDrained_sec;
   bool  _hasRegisteredActionComplete;
-  
+
   State _currentState;
   
   void TransitionToDrivingToFood(Robot& robot);

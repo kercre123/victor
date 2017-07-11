@@ -32,7 +32,6 @@ namespace Cozmo {
 
   
 namespace{
-const char* kStrategyTypeKey = "strategyType";
   
 }
 
@@ -40,14 +39,12 @@ const char* kStrategyTypeKey = "strategyType";
 IWantsToRunStrategy* WantsToRunStrategyFactory::CreateWantsToRunStrategy(Robot& robot,
                                                                          const Json::Value& config)
 {
-  std::string strategyType = JsonTools::ParseString(config,
-                                                    kStrategyTypeKey,
-                                                    "WantsToRunStrategyFactory.NoTypeSpecified");
-  WantsToRunStrategyType strategyTypes = WantsToRunStrategyTypeFromString(strategyType);
+
+  WantsToRunStrategyType strategyType = IWantsToRunStrategy::ExtractStrategyType(config);
   
   IWantsToRunStrategy* strategy = nullptr;
 
-  switch (strategyTypes) {
+  switch (strategyType) {
     case WantsToRunStrategyType::AlwaysRun:
     {
       strategy = new StrategyAlwaysRun(robot, config);

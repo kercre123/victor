@@ -23,12 +23,24 @@ namespace Cozmo {
 
 namespace {
 using namespace ExternalInterface;
+const char* kStrategyTypeKey = "strategyType";
 }
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+WantsToRunStrategyType IWantsToRunStrategy::ExtractStrategyType(const Json::Value& config)
+{
+  std::string strategyType = JsonTools::ParseString(config,
+                                                    kStrategyTypeKey,
+                                                    "IWantsToRunStrategy.ExtractStrategyType.NoTypeSpecified");
+  return WantsToRunStrategyTypeFromString(strategyType);
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IWantsToRunStrategy::IWantsToRunStrategy(Robot& robot, const Json::Value& config)
 : _robot(robot)
+, _strategyType(ExtractStrategyType(config))
 {
 }
 
