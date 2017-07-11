@@ -82,7 +82,10 @@ Blockly.BlockSvg.FIELD_WIDTH_MIN_EDIT = 13 * Blockly.BlockSvg.GRID_UNIT;
  * Maximum width of user inputs during editing
  * @const
  */
-Blockly.BlockSvg.FIELD_WIDTH_MAX_EDIT = 24 * Blockly.BlockSvg.GRID_UNIT;
+// *** ANKI CHANGE***
+// Increase text field width during editing
+Blockly.BlockSvg.FIELD_WIDTH_MAX_EDIT = 96 * Blockly.BlockSvg.GRID_UNIT;
+//Blockly.BlockSvg.FIELD_WIDTH_MAX_EDIT = 24 * Blockly.BlockSvg.GRID_UNIT;
 
 /**
  * Maximum height of user inputs during editing

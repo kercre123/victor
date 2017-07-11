@@ -1121,9 +1121,13 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       string baseFilename = GetRootPath() + scratchPathToHTML;
       string urlPath = GetUrlPath(baseFilename);
 
+      // Append locale parameter to URL
+      string locale = Localization.GetStringsLocale();
+      urlPath += "?locale=" + locale;
+
       DAS.Info("CodeLab.LoadURL", "urlPath = '" + urlPath + "'");
 
-      _CurrentURLFilename = scratchPathToHTML;
+      _CurrentURLFilename = scratchPathToHTML;  // The currently displayed URL (used for hot-reloading)
       _WebViewObjectComponent.LoadURL(urlPath);
       if ((_DevLoadPath != null) && _DevLoadPathFirstRequest) {
         _DevLoadPathFirstRequest = false;
