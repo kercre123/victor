@@ -216,7 +216,8 @@ message ChargerEvent {
 // Unexpected movement was detected so robot was stopped and all actions were cancelled
 message UnexpectedMovement {
   uint_32 timestamp,
-  UnexpectedMovementType movementType
+  UnexpectedMovementType movementType,
+  UnexpectedMovementSide movementSide
 }
 
 // Whether or not the restore was successful

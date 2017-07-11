@@ -221,9 +221,12 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     // adding of obstacles gets turned off too. This is kind of a hack to avoid
     // needing another message/system for turning this on and off.
 
+    UnexpectedMovementSide unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
+    
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
+    // TODO: Should we really be checking this here? It prevents collision obstacles from being created while reaction is disabled. (COZMO-13034)
     const bool isReactToUnexpectedMovementEnabled = _robot.GetBehaviorManager().
                         IsReactionTriggerEnabled(ReactionTrigger::UnexpectedMovement);
     if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && isReactToUnexpectedMovementEnabled)
@@ -269,6 +272,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           if(leftGoingForward)
           {
             // Put obstacle on right side
+            unexpectedMovementSide = UnexpectedMovementSide::RIGHT;
             obstaclePoseWrtRobot.SetRotation(-M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, -0.5f*ROBOT_BOUNDING_Y - obstaclePositionPad_mm, 0.f});
             debugStr = "to right of";
@@ -276,6 +280,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           else
           {
             // Put obstacle on left side
+            unexpectedMovementSide = UnexpectedMovementSide::LEFT;
             obstaclePoseWrtRobot.SetRotation(M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, 0.5f*ROBOT_BOUNDING_Y + obstaclePositionPad_mm, 0.f});
             debugStr = "to left of";
@@ -288,12 +293,14 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           if(leftGoingForward && rightGoingForward)
           {
             // Put obstacle in front of robot (note: leave unrotated)
+            unexpectedMovementSide = UnexpectedMovementSide::FRONT;
             obstaclePoseWrtRobot.SetTranslation({ROBOT_BOUNDING_X_FRONT + obstaclePositionPad_mm, 0.f, 0.f});
             debugStr = "in front of";
           }
           else
           {
             // Put obstacle behind robot
+            unexpectedMovementSide = UnexpectedMovementSide::BACK;
             obstaclePoseWrtRobot.SetTranslation({ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X - obstaclePositionPad_mm, 0.f, 0.f});
             debugStr = "behind";
           }
@@ -325,7 +332,11 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
       
     } // if(unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED)
     
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnexpectedMovement(robotState.timestamp, unexpectedMovementType)));
+    {
+      // Broadcast the associated event
+      ExternalInterface::UnexpectedMovement msg(robotState.timestamp, unexpectedMovementType, unexpectedMovementSide);
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    }
     
     _unexpectedMovement.Reset();
     

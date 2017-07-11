@@ -13,5 +13,14 @@ enum uint_8 UnexpectedMovementType
   TURNED_IN_OPPOSITE_DIRECTION  // Turning and spun in opposite direction
 }
 
+enum uint_8 UnexpectedMovementSide
+{
+  UNKNOWN = 0,
+  FRONT,
+  BACK,
+  LEFT,
+  RIGHT
+}
+
 } // namespace Cozmo
 } // namespace Anki

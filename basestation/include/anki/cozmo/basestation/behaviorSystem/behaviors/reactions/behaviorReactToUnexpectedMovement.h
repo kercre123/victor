@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/types/unexpectedMovementTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
@@ -30,6 +31,8 @@ private:
   friend class BehaviorContainer;
   BehaviorReactToUnexpectedMovement(Robot& robot, const Json::Value& config);
   
+  UnexpectedMovementSide _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
+  
 public:  
   virtual bool IsRunnableInternal(const BehaviorPreReqNone& preReqData) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
@@ -37,6 +40,7 @@ public:
 protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override { };
+  virtual void   AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
 };
   
 }

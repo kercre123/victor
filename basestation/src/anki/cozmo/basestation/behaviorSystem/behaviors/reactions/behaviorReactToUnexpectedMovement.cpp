@@ -38,11 +38,27 @@ Result BehaviorReactToUnexpectedMovement::InitInternal(Robot& robot)
   // Make Cozmo more frustrated if he keeps running into things/being turned
   robot.GetMoodManager().TriggerEmotionEvent("ReactToUnexpectedMovement", MoodManager::GetCurrentTimeInSeconds());
   
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement), [this](){
+  // Lock the wheels if the unexpected movement is behind us so we don't drive backward and delete the created obstacle
+  // TODO: Consider using a different animation that drives forward instead of backward? (COZMO-13035)
+  const u8 tracksToLock = Util::EnumToUnderlying(_unexpectedMovementSide == UnexpectedMovementSide::BACK ?
+                                                 AnimTrackFlag::BODY_TRACK :
+                                                 AnimTrackFlag::NO_TRACKS);
+  
+  const u32  kNumLoops = 1;
+  const bool kInterruptRunning = true;
+
+  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement,
+                                                 kNumLoops, kInterruptRunning, tracksToLock), [this]()
+  {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
   });
   
   return RESULT_OK;
+}
+  
+void BehaviorReactToUnexpectedMovement::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  _unexpectedMovementSide = event.GetData().Get_UnexpectedMovement().movementSide;
 }
   
 }
