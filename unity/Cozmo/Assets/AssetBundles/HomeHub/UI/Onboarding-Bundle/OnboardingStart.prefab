@@ -214,13 +214,32 @@ MonoBehaviour:
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
   _PlayIdle: 1
+  _LoopedAnim:
+    _EnumValueAsString: OnboardingPreBirth
+    _EnumValue: 299
   _CustomIdle:
-    _EnumValueAsString: Count
-    _EnumValue: 478
+    _EnumValueAsString: OnboardingPreBirth
+    _EnumValue: 299
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: 
   _DimNeedsMeters: 
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions: []
+  _ForceNeedValuesOnStart:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId: 45
+  _ForceNeedValuesOnEvent:
+  - -1
+  - -1
+  - -1
+  _UnPausedNeedMeter: 3
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
   _ButtonStateFeed: 3

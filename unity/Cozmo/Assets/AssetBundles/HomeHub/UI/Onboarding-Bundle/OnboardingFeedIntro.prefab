@@ -84,7 +84,9 @@ MonoBehaviour:
   _DimBackground: 1
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
-  _PlayIdle: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 491
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleEnergy
     _EnumValue: 295
@@ -95,10 +97,15 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
-  - -1
-  - -1
-  - -1
+  - 1
+  - 0.6
+  - 0.6
   _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId: 45
+  _ForceNeedValuesOnEvent:
   - -1
   - -1
   - -1

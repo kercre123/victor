@@ -104,7 +104,7 @@ public class BehaviorDisplay : MonoBehaviour {
       _BehaviorLabel.color = _BehaviorDefaultColor;
     }
     // Fade our new string back up
-    _BehaviorLabel.text = "> " + _CurrString;
+    _BehaviorLabel.text = _CurrString;
     CleanupTween();
     _FadeTween = _BehaviorLabel.DOFade(1.0F, _FadeTime_Sec);
   }

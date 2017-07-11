@@ -21,7 +21,7 @@ namespace Onboarding {
 
       // set up for the upcoming repair bit
       ForceSetDamagedParts msg = new ForceSetDamagedParts();
-      msg.partIsDamaged = new bool[] { true, false, false };
+      msg.partIsDamaged = new bool[] { false, true, false };
       RobotEngineManager.Instance.Message.ForceSetDamagedParts = msg;
       RobotEngineManager.Instance.SendMessage();
     }

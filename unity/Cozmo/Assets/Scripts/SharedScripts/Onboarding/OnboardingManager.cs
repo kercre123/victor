@@ -487,6 +487,7 @@ public class OnboardingManager : MonoBehaviour {
     for (int i = 0; i < numStates; ++i) {
       OnboardingManager.Instance.CompletePhase((OnboardingPhases)i, false);
     }
+    HubWorldBase.Instance.StartFreeplay();
   }
 
   public void DebugSkipOne() {

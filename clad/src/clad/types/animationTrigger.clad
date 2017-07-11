@@ -321,6 +321,7 @@ enum int_32 AnimationTrigger
   OnboardingSoundOnlyLiftEffortPickup,
   OnboardingSoundOnlyLiftEffortPlaceLow,
   OnboardingGetOut,
+  OnboardingWakeUpDriveOffCharger,
   PeekABooGetIn,
   PeekABooGetOutHappy,
   PeekABooGetOutSad,

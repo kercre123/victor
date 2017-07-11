@@ -1,4 +1,4 @@
-﻿using Cozmo.UI;
+using Cozmo.UI;
 using UnityEngine;
 using System.Collections.Generic;
 using Cozmo.Needs;
@@ -31,10 +31,11 @@ namespace Onboarding {
     protected bool _ReactionsEnabled = true;
 
     [SerializeField]
-    protected bool _PlayIdle = false;
+    protected SerializableAnimationTrigger _LoopedAnim = new SerializableAnimationTrigger();
 
     [SerializeField]
     protected SerializableAnimationTrigger _CustomIdle = new SerializableAnimationTrigger();
+
     [SerializeField]
     protected bool _FreeplayEnabledOnExit = false;
 
@@ -58,6 +59,11 @@ namespace Onboarding {
 
     [SerializeField]
     protected float[] _ForceNeedValuesOnEnd = new float[3] { -1.0f, -1.0f, -1.0f };
+
+    [SerializeField]
+    protected Anki.Cozmo.NeedsActionId _ForceNeedValuesOnEventId = Anki.Cozmo.NeedsActionId.Count;
+    [SerializeField]
+    protected float[] _ForceNeedValuesOnEvent = new float[3] { -1.0f, -1.0f, -1.0f };
 
     // By default they are all paused during onboarding from decay
     [SerializeField]
@@ -87,11 +93,33 @@ namespace Onboarding {
       DAS.Info("DEV onboarding stage.started", name);
 
       // Early idle states need to loop the loading animation.
-      if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
+      IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+      if (currentRobot != null) {
         // Really doesn't show a one frame pop to default idle between states
-        RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth, kOnboardingIdleAnimLock);
-        HandleLoopedAnimationComplete();
+        if (_LoopedAnim.Value != Anki.Cozmo.AnimationTrigger.Count) {
+          // The connection might still be playing the intro so queue this as next
+          currentRobot.SendAnimationTrigger(_LoopedAnim.Value,
+                                            HandleLoopedAnimationComplete, Anki.Cozmo.QueueActionPosition.NEXT);
+        }
+
+        if (_ForceNeedValuesOnEventId != Anki.Cozmo.NeedsActionId.Count) {
+          NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+        }
       }
+    }
+
+    public virtual void OnDestroy() {
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
+      }
+
+      HubWorldBase instance = HubWorldBase.Instance;
+      if (instance != null && _FreeplayEnabledOnExit) {
+        instance.StartFreeplay();
+      }
+      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
+
+      DAS.Info("DEV onboarding stage.ended", name);
     }
 
     public virtual void OnEnable() {
@@ -156,18 +184,12 @@ namespace Onboarding {
       RobotEngineManager.Instance.SendMessage();
     }
 
-    public virtual void OnDestroy() {
-      if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(kOnboardingIdleAnimLock);
-        RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
+    private void HandleLatestNeedsLevelChanged(Anki.Cozmo.NeedsActionId actionId) {
+      if (_ForceNeedValuesOnEventId == actionId) {
+        RobotEngineManager.Instance.Message.ForceSetNeedsLevels =
+                                        Singleton<ForceSetNeedsLevels>.Instance.Initialize(_ForceNeedValuesOnEvent);
+        RobotEngineManager.Instance.SendMessage();
       }
-
-      HubWorldBase instance = HubWorldBase.Instance;
-      if (instance != null && _FreeplayEnabledOnExit) {
-        instance.StartFreeplay();
-      }
-
-      DAS.Info("DEV onboarding stage.ended", name);
     }
 
     public virtual void SkipPressed() {
@@ -176,8 +198,7 @@ namespace Onboarding {
 
     protected virtual void HandleLoopedAnimationComplete(bool success = true) {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth,
-                                                                              HandleLoopedAnimationComplete);
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(_LoopedAnim.Value, HandleLoopedAnimationComplete);
       }
     }
   }

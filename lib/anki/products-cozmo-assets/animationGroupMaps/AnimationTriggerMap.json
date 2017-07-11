@@ -1228,6 +1228,10 @@
       "AnimName": "ag_launch_reacttonextscreen"
     },
     {
+      "CladEvent": "OnboardingWakeUpDriveOffCharger",
+      "AnimName": "ag_launch_altwakeup_01"
+    },
+    {
       "CladEvent": "PeekABooGetIn",
       "AnimName": "ag_peekaboo_getin"
     },

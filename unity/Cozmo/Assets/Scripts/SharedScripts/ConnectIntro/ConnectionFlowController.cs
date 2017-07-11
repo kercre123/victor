@@ -122,6 +122,16 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   public static AnimationTrigger GetAnimationForWakeUp() {
+    // Previously they quit onboarding in the middle, we need another way to drive off charger
+    // other than first onboarding animation.
+    if (!OnboardingManager.Instance.AllowFreeplayOnHubEnter()) {
+      AnimationTrigger wakeUpTrigger = AnimationTrigger.StartSleeping;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null && robot.Status(RobotStatusFlag.IS_ON_CHARGER)) {
+        wakeUpTrigger = AnimationTrigger.OnboardingWakeUpDriveOffCharger;
+      }
+      return wakeUpTrigger;
+    }
     Cozmo.Needs.NeedsStateManager nsm = Cozmo.Needs.NeedsStateManager.Instance;
     if (nsm != null) {
       if (nsm.GetCurrentDisplayValue(NeedId.Repair).Bracket.Equals(NeedBracketId.Critical)) {
@@ -485,6 +495,7 @@ public class ConnectionFlowController : MonoBehaviour {
         data.Pack(ms);
 
         robot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
+        robot.SendAnimationTrigger(AnimationTrigger.StartSleeping);
       }
       else {
         DAS.Warn("ConnectionFlowController.CheckForRestoreRobotFlow", "Robot has disconnected");
@@ -523,7 +534,9 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void HandleWakeAnimationComplete(bool success) {
-    GameObject.Destroy(_WakingUpCozmoScreenInstance);
+    if (_WakingUpCozmoScreenInstance != null) {
+      GameObject.Destroy(_WakingUpCozmoScreenInstance);
+    }
     DAS.Debug("ConnectionFlow.HandleWakeAnimationComplete", "wake up animation: " + success);
     FinishConnectionFlow();
   }
