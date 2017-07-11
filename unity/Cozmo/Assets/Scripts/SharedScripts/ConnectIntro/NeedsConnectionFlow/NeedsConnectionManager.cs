@@ -2,6 +2,7 @@
 using Anki.Assets;
 using Cozmo.ConnectionFlow.UI;
 using System.Collections.Generic;
+using DataPersistence;
 
 namespace Cozmo.ConnectionFlow {
   public class NeedsConnectionManager : MonoBehaviour {
@@ -23,6 +24,10 @@ namespace Cozmo.ConnectionFlow {
     [SerializeField]
     private GameObjectDataLink _FirstTimeConnectViewPrefabData;
     private FirstTimeConnectView _FirstTimeConnectViewInstance;
+
+    [SerializeField]
+    private Cozmo.Settings.SDKModal _SDKModalPrefab;
+
 
     private bool _StartFlowInProgress = false;
 
@@ -219,10 +224,16 @@ namespace Cozmo.ConnectionFlow {
 
     private void IntroFlowComplete() {
       _StartFlowInProgress = false;
-      GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
-      hubWorldObject.transform.SetParent(transform, false);
-      _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
-      _HubWorldInstance.LoadHubWorld();
+
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
+        EnableSDK();
+      }
+      else {
+        GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
+        hubWorldObject.transform.SetParent(transform, false);
+        _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
+        _HubWorldInstance.LoadHubWorld();
+      }
     }
 
     private void HandleConnectionFlowQuit() {
@@ -300,6 +311,17 @@ namespace Cozmo.ConnectionFlow {
         }
         _NeedsUnconnectViewInstance = null;
       }
+    }
+
+    private void EnableSDK() {
+      DataPersistenceManager.Instance.IsSDKEnabled = true;
+      DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
+      DataPersistenceManager.Instance.Save();
+
+      var sdkModalPriorityData = new Cozmo.UI.ModalPriorityData(Cozmo.UI.ModalPriorityLayer.VeryHigh, 0,
+                                Cozmo.UI.LowPriorityModalAction.Queue,
+                                Cozmo.UI.HighPriorityModalAction.ForceCloseOthersAndOpen);
+      UIManager.OpenModal(_SDKModalPrefab, sdkModalPriorityData, null);
     }
   }
 }
