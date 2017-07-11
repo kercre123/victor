@@ -85,7 +85,6 @@ public class CozmoText : Anki.Core.UI.Components.AnkiTextMeshPro {
 
     if (_DisplayText != displayText || _DisplayText != m_text) {
       _DisplayText = displayText;
-      m_text = _DisplayText;
       return true;
     }
     return false;
