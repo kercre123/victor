@@ -753,12 +753,12 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     }
 
     private void WebViewCallback(string jsonStringFromJS) {
-      // TODO Temporary solution for removing PII from logs.
-      // For vertical will need to check more than just CozmoSays,
-      // potentially. Also, ideally only strip out CozmoSays
-      // payload, not entire JSON string.
       string logJSONStringFromJS = jsonStringFromJS;
       if (logJSONStringFromJS.Contains("cozmoSays")) {
+        // TODO Temporary solution for removing PII from logs.
+        // For vertical will need to check more than just CozmoSays,
+        // potentially. Also, ideally only strip out CozmoSays
+        // payload, not entire JSON string.
         logJSONStringFromJS = "SayTextAction-Redacted";
       }
 
@@ -953,13 +953,24 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         TurnInPlace(-kTurnAngle, inProgressScratchBlock.CompletedTurn);
       }
       else if (scratchRequest.command == "cozmoSays") {
-        bool hasBadWords = BadWordsFilterManager.Instance.Contains(scratchRequest.argString);
+        string cozmoSaysText = scratchRequest.argString;
+        string cozmoSaysTextCleaned = "";
+
+        // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
+        for (int i = 0; i < cozmoSaysText.Length; i++) {
+          char currentChar = cozmoSaysText[i];
+          if (char.IsLetter(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
+            cozmoSaysTextCleaned += currentChar;
+          }
+        }
+
+        bool hasBadWords = BadWordsFilterManager.Instance.Contains(cozmoSaysTextCleaned);
         _SessionState.ScratchBlockEvent(scratchRequest.command, DASUtil.FormatExtraData(hasBadWords.ToString()));  // deliberately don't send string as it's PII
         if (hasBadWords) {
-          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock);
+          RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.CozmoSaysBadWord, inProgressScratchBlock.AdvanceToNextBlock);
         }
         else {
-          RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(scratchRequest.argString, Anki.Cozmo.AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock);
+          RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(cozmoSaysTextCleaned, AnimationTrigger.Count, callback: inProgressScratchBlock.AdvanceToNextBlock);
         }
       }
       else if (scratchRequest.command == "cozmoHeadAngle") {
@@ -1036,6 +1047,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       }
 
       return;
+    }
+
+    // Less forgiving than char.IsPunctuation()
+    private bool IsPunctuation(char c) {
+      return c == '.' || c == ';' || c == '\'' || c == ',' || c == '?' || c == '!' || c == ':';
     }
 
     private void OpenCodeLabProject(RequestToOpenProjectOnWorkspace request, string projectUUID) {

@@ -364,7 +364,7 @@
       "translation": "Cancel"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle": {
-      "translation": "Delete \\'{0}\\'?"
+      "translation": "Delete \"{0}\"?"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText": {
       "translation": "Yes, Delete"

@@ -83,6 +83,15 @@ Blockly.Blocks['text_with_validator'] = {
       if (inputText.length > MAX_TEXT_LENGTH) {
         inputText = inputText.slice(0, MAX_TEXT_LENGTH);
       }
+
+      // Remove bad characters
+      inputText = inputText.replace("'", "");
+      inputText = inputText.replace('"', "");
+      inputText = inputText.replace('<', "");
+      inputText = inputText.replace('>', "");
+      inputText = inputText.replace('\\', "");
+      inputText = inputText.replace('/', "");
+
       return inputText;
     });
   }
