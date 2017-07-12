@@ -85,12 +85,7 @@ Blockly.Blocks['text_with_validator'] = {
       }
 
       // Remove bad characters
-      inputText = inputText.replace("'", "");
-      inputText = inputText.replace('"', "");
-      inputText = inputText.replace('<', "");
-      inputText = inputText.replace('>', "");
-      inputText = inputText.replace('\\', "");
-      inputText = inputText.replace('/', "");
+      var inputText = inputText.replace(/[|&;$%@"'/\\<>()+,]/g, "");
 
       return inputText;
     });
