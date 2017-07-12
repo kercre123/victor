@@ -3,10 +3,10 @@
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
-	    "anki-thirdparty": {
-	        "branch": "branches/cozmo",
-		"version": "18"
-	    },
+            "anki-thirdparty": {
+                "branch": "branches/cozmo",
+                "version": "18"
+            },
             "cozmo-assets": {
                 "allow_extra_files": "True",
                 "extract_types_from_tar": [
@@ -22,7 +22,7 @@
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "165"
+                "version": "166"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -53,4 +53,3 @@
         "root_url": "https://build.ankicore.com/"
     }
 }
-
