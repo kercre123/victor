@@ -4606,10 +4606,10 @@
                             "SkinFontStyle": true,
                             "FontStyle": 0,
                             "SkinTextAlignment": true,
-                            "TextAlignment": 513,
+                            "TextAlignment": 514,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
                             "SkinFontSize": true,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -4647,8 +4647,8 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 55.0,
-                            "AutoSizingMax": 65.0,
+                            "AutoSizingMin": 35.0,
+                            "AutoSizingMax": 55.0,
                             "RectTF": {
                                 "AnchoredPosition": {
                                     "x": 0.0,
@@ -10833,9 +10833,9 @@
                             },
                             "SkinFontColor": true,
                             "FontColor": {
-                                "r": 0.11372549831867218,
-                                "g": 0.6784313917160034,
-                                "b": 0.8352941870689392,
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
                                 "a": 1.0
                             },
                             "SkinImage": false,
@@ -10885,7 +10885,7 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 108.0,
+                            "AutoSizingMin": 98.0,
                             "AutoSizingMax": 108.0,
                             "RectTF": {
                                 "AnchoredPosition": {
@@ -15212,22 +15212,22 @@
                             },
                             "SkinFontColor": true,
                             "FontColor": {
-                                "r": 0.9264705777168274,
-                                "g": 0.9264705777168274,
-                                "b": 0.9264705777168274,
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
                                 "a": 1.0
                             },
                             "SkinImage": false,
                             "ImageResourceKey": "",
                             "SkinFont": true,
-                            "SkinFontStyle": false,
+                            "SkinFontStyle": true,
                             "FontStyle": 0,
                             "SkinTextAlignment": true,
                             "TextAlignment": 513,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
                             "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
-                            "SkinFontSize": false,
+                            "SkinFontSize": true,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
                             "SkinRectTF": false,
@@ -15253,9 +15253,9 @@
                             "ShadowUseGraphicAlpha": false,
                             "SkinTMPOutlineColor": true,
                             "TMPOutlineColor": {
-                                "r": 1.0,
-                                "g": 1.0,
-                                "b": 1.0,
+                                "r": 0.0,
+                                "g": 0.0,
+                                "b": 0.0,
                                 "a": 1.0
                             },
                             "SkinTMPOutlineThickness": true,
@@ -15264,7 +15264,7 @@
                             "ButtonImageArray": [],
                             "SkinAutoSizing": true,
                             "EnableAutoSizing": true,
-                            "AutoSizingMin": 80.0,
+                            "AutoSizingMin": 60.0,
                             "AutoSizingMax": 80.0,
                             "RectTF": {
                                 "AnchoredPosition": {
@@ -15502,7 +15502,7 @@
                                 }
                             }
                         },
-			{
+                        {
                             "Id": "Empty_Slot",
                             "Type": 1,
                             "SkinImageColor": true,
@@ -16407,7 +16407,309 @@
                                     "m_DisabledTrigger": "Disabled"
                                 }
                             }
-			}
+                        },
+                        {
+                            "Id": "Onboarding_Text_Large",
+                            "Type": 3,
+                            "SkinImageColor": false,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": true,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": false,
+                            "ImageResourceKey": "",
+                            "SkinFont": true,
+                            "SkinFontStyle": true,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": true,
+                            "TextAlignment": 514,
+                            "SkinTextOverflow": true,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
+                            "SkinFontSize": true,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": false,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": true,
+                            "TMPOutlineColor": {
+                                "r": 0.0,
+                                "g": 0.0,
+                                "b": 0.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": true,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": false,
+                            "ButtonImageArray": [],
+                            "SkinAutoSizing": true,
+                            "EnableAutoSizing": true,
+                            "AutoSizingMin": 85.0,
+                            "AutoSizingMax": 100.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        },
+                        {
+                            "Id": "Onboarding_Description_Text",
+                            "Type": 3,
+                            "SkinImageColor": false,
+                            "ImageColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinFontColor": true,
+                            "FontColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinImage": false,
+                            "ImageResourceKey": "",
+                            "SkinFont": true,
+                            "SkinFontStyle": true,
+                            "FontStyle": 0,
+                            "SkinTextAlignment": true,
+                            "TextAlignment": 514,
+                            "SkinTextOverflow": true,
+                            "TextOverflow": 0,
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
+                            "SkinFontSize": true,
+                            "FontSizeOffset": 0,
+                            "SkinButtonTransition": false,
+                            "SkinRectTF": false,
+                            "SkinShrinkOnClick": false,
+                            "ShrinkOnClick": false,
+                            "SkinShrinkScale": false,
+                            "ShrinkScale": 0.0,
+                            "SkinShadowEnabled": false,
+                            "ShadowEnabled": false,
+                            "SkinShadowColor": false,
+                            "ShadowColor": {
+                                "r": 1.0,
+                                "g": 1.0,
+                                "b": 1.0,
+                                "a": 1.0
+                            },
+                            "SkinShadowDistance": false,
+                            "ShadowDistance": {
+                                "x": 0.0,
+                                "y": 0.0
+                            },
+                            "SkinShadowUseGraphicAlpha": false,
+                            "ShadowUseGraphicAlpha": false,
+                            "SkinTMPOutlineColor": true,
+                            "TMPOutlineColor": {
+                                "r": 0.0,
+                                "g": 0.0,
+                                "b": 0.0,
+                                "a": 1.0
+                            },
+                            "SkinTMPOutlineThickness": true,
+                            "TMPOutlineThickness": 0.0,
+                            "SkinButtonImageArray": false,
+                            "ButtonImageArray": [],
+                            "SkinAutoSizing": true,
+                            "EnableAutoSizing": true,
+                            "AutoSizingMin": 55.0,
+                            "AutoSizingMax": 75.0,
+                            "RectTF": {
+                                "AnchoredPosition": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchoredPosition3D": {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "z": 0.0
+                                },
+                                "AnchorMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "AnchorMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMax": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "OffsetMin": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Pivot": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                },
+                                "Rect": {
+                                    "serializedVersion": "2",
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "width": 0.0,
+                                    "height": 0.0
+                                },
+                                "SizeDelta": {
+                                    "x": 0.0,
+                                    "y": 0.0
+                                }
+                            },
+                            "ButtonTransition": {
+                                "Type": 0,
+                                "SpriteBlock": {
+                                    "HighlightedImageResourceKey": "",
+                                    "PressedImageResourceKey": "",
+                                    "DisabledImageResourceKey": ""
+                                },
+                                "ColorBlock": {
+                                    "m_NormalColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_HighlightedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_PressedColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_DisabledColor": {
+                                        "r": 0.0,
+                                        "g": 0.0,
+                                        "b": 0.0,
+                                        "a": 0.0
+                                    },
+                                    "m_ColorMultiplier": 0.0,
+                                    "m_FadeDuration": 0.0
+                                },
+                                "AnimationTriggers": {
+                                    "m_NormalTrigger": "Normal",
+                                    "m_HighlightedTrigger": "Highlighted",
+                                    "m_PressedTrigger": "Pressed",
+                                    "m_DisabledTrigger": "Disabled"
+                                }
+                            }
+                        }
                     ]
                 }
             ]
