@@ -279,7 +279,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     facePositionUpdated: false,
     fistBump: false,
     frustration: false,
-    hiccup: true,
+    hiccup: false,
     motorCalibration: false,
     noPreDockPoses: false,
     objectPositionUpdated: false,

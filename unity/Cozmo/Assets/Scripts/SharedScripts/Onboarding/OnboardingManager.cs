@@ -201,15 +201,17 @@ public class OnboardingManager : MonoBehaviour {
       }
     }
     // Going to disconnect soon and won't be able to clean up a lot of onboarding stuff without a robot
-    IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
-    if (CurrentRobot == null) {
+    IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (currentRobot == null) {
       return;
     }
     int startStage = 0;
     _CurrPhase = phase;
+    if (PhaseWantsReactionsDisabled(_CurrPhase)) {
+      currentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
+    }
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
-      CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
-      RobotEngineManager.Instance.CurrentRobot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId, ReactionaryBehaviorEnableGroups.kOnboardingHomeTriggers);
+      currentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle, kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
 
       DAS.Event("onboarding.start", FirstTime ? "1" : "0");
@@ -258,12 +260,16 @@ public class OnboardingManager : MonoBehaviour {
     if (OnOnboardingPhaseCompleted != null) {
       OnOnboardingPhaseCompleted.Invoke(_CurrPhase);
     }
+    IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (currentRobot == null) {
+      return;
+    }
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
-        RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
-      }
+      currentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
+    }
+    if (PhaseWantsReactionsDisabled(_CurrPhase)) {
+      currentRobot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kOnboardingHomeId);
     }
 
     RobotEngineManager.Instance.Message.RegisterOnboardingComplete =
@@ -506,6 +512,17 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
   #endregion
+
+  private bool PhaseWantsReactionsDisabled(OnboardingPhases phase) {
+    switch (phase) {
+    case OnboardingPhases.InitialSetup:
+    case OnboardingPhases.NurtureIntro:
+    case OnboardingPhases.FeedIntro:
+    case OnboardingPhases.PlayIntro:
+      return true;
+    }
+    return false;
+  }
 
   private void GiveStartingInventory() {
     PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
