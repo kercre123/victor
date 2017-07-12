@@ -417,7 +417,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     if (resCat == ActionResultCategory::SUCCESS)
     {
       PRINT_CH_INFO("Behaviors", (GetIDStr() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
-      NeedActionCompleted();
+      NeedActionCompleted(NeedsActionId::StackCube);
       // emotions and behavior objective check
       FireEmotionEvents(robot);
     }
@@ -598,6 +598,8 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     {
       // 2) otherwise, find area as close to the center as possible (use memory map for this?)
       
+      NeedActionCompleted(NeedsActionId::PickupCube);
+
       Pose3d dropPose;
       const bool foundPose = FindFreePoseInBeacon(pickedUpObject, selectedBeacon, robot, dropPose, _configParams.recentFailureCooldown_sec);
       if ( foundPose )

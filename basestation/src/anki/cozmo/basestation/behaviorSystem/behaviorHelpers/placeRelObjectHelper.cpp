@@ -153,11 +153,6 @@ void PlaceRelObjectHelper::RespondToPlaceRelResult(ActionResult result, Robot& r
   switch(result){
     case ActionResult::SUCCESS:
     {
-      // Only if stacked directly, not pyramid.
-      if(Util::IsNearZero(_params.placementOffsetX_mm) && Util::IsNearZero(_params.placementOffsetY_mm))
-      {
-        robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(NeedsActionId::StackCube);
-      }
       _status = BehaviorStatus::Complete;
       break;
     }

@@ -459,7 +459,7 @@ void BehaviorPeekABoo::TransitionExit(Robot& robot)
   BehaviorObjectiveAchieved(BehaviorObjective::PeekABooComplete);
   if(anySuccessfullReactions){
     BehaviorObjectiveAchieved(BehaviorObjective::PeekABooSuccess);
-    NeedActionCompleted(NeedsActionId::PeekAboo);
+    NeedActionCompleted();
   }
 }
 

@@ -1,6 +1,7 @@
 {
   "behaviorClass": "PeekABoo",
   "behaviorID": "SparksPeekABoo",
+  "needsActionID": "PeekAboo_Sparked",
   "displayNameKey":"behavior.PeekAboo",
   "requiredUnlockId": "PeekABoo",
   "minTimesPeekBeforeQuit" : 3,

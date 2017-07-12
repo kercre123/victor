@@ -276,6 +276,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
     IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   }
+  NeedActionCompleted();
 }
 
   

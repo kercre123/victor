@@ -2,6 +2,7 @@
 {
   "behaviorClass": "PeekABoo",
   "behaviorID": "FPPeekABoo",
+  "needsActionID": "PeekAboo",
   "displayNameKey":"behavior.PeekAboo",
   "requiredUnlockId": "PeekABoo",
 
