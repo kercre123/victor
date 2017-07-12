@@ -18,6 +18,7 @@ namespace Cozmo.RequestGame {
 
     public delegate void RequestGameConfirmedHandler(string challengeId);
     public event RequestGameConfirmedHandler OnRequestGameConfirmed;
+    public event System.Action OnRequestGameAlertCreated;
 
     AlertModalData _RequestGameAlertData = null;
     private Stopwatch _Stopwatch = null;
@@ -90,6 +91,10 @@ namespace Cozmo.RequestGame {
         // Hook up callbacks
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Gp_Shared_Request_Game);
         _RequestDialog = alertModal;
+
+        if (OnRequestGameAlertCreated != null) {
+          OnRequestGameAlertCreated();
+        }
       };
 
       Action<UIManager.CreationCancelledReason> requestGameCancelled = (cancelReason) => {
