@@ -11,7 +11,7 @@
 
 #include "cozmoAnim/cozmoAnim.h"
 #include "cozmoAnim/engineMessages.h"
-//#include "anki/cozmo/basestation/cozmoContext.h"
+#include "cozmoAnim/cozmoContext.h"
 //#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 //#include "anki/cozmo/basestation/events/ankiEvent.h"
 //#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -63,7 +63,7 @@ namespace Cozmo {
 
 CozmoAnim::CozmoAnim(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
-  , _assetLoader(std::make_unique<RobotDataLoader>(dataPlatform))
+  , _context(std::make_unique<CozmoContext>(dataPlatform))
 {
   
   if (Anki::Util::gTickTimeProvider == nullptr) {
@@ -110,10 +110,9 @@ Result CozmoAnim::Init(const Json::Value& config) {
 //    return lastResult;
 //  }
   
-  
-  _assetLoader->LoadNonConfigData();
-  
-  
+
+  _context->GetDataLoader()->LoadNonConfigData();
+    
   Messages::Init();
   
   

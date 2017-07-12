@@ -12,7 +12,6 @@
 #define ANKI_COZMO_ANIM_H
 
 #include "json/json.h"
-#include "util/signals/simpleSignal_fwd.h"
 
 #include "anki/common/types.h"
 //#include "anki/types.h"
@@ -33,8 +32,7 @@ namespace Anki {
 namespace Cozmo {
   
 // Forward declarations
-//class CozmoContext;
-class RobotDataLoader;  // TODO: Rename to AssetLoader?  (Anims and sounds)
+class CozmoContext;
   
 class CozmoAnim
 {
@@ -55,7 +53,7 @@ protected:
 
   virtual Result InitInternal();
   
-  std::unique_ptr<RobotDataLoader> _assetLoader;
+  std::unique_ptr<CozmoContext>  _context;
   
 }; // class CozmoAnim
   
