@@ -31,7 +31,7 @@
         "translation": "Microphone Check"
     }, 
     "voiceCommands.tutorialText.SpeakClearlyDesc": {
-        "translation": "Speak clearly into your device's microphone and avoid background noise"
+        "translation": "Speak clearly into your device's microphone and avoid background noise."
     }, 
     "voiceCommands.tutorialText.SayHeyCozmo": {
         "translation": "Say, \"Hey Cozmo\""
@@ -40,7 +40,7 @@
         "translation": "Your microphone is working!"
     }, 
     "voiceCommands.mainPageText.GifDescription": {
-        "translation": "Timing is important. Practice speaking clearly and slowly. Cozmo's backpack turns white when he's heard, \"Hey Cozmo.\""
+        "translation": "Practice speaking clearly and slowly. Cozmo's backpack turns white when he's heard, \"Hey Cozmo.\" Lowering Music volume in <b>SETTINGS</b> can help Cozmo hear better."
     }, 
     "voiceCommands.mainPageText.VoiceCommandTitle": {
         "translation": "Voice Commands"
@@ -136,6 +136,6 @@
         "translation": "YES, PLEASE"
     },
     "voiceCommands.GoToSleepCancel": {
-        "translation": "Say \"<b>Hey, Cozmo</b>\" to cancel"
+        "translation": "Say \"<b>Hey, Cozmo</b>\" to cancel."
     }
 }

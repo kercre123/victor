@@ -88,7 +88,7 @@
     "translation": "Safe Play:"
   },
   "droneMode.safePlay.description": {
-    "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
+    "translation": "Explore indoors in well lit spaces.\n\nDrive on flat surfaces.\n\nBe careful of falling off edges.\n\nStay close to Cozmo for the best experience."
   },
   "droneMode.button.action.reactToPet": {
     "translation": "Greet"
@@ -118,22 +118,22 @@
     "translation": "Drag and hold to move Cozmo forward or backward.\nLet go to stop."
   },
   "droneMode.text.toggleNightVision": {
-    "translation": "Tap to toggle Nightvision On or Off"
+    "translation": "Tap to toggle Nightvision on or off."
   },
   "droneMode.text.raiseLowerHead": {
-    "translation": "Drag to move Cozmo's Head or Lift Up and Down"
+    "translation": "Drag to move Cozmo's Head or Lift up and down."
   },
   "droneMode.text.switchHeadOrLift": {
-    "translation": "Tap to switch between Head and Lift Control"
+    "translation": "Tap to switch between Head and Lift Control."
   },
   "droneMode.text.cozmoReticleHeader": {
-    "translation": "When Cozmo selects an object you can see it here"
+    "translation": "When Cozmo selects an object you can see it here."
   },
   "droneMode.text.reticleOutlineDescrip": {
-    "translation": "An outline will appear around the selected object"
+    "translation": "An outline will appear around the selected object."
   },
   "droneMode.text.cozmoInteractionChoice": {
-    "translation": "Tap on the options that appear to make Cozmo interact"
+    "translation": "Tap on the options that appear to make Cozmo interact."
   },
   "memoryMatchGame.howToPlay": {
     "translation": "You and Cozmo will take turns.\nAs the Cubes flash, memorize the pattern. Then tap the Cubes in order to repeat it."
@@ -142,10 +142,10 @@
     "translation": "You play while Cozmo watches.\nAs the Cubes flash, memorize the pattern, then repeat it."
   },
   "memoryMatchGame.difficulty.hardDescription.locked": {
-    "translation": "Unlock by winning Memory Match VS mode."
+    "translation": "Unlock by winning Memory Match YOU VS. COZMO mode."
   },
   "memoryMatchGame.label.yourTurn": {
-    "translation": "Your Turn"
+    "translation": "Your turn"
   },
   "memoryMatchGame.label.cozmoTurn": {
     "translation": "Cozmo's turn"
@@ -169,10 +169,10 @@
     "translation": "Pattern Length: {0}"
   },
   "memoryMatchGame.mode.vs": {
-    "translation": "You VS Cozmo"
+    "translation": "YOU VS. COZMO"
   },
   "memoryMatchGame.mode.solo": {
-    "translation": "Solo"
+    "translation": "SOLO"
   },
   "memoryMatchGame.label.placeCenter": {
     "translation": "Put 1 Cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
@@ -190,7 +190,7 @@
     "translation": "Cozmo is checking the Cubes..."
   },
   "memoryMatchGame.solo.NewHighScore": {
-    "translation": "You set a new record"
+    "translation": "You set a new record!"
   },
   "memoryMatchGame.solo.GameOver": {
     "translation": "Well done!"
@@ -199,10 +199,10 @@
     "translation": "Round {0:N0}"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap a flashing Cube you\nwant to play with"
+    "translation": "Tap a flashing Cube you\nwant to play with."
   },
   "speedTap.separateBlocks": {
-    "translation": "Cubes should be separated"
+    "translation": "Cubes should be separated."
   },
   "speedTap.tapBlockForRound": {
     "translation": "Tap your Cube to begin the next round."
@@ -226,7 +226,7 @@
     "translation": "Cube Disconnected"
   },
   "minigame.lostTrackOfBlock.description": {
-    "translation": "One of the Cubes has disconnected. Visit Settings to learn more about troubleshooting Cubes."
+    "translation": "One of the Cubes has disconnected. Visit <b>SETTINGS</b> to learn more about troubleshooting Cubes."
   },
   "minigame.timeout.title": {
     "translation": "The Game Has Ended"
@@ -247,7 +247,7 @@
     "translation": "You got the point!"
   },
   "cubePounce.header.waitForPounce": {
-    "translation": "Wait for Cozmo to Pounce!"
+    "translation": "Wait for Cozmo to pounce!"
   },
   "cubePounce.header.pushCubeTowardCozmo": {
     "translation": "Slowly push the Cube towards Cozmo... but not too close!"
@@ -256,7 +256,7 @@
     "translation": "Cozmo got the point!"
   },
   "cubePounce.header.setupText": {
-    "translation": "Game Setup"
+    "translation": "Game Setup:"
   },
   "minigame.text.howToPlay": {
     "translation": "How To Play"
@@ -265,16 +265,16 @@
     "translation": "How To Play:"
   },
   "minigame.difficulty.easy": {
-    "translation": "One Color"
+    "translation": "ONE COLOR"
   },
   "minigame.difficulty.medium": {
-    "translation": "Two Colors"
+    "translation": "TWO COLORS"
   },
   "minigame.difficulty.hard": {
-    "translation": "Three Colors"
+    "translation": "THREE COLORS"
   },
   "minigame.difficulty.expert": {
-    "translation": "Four Colors"
+    "translation": "FOUR COLORS"
   },
   "speedTap.difficulty.easyDescription": {
     "translation": "Be the first to tap your Cube when the colors match, but never tap on red!"
@@ -298,13 +298,13 @@
     "translation": "Unlock by unlocking Quick Tap."
   },
   "speedTap.difficulty.mediumDescription.locked": {
-    "translation": "Two Color Mode is Locked\nUnlock by winning Quick Tap in One Color Mode."
+    "translation": "Two Color Mode is locked.\nUnlock by winning Quick Tap in <b>ONE COLOR MODE</b>."
   },
   "speedTap.difficulty.hardDescription.locked": {
-    "translation": "Three Color Mode is Locked\nUnlock by winning Quick Tap in Two Color Mode."
+    "translation": "Three Color Mode is locked.\nUnlock by winning Quick Tap in <b>TWO COLOR MODE</b>."
   },
   "speedTap.difficulty.expertDescription.locked": {
-    "translation": "Four Color Mode is Locked\nUnlock by winning Quick Tap in Three Color Mode."
+    "translation": "Four Color Mode is locked.\nUnlock by winning Quick Tap in <b>THREE COLOR MODE</b>."
   },
   "speedTap.text.getReady": {
     "translation": "Get Ready!"
@@ -331,16 +331,16 @@
     "translation": "Locked!"
   },
   "speedTap.text.MP.Locked": {
-    "translation": "To unlock 3 player mode, play Human vs Cozmo once on this difficulty."
+    "translation": "To unlock 3 player mode, play Human vs. Cozmo once on this difficulty."
   },
   "speedTapGame.label.vs": {
-    "translation": "VS"
+    "translation": "vs."
   },
   "speedTapGame.mode.HvC": {
-    "translation": "Human vs Cozmo"
+    "translation": "Human vs. Cozmo"
   },
   "speedTapGame.mode.HvHvC": {
-    "translation": "Human vs Human vs Cozmo"
+    "translation": "Human vs. Human vs. Cozmo"
   },
   "cozmoSays.instructions.label": {
     "translation": "Type a word or phrase and hear Cozmo say it"
@@ -358,13 +358,13 @@
     "translation": "Player 1:"
   },
   "speedTap.tapBlock2": {
-    "translation": "Tap the flashing Cube"
+    "translation": "Tap the flashing Cube."
   },
   "minigame.GuardDog.Title": {
     "translation": "Cozmo Is Guarding His Cubes"
   },
   "minigame.GuardDog.Desc": {
-    "translation": "Try to slowly and carefully turn all of Cozmo's cubes upside down without waking him up.\n\nCareful... Cozmo can sense when his cubes are moving!"
+    "translation": "Try to slowly and carefully turn all of Cozmo's Cubes upside down without waking him up.\n\nCareful... Cozmo can sense when his cubes are moving!"
   },
   "speedTap.driveToCubeFail.title": {
     "translation": "Cozmo Can't Find His Cube!"

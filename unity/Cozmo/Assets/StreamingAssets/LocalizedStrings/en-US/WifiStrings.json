@@ -19,76 +19,76 @@
     ]
   },
   "wifiStrings.Instructions.SlideA.titleCopy": {
-    "translation": "To connect to Cozmo's WiFi, you'll need to go to your device's Settings"
+    "translation": "To connect to Cozmo's WiFi, you'll need to go to your device's Settings."
   },
   "wifiStrings.Instructions.SlideA.altCopy": {
     "translation": "READ ALL INSTRUCTIONS FIRST"
   },
   "wifiStrings.Instructions.SlideB": {
-    "translation": "Let's make sure Cozmo is powered on"
+    "translation": "Let's make sure Cozmo is powered on."
   },
   "wifiStrings.Instructions.SlideB.altCopy": {
-    "translation": "Remove then replace him on the charger"
+    "translation": "Remove then replace him on the charger."
   },
   "wifiStrings.Instructions.Slide0": {
-    "translation": "Find and tap your device's Settings icon"
+    "translation": "Find and tap your device's Settings icon."
   },
   "wifiStrings.Instructions.Slide0altCopy": {
-    "translation": "Press the Home button to exit the Cozmo app"
+    "translation": "Press the Home button to exit the Cozmo App."
   },
   "wifiStrings.Instructions.Slide0Android": {
-    "translation": "Pull down your device's Settings panel"
+    "translation": "Pull down your device's Settings panel."
   },
   "wifiStrings.Instructions.Slide1": {
-    "translation": "Select the WiFi section from your Settings menu"
+    "translation": "Select the WiFi section from your Settings menu."
   },
   "wifiStrings.Instructions.Slide2": {
-    "translation": "Choose Cozmo's network from the list"
+    "translation": "Choose Cozmo's network from the list."
   },
   "wifiStrings.Instructions.Slide3": {
-    "translation": "Enter the password shown on your Cozmo"
+    "translation": "Enter the password shown on your Cozmo."
   },
   "wifiStrings.Instructions.Slide3.altCopy": {
-    "translation": "Don't see a password?  Tap Here:"
+    "translation": "Don't see a password? Tap Here:"
   },
   "wifiStrings.Instructions.Slide3altCopy2": {
-    "translation": "Use ALL CAPS with no spaces"
+    "translation": "Use ALL CAPS with no spaces."
   },
   "wifiStrings.Instructions.Slide3.5": {
-    "translation": "Cozmo does not provide an Internet connection"
+    "translation": "Cozmo does not provide an Internet connection."
   },
   "wifiStrings.Instructions.Slide3.5altCopy": {
-    "translation": "Tap OK to stay connected to Cozmo's WiFi"
+    "translation": "Tap OK to stay connected to Cozmo's WiFi."
   },
   "wifiStrings.Instructions.Slide4": {
-    "translation": "Exit Settings and return to the Cozmo App"
+    "translation": "Exit Settings and return to the Cozmo App."
   },
   "wifiStrings.Instructions.Slide4altCopy": {
-    "translation": "The App will know when Cozmo is connected"
+    "translation": "The App will know when Cozmo is connected."
   },
   "wifiStrings.nextButton": {
-    "translation": "Next"
+    "translation": "NEXT"
   },
   "wifiStrings.backButton": {
-    "translation": "Back"
+    "translation": "BACK"
   },
   "wifi.gethelp.title": {
     "translation": "Having trouble connecting to Cozmo's WiFi?"
   },
   "wifi.gethelp.description": {
-    "translation": "Try the following:\n\n1. Remove then replace Cozmo on his charger\n2. Turn your device's WiFi OFF then back ON"
+    "translation": "Try the following:\n\n1. Remove then replace Cozmo on his charger.\n2. Turn your device's WiFi <b>OFF</b> then back <b>ON.</b>"
   },
   "wifi.gethelp.description2": {
-    "translation": "If you need to see Cozmo's network info, raise and lower his lift"
+    "translation": "If you need to see Cozmo's network info, raise and lower his lift."
   },
   "wifi.gethelp.footer": {
-    "translation": "Still stuck? Visit <b>support.anki.com</b> on another device\n or call us at <b>(877) 721-ANKI</b>"
+    "translation": "Still stuck? Visit <b>support.anki.com</b> on another device."
   },
   "wifi.getHelp.linkText": {
     "translation": "Get Help"
   },
   "wifi.enterPassword": {
-    "translation": "Enter password for {0}"
+    "translation": "Enter password for {0}."
   },
   "wifi.passwordFormat": {
     "translation": "Password incorrect length."
@@ -112,16 +112,16 @@
     "translation": "Wifi is turned off. Please press the button below to turn it on."
   },
   "wifi.locationPermission": {
-    "translation": "Let the Cozmo App make connecting easier! Tap \"Allow\" when asked for Location Permissions, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+    "translation": "Let the Cozmo App make connecting easier! Tap <b>Allow</b> when asked for Location Permissions, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
   },
   "wifi.pleaseLocationPermission": {
-    "translation": "Are you sure? Without Location Permissions, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Allow\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
+    "translation": "Are you sure? Without Location Permissions, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap <b>Allow</b> when asked to allow the Cozmo App to connect for you, or tap <b>Cancel</b> to connect yourself."
   },
   "wifi.enableLocation": {
-    "translation": "Tap \"OK\" when asked to turn on Location, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
+    "translation": "Tap <b>Allow</b> when asked to turn on Location, so that the Cozmo App can find nearby Cozmos.\n\nNote: We will never store your location!"
   },
   "wifi.pleaseEnableLocation": {
-    "translation": "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap \"Yes\" when asked to allow the Cozmo App to connect for you, or tap \"Cancel\" to connect yourself."
+    "translation": "Are you sure? Without Location, you'll have to connect to Cozmo manually in your phone's Wifi Settings. Tap <b>Yes</b> when asked to allow the Cozmo App to connect for you, or tap <b>Cancel</b> to connect yourself."
   },
   "wifi.passwordRememberStatement": {
     "translation": "Password is visible on Cozmo's face, enter it exactly as it appears. Your device should remember this password, so you will only need to enter it once."

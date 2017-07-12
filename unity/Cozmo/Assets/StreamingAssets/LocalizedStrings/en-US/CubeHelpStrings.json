@@ -22,25 +22,25 @@
     "translation": "Cozmo can't hear all of the Cubes. Place them near him."
   },
   "cubeHelpStrings.Instructions.Slide0altCopy": {
-    "translation": "Tap Next if you're still having trouble"
+    "translation": "Tap <b><color=#d3d3d3>NEXT</color></b> if you're still having trouble"
   },
   "cubeHelpStrings.Instructions.SlideACopy": {
-    "translation": "First, go to Settings\nThen, tap Refresh Cubes"
+    "translation": "First, go to <b>SETTINGS</b>.\nThen, tap <b>REFRESH CUBES</b>."
   },
   "cubeHelpStrings.Instructions.Slide1": {
-    "translation": "Next, let's try changing your Cube's battery"
+    "translation": "Next, try changing your Cube's battery."
   },
   "cubeHelpStrings.Instructions.Slide1altCopy": {
-    "translation": "Place it upside down and unscrew the cover"
+    "translation": "Place it upside down and unscrew the cover."
   },
   "cubeHelpStrings.Instructions.Slide2": {
-    "translation": "Replace the battery with a fresh N cell"
+    "translation": "Replace the battery with a fresh N Cell."
   },
   "cubeHelpStrings.Instructions.Slide2altCopy": {
-    "translation": "Insert the new battery positive (+) end up"
+    "translation": "Insert the new battery positive (<b><color=#d3d3d3>+</color></b>) end up."
   },
   "cubeHelpStrings.Instructions.Slide3": {
-    "translation": "Replace the cover and fasten it gently"
+    "translation": "Replace the cover and fasten it gently."
   },
   "cubeHelpStrings.Instructions.Slide3altCopy": {
     "translation": "Make sure the cover matches the Cube. It should now light up!"

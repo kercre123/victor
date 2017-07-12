@@ -91,13 +91,13 @@
     "translation": "{0}!"
   },
   "requestGame.description": {
-    "translation": "Cozmo wants to play"
+    "translation": "Cozmo Wants to Play"
   },
   "label.connect": {
     "translation": "CONNECT"
   },
   "label.start": {
-    "translation": "Start"
+    "translation": "START"
   },
   "coreUpgradeDetailsDialog.cubesNeeded": {
     "translation": "{0} {1} Required"
@@ -118,13 +118,13 @@
     "translation": "LET'S BEGIN"
   },
   "soundcheck.description": {
-    "translation": "Please make sure your device's sound is turned on"
+    "translation": "Please make sure your device's sound is turned on."
   },
   "refreshCubesPrompt.description": {
-    "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
+    "translation": "Put one of each Cube next to Cozmo and tap <b><color=#11a2f0ff>REFRESH</color></b>. Cozmo will Connect to the 3 that he thinks are closest."
   },
   "button.replay": {
-    "translation": "REPLAY"
+    "translation": "Replay"
   },
   "button.skip": {
     "translation": "SKIP"
@@ -136,7 +136,7 @@
     "translation": "Cozmo is having trouble seeing!"
   },
   "error.badLight.Bottom": {
-    "translation": "Avoid bright lights and dimly lit spaces"
+    "translation": "Avoid bright lights and dimly lit spaces."
   },
   "label.cozmo.serial": {
     "translation": "Cozmo ID: {0}"
@@ -157,7 +157,7 @@
     "translation": "Total Sparks: {0}"
   },
   "label.termsInstructions": {
-    "translation": "By tapping \"<color=#11a2f0ff>CONNECT</color>\", you agree to the following terms:"
+    "translation": "By tapping <b><color=#11a2f0ff>CONNECT</color></b>, you agree to the following terms:"
   },
   "label.simpleCount": {
     "translation": "{0} {1}"

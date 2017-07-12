@@ -31,22 +31,22 @@
     "translation": "Please help Cozmo get upright and ready to play."
   },
   "challengeDetails.cozmoDizzy.title": {
-    "translation": "Cozmo is Dizzy"
+    "translation": "Cozmo Is Dizzy"
   },
   "challengeDetails.cozmoDizzy.description": {
     "translation": "Wait until Cozmo has recovered from being Dizzy and is ready to play."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title": {
-    "translation": "Cozmo is Waking Up"
+    "translation": "Cozmo Is Waking Up"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description": {
     "translation": "Please wait for Cozmo to wake up and drive off of his charger."
   },
   "challengeDetails.needsMoreCubesModal.button": {
-    "translation": "Show Me How"
+    "translation": "SHOW ME HOW"
   },
   "challengeDetails.cozmoHasHiccups.title": {
-    "translation": "Cozmo has the Hiccups"
+    "translation": "Cozmo Has the Hiccups"
   },
   "challengeDetails.cozmoHasHiccups.description": {
     "translation": "Try to help Cozmo by putting him upside-down."

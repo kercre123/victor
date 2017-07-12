@@ -34,10 +34,10 @@
     "translation": "Delete"
   },
   "faceEnrollment.instructions.top": {
-    "translation": "Look at Cozmo straight on, and hold still"
+    "translation": "Look at Cozmo straight on, and hold still."
   },
   "faceEnrollment.instructions.bottom": {
-    "translation": "When Cozmo is done, he'll say your name"
+    "translation": "When Cozmo is done, he'll say your name."
   },
   "faceEnrollment.errors.neverSawValidFace.title": {
     "translation": "Cozmo already knows you!"

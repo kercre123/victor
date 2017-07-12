@@ -22,16 +22,16 @@
     "translation": "Play"
   },
   "sparksView.askForGameCard.title": {
-    "translation": "ASK COZMO FOR A GAME"
+    "translation": "SPARK A GAME"
   },
   "sparksView.askForTrickCard.title": {
-    "translation": "ASK COZMO FOR A TRICK"
+    "translation": "SPARK A TRICK"
   },
   "sparksView.listAbilitiesCard.title": {
-    "translation": "VIEW ALL ABILITIES"
+    "translation": "TRICKS AND GAMES"
   },
   "sparksView.listAbilitiesCard.description": {
-    "translation": "Ask Cozmo to perform a specific game or trick"
+    "translation": "Ask Cozmo to perform a specific Trick or Game."
   },
   "sparksView.sparkCount.label": {
     "translation": "Sparks Available"

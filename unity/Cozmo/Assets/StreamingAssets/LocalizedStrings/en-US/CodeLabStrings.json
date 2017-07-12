@@ -145,7 +145,7 @@
       "translation": "Answer #14"
   },
   "codeLabChallenge_PushCube.questionSlide.primaryText": {
-      "translation": "#15: Push a cube."
+      "translation": "#15: Push a Cube."
   },
   "codeLabChallenge_PushCube.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
@@ -163,7 +163,7 @@
       "translation": "Answer #16"
   },
   "codeLabChallenge_LiftCube.questionSlide.primaryText": {
-      "translation": "#17: <span class='purple'>LIFT</span> a cube."
+      "translation": "#17: <span class='purple'>LIFT</span> a Cube."
   },
   "codeLabChallenge_LiftCube.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
@@ -172,7 +172,7 @@
       "translation": "Answer #17"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText": {
-      "translation": "#18: Workout with cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
+      "translation": "#18: Work out with Cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
@@ -244,7 +244,7 @@
       "translation": "Answer #25"
   },
   "codeLabChallenge_stackCubes.questionSlide.primaryText": {
-      "translation": "#26: Stack 2 cubes."
+      "translation": "#26: Stack 2 Cubes."
   },
   "codeLabChallenge_stackCubes.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
@@ -253,7 +253,7 @@
       "translation": "Answer #26"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText": {
-      "translation": "#27: Stack 2 cubes, then tip them over."
+      "translation": "#27: Stack 2 Cubes, then tip them over."
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
@@ -280,7 +280,7 @@
       "translation": "Answer #29"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText": {
-      "translation": "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
+      "translation": "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a Cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"
@@ -289,7 +289,7 @@
       "translation": "Answer #30"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText": {
-      "translation": "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
+      "translation": "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the Cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText": {
       "translation": "Try the challenge first, then tap NEXT to check your answer!"

@@ -58,25 +58,25 @@
     "translation": "Head needs adjustment"
   },
   "needs.NeedsRepairModal.HeadRepairedNotice": {
-    "translation": "Head adjusted"
+    "translation": "Head Adjusted"
   },
   "needs.NeedsRepairModal.TreadsDamageNotice": {
     "translation": "Treads require alignment"
   },
   "needs.NeedsRepairModal.TreadsRepairedNotice": {
-    "translation": "Treads aligned"
+    "translation": "Treads Aligned"
   },
   "needs.NeedsRepairModal.LiftDamageNotice": {
     "translation": "Lift needs calibration"
   },
   "needs.NeedsRepairModal.LiftRepairedNotice": {
-    "translation": "Lift calibrated"
+    "translation": "Lift Calibrated"
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction": {
     "translation": "Tap the parts to be tuned up."
   },  
   "needs.NeedsRepairModal.TuneUpInstruction": {
-    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap SEND."
+    "translation": "Use the buttons on the right to recreate the arrow pattern. Then tap <b>SEND</b>."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded": {
     "translation": "Cozmo is fully tuned up!"

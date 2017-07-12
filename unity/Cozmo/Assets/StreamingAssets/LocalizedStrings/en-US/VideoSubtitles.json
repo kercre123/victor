@@ -19,75 +19,75 @@
     ]
   },
   "videoSubtitles.speedTap.first": {
-    "translation": "GAME SETUP"
+    "translation": "Game Setup"
   },
   "videoSubtitles.speedTap.second": {
-    "translation": "COZMO WILL SELECT HIS CUBE"
+    "translation": "Cozmo will select his Cube."
   },
   "videoSubtitles.speedTap.third": {
-    "translation": "TAP TO SELECT YOUR CUBE"
+    "translation": "Tap to select your Cube."
   },
   "videoSubtitles.speedTap.fourth": {
-    "translation": "GET READY"
+    "translation": "Get ready."
   },
   "videoSubtitles.speedTap.fifth": {
-    "translation": "TAP IF THE COLORS MATCH"
+    "translation": "Tap if the colors match."
   },
   "videoSubtitles.speedTap.sixth": {
-    "translation": "NO MATCH"
+    "translation": "No match."
   },
   "videoSubtitles.speedTap.seventh": {
-    "translation": "NO TAPPING ON RED"
+    "translation": "No tapping on red."
   },
   "videoSubtitles.speedTap.eighth": {
-    "translation": "FIRST TO 5 POINTS WINS"
+    "translation": "First to 5 points wins."
   },
   "videoSubtitles.cubePounce.first": {
-    "translation": "USE ONE CUBE"
+    "translation": "Use one cube."
   },
   "videoSubtitles.cubePounce.second": {
-    "translation": "GREEN MEANS COZMO CAN SEE IT"
+    "translation": "Green means Cozmo can see it."
   },
   "videoSubtitles.cubePounce.third": {
-    "translation": "PUSH IT TOWARDS COZMO"
+    "translation": "Push it towards Cozmo."
   },
     "videoSubtitles.cubePounce.fourth": {
-    "translation": "PULL AWAY BEFORE HE POUNCES"
+    "translation": "Pull away before he pounces."
   },
     "videoSubtitles.cubePounce.fifth": {
-    "translation": "IF YOU ARE TOO SLOW"
+    "translation": "If you are too slow,"
   },
     "videoSubtitles.cubePounce.sixth": {
-    "translation": "COZMO WILL SCORE A POINT"
+    "translation": "Cozmo will score a point."
   },
   "videoSubtitles.memoryMatch.first": {
-    "translation": "GAME SETUP"
+    "translation": "Game Setup"
   },
   "videoSubtitles.memoryMatch.second": {
-    "translation": "COZMO IS READY TO PLAY"
+    "translation": "Cozmo is ready to play."
   },
   "videoSubtitles.memoryMatch.third": {
-    "translation": "THE GAME BEGINS WITH A PATTERN"
+    "translation": "The game begins with a pattern."
   },
   "videoSubtitles.memoryMatch.fourth": {
-    "translation": "WATCH THE PATTERN"
+    "translation": "Watch the pattern."
   },
   "videoSubtitles.memoryMatch.fifth": {
-    "translation": "THEN REPEAT IT BACK"
+    "translation": "Then repeat it back."
   },
   "videoSubtitles.memoryMatch.sixth": {
-    "translation": "TAKE TURNS WITH COZMO"
+    "translation": "Take turns with Cozmo."
   },
   "videoSubtitles.memoryMatch.seventh": {
-    "translation": "EACH ROUND, THE PATTERN WILL GROW"
+    "translation": "Each round, the pattern will grow."
   },
   "videoSubtitles.memoryMatch.eighth": {
-    "translation": "TOO MANY MISTAKES AND YOU ARE OUT"
+    "translation": "Too many mistakes and you are out."
   },
   "videoSubtitles.memoryMatch.nineth": {
-    "translation": "SEE HOW FAR YOU CAN GET"
+    "translation": "See how far you can get."
   },
   "videoSubtitles.memoryMatch.tenth": {
-    "translation": "GOOD LUCK"
+    "translation": "Good luck!"
   }
 }

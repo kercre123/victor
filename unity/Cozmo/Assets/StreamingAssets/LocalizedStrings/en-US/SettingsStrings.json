@@ -25,19 +25,19 @@
     "translation": "Cube Status"
   },
   "settings.cubeStatusPanel.locateText": {
-    "translation": "(Tap to locate Cubes)"
+    "translation": "Tap to locate Cubes."
   },
   "settings.sdkPanel.activateSDKalert.text": {
     "translation": "Activate SDK Mode?"
   },
   "settings.sdkPanel.disableButton.text": {
-    "translation": "Disable SDK"
+    "translation": "DISABLE SDK"
   },
   "settings.sdkPanel.enableButton.text": {
-    "translation": "Enable SDK"
+    "translation": "ENABLE SDK"
   },
   "settings.sdkPanel.label.title": {
-    "translation": "Cozmo SDK"
+    "translation": "COZMO SDK"
   },
   "settings.sdkPanel.connectionCommandCount.text": {
     "translation": "Commands: {0}"
@@ -76,28 +76,28 @@
     "translation": "Incompatible SDK Version"
   },
   "settings.sdkPanel.hideScreenButton.text": {
-    "translation": "Hide Screen"
+    "translation": "HIDE SCREEN"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo": {
-    "translation": "Sleep Cozmo"
+    "translation": "SLEEP COZMO"
   },
   "settings.sleepCozmoPanel.confirmationModal.title": {
     "translation": "Sleep Cozmo?"
   },
   "settings.sleepCozmoPanel.confirmModal.description": {
-    "translation": "Leave Cozmo on his charger to boost his battery or tap Sleep to disconnect"
+    "translation": "Leave Cozmo on his charger to boost his battery or tap <b><color=#11a2f0ff>SLEEP</color></b> to disconnect."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm": {
-    "translation": "Sleep"
+    "translation": "SLEEP"
   },
   "settings.supportView.button.restoreCozmo": {
-    "translation": "Restore Cozmo"
+    "translation": "RESTORE COZMO"
   },
   "settings.supportView.label.directions": {
     "translation": "Customer Support is available online at"
   },
   "settings.supportView.label.restoreCozmoClarification": {
-    "translation": "(Re-applies unlocks from this profile to your Cozmo)"
+    "translation": "Reapplies unlocks from this profile to your Cozmo."
   },
   "settings.supportView.label.title": {
     "translation": "Contact Support"
@@ -106,10 +106,10 @@
     "translation": "support.anki.com"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton": {
-    "translation": "Restore"
+    "translation": "RESTORE"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel": {
-    "translation": "<color=#b52c13>Failed to Restore Your Cozmo</color>"
+    "translation": "<color=#b52c13>Failed to Restore Your Cozmo.</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel": {
     "translation": "Restoring your Cozmo..."
@@ -130,16 +130,16 @@
     "translation": "Acknowledgments"
   },
   "settings.versionPanel.button.eraseCozmo": {
-    "translation": "Erase Cozmo"
+    "translation": "ERASE COZMO"
   },
   "settings.versionPanel.button.support": {
     "translation": "Support"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton": {
-    "translation": "Erase"
+    "translation": "ERASE"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel": {
-    "translation": "<color=#b52c13>Failed to Erase Your Cozmo</color>"
+    "translation": "<color=#b52c13>Failed to Erase Your Cozmo.</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel": {
     "translation": "Erasing your Cozmo..."
@@ -148,7 +148,7 @@
     "translation": "Erase Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel": {
-    "translation": "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo! Your Bits and Sparks will be saved."
+    "translation": "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo!"
   },
   "settings.versionPanel.label.appRun": {
     "translation": "App Run ID: {0}"
