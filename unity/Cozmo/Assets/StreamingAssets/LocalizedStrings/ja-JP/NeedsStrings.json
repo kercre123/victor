@@ -31,7 +31,7 @@
     "translation" : "すべてのライトが明るく輝くまでキューブを振ってください。"
   },
   "needs.NeedsEnergyModal.Instruction3" : {
-    "translation" : "キューブをCozmoの前に置きます。"
+    "translation" : "Cozmoがそれを見ることができる場所にキューブを置き、彼は自分自身を養うことができます。"
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
     "translation" : "Cozmoは完全に供給されています！"
@@ -92,5 +92,14 @@
   },
   "needs.Done" : {
     "translation" : "完了"
+  },
+  "needs.RewardsDialog.SparksEarned" : {
+    "translation" : "あなたはもっとスパークを獲得しました！"
+  },
+  "needs.RewardsDialog.TrickUnlocked" : {
+    "translation" : "あなたはロックされている{0} ！"
+  },
+  "needs.RewardsDialog.SongUnlocked" : {
+    "translation" : "あなたはロックされている{0} ！"
   }
 }

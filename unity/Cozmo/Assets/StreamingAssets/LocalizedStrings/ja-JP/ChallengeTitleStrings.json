@@ -49,13 +49,13 @@
     "translation" : "リモコンモード"
   },
   "droneMode.description" : {
-    "translation" : "コズモは、あなたがコントロールを取ると、彼の目を通して世界を探索することができます。"
+    "translation" : "Cozmoの目を通して世界を探検しよう！"
   },
   "faceEnrollment.title" : {
     "translation" : "顔認識"
   },
   "faceEnrollment.description" : {
-    "translation" : "彼は自分の名前を言うことを学ぶことができるように、新しい人々にコズモを紹介します。"
+    "translation" : "Cozmoが人々を認識し、その名前を知るのを助けます。"
   },
   "memoryMatchGame.title" : {
     "translation" : "記憶ゲーム"
@@ -73,15 +73,18 @@
     "translation" : "Cozmoトーク"
   },
   "cozmoSays.description" : {
-    "translation" : "スパークと引き換えに、コズモは、単語やフレーズを言うしようとします！"
+    "translation" : "Sparksと引き換えに、Cozmoは言葉やフレーズを語ろうとします！"
   },
   "codeLab.title" : {
     "translation" : "コードラボ"
   },
   "codeLab.description" : {
-    "translation" : "コズモをプログラムし、彼が行うことができます楽しいことを探求するためにあなたの創造性を使用してください！"
+    "translation" : "あなたの創造性を使ってCozmoをプログラムし、一緒にできることを探そう！"
   },
   "activityView.title" : {
-    "translation" : "探検する"
+    "translation" : "発見する"
+  },
+  "memoryMatchGame.label.incorrect" : {
+    "translation" : "不正確"
   }
 }

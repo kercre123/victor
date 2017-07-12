@@ -3,517 +3,517 @@
     "translate_paths" : ["*/translation"],
     "variants_enabled" : true,
     "translate_mode" : "custom",
-    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "codeLabChallenge_driveForwardFour.questionSlide.primaryText": {
-    "translation": "#1: <span class='blue'>DRIVE FORWARD</span> 4."
+  "codeLabChallenge_driveForwardFour.questionSlide.primaryText" : {
+    "translation" : "# 1: <span class='blue'> VORWÄRTS FAHREN </span> 4"
   },
-  "codeLabChallenge_driveForwardFour.questionSlide.secondaryText": {
-    "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveForwardFour.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_driveForwardFour.answerSlide.primaryText": {
-    "translation": "Answer #1"
+  "codeLabChallenge_driveForwardFour.answerSlide.primaryText" : {
+    "translation" : "Antwort 1"
   },
-  "codeLabChallenge_driveAndSneeze.questionSlide.primaryText": {
-      "translation": "#2: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='violet'>SNEEZE.</span>"
+  "codeLabChallenge_driveAndSneeze.questionSlide.primaryText" : {
+    "translation" : "# 2: <span class='blue'> VORWÄRTS FAHREN </span> 4, dann <span class='violet'> NIESEN. </span>"
   },
-  "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_driveAndSneeze.answerSlide.primaryText": {
-      "translation": "Answer #2"
+  "codeLabChallenge_driveAndSneeze.answerSlide.primaryText" : {
+    "translation" : "Antwort # 2"
   },
-  "codeLabChallenge_driveSquareSimple.questionSlide.primaryText": {
-      "translation": "#3: <span class='blue'>DRIVE</span> in a square."
+  "codeLabChallenge_driveSquareSimple.questionSlide.primaryText" : {
+    "translation" : "#3: <span class='blue'> FAHRT </span> Auf einem Platz."
   },
-  "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_driveSquareSimple.answerSlide.primaryText": {
-      "translation": "Answer #3"
+  "codeLabChallenge_driveSquareSimple.answerSlide.primaryText" : {
+    "translation" : "Antwort # 3"
   },
-  "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText": {
-      "translation": "#4: <span class='blue'>DRIVE BACKWARD</span> in a square."
+  "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText" : {
+    "translation" : "# 4: <span class='blue'> DRIVE BACKWARD </span> Auf einem Platz."
   },
-  "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText": {
-      "translation": "Answer #4"
+  "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText" : {
+    "translation" : "Antwort # 4"
   },
-  "codeLabChallenge_sayHi.questionSlide.primaryText": {
-      "translation": "#5: <span class='purple'>SAY</span> \"Hi.\""
+  "codeLabChallenge_sayHi.questionSlide.primaryText" : {
+    "translation" : "# 5: <span class='purple'> SAGEN </span> &quot;Hallo.&quot;"
   },
-  "codeLabChallenge_sayHi.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_sayHi.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_sayHi.answerSlide.primaryText": {
-      "translation": "Answer #5"
+  "codeLabChallenge_sayHi.answerSlide.primaryText" : {
+    "translation" : "Antwort # 5"
   },
-  "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText": {
-      "translation": "#6: <span class='purple'>LIGHT BACKPACK</span> green."
+  "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText" : {
+    "translation" : "# 6: <span class='purple'> LIGHT RUCKSACK </span> Grün."
   },
-  "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText": {
-      "translation": "Answer #6"
+  "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText" : {
+    "translation" : "Antwort # 6"
   },
-  "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText": {
-      "translation": "#7: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color."
+  "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText" : {
+    "translation" : "# 7: <span class='purple'> LIGHT RUCKSACK </span> Ihre Lieblingsfarbe, dann <span class='purple'> SAGEN </span> Diese Farbe."
   },
-  "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText": {
-      "translation": "Answer #7"
+  "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText" : {
+    "translation" : "Antwort # 7"
   },
-  "codeLabChallenge_whenFaceSay.questionSlide.primaryText": {
-      "translation": "#8: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> \"I see you.\""
+  "codeLabChallenge_whenFaceSay.questionSlide.primaryText" : {
+    "translation" : "# 8: <span class='yellow'> WENN GESICHT GESEHEN IST, </span><span class='purple'> SAGEN </span> &quot;Bis bald.&quot;"
   },
-  "codeLabChallenge_whenFaceSay.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSay.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenFaceSay.answerSlide.primaryText": {
-      "translation": "Answer #8"
+  "codeLabChallenge_whenFaceSay.answerSlide.primaryText" : {
+    "translation" : "Antwort # 8"
   },
-  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText": {
-      "translation": "#9: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>"
+  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText" : {
+    "translation" : "# 9: <span class='yellow'> WENN GESICHT GESEHEN IST, </span><span class='purple'> LIGHT RUCKSACK </span> eine Farbe, <span class='purple'> SAGEN </span> Etwas, und <span class='blue'> VORWÄRTS FAHREN. </span>"
   },
-  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText": {
-      "translation": "Answer #9"
+  "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText" : {
+    "translation" : "Antwort # 9"
   },
-  "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText": {
-      "translation": "#10: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>"
+  "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText" : {
+    "translation" : "# 10: <span class='purple'> LIGHT RUCKSACK </span> Eine Geheimnisfarbe für immer in einem <span class='orange'> SCHLEIFE. </span>"
   },
-  "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText": {
-      "translation": "Answer #10"
+  "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText" : {
+    "translation" : "Antwort # 10"
   },
-  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText": {
-      "translation": "#11: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color."
+  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText" : {
+    "translation" : "# 11: <span class='yellow'> WENN WÜRFEL GESCHLOSSEN WIRD, </span><span class='purple'> LIGHT RUCKSACK </span> Eine Geheimnisfarbe."
   },
-  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText": {
-      "translation": "Answer #11"
+  "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText" : {
+    "translation" : "Antwort # 11"
   },
-  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText": {
-      "translation": "#12: <span class='yellow'>WHEN CUBE IS TAPPED, </span>do <span class='violet'>MYSTERY ANIMATION.</span>"
+  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText" : {
+    "translation" : "# 12: <span class='yellow'> WENN WÜRFEL GESCHLOSSEN WIRD, </span> machen <span class='violet'> MYSTERY ANIMATION. </span>"
   },
-  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText": {
-      "translation": "Answer #12"
+  "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText" : {
+    "translation" : "Antwort # 12"
   },
-  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText": {
-      "translation": "#13: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>"
+  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText" : {
+    "translation" : "# 13: <span class='yellow'> SEE WÜRFEL, </span> dann <span class='violet'> ACT GLÜCKLICH </span>"
   },
-  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText": {
-      "translation": "Answer #13"
+  "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText" : {
+    "translation" : "Antwort # 13"
   },
-  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText": {
-      "translation": "#14: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>"
+  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText" : {
+    "translation" : "# 14: <span class='yellow'> SEE WÜRFEL, </span> dann <span class='blue'> DRIVE TO CUBE </span>"
   },
-  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText": {
-      "translation": "Answer #14"
+  "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText" : {
+    "translation" : "Antwort # 14"
   },
-  "codeLabChallenge_PushCube.questionSlide.primaryText": {
-      "translation": "#15: Push a cube."
+  "codeLabChallenge_PushCube.questionSlide.primaryText" : {
+    "translation" : "# 15: Schieben Sie einen Würfel."
   },
-  "codeLabChallenge_PushCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_PushCube.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_PushCube.answerSlide.primaryText": {
-      "translation": "Answer #15"
+  "codeLabChallenge_PushCube.answerSlide.primaryText" : {
+    "translation" : "Antwort # 15"
   },
-  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText": {
-      "translation": "#16: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>"
+  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText" : {
+    "translation" : "# 16: <span class='purple'> MOVE LIFT </span> Auf und ab 3 <span class='orange'> MAL. </span>"
   },
-  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText": {
-      "translation": "Answer #16"
+  "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText" : {
+    "translation" : "Antwort # 16"
   },
-  "codeLabChallenge_LiftCube.questionSlide.primaryText": {
-      "translation": "#17: <span class='purple'>LIFT</span> a cube."
+  "codeLabChallenge_LiftCube.questionSlide.primaryText" : {
+    "translation" : "# 17: <span class='purple'> AUFZUG </span> Ein Würfel"
   },
-  "codeLabChallenge_LiftCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_LiftCube.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_LiftCube.answerSlide.primaryText": {
-      "translation": "Answer #17"
+  "codeLabChallenge_LiftCube.answerSlide.primaryText" : {
+    "translation" : "Antwort # 17"
   },
-  "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText": {
-      "translation": "#18: Workout with cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
+  "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
+    "translation" : "# 18: Workout mit Würfel: <span class='blue'> DRIVE TO CUBE, </span><span class='purple'> AUFZUG </span> Es oben und auf halbem Weg 3 <span class='orange'> MAL, </span> dann <span class='purple'> SETZTE ES AB. </span>"
   },
-  "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText": {
-      "translation": "Answer #18"
+  "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText" : {
+    "translation" : "Antwort # 18"
   },
-  "codeLabChallenge_DriveFastSquare.questionSlide.primaryText": {
-      "translation": "#19: <span class='blue'>DRIVE FAST</span> in a square."
+  "codeLabChallenge_DriveFastSquare.questionSlide.primaryText" : {
+    "translation" : "# 19: <span class='blue'> SCHNELL FAHREN </span> Auf einem Platz."
   },
-  "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_DriveFastSquare.answerSlide.primaryText": {
-      "translation": "Answer #19"
+  "codeLabChallenge_DriveFastSquare.answerSlide.primaryText" : {
+    "translation" : "Antwort # 19"
   },
-  "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText": {
-      "translation": "#20: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks."
+  "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText" : {
+    "translation" : "# 20: <span class='blue'> SCHNELL FAHREN </span> In einem Quadrat, mit nur 4 Codeblöcken."
   },
-  "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText": {
-      "translation": "Answer #20"
+  "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText" : {
+    "translation" : "Antwort # 20"
   },
-  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText": {
-      "translation": "#21: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
+  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText" : {
+    "translation" : "# 21: <span class='yellow'> WENN WÜRFEL GESCHLOSSEN WIRD, </span><span class='blue'> FAHRT </span> Eine Seite eines Platzes und <span class='blue'> WENDE. </span>"
   },
-  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText": {
-      "translation": "Answer #21"
+  "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText" : {
+    "translation" : "Antwort # 21"
   },
-  "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText": {
-      "translation": "#22: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>"
+  "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText" : {
+    "translation" : "# 22: <span class='yellow'> WENN LÄCHELN IST, </span><span class='violet'> ACT GLÜCKLICH </span>"
   },
-  "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText": {
-      "translation": "Answer #22"
+  "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText" : {
+    "translation" : "Antwort # 22"
   },
-  "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText": {
-      "translation": "#23: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
+  "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText" : {
+    "translation" : "# 23: <span class='yellow'> WENN LÄCHELN IST, </span><span class='blue'> FAHRT </span> Eine Seite eines Platzes und <span class='blue'> WENDE. </span>"
   },
-  "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText": {
-      "translation": "Answer #23"
+  "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText" : {
+    "translation" : "Antwort # 23"
   },
-  "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText": {
-      "translation": "#24: <span class='purple'>SAY,</span> \"Smile!\" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>"
+  "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText" : {
+    "translation" : "# 24: <span class='purple'> SAGEN, </span> &quot;Lächeln!&quot; <span class='yellow'> WENN LÄCHELN IST, </span> dann <span class='violet'> ACT WIE GEWINNER. </span>"
   },
-  "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText": {
-      "translation": "Answer #24"
+  "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText" : {
+    "translation" : "Antwort # 24"
   },
-  "codeLabChallenge_peekaboo.questionSlide.primaryText": {
-      "translation": "#25: Play Peekaboo. (<span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span> <span class='orange'>REPEAT FOREVER.</span>)"
+  "codeLabChallenge_peekaboo.questionSlide.primaryText" : {
+    "translation" : "# 25: Peekaboo spielen ( <span class='yellow'> WENN GESICHT GESEHEN IST, </span><span class='violet'> ACT GLÜCKLICH </span><span class='orange'> WIEDER WIEDER VERWENDEN. </span> )"
   },
-  "codeLabChallenge_peekaboo.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_peekaboo.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_peekaboo.answerSlide.primaryText": {
-      "translation": "Answer #25"
+  "codeLabChallenge_peekaboo.answerSlide.primaryText" : {
+    "translation" : "Antwort # 25"
   },
-  "codeLabChallenge_stackCubes.questionSlide.primaryText": {
-      "translation": "#26: Stack 2 cubes."
+  "codeLabChallenge_stackCubes.questionSlide.primaryText" : {
+    "translation" : "# 26: Stapel 2 Würfel."
   },
-  "codeLabChallenge_stackCubes.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_stackCubes.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_stackCubes.answerSlide.primaryText": {
-      "translation": "Answer #26"
+  "codeLabChallenge_stackCubes.answerSlide.primaryText" : {
+    "translation" : "Antwort # 26"
   },
-  "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText": {
-      "translation": "#27: Stack 2 cubes, then tip them over."
+  "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText" : {
+    "translation" : "# 27: Stapel 2 Würfel, dann Tip sie über."
   },
-  "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText": {
-      "translation": "Answer #27"
+  "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText" : {
+    "translation" : "Antwort # 27"
   },
-  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText": {
-      "translation": "#28: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
+  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText" : {
+    "translation" : "# 28: <span class='yellow'> WENN GESICHT GESEHEN IST, </span><span class='blue'> WENDE </span> Ganz herum."
   },
-  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText": {
-      "translation": "Answer #28"
+  "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText" : {
+    "translation" : "Antwort # 28"
   },
-  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText": {
-      "translation": "#29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText" : {
+    "translation" : "# 29: <span class='yellow'> WENN GESICHT GESEHEN IST, </span><span class='violet'> ACT ÜBERRASCHT, </span> dann <span class='blue'> WENDE </span> Ganz herum."
   },
-  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText": {
-      "translation": "Answer #29"
+  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText" : {
+    "translation" : "Antwort # 29"
   },
-  "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText": {
-      "translation": "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
+  "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText" : {
+    "translation" : "# 30: Fetch Cubes: Beginne mit Würfeln ein paar Meter hinter Cozmo. <span class='yellow'> WENN GESICHT GESEHEN IST, </span> Holt einen Würfel und bring ihn zurück. <span class='orange'> WIEDER WIEDER VERWENDEN. </span>"
   },
-  "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText": {
-      "translation": "Answer #30"
+  "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText" : {
+    "translation" : "Antwort # 30"
   },
-  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText": {
-      "translation": "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
+  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
+    "translation" : "# 31: Setzen Sie Würfel zurück: <span class='yellow'> WENN WÜRFEL IST, </span> Cozmo haben <span class='blue'> WENDE </span> Und setze den Würfel ein paar Füße hinter ihm und kehre zurück. <span class='orange'> WIEDER WIEDER VERWENDEN. </span>"
   },
-  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText": {
-      "translation": "Answer #31"
+  "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText" : {
+    "translation" : "Antwort # 31"
   },
-  "codeLabChallenge_intruder.questionSlide.primaryText": {
-      "translation": "#32: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
+  "codeLabChallenge_intruder.questionSlide.primaryText" : {
+    "translation" : "# 32: <span class='yellow'> WENN GESICHT GESEHEN IST, </span><span class='violet'> ACT ÜBERRASCHT, </span> dann <span class='orange'> FÜR IMMER: </span><span class='purple'> LIGHT RUCKSACK </span> rot, <span class='purple'> SAGEN, </span> &quot;Eindringling!&quot; Und blinzeln <span class='purple'> RUCKSACK </span> aus."
   },
-  "codeLabChallenge_intruder.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_intruder.questionSlide.secondaryText" : {
+    "translation" : "Versuchen Sie zuerst die Herausforderung, dann tippen Sie auf NEXT, um Ihre Antwort zu überprüfen!"
   },
-  "codeLabChallenge_intruder.answerSlide.primaryText": {
-      "translation": "Answer #32"
+  "codeLabChallenge_intruder.answerSlide.primaryText" : {
+    "translation" : "Antwort # 32"
   },
-  "codeLabChallenge_challengesUI.slideXofY": {
-      "translation": "{0} of {1}"
+  "codeLabChallenge_challengesUI.slideXofY" : {
+    "translation" : "{0} von {1}"
   },
-  "codeLabChallenge_challengesUI.challengesModalTitle": {
-      "translation": "Challenges"
+  "codeLabChallenge_challengesUI.challengesModalTitle" : {
+    "translation" : "Herausforderungen"
   },
-  "codeLab.modalSlideshow.backButtonLabel": {
-      "translation": "Back"
+  "codeLab.modalSlideshow.backButtonLabel" : {
+    "translation" : "Zurück"
   },
-  "codeLab.modalSlideshow.nextButtonLabel": {
-      "translation": "Next"
+  "codeLab.modalSlideshow.nextButtonLabel" : {
+    "translation" : "Nächster"
   },
-  "codeLab.modalSlideshow.doneButtonLabel": {
-      "translation": "Done"
+  "codeLab.modalSlideshow.doneButtonLabel" : {
+    "translation" : "Erledigt"
   },
-  "codeLab.tutorial.modalTitle": {
-      "translation": "Code Lab Tutorial"
+  "codeLab.tutorial.modalTitle" : {
+    "translation" : "Code Lab Tutorial"
   },
-  "codeLab.tutorial.slide_letsYouProgramCozmo": {
-      "translation": "Code Lab lets you program Cozmo."
+  "codeLab.tutorial.slide_letsYouProgramCozmo" : {
+    "translation" : "Code Lab können Sie Cozmo programmieren."
   },
-  "codeLab.tutorial.slide_tapBlockToSeeFunction": {
-      "translation": "You can tap a code block to see what it does."
+  "codeLab.tutorial.slide_tapBlockToSeeFunction" : {
+    "translation" : "Sie können einen Codeblock tippen, um zu sehen, was es tut."
   },
-  "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft": {
-      "translation": "Turn left"
+  "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft" : {
+    "translation" : "Biegen Sie links ab"
   },
-  "codeLab.tutorial.slide_dragBlocksToMakePrograms": {
-      "translation": "Drag code blocks together to make a program."
+  "codeLab.tutorial.slide_dragBlocksToMakePrograms" : {
+    "translation" : "Ziehen Sie Codeblöcke zusammen, um ein Programm zu erstellen."
   },
-  "codeLab.tutorial.slide_greenBlockFirst": {
-      "translation": "Always place a green flag BLOCK first. That way, the green flag BUTTON starts your program!"
+  "codeLab.tutorial.slide_greenBlockFirst" : {
+    "translation" : "Setzen Sie immer eine grüne Fahne BLOCK zuerst. Auf diese Weise startet die grüne Fahne BUTTON Ihr Programm!"
   },
-  "codeLab.projects.modalTitle": {
-      "translation": "Cozmo Code Lab"
+  "codeLab.projects.modalTitle" : {
+    "translation" : "Cozmo Code Lab"
   },
-  "codeLab.projects.tutorialLabel": {
-      "translation": "Tutorial"
+  "codeLab.projects.tutorialLabel" : {
+    "translation" : "Tutorial"
   },
-  "codeLab.projects.newProjectButtonLabel": {
-      "translation": "New Project"
+  "codeLab.projects.newProjectButtonLabel" : {
+    "translation" : "Neues Projekt"
   },
-  "codeLab.projects.projectType.sampleProject": {
-      "translation": "Sample"
+  "codeLab.projects.projectType.sampleProject" : {
+    "translation" : "Sample"
   },
-  "codeLab.projects.projectType.personalProject": {
-      "translation": "Personal"
+  "codeLab.projects.projectType.personalProject" : {
+    "translation" : "Persönlich"
   },
-  "codeLab.projects.confirmQuit.promptText": {
-      "translation": "Quit Activity?"
+  "codeLab.projects.confirmQuit.promptText" : {
+    "translation" : "Beenden Sie die Aktivität?"
   },
-  "codeLab.projects.confirmQuit.confirmButton.labelText": {
-      "translation": "Quit"
+  "codeLab.projects.confirmQuit.confirmButton.labelText" : {
+    "translation" : "Verlassen"
   },
-  "codeLab.projects.confirmQuit.cancelButton.labelText": {
-      "translation": "Cancel"
+  "codeLab.projects.confirmQuit.cancelButton.labelText" : {
+    "translation" : "Stornieren"
   },
-  "codeLab.projects.confirmDeleteProject.confirmPromptTitle": {
-      "translation": "Delete \"{0}\"?"
+  "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
+    "translation" : "Löschen \\ ' {0} \\ '"
   },
-  "codeLab.projects.confirmDeleteProject.confirmButton.labelText": {
-      "translation": "Yes, Delete"
+  "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
+    "translation" : "Ja, Löschen"
   },
-  "codeLab.projects.confirmDeleteProject.cancelButton.labelText": {
-      "translation": "No, Cancel"
+  "codeLab.projects.confirmDeleteProject.cancelButton.labelText" : {
+    "translation" : "Nein, Abbrechen"
   },
-  "codeLab.projects.confirmDeleteProject.confirmPrompt": {
-      "translation": "Are you sure you want to delete this project?"
+  "codeLab.projects.confirmDeleteProject.confirmPrompt" : {
+    "translation" : "Sind Sie sicher, dass Sie dieses Projekt löschen möchten?"
   },
-  "codeLabSampleProject_DriveInSquare.projectName": {
-      "translation": "Drive In Square"
+  "codeLabSampleProject_DriveInSquare.projectName" : {
+    "translation" : "Fahren Sie in Platz"
   },
-  "codeLabSampleProject_RainbowBackpack.projectName": {
-      "translation": "Rainbow Backpack"
+  "codeLabSampleProject_RainbowBackpack.projectName" : {
+    "translation" : "Regenbogen-Rucksack"
   },
-  "codeLabSampleProject_DrivingAndSneezing.projectName": {
-      "translation": "Driving and Sneezing"
+  "codeLabSampleProject_DrivingAndSneezing.projectName" : {
+    "translation" : "Fahren und Niesen"
   },
-  "codeLabSampleProject_TapCubeForMysteryAnimation.projectName": {
-      "translation": "Tap Cube for Mystery Animation"
+  "codeLabSampleProject_TapCubeForMysteryAnimation.projectName" : {
+    "translation" : "Tippen Sie auf Cube für Mystery Animation"
   },
-  "codeLabSampleProject_DriveInSquareAdvanced.projectName": {
-      "translation": "Drive In Square: Advanced"
+  "codeLabSampleProject_DriveInSquareAdvanced.projectName" : {
+    "translation" : "Drive In Square: Fortgeschrittene"
   },
-  "codeLabSampleProject_PushCube.projectName": {
-      "translation": "Push Cube"
+  "codeLabSampleProject_PushCube.projectName" : {
+    "translation" : "Push Cube"
   },
-  "codeLabSampleProject_Peekaboo.projectName": {
-      "translation": "Peekaboo"
+  "codeLabSampleProject_Peekaboo.projectName" : {
+    "translation" : "Guck-Guck"
   },
-  "codeLabSampleProject_WorkoutwithCube.projectName": {
-      "translation": "Workout with Cube"
+  "codeLabSampleProject_WorkoutwithCube.projectName" : {
+    "translation" : "Workout mit Cube"
   },
-  "codeLabSampleProject_IntruderAlarm.projectName": {
-      "translation": "Intruder Alarm!"
+  "codeLabSampleProject_IntruderAlarm.projectName" : {
+    "translation" : "Einbruchalarm!"
   },
- "codeLabHorizontal.UserProject.MyProject": {
-    "translation": "My Project"
+  "codeLabHorizontal.UserProject.MyProject" : {
+    "translation" : "Mein Projekt {0}"
   },
- "codeLabHorizontal.CozmoSaysBlock.DefaultText": {
-    "translation": "Hi"
+  "codeLabHorizontal.CozmoSaysBlock.DefaultText" : {
+    "translation" : "Hallo"
   },
- "codeLabHorizontal.Tooltip.RepeatForever": {
-    "translation": "Repeat Forever"
+  "codeLabHorizontal.Tooltip.RepeatForever" : {
+    "translation" : "Wiederholen Sie für immer"
   },
-  "codeLabHorizontal.Tooltip.Repeat": {
-    "translation": "Repeat"
+  "codeLabHorizontal.Tooltip.Repeat" : {
+    "translation" : "Wiederholen"
   },
-  "codeLabHorizontal.Tooltip.StopProgram": {
-    "translation": "Stop Program"
+  "codeLabHorizontal.Tooltip.StopProgram" : {
+    "translation" : "Programm beenden"
   },
-  "codeLabHorizontal.Tooltip.LightBackpack": {
-    "translation": "Light Backpack"
+  "codeLabHorizontal.Tooltip.LightBackpack" : {
+    "translation" : "Leichter Rucksack"
   },
-  "codeLabHorizontal.Tooltip.DriveForward": {
-    "translation": "Drive Forward"
+  "codeLabHorizontal.Tooltip.DriveForward" : {
+    "translation" : "Vorwärts fahren"
   },
-  "codeLabHorizontal.Tooltip.DriveForwardFast": {
-    "translation": "Drive Forward Fast"
+  "codeLabHorizontal.Tooltip.DriveForwardFast" : {
+    "translation" : "Fahren Sie schnell vorwärts"
   },
-  "codeLabHorizontal.Tooltip.DriveBackward": {
-    "translation": "Drive Backward"
+  "codeLabHorizontal.Tooltip.DriveBackward" : {
+    "translation" : "Rückwärts fahren"
   },
-  "codeLabHorizontal.Tooltip.DriveBackwardFast": {
-    "translation": "Drive Backward Fast"
+  "codeLabHorizontal.Tooltip.DriveBackwardFast" : {
+    "translation" : "Fahren Sie schnell zurück"
   },
-  "codeLabHorizontal.Tooltip.ActHappy": {
-    "translation": "Act Happy"
+  "codeLabHorizontal.Tooltip.ActHappy" : {
+    "translation" : "Handeln Sie glücklich"
   },
-  "codeLabHorizontal.Tooltip.ActLikeWinner": {
-    "translation": "Act Like Winner"
+  "codeLabHorizontal.Tooltip.ActLikeWinner" : {
+    "translation" : "Akt wie Gewinner"
   },
-  "codeLabHorizontal.Tooltip.ActSad": {
-    "translation": "Act Sad"
+  "codeLabHorizontal.Tooltip.ActSad" : {
+    "translation" : "Handeln traurig"
   },
-  "codeLabHorizontal.Tooltip.ActSurprised": {
-    "translation": "Act Surprised"
+  "codeLabHorizontal.Tooltip.ActSurprised" : {
+    "translation" : "Akt überrascht"
   },
-  "codeLabHorizontal.Tooltip.ActLikeDog": {
-    "translation": "Act Like Dog"
+  "codeLabHorizontal.Tooltip.ActLikeDog" : {
+    "translation" : "Handeln Sie wie Hund"
   },
-  "codeLabHorizontal.Tooltip.ActLikeCat": {
-    "translation": "Act Like Cat"
+  "codeLabHorizontal.Tooltip.ActLikeCat" : {
+    "translation" : "Handeln wie Katze"
   },
-  "codeLabHorizontal.Tooltip.Sneeze": {
-    "translation": "Sneeze"
+  "codeLabHorizontal.Tooltip.Sneeze" : {
+    "translation" : "Niesen"
   },
-  "codeLabHorizontal.Tooltip.ActExcited": {
-    "translation": "Act Excited"
+  "codeLabHorizontal.Tooltip.ActExcited" : {
+    "translation" : "Akt aufgeregt"
   },
-  "codeLabHorizontal.Tooltip.ThinkHard": {
-    "translation": "Think Hard"
+  "codeLabHorizontal.Tooltip.ThinkHard" : {
+    "translation" : "Denke scharf nach"
   },
-  "codeLabHorizontal.Tooltip.ActBored": {
-    "translation": "Act Bored"
+  "codeLabHorizontal.Tooltip.ActBored" : {
+    "translation" : "Handeln langweilig"
   },
-  "codeLabHorizontal.Tooltip.ActFrustrated": {
-    "translation": "Act Frustrated"
+  "codeLabHorizontal.Tooltip.ActFrustrated" : {
+    "translation" : "Gesetz frustriert"
   },
-  "codeLabHorizontal.Tooltip.ActChatty": {
-    "translation": "Act Chatty"
+  "codeLabHorizontal.Tooltip.ActChatty" : {
+    "translation" : "Handeln Sie Chatty"
   },
-  "codeLabHorizontal.Tooltip.ActDisappointed": {
-    "translation": "Act Disappointed"
+  "codeLabHorizontal.Tooltip.ActDisappointed" : {
+    "translation" : "Akt enttäuscht"
   },
-  "codeLabHorizontal.Tooltip.Snore": {
-    "translation": "Snore"
+  "codeLabHorizontal.Tooltip.Snore" : {
+    "translation" : "Schnarchen"
   },
-  "codeLabHorizontal.Tooltip.MysteryAnimation": {
-    "translation": "Mystery Animation"
+  "codeLabHorizontal.Tooltip.MysteryAnimation" : {
+    "translation" : "Geheimnis Animation"
   },
-  "codeLabHorizontal.Tooltip.MoveLift": {
-    "translation": "Move Lift"
+  "codeLabHorizontal.Tooltip.MoveLift" : {
+    "translation" : "Bewegen Sie den Aufzug"
   },
-  "codeLabHorizontal.Tooltip.MoveHead": {
-    "translation": "Move Head"
+  "codeLabHorizontal.Tooltip.MoveHead" : {
+    "translation" : "Kopf bewegen"
   },
-  "codeLabHorizontal.Tooltip.DriveToCube": {
-    "translation": "Drive to Cube"
+  "codeLabHorizontal.Tooltip.DriveToCube" : {
+    "translation" : "Fahren Sie zu Cube"
   },
-  "codeLabHorizontal.Tooltip.Say": {
-    "translation": "Say"
+  "codeLabHorizontal.Tooltip.Say" : {
+    "translation" : "Sagen"
   },
-  "codeLabHorizontal.Tooltip.TurnLeft": {
-    "translation": "Turn Left"
+  "codeLabHorizontal.Tooltip.TurnLeft" : {
+    "translation" : "Biegen Sie links ab"
   },
-  "codeLabHorizontal.Tooltip.TurnRight": {
-    "translation": "Turn Right"
+  "codeLabHorizontal.Tooltip.TurnRight" : {
+    "translation" : "Biegen Sie rechts ab"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeFace": {
-    "translation": "Wait to See Face"
+  "codeLabHorizontal.Tooltip.WaitToSeeFace" : {
+    "translation" : "Warten Sie, um Gesicht zu sehen"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeSmile": {
-    "translation": "Wait to See Smile"
+  "codeLabHorizontal.Tooltip.WaitToSeeSmile" : {
+    "translation" : "Warte, um zu sehen, Lächeln"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeFrown": {
-    "translation": "Wait to See Frown"
+  "codeLabHorizontal.Tooltip.WaitToSeeFrown" : {
+    "translation" : "Warten Sie, um Stirnrunzeln zu sehen"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeCube": {
-    "translation": "Wait to See Cube"
+  "codeLabHorizontal.Tooltip.WaitToSeeCube" : {
+    "translation" : "Warten Sie, um Cube zu sehen"
   },
-  "codeLabHorizontal.Tooltip.WaitTorCubeTap": {
-    "translation": "Wait for Cube Tap"
+  "codeLabHorizontal.Tooltip.WaitTorCubeTap" : {
+    "translation" : "Warten auf Cube Tap"
   },
-  "codeLabHorizontal.Tooltip.StartProgramHere": {
-    "translation": "Start Program Here"
+  "codeLabHorizontal.Tooltip.StartProgramHere" : {
+    "translation" : "Programm starten hier"
   },
-  "codeLabHorizontal.Category.Drive": {
-    "translation": "Drive"
+  "codeLabHorizontal.Category.Drive" : {
+    "translation" : "Fahrt"
   },
-  "codeLabHorizontal.Category.Actions": {
-    "translation": "Actions"
+  "codeLabHorizontal.Category.Actions" : {
+    "translation" : "Aktionen"
   },
-  "codeLabHorizontal.Category.Animations": {
-    "translation": "Animations"
+  "codeLabHorizontal.Category.Animations" : {
+    "translation" : "Animationen"
   },
-  "codeLabHorizontal.Category.Events": {
-    "translation": "Events"
+  "codeLabHorizontal.Category.Events" : {
+    "translation" : "Veranstaltungen"
   },
-  "codeLabHorizontal.Category.Control": {
-    "translation": "Control"
+  "codeLabHorizontal.Category.Control" : {
+    "translation" : "Steuern"
   }
 }

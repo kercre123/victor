@@ -86,5 +86,11 @@
   },
   "label.cancelText" : {
     "translation" : "Annuler"
+  },
+  "label.liquidMetalCozmo" : {
+    "translation" : "Édition spéciale: métal liquide"
+  },
+  "connectivity.sendGameplayDataPrompt" : {
+    "translation" : "Aidez-nous à améliorer Cozmo en nous envoyant vos données de jeu et vos statistiques"
   }
 }

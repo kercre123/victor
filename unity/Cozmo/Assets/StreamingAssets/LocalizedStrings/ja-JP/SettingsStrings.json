@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "settings.cubeStatusPanel.button.cubeRefresh" : {
-    "translation" : "キューブをリフレッシュ"
+    "translation" : "リフレッシュキューブ"
   },
   "settings.cubeStatusPanel.button.title" : {
     "translation" : "キューブステータス"
@@ -172,7 +172,7 @@
     "translation" : "ボリューム＆一般"
   },
   "settings.volumePanel.robotToggle.low" : {
-    "translation" : "ロー"
+    "translation" : "低い"
   },
   "settings.volumePanel.robotToggle.high" : {
     "translation" : "高い"

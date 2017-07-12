@@ -49,7 +49,7 @@
     "translation" : "Cozmo hat gelernt, Ihr Gesicht zu erkennen und kann Ihren Namen sagen, wenn er dich sieht. Verwenden Sie wieder treffen Cozmo ihn Freunde zu mehr vorstellen."
   },
   "faceEnrollment.button.addNewPerson" : {
-    "translation" : "New Person"
+    "translation" : "HINZUFÜGEN NEUE PERSON"
   },
   "faceEnrollment.button.scanAgain" : {
     "translation" : "Scan {0} Nochmals"
@@ -73,6 +73,6 @@
     "translation" : "Heute"
   },
   "error.TooManyFaces" : {
-    "translation" : "Stellen Sie sicher, dass Cozmo nur ein Gesicht sieht"
+    "translation" : "Stellen Sie sicher, dass Cozmo nur sieht {0}"
   }
 }

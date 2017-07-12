@@ -127,9 +127,12 @@
     "translation" : "Regarder Cozmo Roll a Cube ..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b> Cozmo vous informera de ce dont il a besoin. </b> À l'heure actuelle, la lumière rouge sur son dos signifie qu'il veut être réglé."
+    "translation" : "<b> Cozmo a besoin d'une mise au point. </b> Lorsque la barre rouge est faible, cela signifie que Cozmo doit être réglé. Appuyez sur le bouton TUNE UP."
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b> Cozmo doit être nourri. </b> La lumière bleue sur son dos signifie son besoin d'alimentation est faible."
+    "translation" : "<b> Cozmo doit être nourri. </b> Lorsque la barre bleue est faible, cela signifie que Cozmo a faim. Appuyez sur le bouton FEED."
+  },
+  "onboarding.DoATrickDesc" : {
+    "translation" : "Avec cette astuce, regardez Cozmo découvrir un cube et le rouler. Assurez-vous qu'il y a un cube qu'il puisse voir."
   }
 }

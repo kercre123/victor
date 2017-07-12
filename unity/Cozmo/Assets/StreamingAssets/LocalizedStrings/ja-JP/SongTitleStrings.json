@@ -1,87 +1,75 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "song.title.camptown": {
-    "translation": "Camptown Races"
+  "song.title.camptown" : {
+    "translation" : "キャンプタウンレース"
   },
-  "song.title.itsyBitsySpider": {
-    "translation": "Itsy Bitsy Spider"
+  "song.title.itsyBitsySpider" : {
+    "translation" : "Itsy Bitsy Spider"
   },
-  "song.title.beethoven": {
-    "translation": "Beethoven\\'s 5th Symphony"
+  "song.title.beethoven" : {
+    "translation" : "ベートーベン交響曲第5番"
   },
-  "song.title.popGoesTheWeasel": {
-    "translation": "Pop Goes the Weasel"
+  "song.title.popGoesTheWeasel" : {
+    "translation" : "ポップはイタチに行く"
   },
-  "song.title.rowYourBoat": {
-    "translation": "Row Your Boat"
+  "song.title.rowYourBoat" : {
+    "translation" : "行をあなたのボート"
   },
-  "song.title.pachebelCanon": {
-    "translation": "Pachelbel\\'s' Canon"
+  "song.title.pachebelCanon" : {
+    "translation" : "パッヘルベルのキヤノン"
   },
-  "song.title.odeToJoy": {
-    "translation": "Beethoven\\'s 9th Symphony"
+  "song.title.odeToJoy" : {
+    "translation" : "ベートーベン交響曲第9番"
   },
-  "song.title.twinkleTwinkle": {
-    "translation": "Twinkle Twinkle Little Star"
+  "song.title.twinkleTwinkle" : {
+    "translation" : "キラキラ光る"
   },
-  "song.title.frereJaqcues": {
-    "translation": "Frère Jacques"
+  "song.title.frereJaqcues" : {
+    "translation" : "フレール・ジャック"
   },
-  "song.title.maryHadALittleLamb": {
-    "translation": "Mary Had a Little Lamb"
+  "song.title.maryHadALittleLamb" : {
+    "translation" : "メアリー・リトル・ラム"
   },
-  "song.title.takeMeOutToTheBallgame": {
-    "translation": "Take Me Out to the Ballgame"
+  "song.title.takeMeOutToTheBallgame" : {
+    "translation" : "私をボールゲームに連れて行こう"
   },
-  "song.title.williamTell": {
-    "translation": "William Tell Overture"
+  "song.title.williamTell" : {
+    "translation" : "ウィリアムテルオーバーチュア"
   },
-  "song.title.yankeeDoodle": {
-    "translation": "Yankee Doodle"
+  "song.title.yankeeDoodle" : {
+    "translation" : "ヤンキードゥードル"
   },
-  "song.title.beautifulDreamer": {
-    "translation": "Beautiful Dreamer"
+  "song.title.beautifulDreamer" : {
+    "translation" : "美しい夢想家"
   },
-  "song.title.mountainKing": {
-    "translation": "Hall of the Mountain King"
+  "song.title.mountainKing" : {
+    "translation" : "マウンテンキングホール"
   },
-  "song.title.taRaRaBoom": {
-    "translation": "Ta Ra Ra Boom De Ay"
+  "song.title.taRaRaBoom" : {
+    "translation" : "タ・ラ・ラ・ブーム・デ・アイ"
   },
-  "song.title.entryOfTheGladiators": {
-    "translation": "Entry of the Gladiators"
+  "song.title.entryOfTheGladiators" : {
+    "translation" : "剣闘士の入り口"
   },
-  "song.title.helloMyBaby": {
-    "translation": "Hello My Baby"
+  "song.title.helloMyBaby" : {
+    "translation" : "ハローマイベイビー"
   },
-  "song.title.turkeyInTheStraw": {
-    "translation": "Turkey In The Straw"
+  "song.title.turkeyInTheStraw" : {
+    "translation" : "トルコでトルコ"
   },
-  "song.title.londonBridge": {
-    "translation": "London Bridge is Falling Down"
+  "song.title.londonBridge" : {
+    "translation" : "ロンドン橋が下降している"
   },
-  "song.title.sakura": {
-    "translation": "Sakura"
+  "song.title.sakura" : {
+    "translation" : "さくら"
   },
-  "song.title.mussIDenn": {
-    "translation": "Muss I Denn"
+  "song.title.mussIDenn" : {
+    "translation" : "Muss I Denn"
   }
 }

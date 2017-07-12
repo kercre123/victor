@@ -31,7 +31,7 @@
     "translation" : "Secouez ce Cube jusqu'à ce que toutes les lumières brillent."
   },
   "needs.NeedsEnergyModal.Instruction3" : {
-    "translation" : "Placez le cube devant Cozmo."
+    "translation" : "Placez le Cube où Cozmo peut le voir, afin qu'il puisse se nourrir."
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
     "translation" : "Cozmo est pleinement alimenté!"
@@ -92,5 +92,14 @@
   },
   "needs.Done" : {
     "translation" : "TERMINÉ"
+  },
+  "needs.RewardsDialog.SparksEarned" : {
+    "translation" : "Vous avez gagné plus de Sparks!"
+  },
+  "needs.RewardsDialog.TrickUnlocked" : {
+    "translation" : "Vous avez déverrouillé {0} !"
+  },
+  "needs.RewardsDialog.SongUnlocked" : {
+    "translation" : "Vous avez déverrouillé {0} !"
   }
 }

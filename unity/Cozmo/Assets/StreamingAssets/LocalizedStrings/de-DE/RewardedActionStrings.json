@@ -6,9 +6,6 @@
     "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "reward.description.Missing" : {
-    "translation" : "Fehlende Beschreibung"
-  },
   "reward.description.Freeplay.Spark" : {
     "translation" : "Funken eines Upgrade"
   },

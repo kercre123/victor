@@ -127,9 +127,12 @@
     "translation" : "Schauen Sie sich Cozmo Roll a Cube ..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b> Cozmo wird Sie wissen lassen, was er braucht. </b> Im Augenblick bedeutet das rote Licht auf dem Rücken, dass er sich abgestimmt hat."
+    "translation" : "<b> Cozmo braucht eine Melodie. </b> Wenn der rote Balken niedrig ist, bedeutet dies, dass Cozmo abgestimmt werden muss. Tippen Sie auf die Taste TUNE UP."
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b> Cozmo muss gefüttert werden. </b> Das blaue Licht auf dem Rücken bedeutet, dass sein Feed Need niedrig ist."
+    "translation" : "<b> Cozmo muss gefüttert werden. </b> Wenn der blaue Balken niedrig ist, bedeutet das, dass Cozmo hungrig ist. Tippen Sie auf die Taste FEED."
+  },
+  "onboarding.DoATrickDesc" : {
+    "translation" : "Mit diesem Trick, sehen Sie Cozmo einen Würfel und rollen Sie es. Stellen Sie sicher, dass es einen Würfel gibt, den er sehen kann."
   }
 }

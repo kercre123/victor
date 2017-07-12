@@ -46,13 +46,13 @@
     "translation" : "閉じる"
   },
   "button.done" : {
-    "translation" : "終わりました"
+    "translation" : "完了"
   },
   "button.play" : {
     "translation" : "遊びます"
   },
   "button.leave" : {
-    "translation" : "残します"
+    "translation" : "離れる"
   },
   "button.back" : {
     "translation" : "バック"
@@ -61,7 +61,7 @@
     "translation" : "次"
   },
   "button.staySparked" : {
-    "translation" : "滞在きっかけ"
+    "translation" : "スパイクされたまま"
   },
   "button.soundsGood" : {
     "translation" : "いいですね"
@@ -82,7 +82,7 @@
     "translation" : "コズモは、再生したいです"
   },
   "label.connect" : {
-    "translation" : "接続します"
+    "translation" : "CONNECT"
   },
   "label.start" : {
     "translation" : "開始"
@@ -97,7 +97,7 @@
     "translation" : "音量チェック"
   },
   "button.GetACozmo" : {
-    "translation" : "コズモを取得"
+    "translation" : "コスモを取得する"
   },
   "button.start" : {
     "translation" : "開始"
@@ -113,9 +113,6 @@
   },
   "button.replay" : {
     "translation" : "リプレイ"
-  },
-  "label.to" : {
-    "translation" : "に："
   },
   "button.skip" : {
     "translation" : "スキップ"
@@ -148,18 +145,21 @@
     "translation" : "合計スパークス： {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "「スタート」をタップすると、あなたは以下の条件に同意します："
+    "translation" : "&quot; <color=#11a2f0ff> CONNECT </color>以下の条件に同意したものとします。"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
-  },
-  "button.temp" : {
-    "translation" : "Temp"
   },
   "label.basicCozmo" : {
     "translation" : "ビッグブレイン。より大きな人格。"
   },
   "label.currentPage" : {
     "translation" : "{0}の{1}"
+  },
+  "label.RewardHeader" : {
+    "translation" : "報酬"
+  },
+  "button.buyACozmo" : {
+    "translation" : "コズモを買う"
   }
 }

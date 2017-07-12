@@ -7,7 +7,7 @@
     "source_key_paths" : ["/{*}"]
   },
   "settings.cubeStatusPanel.button.cubeRefresh" : {
-    "translation" : "Aktualisieren Cubes"
+    "translation" : "REFRESH CUBES"
   },
   "settings.cubeStatusPanel.button.title" : {
     "translation" : "Cube-Status"
@@ -172,10 +172,10 @@
     "translation" : "Volume & General"
   },
   "settings.volumePanel.robotToggle.low" : {
-    "translation" : "Niedrig"
+    "translation" : "NIEDRIG"
   },
   "settings.volumePanel.robotToggle.high" : {
-    "translation" : "Hoch"
+    "translation" : "HOCH"
   },
   "settings.volumePanel.robotToggle.medium" : {
     "translation" : "MED"

@@ -19,7 +19,7 @@
     "translation" : "Die Cozmo App muss Spieldateien auf Ihrem Gerät zugreifen, um zu laufen. Verwenden Sie den Link unten die Cozmo App-Einstellungen zu besuchen, und tippen Sie <b> Berechtigungen&gt; Speicher </b> Rückzug zu ermöglichen."
   },
   "boot.continue" : {
-    "translation" : "Fortsetzen"
+    "translation" : "FORTSETZEN"
   },
   "boot.settings" : {
     "translation" : "Einstellungen"

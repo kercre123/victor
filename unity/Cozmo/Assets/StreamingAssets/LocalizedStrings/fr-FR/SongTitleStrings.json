@@ -1,87 +1,75 @@
 {
-  "smartling": {
-    "translate_paths": [
-      "*/translation"
-    ],
-    "variants_enabled": true,
-    "translate_mode": "custom",
-    "placeholder_format_custom": [
-      "%%[^%]+?%%",
-      "%[^%]+?%",
-      "##[^#]+?##",
-      "__[^_]+?__",
-      "[$]\\{[^\\}\\{]+?\\}",
-      "\\{\\{[^\\}\\{]+?\\}\\}",
-      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
-    ],
-    "source_key_paths": [
-      "/{*}"
-    ]
+  "smartling" : {
+    "translate_paths" : ["*/translation"],
+    "variants_enabled" : true,
+    "translate_mode" : "custom",
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "source_key_paths" : ["/{*}"]
   },
-  "song.title.camptown": {
-    "translation": "Camptown Races"
+  "song.title.camptown" : {
+    "translation" : "Camptown Races"
   },
-  "song.title.itsyBitsySpider": {
-    "translation": "Itsy Bitsy Spider"
+  "song.title.itsyBitsySpider" : {
+    "translation" : "Itsy Bitsy Spider"
   },
-  "song.title.beethoven": {
-    "translation": "Beethoven\\'s 5th Symphony"
+  "song.title.beethoven" : {
+    "translation" : "La 5ème Symphonie de Beethoven"
   },
-  "song.title.popGoesTheWeasel": {
-    "translation": "Pop Goes the Weasel"
+  "song.title.popGoesTheWeasel" : {
+    "translation" : "Pop Goes the Weasel"
   },
-  "song.title.rowYourBoat": {
-    "translation": "Row Your Boat"
+  "song.title.rowYourBoat" : {
+    "translation" : "Ligne de votre bateau"
   },
-  "song.title.pachebelCanon": {
-    "translation": "Pachelbel\\'s' Canon"
+  "song.title.pachebelCanon" : {
+    "translation" : "Canon Pachelbel"
   },
-  "song.title.odeToJoy": {
-    "translation": "Beethoven\\'s 9th Symphony"
+  "song.title.odeToJoy" : {
+    "translation" : "La 9ème symphonie de Beethoven"
   },
-  "song.title.twinkleTwinkle": {
-    "translation": "Twinkle Twinkle Little Star"
+  "song.title.twinkleTwinkle" : {
+    "translation" : "Twinkle Twinkle Little Star"
   },
-  "song.title.frereJaqcues": {
-    "translation": "Frère Jacques"
+  "song.title.frereJaqcues" : {
+    "translation" : "Frère Jacques"
   },
-  "song.title.maryHadALittleLamb": {
-    "translation": "Mary Had a Little Lamb"
+  "song.title.maryHadALittleLamb" : {
+    "translation" : "Mary avait un petit agneau"
   },
-  "song.title.takeMeOutToTheBallgame": {
-    "translation": "Take Me Out to the Ballgame"
+  "song.title.takeMeOutToTheBallgame" : {
+    "translation" : "Emmenez-moi au jeu de balles"
   },
-  "song.title.williamTell": {
-    "translation": "William Tell Overture"
+  "song.title.williamTell" : {
+    "translation" : "William Tell Overture"
   },
-  "song.title.yankeeDoodle": {
-    "translation": "Yankee Doodle"
+  "song.title.yankeeDoodle" : {
+    "translation" : "Yankee Doodle"
   },
-  "song.title.beautifulDreamer": {
-    "translation": "Beautiful Dreamer"
+  "song.title.beautifulDreamer" : {
+    "translation" : "Beau rêveur"
   },
-  "song.title.mountainKing": {
-    "translation": "Hall of the Mountain King"
+  "song.title.mountainKing" : {
+    "translation" : "Temple du Roi de la Montagne"
   },
-  "song.title.taRaRaBoom": {
-    "translation": "Ta Ra Ra Boom De Ay"
+  "song.title.taRaRaBoom" : {
+    "translation" : "Ta Ra Ra Boom De Ay"
   },
-  "song.title.entryOfTheGladiators": {
-    "translation": "Entry of the Gladiators"
+  "song.title.entryOfTheGladiators" : {
+    "translation" : "Entrée des Gladiateurs"
   },
-  "song.title.helloMyBaby": {
-    "translation": "Hello My Baby"
+  "song.title.helloMyBaby" : {
+    "translation" : "Bonjour mon bébé"
   },
-  "song.title.turkeyInTheStraw": {
-    "translation": "Turkey In The Straw"
+  "song.title.turkeyInTheStraw" : {
+    "translation" : "Turquie Dans La Paille"
   },
-  "song.title.londonBridge": {
-    "translation": "London Bridge is Falling Down"
+  "song.title.londonBridge" : {
+    "translation" : "Le pont de Londres s'effondre"
   },
-  "song.title.sakura": {
-    "translation": "Sakura"
+  "song.title.sakura" : {
+    "translation" : "Sakura"
   },
-  "song.title.mussIDenn": {
-    "translation": "Muss I Denn"
+  "song.title.mussIDenn" : {
+    "translation" : "Muss I Denn"
   }
 }

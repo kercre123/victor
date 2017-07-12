@@ -19,7 +19,7 @@
     "translation" : "L'App Cozmo a besoin d'accéder aux fichiers de jeu sur votre appareil afin d'exécuter. Utilisez le lien ci-dessous pour visiter le App Settings Cozmo, et appuyez sur <b> Autorisations&gt; Stockage </b> pour permettre cela."
   },
   "boot.continue" : {
-    "translation" : "Continuer"
+    "translation" : "CONTINUER"
   },
   "boot.settings" : {
     "translation" : "Paramètres"

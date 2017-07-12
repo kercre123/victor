@@ -117,9 +117,6 @@
   "behavior.RamIntoBlock" : {
     "translation" : " "
   },
-  "error.TooManyFaces" : {
-    "translation" : "コズモだけ見ていることを確認します"
-  },
   "behavior.BuildPyramid" : {
     "translation" : "コズモはピラミッドを建てています"
   },
@@ -222,6 +219,12 @@
   "behavior.VC_Refuse_Sparks" : {
     "translation" : "あなたはスパークが足りません"
   },
+  "behavior.VC_HowAreYouDoing_AllGood" : {
+    "translation" : "コズモは気分がいい"
+  },
+  "behavior.SearchForFace" : {
+    "translation" : "コズモは顔を探しています"
+  },
   "behavior.Needs_MildLowEnergyRequest" : {
     "translation" : "コズモは空腹感がある"
   },
@@ -237,6 +240,9 @@
   "behavior.Needs_SevereLowEnergyRequest" : {
     "translation" : "Cozmoはとても空腹感があります - 本当にエネルギーが必要です！"
   },
+  "behavior.Needs_SevereLowPlayGetIn" : {
+    "translation" : "Cozmoはとても寂しく感じています。彼は本当にプレーしたい！"
+  },
   "behavior.Needs_SevereLowPlayBored" : {
     "translation" : "Cozmoはとても寂しく感じていて、彼は本当にプレーしたい！"
   },
@@ -248,5 +254,11 @@
   },
   "behavior.Needs_SevereLowRepairRequest" : {
     "translation" : "Cozmoはうまく感じません - 彼は本当に調整する必要があります！"
+  },
+  "behavior.VC_TrackLaser" : {
+    "translation" : "Cozmoがレーザーを探しています"
+  },
+  "button.CONTINUE.caps" : {
+    "translation" : "持続する"
   }
 }

@@ -31,7 +31,7 @@
     "translation" : "Schütt den Würfel, bis alle Lichter hell leuchten."
   },
   "needs.NeedsEnergyModal.Instruction3" : {
-    "translation" : "Lege den Würfel vor Cozmo."
+    "translation" : "Lege den Würfel, wo Cozmo es sehen kann, also kann er sich selbst ernähren."
   },
   "needs.NeedsEnergyModal.FeedingComplete" : {
     "translation" : "Cozmo ist voll gefüttert!"
@@ -92,5 +92,14 @@
   },
   "needs.Done" : {
     "translation" : "ERLEDIGT"
+  },
+  "needs.RewardsDialog.SparksEarned" : {
+    "translation" : "Du hast mehr Sparks verdient!"
+  },
+  "needs.RewardsDialog.TrickUnlocked" : {
+    "translation" : "Du hast freigeschaltet {0} Nein"
+  },
+  "needs.RewardsDialog.SongUnlocked" : {
+    "translation" : "Du hast freigeschaltet {0} Nein"
   }
 }

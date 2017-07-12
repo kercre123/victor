@@ -13,7 +13,7 @@
     "translation" : "Joueur"
   },
   "button.quit" : {
-    "translation" : "Quitter"
+    "translation" : "QUITTER"
   },
   "button.cancel" : {
     "translation" : "ANNULER"
@@ -31,28 +31,28 @@
     "translation" : "NON, MERCI"
   },
   "button.continue" : {
-    "translation" : "Continuer"
+    "translation" : "CONTINUER"
   },
   "button.okay" : {
-    "translation" : "d'accord"
+    "translation" : "D'ACCORD"
   },
   "button.again" : {
     "translation" : "REJOUER"
   },
   "button.refresh" : {
-    "translation" : "Rafraîchir"
+    "translation" : "RAFRAÎCHIR"
   },
   "button.close" : {
-    "translation" : "Fermer"
+    "translation" : "FERMER"
   },
   "button.done" : {
-    "translation" : "Terminé"
+    "translation" : "TERMINÉ"
   },
   "button.play" : {
     "translation" : "JOUER"
   },
   "button.leave" : {
-    "translation" : "Laisser"
+    "translation" : "LAISSER"
   },
   "button.back" : {
     "translation" : "ARRIÈRE"
@@ -61,7 +61,7 @@
     "translation" : "PROCHAIN"
   },
   "button.staySparked" : {
-    "translation" : "Restez Stimulée"
+    "translation" : "SEJOUR CHAUDÉ"
   },
   "button.soundsGood" : {
     "translation" : "ÇA M'A L'AIR BIEN"
@@ -82,7 +82,7 @@
     "translation" : "Cozmo veut jouer"
   },
   "label.connect" : {
-    "translation" : "Relier"
+    "translation" : "RELIER"
   },
   "label.start" : {
     "translation" : "Début"
@@ -97,13 +97,13 @@
     "translation" : "Sound check"
   },
   "button.GetACozmo" : {
-    "translation" : "Get A Cozmo"
+    "translation" : "OBTENIR UN COZMO"
   },
   "button.start" : {
     "translation" : "DÉBUT"
   },
   "button.begin" : {
-    "translation" : "Commençons"
+    "translation" : "COMMENÇONS"
   },
   "soundcheck.description" : {
     "translation" : "faire S'il vous plaît que le son de votre appareil est allumé"
@@ -112,13 +112,10 @@
     "translation" : "Mettez un de chaque côté de Cube Cozmo et appuyez sur «Actualiser». Cozmo se connecter à la 3 qu'il pense sont les plus proches."
   },
   "button.replay" : {
-    "translation" : "Rejouer"
-  },
-  "label.to" : {
-    "translation" : "À:"
+    "translation" : "REJOUER"
   },
   "button.skip" : {
-    "translation" : "Sauter"
+    "translation" : "SAUTER"
   },
   "soundcheck.description.confirm" : {
     "translation" : "Avez-vous entendu le son?"
@@ -148,18 +145,21 @@
     "translation" : "Total des Sparks: {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "En appuyant sur \"Démarrer\", vous acceptez les termes ci-dessous:"
+    "translation" : "En tapotant &quot; <color=#11a2f0ff> RELIER </color> &quot;, Vous acceptez les termes suivants:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
-  },
-  "button.temp" : {
-    "translation" : "Temp"
   },
   "label.basicCozmo" : {
     "translation" : "Gros cerveau. Personnalité plus grande."
   },
   "label.currentPage" : {
     "translation" : "{0} de {1}"
+  },
+  "label.RewardHeader" : {
+    "translation" : "RÉCOMPENSES"
+  },
+  "button.buyACozmo" : {
+    "translation" : "ACHETER UN COZMO"
   }
 }

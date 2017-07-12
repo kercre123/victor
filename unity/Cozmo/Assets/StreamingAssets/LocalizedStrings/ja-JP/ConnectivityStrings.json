@@ -86,5 +86,11 @@
   },
   "label.cancelText" : {
     "translation" : "キャンセル"
+  },
+  "label.liquidMetalCozmo" : {
+    "translation" : "スペシャルエディション：Liquid Metal"
+  },
+  "connectivity.sendGameplayDataPrompt" : {
+    "translation" : "あなたのゲームプレイのデータと統計情報をお送りください。"
   }
 }

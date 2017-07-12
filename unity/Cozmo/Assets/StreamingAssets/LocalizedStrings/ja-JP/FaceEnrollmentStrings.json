@@ -49,7 +49,7 @@
     "translation" : "コズモはあなたの顔を認識するように学習していると、彼はあなたを見ているときに自分の名前を言うかもしれません。より多くの友人に彼を紹介するために再び会うコズモを使用してください。"
   },
   "faceEnrollment.button.addNewPerson" : {
-    "translation" : "新しい人を追加"
+    "translation" : "新しい人を追加する"
   },
   "faceEnrollment.button.scanAgain" : {
     "translation" : "スキャン{0}再び"
@@ -73,6 +73,6 @@
     "translation" : "今日"
   },
   "error.TooManyFaces" : {
-    "translation" : "Cozmoには1つの顔しか見えないようにする"
+    "translation" : "Cozmoだけが見えることを確認する{0}"
   }
 }

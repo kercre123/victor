@@ -13,7 +13,7 @@
     "translation" : "Spieler"
   },
   "button.quit" : {
-    "translation" : "Verlassen"
+    "translation" : "VERLASSEN"
   },
   "button.cancel" : {
     "translation" : "STORNIEREN"
@@ -31,28 +31,28 @@
     "translation" : "NEIN DANKE"
   },
   "button.continue" : {
-    "translation" : "Fortsetzen"
+    "translation" : "FORTSETZEN"
   },
   "button.okay" : {
-    "translation" : "okay"
+    "translation" : "IN ORDNUNG"
   },
   "button.again" : {
     "translation" : "SPIEL NOCHMAL"
   },
   "button.refresh" : {
-    "translation" : "auffrischen"
+    "translation" : "REFRESH"
   },
   "button.close" : {
-    "translation" : "Schließen"
+    "translation" : "SCHLIESSEN"
   },
   "button.done" : {
-    "translation" : "Erledigt"
+    "translation" : "ERLEDIGT"
   },
   "button.play" : {
     "translation" : "SPIELEN"
   },
   "button.leave" : {
-    "translation" : "Verlassen"
+    "translation" : "VERLASSEN"
   },
   "button.back" : {
     "translation" : "ZURÜCK"
@@ -61,7 +61,7 @@
     "translation" : "NÄCHSTER"
   },
   "button.staySparked" : {
-    "translation" : "Bleiben Ausgelöst"
+    "translation" : "STAY SPARKED"
   },
   "button.soundsGood" : {
     "translation" : "HÖRT SICH GUT AN"
@@ -82,7 +82,7 @@
     "translation" : "Cozmo will spielen"
   },
   "label.connect" : {
-    "translation" : "Verbinden"
+    "translation" : "VERBINDEN"
   },
   "label.start" : {
     "translation" : "Anfang"
@@ -97,13 +97,13 @@
     "translation" : "Soundcheck"
   },
   "button.GetACozmo" : {
-    "translation" : "Get A Cozmo"
+    "translation" : "GET A COZMO"
   },
   "button.start" : {
     "translation" : "ANFANG"
   },
   "button.begin" : {
-    "translation" : "Lass uns anfangen"
+    "translation" : "LASS UNS ANFANGEN"
   },
   "soundcheck.description" : {
     "translation" : "Bitte stellen Sie sicher, Ton des Geräts eingeschaltet ist"
@@ -112,13 +112,10 @@
     "translation" : "Setzen Sie einen einzelnen Cube neben Cozmo und tippen Sie \"Aktualisieren\". Cozmo wird eine Verbindung mit der 3, dass er denkt, dass am nächsten sind."
   },
   "button.replay" : {
-    "translation" : "Wiederholung"
-  },
-  "label.to" : {
-    "translation" : "Nach:"
+    "translation" : "WIEDERHOLUNG"
   },
   "button.skip" : {
-    "translation" : "Überspringen"
+    "translation" : "ÜBERSPRINGEN"
   },
   "soundcheck.description.confirm" : {
     "translation" : "Hörten Sie den Ton?"
@@ -148,18 +145,21 @@
     "translation" : "Insgesamt Sparks: {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "Durch Tippen auf \"Start\", erklären Sie sich mit den nachstehenden Bedingungen:"
+    "translation" : "Durch Tippen auf &quot; <color=#11a2f0ff> VERBINDEN </color> &quot;Sie stimmen den folgenden Bedingungen zu:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
-  },
-  "button.temp" : {
-    "translation" : "Temp"
   },
   "label.basicCozmo" : {
     "translation" : "Großes Gehirn. Größere Persönlichkeit."
   },
   "label.currentPage" : {
     "translation" : "{0} von {1}"
+  },
+  "label.RewardHeader" : {
+    "translation" : "BELOHNUNGEN"
+  },
+  "button.buyACozmo" : {
+    "translation" : "KAUFEN SIE EIN COZMO"
   }
 }

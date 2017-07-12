@@ -3,517 +3,517 @@
     "translate_paths" : ["*/translation"],
     "variants_enabled" : true,
     "translate_mode" : "custom",
-    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "__[^_]+?__", "[$]\\{[^\\}\\{]+?\\}", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
+    "placeholder_format_custom" : ["%%[^%]+?%%", "%[^%]+?%", "##[^#]+?##", "[$]\\{[^\\}\\{]+?\\}", "__[^_]+?__", "\\{\\{[^\\}\\{]+?\\}\\}", "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"],
     "source_key_paths" : ["/{*}"]
   },
-  "codeLabChallenge_driveForwardFour.questionSlide.primaryText": {
-    "translation": "Challenge 1: <span class='blue'>DRIVE FORWARD</span> 4."
+  "codeLabChallenge_driveForwardFour.questionSlide.primaryText" : {
+    "translation" : "＃1： <span class='blue'>前方に運転する</span> 4。"
   },
-  "codeLabChallenge_driveForwardFour.questionSlide.secondaryText": {
-    "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveForwardFour.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_driveForwardFour.answerSlide.primaryText": {
-    "translation": "Answer 1"
+  "codeLabChallenge_driveForwardFour.answerSlide.primaryText" : {
+    "translation" : "答え＃1"
   },
-  "codeLabChallenge_driveAndSneeze.questionSlide.primaryText": {
-      "translation": "Challenge 2: <span class='blue'>DRIVE FORWARD</span> 4, then <span class='violet'>SNEEZE.</span>"
+  "codeLabChallenge_driveAndSneeze.questionSlide.primaryText" : {
+    "translation" : "＃2： <span class='blue'>前方に運転する</span> 4、次に<span class='violet'>くしゃみ。 </span>"
   },
-  "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveAndSneeze.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_driveAndSneeze.answerSlide.primaryText": {
-      "translation": "Answer 2"
+  "codeLabChallenge_driveAndSneeze.answerSlide.primaryText" : {
+    "translation" : "答え＃2"
   },
-  "codeLabChallenge_driveSquareSimple.questionSlide.primaryText": {
-      "translation": "Challenge 3: <span class='blue'>DRIVE</span> in a square."
+  "codeLabChallenge_driveSquareSimple.questionSlide.primaryText" : {
+    "translation" : "＃3： <span class='blue'>ドライブ</span>四角い"
   },
-  "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveSquareSimple.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_driveSquareSimple.answerSlide.primaryText": {
-      "translation": "Answer 3"
+  "codeLabChallenge_driveSquareSimple.answerSlide.primaryText" : {
+    "translation" : "答え＃3"
   },
-  "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText": {
-      "translation": "Challenge 4: <span class='blue'>DRIVE BACKWARD</span> in a square."
+  "codeLabChallenge_driveBackwardSquare.questionSlide.primaryText" : {
+    "translation" : "＃4： <span class='blue'>ドライブバック</span>四角い"
   },
-  "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_driveBackwardSquare.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText": {
-      "translation": "Answer 4"
+  "codeLabChallenge_driveBackwardSquare.answerSlide.primaryText" : {
+    "translation" : "答え＃4"
   },
-  "codeLabChallenge_sayHi.questionSlide.primaryText": {
-      "translation": "Challenge 5: <span class='purple'>SAY</span> \"Hi.\""
+  "codeLabChallenge_sayHi.questionSlide.primaryText" : {
+    "translation" : "＃5： <span class='purple'>いう</span> &quot;こんにちは。&quot;"
   },
-  "codeLabChallenge_sayHi.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_sayHi.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_sayHi.answerSlide.primaryText": {
-      "translation": "Answer 5"
+  "codeLabChallenge_sayHi.answerSlide.primaryText" : {
+    "translation" : "答え＃5"
   },
-  "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText": {
-      "translation": "Challenge 6: <span class='purple'>LIGHT BACKPACK</span> green."
+  "codeLabChallenge_lightBackpackGreen.questionSlide.primaryText" : {
+    "translation" : "＃6： <span class='purple'>ライトバックパック</span>緑。"
   },
-  "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_lightBackpackGreen.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText": {
-      "translation": "Answer 6"
+  "codeLabChallenge_lightBackpackGreen.answerSlide.primaryText" : {
+    "translation" : "答え＃6"
   },
-  "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText": {
-      "translation": "Challenge 7: <span class='purple'>LIGHT BACKPACK</span> your favorite color, then <span class='purple'>SAY</span> that color."
+  "codeLabChallenge_lightBackpackSayColor.questionSlide.primaryText" : {
+    "translation" : "＃7： <span class='purple'>ライトバックパック</span>あなたの好きな色、そして<span class='purple'>いう</span>その色。"
   },
-  "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_lightBackpackSayColor.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText": {
-      "translation": "Answer 7"
+  "codeLabChallenge_lightBackpackSayColor.answerSlide.primaryText" : {
+    "translation" : "答え＃7"
   },
-  "codeLabChallenge_whenFaceSay.questionSlide.primaryText": {
-      "translation": "Challenge 8: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>SAY</span> \"I see you.\""
+  "codeLabChallenge_whenFaceSay.questionSlide.primaryText" : {
+    "translation" : "＃8： <span class='yellow'>顔が見えるとき、 </span><span class='purple'>いう</span> &quot;あなたが見えてます。&quot;"
   },
-  "codeLabChallenge_whenFaceSay.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSay.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenFaceSay.answerSlide.primaryText": {
-      "translation": "Answer 8"
+  "codeLabChallenge_whenFaceSay.answerSlide.primaryText" : {
+    "translation" : "答え＃8"
   },
-  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText": {
-      "translation": "Challenge 9: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='purple'>LIGHT BACKPACK</span> a color, <span class='purple'>SAY</span> something, and <span class='blue'>DRIVE FORWARD.</span>"
+  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.primaryText" : {
+    "translation" : "＃9： <span class='yellow'>顔が見えるとき、 </span><span class='purple'>ライトバックパック</span>色、 <span class='purple'>いう</span>何か、そして<span class='blue'> DRIVE FORWARD。 </span>"
   },
-  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSaySayAndDrive.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText": {
-      "translation": "Answer 9"
+  "codeLabChallenge_whenFaceSaySayAndDrive.answerSlide.primaryText" : {
+    "translation" : "答え＃9"
   },
-  "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText": {
-      "translation": "Challenge 10: <span class='purple'>LIGHT BACKPACK</span> a mystery color forever in a <span class='orange'>LOOP.</span>"
+  "codeLabChallenge_lightBackpackMystery.questionSlide.primaryText" : {
+    "translation" : "＃10： <span class='purple'>ライトバックパック</span>永遠に謎の色<span class='orange'>ループ。 </span>"
   },
-  "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_lightBackpackMystery.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText": {
-      "translation": "Answer 10"
+  "codeLabChallenge_lightBackpackMystery.answerSlide.primaryText" : {
+    "translation" : "答え＃10"
   },
-  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText": {
-      "translation": "Challenge 11: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='purple'>LIGHT BACKPACK</span> a mystery color."
+  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.primaryText" : {
+    "translation" : "＃11： <span class='yellow'>キューブがタップされると、 </span><span class='purple'>ライトバックパック</span>謎の色。"
   },
-  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeTappedMysteryBackpack.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText": {
-      "translation": "Answer 11"
+  "codeLabChallenge_whenCubeTappedMysteryBackpack.answerSlide.primaryText" : {
+    "translation" : "答え＃11"
   },
-  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText": {
-      "translation": "Challenge 12: <span class='yellow'>WHEN CUBE IS TAPPED, </span>do <span class='violet'>MYSTERY ANIMATION.</span>"
+  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.primaryText" : {
+    "translation" : "＃12： <span class='yellow'>キューブがタップされると、 </span>行う<span class='violet'>謎のアニメーション。 </span>"
   },
-  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeTappedMysteryAction.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText": {
-      "translation": "Answer 12"
+  "codeLabChallenge_whenCubeTappedMysteryAction.answerSlide.primaryText" : {
+    "translation" : "答え＃12"
   },
-  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText": {
-      "translation": "Challenge 13: <span class='yellow'>SEE CUBE,</span> then <span class='violet'>ACT HAPPY.</span>"
+  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.primaryText" : {
+    "translation" : "＃13： <span class='yellow'> SEE CUBE、 </span>次に<span class='violet'>うまく行かない。 </span>"
   },
-  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeSeenHappyAction.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText": {
-      "translation": "Answer 13"
+  "codeLabChallenge_whenCubeSeenHappyAction.answerSlide.primaryText" : {
+    "translation" : "答え＃13"
   },
-  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText": {
-      "translation": "Challenge 14: <span class='yellow'>SEE CUBE,</span> then <span class='blue'>DRIVE TO CUBE.</span>"
+  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.primaryText" : {
+    "translation" : "＃14： <span class='yellow'> SEE CUBE、 </span>次に<span class='blue'>キューブを運転する。 </span>"
   },
-  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeSeenDriveToCube.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText": {
-      "translation": "Answer 14"
+  "codeLabChallenge_whenCubeSeenDriveToCube.answerSlide.primaryText" : {
+    "translation" : "答え＃14"
   },
-  "codeLabChallenge_PushCube.questionSlide.primaryText": {
-      "translation": "Challenge 15: Push a cube."
+  "codeLabChallenge_PushCube.questionSlide.primaryText" : {
+    "translation" : "＃15：立方体を押す。"
   },
-  "codeLabChallenge_PushCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_PushCube.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_PushCube.answerSlide.primaryText": {
-      "translation": "Answer 15"
+  "codeLabChallenge_PushCube.answerSlide.primaryText" : {
+    "translation" : "答え＃15"
   },
-  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText": {
-      "translation": "Challenge 16: <span class='purple'>MOVE LIFT</span> up and down 3 <span class='orange'>TIMES.</span>"
+  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.primaryText" : {
+    "translation" : "＃16： <span class='purple'> MOVE LIFT </span>上下3 <span class='orange'> TIMES。 </span>"
   },
-  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_MoveLiftUpAndDown.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText": {
-      "translation": "Answer 16"
+  "codeLabChallenge_MoveLiftUpAndDown.answerSlide.primaryText" : {
+    "translation" : "答え＃16"
   },
-  "codeLabChallenge_LiftCube.questionSlide.primaryText": {
-      "translation": "Challenge 17: <span class='purple'>LIFT</span> a cube."
+  "codeLabChallenge_LiftCube.questionSlide.primaryText" : {
+    "translation" : "＃17： <span class='purple'>リフト</span>キューブ。"
   },
-  "codeLabChallenge_LiftCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_LiftCube.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_LiftCube.answerSlide.primaryText": {
-      "translation": "Answer 17"
+  "codeLabChallenge_LiftCube.answerSlide.primaryText" : {
+    "translation" : "答え＃17"
   },
-  "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText": {
-      "translation": "Challenge 18: Workout with cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
+  "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
+    "translation" : "＃18：キューブを使ったワークアウト： <span class='blue'>キューブ、 </span><span class='purple'>リフト</span>それを途中で3回<span class='orange'> TIMES、 </span>次に<span class='purple'>それを下にしてください。 </span>"
   },
-  "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText": {
-      "translation": "Answer 18"
+  "codeLabChallenge_WorkoutWithCube.answerSlide.primaryText" : {
+    "translation" : "答え＃18"
   },
-  "codeLabChallenge_DriveFastSquare.questionSlide.primaryText": {
-      "translation": "Challenge 19: <span class='blue'>DRIVE FAST</span> in a square."
+  "codeLabChallenge_DriveFastSquare.questionSlide.primaryText" : {
+    "translation" : "＃19： <span class='blue'> DRIVE FAST </span>四角い"
   },
-  "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_DriveFastSquare.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_DriveFastSquare.answerSlide.primaryText": {
-      "translation": "Answer 19"
+  "codeLabChallenge_DriveFastSquare.answerSlide.primaryText" : {
+    "translation" : "回答＃19"
   },
-  "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText": {
-      "translation": "Challenge 20: <span class='blue'>DRIVE FAST</span> in a square, using only 4 code blocks."
+  "codeLabChallenge_DriveSquareAdvanced.questionSlide.primaryText" : {
+    "translation" : "＃20： <span class='blue'> DRIVE FAST </span> 4つのコードブロックのみを使用して四角で囲みます。"
   },
-  "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_DriveSquareAdvanced.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText": {
-      "translation": "Answer 20"
+  "codeLabChallenge_DriveSquareAdvanced.answerSlide.primaryText" : {
+    "translation" : "答え＃20"
   },
-  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText": {
-      "translation": "Challenge 21: <span class='yellow'>WHEN CUBE IS TAPPED,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
+  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.primaryText" : {
+    "translation" : "＃21： <span class='yellow'>キューブがタップされると、 </span><span class='blue'>ドライブ</span>正方形の片側<span class='blue'>順番。 </span>"
   },
-  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeTappedDriveSide.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText": {
-      "translation": "Answer 21"
+  "codeLabChallenge_whenCubeTappedDriveSide.answerSlide.primaryText" : {
+    "translation" : "答え＃21"
   },
-  "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText": {
-      "translation": "Challenge 22: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span>"
+  "codeLabChallenge_whenSmileActHappy.questionSlide.primaryText" : {
+    "translation" : "＃22： <span class='yellow'>スミルが見えるとき、 </span><span class='violet'>うまく行かない。 </span>"
   },
-  "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenSmileActHappy.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText": {
-      "translation": "Answer 22"
+  "codeLabChallenge_whenSmileActHappy.answerSlide.primaryText" : {
+    "translation" : "答え＃22"
   },
-  "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText": {
-      "translation": "Challenge 23: <span class='yellow'>WHEN SMILE IS SEEN,</span> <span class='blue'>DRIVE</span> one side of a square and <span class='blue'>TURN.</span>"
+  "codeLabChallenge_whenSmileDriveSide.questionSlide.primaryText" : {
+    "translation" : "＃23： <span class='yellow'>スミルが見えるとき、 </span><span class='blue'>ドライブ</span>正方形の片側<span class='blue'>順番。 </span>"
   },
-  "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenSmileDriveSide.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText": {
-      "translation": "Answer 23"
+  "codeLabChallenge_whenSmileDriveSide.answerSlide.primaryText" : {
+    "translation" : "答え＃23"
   },
-  "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText": {
-      "translation": "Challenge 24: <span class='purple'>SAY,</span> \"Smile!\" <span class='yellow'>WHEN SMILE IS SEEN,</span> then <span class='violet'>ACT LIKE WINNER.</span>"
+  "codeLabChallenge_whenSmileActWinner.questionSlide.primaryText" : {
+    "translation" : "＃24： <span class='purple'>いう、 </span> &quot;スマイル！&quot; <span class='yellow'>スミルが見えるとき、 </span>次に<span class='violet'>アクトライクウイナー。 </span>"
   },
-  "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenSmileActWinner.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText": {
-      "translation": "Answer 24"
+  "codeLabChallenge_whenSmileActWinner.answerSlide.primaryText" : {
+    "translation" : "答え＃24"
   },
-  "codeLabChallenge_peekaboo.questionSlide.primaryText": {
-      "translation": "Challenge 25: Play Peekaboo. (<span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT HAPPY.</span> <span class='orange'>REPEAT FOREVER.</span>)"
+  "codeLabChallenge_peekaboo.questionSlide.primaryText" : {
+    "translation" : "＃25：Peekabooをプレイする。 （ <span class='yellow'>顔が見えるとき、 </span><span class='violet'>うまく行かない。 </span><span class='orange'>永遠に繰り返す。 </span> ）"
   },
-  "codeLabChallenge_peekaboo.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_peekaboo.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_peekaboo.answerSlide.primaryText": {
-      "translation": "Answer 25"
+  "codeLabChallenge_peekaboo.answerSlide.primaryText" : {
+    "translation" : "答え＃25"
   },
-  "codeLabChallenge_stackCubes.questionSlide.primaryText": {
-      "translation": "Challenge 26: Stack 2 cubes."
+  "codeLabChallenge_stackCubes.questionSlide.primaryText" : {
+    "translation" : "＃26：スタック2つのキューブ。"
   },
-  "codeLabChallenge_stackCubes.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_stackCubes.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_stackCubes.answerSlide.primaryText": {
-      "translation": "Answer 26"
+  "codeLabChallenge_stackCubes.answerSlide.primaryText" : {
+    "translation" : "答え＃26"
   },
-  "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText": {
-      "translation": "Challenge 27: Stack 2 cubes, then tip them over."
+  "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText" : {
+    "translation" : "＃27：2つの立方体を積み重ねて、それらの上にひっくり返します。"
   },
-  "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText": {
-      "translation": "Answer 27"
+  "codeLabChallenge_stackCubesTipOver.answerSlide.primaryText" : {
+    "translation" : "回答＃27"
   },
-  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText": {
-      "translation": "Challenge 28: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='blue'>TURN</span> completely around."
+  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.primaryText" : {
+    "translation" : "＃28： <span class='yellow'>顔が見えるとき、 </span><span class='blue'>順番</span>完全に周り。"
   },
-  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSeenTurnAround.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText": {
-      "translation": "Answer 28"
+  "codeLabChallenge_whenFaceSeenTurnAround.answerSlide.primaryText" : {
+    "translation" : "回答＃28"
   },
-  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText": {
-      "translation": "Challenge 29: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='blue'>TURN</span> completely around."
+  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.primaryText" : {
+    "translation" : "＃29： <span class='yellow'>顔が見えるとき、 </span><span class='violet'> ACT SURPRISED、 </span>次に<span class='blue'>順番</span>完全に周り。"
   },
-  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText": {
-      "translation": "Answer 29"
+  "codeLabChallenge_whenFaceSeenActSurprisedTurnAround.answerSlide.primaryText" : {
+    "translation" : "答え＃29"
   },
-  "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText": {
-      "translation": "Challenge 30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
+  "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText" : {
+    "translation" : "＃30：キューブをフェッチする：Cozmoの後ろに数フィートの立方体で開始します。 <span class='yellow'>顔が見えるとき、 </span>キューブを取り出して元に戻します。 <span class='orange'>永遠に繰り返す。 </span>"
   },
-  "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText": {
-      "translation": "Answer 30"
+  "codeLabChallenge_whenFaceFetchCube.answerSlide.primaryText" : {
+    "translation" : "答え＃30"
   },
-  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText": {
-      "translation": "Challenge 31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
+  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
+    "translation" : "＃31：キューブを後ろに置く： <span class='yellow'>キューブが見えるとき、 </span>コズモを持っている<span class='blue'>順番</span>キューブを彼の後ろに数フィート置いて戻ってください。 <span class='orange'>永遠に繰り返す。 </span>"
   },
-  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText": {
-      "translation": "Answer 31"
+  "codeLabChallenge_whenCubeSeenSetBehind.answerSlide.primaryText" : {
+    "translation" : "回答＃31"
   },
-  "codeLabChallenge_intruder.questionSlide.primaryText": {
-      "translation": "Challenge 32: <span class='yellow'>WHEN FACE IS SEEN,</span> <span class='violet'>ACT SURPRISED,</span> then <span class='orange'>FOREVER:</span> <span class='purple'>LIGHT BACKPACK</span> red, <span class='purple'>SAY,</span> \"Intruder!\" and blink <span class='purple'>BACKPACK</span> off."
+  "codeLabChallenge_intruder.questionSlide.primaryText" : {
+    "translation" : "＃32： <span class='yellow'>顔が見えるとき、 </span><span class='violet'> ACT SURPRISED、 </span>次に<span class='orange'>永遠： </span><span class='purple'>ライトバックパック</span>赤、 <span class='purple'>いう、 </span> &quot;侵入者！&quot;点滅<span class='purple'>バックパック</span>オフ。"
   },
-  "codeLabChallenge_intruder.questionSlide.secondaryText": {
-      "translation": "Try the challenge first, then tap NEXT to check your answer!"
+  "codeLabChallenge_intruder.questionSlide.secondaryText" : {
+    "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
   },
-  "codeLabChallenge_intruder.answerSlide.primaryText": {
-      "translation": "Answer 32"
+  "codeLabChallenge_intruder.answerSlide.primaryText" : {
+    "translation" : "答え＃32"
   },
-  "codeLabChallenge_challengesUI.slideXofY": {
-      "translation": "{0} of {1}"
+  "codeLabChallenge_challengesUI.slideXofY" : {
+    "translation" : "{0}の{1}"
   },
-  "codeLabChallenge_challengesUI.challengesModalTitle": {
-      "translation": "Challenges"
+  "codeLabChallenge_challengesUI.challengesModalTitle" : {
+    "translation" : "課題"
   },
-  "codeLab.modalSlideshow.backButtonLabel": {
-      "translation": "Back"
+  "codeLab.modalSlideshow.backButtonLabel" : {
+    "translation" : "バック"
   },
-  "codeLab.modalSlideshow.nextButtonLabel": {
-      "translation": "Next"
+  "codeLab.modalSlideshow.nextButtonLabel" : {
+    "translation" : "次"
   },
-  "codeLab.modalSlideshow.doneButtonLabel": {
-      "translation": "Done"
+  "codeLab.modalSlideshow.doneButtonLabel" : {
+    "translation" : "完了"
   },
-  "codeLab.tutorial.modalTitle": {
-      "translation": "Code Lab Tutorial"
+  "codeLab.tutorial.modalTitle" : {
+    "translation" : "コードラボチュートリアル"
   },
-  "codeLab.tutorial.slide_letsYouProgramCozmo": {
-      "translation": "Code Lab lets you program Cozmo."
+  "codeLab.tutorial.slide_letsYouProgramCozmo" : {
+    "translation" : "コードラボでは、Cozmoをプログラムできます。"
   },
-  "codeLab.tutorial.slide_tapBlockToSeeFunction": {
-      "translation": "You can tap a code block to see what it does."
+  "codeLab.tutorial.slide_tapBlockToSeeFunction" : {
+    "translation" : "コードブロックをタップすると、コードブロックの内容を確認できます。"
   },
-  "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft": {
-      "translation": "Turn left"
+  "codeLab.tutorial.slide_tapBlockToSeeFunction.sampleTooltip.turnLeft" : {
+    "translation" : "左折してください"
   },
-  "codeLab.tutorial.slide_dragBlocksToMakePrograms": {
-      "translation": "Drag code blocks together to make a program."
+  "codeLab.tutorial.slide_dragBlocksToMakePrograms" : {
+    "translation" : "コードブロックを一緒にドラッグしてプログラムを作成します。"
   },
-  "codeLab.tutorial.slide_greenBlockFirst": {
-      "translation": "Always place a green flag BLOCK first. That way, the green flag BUTTON starts your program!"
+  "codeLab.tutorial.slide_greenBlockFirst" : {
+    "translation" : "必ず緑色の旗を最初に置いてください。そうすれば、緑色のボタンBUTTONがあなたのプログラムを開始します！"
   },
-  "codeLab.projects.modalTitle": {
-      "translation": "Cozmo Code Lab"
+  "codeLab.projects.modalTitle" : {
+    "translation" : "Cozmoコードラボ"
   },
-  "codeLab.projects.tutorialLabel": {
-      "translation": "Tutorial"
+  "codeLab.projects.tutorialLabel" : {
+    "translation" : "チュートリアル"
   },
-  "codeLab.projects.newProjectButtonLabel": {
-      "translation": "New Project"
+  "codeLab.projects.newProjectButtonLabel" : {
+    "translation" : "新しいプロジェクト"
   },
-  "codeLab.projects.projectType.sampleProject": {
-      "translation": "Sample"
+  "codeLab.projects.projectType.sampleProject" : {
+    "translation" : "サンプル"
   },
-  "codeLab.projects.projectType.personalProject": {
-      "translation": "Personal"
+  "codeLab.projects.projectType.personalProject" : {
+    "translation" : "パーソナル"
   },
-  "codeLab.projects.confirmQuit.promptText": {
-      "translation": "Quit Activity?"
+  "codeLab.projects.confirmQuit.promptText" : {
+    "translation" : "アクティビティを終了しますか？"
   },
-  "codeLab.projects.confirmQuit.confirmButton.labelText": {
-      "translation": "Quit"
+  "codeLab.projects.confirmQuit.confirmButton.labelText" : {
+    "translation" : "終了する"
   },
-  "codeLab.projects.confirmQuit.cancelButton.labelText": {
-      "translation": "Cancel"
+  "codeLab.projects.confirmQuit.cancelButton.labelText" : {
+    "translation" : "キャンセル"
   },
-  "codeLab.projects.confirmDeleteProject.confirmPromptTitle": {
-      "translation": "Delete \"{0}\"?"
+  "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
+    "translation" : "削除\\ ' {0} \\ '？"
   },
-  "codeLab.projects.confirmDeleteProject.confirmButton.labelText": {
-      "translation": "Yes, Delete"
+  "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
+    "translation" : "はい、削除"
   },
-  "codeLab.projects.confirmDeleteProject.cancelButton.labelText": {
-      "translation": "No, Cancel"
+  "codeLab.projects.confirmDeleteProject.cancelButton.labelText" : {
+    "translation" : "いいえ、キャンセル"
   },
-  "codeLab.projects.confirmDeleteProject.confirmPrompt": {
-      "translation": "Are you sure you want to delete this project?"
+  "codeLab.projects.confirmDeleteProject.confirmPrompt" : {
+    "translation" : "このプロジェクトを削除してもよろしいですか？"
   },
-  "codeLabSampleProject_DriveInSquare.projectName": {
-      "translation": "Drive In Square"
+  "codeLabSampleProject_DriveInSquare.projectName" : {
+    "translation" : "スクエアでドライブ"
   },
-  "codeLabSampleProject_RainbowBackpack.projectName": {
-      "translation": "Rainbow Backpack"
+  "codeLabSampleProject_RainbowBackpack.projectName" : {
+    "translation" : "レインボーバックパック"
   },
-  "codeLabSampleProject_DrivingAndSneezing.projectName": {
-      "translation": "Driving and Sneezing"
+  "codeLabSampleProject_DrivingAndSneezing.projectName" : {
+    "translation" : "運転とくしゃみ"
   },
-  "codeLabSampleProject_TapCubeForMysteryAnimation.projectName": {
-      "translation": "Tap Cube for Mystery Animation"
+  "codeLabSampleProject_TapCubeForMysteryAnimation.projectName" : {
+    "translation" : "ミステリーアニメーションのタップキューブ"
   },
-  "codeLabSampleProject_DriveInSquareAdvanced.projectName": {
-      "translation": "Drive In Square: Advanced"
+  "codeLabSampleProject_DriveInSquareAdvanced.projectName" : {
+    "translation" : "ドライブスクエア：上級"
   },
-  "codeLabSampleProject_PushCube.projectName": {
-      "translation": "Push Cube"
+  "codeLabSampleProject_PushCube.projectName" : {
+    "translation" : "プッシュキューブ"
   },
-  "codeLabSampleProject_Peekaboo.projectName": {
-      "translation": "Peekaboo"
+  "codeLabSampleProject_Peekaboo.projectName" : {
+    "translation" : "ピカブー"
   },
-  "codeLabSampleProject_WorkoutwithCube.projectName": {
-      "translation": "Workout with Cube"
+  "codeLabSampleProject_WorkoutwithCube.projectName" : {
+    "translation" : "キューブでのワークアウト"
   },
-  "codeLabSampleProject_IntruderAlarm.projectName": {
-      "translation": "Intruder Alarm!"
+  "codeLabSampleProject_IntruderAlarm.projectName" : {
+    "translation" : "侵入者警報！"
   },
- "codeLabHorizontal.UserProject.MyProject": {
-    "translation": "My Project"
+  "codeLabHorizontal.UserProject.MyProject" : {
+    "translation" : "私のプロジェクト{0}"
   },
- "codeLabHorizontal.CozmoSaysBlock.DefaultText": {
-    "translation": "Hi"
+  "codeLabHorizontal.CozmoSaysBlock.DefaultText" : {
+    "translation" : "こんにちは"
   },
- "codeLabHorizontal.Tooltip.RepeatForever": {
-    "translation": "Repeat Forever"
+  "codeLabHorizontal.Tooltip.RepeatForever" : {
+    "translation" : "リピートフォーエバー"
   },
-  "codeLabHorizontal.Tooltip.Repeat": {
-    "translation": "Repeat"
+  "codeLabHorizontal.Tooltip.Repeat" : {
+    "translation" : "繰り返す"
   },
-  "codeLabHorizontal.Tooltip.StopProgram": {
-    "translation": "Stop Program"
+  "codeLabHorizontal.Tooltip.StopProgram" : {
+    "translation" : "プログラムを停止する"
   },
-  "codeLabHorizontal.Tooltip.LightBackpack": {
-    "translation": "Light Backpack"
+  "codeLabHorizontal.Tooltip.LightBackpack" : {
+    "translation" : "ライトバックパック"
   },
-  "codeLabHorizontal.Tooltip.DriveForward": {
-    "translation": "Drive Forward"
+  "codeLabHorizontal.Tooltip.DriveForward" : {
+    "translation" : "ドライブフォワード"
   },
-  "codeLabHorizontal.Tooltip.DriveForwardFast": {
-    "translation": "Drive Forward Fast"
+  "codeLabHorizontal.Tooltip.DriveForwardFast" : {
+    "translation" : "早送りする"
   },
-  "codeLabHorizontal.Tooltip.DriveBackward": {
-    "translation": "Drive Backward"
+  "codeLabHorizontal.Tooltip.DriveBackward" : {
+    "translation" : "後退する"
   },
-  "codeLabHorizontal.Tooltip.DriveBackwardFast": {
-    "translation": "Drive Backward Fast"
+  "codeLabHorizontal.Tooltip.DriveBackwardFast" : {
+    "translation" : "後ろ向き高速ドライブ"
   },
-  "codeLabHorizontal.Tooltip.ActHappy": {
-    "translation": "Act Happy"
+  "codeLabHorizontal.Tooltip.ActHappy" : {
+    "translation" : "法律上の幸せ"
   },
-  "codeLabHorizontal.Tooltip.ActLikeWinner": {
-    "translation": "Act Like Winner"
+  "codeLabHorizontal.Tooltip.ActLikeWinner" : {
+    "translation" : "勝者のように行動"
   },
-  "codeLabHorizontal.Tooltip.ActSad": {
-    "translation": "Act Sad"
+  "codeLabHorizontal.Tooltip.ActSad" : {
+    "translation" : "法悲しい"
   },
-  "codeLabHorizontal.Tooltip.ActSurprised": {
-    "translation": "Act Surprised"
+  "codeLabHorizontal.Tooltip.ActSurprised" : {
+    "translation" : "法律が驚いた"
   },
-  "codeLabHorizontal.Tooltip.ActLikeDog": {
-    "translation": "Act Like Dog"
+  "codeLabHorizontal.Tooltip.ActLikeDog" : {
+    "translation" : "犬のように行動する"
   },
-  "codeLabHorizontal.Tooltip.ActLikeCat": {
-    "translation": "Act Like Cat"
+  "codeLabHorizontal.Tooltip.ActLikeCat" : {
+    "translation" : "猫のように行動する"
   },
-  "codeLabHorizontal.Tooltip.Sneeze": {
-    "translation": "Sneeze"
+  "codeLabHorizontal.Tooltip.Sneeze" : {
+    "translation" : "くしゃみ"
   },
-  "codeLabHorizontal.Tooltip.ActExcited": {
-    "translation": "Act Excited"
+  "codeLabHorizontal.Tooltip.ActExcited" : {
+    "translation" : "Act Excited"
   },
-  "codeLabHorizontal.Tooltip.ThinkHard": {
-    "translation": "Think Hard"
+  "codeLabHorizontal.Tooltip.ThinkHard" : {
+    "translation" : "よく考える"
   },
-  "codeLabHorizontal.Tooltip.ActBored": {
-    "translation": "Act Bored"
+  "codeLabHorizontal.Tooltip.ActBored" : {
+    "translation" : "Act Bored"
   },
-  "codeLabHorizontal.Tooltip.ActFrustrated": {
-    "translation": "Act Frustrated"
+  "codeLabHorizontal.Tooltip.ActFrustrated" : {
+    "translation" : "法が挫折した"
   },
-  "codeLabHorizontal.Tooltip.ActChatty": {
-    "translation": "Act Chatty"
+  "codeLabHorizontal.Tooltip.ActChatty" : {
+    "translation" : "Act Chatty"
   },
-  "codeLabHorizontal.Tooltip.ActDisappointed": {
-    "translation": "Act Disappointed"
+  "codeLabHorizontal.Tooltip.ActDisappointed" : {
+    "translation" : "法が失望した"
   },
-  "codeLabHorizontal.Tooltip.Snore": {
-    "translation": "Snore"
+  "codeLabHorizontal.Tooltip.Snore" : {
+    "translation" : "いびき"
   },
-  "codeLabHorizontal.Tooltip.MysteryAnimation": {
-    "translation": "Mystery Animation"
+  "codeLabHorizontal.Tooltip.MysteryAnimation" : {
+    "translation" : "ミステリーアニメーション"
   },
-  "codeLabHorizontal.Tooltip.MoveLift": {
-    "translation": "Move Lift"
+  "codeLabHorizontal.Tooltip.MoveLift" : {
+    "translation" : "リフトを移動"
   },
-  "codeLabHorizontal.Tooltip.MoveHead": {
-    "translation": "Move Head"
+  "codeLabHorizontal.Tooltip.MoveHead" : {
+    "translation" : "頭を動かす"
   },
-  "codeLabHorizontal.Tooltip.DriveToCube": {
-    "translation": "Drive to Cube"
+  "codeLabHorizontal.Tooltip.DriveToCube" : {
+    "translation" : "キューブにドライブ"
   },
-  "codeLabHorizontal.Tooltip.Say": {
-    "translation": "Say"
+  "codeLabHorizontal.Tooltip.Say" : {
+    "translation" : "いう"
   },
-  "codeLabHorizontal.Tooltip.TurnLeft": {
-    "translation": "Turn Left"
+  "codeLabHorizontal.Tooltip.TurnLeft" : {
+    "translation" : "左折してください"
   },
-  "codeLabHorizontal.Tooltip.TurnRight": {
-    "translation": "Turn Right"
+  "codeLabHorizontal.Tooltip.TurnRight" : {
+    "translation" : "右に曲がる"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeFace": {
-    "translation": "Wait to See Face"
+  "codeLabHorizontal.Tooltip.WaitToSeeFace" : {
+    "translation" : "顔を待つ"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeSmile": {
-    "translation": "Wait to See Smile"
+  "codeLabHorizontal.Tooltip.WaitToSeeSmile" : {
+    "translation" : "笑顔を待つ"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeFrown": {
-    "translation": "Wait to See Frown"
+  "codeLabHorizontal.Tooltip.WaitToSeeFrown" : {
+    "translation" : "ぼろぼろを見るのを待つ"
   },
-  "codeLabHorizontal.Tooltip.WaitToSeeCube": {
-    "translation": "Wait to See Cube"
+  "codeLabHorizontal.Tooltip.WaitToSeeCube" : {
+    "translation" : "キューブを待つ"
   },
-  "codeLabHorizontal.Tooltip.WaitTorCubeTap": {
-    "translation": "Wait for Cube Tap"
+  "codeLabHorizontal.Tooltip.WaitTorCubeTap" : {
+    "translation" : "キューブタップ待ち"
   },
-  "codeLabHorizontal.Tooltip.StartProgramHere": {
-    "translation": "Start Program Here"
+  "codeLabHorizontal.Tooltip.StartProgramHere" : {
+    "translation" : "ここでプログラムを開始"
   },
-  "codeLabHorizontal.Category.Drive": {
-    "translation": "Drive"
+  "codeLabHorizontal.Category.Drive" : {
+    "translation" : "ドライブ"
   },
-  "codeLabHorizontal.Category.Actions": {
-    "translation": "Actions"
+  "codeLabHorizontal.Category.Actions" : {
+    "translation" : "行動"
   },
-  "codeLabHorizontal.Category.Animations": {
-    "translation": "Animations"
+  "codeLabHorizontal.Category.Animations" : {
+    "translation" : "アニメーション"
   },
-  "codeLabHorizontal.Category.Events": {
-    "translation": "Events"
+  "codeLabHorizontal.Category.Events" : {
+    "translation" : "イベント"
   },
-  "codeLabHorizontal.Category.Control": {
-    "translation": "Control"
+  "codeLabHorizontal.Category.Control" : {
+    "translation" : "コントロール"
   }
 }

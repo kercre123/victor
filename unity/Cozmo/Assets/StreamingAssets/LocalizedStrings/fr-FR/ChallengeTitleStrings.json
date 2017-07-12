@@ -49,13 +49,13 @@
     "translation" : "Mode Explorateur"
   },
   "droneMode.description" : {
-    "translation" : "Cozmo vous permet de prendre le contrôle et d'explorer le monde à travers ses yeux."
+    "translation" : "Explorez le monde grâce aux yeux de Cozmo!"
   },
   "faceEnrollment.title" : {
     "translation" : "Première rencontre"
   },
   "faceEnrollment.description" : {
-    "translation" : "Introduire Cozmo à de nouvelles personnes afin qu'il puisse apprendre à dire leur nom."
+    "translation" : "Aidez Cozmo à reconnaître les gens et à apprendre leur nom."
   },
   "memoryMatchGame.title" : {
     "translation" : "Jeu de mémoire"
@@ -73,15 +73,18 @@
     "translation" : "La parole à Cozmo"
   },
   "cozmoSays.description" : {
-    "translation" : "En échange d'une Spark, Cozmo va essayer de dire un mot ou une phrase!"
+    "translation" : "En échange de Sparks, Cozmo tentera de dire un mot ou une phrase!"
   },
   "codeLab.title" : {
     "translation" : "code Lab"
   },
   "codeLab.description" : {
-    "translation" : "Utilisez votre créativité pour programmer Cozmo et d'explorer des choses amusantes qu'il peut faire!"
+    "translation" : "Utilisez votre créativité pour programmer Cozmo et explorez les choses que vous pouvez faire ensemble!"
   },
   "activityView.title" : {
-    "translation" : "Explorer"
+    "translation" : "Découvrir"
+  },
+  "memoryMatchGame.label.incorrect" : {
+    "translation" : "INCORRECT"
   }
 }

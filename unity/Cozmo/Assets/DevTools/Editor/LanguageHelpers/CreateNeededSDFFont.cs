@@ -95,7 +95,7 @@ public class CreateNeededSDFFont {
     }
   }
 
-  [MenuItem("Cozmo/Text Mesh Pro/Generate ja-JP SDF Font")]
+  [MenuItem("Cozmo/Localization/Generate ja-JP SDF Font")]
   public static void CreateSDFFontsFromMenu() {
     CreateSDFFonts(_kDefaultCharacterListAssetPath);
   }

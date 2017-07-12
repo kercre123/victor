@@ -127,9 +127,12 @@
     "translation" : "時計Cozmoキューブロール..."
   },
   "onboarding.RepairIntro" : {
-    "translation" : "<b> Cozmoは彼に必要なものを教えてくれます。 </b>今、彼の背中の赤い光は、彼が調整したいということを意味します。"
+    "translation" : "<b> Cozmoにはチューンアップが必要です。 </b>赤いバーが低いときは、Cozmoをチューニングする必要があることを意味します。 TUNE UPボタンをタップします。"
   },
   "onboarding.FeedIntro" : {
-    "translation" : "<b> Cozmoは給餌する必要があります。 </b>彼の背中の青い光は、彼の給餌ニーズが低いことを意味する。"
+    "translation" : "<b> Cozmoは給餌する必要があります。 </b>青い棒が低いとき、それはCozmoが空腹であることを意味します。 FEEDボタンをタップします。"
+  },
+  "onboarding.DoATrickDesc" : {
+    "translation" : "このトリックで、Cozmoがキューブを見つけてロールしているのを見てください。彼が見ることができるキューブがあることを確認してください。"
   }
 }

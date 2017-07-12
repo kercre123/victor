@@ -86,5 +86,11 @@
   },
   "label.cancelText" : {
     "translation" : "Stornieren"
+  },
+  "label.liquidMetalCozmo" : {
+    "translation" : "Sonderausgabe: Flüssigmetall"
+  },
+  "connectivity.sendGameplayDataPrompt" : {
+    "translation" : "Helfen Sie uns, Cozmo besser zu machen, indem Sie uns Ihre Gameplay-Daten und Statistiken senden"
   }
 }

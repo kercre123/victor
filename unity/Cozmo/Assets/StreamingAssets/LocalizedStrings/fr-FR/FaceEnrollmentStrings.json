@@ -73,6 +73,6 @@
     "translation" : "Aujourd'hui"
   },
   "error.TooManyFaces" : {
-    "translation" : "Assurez-vous que Cozmo ne voit qu'un visage"
+    "translation" : "Assurez-vous que Cozmo ne voit que {0}"
   }
 }
