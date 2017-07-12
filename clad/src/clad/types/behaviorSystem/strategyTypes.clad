@@ -13,6 +13,7 @@ enum uint_8 WantsToRunStrategyType {
 
   AlwaysRun,
   ExpressNeedsTransition,
+  Generic,
   InNeedsBracket,
   NoPreDockPoses,
   PlacedOnCharger,

@@ -347,4 +347,30 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     unexpectedMovement: true,
     vc: false
   );
+
+  // triggers disabled while app is backgrounded
+  public static Anki.Cozmo.AllTriggersConsidered kAppBackgroundedTriggers = new Anki.Cozmo.AllTriggersConsidered(
+    cliffDetected: false,
+    cubeMoved: false,
+    doubleTapDetected: false,
+    facePositionUpdated: false,
+    fistBump: false,
+    frustration: false,
+    hiccup: false,
+    motorCalibration: false,
+    noPreDockPoses: false,
+    objectPositionUpdated: false,
+    placedOnCharger: true,
+    petInitialDetection: false,
+    robotPickedUp: false,
+    robotPlacedOnSlope: false,
+    returnedToTreads: false,
+    robotOnBack: false,
+    robotOnFace: false,
+    robotOnSide: false,
+    robotShaken: false,
+    sparked: false,
+    unexpectedMovement: false,
+    vc: true
+  );
 }

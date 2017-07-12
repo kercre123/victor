@@ -16,7 +16,7 @@
 
   "searchAmplitude_deg": 90.0,
   
-  "maxTimeToConfirm_ms": 3000.0,
+  "maxTimeToConfirm_ms": 5000.0,
   "maxTimeSinceNoLaser_ms": 3000.0,
   "maxTimeBehaviorTimeout_sec": 60.0,
   "maxTimeBeforeRotate_sec": 1.25,

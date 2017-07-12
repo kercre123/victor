@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFactory.h"
 
+#include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyCubeMoved.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFacePositionUpdated.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyFistBump.h"
@@ -28,11 +29,19 @@
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/jsonTools.h"
+
+#include "clad/types/behaviorSystem/strategyTypes.h"
+
 #include "util/logging/logging.h"
 
 
 namespace Anki {
 namespace Cozmo {
+
+namespace {
+static const char* kStrategyToCreateKey = "strategyToCreate";
+}
 
 using namespace ExternalInterface;
 
@@ -41,6 +50,14 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
                                                            const Json::Value& config,
                                                            ReactionTrigger trigger)
 {
+  WantsToRunStrategyType strategyToCreate = WantsToRunStrategyType::Invalid;
+  std::string strategyToCreateString = "";
+  JsonTools::GetValueOptional(config, kStrategyToCreateKey, strategyToCreateString);
+  if(!strategyToCreateString.empty())
+  {
+    strategyToCreate = WantsToRunStrategyTypeFromString(strategyToCreateString);
+  }
+
   IReactionTriggerStrategy* strategy = nullptr;
   switch (trigger) {
     case ReactionTrigger::CliffDetected:
@@ -123,7 +140,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotPickedUp:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::InAir;
       });
       
@@ -152,7 +169,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotOnBack:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::OnBack;
       });
       
@@ -162,7 +179,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotOnFace:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::OnFace;
       });
       
@@ -172,7 +189,7 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     case ReactionTrigger::RobotOnSide:
     {
       auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot, const IBehaviorPtr behavior) -> bool {
+      genericStrategy->SetShouldTriggerCallback([] (const Robot& robot) -> bool {
         return robot.GetOffTreadsState() == OffTreadsState::OnLeftSide
             || robot.GetOffTreadsState() == OffTreadsState::OnRightSide;
       });
@@ -203,7 +220,35 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
     }
     case ReactionTrigger::VC:
     {
-      strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
+      const WantsToRunStrategyType kGenericStrategyType = WantsToRunStrategyType::Generic;
+      if(strategyToCreate == kGenericStrategyType)
+      {
+        // Generic strategy wants to run when IdleTimeout is cancelled (cancelled by game when waking up while
+        // going to sleep). The VC reaction trigger needs to be enabled and the current reaction can't be VC.
+        // This strategy is used to trigger reactToVoiceCommand_Wakeup when sleeping is cancelled via a cancel
+        // button
+        auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
+        std::set<MessageGameToEngineTag> relevantTypes =
+        {
+          MessageGameToEngineTag::CancelIdleTimeout
+        };
+        genericStrategy->ConfigureRelevantEvents(relevantTypes,
+         [](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event, const Robot& robot)
+         {
+           const bool currentTriggerNotVC = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
+                                             ReactionTrigger::VC);
+           const bool VCTriggerEnabled = robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::VC);
+           
+           return (currentTriggerNotVC && VCTriggerEnabled);
+         }
+        );
+        
+        strategy = genericStrategy;
+      }
+      else
+      {
+        strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
+      }
       break;
     }
     case ReactionTrigger::Count:

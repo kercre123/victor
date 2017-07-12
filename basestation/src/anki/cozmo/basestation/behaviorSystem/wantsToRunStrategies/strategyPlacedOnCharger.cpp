@@ -63,10 +63,9 @@ bool StrategyPlacedOnCharger::WantsToRunInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void StrategyPlacedOnCharger::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
-  if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ChargerEvent &&
-     event.GetData().Get_ChargerEvent().onCharger)
+  if(event.GetData().GetTag() == ExternalInterface::MessageEngineToGameTag::ChargerEvent)
   {
-    _shouldTrigger = true;
+    _shouldTrigger = event.GetData().Get_ChargerEvent().onCharger;
   }
 }
   

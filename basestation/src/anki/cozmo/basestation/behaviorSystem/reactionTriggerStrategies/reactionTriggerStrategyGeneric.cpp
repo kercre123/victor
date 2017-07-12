@@ -26,6 +26,12 @@ static const char* kShouldResumeLastKey = "shouldResumeLast";
 static const char* kCanInterruptOtherTriggeredBehaviorKey = "canInterruptOtherTriggeredBehavior";
 static const char* kTriggerStrategyNameKey = "debugStrategyName";
 static const char* kNeedsRobotPreReqKey = "needsRobotPreReq";
+
+static const char* kWantsToRunStrategyConfigKey = "wantsToRunStrategyConfig";
+static const char* kStrategyGenericJson =
+  "{"
+  "   \"strategyType\" : \"Generic\""
+  "}";
 }
 
 namespace Anki {
@@ -47,7 +53,18 @@ ReactionTriggerStrategyGeneric* ReactionTriggerStrategyGeneric::CreateReactionTr
   }
   
   JsonTools::GetValueOptional(genericParams, kTriggerStrategyNameKey, strategyName);
-  return new ReactionTriggerStrategyGeneric(robot, config, strategyName);
+  
+  // Dynamically add a "wantsToRunStrategyConfig" json value to the passed in config
+  // so that the generic wantsToRunStrategy is created by the base class
+  Json::Reader reader;
+  Json::Value genericStrategyConfig;
+  const bool parsedOK = reader.parse(kStrategyGenericJson, genericStrategyConfig, false);
+  DEV_ASSERT(parsedOK, "ReactionTriggerStrategyGeneric.CreateReactionTriggerStrategyGeneric.FailedToParseJson");
+  
+  Json::Value configCopy = config;
+  configCopy[kWantsToRunStrategyConfigKey] = genericStrategyConfig;
+  
+  return new ReactionTriggerStrategyGeneric(robot, configCopy, strategyName);
 }
 
 // Private constructor so that only the static creation function above can make an instance
@@ -90,71 +107,54 @@ void ReactionTriggerStrategyGeneric::SetupForceTriggerBehavior(const Robot& robo
 // default, this boils down to only checking behavior->IsRunnable with no prereqs.
 bool ReactionTriggerStrategyGeneric::ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior)
 {
-  if(_relevantEvents.empty() || _shouldTrigger)
-  {
-    _shouldTrigger = false;
+  if(ANKI_VERIFY(_wantsToRunStrategy != nullptr,
+                 "ReactionTriggerStrategyNoPreDockPoses.ShouldTriggerBehaviorInternal",
+                 "WantsToRunStrategyNotSpecified")){
     
-    // If the callback isn't set we treat it as returning true
-    if (!_shouldTriggerCallback || _shouldTriggerCallback(robot, behavior))
-    {
-      if (_needsRobotPreReq)
-      {
-        return behavior->IsRunnable(BehaviorPreReqRobot(robot));
-      }
-      else
-      {
-        return behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs);
-      }
-    }
+    const bool isRunnable = (behavior->IsRunning() ||
+                             (_needsRobotPreReq ?
+                              behavior->IsRunnable(BehaviorPreReqRobot(robot)) :
+                              behavior->IsRunnable(ReactionTriggerConst::kNoPreReqs)));
+    
+    return isRunnable && _wantsToRunStrategy->WantsToRun(robot);
   }
   
   return false;
 }
-  
-// Overrides interface to allow for instances with different configurations to decide how they want to handle events
-// they're listening to. Includes a check to make sure an event being handled is one that has actually been
-// requested when the class was configured. With no callback specified this simply marks that computational switch
-// should occur whenever a relevant event is handled.
-void ReactionTriggerStrategyGeneric::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+
+void ReactionTriggerStrategyGeneric::SetShouldTriggerCallback(StrategyGeneric::ShouldTriggerCallbackType callback)
 {
-  // Don't do anything if this trigger can't interrupt itself and this reaction trigger
-  //  caused the current behavior to run.
-  if (!CanInterruptSelf() &&
-      robot.GetBehaviorManager().GetCurrentReactionTrigger() == GetReactionTrigger())
-  {
-    return;
-  }
+  StrategyGeneric* strategy = GetGenericWantsToRunStrategy();
+  strategy->SetShouldTriggerCallback(callback);
+}
   
-  if (_relevantEvents.find(event.GetData().GetTag()) == _relevantEvents.end())
-  {
-    PRINT_NAMED_ERROR("ReactionTriggerStrategyGeneric.AlwaysHandleInternal.BadEventType",
-                      "GenericStrategy named %s not configured to handle tag type %s",
-                      _strategyName.c_str(),
-                      MessageEngineToGameTagToString(event.GetData().GetTag()));
-    return;
-  }
+void ReactionTriggerStrategyGeneric::ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents,
+                                                             StrategyGeneric::E2GHandleCallbackType callback)
+{
+  StrategyGeneric* strategy = GetGenericWantsToRunStrategy();
+  strategy->ConfigureRelevantEvents(relevantEvents, callback);
+}
   
-  if (!_eventHandleCallback || _eventHandleCallback(event, robot))
-  {
-    _shouldTrigger = true;
-  }
+void ReactionTriggerStrategyGeneric::ConfigureRelevantEvents(std::set<GameToEngineTag> relevantEvents,
+                                                             StrategyGeneric::G2EHandleCallbackType callback)
+{
+  StrategyGeneric* strategy = GetGenericWantsToRunStrategy();
+  strategy->ConfigureRelevantEvents(relevantEvents, callback);
 }
 
-void ReactionTriggerStrategyGeneric::ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents, EventHandleCallbackType callback)
+StrategyGeneric* ReactionTriggerStrategyGeneric::GetGenericWantsToRunStrategy() const
 {
-  if (!ANKI_VERIFY(_relevantEvents.empty(), "ReactionTriggerStrategyGeneric::SetEventHandleCallback.EventsAlreadySet", ""))
+  StrategyGeneric* strategy;
+  if(ANKI_DEV_CHEATS)
   {
-    return;
+    strategy = dynamic_cast<StrategyGeneric*>(_wantsToRunStrategy);
+    DEV_ASSERT(strategy != nullptr, "ReactionTriggerStrategyGeneric.GetGenericWantsToRunStrategy.Null");
   }
-  
-  if (!ANKI_VERIFY(!relevantEvents.empty(), "ReactionTriggerStrategyGeneric::SetEventHandleCallback.NewEventsNotSpecified", ""))
+  else
   {
-    return;
+    strategy = static_cast<StrategyGeneric*>(_wantsToRunStrategy);
   }
-  
-  _relevantEvents = relevantEvents; // keep a copy on this instance for validation later
-  SubscribeToTags(std::move(relevantEvents));
-  _eventHandleCallback = callback;
+  return strategy;
 }
 
 } // namespace Cozmo

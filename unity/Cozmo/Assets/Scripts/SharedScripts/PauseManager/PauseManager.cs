@@ -152,6 +152,8 @@ namespace Cozmo {
     }
 
     private void HandleApplicationPause(bool shouldBePaused) {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+
       // When pausing, try to close any challenge that's open and reset robot state to Idle
       if (!_IsPaused && shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application being paused");
@@ -170,6 +172,10 @@ namespace Cozmo {
           StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
           // Set up a timer so that if we unpause after starting the goToSleep, we'll do the wakeup (using a little buffer past beginning of sleep)
           _ShouldPlayWakeupTimestamp = Time.realtimeSinceStartup + Settings.AppBackground_TimeTilSleep_sec + Settings.AppBackground_SleepAnimGetInBuffer_sec;
+        }
+
+        if (null != robot) {
+          robot.DisableReactionsWithLock(ReactionaryBehaviorEnableGroups.kPauseManagerId, ReactionaryBehaviorEnableGroups.kAppBackgroundedTriggers);
         }
 
         // Let the engine know that we're being paused
@@ -194,13 +200,13 @@ namespace Cozmo {
           bool shouldPlayWakeup = false;
           if (!_EngineTriggeredSleep && _IdleTimeOutEnabled) {
             StopIdleTimeout();
+
             if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
               shouldPlayWakeup = true;
             }
           }
 
           if (shouldPlayWakeup) {
-            IRobot robot = RobotEngineManager.Instance.CurrentRobot;
             if (null != robot) {
               robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, HandleFinishedWakeup);
             }

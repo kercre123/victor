@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyAlwaysRun.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyExpressNeedsTransition.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyGeneric.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyInNeedsBracket.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyNoPreDockPoses.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyPlacedOnCharger.h"
@@ -53,6 +54,11 @@ IWantsToRunStrategy* WantsToRunStrategyFactory::CreateWantsToRunStrategy(Robot& 
     case WantsToRunStrategyType::ExpressNeedsTransition:
     {
       strategy = new StrategyExpressNeedsTransition(robot, config);
+      break;
+    }
+    case WantsToRunStrategyType::Generic:
+    {
+      strategy = new StrategyGeneric(robot, config);
       break;
     }
     case WantsToRunStrategyType::InNeedsBracket:

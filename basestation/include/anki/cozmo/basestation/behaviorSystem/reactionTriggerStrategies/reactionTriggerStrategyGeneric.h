@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_ReactionTriggerStrategyGeneric_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/strategyGeneric.h"
 
 #include <set>
 #include <string>
@@ -21,7 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
-class ReactionTriggerStrategyGeneric : public IReactionTriggerStrategy{
+class ReactionTriggerStrategyGeneric : public IReactionTriggerStrategy {
 public:
   // Static function for creating instances that makes use of json configuration during construction
   static ReactionTriggerStrategyGeneric* CreateReactionTriggerStrategyGeneric(Robot& robot,
@@ -31,32 +32,29 @@ public:
   virtual bool ShouldResumeLastBehavior() const override { return _shouldResumeLast;}
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return _canInterruptOtherTriggeredBehavior; }
   
-  // Callback for the custom logic to determine whether to trigger the behavior
-  using ShouldTriggerCallbackType = std::function<bool(const Robot& robot, const IBehaviorPtr behavior)>;
+  void SetShouldTriggerCallback(StrategyGeneric::ShouldTriggerCallbackType callback);
   
-  // Callback for the custom logic to determine whether to computationally switch based on this event
-  using EventHandleCallbackType = std::function<bool(const EngineToGameEvent& event, const Robot& robot)>;
+  void ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents,
+                               StrategyGeneric::E2GHandleCallbackType callback = StrategyGeneric::E2GHandleCallbackType{});
   
-  // Setters for the above callbacks
-  void SetShouldTriggerCallback(ShouldTriggerCallbackType callback) { _shouldTriggerCallback = callback; }
-  void ConfigureRelevantEvents(std::set<EngineToGameTag> relevantEvents, EventHandleCallbackType callback = EventHandleCallbackType{});
+  void ConfigureRelevantEvents(std::set<GameToEngineTag> relevantEvents,
+                               StrategyGeneric::G2EHandleCallbackType callback = StrategyGeneric::G2EHandleCallbackType{});
   
 protected:
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
 
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
   
 private:
+  
+  StrategyGeneric* GetGenericWantsToRunStrategy() const;
+
   bool                          _shouldTrigger = false;
   std::string                   _strategyName = "Trigger Strategy Generic";
   bool                          _shouldResumeLast = true;
   bool                          _canInterruptOtherTriggeredBehavior; // Initialized in constructor by call to base class getter
   bool                          _needsRobotPreReq = false;
-  std::set<EngineToGameTag>     _relevantEvents; // The list of events this trigger is subscribed to, kept for sanity checking later
-  ShouldTriggerCallbackType     _shouldTriggerCallback;
-  EventHandleCallbackType       _eventHandleCallback;
   
   // Private constructor because we want to create instances using the static creation function above
   ReactionTriggerStrategyGeneric(Robot& robot,
