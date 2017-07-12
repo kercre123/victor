@@ -1,4 +1,4 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using Cozmo.Needs;
 using Cozmo.Needs.UI;
 using Cozmo.UI;
@@ -9,20 +9,21 @@ namespace Cozmo.Play.UI {
   public class NeedsPlayModal : BaseModal {
 
     [SerializeField]
-    private NeedsMeter _PlayMeter;
+    private RectTransform _MetersAnchor;
+
+    [SerializeField]
+    private NeedsMetersWidget _MetersWidgetPrefab;
+
+    private NeedsMetersWidget _MetersWidget;
 
     public void InitializePlayModal() {
       NeedsStateManager nsm = NeedsStateManager.Instance;
 
-      _PlayMeter.Initialize(allowInput: false,
-                            buttonClickCallback: null,
-                            dasButtonName: "play_need_meter_button",
-                            dasParentDialogName: DASEventDialogName);
-      _PlayMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Play).Value);
-    }
+      _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
+      _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName,
+                               baseDialog: this,
+                               focusOnMeter: NeedId.Play);
 
-    private void OnDestroy() {
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -31,21 +32,6 @@ namespace Cozmo.Play.UI {
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {
       ConstructDefaultFadeCloseAnimation(closeAnimation);
-    }
-
-    protected override void RaiseDialogOpenAnimationFinished() {
-      base.RaiseDialogOpenAnimationFinished();
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
-    }
-
-    protected override void RaiseDialogClosed() {
-      base.RaiseDialogClosed();
-      NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
-    }
-
-    private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
-      NeedsStateManager nsm = NeedsStateManager.Instance;
-      _PlayMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Play).Value);
     }
   }
 }

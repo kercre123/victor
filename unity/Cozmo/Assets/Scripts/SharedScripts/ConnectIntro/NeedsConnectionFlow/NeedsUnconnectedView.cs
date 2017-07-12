@@ -14,6 +14,10 @@ namespace Cozmo.ConnectionFlow.UI {
     private CozmoButton _ConnectButton;
 
     [SerializeField]
+    private RectTransform _MetersAnchor;
+
+    [SerializeField]
+    private NeedsMetersWidget _MetersWidgetPrefab;
     private NeedsMetersWidget _MetersWidget;
 
     // Use this for initialization
@@ -25,7 +29,8 @@ namespace Cozmo.ConnectionFlow.UI {
         _ConnectButton.Initialize(HandleConnectButtonPressed, "connect_button", "needs_unconnected_view");
       }
 
-      _MetersWidget.Initialize(enableButtonBasedOnNeeds: false, dasParentDialogName: DASEventDialogName, baseDialog: this);
+      _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
+      _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
       _MetersWidget.OnPlayPressed += HandleMeterPressed;
       _MetersWidget.OnEnergyPressed += HandleMeterPressed;
       _MetersWidget.OnRepairPressed += HandleMeterPressed;
@@ -45,6 +50,14 @@ namespace Cozmo.ConnectionFlow.UI {
       _MetersWidget.OnPlayPressed -= HandleMeterPressed;
       _MetersWidget.OnEnergyPressed -= HandleMeterPressed;
       _MetersWidget.OnRepairPressed -= HandleMeterPressed;
+      Destroy(_MetersWidget.gameObject);
+    }
+
+    protected override void RaiseDialogClosed() {
+      if (_MetersWidget != null) {
+        _MetersWidget.gameObject.SetActive(false);
+      }
+      base.RaiseDialogClosed();
     }
 
     private void HandleConnectButtonPressed() {

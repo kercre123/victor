@@ -1,5 +1,6 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using Cozmo.UI;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,52 +20,67 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private NeedsMeter _PlayMeter;
 
-    private bool _EnableButtonsBasedOnNeeds;
+    [SerializeField]
+    private CozmoImage _DimmedImage;
 
-    public void Initialize(bool enableButtonBasedOnNeeds, string dasParentDialogName, BaseDialog baseDialog) {
-      NeedsStateManager nsm = NeedsStateManager.Instance;
+    [SerializeField]
+    private float _InitialFillStaggerTime = 1f;
 
-      bool allowInput = true;
-      NeedsValue repairValue, energyValue, playValue;
-      repairValue = nsm.GetCurrentDisplayValue(NeedId.Repair);
-      energyValue = nsm.GetCurrentDisplayValue(NeedId.Energy);
-      playValue = nsm.GetCurrentDisplayValue(NeedId.Play);
-
-      _RepairMeter.Initialize(allowInput, RaiseRepairPressed, "repair_need_meter_button", dasParentDialogName);
-      _RepairMeter.ProgressBar.SetValueInstant(repairValue.Value);
-
-      _EnergyMeter.Initialize(allowInput, RaiseEnergyPressed, "energy_need_meter_button", dasParentDialogName);
-      _EnergyMeter.ProgressBar.SetValueInstant(energyValue.Value);
-
-      _PlayMeter.Initialize(allowInput, RaisePlayPressed, "play_need_meter_button", dasParentDialogName);
-      _PlayMeter.ProgressBar.SetValueInstant(playValue.Value);
-
-      baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
-
-      _EnableButtonsBasedOnNeeds = enableButtonBasedOnNeeds;
-      if (_EnableButtonsBasedOnNeeds) {
-        EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
+    private bool _RepairMeterPaused = false;
+    public bool RepairMeterPaused {
+      get {
+        return _RepairMeterPaused;
+      }
+      set {
+        bool unpaused = _RepairMeterPaused && !value;
+        _RepairMeterPaused = value;
+        if (unpaused) {
+          HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
+        }
       }
     }
 
+    private bool _EnableButtonsBasedOnNeeds;
+
+    private Coroutine _StaggeredFillCoroutine = null;
+
+    public void Initialize(string dasParentDialogName,
+                           BaseDialog baseDialog,
+                           NeedId focusOnMeter = NeedId.Count) {
+      NeedsStateManager nsm = NeedsStateManager.Instance;
+      _RepairMeter.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Repair).Value);
+      _EnergyMeter.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Energy).Value);
+      _PlayMeter.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Play).Value);
+
+      //if we are isolating a meter, let's stick a dimmer behind it, covering the rest.
+      _DimmedImage.gameObject.SetActive(focusOnMeter != NeedId.Count);
+      _DimmedImage.transform.SetAsLastSibling();
+
+      switch (focusOnMeter) {
+      case NeedId.Repair:
+        _RepairMeter.transform.SetAsLastSibling();
+        break;
+      case NeedId.Energy:
+        _EnergyMeter.transform.SetAsLastSibling();
+        break;
+      case NeedId.Play:
+        _PlayMeter.transform.SetAsLastSibling();
+        break;
+      }
+
+      baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+    }
+
     private void OnDestroy() {
+      if (_StaggeredFillCoroutine != null) {
+        StopCoroutine(_StaggeredFillCoroutine);
+      }
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
     }
 
     private void HandleDialogFinishedOpenAnimation() {
-      NeedsStateManager nsm = NeedsStateManager.Instance;
-      NeedsValue repairValue, energyValue, playValue;
-      repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
-      energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
-      playValue = nsm.PopLatestEngineValue(NeedId.Play);
-      UpdateMeters(repairValue.Value, energyValue.Value, playValue.Value);
-      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
-
-      if (_EnableButtonsBasedOnNeeds) {
-        EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
-        NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
-      }
+      _StaggeredFillCoroutine = StartCoroutine(StaggerMeterFills());
     }
 
     private void PlayMeterMoveSound(float oldVal, float newVal) {
@@ -94,10 +110,11 @@ namespace Cozmo.Needs.UI {
     }
 
     private void UpdateMeters(float repairValue, float energyValue, float playValue) {
-      NeedsStateManager nsm = NeedsStateManager.Instance;
-      _RepairMeter.ProgressBar.SetTargetAndAnimate(repairValue);
-      _EnergyMeter.ProgressBar.SetTargetAndAnimate(energyValue);
-      _PlayMeter.ProgressBar.SetTargetAndAnimate(playValue);
+      if (!_RepairMeterPaused) {
+        _RepairMeter.SetTargetAndAnimate(repairValue);
+      }
+      _EnergyMeter.SetTargetAndAnimate(energyValue);
+      _PlayMeter.SetTargetAndAnimate(playValue);
     }
 
     private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {
@@ -105,7 +122,6 @@ namespace Cozmo.Needs.UI {
       NeedsValue repairValue, energyValue;
       repairValue = nsm.PopLatestEngineValue(NeedId.Repair);
       energyValue = nsm.PopLatestEngineValue(NeedId.Energy);
-      EnableButtonsBasedOnBrackets(repairValue.Bracket, energyValue.Bracket);
       NeedsValue playValue = nsm.PopLatestEngineValue(NeedId.Play);
       if ((needId == NeedId.Repair && repairValue.Bracket == NeedBracketId.Critical) ||
           (needId == NeedId.Energy && energyValue.Bracket == NeedBracketId.Critical) ||
@@ -116,21 +132,6 @@ namespace Cozmo.Needs.UI {
           (needId == NeedId.Energy && energyValue.Bracket == NeedBracketId.Full) ||
           (needId == NeedId.Play && energyValue.Bracket == NeedBracketId.Full)) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Meter_Full);
-      }
-    }
-
-    private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
-      if (repairBracket == NeedBracketId.Critical) {
-        _EnergyMeter.ButtonEnabled = false;
-        _PlayMeter.ButtonEnabled = false;
-      }
-      else if (energyBracket == NeedBracketId.Critical) {
-        _EnergyMeter.ButtonEnabled = true;
-        _PlayMeter.ButtonEnabled = false;
-      }
-      else {
-        _EnergyMeter.ButtonEnabled = true;
-        _PlayMeter.ButtonEnabled = true;
       }
     }
 
@@ -152,6 +153,34 @@ namespace Cozmo.Needs.UI {
       }
     }
 
+    private IEnumerator StaggerMeterFills() {
+      float oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Repair).Value;
+      float newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Repair).Value;
+      PlayMeterMoveSound(oldValue, newValue);
+      _RepairMeter.SetTargetAndAnimate(newValue);
+
+      yield return new WaitForSeconds(_InitialFillStaggerTime);
+
+      oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Value;
+      newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Energy).Value;
+      PlayMeterMoveSound(oldValue, newValue);
+      _EnergyMeter.SetTargetAndAnimate(newValue);
+
+      yield return new WaitForSeconds(_InitialFillStaggerTime);
+
+      oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Play).Value;
+      newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Play).Value;
+      PlayMeterMoveSound(oldValue, newValue);
+      _PlayMeter.SetTargetAndAnimate(newValue);
+
+      //now that we are done with our initial fills, let's subscribed to further changes
+      NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+      NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+
+      _StaggeredFillCoroutine = null;
+      yield return 0;
+    }
+
     #region Onboarding
 
     public void DimNeedMeters(List<NeedId> dimmedMeters) {
@@ -160,16 +189,6 @@ namespace Cozmo.Needs.UI {
       _PlayMeter.Dim = dimmedMeters.Contains(NeedId.Play);
     }
 
-    public CozmoButton RepairButton {
-      get {
-        return _RepairMeter.Button;
-      }
-    }
-    public CozmoButton FeedButton {
-      get {
-        return _EnergyMeter.Button;
-      }
-    }
     #endregion
   }
 }

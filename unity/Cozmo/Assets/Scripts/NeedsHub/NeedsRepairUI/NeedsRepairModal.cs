@@ -60,7 +60,10 @@ namespace Cozmo.Repair.UI {
     #region SERIALIZED FIELDS
 
     [SerializeField]
-    private NeedsMeter _RepairMeter = null;
+    private RectTransform _MetersAnchor;
+
+    [SerializeField]
+    private NeedsMetersWidget _MetersWidgetPrefab;
 
     [SerializeField]
     private RepairPartElements _HeadElements = null;
@@ -141,6 +144,8 @@ namespace Cozmo.Repair.UI {
 
     #region NON-SERIALIZED FIELDS
 
+    private NeedsMetersWidget _MetersWidget;
+
     private NeedBracketId _LastBracket = NeedBracketId.Count;
 
     private RepairModalState _CurrentModalState = RepairModalState.PRE_SCAN;
@@ -179,7 +184,6 @@ namespace Cozmo.Repair.UI {
 
     private AlertModal _InterruptedAlert = null;
 
-    private bool _MeterPaused = false; //pause meter in certain states
     private bool _WaitForDropCube = false;
 
     //when this timer reaches zero, the modal will close
@@ -221,12 +225,10 @@ namespace Cozmo.Repair.UI {
 
       nsm.PauseExceptForNeed(NeedId.Repair);
 
-      _RepairMeter.Initialize(allowInput: false,
-                              buttonClickCallback: null,
-                              dasButtonName: "repair_need_meter_button",
-                              dasParentDialogName: DASEventDialogName);
-
-      _RepairMeter.ProgressBar.SetValueInstant(nsm.GetCurrentDisplayValue(NeedId.Repair).Value);
+      _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
+      _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName,
+                               baseDialog: this,
+                               focusOnMeter: NeedId.Repair);
 
       InitializePartElements(HandleRepairHeadButtonPressed, "repair_head_button", _HeadElements);
       InitializePartElements(HandleRepairLiftButtonPressed, "repair_lift_button", _LiftElements);
@@ -426,7 +428,7 @@ namespace Cozmo.Repair.UI {
         _ScanButton.interactable = true;
         break;
       case RepairModalState.SCAN:
-        _MeterPaused = true;
+        _MetersWidget.RepairMeterPaused = true;
         RefreshAllPartElements();
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Scan, Anki.AudioEngine.Multiplexer.AudioCallbackFlag.EventComplete, ScanSoundComplete);
         break;
@@ -462,8 +464,8 @@ namespace Cozmo.Repair.UI {
       switch (_CurrentModalState) {
       case RepairModalState.PRE_SCAN: break;
       case RepairModalState.SCAN:
-        if (_MeterPaused && _TimeInModalState >= _ScanDuration) {
-          _MeterPaused = false;
+        if (_MetersWidget.RepairMeterPaused && _TimeInModalState >= _ScanDuration) {
+          _MetersWidget.RepairMeterPaused = false;
           HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
         }
         break;
@@ -483,7 +485,7 @@ namespace Cozmo.Repair.UI {
         _ScanButton.gameObject.SetActive(false);
         break;
       case RepairModalState.SCAN:
-        _MeterPaused = false;
+        _MetersWidget.RepairMeterPaused = false;
         HandleLatestNeedsLevelChanged(NeedsActionId.NoAction);
         break;
       case RepairModalState.TUNE_UP:
@@ -674,7 +676,7 @@ namespace Cozmo.Repair.UI {
         break;
       case TuneUpState.TUNE_UP_COMPLETE:
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Success_Complete);
-        _MeterPaused = true;
+        _MetersWidget.RepairMeterPaused = true;
         NeedsStateManager.Instance.RegisterNeedActionCompleted(_PartRepairAction);
         break;
       }
@@ -818,10 +820,6 @@ namespace Cozmo.Repair.UI {
       PlayRobotRepairIdleAnim();
 
       RefreshAllPartElements();
-
-      if (!_MeterPaused) {
-        _RepairMeter.ProgressBar.SetTargetAndAnimate(nsm.PopLatestEngineValue(NeedId.Repair).Value);
-      }
     }
 
     // light up the next arrow, note: this may be removed if deemed too distracting by design

@@ -15,7 +15,10 @@ namespace Cozmo.Energy.UI {
     private CozmoText[] _InstructionNumberTexts;
 
     [SerializeField]
-    private NeedsMeter _EnergyMeter;
+    private RectTransform _MetersAnchor;
+
+    [SerializeField]
+    private NeedsMetersWidget _MetersWidgetPrefab;
 
     [SerializeField]
     private CozmoButton _DoneCozmoButton;
@@ -32,6 +35,8 @@ namespace Cozmo.Energy.UI {
     #endregion
 
     #region NON-SERIALIZED FIELDS
+
+    private NeedsMetersWidget _MetersWidget;
 
     private Sequence _HungryAnimation = null;
     private Sequence _FullAnimation = null;
@@ -64,13 +69,10 @@ namespace Cozmo.Energy.UI {
       NeedsStateManager nsm = NeedsStateManager.Instance;
       nsm.PauseExceptForNeed(NeedId.Energy);
 
-      _EnergyMeter.Initialize(allowInput: false,
-                              buttonClickCallback: null,
-                              dasButtonName: "energy_need_meter_button",
-                              dasParentDialogName: DASEventDialogName);
-
-      float displayEnergy = nsm.GetCurrentDisplayValue(NeedId.Energy).Value;
-      _EnergyMeter.ProgressBar.SetValueInstant(displayEnergy);
+      _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
+      _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName,
+                               baseDialog: this,
+                               focusOnMeter: NeedId.Energy);
 
       if (_InstructionNumberTexts != null) {
         for (int i = 0; i < _InstructionNumberTexts.Length; i++) {
@@ -142,8 +144,6 @@ namespace Cozmo.Energy.UI {
 
     private void HandleLatestNeedsLevelChanged(NeedsActionId actionId) {
       NeedsStateManager nsm = NeedsStateManager.Instance;
-      float engineEnergy = nsm.PopLatestEngineValue(NeedId.Energy).Value;
-      _EnergyMeter.ProgressBar.SetTargetAndAnimate(engineEnergy);
       RefreshForCurrentBracket(nsm);
 
       if (actionId == NeedsActionId.Feed) {

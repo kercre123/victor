@@ -603,8 +603,6 @@ public class OnboardingManager : MonoBehaviour {
       const string kDimmedBGSkinName = "NavHub_Container_BG_Dimmed";
       _NeedsHubView.NavBackgroundImage.LinkedComponentId = anyDimmed ? kDimmedBGSkinName : kNormalBGSkinName;
       _NeedsHubView.NavBackgroundImage.UpdateSkinnableElements();
-      _NeedsHubView.MeterBackgroundImage.LinkedComponentId = anyDimmed ? kDimmedBGSkinName : kNormalBGSkinName;
-      _NeedsHubView.MeterBackgroundImage.UpdateSkinnableElements();
       _NeedsHubView.MetersWidget.DimNeedMeters(dimmedMeters);
     }
     if (RobotEngineManager.Instance.CurrentRobot != null) {

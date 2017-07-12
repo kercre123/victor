@@ -27,6 +27,12 @@ namespace Cozmo.Needs.UI {
     private CozmoButton _HelpButton;
 
     [SerializeField]
+    private CozmoButton _RepairButton;
+
+    [SerializeField]
+    private CozmoButton _FeedButton;
+
+    [SerializeField]
     private StarBar _StarBar;
 
     [SerializeField]
@@ -38,6 +44,10 @@ namespace Cozmo.Needs.UI {
     private BaseModal _HelpTipsModalInstance;
 
     [SerializeField]
+    private RectTransform _MetersAnchor;
+
+    [SerializeField]
+    private NeedsMetersWidget _MetersWidgetPrefab;
     private NeedsMetersWidget _MetersWidget;
 
     [SerializeField]
@@ -62,9 +72,13 @@ namespace Cozmo.Needs.UI {
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
       _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
 
-      _MetersWidget.Initialize(enableButtonBasedOnNeeds: true, dasParentDialogName: DASEventDialogName, baseDialog: this);
+      _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
+      _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
       _MetersWidget.OnRepairPressed += HandleRepairButton;
       _MetersWidget.OnEnergyPressed += HandleEnergyButton;
+
+      _RepairButton.Initialize(HandleRepairButton, "repair_need_meter_button", DASEventDialogName);
+      _FeedButton.Initialize(HandleEnergyButton, "energy_need_meter_button", DASEventDialogName);
 
       NeedsStateManager nsm = NeedsStateManager.Instance;
       NeedsValue repairValue, energyValue;
@@ -186,7 +200,6 @@ namespace Cozmo.Needs.UI {
     #region Onboarding
     public CozmoImage OnboardingBlockoutImage;
     public CozmoImage NavBackgroundImage;
-    public CozmoImage MeterBackgroundImage;
     public NeedsMetersWidget MetersWidget {
       get { return _MetersWidget; }
     }
@@ -194,10 +207,10 @@ namespace Cozmo.Needs.UI {
       get { return _ActivitiesButton; }
     }
     public CozmoButton RepairButton {
-      get { return _MetersWidget.RepairButton; }
+      get { return _RepairButton; }
     }
     public CozmoButton FeedButton {
-      get { return _MetersWidget.FeedButton; }
+      get { return _FeedButton; }
     }
     public CozmoButton PlayButton {
       get { return _SparksButton; }
