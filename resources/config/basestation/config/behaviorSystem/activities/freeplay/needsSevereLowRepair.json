@@ -19,59 +19,14 @@
   
   "behaviorChooser" :
   {
-    "type" : "Scoring",
-    "scoreBonusForCurrentBehavior" : {
-      "nodes" : [
-        { "x" :   0.0, "y" :  0.1 } // give this bonus to continue the same behavior unless score changes by that much
-      ]
-    },
+    "type" : "StrictPriority",
     
     "behaviors" : [
-      {
-        "behaviorID": "DriveOffCharger",
-        "scoring": { "flatScore": 1000 }
-      },
-      {
-        "behaviorID": "PutDownBlock",
-        "scoring": { "flatScore": 0.1 }
-      },
-      {
-        "behaviorID": "Needs_SevereLowRepairGetIn",
-        "scoring": { "flatScore": 1.0 }
-      },
-      {
-        "behaviorID": "Needs_SevereLowRepairRequest",
-        "scoring": {
-          "flatScore": 0.5,
-          "repetitionPenalty": {
-            "nodes": [
-              {
-                "x": 3.0,
-                "y": 0.0
-              },
-              {
-                "x": 5.0,
-                "y": 0.1
-              },
-              {
-                "x": 10.0,
-                "y": 0.1
-              },
-              {
-                "x": 30.0,
-                "y": 1.0
-              }
-            ]
-          }
-        }
-      },
-      {
-        // wait behavior is included so that this activity doesn't end if it can't do any of the other activities
-        "behaviorID": "Needs_Wait",
-        "scoring": {
-          "flatScore": 0.1
-        }
-      }
+      "DriveOffCharger",
+      "PutDownBlock",
+      "Needs_SevereLowRepairGetIn",
+      "Needs_SevereLowRepairState",
+      "Needs_Wait"
     ]
   }
 }

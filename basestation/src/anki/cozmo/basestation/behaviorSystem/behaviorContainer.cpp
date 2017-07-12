@@ -42,6 +42,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/feeding/behaviorFeedingSearchForCube.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorCheckForStackAtInterval.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorCubeLiftWorkout.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveInDesperation.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveToFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorOnConfigSeen.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorPickUpAndPutDownCube.h"
@@ -587,6 +588,12 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
       newBehavior = IBehaviorPtr(new BehaviorReactToVoiceCommand(robot, config));
       break;
     }
+    case BehaviorClass::DriveInDesperation:
+    {
+      newBehavior = IBehaviorPtr(new BehaviorDriveInDesperation(robot, config));
+      break;
+    }
+       
   }
   
   if(newBehavior != nullptr){

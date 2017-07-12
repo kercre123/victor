@@ -1,6 +1,0 @@
-{
-  "behaviorClass": "PlayAnimWithFace",
-  "behaviorID": "Needs_SevereLowEnergyRequest",
-  "displayNameKey":"behavior.Needs_SevereLowEnergyRequest",
-  "animTriggers": ["NeedsSevereLowEnergyRequest"]
-}
