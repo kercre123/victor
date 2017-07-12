@@ -95,8 +95,8 @@ namespace Anki {
     void  SetPlaneOrigin(const Point3f &origin);
     void  SetPlaneNormal(const Vec3f   &normal);
 
-    // translate along its current angle (negative means backwards)
-    void TranslateBy(float dist);
+    // translate along its current angle, along the +x axis (negative means backwards)
+    void TranslateForward(float dist);
 
     void SetRotation(Radians theta);
 
@@ -251,7 +251,11 @@ namespace Anki {
     void RotateBy(const RotationVector3d& Rvec);
     void RotateBy(const RotationMatrix3d& Rmat);
     void RotateBy(const Rotation3d& R);
-    
+
+    // translate along its current angle, along the +x axis (negative means backwards)
+    template<typename T>
+    void TranslateForward(T dist);
+
     // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
     template<typename T>
     Point<3,T> operator*(const Point<3,T> &point) const;
@@ -579,7 +583,13 @@ namespace Anki {
     
     return pointOut;
   }
-  
+
+  template<typename T>
+  void Pose3d::TranslateForward(T dist)
+  {
+    _translation = _translation + _rotation * Point<3,T>{dist, T(0.0), T(0.0)};
+  }
+
   template<typename T>
   void Pose3d::ApplyTo(const Quadrilateral<3,T> &quadIn,
                        Quadrilateral<3,T>       &quadOut) const

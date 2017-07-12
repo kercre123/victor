@@ -136,7 +136,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
   // first, check if we need to do the initial backup
   if( backupDistance > MINIMAL_ANGLE_PLANNER_LENGTH_THRESHOLD ) {
     Pose2d backupIntermediatePose( curr );
-    backupIntermediatePose.TranslateBy(-backupDistance);
+    backupIntermediatePose.TranslateForward(-backupDistance);
 
     _path.AppendLine(curr.GetX(), curr.GetY(),
                      backupIntermediatePose.GetX(), backupIntermediatePose.GetY(),
@@ -178,7 +178,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
 
     
     Pose2d nextPose(curr);
-    nextPose.TranslateBy(straightDist);
+    nextPose.TranslateForward(straightDist);
 
     _path.AppendLine(curr.GetX(), curr.GetY(),
                      nextPose.GetX(), nextPose.GetY(),

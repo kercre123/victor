@@ -56,7 +56,7 @@ namespace Anki {
     
   }
 
-  void Pose2d::TranslateBy(float dist)
+  void Pose2d::TranslateForward(float dist)
   {
     _translation.x() += dist * cosf(_angle.ToFloat());
     _translation.y() += dist * sinf(_angle.ToFloat());
