@@ -11,9 +11,7 @@ namespace Cozmo {
     DeviceModel,
     AppRunID,
     LastAppRunID,
-    BuildVersion,
-
-    Count
+    BuildVersion
   }
 
   structure DeviceDataPair

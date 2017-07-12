@@ -964,7 +964,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetNeedsLevels& m
 template<>
 void NeedsManager::HandleMessage(const ExternalInterface::ForceSetDamagedParts& msg)
 {
-  for (size_t i = 0; i < static_cast<size_t>(RepairablePartId::Count); i++)
+  for (size_t i = 0; i < RepairablePartIdNumEntries; i++)
   {
     _needsState._partIsDamaged[static_cast<RepairablePartId>(i)] = msg.partIsDamaged[i];
   }
@@ -976,7 +976,7 @@ void NeedsManager::HandleMessage(const ExternalInterface::ForceSetDamagedParts& 
   //        repairable part is damaged
   // data: Unused
   std::ostringstream stream;
-  for (size_t i = 0; i < static_cast<size_t>(RepairablePartId::Count); i++)
+  for (size_t i = 0; i < RepairablePartIdNumEntries; i++)
   {
     if (i > 0)
     {
@@ -1264,8 +1264,8 @@ void NeedsManager::SendNeedsStateToGame(const NeedsActionId actionCausingTheUpda
   }
   
   std::vector<bool> partIsDamaged;
-  partIsDamaged.reserve((size_t)RepairablePartId::Count);
-  for (size_t i = 0; i < (size_t)RepairablePartId::Count; i++)
+  partIsDamaged.reserve(RepairablePartIdNumEntries);
+  for (size_t i = 0; i < RepairablePartIdNumEntries; i++)
   {
     const bool isDamaged = _needsState.GetPartIsDamagedByIndex(i);
     partIsDamaged.push_back(isDamaged);
@@ -1982,7 +1982,7 @@ bool NeedsManager::FinishReadFromRobot(const u8* data, const size_t size, const 
     _needsStateFromRobot._curNeedsLevels[needId] = Util::numeric_cast<float>(stateOnRobot.curNeedLevel[i]) / kNeedLevelStorageMultiplier;
   }
 
-  for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
+  for (int i = 0; i < RepairablePartIdNumEntries; i++)
   {
     const auto& pardId = static_cast<RepairablePartId>(i);
     _needsStateFromRobot._partIsDamaged[pardId] = stateOnRobot.partIsDamaged[i];

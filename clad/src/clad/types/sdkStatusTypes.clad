@@ -11,9 +11,7 @@ enum uint_8 SdkStatusType
 {
   Behavior,
   Action,
-  Anim,
-
-  Count // leave as last element
+  Anim
 }
 
 

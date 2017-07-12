@@ -72,7 +72,7 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
   }
   // Cereate Say Text Intent Map
   std::unordered_map<std::string, SayTextIntent> sayTextIntentMap;
-  for (uint8_t anIntentIdx = 0; anIntentIdx < Util::numeric_cast<uint8_t>(SayTextIntent::Count); ++anIntentIdx) {
+  for (uint8_t anIntentIdx = 0; anIntentIdx < SayTextIntentNumEntries; ++anIntentIdx) {
     const SayTextIntent anIntent = static_cast<SayTextIntent>(anIntentIdx);
     sayTextIntentMap.emplace( EnumToString(anIntent), anIntent );
   }

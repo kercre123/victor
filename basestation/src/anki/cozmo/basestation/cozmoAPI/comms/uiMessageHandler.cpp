@@ -791,8 +791,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
                                                                   _sdkStatus.IsWrongSdkVersion());
           
           std::vector<std::string> sdkStatusStrings;
-          sdkStatusStrings.reserve((size_t)SdkStatusType::Count);
-          for (uint32_t i=0; i < (size_t)SdkStatusType::Count; ++i)
+          sdkStatusStrings.reserve(SdkStatusTypeNumEntries);
+          for (uint32_t i=0; i < SdkStatusTypeNumEntries; ++i)
           {
             sdkStatusStrings.push_back( _sdkStatus.GetStatus(SdkStatusType(i)) );
           }

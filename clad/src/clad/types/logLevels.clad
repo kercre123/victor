@@ -13,9 +13,7 @@ enum uint_8 LogLevel
   Info,
   Event,
   Warning,
-  Error,
-
-  Count
+  Error
 }
 
 

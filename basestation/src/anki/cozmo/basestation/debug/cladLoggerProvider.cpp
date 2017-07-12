@@ -32,7 +32,7 @@ LogLevel ILoggerLevelToCladLevel(Anki::Util::ILoggerProvider::LogLevel logLevel)
   static_assert((int)Util::ILoggerProvider::LogLevel::LOG_LEVEL_EVENT == (int)LogLevel::Event, "Enum mismatch");
   static_assert((int)Util::ILoggerProvider::LogLevel::LOG_LEVEL_WARN == (int)LogLevel::Warning, "Enum mismatch");
   static_assert((int)Util::ILoggerProvider::LogLevel::LOG_LEVEL_ERROR == (int)LogLevel::Error, "Enum mismatch");
-  static_assert((int)Util::ILoggerProvider::LogLevel::_LOG_LEVEL_COUNT == (int)LogLevel::Count, "Enum mismatch");
+  static_assert((int)Util::ILoggerProvider::LogLevel::_LOG_LEVEL_COUNT == LogLevelNumEntries, "Enum mismatch");
   
   const LogLevel res = (LogLevel)logLevel;
   return res;

@@ -69,7 +69,7 @@ void NeedsState::Init(NeedsConfig& needsConfig, const u32 serialNumber,
   _needsBracketsDirty = true;
   UpdateCurNeedsBrackets(needsConfig._needsBrackets);
   
-  for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
+  for (int i = 0; i < RepairablePartIdNumEntries; i++)
   {
     const auto& repairablePartId = static_cast<RepairablePartId>(i);
     _partIsDamaged[repairablePartId] = false;
@@ -525,7 +525,7 @@ void NeedsState::DebugFillNeedMeters()
   _needsBracketsDirty = true;
   UpdateCurNeedsBrackets(_needsConfig->_needsBrackets);
   
-  for (int i = 0; i < static_cast<int>(RepairablePartId::Count); i++)
+  for (int i = 0; i < RepairablePartIdNumEntries; i++)
   {
     const auto& repairablePartId = static_cast<RepairablePartId>(i);
     _partIsDamaged[repairablePartId] = false;

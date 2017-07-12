@@ -35,8 +35,7 @@ enum int_32 RepairablePartId
 {
   Head    = 0,
   Lift    = 1,
-  Treads  = 2,
-  Count
+  Treads  = 2
 }
 
 enum int_32 NeedsActionId
@@ -108,8 +107,6 @@ enum int_32 NeedsRewardType
   Unlock        = 1,  // data: unlockId
   Song          = 2,  // (new?)
   MemoryBadge   = 3,  // (new?)
-
-  Count
 }
 
 structure NeedsReward

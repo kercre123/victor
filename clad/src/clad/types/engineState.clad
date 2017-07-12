@@ -11,9 +11,7 @@ enum uint_8 EngineState {
   WaitingForUIDevices,
   LoadingData,
   Running,
-  UpdatingFirmware,
-
-  Count
+  UpdatingFirmware
 }
 
 enum uint_8 RobotConnectionResult {

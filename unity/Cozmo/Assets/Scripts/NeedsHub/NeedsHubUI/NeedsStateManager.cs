@@ -169,7 +169,7 @@ namespace Cozmo.Needs {
       }
 
       // Don't let them repair until they can fix on a connected robot
-      int numParts = (int)RepairablePartId.Count;
+      int numParts = System.Enum.GetNames(typeof(RepairablePartId)).Length;
       needsState.partIsDamaged = new bool[numParts];
       for (int i = 0; i < numParts; i++) {
         needsState.partIsDamaged[i] = false;

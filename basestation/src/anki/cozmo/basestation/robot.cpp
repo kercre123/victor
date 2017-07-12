@@ -529,8 +529,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       }
     }
     else if(GetCarryingComponent().IsCarryingObject() &&
-            _offTreadsState != OffTreadsState::InAir &&
-            _offTreadsState != OffTreadsState::Count)
+            _offTreadsState != OffTreadsState::InAir)
     {
       // If we're falling or not upright and were carrying something, assume we
       // are no longer carrying that something and don't know where it is anymore

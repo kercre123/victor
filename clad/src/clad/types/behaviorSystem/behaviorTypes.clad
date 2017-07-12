@@ -325,7 +325,6 @@ enum uint_8 WorkoutStage {
   NormalWorkout        = 0,
   EightiesWorkoutPrep  = 1,
   EightiesWorkoutLift  = 2,
-  Count
 }
 
 } // namespace Cozmo

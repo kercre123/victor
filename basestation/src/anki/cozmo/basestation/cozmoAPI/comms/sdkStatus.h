@@ -89,14 +89,12 @@ public:
   void SetStatus(SdkStatusType statusType, std::string&& statusText)
   {
     const uint32_t idx = (uint32_t)statusType;
-    assert(idx < (uint32_t)SdkStatusType::Count);
     _sdkStatusStrings[idx] = std::move(statusText);
   }
   
   const std::string& GetStatus(SdkStatusType statusType) const
   {
     const uint32_t idx = (uint32_t)statusType;
-    assert(idx < (uint32_t)SdkStatusType::Count);
     return _sdkStatusStrings[idx];
   }
   
@@ -109,7 +107,7 @@ private:
   Util::CircularBuffer<ExternalInterface::MessageGameToEngineTag>  _recentCommands;
 
   std::string   _connectedSdkBuildVersion;
-  std::string   _sdkStatusStrings[(uint32_t)SdkStatusType::Count];
+  std::string   _sdkStatusStrings[SdkStatusTypeNumEntries];
   
   IExternalInterface* _externalInterface = nullptr;
   

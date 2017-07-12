@@ -41,9 +41,7 @@ enum uint_8 AudioCapturePermissionState {
   Unknown,
   Granted,
   DeniedAllowRetry,
-  DeniedNoRetry,
-
-  Count
+  DeniedNoRetry
 }
 
 
