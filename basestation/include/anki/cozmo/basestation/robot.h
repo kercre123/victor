@@ -878,6 +878,7 @@ protected:
   GyroData         _robotGyro;
   float            _robotAccelMagnitude = 0.0f; // current magnitude of accelerometer data (norm of all three axes)
   float            _robotAccelMagnitudeFiltered = 0.0f; // low-pass filtered accelerometer magnitude
+  AccelData        _robotAccelFiltered; // low-pass filtered robot accelerometer data (for each axis)
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use

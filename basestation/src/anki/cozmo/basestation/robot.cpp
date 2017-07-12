@@ -137,9 +137,8 @@ static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
 static const float kPitchAngleOnBackTolerance_deg = 15.0f;
 
 //Constants for on side
-static const float kOnLeftSide_rawYAccel = -9000.0f;
-static const float kOnRightSide_rawYAccel = 10500.0f;
-static const float kOnSideTolerance_rawYAccel =3000.0f;
+static const float kOnSideAccel_mmps2 = 9800.0f;
+static const float kOnSideToleranceAccel_mmps2 = 3000.0f;
 
 // On face angles
 static const float kPitchAngleOnFacePlantMin_rads = DEG_TO_RAD(110.f);
@@ -196,6 +195,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
                   {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
+  , _robotAccelFiltered(0.f, 0.f, 0.f)
   , _stateHistory(new RobotStateHistory())
   , _moodManager(new MoodManager(this))
   , _inventoryComponent(new InventoryComponent(*this))
@@ -384,15 +384,14 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   //////////
   
   //// COZMO_UP_RIGHT
-  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerance_rads;
+  const bool currOnTreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerance_rads;
   
   //// COZMO_ON_BACK
   const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
   const bool currOnBack = std::abs( GetPitchAngle().ToDouble() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
   //// COZMO_ON_SIDE
-  const float rawY = msg.accel.y;
-  const bool onRightSide =  (std::abs(rawY - kOnRightSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
-  const bool currOnSide = onRightSide || (std::abs(rawY - kOnLeftSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
+  const bool currOnSide = Util::IsNear(std::abs(_robotAccelFiltered.y), kOnSideAccel_mmps2, kOnSideToleranceAccel_mmps2);
+  const bool onRightSide = currOnSide && (_robotAccelFiltered.y > 0.f);
   //// COZMO_ON_FACE
   const float facePlantMinAngle = IsPhysical() ? kPitchAngleOnFacePlantMin_rads : kPitchAngleOnFacePlantMin_sim_rads;
   const float facePlantMaxAngle = IsPhysical() ? kPitchAngleOnFacePlantMax_rads : kPitchAngleOnFacePlantMax_sim_rads;
@@ -407,6 +406,19 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     if (_awaitingConfirmationTreadState != OffTreadsState::Falling) {
       _awaitingConfirmationTreadState = OffTreadsState::Falling;
       _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
+    }
+  }
+  else if(currOnSide) {
+    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
+       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
+    {
+      // Transition to Robot on Side
+      if(onRightSide) {
+        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
+      } else {
+        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
+      }
+      _timeOffTreadStateChanged_ms = currentTimestamp;
     }
   }
   else if(currFacePlant) {
@@ -424,20 +436,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
     }
   }
-  else if(currOnSide) {
-    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
-       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
-    {
-      // Transition to Robot on Side
-      if(onRightSide){
-        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
-      }else{
-        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
-      }
-      _timeOffTreadStateChanged_ms = currentTimestamp;
-    }
-  }
-  else if(currOntreads) {
+  else if(currOnTreads) {
     if (_awaitingConfirmationTreadState != OffTreadsState::InAir
         && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
     {
@@ -447,7 +446,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   }// end if(isFalling)
     
   /////
-  // Message based tred state transitions
+  // Message based tread state transitions
   ////
   
   // Transition from ontreads to InAir - happens instantly
@@ -471,8 +470,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   }
   
   //////////
-  // A new tred state has been confirmed
+  // A new tread state has been confirmed
   //////////
+  bool offTreadsStateChanged = false;
   if(_timeOffTreadStateChanged_ms + kRobotTimeToConsiderOfftreads_ms <= currentTimestamp
      && _offTreadsState != _awaitingConfirmationTreadState)
   {
@@ -543,10 +543,19 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       SetOnChargerPlatform(false);
     }
     
-    return true;
+    offTreadsStateChanged = true;
   }
   
-  return false;
+  // Send viz message with current treads states
+  const bool awaitingNewTreadsState = (_offTreadsState != _awaitingConfirmationTreadState);
+  const auto vizManager = GetContext()->GetVizManager();
+  vizManager->SetText(VizManager::OFF_TREADS_STATE,
+                      NamedColors::GREEN,
+                      "OffTreadsState: %s  %s",
+                      EnumToString(_offTreadsState),
+                      awaitingNewTreadsState ? EnumToString(_awaitingConfirmationTreadState) : "");
+  
+  return offTreadsStateChanged;
 }
     
 const Util::RandomGenerator& Robot::GetRNG() const
@@ -777,10 +786,17 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                              + _robotAccel.y * _robotAccel.y
                              + _robotAccel.z * _robotAccel.z);
   
-  const float kAccelFilterConstant = 0.95f; // between 0 and 1
-  _robotAccelMagnitudeFiltered = (kAccelFilterConstant * _robotAccelMagnitudeFiltered)
-                              + ((1.0f - kAccelFilterConstant) * _robotAccelMagnitude);
+  const float kAccelMagFilterConstant = 0.95f; // between 0 and 1
+  _robotAccelMagnitudeFiltered = (kAccelMagFilterConstant * _robotAccelMagnitudeFiltered)
+                              + ((1.0f - kAccelMagFilterConstant) * _robotAccelMagnitude);
   
+  const float kAccelFilterConstant = 0.90f; // between 0 and 1
+  _robotAccelFiltered.x = (kAccelFilterConstant * _robotAccelFiltered.x)
+                        + ((1.0f - kAccelFilterConstant) * msg.accel.x);
+  _robotAccelFiltered.y = (kAccelFilterConstant * _robotAccelFiltered.y)
+                        + ((1.0f - kAccelFilterConstant) * msg.accel.y);
+  _robotAccelFiltered.z = (kAccelFilterConstant * _robotAccelFiltered.z)
+                        + ((1.0f - kAccelFilterConstant) * msg.accel.z);
   
   // Update cozmo's internal offTreadsState knowledge
   const OffTreadsState prevOffTreadsState = _offTreadsState;

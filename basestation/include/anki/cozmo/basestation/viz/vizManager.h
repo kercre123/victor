@@ -63,6 +63,7 @@ namespace Anki {
     public:
       
       typedef enum : u8 {
+        OFF_TREADS_STATE,
         ACTION,
         LOCALIZED_TO,
         WORLD_ORIGIN,
