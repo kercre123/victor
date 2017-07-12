@@ -202,6 +202,11 @@ bool ReactionTriggerStrategyHiccup::ShouldTriggerBehaviorInternal(const Robot& r
         _firstHiccupStartTime = curTime;
       }
       
+      if (isRunnable)
+      {
+        NeedActionCompleted(NeedsActionId::IndividualHiccup);
+      }
+      
       return isRunnable;
     }
   }

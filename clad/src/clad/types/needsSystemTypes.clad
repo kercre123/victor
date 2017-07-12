@@ -76,6 +76,7 @@ enum int_32 NeedsActionId
   GuardDogWin,
   HiccupsEndBad,
   HiccupsEndGood,
+  IndividualHiccup,
   KnockDownCubes,
   KnockDownCubes_Sparked,
   PeekAboo,
