@@ -68,7 +68,13 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
         MessageEngineToGameTag::CliffEvent,
         MessageEngineToGameTag::RobotStopped
       };
-      genericStrategy->ConfigureRelevantEvents(relevantTypes);
+      // If the current reaction trigger is already CliffDetected, then we don't want to trigger it again
+      // unless it "canInterruptSelf". This prevents the CliffEvent message (which comes in ~0.5 sec after
+      // the RobotStopped msg) from causing the ReactToCliff behavior to run a second time.
+      auto callback = [genericStrategy](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) {
+          return (robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::CliffDetected) || genericStrategy->CanInterruptSelf();
+        };
+      genericStrategy->ConfigureRelevantEvents(relevantTypes, callback);
       strategy = genericStrategy;
       break;
     }
