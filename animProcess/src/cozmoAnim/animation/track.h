@@ -289,8 +289,8 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame,
   
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
     PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.TooManyFrames",
-                        "There are already %zu frames in %s track. Refusing to add more.",
-                        _frames.size(), keyFrame.GetClassName().c_str());
+                        "There are already %zu frames in track of type %s. Refusing to add more.",
+                        _frames.size(), typeid(keyFrame).name());
     return RESULT_FAIL;
   }
   

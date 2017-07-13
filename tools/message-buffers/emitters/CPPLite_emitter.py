@@ -637,11 +637,7 @@ class HUnionEmitter(BaseEmitter):
         self.output.write('\n')
     
     def emitTagToString(self, node, globals):
-        with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
         self.output.write('static const char* {tag_name}ToString({tag_name} t);\n'.format(**globals))
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
 
 class CPPUnionEmitter(HUnionEmitter):
     
@@ -707,8 +703,6 @@ class CPPUnionEmitter(HUnionEmitter):
         def body(member):
             self.output.write('return "{member_name}";\n'.format(member_name=member.name))
         
-        with self.output.reset_indent():
-            self.output.write('#ifdef CLAD_DEBUG\n')
         self.output.write(textwrap.dedent('''\
             const char* {qualified_object_name}::{tag_name}ToString({tag_name} t)
             {{
@@ -716,9 +710,6 @@ class CPPUnionEmitter(HUnionEmitter):
         with self.output.indent(1):
             self.emitSwitch(node, globals, body, argument='t', default_case='return "INVALID";\n')
         self.output.write('}\n')
-        with self.output.reset_indent():
-            self.output.write('#endif // CLAD_DEBUG\n')
-        self.output.write('\n')
     
     def emitSwitch(self, node, globals, callback, tag_type='Tag', argument='tag', default_case='break;\n'):
         self.output.write('switch({argument}) {{\n'.format(argument=argument, **globals))
