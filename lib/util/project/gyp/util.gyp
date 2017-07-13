@@ -20,6 +20,8 @@
     'use_libwebp%': 1,
     'use_lua%': 0,
     'use_civetweb%': 0,
+    'civetweb_library_type%': 'static_library',
+    'lua_library_type%': 'static_library',
     'util_unittest_library_type%': 'shared_library',
 
     'compiler_flags': [
