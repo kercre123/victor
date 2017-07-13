@@ -454,6 +454,15 @@ def set_android_sdk_root_for_unity(override_android_home_dir):
            android_home]
     subprocess.call(cmd)
 
+def set_java_home_for_unity():
+    java_home = util.File.evaluate("/usr/libexec/java_home")
+    cmd = ["defaults",
+           "write",
+           get_path_to_unity_editor_plist(),
+           "JdkPath",
+           java_home]
+    subprocess.call(cmd)
+
 def parseArgs(scriptArgs):
     version = '1.0'
     parser = argparse.ArgumentParser(description='finds or installs android ndk/sdk', version=version)

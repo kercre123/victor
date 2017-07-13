@@ -3,3 +3,6 @@
 
 build-breakpad/
 stage/
+build-android-sdk/
+*~
+venv
