@@ -33,13 +33,14 @@ namespace Cozmo {
   
 // Forward declarations
 class CozmoContext;
+class AnimationStreamer;
   
-class CozmoAnim
+class CozmoAnimEngine
 {
 public:
 
-  CozmoAnim(Util::Data::DataPlatform* dataPlatform);
-  ~CozmoAnim();
+  CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform);
+  ~CozmoAnimEngine();
 
   Result Init(const Json::Value& config);
 
@@ -53,9 +54,10 @@ protected:
 
   virtual Result InitInternal();
   
-  std::unique_ptr<CozmoContext>  _context;
+  std::unique_ptr<CozmoContext>       _context;
+  std::unique_ptr<AnimationStreamer>  _animationStreamer;
   
-}; // class CozmoAnim
+}; // class CozmoAnimEngine
   
 
 } // namespace Cozmo

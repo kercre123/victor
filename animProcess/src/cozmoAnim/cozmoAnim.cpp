@@ -12,9 +12,7 @@
 #include "cozmoAnim/cozmoAnim.h"
 #include "cozmoAnim/engineMessages.h"
 #include "cozmoAnim/cozmoContext.h"
-//#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-//#include "anki/cozmo/basestation/events/ankiEvent.h"
-//#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "cozmoAnim/animation/animationStreamer.h"
 //#include "anki/cozmo/basestation/ankiEventUtil.h"
 //#include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 //#include "anki/cozmo/basestation/audio/audioEngineInput.h"
@@ -35,7 +33,6 @@
 //#include "util/logging/printfLoggerProvider.h"
 //#include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
-//#include "util/environment/locale.h"
 //#include "util/transport/connectionStats.h"
 #include <cstdlib>
 #include <ctime>
@@ -61,9 +58,10 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoAnim::CozmoAnim(Util::Data::DataPlatform* dataPlatform)
+CozmoAnimEngine::CozmoAnimEngine(Util::Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
   , _context(std::make_unique<CozmoContext>(dataPlatform))
+  , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
 {
   
   if (Anki::Util::gTickTimeProvider == nullptr) {
@@ -72,7 +70,7 @@ CozmoAnim::CozmoAnim(Util::Data::DataPlatform* dataPlatform)
   
 }
 
-CozmoAnim::~CozmoAnim()
+CozmoAnimEngine::~CozmoAnimEngine()
 {
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
@@ -80,7 +78,7 @@ CozmoAnim::~CozmoAnim()
   BaseStationTimer::removeInstance();
 }
 
-Result CozmoAnim::Init(const Json::Value& config) {
+Result CozmoAnimEngine::Init(const Json::Value& config) {
 
   if(_isInitialized) {
     PRINT_NAMED_INFO("CozmoEngine.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
@@ -118,11 +116,11 @@ Result CozmoAnim::Init(const Json::Value& config) {
   
   Result lastResult = InitInternal();
   if(lastResult != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.");
+    PRINT_NAMED_ERROR("CozmoAnimEngine.Init", "Failed calling internal init.");
     return lastResult;
   }
   
-  PRINT_NAMED_INFO("CozmoAnim.Init.Success","");
+  PRINT_NAMED_INFO("CozmoAnimEngine.Init.Success","");
   _isInitialized = true;
 
   return RESULT_OK;
@@ -143,12 +141,12 @@ Result CozmoAnim::Init(const Json::Value& config) {
 //}
   
 
-Result CozmoAnim::Update(const BaseStationTime_t currTime_nanosec)
+Result CozmoAnimEngine::Update(const BaseStationTime_t currTime_nanosec)
 {
-  //ANKI_CPU_PROFILE("CozmoAnim::Update");
+  //ANKI_CPU_PROFILE("CozmoAnimEngine::Update");
   
   if(!_isInitialized) {
-    PRINT_NAMED_ERROR("CozmoAnim.Update", "Cannot update CozmoEngine before it is initialized.");
+    PRINT_NAMED_ERROR("CozmoAnimEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
   }
 
@@ -178,12 +176,14 @@ Result CozmoAnim::Update(const BaseStationTime_t currTime_nanosec)
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
   Messages::Update();
   
+  _animationStreamer->Update();
+  
   
 //  // Handle UI
 //  Result lastResult = _uiMsgHandler->Update();
 //  if (RESULT_OK != lastResult)
 //  {
-//    PRINT_NAMED_ERROR("CozmoAnim.Update", "Error updating UIMessageHandler");
+//    PRINT_NAMED_ERROR("CozmoAnimEngine.Update", "Error updating UIMessageHandler");
 //    return lastResult;
 //  }
   
@@ -216,7 +216,7 @@ Result CozmoAnim::Update(const BaseStationTime_t currTime_nanosec)
 //      break;
 //    }
 //    default:
-//      PRINT_NAMED_ERROR("CozmoAnim.Update.UnexpectedState","Running Update in an unexpected state!");
+//      PRINT_NAMED_ERROR("CozmoAnimEngine.Update.UnexpectedState","Running Update in an unexpected state!");
 //  }
   
   // Tick Audio Controller after all messages have been processed
@@ -244,7 +244,7 @@ Result CozmoAnim::Update(const BaseStationTime_t currTime_nanosec)
 
 
 
-//void CozmoAnim::SetEngineState(EngineState newState)
+//void CozmoAnimEngine::SetEngineState(EngineState newState)
 //{
 //  EngineState oldState = _engineState;
 //  if (oldState == newState)
@@ -260,7 +260,7 @@ Result CozmoAnim::Update(const BaseStationTime_t currTime_nanosec)
 //  Anki::Util::sEventF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
 //}
   
-Result CozmoAnim::InitInternal()
+Result CozmoAnimEngine::InitInternal()
 {
   // Setup Audio Controller
   {
@@ -268,19 +268,6 @@ Result CozmoAnim::InitInternal()
   
   return RESULT_OK;
 }
-  
-
-//template<>
-//void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
-//{
-//  _context->GetRobotManager()->ReadAnimationDir();
-//}
-//
-//template<>
-//void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
-//{
-//  _context->GetRobotManager()->ReadFaceAnimationDir();
-//}
 
 
 } // namespace Cozmo

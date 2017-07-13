@@ -57,7 +57,7 @@ int main(void)
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
   
   // Create and init CozmoAnim
-  CozmoAnim cozmoAnim(dataPlatform);
+  CozmoAnimEngine cozmoAnim(dataPlatform);
   
   Json::Value dummyJson;
   cozmoAnim.Init(dummyJson);

@@ -144,7 +144,7 @@ int main(int argc, char **argv)
   NativeAnkiUtilConsoleLoadVars();
   
   // Initialize the API
-  CozmoAnim cozmoAnim(&dataPlatform);
+  CozmoAnimEngine cozmoAnim(&dataPlatform);
   cozmoAnim.Init(config);
 
   PRINT_NAMED_INFO("webotsCtrlAnim.main", "CozmoAnim created and initialized.");
