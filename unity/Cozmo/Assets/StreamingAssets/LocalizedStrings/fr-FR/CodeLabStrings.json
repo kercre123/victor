@@ -133,7 +133,7 @@
     "translation" : "Réponse # 14"
   },
   "codeLabChallenge_PushCube.questionSlide.primaryText" : {
-    "translation" : "# 15: Poussez un cube."
+    "translation" : "#15: Push a Cube."
   },
   "codeLabChallenge_PushCube.questionSlide.secondaryText" : {
     "translation" : "Essayez d'abord le défi, puis appuyez sur NEXT pour vérifier votre réponse!"
@@ -160,7 +160,7 @@
     "translation" : "Réponse # 17"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
-    "translation" : "# 18: Workout with cube: <span class='blue'> CONDUIRE À CUBE, </span><span class='purple'> ASCENSEUR </span> Jusqu'à la moitié 3 <span class='orange'> FOIS, </span> puis <span class='purple'> ENSEMBLE. </span>"
+    "translation" : "#18: Work out with Cube: <span class='blue'>DRIVE TO CUBE,</span> <span class='purple'>LIFT</span> it up and halfway down 3 <span class='orange'>TIMES,</span> then <span class='purple'>SET IT DOWN.</span>"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
     "translation" : "Essayez d'abord le défi, puis appuyez sur NEXT pour vérifier votre réponse!"
@@ -232,7 +232,7 @@
     "translation" : "Réponse # 25"
   },
   "codeLabChallenge_stackCubes.questionSlide.primaryText" : {
-    "translation" : "# 26: Empilez 2 cubes."
+    "translation" : "# 26: piloter 2 cubes."
   },
   "codeLabChallenge_stackCubes.questionSlide.secondaryText" : {
     "translation" : "Essayez d'abord le défi, puis appuyez sur NEXT pour vérifier votre réponse!"
@@ -241,7 +241,7 @@
     "translation" : "Réponse # 26"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText" : {
-    "translation" : "# 27: Empilez 2 cubes, puis rabaissez-les."
+    "translation" : "# 27: pilule 2 cubes, puis incline-les."
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText" : {
     "translation" : "Essayez d'abord le défi, puis appuyez sur NEXT pour vérifier votre réponse!"
@@ -268,7 +268,7 @@
     "translation" : "Réponse # 29"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.primaryText" : {
-    "translation" : "# 30: Fetch Cubes: commencez par des cubes à quelques pieds de Cozmo. <span class='yellow'> Quand on regarde, </span> Récupérer un cube et le ramener. <span class='orange'> REPETIR POUR TOUJOURS. </span>"
+    "translation" : "#30: Fetch Cubes: Start with cubes a couple feet behind Cozmo. <span class='yellow'>WHEN FACE IS SEEN,</span> fetch a Cube and bring it back. <span class='orange'>REPEAT FOREVER.</span>"
   },
   "codeLabChallenge_whenFaceFetchCube.questionSlide.secondaryText" : {
     "translation" : "Essayez d'abord le défi, puis appuyez sur NEXT pour vérifier votre réponse!"
@@ -277,7 +277,7 @@
     "translation" : "Réponse # 30"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
-    "translation" : "# 31: Mettre les cubes en arrière: <span class='yellow'> QUAND CUBE EST VU, </span> Ont Cozmo <span class='blue'> TOUR </span> Et met le cube à quelques pieds derrière lui et retourne. <span class='orange'> REPETIR POUR TOUJOURS. </span>"
+    "translation" : "#31: Put Cubes Back: <span class='yellow'>WHEN CUBE IS SEEN,</span> have Cozmo <span class='blue'>TURN</span> and set the Cube a couple feet behind him and return. <span class='orange'>REPEAT FOREVER.</span>"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
     "translation" : "Essayez d'abord le défi, puis appuyez sur NEXT pour vérifier votre réponse!"
@@ -331,7 +331,7 @@
     "translation" : "Cozmo Code Lab"
   },
   "codeLab.projects.tutorialLabel" : {
-    "translation" : "Didacticiel"
+    "translation" : "Tutoriel"
   },
   "codeLab.projects.newProjectButtonLabel" : {
     "translation" : "Nouveau projet"
@@ -352,7 +352,7 @@
     "translation" : "Annuler"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
-    "translation" : "Effacer \\' {0} \\ '?"
+    "translation" : "Delete \"{0}\"?"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
     "translation" : "Oui, Supprimer"

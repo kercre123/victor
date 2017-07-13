@@ -13,19 +13,19 @@
     "translation" : "Cube-Status"
   },
   "settings.cubeStatusPanel.locateText" : {
-    "translation" : "(Tippen Sie Cubes zu lokalisieren)"
+    "translation" : "Tap to locate Cubes."
   },
   "settings.sdkPanel.activateSDKalert.text" : {
     "translation" : "Aktivieren Sie SDK-Modus?"
   },
   "settings.sdkPanel.disableButton.text" : {
-    "translation" : "Deaktivieren SDK"
+    "translation" : "DISABLE SDK"
   },
   "settings.sdkPanel.enableButton.text" : {
-    "translation" : "Aktivieren SDK"
+    "translation" : "ENABLE SDK"
   },
   "settings.sdkPanel.label.title" : {
-    "translation" : "Cozmo SDK"
+    "translation" : "COZMO SDK"
   },
   "settings.sdkPanel.connectionCommandCount.text" : {
     "translation" : "Befehle: {0}"
@@ -64,28 +64,28 @@
     "translation" : "Inkompatible SDK Version"
   },
   "settings.sdkPanel.hideScreenButton.text" : {
-    "translation" : "Bildschirm ausblenden"
+    "translation" : "HIDE SCREEN"
   },
   "settings.sleepCozmoPanel.button.sleepCozmo" : {
-    "translation" : "Schlaf Cozmo"
+    "translation" : "SLEEP COZMO"
   },
   "settings.sleepCozmoPanel.confirmationModal.title" : {
     "translation" : "Schlaf Cozmo?"
   },
   "settings.sleepCozmoPanel.confirmModal.description" : {
-    "translation" : "Lassen Sie Cozmo auf seinem Ladegerät seine Batterie oder tippen Schlaf zu steigern zu trennen"
+    "translation" : "Verlasse Cozmo auf seinem Ladegerät, um seine Batterie zu steigern oder zu klopfen <b><color=#11a2f0ff> SCHLAF </color></b> trennen."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm" : {
-    "translation" : "Schlaf"
+    "translation" : "SCHLAF"
   },
   "settings.supportView.button.restoreCozmo" : {
-    "translation" : "Wiederherstellen Cozmo"
+    "translation" : "RESTORE COZMO"
   },
   "settings.supportView.label.directions" : {
     "translation" : "Kunden-Support ist online verfügbar unter"
   },
   "settings.supportView.label.restoreCozmoClarification" : {
-    "translation" : "(Re-gilt Unlocks aus diesem Profil zu Ihrem Cozmo)"
+    "translation" : "Reapplies entriegelt aus diesem Profil zu deinem Cozmo."
   },
   "settings.supportView.label.title" : {
     "translation" : "Kontakt Support"
@@ -94,10 +94,10 @@
     "translation" : "support.anki.com"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton" : {
-    "translation" : "Wiederherstellen"
+    "translation" : "WIEDERHERSTELLEN"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13> Fehlgeschlagen Ihr Cozmo Wiederherstellen </color>"
+    "translation" : "<color=#b52c13>Failed to Restore Your Cozmo.</color>"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel" : {
     "translation" : "Wiederherstellen der Cozmo ..."
@@ -118,16 +118,16 @@
     "translation" : "Anerkennungen"
   },
   "settings.versionPanel.button.eraseCozmo" : {
-    "translation" : "Erase Cozmo"
+    "translation" : "ERASE COZMO"
   },
   "settings.versionPanel.button.support" : {
     "translation" : "Unterstützung"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton" : {
-    "translation" : "Löschen"
+    "translation" : "LÖSCHEN"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel" : {
-    "translation" : "<color=#b52c13> Fehler beim Löschen Ihr Cozmo </color>"
+    "translation" : "<color=#b52c13>Failed to Erase Your Cozmo.</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel" : {
     "translation" : "Löschen des Cozmo ..."
@@ -136,7 +136,7 @@
     "translation" : "Erase Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel" : {
-    "translation" : "WARNUNG: Dies wird Cozmo Daten und alle freischaltbaren Features löschen. Verwenden Sie diese Option nur, wenn Sie mit Cozmo vorne beginnen wollen! Ihre Bits und Sparks wird gespeichert."
+    "translation" : "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo!"
   },
   "settings.versionPanel.label.appRun" : {
     "translation" : "App Run-ID: {0}"

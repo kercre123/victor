@@ -22,10 +22,10 @@
     "translation" : "Effacer"
   },
   "faceEnrollment.instructions.top" : {
-    "translation" : "Regardez Cozmo tout droit, et détiennent encore"
+    "translation" : "Look at Cozmo straight on, and hold still."
   },
   "faceEnrollment.instructions.bottom" : {
-    "translation" : "Lorsque Cozmo est fait, il va dire votre nom"
+    "translation" : "Quand Cozmo a terminé, il dira votre nom."
   },
   "faceEnrollment.errors.neverSawValidFace.title" : {
     "translation" : "Cozmo vous connaît déjà!"

@@ -34,40 +34,40 @@
     "translation" : "Mise à jour de votre Cozmo ..."
   },
   "connectivity.updatingFirmwareSubTitle" : {
-    "translation" : "S'il vous plaît garder Cozmo sur son chargeur"
+    "translation" : "Gardez Cozmo sur son chargeur."
   },
   "connectivity.updatingFirmwareFooter" : {
-    "translation" : "Vous aurez besoin de se reconnecter au WiFi de Cozmo après la mise à jour terminée"
+    "translation" : "You will need to reconnect to Cozmo's WiFi after the update completes."
   },
   "connectivity.updateApp" : {
-    "translation" : "Vous devez mettre à jour votre application Cozmo pour continuer"
+    "translation" : "Vous devez mettre à jour votre application Cozmo pour continuer."
   },
   "connectivity.pullTabsTitle" : {
-    "translation" : "Tirez les onglets de vos Cubes"
+    "translation" : "Pull the tabs on your Cubes."
   },
   "connectivity.enterDOB" : {
     "translation" : "Entrez votre anniversaire"
   },
   "connectivity.cozmoSleepTitle" : {
-    "translation" : "Aller dormir"
+    "translation" : "Aller dormir..."
   },
   "connectivity.cozmoSleepDesc" : {
-    "translation" : "Cozmo va dormir et se déconnecter rapidement"
+    "translation" : "Cozmo is going to sleep and will disconnect soon..."
   },
   "connectivity.cozmoLowBatteryTitle" : {
-    "translation" : "Cozmo a peu de batterie"
+    "translation" : "Cozmo is Low On Battery"
   },
   "connectivity.cozmoLowBatteryDesc" : {
-    "translation" : "S'il vous plaît placer Cozmo sur son chargeur"
+    "translation" : "Placez Cozmo sur son chargeur."
   },
   "connectivity.keepCozmoOnCharger" : {
-    "translation" : "S'il vous plaît laissez Cozmo sur son chargeur lors de l'installation"
+    "translation" : "Please leave Cozmo on his charger during setup."
   },
   "connectivity.placeCozmoOnCharger" : {
-    "translation" : "Placez Cozmo sur son chargeur"
+    "translation" : "Place Cozmo on his charger."
   },
   "connectivity.replaceCozmoOnCharger" : {
-    "translation" : "Retirer et remplacer Cozmo sur son chargeur"
+    "translation" : "Retirez et remplace Cozmo sur son chargeur."
   },
   "label.getHelp" : {
     "translation" : "Obtenir de l'aide"
@@ -76,21 +76,21 @@
     "translation" : "Cubes ne fonctionne pas?"
   },
   "connectivity.connectionRejected.title" : {
-    "translation" : "Un autre appareil est connecté à Cozmo S'il vous plaît déconnectez que l'appareil et essayez à nouveau"
+    "translation" : "Another Device is connected to Cozmo.\u000aPlease disconnect that Device and try again."
   },
   "needs.unconnected.needToConnect.title" : {
     "translation" : "Cozmo n'est pas connecté"
   },
   "needs.unconnected.needToConnect.description" : {
-    "translation" : "Afin de prendre soin de Cozmo et de vérifier ses besoins, vous devez d'abord vous connecter. "
+    "translation" : "Afin de prendre soin de Cozmo et de vérifier ses besoins, vous devez d'abord vous connecter."
   },
   "label.cancelText" : {
-    "translation" : "Annuler"
+    "translation" : "CANCEL"
   },
   "label.liquidMetalCozmo" : {
-    "translation" : "Édition spéciale: métal liquide"
+    "translation" : "Collector’s Edition: Liquid Metal"
   },
   "connectivity.sendGameplayDataPrompt" : {
-    "translation" : "Aidez-nous à améliorer Cozmo en nous envoyant vos données de jeu et vos statistiques"
+    "translation" : "Help us make Cozmo better by sending us your gameplay data and statistics."
   }
 }

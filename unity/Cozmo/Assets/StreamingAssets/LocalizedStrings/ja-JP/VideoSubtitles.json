@@ -7,75 +7,75 @@
     "source_key_paths" : ["/{*}"]
   },
   "videoSubtitles.speedTap.first" : {
-    "translation" : "GAMEのSETUP"
+    "translation" : "ゲームのセットアップ"
   },
   "videoSubtitles.speedTap.second" : {
-    "translation" : "コズモはHIS CUBEが選択されます"
+    "translation" : "Cozmoは彼のキューブを選ぶでしょう。"
   },
   "videoSubtitles.speedTap.third" : {
-    "translation" : "YOUR CUBEを選択するために、TAP"
+    "translation" : "キューブをタップして選択します。"
   },
   "videoSubtitles.speedTap.fourth" : {
-    "translation" : "READY GET"
+    "translation" : "準備をする。"
   },
   "videoSubtitles.speedTap.fifth" : {
-    "translation" : "TAP色が一致した場合"
+    "translation" : "色が一致する場合はタップします。"
   },
   "videoSubtitles.speedTap.sixth" : {
-    "translation" : "勝ち目がない"
+    "translation" : "勝ち目がない。"
   },
   "videoSubtitles.speedTap.seventh" : {
-    "translation" : "RED ON NOタッピングません"
+    "translation" : "赤をタップすることはありません。"
   },
   "videoSubtitles.speedTap.eighth" : {
-    "translation" : "FIRST 5ポイントにWINS"
+    "translation" : "最初から5ポイントが勝ちます。"
   },
   "videoSubtitles.cubePounce.first" : {
-    "translation" : "ONE CUBEをUSE"
+    "translation" : "1つのキューブを使用します。"
   },
   "videoSubtitles.cubePounce.second" : {
-    "translation" : "GREENはコズモはそれを見ることができることを意味します"
+    "translation" : "緑色はCozmoが見ることができます。"
   },
   "videoSubtitles.cubePounce.third" : {
-    "translation" : "コズモに向けて押し込み"
+    "translation" : "それをCozmoの方に押します。"
   },
   "videoSubtitles.cubePounce.fourth" : {
-    "translation" : "HEはPOUNCES前に引き離します"
+    "translation" : "彼が突っ込む前に引き離す。"
   },
   "videoSubtitles.cubePounce.fifth" : {
-    "translation" : "あなたも遅い場合"
+    "translation" : "あなたが遅すぎる場合は、"
   },
   "videoSubtitles.cubePounce.sixth" : {
-    "translation" : "コズモは、POINTを獲得します"
+    "translation" : "コズモがポイントを獲得する。"
   },
   "videoSubtitles.memoryMatch.first" : {
-    "translation" : "GAMEのSETUP"
+    "translation" : "ゲームのセットアップ"
   },
   "videoSubtitles.memoryMatch.second" : {
-    "translation" : "コズモはプレイする準備ができています"
+    "translation" : "Cozmoはプレイする準備ができています。"
   },
   "videoSubtitles.memoryMatch.third" : {
-    "translation" : "GAMEはパターンでBEGINS"
+    "translation" : "ゲームはパターンで始まります。"
   },
   "videoSubtitles.memoryMatch.fourth" : {
-    "translation" : "PATTERNを見ます"
+    "translation" : "パターンを見てください。"
   },
   "videoSubtitles.memoryMatch.fifth" : {
-    "translation" : "当時それを繰り返します"
+    "translation" : "それからそれを繰り返してください。"
   },
   "videoSubtitles.memoryMatch.sixth" : {
-    "translation" : "コズモWITH交代"
+    "translation" : "Cozmoと交代する。"
   },
   "videoSubtitles.memoryMatch.seventh" : {
-    "translation" : "各ラウンドでは、パターンが成長します"
+    "translation" : "各ラウンド、パターンが成長します。"
   },
   "videoSubtitles.memoryMatch.eighth" : {
-    "translation" : "あまりにも多くのミスやYOUが出ています"
+    "translation" : "あまりにも多くの間違いやあなたが出ている。"
   },
   "videoSubtitles.memoryMatch.nineth" : {
-    "translation" : "あなたが得ることができるどのくらいSEE"
+    "translation" : "あなたが得ることができる方法を参照してください。"
   },
   "videoSubtitles.memoryMatch.tenth" : {
-    "translation" : "がんばろう"
+    "translation" : "がんばろう！"
   }
 }

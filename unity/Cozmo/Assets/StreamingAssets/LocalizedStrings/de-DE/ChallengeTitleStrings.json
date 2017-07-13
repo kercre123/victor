@@ -19,22 +19,22 @@
     "translation" : "Bitte helfen Cozmo aufrecht und bereit zu spielen."
   },
   "challengeDetails.cozmoDizzy.title" : {
-    "translation" : "Cozmo ist schwindelig"
+    "translation" : "Cozmo Is Dizzy"
   },
   "challengeDetails.cozmoDizzy.description" : {
     "translation" : "Warten Sie, bis Cozmo sich von Schwindel erholt hat und bereit ist zu spielen."
   },
   "challengeDetails.cozmoIsStillWakingUpModal.title" : {
-    "translation" : "Cozmo erwacht"
+    "translation" : "Cozmo Is Waking Up"
   },
   "challengeDetails.cozmoIsStillWakingUpModal.description" : {
     "translation" : "Bitte warten Sie auf Cozmo aufwachen und losfahren seiner Ladegerät."
   },
   "challengeDetails.needsMoreCubesModal.button" : {
-    "translation" : "Zeig mir wie"
+    "translation" : "ZEIG MIR WIE"
   },
   "challengeDetails.cozmoHasHiccups.title" : {
-    "translation" : "Cozmo hat den Schluckauf"
+    "translation" : "Cozmo hat die Schluckauf"
   },
   "challengeDetails.cozmoHasHiccups.description" : {
     "translation" : "Versuchen Sie Cozmo zu helfen, indem sie ihm den Kopf nach unten setzen."

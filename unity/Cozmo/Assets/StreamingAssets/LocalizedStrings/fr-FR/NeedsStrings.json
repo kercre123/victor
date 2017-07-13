@@ -46,34 +46,34 @@
     "translation" : "La tête doit être réglée"
   },
   "needs.NeedsRepairModal.HeadRepairedNotice" : {
-    "translation" : "Réglage de la tête"
+    "translation" : "Head Adjusted"
   },
   "needs.NeedsRepairModal.TreadsDamageNotice" : {
     "translation" : "Les bandes de roulement doivent être alignées"
   },
   "needs.NeedsRepairModal.TreadsRepairedNotice" : {
-    "translation" : "Marches alignées alignées"
+    "translation" : "Treads Aligned"
   },
   "needs.NeedsRepairModal.LiftDamageNotice" : {
     "translation" : "L'élévation nécessite un étalonnage"
   },
   "needs.NeedsRepairModal.LiftRepairedNotice" : {
-    "translation" : "Ascenseur étalonné"
+    "translation" : "Lift Calibrated"
   },
   "needs.NeedsRepairModal.RepairButtonsInstruction" : {
     "translation" : "Appuyez sur les pièces à régler."
   },
   "needs.NeedsRepairModal.TuneUpInstruction" : {
-    "translation" : "Utilisez les boutons à droite pour recréer la flèche. Ensuite, appuyez sur ENVOYER."
+    "translation" : "Use the buttons on the right to recreate the arrow pattern. Then tap <b>SEND</b>."
   },
   "needs.NeedsRepairModal.NoRepairsNeeded" : {
     "translation" : "Cozmo est entièrement réglé!"
   },
   "needs.NeedsRepairModal.CalibrateButtonText" : {
-    "translation" : "ENVOYER"
+    "translation" : "Envoyer"
   },
   "needs.NeedsRepairModal.ScanButtonText" : {
-    "translation" : "SCAN COZMO"
+    "translation" : "SCANNER COZMO"
   },
   "needs.NeedsRepairModal.AlligningHead" : {
     "translation" : "Tête d'ajustement ..."

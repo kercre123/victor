@@ -10,25 +10,25 @@
     "translation" : "Cozmoはすべてのキューブを聞くことができません。それらを彼の近くに置きなさい。"
   },
   "cubeHelpStrings.Instructions.Slide0altCopy" : {
-    "translation" : "それでも問題が解決しない場合は[次へ]をタップし"
+    "translation" : "タップ<b><color=#d3d3d3>次</color></b>あなたがまだ問題を抱えている場合"
   },
   "cubeHelpStrings.Instructions.SlideACopy" : {
-    "translation" : "まず、最新の情報に更新キューブをタップし、次に[設定]"
+    "translation" : "まず、 <b>設定</b> 。次に、 <b>リフレッシュキューブ</b> 。"
   },
   "cubeHelpStrings.Instructions.Slide1" : {
-    "translation" : "次は、あなたのキューブのバッテリーを変更してみましょう"
+    "translation" : "次に、キューブのバッテリーを交換してみてください。"
   },
   "cubeHelpStrings.Instructions.Slide1altCopy" : {
-    "translation" : "それを逆さまに置き、カバーを外し"
+    "translation" : "それを逆さにしてカバーを緩めます。"
   },
   "cubeHelpStrings.Instructions.Slide2" : {
-    "translation" : "新鮮なN個のセルとバッテリーを交換"
+    "translation" : "バッテリーを新しいNセルに交換します。"
   },
   "cubeHelpStrings.Instructions.Slide2altCopy" : {
-    "translation" : "新しい電池の正（+）終わるを挿入"
+    "translation" : "新しいバッテリをプラスに挿入します（ <b><color=#d3d3d3> + </color></b> ） 結局。"
   },
   "cubeHelpStrings.Instructions.Slide3" : {
-    "translation" : "カバーを取り付け、軽く締め"
+    "translation" : "カバーを元に戻し、静かに締めます。"
   },
   "cubeHelpStrings.Instructions.Slide3altCopy" : {
     "translation" : "カバーはキューブと一致していることを確認します。今では点灯します！"

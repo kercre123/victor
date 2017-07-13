@@ -133,7 +133,7 @@
     "translation" : "答え＃14"
   },
   "codeLabChallenge_PushCube.questionSlide.primaryText" : {
-    "translation" : "＃15：立方体を押す。"
+    "translation" : "＃15：キューブを押す。"
   },
   "codeLabChallenge_PushCube.questionSlide.secondaryText" : {
     "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
@@ -160,7 +160,7 @@
     "translation" : "答え＃17"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.primaryText" : {
-    "translation" : "＃18：キューブを使ったワークアウト： <span class='blue'>キューブ、 </span><span class='purple'>リフト</span>それを途中で3回<span class='orange'> TIMES、 </span>次に<span class='purple'>それを下にしてください。 </span>"
+    "translation" : "＃18：Cubeで動く： <span class='blue'>キューブ、 </span><span class='purple'>リフト</span>それを途中で3回<span class='orange'> TIMES、 </span>次に<span class='purple'>それを下にしてください。 </span>"
   },
   "codeLabChallenge_WorkoutWithCube.questionSlide.secondaryText" : {
     "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
@@ -232,7 +232,7 @@
     "translation" : "答え＃25"
   },
   "codeLabChallenge_stackCubes.questionSlide.primaryText" : {
-    "translation" : "＃26：スタック2つのキューブ。"
+    "translation" : "＃26：Stack 2 Cubes。"
   },
   "codeLabChallenge_stackCubes.questionSlide.secondaryText" : {
     "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
@@ -241,7 +241,7 @@
     "translation" : "答え＃26"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.primaryText" : {
-    "translation" : "＃27：2つの立方体を積み重ねて、それらの上にひっくり返します。"
+    "translation" : "＃27：2つの立方体を積み重ねて、それらの上に置く。"
   },
   "codeLabChallenge_stackCubesTipOver.questionSlide.secondaryText" : {
     "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
@@ -277,7 +277,7 @@
     "translation" : "答え＃30"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.primaryText" : {
-    "translation" : "＃31：キューブを後ろに置く： <span class='yellow'>キューブが見えるとき、 </span>コズモを持っている<span class='blue'>順番</span>キューブを彼の後ろに数フィート置いて戻ってください。 <span class='orange'>永遠に繰り返す。 </span>"
+    "translation" : "＃31：キューブを後ろに置く： <span class='yellow'>キューブが見えるとき、 </span>コズモを持っている<span class='blue'>順番</span>キューブを彼の後ろに数フィート進めて戻ってください。 <span class='orange'>永遠に繰り返す。 </span>"
   },
   "codeLabChallenge_whenCubeSeenSetBehind.questionSlide.secondaryText" : {
     "translation" : "最初にチャレンジを試み、次に「次へ」をタップして回答を確認してください！"
@@ -352,7 +352,7 @@
     "translation" : "キャンセル"
   },
   "codeLab.projects.confirmDeleteProject.confirmPromptTitle" : {
-    "translation" : "削除\\ ' {0} \\ '？"
+    "translation" : "削除 \" {0} \"？"
   },
   "codeLab.projects.confirmDeleteProject.confirmButton.labelText" : {
     "translation" : "はい、削除"
@@ -382,7 +382,7 @@
     "translation" : "プッシュキューブ"
   },
   "codeLabSampleProject_Peekaboo.projectName" : {
-    "translation" : "ピカブー"
+    "translation" : "いないいないばあ"
   },
   "codeLabSampleProject_WorkoutwithCube.projectName" : {
     "translation" : "キューブでのワークアウト"

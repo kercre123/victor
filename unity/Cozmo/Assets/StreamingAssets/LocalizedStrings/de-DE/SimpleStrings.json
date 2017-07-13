@@ -49,7 +49,7 @@
     "translation" : "ERLEDIGT"
   },
   "button.play" : {
-    "translation" : "SPIELEN"
+    "translation" : "Spielen"
   },
   "button.leave" : {
     "translation" : "VERLASSEN"
@@ -85,7 +85,7 @@
     "translation" : "VERBINDEN"
   },
   "label.start" : {
-    "translation" : "Anfang"
+    "translation" : "START"
   },
   "coreUpgradeDetailsDialog.cubesNeeded" : {
     "translation" : "{0}{1} Erforderlich"
@@ -106,13 +106,13 @@
     "translation" : "LASS UNS ANFANGEN"
   },
   "soundcheck.description" : {
-    "translation" : "Bitte stellen Sie sicher, Ton des Geräts eingeschaltet ist"
+    "translation" : "Bitte stellen Sie sicher, dass der Sound Ihres Geräts eingeschaltet ist."
   },
   "refreshCubesPrompt.description" : {
-    "translation" : "Setzen Sie einen einzelnen Cube neben Cozmo und tippen Sie \"Aktualisieren\". Cozmo wird eine Verbindung mit der 3, dass er denkt, dass am nächsten sind."
+    "translation" : "Setzen Sie einen von jedem Würfel neben Cozmo und tippen Sie auf <b><color=#11a2f0ff> REFRESH </color></b> . Cozmo wird mit den 3 verbinden, die er am nächsten sieht."
   },
   "button.replay" : {
-    "translation" : "WIEDERHOLUNG"
+    "translation" : "Wiederholung"
   },
   "button.skip" : {
     "translation" : "ÜBERSPRINGEN"
@@ -124,7 +124,7 @@
     "translation" : "Cozmo hat Schwierigkeiten zu sehen!"
   },
   "error.badLight.Bottom" : {
-    "translation" : "Vermeiden Sie helles Licht und schwach beleuchteten Räumen"
+    "translation" : "Vermeiden Sie helle Lichter und schwach beleuchtete Räume."
   },
   "label.cozmo.serial" : {
     "translation" : "Cozmo-ID: {0}"
@@ -145,7 +145,7 @@
     "translation" : "Insgesamt Sparks: {0}"
   },
   "label.termsInstructions" : {
-    "translation" : "Durch Tippen auf &quot; <color=#11a2f0ff> VERBINDEN </color> &quot;Sie stimmen den folgenden Bedingungen zu:"
+    "translation" : "By tapping <b><color=#11a2f0ff>CONNECT</color></b>, you agree to the following terms:"
   },
   "label.simpleCount" : {
     "translation" : "{0} {1}"
@@ -157,7 +157,7 @@
     "translation" : "{0} von {1}"
   },
   "label.RewardHeader" : {
-    "translation" : "BELOHNUNGEN"
+    "translation" : "Belohnungen"
   },
   "button.buyACozmo" : {
     "translation" : "KAUFEN SIE EIN COZMO"
