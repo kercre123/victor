@@ -17,8 +17,8 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
 
 // For animProcess<->Engine communications
 #include "anki/cozmo/transport/IUnreliableTransport.h"
@@ -48,14 +48,50 @@ namespace Anki {
         
         const int MAX_PACKET_BUFFER_SIZE = 2048;
         u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
+        
       } // private namespace
 
+
+      // Forward declarations
+      extern "C" TimeStamp_t GetTimeStamp(void);
+      
+      Result InitRadio();
+      
+      bool RadioIsConnected();
+      
+      void RadioUpdateState(u8 wifi);
+      
+      int RadioQueueAvailable();
+      
+      void DisconnectRadio();
+      
+      /** Gets the next packet from the radio
+       * @param buffer [out] A buffer into which to copy the packet. Must have MTU bytes available
+       * return The number of bytes of the packet or 0 if no packet was available.
+       */
+      u32 RadioGetNextPacket(u8* buffer);
+      
+      /** Send a packet on the radio.
+       * @param buffer [in] A pointer to the data to be sent
+       * @param length [in] The number of bytes to be sent
+       * @param socket [in] Socket number, default 0 (base station)
+       * @return true if the packet was queued for transmission, false if it couldn't be queued.
+       */
+      bool RadioSendPacket(const void *buffer, const u32 length, const u8 socket=0);
+      
+      void DisconnectRobot();
+      u32 GetNextPacketFromRobot(u8* buffer, u32 max_length);
+
+      void ProcessMessage(RobotInterface::EngineToRobot& msg);
+      extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
+      
+      
 // #pragma mark --- Messages Method Implementations ---
 
       Result Init()
       {
         // Setup engine comms
-        HAL::InitRadio();
+        InitRadio();
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
@@ -83,7 +119,7 @@ namespace Anki {
         }
 
         // Send message along to robot
-        HAL::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+        SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
 
       } // ProcessMessage()
 
@@ -96,7 +132,7 @@ namespace Anki {
       {
         // Send block connection state when engine connects
         static bool wasConnected = false;
-        if (!wasConnected && HAL::RadioIsConnected()) {
+        if (!wasConnected && RadioIsConnected()) {
           
           // Send RobotAvailable indicating sim robot
           RobotInterface::RobotAvailable idMsg;
@@ -116,7 +152,7 @@ namespace Anki {
           
           wasConnected = true;
         }
-        else if (wasConnected && !HAL::RadioIsConnected()) {
+        else if (wasConnected && !RadioIsConnected()) {
           wasConnected = false;
         }
         
@@ -134,7 +170,7 @@ namespace Anki {
 
         //ReliableConnection_printState(&connection);
 
-        while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
+        while((dataLen = RadioGetNextPacket(pktBuffer_)) > 0)
         {
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
           if (res < 0)
@@ -143,7 +179,7 @@ namespace Anki {
           }
         }
 
-        if (HAL::RadioIsConnected())
+        if (RadioIsConnected())
         {
           if (ReliableTransport_Update(&connection) == false) // Connection has timed out
           {
@@ -155,7 +191,7 @@ namespace Anki {
         
         
         // Process incoming messages from robot
-        while ((dataLen = HAL::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
+        while ((dataLen = GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
         {
           Anki::Cozmo::RobotInterface::RobotToEngine msgBuf;
           
@@ -172,18 +208,13 @@ namespace Anki {
           else
           {
             // Send up to engine
-            ::Anki::Cozmo::HAL::RadioSendMessage(msgBuf.GetBuffer()+1, msgBuf.Size()-1, msgBuf.tag);
+            RadioSendMessage(msgBuf.GetBuffer()+1, msgBuf.Size()-1, msgBuf.tag);
           }
           
         }
 
       }
 
-
-    } // namespace Messages
-
-    
-    namespace HAL {
 
       TimeStamp_t GetTimeStamp()
       {
@@ -196,7 +227,7 @@ namespace Anki {
       {
         const bool reliable = msgID < EnumToUnderlyingType(RobotInterface::ToRobotAddressSpace::TO_ENG_UNREL);
         const bool hot = false;
-        if (::Anki::Cozmo::HAL::RadioIsConnected())
+        if (RadioIsConnected())
         {
           if (reliable)
           {
@@ -224,7 +255,7 @@ namespace Anki {
         }
       }
 
-    } // namespace HAL
+    } // namespace Messages
   } // namespace Cozmo
 } // namespace Anki
 
@@ -232,7 +263,7 @@ namespace Anki {
 // Shim for reliable transport
 bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
 {
-  return Anki::Cozmo::HAL::RadioSendPacket(buffer, bufferSize);
+  return Anki::Cozmo::Messages::RadioSendPacket(buffer, bufferSize);
 }
 
 void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
@@ -259,24 +290,24 @@ void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
   ReliableTransport_FinishConnection(connection); // Accept the connection
   //AnkiInfo( 121, "Receiver_OnConnectionRequest", 369, "ReliableTransport new connection", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1);
+  Anki::Cozmo::Messages::RadioUpdateState(1);
 }
 
 void Receiver_OnConnected(ReliableConnection* connection)
 {
   //AnkiInfo( 122, "Receiver_OnConnected", 370, "ReliableTransport connection completed", 0);
-  Anki::Cozmo::HAL::RadioUpdateState(1);
+  Anki::Cozmo::Messages::RadioUpdateState(1);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
-  Anki::Cozmo::HAL::RadioUpdateState(0);   // Must mark connection disconnected BEFORE trying to print
+  Anki::Cozmo::Messages::RadioUpdateState(0);   // Must mark connection disconnected BEFORE trying to print
   //AnkiInfo( 123, "Receiver_OnDisconnect", 371, "ReliableTransport disconnected", 0);
   ReliableConnection_Init(connection, NULL); // Reset the connection
-  Anki::Cozmo::HAL::RadioUpdateState(0);
+  Anki::Cozmo::Messages::RadioUpdateState(0);
 }
 
-int Anki::Cozmo::HAL::RadioQueueAvailable()
+int Anki::Cozmo::Messages::RadioQueueAvailable()
 {
   return ReliableConnection_GetReliableQueueAvailable(&Anki::Cozmo::connection);
 }

@@ -12,6 +12,8 @@ CLAD_PYTHON=$(CLAD_EMITTER_DIR)/Python_emitter.py
 CLAD_CPP_DECL=./cozmo_CPP_declarations_emitter.py
 CLAD_CPP_SWITCH=./cozmo_CPPLite_switch_emitter.py
 CLAD_CPPLITE_SEND_HELPER=./cozmo_CPPLite_send_helper_emitter.py
+CLAD_CPPLITE_SEND_TO_ENGINE_HELPER=./cozmo_CPPLite_sendToEngine_helper_emitter.py
+CLAD_CPPLITE_SEND_TO_ROBOT_HELPER=./cozmo_CPPLite_sendToRobot_helper_emitter.py
 CLAD_HASH=$(CLAD_EMITTER_DIR)/ASTHash_emitter.py
 
 INPUT_DIR=./src/
@@ -83,6 +85,16 @@ python: $(OUTPUT_PYTHON) $(ENGINE_TO_ROBOT_UNION)_hash.py $(ROBOT_TO_ENGINE_UNIO
 	$(PYTHON) $(CLAD_CPPLITE_SEND_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_send_helper.h
 
+%_sendToEngine_helper.h : %.clad $(CLAD_CPPLITE_SEND_TO_ENGINE_HELPER)
+	if test -f $(OUTPUT_DIR)robot/$*_sendToEngine_helper.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*_sendToEngine_helper.h; fi
+	$(PYTHON) $(CLAD_CPPLITE_SEND_TO_ENGINE_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*_sendToEngine_helper.h
+
+%_sendToRobot_helper.h : %.clad $(CLAD_CPPLITE_SEND_TO_ROBOT_HELPER)
+	if test -f $(OUTPUT_DIR)robot/$*_sendToRobot_helper.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*_sendToRobot_helper.h; fi
+	$(PYTHON) $(CLAD_CPPLITE_SEND_TO_ROBOT_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*_sendToRobot_helper.h
+
 %.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE)
 	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
 	if test -f $(OUTPUT_DIR)robot/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)robot/$*.cpp; fi
@@ -119,6 +131,8 @@ nrf: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(BODY_START_TAG)_to_$(BODY_E
 k02: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 
 esp: cpp $(ENGINE_TO_ROBOT_UNION)_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
+
+anim: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_sendToEngine_helper.h $(ENGINE_TO_ROBOT_UNION)_sendToRobot_helper.h
 
 lightCube: $(LIGHT_CUBE_UNION)_declarations.def $(LIGHT_CUBE_UNION)_send_helper.h $(LIGHT_CUBE_UNION)_switch.def
 

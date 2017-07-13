@@ -21,7 +21,7 @@
 
 namespace Anki {
 namespace Cozmo {
-namespace HAL {
+namespace Messages {
 
     namespace { // "Private members"
       const size_t RECV_BUFFER_SIZE = 1024 * 4;
