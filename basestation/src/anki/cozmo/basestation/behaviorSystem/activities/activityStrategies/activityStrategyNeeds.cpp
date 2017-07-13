@@ -38,9 +38,9 @@ ActivityStrategyNeeds::ActivityStrategyNeeds(Robot& robot, const Json::Value& co
 {
   if(config.isMember(kHigherPriorityStrategyConfigKey)){
     const Json::Value& higherPriorityWantsToRunConfig = config[kHigherPriorityStrategyConfigKey];
-    _higherPriorityWantsToRunStrategy =
+    _higherPriorityWantsToRunStrategy.reset(
         WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot,
-                                                            higherPriorityWantsToRunConfig);
+                                                            higherPriorityWantsToRunConfig));
     ANKI_VERIFY(_higherPriorityWantsToRunStrategy->GetStrategyType() == WantsToRunStrategyType::InNeedsBracket,
                 "ActivityStrategyNeeds.Constructor.IncorrectStrategyType",
                 "Created HigherPrioritiy strategy with type %s",

@@ -33,13 +33,13 @@ struct RobotCompletedAction;
 
 class Robot;
 
-using IBehaviorPtr = std::shared_ptr<IBehavior>;
-using BehaviorRobotCompletedActionCallback = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
-using BehaviorActionResultCallback = std::function<void(ActionResult)>;
+using IBehaviorPtr                          = std::shared_ptr<IBehavior>;
+using BehaviorRobotCompletedActionCallback  = std::function<void(const ExternalInterface::RobotCompletedAction&)>;
+using BehaviorActionResultCallback          = std::function<void(ActionResult)>;
 using BehaviorActionResultWithRobotCallback = std::function<void(ActionResult, Robot&)>;
-using BehaviorSimpleCallback = std::function<void(void)>;
-using BehaviorSimpleCallbackWithRobot = std::function<void(Robot& robot)>;
-using BehaviorStatusCallbackWithRobot = std::function<BehaviorStatus(Robot& robot)>;
+using BehaviorSimpleCallback                = std::function<void(void)>;
+using BehaviorSimpleCallbackWithRobot       = std::function<void(Robot& robot)>;
+using BehaviorStatusCallbackWithRobot       = std::function<BehaviorStatus(Robot& robot)>;
 
 
 }

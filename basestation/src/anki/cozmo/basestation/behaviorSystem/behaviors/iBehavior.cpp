@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
-#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/wantsToRunStrategyFactory.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/components/carryingComponent.h"
@@ -308,7 +307,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(_robot, wantsToRunConfig);
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(_robot, wantsToRunConfig));
   }
   
   // Doesn't actually read anything from behavior config, but sets defaults

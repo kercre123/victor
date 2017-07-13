@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorHelpers/helperHandle.h"
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/reactionTriggerHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
 #include "anki/cozmo/basestation/components/cubeLightComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
@@ -62,7 +63,6 @@ class ActionableObject;
 class DriveToObjectAction;
 class BehaviorHelperFactory;
 class IHelper;
-class IWantsToRunStrategy;
 enum class ObjectInteractionIntention;
   
 class BehaviorPreReqNone;
@@ -457,7 +457,7 @@ private:
   float _lastRunTime_s;
   float _startedRunningTime_s;
   
-  IWantsToRunStrategy* _wantsToRunStrategy;
+  IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
   bool IsRunnableBase(const Robot& robot, bool allowWhileRunning) const;

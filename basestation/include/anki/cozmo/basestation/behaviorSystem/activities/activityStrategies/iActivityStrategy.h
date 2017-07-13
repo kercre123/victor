@@ -12,6 +12,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_Activities_ActivityStrategies_IActivityStrategy_H__
 #define __Cozmo_Basestation_BehaviorSystem_Activities_ActivityStrategies_IActivityStrategy_H__
 
+#include "anki/cozmo/basestation/behaviorSystem/wantsToRunStrategies/iWantsToRunStrategy.h"
+
 #include "clad/types/featureGateTypes.h"
 
 #include "util/signals/simpleSignal_fwd.h"
@@ -25,7 +27,6 @@ namespace Anki {
 namespace Cozmo {
 
 template<typename TYPE> class AnkiEvent;
-class IWantsToRunStrategy;
 class MoodScorer;
 class Robot;
 
@@ -61,7 +62,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  IWantsToRunStrategy* _wantsToRunStrategy;
+  IWantsToRunStrategyPtr _wantsToRunStrategy;
   
   // signal handles for events strategies register to
   std::vector<Signal::SmartHandle> _eventHandles;

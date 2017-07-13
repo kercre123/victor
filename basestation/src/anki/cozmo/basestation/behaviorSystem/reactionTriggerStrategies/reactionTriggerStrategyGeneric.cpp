@@ -147,12 +147,12 @@ StrategyGeneric* ReactionTriggerStrategyGeneric::GetGenericWantsToRunStrategy() 
   StrategyGeneric* strategy;
   if(ANKI_DEV_CHEATS)
   {
-    strategy = dynamic_cast<StrategyGeneric*>(_wantsToRunStrategy);
+    strategy = dynamic_cast<StrategyGeneric*>(_wantsToRunStrategy.get());
     DEV_ASSERT(strategy != nullptr, "ReactionTriggerStrategyGeneric.GetGenericWantsToRunStrategy.Null");
   }
   else
   {
-    strategy = static_cast<StrategyGeneric*>(_wantsToRunStrategy);
+    strategy = static_cast<StrategyGeneric*>(_wantsToRunStrategy.get());
   }
   return strategy;
 }

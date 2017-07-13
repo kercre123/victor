@@ -44,7 +44,7 @@ IReactionTriggerStrategy::IReactionTriggerStrategy(Robot& robot, const Json::Val
   
   if(config.isMember(kWantsToRunStrategyConfigKey)){
     const Json::Value& wantsToRunConfig = config[kWantsToRunStrategyConfigKey];
-    _wantsToRunStrategy = WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, wantsToRunConfig);
+    _wantsToRunStrategy.reset(WantsToRunStrategyFactory::CreateWantsToRunStrategy(robot, wantsToRunConfig));
   }
   
   

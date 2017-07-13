@@ -31,7 +31,7 @@ public:
   virtual bool WantsToEndInternal(const Robot& robot, float lastTimeActivityStartedSec) const override;
 
 private:
-  IWantsToRunStrategy* _higherPriorityWantsToRunStrategy;
+  IWantsToRunStrategyPtr _higherPriorityWantsToRunStrategy;
   
 };
 
