@@ -13,7 +13,7 @@
 #ifndef __Util_Global_GlobalDefinitions_H__
 #define __Util_Global_GlobalDefinitions_H__
 
-#include <util/export/export.h>
+#include "util/export/export.h"
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Use ANKI_DEVELOPER_CODE to strip down code that should only be available to developers in debug, but not for
 // testing in release, nor available to players.

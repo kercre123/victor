@@ -45,7 +45,7 @@ done
 
 
 if [ "$#" == "0" ]; then
-  args="-s -v threadtime Unity:I das:D dasJava:V libc:I DEBUG:D AndroidRuntime:W fmod:V BLEPeripheral:V VehicleConnection:D WifiMessagePort:V HockeyApp:V BackgroundConnectivity:D AnkiUtil:V AudioCaptureSystem:V"
+  args="-s -v threadtime Unity:I das:D dasJava:V libc:I DEBUG:D AndroidRuntime:W fmod:V BLEPeripheral:V VehicleConnection:D WifiMessagePort:V HockeyApp:V BackgroundConnectivity:D AnkiUtil:V AudioCaptureSystem:V AudioSystem.Logging:V AudioSystem.Debugging:V"
   echo using default filter: $args
 elif [ $ALL -eq 1 ]; then
   args="-v threadtime *:V"

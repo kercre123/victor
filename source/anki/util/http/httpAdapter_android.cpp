@@ -16,7 +16,7 @@
 #include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
 
-CONSOLE_VAR(int, kHttpRequestTimeOutMSec, "Settings.Debug", 10000);
+CONSOLE_VAR_RANGED(int, kHttpRequestTimeOutMSec, "Settings.Debug", 10000, 0, 100000);
 
 namespace {
 std::mutex instancesMutex;

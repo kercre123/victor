@@ -11,7 +11,7 @@
  **/
 
 #include "util/jsonWriter/jsonWriter.h"
-#include <util/logging/logging.h>
+#include "util/logging/logging.h"
 #include <exception>
 
 using namespace std;

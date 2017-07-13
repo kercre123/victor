@@ -37,6 +37,12 @@ int UUIDBytesFromString(UUIDBytesRef uuid, const char* uuidStr) {
   return (n != 36 || uuidStr[n] != '\0' || result != 16) ? -1 : 0;
 }
 
+int IsValidUUIDString(const char* uuidStr) {
+  UUIDBytes uuid;
+  return (0 == UUIDBytesFromString(&uuid, uuidStr));
+}
+
+
 static void StringToUpper(unsigned char* str) {
   while(*str) {
     *str = toupper(*str) & 0xff;

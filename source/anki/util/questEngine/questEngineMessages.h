@@ -5,7 +5,7 @@
 #ifndef __UTIL_QUEST_ENGINE_QUEST_ENGINE_MESSAGES_H__
 #define __UTIL_QUEST_ENGINE_QUEST_ENGINE_MESSAGES_H__
 
-#include <CLAD/SafeMessageBuffer.h>
+#include "CLAD/SafeMessageBuffer.h"
 #include <array>
 #include <cassert>
 #include <cstdint>

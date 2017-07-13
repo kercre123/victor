@@ -8,7 +8,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # prepare
-PROJECT="${TOPLEVEL}/lib/util/project/gyp-android"
+PROJECT="${TOPLEVEL}/project/gyp-android"
 BUILD_TYPE="Release"
 NINJA_DIR="${PROJECT}/out/${BUILD_TYPE}"
 

@@ -6,16 +6,22 @@
     'jsoncpp_source_file_name': 'jsoncpp.lst',
     'kazmath_source_file_name': 'kazmath.lst',
     'audioutil_source_file_name': 'audioUtil.lst',
+    'civetweb_source_file_name': 'civetweb.lst',
+    'lua_source_file_name': 'lua.lst',
     'folly_source_file_name': 'folly.lst',
     'libwebp_source_file_name': 'libwebp.lst',
     'cpufeatures_source_file_name': 'cpufeatures.lst',
     'networkApp_source_file_name': 'networkApp.lst',
+    'generated_clad_source_file_name': 'messages.lst',
 
     'build_flavor%': 'dev',
     'clad_dir%': '../../tools/message-buffers',
     'has_shipping%': 1,
     'use_libwebp%': 1,
-    
+    'use_lua%': 0,
+    'use_civetweb%': 0,
+    'util_unittest_library_type%': 'shared_library',
+
     'compiler_flags': [
       '-DJSONCPP_USING_SECURE_MEMORY=0',
       '-DWEBP_RESCALER_FIX=0',
@@ -138,7 +144,7 @@
           '-stdlib=libc++',
           '-lpthread',
         ]
-      }],
+      }]
     ],
   },
 
@@ -146,6 +152,9 @@
     'cflags': ['<@(compiler_c_flags)'],
     'cflags_cc': ['<@(compiler_cpp_flags)'],
     'ldflags': ['<@(linker_flags)'],
+    'include_dirs': [
+      '<(clad_dir)/support/cpp/include',
+    ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
@@ -352,11 +361,17 @@
               'jsoncpp',
               'kazmath',
               'libwebp',
+              'civetweb',
+              'lua',
+              'cladutil',
             ],
             'dependencies': [
               'jsoncpp',
               'kazmath',
               'libwebp',
+              'civetweb',
+              'lua',
+              'cladutil',
             ],
             'type': '<(util_library_type)',
           },
@@ -458,6 +473,9 @@
               'jsoncpp',
               'kazmath',
               'libwebp',
+              'civetweb',
+              'lua',
+              'cladutil',
             ],
             'defines': [
               'UNIT_TEST=1',
@@ -466,11 +484,14 @@
               'jsoncpp',
               'kazmath',
               'libwebp',
+              'civetweb',
+              'lua',
+              'cladutil',
             ],
             'xcode_settings': {
               'LD_DYLIB_INSTALL_NAME': '@rpath/$(EXECUTABLE_PATH)'
             },
-            'type': 'shared_library',
+            'type': '<(util_unittest_library_type)',
           },
 
 
@@ -667,6 +688,94 @@
     },
 
     {
+      'target_name': 'civetweb',
+      'sources': [ '<!@(cat <(civetweb_source_file_name))' ],
+      'include_dirs': [
+        '../../source/3rd/civetweb/include',
+        '../../source/3rd/civetweb/src',
+      ],
+      'defines': [
+        'USE_WEBSOCKET=1',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../source/3rd/civetweb/include',
+          '../../source/3rd/civetweb/src',
+        ],
+      },
+      'type': '<(civetweb_library_type)',
+      'cflags': [
+        '-Wno-unknown-pragmas',
+        '-Wno-shorten-64-to-32'
+      ],
+      'cflags_cc': [
+        '-Wno-unknown-pragmas',
+        '-Wno-shorten-64-to-32'
+      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-unknown-pragmas',
+          '-Wno-shorten-64-to-32'
+        ],
+      },
+    },
+
+    {
+      'target_name': 'lua',
+      'sources': [ '<!@(cat <(lua_source_file_name))' ],
+      'include_dirs': [
+        '../../source/3rd/lua/src',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../source/3rd/lua/src',
+        ],
+      },
+      'type': '<(lua_library_type)',
+      'cflags': [
+        '-Wno-unknown-pragmas',
+        '-Wno-shorten-64-to-32',
+        '-Wno-uninitialized',
+        '-Wno-conditional-uninitialized',
+        '-Wno-deprecated-declarations',
+      ],
+      'cflags_cc': [
+        '-Wno-unknown-pragmas',
+        '-Wno-shorten-64-to-32',
+        '-Wno-uninitialized',
+        '-Wno-conditional-uninitialized',
+        '-Wno-deprecated-declarations',
+      ], 
+      'xcode_settings': {
+        'OTHER_CFLAGS': [
+          '-Wno-unknown-pragmas',
+          '-Wno-shorten-64-to-32',
+          '-Wno-uninitialized',
+          '-Wno-conditional-uninitialized',
+          '-Wno-deprecated-declarations',
+        ],
+      },
+    },
+
+    {
+      'target_name': 'cladutil',
+      'sources': [
+        '<!@(cat <(generated_clad_source_file_name))',
+      ],
+      'include_dirs': [
+        '../../source/anki/messages',
+      ],
+      'dependencies': [
+        'jsoncpp',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../source/anki/messages',
+        ],
+      },
+      'type': 'static_library',
+    },
+    {
       'target_name': 'util',
       'sources': [
         '<!@(cat <(util_source_file_name))',
@@ -684,6 +793,22 @@
           ],
           'dependencies': [
             'libwebp'
+          ]
+        }],
+        ['<(use_lua)==1', {
+          'export_dependent_settings': [
+            'lua'
+          ],
+          'dependencies': [
+            'lua'
+          ]
+        }],
+        ['<(use_civetweb)==1', {
+          'export_dependent_settings': [
+            'civetweb'
+          ],
+          'dependencies': [
+            'civetweb'
           ]
         }],
         ['OS=="mac"', { 'libraries': [ '$(SDKROOT)/System/Library/Frameworks/Foundation.framework' ] }]
@@ -705,10 +830,12 @@
       'export_dependent_settings': [
         'jsoncpp',
         'kazmath',
+        'cladutil',
        ],
       'dependencies': [
         'jsoncpp',
         'kazmath',
+        'cladutil',
       ],
       'type': '<(util_library_type)',
     },
