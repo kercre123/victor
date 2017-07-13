@@ -304,8 +304,7 @@ Result BehaviorBouncer::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kReactionArray);
   
   // Disable idle animation
-  auto & animationStreamer = robot.GetAnimationStreamer();
-  animationStreamer.PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
+  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   
   // Stash robot parameters
   _displayWidth_px = robot.GetDisplayWidthInPixels();
@@ -590,10 +589,6 @@ void BehaviorBouncer::StopInternal(Robot& robot)
   LOG_TRACE("BehaviorBouncer.StopInternal", "Stop behavior");
   
   // TODO: Record relevant DAS events here.
- 
-  // Restore idle animation
-  auto & animationStreamer = robot.GetAnimationStreamer();
-  animationStreamer.RemoveIdleAnimation(GetIDStr());
 }
   
 } // namespace Cozmo

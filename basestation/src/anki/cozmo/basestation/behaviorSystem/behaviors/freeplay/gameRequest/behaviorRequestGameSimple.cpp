@@ -184,11 +184,7 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
-  // disable idle animation, but save the old one on the stack
-  if( ! _shouldPopIdle ) {
-    _shouldPopIdle = true;
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
-  }
+  SmartPushIdleAnimation(robot, AnimationTrigger::Count);
 
   if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
@@ -272,11 +268,6 @@ void BehaviorRequestGameSimple::RequestGame_StopInternal(Robot& robot)
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
   StopActing(false);
-
-  if( _shouldPopIdle ) {
-    _shouldPopIdle = false;
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
-  }
 }
 
   

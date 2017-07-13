@@ -65,6 +65,7 @@ static const char* kSparkedBehaviorDisableLock       = "SparkBehaviorDisables";
 static const char* kSmartReactionLockSuffix          = "_behaviorLock";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToRunStrategyConfigKey      = "wantsToRunStrategyConfig";
+static const std::string kIdleLockPrefix             = "Behavior_";
 
 
 static const int kMaxResumesFromCliff                = 2;
@@ -209,6 +210,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isRunning(false)
 , _isResuming(false)
+, _hasSetIdle(false)
 {
   if(!ReadFromJson(config)){
     PRINT_NAMED_WARNING("IBehavior.ReadFromJson.Failed",
@@ -413,6 +415,7 @@ Result IBehavior::Init()
   _stopRequestedAfterAction = false;
   _actingCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _hasSetIdle = false;
   Result initResult = InitInternal(_robot);
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
@@ -516,6 +519,10 @@ void IBehavior::Stop()
     SmartRemoveDisableReactionsLock(*_smartLockIDs.begin());
   }
 
+  if(_hasSetIdle){
+    SmartRemoveIdleAnimation(_robot);
+  }
+  
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
@@ -854,8 +861,34 @@ void IBehavior::NeedActionCompleted(NeedsActionId needsActionId)
 
   _robot.GetContext()->GetNeedsManager()->RegisterNeedsActionCompleted(needsActionId);
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation)
+{
+  if(ANKI_VERIFY(!_hasSetIdle,
+                 "IBehavior.SmartPushIdleAnimation.IdleAlreadySet",
+                 "Behavior %s has already set an idle animation",
+                 GetIDStr().c_str())){
+    robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetIDStr());
+    _hasSetIdle = true;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartRemoveIdleAnimation(Robot& robot)
+{
+  if(ANKI_VERIFY(_hasSetIdle,
+                 "IBehavior.SmartRemoveIdleAnimation.NoIdleSet",
+                 "Behavior %s is trying to remove an idle, but none is currently set",
+                 GetIDStr().c_str())){
+    robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetIDStr());
+    _hasSetIdle = false;
+  }
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SmartDisableReactionsWithLock(const std::string& lockID,
                                               const TriggersArray& triggers)

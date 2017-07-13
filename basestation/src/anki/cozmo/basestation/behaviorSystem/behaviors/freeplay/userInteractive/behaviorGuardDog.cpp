@@ -164,9 +164,6 @@ Result BehaviorGuardDog::InitInternal(Robot& robot)
   // Disable reactionary behaviors that we don't want interrupting this:
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersGuardDogArray);
   
-  // Disable idle animation (TODO: needed?)
-  //robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
-  
   // Reset some members in case this is running again:
   _cubesDataMap.clear();
   _firstSleepingStartTime_s = 0.f;

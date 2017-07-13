@@ -111,6 +111,12 @@ protected:
   // Allows activities to pass up a display name from sub activities
   void SetActivityIDFromSubActivity(ActivityID activityID){ _id = activityID;}
   
+  // Push an idle animation which will be removed when the activity is deselected
+  void SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation);
+  
+  // Remove an idle animation before the activity is deselected
+  void SmartRemoveIdleAnimation(Robot& robot);
+  
   void SmartDisableReactionsWithLock(Robot& robot,
                                      const std::string& lockID,
                                      const TriggersArray& triggers);
@@ -183,9 +189,12 @@ private:
   // spark required for this activity
   UnlockId _requiredSpark;
   
-  bool _requireObjectTapped = false;
+  // track whether the activity has set an idle
+  bool _hasSetIdle;
+  
+  bool _requireObjectTapped;
 
-  bool _supportsObjectTapInteractions = false;
+  bool _supportsObjectTapInteractions;
   
   // last time the activity started running
   float _lastTimeActivityStartedSecs;

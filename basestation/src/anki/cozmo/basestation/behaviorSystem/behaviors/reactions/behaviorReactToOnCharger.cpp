@@ -73,7 +73,6 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
 , _timeTilSleepAnimation_s(-1.0)
 , _timeTilDisconnect_s(0.0)
 , _triggerableFromVoiceCommand(false)
-, _pushedIdleAnimation(false)
 {
   SubscribeToTags({
     GameToEngineTag::CancelIdleTimeout
@@ -107,10 +106,8 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>(_triggerableFromVoiceCommand);
   
-  _pushedIdleAnimation = false;
   if(NeedId::Count == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
-    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, GetIDStr());
-    _pushedIdleAnimation = true;
+    SmartPushIdleAnimation(robot, AnimationTrigger::Count);
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
   robot.GetExternalInterface()->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
@@ -121,9 +118,6 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
-  if(_pushedIdleAnimation){
-    robot.GetAnimationStreamer().RemoveIdleAnimation(GetIDStr());
-  }
 }
 
 

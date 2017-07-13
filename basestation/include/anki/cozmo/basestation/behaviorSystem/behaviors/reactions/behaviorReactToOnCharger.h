@@ -45,11 +45,7 @@ private:
   float _timeTilSleepAnimation_s;
   float _timeTilDisconnect_s;
   bool _triggerableFromVoiceCommand;
-  
-  bool _pushedIdleAnimation;
-  
 
-  
 }; // class BehaviorReactToOnCharger
   
 

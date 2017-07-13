@@ -372,6 +372,11 @@ protected:
   /// before the behavior stops.
   ////////////////
   
+  // Push an idle animation which will be removed when the behavior stops
+  void SmartPushIdleAnimation(Robot& robot, AnimationTrigger animation);
+  
+  // Remove an idle animation before the beahvior stops
+  void SmartRemoveIdleAnimation(Robot& robot);
   
   // Allows the behavior to disable and enable reaction triggers without having to worry about re-enabling them
   // these triggers will be automatically re-enabled when the behavior stops
@@ -512,6 +517,9 @@ private:
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop
   std::set<std::string> _smartLockIDs;
+  
+  // track whether the behavior has set an idle
+  bool _hasSetIdle;
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
