@@ -16,11 +16,11 @@
 #include "anki/common/basestation/utils/timer.h"
 
 
-#include "cozmoAnim/cannedAnimationContainer.h"
+#include "cozmoAnim/animation/cannedAnimationContainer.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 //#include "anki/cozmo/basestation/cozmoContext.h"
 //#include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "cozmoAnim/proceduralFace.h"
+#include "cozmoAnim/animation/proceduralFace.h"
 #include "cozmo_anim_generated.h"
 
 #include "util/console/consoleInterface.h"

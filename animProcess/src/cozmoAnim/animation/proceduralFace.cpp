@@ -10,8 +10,8 @@
  *
  **/
 
-#include "cozmoAnim/proceduralFace.h"
-#include "cozmoAnim/scanlineDistorter.h"
+#include "cozmoAnim/animation/proceduralFace.h"
+#include "cozmoAnim/animation/scanlineDistorter.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/common/basestation/math/point_impl.h"

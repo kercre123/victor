@@ -11,7 +11,7 @@
 */
 
 
-#include "cozmoAnim/track.h"
+#include "cozmoAnim/animation/track.h"
 #include "util/logging/logging.h"
 
 namespace Anki {

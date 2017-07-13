@@ -13,8 +13,8 @@
  *
  **/
 
-#include "cozmoAnim/animation.h"
-//#include "anki/cozmo/basestation/robot.h"
+#include "cozmoAnim/animation/animation.h"
+//#include "cozmoAnim/animation/proceduralFace.h"
 //#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"

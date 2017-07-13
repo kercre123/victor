@@ -11,7 +11,7 @@
  *
  **/
 
-#include "cozmoAnim/cannedAnimationContainer.h"
+#include "cozmoAnim/animation/cannedAnimationContainer.h"
 //#include "anki/cozmo/basestation/faceAnimationManager.h"
 
 #include "util/logging/logging.h"

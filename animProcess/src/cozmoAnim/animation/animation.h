@@ -18,9 +18,8 @@
 #define ANKI_COZMO_CANNED_ANIMATION_H
 
 #include "anki/common/basestation/jsonTools.h"
-#include "cozmoAnim/keyframe.h"
-//#include "cozmoAnim/proceduralFace.h"
-#include "cozmoAnim/track.h"
+#include "cozmoAnim/animation/keyframe.h"
+#include "cozmoAnim/animation/track.h"
 #include <list>
 #include <queue>
 

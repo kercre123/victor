@@ -18,7 +18,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
 //#include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "cozmoAnim/keyframe.h"
+#include "cozmoAnim/animation/keyframe.h"
 #include "cozmoAnim/ledEncoding.h"
 //#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"

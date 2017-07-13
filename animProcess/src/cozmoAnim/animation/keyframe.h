@@ -18,7 +18,7 @@
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
 #include "anki/common/basestation/colorRGBA.h"
-#include "cozmoAnim/proceduralFace.h"
+#include "cozmoAnim/animation/proceduralFace.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 //#include "clad/audio/audioEventTypes.h"

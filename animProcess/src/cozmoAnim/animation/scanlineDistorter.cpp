@@ -10,10 +10,10 @@
  *
  **/
 
-#include "cozmoAnim/scanlineDistorter.h"
+#include "cozmoAnim/animation/scanlineDistorter.h"
 
-#include "cozmoAnim/keyframe.h"
-#include "cozmoAnim/proceduralFace.h"
+#include "cozmoAnim/animation/keyframe.h"
+#include "cozmoAnim/animation/proceduralFace.h"
 
 #include "anki/common/basestation/math/matrix_impl.h"
 #include "anki/vision/basestation/image.h" 
