@@ -55,49 +55,55 @@ namespace DataPersistence {
     // This is only called right after the save file is read in, and checks that the read in save file matches code.
     // if they don't a conversion is done.
     private void CheckSaveVersionUpdates() {
-      PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
-
-      // In version 0 we let sessions grow infinitely in StartNewSession.
-      // This chunk of code converts that into just storing a series of ints so the size is manageable
-      if (profile != null && profile.Sessions != null &&
-          profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
-        // This likely only happens when we're first switching over to the creation of total sessions
-        if (profile.Sessions.Count > profile.TotalSessions) {
-          profile.TotalSessions = profile.Sessions.Count;
-        }
-
-        foreach (DataPersistence.TimelineEntryData sessionEntry in profile.Sessions) {
-          if (sessionEntry.HasConnectedToCozmo) {
-            profile.DaysWithCozmo++;
+      try {
+        PlayerProfile profile = Data.DefaultProfile;
+        // In version 0 we let sessions grow infinitely in StartNewSession.
+        // This chunk of code converts that into just storing a series of ints so the size is manageable
+        if (profile != null && profile.Sessions != null &&
+            profile.SaveVersion == 0 && PlayerProfile.kSaveVersionCurrent > 0) {
+          // This likely only happens when we're first switching over to the creation of total sessions
+          if (profile.Sessions.Count > profile.TotalSessions) {
+            profile.TotalSessions = profile.Sessions.Count;
           }
-        }
 
-        if (Data.DefaultProfile.Sessions.LastOrDefault() == null) {
-          profile.CurrentStreak = 0;
-        }
-        else if (Data.DefaultProfile.Sessions.Count < 2) {
-          profile.CurrentStreak = 1;
-        }
-        else {
-          int streakCount = 1;
-          int currentIndex = Data.DefaultProfile.Sessions.Count - 1;
-          int previousIndex = Data.DefaultProfile.Sessions.Count - 2;
-          while (previousIndex >= 0) {
-            Date currentDate = Data.DefaultProfile.Sessions[currentIndex].Date;
-            Date previousDate = Data.DefaultProfile.Sessions[previousIndex].Date;
-            if (previousDate.OffsetDays(1).Equals(currentDate)) {
-              streakCount++;
+          foreach (TimelineEntryData sessionEntry in profile.Sessions) {
+            if (sessionEntry.HasConnectedToCozmo) {
+              profile.DaysWithCozmo++;
             }
-            else {
-              break;
-            }
-            currentIndex--;
-            previousIndex--;
           }
-          profile.CurrentStreak = streakCount;
-        }
 
-        profile.SaveVersion = PlayerProfile.kSaveVersionCurrent;
+          if (profile.Sessions.LastOrDefault() == null) {
+            profile.CurrentStreak = 0;
+          }
+          else if (profile.Sessions.Count < 2) {
+            profile.CurrentStreak = 1;
+          }
+          else {
+            int streakCount = 1;
+            int currentIndex = profile.Sessions.Count - 1;
+            int previousIndex = profile.Sessions.Count - 2;
+            while (previousIndex >= 0) {
+              Date currentDate = profile.Sessions[currentIndex].Date;
+              Date previousDate = profile.Sessions[previousIndex].Date;
+              if (previousDate.OffsetDays(1).Equals(currentDate)) {
+                streakCount++;
+              }
+              else {
+                break;
+              }
+              currentIndex--;
+              previousIndex--;
+            }
+            profile.CurrentStreak = streakCount;
+          }
+
+          profile.SaveVersion = PlayerProfile.kSaveVersionCurrent;
+        }
+      }
+      catch (Exception ex) {
+        // This error happens before DAS is initialized so the unity error messages makes sure we log the error to hockeyapp
+        // but doesn't cause execution to stop and hang on the loading screen.
+        Debug.LogError("DataPersistenceManager.CheckSaveVersionUpdates.Error, " + ex.StackTrace);
       }
     }
 
