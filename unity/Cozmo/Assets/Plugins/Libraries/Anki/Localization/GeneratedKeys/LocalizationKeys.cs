@@ -340,6 +340,8 @@ public static class LocalizationKeys {
   public const string kNeedsUnconnectedNeedToConnectDescription = "needs.unconnected.needToConnect.description";
   public const string kLabelCancelText = "label.cancelText";
   public const string kLabelLiquidMetalCozmo = "label.liquidMetalCozmo";
+  public const string kConnectivitySendGameplayDataPrompt = "connectivity.sendGameplayDataPrompt";
+  public const string kConnectivityBehaviorDisplayDisconnected = "connectivity.behaviorDisplayDisconnected";
 
   #endregion
 
@@ -646,7 +648,6 @@ public static class LocalizationKeys {
 
   #region RewardedActionStrings
 
-  public const string kRewardDescriptionMissing = "reward.description.Missing";
   public const string kRewardDescriptionFreeplaySpark = "reward.description.Freeplay.Spark";
   public const string kRewardDescriptionFreeplayCompleteBehaviorStack = "reward.description.Freeplay.CompleteBehavior.Stack";
   public const string kRewardDescriptionFreeplayCompleteBehaviorPounce = "reward.description.Freeplay.CompleteBehavior.Pounce";
@@ -813,6 +814,7 @@ public static class LocalizationKeys {
   public const string kLabelBasicCozmo = "label.basicCozmo";
   public const string kLabelCurrentPage = "label.currentPage";
   public const string kLabelRewardHeader = "label.RewardHeader";
+  public const string kButtonBuyACozmo = "button.buyACozmo";
 
   #endregion
 
@@ -1002,6 +1004,7 @@ public static class LocalizationKeys {
   public const string kVoiceCommandsMainPageButtonAppSettingsButton = "voiceCommands.mainPageButton.AppSettingsButton";
   public const string kVoiceCommandsCommandNoThankYou = "voiceCommands.command.NoThankYou";
   public const string kVoiceCommandsCommandYesPlease = "voiceCommands.command.YesPlease";
+  public const string kVoiceCommandsGoToSleepCancel = "voiceCommands.GoToSleepCancel";
 
   #endregion
 

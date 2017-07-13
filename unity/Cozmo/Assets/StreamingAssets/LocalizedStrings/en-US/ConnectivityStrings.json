@@ -104,5 +104,8 @@
   },
   "connectivity.sendGameplayDataPrompt": {
     "translation": "Help us make Cozmo better by sending us your gameplay data and statistics."
+  },
+  "connectivity.behaviorDisplayDisconnected": {
+    "translation": "Cozmo has been disconnected."
   }
 }

@@ -10,7 +10,7 @@ public class BehaviorDisplay : MonoBehaviour {
   private Color _BehaviorRewardColor;
 
   [SerializeField]
-  private AnkiTextLegacy _BehaviorLabel;
+  private CozmoText _BehaviorLabel;
   // So we don't flicker in a one state frame, must be in state for a bit before we want to change to it.
   [SerializeField]
   private float _MinTimeInStateBeforeChange_Sec = 0.5f;
@@ -20,6 +20,12 @@ public class BehaviorDisplay : MonoBehaviour {
 
   [SerializeField]
   private float _FadeTime_Sec = 0.3f;
+
+  [SerializeField]
+  private GameObject _ConnectedIcon;
+
+  [SerializeField]
+  private GameObject _DisconnectedIcon;
 
   private Tween _FadeTween = null;
   private string _OverrideString = null;
@@ -36,6 +42,7 @@ public class BehaviorDisplay : MonoBehaviour {
 
   private string _CurrString = "";
 
+  private bool _IsDisconnected;
 
   private void Start() {
     _BehaviorLabel.text = "";
@@ -60,14 +67,14 @@ public class BehaviorDisplay : MonoBehaviour {
 
   private void Update() {
     IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
-    if (CurrentRobot != null && _BehaviorLabel != null) {
+    if (CurrentRobot != null) {
       if (_OverrideString == null) {
         string currBehaviorString = string.Empty;
         if (CurrentRobot.CurrentBehaviorDisplayNameKey != string.Empty) {
           currBehaviorString = Localization.Get(CurrentRobot.CurrentBehaviorDisplayNameKey);
         }
         // If string is empty the design is that cozmo should stay in the previous state
-        if (currBehaviorString != string.Empty && currBehaviorString != _CurrString) {
+        if ((currBehaviorString != string.Empty && currBehaviorString != _CurrString) || _IsDisconnected) {
           // start counting start of a change
           if (_StateChangeTimeStamp < 0.0f) {
             _StateChangeTimeStamp = Time.time;
@@ -87,6 +94,28 @@ public class BehaviorDisplay : MonoBehaviour {
           _OverrideString = null;
         }
       }
+      _IsDisconnected = false;
+      SetConnectedIcon(true);
+    }
+    else {
+      if (!_IsDisconnected) {
+        // fade in connected text
+        StartFadeTo(Localization.Get(LocalizationKeys.kConnectivityBehaviorDisplayDisconnected));
+
+        _RewardedActionTimeStamp = -1.0f;
+        _StateChangeTimeStamp = 0.0f; // fade out immediately when we become connected
+        _IsDisconnected = true;
+      }
+      SetConnectedIcon(false);
+    }
+  }
+
+  private void SetConnectedIcon(bool connected) {
+    if (_ConnectedIcon.activeSelf != connected) {
+      _ConnectedIcon.SetActive(connected);
+    }
+    if (_DisconnectedIcon.activeSelf != !connected) {
+      _DisconnectedIcon.SetActive(!connected);
     }
   }
 

@@ -20,6 +20,9 @@ namespace Cozmo.UI {
     private TabPanel[] _PanelPrefabs;
 
     [SerializeField]
+    private TabPanel[] _PanelPrefabsDisconnected;
+
+    [SerializeField]
     private SnappableLayoutGroup _SnappableLayoutGroup;
 
     [SerializeField]
@@ -33,8 +36,14 @@ namespace Cozmo.UI {
       //prevent scroll rect from reacting to its parent getting tweened on screen
       _SettingsScrollRect.enabled = false;
 
-      for (int i = 0; i < _PanelPrefabs.Length; ++i) {
-        TabPanel newTabPanel = UIManager.CreateUIElement(_PanelPrefabs[i].gameObject, _SettingsScrollRect.content).GetComponent<TabPanel>();
+      TabPanel[] panelsToUse = _PanelPrefabs;
+      // when disconnected, use a smaller set of prefabs
+      if (RobotEngineManager.Instance.CurrentRobot == null) {
+        panelsToUse = _PanelPrefabsDisconnected;
+      }
+
+      for (int i = 0; i < panelsToUse.Length; ++i) {
+        TabPanel newTabPanel = UIManager.CreateUIElement(panelsToUse[i].gameObject, _SettingsScrollRect.content).GetComponent<TabPanel>();
         newTabPanel.Initialize(homeViewInstance);
         _TabPanelsList.Add(newTabPanel);
         _SnappableLayoutGroup.RegisterLayoutElement(newTabPanel.LayoutElement);
