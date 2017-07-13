@@ -1,5 +1,5 @@
 /**
- * File: iFrustrationListener.h
+ * File: iSubtaskListener.h
  *
  * Author: Kevin M. Karol
  * Created: 12/14/16
@@ -16,10 +16,12 @@
 
 namespace Anki {
 namespace Cozmo {
+
+class Robot;
   
 class ISubtaskListener{
 public:
-  virtual void AnimationComplete() = 0;
+  virtual void AnimationComplete(Robot& robot) = 0;
 };
 
 

@@ -74,7 +74,7 @@ void ReactionTriggerStrategyFrustration::BehaviorThatStrategyWillTriggerInternal
   behavior->AddListener(this);
 }
 
-void ReactionTriggerStrategyFrustration::AnimationComplete()
+void ReactionTriggerStrategyFrustration::AnimationComplete(Robot& robot)
 {
   _lastReactedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }

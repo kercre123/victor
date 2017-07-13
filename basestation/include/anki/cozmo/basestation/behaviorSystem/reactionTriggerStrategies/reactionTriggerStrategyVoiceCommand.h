@@ -15,6 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_ReactionTriggerStrategyVoiceCommand_H__
 
 #include "anki/cozmo/basestation/behaviorSystem/reactionTriggerStrategies/iReactionTriggerStrategy.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iSubtaskListener.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
 #include <map>
@@ -24,17 +25,20 @@ namespace Anki {
 namespace Cozmo {
 
   
-class ReactionTriggerStrategyVoiceCommand : public IReactionTriggerStrategy {
+class ReactionTriggerStrategyVoiceCommand : public IReactionTriggerStrategy, public ISubtaskListener {
 public:
   ReactionTriggerStrategyVoiceCommand(Robot& robot, const Json::Value& config);
 
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   virtual bool CanInterruptOtherTriggeredBehavior() const override { return true; }
   
+  virtual void AnimationComplete(Robot& robot) override;
+  
 protected:
   virtual void EnabledStateChanged(bool enabled) override {_shouldTrigger = false;}
   virtual bool ShouldTriggerBehaviorInternal(const Robot& robot, const IBehaviorPtr behavior) override;
   virtual void SetupForceTriggerBehavior(const Robot& robot, const IBehaviorPtr behavior) override;
+  virtual void BehaviorThatStrategyWillTriggerInternal(IBehaviorPtr behavior) override;
 
 private:
   bool                                  _shouldTrigger = false;

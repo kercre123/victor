@@ -33,6 +33,11 @@ public:
   virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const override;
   virtual bool CarryingObjectHandledInternally() const override {return true;}
   
+  // Empty override of AddListener because the strategy that controls this behavior is a listener
+  // The strategy controls multiple different behaviors and listeners are necessary for the other behaviors
+  // since they are generic PlayAnim behaviors (reactToVoiceCommand_Wakeup)
+  virtual void AddListener(ISubtaskListener* listener) override {};
+  
 protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
