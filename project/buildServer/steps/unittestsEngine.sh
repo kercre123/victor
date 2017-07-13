@@ -25,7 +25,7 @@ BUILDTOOLS=$TOPLEVEL/tools/build
 if [ $NO_BUILD -eq 0 ]; then
     # build
     xcodebuild \
-    -workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+    -workspace $PROJECT/CozmoWorkspace_mac.xcworkspace \
     -scheme BUILD_WORKSPACE \
     -sdk macosx \
     -configuration $BUILD_TYPE \
@@ -33,7 +33,7 @@ if [ $NO_BUILD -eq 0 ]; then
 fi
 
 BUILD_DIR=`xcodebuild \
--workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+-workspace $PROJECT/CozmoWorkspace_mac.xcworkspace \
 -scheme BUILD_WORKSPACE \
 -sdk macosx \
 -configuration $BUILD_TYPE \

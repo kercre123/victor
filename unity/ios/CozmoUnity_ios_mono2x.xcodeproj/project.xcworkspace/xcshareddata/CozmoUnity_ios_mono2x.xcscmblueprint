@@ -14,9 +14,9 @@
     "E62CD4A721A256AB0BFA980CD6BBCFED75C49A16" : "coretech-external\/",
     "57A4392EEC832389E17757F60871A5718C3B4F4E" : "cozmo-one\/"
   },
-  "DVTSourceControlWorkspaceBlueprintNameKey" : "CozmoUnity_iOS_Mono2x",
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "CozmoUnity_ios_mono2x",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
-  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "unity\/ios\/CozmoUnity_iOS_Mono2x.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "unity\/ios\/CozmoUnity_ios_mono2x.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:anki\/cozmo-one.git",

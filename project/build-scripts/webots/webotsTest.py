@@ -294,7 +294,7 @@ def build(build_type, cozmo_version_num):
   if cozmo_version_num == 2:
     workspace_prefix = 'Cozmov2'
 
-  workspace_filename = "{}Workspace_MAC.xcworkspace".format(workspace_prefix)
+  workspace_filename = "{}Workspace_mac.xcworkspace".format(workspace_prefix)
 
   build_command = [
     'xcodebuild',

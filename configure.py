@@ -383,9 +383,9 @@ class GamePlatformConfiguration(object):
             version_tag = 'v2' if options.engine_v2 else ''
             self.workspace_name = '{0}{1}Workspace_{2}'.format(PRODUCT_NAME,
                                                                version_tag,
-                                                               self.platform.upper())
+                                                               self.platform.lower())
             if platform == 'ios' and options.selected_script_engine == 'mono2x':
-                self.workspace_name += '_Mono2x'
+                self.workspace_name += '_mono2x'
             self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
 
             self.scheme = 'BUILD_WORKSPACE'
@@ -416,9 +416,9 @@ class GamePlatformConfiguration(object):
             if options.selected_script_engine == 'il2cpp':
                 proj_name = '{0}Unity_{1}.xcodeproj'
             else:
-                proj_name = '{0}Unity_{1}_Mono2x.xcodeproj'
+                proj_name = '{0}Unity_{1}_mono2x.xcodeproj'
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
-                                                         proj_name.format(PRODUCT_NAME, self.platform.upper()))
+                                                         proj_name.format(PRODUCT_NAME, self.platform.lower()))
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
             try:
                 if self.options.provision_profile is not None:

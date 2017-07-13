@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:CozmoUnity_iOS_Mono2x.xcodeproj">
+      location = "self:CozmoUnity_ios_mono2x.xcodeproj">
    </FileRef>
 </Workspace>

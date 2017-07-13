@@ -34,7 +34,7 @@ if [ ! -d "${DERIVED_DATA_BASE}" ]; then
     exit 1
 fi
 
-DERIVED_DATA=`find $DERIVED_DATA_BASE -name 'CozmoWorkspace_MAC*' -maxdepth 1`
+DERIVED_DATA=`find $DERIVED_DATA_BASE -name 'CozmoWorkspace_mac*' -maxdepth 1`
 
 if [ `echo ${DERIVED_DATA} | wc -l` -ne "1" ]; then
     echo "could not find Cozmo xcode workspace directory in dervied data"

@@ -16,9 +16,9 @@
     "E62CD4A721A256AB0BFA980CD6BBCFED75C49A16" : "coretech-external\/",
     "90913405919E9B8A31537D54C42FD5B256BDD5DE" : "cozmo-one\/lib\/audio\/"
   },
-  "DVTSourceControlWorkspaceBlueprintNameKey" : "CozmoUnity_iOS",
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "CozmoUnity_ios",
   "DVTSourceControlWorkspaceBlueprintVersion" : 204,
-  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "unity\/ios\/CozmoUnity_iOS.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "unity\/ios\/CozmoUnity_ios.xcodeproj",
   "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
     {
       "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:anki\/products-cozmo.git",
