@@ -16,6 +16,7 @@
 #if defined(ANKI_PLATFORM_OSX)
 
 #include "textToSpeechProvider.h"
+#include <string>
 
 // Forward declarations (Cozmo)
 namespace Anki {
@@ -36,13 +37,19 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const CozmoContext* ctx);
+  TextToSpeechProviderImpl(const CozmoContext* ctx, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
   
   Result CreateAudioData(const std::string& text, float durationScalar, TextToSpeechProviderData& data);
 
 private:
-  // Private members
+  // Configurable parameters
+  std::string _tts_language;
+  std::string _tts_voice;
+  int _tts_speed;
+  int _tts_shaping;
+  
+  // Opaque handle to Acapela TTS SDK
   void* _lpBabTTS = nullptr;
 
 }; // class TextToSpeechProviderImpl

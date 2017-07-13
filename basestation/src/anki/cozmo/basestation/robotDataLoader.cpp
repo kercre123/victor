@@ -587,7 +587,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                        "Voice Command Json config file %s not found or failed to parse.",
+                        "Voice Command Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
       _voiceCommandConfig.clear();
     }
@@ -600,7 +600,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.LetsPlayWeightsConfigFailed",
-                        "Lets play Json config file %s not found or failed to parse.",
+                        "Lets play Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
       _gameRequestWeights.clear();
     }
@@ -613,7 +613,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.DoATrickWeightsConfigFailed",
-                        "Do a trick Json config file %s not found or failed to parse.",
+                        "Do a trick Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
       _doATrickWeights.clear();
     }
@@ -661,24 +661,24 @@ void RobotDataLoader::LoadRobotConfigs()
   ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadRobotConfigs");
   // mood config
   {
-    std::string jsonFilename = "config/basestation/config/mood_config.json";
+    static const std::string jsonFilename = "config/basestation/config/mood_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotMoodConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.MoodConfigJsonNotFound",
-                        "Mood Json config file %s not found or failed to parse.",
+                        "Mood Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
 
   // activities config
   {
-    std::string jsonFilename = "config/basestation/config/behaviorSystem/activities_config.json";
+    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/activities_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotActivitiesConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.BehaviorConfigJsonFailed",
-                        "Behavior Json config file %s not found or failed to parse.",
+                        "Behavior Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
       _robotActivitiesConfig.clear();
     }
@@ -686,12 +686,12 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // Workout config
   {
-    std::string jsonFilename = "config/basestation/config/behaviorSystem/workout_config.json";
+    static const std::string jsonFilename = "config/basestation/config/behaviorSystem/workout_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotWorkoutConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.WorkoutConfigJsonFailed",
-                        "Workout Json config file %s not found or failed to parse.",
+                        "Workout Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
       _robotWorkoutConfig.clear();
     }
@@ -699,12 +699,12 @@ void RobotDataLoader::LoadRobotConfigs()
 
   // vision config
   {
-    std::string jsonFilename = "config/basestation/config/vision_config.json";
+    static const std::string jsonFilename = "config/basestation/config/vision_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _robotVisionConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.VisionConfigJsonNotFound",
-                        "Vision Json config file %s not found or failed to parse.",
+                        "Vision Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
@@ -716,63 +716,76 @@ void RobotDataLoader::LoadRobotConfigs()
   
   // needs system config
   {
-    std::string jsonFilename = "config/basestation/config/needs_config.json";
+    static const std::string jsonFilename = "config/basestation/config/needs_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsSystemConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.NeedsConfigJsonNotFound",
-                        "Needs System Json config file %s not found or failed to parse.",
+                        "Needs System Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
   
   // needs level (star rewards) config
   {
-    std::string jsonFilename = "config/basestation/config/needs_level_config.json";
+    static const std::string jsonFilename = "config/basestation/config/needs_level_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _starRewardsConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.StarsConfigJsonNotFound",
-                        "Needs Level (star rewards) Json config file %s not found or failed to parse.",
+                        "Needs Level (star rewards) Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
 
   // needs system actions config
   {
-    std::string jsonFilename = "config/basestation/config/needs_action_config.json";
+    static const std::string jsonFilename = "config/basestation/config/needs_action_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsActionConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.ActionConfigJsonNotFound",
-                        "Needs System Action Json config file %s not found or failed to parse.",
+                        "Needs System Action Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
 
   // needs system decay config
   {
-    std::string jsonFilename = "config/basestation/config/needs_decay_config.json";
+    static const std::string jsonFilename = "config/basestation/config/needs_decay_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsDecayConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.DecayConfigJsonNotFound",
-                        "Needs System Decay Json config file %s not found or failed to parse.",
+                        "Needs System Decay Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
 
   // needs "handlers" config (e.g. eye procedural glitches for low repair)
   {
-    std::string jsonFilename = "config/basestation/config/needs_handlers_config.json";
+    static const std::string jsonFilename = "config/basestation/config/needs_handlers_config.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _needsHandlersConfig);
     if (!success)
     {
       PRINT_NAMED_ERROR("RobotDataLoader.NeedsHandlersConfigJsonNotFound",
-                        "Needs System Handlers Json config file %s not found or failed to parse.",
+                        "Needs System Handlers Json config file %s not found or failed to parse",
                         jsonFilename.c_str());
     }
   }
+    
+  // Text-to-speech config
+  {
+    static const std::string jsonFilename = "config/basestation/config/tts_config.json";
+    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _textToSpeechConfig);
+    if (!success)
+    {
+      PRINT_NAMED_ERROR("RobotDataLoader.TextToSpeechConfigNotFound",
+                        "Text-to-speech config file %s not found or failed to parse",
+                        jsonFilename.c_str());
+    }
+  }
+
   
   // feature gate
   {

@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider_ios.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider_acapela.h"
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/data/dataScope.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -44,10 +45,6 @@
 #import "acattsioslicense.h"
 #import "acattsioslicense.m"
 
-#define TTS_VOICE_FRENCH   "frf_bruno_22k_co.fl"
-#define TTS_VOICE_GERMAN   "ged_klaus_22k_co.fl"
-#define TTS_VOICE_JAPANESE "ja_jp_sakura_22k_co.fl"
-#define TTS_VOICE_DEFAULT  "enu_ryan_22k_co.fl"
 
 // Max samples per read
 #define TTS_BLOCKSIZE (16*1024)
@@ -60,7 +57,7 @@
 + (id)shared;
 
 // Instance methods to implement SDK operations
-- (Anki::Result)loadVoice:(const char*)voice;
+- (Anki::Result)loadVoice:(const char*)voice speed:(int)speed shaping:(int)shaping;
 - (Anki::Result)generateAudioFile:(const char*)str path:(const char*)path speechRate:(float)speechRate;
 
 // Instance methods to implement AcapelaSpeechDelegate callback interface.
@@ -91,7 +88,7 @@
   return instance;
 }
 
-- (Anki::Result)loadVoice:(const char*)voice
+- (Anki::Result)loadVoice:(const char*)voice speed:(int)speed shaping:(int)shaping
 {
   @autoreleasepool
   {
@@ -127,6 +124,9 @@
       return Anki::RESULT_FAIL;
     }
   
+    [_acaTTS setRate:speed];
+    [_acaTTS setVoiceShaping:shaping];
+    
     //
     // Set SDK delegate for diagnostics.  At present, delegate methods don't do anything else,
     // but TTS SDK crashes at random if delegate is not provided. :(
@@ -201,46 +201,55 @@ namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, const Json::Value& tts_platform_config)
 {
   using Locale = Anki::Util::Locale;
-  using Language = Anki::Util::Locale::Language;
   using DataPlatform = Anki::Util::Data::DataPlatform;
   using Scope = Anki::Util::Data::Scope;
   
   @autoreleasepool
   {
-  
-    const Locale * locale = context->GetLocale();
-    const Language language = locale->GetLanguage();
-  
-    // Choose the best voice for current locale
-    std::string voice;
-    switch (language) {
-      case Language::fr:
-        voice = TTS_VOICE_FRENCH;
-        break;
-      case Language::de:
-        voice = TTS_VOICE_GERMAN;
-        break;
-      case Language::ja:
-        voice = TTS_VOICE_JAPANESE;
-        break;
-      default:
-        voice = TTS_VOICE_DEFAULT;
-        break;
+    // Check for valid data platform before we do any work
+    const DataPlatform * dataPlatform = context->GetDataPlatform();
+    if (nullptr == dataPlatform) {
+      // This may happen during unit tests
+      LOG_WARNING("TextToSpeechProvider.Initialize.NoDataPlatform", "Unable to initialize TTS provider");
+      return;
     }
-  
+    
+    // Check for valid locale before we do any work
+    const Locale * locale = context->GetLocale();
+    if (nullptr == locale) {
+      // This may happen during unit tests
+      LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale", "Unable to initialize TTS provider");
+      return;
+    }
+    
+    // Set up default parameters
+    _tts_language = locale->GetLanguageString();
+    _tts_voice = "enu_ryan_22k_co.fl";
+    _tts_speed = 100;
+    _tts_shaping = 100;
+    
+    // Allow language configuration to override defaults
+    Json::Value tts_language_config = tts_platform_config[_tts_language.c_str()];
+    
+    JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kVoiceKey, _tts_voice);
+    JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kSpeedKey, _tts_speed);
+    JsonTools::GetValueOptional(tts_language_config, TextToSpeechProvider::kShapingKey, _tts_shaping);
+    
+    LOG_INFO("TextToSpeechProvider.Initialize", "language=%s voice=%s speed=%d shaping=%d",
+             _tts_language.c_str(), _tts_voice.c_str(), _tts_speed, _tts_shaping);
+    
     // Initialize SDK and load voice
     AcapelaProviderImpl * impl = [AcapelaProviderImpl shared];
   
-    Result result = [impl loadVoice:voice.c_str()];
+    Result result = [impl loadVoice:_tts_voice.c_str() speed:_tts_speed shaping:_tts_shaping];
     if (RESULT_OK != result) {
-      LOG_ERROR("TextToSpeechProvider.LoadVoice", "Unable to load voice (result %d)", result);
+      LOG_ERROR("TextToSpeechProvider.LoadVoice", "Unable to load voice=%s (result %d)", _tts_voice.c_str(), result);
     }
   
     // Generate a path for temporary data
-    const DataPlatform * dataPlatform = context->GetDataPlatform();
     _path = dataPlatform->pathToResource(Scope::Cache, "cozmo.pcm");
   }
 }
@@ -262,8 +271,8 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
     // Get reference to shared instance
     AcapelaProviderImpl * impl = [AcapelaProviderImpl shared];
   
-    // Convert duration scalar from unit to percentage, then clamp to allowed range
-    const float speechRate = AcapelaTTS::GetSpeechRate(durationScalar);
+    // Adjust base speed by scalar, then clamp to allowed range
+    const float speechRate = AcapelaTTS::GetSpeechRate(_tts_speed, durationScalar);
   
     Result result = [impl generateAudioFile:text.c_str() path:_path.c_str() speechRate:speechRate];
     if (RESULT_OK != result) {

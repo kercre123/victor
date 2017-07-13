@@ -1,0 +1,85 @@
+//
+// resources/config/basestation/config/tts_config.json
+//
+// Cozmo text-to-speech configuration params
+// 
+// Top-level object contains a nested object for each supported platform.
+// Each platform object contains a nested object for each supported language.
+//
+{
+  "osx":
+  {
+    "en":
+    {
+      "voice": "Ryan22k_CO",
+      "speed": 80
+    },
+    "fr":
+    {
+      "voice": "Bruno22k_CO",
+      "speed": 75
+    },
+    "de":
+    {
+      "voice": "Klaus22k_CO",
+      "speed": 75
+    },
+    "ja":
+    {
+      "voice": "Sakura22k_CO",
+      "speed": 75,
+      "pitch": 75,
+      "shaping": 65
+    }
+  },
+  "ios":
+  {
+    "en":
+    {
+      "voice": "enu_ryan_22k_co.fl",
+      "speed": 80
+    },
+    "fr":
+    {
+      "voice": "frf_bruno_22k_co.fl",
+      "speed": 75
+    },
+    "de":
+    {
+      "voice": "ged_klaus_22k_co.fl",
+      "speed": 75
+    },
+    "ja":
+    {
+      "voice": "ja_jp_sakura_22k_co.fl",
+      "speed": 75,
+      "pitch": 75,
+      "shaping": 65
+    }
+  },
+  "android":
+  {
+    "en":
+    {
+      "voice": "enu_ryan_22k_co.fl",
+      "speed": 80
+    },
+    "fr":
+    {
+      "voice": "frf_bruno_22k_co.fl",
+      "speed": 75
+    },
+    "de":
+    {
+      "voice": "ged_klaus_22k_co.fl",
+      "speed": 75
+    },
+    "ja":
+    {
+      "voice": "ja_jp_sakura_22k_co.fl",
+      "speed": 75,
+      "pitch": 75,
+      "shaping": 65
+    }
+  }
+}

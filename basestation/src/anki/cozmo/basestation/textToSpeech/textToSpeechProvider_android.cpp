@@ -36,7 +36,7 @@ namespace Anki {
 namespace Cozmo {
 namespace TextToSpeech {
   
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const CozmoContext* context, const Json::Value&)
 {
   flite_init();
   _voice = register_cmu_us_rms(nullptr);

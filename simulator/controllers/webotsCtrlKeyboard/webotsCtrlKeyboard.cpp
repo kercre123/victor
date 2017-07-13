@@ -2410,7 +2410,7 @@ namespace Anki {
                 // TODO: Add ability to set action style, voice style, duration scalar and pitch from KB controller
                 sayTextMsg.voiceStyle = (key == '"' ? SayTextVoiceStyle::CozmoProcessing_Sentence :
                                          SayTextVoiceStyle::Unprocessed);
-                sayTextMsg.durationScalar = 2.f;
+                sayTextMsg.durationScalar = 1.f;
                 sayTextMsg.voicePitch = 0.f;
                 sayTextMsg.playEvent = AnimationTrigger::Count;
                                 

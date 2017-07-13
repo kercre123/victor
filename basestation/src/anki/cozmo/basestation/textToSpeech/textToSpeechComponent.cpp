@@ -15,14 +15,18 @@
  */
 
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechProvider.h"
+
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "audioEngine/audioEngineController.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "audioEngine/plugins/ankiPluginInterface.h"
 
 #include "util/dispatchQueue/dispatchQueue.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -39,12 +43,13 @@
 namespace Anki {
 namespace Cozmo {
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
 : _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
-  , _pvdr(new Anki::Cozmo::TextToSpeech::TextToSpeechProvider(context))
 {
+  const Json::Value& tts_config = context->GetDataLoader()->GetTextToSpeechConfig();
+  _pvdr = std::make_unique<TextToSpeech::TextToSpeechProvider>(context, tts_config);
+
   if (nullptr != context && nullptr != context->GetAudioMultiplexer()) {
     _audioController = context->GetAudioMultiplexer()->GetAudioController();
   }
