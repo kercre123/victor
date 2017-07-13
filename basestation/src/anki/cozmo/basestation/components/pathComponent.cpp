@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/components/pathComponent.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceAndApproachPlanner.h"
@@ -349,7 +350,7 @@ void PathComponent::HandlePlanComplete()
   Planning::Path newPath;
 
   const Pose3d& driveCenterPose = _robot.GetDriveCenterPose();
-      
+  
   _selectedPathPlanner->GetCompletePath(driveCenterPose,
                                         newPath,
                                         selectedPoseIdx,
@@ -505,8 +506,51 @@ void PathComponent::SelectPlanner()
   }
 }
 
+void PathComponent::SetCustomMotionProfile(const PathMotionProfile& motionProfile)
+{
+  if( HasCustomMotionProfile() ) {
+    PRINT_NAMED_WARNING("PathComponent.SetMotionProfile.Conflict",
+                        "Trying to set custom motion profile, but one is already set! Overriding");
+  }
+
+  // warning for is custom
+  if( !motionProfile.isCustom ) {
+    PRINT_NAMED_WARNING("PathComponent.SetCustomMotionProfile.NotCustom",
+                        "Motion profile passed in didn't have it's isCustom flag set. This may cause inconsistencies");
+  }
+  
+  *_pathMotionProfile = motionProfile;
+  _hasCustomMotionProfile = true;
+}
+
+void PathComponent::SetCustomMotionProfileForAction(const PathMotionProfile& motionProfile, IActionRunner* action)
+{
+  SetCustomMotionProfile(motionProfile);
+
+  DEV_ASSERT(action != nullptr, "PathComponent.SetCustomMotionProfileForAction.NullAction");
+  action->ClearMotionProfileOnCompletion();
+}
+
+void PathComponent::ClearCustomMotionProfile()
+{
+  _hasCustomMotionProfile = false;
+  // the actual motion profile will get updated in StartDrivingToPose
+}
+
+bool PathComponent::HasCustomMotionProfile() const
+{
+  return _hasCustomMotionProfile;
+}
+
+const PathMotionProfile& PathComponent::GetCustomMotionProfile() const
+{
+  ANKI_VERIFY(_hasCustomMotionProfile, "PathComponent.GetCustomMotionProfile.NoCustomProfile",
+              "Trying to get the custom profile, but none is set. This is a bug");
+  return *_pathMotionProfile;
+}
+
+
 Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
-                                         const PathMotionProfile& motionProfile,
                                          std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr,
                                          bool useManualSpeed)
 {
@@ -533,7 +577,6 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
 
   _usingManualPathSpeed = useManualSpeed;
   _plannerSelectedPoseIndex = selectedPoseIndexPtr;
-  *_pathMotionProfile = motionProfile;
 
   const Pose3d& driveCenterPose(_robot.GetDriveCenterPose());  
 
@@ -581,6 +624,10 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
     // otherwise we are computing. Note that some planners finish immediately, in which case the status will
     // be updated on the next Update tick
     SetDriveToPoseStatus(ERobotDriveToPoseStatus::ComputingPath);
+  }
+
+  if( !_hasCustomMotionProfile ) {
+    *_pathMotionProfile = _speedChooser->GetPathMotionProfile(poses);
   }
 
   return RESULT_OK;
@@ -767,6 +814,7 @@ Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManu
 
 void PathComponent::ExecuteTestPath(const PathMotionProfile& motionProfile)
 {
+  // NOTE: no need to use the custom motion profile here, we just manually pass it in to the test path
   Planning::Path p;
   _longPathPlanner->GetTestPath(_robot.GetPose(), p, &motionProfile);
   ExecutePath(p, false);

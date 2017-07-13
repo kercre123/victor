@@ -31,7 +31,6 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/pathMotionProfile.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/rollingFileLogger.h"
 #include <fstream>
@@ -103,8 +102,6 @@ namespace Anki {
       
         std::map<u32, ActionResultCallback> _actionCallbackMap;
         Signal::SmartHandle _signalHandle;
-      
-        PathMotionProfile _motionProfile;
       
         // ID of block to pickup
         ObjectID _blockObjectIDPickup;

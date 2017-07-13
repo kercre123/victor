@@ -32,7 +32,6 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHelperComponent::BehaviorHelperComponent()
 : _helperFactory(new BehaviorHelperFactory(*this))
-, _motionProfile(DEFAULT_PATH_MOTION_PROFILE)
 {
   
   
@@ -74,15 +73,6 @@ bool BehaviorHelperComponent::DelegateToHelper(Robot& robot,
   PushHelperOntoStackAndUpdate(robot, handleToRun);
   _worldOriginAtStart = robot.GetWorldOrigin();
   return true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHelperComponent::SetMotionProfile(const PathMotionProfile& profile)
-{
-  DEV_ASSERT(_helperStack.empty(),
-             "BehaviorHelperComponent.SetMotionProfile.HelperAlreadyStarted");
-  _motionProfile = profile;
 }
 
 
@@ -259,21 +249,8 @@ void BehaviorHelperComponent::ClearStackMaintenanceVars()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorHelperComponent::ClearStackLifetimeVars()
 {
-  _motionProfile = DEFAULT_PATH_MOTION_PROFILE;
 }
   
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorHelperComponent::GetPathMotionProfile(PathMotionProfile& profile)
-{
-  if(_motionProfile != DEFAULT_PATH_MOTION_PROFILE){
-    profile = _motionProfile;
-    return true;
-  }else{
-    return false;
-  }
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorHelperComponent::ClearStackFromTopToIter(HelperIter& iter_in)

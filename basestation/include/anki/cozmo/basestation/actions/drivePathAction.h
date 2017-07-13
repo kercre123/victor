@@ -35,6 +35,8 @@ class Robot;
 class DrivePathAction : public IAction
 {
 public:
+  // NOTE: this action does not support custom motion profiles from the path component. It will always
+  // execute the given path at the speed specified in path.
   DrivePathAction(Robot& robot, const Planning::Path& path);
   
 protected:

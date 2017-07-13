@@ -56,6 +56,8 @@ namespace Cozmo {
       void SetAccel(f32 accel_radPerSec2);
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
+
+      virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
       void SetMoveEyes(bool enable) { _moveEyes = enable; }
       
@@ -88,6 +90,7 @@ namespace Cozmo {
       const bool _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = _kDefaultSpeed;
       f32     _accel_radPerSec2 = _kDefaultAccel;
+      bool    _motionProfileManuallySet = false;
       
       // To keep track of PoseFrameId changes mid-turn:
       PoseFrameID_t _prevPoseFrameId = 0;
@@ -144,12 +147,17 @@ namespace Cozmo {
     {
     public:
       // Positive distance for forward, negative for backward.
-      // Speed should be positive.
+      // Speed should be positive if specified
+      DriveStraightAction(Robot& robot, f32 dist_mm);
       DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps, bool shouldPlayAnimation = true);
       virtual ~DriveStraightAction();
+
+      void SetShouldPlayAnimation(bool shouldPlay) { _shouldPlayDrivingAnimation = shouldPlay; }
       
-      void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
-      void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
+      void SetAccel(f32 accel_mmps2);
+      void SetDecel(f32 decel_mmps2);
+
+      virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
     protected:
       
@@ -162,6 +170,7 @@ namespace Cozmo {
       f32 _speed_mmps  = DEFAULT_PATH_MOTION_PROFILE.speed_mmps;
       f32 _accel_mmps2 = DEFAULT_PATH_MOTION_PROFILE.accel_mmps2;
       f32 _decel_mmps2 = DEFAULT_PATH_MOTION_PROFILE.decel_mmps2;
+      bool _motionProfileManuallySet = false;
       
       bool _hasStarted = false;
       
@@ -190,7 +199,7 @@ namespace Cozmo {
       void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
       void SetMoveEyes(bool enable) { _moveEyes = enable; }
-      
+
     protected:
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
@@ -220,6 +229,8 @@ namespace Cozmo {
       Radians _tiltAngleTol           = _kDefaultTiltAngleTol;
       f32     _maxTiltSpeed_radPerSec = _kDefaultMaxTiltSpeed;
       f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
+      bool    _panSpeedsManuallySet   = false;
+      bool    _tiltSpeedsManuallySet  = false;
       
     }; // class PanAndTiltAction
     

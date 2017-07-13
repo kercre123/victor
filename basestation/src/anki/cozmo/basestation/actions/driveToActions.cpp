@@ -159,13 +159,7 @@ namespace Anki {
       
       return false;
     }
-    
-    void DriveToObjectAction::SetMotionProfile(const PathMotionProfile& motionProfile)
-    {
-      _hasMotionProfile = true;
-      _pathMotionProfile = motionProfile;
-    }
-    
+        
     ActionResult DriveToObjectAction::GetPossiblePoses(ActionableObject* object,
                                                        std::vector<Pose3d>& possiblePoses,
                                                        bool& alreadyInPosition)
@@ -272,10 +266,6 @@ namespace Anki {
           
           DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, true, _useManualSpeed);
           driveToPoseAction->SetGoals(possiblePoses, object->GetPose());
-          if(_hasMotionProfile)
-          {
-            driveToPoseAction->SetMotionProfile(_pathMotionProfile);
-          }
           _compoundAction.AddAction(driveToPoseAction);
         }
         
@@ -591,7 +581,7 @@ namespace Anki {
       if( _robot.GetPathComponent().IsActive() ) {
         _robot.GetPathComponent().Abort();
       }
-      
+
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
       
@@ -664,13 +654,7 @@ namespace Anki {
       _useObjectPose = true;
       return SetGoals(poses, distThreshold, angleThreshold);
     }
-    
-    void DriveToPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
-    {
-      _hasMotionProfile = true;
-      _pathMotionProfile = motionProfile;
-    }
-    
+        
     ActionResult DriveToPoseAction::Init()
     {
       _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
@@ -701,14 +685,8 @@ namespace Anki {
         Result planningResult = RESULT_OK;
         
         *_selectedGoalIndex = 0;
-        
-        if(!_hasMotionProfile)
-        {
-          _pathMotionProfile = pathComponent.GetSpeedChooser().GetPathMotionProfile(_goalPoses);
-        }
-        
+                
         planningResult = pathComponent.StartDrivingToPose(_goalPoses,
-                                                          _pathMotionProfile,
                                                           _selectedGoalIndex,
                                                           _useManualSpeed);
         
@@ -1166,27 +1144,7 @@ namespace Anki {
       }
       return false;
     }
-    
-    void IDriveToInteractWithObject::SetMotionProfile(const PathMotionProfile& motionProfile)
-    {
-      if(!_driveToObjectAction.expired()) {
-        static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get())->SetMotionProfile(motionProfile);
-      } else {
-        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetMotionProfile.NullDriveToAction", "");
-      }
-      
-      // If any of our children are dockActions (which they likely are) we need to update their
-      // speeds/accels to use the ones specified in the motionProfile
-      for(auto& action : GetActionList())
-      {
-        IDockAction* dockAction;
-        if((dockAction = dynamic_cast<IDockAction*>(action.get())) != nullptr)
-        {
-          dockAction->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
-        }
-      }
-    }
-    
+        
     void IDriveToInteractWithObject::SetShouldCheckForObjectOnTopOf(const bool b)
     {
       if(!_dockAction.expired())
@@ -1669,7 +1627,8 @@ namespace Anki {
         {
           MoveHeadToAngleAction* moveHeadToAngleAction = new MoveHeadToAngleAction(robot, kIdealViewBlockHeadAngle);
           AddAction(moveHeadToAngleAction);
-          DriveStraightAction* driveAction = new DriveStraightAction(robot, -moveBackDist, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps, false);
+          DriveStraightAction* driveAction = new DriveStraightAction(robot, -moveBackDist);
+          driveAction->SetShouldPlayAnimation(false);
           AddAction(driveAction);
           WaitAction* waitAction = new WaitAction(robot, waitTime);
           AddAction(waitAction);

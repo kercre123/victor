@@ -70,6 +70,7 @@ public:
   void StopTrackingWhenOtherActionCompleted( u32 otherActionTag );
   
   // Set min/max body pan and head tilt speeds directly
+  // NOTE: motion profile doesn't effect these speeds!  
   void SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec);
   void SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec);
   
