@@ -58,6 +58,12 @@ if [ -z $PYTHON ];then
   exit 1
 fi
 
+PYTHON3=`which python3`
+if [ -z $PYTHON3 ];then
+  echo python3 not found
+  exit 1
+fi
+
 _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
 _GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
@@ -75,7 +81,7 @@ if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem downloading *.json from Smartling. Check build log!" "danger" $exit_status
 fi
 
-$PYTHON $_STRIP_ZERO_WIDTH_SPACES_SCRIPT --localized-strings-dir $_LOCALIZED_STRINGS_DIR || exit_status=$?
+$PYTHON3 $_STRIP_ZERO_WIDTH_SPACES_SCRIPT --localized-strings-dir $_LOCALIZED_STRINGS_DIR || exit_status=$?
 if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem stripping zero width spaces. Check build log!" "danger" $exit_status
 fi
