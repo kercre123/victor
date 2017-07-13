@@ -492,10 +492,10 @@ MonoBehaviour:
   _ReactionsEnabled: 1
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 491
+    _EnumValue: 499
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 491
+    _EnumValue: 499
   _FreeplayEnabledOnExit: 1
   _DASPhaseID: 0
   _OverrideTickerKey: 
@@ -503,9 +503,9 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions:
   - _EnumValueAsString: RollACube
-    _EnumValue: 37
-  - _EnumValueAsString: RollACube_Sparked
     _EnumValue: 38
+  - _EnumValueAsString: RollACube_Sparked
+    _EnumValue: 39
   _ForceNeedValuesOnStart:
   - -1
   - -1
@@ -514,7 +514,9 @@ MonoBehaviour:
   - 1
   - 1
   - 1
-  _ForceNeedValuesOnEventId: 45
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: RollACube_Sparked
+    _EnumValue: 39
   _ForceNeedValuesOnEvent:
   - -1
   - -1

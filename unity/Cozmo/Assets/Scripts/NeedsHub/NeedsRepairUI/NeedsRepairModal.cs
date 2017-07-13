@@ -267,6 +267,12 @@ namespace Cozmo.Repair.UI {
       _RevealProgressMaxWidth = _RevealProgressBar.sizeDelta.x;
 
       EnterModalState(); //do any state set up if needed for our initial state
+
+      if (_OptionalCloseDialogCozmoButton != null &&
+          OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
+      }
+
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {

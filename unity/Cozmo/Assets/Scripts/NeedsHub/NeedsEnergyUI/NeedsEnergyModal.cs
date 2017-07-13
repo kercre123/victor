@@ -90,6 +90,11 @@ namespace Cozmo.Energy.UI {
       HandleLatestNeedsLevelChanged(NeedsActionId.Feed);
 
       RefreshForCurrentBracket(nsm);
+
+      if (_OptionalCloseDialogCozmoButton != null &&
+          OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+        _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
+      }
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {

@@ -22,6 +22,23 @@ namespace Onboarding {
       }
     }
 
+#if ANKI_DEV_CHEATS
+    public override void SkipPressed() {
+      // Debug moving around, since continue    
+      BaseModal modal = FindObjectOfType<Cozmo.Repair.UI.NeedsRepairModal>();
+      if (modal != null) {
+        modal.CloseDialog();
+        return;
+      }
+      modal = FindObjectOfType<Cozmo.Energy.UI.NeedsEnergyModal>();
+      if (modal != null) {
+        modal.CloseDialog();
+        return;
+      }
+      // The modal closing will cause the GoToNextStage call if we found a modal
+      base.SkipPressed();
+    }
+#endif
   }
 
 }

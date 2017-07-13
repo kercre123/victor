@@ -72,6 +72,8 @@ namespace Cozmo.Needs.UI {
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventDialogName);
       _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
 
+      OnboardingManager.Instance.InitInitalOnboarding(this);
+
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
       _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
       _MetersWidget.OnRepairPressed += HandleRepairButton;
@@ -101,8 +103,6 @@ namespace Cozmo.Needs.UI {
       _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
 
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
-
-      OnboardingManager.Instance.InitInitalOnboarding(this);
     }
 
     protected override void CleanUp() {
@@ -170,8 +170,6 @@ namespace Cozmo.Needs.UI {
     private void HandleDialogFinishedOpenAnimation() {
       PopLatestBracketAndUpdateButtons();
       NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
-
-      OnboardingManager.Instance.StartAnyPhaseIfNeeded();
     }
 
     private void HandleLatestNeedsBracketChanged(NeedsActionId actionId, NeedId needId) {

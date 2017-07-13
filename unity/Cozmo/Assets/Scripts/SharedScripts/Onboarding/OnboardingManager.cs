@@ -184,6 +184,14 @@ public class OnboardingManager : MonoBehaviour {
     if (IsOnboardingRequired(OnboardingPhases.InitialSetup)) {
       StartPhase(OnboardingPhases.InitialSetup);
     }
+    _NeedsHubView.DialogOpenAnimationFinished += HandleNeedsViewOpenAnimationCompleted;
+  }
+
+  private void HandleNeedsViewOpenAnimationCompleted() {
+    if (_NeedsHubView != null) {
+      _NeedsHubView.DialogOpenAnimationFinished -= HandleNeedsViewOpenAnimationCompleted;
+      OnboardingManager.Instance.StartAnyPhaseIfNeeded();
+    }
   }
 
   public void StartPhase(OnboardingPhases phase) {

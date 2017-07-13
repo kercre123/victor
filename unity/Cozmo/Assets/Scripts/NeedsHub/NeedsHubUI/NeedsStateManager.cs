@@ -9,6 +9,13 @@ namespace Cozmo.Needs {
 
     [System.Serializable]
     public class SerializableNeedsActionIds : SerializableEnum<Anki.Cozmo.NeedsActionId> {
+      public SerializableNeedsActionIds() {
+        Value = NeedsActionId.Count;
+      }
+
+      public SerializableNeedsActionIds(NeedsActionId defaultVale) {
+        Value = defaultVale;
+      }
     }
 
     public delegate void LatestNeedLevelChangedHandler(NeedsActionId actionThatCausedChange);
