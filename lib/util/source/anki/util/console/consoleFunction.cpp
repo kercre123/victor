@@ -10,7 +10,7 @@
 
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleSystem.h"
-#include <util/helpers/includeSstream.h>
+#include "util/helpers/includeSstream.h"
 #include <assert.h>
 #include <stdint.h>
 
@@ -292,7 +292,7 @@ ConsoleArgType IConsoleFunction::GetArgTypeFromString( const std::string& argstr
 // Using a macro so that it's easy to add/remove support for data types.
 #define CONSOLE_INCLUDE_MANUAL_TYPES
 #define CONSOLE_ARG_TYPE( __argname__, __argtype__, ... ) \
-  case ConsoleArgType_##__argname__: arg = ( new ConsoleArg<__argtype__>::ConsoleArg( name, isOptional ) ); break;
+  case ConsoleArgType_##__argname__: arg = ( new ConsoleArg<__argtype__>( name, isOptional ) ); break;
 
 IConsoleFunctionArg* IConsoleFunction::CreateConsoleArg( ConsoleArgType type, StringID name, bool isOptional )
 {

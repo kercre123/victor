@@ -8,6 +8,12 @@ import subprocess
 import argparse
 import StringIO
 
+class ArgParseUniqueStore(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string):
+        if getattr(namespace, self.dest, self.default) is not None:
+            parser.error(option_string + " appears multiple times.\n")
+        setattr(namespace, self.dest, values)
+
 def gypHelp():
   print "to install gyp:"
   print "cd ~/your_workspace/"
@@ -95,6 +101,7 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import generateCLAD
   import util
 
   # create gyp arg function
@@ -154,12 +161,22 @@ def main(scriptArgs):
     UtilLog.error('error executing unpackLibs')
   os.chdir(os.path.join(projectRoot, 'project/gyp'))
 
+  # generate CLAD source
+  clad_src_dir = os.path.join(projectRoot, 'source', 'anki', 'clad')
+  clad_dst_dir = os.path.join(projectRoot, 'source', 'anki', 'messages')
+  generate_clad_result = generateCLAD.generateMessageBuffersCPP(clad_src_dir,
+                                                                clad_dst_dir,
+                                                                os.path.join(os.path.abspath(options.cladPath), 'emitters'),
+                                                                options.verbose)
+
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['source/anki/util' ], ['project/gyp/util.lst'])
   generator.processFolder(['source/anki/audioUtil' ], ['project/gyp/audioUtil.lst'])
   generator.processFolder(['source/anki/utilUnitTest'], ['project/gyp/utilUnitTest.lst'])
   generator.processFolder(['source/anki/networkApp'], ['project/gyp/networkApp.lst'])
+  generator.processFolder(['source/anki/clad'], ['project/gyp/clad.lst'])
+  generator.processFolder(['source/anki/messages'], ['project/gyp/messages.lst'])
 
   if options.updateListsOnly:
     return True
@@ -178,12 +195,14 @@ def main(scriptArgs):
     'cpufeatures_library_type': 'static_library',
     'util_library_type': 'static_library',
     'audioutil_library_type': 'static_library',
+    'civetweb_library_type': 'static_library',
+    'lua_library_type': 'static_library',
     'gyp_location': gypPath,
     'configure_location': configurePath,
     'clad_dir': clad_dir_rel,
     'ndk_root': 'INVALID',
     'android_toolchain': 'arm-linux-androideabi-4.9',
-    'android_platform': 'android-18'
+    'android_platform': 'android-18',
   }
 
   # mac
