@@ -1,5 +1,6 @@
 using UnityEngine;
 using Anki.Cozmo;
+using Anki.Cozmo.Audio;
 using Anki.Cozmo.ExternalInterface;
 using Newtonsoft.Json;
 using DataPersistence;
@@ -29,6 +30,11 @@ namespace CodeLab {
       CreateNewProject,     // Workspace displays only green flag
       DisplayUserProject,   // Display a previously-saved user project. User project UUID saved in _ProjectUUIDToOpen.
       DisplaySampleProject  // Display a previously-saved sample project. Sample project UUID saved in _ProjectUUIDToOpen.
+    }
+
+    private enum MusicRoundStates {
+      WorkspaceMusicRound = 1,
+      LobbyMusicRound = 2
     }
 
     // Look at CodeLabGameUnlockable.asset in editor to set when unlocked.
@@ -121,7 +127,7 @@ namespace CodeLab {
     }
 
     private GameToGameConn _GameToGameConn = new GameToGameConn(); // Dev-Connection for non-SHIPPING builds
-    private string _CurrentURLFilename = null; // The currently displayed URL (used for hot-reloading)
+    private string _CurrentURLFilename = null; // The currently displayed URL
     private string _DevLoadPath = null; // Custom path for loading assets in dev builds
     private bool _DevLoadPathFirstRequest = true;
 
@@ -1110,6 +1116,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 #endif // UNITY_EDITOR
     }
 
+    private bool IsDisplayingWorkspacePage() {
+      if (_CurrentURLFilename.IndexOf(kHorizontalIndexFilename, StringComparison.Ordinal) > -1) {
+        return true;
+      }
+      else if (_CurrentURLFilename.IndexOf(kVerticalIndexFilename, StringComparison.Ordinal) > -1) {
+        return true;
+      }
+      return false;
+    }
+
     private void LoadURL(string scratchPathToHTML) {
       if (_SessionState.IsProgramRunning()) {
         // Program is currently running and we won't receive OnScriptStopped notification
@@ -1127,10 +1143,20 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
       DAS.Info("CodeLab.LoadURL", "urlPath = '" + urlPath + "'");
 
-      _CurrentURLFilename = scratchPathToHTML;  // The currently displayed URL (used for hot-reloading)
+      _CurrentURLFilename = scratchPathToHTML;
       _WebViewObjectComponent.LoadURL(urlPath);
       if ((_DevLoadPath != null) && _DevLoadPathFirstRequest) {
         _DevLoadPathFirstRequest = false;
+      }
+
+      // Set "lobby" versus "workspace" music
+      if (IsDisplayingWorkspacePage()) {
+        // Workspace music: plays for horizontal and vertical workspace as well as challenges
+        GameAudioClient.SetMusicRoundState((int)MusicRoundStates.WorkspaceMusicRound);
+      }
+      else {
+        // Lobby music: plays for tutorial and save/load UI
+        GameAudioClient.SetMusicRoundState((int)MusicRoundStates.LobbyMusicRound);
       }
     }
 
