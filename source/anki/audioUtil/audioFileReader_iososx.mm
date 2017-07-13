@@ -16,6 +16,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 
 #include <iostream>
+#include <thread>
 
 namespace Anki {
 namespace AudioUtil {
@@ -95,34 +96,48 @@ static OSStatus ConvertAudioDataCallback (AudioConverterRef               inAudi
 
 struct AudioFileReader::NativeAudioFileData
 {
-  AudioFileID audioFileID;
-  AudioStreamBasicDescription basicDescription;
+  AudioFileID audioFileID{};
+  AudioStreamBasicDescription basicDescription{};
 };
 
 bool AudioFileReader::ReadFile(const std::string& audioFilePath)
 {
   ClearAudio();
   
+  bool success = false;
+  
   @autoreleasepool
   {
     NativeAudioFileData fileData;
-    if (!GetNativeFileData(fileData, audioFilePath))
+    auto doReadFile = [this, &fileData, &audioFilePath] () -> bool
     {
-      return false;
-    }
+      if (!GetNativeFileData(fileData, audioFilePath))
+      {
+        return false;
+      }
+      
+      if (!ConvertAndStoreSamples(fileData))
+      {
+        return false;
+      }
+      
+      if (!TrimPrimingAndRemainder(fileData))
+      {
+        return false;
+      }
+      
+      return true;
+    };
     
-    if (!ConvertAndStoreSamples(fileData))
-    {
-      return false;
-    }
+    success = doReadFile();
     
-    if (!TrimPrimingAndRemainder(fileData))
+    if (fileData.audioFileID)
     {
-      return false;
+      AudioFileClose(fileData.audioFileID);
     }
   }
   
-  return true;
+  return success;
 }
 
 bool AudioFileReader::GetNativeFileData(NativeAudioFileData& fileData, const std::string& audioFilePath)
@@ -263,6 +278,27 @@ bool AudioFileReader::TrimPrimingAndRemainder(const NativeAudioFileData& fileDat
   }
   return true;
 }
+
+void AudioFileReader::DeliverAudio(bool doRealTime)
+{
+  auto dataCallback = GetDataCallback();
+  if (!dataCallback)
+  {
+    return;
+  }
   
+  constexpr auto updatePeriod = std::chrono::milliseconds(Anki::AudioUtil::kTimePerAudioChunk_ms);
+  for (const auto& audioChunk : _audioSamples)
+  {
+    std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+    dataCallback(audioChunk.data(), static_cast<uint32_t>(audioChunk.size()));
+    auto elapsed = std::chrono::steady_clock::now() - startTime;
+    if (doRealTime && elapsed < updatePeriod)
+    {
+      std::this_thread::sleep_for(updatePeriod - elapsed);
+    }
+  }
+}
+
 } // namespace AudioUtil
 } // namespace Anki

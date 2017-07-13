@@ -3,11 +3,20 @@
 #include "util/jni/jniUtils.h"
 #include "util/logging/logging.h"
 
+#include <android/log.h>
+#define JNI_INIT_WARNING( message, args... ) __android_log_print( ANDROID_LOG_WARN, "AndroidRuntime", message, ##args )
+
 namespace Anki {
 namespace Util {
 
 JavaVM* JNIUtils::_sJvm = nullptr;
 jobject JNIUtils::_sCurrentActivity = nullptr;
+  
+// Keeping these hidden in the definitions file in an anonymous namespace for simplicity
+namespace {
+  JGlobalObject     _sClassLoader;
+  jmethodID         _sFindClassMethod;
+}
 
 jobjectArray JNIUtils::convertStringMapToJObjectArray(JNIEnv* env, const std::map<std::string,std::string>& stringMap, std::vector<jstring>& stringRefs)
 {
@@ -175,6 +184,64 @@ void JNIUtils::SetCurrentActivity(JNIEnv* env, const jobject activity)
     _sCurrentActivity = env->NewGlobalRef(activity);
   }
 }
+  
+void JNIUtils::SetJvm(JavaVM* jvm, const char* randomProjectClass)
+{
+  _sJvm = jvm;
+  
+  if (nullptr != _sJvm && nullptr != randomProjectClass)
+  {
+    AcquireClassLoaderWithClass(randomProjectClass);
+  }
+}
+
+bool JNIUtils::AcquireClassLoaderWithClass(const char* randomProjectClass)
+{
+  // Need to have a jvm set before we can use it to acquire the class loader
+  if (nullptr == _sJvm)
+  {
+    JNI_INIT_WARNING("JNIUtils.AcquireClassLoaderWithClass.JVMNotSet");
+    return false;
+  }
+  
+  auto envWrapper = JNIUtils::getJNIEnvWrapper();
+  JNIEnv* env = envWrapper->GetEnv();
+  if (nullptr == env)
+  {
+    JNI_INIT_WARNING("JNIUtils.AcquireClassLoaderWithClass.JNIEnvNotFound");
+    return false;
+  }
+  
+  JClassHandle randomClass{env->FindClass(randomProjectClass), env};
+  if (nullptr == randomClass)
+  {
+    JNI_INIT_WARNING("JNIUtils.AcquireClassLoaderWithClass.RandomProjectClassNotFound %s", randomProjectClass);
+    return false;
+  }
+  
+  // Note that the "getClassLoader" method is on the "Class" class type, hence this step.
+  JClassHandle classClass{env->GetObjectClass(randomClass.get()), env};
+  if (nullptr == classClass)
+  {
+    JNI_INIT_WARNING("JNIUtils.AcquireClassLoaderWithClass.GetClassClassFailed");
+    return false;
+  }
+  
+  JClassHandle classLoaderClass{env->FindClass("java/lang/ClassLoader"), env};
+  if (nullptr == classLoaderClass)
+  {
+    JNI_INIT_WARNING("JNIUtils.AcquireClassLoaderWithClass.ClassLoaderClassNotFound");
+    return false;
+  }
+  
+  jmethodID getClassLoaderMethod = env->GetMethodID(classClass.get(), "getClassLoader", "()Ljava/lang/ClassLoader;");
+  
+  // Now we have all the things we need to get and store off the ClassLoader reference and method to find classes with it
+  _sClassLoader = JGlobalObject{env->CallObjectMethod(randomClass.get(), getClassLoaderMethod), env};
+  _sFindClassMethod = env->GetMethodID(classLoaderClass.get(), "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+
+  return true;
+}
 
 // JNIEnvWrapper implementation
 
@@ -206,6 +273,24 @@ public:
     if (_detachOnDestroy) {
       _jvm->DetachCurrentThread();
     }
+  }
+  
+  virtual jclass FindClassInProject(const char* className) override
+  {
+    if (nullptr == _env)
+    {
+      PRINT_NAMED_ERROR("JNIEnvWrapperImpl.FindClassInProject", "Missing JNIEnv");
+      return nullptr;
+    }
+    
+    if (nullptr == _sClassLoader)
+    {
+      PRINT_NAMED_ERROR("JNIEnvWrapperImpl.FindClassInProject", "Missing ClassLoader ref");
+      return nullptr;
+    }
+    
+    JStringHandle stringArg{_env->NewStringUTF(className), _env};
+    return static_cast<jclass>(_env->CallObjectMethod(_sClassLoader.get(), _sFindClassMethod, stringArg.get()));
   }
 
   virtual JNIEnv* GetEnv() override { return _env; }

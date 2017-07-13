@@ -1,0 +1,33 @@
+/**
+* File: waveFile.h
+*
+* Author: Lee Crippen
+* Created: 07/03/17
+*
+* Description: Simple wave file saving functionality.
+*
+* Copyright: Anki, Inc. 2017
+*
+*/
+
+#ifndef __Anki_AudioUtil_WaveFile_H_
+#define __Anki_AudioUtil_WaveFile_H_
+
+#include "audioUtil/audioDataTypes.h"
+
+#include <string>
+
+namespace Anki {
+namespace AudioUtil {
+
+class WaveFile {
+public:
+  static bool SaveFile(const std::string& filename, const AudioChunkList& chunkList);
+  
+}; // class WaveFile
+
+  
+} // namespace AudioUtil
+} // namespace Anki
+
+#endif // __Anki_AudioUtil_WaveFile_H_

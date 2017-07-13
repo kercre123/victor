@@ -2,7 +2,23 @@
 # Copyright (c) 2014 Anki, Inc.
 # All rights reserved.
 
-adb='adb'
+GIT=`which git`
+if [ -z $GIT ]
+then
+    echo git not found
+    exit 1
+fi
+TOPLEVEL=`$GIT rev-parse --show-toplevel`
+
+ADB=adb
+if [ -e $TOPLEVEL/local.properties ]; then
+    ANDROID_HOME=`egrep sdk.dir $TOPLEVEL/local.properties | awk -F= '{print $2;}'`
+    ADB=$ANDROID_HOME/platform-tools/adb
+    if [ ! -x $ADB ]; then
+        ADB=adb
+    fi
+fi
+
 #shift
 args=$@
 
@@ -63,7 +79,7 @@ end makeTab
 
 
 devices=""
-lines=`$adb devices`
+lines=`$ADB devices`
 IFS=$'\n'
 for line in $lines
 do
@@ -84,7 +100,7 @@ echo "$commonStart" > $file
 IFS=$' '
 counter=1
 for device in $devices; do
-  echo "${commandStart}clear;osascript -e 'tell application \\\"System Events\\\" to keystroke \\\"k\\\" using {command down, option down}';adb -s $device logcat -c;adb -s $device logcat $args | /usr/bin/tee $logcatfile.$device.txt ${commandEnd1}$counter${commandEnd2}" >> $file
+  echo "${commandStart}clear;osascript -e 'tell application \\\"System Events\\\" to keystroke \\\"k\\\" using {command down, option down}';$ADB -s $device logcat -c;$ADB -s $device logcat $args | /usr/bin/tee $logcatfile.$device.txt ${commandEnd1}$counter${commandEnd2}" >> $file
   counter=$((counter + 1))
 done
 echo "$commonEnd" >> $file

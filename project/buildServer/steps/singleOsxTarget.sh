@@ -13,7 +13,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # prepare
-PROJECT=$TOPLEVEL/project/gyp-mac
+PROJECT=$TOPLEVEL/lib/util/project/gyp-mac
 BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
 

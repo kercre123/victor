@@ -17,6 +17,7 @@
 #define __Util_BitFlags_BitFlagStorage_H__
 
 
+#include <limits>
 #include <assert.h>
 #include <stdint.h>
 

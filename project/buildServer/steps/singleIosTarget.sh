@@ -8,7 +8,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # prepare
-PROJECT=$TOPLEVEL/project/gyp-ios
+PROJECT=$TOPLEVEL/lib/util/project/gyp-ios
 BUILD_TYPE="Release"
 DERIVED_DATA=$PROJECT/DerivedData
 

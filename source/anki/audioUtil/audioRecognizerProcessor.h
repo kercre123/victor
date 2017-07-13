@@ -24,38 +24,38 @@
 namespace Anki {
 namespace AudioUtil {
   
-class AudioCaptureSystem;
+class IAudioInputSource;
 class SpeechRecognizer;
   
 class AudioRecognizerProcessor
 {
 public:
-  AudioRecognizerProcessor();
+  AudioRecognizerProcessor(const std::string& savedAudioDir);
   virtual ~AudioRecognizerProcessor();
   AudioRecognizerProcessor(AudioRecognizerProcessor&& other) = delete;
   AudioRecognizerProcessor& operator=(AudioRecognizerProcessor&& other) = delete;
   AudioRecognizerProcessor(const AudioRecognizerProcessor& other) = delete;
   AudioRecognizerProcessor& operator=(const AudioRecognizerProcessor& other) = delete;
-  bool IsValid() const { return _captureSystem != nullptr; }
   
+  void SetAudioInputSource(IAudioInputSource* newCaptureSystem);
   void SetSpeechRecognizer(SpeechRecognizer* newRecog);
   void Start();
   void Stop();
 
-  using ResultType = std::string;
+  using ResultType = std::pair<std::string, float>;
   bool HasResults() const;
   ResultType PopNextResult();
   
 private:
   SpeechRecognizer*                       _recognizer = nullptr;
-  std::unique_ptr<AudioCaptureSystem>     _captureSystem;
+  IAudioInputSource*                      _audioInputSource = nullptr;
   bool                                    _capturingAudio = false;
-  mutable std::mutex                      _recognizerMutex;
+  std::mutex                              _componentsMutex;
   mutable std::mutex                      _resultMutex;
   std::deque<ResultType>                  _procResults;
   
   void AudioSamplesCallback(const AudioSample* buffer, uint32_t numSamples);
-  void AddRecognizerResult(const char* data);
+  void AddRecognizerResult(const char* data, float score);
   
 }; // class AudioRecognizerProcessor
     

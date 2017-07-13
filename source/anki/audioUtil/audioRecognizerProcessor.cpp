@@ -10,21 +10,54 @@
 *
 */
 
-#include "audioRecognizerProcessor.h"
+#include "audioUtil/audioRecognizerProcessor.h"
 
-#include "audioCaptureSystem.h"
-#include "speechRecognizer.h"
+#include "audioUtil/audioCaptureSystem.h"
+#include "audioUtil/speechRecognizer.h"
+#include "audioUtil/waveFile.h"
+
+#include "util/fileUtils/fileUtils.h"
+#include "util/global/globalDefinitions.h"
+
+#include <chrono>
+
+#include "util/console/consoleInterface.h"
+
+namespace {
+  std::string                             _savedAudioDir;
+  Anki::AudioUtil::AudioChunkList         _savedAudio;
+  uint32_t                                _minSamplesToCapture = 0;
+  
+#if ANKI_DEV_CHEATS
+  void RecordAudioInput(ConsoleFunctionContextRef context)
+  {
+    constexpr uint32_t                      _kDefaultNumSecondsToCapture = 5;
+    constexpr uint32_t                      _kMaxNumSecondsToCapture = 60;
+    
+    uint32_t numSeconds = ConsoleArg_GetOptional_UInt(context, "seconds", 0);
+    if (numSeconds > _kMaxNumSecondsToCapture)
+    {
+      numSeconds = _kMaxNumSecondsToCapture;
+    }
+    else if (numSeconds == 0)
+    {
+      numSeconds = _kDefaultNumSecondsToCapture;
+    }
+    _minSamplesToCapture = numSeconds * Anki::AudioUtil::kSampleRate_hz;
+  }
+  
+  CONSOLE_FUNC(RecordAudioInput, "VoiceCommand", optional uint32_t seconds);
+#endif
+}
 
 namespace Anki {
 namespace AudioUtil {
   
-
-AudioRecognizerProcessor::AudioRecognizerProcessor()
-: _captureSystem(new AudioCaptureSystem())
+AudioRecognizerProcessor::AudioRecognizerProcessor(const std::string& savedAudioDir)
 {
-  if (!_captureSystem->IsValid())
+  if (ANKI_DEV_CHEATS)
   {
-    _captureSystem.reset();
+    _savedAudioDir = savedAudioDir;
   }
 }
 
@@ -35,55 +68,89 @@ AudioRecognizerProcessor::~AudioRecognizerProcessor()
   
 void AudioRecognizerProcessor::SetSpeechRecognizer(SpeechRecognizer* newRecog)
 {
-  std::lock_guard<std::mutex> lock(_recognizerMutex);
+  std::lock_guard<std::mutex> lock(_componentsMutex);
   if (_recognizer)
   {
-    _recognizer->Stop();
     _recognizer->SetCallback();
   }
   
   _recognizer = newRecog;
-  _recognizer->SetCallback(std::bind(&AudioRecognizerProcessor::AddRecognizerResult, this, std::placeholders::_1));
-  _recognizer->Start();
+  if (_recognizer)
+  {
+    _recognizer->SetCallback(std::bind(&AudioRecognizerProcessor::AddRecognizerResult, this, std::placeholders::_1, std::placeholders::_2));
+  }
+}
+
+
+void AudioRecognizerProcessor::SetAudioInputSource(IAudioInputSource* audioInputSource)
+{
+  std::lock_guard<std::mutex> lock(_componentsMutex);
+  if (_audioInputSource)
+  {
+    _audioInputSource->SetCallback(IAudioInputSource::DataCallback{});
+  }
+  
+  _audioInputSource = audioInputSource;
+  if (_audioInputSource)
+  {
+    _audioInputSource->SetCallback(std::bind(&AudioRecognizerProcessor::AudioSamplesCallback, this, std::placeholders::_1, std::placeholders::_2));
+  }
 }
 
 void AudioRecognizerProcessor::Start()
 {
-  if (!_captureSystem || _capturingAudio)
-  {
-    return;
-  }
-  
+  std::lock_guard<std::mutex> lock(_resultMutex);
   _capturingAudio = true;
-  _captureSystem->SetCallback(std::bind(&AudioRecognizerProcessor::AudioSamplesCallback, this, std::placeholders::_1, std::placeholders::_2));
-  _captureSystem->StartRecording();
-}
-  
-void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, uint32_t numSamples)
-{
-  std::lock_guard<std::mutex> lock(_recognizerMutex);
-  if (_recognizer)
-  {
-    _recognizer->Update(buffer, numSamples);
-  }
 }
 
 void AudioRecognizerProcessor::Stop()
 {
-  if (!_captureSystem || !_capturingAudio)
+  std::lock_guard<std::mutex> lock(_resultMutex);
+  _capturingAudio = false;
+}
+  
+void AudioRecognizerProcessor::AudioSamplesCallback(const AudioSample* buffer, uint32_t numSamples)
+{
   {
-    return;
+    std::lock_guard<std::mutex> lock(_componentsMutex);
+    if (_recognizer)
+    {
+      _recognizer->Update(buffer, numSamples);
+    }
   }
   
-  _capturingAudio = false;
-  _captureSystem->StopRecording();
-  _captureSystem->ClearCallback();
+  if (ANKI_DEV_CHEATS && _minSamplesToCapture > 0)
+  {
+    AudioChunk newChunk;
+    newChunk.reserve(numSamples);
+    newChunk.insert(newChunk.end(), buffer, buffer + numSamples);
+    _savedAudio.push_back(std::move(newChunk));
+    
+    if (_minSamplesToCapture <= numSamples)
+    {
+      _minSamplesToCapture = 0;
+      auto curTimeString = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+      if (!_savedAudioDir.empty() && Util::FileUtils::DirectoryDoesNotExist(_savedAudioDir))
+      {
+        Util::FileUtils::CreateDirectory(_savedAudioDir);
+      }
+      WaveFile::SaveFile(Util::FileUtils::FullFilePath({_savedAudioDir, curTimeString + ".wav"}), _savedAudio);
+      _savedAudio.clear();
+    }
+    else
+    {
+      _minSamplesToCapture -= numSamples;
+    }
+  }
 }
                            
-void AudioRecognizerProcessor::AddRecognizerResult(const char* data)
+void AudioRecognizerProcessor::AddRecognizerResult(const char* data, float score)
 {
   std::lock_guard<std::mutex> lock(_resultMutex);
-  _procResults.push_back(data);
+  if (_capturingAudio)
+  {
+    _procResults.push_back( {data, score} );
+  }
 }
 
 bool AudioRecognizerProcessor::HasResults() const

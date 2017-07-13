@@ -14,6 +14,7 @@
     'build_flavor%': 'dev',
     'clad_dir%': '../../tools/message-buffers',
     'has_shipping%': 1,
+    'use_libwebp%': 1,
     
     'compiler_flags': [
       '-DJSONCPP_USING_SECURE_MEMORY=0',
@@ -408,6 +409,12 @@
     [
       "OS=='mac'",
       {
+        'variables': {
+          'macosx_deployment_target%': '',
+        },
+        'xcode_settings': {
+          'MACOSX_DEPLOYMENT_TARGET' : '<(macosx_deployment_target)',
+        },
         'target_defaults': {
           'variables': {
             'mac_target_archs%': [ '<@(target_archs)' ]
@@ -671,6 +678,15 @@
         ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
         ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
         ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
+        ['<(use_libwebp)==1', {
+          'export_dependent_settings': [
+            'libwebp'
+          ],
+          'dependencies': [
+            'libwebp'
+          ]
+        }],
+        ['OS=="mac"', { 'libraries': [ '$(SDKROOT)/System/Library/Frameworks/Foundation.framework' ] }]
       ],
       'include_dirs': [
         '../../source/anki',
@@ -689,12 +705,10 @@
       'export_dependent_settings': [
         'jsoncpp',
         'kazmath',
-        'libwebp',
        ],
       'dependencies': [
         'jsoncpp',
         'kazmath',
-        'libwebp',
       ],
       'type': '<(util_library_type)',
     },

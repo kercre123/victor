@@ -61,7 +61,13 @@ ITickTimeProvider* gTickTimeProvider = nullptr;
 ILoggerProvider*gLoggerProvider = nullptr;
 ChannelFilter gChannelFilter;
 IEventProvider* gEventProvider = nullptr;
+
+// Has an error been reported?
 bool _errG = false;
+  
+// Do we break on any error?
+bool _errBreakOnError = true;
+
 const size_t kMaxStringBufferSize = 1024;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -356,6 +362,20 @@ void sChanneledDebug(const char* channelName, const char* eventName, const KVV& 
   
   // log it
   LogChannelDebug(channelName, eventName, keyValues, eventValue);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool sVerifyFailedReturnFalse(const char* eventName, const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  sErrorV(eventName, {}, format, args);
+  va_end(args);
+  _errG=true;
+  sDumpCallstack("VERIFY"); 
+  sLogFlush();
+  sDebugBreak();
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

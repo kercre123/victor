@@ -138,16 +138,16 @@ inline constexpr bool IsNearZero(double x)
 }
 
 // IsFltGTZero implementations
-// TRUE if greater than the negative of the tolerance
+// TRUE if greater than the tolerance
   
 inline constexpr bool IsFltGTZero(float x)
 {
-  return (x > -Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+  return (x > Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
 }
  
 inline constexpr bool IsFltGTZero(double x)
 {
-  return (x > -Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE);
+  return (x > Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE);
 }
   
 // IsFltGZero implementations

@@ -38,11 +38,10 @@ namespace AudioUtil {
   
 struct AudioCaptureSystemData
 {
-  AudioCaptureSystem::DataCallback  _dataCallback;
+  AudioCaptureSystem*               _captureSystem = nullptr;
   AudioQueueRef                     _queue = nullptr;
   AudioQueueBufferRef               _buffers[NUM_BUFFERS];
   bool                              _recording = false;
-  mutable std::mutex                _dataMutex;
   
   void HandleCallback(AudioQueueRef                                   inAQ,
                       AudioQueueBufferRef                             inBuffer,
@@ -50,13 +49,13 @@ struct AudioCaptureSystemData
                       UInt32                                          inNumberPackets,
                       const AudioStreamPacketDescription * __nullable inPacketDescs)
   {
-    std::lock_guard<std::mutex> lock(_dataMutex);
     if(_recording)
     {
-      if (_dataCallback)
+      auto dataCallback = _captureSystem->GetDataCallback();
+      if (dataCallback)
       {
         const auto* const dataStart = static_cast<AudioSample*>(inBuffer->mAudioData);
-        _dataCallback(dataStart, inNumberPackets);
+        dataCallback(dataStart, inNumberPackets);
       }
       
       AudioQueueEnqueueBuffer(_queue, inBuffer, 0, NULL);
@@ -77,6 +76,7 @@ struct AudioCaptureSystemData
       
       AudioQueueDispose(_queue, true);
     }
+    _captureSystem = nullptr;
   }
 };
   
@@ -91,27 +91,35 @@ static void HandleCallbackEntry(void * __nullable               inUserData,
   if (data) { data->HandleCallback(inAQ, inBuffer, inStartTime, inNumberPackets, inPacketDescs); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem()
-: _impl(new AudioCaptureSystemData{})
+AudioCaptureSystem::AudioCaptureSystem() = default;
+
+// Note this should be done AFTER permission has been granted
+void AudioCaptureSystem::Init()
 {
-  AudioStreamBasicDescription standardAudioFormat;
-  GetStandardAudioDescriptionFormat(standardAudioFormat);
-  OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
-  if (kAudioServicesNoError != status)
+  if (!_impl && GetPermissionState() == PermissionState::Granted)
   {
-    PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
-    _impl.reset();
-    return;
-  }
-  
-  for(int i = 0; i < NUM_BUFFERS; i++)
-  {
-    status = AudioQueueAllocateBuffer(_impl->_queue, kBytesPerChunk, &_impl->_buffers[i]);
+    _impl.reset(new AudioCaptureSystemData{});
+    _impl->_captureSystem = this;
+    
+    AudioStreamBasicDescription standardAudioFormat;
+    GetStandardAudioDescriptionFormat(standardAudioFormat);
+    OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
       _impl.reset();
       return;
+    }
+    
+    for(int i = 0; i < NUM_BUFFERS; i++)
+    {
+      status = AudioQueueAllocateBuffer(_impl->_queue, kBytesPerChunk, &_impl->_buffers[i]);
+      if (kAudioServicesNoError != status)
+      {
+        PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+        _impl.reset();
+        return;
+      }
     }
   }
 }
@@ -120,98 +128,179 @@ AudioCaptureSystem::~AudioCaptureSystem()
 {
   StopRecording();
 }
-  
-void AudioCaptureSystem::SetCallback(DataCallback newCallback)
+ 
+#if IPHONE_TYPE
+static AudioCaptureSystem::PermissionState ConvertPermissionType(AVAudioSessionRecordPermission avPermissionStatus)
 {
-  if (_impl)
+  switch (avPermissionStatus)
   {
-    std::lock_guard<std::mutex> lock(_impl->_dataMutex);
-    _impl->_dataCallback = newCallback;
+    case AVAudioSessionRecordPermissionUndetermined:
+    {
+      return AudioCaptureSystem::PermissionState::Unknown;
+    }
+    case AVAudioSessionRecordPermissionDenied:
+    {
+      return AudioCaptureSystem::PermissionState::DeniedNoRetry;
+    }
+    case AVAudioSessionRecordPermissionGranted:
+    {
+      return AudioCaptureSystem::PermissionState::Granted;
+    }
+    default:
+    {
+      return AudioCaptureSystem::PermissionState::Unknown;
+    }
   }
 }
- 
-// TODO: StartRecording needs a lot of work; the current functionality can work if mic permissions are granted, but doesn't handle the alternate scenario.
-// See more todos and comments below.
+#endif
+
+AudioCaptureSystem::PermissionState AudioCaptureSystem::GetPermissionState(bool isRepeatRequest) const
+{
+  // MacOS always grants permission to use the microphone, so use that as default
+  PermissionState permissionState = PermissionState::Granted;
+
+  #if IPHONE_TYPE
+    permissionState = ConvertPermissionType([[AVAudioSession sharedInstance] recordPermission]);
+  #endif
+  
+  return permissionState;
+}
+
+void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallback resultCallback) const
+{
+  if (IPHONE_TYPE)
+  {
+  #if IPHONE_TYPE
+    [[AVAudioSession sharedInstance] requestRecordPermission: ^(BOOL granted) {
+      resultCallback();
+    }];
+  #endif
+  }
+  else
+  {
+    resultCallback();
+  }
+}
+  
+static void DoIPhoneSpecificConfig()
+{
+#if IPHONE_TYPE
+  AVAudioSession * session = [AVAudioSession sharedInstance];
+  if (!session)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSession.sharedInstance.Invalid", "");
+    return;
+  }
+
+  auto currentOptions = [session categoryOptions];
+  // This option needs to be set explicitly for the PlayAndRecord category we're switching to below.
+  // If that doesn't happen, audio reverts to default playback through phone speaker only, instead of
+  // speakerphone mode.
+  currentOptions |= AVAudioSessionCategoryOptionDefaultToSpeaker;
+  NSError* nsError = nil;
+  [session setCategory:AVAudioSessionCategoryPlayAndRecord
+           withOptions:currentOptions
+                 error:&nsError];
+  if (nsError)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSession.setCategory.Error", "Code %ld %s",
+                        (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+  }
+
+  // The System measurement mode could? help with voice recognition (it's the mode used by the speech
+  // recognition software THF by Sensory), but unfortunately enabling it results in reducing overall device
+  // output volume by ~60% (very rough guess) which isn't well documented in Apple docs. So far I haven't found
+  // any way to disable that side effect either, so leaving this in but disabled for historical purposes.
+  // Set the "system measurement" mode to disable signal processing from input
+//  [session setMode:AVAudioSessionModeMeasurement error:&nsError];
+//  if (nsError)
+//  {
+//    PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AVAudioSession.setMode.Error", "Code %ld %s",
+//                      (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+//  }
+
+  [session setActive:YES error:&nsError];
+  if (nsError)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSession.setActive.Error", "Code %ld %s",
+                      (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+  }
+  
+  
+  // Now that the session has been enabled, look for a front microphone. If it exists we'll prioritize it.
+  // Note this has been adapted from the example at https://developer.apple.com/library/content/qa/qa1799/_index.html
+  // Also note that the final part of the example was removed, which set the built-in mic to be the preferred
+  // input port. It was removed because of the earlier check below which returns early if there's more than one
+  // mic port found.
+  
+  // Get the set of available inputs. If there are no audio accessories attached, there will be
+  // only one available input -- the built in microphone.
+  NSArray* inputs = [session availableInputs];
+  if ([inputs count] > 1)
+  {
+    // If there's more than one input, we'll assume the user wants to use the other input instead
+    // of the built-in mic, so we'll return rather than configure (and prioritize) that mic
+    return;
+  }
+  
+  // Locate the Port corresponding to the built-in microphone.
+  AVAudioSessionPortDescription* builtInMicPort = nil;
+  for (AVAudioSessionPortDescription* port in inputs)
+  {
+    if ([port.portType isEqualToString:AVAudioSessionPortBuiltInMic])
+    {
+      builtInMicPort = port;
+      break;
+    }
+  }
+  
+  // Print out a description of the data sources for the built-in microphone
+//  NSLog(@"There are %u data sources for port :\"%@\"", (unsigned)[builtInMicPort.dataSources count], builtInMicPort);
+//  NSLog(@"%@", builtInMicPort.dataSources);
+  
+  // loop over the built-in mic's data sources and attempt to locate the front microphone
+  AVAudioSessionDataSourceDescription* frontDataSource = nil;
+  for (AVAudioSessionDataSourceDescription* source in builtInMicPort.dataSources)
+  {
+    if ([source.orientation isEqual:AVAudioSessionOrientationFront])
+    {
+      frontDataSource = source;
+      break;
+    }
+  } // end data source iteration
+  
+  if (frontDataSource)
+  {
+//    NSLog(@"Currently selected source is \"%@\" for port \"%@\"", builtInMicPort.selectedDataSource.dataSourceName, builtInMicPort.portName);
+//    NSLog(@"Attempting to select source \"%@\" on port \"%@\"", frontDataSource, builtInMicPort.portName);
+    
+    // Set a preference for the front data source.
+    if (![builtInMicPort setPreferredDataSource:frontDataSource error:&nsError])
+    {
+      PRINT_NAMED_ERROR("AudioCaptureSystem.DoIPhoneSpecificConfig.AVAudioSessionPortDescription.setPreferredDataSource.Error", "Code %ld %s",
+                        (long)[nsError code], [[nsError localizedDescription] UTF8String]);
+    }
+  }
+#endif
+}
+
 void AudioCaptureSystem::StartRecording()
 {
-  if (_impl && !_impl->_recording)
+  if (_impl && !_impl->_recording && GetPermissionState() == PermissionState::Granted)
   {
-    
-    // TODO: HACK: FIXME: This is a stub for the platform specific functionality to check microphone (and maybe other future?)
-    // permissions.
-    // Note this interface for requesting (or checking) microphone permission is iOS only.
-#if IPHONE_TYPE
-    //void(^requestBlock)(BOOL) = ^(BOOL granted) {
-    //  if (granted) {
-    //    NSLog(@"req granted");
-    //  }
-    //  else {
-    //    NSLog(@"req denied");
-    //  }
-    //};
-    
-    AVAudioSessionRecordPermission permissionStatus = [[AVAudioSession sharedInstance] recordPermission];
-    switch (permissionStatus) {
-      case AVAudioSessionRecordPermissionUndetermined:
-        [[AVAudioSession sharedInstance] requestRecordPermission: ^(BOOL granted) {
-          if (granted) {
-            std::cout << "microphone permission request granted" << std::endl;
-          }
-          else {
-            std::cout << "microphone permission request denied" << std::endl;
-          }
-        }];
-        break;
-      case AVAudioSessionRecordPermissionDenied:
-        std::cout << "microphone permission request already denied" << std::endl;
-        break;
-      case AVAudioSessionRecordPermissionGranted:
-        std::cout << "microphone permission request already granted" << std::endl;
-        break;
-      default:
-        break;
-    }
-#endif
-    
     _impl->_recording = true;
     for(int i = 0; i < NUM_BUFFERS; i++)
     {
       AudioQueueEnqueueBuffer(_impl->_queue, _impl->_buffers[i], 0, NULL);
     }
     
-    
-    // TODO: HACK: FIXME: This is a stub for the platform specific functionality to set up the audio record session on iOS. Needs polish
-#if IPHONE_TYPE
-    AVAudioSession * session = [AVAudioSession sharedInstance];
-    
-    if (!session)
+    if (IPHONE_TYPE)
     {
-      PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AVAudioSession.sharedInstance.Invalid", "");
+      DoIPhoneSpecificConfig();
     }
-    else
-    {
-      NSError* nsError;
-      [session setCategory:AVAudioSessionCategoryPlayAndRecord error:&nsError];
-      
-      if (nsError)
-      {
-        PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AVAudioSession.setCategory.Error", "%ld", (long)[nsError code]);
-      }
-      
-      [session setActive:YES error:&nsError];
-      if (nsError)
-      {
-        PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AVAudioSession.setActive.Error", "%ld", (long)[nsError code]);
-      }
-    }
-#endif
     
-    // TODO: HACK: FIXME: This is where we will get a failure if the app has either been denied permission for the mic in the past,
-    // or this is the first time the app is hitting this code, and we don't yet have permission from the user (see above callback block code).
-    // Either way, some work needs to happen here to pull out proper requesting logic, and use the permissions status to smartly decide
-    // what to do when StartRecording is called.
     OSStatus status = AudioQueueStart(_impl->_queue, NULL);
-    if (status)
+    if (kAudioServicesNoError != status)
     {
       PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AudioQueueStart.Error","Is permission properly granted? OSStatus errorcode: %d", (int)status);
     }

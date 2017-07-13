@@ -11,6 +11,8 @@
 */
 
 #include "audioCaptureSystem.h"
+#include "util/jni/jniUtils.h"
+#include "util/logging/logging.h"
 
 #include <android/log.h>
 #include <SLES/OpenSLES.h>
@@ -22,14 +24,18 @@
 
 #define AUDIOCAPTURE_ERROR( message, args... ) __android_log_print( ANDROID_LOG_ERROR, "AudioCaptureSystem", message, ##args )
 
+namespace {
+  Anki::AudioUtil::AudioCaptureSystem::RequestCapturePermissionCallback     _requestCapturePermissionCallback;
+  std::mutex                                                                _requestPermCallbackLock;
+}
+
 namespace Anki {
 namespace AudioUtil {
   
 struct AudioCaptureSystemData
 {
-  AudioCaptureSystem::DataCallback  _dataCallback;
+  AudioCaptureSystem*               _captureSystem = nullptr;
   bool                              _recording = false;
-  mutable std::mutex                _dataMutex;
   
   // Pair of audio sample buffers to hold recorded audio
   AudioChunk                        _inputBuffers[2] = { AudioChunk(kSamplesPerChunk), AudioChunk(kSamplesPerChunk) };
@@ -53,10 +59,10 @@ struct AudioCaptureSystemData
       _enqueuedBuffer = (0 == _enqueuedBuffer) ? 1 : 0;
       (*_recorderBufferQueue)->Enqueue(_recorderBufferQueue, _inputBuffers[_enqueuedBuffer].data(), kBytesPerChunk);
       
-      std::lock_guard<std::mutex> lock(_dataMutex);
-      if (_dataCallback)
+      auto dataCallback = _captureSystem->GetDataCallback();
+      if (dataCallback)
       {
-        _dataCallback(_inputBuffers[fullBuffer].data(), kSamplesPerChunk);
+        dataCallback(_inputBuffers[fullBuffer].data(), kSamplesPerChunk);
       }
     }
   }
@@ -88,9 +94,18 @@ static void HandleCallbackEntry(SLAndroidSimpleBufferQueueItf bufferQueue, void 
   if (data) { data->HandleCallback(); }
 }
 
-AudioCaptureSystem::AudioCaptureSystem()
-  : _impl(new AudioCaptureSystemData{})
+AudioCaptureSystem::AudioCaptureSystem() = default;
+
+void AudioCaptureSystem::Init()
 {
+  if (_impl || GetPermissionState() != PermissionState::Granted)
+  {
+    return;
+  }
+  
+  _impl.reset(new AudioCaptureSystemData{});
+  _impl->_captureSystem = this;
+  
   using SetupStep = std::pair<std::string, std::function<SLuint32()>>;
   std::vector<SetupStep> setupSteps;
   
@@ -175,19 +190,85 @@ AudioCaptureSystem::AudioCaptureSystem()
     }
   }
 }
+  
+AudioCaptureSystem::PermissionState AudioCaptureSystem::GetPermissionState(bool isRepeatRequest) const
+{
+  auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
+  JNIEnv* env = envWrapper->GetEnv();
+  
+  if (nullptr == env)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.GetPermissionState.EnvNotFound",
+                      "Unable to find JNIEnv variable.");
+    return PermissionState::DeniedAllowRetry;
+  }
+  
+  Util::JClassHandle captureClass{envWrapper->FindClassInProject("com/anki/audioUtil/AudioCaptureSystem"), env};
+  if (nullptr == captureClass)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.GetPermissionState.ClassNotFound",
+                      "Unable to find com.anki.audioUtil.AudioCaptureSystem");
+    return PermissionState::DeniedAllowRetry;
+  }
+  
+  // get method for checking audio capture permission status
+  jmethodID hasPermissionMethodID = env->GetStaticMethodID(captureClass.get(), "hasCapturePermission", "()Z");
+  jboolean permissionGranted = env->CallStaticBooleanMethod(captureClass.get(), hasPermissionMethodID);
+  
+  if (!permissionGranted)
+  {
+    jmethodID showRationaleMethodID = env->GetStaticMethodID(captureClass.get(), "shouldShowRationale", "()Z");
+    jboolean shouldShowRationale = env->CallStaticBooleanMethod(captureClass.get(), showRationaleMethodID);
+    
+    // If we were denied permission we can check whether the OS says we should give a rationale.
+    // If the OS says don't bother with the rationale and we have requested permission sometime before,
+    // we know the user has selected "don't show again", and won't be getting more prompts to allow mic access.
+    // That means we need to tell them to go to their settings to enable the access.
+    if (!shouldShowRationale && isRepeatRequest)
+    {
+      return PermissionState::DeniedNoRetry;
+    }
+    
+    return PermissionState::DeniedAllowRetry;
+  }
+  
+  return PermissionState::Granted;
+}
+
+void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallback resultCallback) const
+{
+  auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
+  JNIEnv* env = envWrapper->GetEnv();
+  
+  if (nullptr == env)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.RequestCapturePermission.EnvNotFound",
+                      "Unable to find JNIEnv variable.");
+    return;
+  }
+  
+  Util::JClassHandle captureClass{envWrapper->FindClassInProject("com/anki/audioUtil/AudioCaptureSystem"), env};
+  if (nullptr == captureClass)
+  {
+    PRINT_NAMED_ERROR("AudioCaptureSystem.RequestCapturePermission.ClassNotFound",
+                      "Unable to find com.anki.audioUtil.AudioCaptureSystem");
+    return;
+  }
+  
+  // Only lock while updating the capture callback
+  {
+    std::lock_guard<std::mutex> lock(_requestPermCallbackLock);
+    _requestCapturePermissionCallback = std::move(resultCallback);
+  }
+  
+  // get method for requesting audio capture permission status and call it
+  jmethodID methodID = env->GetStaticMethodID(captureClass.get(), "requestCapturePermission", "()V");
+  env->CallStaticVoidMethod(captureClass.get(), methodID);
+}
 
 AudioCaptureSystem::~AudioCaptureSystem()
 {
   StopRecording();
-}
-  
-void AudioCaptureSystem::SetCallback(DataCallback newCallback)
-{
-  if (_impl)
-  {
-    std::lock_guard<std::mutex> lock(_impl->_dataMutex);
-    _impl->_dataCallback = newCallback;
-  }
 }
   
 void AudioCaptureSystem::StartRecording()
@@ -221,3 +302,19 @@ void AudioCaptureSystem::StopRecording()
 
 } // end namespace AudioUtil
 } // end namespace Anki
+
+extern "C"
+{
+
+void JNICALL
+Java_com_anki_audioUtil_AudioCaptureSystem_NativeRequestCapturePermissionCallback(JNIEnv* env, jobject clazz, jboolean permissionGranted)
+{
+  std::lock_guard<std::mutex> lock(_requestPermCallbackLock);
+  if (_requestCapturePermissionCallback)
+  {
+    _requestCapturePermissionCallback();
+    _requestCapturePermissionCallback = Anki::AudioUtil::AudioCaptureSystem::RequestCapturePermissionCallback{};
+  }
+}
+
+} // extern "C"
