@@ -72,6 +72,10 @@ class UnityBuildConfig(object):
         return os.path.join('/', 'Applications', 'Unity', 'Unity.app', 'Contents', 'MacOS', 'Unity')
 
     @staticmethod
+    def default_log_file():
+        return os.path.join(util.Git.repo_root(), 'build', 'Unity', 'UnityBuild.log')
+
+    @staticmethod
     def get_unity_project_version(project_dir):
         project_version_path = os.path.join(project_dir, 'ProjectSettings', 'ProjectVersion.txt')
         version = None
@@ -123,6 +127,7 @@ class UnityBuildConfig(object):
         self.script_profiling = False
         self.asset_destination_path = None
         self.build_type = 'PlayerAndAssets'
+        self.build_number = '1'
         self.verbose = False
         self.unity_exe = UnityBuildConfig.default_unity_exe()
         self.destination_file = None
@@ -147,6 +152,8 @@ class UnityBuildConfig(object):
         parser.add_argument('--script-engine', action="store", choices=('mono2x', 'il2cpp'), default="mono2x")
         parser.add_argument('--build-type', action="store", choices=('PlayerAndAssets', 'OnlyAssets', 'OnlyPlayer'),
                             default="PlayerAndAssets", dest='build_type')
+        parser.add_argument('--build-number', metavar='string', default='1', required=False,
+                            help='Set the Android build number')
         parser.add_argument('--asset-destination-path', action="store",
                             default="Assets/StreamingAssets/cozmo_resources", dest='asset_destination_path',
                             help="where to copy assets to")
@@ -207,8 +214,12 @@ class UnityBuild(object):
 
         # We need to skip the ProjectSettings.asset file, since it can be
         # modified during the build.
+        # Also skipping GraphicsSettings.asset, because it gets touched (but not modified)
+        # per a Unity bug; waiting to upgrade for fix
+        # https://issuetracker.unity3d.com/issues/projectsettings-slash-graphicssettings-dot-asset-changes-everytime-platform-is-changed-polluting-version-control
         excludes = set(['ProjectSettings.asset',
                         'EditorUserBuildSettings.asset',
+                        'GraphicsSettings.asset',
                         '.DS_Store'])
 
         src_files = []
@@ -299,6 +310,7 @@ class UnityBuild(object):
         message += " --script-engine " + self.build_config.script_engine
         message += " --asset-path " + self.build_config.asset_destination_path
         message += " --build-type " + self.build_config.build_type
+        message += " --build-number " + self.build_config.build_number
 
         logFilePath = os.path.expanduser('~/Library/Logs/Unity/Editor.log')
         handleUnityLog = open(logFilePath, 'r')
@@ -356,8 +368,9 @@ class UnityBuild(object):
         procArgs.extend(["--sdk", self.build_config.sdk])
         procArgs.extend(["--build-path", self.build_config.build_dir])
         procArgs.extend(["--script-engine", self.build_config.script_engine])
-        procArgs.extend(["--asset-path ", self.build_config.asset_destination_path])
-        procArgs.extend(["--build-type ", self.build_config.build_type])
+        procArgs.extend(["--asset-path", self.build_config.asset_destination_path])
+        procArgs.extend(["--build-type", self.build_config.build_type])
+        procArgs.extend(["--build-number", self.build_config.build_number])
 
         if self.build_config.script_debugging:
             procArgs.extend(["--debug"])
@@ -510,16 +523,14 @@ if __name__ == '__main__':
         print(default_project_dir)
         config.project_dir = default_project_dir
 
-    # platform-dependenct build_product
+    # platform-dependent build_product
     if not config.build_product:
-        #handle ios case
         if config.platform == 'ios':
             config.build_product = os.path.join(config.build_dir, 'Unity-iPhone.xcodeproj')
-        # handle mac/osx case
         elif config.platform == 'mac':
             config.build_product = os.path.join(config.build_dir, 'UnityPlayerOSX.app')
-        #handle android case
         elif config.platform == 'android':
+            # Note this path is not used for cozmo
             config.build_product = os.path.join(config.build_dir, 'OverDrive/libs/unity-classes.jar')
 
     if (config.platform == 'mac'):

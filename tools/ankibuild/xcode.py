@@ -8,7 +8,7 @@ import util
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-RAW_OUTPUT = False
+RAW_OUTPUT = True
 
 class XcodeWorkspace(object):
     def __init__(self, name):
@@ -118,16 +118,14 @@ def build(
     
     if not project and not workspace:
         raise ValueError('You must specify either a project or workspace to xcodebuild.')
-    
+
+    arguments = ['xcodebuild']
     if RAW_OUTPUT:
         use_xcpretty = False
-        arguments = ['xcodebuild']
     elif util.File.evaluate(['xcpretty', '--version'], ignore_result=True):
         use_xcpretty = True
-        arguments = ['xcodebuild']
     else:
         use_xcpretty = False
-        arguments = [os.path.join(REPO_ROOT, 'tools', 'xctool', 'bin', 'xctool')]
         print('NOTE: For better output, install xcpretty:')
         print('`sudo gem install xcpretty`')
     

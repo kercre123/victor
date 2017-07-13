@@ -43,6 +43,7 @@ class FileListGenerator(object):
       '*~',
       '*.swp',
       '*.orig',
+      '*.lst',
       'version.h',
     ]
 
@@ -141,6 +142,7 @@ def folderParse(s):
         folders = []
         lstFiles = []
         for item in aList:
+          print(item)
           if '.lst' in item:
             lstFiles.append(item)
           else:
@@ -165,6 +167,8 @@ def parseArgs(scriptArgs):
                       help='value to exit with if list files change')
   parser.add_argument('--sourcePair', '-s', dest="folderLists", type=folderParse, action='store', nargs='+', required=True,
                       help="pair of: list of folders, list of source files, all comma separated")
+  parser.add_argument('--exclude', '-x', dest='exclude_globs', action='append', default=[],
+                      help="file glob patterns to exclude")
   (options, args) = parser.parse_known_args(scriptArgs)
 
   projectRoot = options.projectRoot
@@ -193,7 +197,7 @@ if __name__ == '__main__':
   generator = FileListGenerator(options)
   modifications = False
   for folderList in options.folderLists:
-    if generator.processFolder(folderList[0], folderList[1]):
+    if generator.processFolder(folderList[0], folderList[1], options.exclude_globs):
       modifications = True
   
   if modifications:

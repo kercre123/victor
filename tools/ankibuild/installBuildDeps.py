@@ -48,34 +48,6 @@ class DependencyInstaller(object):
     return True
 
 
-  def installAndroidSDK(self):
-    if self.isInstalled('android'):
-      return True
-    if not self.installTool('android'):
-      return False
-    # this list should be passed in via configure
-    ANDROID_PKGS= ['tools',
-                   'platform-tools',
-                   'build-tools-19.1.0',
-                   'android-21',
-                   'android-19',
-                   'android-18',
-                   'extra-android-m2repository',
-                   'extra-android-support',
-                   'build-tools-21.1.2',
-                   'build-tools-21.1.1',
-                   'build-tools-20.0.0',
-                   'build-tools-19.0.3',
-                   'extra-google-m2repository',
-                   'extra-google-google_play_services']
-    click_yes = "(sleep 5 && while [ 1 ]; do sleep 1; echo y ; done)"
-    shellCommand = "android --silent update sdk --all --no-ui --filter %s" % ','.join(ANDROID_PKGS)
-    p = subprocess.Popen([click_yes], stdout=subprocess.PIPE, shell=True, preexec_fn=setsid, close_fds=True)
-    result = subprocess.call(shellCommand, executable="/bin/bash", stdin=p.stdout, stderr=subprocess.STDOUT, shell=True)
-    # This is critical otherwise click_yes will happen forever.
-    killpg(p.pid, signal.SIGUSR1)
-    return result == 0
-
   def installTool(self, tool):
     if not self.isInstalled(tool):
       # TODO: Add support for installing specific versions.
@@ -89,20 +61,54 @@ class DependencyInstaller(object):
         return False
     return True
 
+  def addEnvVariable(self, env_name, env_value):
+    """ Adds an Env variable to bash profile & sets it for the run of the script.
+    Args:
+        env_name: Name of environment variable(will be caste to uppercase).
+        env_value: Value of variable.
+
+    Returns: True if set.  False is the variable exists either in the environment or in bash_profile.
+
+    """
+    env_name = str.upper(env_name)
+    home = getenv("HOME")
+    if home is None:
+      print("Error: Unable to find ${HOME} directory")
+      return False
+
+    # The insurmountable problem is that a subprocess cannot change the environment of the calling process.
+    # This will set everything for this run OR for future terminals to work correctly.
+    if getenv(env_name) is None:
+      environ[env_name] = env_value
+      print("Set environment variable {} to {}".format(env_name, env_value))
+
+      bash_prof = path.join(home, '.bash_profile')
+      export_line = 'export {}={}'.format(env_name, env_value)
+      # If there is no bash profile don't' make it.
+      if path.isfile(bash_prof):
+        handle_prof = open(bash_prof, 'r')
+        check_lines = handle_prof.readlines()
+        handle_prof.close()
+        for lines in check_lines:
+          if lines.strip() == export_line.strip():
+            #Variable already set but doesn't exist in env. This implies that it's been added by this process.
+            print("Warning: You should open a new terminal now that bash_profile has been modified.")
+            return False
+
+        with open(bash_prof, 'a+') as file:
+          file.write('\n' + export_line)
+        if file.closed is True:
+          # bash is not optional for this subprocess call.
+          if subprocess.call(['source', bash_prof], executable="/bin/bash") != 0:
+            print "Warning: Unable to source {}".format(bash_prof)
+
+    return True
 
   def install(self):
     homebrew_deps = self.options.deps
-    if 'android-sdk' in homebrew_deps:
-      homebrew_deps.remove('android-sdk')
-      sdk_installed = self.installAndroidSDK()
-      if not sdk_installed:
-        return False
 
     if not self.getHomebrew():
       return False
-
-    if 'buck' in homebrew_deps:
-      subprocess.call(['brew', 'tap', 'facebook/fb'])
 
     for tool in homebrew_deps:
       if not self.installTool(tool):
