@@ -228,6 +228,7 @@ UnityDASDll/UnityDASDll/bin/*
 # Anki specific
 EXTERNALS
 TAGS
+.subtreeconfig
 
 #symlinks
 resources/config/basestation/firmware

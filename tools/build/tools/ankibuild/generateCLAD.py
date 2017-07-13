@@ -118,18 +118,41 @@ DefaultImporter:
                                                    })
             util.File.update_if_changed(meta_file_path, meta_file_path_tmp)
 
+def generateMessageBuffersCPP(src_dir, dest_dir, clad_emitter_dir=None, verbose=False):
+  print '[CLAD] Generating C++ Sources...'
+  stdout = subprocess.PIPE
+  make_width = 6
+  rel_dest_dir = os.path.relpath(dest_dir, src_dir)
+  if verbose:
+    print "src -> {0}".format(src_dir)
+    print "dst -> {0}".format(dest_dir)
+    print "rel -> {0}".format(rel_dest_dir)
+    stdout = None
+    make_width = 1
+
+  make_vars = {}
+  make_vars["OUTPUT_DIR"] = rel_dest_dir 
+
+  if clad_emitter_dir:
+    make_vars["CLAD_EMITTER_DIR"] = clad_emitter_dir
+
+  make_params = ['make',
+                   '-j', '6',
+                   '-C', src_dir]
+
+  for k,v in make_vars.iteritems():
+    var_def = "%s=%s" % (k,v)
+    make_params.append(var_def)
+
+  make_params.append('cpp')
+
+  result = subprocess.call(make_params, stdout=stdout)
+  return result
 
 if __name__ == '__main__':
-    import sys
-    #ankibuild
-    import util
-    from unity import UnityBuildConfig
+  projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+  result = generateMessageBuffers(os.path.join(projectRoot, 'source', 'anki', 'clad'), os.path.join(projectRoot, 'source', 'generated'))
+  if result != 0:
+    print "Failed to generate message-buffer sources"
+    exit(1)
 
-    repo_root = util.Git.repo_root()
-    basestation_dir = util.Module.get_path('basestation')
-    unity_dir = UnityBuildConfig.find_unity_project(repo_root)
-    result = generateMessageBuffers(basestation_dir, unity_dir, verbose=False)
-                                    
-    if not result:
-        sys.exit(1)
-    
