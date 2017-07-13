@@ -61,6 +61,7 @@ fi
 _TOPLEVEL=`$GIT rev-parse --show-toplevel`
 _SMARTLING_PULL_SCRIPT=${_TOPLEVEL}/tools/smartling/smartling-pull.sh
 _GENERATE_SDF_SCRIPT=${_TOPLEVEL}/tools/smartling/generateSDFfromTranslations.py
+_STRIP_ZERO_WIDTH_SPACES_SCRIPT=${_TOPLEVEL}/tools/smartling/strip-zero-width-spaces.py
 _UNITY_PROJECT_DIR=${_TOPLEVEL}/unity/Cozmo/
 _TRANSLATED_ASSETS_DIR=Assets/StreamingAssets/LocalizedStrings/ja-JP
 _TRANSALATED_OUTPUT_FILE=Assets/DevTools/Editor/LanguageHelpers/japaneseTranslations.txt
@@ -70,14 +71,17 @@ _GIT_COZMO_PR_URI=https://$ANKI_SMARTLING_ACCESS_TOKEN:x-oauth-basic@api.github.
 
 exit_status=0
 $_SMARTLING_PULL_SCRIPT -t published $_LOCALIZED_STRINGS_DIR || exit_status=$?
-
 if [ $exit_status -ne 0 ]; then
     send_slack_message "There was a problem downloading *.json from Smartling. Check build log!" "danger" $exit_status
 fi
 
+$PYTHON $_STRIP_ZERO_WIDTH_SPACES_SCRIPT --localized-strings-dir $_LOCALIZED_STRINGS_DIR || exit_status=$?
+if [ $exit_status -ne 0 ]; then
+    send_slack_message "There was a problem stripping zero width spaces. Check build log!" "danger" $exit_status
+fi
+
 $PYTHON $_GENERATE_SDF_SCRIPT --project-dir $_UNITY_PROJECT_DIR --translated-json-asset-dir $_TRANSLATED_ASSETS_DIR \
 --txt-output-asset-path $_TRANSALATED_OUTPUT_FILE || exit_status=$?
-
 if [ $exit_status -ne 0 ]; then
     send_slack_message_no_exit "There was a problem generating JP SDF from translations. Check build log!" "danger"
 fi
