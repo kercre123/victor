@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   VideoSubtitles:
   - _LocalizationKey: 
-    _DurationSeconds: 3.8
+    _DurationSeconds: 0.3
   - _LocalizationKey: videoSubtitles.speedTap.first
     _DurationSeconds: 3.4
   - _LocalizationKey: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   VideoSubtitles:
   - _LocalizationKey: 
-    _DurationSeconds: 4
+    _DurationSeconds: 0.5
   - _LocalizationKey: videoSubtitles.cubePounce.first
     _DurationSeconds: 2.4
   - _LocalizationKey: 
