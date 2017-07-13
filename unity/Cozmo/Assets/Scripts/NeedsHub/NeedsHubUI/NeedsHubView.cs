@@ -189,10 +189,21 @@ namespace Cozmo.Needs.UI {
     }
 
     private void EnableButtonsBasedOnBrackets(NeedBracketId repairBracket, NeedBracketId energyBracket) {
-      if (repairBracket == NeedBracketId.Critical || energyBracket == NeedBracketId.Critical) {
+      // Onboarding overrides this stuff.
+      if (OnboardingManager.Instance.IsOnboardingOverridingNavButtons()) {
+        return;
+      }
+      // Sparks button is labelled play.
+      if (repairBracket == NeedBracketId.Critical) {
+        _FeedButton.Interactable = false;
+        _SparksButton.Interactable = false;
+      }
+      else if (energyBracket == NeedBracketId.Critical) {
+        _FeedButton.Interactable = true;
         _SparksButton.Interactable = false;
       }
       else {
+        _FeedButton.Interactable = true;
         _SparksButton.Interactable = true;
       }
     }

@@ -386,6 +386,19 @@ public class OnboardingManager : MonoBehaviour {
            !IsOnboardingRequired(OnboardingPhases.PlayIntro);
   }
 
+  public bool IsOnboardingOverridingNavButtons() {
+    if (_CurrStageInst != null) {
+      OnboardingBaseStage onboardingInfo = _CurrStageInst.GetComponent<OnboardingBaseStage>();
+      if (onboardingInfo != null) {
+        bool isFeedSpecial = (onboardingInfo.ButtonStateFeed != OnboardingBaseStage.OnboardingButtonStates.Active);
+        bool isPlaySpecial = (onboardingInfo.ButtonStatePlay != OnboardingBaseStage.OnboardingButtonStates.Active);
+        bool isRepairSpecial = (onboardingInfo.ButtonStateRepair != OnboardingBaseStage.OnboardingButtonStates.Active);
+        return isFeedSpecial || isPlaySpecial || isRepairSpecial;
+      }
+    }
+    return false;
+  }
+
   private void SetSpecificStage(int nextStage, bool canStartNewPhase = true) {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
