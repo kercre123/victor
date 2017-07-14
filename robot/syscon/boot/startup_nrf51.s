@@ -36,7 +36,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler
                 DCD     NMI_Handler
                 DCD     HardFault_Handler
-                DCD     5                         ; Syscon version - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2
+                DCD     6                         ; Syscon version - 0 = pre-Pilot, 1 = Pilot, 3 = "First 1000" Prod, 4 = Full Prod, 5 = 1.5 EP2, 6 = 1.5c (new gearbox ratio)
                 DCD     0                         ; Body ESN
                 DCD     0xFFFFFFFF                ; Current Color[0]
                 DCD     0xFFFFFFFF                ; Current Color[1]
