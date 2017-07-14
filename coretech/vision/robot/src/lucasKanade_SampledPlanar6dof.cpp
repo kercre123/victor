@@ -23,6 +23,8 @@ non-disclosure agreement with Anki, inc.
 #include "anki/vision/robot/transformations.h"
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 
+#include <array>
+
 //#define SEND_BINARY_IMAGES_TO_MATLAB
 
 #define USE_OPENCV_ITERATIVE_POSE_INIT 1
@@ -215,6 +217,7 @@ namespace Anki
         const f32 focalLength_y,
         const f32 camCenter_x,
         const f32 camCenter_y,
+        const std::vector<f32>& distortionCoeffs,
         const Point<f32>& templateSize_mm,
         MemoryStack ccmMemory,
         MemoryStack &onchipScratch,
@@ -279,7 +282,7 @@ namespace Anki
           calibMatrix[1][0] = 0.f;           calibMatrix[1][1] = focalLength_y; calibMatrix[1][2] = camCenter_y;
           calibMatrix[2][0] = 0.f;           calibMatrix[2][1] = 0.f;           calibMatrix[2][2] = 1.f;
 
-          cv::Mat distortionCoeffs; // TODO: currently empty, use radial distoration?
+          cv::Mat_<f32> cvDistortionCoeffs(1, (s32)distortionCoeffs.size(), const_cast<f32*>(distortionCoeffs.data()));
           cv::Mat_<f32> calibMatrix_cvMat(3,3);
           //calibMatrix.ArrayToCvMat(&calibMatrix_cvMat);
           for(s32 i=0; i<3; ++i) {
@@ -289,7 +292,7 @@ namespace Anki
           }
 
           cv::solvePnP(cvObjPoints, cvImagePoints,
-            calibMatrix_cvMat, distortionCoeffs,
+            calibMatrix_cvMat, cvDistortionCoeffs,
             cvRvec, cvTranslation,
             false, CV_ITERATIVE);
 
