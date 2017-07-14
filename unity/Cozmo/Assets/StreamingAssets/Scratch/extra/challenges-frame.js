@@ -30,7 +30,7 @@ window.Challenges = (function(){
     window.Unity.call('{"requestId": "-1", "command": "cozmoGetChallengeBookmark","argString": "window.callback_openToSlideNum"}');
 
     // FOR DEV ONLY - DO NOT TURN ON IN COMMIT
-    //window.callback_openToSlideNum(6);
+    // window.callback_openToSlideNum(6);
   }
 
   /**
@@ -54,7 +54,8 @@ window.Challenges = (function(){
   function openToSlideNum(number) {
     // put a hash fragement itentifier on the URL to tell the
     //  challenges which page to start with
-    var iframeUrl = 'extra/challenges.html#' + (number || 1);
+    var locale = window.getUrlVars()['locale'];
+    var iframeUrl = 'extra/challenges.html?locale=' + locale + '#' + (number || 1);
 
     _container.style.display = 'block';
     _iframe.setAttribute('src', iframeUrl);

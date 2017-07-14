@@ -88,7 +88,7 @@
     var url = elem.getAttribute('href');
     setTimeout(function(){
       // navigate to anchor tag's url after sound finishes
-      window.location.href = url;
+      window.location.href = url + '?locale=' + LOCALE;
     }, 50);
   }
 

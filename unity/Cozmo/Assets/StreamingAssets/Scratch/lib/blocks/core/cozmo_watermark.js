@@ -74,7 +74,8 @@ Blockly.CozmoWatermark.prototype.createDom = function() {
 
   var watermarkFilePath = "./images/ui/";
   var watermarkFileName = "code_lab_watermark.svg";
-  if (window.locale == "ja-JP") {
+  var cozmoLocale = window.getUrlVars()['locale'];
+  if (cozmoLocale == "ja-JP") {
     watermarkFileName =  "code_lab_watermark_JP.svg"
   }
 
