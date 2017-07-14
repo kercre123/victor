@@ -969,7 +969,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     BlockWorldFilter filter;
   
     ConnectedObjectStates objectStates;
-    filter.SetFilterFcn([this,&objectStates](const ObservableObject* obj)
+    filter.SetFilterFcn([&objectStates](const ObservableObject* obj)
                         {
                           ConnectedObjectState objectState(obj->GetID(),
                                                   obj->GetFamily(),
@@ -1238,7 +1238,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
     filterOld.AddAllowedOrigin(newOrigin);
     
-    ModifierFcn addToPoseConfirmer = [this,&newOrigin](ObservableObject* object){
+    ModifierFcn addToPoseConfirmer = [this](ObservableObject* object){
       _robot->GetObjectPoseConfirmer().AddInExistingPose(object);
     };
     
@@ -2701,7 +2701,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
       BlockWorldFilter matchingIDInAnyOrigin;
       matchingIDInAnyOrigin.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
       matchingIDInAnyOrigin.SetAllowedIDs({removedObjectID});
-      ModifierFcn clearActiveID = [this](ObservableObject* object) {
+      ModifierFcn clearActiveID = [](ObservableObject* object) {
         object->SetActiveID(ObservableObject::InvalidActiveID);
         object->SetFactoryID(ObservableObject::InvalidFactoryID); // should not be needed. Should we keep it?
       };
@@ -4621,7 +4621,7 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
   {
     // Filter out anything that can't be used for localization 
     BlockWorldFilter filter;
-    filter.SetFilterFcn([origin](const ObservableObject* obj) {
+    filter.SetFilterFcn([](const ObservableObject* obj) {
       return obj->CanBeUsedForLocalization();
     });
     

@@ -1331,9 +1331,9 @@ namespace Anki {
         if(driveToAction != nullptr)
         {
           driveToAction->SetGetPossiblePosesFunc(
-            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object,
-                                                                     std::vector<Pose3d>& possiblePoses,
-                                                                     bool& alreadyInPosition)
+            [&robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object,
+                                                               std::vector<Pose3d>& possiblePoses,
+                                                               bool& alreadyInPosition)
             {
               return PlaceRelObjectAction::ComputePlaceRelObjectOffsetPoses(object,
                                                                             placementOffsetX_mm,
