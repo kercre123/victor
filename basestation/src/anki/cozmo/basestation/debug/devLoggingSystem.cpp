@@ -46,6 +46,7 @@ const std::string DevLoggingSystem::kRobotToEngineName = "robotToEngine";
 const std::string DevLoggingSystem::kEngineToRobogName = "engineToRobot";
 const std::string DevLoggingSystem::kEngineToVizName = "engineToViz";
 const std::string DevLoggingSystem::kAppRunExtension = ".apprun";
+const std::string DevLoggingSystem::kWavFileExtension = ".wav";
 const std::string DevLoggingSystem::kAppRunKey = "apprun";
 const std::string DevLoggingSystem::kDeviceIdKey = "deviceID";
 const std::string DevLoggingSystem::kTimeSinceEpochKey = "timeSinceEpoch";
@@ -154,7 +155,7 @@ void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, cons
 
 void DevLoggingSystem::ArchiveOneDirectory(const std::string& baseDirectory)
 {
-  auto filePaths = Util::FileUtils::FilesInDirectory(baseDirectory, true, {Util::RollingFileLogger::kDefaultFileExtension, kAppRunExtension.c_str()}, true);
+  auto filePaths = Util::FileUtils::FilesInDirectory(baseDirectory, true, {Util::RollingFileLogger::kDefaultFileExtension, kAppRunExtension.c_str(), kWavFileExtension.c_str()}, true);
   ArchiveUtil::CreateArchiveFromFiles(baseDirectory + kArchiveExtensionString, baseDirectory, filePaths);
 }
 
