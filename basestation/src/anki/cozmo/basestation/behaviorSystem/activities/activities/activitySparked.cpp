@@ -295,7 +295,6 @@ void ActivitySparked::ResetLightsAndAnimations(Robot& robot)
   if(_idleAnimationsSet){
     // Revert to driving anims
     robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetIDStr());
-    SmartRemoveIdleAnimation(robot);
     robot.GetBodyLightComponent().StopLoopingBackpackLights(_bodyLightDataLocator);
     _idleAnimationsSet = false;
   }
