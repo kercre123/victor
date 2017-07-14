@@ -193,11 +193,6 @@ void FeedingCubeController::ReInitializeController(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FeedingCubeController::ClearController(Robot& robot)
 {
-  // Re-set music
-  if(_cubeStateTracker->_currentChargeLevel > 0){
-    UpdateChargeAudioRound(robot, ChargeStateChange::Charge_Stop);
-  }
-  
   // Re-set lights
   _cubeStateTracker->_desiredAnimationTrigger = CubeAnimationTrigger::Count;
   SetCubeLights(robot);

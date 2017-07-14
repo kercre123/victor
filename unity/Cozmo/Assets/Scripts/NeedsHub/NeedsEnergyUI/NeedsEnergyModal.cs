@@ -117,6 +117,9 @@ namespace Cozmo.Energy.UI {
     protected override void RaiseDialogClosed() {
       base.RaiseDialogClosed();
 
+      // Ensure all cube feeding sound FX stop
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Cube_Feeding_Loop_Stop);
+
       if (_LastNeedBracket != NeedBracketId.Count) {
         AnimateElements(fullElements: _LastNeedBracket == NeedBracketId.Full, hide: true);
       }
