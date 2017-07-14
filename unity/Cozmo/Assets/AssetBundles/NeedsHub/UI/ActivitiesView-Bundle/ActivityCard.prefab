@@ -509,9 +509,20 @@ MonoBehaviour:
   TextPressedColor: {r: 0.8980392, g: 0.9843137, b: 0.99215686, a: 1}
   TextDisabledColor: {r: 0.3254902, g: 0.36862746, b: 0.38431373, a: 1}
   _AlphaController: {fileID: 0}
-  ButtonGraphics: []
+  ButtonGraphics:
+  - targetImage: {fileID: 114269123884623070}
+    pressedSprite: {fileID: 0}
+    pressedColor: {r: 0.8000001, g: 0.8000001, b: 0.8000001, a: 1}
+    disabledSprite: {fileID: 0}
+    disabledColor: {r: 0.8000001, g: 0.8000001, b: 0.8000001, a: 1}
+  - targetImage: {fileID: 114836825603389336}
+    pressedSprite: {fileID: 0}
+    pressedColor: {r: 0.8000001, g: 0.8000001, b: 0.8000001, a: 1}
+    disabledSprite: {fileID: 0}
+    disabledColor: {r: 0.8000001, g: 0.8000001, b: 0.8000001, a: 1}
   _OverrideButtonImageArray: 0
   _GlintAnimator: {fileID: 0}
+  _AlwaysShowGlintWhenEnabled: 0
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
@@ -787,7 +798,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Frame_Card_Edging
+  _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114629324492242840
@@ -1095,7 +1106,7 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
-  _LinkedComponentId: Frame_Card_Background
+  _LinkedComponentId: 
   _OverrideSkinColor: 0
   _OverrideSkinImage: 0
 --- !u!114 &114915213627081488

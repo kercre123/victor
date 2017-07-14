@@ -463,7 +463,7 @@ namespace Cozmo.UI {
     }
 
     private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
-      graphic.targetImage.sprite = desiredSprite ?? graphic.enabledSprite;
+      graphic.targetImage.sprite = (desiredSprite != null) ? desiredSprite : graphic.enabledSprite;
       graphic.targetImage.color = desiredColor;
     }
 

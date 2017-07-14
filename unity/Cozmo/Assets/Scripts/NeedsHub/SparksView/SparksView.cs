@@ -149,6 +149,7 @@ namespace Cozmo.Needs.Sparks.UI {
         // Prevent the player from doing other things
         _IsDisablingTouches = true;
         UIManager.DisableTouchEvents(_DisableTouchKey);
+        ContextManager.Instance.ShowForeground();
 
         // Make sure that we re-enable touches in case something goes wrong with robot comms
         Invoke("ReenableTouches", _ReenableTouchTimeout_s);
@@ -164,6 +165,7 @@ namespace Cozmo.Needs.Sparks.UI {
       if (_IsDisablingTouches) {
         _IsDisablingTouches = false;
         UIManager.EnableTouchEvents(_DisableTouchKey);
+        ContextManager.Instance.HideForeground();
       }
     }
 

@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Name: UIDefaultTransitionSettings
   m_EditorClassIdentifier: 
   _ContextFlashColor: {r: 0, g: 1, b: 0, a: 1}
-  _ContextDimColor: {r: 0, g: 0.14901961, b: 0.28235295, a: 1}
-  _ContextDimAlpha: 0.7
+  _ContextDimColor: {r: 0.16176468, g: 0.16176468, b: 0.16176468, a: 0.8627451}
   _ContextFlashDuration: 0.5
   _StartTimeStagger_sec: 0.1
   _FadeInTransitionDuration_sec: 0.4

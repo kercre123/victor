@@ -191,6 +191,12 @@ namespace Cozmo.Needs.UI {
       if (OnboardingManager.Instance.IsOnboardingOverridingNavButtons()) {
         return;
       }
+
+      // Always enable the buttons in mock mode
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        return;
+      }
+
       // Sparks button is labelled play.
       if (repairBracket == NeedBracketId.Critical) {
         _FeedButton.Interactable = false;
