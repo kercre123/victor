@@ -397,6 +397,14 @@ message ShutdownRobot
   uint_32 reserved[8]
 }
 
+// TODO: Make animation files referencable by integer tag so we don't have to send a string.
+
+message PlayAnim
+{
+  uint_32 tag,
+  uint_8 animName[64]
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -518,10 +526,10 @@ union EngineToRobot
   GenerateTestTone              generateTestTone            = 0x65,
   EnableColorImages             enableColorImages           = 0x66,
 
-  // 0x80 to 0xAF: To WiFi
+  // 0x80 to 0xAF: To WiFi in V1. To Anim Process in V2
   RequestCrashReports           requestCrashReports         = 0x80,
   NVStorage::NVCommand          commandNV                   = 0x81,
-  //          FREE SLOT!!!                                  = 0x82,
+  PlayAnim                      playAnim                    = 0x82,   // V2
   //          FREE SLOT!!!                                  = 0x83,
   //          FREE SLOT!!!                                  = 0x84,
   //          FREE SLOT!!!                                  = 0x85,

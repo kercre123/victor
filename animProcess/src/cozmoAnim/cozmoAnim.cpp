@@ -111,7 +111,7 @@ Result CozmoAnimEngine::Init(const Json::Value& config) {
 
   _context->GetDataLoader()->LoadNonConfigData();
     
-  Messages::Init();
+  Messages::Init(_animationStreamer.get());
   
   
   Result lastResult = InitInternal();

@@ -11,8 +11,9 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "engineMessages.h"
+#include "cozmoAnim/engineMessages.h"
 
+#include "cozmoAnim/animation/animationStreamer.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -48,6 +49,8 @@ namespace Anki {
         
         const int MAX_PACKET_BUFFER_SIZE = 2048;
         u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
+        
+        AnimationStreamer* _animStreamer = nullptr;
         
       } // private namespace
 
@@ -88,14 +91,14 @@ namespace Anki {
       
 // #pragma mark --- Messages Method Implementations ---
 
-      Result Init()
+      Result Init(AnimationStreamer* animStreamer)
       {
         // Setup engine comms
         InitRadio();
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
 
-        
+        _animStreamer = animStreamer;
         
         return RESULT_OK;
       }
@@ -106,6 +109,8 @@ namespace Anki {
         
         switch(msg.tag)
         {
+          // TODO: If this switch block becomes huge, we can auto-generate it with an emitter.
+          //       Most messages will be ignored though so it probably shouldn't be necessary.
           //#include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
             
           case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableAnimTracks:
@@ -113,6 +118,15 @@ namespace Anki {
             // Do something
             // ...
             
+            break;
+          }
+            
+          case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_playAnim:
+          {
+            std::string animName((char*)msg.playAnim.animName);
+            PRINT_NAMED_INFO("EngineMesssages.ProcessMessage.PlayAnim", "%s", animName.c_str());
+            _animStreamer->SetStreamingAnimation(animName);
+
             break;
           }
 

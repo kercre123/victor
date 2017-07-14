@@ -24,13 +24,17 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+// Forward declarations
+class AnimationStreamer;
+  
 namespace Messages {
 
   // Create all the dispatch function prototypes (all implemented
   // manually in messages.cpp).
   //#include "clad/robotInterface/messageEngineToRobot_declarations.def"
 
-  Result Init();
+  Result Init(AnimationStreamer* animStreamer);
 
   void Update();
 

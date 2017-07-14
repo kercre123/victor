@@ -900,6 +900,10 @@ namespace Anki {
       {
         AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
       }
+      void Process_playAnim(RobotInterface::PlayAnim const& msg)
+      {
+        // Nothing to do here
+      }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here
