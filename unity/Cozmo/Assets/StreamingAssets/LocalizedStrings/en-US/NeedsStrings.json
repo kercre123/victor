@@ -113,5 +113,47 @@
   },
   "needs.RewardsDialog.SongUnlocked": {
     "translation": "You've unlocked {0}!"
+  },
+  "needs.FreeplaySparksReward.CozmoSings": {
+    "translation": "Cozmo just generated {0} Sparks by singing a song!"
+  },
+  "needs.FreeplaySparksReward.FistBump": {
+    "translation": "Cozmo just generated {0} Sparks by doing a fist bump!"
+  },
+  "needs.FreeplaySparksReward.GatherCubes": {
+    "translation": "Cozmo just generated {0} Sparks by gathering his cubes!"
+  },
+  "needs.FreeplaySparksReward.HiccupsEndBad": {
+    "translation": "Cozmo just generated {0} Sparks by curing his hiccups!"
+  },
+  "needs.FreeplaySparksReward.HiccupsEndGood": {
+    "translation": "Cozmo just generated {0} Sparks by curing his hiccups!"
+  },
+  "needs.FreeplaySparksReward.KnockDownCubes": {
+    "translation": "Cozmo just generated {0} Sparks by knocking down cubes!"
+  },
+  "needs.FreeplaySparksReward.PeekAboo": {
+    "translation": "Cozmo just generated {0} Sparks by playing Peek A Boo!"
+  },
+  "needs.FreeplaySparksReward.PickUpCube": {
+    "translation": "Cozmo just generated {0} Sparks by picking up a cube!"
+  },
+  "needs.FreeplaySparksReward.PopAWheelie": {
+    "translation": "Cozmo just generated {0} Sparks by popping a wheelie!"
+  },
+  "needs.FreeplaySparksReward.Pounce": {
+    "translation": "Cozmo just generated {0} Sparks by pouncing!"
+  },
+  "needs.FreeplaySparksReward.PyramidCompleted": {
+    "translation": "Cozmo just generated {0} Sparks by building a pyramid!"
+  },
+  "needs.FreeplaySparksReward.RollACube": {
+    "translation": "Cozmo just generated {0} Sparks by rolling a cube!"
+  },
+  "needs.FreeplaySparksReward.StackCube": {
+    "translation": "Cozmo just generated {0} Sparks by stacking cubes!"
+  },
+  "needs.FreeplaySparksReward.Workout": {
+    "translation": "Cozmo just generated {0} Sparks by performing a workout!"
   }
 }

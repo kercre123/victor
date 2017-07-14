@@ -49,14 +49,14 @@ public class BehaviorDisplay : MonoBehaviour {
     _BehaviorDefaultColor = UIColorPalette.FreeplayBehaviorDefaultColor;
     _BehaviorRewardColor = UIColorPalette.FreeplayBehaviorRewardColor;
     SetOverrideString(null);
-    RewardedActionManager.Instance.OnFreeplayRewardEvent += HandleFreeplayRewardedAction;
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FreeplaySparksAwarded>(HandleFreeplaySparksGiven);
 
     OnboardingManager.Instance.OnOverrideTickerString += HandleOnboardingStringOverride;
   }
 
   private void OnDestroy() {
     CleanupTween();
-    RewardedActionManager.Instance.OnFreeplayRewardEvent -= HandleFreeplayRewardedAction;
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FreeplaySparksAwarded>(HandleFreeplaySparksGiven);
     OnboardingManager.Instance.OnOverrideTickerString -= HandleOnboardingStringOverride;
   }
   private void CleanupTween() {
@@ -151,9 +151,9 @@ public class BehaviorDisplay : MonoBehaviour {
     SetOverrideString(str);
   }
 
-  private void HandleFreeplayRewardedAction(RewardedActionData reward) {
-    string rewardDesc = Localization.Get(reward.Reward.DescriptionKey);
-    string toShow = Localization.GetWithArgs(LocalizationKeys.kRewardFreeplayBehaviorDisplay, reward.Reward.Amount, rewardDesc);
+  private void HandleFreeplaySparksGiven(Anki.Cozmo.ExternalInterface.FreeplaySparksAwarded msg) {
+    string baseString = Localization.Get(msg.sparksAwardedDisplayKey);
+    string toShow = Localization.GetWithArgs(baseString, msg.sparksAwarded);
     _RewardedActionTimeStamp = Time.time;
     SetOverrideString(toShow);
   }

@@ -3584,7 +3584,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _BehaviorLabel: {fileID: 114353393468463264}
   _MinTimeInStateBeforeChange_Sec: 0.5
-  _MinTimeShowingRewardBeforeChange_Sec: 2.5
+  _MinTimeShowingRewardBeforeChange_Sec: 6
   _FadeTime_Sec: 0.3
   _ConnectedIcon: {fileID: 1670202095257410}
   _DisconnectedIcon: {fileID: 1619366080315200}

@@ -57,6 +57,9 @@ static const std::string kNumStarsAwardedKey = "NumStarsAwarded";
 static const std::string kNumStarsForNextUnlockKey = "NumStarsForNextUnlock";
 static const std::string kTimeLastStarAwardedKey = "TimeLastStarAwarded";
 
+// This key is used as the base of the string for when sparks are sometimes rewarded
+// for freeplay activities, that tells how many sparks were awarded and what Cozmo
+// was doing (we append the NeedsActionId enum string to the end of this string)
 static const std::string kFreeplaySparksRewardStringKey = "needs.FreeplaySparksReward";
 
 static const float kNeedLevelStorageMultiplier = 100000.0f;
@@ -695,7 +698,7 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
 
   SendNeedsStateToGame(actionCompleted);
 
-  bool starAwarded = UpdateStarsState();
+  const bool starAwarded = UpdateStarsState();
 
   // If no daily star was awarded, possibly award sparks for freeplay activities
   if (!starAwarded)
@@ -706,14 +709,11 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
       {
         const int sparksAwarded = RewardSparksForFreeplay();
 
-        // Tell game that sparks were awarded, and how many, and the new total
-        auto& ic = _robot->GetInventoryComponent();
-        const int sparksTotal = ic.GetInventoryAmount(InventoryType::Sparks);
+        // Tell game that sparks were awarded, and how many, and what cozmo was doing
         ExternalInterface::FreeplaySparksAwarded msg;
         msg.sparksAwarded = sparksAwarded;
-        msg.sparksTotal = sparksTotal;
-        msg.needsActionId = actionCompleted;
-        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey;
+        msg.sparksAwardedDisplayKey = kFreeplaySparksRewardStringKey + "." +
+                                      NeedsActionIdToString(actionCompleted);
         const auto& extInt = _cozmoContext->GetExternalInterface();
         extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }

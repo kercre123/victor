@@ -55,7 +55,6 @@ enum int_32 NeedsActionId
   Feed,
 
   // Other actions (this will be a big and ever-growing list)
-  Play, // Generic prototypes
   KeepAwayWin,
   KeepAwayLose,
   MemoryMatchWin,
