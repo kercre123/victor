@@ -15,7 +15,6 @@ enum uint_8 WantsToRunStrategyType {
   ExpressNeedsTransition,
   Generic,
   InNeedsBracket,
-  NoPreDockPoses,
   PlacedOnCharger,
   RobotPlacedOnSlope,
   RobotShaken
