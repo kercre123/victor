@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackFaceAction.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -37,8 +38,9 @@ CONSOLE_VAR(f32, kMinDriveToFaceDistance_mm, "BehaviorDriveToFace", 200.0f);
 // tuned based off some testing to attempt the right feeling of "approaching" the face
 const float kArbitraryDecelFactor = 3.0f;
 }
-   
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveToFace::BehaviorDriveToFace(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _currentState(State::TurnTowardsFace)
@@ -46,23 +48,13 @@ BehaviorDriveToFace::BehaviorDriveToFace(Robot& robot, const Json::Value& config
 {
   
 }
- 
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveToFace::IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const
 {
-  Pose3d facePose;
   const Robot& robot = preReqData.GetRobot();
-  robot.GetFaceWorld().GetLastObservedFace(facePose, true);
-  const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
-  
-  return lastFaceInCurrentOrigin;
-}
 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorDriveToFace::InitInternal(Robot& robot)
-{
   Pose3d facePose;
   const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
   const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
@@ -75,6 +67,31 @@ Result BehaviorDriveToFace::InitInternal(Robot& robot)
     }
   }
   
+  return _targetFace.IsValid();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDriveToFace::IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const
+{
+  
+  auto desiredTargets = preReqData.GetDesiredTargets();
+  const Robot& robot = preReqData.GetRobot();
+  if(ANKI_VERIFY(desiredTargets.size() == 1,
+                 "BehaviorDriveToFace.IsRunnableInternal.IncorrectTagets",
+                 "Recieved pre req with %zu targets",
+                 desiredTargets.size())){
+    _targetFace = robot.GetFaceWorld().GetSmartFaceID(*desiredTargets.begin());
+    return _targetFace.IsValid();
+  }
+
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorDriveToFace::InitInternal(Robot& robot)
+{
   if(_targetFace.IsValid()){
     TransitionToTurningTowardsFace(robot);
     return Result::RESULT_OK;
@@ -99,7 +116,14 @@ IBehavior::Status BehaviorDriveToFace::UpdateInternal(Robot& robot)
   return base::UpdateInternal(robot);
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::StopInternal(Robot& robot)
+{
+  _targetFace.Reset();
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::TransitionToTurningTowardsFace(Robot& robot)
 {
@@ -109,12 +133,15 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace(Robot& robot)
     CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential(robot);
     turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(robot, _targetFace));
     turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(robot, facePtr->GetID()));
-
     
     StartActing(new TurnTowardsFaceAction(robot, _targetFace),
-                [this, &robot](ActionResult result){
+                [this, &robot, &facePtr](ActionResult result){
                   if(result == ActionResult::SUCCESS){
-                    TransitionToDrivingToFace(robot);
+                    if(IsCozmoAlreadyCloseEnoughToFace(robot, facePtr->GetID())){
+                      TransitionToAlreadyCloseEnough(robot);
+                    }else{
+                      TransitionToDrivingToFace(robot);
+                    }
                   }
                 });
   }
@@ -125,31 +152,25 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace(Robot& robot)
 void BehaviorDriveToFace::TransitionToDrivingToFace(Robot& robot)
 {
   SET_STATE(DriveToFace);
-  // Get the distance between the robot and the head's pose on the X/Y plane
+  float distToHead;
   const Vision::TrackedFace* facePtr = robot.GetFaceWorld().GetFace(_targetFace);
-  if(facePtr != nullptr){
-    Pose3d headPoseModified = facePtr->GetHeadPose();
-    headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
-                                     headPoseModified.GetTranslation().y(),
-                                     robot.GetPose().GetTranslation().z()});
-    f32 distToHead;
-    if(ComputeDistanceBetween(headPoseModified, robot.GetPose(), distToHead) &&
-       distToHead > kMinDriveToFaceDistance_mm){
-      
-      DriveStraightAction* driveAction = new DriveStraightAction(robot,
-                                                                 distToHead - kMinDriveToFaceDistance_mm,
-                                                                 MAX_WHEEL_SPEED_MMPS);
-      driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
-      StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
-    }else{
-      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_AlreadyHere),
-                  &BehaviorDriveToFace::TransitionToTrackingFace);
-    }
-  }else{
-    PRINT_CH_INFO("BehaviorDriveToFace.TransitionToDrivingToFace.NullFace",
-                  "Target face appears to have disappeared",
-                  "Face ID: %s", _targetFace.GetDebugStr().c_str());
+  if(facePtr != nullptr &&
+     CalculateDistanceToFace(robot, facePtr->GetID(), distToHead)){
+    DriveStraightAction* driveAction = new DriveStraightAction(robot,
+                                                               distToHead - kMinDriveToFaceDistance_mm,
+                                                               MAX_WHEEL_SPEED_MMPS);
+    driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
+    StartActing(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
   }
+}
+
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::TransitionToAlreadyCloseEnough(Robot& robot)
+{
+  SET_STATE(AlreadyCloseEnough);
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ComeHere_AlreadyHere),
+              &BehaviorDriveToFace::TransitionToTrackingFace);
 }
 
 
@@ -166,14 +187,46 @@ void BehaviorDriveToFace::TransitionToTrackingFace(Robot& robot)
     StartActing(new TrackFaceAction(robot, faceID));
   }
 }
-  
-  
+
+
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::SetState_internal(State state, const std::string& stateName)
 {
   _currentState = state;
   SetDebugStateName(stateName);
 }
+
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDriveToFace::IsCozmoAlreadyCloseEnoughToFace(Robot& robot, Vision::FaceID_t faceID)
+{
+  float distToHead;
+  if(CalculateDistanceToFace(robot, faceID, distToHead)){
+    return distToHead <= kMinDriveToFaceDistance_mm;
+  }
+  
+  return false;
+}
+
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDriveToFace::CalculateDistanceToFace(Robot& robot, Vision::FaceID_t faceID, float& distance)
+{
+  // Get the distance between the robot and the head's pose on the X/Y plane
+  const Vision::TrackedFace* facePtr = robot.GetFaceWorld().GetFace(_targetFace);
+  if(facePtr != nullptr){
+    Pose3d headPoseModified = facePtr->GetHeadPose();
+    headPoseModified.SetTranslation({headPoseModified.GetTranslation().x(),
+      headPoseModified.GetTranslation().y(),
+      robot.GetPose().GetTranslation().z()});
+    return ComputeDistanceBetween(headPoseModified, robot.GetPose(), distance);
+  }
+  
+  return false;
+}
+
+  
+
   
 }
 }

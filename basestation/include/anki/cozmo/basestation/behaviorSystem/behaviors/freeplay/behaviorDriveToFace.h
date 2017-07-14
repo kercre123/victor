@@ -23,6 +23,11 @@ class Robot;
 
 class BehaviorDriveToFace : public IBehavior
 {
+public:
+  // Returns true if Cozmo is close enough to the face that he won't actually
+  // drive forward when this behavior runs
+  bool IsCozmoAlreadyCloseEnoughToFace(Robot& robot, Vision::FaceID_t faceID);
+  
 protected:
   // Enforce creation through BehaviorContainer
   friend class BehaviorContainer;
@@ -30,26 +35,33 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual IBehavior::Status UpdateInternal(Robot& robot) override;
+  virtual void StopInternal(Robot& robot) override;
+
   
   virtual bool IsRunnableInternal(const BehaviorPreReqRobot& preReqData) const override;
+  virtual bool IsRunnableInternal(const BehaviorPreReqAcknowledgeFace& preReqData ) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
-
+  
 private:
   using base = IBehavior;
   enum class State {
     TurnTowardsFace,
     DriveToFace,
+    AlreadyCloseEnough,
     TrackFace
   };
   
   State _currentState;
   float _timeCancelTracking_s;
-  SmartFaceID _targetFace;
+  mutable SmartFaceID _targetFace;
   
   void TransitionToTurningTowardsFace(Robot& robot);
   void TransitionToDrivingToFace(Robot& robot);
+  void TransitionToAlreadyCloseEnough(Robot& robot);
   void TransitionToTrackingFace(Robot& robot);
   
+  // Returns true if able to calculate distance to face - false otherwise
+  bool CalculateDistanceToFace(Robot& robot, Vision::FaceID_t faceID, float& distance);
   void SetState_internal(State state, const std::string& stateName);
 
   

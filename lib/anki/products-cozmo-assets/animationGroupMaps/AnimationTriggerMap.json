@@ -1882,12 +1882,28 @@
       "AnimName": "ag_askForBlock"
     },
     {
+      "CladEvent": "VC_Alrighty",
+      "AnimName": "ag_vc_alrighty"
+    },
+    {
       "CladEvent": "VC_HowAreYouDoing_AllGood",
       "AnimName": "ag_vc_reaction_feeling_good_01"
     },
     {
+      "CladEvent": "VC_Listening",
+      "AnimName": "ag_vc_listening"
+    },
+    {
       "CladEvent": "VC_LookDownNoLaser",
       "AnimName": "ag_explorer_huh"
+    },
+    {
+      "CladEvent": "VC_NoFollowupCommand_NoFace",
+      "AnimName": "ag_vc_reaction_whatwasthat"
+    },
+    {
+      "CladEvent": "VC_NoFollowupCommand_WithFace",
+      "AnimName": "ag_vc_reaction_yesfaceheardyou"
     },
     {
       "CladEvent": "VC_Refuse_energy",

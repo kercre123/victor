@@ -16,21 +16,27 @@
 #include "anki/cozmo/basestation/aiComponent/aiComponent.h"
 #include "anki/cozmo/basestation/aiComponent/doATrickSelector.h"
 #include "anki/cozmo/basestation/aiComponent/requestGameComponent.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqRobot.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAnimSequence.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/iBehavior.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/animationWrappers/behaviorPlayAnimSequenceWithFace.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviors/freeplay/behaviorDriveToFace.h"
+
 #include "anki/cozmo/basestation/components/inventoryComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandComponent.h"
+
+#include "anki/common/basestation/utils/timer.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -38,17 +44,129 @@ namespace Cozmo {
   
 namespace {
 
-  // Maps a voice command to how many sparks it costs to execute
-  const std::map<VoiceCommand::VoiceCommandType, SparkableThings> kVoiceCommandToSparkableThingsMap = {
-    {VoiceCommand::VoiceCommandType::DoATrick, SparkableThings::DoATrick},
-    {VoiceCommand::VoiceCommandType::LetsPlay, SparkableThings::PlayAGame},
-    {VoiceCommand::VoiceCommandType::FistBump, SparkableThings::FistBump},
-    {VoiceCommand::VoiceCommandType::PeekABoo, SparkableThings::PeekABoo},
-  };
+// Maps a voice command to how many sparks it costs to execute
+const std::map<VoiceCommand::VoiceCommandType, SparkableThings> kVoiceCommandToSparkableThingsMap = {
+  {VoiceCommand::VoiceCommandType::DoATrick, SparkableThings::DoATrick},
+  {VoiceCommand::VoiceCommandType::LetsPlay, SparkableThings::PlayAGame},
+  {VoiceCommand::VoiceCommandType::FistBump, SparkableThings::FistBump},
+  {VoiceCommand::VoiceCommandType::PeekABoo, SparkableThings::PeekABoo},
+};
+
+static const int kMaxChooseBehaviorLoop = 1000;
+
+} // namespace
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehaviorQueue&& responseQue,
+                                                              VoiceCommand::VoiceCommandType commandType)
+{
+  // Ensure data's not being overwritten improperly
+  ANKI_VERIFY(_respondToVCQueue.empty() &&
+              (_currentResponseType == VoiceCommand::VoiceCommandType::Count) &&
+              _currentResponseBehavior == nullptr,
+              "VCResponseData.SetNewResponseData.OverwritingData",
+              "Attempting to overwrite response data with remaining que length %zu and type %s",
+              _respondToVCQueue.size(),
+              VoiceCommand::VoiceCommandTypeToString(_currentResponseType));
   
+  _currentResponseBehavior.reset();
+  _respondToVCQueue = std::move(responseQue);
+  _currentResponseType = commandType;
 }
   
+void ActivityVoiceCommand::VCResponseData::ClearResponseData(){
+  if(_currentResponseType != VoiceCommand::VoiceCommandType::Count){
+    using namespace ::Anki::Cozmo::VoiceCommand;
+    auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+    voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(_currentResponseType));
+  }
+  
+  _respondToVCQueue = {};
+  _currentResponseBehavior.reset();
+  _currentResponseType = VoiceCommand::VoiceCommandType::Count;
+
+}
+  
+
+void ActivityVoiceCommand::VCResponseData::ClearResponseQueue()
+{
+  _respondToVCQueue = {};
+}
+
+
+bool ActivityVoiceCommand::VCResponseData::WillStartRespondingToCommand()
+{
+  return (_currentResponseBehavior == nullptr) && !_respondToVCQueue.empty();
+}
+
+IBehaviorPtr ActivityVoiceCommand::VCResponseData::ChooseNextBehavior(const IBehaviorPtr currentBehavior)
+{
+  using namespace ::Anki::Cozmo::VoiceCommand;
+
+  // Check to see if we're about to start responding to a VC
+  if(WillStartRespondingToCommand()){
+    auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+    ActivityVoiceCommand::BeginRespondingToCommand(_context, GetCommandType());
+    voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(GetCommandType()));
+  }
+  
+  // Logic overview: During Update responses to VCs are determined and set up as
+  // a queue of functions to iterate over.  Each function returns a behavior ptr
+  // which should be run to completion.  Within the function any messages or
+  // parameters can be set - returning nullptr is allowed as the last function in
+  // the queue if events need to be sent within the lambda but no behavior needs to run
+  BOUNDED_WHILE(kMaxChooseBehaviorLoop,
+                (_currentResponseBehavior != nullptr) ||
+                (_currentResponseBehavior == nullptr) && !_respondToVCQueue.empty())
+  {
+    if(_currentResponseBehavior != nullptr)
+    {
+      // If we already have a behavior that VC started we should keep using it while it's running
+      if(_currentResponseBehavior->IsRunning())
+      {
+        return _currentResponseBehavior;
+      }
+      else
+      {
+        // clear out the currently running behavior
+        _currentResponseBehavior = nullptr;
+      }
+    }
+    else if(!_respondToVCQueue.empty())
+    {
+      {
+        // Get the behavior function, get the next behavior to run, and then pop
+        // the function off the queue
+        auto& GetBehaviorFunc = _respondToVCQueue.front();
+        _currentResponseBehavior = GetBehaviorFunc(currentBehavior);
+        _respondToVCQueue.pop();
+      }
+      
+      if(_currentResponseBehavior == nullptr)
+      {
+        ANKI_VERIFY(_respondToVCQueue.empty(),
+                    "ActivityVoiceCommand.ChooseNextBehaviorInternal.ResponseQueueNotEmpty",
+                    "Response function returned nullptr, but there are still %zu functions in the queue",
+                    _respondToVCQueue.size());
+      }
+      else
+      {
+        // return the behavior so that it will start running this tick
+        return _currentResponseBehavior;
+      }
+    } // end else if(!_respondToVCQueue.empty())
+  } // end BOUNDED_WHILE
+  
+  // The response queue has finished, so clear all data about the last
+  // command responded to
+  ClearResponseData();
+  
+  IBehaviorPtr emptyPtr;
+  return emptyPtr;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActivityVoiceCommand::~ActivityVoiceCommand() = default;
   
 #include "clad/types/voiceCommandTypes.h"
@@ -64,7 +182,8 @@ using namespace ::Anki::Cozmo::VoiceCommand;
 ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& config)
 :IActivity(robot, config)
 , _context(robot.GetContext())
-, _voiceCommandBehavior(nullptr)
+, _vcResponseData(std::make_unique<VCResponseData>(_context))
+, _lookDownObjectiveAchieved(false)
 {
   
   const auto& BM = robot.GetBehaviorManager();
@@ -74,10 +193,19 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
              _danceBehavior->GetClass() == BehaviorClass::Dance,
              "VoiceCommandBehaviorChooser.Dance.ImproperClassRetrievedForID");
   
-  _driveToFaceBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
-  DEV_ASSERT(_driveToFaceBehavior != nullptr &&
-             _driveToFaceBehavior->GetClass() == BehaviorClass::DriveToFace,
-             "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
+  {
+    IBehaviorPtr comeHereBehavior = BM.FindBehaviorByID(BehaviorID::VC_ComeHere);
+    if(ANKI_DEV_CHEATS){
+      _driveToFaceBehavior = std::dynamic_pointer_cast<BehaviorDriveToFace>(comeHereBehavior);
+
+    }else{
+      _driveToFaceBehavior = std::static_pointer_cast<BehaviorDriveToFace>(comeHereBehavior);
+
+    }
+    DEV_ASSERT(_driveToFaceBehavior != nullptr &&
+               _driveToFaceBehavior->GetClass() == BehaviorClass::DriveToFace,
+               "VoiceCommandBehaviorChooser.ComeHereBehavior.ImproperClassRetrievedForName");
+  }
   
   _searchForFaceBehavior = BM.FindBehaviorByID(BehaviorID::VC_SearchForFace);
   DEV_ASSERT(_searchForFaceBehavior != nullptr &&
@@ -116,7 +244,12 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
   DEV_ASSERT(_goToSleepBehavior != nullptr &&
              _goToSleepBehavior->GetClass() == BehaviorClass::ReactToOnCharger,
              "VoiceCommandBehaviorChooser.Laser.ImproperClassRetrievedForID");
-
+  
+  _alrightyBehavior = BM.FindBehaviorByID(BehaviorID::VC_AlrightyResponse);
+  DEV_ASSERT(_alrightyBehavior != nullptr &&
+             _alrightyBehavior->GetClass() == BehaviorClass::PlayAnimWithFace,
+             "VoiceCommandBehaviorChooser.AlrightyBehavior.ImproperClassRetrievedForID");
+  
   DEV_ASSERT(nullptr != _context, "ActivityVoiceCommand.Constructor.NullContext");
   
   // setup the let's play map
@@ -145,6 +278,7 @@ ActivityVoiceCommand::ActivityVoiceCommand(Robot& robot, const Json::Value& conf
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, const IBehaviorPtr currentRunningBehavior)
 {
   IBehaviorPtr emptyPtr;
@@ -155,230 +289,322 @@ IBehaviorPtr ActivityVoiceCommand::ChooseNextBehaviorInternal(Robot& robot, cons
     return emptyPtr;
   }
   
-  // Check to see if we should update the _voiceCommandBehavior should we be trying to track a laser
-  const bool didUpdateLaserBehavior = CheckForLaserTrackingChange(robot, currentRunningBehavior);
-  if(didUpdateLaserBehavior)
+  
+  if(ANKI_VERIFY(_vcResponseData != nullptr,
+                 "ActivityVoiceCommand.ChooseNextBehavior.NoResponseData",
+                 "Respones data ptr is null")){
+    return _vcResponseData->ChooseNextBehavior(currentRunningBehavior);
+  }
+  
+  return emptyPtr;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ActivityVoiceCommand::Update(Robot& robot)
+{
+  auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+  if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.Update", "VoiceCommandComponent invalid"))
   {
-    return _voiceCommandBehavior;
+    return Result::RESULT_FAIL;
+  }
+  
+  // Clear out all state tracking if a reaction plays or cozmo is off his treads
+  if((robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) ||
+     (robot.GetOffTreadsState() != OffTreadsState::OnTreads)){
+    _lookDownObjectiveAchieved = false;
+    _vcResponseData->ClearResponseData();
+  }
+  
+  // If one of the look down objectives was achieved clear out the rest of the response
+  // queue, but allow the currently running behavior to end on its own
+  if(_lookDownObjectiveAchieved){
+    _lookDownObjectiveAchieved = false;
+    _vcResponseData->ClearResponseQueue();
   }
   
   const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
   
-  // If we already have a behavior assigned we should keep using it, if it's running
-  if (_voiceCommandBehavior)
+  if(!ShouldActivityRespondToCommand(currentCommand))
   {
-    if (_voiceCommandBehavior->IsRunning())
+    return Result::RESULT_OK;
+  }
+  
+  // The activity will respond to the command, so clear the pending command out
+  // of the voice command component
+  voiceCommandComponent->ClearHeardCommand();
+  
+  // If the command requires an unlock and it's not unlocked, we don't
+  // want to respond at all
+  if(!HasAppropriateUnlocksForCommand(robot, currentCommand))
+  {
+    return Result::RESULT_OK;
+  }
+  
+  ///////
+  // Commands that unity responds to - these we mark as responding to command
+  // here - all other responses which setup response queues are handled in
+  // ChooseNextBehavior
+  ///////
+  {
+    if (currentCommand == VoiceCommandType::YesPlease)
     {
-      return _voiceCommandBehavior;
+      voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(true));
+      BeginRespondingToCommand(_context, currentCommand);
+      // nothing else to do - unity will handle the rest
+      return Result::RESULT_OK;
     }
-    // Otherwise this behavior isn't running anymore so clear it and potentially get a new one to use below
-    _voiceCommandBehavior = nullptr;
+    else if (currentCommand == VoiceCommandType::NoThankYou)
+    {
+      voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(false));
+      BeginRespondingToCommand(_context, currentCommand);
+      // nothing else to do - unity will handle the rest
+      return Result::RESULT_OK;
+    }
+    else if ( currentCommand == VoiceCommandType::Continue)
+    {
+      // The continue command is handled by the VC Component and doesn't require
+      // any special messaging
+      BeginRespondingToCommand(_context, currentCommand);
+      // nothing else to do - unity will handle the rest
+      return Result::RESULT_OK;
+    }
   }
   
-  // If we don't have an existing running voice command behavior, execute any waiting tasks
-  if (_doneRespondingTask)
+  ///////
+  // Commands that Engine responds to
+  ///////
   {
-    _doneRespondingTask();
-    _doneRespondingTask = std::function<void()>{};
-  }
-  
-  const bool isCommandValid = IsCommandValid(currentCommand);
-  
-  if(isCommandValid)
-  {
-    voiceCommandComponent->ClearHeardCommand();
-  
+    ChooseNextBehaviorQueue responseQueue;
+    // Clear out any response data if a previous command is still responding
+    _vcResponseData->ClearResponseData();
+
     if(ShouldCheckNeeds(currentCommand))
     {
       // Check if we should refuse to execute the command due to needs state
-      const bool shouldRefuse = CheckRefusalDueToNeeds(robot, _voiceCommandBehavior);
+      const bool shouldRefuse = CheckRefusalDueToNeeds(robot, responseQueue);
       if(shouldRefuse)
       {
-        const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-        BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      
-        return _voiceCommandBehavior;
+        _vcResponseData->SetNewResponseData(std::move(responseQueue), currentCommand);
+        // nothing else to do - refusal will run in ChooseNextBehavior
+        return Result::RESULT_OK;
       }
     }
     
     // Check if we have enough sparks to execute the command
     if(!HasEnoughSparksForCommand(robot, currentCommand))
     {
-      CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
-      
-      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      
-      return _voiceCommandBehavior;
+      CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, responseQueue);
+      _vcResponseData->SetNewResponseData(std::move(responseQueue), currentCommand);
+      // nothing else to do - refusal will run in ChooseNextBehavior
+      return Result::RESULT_OK;
     }
     
-    if(!HasAppropriateUnlocksForCommand(robot, currentCommand))
+    switch (currentCommand)
     {
-      _voiceCommandBehavior = emptyPtr;
-      return _voiceCommandBehavior;
-    }
-  }
-  
-  switch (currentCommand)
-  {
-    case VoiceCommandType::LetsPlay:
-    {
-      auto& gameSelector = robot.GetAIComponent().GetRequestGameComponent();
-      UnlockId requestGameID = gameSelector.IdentifyNextGameTypeToRequest(robot);
-      
-      if(requestGameID != UnlockId::Count){
-        const auto& iter = _letsPlayMap.find(requestGameID);
-        if(ANKI_VERIFY(iter != _letsPlayMap.end(),
-                       "ActivityVoiceCommand.ChooseNextBehaviorInternal.LetsPlay",
-                       "Unlock ID %s not found in map",
-                       UnlockIdToString(requestGameID))){
-          _voiceCommandBehavior = iter->second;
-          
-          const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-          BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
+      case VoiceCommandType::LetsPlay:
+      {
+        auto& gameSelector = robot.GetAIComponent().GetRequestGameComponent();
+        UnlockId requestGameID = gameSelector.IdentifyNextGameTypeToRequest(robot);
+        
+        if(requestGameID != UnlockId::Count){
+          const auto& iter = _letsPlayMap.find(requestGameID);
+          if(ANKI_VERIFY(iter != _letsPlayMap.end(),
+                         "ActivityVoiceCommand.ChooseNextBehaviorInternal.LetsPlay",
+                         "Unlock ID %s not found in map",
+                         UnlockIdToString(requestGameID))){
+            
+            IBehaviorPtr ptrCopy = iter->second;
+            responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+            responseQueue.push([this, &robot, ptrCopy, &currentCommand](const IBehaviorPtr currentBehavior){
+              RemoveSparksForCommand(robot, currentCommand);
+              return ptrCopy;
+            });
+          }
+        }
+        break;
+      }
+      case VoiceCommandType::DoADance:
+      {
+        responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+        responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _danceBehavior;});
+        break;
+      }
+      case VoiceCommandType::DoATrick:
+      {
+        responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+        responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
           RemoveSparksForCommand(robot, currentCommand);
+          robot.GetAIComponent().GetDoATrickSelector().RequestATrick(robot);
+          return nullptr;
+        });
+
+        break;
+      }
+      case VoiceCommandType::ComeHere:
+      {
+
+        std::set<Vision::FaceID_t> desiredFaces;
+        
+        Pose3d facePose;
+        const TimeStamp_t timeLastFaceObserved = robot.GetFaceWorld().GetLastObservedFace(facePose, true);
+        const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+        if(lastFaceInCurrentOrigin){
+          const auto facesObserved = robot.GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
+          if(facesObserved.size() > 0){
+            desiredFaces.insert(*facesObserved.begin());
+          }
+        }
+        
+        // If for any reason Cozmo can't drive to the user's face,
+        // we should search for a face instead
+        bool shouldSearchForFaces = false;
+        
+        if(!desiredFaces.empty()){
+          BehaviorPreReqAcknowledgeFace preReqData(desiredFaces, robot);
+          if(_driveToFaceBehavior->IsRunnable(preReqData)){
+            // Only play the "alrighty" animation if we're actually going to drive towards the face
+            if(!_driveToFaceBehavior->IsCozmoAlreadyCloseEnoughToFace(robot, *desiredFaces.begin())){
+               responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+            }
+            responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _driveToFaceBehavior;});
+          }else{
+            shouldSearchForFaces = true;
+          }
+        }else{
+          shouldSearchForFaces = true;
+        }
+        
+        if(shouldSearchForFaces){
+          BehaviorPreReqRobot preReqData(robot);
+          if(ANKI_VERIFY(_searchForFaceBehavior->IsRunnable(preReqData),
+                         "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
+                         "No way to respond to the voice command")){
+            responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _searchForFaceBehavior;});
+            // If we find a face while searching, drive towards it
+            responseQueue.push([this, &robot](const IBehaviorPtr currentBehavior){
+              Pose3d facePose;
+              robot.GetFaceWorld().GetLastObservedFace(facePose, true);
+              const bool lastFaceInCurrentOrigin = &facePose.FindOrigin() == robot.GetWorldOrigin();
+              if(lastFaceInCurrentOrigin){
+                return std::static_pointer_cast<IBehavior>(_driveToFaceBehavior);
+              }else{
+                IBehaviorPtr emptyPtr;
+                return emptyPtr;
+              }
+            });
+          }
+        }
+        
+        break;
+      }
+      case VoiceCommandType::FistBump:
+      {
+        BehaviorPreReqRobot preReqRobot(robot);
+        //Ensure fist bump is runnable
+        if(_fistBumpBehavior->IsRunnable(preReqRobot))
+        {
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+            RemoveSparksForCommand(robot, currentCommand);
+            const bool isSoftSpark = false;
+            robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
+            return nullptr;
+          });
+        }
+        else
+        {
+          CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, responseQueue);
+        }
+        break;
+      }
+      case VoiceCommandType::PeekABoo:
+      {
+        BehaviorPreReqRobot preReqRobot(robot);
+        //Ensure PeekABoo is runnable
+        if(_peekABooBehavior->IsRunnable(preReqRobot))
+        {
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+            RemoveSparksForCommand(robot, currentCommand);
+            const bool isSoftSpark = false;
+            robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
+            return nullptr;
+          });
+        }
+        else
+        {
+          CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, responseQueue);
+        }
+        break;
+      }
+      case VoiceCommandType::GoToSleep:
+      {
+        BehaviorPreReqNone req;
+        if(_goToSleepBehavior->IsRunnable(req))
+        {
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _goToSleepBehavior;});
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("ActivityVoiceCommand.ChooseNextBehaviorInternal.GoToSleepBehaviorNotRunnable", "");
+        }
+        break;
+      }
+      case VoiceCommandType::HowAreYouDoing:
+      {
+        HandleHowAreYouDoingCommand(robot, responseQueue);
+        break;
+      }
+      case VoiceCommandType::LookDown:
+      {
+        BehaviorPreReqRobot preReqRobot(robot);
+        if(_laserBehavior->IsRunnable(preReqRobot))
+        {
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _laserBehavior;   });
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _pounceBehavior;  });
+          responseQueue.push([this](const IBehaviorPtr currentBehavior){
+            _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VC_LookDownNoLaser, 1);
+            return _playAnimBehavior;
+          });
           
         }
-      }
-      return _voiceCommandBehavior;
-    }
-    case VoiceCommandType::DoADance:
-    {
-      _voiceCommandBehavior = _danceBehavior;
-      
-      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      
-      return _voiceCommandBehavior;
-    }
-    case VoiceCommandType::DoATrick:
-    {
-      robot.GetAIComponent().GetDoATrickSelector().RequestATrick(robot);
-      BeginRespondingToCommand(currentCommand);
-
-      RemoveSparksForCommand(robot, currentCommand);
-
-      return emptyPtr;
-    }
-    case VoiceCommandType::ComeHere:
-    {
-      BehaviorPreReqRobot preReqData(robot);
-      if(_driveToFaceBehavior->IsRunnable(preReqData)){
-        _voiceCommandBehavior = _driveToFaceBehavior;
-      }
-      else
-      {
-        BehaviorPreReqRobot preReqData(robot);
-        if(ANKI_VERIFY(_searchForFaceBehavior->IsRunnable(preReqData),
-                       "ActivityVoiceCommand.ChooseNextBehaviorInternal.SearchForFaceNotRunnable",
-                       "No way to respond to the voice command")){
-          _voiceCommandBehavior = _searchForFaceBehavior;
+        else
+        {
+          CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, responseQueue);
         }
+        break;
       }
-      
-      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      
-      return _voiceCommandBehavior;
+        
+      // These commands should never have made it to this part of the function,
+      // it should have exited above once they were handled
+      case VoiceCommandType::YesPlease:
+      case VoiceCommandType::NoThankYou:
+      case VoiceCommandType::Continue:
+      case VoiceCommandType::HeyCozmo:
+      case VoiceCommandType::Count:
+      {
+        ANKI_VERIFY(false,
+                    "ActivityVoiceCommand.ChooseNextBehaviorInternal.VCNotHandled",
+                    "VC %s reached response queue switch within activity",
+                    VoiceCommandTypeToString(currentCommand));
+        break;
+      }
     }
-    case VoiceCommandType::FistBump:
-    {
-      BehaviorPreReqRobot preReqRobot(robot);
-      //Ensure fist bump is runnable
-      if(_fistBumpBehavior->IsRunnable(preReqRobot))
-      {
-        RemoveSparksForCommand(robot, currentCommand);
-      
-        const bool isSoftSpark = false;
-        robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
-        _voiceCommandBehavior = emptyPtr;
-      }
-      else
-      {
-        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
-      }
-      
-      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-
-      return _voiceCommandBehavior;
-    }
-    case VoiceCommandType::PeekABoo:
-    {
-      BehaviorPreReqRobot preReqRobot(robot);
-      //Ensure PeekABoo is runnable
-      if(_peekABooBehavior->IsRunnable(preReqRobot))
-      {
-        RemoveSparksForCommand(robot, currentCommand);
-      
-        const bool isSoftSpark = false;
-        robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
-        _voiceCommandBehavior = emptyPtr;
-      }
-      else
-      {
-        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
-      }
-      
-      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-      
-      return _voiceCommandBehavior;
-    }
-    case VoiceCommandType::GoToSleep:
-    {
-      BehaviorPreReqNone req;
-      if(_goToSleepBehavior->IsRunnable(req))
-      {
-        _voiceCommandBehavior = _goToSleepBehavior;
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("ActivityVoiceCommand.ChooseNextBehaviorInternal.GoToSleepBehaviorNotRunnable", "");
-      }
-      
-      BeginRespondingToCommand(currentCommand);
-      return _voiceCommandBehavior;
-    }
-    case VoiceCommandType::HowAreYouDoing:
-    {
-      HandleHowAreYouDoingCommand(robot, _voiceCommandBehavior);
-      BeginRespondingToCommand(currentCommand);
-      return _voiceCommandBehavior;
-    }
-    case VoiceCommandType::LookDown:
-    {
-      BehaviorPreReqRobot preReqRobot(robot);
-      if(_laserBehavior->IsRunnable(preReqRobot))
-      {
-        _lookDownState = LookDownState::WAITING_FOR_LASER;
-        _voiceCommandBehavior = _laserBehavior;
-      }
-      else
-      {
-        CheckAndSetupRefuseBehavior(robot, BehaviorID::VC_Refuse_Sparks, _voiceCommandBehavior);
-      }
-      
-      const bool shouldTrackLifetime = (_voiceCommandBehavior != nullptr);
-      BeginRespondingToCommand(currentCommand, shouldTrackLifetime);
-     
-      return _voiceCommandBehavior;
-    }
-      
     
-    // These commands will never be handled by this chooser:
-    case VoiceCommandType::YesPlease:
-    case VoiceCommandType::NoThankYou:
-    case VoiceCommandType::Continue:
-    case VoiceCommandType::HeyCozmo:
-    case VoiceCommandType::Count:
-    {
-      // We're intentionally not handling these types in ActivityVoiceCommand
-      return emptyPtr;
+    if(!responseQueue.empty()){
+      _vcResponseData->SetNewResponseData(std::move(responseQueue), currentCommand);
     }
-  }
+    
+  } // End engine responses to commands
+  
+  return Result::RESULT_OK;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandType command) const
 {
   const auto& commandToSparkCost = kVoiceCommandToSparkableThingsMap.find(command);
@@ -391,7 +617,9 @@ bool ActivityVoiceCommand::HasEnoughSparksForCommand(Robot& robot, VoiceCommandT
   
   return true;
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityVoiceCommand::HasAppropriateUnlocksForCommand(Robot& robot, VoiceCommand::VoiceCommandType command) const
 {
   UnlockId requiredID = UnlockId::Count;
@@ -422,6 +650,70 @@ bool ActivityVoiceCommand::HasAppropriateUnlocksForCommand(Robot& robot, VoiceCo
   return true;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ActivityVoiceCommand::ShouldActivityRespondToCommand(VoiceCommand::VoiceCommandType command) const
+{
+  switch(command)
+  {
+    case VoiceCommandType::Continue:
+    case VoiceCommandType::ComeHere:
+    case VoiceCommandType::DoADance:
+    case VoiceCommandType::DoATrick:
+    case VoiceCommandType::FistBump:
+    case VoiceCommandType::GoToSleep:
+    case VoiceCommandType::HowAreYouDoing:
+    case VoiceCommandType::LetsPlay:
+    case VoiceCommandType::LookDown:
+    case VoiceCommandType::PeekABoo:
+    case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::YesPlease:
+    {
+      return true;
+    }
+      // These commands will never be handled by this chooser:
+    case VoiceCommandType::HeyCozmo:
+    case VoiceCommandType::Count:
+    {
+      // We're intentionally not handling these types in ActivityVoiceCommand
+      return false;
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const
+{
+  switch(command)
+  {
+    case VoiceCommandType::LetsPlay:
+    case VoiceCommandType::DoADance:
+    case VoiceCommandType::DoATrick:
+    case VoiceCommandType::ComeHere:
+    case VoiceCommandType::FistBump:
+    case VoiceCommandType::PeekABoo:
+    case VoiceCommandType::LookDown:
+    {
+      return true;
+    }
+      
+      // These commands are special; we don't care what our needs are when handling them
+    case VoiceCommandType::Continue:
+    case VoiceCommandType::HeyCozmo:
+    case VoiceCommandType::GoToSleep:
+    case VoiceCommandType::NoThankYou:
+    case VoiceCommandType::HowAreYouDoing:
+    case VoiceCommandType::YesPlease:
+    case VoiceCommandType::Count:
+    {
+      return false;
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ActivityVoiceCommand::RemoveSparksForCommand(Robot& robot, VoiceCommandType command)
 {
   const auto& commandToSparkCost = kVoiceCommandToSparkableThingsMap.find(command);
@@ -438,84 +730,31 @@ void ActivityVoiceCommand::RemoveSparksForCommand(Robot& robot, VoiceCommandType
   }
 }
 
-bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, IBehaviorPtr& outputBehavior) const
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQue) const
 {
   Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
   {
     BehaviorID whichRefuse = BehaviorID::VC_Refuse_Repair;
-    return CheckAndSetupRefuseBehavior(robot, whichRefuse, outputBehavior);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQue);
   }
   else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
   {
     BehaviorID whichRefuse = BehaviorID::VC_Refuse_Energy;
-    return CheckAndSetupRefuseBehavior(robot, whichRefuse, outputBehavior);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQue);
   }
   
   return false;
 }
 
-bool ActivityVoiceCommand::IsCommandValid(VoiceCommand::VoiceCommandType command) const
-{
-  switch(command)
-  {
-    case VoiceCommandType::LetsPlay:
-    case VoiceCommandType::DoADance:
-    case VoiceCommandType::DoATrick:
-    case VoiceCommandType::ComeHere:
-    case VoiceCommandType::FistBump:
-    case VoiceCommandType::PeekABoo:
-    case VoiceCommandType::GoToSleep:
-    case VoiceCommandType::HowAreYouDoing:
-    case VoiceCommandType::LookDown:
-    {
-      return true;
-    }
-    // These commands will never be handled by this chooser:
-    case VoiceCommandType::Continue:
-    case VoiceCommandType::HeyCozmo:
-    case VoiceCommandType::NoThankYou:
-    case VoiceCommandType::YesPlease:
-    case VoiceCommandType::Count:
-    {
-      // We're intentionally not handling these types in ActivityVoiceCommand
-      return false;
-    }
-  }
-}
-  
-bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType command) const
-{
-  switch(command)
-  {
-    case VoiceCommandType::LetsPlay:
-    case VoiceCommandType::DoADance:
-    case VoiceCommandType::DoATrick:
-    case VoiceCommandType::ComeHere:
-    case VoiceCommandType::FistBump:
-    case VoiceCommandType::PeekABoo:
-    case VoiceCommandType::LookDown:
-    {
-      return true;
-    }
 
-    // These commands are special; we don't care what our needs are when handling them
-    case VoiceCommandType::Continue:
-    case VoiceCommandType::HeyCozmo:
-    case VoiceCommandType::GoToSleep:
-    case VoiceCommandType::NoThankYou:
-    case VoiceCommandType::HowAreYouDoing:
-    case VoiceCommandType::YesPlease:
-    case VoiceCommandType::Count:
-    {
-      return false;
-    }
-  }
-}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
                                                        BehaviorID whichRefuse,
-                                                       IBehaviorPtr& outputBehavior) const
+                                                       ChooseNextBehaviorQueue& responseQue) const
 {
   IBehaviorPtr refuseBehavior = robot.GetBehaviorManager().FindBehaviorByID(whichRefuse);
   DEV_ASSERT(refuseBehavior != nullptr &&
@@ -525,67 +764,25 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
   BehaviorPreReqRobot preReqRobot(robot);
   if(refuseBehavior->IsRunnable(preReqRobot))
   {
-    outputBehavior = refuseBehavior;
+    responseQue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
     return true;
   }
   return false;
 }
 
-void ActivityVoiceCommand::BeginRespondingToCommand(VoiceCommand::VoiceCommandType command, bool trackResponseLifetime)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityVoiceCommand::BeginRespondingToCommand(const CozmoContext* context, VoiceCommand::VoiceCommandType command)
 {
-  auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
+  auto* voiceCommandComponent = context->GetVoiceCommandComponent();
   
   Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(command));
   voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommand(command));
-  
-  // If we don't care about the lifetime of this command response, just send out the response event
-  if (!trackResponseLifetime)
-  {
-    return;
-  }
-  
-  voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandStart(command));
-  DEV_ASSERT_MSG(!_doneRespondingTask,
-                 "ActivityVoiceCommand.BeginRespondingToCommand",
-                 "The _doneRespondingTask was not cleared and is being overwritten");
-  _doneRespondingTask = [voiceCommandComponent, command] ()
-  {
-    voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(command));
-  };
 }
 
-Result ActivityVoiceCommand::Update(Robot& robot)
-{
-  auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
-  if (!ANKI_VERIFY(voiceCommandComponent != nullptr, "ActivityVoiceCommand.Update", "VoiceCommandComponent invalid"))
-  {
-    return Result::RESULT_FAIL;
-  }
-  
-  // These voice commands don't have behaviors directly associated, so we send out events here when the command is triggered instead
-  const auto& currentCommand = voiceCommandComponent->GetPendingCommand();
-  if (currentCommand == VoiceCommandType::YesPlease)
-  {
-    voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(true));
-    voiceCommandComponent->ClearHeardCommand();
-    BeginRespondingToCommand(currentCommand);
-  }
-  else if (currentCommand == VoiceCommandType::NoThankYou)
-  {
-    voiceCommandComponent->BroadcastVoiceEvent(UserResponseToPrompt(false));
-    voiceCommandComponent->ClearHeardCommand();
-    BeginRespondingToCommand(currentCommand);
-  }else if ( currentCommand == VoiceCommandType::Continue){
-    // The continue command is handled by the VC Component and doesn't require
-    // data to be sent up - so go ahead and clear the command
-    voiceCommandComponent->ClearHeardCommand();
-    BeginRespondingToCommand(currentCommand);
-  }
 
-  return Result::RESULT_OK;
-}
-
-void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, IBehaviorPtr& outputBehavior)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQue)
 {
   // Maps a need and bracket to a behavior and animations
   static const std::map<std::pair<NeedId, NeedBracketId>,
@@ -660,7 +857,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, IBehaviorPt
   BehaviorPreReqAnimSequence preReq(robot, howAreYouDoingAnims);
   if(howAreYouDoingBehavior->IsRunnable(preReq))
   {
-    outputBehavior = howAreYouDoingBehavior;
+    responseQue.push([&howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
   }
   else
   {
@@ -668,71 +865,19 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, IBehaviorPt
   }
 }
 
-bool ActivityVoiceCommand::CheckForLaserTrackingChange(Robot& robot, const IBehaviorPtr curBehavior)
-{
-  // If we are waiting for a laser or motion but have entered a reactionary behavior then stop waiting for
-  // the laser or motion and give up
-  if(_lookDownState != LookDownState::NONE &&
-     robot.GetBehaviorManager().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger)
-  {
-    _lookDownState = LookDownState::NONE;
-    return false;
-  }
-  
-  if(curBehavior != nullptr)
-  {
-    // If we are waiting for a laser but are no longer in the wait for laser behavior
-    // then it must have not found a laser so switch to looking for motion with the PounceOnMotion
-    // behavior
-    if(_lookDownState == LookDownState::WAITING_FOR_LASER &&
-       curBehavior->GetID() != BehaviorID::VC_TrackLaser)
-    {
-      BehaviorPreReqNone preReq;
-      if(_pounceBehavior->IsRunnable(preReq))
-      {
-        _voiceCommandBehavior = _pounceBehavior;
-      }
-      
-      _lookDownState = LookDownState::WAITING_FOR_MOTION;
-      
-      return true;
-    }
-    // Otherwise if we are waiting for motion but are no longer in the wait for motion behavior
-    // then it must have not found motion so switch to playing a "nothing was found" animation
-    else if(_lookDownState == LookDownState::WAITING_FOR_MOTION &&
-            curBehavior->GetID() != BehaviorID::VC_PounceOnMotion)
-    {
-      _playAnimBehavior->SetAnimationTrigger(AnimationTrigger::VC_LookDownNoLaser, 1);
-      
-      BehaviorPreReqNone preReq;
-      if(_playAnimBehavior->IsRunnable(preReq))
-      {
-        _voiceCommandBehavior = _playAnimBehavior;
-      }
-      
-      _lookDownState = LookDownState::NONE;
-      
-      return true;
-    }
-  }
-  
-  return false;
-}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void ActivityVoiceCommand::HandleMessage(const ExternalInterface::BehaviorObjectiveAchieved& msg)
 {
   // If we are waiting for a laser and the TrackLaser behavior successfully tracked a laser then
   // we are no longer waiting for a laser
-  if(_lookDownState == LookDownState::WAITING_FOR_LASER &&
-     msg.behaviorObjective == BehaviorObjective::LaserTracked)
-  {
-    _lookDownState = LookDownState::NONE;
-  }
-  else if(_lookDownState == LookDownState::WAITING_FOR_MOTION &&
-          msg.behaviorObjective == BehaviorObjective::PouncedAndCaught)
-  {
-    _lookDownState = LookDownState::NONE;
+  if(_vcResponseData->GetCommandType() == VoiceCommandType::LookDown){
+    if((msg.behaviorObjective == BehaviorObjective::LaserTracked) ||
+       (msg.behaviorObjective == BehaviorObjective::PouncedAndCaught))
+    {
+      _lookDownObjectiveAchieved = true;
+    }
   }
 }
 

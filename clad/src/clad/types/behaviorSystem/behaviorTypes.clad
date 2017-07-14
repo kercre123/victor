@@ -248,6 +248,7 @@ enum uint_8 BehaviorID {
   TapInteractionStackCubes,
   TrackLaser,
 
+  VC_AlrightyResponse,
   VC_ComeHere,
   VC_GoToSleep,
   VC_HowAreYouDoing_AllGood,
