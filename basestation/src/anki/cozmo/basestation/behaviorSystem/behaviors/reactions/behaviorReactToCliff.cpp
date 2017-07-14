@@ -118,9 +118,10 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
         return true;
       };
       
+      // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
-      // skip the "huh" animation if in severe energy
-      if(NeedId::Energy == robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression()){
+      NeedId expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+      if((expressedNeed == NeedId::Energy) || (expressedNeed == NeedId::Repair)){
         callbackFunc = &BehaviorReactToCliff::TransitionToPlayingCliffReaction;
       }
       
