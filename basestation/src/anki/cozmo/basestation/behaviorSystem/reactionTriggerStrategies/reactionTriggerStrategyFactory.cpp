@@ -230,7 +230,9 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       if(strategyToCreate == kGenericStrategyType)
       {
         // Generic strategy wants to run when IdleTimeout is cancelled (cancelled by game when waking up while
-        // going to sleep). The VC reaction trigger needs to be enabled and the current reaction can't be VC.
+        // going to sleep). The VC reaction trigger needs to be enabled and the current reaction can't be VC or
+        // PlacedOnCharger (We expect to potentially receive a CancelIdleTimeout message from game when
+        // on the charger and we don't want that to trigger the strategy).
         // This strategy is used to trigger reactToVoiceCommand_Wakeup when sleeping is cancelled via a cancel
         // button
         auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
@@ -243,9 +245,11 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
          {
            const bool currentTriggerNotVC = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
                                              ReactionTrigger::VC);
+           const bool currentTriggerNotOnCharger = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
+                                                    ReactionTrigger::PlacedOnCharger);
            const bool VCTriggerEnabled = robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::VC);
            
-           return (currentTriggerNotVC && VCTriggerEnabled);
+           return (VCTriggerEnabled && currentTriggerNotVC && currentTriggerNotOnCharger);
          }
         );
         
