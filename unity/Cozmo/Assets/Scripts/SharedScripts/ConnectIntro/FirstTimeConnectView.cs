@@ -53,7 +53,7 @@ public class FirstTimeConnectView : BaseView {
   private void Awake() {
 
     DasTracker.Instance.TrackFirstTimeConnectStarted();
-
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnect);
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
       _StartButton.Initialize(HandleMockButton, "start_button", "first_time_connect_dialog");
     }
@@ -128,6 +128,7 @@ public class FirstTimeConnectView : BaseView {
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnect);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ResponseLocale>(HandleLocaleResponse);
     DasTracker.Instance.TrackFirstTimeConnectEnded();
   }
@@ -221,10 +222,11 @@ public class FirstTimeConnectView : BaseView {
 
   }
 
-  public void HandleRobotDisconnect() {
+  public void HandleRobotDisconnect(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     if (_ConnectionFlowInstance != null) {
       _ConnectionFlowInstance.HandleRobotDisconnect();
     }
+    HandleConnectionFlowQuit();
   }
 
   private void HandleConnectionFlowQuit() {
