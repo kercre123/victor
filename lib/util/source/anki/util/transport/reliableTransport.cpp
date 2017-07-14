@@ -27,7 +27,7 @@ namespace Util {
 
   
 CONSOLE_VAR(bool,      kPrintNetworkStats,              "Network", false);
-CONSOLE_VAR(uint32_t,  kPrintNetworkStatsTimeSpacingMS, "Network", 1000);
+CONSOLE_VAR_RANGED(uint32_t,  kPrintNetworkStatsTimeSpacingMS, "Network", 1000, 0, 10000);
 
 
 // ============================== Packet Headers ========================================

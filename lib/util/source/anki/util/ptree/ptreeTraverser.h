@@ -16,7 +16,7 @@
 #include <stack>
 #include <boost/property_tree/ptree_fwd.hpp>
 #include "util/ptree/ptreeKey.h"
-#include <util/ptree/includePtree.h>
+#include "util/ptree/includePtree.h"
 
 namespace Anki{ namespace Util {
 namespace PtreeTools {

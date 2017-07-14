@@ -1,0 +1,95 @@
+namespace Anki {
+namespace Util {
+namespace AnkiLab {
+
+structure Metadata {
+  string project_id,
+  uint_32 version,
+  uint_32 revision,
+}
+
+structure ExperimentVariation {
+  string key,
+  uint_8 pop_frac_pct
+}
+
+structure VariantCondition {
+  string user_id,
+  string variation_key,
+}
+
+enum uint_8 ActivationMode {
+  // lowercase values to avoid capitalization in JSON string entries
+  manual,
+  automatic
+}
+
+structure Experiment {
+  uint_32 version,
+  string key,
+
+  ActivationMode activation_mode,
+
+  string start_time_utc_iso8601,
+  string stop_time_utc_iso8601,
+  string pause_time_utc_iso8601,
+  string resume_time_utc_iso8601,
+    
+  uint_8 pop_frac_pct,
+
+  string audience_tags[uint_8],
+  ExperimentVariation variations[uint_8],
+  VariantCondition forced_variations[uint_8],
+}
+
+structure AnkiLabDef {
+  Metadata meta,
+  Experiment experiments[uint_8],
+}
+
+structure AssignmentDef {
+  string experiment_key,
+  string user_id,
+  string variation_key
+}
+
+enum uint_8 AssignmentStatus {
+  // Initial condition
+  Invalid,
+
+  //
+  // Unexpected error cases
+  //
+
+  // programming error or code/data mismatch
+  ExperimentNotFound,
+  VariantNotFound,
+
+  //
+  // Expected results
+  //
+
+  // experiment.unassigned -> criteria not met
+  ExperimentNotRunning,
+  AudienceMismatch,
+  Unassigned,
+
+  // experiment.assigned -> criteria satified, variant assigned
+  Assigned,
+  OverrideAssigned,
+  ForceAssigned,
+}
+
+message ActivateExperimentRequest {
+  string experiment_key,
+  string user_id,
+}
+
+message ActivateExperimentResponse {
+  AssignmentStatus status,
+  string variation_key,
+}
+
+} // namespace AnkiLab
+} // namespace Util
+} // namespace Anki

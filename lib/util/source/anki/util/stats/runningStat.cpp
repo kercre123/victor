@@ -17,7 +17,7 @@
 #include <math.h>
 #include <string>
 #include <stdio.h>
-#include <util/logging/logging.h>
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Util {
