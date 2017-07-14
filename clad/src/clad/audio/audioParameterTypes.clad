@@ -19,6 +19,7 @@ enum uint_32 ParameterType
   Invalid = 0,
   Mood = 3128647864,
   Music_Mood = 1579946944,
+  Music_Vc_Mode = 3919823198,
   Music_Volume = 1006694123,
   Mvt_Effort_Pitch = 3281296278,
   Mvt_Effort_Volume = 537268346,

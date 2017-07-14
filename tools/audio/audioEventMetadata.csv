@@ -1,6 +1,8 @@
 Type,AudioCategory,WWiseIdKey,WWiseIdValue,GroupName,AliasName,Comment
 Event,,Play__App__Music_Dim_Off,1721389992,App,Music_Dim_Off,
 Event,,Play__App__Music_Dim_On,3577443762,App,Music_Dim_On,
+Event,,Play__App__Music_Vc_Mode_Off,2840054831,App,Music_Vc_Mode_Off,
+Event,,Play__App__Music_Vc_Mode_On,708318267,App,Music_Vc_Mode_On,
 Event,,Play__Coz_App__Enter_Background,2017190380,Coz_App,Enter_Background,
 Event,,Play__Coz_App__Enter_Foreground,1225777195,Coz_App,Enter_Foreground,
 Event,,Play__Cue_World_Event__Cubes_Stacked,3962867948,Cue_World_Event,Cubes_Stacked,
@@ -543,4 +545,4 @@ Event,,Stop__Robot_Vo__Shared_Happy_Loop_Stop,4286366971,Robot_Vo,Shared_Happy_L
 Event,,Stop__Robot_Vo__Shared_Idea_Loop_Stop,273762158,Robot_Vo,Shared_Idea_Loop_Stop,
 Event,,Stop__Robot_Vo__Sparked_Workout_Lift_Fail_Struggle_Longest_Stop,1084850966,Robot_Vo,Sparked_Workout_Lift_Fail_Struggle_Longest_Stop,
 Event,,Stop__Sfx__Cube_Feeding_Loop_Stop,3890113136,Sfx,Cube_Feeding_Loop_Stop,
-Event,,Stop__Sfx__Repair_Scan,19097859,Sfx,Repair_Scan,
+Event,,Stop__Sfx__Repair_Scan_Stop,1631036014,Sfx,Repair_Scan_Stop,
