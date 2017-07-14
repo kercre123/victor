@@ -313,11 +313,20 @@ namespace Cozmo {
     }
 
     private void StopIdleTimeout() {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      bool robotValid = robot != null;
+
+      // Only disable cube sleep if we definately enabled it from the call to StartIdleTimeout
+      if (_StartedIdleTimeout) {
+        if (robotValid) {
+          robot.EnableCubeSleep(false);
+        }
+      }
+
       _StartedIdleTimeout = false;
       RobotEngineManager.Instance.CancelIdleTimeout();
 
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (null != robot) {
+      if (robotValid) {
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kPauseManagerId);
         robot.RobotResumeFromIdle(true);
       }
