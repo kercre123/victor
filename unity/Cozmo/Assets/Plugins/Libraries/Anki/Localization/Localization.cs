@@ -63,20 +63,14 @@ public static class Localization {
   private static string _CurrentLocale = null;
   private static string _CurrentFontBundleVariant = null;
   private static System.Globalization.CultureInfo _CurrentCulture = null;
+  private static SystemLanguage _SystemLanguage = Application.systemLanguage;
 
   public static string LoadLocaleAndCultureInfo(bool overrideLanguage = false, SystemLanguage languageOverride = SystemLanguage.English) {
-
-#if SHIPPING
-     _CurrentLocale = "en-US";
-     _CurrentFontBundleVariant = "latin";
-#else
-    // Only show localization logic in non-shipping builds
-    SystemLanguage language = Application.systemLanguage;
     if (overrideLanguage) {
-      language = languageOverride;
+      _SystemLanguage = languageOverride;
     }
 
-    switch (language) {
+    switch (_SystemLanguage) {
     case SystemLanguage.English:
       _CurrentLocale = "en-US";
       _CurrentFontBundleVariant = "latin";
@@ -99,8 +93,6 @@ public static class Localization {
       break;
     }
 
-#endif
-
     _CurrentCulture = new System.Globalization.CultureInfo(_CurrentLocale);
     return _CurrentLocale;
   }
@@ -112,6 +104,10 @@ public static class Localization {
     }
 
     return _CurrentLocale;
+  }
+
+  public static SystemLanguage GetLanguage() {
+    return _SystemLanguage;
   }
 
   public static string GetCurrentFontBundleVariant() {
