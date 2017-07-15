@@ -63,12 +63,12 @@ const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 // for 8 encoder ticks per revolution, we compute the meters per tick as:
 // Applying a slip factor correction of 94.8%
 const u32 METERS_PER_TICK = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43);
-const u32 METERS_PER_TICK_1v5c = TO_FIXED_0_32((0.948 * 0.125 * 0.0292 * 3.14159265359) / 149.7);
 Fixed metersPerWheelTick;
 
 // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
 // compute the radians per tick on the lift as:
 const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
+const Fixed RADIANS_PER_LIFT_TICK_1v5c = TO_FIXED((0.25 * 3.14159265359) / 149.7);
 Fixed radiansPerLiftTick;
 
 // Given a gear ratio of 348.77:1 and 4 encoder ticks per revolution, we
@@ -360,11 +360,11 @@ void Motors::init()
   ConfigurePPI(NRF_TIMER2, 2, 4);
 
   if (BODY_VER >= BODY_VER_1v5c) {
-    metersPerWheelTick = METERS_PER_TICK_1v5c;
+    radiansPerLiftTick = RADIANS_PER_LIFT_TICK_1v5c;
   } else {
-    metersPerWheelTick = METERS_PER_TICK;
+    radiansPerLiftTick = RADIANS_PER_LIFT_TICK;
   }
-  radiansPerLiftTick = RADIANS_PER_LIFT_TICK;
+  metersPerWheelTick = METERS_PER_TICK;
   radiansPerHeadTick = RADIANS_PER_HEAD_TICK;
   
   // Setup head encoder tick rate for production or pre-production hardware
