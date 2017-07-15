@@ -80,7 +80,14 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleDialogFinishedOpenAnimation() {
-      _StaggeredFillCoroutine = StartCoroutine(StaggerMeterFills());
+      // Onboarding disables this game object until it's done and starts on it's own.
+      if (isActiveAndEnabled) {
+        _StaggeredFillCoroutine = StartCoroutine(StaggerMeterFills());
+      }
+      else {
+        NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
+        NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+      }
     }
 
     private void PlayMeterMoveSound(float oldVal, float newVal) {

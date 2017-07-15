@@ -48,6 +48,12 @@
   "needs.NeedsEnergyModal.FeedingComplete": {
     "translation": "Cozmo is fully fed!"
   },
+  "needs.NeedsEnergyModal.CubeHelp.Propmt": {
+    "translation": "Cozmo can't be fed because he can't hear his cubes"
+  },
+  "needs.NeedsEnergyModal.CubeHelp.Propmt.Button": {
+    "translation": "RECONNECT CUBES"
+  },
   "needs.NeedsRepairModal.Title": {
     "translation": "Tune Up Cozmo"
   },

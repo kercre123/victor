@@ -481,6 +481,7 @@ MonoBehaviour:
   - {fileID: 166310, guid: 343c1b923922a4ab18d34a45f119b5c1, type: 2}
   - {fileID: 112936, guid: d33285ccabbd54fc2a0336551c43bfcd, type: 2}
   - {fileID: 112936, guid: 67cf5108d7a054df4b14f1043dda0fad, type: 2}
+  - {fileID: 112936, guid: 2ba29d62eea8b4b8e9948da838397198, type: 2}
   _SwipeContainer: {fileID: 224167029939247450}
   _PageIndicatorPrefab: {fileID: 11435474, guid: 570bebd44cb114622b6d8fb39a91247a,
     type: 2}
@@ -520,7 +521,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -557,7 +558,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 5991b4eca9a7440c3868d5541dad0207, type: 3}
+  m_Sprite: {fileID: 21300000, guid: aee3e7f625e424d13b400f85a620c62e, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1

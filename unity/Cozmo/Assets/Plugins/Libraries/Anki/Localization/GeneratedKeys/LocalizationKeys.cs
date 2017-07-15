@@ -356,6 +356,11 @@ public static class LocalizationKeys {
   public const string kCubeHelpStringsInstructionsSlide2altCopy = "cubeHelpStrings.Instructions.Slide2altCopy";
   public const string kCubeHelpStringsInstructionsSlide3 = "cubeHelpStrings.Instructions.Slide3";
   public const string kCubeHelpStringsInstructionsSlide3altCopy = "cubeHelpStrings.Instructions.Slide3altCopy";
+  public const string kCubeHelpStringsInstructionsQuickSnackSlideTitle = "cubeHelpStrings.Instructions.QuickSnackSlide.Title";
+  public const string kCubeHelpStringsInstructionsQuickSnackSlideBody = "cubeHelpStrings.Instructions.QuickSnackSlide.Body";
+  public const string kCubeHelpStringsInstructionsQuickSnackSlideButton = "cubeHelpStrings.Instructions.QuickSnackSlide.Button";
+  public const string kCubeHelpStringsInstructionsFeedPopupTitle = "cubeHelpStrings.Instructions.FeedPopup.Title";
+  public const string kCubeHelpStringsInstructionsFeedPopupBody = "cubeHelpStrings.Instructions.FeedPopup.Body";
 
   #endregion
 
@@ -567,6 +572,8 @@ public static class LocalizationKeys {
   public const string kNeedsNeedsEnergyModalInstruction2 = "needs.NeedsEnergyModal.Instruction2";
   public const string kNeedsNeedsEnergyModalInstruction3 = "needs.NeedsEnergyModal.Instruction3";
   public const string kNeedsNeedsEnergyModalFeedingComplete = "needs.NeedsEnergyModal.FeedingComplete";
+  public const string kNeedsNeedsEnergyModalCubeHelpPropmt = "needs.NeedsEnergyModal.CubeHelp.Propmt";
+  public const string kNeedsNeedsEnergyModalCubeHelpPropmtButton = "needs.NeedsEnergyModal.CubeHelp.Propmt.Button";
   public const string kNeedsNeedsRepairModalTitle = "needs.NeedsRepairModal.Title";
   public const string kNeedsNeedsRepairModalRepairSummary = "needs.NeedsRepairModal.RepairSummary";
   public const string kNeedsNeedsRepairModalHeadDamageNotice = "needs.NeedsRepairModal.HeadDamageNotice";
@@ -589,6 +596,20 @@ public static class LocalizationKeys {
   public const string kNeedsRewardsDialogSparksEarned = "needs.RewardsDialog.SparksEarned";
   public const string kNeedsRewardsDialogTrickUnlocked = "needs.RewardsDialog.TrickUnlocked";
   public const string kNeedsRewardsDialogSongUnlocked = "needs.RewardsDialog.SongUnlocked";
+  public const string kNeedsFreeplaySparksRewardCozmoSings = "needs.FreeplaySparksReward.CozmoSings";
+  public const string kNeedsFreeplaySparksRewardFistBump = "needs.FreeplaySparksReward.FistBump";
+  public const string kNeedsFreeplaySparksRewardGatherCubes = "needs.FreeplaySparksReward.GatherCubes";
+  public const string kNeedsFreeplaySparksRewardHiccupsEndBad = "needs.FreeplaySparksReward.HiccupsEndBad";
+  public const string kNeedsFreeplaySparksRewardHiccupsEndGood = "needs.FreeplaySparksReward.HiccupsEndGood";
+  public const string kNeedsFreeplaySparksRewardKnockDownCubes = "needs.FreeplaySparksReward.KnockDownCubes";
+  public const string kNeedsFreeplaySparksRewardPeekAboo = "needs.FreeplaySparksReward.PeekAboo";
+  public const string kNeedsFreeplaySparksRewardPickUpCube = "needs.FreeplaySparksReward.PickUpCube";
+  public const string kNeedsFreeplaySparksRewardPopAWheelie = "needs.FreeplaySparksReward.PopAWheelie";
+  public const string kNeedsFreeplaySparksRewardPounce = "needs.FreeplaySparksReward.Pounce";
+  public const string kNeedsFreeplaySparksRewardPyramidCompleted = "needs.FreeplaySparksReward.PyramidCompleted";
+  public const string kNeedsFreeplaySparksRewardRollACube = "needs.FreeplaySparksReward.RollACube";
+  public const string kNeedsFreeplaySparksRewardStackCube = "needs.FreeplaySparksReward.StackCube";
+  public const string kNeedsFreeplaySparksRewardWorkout = "needs.FreeplaySparksReward.Workout";
 
   #endregion
 
