@@ -9,19 +9,28 @@
 // get the local string from the URL
 var LOCALE = window.getUrlVars()['locale'];
 
-// write the locale specific translations javascript file
-document.write('<script src="../LocalizedStrings/' + LOCALE + '/CodeLabStrings.js"></script>');
+// compute the URL for the translations javascript file
+var translationsUrl = 'LocalizedStrings/' + LOCALE + '/CodeLabStrings.js';
 
 // compute URL prefix for locale based font
 var latinFontLocales = ['de-DE', 'en-US', 'fr-FR'];
 var fontLocale = (latinFontLocales.indexOf(LOCALE) >= 0) ? 'latin' : LOCALE;
-var fontSrcPrefix = '../fonts/Fonts-' + fontLocale;
+var fontSrcPrefix = 'fonts/Fonts-' + fontLocale;
+
+// if in the 'extra' folder, add parent folder to relative paths for translations and fonts
+if (window.location.pathname.indexOf('/extra/') >= 0) {
+  translationsUrl = '../' + translationsUrl;
+  fontSrcPrefix = '../' + fontSrcPrefix;
+}
 
 // create a map of font names to localized font files
 var fonts = {};
 fonts['Avenir Next'] = fontSrcPrefix + '/AvenirLTStd-Medium.otf';
 fonts['Avenir Next Black'] = fontSrcPrefix + '/AvenirLTStd-Black.otf';
 fonts['Avenir Next Bold'] = fontSrcPrefix + '/AvenirLTStd-Heavy.otf';
+
+// write the locale specific translations javascript file
+document.write('<script src="' + translationsUrl + '"></script>');
 
 // write out style tags with the localized @font-face declarations
 document.write('<style>');
