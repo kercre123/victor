@@ -359,7 +359,22 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
         // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
         if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
-          RaiseChallengeQuit();
+          if (IsDisplayingWorkspacePage()) {
+            try {
+              // We want to exit Code Lab, but first, let's check if we have
+              // a project to save before exiting. Unity will wait until
+              // JavaScript calls back into Unity with cozmoSaveOnQuitCompleted,
+              // and then Unity will exit Code Lab.
+              this.EvaluateJS("window.saveCozmoUserProject(true);");
+            }
+            catch (Exception) {
+              // If anything unexpected happens, don't wait to exit Code Lab.
+              RaiseChallengeQuit();
+            }
+          }
+          else {
+            RaiseChallengeQuit();
+          }
         }
       }
     }
@@ -712,6 +727,11 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         return true;
       case "cozmoStopAll":
         OnStopAll();
+        return true;
+      case "cozmoSaveOnQuitCompleted":
+        // JavaScript is confirming project has been saved,
+        // so now we can exit Code Lab. 
+        RaiseChallengeQuit();
         return true;
       case "getCozmoUserAndSampleProjectLists":
         OnGetCozmoUserAndSampleProjectLists(scratchRequest);
