@@ -61,6 +61,14 @@ namespace Anki {
             m.resolution = VGA;
             break;
 
+          case 720:
+            if(captureWidth!=1280*3) {
+              PRINT("CompressAndSendImage - Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
+              return RESULT_FAIL;
+            }
+            m.resolution = HD720;
+            break;
+
           default:
             PRINT("CompressAndSendImage - Unrecognized resolution: %dx%d.\n", captureWidth/3, captureHeight);
             return RESULT_FAIL;

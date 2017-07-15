@@ -56,11 +56,11 @@ namespace Anki {
       
       // Lens distortion
       const bool kUseLensDistortion = false;
-      const f32 kRadialDistCoeff1     = -0.4f;
-      const f32 kRadialDistCoeff2     = -0.2f;
-      const f32 kRadialDistCoeff3     = -0.1f;
-      const f32 kTangentialDistCoeff1 = 0.05f;
-      const f32 kTangentialDistCoeff2 = 0.025f;
+      const f32 kRadialDistCoeff1     = -0.01f;
+      const f32 kRadialDistCoeff2     = -0.005f;
+      const f32 kRadialDistCoeff3     = -0.0025f;
+      const f32 kTangentialDistCoeff1 = 0.0025f;
+      const f32 kTangentialDistCoeff2 = 0.00125f;
       const f32 kDistCoeffNoiseFrac = 0.0f; // fraction of the true value to use for uniformly distributed noise (0 to disable)
       
     } // "private" namespace
@@ -270,7 +270,7 @@ namespace Anki {
     bool AndroidHAL::CameraGetFrame(u8* frame, u32& imageID, std::vector<ImageImuData>& imuData )
     {
       DEV_ASSERT(frame != NULL, "sim_androidHAL.CameraGetFrame.NullFramePointer");
-
+      
       const u8* image = headCam_->getImage();
       DEV_ASSERT(image != NULL, "sim_androidHAL.CameraGetFrame.NullImagePointer");
 

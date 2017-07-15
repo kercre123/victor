@@ -29,8 +29,152 @@
 #include "gtest/gtest.h"
 #include "json/json.h"
 
+#include "opencv2/calib3d/calib3d.hpp"
+
+#include "anki/common/basestation/math/rotation.h"
+
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
+
+TEST(VisionSystem, Test)
+{
+//  auto img = cv::imread("/Users/alchaussee/Desktop/images_24180_0.jpg");
+  auto img = cv::imread("/Users/alchaussee/Desktop/images_22165_12.jpg");
+  std::vector<cv::KeyPoint> keypoints;
+  auto detector = cv::SimpleBlobDetector::create();
+  detector->detect(img, keypoints);
+  
+  std::sort(keypoints.begin(), keypoints.end(), [](cv::KeyPoint x, cv::KeyPoint y){ return x.pt.y<y.pt.y; });
+  
+  
+  cv::Mat out = img;
+  int i = 0;
+  for(auto p : keypoints)
+  {
+    cv::putText(out, std::to_string(i), keypoints[i].pt, cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0,0,255));
+    i++;
+  }
+  
+//  cv::imshow("", out);
+//  cv::waitKey();
+//  
+//  cv::Mat_<double> imgPts = (cv::Mat_<double>(8,3) <<
+//    keypoints[0].pt.x, keypoints[0].pt.y, 1,
+//    keypoints[1].pt.x, keypoints[1].pt.y, 1,
+//    keypoints[2].pt.x, keypoints[2].pt.y, 1,
+//    keypoints[3].pt.x, keypoints[3].pt.y, 1,
+//    keypoints[4].pt.x, keypoints[4].pt.y, 1,
+//    keypoints[5].pt.x, keypoints[5].pt.y, 1,
+//    keypoints[6].pt.x, keypoints[6].pt.y, 1,
+//    keypoints[7].pt.x, keypoints[7].pt.y, 1);
+//  
+//  cv::Mat_<double> worldPts = (cv::Mat_<double>(8,4) <<
+//                               0.1,   0.03, 0.1,  1,
+//                               0.1,  -0.03, 0.09, 1,
+//                               0.2,   0.03, 0.1,  1,
+//                               0.2,  -0.03, 0.08, 1,
+//                               0.15,  0.03, 0.06, 1,
+//                               0.15, -0.03, 0.05, 1,
+//                               0.12,  0,    0.04, 1,
+//                               0.16,  0,    0.02, 1);
+  
+//  int npoints = 8;
+//  cv::Mat_<double> C = cv::Mat_<double>::zeros(3*npoints,12);
+//  for(int r=0; r<npoints; ++r)
+//  {
+//    cv::Mat_<double> pt_world_t = worldPts.row(r);
+//    double x = imgPts.at<double>(r,0);
+//    double y = imgPts.at<double>(r,1);
+//    double w = imgPts.at<double>(r,2);
+//    C.row(3*r+0).colRange(4,8) = -w*pt_world_t;
+//    C.row(3*r+0).colRange(8,12) = y*pt_world_t;
+//    C.row(3*r+1).colRange(0,4) = w*pt_world_t;
+//    C.row(3*r+1).colRange(8,12) = -x*pt_world_t;
+//    C.row(3*r+2).colRange(0,4) = -y*pt_world_t;
+//    C.row(3*r+2).colRange(4,8) = x*pt_world_t;
+//  }
+  
+
+  
+//  cv::Mat_<double> P;
+//  cv::SVD::solveZ(C,P); // P is a 12x1 column vector
+//  P = P.reshape(1,3); // Reshape P to be a standard 3x4 projection matrix
+//
+//
+//  cv::Mat_<double> K;
+//  cv::Mat_<double> R;
+//  cv::Mat_<double> T;
+//  cv::decomposeProjectionMatrix(P, K, R, T);
+//
+//
+//  std::stringstream ss;
+//  ss << K << std::endl;
+//  PRINT_NAMED_WARNING("K", "%s", ss.str().c_str());
+//  
+//  std::stringstream ss1;
+//  ss1 << R << std::endl;
+//  PRINT_NAMED_WARNING("R", "%s", ss1.str().c_str());
+//  
+//  std::stringstream ss2;
+//  ss2 << T << std::endl;
+//  PRINT_NAMED_WARNING("T", "%s", ss2.str().c_str());
+  
+//  Anki::SmallSquareMatrix<3,double> Rtemp;
+//  Rtemp.get_CvMatx_() = R;
+//  Anki::RotationMatrix3d Rmat(Rtemp);
+//  
+//  Anki::Radians x, y, z;
+//  Rmat.GetEulerAngles(x, y, z);
+//  PRINT_NAMED_WARNING("", "%f %f %f", x.getDegrees(), y.getDegrees(), z.getDegrees());
+  
+  
+  std::vector<std::vector<cv::Vec2f>> imgPts = {{
+                             {keypoints[0].pt.x, keypoints[0].pt.y},
+                             {keypoints[1].pt.x, keypoints[1].pt.y},
+                             {keypoints[2].pt.x, keypoints[2].pt.y},
+                             {keypoints[3].pt.x, keypoints[3].pt.y},
+                             {keypoints[4].pt.x, keypoints[4].pt.y},
+                             {keypoints[5].pt.x, keypoints[5].pt.y},
+                             {keypoints[6].pt.x, keypoints[6].pt.y},
+                             {keypoints[7].pt.x, keypoints[7].pt.y}}};
+  
+//  float x = 0.005 * cos(DEG_TO_RAD(13.8));
+//  float z = 0.005 * sin(DEG_TO_RAD(13.8));
+  float x = 0.005 * cos(DEG_TO_RAD(9.2));
+  float z = 0.005 * sin(DEG_TO_RAD(9.2));
+  std::vector<std::vector<cv::Vec3f>> worldPts = {{
+                               {0.1f-x,   0.03, 0.1f-z},
+                               {0.1f-x,  -0.03, 0.09f-z},
+                               {0.2f-x,   0.03, 0.1f-z},
+                               {0.2f-x,  -0.03, 0.08f-z},
+                               {0.15f-x,  0.03, 0.06f-z},
+                               {0.15f-x, -0.03, 0.05f-z},
+                               {0.12f-x,  0,    0.04f-z},
+                               {0.16f-x,  0,    0.02f-z}}};
+  
+  cv::Mat_<double> D = cv::Mat::zeros(8, 1, CV_64F);
+  std::vector<cv::Mat_<double>> R2;
+  R2.push_back(cv::Mat::zeros(3, 3, CV_64F));
+  std::vector<cv::Mat_<double>> T2;
+  T2.push_back(cv::Mat::zeros(3,3,CV_64F));
+  
+  cv::Mat_<double> K2 = (cv::Mat_<double>(3,3) <<
+                          100, 0, 160,
+                          0, 100, 120,
+                          0, 0, 1);
+  
+  cv::calibrateCamera(worldPts, imgPts, cv::Size(img.cols, img.rows),
+                      K2, D, R2, T2,
+                      cv::CALIB_USE_INTRINSIC_GUESS);
+  
+    std::stringstream ss;
+    ss << K2 << std::endl;
+    PRINT_NAMED_WARNING("K", "%s", ss.str().c_str());
+  
+  std::stringstream ss1;
+  ss1 << D << std::endl;
+  PRINT_NAMED_WARNING("D", "%s", ss1.str().c_str());
+}
 
 TEST(VisionSystem, MarkerDetectionTests)
 {

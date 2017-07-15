@@ -1467,6 +1467,14 @@ namespace Cozmo {
         }
         break;
         
+      case 720:
+        if (captureWidth!=1280) {
+          result = RESULT_FAIL;
+        } else {
+          m.resolution = ImageResolution::HD720;
+        }
+        break;
+        
       default:
         result = RESULT_FAIL;
     }
@@ -2274,7 +2282,7 @@ namespace Cozmo {
   void VisionComponent::CaptureAndSendImage()
   {
     // This resolution should match AndroidHAL::_imageCaptureResolution!
-    const ImageResolution expectedResolution = ImageResolution::QVGA;
+    const ImageResolution expectedResolution = ImageResolution::HD720;
     DEV_ASSERT(expectedResolution == AndroidHAL::getInstance()->CameraGetResolution(),
                "VisionComponent.CaptureAndSendImage.ResolutionMismatch");
     const int cameraRes = static_cast<const int>(expectedResolution);
@@ -2301,11 +2309,11 @@ namespace Cozmo {
       
       
       // DEBUG Distortion coeffs
-      Vision::ImageRGB imgUndistorted(numRows,numCols);
-      cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
-                    _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
-                    _camera.GetCalibration()->GetDistortionCoeffs());
-      imgUndistorted.Display("UndistortedImage");
+//      Vision::ImageRGB imgUndistorted(numRows,numCols);
+//      cv::undistort(imgRGB.get_CvMat_(), imgUndistorted.get_CvMat_(),
+//                    _camera.GetCalibration()->GetCalibrationMatrix().get_CvMatx_(),
+//                    _camera.GetCalibration()->GetDistortionCoeffs());
+//      imgUndistorted.Display("UndistortedImage");
       
       // Create EncodedImage with proper imageID and timestamp
       // ***** TODO: Timestamp needs to be in sync with RobotState timestamp!!! ******

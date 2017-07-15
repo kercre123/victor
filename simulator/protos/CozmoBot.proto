@@ -13,9 +13,9 @@ PROTO CozmoBot [
 #  field SFFloat  fieldOfView  1.21
 
   # QVGA Crop:
-  field SFInt32  cameraWidth  320
-  field SFInt32  cameraHeight 240
-  field SFFloat  fieldOfView  1.04
+  field SFInt32  cameraWidth  1280
+  field SFInt32  cameraHeight 720
+  field SFFloat  fieldOfView  1.8
 
   # VGA Wide:
 #    field SFInt32  cameraWidth  640

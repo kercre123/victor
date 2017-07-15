@@ -357,6 +357,10 @@ namespace Cozmo {
         calibSizeValid = camCalib.GetNrows() == 240;
         _captureResolution = ImageResolution::QVGA;
         break;
+      case 1280:
+        calibSizeValid = camCalib.GetNrows() == 720;
+        _captureResolution = ImageResolution::HD720;
+        break;
     }
     
     if(!calibSizeValid)

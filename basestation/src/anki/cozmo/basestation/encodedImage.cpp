@@ -94,7 +94,8 @@ namespace Cozmo {
     {
       _imgID           = chunk.imageId;
       
-      if(chunk.resolution != ImageResolution::QVGA)
+      if(chunk.resolution != ImageResolution::QVGA &&
+         chunk.resolution != ImageResolution::HD720)
       {
         PRINT_NAMED_WARNING("EncodedImage.AddChunk.BadResolution",
                             "Expecting QVGA resolution, got %s",

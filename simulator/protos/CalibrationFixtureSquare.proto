@@ -1,6 +1,6 @@
 #VRML_SIM V7.3.0 utf8
 
-PROTO CalibrationPattern [
+PROTO CalibrationFixtureSquare [
   field SFString name "CalibrationPattern"
 
   field SFVec3f       translation  0 0 0
@@ -14,9 +14,9 @@ PROTO CalibrationPattern [
   # Asymmetric circles pattern
   # Image is 1830 x 1330
   # Pattern is 1208 x 872
-  field SFString image                         "acircles_pattern.png"
-  field SFFloat  imageAspectRatio              0.72677595628415
-  field SFFloat  imageWidthToPatternWidthRatio 1.51490066225165
+  field SFString image                         "acircles_pattern_square.png"
+  field SFFloat  imageAspectRatio              1
+  field SFFloat  imageWidthToPatternWidthRatio 1
 ]
 {
 Solid {
@@ -37,7 +37,7 @@ Solid {
         }
       }
       geometry Box {
-        size %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value}% 0.0001 %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value * fields.imageAspectRatio.value}%
+        size %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value}% %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value}% %{=fields.patternWidth.value * fields.imageWidthToPatternWidthRatio.value}%
       }
     }
 

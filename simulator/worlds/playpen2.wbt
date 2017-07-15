@@ -45,7 +45,12 @@ WebotsKeyboardController {
 CozmoVizDisplay {
   filterLogs TRUE
 }
-CalibrationFixtureSquare {
-  translation 0.16 0 0.05
-  rotation 0.28108464 0.67859835 -0.67859833 5.1871285
+Transform {
+  rotation 0 1 0 -0.6108652382
+  children [
+  CalibrationFixtureSquare {
+    translation 0.16 0 0.04
+    rotation 0.28108464 0.67859835 -0.67859833 5.1871285
+  }
+  ]
 }
