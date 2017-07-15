@@ -40,7 +40,7 @@ namespace Cozmo.Needs.Sparks.UI {
     private CozmoButton _ListAbilitiesButton;
 
     [SerializeField]
-    private GameObject _OnboardingDimmer;
+    private GameObject[] _OnboardingDimmers;
 
     [SerializeField]
     private SparksListModal _SparksListModalPrefab;
@@ -79,7 +79,9 @@ namespace Cozmo.Needs.Sparks.UI {
       RequestGameManager.Instance.OnRequestGameAlertCreated += ReenableTouches;
 
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.PlayIntro)) {
-        _OnboardingDimmer.SetActive(true);
+        for (int i = 0; i < _OnboardingDimmers.Length; i++) {
+          _OnboardingDimmers[i].SetActive(true);
+        }
         _BackButton.gameObject.SetActive(false);
         OnboardingManager.Instance.OnOnboardingPhaseCompleted += HandleOnboardingPhaseComplete;
       }
