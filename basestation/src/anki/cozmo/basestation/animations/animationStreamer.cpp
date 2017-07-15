@@ -1064,36 +1064,38 @@ namespace Cozmo {
       cozmoContext->SetSdkStatus(SdkStatusType::Anim, std::string("Idle:") + _idleAnimation->GetName());
     }
     
-    _trackLayerComponent->Update();
-    
-    // Always keep face alive, unless we have a streaming animation, since we rely on it
-    // to do all face updating and we don't want to step on it's hand-designed toes.
-    // Wait a 1/2 second before running after we finish the last streaming animation
-    // to help reduce stepping on the next animation's toes when we have things
-    // sequenced.
-    // NOTE: lastStreamTime>0 check so that we don't start keeping face alive before
-    //       first animation of any kind is sent.
-    const bool haveStreamingAnimation = _streamingAnimation != nullptr;
+    // Don't update any layers (which could include things like "needs repair" or KeepFaceAlive) until we've sent
+    // some animation (e.g. to avoid triggering needs repair during initial connection)
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
-    const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
-    const bool haveIdleAnimation      = _idleAnimation != nullptr;
-    const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > _longEnoughSinceLastStreamTimeout_s;
-    
-    if(!haveStreamingAnimation &&
-       haveStreamedAnything &&
-       (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
+    if(haveStreamedAnything)
     {
-      // If we were interrupted from streaming an animation and we've met all the
-      // conditions to even be in this function, then we should make sure we've
-      // got neutral face back on the screen
-      if(_wasAnimationInterruptedWithNothing) {
-        SetStreamingAnimation(_neutralFaceAnimation);
-        _wasAnimationInterruptedWithNothing = false;
-      }
+      _trackLayerComponent->Update();
       
-      _trackLayerComponent->KeepFaceAlive(GetAllParams());
+      // Always keep face alive, unless we have a streaming animation, since we rely on it
+      // to do all face updating and we don't want to step on it's hand-designed toes.
+      // Wait a 1/2 second before running after we finish the last streaming animation
+      // to help reduce stepping on the next animation's toes when we have things
+      // sequenced.
+      const bool haveStreamingAnimation = _streamingAnimation != nullptr;
+      const bool usingLiveIdle          = _idleAnimation == &_liveAnimation;
+      const bool haveIdleAnimation      = _idleAnimation != nullptr;
+      const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime) > _longEnoughSinceLastStreamTimeout_s;
+      
+      if(!haveStreamingAnimation &&
+         (usingLiveIdle || (!haveIdleAnimation && longEnoughSinceStream)))
+      {
+        // If we were interrupted from streaming an animation and we've met all the
+        // conditions to even be in this function, then we should make sure we've
+        // got neutral face back on the screen
+        if(_wasAnimationInterruptedWithNothing) {
+          SetStreamingAnimation(_neutralFaceAnimation);
+          _wasAnimationInterruptedWithNothing = false;
+        }
+        
+        _trackLayerComponent->KeepFaceAlive(GetAllParams());
+      }
     }
-    
+  
     if(_streamingAnimation != nullptr) {
       _timeSpentIdling_ms = 0;
       
