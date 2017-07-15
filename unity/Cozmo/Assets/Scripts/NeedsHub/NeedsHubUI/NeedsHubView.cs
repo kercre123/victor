@@ -66,6 +66,8 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private GameObject _LiquidMetalTitle;
 
+    private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
+
     public void Start() {
       _ActivitiesButton.Initialize(HandleActivitiesButtonClicked, "open_activities_button", DASEventDialogName);
       _SparksButton.Initialize(HandleSparksButtonClicked, "open_sparks_button", DASEventDialogName);
@@ -103,6 +105,12 @@ namespace Cozmo.Needs.UI {
       _SettingsAlertImage.gameObject.SetActive(!RobotEngineManager.Instance.AllCubesConnected());
 
       this.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+
+      ChallengeEdgeCases challengeEdgeCases = ChallengeEdgeCases.CheckForDizzy
+                      | ChallengeEdgeCases.CheckForHiccups
+                      | ChallengeEdgeCases.CheckForDriveOffCharger
+                      | ChallengeEdgeCases.CheckForOnTreads;
+      _EdgeCaseAlertController = new ChallengeStartEdgeCaseAlertController(new ModalPriorityData(), challengeEdgeCases);
     }
 
     protected override void CleanUp() {
@@ -141,6 +149,10 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleRepairButton() {
+      if (ShowEdgeCaseAlertIfNeeded()) {
+        return;
+      }
+
       UIManager.OpenModal(_NeedsRepairModalPrefab, new ModalPriorityData(), HandleRepairModalCreated);
     }
 
@@ -150,6 +162,10 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleEnergyButton() {
+      if (ShowEdgeCaseAlertIfNeeded()) {
+        return;
+      }
+
       UIManager.OpenModal(_NeedsEnergyModalPrefab, new ModalPriorityData(), HandleEnergyModalCreated);
     }
 
@@ -210,6 +226,11 @@ namespace Cozmo.Needs.UI {
         _FeedButton.Interactable = true;
         _SparksButton.Interactable = true;
       }
+    }
+
+    private bool ShowEdgeCaseAlertIfNeeded() {
+      // We can send in default values because we are not checking cubes or os
+      return _EdgeCaseAlertController.ShowEdgeCaseAlertIfNeeded(null, 0, true, null);
     }
 
     #region Onboarding
