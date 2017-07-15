@@ -278,6 +278,7 @@ MonoBehaviour:
   _ShowCozmoCubesLabel: {fileID: 114164534589192122}
   _TransparentCubeContainer: {fileID: 22485158}
   _CozmoImageTransform: {fileID: 22430710}
+  _UILightColorAlphaOverride: 0.7
 --- !u!114 &11457834
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -563,7 +564,7 @@ MonoBehaviour:
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 65
+  m_fontSizeMin: 45
   m_fontSizeMax: 65
   m_fontStyle: 0
   m_textAlignment: 513
@@ -632,7 +633,7 @@ MonoBehaviour:
   _OverrideOutlineThickness: 0
   _OverrideSkinFontSize: 0
   _OverrideSkinFontStyle: 0
-  _OverrideSkinTextAlignment: 0
+  _OverrideSkinTextAlignment: 1
   _OverrideSkinTextOverflow: 0
   _OverrideSkinAutoSizing: 0
 --- !u!222 &222684650217968508

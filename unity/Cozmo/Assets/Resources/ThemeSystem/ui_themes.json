@@ -4148,7 +4148,7 @@
                                 "a": 1.0
                             },
                             "SkinImage": true,
-                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_down.png",
+                            "ImageResourceKey": "Assets/AssetBundles/NeedsHub/Art/CommonButtonSprites/common_button_sprites-UHD/Packed/btn_closeIcon_on.png",
                             "SkinFont": false,
                             "SkinFontStyle": false,
                             "FontStyle": 0,
@@ -4606,7 +4606,7 @@
                             "SkinFontStyle": true,
                             "FontStyle": 0,
                             "SkinTextAlignment": true,
-                            "TextAlignment": 514,
+                            "TextAlignment": 513,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
                             "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
@@ -10847,7 +10847,7 @@
                             "TextAlignment": 513,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Black SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
                             "SkinFontSize": true,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -14759,9 +14759,9 @@
                             },
                             "SkinFontColor": true,
                             "FontColor": {
-                                "r": 0.16078431904315949,
-                                "g": 0.16078431904315949,
-                                "b": 0.16078431904315949,
+                                "r": 0.08250430971384049,
+                                "g": 0.6462979316711426,
+                                "b": 0.8014705777168274,
                                 "a": 1.0
                             },
                             "SkinImage": false,
@@ -14773,7 +14773,7 @@
                             "TextAlignment": 514,
                             "SkinTextOverflow": true,
                             "TextOverflow": 0,
-                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Medium SDF.asset",
+                            "FontResourceKey": "Assets/AssetBundles/Fonts/Fonts-latin/AvenirLTStd-Heavy SDF.asset",
                             "SkinFontSize": true,
                             "FontSizeOffset": 0,
                             "SkinButtonTransition": false,
@@ -15802,8 +15802,8 @@
                                     "m_PressedTrigger": "Pressed",
                                     "m_DisabledTrigger": "Disabled"
                                 }
-                            }                        
-			},
+                            }
+                        },
                         {
                             "Id": "Image_Arrow_Straight",
                             "Type": 1,
