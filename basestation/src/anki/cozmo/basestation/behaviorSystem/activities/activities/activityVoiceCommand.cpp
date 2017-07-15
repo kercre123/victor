@@ -57,7 +57,7 @@ static const int kMaxChooseBehaviorLoop = 1000;
 } // namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehaviorQueue&& responseQue,
+void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehaviorQueue&& responseQueue,
                                                               VoiceCommand::VoiceCommandType commandType)
 {
   // Ensure data's not being overwritten improperly
@@ -70,7 +70,7 @@ void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehavior
               VoiceCommand::VoiceCommandTypeToString(_currentResponseType));
   
   _currentResponseBehavior.reset();
-  _respondToVCQueue = std::move(responseQue);
+  _respondToVCQueue = std::move(responseQueue);
   _currentResponseType = commandType;
 }
   
@@ -732,18 +732,18 @@ void ActivityVoiceCommand::RemoveSparksForCommand(Robot& robot, VoiceCommandType
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQue) const
+bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQueue) const
 {
   Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
   {
     BehaviorID whichRefuse = BehaviorID::VC_Refuse_Repair;
-    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQue);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQueue);
   }
   else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
   {
     BehaviorID whichRefuse = BehaviorID::VC_Refuse_Energy;
-    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQue);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQueue);
   }
   
   return false;
@@ -754,7 +754,7 @@ bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
                                                        BehaviorID whichRefuse,
-                                                       ChooseNextBehaviorQueue& responseQue) const
+                                                       ChooseNextBehaviorQueue& responseQueue) const
 {
   IBehaviorPtr refuseBehavior = robot.GetBehaviorManager().FindBehaviorByID(whichRefuse);
   DEV_ASSERT(refuseBehavior != nullptr &&
@@ -764,7 +764,7 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
   BehaviorPreReqRobot preReqRobot(robot);
   if(refuseBehavior->IsRunnable(preReqRobot))
   {
-    responseQue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
+    responseQueue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
     return true;
   }
   return false;
@@ -782,7 +782,7 @@ void ActivityVoiceCommand::BeginRespondingToCommand(const CozmoContext* context,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQue)
+void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQueue)
 {
   // Maps a need and bracket to a behavior and animations
   static const std::map<std::pair<NeedId, NeedBracketId>,
@@ -857,7 +857,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextB
   BehaviorPreReqAnimSequence preReq(robot, howAreYouDoingAnims);
   if(howAreYouDoingBehavior->IsRunnable(preReq))
   {
-    responseQue.push([&howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
+    responseQueue.push([howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
   }
   else
   {
