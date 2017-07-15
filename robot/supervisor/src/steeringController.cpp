@@ -491,7 +491,7 @@ namespace Anki {
 
 //      PRINT("CURR: %f %f\n", targetLeftVel_, targetRightVel_);
 
-      if (leftAccelPerCycle_ == 0) {
+      if (NEAR_ZERO(leftAccelPerCycle_)) {
         // max acceleration (i.e. command target velocity)
         currLeftVel = targetLeftVel_;
       } else {
@@ -502,7 +502,7 @@ namespace Anki {
         }
       }
 
-      if (rightAccelPerCycle_ == 0) {
+      if (NEAR_ZERO(rightAccelPerCycle_)) {
         // max acceleration (i.e. command target velocity)
         currRightVel = targetRightVel_;
       } else {
@@ -837,7 +837,7 @@ namespace Anki {
         // so that we accelerate to the target speed in a straight line
         WheelController::SetDesiredWheelSpeeds(avgWheelSpeed, avgWheelSpeed);
         
-      } else if(curvatureRadius_mm == 0) {
+      } else if(NEAR_ZERO(curvatureRadius_mm)) {
         ExecutePointTurn(speed, accel);
         return;
       } else {

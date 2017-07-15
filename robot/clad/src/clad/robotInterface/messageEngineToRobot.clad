@@ -397,6 +397,7 @@ message ShutdownRobot
   uint_32 reserved[8]
 }
 
+// ========== V2 Animation process messages ===========
 // TODO: Make animation files referencable by integer tag so we don't have to send a string.
 
 message PlayAnim
@@ -404,6 +405,28 @@ message PlayAnim
   uint_32 tag,
   uint_8 animName[64]
 }
+
+message LockAnimTracks
+{
+  uint_8 whichTracks    // See AnimTrackFlags
+}
+
+message RecordHeading
+{
+}
+
+message TurnToRecordedHeading
+{
+  int_16 offset_deg,        // Offset from recorded angle
+  int_16 speed_degPerSec,
+  int_16 accel_degPerSec2,
+  int_16 decel_degPerSec2,
+  uint_16 tolerance_deg,
+  uint_16 numHalfRevs,
+  bool useShortestDir,
+}
+
+// ====================================================
 
 enum uint_32 ToRobotAddressSpace
 {
@@ -530,9 +553,9 @@ union EngineToRobot
   RequestCrashReports           requestCrashReports         = 0x80,
   NVStorage::NVCommand          commandNV                   = 0x81,
   PlayAnim                      playAnim                    = 0x82,   // V2
-  //          FREE SLOT!!!                                  = 0x83,
-  //          FREE SLOT!!!                                  = 0x84,
-  //          FREE SLOT!!!                                  = 0x85,
+  LockAnimTracks                lockAnimTracks              = 0x83,   // V2
+  RecordHeading                 recordHeading               = 0x84,   // V2
+  TurnToRecordedHeading         turnToRecordedHeading       = 0x85,   // V2
   BLE::ConnectionState          bleConnectionState          = 0x86,
   BLE::DataReceived             bleDataReceived             = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,

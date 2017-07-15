@@ -904,6 +904,24 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_lockAnimTracks(RobotInterface::LockAnimTracks const& msg)
+      {
+        // Nothing to do here
+      }
+      void Process_recordHeading(RobotInterface::RecordHeading const& msg)
+      {
+        SteeringController::RecordHeading();
+      }
+      void Process_turnToRecordedHeading(RobotInterface::TurnToRecordedHeading const& msg)
+      {
+        SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
+                                                              DEG_TO_RAD_F32(msg.speed_degPerSec),
+                                                              DEG_TO_RAD_F32(msg.accel_degPerSec2),
+                                                              DEG_TO_RAD_F32(msg.decel_degPerSec2),
+                                                              DEG_TO_RAD_F32(msg.tolerance_deg),
+                                                              msg.numHalfRevs,
+                                                              msg.useShortestDir);
+      }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here
@@ -1098,6 +1116,7 @@ namespace Anki {
         missedLogs_ = 0;
       }
 
+#ifndef COZMO_V2
 #ifdef SIMULATOR
       int SendText(const char *format, ...)
       {
@@ -1139,7 +1158,8 @@ namespace Anki {
       {
         return SendText(RobotInterface::LogLevel::ANKI_LOG_LEVEL_PRINT, format, vaList);
       }
-#endif
+#endif // SIMULATOR
+#endif // COZMO_V2
 
       bool ReceivedInit()
       {

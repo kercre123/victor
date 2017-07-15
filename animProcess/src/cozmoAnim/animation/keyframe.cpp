@@ -154,17 +154,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
     {
-      _streamHeadMsg.time_ms = (uint16_t)_durationTime_ms;
+      _streamHeadMsg.duration_sec = 0.001 * _durationTime_ms;
       
       // Add variability:
       if(_angleVariability_deg > 0) {
-        _streamHeadMsg.angle_deg = static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
-                                                                           _angle_deg + _angleVariability_deg));
+        _streamHeadMsg.angle_rad = DEG_TO_RAD(static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
+                                                                                      _angle_deg + _angleVariability_deg)));
       } else {
-        _streamHeadMsg.angle_deg = _angle_deg;
+        _streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
       }
       
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::HeadAngle(_streamHeadMsg));
+      return new RobotInterface::EngineToRobot(_streamHeadMsg);
     }
 
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
@@ -209,7 +209,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
     {
-      _streamLiftMsg.time_ms = (uint16_t)_durationTime_ms;
+      _streamLiftMsg.duration_sec = 0.001 * _durationTime_ms;
       
       // Add variability:
       if(_heightVariability_mm > 0) {
@@ -219,7 +219,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         _streamLiftMsg.height_mm = _height_mm;
       }
 
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::LiftHeight(_streamLiftMsg));
+      return new RobotInterface::EngineToRobot(_streamLiftMsg);
     }
 
     Result LiftHeightKeyFrame::DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
@@ -719,21 +719,24 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     BodyMotionKeyFrame::BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms)
     : BodyMotionKeyFrame()
     {
+      bool isPointTurn = curvatureRadius_mm == 0;
+      
       _durationTime_ms = duration_ms;
-      _streamMsg.speed = speed;
+      _streamMsg.speed = isPointTurn ? DEG_TO_RAD(speed) : speed;
       _streamMsg.curvatureRadius_mm = curvatureRadius_mm;
+      _streamMsg.accel = isPointTurn ? 50.f : 0.f;  // 50 is what has been used on V1
     }
     
     void BodyMotionKeyFrame::CheckRotationSpeed(const std::string& animNameDebug)
     {
       // Check that speed is valid
-      if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
+      if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckRotationSpeed.PointTurnSpeedExceedsLimit",
-                      "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-                      animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+                      "%s: PointTurn speed %f deg/s exceeds limit of %f deg/s. Clamping",
+                      animNameDebug.c_str(), std::abs(RAD_TO_DEG(_streamMsg.speed)), MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed,
-                                -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
-                                MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+                                -MAX_BODY_ROTATION_SPEED_RAD_PER_SEC,
+                                MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
       }
     }
 
@@ -742,7 +745,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       // Check that speed is valid
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
         PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckStraightSpeed.StraightSpeedExceedsLimit",
-                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                      "%s: Speed %f mm/s exceeds limit of %f mm/s. Clamping",
                       animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
@@ -757,7 +760,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       //       just using straight limit for now as a sanity check.
       if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
         PRINT_CH_INFO("Animations", "BodyMotionKeyFrame.CheckTurnSpeed.ArcSpeedExceedsLimit",
-                      "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                      "%s: Speed %f mm/s exceeds limit of %f mm/s. Clamping",
                       animNameDebug.c_str(), std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
         _streamMsg.speed = CLIP((f32)_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
       }
@@ -839,10 +842,10 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       
       if(GetCurrentTime() == 0) {
         // Send the motion command at the beginning
-        return new RobotInterface::EngineToRobot(AnimKeyFrame::BodyMotion(_streamMsg));
+        return new RobotInterface::EngineToRobot(_streamMsg);
       } else if(_enableStopMessage && GetCurrentTime() >= _durationTime_ms) {
         // Send a stop command when the duration has passed
-        return new RobotInterface::EngineToRobot(AnimKeyFrame::BodyMotion(_stopMsg));
+        return new RobotInterface::EngineToRobot(_stopMsg);
       } else {
         // Do nothing in the middle or if no done message is required.
         // (Note that IsDone() will return false during
@@ -889,7 +892,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     
     RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
     {
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::RecordHeading(_streamMsg));
+      return new RobotInterface::EngineToRobot(_streamMsg);
     }
     
     bool RecordHeadingKeyFrame::IsDone()
@@ -1006,7 +1009,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     
     RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
     {
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::TurnToRecordedHeading(_streamMsg));
+      return new RobotInterface::EngineToRobot(_streamMsg);
     }
     
     bool TurnToRecordedHeadingKeyFrame::IsDone()

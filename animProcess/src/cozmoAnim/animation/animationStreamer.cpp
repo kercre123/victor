@@ -27,15 +27,20 @@
 //#include "anki/cozmo/basestation/events/ankiEvent.h"
 //#include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-//#include "clad/externalInterface/messageGameToEngineTag.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
-#define DEBUG_ANIMATION_STREAMING 0
+
+#include "cozmoAnim/engineMessages.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine_sendToEngine_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_sendToRobot_helper.h"
+
+#define DEBUG_ANIMATION_STREAMING 1
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
 namespace Anki {
@@ -56,17 +61,11 @@ namespace Cozmo {
   
 //  const AnimationTrigger AnimationStreamer::NeutralFaceTrigger = AnimationTrigger::NeutralFace;
   
-//  const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
-  
-  // This is roughly (2 x ExpectedOneWayLatency_ms + BasestationTick_ms) / AudioSampleLength_ms
-//  const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
-  
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context) //, Audio::RobotAudioClient& audioClient)
   : IAnimationStreamer()
   , _context(context)
   , _animationContainer(*(_context->GetDataLoader()->GetCannedAnimations()))
-//  , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _rng(*_context->GetRandom())
 //  , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
@@ -75,11 +74,6 @@ namespace Cozmo {
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   {
     _liveAnimation.SetIsLive(true);
-    
-//    // TODO: Provide a default idle animation via Json config? COZMO-1662
-//    // For now, default the idle to be doing nothing, since that what it used to be.
-//    _idleAnimationNameStack.push_back(
-//        std::make_pair(AnimationTrigger::Count, kDefaultIdleAnimLock));
     
     DEV_ASSERT(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
     
@@ -122,43 +116,6 @@ namespace Cozmo {
     _trackLayerComponent->Init();
   }
   
-//  void AnimationStreamer::SetupHandlers(IExternalInterface* extIntFace)
-//  {
-//    if(nullptr == extIntFace) {
-//      return;
-//    }
-//      
-//    using namespace ExternalInterface;
-//    using GameToEngineEvent = AnkiEvent<MessageGameToEngine>;
-//    
-//    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PushIdleAnimation,
-//                                                   [this](const GameToEngineEvent& msg) {
-//                                                     const auto& idleAnim = msg.GetData().Get_PushIdleAnimation();
-//                                                     PushIdleAnimation(idleAnim.animTrigger, idleAnim.lockName);
-//                                                   }));
-//    
-//    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::RemoveIdleAnimation,
-//                                                   [this](const GameToEngineEvent& msg) {
-//                                                     RemoveIdleAnimation(msg.GetData().Get_RemoveIdleAnimation().lockName);
-//                                                   }));
-//    
-//    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::ReplayLastAnimation,
-//                                                   [this](const GameToEngineEvent& msg) {
-//                                                     SetStreamingAnimation(_lastPlayedAnimationId,
-//                                                                           msg.GetData().Get_ReplayLastAnimation().numLoops);
-//                                                   }));
-//
-//  } // SetupHandlers()
-
-//  const std::string& AnimationStreamer::GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const 
-//  {
-//    const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
-//    if(group != nullptr && !group->IsEmpty()) {
-//      return group->GetAnimationName(robot.GetMoodManager(), _animationGroups, robot.GetHeadAngle());
-//    }
-//    static const std::string empty("");
-//    return empty;
-//  }
   
   const Animation* AnimationStreamer::GetCannedAnimation(const std::string& name) const
   {
@@ -167,7 +124,6 @@ namespace Cozmo {
   
   AnimationStreamer::~AnimationStreamer()
   {
-    ClearSendBuffer();
   }
 
   
@@ -261,19 +217,6 @@ namespace Cozmo {
     }
   }
   
-  // Private helper to construct string of unsent message tags
-  static std::string ToString(const std::list<RobotInterface::EngineToRobot*> sendBuffer)
-  {
-    std::string s;
-    for (const auto * item : sendBuffer)
-    {
-      if (item != sendBuffer.front()) {
-        s.append(",");
-      }
-      s.append(RobotInterface::EngineToRobot::TagToString(item->tag));
-    }
-    return s;
-  }
   
   void AnimationStreamer::Abort()
   {
@@ -290,15 +233,14 @@ namespace Cozmo {
       
       PRINT_NAMED_INFO("AnimationStreamer.Abort",
                        //"Tag=%d %s:%s hasFramesLeft=%d audioComplete=%d startSent=%d endSent=%d sendBuffer=%s",
-                       "Tag=%d %s:%s hasFramesLeft=%d startSent=%d endSent=%d sendBuffer=%s",
+                       "Tag=%d %s:%s hasFramesLeft=%d startSent=%d endSent=%d",
                        _tag,
                        type,
                        anim->GetName().c_str(),
                        anim->HasFramesLeft(),
 //                       _audioClient.AnimationIsComplete(),
                        _startOfAnimationSent,
-                       _endOfAnimationSent,
-                       ToString(_sendBuffer).c_str());
+                       _endOfAnimationSent);
       
       // Reset streamer state
       _startOfAnimationSent = false;
@@ -312,117 +254,6 @@ namespace Cozmo {
   } // Abort()
 
   
-//  Result AnimationStreamer::PushIdleAnimation(AnimationTrigger animName, const std::string& lockName)
-//  {
-//    if(ANKI_DEV_CHEATS){
-//      const bool sdkDifferentParadigmLock = (lockName == kSDKIdleAnimLock);
-//      if(!sdkDifferentParadigmLock){
-//        for(const auto& entry : _idleAnimationNameStack){
-//          DEV_ASSERT_MSG(entry.second != lockName,
-//                         "AnimationStreamer.PushIdleAnimation.DuplicateLock",
-//                         "Attempting to push a duplicate idle lock: %s",
-//                         lockName.c_str());
-//        }
-//      }
-//    }
-//    
-//    if(animName == AnimationTrigger::Count) {
-//      if(DEBUG_ANIMATION_STREAMING) {
-//        PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation.Disabling",
-//                          "Disabling idle animation.");
-//      }
-//      _idleAnimation = nullptr;
-//      _isIdling = false;
-//    }
-//    _idleAnimationNameStack.push_back(std::make_pair(animName, lockName));
-//    
-//    if(DEBUG_ANIMATION_STREAMING) {
-//      PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation",
-//                        "Setting idle animation to '%s'.",
-//                        EnumToString(animName));
-//    }
-//    
-//    return RESULT_OK;
-//  } // PushIdleAnimation()
-//  
-//  
-//  Result AnimationStreamer::RemoveIdleAnimation(const std::string& lockName)
-//  {
-//    if(_idleAnimationNameStack.size() == 1) {
-//      PRINT_NAMED_WARNING("AnimationStreamer.RemoveIdleAnimation.WillNotPopLast",
-//                        "Refusing to pop default idle animation '%s' for lockName %s",
-//                         AnimationTriggerToString(_idleAnimationNameStack.back().first),
-//                         lockName.c_str());
-//      return RESULT_FAIL;
-//    }
-//    
-//    if( _idleAnimationNameStack.empty() ) {
-//      // This shouldn't really happen because we generally want something always
-//      // in the idle stack
-//      PRINT_NAMED_ERROR("AnimationStreamer.RemoveIdleAnimation.NoStack",
-//                          "Trying to pop an idle animation, but the stack is empty");
-//      return RESULT_FAIL;
-//    }
-//
-//    // find the (last - just in case the same name is pushed multiple times)
-//    // idle animation with the matching lock name in the idle animation stack
-//    {
-//      auto lastMatchingAnimIter = _idleAnimationNameStack.end();
-//      {
-//        auto idleAnimIter = _idleAnimationNameStack.begin();
-//        BOUNDED_WHILE(kBoundedWhileRemoveIdleMax, idleAnimIter != _idleAnimationNameStack.end()){
-//          if(idleAnimIter->second == lockName){
-//            lastMatchingAnimIter = idleAnimIter;
-//          }
-//          ++idleAnimIter;
-//        }
-//      }
-//      if(lastMatchingAnimIter != _idleAnimationNameStack.end()){
-//        const std::string animName = lastMatchingAnimIter->second;
-//        lastMatchingAnimIter = _idleAnimationNameStack.erase(lastMatchingAnimIter);
-//        // Generally we should be poppping off the top of a stack - print a warning
-//        // if we're not
-//        if(lastMatchingAnimIter != _idleAnimationNameStack.end()){
-//          PRINT_NAMED_WARNING("AnimationStreamer.RemoveIdleAnimation.AnimationRemovedFromMiddleOfStack",
-//                              "The animation %s was removed with lock name %s, but other idles were above it",
-//                              animName.c_str(),
-//                              lockName.c_str());
-//        }
-//      }else{
-//        PRINT_NAMED_WARNING("AnimationStreamer.RemoveIdleAnimation.NoLockNameFoundInStack",
-//                            "Attempted to remove idle with lock name %s, but not found",
-//                            lockName.c_str());
-//        return RESULT_FAIL;
-//      }
-//    }
-//    
-//    DEV_ASSERT(!_idleAnimationNameStack.empty(), "AnimationStreamer.RemoveIdleAnimation.EmptyIdleStack");
-//    
-//    // If what's left on the stack is "no idle", make sure to make idle null and isIdling = false:
-//    if(_idleAnimationNameStack.back().first == AnimationTrigger::Count) {
-//      // If we were just idling and there's nothing streaming, we don't want to leave
-//      // the face in a weird spot, so stream the neutral face, just in case
-//      if(_idleAnimation != nullptr && _streamingAnimation == nullptr) {
-//        // Send the neutral face
-//        SetStreamingAnimation(_neutralFaceAnimation);
-//      }
-//
-//      _idleAnimation = nullptr;
-//      _isIdling = false;
-//    }
-//    
-//    return RESULT_OK;
-//  }
-//
-//  const std::string& AnimationStreamer::GetIdleAnimationName() const
-//  {
-//    if( nullptr == _idleAnimation ) {
-//      static const std::string empty("");
-//      return empty;
-//    }
-//
-//    return _idleAnimation->GetName();
-//  }
   
   Result AnimationStreamer::InitStream(Animation* anim, Tag withTag)
   {
@@ -444,12 +275,7 @@ namespace Cozmo {
       // Initialize "fake" streaming time to the same start time so we can compare
       // to it for determining when its time to stream out a keyframe
       _streamingTime_ms = _startTime_ms;
-      
-      if(!_sendBuffer.empty()) {
-        PRINT_NAMED_WARNING("Animation.Init.SendBufferNotEmpty",
-                            "Expecting SendBuffer to be empty. Will clear.");
-        ClearSendBuffer();
-      }
+
       
       // If this is an empty (e.g. live) animation, there is no need to
       // send end of animation keyframe until we actually send a keyframe
@@ -474,148 +300,23 @@ namespace Cozmo {
   bool AnimationStreamer::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
   {
     if(msg != nullptr) {
-      _sendBuffer.push_back(msg);
+      delete msg;
       return true;
     }
     return false;
   }
   
-  Result AnimationStreamer::SendBufferedMessages()
+  // TODO: Take in EngineToRobot& instead of ptr?
+  bool AnimationStreamer::SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track)
   {
-    /*
-#   if DEBUG_ANIMATION_STREAMING
-    s32 numSent = 0;
-#   endif
-    
-    // Empty out anything waiting in the send buffer:
-    RobotInterface::EngineToRobot* msg = nullptr;
-    while(!_sendBuffer.empty()) {
-      if(DEBUG_ANIMATION_STREAMING) {
-        PRINT_NAMED_DEBUG("AnimationStreamer.SendBufferedMessages",
-                          "Send buffer length=%lu.", (unsigned long)_sendBuffer.size());
+    bool res = false;
+    if(msg != nullptr) {
+      if (!IsTrackLocked((u8)track)) {
+        res = Messages::SendPacketToRobot(msg->GetBuffer(), msg->Size());
       }
-      
-      // Compute number of bytes required and whether the robot is accepting any
-      // further audio frames yet
-      msg = _sendBuffer.front();
-      const size_t numBytesRequired = msg->Size();
-      
-      s32 numAudioFramesRequired = 0;
-      if(RobotInterface::EngineToRobotTag::animAudioSample == msg->GetTag() ||
-         RobotInterface::EngineToRobotTag::animAudioSilence == msg->GetTag())
-      {
-        ++numAudioFramesRequired;
-      }
-      
-      if(numBytesRequired <= _numBytesToSend &&
-         numAudioFramesRequired <= _numAudioFramesToSend)
-      {
-        Result sendResult = robot.SendMessage(*msg);
-        if(sendResult != RESULT_OK) {
-          return sendResult;
-        }
-        
-#       if DEBUG_ANIMATION_STREAMING
-        ++numSent;
-#       endif
-        
-        _numBytesToSend -= numBytesRequired;
-        _numAudioFramesToSend -= numAudioFramesRequired;
-        
-        // Increment total number of bytes and audio frames streamed to robot
-        robot.IncrementNumAnimationBytesStreamed((int32_t)numBytesRequired);
-        robot.IncrementNumAnimationAudioFramesStreamed(numAudioFramesRequired);
-        
-        _sendBuffer.pop_front();
-        delete msg;
-      } else {
-        // Out of bytes or audio frames to send, continue on next Update()
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_DEBUG("Animation.SendBufferedMessages.SentMax",
-                          "Sent %d messages, but ran out of bytes or audio frames to "
-                          "send from buffer. %lu bytes remain, so will continue next Update().",
-                          numSent, (unsigned long)_sendBuffer.size());
-#       endif
-        return RESULT_OK;
-      }
+      delete msg;
     }
-    
-    // Sanity check
-    // If we got here, we've finished streaming out everything in the send
-    // buffer -- i.e., all the frames associated with the last audio keyframe
-    assert(_numBytesToSend >= 0);
-    assert(_sendBuffer.empty());
-    
-#   if DEBUG_ANIMATION_STREAMING
-    if(numSent > 0) {
-      PRINT_NAMED_DEBUG("Animation.SendBufferedMessages.Sent",
-                        "Sent %d messages, %lu remain in buffer.",
-                        numSent, (unsigned long)_sendBuffer.size());
-    }
-#   endif
-    */
-    return RESULT_OK;
-  } // SendBufferedMessages()
-
-//  bool AnimationStreamer::GetAudioToSend(const Robot& robot,
-//                                         TimeStamp_t startTime_ms,
-//                                         TimeStamp_t streamingTime_ms,
-//                                         AnimKeyFrame::AudioSample& rawAudio_out)
-//  {
-//    using namespace Audio;
-//    
-//    bool haveAudio = false;
-//    
-//    if(_audioClient.HasAnimation())
-//    {
-//      RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
-//      
-//      RobotInterface::EngineToRobot* audioMsg = nullptr;
-//      audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
-//      // Have an animation and audio so send the audio
-//      if(nullptr != audioMsg)
-//      {
-//        rawAudio_out = std::move(audioMsg->Get_animAudioSample());
-//        haveAudio = true;
-//
-//        if(DEBUG_ANIMATION_STREAMING_AUDIO)
-//        {
-//          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
-//                           "Has Animation and Audio Message");
-//        }
-//      }
-//      // Have an animation but no audio so send silence
-//      else
-//      {
-//        if(DEBUG_ANIMATION_STREAMING_AUDIO)
-//        {
-//          PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
-//                           "Has Animation Insert Silence");
-//        }
-//      }
-//    }
-//    // No animation so send silence
-//    else
-//    {
-//      if(DEBUG_ANIMATION_STREAMING_AUDIO)
-//      {
-//        PRINT_NAMED_INFO("AnimationStreamer.BufferAudioToSend",
-//                         "NO Animation Insert Silence");
-//      }
-//    }
-//  
-//    return haveAudio;
-//  }
-  
-  void AnimationStreamer::ClearSendBuffer()
-  {
-    for (auto& engineToRobotMsg : _sendBuffer ) {
-      PRINT_NAMED_DEBUG("AnimationStreamer.ClearSendBuffer",
-                        "Clearing unsent %s",
-                        RobotInterface::EngineToRobot::TagToString(engineToRobotMsg->tag));
-      Util::SafeDelete(engineToRobotMsg);
-    }
-    _sendBuffer.clear();
+    return res;
   }
   
   void AnimationStreamer::SetParam(LiveIdleAnimationParameter whichParam, float newValue)
@@ -657,68 +358,55 @@ namespace Cozmo {
 
   }
   
+  Result AnimationStreamer::SendStartOfAnimation()
+  {
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
+    }
+    //BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::StartOfAnimation(_tag)));
+    RobotInterface::AnimationStarted startMsg;
+    startMsg.tag = _tag;
+    if (!RobotInterface::SendMessage(startMsg)) {
+      return RESULT_FAIL;
+    }
+    
+    _startOfAnimationSent = true;
+    _endOfAnimationSent = false;
+    return RESULT_OK;
+  }
   
-//  Result AnimationStreamer::SendStartOfAnimation()
-//  {
-//    if(DEBUG_ANIMATION_STREAMING) {
-//      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
-//    }
-//    BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::StartOfAnimation(_tag)));
-//    _startOfAnimationSent = true;
-//    _endOfAnimationSent = false;
-//    return RESULT_OK;
-//  }
-  
-//  Result AnimationStreamer::SendEndOfAnimation(Robot& robot)
-//  {
-//    Result lastResult = RESULT_OK;
-//    
-//    DEV_ASSERT(_startOfAnimationSent,
-//               "Should not be sending end of animation without having first sent start of animation.");
-//    
-//    if(DEBUG_ANIMATION_STREAMING) {
-//      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Streaming EndOfAnimation at t=%dms.",
-//                       _streamingTime_ms - _startTime_ms);
-//      
-//      /* no longer necessary to check with the assert above?
-//       static TimeStamp_t lastEndOfAnimTime = 0;
-//       if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
-//       PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Already sent end of animation at t=%dms.",
-//       lastEndOfAnimTime);
-//       }
-//       lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
-//       */
-//    }
-//    
-//    RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
-//    size_t endMsgSize = endMsg.Size();
-//    lastResult = robot.SendMessage(endMsg);
-//    if(lastResult != RESULT_OK) { return lastResult; }
-//    _endOfAnimationSent = true;
-//    _startOfAnimationSent = false;
-//    
-//    // Increment running total of bytes and "audio frames" streamed (we consider
-//    // end of anim to be "audio" for flow control counting)
-//    robot.IncrementNumAnimationBytesStreamed((int32_t)endMsgSize);
-//    robot.IncrementNumAnimationAudioFramesStreamed(1);
-//    
-//    return lastResult;
-//  } // SendEndOfAnimation()
-  
+  Result AnimationStreamer::SendEndOfAnimation()
+  {
+    Result lastResult = RESULT_OK;
+    
+    DEV_ASSERT(_startOfAnimationSent,
+               "Should not be sending end of animation without having first sent start of animation.");
+    
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Streaming EndOfAnimation at t=%dms.",
+                       _streamingTime_ms - _startTime_ms);
+    }
+    
+    RobotInterface::AnimationEnded endMsg;
+    endMsg.tag = _tag;
+    if (!RobotInterface::SendMessage(endMsg)) {
+      return RESULT_FAIL;
+    }
+    
+    _endOfAnimationSent = true;
+    _startOfAnimationSent = false;
+    
+    
+    return lastResult;
+  } // SendEndOfAnimation()
+
+
   Result AnimationStreamer::StreamLayers()
   {
     Result lastResult = RESULT_OK;
     
-//    UpdateAmountToSend(robot);
-    
-    // Send anything still left in the buffer after last Update()
-    lastResult = SendBufferedMessages();
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-    
     // Add more stuff to send buffer from various layers
-    while(_sendBuffer.empty() &&
+    while(//_sendBuffer.empty() &&
           _trackLayerComponent->HaveLayersToSend())
     {
       // We don't have an animation but we still have procedural layers to so
@@ -762,12 +450,6 @@ namespace Cozmo {
         BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
       }
       
-      // Send as much as we can of what we just buffered
-      lastResult = SendBufferedMessages();
-      if(RESULT_OK != lastResult) {
-        break;
-      }
-      
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
@@ -777,7 +459,6 @@ namespace Cozmo {
     // If we just finished buffering all the layers, send an end of animation message
     if(_startOfAnimationSent &&
        !_trackLayerComponent->HaveLayersToSend() &&
-       _sendBuffer.empty() &&
        !_endOfAnimationSent) {
 //      lastResult = SendEndOfAnimation(robot);
     }
@@ -807,7 +488,7 @@ namespace Cozmo {
     auto & recordHeadingTrack = anim->GetTrack<RecordHeadingKeyFrame>();
     auto & turnToRecordedHeadingTrack = anim->GetTrack<TurnToRecordedHeadingKeyFrame>();
     auto & eventTrack       = anim->GetTrack<EventKeyFrame>();
-    auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
+//    auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
     
     // Is it time to play device audio? (using actual basestation time)
     if(deviceAudioTrack.HasFramesLeft() &&
@@ -817,19 +498,13 @@ namespace Cozmo {
        deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-//    UpdateAmountToSend(robot);
-    
-    // Send anything still left in the buffer after last Update()
-    lastResult = SendBufferedMessages();
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
     
     // Add more stuff to the send buffer. Note that we are not counting individual
     // keyframes here, but instead _audio_ keyframes (with which we will buffer
     // any co-timed keyframes from other tracks).
     
-    while ( ShouldProcessAnimationFrame(anim, _startTime_ms, _streamingTime_ms) )
+    //while ( ShouldProcessAnimationFrame(anim, _startTime_ms, _streamingTime_ms) )
+    if (anim->HasFramesLeft())
     {
       
       if(DEBUG_ANIMATION_STREAMING) {
@@ -837,13 +512,6 @@ namespace Cozmo {
         //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
         //                 numBytesToSend);
       }
-      
-      // Get a single audio sample from the audio manager (or silence if there isn't one)
-      // (Have to *always* send an audio frame to keep time, whether that's the next
-      // audio sample or a silent frame.)
-      // NOTE: Audio frame must be first!
-//      AnimKeyFrame::AudioSample rawAudio;
-//      const bool haveAnimAudio = GetAudioToSend(robot, _startTime_ms, _streamingTime_ms, rawAudio);
       
       // Apply any track layers to the animation
       TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
@@ -855,15 +523,15 @@ namespace Cozmo {
 //                                              (haveAnimAudio ? &rawAudio : nullptr));
                                               nullptr);
       
-      // Audio keyframe always goes first
-      if(layeredKeyFrames.haveAudioKeyFrame)
-      {
-        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
-      }
-      else
-      {
-        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-      }
+//      // Audio keyframe always goes first
+//      if(layeredKeyFrames.haveAudioKeyFrame)
+//      {
+//        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
+//      }
+//      else
+//      {
+//        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+//      }
       
       //
       // We are guaranteed to have sent some kind of audio frame at this point.
@@ -887,72 +555,60 @@ namespace Cozmo {
 //        SendStartOfAnimation();
       }
       
-      if(BufferMessageToSend(headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+      if(SendIfTrackUnlocked(headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::HEAD_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
       }
       
-      if(BufferMessageToSend(liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+      if(SendIfTrackUnlocked(liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::LIFT_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
       }
       
+      // TODO: This can just send message directly up to engine
       if(BufferMessageToSend(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
       }
       
-      // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
-      // like idles, keep alive, or normal animated faces)
-      if(BufferMessageToSend(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms)))
-      {
-        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-      }
-      else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
-      {
-        BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
-      }
+//      // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
+//      // like idles, keep alive, or normal animated faces)
+//      if(BufferMessageToSend(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms)))
+//      {
+//        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+//      }
+//      else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
+//      {
+//        BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
+//      }
       
-      if(layeredKeyFrames.haveBackpackKeyFrame)
-      {
-        BufferMessageToSend(layeredKeyFrames.backpackKeyFrame.GetStreamMessage());
-      }
+//      if(layeredKeyFrames.haveBackpackKeyFrame)
+//      {
+//        BufferMessageToSend(layeredKeyFrames.backpackKeyFrame.GetStreamMessage());
+//      }
       
-      if(BufferMessageToSend(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+      if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
       }
       
-      if(BufferMessageToSend(recordHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+      if(SendIfTrackUnlocked(recordHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("RecordHeading");
       }
 
-      if(BufferMessageToSend(turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+      if(SendIfTrackUnlocked(turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("TurnToRecordedHeading");
       }
       
 #     undef DEBUG_STREAM_KEYFRAME_MESSAGE
-        
-      // Send out as much as we can from the send buffer. If we manage to send
-      // the entire buffer out, we will proceed with putting more into the buffer
-      // the next time through this while loop. Otherwise, we will exit the while
-      // loop and continue trying to empty the buffer on the next Update().
-      // Doing this guarantees we don't try to buffer another message pointer from
-      // the same frame before sending the last one (which is important because we
-      // re-use message structs inside the keyframes and don't want pointers
-      // getting reassigned before they get sent out!)
-      lastResult = SendBufferedMessages();
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
+      
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+      _streamingTime_ms += ANIM_TIME_STEP;  //RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
     } // while(buffering frames)
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
 //        _audioClient.AnimationIsComplete() &&
-        _sendBuffer.empty() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
     {      
@@ -1227,30 +883,7 @@ namespace Cozmo {
     {
       if(_trackLayerComponent->HaveLayersToSend())
       {
-        lastResult = StreamLayers();
-      }
-      else if(!_sendBuffer.empty())
-      {
-        PRINT_NAMED_WARNING("AnimationStreamer.Update.SendBufferNotEmpty",
-                            "Expect send buffer to be emptied by UpdateStream or StreamFaceLayers "
-                            "by now, has %zu messages",
-                            _sendBuffer.size());
-        
-        // Stream anything left in the send buffer. This can happen sometimes when it's taking awhile  
-//        UpdateAmountToSend(robot);
-        lastResult = SendBufferedMessages();
-        if(RESULT_OK != lastResult) {
-          PRINT_NAMED_WARNING("AnimationStreamer.Update.SendBufferedMessagesFailed",
-                              "Could not send %zu remaining messages in send buffer",
-                              _sendBuffer.size());
-        }
-        
-        // If we've finished sending whatever messages
-        if(_startOfAnimationSent &&
-           _sendBuffer.empty() &&
-           !_endOfAnimationSent) {
-//          lastResult = SendEndOfAnimation(robot);
-        }
+//        lastResult = StreamLayers();
       }
     }
     
@@ -1258,58 +891,6 @@ namespace Cozmo {
   } // AnimationStreamer::Update()
   
   
-//  void AnimationStreamer::UpdateAmountToSend(Robot& robot)
-//  {
-//    // Compute number of bytes free in robot animation buffer.
-//    // This is a lower bound since this is computed from a delayed measure
-//    // of the number of animation bytes already played on the robot.
-//    s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
-//    s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
-//    s32 totalNumAudioFramesStreamed = robot.GetNumAnimationAudioFramesStreamed();
-//    s32 totalNumAudioFramesPlayed = robot.GetNumAnimationAudioFramesPlayed();
-//    
-//    bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-//    DEV_ASSERT_MSG((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow,
-//                   "AnimationStreamer.UpdateAmountToSend.BytesPlayedExceedsStreamed",
-//                   "totalNumBytesStreamed: %d, totalNumBytesPlayed: %d, overflow: %s",
-//                   totalNumBytesStreamed,
-//                   totalNumBytesPlayed,
-//                   (overflow ? "Yes" : "No"));
-//    
-//    s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
-//    if (overflow) {
-//      // Computation for minBytesFreeInRobotBuffer still works out in overflow case
-//      PRINT_NAMED_INFO("AnimationStreamer.UpdateAmountToSend.BytesStreamedOverflow",
-//                       "free %d (streamed = %d, played %d)",
-//                       minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
-//    }
-//    
-//    if(minBytesFreeInRobotBuffer < 0) {
-//      PRINT_NAMED_WARNING("AnimationStreamer.UpdateAmountToSend.NegativeMinBytesFreeInRobot",
-//                          "minBytesFree:%d numBytesStreamed:%d numBytesPlayed:%d",
-//                          minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
-//      minBytesFreeInRobotBuffer = 0;
-//    }
-//    
-//    // Reset the number of bytes we can send each Update() as a form of
-//    // flow control: Don't send frames if robot has no space for them, and be
-//    // careful not to overwhelm reliable transport either, in terms of bytes or
-//    // sheer number of messages. These get decremented on each call to
-//    // SendBufferedMessages() below
-//    _numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
-//                               minBytesFreeInRobotBuffer);
-//    
-//    s32 audioFramesInBuffer = totalNumAudioFramesStreamed - totalNumAudioFramesPlayed;
-//
-//    if(DEBUG_ANIMATION_STREAMING) {
-//      PRINT_NAMED_INFO("AnimationStreamer.UpdateAmountToSend", "Streamed= %d, Played=%d, InBuffer=%d",
-//                       totalNumAudioFramesStreamed, totalNumAudioFramesPlayed, audioFramesInBuffer);
-//    }
-//    _numAudioFramesToSend = std::max(0, NUM_AUDIO_FRAMES_LEAD-audioFramesInBuffer);
-//    
-//  } // UpdateAmountToSend()
-//  
-
   
   void AnimationStreamer::SetDefaultParams()
   {
@@ -1494,7 +1075,7 @@ namespace Cozmo {
   
   bool AnimationStreamer::IsFinished(Animation* anim) const
   {
-    return _endOfAnimationSent && !anim->HasFramesLeft() && _sendBuffer.empty();
+    return _endOfAnimationSent && !anim->HasFramesLeft();
   }
 
   void AnimationStreamer::ResetKeepFaceAliveLastStreamTimeout()

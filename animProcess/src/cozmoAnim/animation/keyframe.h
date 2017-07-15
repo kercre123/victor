@@ -19,6 +19,7 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 #include "cozmoAnim/animation/proceduralFace.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 //#include "clad/audio/audioEventTypes.h"
@@ -150,8 +151,7 @@ namespace Cozmo {
     s8          _angle_deg;
     u8          _angleVariability_deg;
     
-    AnimKeyFrame::HeadAngle _streamHeadMsg;
-    
+    RobotInterface::SetHeadAngle _streamHeadMsg;
   }; // class HeadAngleKeyFrame
   
   
@@ -183,7 +183,7 @@ namespace Cozmo {
     u8          _height_mm;
     u8          _heightVariability_mm;
     
-    AnimKeyFrame::LiftHeight _streamLiftMsg;
+    RobotInterface::SetLiftHeight _streamLiftMsg;
     
   }; // class LiftHeightKeyFrame
     
@@ -508,8 +508,8 @@ namespace Cozmo {
     s32 _durationTime_ms;
     bool _enableStopMessage = true;
     
-    AnimKeyFrame::BodyMotion _streamMsg;
-    AnimKeyFrame::BodyMotion _stopMsg;
+    RobotInterface::DriveWheelsCurvature _streamMsg;
+    RobotInterface::DriveWheelsCurvature _stopMsg;
     
   }; // class BodyMotionKeyFrame
   
@@ -540,7 +540,7 @@ namespace Cozmo {
     
   private:
     
-    AnimKeyFrame::RecordHeading _streamMsg;
+    RobotInterface::RecordHeading _streamMsg;
     
   }; // class RecordHeadingKeyFrame
   
@@ -584,7 +584,7 @@ namespace Cozmo {
     
     s32 _durationTime_ms;
     
-    AnimKeyFrame::TurnToRecordedHeading _streamMsg;
+    RobotInterface::TurnToRecordedHeading _streamMsg;
     
   }; // class TurnToRecordedHeadingKeyFrame
   

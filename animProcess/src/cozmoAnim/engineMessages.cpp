@@ -113,11 +113,10 @@ namespace Anki {
           //       Most messages will be ignored though so it probably shouldn't be necessary.
           //#include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
             
-          case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableAnimTracks:
+          case (int)Anki::Cozmo::RobotInterface::EngineToRobot::Tag_lockAnimTracks:
           {
-            // Do something
-            // ...
-            
+            PRINT_NAMED_INFO("EngineMessages.ProcessMessage.LockTracks", "0x%x", msg.lockAnimTracks.whichTracks);
+            _animStreamer->SetLockedTracks(msg.lockAnimTracks.whichTracks);
             break;
           }
             

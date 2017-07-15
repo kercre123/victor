@@ -64,21 +64,10 @@ namespace Cozmo {
     // Actual streaming occurs on calls to Update().
     virtual Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) = 0;
     
-//    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
-//    // idle (even if it came from SetIdleAnimation) is always on the stack
-//    virtual Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName) = 0;
-//    
-//    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
-//    // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
-//    // Will not pop the last idle off the stack.
-//    virtual Result RemoveIdleAnimation(const std::string& lockName) = 0;
-    
     // If any animation is set for streaming and isn't done yet, stream it.
     virtual Result Update() = 0;
     
     virtual const Animation* GetStreamingAnimation() const = 0;
-    
-//    virtual const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const = 0;
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     // and there is no idle animation
@@ -112,17 +101,6 @@ namespace Cozmo {
     Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
     Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true) override;
     
-//    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
-//    // idle (even if it came from SetIdleAnimation) is always on the stack
-//    Result PushIdleAnimation(AnimationTrigger animName, const std::string& lockName) override;
-//    
-//    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
-//    // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
-//    // Will not pop the last idle off the stack.
-//    Result RemoveIdleAnimation(const std::string& lockName) override;
-//
-//    const std::string& GetIdleAnimationName() const;
-    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update() override;
      
@@ -132,7 +110,6 @@ namespace Cozmo {
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const override { return _streamingAnimation; }
     
-//    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const override;
     const Animation* GetCannedAnimation(const std::string& name) const;
 
     // Required by HasSettableParameters:
@@ -141,11 +118,6 @@ namespace Cozmo {
     
     // Overload of SetParam from base class. Mostly just calls base class method.
     void SetParam(LiveIdleAnimationParameter whichParam, float newValue);
-    
-    // "Flow control" for not getting too far ahead of the robot, to help prevent
-    // too much delay when we want to layer something on "now". This is number of
-    // audio frames.
-    static const s32 NUM_AUDIO_FRAMES_LEAD;
     
     // Set/Reset the amount of time to wait before forcing KeepFaceAlive() after the last stream has stopped
     // and there is no idle animation
@@ -156,6 +128,9 @@ namespace Cozmo {
     virtual TrackLayerComponent* GetTrackLayerComponent() override { return _trackLayerComponent.get(); }
     virtual const TrackLayerComponent* GetTrackLayerComponent() const override { return _trackLayerComponent.get(); }
 
+    void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
+    bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
+    
   private:
     
     // Initialize the streaming of an animation with a given tag
@@ -168,16 +143,8 @@ namespace Cozmo {
     // This performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
     
-//    Result SendStartOfAnimation();
-//    Result SendEndOfAnimation(Robot& robot);
-    
-    // Get an audio sample from the AudioManager
-    // Outputs rawAudio_out which will contain the audio sample from the AudioManager
-    // Returns true if rawAudio_out is valid (there is audio to play)
-//    bool GetAudioToSend(const Robot& robot,
-//                          TimeStamp_t startTime_ms,
-//                          TimeStamp_t streamingTime_ms,
-//                          AnimKeyFrame::AudioSample& rawAudio_out);
+    Result SendStartOfAnimation();
+    Result SendEndOfAnimation();
     
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
@@ -185,8 +152,6 @@ namespace Cozmo {
     // Update generate frames needed by the "live" idle animation and add them
     // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation();
-    
-//    void UpdateAmountToSend(Robot& robot);
     
     // If we are currently streaming, kill it, and make sure not to leave a
     // random face displayed (stream last face keyframe)
@@ -196,13 +161,11 @@ namespace Cozmo {
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
-//    AnimationGroupContainer&  _animationGroups;
     
     Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
-//    std::vector<std::pair<AnimationTrigger, std::string>> _idleAnimationNameStack;
 
     std::string _lastPlayedAnimationId;
 
@@ -255,20 +218,17 @@ namespace Cozmo {
     // reliable UDP channel and the robot's animation buffer can handle on a
     // given tick.
     bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
-    Result SendBufferedMessages();
     
-    void ClearSendBuffer();
     
-    std::list<RobotInterface::EngineToRobot*> _sendBuffer;
-//    s32 _numBytesToSend = 0;
-//    s32 _numAudioFramesToSend = 0;
+    bool SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track);
+    
     Tag _tag;
-    
-    // "Flow control" for not overrunning reliable transport in a single
-    // update tick
-    static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
+
     
     Util::RandomGenerator& _rng;
+    
+    // For track locking
+    u8 _lockedTracks;
     
     // For live animation
     Animation      _liveAnimation;
@@ -281,10 +241,6 @@ namespace Cozmo {
 //    s32            _headMoveSpacing_ms   = 0;
     
 //    Audio::RobotAudioClient& _audioClient;
-    
-//    // For handling incoming messages
-//    std::vector<Signal::SmartHandle> _eventHandlers;
-//    void SetupHandlers(IExternalInterface* externalInterface);
     
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
     // idle animation
