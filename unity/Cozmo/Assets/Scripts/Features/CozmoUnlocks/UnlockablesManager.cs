@@ -256,15 +256,6 @@ public class UnlockablesManager : MonoBehaviour {
       if (!DebugMenuManager.Instance.DemoMode) {
         // Demo mode doesn't want the arrows since it wants the appearance of everything already being unlocked.
         DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(resultMessage.unlockID);
-        // Trigger soft spark in the engine if the unlock was an action
-        if (unlockData.UnlockableType == UnlockableType.Action) {
-          RobotEngineManager.Instance.Message.BehaviorManagerMessage =
-          Singleton<BehaviorManagerMessage>.Instance.Initialize(
-            Convert.ToByte(RobotEngineManager.Instance.CurrentRobotID),
-            Singleton<SparkUnlocked>.Instance.Initialize(resultMessage.unlockID)
-          );
-          RobotEngineManager.Instance.SendMessage();
-        }
       }
 
       if (OnUnlockComplete != null) {
