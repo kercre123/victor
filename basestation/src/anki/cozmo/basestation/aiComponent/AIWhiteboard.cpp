@@ -1042,8 +1042,10 @@ void AIWhiteboard::SetSevereNeedExpression(NeedId need) {
                  "Set to %s (was %s)",
                  NeedIdToString(need),
                  NeedIdToString(_severeNeedExpression));
-  
-  DEV_ASSERT(_severeNeedExpression == NeedId::Count,
+
+  // shouldn't already be expressing a severe need, except in the case of Play, because there may not have
+  // been a get-out from play yet (e.g. play goes severe first, then hunger)
+  DEV_ASSERT(_severeNeedExpression == NeedId::Count || _severeNeedExpression == NeedId::Play,
              "AIWhiteboard.SetSevereNeedExpression.ExpressionAlreadySet");
   
   //////
