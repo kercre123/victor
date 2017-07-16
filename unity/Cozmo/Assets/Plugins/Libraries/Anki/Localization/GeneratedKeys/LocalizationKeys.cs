@@ -341,6 +341,7 @@ public static class LocalizationKeys {
   public const string kLabelCancelText = "label.cancelText";
   public const string kLabelLiquidMetalCozmo = "label.liquidMetalCozmo";
   public const string kConnectivitySendGameplayDataPrompt = "connectivity.sendGameplayDataPrompt";
+  public const string kNeedsVoiceSettingsModalTitle = "needs.VoiceSettingsModal.Title";
   public const string kConnectivityBehaviorDisplayDisconnected = "connectivity.behaviorDisplayDisconnected";
 
   #endregion
@@ -1026,6 +1027,9 @@ public static class LocalizationKeys {
   public const string kVoiceCommandsCommandNoThankYou = "voiceCommands.command.NoThankYou";
   public const string kVoiceCommandsCommandYesPlease = "voiceCommands.command.YesPlease";
   public const string kVoiceCommandsGoToSleepCancel = "voiceCommands.GoToSleepCancel";
+  public const string kVoiceCommandsTutorialTextEnableMicInstrructions = "voiceCommands.tutorialText.EnableMicInstrructions";
+  public const string kVoiceCommandsTutorialTextFirstEnableMicInstrructions = "voiceCommands.tutorialText.FirstEnableMicInstrructions";
+  public const string kVoiceCommandsTutorialTextForBestResults = "voiceCommands.tutorialText.ForBestResults";
 
   #endregion
 

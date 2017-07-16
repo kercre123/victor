@@ -103,7 +103,10 @@
     "translation": "Collector’s Edition: Liquid Metal"
   },
   "connectivity.sendGameplayDataPrompt": {
-    "translation": "Help us make Cozmo better by sending us your gameplay data and statistics."
+    "translation": "Help us make Cozmo better by sending us your gameplay data and statistics"
+  },
+  "needs.VoiceSettingsModal.Title": {
+    "translation": "Voice Commands"
   },
   "connectivity.behaviorDisplayDisconnected": {
     "translation": "Cozmo has been disconnected."

@@ -1662,7 +1662,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1139731038903110}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04aa69c625a594415940896ee2c4d961, type: 3}
   m_Name: 
@@ -2954,6 +2954,18 @@ MonoBehaviour:
         useCustom: 0
         duration_sec: 0
         easing: 0
+    - target: {fileID: 224197703439718264}
+      originOffset: {x: 0, y: 250}
+      openSetting:
+        startTime_sec: 0.25
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
   _FadeTweenSettings:
     staggerType: 0
     uniformStagger_sec: 0
@@ -2971,12 +2983,16 @@ MonoBehaviour:
         easing: 0
   _ActivitiesButton: {fileID: 114446962315980540}
   _SettingsButton: {fileID: 114273081088830324}
+  _VoiceSettingsButton: {fileID: 114230418206486318}
+  _VoiceSettingsOffButton: {fileID: 114371206341503252}
   _SparksButton: {fileID: 114407009027686870}
   _HelpButton: {fileID: 114905935062576232}
   _RepairButton: {fileID: 114743978935695850}
   _FeedButton: {fileID: 114261238547696976}
   _StarBar: {fileID: 114566856538031404}
   _SettingsModalPrefab: {fileID: 114595580861209808, guid: 5ffefb52ea4cf4db7924a2c00b6d5ac7,
+    type: 2}
+  _VoiceSettingsModalPrefab: {fileID: 114008808968037536, guid: 9240efc66c8b1405c836e16e120c6eed,
     type: 2}
   _HelpTipsModalPrefab: {fileID: 11489240, guid: e8253b38997414ae39d897571e6d7ed8,
     type: 2}
