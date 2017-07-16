@@ -15,6 +15,7 @@ from datetime import datetime
 import json
 from enum import Enum, unique
 from functools import lru_cache
+import shutil
 
 # Root folder path of cozmo-one repo
 COZMO_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip(b"\r\n").decode("utf-8")
@@ -585,6 +586,10 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
         # Check log for crashes, errors, and warnings
         (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, log_file_name)
 
+        # Combines the webots test output file and the devLog directory into a human readable format
+        didFail = (fail_on_error and (error_count > 0)) or (crash_count > 0)
+        generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_controller, world_file, num_retries_counting_up, cur_time)
+
         # Check if timeout exceeded
         if run_webots_thread.isAlive():
           UtilLog.error('{test_controller} exceeded timeout.'.format(test_controller=test_controller))
@@ -626,6 +631,28 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
   tarzip_logs(log_file_paths, cur_time)
 
   return (test_statuses, total_error_count, total_warning_count)
+
+
+def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_controller, world_file, num_retries_counting_up, cur_time):
+  """ Combines the webots test output and the devLog into a single human readable foldername
+
+      This function relies on the fact that we zip up previous devLogs so only the devLog
+      which was generated in assosiation with the log file is still a folder
+      and that the dev_log_folder path is stable.  
+      The two asserts in this function ensure that those assumptions are true.
+  """
+  dev_log_folder = log_folder + "/playbackLogs/webotsCtrlGameEngine/gameLogs/devLogger"
+  assert os.path.isdir(dev_log_folder)
+  dirs = [entry.path for entry in os.scandir(dev_log_folder) if entry.is_dir()]
+  assert len(dirs) == 1
+
+  shutil.copy(log_file_name, dirs[0])
+  didFailPrefix = ""
+  if(didFail):
+    didFailPrefix = "FAILURE_"
+
+  human_readable_output = dev_log_folder + "/" + didFailPrefix + test_controller + "_" + world_file + "_" + str(num_retries_counting_up) + str(cur_time)
+  shutil.move(dirs[0], human_readable_output)
 
 
 def tarzip_logs(log_file_paths, cur_time):
