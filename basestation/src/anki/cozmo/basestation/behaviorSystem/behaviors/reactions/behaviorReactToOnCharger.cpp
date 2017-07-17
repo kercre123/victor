@@ -118,6 +118,7 @@ Result BehaviorReactToOnCharger::InitInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
+  _onChargerCanceled = false;
 }
 
 
