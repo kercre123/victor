@@ -26,6 +26,9 @@ namespace Cozmo.Needs.UI {
     [SerializeField]
     private float _InitialFillStaggerTime = 1f;
 
+    [SerializeField]
+    private float _InitialFillOnboardingStaggerTime = 0.5f;
+
     private bool _RepairMeterPaused = false;
     public bool RepairMeterPaused {
       get {
@@ -67,8 +70,12 @@ namespace Cozmo.Needs.UI {
         _PlayMeter.transform.SetAsLastSibling();
         break;
       }
-
-      baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        OnboardingManager.Instance.OnOnboardingAnimEvent += HandleOnboardingAnimEvent;
+      }
+      else {
+        baseDialog.DialogOpenAnimationFinished += HandleDialogFinishedOpenAnimation;
+      }
     }
 
     private void OnDestroy() {
@@ -77,6 +84,7 @@ namespace Cozmo.Needs.UI {
       }
       NeedsStateManager.Instance.OnNeedsLevelChanged -= HandleLatestNeedsLevelChanged;
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
+      OnboardingManager.Instance.OnOnboardingAnimEvent -= HandleOnboardingAnimEvent;
     }
 
     private void HandleDialogFinishedOpenAnimation() {
@@ -87,6 +95,13 @@ namespace Cozmo.Needs.UI {
       else {
         NeedsStateManager.Instance.OnNeedsLevelChanged += HandleLatestNeedsLevelChanged;
         NeedsStateManager.Instance.OnNeedsBracketChanged += HandleLatestNeedsBracketChanged;
+      }
+    }
+
+    private void HandleOnboardingAnimEvent(string eventName) {
+      const string _kMechanimEventOnboardingNeedsMeterShow = "NeedsMeterStartEvent";
+      if (eventName == _kMechanimEventOnboardingNeedsMeterShow) {
+        HandleDialogFinishedOpenAnimation();
       }
     }
 
@@ -166,14 +181,17 @@ namespace Cozmo.Needs.UI {
       PlayMeterMoveSound(oldValue, newValue);
       _RepairMeter.SetTargetAndAnimate(newValue);
 
-      yield return new WaitForSeconds(_InitialFillStaggerTime);
+      float staggerTime = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro) ?
+                                     _InitialFillOnboardingStaggerTime : _InitialFillStaggerTime;
+
+      yield return new WaitForSeconds(staggerTime);
 
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Energy).Value;
       PlayMeterMoveSound(oldValue, newValue);
       _EnergyMeter.SetTargetAndAnimate(newValue);
 
-      yield return new WaitForSeconds(_InitialFillStaggerTime);
+      yield return new WaitForSeconds(staggerTime);
 
       oldValue = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Play).Value;
       newValue = NeedsStateManager.Instance.PopLatestEngineValue(NeedId.Play).Value;

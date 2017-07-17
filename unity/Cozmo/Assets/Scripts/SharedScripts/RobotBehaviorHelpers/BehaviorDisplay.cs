@@ -44,7 +44,7 @@ public class BehaviorDisplay : MonoBehaviour {
 
   private bool _IsDisconnected;
 
-  private void Start() {
+  private void Awake() {
     _BehaviorLabel.text = "";
     _BehaviorDefaultColor = UIColorPalette.FreeplayBehaviorDefaultColor;
     _BehaviorRewardColor = UIColorPalette.FreeplayBehaviorRewardColor;

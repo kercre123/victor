@@ -1,4 +1,4 @@
-﻿using Anki.Cozmo;
+using Anki.Cozmo;
 using Anki.Cozmo.VoiceCommand;
 using Cozmo.Energy.UI;
 using Cozmo.Play.UI;
@@ -79,7 +79,12 @@ namespace Cozmo.Needs.UI {
 
     private ChallengeStartEdgeCaseAlertController _EdgeCaseAlertController;
 
-    public void Start() {
+    // absolutely needs to be in awake to prevent one frame pops.
+    private void Awake() {
+      OnboardingManager.Instance.InitInitalOnboarding(this);
+    }
+
+    private void Start() {
       VoiceCommandManager.Instance.StateDataCallback += HandleMicrophoneAuthorizationStatusUpdate;
       VoiceCommandManager.SendVoiceCommandEvent<RequestStatusUpdate>(Singleton<RequestStatusUpdate>.Instance);
 
@@ -89,8 +94,6 @@ namespace Cozmo.Needs.UI {
       _VoiceSettingsButton.Initialize(HandleVoiceSettingsButton, "voice_settings_button", DASEventDialogName);
       _VoiceSettingsOffButton.Initialize(HandleVoiceSettingsButton, "voice_settings_button_off", DASEventDialogName);
       _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventDialogName);
-
-      OnboardingManager.Instance.InitInitalOnboarding(this);
 
       _MetersWidget = UIManager.CreateUIElement(_MetersWidgetPrefab.gameObject, _MetersAnchor).GetComponent<NeedsMetersWidget>();
       _MetersWidget.Initialize(dasParentDialogName: DASEventDialogName, baseDialog: this);
@@ -130,8 +133,10 @@ namespace Cozmo.Needs.UI {
     }
 
     protected override void CleanUp() {
-      _MetersWidget.OnRepairPressed -= HandleRepairButton;
-      _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
+      if (_MetersWidget != null) {
+        _MetersWidget.OnRepairPressed -= HandleRepairButton;
+        _MetersWidget.OnEnergyPressed -= HandleEnergyButton;
+      }
       NeedsStateManager.Instance.OnNeedsBracketChanged -= HandleLatestNeedsBracketChanged;
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
@@ -267,6 +272,13 @@ namespace Cozmo.Needs.UI {
     #region Onboarding
     public CozmoImage OnboardingBlockoutImage;
     public CozmoImage NavBackgroundImage;
+
+    protected override void ConstructOpenAnimation(Sequence openAnimation) {
+      // onboarding has an elaborate mechanim thing constructed
+      if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.NurtureIntro)) {
+        base.ConstructOpenAnimation(openAnimation);
+      }
+    }
     public NeedsMetersWidget MetersWidget {
       get { return _MetersWidget; }
     }
@@ -284,6 +296,9 @@ namespace Cozmo.Needs.UI {
     }
     public StarBar RewardBar {
       get { return _StarBar; }
+    }
+    private void HandleMechanimEvent(string param) {
+      OnboardingManager.Instance.OnOnboardingAnimEvent.Invoke(param);
     }
     #endregion
   }
