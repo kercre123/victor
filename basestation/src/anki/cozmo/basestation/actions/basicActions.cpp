@@ -549,6 +549,15 @@ namespace Anki {
               (u8)AnimTrackFlag::BODY_TRACK)
     , _dist_mm(dist_mm)
     {
+
+      // set default speed based on the driving direction
+      if( dist_mm >= 0.0f ) {
+        _speed_mmps = DEFAULT_PATH_MOTION_PROFILE.speed_mmps;
+      }
+      else {
+        _speed_mmps = -DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps;
+      }
+      
       SetName("DriveStraight" + std::to_string(_dist_mm) + "mm");
     }
   
