@@ -31,6 +31,10 @@ namespace Cozmo.UI {
       base.onClick.AddListener(HandleOnPress);
     }
 
+    public void RepairListener() {
+      base.onClick.AddListener(HandleOnPress);
+    }
+
     protected override void OnDestroy() {
       base.OnDestroy();
       base.onClick.RemoveListener(HandleOnPress);

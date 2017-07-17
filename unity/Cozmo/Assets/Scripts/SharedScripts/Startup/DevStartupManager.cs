@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public class DevStartupManager : MonoBehaviour {
   [SerializeField]
@@ -22,6 +23,11 @@ public class DevStartupManager : MonoBehaviour {
     _StartupManager.StartLoadAsync();
 #endif
 
+    if(GetFlag("-smoke")) {
+      RobotEngineManager.Instance.RobotConnectionType = RobotEngineManager.ConnectionType.Mock;
+      _StartupManager.StartLoadAsync();
+    }
+
     _RobotButton.onClick.AddListener(() => {
       RobotEngineManager.Instance.RobotConnectionType = RobotEngineManager.ConnectionType.Robot;
       GameObject.Destroy(gameObject);
@@ -39,5 +45,17 @@ public class DevStartupManager : MonoBehaviour {
       GameObject.Destroy(gameObject);
       _StartupManager.StartLoadAsync();
     });
+    
   }
+
+  private static bool GetFlag(string name) {
+      var args = System.Environment.GetCommandLineArgs();
+      foreach (String item in args) {
+        if (item == name) {
+          return true;
+        }
+      }
+      return false;
+  }
+
 }

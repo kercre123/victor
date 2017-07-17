@@ -59,10 +59,8 @@ public class DebugMenuManager : MonoBehaviour {
 
   public void OnDebugMenuButtonTap() {
 #if ENABLE_DEBUG_PANEL
-    if (FakeTouchManager.Instance != null && !FakeTouchManager.Instance.IsPlayingTouches && !FakeTouchManager.Instance.IsSoakingTouches) {
-      CreateDebugDialog();
-    }
-#endif
+    CreateDebugDialog();
+#endif 
   }
 
   public GameBase GetCurrChallenge() {
