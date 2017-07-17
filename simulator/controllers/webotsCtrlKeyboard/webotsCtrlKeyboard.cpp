@@ -977,8 +977,6 @@ namespace Anki {
                 }
                 else if(shiftKeyPressed) {
                   ExternalInterface::QueueSingleAction msg;
-                  msg.robotID = 1;
-                  msg.position = QueueActionPosition::NOW;
                   
                   using SFNOD = ExternalInterface::SearchForNearbyObjectDefaults;
                   ExternalInterface::SearchForNearbyObject searchAction {
@@ -989,9 +987,7 @@ namespace Anki {
                   };
                   msg.action.Set_searchForNearbyObject(std::move(searchAction));
 
-                  ExternalInterface::MessageGameToEngine message;
-                  message.Set_QueueSingleAction(msg);
-                  SendMessage(message);
+                  SendAction(msg);
                 }
                 else if (altKeyPressed) {
                   static bool enableCliffSensor = false;

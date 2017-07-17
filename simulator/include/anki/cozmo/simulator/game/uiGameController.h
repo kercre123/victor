@@ -147,8 +147,11 @@ protected:
                            const f32 tol_rad = 0.f,  // 0: Use default tolerance of POINT_TURN_ANGLE_TOL
                            const bool isAbsolute = false,
                            const QueueActionPosition queueActionPosition = QueueActionPosition::NOW);
+
+  // Queue a generic action, automatically set robot id, id tag, and position to run now
+  void SendAction(const ExternalInterface::QueueSingleAction& msg_in);
   
-  void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
+  void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);  
   void SendMoveHead(const f32 speed_rad_per_sec);
   void SendMoveLift(const f32 speed_rad_per_sec);
   void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
