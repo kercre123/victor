@@ -39,8 +39,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const char* kIdleAnimLock = "basic_actions_anim_lock";
-  
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
     CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
     
@@ -418,10 +416,6 @@ namespace Anki {
   
     SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
     {
-      if( _shouldPopIdle ) {
-        _robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleAnimLock);
-        _shouldPopIdle = false;
-      }
       _compoundAction.PrepForCompletion();
     }
   
@@ -461,7 +455,7 @@ namespace Anki {
                         RAD_TO_DEG(secondAngle_rads),
                         afterSecondTurnWait_s);
 
-      _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
+      AddToCompoundAction(new WaitAction(_robot, initialWait_s));
 
       DriveStraightAction* driveBackAction = nullptr;
 
@@ -483,31 +477,25 @@ namespace Anki {
       });
       
       
-      _compoundAction.AddAction(driveAndLook);
+      AddToCompoundAction(driveAndLook);
       
-      _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
+      AddToCompoundAction(new WaitAction(_robot, initialWait_s));
 
       TurnInPlaceAction* turn0 = new TurnInPlaceAction(_robot, firstAngle_rads, false);
       turn0->SetTolerance(DEG_TO_RAD(4.0f));
-      _compoundAction.AddAction(turn0);
+      AddToCompoundAction(turn0);
       
-      _compoundAction.AddAction(new WaitAction(_robot, afterFirstTurnWait_s));
+      AddToCompoundAction(new WaitAction(_robot, afterFirstTurnWait_s));
 
       TurnInPlaceAction* turn1 = new TurnInPlaceAction(_robot, secondAngle_rads, false);
       turn1->SetTolerance(DEG_TO_RAD(4.0f));
-      _compoundAction.AddAction(turn1);
+      AddToCompoundAction(turn1);
 
-      _compoundAction.AddAction(new WaitAction(_robot, afterSecondTurnWait_s));
+      AddToCompoundAction(new WaitAction(_robot, afterSecondTurnWait_s));
 
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
       _compoundAction.ShouldSuppressTrackLocking(true);
 
-      // disable the live idle animation, so we aren't moving during the "wait" sections
-      if( ! _shouldPopIdle ) {
-        _shouldPopIdle = true;
-        _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count, kIdleAnimLock);
-      }
-      
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
       // first update doesn't _fail_
@@ -539,7 +527,18 @@ namespace Anki {
       
       return internalResult;
     }
-  
+
+    void SearchForNearbyObjectAction::AddToCompoundAction(IActionRunner* action)
+    {
+      // in addition to whichever tracks the action is using, also lock the head and lift so that they don't
+      // move during idles
+      const u8 bodyAndHead = ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
+      const u8 tracksToLock = action->GetTracksToLock() | bodyAndHead;
+      action->SetTracksToLock( tracksToLock );
+
+      _compoundAction.AddAction(action);
+    }
+
 #pragma mark ---- DriveStraightAction ----
     
     DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm)
