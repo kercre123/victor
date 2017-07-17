@@ -587,8 +587,12 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
         (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, log_file_name)
 
         # Combines the webots test output file and the devLog directory into a human readable format
-        didFail = (fail_on_error and (error_count > 0)) or (crash_count > 0)
-        generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_controller, world_file, num_retries_counting_up, cur_time)
+        didFail = any([(fail_on_error and (error_count > 0)), (crash_count > 0), 
+                          run_webots_thread.isAlive(), (output.test_return_code is None), (output.test_return_code != 0)])
+
+        generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, 
+                                        didFail, test_controller, world_file, 
+                                        cur_time)
 
         # Check if timeout exceeded
         if run_webots_thread.isAlive():
@@ -633,7 +637,7 @@ def run_tests(tests, log_folder, show_graphics, cozmo_version, default_timeout, 
   return (test_statuses, total_error_count, total_warning_count)
 
 
-def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_controller, world_file, num_retries_counting_up, cur_time):
+def generate_combined_webots_devLog(cozmo_version, log_folder, log_file_name, didFail, test_controller, world_file, cur_time):
   """ Combines the webots test output and the devLog into a single human readable foldername
 
       This function relies on the fact that we zip up previous devLogs so only the devLog
@@ -641,7 +645,10 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
       and that the dev_log_folder path is stable.  
       The two asserts in this function ensure that those assumptions are true.
   """
-  dev_log_folder = log_folder + "/playbackLogs/webotsCtrlGameEngine/gameLogs/devLogger"
+  cozmoEngineSuffix = ""
+  if(cozmo_version == 2):
+    cozmoEngineSuffix = "2"
+  dev_log_folder = log_folder + "/playbackLogs/webotsCtrlGameEngine" + cozmoEngineSuffix + "/gameLogs/devLogger"
   assert os.path.isdir(dev_log_folder)
   dirs = [entry.path for entry in os.scandir(dev_log_folder) if entry.is_dir()]
   assert len(dirs) == 1
@@ -651,7 +658,7 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
   if(didFail):
     didFailPrefix = "FAILURE_"
 
-  human_readable_output = dev_log_folder + "/" + didFailPrefix + test_controller + "_" + world_file + "_" + str(num_retries_counting_up) + str(cur_time)
+  human_readable_output = dev_log_folder + "/" + didFailPrefix + test_controller + "_" + world_file + "_webotsTestTime_" + str(cur_time)
   shutil.move(dirs[0], human_readable_output)
 
 
