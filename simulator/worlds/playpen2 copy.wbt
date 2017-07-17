@@ -46,7 +46,7 @@ WebotsKeyboardController {
 CozmoVizDisplay {
   filterLogs TRUE
 }
-CalibrationMarkerStructure {
+DEF c CalibrationMarkerStructure {
   translation -0.133996 -0.697948 0.063
   numCubes 6
   listOfMarkers "\"symbols/stopWithHand.png\", \"customSDK/SDK_3Circles.png\", \"symbols/stopWithHand.png\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"customSDK/SDK_3Hexagons.png\", \"symbols/arrow.png\",\"symbols/stopWithhand.png\","
@@ -65,6 +65,7 @@ CalibrationMarkerStructure {
   translation -0.133309 -0.654272 0.022
   listOfMarkers "\"symbols/stopWithHand.png\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"symbols/stopWithHand.png\","
 }
+
 SolidBox {
   translation -0.13615701 -0.47171235 -0.016527328
   rotation -1.0946489e-08 -8.0315534e-09 -1 0.78539821

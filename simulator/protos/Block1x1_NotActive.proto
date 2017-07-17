@@ -13,7 +13,7 @@ PROTO Block1x1_NotActive [
   field SFBool active FALSE  # Whether or not this block has active lights
   field SFInt32 activeID 1   # Must be unique in the world among all active blocks
   field SFFloat width 0.044    # Length of one edge in meters
-  field SFFloat cornerWidth 0.008 # Length of a corner
+  field SFFloat cornerWidth 0.00 # Length of a corner
   field SFFloat markerWidth 0.025
   
   field SFString markerImg_front ""
