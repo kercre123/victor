@@ -160,6 +160,12 @@
     "translation": "Cozmo just generated {0} Sparks by stacking Cubes!"
   },
   "needs.FreeplaySparksReward.Workout": {
-    "translation": "Cozmo just generated {0} Sparks by working out with a Cube!"
+    "translation": "Cozmo just generated {0} Sparks by performing a workout!"
+  },
+  "needs.FreeplaySparksReward.GuardDogWin": {
+    "translation": "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
+  },
+  "needs.FreeplaySparksReward.GuardDogLose": {
+    "translation": "Cozmo gave you {0} Sparks for playing Guard Dog with him!"
   }
 }

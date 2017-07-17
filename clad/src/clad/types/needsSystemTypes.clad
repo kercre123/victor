@@ -73,6 +73,7 @@ enum int_32 NeedsActionId
   GatherCubes,
   GuardDogLose,
   GuardDogWin,
+  GuardDogNoInteraction,
   HiccupsEndBad,
   HiccupsEndGood,
   IndividualHiccup,

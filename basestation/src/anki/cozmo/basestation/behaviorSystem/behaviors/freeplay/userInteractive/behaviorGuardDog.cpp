@@ -828,6 +828,10 @@ void BehaviorGuardDog::RecordResult(std::string&& result)
   {
     NeedActionCompleted(NeedsActionId::GuardDogWin);
   }
+  else if (_result == "TimeoutCubesUntouched")
+  {
+    NeedActionCompleted(NeedsActionId::GuardDogNoInteraction);
+  }
   else
   {
     NeedActionCompleted(NeedsActionId::GuardDogLose);
