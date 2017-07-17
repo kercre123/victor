@@ -39,7 +39,7 @@
       if (window.getNodes().length <= 0) {
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
-        window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+        window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
       }
       else {
         if (!window.isGreenFlagOnWorkspace()) {
@@ -48,7 +48,7 @@
           var xmlText = Blockly.Xml.domToText(xml);
           var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlText.substring(xmlStart.length, xmlText.length);
 
-          window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+          window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
         }
       }
     }
