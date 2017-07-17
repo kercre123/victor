@@ -204,7 +204,8 @@ def parse_game_arguments():
         ArgumentParser.Command('clean', 'issue the clean command to projects'),
         ArgumentParser.Command('delete', 'delete all generated projects'),
         ArgumentParser.Command('wipeall!',
-                               'delete, then wipe all ignored files in the entire repo (including generated projects)')]
+                               'delete, then wipe all ignored files in the entire repo (including generated projects)'),
+        ArgumentParser.Command('deleteclad', 'delete all generated CLAD files')]
     parser.add_command_arguments(commands)
 
     platforms = ['mac', 'ios', 'android']

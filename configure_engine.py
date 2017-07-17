@@ -16,6 +16,8 @@ EXTERNALS_ROOT = os.path.join(ENGINE_ROOT, 'EXTERNALS')
 CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
 BUILD_TOOLS_ROOT = os.path.join(ENGINE_ROOT, 'tools', 'build', 'tools')
 CLAD_ROOT = os.path.join(ENGINE_ROOT, 'tools', 'message-buffers')
+OUTPUT_DIR_CSHARP = os.path.join('..', 'unity', 'Cozmo', 'Assets', 'Scripts', 'Generated')
+
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.util
 import ankibuild.xcode
@@ -344,6 +346,12 @@ def wipe_all(options, root_path, kill_unity=True):
         ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-xdf'])
         ankibuild.util.File.cd(old_dir)
 
+def deleteClad(options):
+    if options.verbose:
+        print_status('Deleting generated CLAD files ...')
+    
+    subprocess.call('make clean -C' + os.path.join(ENGINE_ROOT, 'clad') + ' ' + 'OUTPUT_DIR_CSHARP=' + OUTPUT_DIR_CSHARP, shell=True)
+    subprocess.call('make clean -C' + os.path.join(ENGINE_ROOT, 'robot', 'clad'), shell=True)
 
 ###############################
 # PLATFORM-DEPENDENT COMMANDS #
@@ -494,7 +502,6 @@ class EnginePlatformConfiguration(object):
             print_status('Deleting build folder {0}'.format(self.options.build_dir))
         ankibuild.util.File.rm_rf(self.options.build_dir)
 
-        
 ###############
 # ENTRY POINT #
 ###############
@@ -528,6 +535,9 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     
     if options.command == 'wipeall!':
         wipe_all(options, root_path)
+        
+    if options.command == 'deleteclad':
+        deleteClad(options)
     
     print_header('DONE COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
 
