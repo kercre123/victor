@@ -46,8 +46,11 @@ typedef unsigned long long int BaseStationTime_t;
 
 // If we're using c++, Result is in a namespace. In c, it's not.
 #ifdef __cplusplus
+#include <cstddef>
 namespace Anki
 {
+  // The type for representing matrix dimensions
+  using MatDimType = size_t;
 #endif
 
   // NOTE: changing the basic type of TimeStamp_t (e.g. to u16 in order to save

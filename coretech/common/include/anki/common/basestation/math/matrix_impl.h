@@ -356,7 +356,7 @@ namespace Anki {
   {
     CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
 #if ANKICORETECH_USE_OPENCV
-    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+    return cv::Matx<T,NROWS,NCOLS>::operator()((int) i, (int) j);
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free (i,j) accessor?
@@ -370,7 +370,7 @@ namespace Anki {
   {
     CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
 #if ANKICORETECH_USE_OPENCV
-    return cv::Matx<T,NROWS,NCOLS>::operator()(i,j);
+    return cv::Matx<T,NROWS,NCOLS>::operator()((int) i, (int)j);
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free const (i,j) accessor?

@@ -18,7 +18,7 @@
 namespace Anki {
   
   // Forward declaration
-  template<s32, typename> class SmallSquareMatrix;
+  template<MatDimType, typename> class SmallSquareMatrix;
   
   namespace Vision {
     
