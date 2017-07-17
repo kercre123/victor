@@ -13,16 +13,14 @@
 # limitations under the License.
 
 '''
-Cozmo, by Anki.
-
-Cozmo is a small robot with a big personality.
-
-This library provides a low-level protocol library used by the
-cozmo SDK package.
+This script will generate a Xamarin/Visual Studio compatable project file suited
+for the exported csharp clad files.  It will also inject a version.cs file 
+which will identify which version of clad is being exported.
 '''
 
 import fnmatch
-import os.path
+import os
+import re
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -57,6 +55,7 @@ headerText = '''<?xml version="1.0" encoding="utf-8"?>
     <NoStdLib>false</NoStdLib>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="version.cs" />
 '''
 
 footerText = '''  </ItemGroup>
@@ -74,6 +73,18 @@ footerText = '''  </ItemGroup>
   </ProjectExtensions>
 </Project>'''
 
+versionFileText = '''namespace Anki
+{
+  namespace Cozmo
+  {
+    public static class CladVersion
+    {
+      public static readonly string _Data = "CLAD_VERSION";
+    }
+  } // namespace Cozmo
+} // namespace Anki
+'''
+
 def walk_directory(f, path, exportedRootPath):
     substringMask = ''.join(path.rsplit(exportedRootPath, 1))
     print(substringMask)
@@ -85,8 +96,30 @@ def walk_directory(f, path, exportedRootPath):
                 entryText = '    <Compile Include=\"' + relativeRoot + file + '" />\n'
                 f.write(entryText)
 
-with open(os.path.join(here, 'csharp_clad', 'cladcsharp.csproj'), 'w') as f:
-    f.write(headerText)
-    walk_directory(f, os.path.join(here, 'csharp_clad', 'clad'), 'clad')
-    f.write(footerText)
-    f.close()
+def generate_project(file_path, source_path):
+    with open(file_path, 'w') as f:
+        f.write(headerText)
+        walk_directory(f, source_path, 'clad')
+        f.write(footerText)
+        f.close()
+
+def fetch_version():
+    try:
+        with open(os.path.join(here, 'src', 'cozmoclad', '__init__.py')) as f:
+            ns = {}
+            exec(f.read(), ns)
+            return ns['__version__']
+    except (IOError, KeyError):
+        return 'local'
+
+def inject_clad_version(file_path):
+    clad_version = fetch_version()
+    with open(file_path, 'w') as f:
+        with open('LICENSE-header-cs.txt','r') as licenseFile:
+            for line in licenseFile.readlines():
+              f.write(line)
+        modified_content = versionFileText.replace('CLAD_VERSION', clad_version)
+        f.write(modified_content)
+
+generate_project(os.path.join(here, 'csharp_clad', 'cladcsharp.csproj'), os.path.join(here, 'csharp_clad', 'clad'))
+inject_clad_version(os.path.join(here, 'csharp_clad', 'version.cs'))
