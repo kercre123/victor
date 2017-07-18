@@ -83,6 +83,22 @@ void InventoryComponent::SetInventoryAmount(InventoryType inventoryID, int total
 void InventoryComponent::AddInventoryAmount(InventoryType inventoryID, int delta)
 {
   SetInventoryAmount(inventoryID,GetInventoryAmount(inventoryID) + delta);
+
+  const std::string inventoryType = (inventoryID == InventoryType::Sparks ? "spark" : "");
+
+  // DAS Event: "meta.inventory.change"
+  // s_val: Sparks inventory type
+  // data: Change (delta) in count
+  Anki::Util::sEvent("meta.inventory.change",
+                     {{DDATA, std::to_string(delta).c_str()}},
+                     inventoryType.c_str());
+
+  // DAS Event: "meta.inventory.balance"
+  // s_val: Sparks inventory type
+  // data: New inventory balance
+  Anki::Util::sEvent("meta.inventory.balance",
+                     {{DDATA, std::to_string(GetInventoryAmount(inventoryID)).c_str()}},
+                     inventoryType.c_str());
 }
   
 int  InventoryComponent::GetInventoryAmount(InventoryType inventoryID)

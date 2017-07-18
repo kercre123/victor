@@ -656,9 +656,11 @@ const NeedsState& NeedsManager::GetCurNeedsState()
 
 void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionCompleted)
 {
-  if (_isPausedOverall) {
+  if (_isPausedOverall)
+  {
     return;
   }
+
   // Only accept certain types of events
   if (_onlyWhiteListedActionsEnabled)
   {
@@ -719,6 +721,13 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
                                       NeedsActionIdToString(actionCompleted);
         const auto& extInt = _cozmoContext->GetExternalInterface();
         extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+
+        // DAS Event: "needs.freeplay_sparks_awarded"
+        // s_val: The number of sparks awarded
+        // data: The need action ID that triggered this
+        Anki::Util::sEvent("needs.freeplay_sparks_awarded",
+                           {{DDATA, NeedsActionIdToString(actionCompleted)}},
+                           std::to_string(sparksAwarded).c_str());
       }
     }
   }
@@ -1463,6 +1472,7 @@ bool NeedsManager::UpdateStarsState(bool cheatGiveStar)
   return starAwarded;
 }
 
+
 void NeedsManager::SendStarLevelCompletedToGame()
 {
   // Since the rewards config can be changed after this feature is launched,
@@ -1498,10 +1508,10 @@ void NeedsManager::SendStarLevelCompletedToGame()
   const auto& extInt = _cozmoContext->GetExternalInterface();
   extInt->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
 
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendStarLevelCompletedToGame","CurrUnlockLevel: %d, stars for next: %d, currStars: %d",
-                      _needsState._curNeedsUnlockLevel,_needsState._numStarsForNextUnlock, _needsState._numStarsAwarded);
-  
-  // Save is forced after this function is called.
+  PRINT_CH_INFO(kLogChannelName, "NeedsManager.SendStarLevelCompletedToGame",
+                "CurrUnlockLevel: %d, stars for next: %d, currStars: %d",
+                _needsState._curNeedsUnlockLevel, _needsState._numStarsForNextUnlock,
+                _needsState._numStarsAwarded);
 }
 
 
@@ -1534,6 +1544,13 @@ void NeedsManager::ProcessLevelRewards(int level, std::vector<NeedsReward>& rewa
         // Put the actual number of sparks awarded into the rewards data that we're about
         // to send to the game, so game will know how many sparks were actually awarded
         rewards.back().data = std::to_string(sparksAdded);
+
+        // DAS Event: "needs.level_sparks_awarded"
+        // s_val: The number of sparks awarded
+        // data: Which level was just unlocked
+        Anki::Util::sEvent("needs.level_sparks_awarded",
+                           {{DDATA, std::to_string(_needsState._curNeedsUnlockLevel).c_str()}},
+                           std::to_string(sparksAdded).c_str());
         break;
       }
       // Songs are treated exactly the same as any other unlock
