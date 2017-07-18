@@ -443,11 +443,15 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
 
-        if self.platform == 'mac' or self.platform == 'ios':
+        if self.platform == 'mac':
             for engine_target in ('cozmoEngine', 'cozmoEngine2'):
                 self.options.cozmo_engine_target = engine_target
                 generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
                 ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
+        if self.platform == 'ios':
+            self.options.cozmo_engine_target = 'cozmoEngine'
+            generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
+            ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
         else:
             generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
 
