@@ -588,7 +588,10 @@ void NeedsManager::SetPaused(const bool paused)
 {
   if (paused == _isPausedOverall)
   {
-    DEV_ASSERT_MSG(paused != _isPausedOverall, "NeedsManager.SetPaused.Redundant",
+    // This can happen for several reasons, e.g. being in explorer mode (which
+    // pauses the needs system), and then backgrounding the app (which also pauses
+    // the needs system)
+    PRINT_CH_DEBUG(kLogChannelName, "NeedsManager.SetPaused.Redundant",
                    "Setting paused to %s but already in that state",
                    paused ? "true" : "false");
     return;
