@@ -153,7 +153,7 @@
           "commandType": "DoADance"
         },
         {
-          "phrase": "Viens là",
+          "phrase": "Viens ici",
           "commandType": "ComeHere"
         },
         {
@@ -161,7 +161,7 @@
           "commandType": "DoATrick"
         },
         {
-          "phrase": "Poing à poing",
+          "phrase": "Fais un check",
           "commandType": "FistBump"
         },
         {
