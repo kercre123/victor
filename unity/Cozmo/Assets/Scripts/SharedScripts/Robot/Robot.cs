@@ -419,6 +419,10 @@ public class Robot : IRobot {
 
     ObservableObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
+
+    if((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
+      DisableReactionsWithLock ("sim", ReactionaryBehaviorEnableGroups.kSimulatedRobotTriggers);
+    }
   }
 
   public void Dispose() {
@@ -454,6 +458,10 @@ public class Robot : IRobot {
 
     ActiveObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
+
+    if((RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim)) {
+      RemoveDisableReactionsLock("sim");
+    }
   }
 
   public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
