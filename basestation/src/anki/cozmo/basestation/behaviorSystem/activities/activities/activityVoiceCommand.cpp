@@ -62,7 +62,7 @@ void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehavior
 {
   // Ensure data's not being overwritten improperly
   ANKI_VERIFY(_respondToVCQueue.empty() &&
-              (_currentResponseType == VoiceCommand::VoiceCommandType::Count) &&
+              (_currentResponseType == VoiceCommand::VoiceCommandType::Invalid) &&
               _currentResponseBehavior == nullptr,
               "VCResponseData.SetNewResponseData.OverwritingData",
               "Attempting to overwrite response data with remaining que length %zu and type %s",
@@ -75,7 +75,7 @@ void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehavior
 }
   
 void ActivityVoiceCommand::VCResponseData::ClearResponseData(){
-  if(_currentResponseType != VoiceCommand::VoiceCommandType::Count){
+  if(_currentResponseType != VoiceCommand::VoiceCommandType::Invalid){
     using namespace ::Anki::Cozmo::VoiceCommand;
     auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
     voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(_currentResponseType));
@@ -83,7 +83,7 @@ void ActivityVoiceCommand::VCResponseData::ClearResponseData(){
   
   _respondToVCQueue = {};
   _currentResponseBehavior.reset();
-  _currentResponseType = VoiceCommand::VoiceCommandType::Count;
+  _currentResponseType = VoiceCommand::VoiceCommandType::Invalid;
 
 }
   
@@ -584,7 +584,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       case VoiceCommandType::NoThankYou:
       case VoiceCommandType::Continue:
       case VoiceCommandType::HeyCozmo:
-      case VoiceCommandType::Count:
+      case VoiceCommandType::Invalid:
       {
         ANKI_VERIFY(false,
                     "ActivityVoiceCommand.ChooseNextBehaviorInternal.VCNotHandled",
@@ -673,7 +673,7 @@ bool ActivityVoiceCommand::ShouldActivityRespondToCommand(VoiceCommand::VoiceCom
     }
       // These commands will never be handled by this chooser:
     case VoiceCommandType::HeyCozmo:
-    case VoiceCommandType::Count:
+    case VoiceCommandType::Invalid:
     {
       // We're intentionally not handling these types in ActivityVoiceCommand
       return false;
@@ -705,7 +705,7 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
     case VoiceCommandType::NoThankYou:
     case VoiceCommandType::HowAreYouDoing:
     case VoiceCommandType::YesPlease:
-    case VoiceCommandType::Count:
+    case VoiceCommandType::Invalid:
     {
       return false;
     }

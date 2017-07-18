@@ -12,10 +12,10 @@
 
 #include "anki/cozmo/basestation/voiceCommands/voiceCommandTuning.h"
 
-#include "anki/cozmo/basestation/voiceCommands/commandPhraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/contextConfig.h"
 #include "anki/cozmo/basestation/voiceCommands/languagePhraseData.h"
 #include "anki/cozmo/basestation/voiceCommands/phraseData.h"
-#include "anki/cozmo/basestation/voiceCommands/sampleKeyphraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/recognitionSetupData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -24,6 +24,7 @@
 #include "audioUtil/audioPlayer.h"
 
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
@@ -39,15 +40,16 @@ namespace VoiceCommand {
 VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatform,
                                        const CommandPhraseData& commandPhraseData,
                                        double targetScore,
-                                       Anki::Util::Locale locale)
-: _commandPhraseData(commandPhraseData)
-, _currentLocale(locale)
+                                       Anki::Util::Locale locale,
+                                       const std::string& sampleGroupDir)
+: _contextDataMap(commandPhraseData.GetContextData())
+, _languagePhraseData(commandPhraseData.GetLanguagePhraseData(locale.GetLanguage()))
 {
   // Get the test data
   static const std::string& sampleDirPath = "test/voiceCommandTests/samples";
   static const std::string& testBaseDir = dataPlatform.pathToResource(Util::Data::Scope::Resources, sampleDirPath);
   
-  _languageSampleDir = Util::FileUtils::FullFilePath({testBaseDir, locale.GetLocaleString()});
+  _languageSampleDir = Util::FileUtils::FullFilePath({testBaseDir, locale.GetLocaleString(), sampleGroupDir});
   
   
   // Get the language data files
@@ -58,6 +60,9 @@ VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatf
   const std::string& pathBase = dataPlatform.pathToResource(Util::Data::Scope::Resources, voiceCommandAssetDirStr);
   _generalNNPath = Util::FileUtils::FullFilePath( {pathBase, languageDirStr, languageFilenames._netfileFilename} );
   const std::string& generalPronunPath = Util::FileUtils::FullFilePath( {pathBase, languageDirStr, languageFilenames._ltsFilename} );
+  
+  // Store off a copy of the trigger phrase recognition data for later use
+  _triggerPhraseSetup = commandPhraseData.GetRecognitionSetupData(locale.GetLanguage(), VoiceCommandListenContext::TriggerPhrase);
   
   // Set up recognizer
   _recognizer.reset(new SpeechRecognizerTHF{});
@@ -75,8 +80,8 @@ VoiceCommandTuning::VoiceCommandTuning(const Util::Data::DataPlatform& dataPlatf
   
   // score the results for this configuration
   _baseScoreData._hitMult = 20.0f;
-  _baseScoreData._missMult = -10.0f;
-  _baseScoreData._falsePositiveMult = -5.0f;
+  _baseScoreData._missMult = -5.0f;
+  _baseScoreData._falsePositiveMult = -10.0f;
   _baseScoreData._targetScoreDiffMult = -0.001f;
   _baseScoreData._targetScoreConstant = targetScore;
 }
@@ -107,14 +112,15 @@ bool VoiceCommandTuning::CalculateParamsForCommand(const std::set<VoiceCommandTy
     
     for (int i = 0; i < numSamplesPerParamBScore; ++i)
     {
-      scoreAverage += ScoreParams(testCommandSet, commandType, paramA, paramB).GetScore();
+      scoreAverage += ScoreParams(testCommandSet, commandType, paramA, paramB).CalculateScore("", _languagePhraseData);
       paramA += paramAInc;
     }
     
     scoreAverage /= Util::numeric_cast<double>(numSamplesPerParamBScore);
     
-    PRINT_NAMED_INFO("VoiceCommandTuning.CalculateParamsForCommand",
-                     "Average for paramB:%d %f", paramB, scoreAverage);
+    PRINT_CH_INFO("VoiceCommands",
+                  "VoiceCommandTuning.CalculateParamsForCommand",
+                  "Average for paramB:%d %f", paramB, scoreAverage);
     
     paramBLUT[paramB] = scoreAverage;
     return scoreAverage;
@@ -134,7 +140,7 @@ bool VoiceCommandTuning::CalculateParamsForCommand(const std::set<VoiceCommandTy
       return paramALUT[paramA];
     }
     
-    double scoreValue = ScoreParams(testCommandSet, commandType, paramA, gssParamBResult).GetScore();
+    double scoreValue = ScoreParams(testCommandSet, commandType, paramA, gssParamBResult).CalculateScore("", _languagePhraseData);
     paramALUT[paramA] = scoreValue;
     return scoreValue;
   };
@@ -150,15 +156,53 @@ bool VoiceCommandTuning::CalculateParamsForCommand(const std::set<VoiceCommandTy
   return true;
 }
 
+float VoiceCommandTuning::CalculateContextConfigValue(ContextConfigSetter setterFunc,
+                                                      double valueBegin,
+                                                      double valueEnd,
+                                                      bool useGoldenSectionSearch) const
+{
+  std::map<double, double> valuesLUT;
+  auto gssScoring = [this, &valuesLUT, &setterFunc] (double testingValue) -> double
+  {
+    const auto& iter = valuesLUT.find(testingValue);
+    if (iter != valuesLUT.end())
+    {
+      return iter->second;
+    }
+    
+    ContextConfig testConfig;
+    setterFunc(testConfig, Util::numeric_cast<float>(testingValue));
+    bool doAudioPlayback = false;
+    ContextConfigSharedPtr combinedConfig;
+    auto paramScoreData = ScoreTriggerAndCommand(testConfig, doAudioPlayback, combinedConfig);
+    double paramScore = paramScoreData.CalculateScore("", _languagePhraseData);
+    
+    valuesLUT[testingValue] = paramScore;
+    return paramScore;
+  };
+  
+  if (useGoldenSectionSearch)
+  {
+    constexpr double maxIterations = 20;
+    return Util::numeric_cast<float>(GSSMaximum(gssScoring, valueBegin, valueEnd, maxIterations));
+  }
+  else
+  {
+    constexpr double maxIterations = 100;
+    return Util::numeric_cast<float>(FindBestBruteForce(gssScoring, valueBegin, valueEnd, maxIterations));
+  }
+}
+
 TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandType>& testCommandSet,
                                                     VoiceCommandType commandType, int paramA, int paramB, bool playAudio) const
 {
+  // Set up the recognizer for this test:
   PhraseDataSharedPtr phraseData;
   
   // Make a copy of the phraselist so we can make modifications
   std::vector<Anki::Cozmo::VoiceCommand::PhraseDataSharedPtr> commandPhraseList;
   {
-    const auto& commandPhraseListTmp = _commandPhraseData.GetPhraseDataList(_currentLocale.GetLanguage(), testCommandSet);
+    const auto& commandPhraseListTmp = _languagePhraseData->GetPhraseDataList(testCommandSet);
     for (const auto& item : commandPhraseListTmp)
     {
       commandPhraseList.push_back(PhraseDataSharedPtr(new PhraseData(*item)));
@@ -175,42 +219,129 @@ TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandT
   phraseData->SetParamB(paramB);
   //    phraseData->SetParamC(250);
   const AudioUtil::SpeechRecognizer::IndexType recogIndex = 0;
-  const bool isPhraseSpotted = true;
-  const bool allowsFollowupRecog = false;
-  _recognizer->AddRecognitionDataAutoGen(recogIndex, _generalNNPath, commandPhraseList, isPhraseSpotted, allowsFollowupRecog);
+  VoiceCommand::RecognitionSetupData setupData;
+  setupData._isPhraseSpotted = true;
+  setupData._allowsFollowup = false;
+  setupData._phraseList = std::move(commandPhraseList);
+  
+  _recognizer->AddRecognitionDataAutoGen(recogIndex, _generalNNPath, setupData);
   _recognizer->SetRecognizerIndex(recogIndex);
   
-  // score the results for this configuration
-  TestResultScoreData scoreData = _baseScoreData;
-  scoreData._scoredPhrase = phraseData->GetPhrase();
+  // Get the results for this configuration
+  TestResultScoreData scoreData = CollectResults(testCommandSet, playAudio);
   
+  // Remove the recognizer now that we're done with it
+  _recognizer->RemoveRecognitionData(recogIndex);
+  _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+  
+  return scoreData;
+}
+  
+TestResultScoreData VoiceCommandTuning::ScoreTriggerAndCommand(const ContextConfig& commandListConfig,
+                                                               bool playAudio,
+                                                               ContextConfigSharedPtr& out_CombinedConfig) const
+{
+  // Add the trigger phrase recognizer
+  constexpr AudioUtil::SpeechRecognizer::IndexType triggerIndex = Util::EnumToUnderlying(VoiceCommandListenContext::TriggerPhrase);
+  const auto& triggerDataIter = _contextDataMap.find(VoiceCommandListenContext::TriggerPhrase);
+  if (triggerDataIter == _contextDataMap.end())
+  {
+    return TestResultScoreData{};
+  }
+  // Make a copy of the set so we can add to it
+  auto totalCommandSet = triggerDataIter->second._commandsSet;
+  
+  _recognizer->AddRecognitionDataAutoGen(triggerIndex, _generalNNPath, _triggerPhraseSetup);
+  
+  // Set up the custom recognizer for the command list context
+  const auto& contextConfigMap = _languagePhraseData->GetContextConfigs();
+  const auto& configMapIter = contextConfigMap.find(VoiceCommandListenContext::CommandList);
+  ContextConfigSharedPtr combinedConfig;
+  if (configMapIter != contextConfigMap.end())
+  {
+    combinedConfig.reset(new ContextConfig(*configMapIter->second));
+  }
+  else
+  {
+    combinedConfig.reset(new ContextConfig);
+  }
+  combinedConfig->Combine(commandListConfig);
+  out_CombinedConfig = combinedConfig;
+  
+  
+  const auto& dataIter = _contextDataMap.find(VoiceCommandListenContext::CommandList);
+  if (dataIter == _contextDataMap.end())
+  {
+    return TestResultScoreData{};
+  }
+  VoiceCommand::RecognitionSetupData setupData;
+  setupData._contextConfig = combinedConfig;
+  
+  const auto& contextData = dataIter->second;
+  const auto& commandListCommandSet = contextData._commandsSet;
+  
+  setupData._isPhraseSpotted = contextData._isPhraseSpotted;
+  setupData._allowsFollowup = contextData._allowsFollowup;
+  setupData._phraseList = _languagePhraseData->GetPhraseDataList(commandListCommandSet);
+  
+  // Add these commands to the total set to score
+  totalCommandSet.insert(commandListCommandSet.begin(), commandListCommandSet.end());
+  
+  constexpr AudioUtil::SpeechRecognizer::IndexType commandListIndex = Util::EnumToUnderlying(VoiceCommandListenContext::CommandList);
+  _recognizer->AddRecognitionDataAutoGen(commandListIndex, _generalNNPath, setupData);
+  
+  _recognizer->SetRecognizerIndex(triggerIndex);
+  _recognizer->SetRecognizerFollowupIndex(commandListIndex);
+  
+  auto resetTask = [this] () {
+    _recognizer->SetRecognizerIndex(triggerIndex);
+    _recognizer->SetRecognizerFollowupIndex(commandListIndex);
+  };
+  
+  // Score the results for this configuration
+  TestResultScoreData scoreData = CollectResults(totalCommandSet, playAudio, resetTask);
+  
+  // Remove the recognizer now that we're done with it
+  _recognizer->RemoveRecognitionData(triggerIndex);
+  _recognizer->RemoveRecognitionData(commandListIndex);
+  _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
+  
+  return scoreData;
+}
+  
+TestResultScoreData VoiceCommandTuning::CollectResults(const std::set<VoiceCommandType>& testCommandSet, bool playAudio, ResetTask resetTask) const
+{
+  // Load up the test data
   Json::Value jsonObject{};
   const std::string& phraseDataFilename = "samplePhraseData.json";
   Anki::Util::Data::DataPlatform::readAsJson(Util::FileUtils::FullFilePath({_languageSampleDir, phraseDataFilename}), jsonObject);
   SampleKeyphraseData sampleData{};
   sampleData.Init(jsonObject);
   const auto& fileToCommandData = sampleData.GetFileToDataMap();
+  
+  // score the results for this configuration
+  TestResultScoreData scoreData = _baseScoreData;
+
   for (const auto& iter : fileToCommandData)
   {
     const auto& filename = iter.first;
+    const auto& commandDataMap = iter.second;
     
     // Set up audio input
     _audioInput->ReadFile(Util::FileUtils::FullFilePath( {_languageSampleDir, filename} ));
+    PRINT_CH_INFO("VoiceCommands", "VoiceCommandTuning.ScoreParams","Processing %s", filename.c_str());
     
     AudioUtil::AudioPlayer audioPlayer;
     if (playAudio)
     {
-      PRINT_NAMED_INFO("VoiceCommandTuning.ScoreParams","Playing audio filename %s", filename.c_str());
       audioPlayer.StartPlaying(_audioInput->GetAudioSamples().begin(), _audioInput->GetAudioSamples().end());
       std::this_thread::sleep_for(std::chrono::milliseconds(AudioUtil::kTimePerAudioChunk_ms));
     }
-    else
-    {
-      (void)audioPlayer;
-    }
     
     // Tell the audio input to go through the audio data and deliver it
-    _audioInput->DeliverAudio(playAudio);
+    constexpr bool addBeginningSilence = true;
+    constexpr bool addEndingSilence = true;
+    _audioInput->DeliverAudio(playAudio, addBeginningSilence, addEndingSilence);
     
     // If we were playing audio we need to make sure it's stopped
     if (playAudio)
@@ -218,37 +349,70 @@ TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandT
       audioPlayer.StopPlaying();
     }
     
-    // Make a copy of the expected results so we can decrement them as we go through what we actually got
-    CommandCounts expectedResults = iter.second;
-    auto& resultsVectorForFile = scoreData._filenameToResultsMap[filename];
+    auto& resultsDataForFile = scoreData._filenameToResultsMap[filename];
+    auto& resultsVectorForFile = resultsDataForFile._actualResults;
     while (_recogProcessor->HasResults())
     {
-      auto result = _recogProcessor->PopNextResult();
-      
-      PhraseDataSharedPtr commandDataFound;
-      for (const auto& dataIter : commandPhraseList)
+      resultsVectorForFile.push_back(_recogProcessor->PopNextResult());
+    }
+    
+    // fill out important information on the scoredata so the calculated score will be correct
+    auto& expectedFileResultsForSetCommands = resultsDataForFile._expectedResults;
+    for (const auto& commandDataIter : commandDataMap)
+    {
+      if (testCommandSet.find(commandDataIter.first) != testCommandSet.end())
       {
-        if (dataIter->GetPhrase() == result.first)
-        {
-          commandDataFound = dataIter;
-          break;
-        }
+        // If the test command set includes this command, include the expected count for it for this file
+        expectedFileResultsForSetCommands.insert(commandDataIter);
       }
-      const auto& commandType = commandDataFound->GetVoiceCommandType();
+    }
+    
+    // Do whatever task we're supposed to do at the end of a file
+    if (resetTask)
+    {
+      resetTask();
+    }
+  }
+  
+  return scoreData;
+}
+
+double TestResultScoreData::CalculateScore(const std::string phrase,
+                                           const ConstLanguagePhraseDataSharedPtr& phraseDataLookup)
+{
+  // Go through the results from each file and get an average score of the results we got.
+  int numResults = 0;
+  double averageScore = 0;
+  
+  int hits = 0;
+  int misses = 0;
+  int falsePositives = 0;
+  
+  bool isEmptyPhrase = phrase.empty();
+  for (const auto& iter : _filenameToResultsMap)
+  {
+    const auto& resultsData = iter.second;
+    const auto& resultsList = resultsData._actualResults;
+    
+    // Make a copy of the expected results so we can decrement them as we go through what we actually got
+    CommandCounts expectedResults = resultsData._expectedResults;
+    for (const auto& result : resultsList)
+    {
+      const auto& commandType = phraseDataLookup->GetDataForPhrase(result.first)->GetVoiceCommandType();
       
       auto remainingExpectedCountIter = expectedResults.find(commandType);
       if (remainingExpectedCountIter == expectedResults.end())
       {
-        ++scoreData._falsePositives;
+        ++falsePositives;
       }
       else if (remainingExpectedCountIter->second == 0)
       {
-        ++scoreData._falsePositives;
+        ++falsePositives;
         expectedResults.erase(remainingExpectedCountIter);
       }
       else if (remainingExpectedCountIter->second > 0)
       {
-        ++scoreData._hits;
+        ++hits;
         --remainingExpectedCountIter->second;
         if (remainingExpectedCountIter->second == 0)
         {
@@ -256,64 +420,37 @@ TestResultScoreData VoiceCommandTuning::ScoreParams(const std::set<VoiceCommandT
         }
       }
       
-      resultsVectorForFile.push_back(std::move(result));
-    }
-    
-    // count up any remaining expected results that are in our test set as misses
-    for (const auto& iter : expectedResults)
-    {
-      if (testCommandSet.find(iter.first) != testCommandSet.end())
-      {
-        scoreData._misses += iter.second;
-      }
-    }
-  }
-  
-  _recognizer->RemoveRecognitionData(recogIndex);
-  _recognizer->SetRecognizerIndex(AudioUtil::SpeechRecognizer::InvalidIndex);
-  
-  return scoreData;
-}
-
-double TestResultScoreData::GetScore() const
-{
-  // Go through the results from each file and get an average score of the results we got.
-  int numResults = 0;
-  double averageScore = 0;
-  
-  for (const auto& iter : _filenameToResultsMap)
-  {
-    const auto& resultsList = iter.second;
-    for (const auto& result : resultsList)
-    {
-      if (result.first == _scoredPhrase)
+      if (isEmptyPhrase || result.first == phrase)
       {
         averageScore += result.second;
         ++numResults;
       }
+    } // for (const auto& result : resultsList)
+    
+    // count up any remaining expected results that are in our test set as misses
+    for (const auto& iter : expectedResults)
+    {
+      misses += iter.second;
     }
-  }
+  } // for (const auto& iter : _filenameToResultsMap)
   
   if (numResults > 0)
   {
     averageScore = averageScore / Anki::Util::numeric_cast<double>(numResults);
   }
   
+  _maxScore = Anki::Util::numeric_cast<double>(hits + misses) * _hitMult;
+  
   // We want the deviation from the target score as an absolute value
   const double& targetScoreDiff = Anki::Util::Abs(averageScore - _targetScoreConstant);
   
-  const double hitScore = Util::numeric_cast<double>(_hits) * _hitMult;
-  const double missScore = Util::numeric_cast<double>(_misses) * _missMult;
-  const double falsePositiveScore = Util::numeric_cast<double>(_falsePositives) * _falsePositiveMult;
+  const double hitScore = Util::numeric_cast<double>(hits) * _hitMult;
+  const double missScore = Util::numeric_cast<double>(misses) * _missMult;
+  const double falsePositiveScore = Util::numeric_cast<double>(falsePositives) * _falsePositiveMult;
   const double targetScoreDiffScore = targetScoreDiff * _targetScoreDiffMult;
   
-  const double finalScore = hitScore + missScore + falsePositiveScore + targetScoreDiffScore;
-  return finalScore;
-}
-
-double TestResultScoreData::GetMaxScore() const
-{
-  return  (Anki::Util::numeric_cast<double>(_hits + _misses) * _hitMult);
+  _score = hitScore + missScore + falsePositiveScore + targetScoreDiffScore;
+  return _score;
 }
 
 
@@ -344,6 +481,34 @@ double VoiceCommandTuning::GSSMaximum(std::function<double(double)> function, do
   }
   
   return (b + a) / 2.0;
+}
+
+double VoiceCommandTuning::FindBestBruteForce(std::function<double(double)> function, double a, double b, int iterations)
+{
+  if (iterations < 2)
+  {
+    return a;
+  }
+  
+  double delta = (b - a) / Util::numeric_cast<double>(iterations - 1);
+  
+  double bestInput = a;
+  double bestScore = function(a);
+  --iterations;
+  
+  double currentInput = a + delta;
+  while (iterations--)
+  {
+    double nextScore = function(currentInput);
+    if (nextScore > bestScore)
+    {
+      bestInput = currentInput;
+      bestScore = nextScore;
+    }
+    currentInput += delta;
+  }
+  
+  return bestInput;
 }
 
 } // namespace VoiceCommand

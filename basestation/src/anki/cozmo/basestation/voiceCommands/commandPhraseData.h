@@ -13,6 +13,8 @@
 #ifndef __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_
 #define __Cozmo_Basestation_VoiceCommands_CommandPhraseData_H_
 
+#include "anki/cozmo/basestation/voiceCommands/recognitionSetupData.h"
+
 #include "util/environment/locale.h"
 #include "clad/types/voiceCommandTypes.h"
 
@@ -32,6 +34,8 @@ namespace Cozmo {
 namespace VoiceCommand {
   
 class LanguagePhraseData;
+using LanguagePhraseDataSharedPtr = std::shared_ptr<LanguagePhraseData>;
+using ConstLanguagePhraseDataSharedPtr = std::shared_ptr<const LanguagePhraseData>;
 struct LanguageFilenames;
 
 class PhraseData;
@@ -65,8 +69,12 @@ public:
   
   const LanguageFilenames& GetLanguageFilenames(LanguageType languageType, CountryType countryType) const;
   
+  ConstLanguagePhraseDataSharedPtr GetLanguagePhraseData(LanguageType languageType) const;
+  
+  RecognitionSetupData GetRecognitionSetupData(LanguageType languageType, VoiceCommandListenContext context) const;
+  
 private:
-  std::map<LanguageType, std::unique_ptr<LanguagePhraseData>> _languagePhraseDataMap;
+  std::map<LanguageType, LanguagePhraseDataSharedPtr>         _languagePhraseDataMap;
   std::map<VoiceCommandListenContext, ContextData>            _contextDataMap;
   
   bool AddLanguagePhraseData(const Json::Value& dataObject);

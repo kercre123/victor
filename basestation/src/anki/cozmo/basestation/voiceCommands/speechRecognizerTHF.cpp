@@ -13,6 +13,8 @@
 */
 
 #include "anki/cozmo/basestation/voiceCommands/phraseData.h"
+#include "anki/cozmo/basestation/voiceCommands/contextConfig.h"
+#include "anki/cozmo/basestation/voiceCommands/recognitionSetupData.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHF.h"
 #include "anki/cozmo/basestation/voiceCommands/speechRecognizerTHFTypes.h"
 #include "util/console/consoleInterface.h"
@@ -181,9 +183,12 @@ void SpeechRecognizerTHF::HandleInitFail(const std::string& failMessage)
 
 bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
                                                     const std::string& nnFilePath,
-                                                    const std::vector<VoiceCommand::PhraseDataSharedPtr>& phraseList,
-                                                    bool isPhraseSpotted, bool allowsFollowupRecog)
+                                                    const VoiceCommand::RecognitionSetupData& setupData)
 {
+  const auto& phraseList = setupData._phraseList;
+  bool isPhraseSpotted = setupData._isPhraseSpotted;
+  bool allowsFollowupRecog = setupData._allowsFollowup;
+  
   recog_t* createdRecognizer = nullptr;
   searchs_t* createdSearch = nullptr;
   
@@ -257,6 +262,55 @@ bool SpeechRecognizerTHF::AddRecognitionDataAutoGen(IndexType index,
     std::string errorMessage = std::string("ERROR ") + searchMethod + err;
     cleanupAfterFailure(errorMessage);
     return false;
+  }
+  
+  // Config the search
+  if (nullptr != setupData._contextConfig)
+  {
+    const auto& contextConfig = *setupData._contextConfig;
+    using DataType = VoiceCommand::ContextConfig::DataValueType;
+    
+    // Set beam param on search
+    if (contextConfig.HasDataValueSet(DataType::SearchBeam))
+    {
+      float beamValue = contextConfig.GetSearchBeam();
+      if (!thfSearchConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, SCH_BEAM, beamValue))
+      {
+        const char *err = thfGetLastError(_impl->_thfSession);
+        std::string method = "thfSearchConfigSet SCH_BEAM";
+        std::string errorMessage = std::string("ERROR ") + method + err;
+        cleanupAfterFailure(errorMessage);
+        return false;
+      }
+    }
+    
+    // Set nota param on search
+    if (contextConfig.HasDataValueSet(DataType::SearchNOTA))
+    {
+      float notaValue = contextConfig.GetSearchNOTA();
+      if (!thfSearchConfigSet(_impl->_thfSession, createdRecognizer, createdSearch, SCH_NOTA, notaValue))
+      {
+        const char *err = thfGetLastError(_impl->_thfSession);
+        std::string method = "thfSearchConfigSet SCH_NOTA";
+        std::string errorMessage = std::string("ERROR ") + method + err;
+        cleanupAfterFailure(errorMessage);
+        return false;
+      }
+    }
+    
+    // set minduration param on recognizer
+    if (contextConfig.HasDataValueSet(DataType::RecogMinDuration))
+    {
+      float minDurationValue = contextConfig.GetRecogMinDuration();
+      if (!thfRecogConfigSet(_impl->_thfSession, createdRecognizer, REC_MINDUR, minDurationValue))
+      {
+        const char *err = thfGetLastError(_impl->_thfSession);
+        std::string method = "thfRecogConfigSet REC_MINDUR";
+        std::string errorMessage = std::string("ERROR ") + method + err;
+        cleanupAfterFailure(errorMessage);
+        return false;
+      }
+    }
   }
   
   /* Initialize recognizer */

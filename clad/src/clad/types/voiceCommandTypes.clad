@@ -24,7 +24,7 @@ enum uint_8 VoiceCommandType {
   YesPlease,
   LookDown,
 
-  Count
+  Invalid
 }
 
 enum uint_8 VoiceCommandListenContext {
@@ -33,7 +33,7 @@ enum uint_8 VoiceCommandListenContext {
   CommandList,
   SimplePrompt,
 
-  Count
+  Invalid
 }
 
 // NOTE: This mirrors the types in AudioUtil::AudioCaptureSystem

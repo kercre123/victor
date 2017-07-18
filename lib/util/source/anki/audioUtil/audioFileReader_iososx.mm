@@ -250,10 +250,11 @@ bool AudioFileReader::TrimPrimingAndRemainder(const NativeAudioFileData& fileDat
   // Trim priming off the front
   {
     UInt32 numPriming = static_cast<UInt32>(sampleRateRatio * static_cast<Float64>(packetTableInfo.mPrimingFrames));
-    while (numPriming >= kSamplesPerChunk)
+    while (numPriming >= _audioSamples.front().size())
     {
+      const auto frontSize = _audioSamples.front().size();
       _audioSamples.pop_front();
-      numPriming -= kSamplesPerChunk;
+      numPriming -= frontSize;
     }
     if (numPriming > 0)
     {
@@ -265,10 +266,11 @@ bool AudioFileReader::TrimPrimingAndRemainder(const NativeAudioFileData& fileDat
   // Trim remainder off the back
   {
     UInt32 numRemainder = static_cast<UInt32>(sampleRateRatio * static_cast<Float64>(packetTableInfo.mRemainderFrames));
-    while (numRemainder >= kSamplesPerChunk)
+    while (numRemainder >= _audioSamples.back().size())
     {
+      const auto backSize = _audioSamples.back().size();
       _audioSamples.pop_back();
-      numRemainder -= kSamplesPerChunk;
+      numRemainder -= backSize;
     }
     if (numRemainder > 0)
     {
@@ -279,7 +281,7 @@ bool AudioFileReader::TrimPrimingAndRemainder(const NativeAudioFileData& fileDat
   return true;
 }
 
-void AudioFileReader::DeliverAudio(bool doRealTime)
+void AudioFileReader::DeliverAudio(bool doRealTime, bool addBeginSilence, bool addEndSilence)
 {
   auto dataCallback = GetDataCallback();
   if (!dataCallback)
@@ -287,15 +289,44 @@ void AudioFileReader::DeliverAudio(bool doRealTime)
     return;
   }
   
-  constexpr auto updatePeriod = std::chrono::milliseconds(Anki::AudioUtil::kTimePerAudioChunk_ms);
-  for (const auto& audioChunk : _audioSamples)
+  // Lambda for delivering a single audio chunk
+  auto deliverAudioChunk = [&dataCallback, doRealTime] (const AudioChunk& audioChunk)
   {
+    const auto updatePeriod = std::chrono::milliseconds((1000 * audioChunk.size()) / kSampleRate_hz);
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
     dataCallback(audioChunk.data(), static_cast<uint32_t>(audioChunk.size()));
     auto elapsed = std::chrono::steady_clock::now() - startTime;
     if (doRealTime && elapsed < updatePeriod)
     {
       std::this_thread::sleep_for(updatePeriod - elapsed);
+    }
+  };
+  
+  // Static AudioChunk to be used for adding silence
+  static const AudioChunk silenceChunk = AudioChunk(std::size_t(AudioUtil::kSamplesPerChunk), 0);
+  constexpr int chunksPerSecond = AudioUtil::kSampleRate_hz / AudioUtil::kSamplesPerChunk;
+  
+  // Deliver beginning silence if desired
+  if (addBeginSilence)
+  {
+    for (int i=0; i<chunksPerSecond; ++i)
+    {
+      deliverAudioChunk(silenceChunk);
+    }
+  }
+  
+  // Deliver the stored audio samples
+  for (const auto& audioChunk : _audioSamples)
+  {
+    deliverAudioChunk(audioChunk);
+  }
+  
+  // Deliver ending silence if desired
+  if (addEndSilence)
+  {
+    for (int i=0; i<chunksPerSecond; ++i)
+    {
+      deliverAudioChunk(silenceChunk);
     }
   }
 }

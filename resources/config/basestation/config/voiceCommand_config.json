@@ -13,12 +13,20 @@
           "ltsFilename" : "lts_en_3.0.raw"
         }
       ],
+      "contextConfigList": [
+        {
+          "contextType": "CommandList",
+          "searchBeam": 50,
+          "searchNOTA": 0.534646,
+          "recogMinDuration": 40
+        }
+      ],
       "phraseCommandsMap": [
         {
           "phrase": "HeyCozmo",
           "commandType": "HeyCozmo",
-          "paramA": -600,
-          "paramB": 550
+          "paramA": -962,
+          "paramB": 722
         },
         {
           "phrase": "Do A Dance",
@@ -193,7 +201,7 @@
       "ltsFilename" : "lts_ja_6.7.12.raw",
       "phraseCommandsMap": [
         {
-          "phrase": "Ne kozmo",
+          "phrase": "Nē kozmo",
           "commandType": "HeyCozmo",
           "paramA": -900,
           "paramB": 600
@@ -203,11 +211,11 @@
           "commandType": "DoADance"
         },
         {
-          "phrase": "Kocchi kite",
+          "phrase": "Kocchi oide",
           "commandType": "ComeHere"
         },
         {
-          "phrase": "Nanika yatte mite",
+          "phrase": "Torikku shite",
           "commandType": "DoATrick"
         },
         {

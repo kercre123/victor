@@ -85,7 +85,7 @@ private:
   private:
     ChooseNextBehaviorQueue        _respondToVCQueue;
     IBehaviorPtr                   _currentResponseBehavior;
-    VoiceCommand::VoiceCommandType _currentResponseType = VoiceCommand::VoiceCommandType::Count;
+    VoiceCommand::VoiceCommandType _currentResponseType = VoiceCommand::VoiceCommandType::Invalid;
     const CozmoContext*            _context;
     // Returns true if ResponseData has not previously returned a behavior to run
     // but will return one this tick
