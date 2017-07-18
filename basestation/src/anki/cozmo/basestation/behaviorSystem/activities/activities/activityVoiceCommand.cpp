@@ -416,7 +416,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
             
             IBehaviorPtr ptrCopy = iter->second;
             responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-            responseQueue.push([this, &robot, ptrCopy, &currentCommand](const IBehaviorPtr currentBehavior){
+            responseQueue.push([this, &robot, ptrCopy, currentCommand](const IBehaviorPtr currentBehavior){
               RemoveSparksForCommand(robot, currentCommand);
               return ptrCopy;
             });
@@ -433,7 +433,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       case VoiceCommandType::DoATrick:
       {
         responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-        responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+        responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
           RemoveSparksForCommand(robot, currentCommand);
           robot.GetAIComponent().GetDoATrickSelector().RequestATrick(robot);
           return nullptr;
@@ -505,7 +505,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         if(_fistBumpBehavior->IsRunnable(preReqRobot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
             RemoveSparksForCommand(robot, currentCommand);
             const bool isSoftSpark = false;
             robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
@@ -525,7 +525,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         if(_peekABooBehavior->IsRunnable(preReqRobot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
             RemoveSparksForCommand(robot, currentCommand);
             const bool isSoftSpark = false;
             robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
