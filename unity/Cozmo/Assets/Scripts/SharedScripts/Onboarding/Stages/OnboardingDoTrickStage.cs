@@ -35,6 +35,12 @@ namespace Onboarding {
           // switch to freeplay so sparks work
           CurrentRobot.ActivateHighLevelActivity(Anki.Cozmo.HighLevelActivity.Freeplay);
           CurrentRobot.EnableSparkUnlock(Anki.Cozmo.UnlockId.RollCube);
+          UnlockableInfo info = UnlockablesManager.Instance.GetUnlockableInfo(Anki.Cozmo.UnlockId.RollCube);
+          Anki.AudioMetaData.SwitchState.Sparked sparkedMusicState = info.SparkedMusicState.Sparked;
+          if (sparkedMusicState == Anki.AudioMetaData.SwitchState.Sparked.Invalid) {
+            sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
+          }
+          RobotEngineManager.Instance.CurrentRobot.SetSparkedMusicState(sparkedMusicState);
         }
         else {
           var cozmoNotOnTreadsData = new AlertModalData("cozmo_off_treads_alert",
