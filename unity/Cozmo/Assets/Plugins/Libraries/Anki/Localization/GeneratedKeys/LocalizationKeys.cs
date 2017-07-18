@@ -1016,7 +1016,7 @@ public static class LocalizationKeys {
   public const string kVoiceCommandsLearnCommandsFistBump_desc = "voiceCommands.learnCommands.FistBump_desc";
   public const string kVoiceCommandsLearnCommandsLearnVoiceCommandTitle = "voiceCommands.learnCommands.LearnVoiceCommandTitle";
   public const string kVoiceCommandsLearnCommandsRememberPhrases = "voiceCommands.learnCommands.RememberPhrases";
-  public const string kVoiceCommandsLearnCommandsSpecialPhrases = "voiceCommands.learnCommands.Special Phrases";
+  public const string kVoiceCommandsLearnCommandsSpecialPhrases = "voiceCommands.learnCommands.SpecialPhrases";
   public const string kVoiceCommandsLearnCommandsDoATrick = "voiceCommands.learnCommands.DoATrick";
   public const string kVoiceCommandsLearnCommandsLetsPlay = "voiceCommands.learnCommands.LetsPlay";
   public const string kVoiceCommandsLearnCommandsExplainMicIcon = "voiceCommands.learnCommands.ExplainMicIcon";

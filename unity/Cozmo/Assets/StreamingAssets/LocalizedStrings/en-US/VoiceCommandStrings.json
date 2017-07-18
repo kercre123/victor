@@ -105,14 +105,14 @@
   "voiceCommands.learnCommands.RememberPhrases": {
     "translation": "Remember these phrases and you can speak them directly to Cozmo."
   },
-  "voiceCommands.learnCommands.Special Phrases": {
+  "voiceCommands.learnCommands.SpecialPhrases": {
     "translation": "Activities with a microphone icon can be accessed with special phrases."
   },
   "voiceCommands.learnCommands.DoATrick": {
-    "translation": "For Tricks Ask, \"<b>Hey Cozmo. Do a trick.</b>\""
+    "translation": "For Tricks Ask,\n\"<b>Hey Cozmo. Do a trick.</b>\""
   },
   "voiceCommands.learnCommands.LetsPlay": {
-    "translation": "For Games Ask, \"<b>Hey Cozmo. Let's play a game.</b>\""
+    "translation": "For Games Ask,\n\"<b>Hey Cozmo. Let's play a game.</b>\""
   },
   "voiceCommands.learnCommands.ExplainMicIcon": {
     "translation": "Whenever you see the microphone icon at the end of a phrase, you can speak your response."

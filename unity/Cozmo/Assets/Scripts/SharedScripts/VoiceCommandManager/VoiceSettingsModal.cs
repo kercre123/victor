@@ -7,27 +7,39 @@ namespace Anki.Cozmo.VoiceCommand {
 
     [SerializeField]
     private CozmoText _StatusLabel;
+
     [SerializeField]
     private CozmoButton _SwitchButton;
+
     [SerializeField]
     private CozmoButton _AppSettingsButton;
 
     [SerializeField]
     private GameObject _VCEnabledDescription;
+
     [SerializeField]
     private GameObject _VCDisabledDescription;
 
     [SerializeField]
     private GameObject _VCEnabledSwitch;
+
     [SerializeField]
     private GameObject _VCDisabledSwitch;
 
     [SerializeField]
     private GameObject _AuthorizationNeededShelf;
+
     [SerializeField]
     private GameObject _LearnCommandsShelf;
+
     [SerializeField]
     private GameObject _VCDisabledShelf;
+
+    [SerializeField]
+    private BaseModal _VCLearnCommandsModalPrefab;
+
+    [SerializeField]
+    private CozmoButton _LearnCommandsButton;
 
     private AudioCapturePermissionState _CurrentAudioCapturePermissionState;
 
@@ -41,7 +53,8 @@ namespace Anki.Cozmo.VoiceCommand {
 #endif
 
       _SwitchButton.Initialize(HandleSwitchButtonClicked, "enable_voice_commands_button", DASEventDialogName);
-      _AppSettingsButton.Initialize(HandleAppSettingsClicked, "app_settings_button", DASEventDialogName);
+      _AppSettingsButton.Initialize(HandleAppSettingsClicked, "open_app_settings_button", DASEventDialogName);
+      _LearnCommandsButton.Initialize(HandleLearnCommandsButtonClicked, "open_learn_commands_button", DASEventDialogName);
 
       _CurrentAudioCapturePermissionState = AudioCapturePermissionState.Unknown;
       VoiceCommandManager.Instance.StateDataCallback += OnMicrophoneAuthorizationStatusUpdate;
@@ -113,6 +126,10 @@ namespace Anki.Cozmo.VoiceCommand {
       DAS.Error("VoiceSettingsModal.HandleAppSettingsClicked", "Platform not supported");
 #endif
 #endif
+    }
+
+    private void HandleLearnCommandsButtonClicked() {
+      UIManager.OpenModal(_VCLearnCommandsModalPrefab, ModalPriorityData.CreateSlightlyHigherData(PriorityData), null);
     }
 
     private bool IsMicrophoneAuthorized {

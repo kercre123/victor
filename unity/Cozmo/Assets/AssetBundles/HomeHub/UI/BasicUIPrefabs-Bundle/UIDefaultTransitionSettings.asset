@@ -18,8 +18,10 @@ MonoBehaviour:
   _FadeInTransitionDuration_sec: 0.4
   _FadeInEasing: 3
   _FadeOutTransitionDuration_sec: 0.4
-  _FadeOutEasing: 2
+  _FadeOutEasing: 3
   _MoveOpenDuration_sec: 0.4
   _MoveOpenEase: 6
   _MoveCloseDuration_sec: 0.4
-  _MoveCloseEase: 5
+  _MoveCloseEase: 9
+  _SwipeDuration_sec: 0.4
+  _SwipeSlideEase: 7

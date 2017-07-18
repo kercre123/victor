@@ -30,8 +30,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DASEventDialogName: cube_help_view
   _OpenAudioEvent:
-    _Event: Invalid
-    _EventType: GenericEvent
+    _Event: Play__Ui__Window_Open
+    _EventType: Ui
   _AlphaController: {fileID: 0}
   _MoveTweenSettings:
     staggerType: 0

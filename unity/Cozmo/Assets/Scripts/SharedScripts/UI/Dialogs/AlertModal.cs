@@ -218,22 +218,11 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
-        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
-        openAnimation.Append(transform.DOLocalMoveY(
-          50, 0.15f).From().SetEase(settings.MoveOpenEase).SetRelative());
-        if (_AlphaController != null) {
-          _AlphaController.alpha = 0;
-          openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(settings.FadeInEasing));
-        }
+        ConstructDefaultPopupOpenAnimation(openAnimation);
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-        UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
-        closeAnimation.Append(transform.DOLocalMoveY(
-          -50, 0.15f).SetEase(settings.MoveCloseEase).SetRelative());
-        if (_AlphaController != null) {
-          closeAnimation.Join(_AlphaController.DOFade(0, 0.25f).SetEase(settings.FadeOutEasing));
-        }
+        ConstructDefaultPopupCloseAnimation(closeAnimation);
       }
     }
 

@@ -15,10 +15,6 @@ MonoBehaviour:
     _EnumValueAsString: FistBump
     _EnumValue: 35
   UnlockableType: 1
-  Prerequisites:
-  - _EnumValueAsString: Workout
-    _EnumValue: 29
-  AnyPrereqUnlock: 0
   _ComingSoon: 0
   DescriptionKey: unlockable.FistBump.Description
   TitleKey: unlockable.FistBump.Title
@@ -35,3 +31,4 @@ MonoBehaviour:
   SortOrder: 750
   AndroidReleaseVersion: 
   AndroidSDKVersion: 0
+  _CanVoiceActivate: 1
