@@ -16,7 +16,8 @@
 
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-
+#include "anki/planning/shared/path.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 

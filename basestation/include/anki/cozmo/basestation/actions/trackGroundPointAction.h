@@ -17,6 +17,8 @@
 
 #include "clad/types/visionModes.h"
 
+#include "util/signals/simpleSignal_fwd.h"
+
 namespace Anki {
 namespace Cozmo {
 

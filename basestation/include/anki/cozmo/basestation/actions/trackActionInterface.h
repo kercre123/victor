@@ -14,6 +14,7 @@
 #define __Anki_Cozmo_Basestation_TrackActionInterface_H__
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/animations/animation.h"
 

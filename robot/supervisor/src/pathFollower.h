@@ -16,7 +16,7 @@ namespace Anki
       Result Update();
       
       // Deletes current path
-      void ClearPath(void);
+      void ClearPath(bool didCompletePath = false);
       
       
       // Add path segment

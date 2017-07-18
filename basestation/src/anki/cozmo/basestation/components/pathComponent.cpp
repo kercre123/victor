@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -92,6 +93,63 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
   else {
     PRINT_NAMED_WARNING("Robot.PathComponent.NoContext", "No cozmo context, won't be fully functional");
   }
+  
+  
+  auto eventLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+  {
+    RobotInterface::PathFollowingEvent payload = event.GetData().Get_pathFollowingEvent();
+    
+    PRINT_CH_DEBUG("Planner", "PathComponent.ReceivedPathEvent", "ID:%d Event:%s",
+                   payload.pathID, EnumToString(payload.eventType));
+    
+    switch(payload.eventType)
+    {
+      case PathEventType::PATH_STARTED:
+      {
+        // In general, we should be coming from "Waiting to Begin" when we receive Path Started.
+        // We could be "Following" already if path/segment ID in RobotState already transitioned us.
+        // We could also be "Ready" if we received a Path Interrupted message already this tick.
+        ANKI_VERIFY(ERobotDriveToPoseStatus::WaitingToBeginPath == _driveToPoseStatus ||
+                    ERobotDriveToPoseStatus::FollowingPath == _driveToPoseStatus ||
+                    ERobotDriveToPoseStatus::Ready == _driveToPoseStatus,
+                    "PathComponent.PathEvent.UnexpectedStatus",
+                    "Expecting to be WaitingToBeginPath or FollowingPath, not %s",
+                    ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+    
+        ANKI_VERIFY(payload.pathID == _lastSentPathID,
+                    "PathComponent.PathEvent.StartingUnexpectedPathID",
+                    "Last sent ID:%d, starting ID:%d",
+                    _lastSentPathID, payload.pathID);
+        
+        // Note that this does nothing if we're already FollowingPath
+        SetDriveToPoseStatus(ERobotDriveToPoseStatus::FollowingPath);
+        break;
+      }
+        
+      case PathEventType::PATH_COMPLETED:
+        // Verify we are completing the last path we sent. Can't do this for "interrupted" because
+        // the last path we sent may be interrupting the pathID in the interruption event message.
+        ANKI_VERIFY(payload.pathID == _lastSentPathID,
+                    "PathComponent.PathEvent.CompletingUnexpectedPathID",
+                    "Last sent ID:%d, completing ID:%d",
+                    _lastSentPathID, payload.pathID);
+        
+        // NOTE: Intentional fallthrough!
+        
+      case PathEventType::PATH_INTERRUPTED:
+      {
+        // Note that OnPathComplete is safe to call if the path is already complete (e.g. thanks to
+        // RobotState message updates)
+        // TODO: differentiate these two events?
+        OnPathComplete();
+        break;
+      }
+    }
+  };
+  
+  _pathEventHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
+                                                                RobotInterface::RobotToEngineTag::pathFollowingEvent,
+                                                                eventLambda);
 }
 
 PathComponent::~PathComponent()

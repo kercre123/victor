@@ -559,14 +559,16 @@ namespace Anki {
       _motionProfileManuallySet = true; // speed has been specified manually
       _shouldPlayDrivingAnimation = shouldPlayAnimation;
       
-      if(_speed_mmps < 0.f) {
+      if(Util::IsFltLTZero(_speed_mmps))
+      {
         PRINT_NAMED_WARNING("DriveStraightAction.Constructor.NegativeSpeed",
                             "Speed should always be positive (not %f). Making positive.",
                             _speed_mmps);
         _speed_mmps = -_speed_mmps;
       }
       
-      if(dist_mm < 0.f) {
+      if(Util::IsFltLTZero(dist_mm))
+      {
         // If distance is negative, we are driving backward and will negate speed
         // internally. Yes, we could have just double-negated if the caller passed in
         // a negative speed already, but this avoids confusion on caller's side about
@@ -618,7 +620,7 @@ namespace Anki {
     {
       _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
       
-      if(_dist_mm == 0.f) {
+      if(Util::IsNearZero(_dist_mm)) {
         // special case
         _hasStarted = true;
         return ActionResult::SUCCESS;
@@ -665,12 +667,17 @@ namespace Anki {
       if(!_hasStarted) {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.GetPathComponent().HasPathToFollow();
-        if( _hasStarted && _shouldPlayDrivingAnimation) {
-          _robot.GetDrivingAnimationHandler().PlayStartAnim();
+        if( _hasStarted )
+        {
+          PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustStarted", "");
+          if(_shouldPlayDrivingAnimation) {
+            _robot.GetDrivingAnimationHandler().PlayStartAnim();
+          }
         }
       }
 
       if ( _hasStarted && !_robot.GetPathComponent().IsActive() ) {
+        PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustCompleted", "");
         if( _shouldPlayDrivingAnimation ) {
           if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
             return ActionResult::RUNNING;

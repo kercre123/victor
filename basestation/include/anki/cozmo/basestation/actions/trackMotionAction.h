@@ -17,6 +17,8 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#include "util/signals/simpleSignal_fwd.h"
+
 namespace Anki {
 namespace Cozmo {
 

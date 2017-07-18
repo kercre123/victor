@@ -17,6 +17,7 @@
 #include "anki/planning/shared/goalDefs.h"
 #include "anki/planning/shared/path.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <memory>
 
@@ -211,6 +212,9 @@ private:
   std::unique_ptr<PlanParameters>    _currPlanParams;
   
   Robot& _robot;
+  
+  Signal::SmartHandle _pathEventHandle;
+  
 };
 
 }

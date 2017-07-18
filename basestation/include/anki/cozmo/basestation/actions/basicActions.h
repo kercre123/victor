@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/faceIdTypes.h"
+#include "anki/vision/basestation/visionMarker.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/toolCodes.h"
@@ -32,6 +33,9 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+    // Forward declaration
+    class ObservableObject;
 
     // Turn in place by a given angle, wherever the robot is when the action is executed.
     //
