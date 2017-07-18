@@ -101,7 +101,7 @@ Result BehaviorPutDownBlock::InitInternal(Robot& robot)
 void BehaviorPutDownBlock::LookDownAtBlock(Robot& robot)
 {
   StartActingExtraScore(CreateLookAfterPlaceAction(robot, true), kBPDB_scoreIncreasePostPutDown,
-              [this,&robot]() {
+              [&robot]() {
                 if(robot.GetCarryingComponent().IsCarryingObject()) {
                   // No matter what, even if we didn't see the object we were
                   // putting down for some reason, mark the robot as not carrying

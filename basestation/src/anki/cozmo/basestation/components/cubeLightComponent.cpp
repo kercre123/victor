@@ -148,7 +148,7 @@ void CubeLightComponent::Update(bool shouldPickNextAnim)
       // If there are no more patterns in this animation or the animation is being stopped
       if(objectAnim.curPattern == objectAnim.endOfPattern || objectAnim.stopNow)
       {
-        auto removeAndCallback = [this, &objectAnim, &objectInfo, &layer]()
+        auto removeAndCallback = [&objectAnim, &objectInfo, &layer]()
         {
           auto callback = objectAnim.callback;
           const u32 actionTag = objectAnim.actionTagCallbackIsFrom;

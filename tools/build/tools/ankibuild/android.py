@@ -140,6 +140,8 @@ def find_ndk_root_for_ndk_version(version_arg):
         '14.0.3770861': '14.0.3770861',
         'r14b': '14.1.3816874',
         '14.1.3816874': '14.1.3816874',
+        'r15b': '15.1.4119039',
+        '15.1.4119039': '15.1.4119039',
     }
     version = ndk_version_arg_to_version[version_arg]
     ndk_root_env_vars = [
@@ -300,9 +302,12 @@ def install_ndk(revision):
         'r14' : 'r14',
         '14.1.3816874': 'r14b',
         'r14b': 'r14b',
+        '15.1.4119039': 'r15b',
+        'r15b': 'r15b',
     }
 
     ndk_info_darwin = {
+        'r15b': {'size': 959321525, 'sha1': '05e3eec7e9ce1d09bb5401b41cf778a2ec19c819'},
         'r14b': {'size': 824705073, 'sha1': '2bf582c43f6da16416e66203d158a6dfaba4277c'},
         'r14': {'size': 824579088, 'sha1': 'd121c9e4f359ff65fb4d003bdd7dbe5dd9cf7295'},
         'r13b': {'size': 665967997, 'sha1': '71fe653a7bf5db08c3af154735b6ccbc12f0add5'},
@@ -310,6 +315,7 @@ def install_ndk(revision):
     }
 
     ndk_info_linux = {
+        'r15b': {'size': 974035125, 'sha1': '2690d416e54f88f7fa52d0dcb5f539056a357b3b'},
         'r14b': {'size': 840626594, 'sha1': 'becd161da6ed9a823e25be5c02955d9cbca1dbeb'},
         'r14': {'size': 840507097, 'sha1': 'eac8b293054671555cb636e350f1a9bc475c8f0c'},
         'r13b': {'size':687311866, 'sha1': '0600157c4ddf50ec15b8a037cfc474143f718fd0'},
@@ -350,6 +356,7 @@ def install_sdk(version):
     sdk_info_darwin = {
         'r1': {'size': 841831972, 'sha1': 'cff532765b5d4b9abd83e322359a5d59f36c5960'},
         'r2': {'size': 916951631, 'sha1': '480d5d6006708c6a404bf4459d43edb59c932dcc'},
+        'r3': {"size": 936119150, "sha1": '57805391ddb7040f43d891ce7e559b3f50d07a9c'},
     }
 
     sdk_info_linux = {

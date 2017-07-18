@@ -746,14 +746,14 @@ static const char* kBehaviorTestName = "Behavior factory test";
       case FactoryTestState::GetPrevTestResults:
       {
         robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_BirthCertificate,
-                                           [this,&robot](u8* data, size_t size, NVStorage::NVResult res){
+                                           [this](u8* data, size_t size, NVStorage::NVResult res){
                                              _hasBirthCertificate = (res == NVStorage::NVResult::NV_OKAY);
                                              PRINT_NAMED_INFO("BehaviorFactoryTest.Update.BirthCertificateReceived",
                                                               "%d", _hasBirthCertificate);
                                            });
         
         robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
-                                           [this,&robot](u8* data, size_t size, NVStorage::NVResult res){
+                                           [this](u8* data, size_t size, NVStorage::NVResult res){
                                              FactoryTestResultEntry entry;
                                              if (res == NVStorage::NVResult::NV_OKAY &&
                                                  NVStorageComponent::MakeWordAligned(entry.Size()) == size) {
@@ -965,7 +965,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {driveAction, headAction, liftAction});
           
           StartActing(compoundAction,
-                      [this,&robot](ActionResult result){
+                      [this](ActionResult result){
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.0f;
                       });
           SetCurrState(FactoryTestState::DriveToSlot);
@@ -1378,7 +1378,7 @@ static const char* kBehaviorTestName = "Behavior factory test";
         CompoundActionSequential* compoundAction = new CompoundActionSequential(robot, {driveAction, turnAction});
         
         StartActing(compoundAction,
-                    [this,&robot](ActionResult result){
+                    [](ActionResult result){
 //                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
 //                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
 //                      // When robot path following is improved (particularly in sim) this physical check can be removed.

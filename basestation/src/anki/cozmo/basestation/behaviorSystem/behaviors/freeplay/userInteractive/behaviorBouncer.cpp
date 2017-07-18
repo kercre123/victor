@@ -235,7 +235,7 @@ void BehaviorBouncer::StartAnimation(Robot& robot,
   // This should never be called when action is already in progress
   DEV_ASSERT(!IsActing(), "BehaviorBouncer.StartAnimation.ShouldNotBeActing");
     
-  auto callback = [this, animationTrigger, nextState] {
+  auto callback = [this, nextState] {
     LOG_TRACE("BehaviorBouncer.StartAnimation.Callback", "Finish animation %s, nextState %s",
               AnimationTriggerToString(animationTrigger), EnumToString(nextState));
     TransitionToState(nextState);
@@ -464,7 +464,7 @@ void BehaviorBouncer::UpdateDisplay(Robot& robot)
     LOG_TRACE("BehaviorBouncer.UpdateDisplay", "Start face action");
     const u32 duration_ms = IKeyFrame::SAMPLE_LENGTH_MS;
     IActionRunner * setFaceAction = new SetFaceAction(robot, image, duration_ms);
-    SimpleCallback callback = [this]() {
+    SimpleCallback callback = []() {
       LOG_TRACE("BehaviorBouncer.UpdateDisplay.Callback", "Face action complete");
     };
     StartActing(setFaceAction, callback);

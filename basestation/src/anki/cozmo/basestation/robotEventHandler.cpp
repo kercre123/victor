@@ -1793,7 +1793,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
   {
     // SetControllerGains
     _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ControllerGains,
-                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         [robot] (const GameToEngineEvent& event)
                                                          {
                                                            const ExternalInterface::ControllerGains& msg = event.GetData().Get_ControllerGains();
                                                            
@@ -1802,7 +1802,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
     
     // SetMotionModelParams
     _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetMotionModelParams,
-                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         [robot] (const GameToEngineEvent& event)
                                                          {
                                                            const ExternalInterface::SetMotionModelParams& msg = event.GetData().Get_SetMotionModelParams();
                                                            
@@ -1811,7 +1811,7 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
     
     // RollActionParams
     _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::RollActionParams,
-                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         [robot] (const GameToEngineEvent& event)
                                                          {
                                                            const ExternalInterface::RollActionParams& msg = event.GetData().Get_RollActionParams();
                                                            

@@ -61,7 +61,7 @@ namespace Anki {
     }
   }
   
-  template<s32 M, s32 N, typename T>
+  template<MatDimType M, MatDimType N, typename T>
   Result LeastSquares(const SmallMatrix<M, N, T>&   A,
                       const SmallMatrix<M, 1, T>&   b,
                       SmallMatrix<N,1,T>&           x,
@@ -76,7 +76,7 @@ namespace Anki {
     }
   }
   
-  template<s32 M, s32 N, typename T>
+  template<MatDimType M, MatDimType N, typename T>
   Result LeastSquares(const SmallMatrix<M, N, T>&   A,
                       const Point<M,T>&             bIn,
                       Point<N,T>&                   xOut,

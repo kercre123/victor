@@ -244,7 +244,7 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
   rollAction->SetMaxTurnTowardsFaceAngle(_params.maxTurnToFaceAngle);
   
 
-  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [&robot] (ActionResult result){
+  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [] (ActionResult result){
     switch(result){
       case ActionResult::SUCCESS:
       {

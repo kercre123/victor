@@ -33,7 +33,7 @@ namespace Anki {
   
   // Forward declaration
   class Radians;
-  template<s32,s32,typename> class SmallMatrix;
+  template<MatDimType,MatDimType,typename> class SmallMatrix;
   
   using PointDimType = size_t;
   
