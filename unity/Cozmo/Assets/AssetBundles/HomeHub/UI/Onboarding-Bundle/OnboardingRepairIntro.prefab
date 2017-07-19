@@ -83,11 +83,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DimBackground: 1
   _ActiveMenuContent: 1
-  _ReactionsEnabled: 1
-  _PlayIdle: 0
+  _ReactionsEnabled: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 504
   _CustomIdle:
     _EnumValueAsString: OnboardingIdleRepair
-    _EnumValue: 297
+    _EnumValue: 305
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: onboarding.repair.ticker
@@ -99,6 +101,13 @@ MonoBehaviour:
   - -1
   - -1
   _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 46
+  _ForceNeedValuesOnEvent:
   - -1
   - -1
   - -1

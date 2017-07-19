@@ -18,11 +18,12 @@ namespace Cozmo.Needs.UI {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NeedsState>(HandleGotNeedsState);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.StarLevelCompleted>(HandleStarLevelCompleted);
 
+      // Hide until we get the first need state update
+      _SegmentedBar.gameObject.SetActive(false);
+
       // Make really sure we have up to date info
       RobotEngineManager.Instance.Message.GetNeedsState = Singleton<Anki.Cozmo.ExternalInterface.GetNeedsState>.Instance;
       RobotEngineManager.Instance.SendMessage();
-      // Hide until we get the first need state update
-      _SegmentedBar.gameObject.SetActive(false);
     }
 
     public void OnDestroy() {
@@ -32,6 +33,7 @@ namespace Cozmo.Needs.UI {
     }
 
     private void HandleStarUnlocked(Anki.Cozmo.ExternalInterface.StarUnlocked message) {
+      _SegmentedBar.gameObject.SetActive(true);
       UpdateBar(message.currentStars, message.maxStarsForLevel);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Nurture_Earn_Token);
     }

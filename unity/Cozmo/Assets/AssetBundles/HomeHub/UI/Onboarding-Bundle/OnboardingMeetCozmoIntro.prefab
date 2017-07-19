@@ -48,10 +48,12 @@ MonoBehaviour:
   _DimBackground: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
-  _PlayIdle: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 504
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 490
+    _EnumValue: 504
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: 
@@ -63,6 +65,13 @@ MonoBehaviour:
   - -1
   - -1
   _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 46
+  _ForceNeedValuesOnEvent:
   - -1
   - -1
   - -1
@@ -220,7 +229,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_text: '#button.begin'
+  m_text: '#onboarding.MeetCozmo.Button'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}
   m_sharedMaterial: {fileID: 2151946, guid: 24ebb3c288909410ebc0de4beacb4fba, type: 2}

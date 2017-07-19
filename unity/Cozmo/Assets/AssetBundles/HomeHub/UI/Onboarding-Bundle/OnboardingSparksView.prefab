@@ -65,15 +65,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DimBackground: 0
   _ActiveMenuContent: 0
-  _ReactionsEnabled: 1
-  _PlayIdle: 0
+  _ReactionsEnabled: 0
+  _LoopedAnim:
+    _EnumValueAsString: Count
+    _EnumValue: 504
   _CustomIdle:
     _EnumValueAsString: OnboardingIdlePlay
-    _EnumValue: 294
+    _EnumValue: 304
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 4
   _OverrideTickerKey: 
   _DimNeedsMeters: 
+  _EnableWhiteListOnly: 1
+  _WhiteListedActions: []
+  _ForceNeedValuesOnStart:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEnd:
+  - -1
+  - -1
+  - -1
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 46
+  _ForceNeedValuesOnEvent:
+  - -1
+  - -1
+  - -1
+  _UnPausedNeedMeter: 3
   _ButtonStateDiscover: 3
   _ButtonStateRepair: 3
   _ButtonStateFeed: 3

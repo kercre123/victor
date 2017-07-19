@@ -94,6 +94,21 @@ namespace Onboarding {
                                                           ThemeKeys.Cozmo.Image.kNavHubContainerBGDimmed :
                                                           ThemeKeys.Cozmo.Image.kNavHubButtonNormal;
       needsHubView.NavBackgroundImage.UpdateSkinnableElements();
+      if (wantsNormalDim) {
+        DimButton(needsHubView.DiscoverButton);
+        DimButton(needsHubView.RepairButton);
+        DimButton(needsHubView.FeedButton);
+        DimButton(needsHubView.PlayButton);
+      }
+    }
+
+    private void DimButton(CozmoButton button) {
+      CozmoImage bg = button.GetComponentInChildren<CozmoImage>();
+      if (bg != null) {
+        bg.LinkedComponentId = ThemeKeys.Cozmo.Image.kNavHubButtonDimmed;
+        button.interactable = false;
+        bg.UpdateSkinnableElements();
+      }
     }
 
     public override void OnDestroy() {
