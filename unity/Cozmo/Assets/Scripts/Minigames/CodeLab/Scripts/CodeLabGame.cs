@@ -985,7 +985,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
         // Clean the Cozmo Says text input using the same process as Cozmo Says minigame
         for (int i = 0; i < cozmoSaysText.Length; i++) {
           char currentChar = cozmoSaysText[i];
-          if (char.IsLetter(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
+          if (char.IsLetterOrDigit(currentChar) || char.IsWhiteSpace(currentChar) || IsPunctuation(currentChar)) {
             cozmoSaysTextCleaned += currentChar;
           }
         }
