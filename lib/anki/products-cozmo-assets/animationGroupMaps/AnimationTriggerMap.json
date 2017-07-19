@@ -1022,6 +1022,10 @@
       "AnimName": "ag_energy_stuckonblock_lvl2"
     },
     {
+      "CladEvent": "NeedsSevereLowPlayForceGetOut",
+      "AnimName": "ag_play_getout"
+    },
+    {
       "CladEvent": "NeedsSevereLowPlayGetIn",
       "AnimName": "ag_play_getin"
     },

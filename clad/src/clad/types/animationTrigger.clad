@@ -270,6 +270,7 @@ enum int_32 AnimationTrigger
   NeedsSevereLowEnergyIdle,
   NeedsSevereLowEnergyRequest,
   NeedsSevereLowEnergySlopeReact,
+  NeedsSevereLowPlayForceGetOut,
   NeedsSevereLowPlayGetIn,
   NeedsSevereLowPlayRequest,
   NeedsSevereLowRepairCliffReact,
