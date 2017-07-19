@@ -204,7 +204,7 @@ def override_unity_block_handling(msg_payload : str):
     try:
         msg_payload_js = json.loads(msg_payload)
     except json.decoder.JSONDecodeError as e:
-        log_text("Decode error: %s" % e)
+        log_text("override_unity_block_handling: Decode error: %s" % e)
         log_text("msg_payload = [%s]" % msg_payload)
         return False
 

@@ -131,6 +131,8 @@ namespace CodeLab {
     private string _DevLoadPath = null; // Custom path for loading assets in dev builds
     private bool _DevLoadPathFirstRequest = true;
 
+    private bool _QuitCodeLabWhenOnCharger = true; // released app does this, but it's annoying for dev
+
     private uint _ChallengeBookmark = 1;
 
     private const float kNormalDriveSpeed_mmps = 70.0f;
@@ -205,6 +207,23 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           LoadURL(_CurrentURLFilename);
         }
         break;
+      case "ReInit":
+        if (_WebViewObject != null) {
+          GameObject.Destroy(_WebViewObject);
+          _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
+          _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
+          _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
+          if (_CurrentURLFilename != null) {
+            LoadURL(_CurrentURLFilename);
+          }
+        }
+        break;
+      case "AllowOnCharger":
+        _QuitCodeLabWhenOnCharger = false;
+        break;
+      case "QuitOnCharger":
+        _QuitCodeLabWhenOnCharger = true;
+        break;
       case "SetAppPath":
         _DevLoadPath = null;
         DAS.Info("CodeLab.SetAppPath", "_DevLoadPath = null");
@@ -266,11 +285,16 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
     private void SetCubeStateForCodeLab(CubeStateForCodeLab cubeDest, LightCube cubeSrc) {
       if (cubeSrc == null) {
         cubeDest.pos = new Vector3(0.0f, 0.0f, 0.0f);
+        cubeDest.camPos = new Vector2(0.0f, 0.0f);
         cubeDest.isValid = false;
+        cubeDest.isVisible = false;
       }
       else {
         cubeDest.pos = cubeSrc.WorldPosition;
+        cubeDest.camPos = cubeSrc.VizRect.center;
         cubeDest.isValid = true;
+        const int kMaxVisionFramesSinceSeeingCube = 30;
+        cubeDest.isVisible = (cubeSrc.NumVisionFramesSinceLastSeen < kMaxVisionFramesSinceSeeingCube);
       }
     }
 
@@ -311,6 +335,9 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
 
         _LatestCozmoState.pos = robot.WorldPosition;
         _LatestCozmoState.poseAngle_d = robot.PoseAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.posePitch_d = robot.PitchAngle * Mathf.Rad2Deg;
+        _LatestCozmoState.liftHeightFactor = robot.LiftHeightFactor;
+        _LatestCozmoState.headAngle_d = robot.HeadAngle * Mathf.Rad2Deg;
 
         // Set cube data
 
@@ -358,7 +385,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
           RobotEngineManager.Instance.CurrentRobot != null && _EndStateIndex != ENDSTATE_QUIT) {
         // Because the SDK agressively turns off every reaction behavior in engine, we can't listen for "placedOnCharger" reaction at the Challenge level.
         // Since all we care about is being on the charger just get that from the robot state and send a single quit request.
-        if ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0) {
+        if (_QuitCodeLabWhenOnCharger && ((RobotEngineManager.Instance.CurrentRobot.RobotStatus & RobotStatusFlag.IS_ON_CHARGER) != 0)) {
           if (IsDisplayingWorkspacePage()) {
             try {
               // We want to exit Code Lab, but first, let's check if we have
@@ -398,7 +425,7 @@ string path = PlatformUtil.GetResourcesBaseFolder() + pathToFile;
       if (_WebViewObject == null) {
         _WebViewObject = new GameObject("WebView", typeof(WebViewObject));
         _WebViewObjectComponent = _WebViewObject.GetComponent<WebViewObject>();
-        _WebViewObjectComponent.Init(WebViewCallback, false, @"Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D257 Safari/9537.53", WebViewError, WebViewLoaded, true);
+        _WebViewObjectComponent.Init(WebViewCallback, false, err: WebViewError, ld: WebViewLoaded, enableWKWebView: true);
 
         int timesPlayedCodeLab = 0;
         DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.TryGetValue(ChallengeID, out timesPlayedCodeLab);

@@ -5,7 +5,9 @@ namespace CodeLab {
 
   public class CubeStateForCodeLab {
     public Vector3 pos;
+    public Vector2 camPos;
     public bool isValid;
+    public bool isVisible;
   }
 
   public class FaceStateForCodeLab {
@@ -17,6 +19,9 @@ namespace CodeLab {
 
   public class CozmoStateForCodeLab {
     public float poseAngle_d;
+    public float posePitch_d;
+    public float liftHeightFactor; // 0.0 to 1.0
+    public float headAngle_d;
     public Vector3 pos;
     public CubeStateForCodeLab cube1 = new CubeStateForCodeLab();
     public CubeStateForCodeLab cube2 = new CubeStateForCodeLab();

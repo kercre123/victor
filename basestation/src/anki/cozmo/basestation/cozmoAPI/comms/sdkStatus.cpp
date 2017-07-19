@@ -102,6 +102,9 @@ void SdkStatus::ResetRobot(bool isExitingSDKMode)
   
   // Stop everything else
   _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );
+  
+  // Re-enable Lift Power (in case user disabled it in their program)
+  _externalInterface->Broadcast( GToE(ExternalInterface::EnableLiftPower(true)) );
 }
 
 
@@ -186,10 +189,13 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
   }
   else
   {
-    // Multiple connection calls are expected if connected on both sdk modes simultaneously
-    if (!(_isInExternalSdkMode && _isInInternalSdkMode))
+    // Multiple connection calls are expected in Dev builds if connected via internal mode (Code Lab) and then connect
+    // by external mode for dev/debugging without enabling sdk mode.
+    const bool isExternalSdkMode = message.connectionType != UiConnectionType::UI;
+    const bool isInExternalSdkModeOrConnection = _isInExternalSdkMode || isExternalSdkMode;
+    if (!(isInExternalSdkModeOrConnection && _isInInternalSdkMode))
     {
-      PRINT_NAMED_ERROR("SdkStatus.OnConnectionSuccess.AlreadyConnected", "");
+      PRINT_NAMED_WARNING("SdkStatus.OnConnectionSuccess.AlreadyConnected", "");
     }
   }
 }
