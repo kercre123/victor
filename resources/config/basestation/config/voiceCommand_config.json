@@ -34,7 +34,9 @@
         },
         {
           "phrase": "Continue",
-          "commandType": "Continue"
+          "commandType": "Continue",
+          "paramA": -995,
+          "paramB": 652
         },
         {
           "phrase": "Come Over Here",
@@ -54,7 +56,9 @@
         },
         {
           "phrase": "No Thank You",
-          "commandType": "NoThankYou"
+          "commandType": "NoThankYou",
+          "paramA": -719,
+          "paramB": 513
         },
         {
           "phrase": "PeekaBoo",
@@ -62,7 +66,9 @@
         },
         {
           "phrase": "Yes Please",
-          "commandType": "YesPlease"
+          "commandType": "YesPlease",
+          "paramA": -926,
+          "paramB": 635
         },
         {
           "phrase": "Go To Sleep",
@@ -99,6 +105,12 @@
           "commandType": "ComeHere"
         },
         {
+          "phrase": "Mach weiter",
+          "commandType": "Continue",
+          "paramA": -936,
+          "paramB": 756
+        },
+        {
           "phrase": "Zieg Mier Einen Trick",
           "commandType": "DoATrick"
         },
@@ -133,6 +145,10 @@
         {
           "phrase": "Wie geht es dir",
           "commandType": "HowAreYouDoing"
+        },
+        {
+          "phrase": "Schau nach unten",
+          "commandType": "LookDown"
         }
       ]
     },
@@ -155,6 +171,12 @@
         {
           "phrase": "Viens ici",
           "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Continue",
+          "commandType": "Continue",
+          "paramA": -677,
+          "paramB": 1000
         },
         {
           "phrase": "Fais moi un tour",
@@ -191,6 +213,10 @@
         {
           "phrase": "Ça va",
           "commandType": "HowAreYouDoing"
+        },
+        {
+          "phrase": "Regarde vers le bas",
+          "commandType": "LookDown"
         }
       ]
     },
@@ -213,6 +239,12 @@
         {
           "phrase": "Kocchi oide",
           "commandType": "ComeHere"
+        },
+        {
+          "phrase": "Sonomama",
+          "commandType": "Continue",
+          "paramA": -1212,
+          "paramB": 713
         },
         {
           "phrase": "Torikku shite",
@@ -249,6 +281,10 @@
         {
           "phrase": "Genki",
           "commandType": "HowAreYouDoing"
+        },
+        {
+          "phrase": "Shita muite",
+          "commandType": "LookDown"
         }
       ]
     }
