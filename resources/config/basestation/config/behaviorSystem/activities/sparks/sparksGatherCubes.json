@@ -29,7 +29,6 @@
       "type" : "StrictPriority",
       "behaviors" : [
         "DriveOffCharger",
-        "CantHandleTallStack",
         "KnockOverCubes",
         "Hiking_RollCube",
         "SparksThinkAboutBeacons",
