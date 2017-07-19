@@ -384,6 +384,8 @@ enum int_32 AnimationTrigger
   ReactToUnexpectedMovement,
   ReactToUnexpectedMovement_Severe_Energy,
   ReactToUnexpectedMovement_Severe_Repair,
+  RepairFailMild,
+  RepairFailSevere,
   RepairFixMildGetIn,
   RepairFixMildGetOut,
   RepairFixMildGetReady,

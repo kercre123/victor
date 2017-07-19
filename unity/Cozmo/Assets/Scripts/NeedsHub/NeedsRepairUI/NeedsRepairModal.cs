@@ -993,6 +993,18 @@ namespace Cozmo.Repair.UI {
           else {
             _DownButtonWrongIndicator.SetActive(true);
           }
+          IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+          if (robot != null) {
+            NeedsStateManager nsm = NeedsStateManager.Instance;
+            bool severe = nsm.GetCurrentDisplayValue(NeedId.Repair).Bracket == NeedBracketId.Critical;
+            if (severe) {
+              robot.SendAnimationTrigger(AnimationTrigger.RepairFailSevere);
+            }
+            else {
+              robot.SendAnimationTrigger(AnimationTrigger.RepairFailMild);
+            }
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.AudioMetaData.GameEvent.Sfx.Repair_Pattern_Error);
+          }
         }
       }
     }
