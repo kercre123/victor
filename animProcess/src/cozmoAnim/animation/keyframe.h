@@ -464,7 +464,7 @@ namespace Cozmo {
   private:
     
     s32 _durationTime_ms;
-    AnimKeyFrame::BackpackLights _streamMsg;
+    RobotInterface::SetBackpackLights _streamMsg;
     
   }; // class BackpackLightsKeyFrame
   

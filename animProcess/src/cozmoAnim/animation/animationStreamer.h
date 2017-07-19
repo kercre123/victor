@@ -131,6 +131,8 @@ namespace Cozmo {
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
     bool IsTrackLocked(u8 trackFlag) const { return ((_lockedTracks & trackFlag) == trackFlag); }
     
+    void EnableLiveTwitching(bool on)      { _isLiveTwitchEnabled = on; }
+    
   private:
     
     // Initialize the streaming of an animation with a given tag
@@ -213,13 +215,7 @@ namespace Cozmo {
     const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
 #   endif
     
-    // Manage the send buffer, which is where we put keyframe messages ready to
-    // go to the robot, and parcel them out according to how many bytes the
-    // reliable UDP channel and the robot's animation buffer can handle on a
-    // given tick.
-    bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
-    
-    
+    // Sends msg to appropriate destination as long as the specified track is unlocked
     bool SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track);
     
     Tag _tag;
@@ -231,14 +227,16 @@ namespace Cozmo {
     u8 _lockedTracks;
     
     // For live animation
+    std::map<LiveIdleAnimationParameter, f32> _liveAnimParams;
+
     Animation      _liveAnimation;
-//    bool           _isLiveTwitchEnabled  = false;
-//    s32            _bodyMoveDuration_ms  = 0;
-//    s32            _liftMoveDuration_ms  = 0;
-//    s32            _headMoveDuration_ms  = 0;
-//    s32            _bodyMoveSpacing_ms   = 0;
-//    s32            _liftMoveSpacing_ms   = 0;
-//    s32            _headMoveSpacing_ms   = 0;
+    bool           _isLiveTwitchEnabled  = false;
+    s32            _bodyMoveDuration_ms  = 0;
+    s32            _liftMoveDuration_ms  = 0;
+    s32            _headMoveDuration_ms  = 0;
+    s32            _bodyMoveSpacing_ms   = 0;
+    s32            _liftMoveSpacing_ms   = 0;
+    s32            _headMoveSpacing_ms   = 0;
     
 //    Audio::RobotAudioClient& _audioClient;
     
@@ -246,7 +244,7 @@ namespace Cozmo {
     // idle animation
     f32 _longEnoughSinceLastStreamTimeout_s;
     
-//    AnimationTag _liveIdleTurnEyeShiftTag = NotAnimatingTag;
+    AnimationTag _liveIdleTurnEyeShiftTag = NotAnimatingTag;
 
   }; // class AnimationStreamer
   

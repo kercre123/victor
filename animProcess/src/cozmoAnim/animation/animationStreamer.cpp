@@ -77,6 +77,8 @@ namespace Cozmo {
     
     DEV_ASSERT(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
     
+    SetDefaultParams();
+    
 //    SetupHandlers(_context->GetExternalInterface());
     
 //    // Set up the neutral face to use when resetting procedural animations
@@ -297,22 +299,30 @@ namespace Cozmo {
     return lastResult;
   }
   
-  bool AnimationStreamer::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
-  {
-    if(msg != nullptr) {
-      delete msg;
-      return true;
-    }
-    return false;
-  }
-  
   // TODO: Take in EngineToRobot& instead of ptr?
   bool AnimationStreamer::SendIfTrackUnlocked(RobotInterface::EngineToRobot* msg, AnimTrackFlag track)
   {
     bool res = false;
     if(msg != nullptr) {
       if (!IsTrackLocked((u8)track)) {
-        res = Messages::SendPacketToRobot(msg->GetBuffer(), msg->Size());
+        switch(track) {
+          case AnimTrackFlag::HEAD_TRACK:
+          case AnimTrackFlag::LIFT_TRACK:
+          case AnimTrackFlag::BODY_TRACK:
+          case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
+            res = Messages::SendPacketToRobot(msg->GetBuffer(), msg->Size());
+            break;
+          case AnimTrackFlag::EVENT_TRACK:
+            //res = Messages::RadioSendMessage(msg->GetBuffer(), msg->Size(), msg->tag);
+            break;
+          case AnimTrackFlag::FACE_IMAGE_TRACK:
+            // Convert to appropriate format and send to display device
+            break;
+          default:
+            // Audio frames are handled separately since they don't actually result in a EngineToRobot message
+            PRINT_NAMED_WARNING("AnimationStreamer.SendIfTrackUnlocked.InvalidTrack", "%s", EnumToString(track));
+            break;
+        }
       }
       delete msg;
     }
@@ -333,9 +343,7 @@ namespace Cozmo {
         newValue = maxSpacing_ms;
       }
     }
-    
-    // Call base class SetParam()
-//    HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>::SetParam(whichParam, newValue);
+    _liveAnimParams[whichParam] = newValue;
   }
   
   
@@ -363,7 +371,6 @@ namespace Cozmo {
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
     }
-    //BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::StartOfAnimation(_tag)));
     RobotInterface::AnimationStarted startMsg;
     startMsg.tag = _tag;
     if (!RobotInterface::SendMessage(startMsg)) {
@@ -375,6 +382,8 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  // TODO: Is this actually being called at the right time?
+  //       Need to call this after triggerTime+durationTime of last keyframe has expired.
   Result AnimationStreamer::SendEndOfAnimation()
   {
     Result lastResult = RESULT_OK;
@@ -396,7 +405,6 @@ namespace Cozmo {
     _endOfAnimationSent = true;
     _startOfAnimationSent = false;
     
-    
     return lastResult;
   } // SendEndOfAnimation()
 
@@ -406,8 +414,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     // Add more stuff to send buffer from various layers
-    while(//_sendBuffer.empty() &&
-          _trackLayerComponent->HaveLayersToSend())
+    while(_trackLayerComponent->HaveLayersToSend())
     {
       // We don't have an animation but we still have procedural layers to so
       // apply them
@@ -419,29 +426,29 @@ namespace Cozmo {
                                               false,
                                               nullptr);
       
-      // If we have audio to send
-      if(layeredKeyFrames.haveAudioKeyFrame)
-      {
-        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
-      }
-      // Otherwise we don't have an audio keyframe so send silence
-      else
-      {
-        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-      }
+//      // If we have audio to send
+//      if(layeredKeyFrames.haveAudioKeyFrame)
+//      {
+//        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
+//      }
+//      // Otherwise we don't have an audio keyframe so send silence
+//      else
+//      {
+//        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+//      }
       
       // If we haven't sent the start of animation yet do so now (after audio)
       if(!_startOfAnimationSent)
       {
         IncrementTagCtr();
         _tag = _tagCtr;
-//        SendStartOfAnimation();
+        SendStartOfAnimation();
       }  
       
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
-        BufferMessageToSend(layeredKeyFrames.backpackKeyFrame.GetStreamMessage());
+        SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK);
       }
       
       // If we have face keyframes to send
@@ -460,7 +467,7 @@ namespace Cozmo {
     if(_startOfAnimationSent &&
        !_trackLayerComponent->HaveLayersToSend() &&
        !_endOfAnimationSent) {
-//      lastResult = SendEndOfAnimation(robot);
+      lastResult = SendEndOfAnimation();
     }
     
     return lastResult;
@@ -481,6 +488,7 @@ namespace Cozmo {
     
     // Grab references to some of the tracks
     // Some tracks are managed by the TrackLayerComponent
+    auto & robotAudioTrack  = anim->GetTrack<RobotAudioKeyFrame>();
     auto & deviceAudioTrack = anim->GetTrack<DeviceAudioKeyFrame>();
     auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
     auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
@@ -488,7 +496,17 @@ namespace Cozmo {
     auto & recordHeadingTrack = anim->GetTrack<RecordHeadingKeyFrame>();
     auto & turnToRecordedHeadingTrack = anim->GetTrack<TurnToRecordedHeadingKeyFrame>();
     auto & eventTrack       = anim->GetTrack<EventKeyFrame>();
-//    auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
+    auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
+    
+    // Is it time to play robot audio?
+    // TODO: Do it this way or with GetCurrentStreamingMessage() like all the other tracks?
+    if (robotAudioTrack.HasFramesLeft() &&
+        robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
+    {
+      // TODO: Play via wwise
+      robotAudioTrack.GetCurrentKeyFrame();
+      robotAudioTrack.MoveToNextKeyFrame();
+    }
     
     // Is it time to play device audio? (using actual basestation time)
     if(deviceAudioTrack.HasFramesLeft() &&
@@ -552,7 +570,7 @@ namespace Cozmo {
       // to keep things consistent in how the robot's AnimationController expects
       // to receive things
       if(!_startOfAnimationSent) {
-//        SendStartOfAnimation();
+        SendStartOfAnimation();
       }
       
       if(SendIfTrackUnlocked(headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::HEAD_TRACK)) {
@@ -564,25 +582,24 @@ namespace Cozmo {
       }
       
       // TODO: This can just send message directly up to engine
-      if(BufferMessageToSend(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+      if(SendIfTrackUnlocked(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::EVENT_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
       }
       
-//      // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
-//      // like idles, keep alive, or normal animated faces)
-//      if(BufferMessageToSend(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms)))
-//      {
-//        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-//      }
-//      else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
-//      {
-//        BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
-//      }
+      // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
+      // like idles, keep alive, or normal animated faces)
+      if(SendIfTrackUnlocked(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::FACE_IMAGE_TRACK)) {
+        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
+      }
+      else if(!faceAnimTrack.HasFramesLeft() && layeredKeyFrames.haveFaceKeyFrame)
+      {
+        BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
+      }
       
-//      if(layeredKeyFrames.haveBackpackKeyFrame)
-//      {
-//        BufferMessageToSend(layeredKeyFrames.backpackKeyFrame.GetStreamMessage());
-//      }
+      if(layeredKeyFrames.haveBackpackKeyFrame)
+      {
+        SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK);
+      }
       
       if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
@@ -613,7 +630,7 @@ namespace Cozmo {
         !_endOfAnimationSent)
     {      
 //       _audioClient.ClearCurrentAnimation();
-//      lastResult = SendEndOfAnimation(robot);
+      lastResult = SendEndOfAnimation();
     }
     
     return lastResult;
@@ -750,7 +767,7 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-//      _trackLayerComponent->KeepFaceAlive(GetAllParams());
+      _trackLayerComponent->KeepFaceAlive(_liveAnimParams);
     }
     
     if(_streamingAnimation != nullptr) {
@@ -794,62 +811,17 @@ namespace Cozmo {
       }
     } // if(_streamingAnimation != nullptr)
     
-    
-    /*
-    else if(!_idleAnimationNameStack.empty() &&
-            (_idleAnimationNameStack.back().first != AnimationTrigger::Count)) {
+    else if (_isLiveTwitchEnabled) {
       
-      AnimationTrigger idleAnimationGroupTrigger = _idleAnimationNameStack.back().first;
-      
-      Animation* oldIdleAnimation = _idleAnimation;
-      if(idleAnimationGroupTrigger == AnimationTrigger::ProceduralLive) {
-        // Make sure these are set, in case we just popped an idle and came back to idle
-        _idleAnimation = &_liveAnimation;
-        _isLiveTwitchEnabled = true;
+      // If not streaming animation is set, do live animation
+      _idleAnimation = &_liveAnimation;
 
-        // Update the live animation's keyframes
-        lastResult = UpdateLiveAnimation(robot);
-        if(RESULT_OK != lastResult) {
-          PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
-                            "Failed updating live animation from current robot state.");
-          return lastResult;
-        }
-      } // if(idleAnimationGroupTrigger == AnimationTrigger::ProceduralLive)
-      else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling) {
-        // We aren't doing "live" idle and the robot is either done with the last
-        // idle animation or hasn't started idling yet. So it's time to select the
-        // next idle from the group.
-        RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
-        if(robot_mgr->HasAnimationForTrigger(idleAnimationGroupTrigger) )
-        {
-          std::string idleAnimationGroupName = robot_mgr->GetAnimationForTrigger(idleAnimationGroupTrigger);
-          const std::string animName = GetAnimationNameFromGroup(idleAnimationGroupName, robot);
-          if(animName.empty()) {
-            PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
-                              "Returned empty animation name for group %s. Popping the group.",
-                              EnumToString(idleAnimationGroupTrigger));
-            _idleAnimation = nullptr;
-            return RESULT_FAIL;
-          }
-          _idleAnimation = _animationContainer.GetAnimation(animName);
-          if(_idleAnimation == nullptr) {
-            PRINT_NAMED_ERROR("AnimationStreamer.Update.InvalidIdleAnimationFromGroup",
-                              "Returned null animation for name '%s' from group '%s'. Popping the group.",
-                              animName.c_str(), idleAnimationGroupName.c_str());
-            return RESULT_FAIL;
-          }
-          
-          PRINT_NAMED_DEBUG("AnimationStreamer.Update.SelectedNewIdle",
-                            "Selected idle animation '%s' from group '%s'",
-                            animName.c_str(), idleAnimationGroupName.c_str());
-        } // if(!idleAnimationGroupName.empty())
-      } // else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling)
-      
-      DEV_ASSERT(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
-      
-      if( oldIdleAnimation != _idleAnimation ) {
-        // We just changed idle animations, so we need to force re-init.
-        _isIdling = false;
+      // Update the live animation's keyframes
+      lastResult = UpdateLiveAnimation();
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
+                          "Failed updating live animation from current robot state.");
+        return lastResult;
       }
       
       if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have
@@ -874,16 +846,15 @@ namespace Cozmo {
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       _timeSpentIdling_ms += ANIM_TIME_STEP;
-    } // else if(!_idleAnimationNameStack.empty() && _idleAnimationNameStack.back() != AnimationTrigger::Count)
-    
-    */
+    }
+
     
     // If we didn't do any streaming above, but we've still got layers to stream
     if(!streamUpdated)
     {
       if(_trackLayerComponent->HaveLayersToSend())
       {
-//        lastResult = StreamLayers();
+        lastResult = StreamLayers();
       }
     }
     
@@ -894,7 +865,7 @@ namespace Cozmo {
   
   void AnimationStreamer::SetDefaultParams()
   {
-    /*
+
 #   define SET_DEFAULT(__NAME__, __VALUE__) \
     SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
     
@@ -930,25 +901,24 @@ namespace Cozmo {
     SET_DEFAULT(EyeDartDownMinScale, 0.85f);
     
 #   undef SET_DEFAULT
-     */
+
   } // SetDefaultParams()
   
   Result AnimationStreamer::UpdateLiveAnimation()
   {
-#   define GET_PARAM(__TYPE__, __NAME__) GetParam<__TYPE__>(LiveIdleAnimationParameter::__NAME__)
+#   define GET_PARAM(__TYPE__, __NAME__) (static_cast<__TYPE__>(_liveAnimParams[LiveIdleAnimationParameter::__NAME__]))
     
     Result lastResult = RESULT_OK;
    
-    /*
     // Don't start wiggling until we've been idling for a bit and make sure we
     // are not picking or placing
     if(_isLiveTwitchEnabled &&
-       _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms) &&
-       !robot.GetDockingComponent().IsPickingOrPlacing())
+       _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms)
+       // && !robot.GetDockingComponent().IsPickingOrPlacing()   // TODO: If picking and place, need to lock these tracks
+       )
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
-      const bool wheelsAvailable = (!robot.GetMoveComponent().IsMoving() &&
-                                    !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK));
+      const bool wheelsAvailable = !IsTrackLocked((u8)AnimTrackFlag::BODY_TRACK);
       const bool timeToMoveBody = (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0;
       if(wheelsAvailable && timeToMoveBody)
       {
@@ -1001,10 +971,9 @@ namespace Cozmo {
       }
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
-      const bool liftIsAvailable = (!robot.GetMoveComponent().IsLiftMoving() &&
-                                    !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK));
+      const bool liftIsAvailable = !IsTrackLocked((u8)AnimTrackFlag::LIFT_TRACK);
       const bool timeToMoveLIft = (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0;
-      if(liftIsAvailable && timeToMoveLIft && !robot.GetCarryingComponent().IsCarryingObject())
+      if(liftIsAvailable && timeToMoveLIft) //  && !robot.GetCarryingComponent().IsCarryingObject())   // TODO Engine should lock lift track after pickup
       {
         _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
                                                    GET_PARAM(s32, LiftMovementDurationMax_ms));
@@ -1029,14 +998,14 @@ namespace Cozmo {
       }
       
       // If head is available, add a little random movement to keep Cozmo looking alive
-      const bool headIsAvailable = (!robot.GetMoveComponent().IsHeadMoving() &&
-                                    !robot.GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK));
+      const bool headIsAvailable = !IsTrackLocked((u8)AnimTrackFlag::HEAD_TRACK);
       const bool timeToMoveHead = (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0;
       if(headIsAvailable && timeToMoveHead)
       {
         _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
-        const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
+        const s8 currentAngle_deg = 10; // static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
+                                        // TODO: Hard coded for now, but should we actually maintain some robot state here for this?
 
         if(DEBUG_ANIMATION_STREAMING) {
           PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
@@ -1057,7 +1026,6 @@ namespace Cozmo {
       
     } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
     
-     */
     return lastResult;
 #   undef GET_PARAM
      

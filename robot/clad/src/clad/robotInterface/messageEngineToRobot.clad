@@ -426,6 +426,16 @@ message TurnToRecordedHeading
   bool useShortestDir,
 }
 
+message SetBackpackLights
+{
+  uint_16 colors[5],
+}
+
+message EnableLiveTwitching
+{
+  bool enable
+}
+
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -559,8 +569,8 @@ union EngineToRobot
   BLE::ConnectionState          bleConnectionState          = 0x86,
   BLE::DataReceived             bleDataReceived             = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
-  //          FREE SLOT!!!                                  = 0x8A,
-  //          FREE SLOT!!!                                  = 0x8B,
+  SetBackpackLights             setBackpackLights           = 0x8A,   // V2
+  EnableLiveTwitching           enableLiveTwitching         = 0x8B,   // V2
   //          FREE SLOT!!!                                  = 0x8C,
   AbortAnimation                abortAnimation              = 0x8D,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x8E,

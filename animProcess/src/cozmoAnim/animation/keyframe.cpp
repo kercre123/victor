@@ -699,7 +699,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     
     RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage()
     {
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::BackpackLights(_streamMsg));
+      return new RobotInterface::EngineToRobot(_streamMsg);
     }
   
   

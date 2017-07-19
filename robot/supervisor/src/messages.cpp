@@ -900,6 +900,9 @@ namespace Anki {
       {
         AnkiWarn( 1196, "Messages.Process_commandNV.Unsupported", 631, "Cozmo 2.0 NVStorage is in engine only", 0);
       }
+      
+      
+      // ==== V2 Animation ======
       void Process_playAnim(RobotInterface::PlayAnim const& msg)
       {
         // Nothing to do here
@@ -922,6 +925,18 @@ namespace Anki {
                                                               msg.numHalfRevs,
                                                               msg.useShortestDir);
       }
+      void Process_setBackpackLights(RobotInterface::SetBackpackLights const& msg)
+      {
+        AnkiWarn( 1242, "Messages.setBackpackLights.NoHALFunction", 305, "", 0);
+      }
+      
+      void Process_enableLiveTwitching(RobotInterface::EnableLiveTwitching const& msg)
+      {
+        // Nothing to do here
+      }
+      // =========== end V2 animation ==============
+      
+      
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here
