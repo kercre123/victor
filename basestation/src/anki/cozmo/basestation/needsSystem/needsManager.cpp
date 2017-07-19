@@ -661,6 +661,13 @@ void NeedsManager::RegisterNeedsActionCompleted(const NeedsActionId actionComple
     return;
   }
 
+  // Don't do anything if no robot connected.  This can happen during shutdown,
+  // since we have so much code being executed from the robot class destructor
+  if (_robot == nullptr)
+  {
+    return;
+  }
+
   // Only accept certain types of events
   if (_onlyWhiteListedActionsEnabled)
   {
