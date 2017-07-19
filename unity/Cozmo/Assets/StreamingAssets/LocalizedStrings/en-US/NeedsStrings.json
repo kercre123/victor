@@ -141,7 +141,7 @@
   "needs.FreeplaySparksReward.PeekAboo": {
     "translation": "Cozmo just generated {0} Sparks by playing Peekaboo!"
   },
-  "needs.FreeplaySparksReward.PickUpCube": {
+  "needs.FreeplaySparksReward.PickupCube": {
     "translation": "Cozmo just generated {0} Sparks by picking up a Cube!"
   },
   "needs.FreeplaySparksReward.PopAWheelie": {
