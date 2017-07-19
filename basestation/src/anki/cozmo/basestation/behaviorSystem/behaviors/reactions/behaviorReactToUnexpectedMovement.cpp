@@ -10,8 +10,11 @@
  *
  **/
 
-#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
+
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/aiComponent/aiComponent.h"
+#include "anki/cozmo/basestation/aiComponent/AIWhiteboard.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -46,8 +49,17 @@ Result BehaviorReactToUnexpectedMovement::InitInternal(Robot& robot)
   
   const u32  kNumLoops = 1;
   const bool kInterruptRunning = true;
-
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement,
+  
+  AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
+  
+  NeedId expressedNeed = robot.GetAIComponent().GetWhiteboard().GetSevereNeedExpression();
+  if(expressedNeed == NeedId::Energy){
+    reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Energy;
+  }else if(expressedNeed == NeedId::Repair){
+    reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement_Severe_Repair;
+  }
+  
+  StartActing(new TriggerLiftSafeAnimationAction(robot, reactionAnimation,
                                                  kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
