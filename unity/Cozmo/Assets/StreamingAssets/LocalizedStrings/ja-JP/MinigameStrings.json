@@ -274,7 +274,7 @@
     "translation" : "気を付けて！キューブパターンは、一度に最大3色で、より複雑になることがあります。"
   },
   "speedTap.difficulty.expertDescription" : {
-    "translation" : "専門家のみ！キューブは今でも最高の選手に挑戦し、一度に最大4色を持つことができます。"
+    "translation" : "エキスパート限定！キューブは4色になることもあります。トッププレーヤーでも難しいでしょう。"
   },
   "button.retry" : {
     "translation" : "再試行する"

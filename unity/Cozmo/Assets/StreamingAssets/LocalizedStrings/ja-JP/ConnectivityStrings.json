@@ -92,5 +92,8 @@
   },
   "connectivity.sendGameplayDataPrompt" : {
     "translation" : "あなたのゲームプレイのデータと統計情報を送信して、Cozmoをより良くするために協力してください。"
+  },
+  "connectivity.behaviorDisplayDisconnected" : {
+    "translation" : "Cozmoが切断されました。"
   }
 }
