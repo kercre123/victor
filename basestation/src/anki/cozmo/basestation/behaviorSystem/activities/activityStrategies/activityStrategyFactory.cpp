@@ -13,6 +13,7 @@
 
 // Activity strategies
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFPPlayWithHumans.h"
+#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyNeedBasedCooldown.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyNeeds.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyPyramid.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySevereNeedsTransition.h"
@@ -67,6 +68,11 @@ IActivityStrategy* CreateActivityStrategy(Robot& robot, const Json::Value& confi
     case ActivityStrategy::Spark:
     {
       newStrategy = new ActivityStrategySpark(robot, config);
+      break;
+    }
+    case ActivityStrategy::NeedBasedCooldown:
+    {
+      newStrategy = new ActivityStrategyNeedBasedCooldown(robot, config);
       break;
     }
     case ActivityStrategy::Needs:

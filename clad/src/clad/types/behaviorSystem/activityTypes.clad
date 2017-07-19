@@ -62,6 +62,7 @@ enum uint_8 ActivityStrategy {
   Pyramid,
   Simple,
   Spark,
+  NeedBasedCooldown,
   Needs,
   SevereNeedTransition,
   Count
