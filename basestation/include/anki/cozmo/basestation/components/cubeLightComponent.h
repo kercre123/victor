@@ -136,9 +136,6 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  // Plays the tap interaction animations on an object depending on its posestate
-  void SetTapInteractionObject(const ObjectID& objectID);
-  
   // Called whenever an active object's posestate changes in order to update the lights
   void OnActiveObjectPoseStateChanged(const ObjectID& objectID,
                                       const PoseState oldPoseState,

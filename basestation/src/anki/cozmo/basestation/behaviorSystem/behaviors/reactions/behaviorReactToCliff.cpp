@@ -43,7 +43,6 @@ static const float kCliffBackupSpeed_mmps = 100.0f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersReactToCliffArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

@@ -75,7 +75,6 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorRamIntoBlock.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToDoubleTap.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToFrustration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviors/reactions/behaviorReactToOnCharger.h"
@@ -581,11 +580,6 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::ReactToPet:
     {
       newBehavior = IBehaviorPtr(new BehaviorReactToPet(robot, config));
-      break;
-    }
-    case BehaviorClass::ReactToDoubleTap:
-    {
-      newBehavior = IBehaviorPtr(new BehaviorReactToDoubleTap(robot, config));
       break;
     }
     case BehaviorClass::ReactToVoiceCommand:

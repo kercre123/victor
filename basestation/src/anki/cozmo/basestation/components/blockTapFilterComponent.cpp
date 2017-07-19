@@ -318,14 +318,6 @@ void BlockTapFilterComponent::CheckForDoubleTap(const ObjectID& objectID)
     PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.Update.DoubleTap",
                   "Detected double tap id:%u", objectID.GetValue());
     
-    // Is ObjectTapInteractions feature enabled
-    if(_robot.GetContext() != nullptr &&
-       _robot.GetContext()->GetFeatureGate() != nullptr &&
-       _robot.GetContext()->GetFeatureGate()->IsFeatureEnabled(FeatureType::ObjectTapInteractions))
-    {
-      _robot.GetBehaviorManager().HandleObjectTapInteraction(objectID);
-    }
-    
     doubleTapInfo->second.doubleTapTime = 0;
     doubleTapInfo->second.isIgnoringMoveMessages = false;
   }

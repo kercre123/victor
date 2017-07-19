@@ -43,7 +43,6 @@ static const f32 kPostLiftDriveBackwardSpeed_mmps = 100.f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

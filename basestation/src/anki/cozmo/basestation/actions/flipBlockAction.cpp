@@ -46,7 +46,6 @@ bool WithinPreActionThreshold(const Robot& robot, std::vector<Pose3d>& possibleP
 constexpr ReactionTriggerHelpers::FullReactionArray kDisableForFlip = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

@@ -45,14 +45,6 @@
             "AnimName": "fadeOff_1sec"
         },
         {
-            "CladEvent": "DoubleTappedKnown",
-            "AnimName": "doubleTappedKnown"
-        },
-        {
-            "CladEvent": "DoubleTappedUnsure",
-            "AnimName": "doubleTappedUnsure"
-        },
-        {
             "CladEvent": "DrivingTo",
             "AnimName": "interacting"
         },

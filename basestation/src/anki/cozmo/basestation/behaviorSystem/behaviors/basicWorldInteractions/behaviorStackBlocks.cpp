@@ -48,7 +48,6 @@ static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
 static constexpr ReactionTriggerHelpers::FullReactionArray kHiccupDisableTriggers = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},
@@ -106,13 +105,6 @@ Result BehaviorStackBlocks::InitInternal(Robot& robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::StopInternal(Robot& robot)
-{
-  ResetBehavior(robot);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStackBlocks::StopInternalFromDoubleTap(Robot& robot)
 {
   ResetBehavior(robot);
 }

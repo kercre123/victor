@@ -36,7 +36,6 @@ enum uint_8 ActivityID {
   NeedsSevereLowRepair,
   NeedsSevereLowPlayGetIn,
   NothingToDo,
-  ObjectTapInteraction,
   PlayAlone,
   PlayWithHumans,
   PutDownDispatch,
@@ -59,7 +58,6 @@ enum uint_8 ActivityID {
 
 // The strategies that determine when an activity wants to start/stop
 enum uint_8 ActivityStrategy {
-  ObjectTapInteraction,
   PlayWithHumans,
   Pyramid,
   Simple,

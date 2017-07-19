@@ -50,7 +50,6 @@ static constexpr float kHeadAngleWhereLiftBlocksCamera_deg = 22.0f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPeekABooArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},

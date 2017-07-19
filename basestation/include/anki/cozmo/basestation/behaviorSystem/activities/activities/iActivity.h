@@ -66,8 +66,6 @@ public:
   
   void OnSelected(Robot& robot);
   void OnDeselected(Robot& robot);
-  bool SupportsObjectTapInteractions() { return _supportsObjectTapInteractions;}
-
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behaviors
@@ -95,9 +93,6 @@ public:
   
   float GetLastTimeStartedSecs() const { return _lastTimeActivityStartedSecs; }
   float GetLastTimeStoppedSecs() const { return _lastTimeActivityStoppedSecs; }
-  
-  // Used to access objectTapInteraction behaviors
-  std::vector<IBehaviorPtr> GetObjectTapBehaviors();
   
 protected:
   using TriggersArray = ReactionTriggerHelpers::FullReactionArray;
@@ -192,9 +187,6 @@ private:
   // track whether the activity has set an idle
   bool _hasSetIdle;
   
-  bool _requireObjectTapped;
-
-  bool _supportsObjectTapInteractions;
   
   // last time the activity started running
   float _lastTimeActivityStartedSecs;

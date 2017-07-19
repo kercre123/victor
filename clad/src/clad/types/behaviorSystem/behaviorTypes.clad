@@ -74,7 +74,6 @@ enum uint_8 BehaviorClass {
   RamIntoBlock,
   ReactToCliff,
   ReactToCubeMoved,
-  ReactToDoubleTap,
   ReactToFrustration,
   ReactToMotorCalibration,
   ReactToOnCharger,
@@ -169,7 +168,6 @@ enum uint_8 BehaviorID {
 
   ReactToCliff,
   ReactToCubeMoved,
-  ReactToDoubleTap,
   ReactToFrustrationMajor,
   ReactToFrustrationMinor,
   ReactToMotorCalibration,
@@ -242,10 +240,6 @@ enum uint_8 BehaviorID {
   SparksVisitPossibleMarker,
 
   StackBlocks,
-  TapInteractionPickUpCube,
-  TapInteractionPopAWheelie,
-  TapInteractionRollCube,
-  TapInteractionStackCubes,
   TrackLaser,
 
   VC_AlrightyResponse,

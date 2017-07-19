@@ -81,7 +81,6 @@ static const char* kLockForFullPyramidProcess = "lockTriggersFullPyramid";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectFullPyramidProcessArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},
@@ -112,7 +111,6 @@ static const char* kLockForPyramidSetup = "lockTriggersPyramidSetup";
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectPyramidSetupArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

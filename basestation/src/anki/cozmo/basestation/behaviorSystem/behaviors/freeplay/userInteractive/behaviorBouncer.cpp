@@ -80,7 +80,6 @@ CONSOLE_VAR_RANGED(s32, kBouncerBallRadius_px, CONSOLE_GROUP, 3, 1, 5);
 constexpr ReactionTriggerHelpers::FullReactionArray kReactionArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},

@@ -1114,41 +1114,6 @@ void AIWhiteboard::ClearSevereNeedExpression() {
   _severeNeedExpression = NeedId::Count;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::SetObjectTapInteraction(const ObjectID& objectID)
-{
-  const ObservableObject* connectedObject = _robot.GetBlockWorld().GetConnectedActiveObjectByID(objectID);
-  
-  // We still want to do something with this double tapped object even if it doesn't exist in the
-  // current frame
-  if(connectedObject != nullptr)
-  {
-    _robot.GetAIComponent().GetObjectInteractionInfoCache().ObjectTapInteractionOccurred(objectID);
-  }
-  else
-  {
-    PRINT_NAMED_WARNING("AIWhiteboard.SetObjectTapInteraction",
-                        "There's no connected instance but we are setting tap interaction for '%d'.", objectID.GetValue());
-  }
-
-  _haveTapIntentionObject = true;
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearObjectTapInteraction()
-{
-  _haveTapIntentionObject = false;
-  
-  // Let ReactToDoubleTap be able to react if the next double tapped object is the same as the last
-  // double tapped object
-  _canReactToDoubleTapReactAgain = true;
-  
-  _suppressReactToDoubleTap = false;
-  
-  // Invalidate current valid objects since tapIntention has changed
-  _robot.GetAIComponent().GetObjectInteractionInfoCache().InvalidateAllIntents();
-}
 
 } // namespace Cozmo
 } // namespace Anki

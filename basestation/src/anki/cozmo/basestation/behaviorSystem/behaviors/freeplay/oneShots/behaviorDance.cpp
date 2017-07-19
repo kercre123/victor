@@ -28,7 +28,6 @@ namespace {
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersDance = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  false},

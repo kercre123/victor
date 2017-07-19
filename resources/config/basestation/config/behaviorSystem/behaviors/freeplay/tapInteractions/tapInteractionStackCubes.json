@@ -1,8 +1,0 @@
-{
-  "behaviorClass": "StackBlocks",
-  "behaviorID": "TapInteractionStackCubes",
-  "needsActionID": "StackCube",
-  "displayNameKey":"behavior.StackCube",
-  "requireObjectTapped" : true,
-  "requiredUnlockId": "StackTwoCubes"
-}

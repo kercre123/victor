@@ -539,8 +539,6 @@ enum int_32 CubeAnimationTrigger
   Dance_05,
   Dance_06,
   DanceFadeOff,
-  DoubleTappedKnown,
-  DoubleTappedUnsure,
   DrivingTo,
   FeedingBlank,
   FeedingCyanCycle,

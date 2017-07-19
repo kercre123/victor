@@ -203,11 +203,6 @@ public:
   virtual std::set<ObjectInteractionIntention>
                            GetBehaviorObjectInteractionIntentions() const { return {}; }
   
-  // Handles stopping, updating target blocks, and re-initing the behavior so things get updated properly with
-  // the newly tapped object
-  // Returns whether or not the behavior can still run after updating target blocks
-  bool HandleNewDoubleTap(Robot& robot);
-  
   
   // Add Listeners to a behavior which will notify them of milestones/events in the behavior's lifecycle
   virtual void AddListener(ISubtaskListener* listener)
@@ -440,17 +435,6 @@ protected:
 
   virtual void UpdateTargetBlocksInternal(const Robot& robot) const {};
   
-  // Updates the double tapped object lights
-  // If on == true will turn on the double tapped lights for the current tapped object
-  // If on == false will clear double tapped lights
-  void UpdateTappedObjectLights(const bool on) const;
-  
-  bool RequiresObjectTapped() const { return _requireObjectTapped; }
-  
-  // Override if a behavior that uses double tapped objects needs to do something different when it stops
-  // due to a double tap
-  virtual void StopInternalFromDoubleTap(Robot& robot) { if(!RequiresObjectTapped()) { StopInternal(robot); } }
-  
   // Convenience Method for accessing the behavior helper factory
   BehaviorHelperFactory& GetBehaviorHelperFactory();
   
@@ -534,7 +518,6 @@ private:
 
   bool _hasSetMotionProfile = false;
   
-  bool _requireObjectTapped = false;
   
   // Handle for SmartDelegateToHelper
   WeakHelperHandle _currentHelperHandle;

@@ -14,7 +14,6 @@
 // Activity strategies
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyFPPlayWithHumans.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyNeeds.h"
-#include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyObjectTapInteraction.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategyPyramid.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySevereNeedsTransition.h"
 #include "anki/cozmo/basestation/behaviorSystem/activities/activityStrategies/activityStrategySimple.h"
@@ -50,11 +49,6 @@ IActivityStrategy* CreateActivityStrategy(Robot& robot, const Json::Value& confi
   ActivityStrategy strategyType = ActivityStrategyFromString(type);
 
   switch(strategyType){
-    case ActivityStrategy::ObjectTapInteraction:
-    {
-      newStrategy = new ActivityStrategyObjectTapInteraction(robot, config);
-      break;
-    }
     case ActivityStrategy::PlayWithHumans:
     {
       newStrategy = new ActivityStrategyFPPlayWithHumans(robot, config);

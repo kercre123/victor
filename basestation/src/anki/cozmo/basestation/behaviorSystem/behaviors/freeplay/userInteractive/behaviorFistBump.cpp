@@ -49,7 +49,6 @@ static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersFistBumpArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

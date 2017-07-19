@@ -35,7 +35,6 @@ const float kShakenDurationThresholdMedium = 2.5f;
 constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersRobotShakenArray = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},

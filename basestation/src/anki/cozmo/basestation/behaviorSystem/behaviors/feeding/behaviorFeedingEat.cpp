@@ -50,7 +50,6 @@ CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  45.0f);
 constexpr ReactionTriggerHelpers::FullReactionArray kDisableCliffWhileEating = {
   {ReactionTrigger::CliffDetected,                true},
   {ReactionTrigger::CubeMoved,                    false},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          false},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  false},

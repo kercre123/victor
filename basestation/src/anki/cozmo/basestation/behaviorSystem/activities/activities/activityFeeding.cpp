@@ -53,7 +53,6 @@ static const ColorRGBA FEEDING_CYAN      (0.f, 1.f, 0.7f);
 constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},
@@ -82,7 +81,6 @@ static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffected
 constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            true},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     true},
   {ReactionTrigger::Frustration,                  true},

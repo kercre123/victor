@@ -67,7 +67,6 @@ namespace Anki {
     static constexpr ReactionTriggerHelpers::FullReactionArray kAffectObjectPositionTriggerArray = {
       {ReactionTrigger::CliffDetected,                false},
       {ReactionTrigger::CubeMoved,                    false},
-      {ReactionTrigger::DoubleTapDetected,            false},
       {ReactionTrigger::FacePositionUpdated,          false},
       {ReactionTrigger::FistBump,                     false},
       {ReactionTrigger::Frustration,                  false},
@@ -96,7 +95,6 @@ namespace Anki {
     constexpr ReactionTriggerHelpers::FullReactionArray kFacePlantDisablesArray = {
       {ReactionTrigger::CliffDetected,                true},
       {ReactionTrigger::CubeMoved,                    true},
-      {ReactionTrigger::DoubleTapDetected,            false},
       {ReactionTrigger::FacePositionUpdated,          false},
       {ReactionTrigger::FistBump,                     false},
       {ReactionTrigger::Frustration,                  false},

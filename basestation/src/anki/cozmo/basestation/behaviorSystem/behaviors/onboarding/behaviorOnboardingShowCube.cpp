@@ -46,7 +46,6 @@ static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
 constexpr ReactionTriggerHelpers::FullReactionArray kOnboardingTriggerAffectedArray = {
   {ReactionTrigger::CliffDetected,                false},
   {ReactionTrigger::CubeMoved,                    true},
-  {ReactionTrigger::DoubleTapDetected,            false},
   {ReactionTrigger::FacePositionUpdated,          true},
   {ReactionTrigger::FistBump,                     false},
   {ReactionTrigger::Frustration,                  true},
