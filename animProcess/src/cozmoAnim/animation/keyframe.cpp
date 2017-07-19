@@ -612,7 +612,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     Result EventKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
     {
-      /*
       // Convert event_id string to AnimEvent enum
       const std::string& eventStr = eventKeyframe->event_id()->str();
       AnimEvent e = AnimEventFromString(eventStr.c_str());
@@ -621,13 +620,11 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return RESULT_FAIL;
       }
       _streamMsg.event_id = e;
-*/
       return RESULT_OK;
     }
 
     Result EventKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      /*
       // Convert event_id string to AnimEvent enum
       if (!jsonRoot.isMember("event_id")) {
         PRINT_NAMED_WARNING("EventKeyFrame.NoEventIDFound", "");
@@ -646,7 +643,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           return RESULT_FAIL;
         }
       }
-      */
+
       return RESULT_OK;
     }
     

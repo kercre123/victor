@@ -366,9 +366,24 @@ class HEnumEmitter(BaseEmitter):
               ''').format(**globals));
         
         self.output.write('const char* EnumToString({enum_name} m);\n'.format(**globals))
+        self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
 
 class CPPEnumEmitter(HEnumEmitter):
-    
+  
+    def visit_EnumDecl(self, node):
+        globals = dict(
+            enum_name=node.name,
+            enum_storage_type=cpplite_mutable_type(node.storage_type.builtin_type()),
+            byte=byte,
+            size_t=size_t,
+        )
+      
+        self.emitHeader(node, globals)
+        self.emitMembers(node, globals)
+        self.emitFooter(node, globals)
+        self.emitSuffix(node, globals)
+        self.emitStringToEnum(node, globals)
+
     def emitHeader(self, node, globals):
         self.output.write(textwrap.dedent('''\
             const char* EnumToString({enum_name} m)
@@ -396,6 +411,33 @@ class CPPEnumEmitter(HEnumEmitter):
     
     def emitSuffix(self, node, globals):
         pass
+
+    def emitStringToEnum(self, node, globals):
+        self.output.write(textwrap.dedent('''\
+          {enum_name} {enum_name}FromString(const std::string& str)
+          {{
+          ''').format(num_values=len(node.members()), **globals))
+          
+        with self.output.indent(1):
+          self.output.write('const std::unordered_map<std::string, {enum_name}> stringToEnumMap = {{\n'.format(**globals))
+          for member in node.members():
+              self.output.write('\t{{"{member_name}", {enum_name}::{member_name}}},\n'.format(member_name=member.name, **globals))
+          self.output.write('};\n\n')
+                
+          self.output.write(textwrap.dedent('''\
+              auto it = stringToEnumMap.find(str);
+              if(it == stringToEnumMap.end()) {{
+              std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              assert(false && "string must be a valid {enum_name} value");
+              return {enum_name}::{first_val};
+              }}
+              
+          ''').format(first_val=node.members()[0].name, **globals))
+            
+          self.output.write('return it->second;\n')
+        
+        self.output.write('}\n\n')
+
 
 class HStructEmitter(BaseEmitter):
     
@@ -883,7 +925,7 @@ if __name__ == '__main__':
         main_output_header_callback,
         comment_lines=comment_lines,
         use_inclusion_guards=True,
-        system_headers=['stdbool.h', 'stdint.h'])
+        system_headers=['stdbool.h', 'stdint.h', 'string'])
     
     
     def main_output_source_callback(output):
@@ -894,4 +936,5 @@ if __name__ == '__main__':
         main_output_source_callback,
         comment_lines=comment_lines,
         use_inclusion_guards=False,
-        local_headers=[main_output_header])
+        local_headers=[main_output_header],
+        system_headers=['unordered_map', 'iostream', 'cassert'])

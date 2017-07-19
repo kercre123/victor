@@ -425,12 +425,15 @@ namespace Cozmo {
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
+    Anki::Cozmo::AnimEvent GetAnimEvent() const { return _streamMsg.event_id; }
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug = "");
     
   private:
     
+    // TODO: Don't actually need this message. Just need the AnimEvent it stores
     AnimKeyFrame::Event _streamMsg;
     
   }; // class EventKeyFrame

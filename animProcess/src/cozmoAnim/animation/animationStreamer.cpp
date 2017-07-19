@@ -18,14 +18,11 @@
 #include "cozmoAnim/animation/faceAnimationManager.h"
 #include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 #include "cozmoAnim/animation/cannedAnimationContainer.h"
-//#include "anki/cozmo/basestation/animations/animationGroup/animationGroupContainer.h"
 #include "cozmoAnim/animation/proceduralFaceDrawer.h"
 //#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/cozmoContext.h"
 #include "cozmoAnim/robotDataLoader.h"
-//#include "anki/cozmo/basestation/events/ankiEvent.h"
-//#include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/console/consoleInterface.h"
@@ -47,9 +44,6 @@ namespace Anki {
 namespace Cozmo {
   
   namespace{
-//  const char* kDefaultIdleAnimLock = "default_anim_lock";
-//  const char* kSDKIdleAnimLock = "sdk";
-//  const int kBoundedWhileRemoveIdleMax = 1000;
     
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped and there is no
   // idle animation
@@ -173,9 +167,6 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
-//#if ANKI_DEV_CHEATS
-//    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(anim == nullptr ? "NONE" : anim->GetName());
-//#endif
     
     if(_streamingAnimation == nullptr) {
       // Set flag if we are interrupting a streaming animation with nothing.
@@ -312,14 +303,8 @@ namespace Cozmo {
           case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
             res = Messages::SendPacketToRobot(msg->GetBuffer(), msg->Size());
             break;
-          case AnimTrackFlag::EVENT_TRACK:
-            //res = Messages::RadioSendMessage(msg->GetBuffer(), msg->Size(), msg->tag);
-            break;
-          case AnimTrackFlag::FACE_IMAGE_TRACK:
-            // Convert to appropriate format and send to display device
-            break;
           default:
-            // Audio frames are handled separately since they don't actually result in a EngineToRobot message
+            // Audio, face, and event frames are handled separately since they don't actually result in a EngineToRobot message
             PRINT_NAMED_WARNING("AnimationStreamer.SendIfTrackUnlocked.InvalidTrack", "%s", EnumToString(track));
             break;
         }
@@ -581,9 +566,26 @@ namespace Cozmo {
         DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
       }
       
-      // TODO: This can just send message directly up to engine
-      if(SendIfTrackUnlocked(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::EVENT_TRACK)) {
+//      // TODO: This can just send message directly up to engine
+//      if(SendIfTrackUnlocked(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::EVENT_TRACK)) {
+//        DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
+//      }
+
+      if (eventTrack.HasFramesLeft() &&
+          eventTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
+      {
         DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
+        
+        // Get keyframe and send contents to engine
+        auto eventKeyFrame = eventTrack.GetCurrentKeyFrame();
+
+        RobotInterface::AnimationEvent eventMsg;
+        eventMsg.event_id = eventKeyFrame.GetAnimEvent();
+        eventMsg.timestamp = currTime_ms;
+        eventMsg.tag = _tag;
+        RobotInterface::SendMessage(eventMsg);
+
+        eventTrack.MoveToNextKeyFrame();
       }
       
       // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
