@@ -81,7 +81,7 @@ namespace Cozmo {
       private Color _IncreasingColor = Color.white;
 
       [SerializeField]
-      private GameObject _FilledEffect = null;
+      private Animator _FilledEffectAnimator = null;
 
       #endregion //Serialized Fields
 
@@ -314,11 +314,8 @@ namespace Cozmo {
             _AnimStartValue = currentValue;
             _BurstTimer = _BurstTime_sec;
 
-            if (_FilledEffect != null && currentValue >= 1f) {
-              if (_FilledEffect.activeSelf) {
-                _FilledEffect.SetActive(false);
-              }
-              _FilledEffect.SetActive(true);
+            if (_FilledEffectAnimator != null && currentValue >= 1f) {
+              _FilledEffectAnimator.SetTrigger("play");
             }
           }
         }
