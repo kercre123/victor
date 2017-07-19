@@ -1,9 +1,4 @@
 {
-  "build-tools": {
-    "path": "tools/build",
-    "initial": "880ac757066f61f54c7d86a7030924124dbcf633",
-    "onto": "e545f71"
-  },
   "clad": {
     "path": "tools/message-buffers",
     "initial": "31ac23a38226f2a141dd895a25fc11fa444552c0",
