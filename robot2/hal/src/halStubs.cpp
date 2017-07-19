@@ -25,7 +25,7 @@
 
 #define RADIO_IP "127.0.0.1"
 
-#define IMU_WORKING 0
+#define IMU_WORKING 1
 
 // Debugging Defines
 #define FRAMES_PER_RESPONSE  1  //send response every N input frames
@@ -212,6 +212,8 @@ namespace Anki {
         printf("pos = %f ", HAL::MotorGetPosition(MOTOR_OF_INTEREST));
         printf("spd = %f ", internalData_.motorSpeed[MOTOR_OF_INTEREST]);
         printf("pow = %f ", internalData_.motorPower[MOTOR_OF_INTEREST]);
+        printf("cliff = %d %d% d% d ",bodyData_->cliffSense[0],bodyData_->cliffSense[1],bodyData_->cliffSense[2],bodyData_->cliffSense[3]);
+        printf("prox = %d %d ",bodyData_->proximity.rangeStatus, bodyData_->proximity.rangeMM);
         printf("\r");
       }
 #endif
@@ -249,7 +251,6 @@ namespace Anki {
       return RESULT_OK;
 
     } // step()
-
 
 
     Result HAL::Step(void)
@@ -412,3 +413,11 @@ namespace Anki {
 
   } // namespace Cozmo
 } // namespace Anki
+
+
+extern "C" {
+
+  u64 steady_clock_now(void) {
+    return std::chrono::steady_clock::now().time_since_epoch().count();
+  }
+}

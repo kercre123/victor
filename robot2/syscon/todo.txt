@@ -1,0 +1,4 @@
+TODO:
+ * Capacitive touch
+ * Microphones
+ * Backpack leds

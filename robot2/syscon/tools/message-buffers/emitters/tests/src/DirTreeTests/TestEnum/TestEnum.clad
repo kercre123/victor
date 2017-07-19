@@ -1,0 +1,21 @@
+// A sample .clad file
+// containing enums
+
+enum no_cpp_class uint_32 FooEnum {
+  foo1,
+  foo2 = verbatim 2 * 4,
+  foo3,
+  foo4 = 10,
+  foo5 = 0x500,
+  foo6,
+  foo7 = verbatim 1000
+}
+
+enum uint_32 BarEnum {
+  bar1,
+  bar2 = verbatim FooEnum::foo2,
+  bar3,
+  bar4 = verbatim FooEnum::foo4 + FooEnum::foo6,
+  bar5 = verbatim bar3 + 7,
+  bar6
+}

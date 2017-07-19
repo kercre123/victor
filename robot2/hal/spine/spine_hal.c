@@ -15,8 +15,6 @@
 #include "spine_hal.h"
 
 
-#include <zlib.h>
-
 typedef uint32_t crc_t;
 
 
@@ -53,6 +51,13 @@ static struct HalGlobals {
 #define spine_debug(fmt, args...)  printf(fmt, ##args)
 #else
 #define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
+#endif
+
+#define EXTENDED_SPINE_DEBUG 0
+#if EXTENDED_SPINE_DEBUG
+#define spine_debug_x spine_debug
+#else
+#define spine_debug_x(fmt, args...)
 #endif
 
 /************* SERIAL INTERFACE ***************/
@@ -175,7 +180,6 @@ static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t p
   assert(expected_len >= 0); //valid type
   assert(expected_len == payload_len);
   assert(payload_len <= (SPINE_MAX_BYTES - SPINE_HEADER_LEN - SPINE_CRC_LEN));
-  expected_len++;
 
   SpineMessageHeader* hdr = &gHal.outheader;
   hdr->sync_bytes = SpineSync_SYNC_HEAD_TO_BODY;
@@ -263,19 +267,22 @@ const SpineMessageHeader* hal_read_frame()
   unsigned int payload_length = ((SpineMessageHeader*)gHal.inbuffer)->bytes_to_follow;
   unsigned int total_message_length = SPINE_HEADER_LEN + payload_length + SPINE_CRC_LEN;
 
-  //spine_debug("%d byte payload\n", payload_length);
+  spine_debug_x("%d byte payload\n", payload_length);
 
   while (index < total_message_length) {
     int rslt = hal_serial_read(gHal.inbuffer + index, total_message_length - index);
+    //spine_debug_x("%d bytes rcvd\n", rslt);
     if (rslt >= 0) {
       index += rslt;
     }
-    else if (rslt < 0) {
+    else { // rslt < 0
       if ((gHal.errcount++ & 0x3FF) == 0) { //TODO: at somepoint maybe we handle this?
         LOGI("spine_payload_read_error %d", rslt);
       }
     }
   }
+
+  spine_debug_x("%d bytes rcvd\n", index);
 
   //now we just have to validate CRC;
   crc_t expected_crc = *((crc_t*)(gHal.inbuffer + SPINE_HEADER_LEN + payload_length));
@@ -289,17 +296,17 @@ const SpineMessageHeader* hal_read_frame()
     unsigned int i;
     unsigned int dropped_bytes = 0;
     for (i = 0; i < payload_length + SPINE_CRC_LEN; i++) {
-      spine_debug(" %02x", gHal.inbuffer[i + SPINE_HEADER_LEN]);
+      spine_debug_x(" %02x", gHal.inbuffer[i + SPINE_HEADER_LEN]);
       if (gHal.inbuffer[i + SPINE_HEADER_LEN] == 0xAA) {
         dropped_bytes = i;
       }
     }
     dropped_bytes = payload_length + SPINE_CRC_LEN - dropped_bytes;
-    spine_debug("\n%d dropped\n", dropped_bytes);
+    spine_debug("\n%u dropped bytes\n", dropped_bytes);
     return NULL;
   }
 
-  //  spine_debug("found frame!\r");
+  spine_debug_x("found frame!\r");
   return ((SpineMessageHeader*)gHal.inbuffer);
 }
 
