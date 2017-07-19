@@ -623,6 +623,16 @@ void BehaviorManager::SendDasTransitionMessage(const BehaviorRunningAndResumeInf
                      {{DDATA,
                        BehaviorIDToString(oldBehaviorID)}},
                        BehaviorIDToString(newBehaviorID));
+
+  // if this was the result of a reaction trigger, send that as well
+  if( newBehaviorInfo.GetCurrentReactionTrigger() != ReactionTrigger::Count &&
+      newBehaviorInfo.GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger ) {
+    // s_val = trigger name
+    // data = triggered behavior name
+    Anki::Util::sEvent("robot.reaction_trigger",
+                       {{DDATA, BehaviorIDToString(newBehaviorID)}},
+                       ReactionTriggerToString(newBehaviorInfo.GetCurrentReactionTrigger()));
+  }
   
   ExternalInterface::BehaviorTransition msg;
   msg.oldBehaviorID = oldBehaviorID;
