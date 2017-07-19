@@ -121,27 +121,44 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
                     "Last sent ID:%d, starting ID:%d",
                     _lastSentPathID, payload.pathID);
         
+        SetLastRecvdPathID(payload.pathID);
+        
         // Note that this does nothing if we're already FollowingPath
         SetDriveToPoseStatus(ERobotDriveToPoseStatus::FollowingPath);
         break;
       }
         
       case PathEventType::PATH_COMPLETED:
-        // Verify we are completing the last path we sent. Can't do this for "interrupted" because
-        // the last path we sent may be interrupting the pathID in the interruption event message.
+      {
+        // Verify we are completing the last path we sent.
         ANKI_VERIFY(payload.pathID == _lastSentPathID,
                     "PathComponent.PathEvent.CompletingUnexpectedPathID",
                     "Last sent ID:%d, completing ID:%d",
                     _lastSentPathID, payload.pathID);
+       
+        // Note that OnPathComplete is safe to call if the path is already complete (e.g. thanks to
+        // RobotState message updates)
+        OnPathComplete();
         
-        // NOTE: Intentional fallthrough!
+        break;
+      }
         
       case PathEventType::PATH_INTERRUPTED:
       {
-        // Note that OnPathComplete is safe to call if the path is already complete (e.g. thanks to
-        // RobotState message updates)
-        // TODO: differentiate these two events?
-        OnPathComplete();
+        // Verify we are interrupting the last path we received.  
+        ANKI_VERIFY(payload.pathID == _lastRecvdPathID,
+                    "PathComponent.PathEvent.InterruptingUnexpectedPathID",
+                    "Last received ID:%d, completing ID:%d",
+                    _lastRecvdPathID, payload.pathID);
+       
+        // Only mark complete if this interruption is for the last path we actually sent and not an earlier one, which
+        // we don't care about anymore
+        if(payload.pathID == _lastSentPathID)
+        {
+          // Note that OnPathComplete is safe to call if the path is already complete (e.g. thanks to
+          // RobotState message updates)
+          OnPathComplete();
+        }
         break;
       }
     }
@@ -186,39 +203,26 @@ void PathComponent::OnPathComplete()
   SetDriveToPoseStatus(ERobotDriveToPoseStatus::Ready);
 }
 
-void PathComponent::UpdateRobotData(s8 currPathSegment, u16 lastRecvdPathID)
+void PathComponent::UpdateCurrentPathSegment(s8 currPathSegment) 
 {  
-  SetLastRecvdPathID(lastRecvdPathID);
-
-  const bool robotReceivedLastPath = _lastSentPathID > 0 && lastRecvdPathID == _lastSentPathID;
-  const bool robotIsFollowingAPath = currPathSegment >= 0;
-
+  const bool robotReceivedLastPath = (_lastSentPathID > 0) && (_lastRecvdPathID == _lastSentPathID);
+  
   if( robotReceivedLastPath ) {
+    
     // only update the current segment if we are on the right path
     SetCurrPathSegment(currPathSegment);
-  }
-
-  if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath &&
-      robotReceivedLastPath &&
-      !robotIsFollowingAPath ) {
-    PRINT_CH_INFO("Planner", "PathComponent.UpdateRobotData.PathComplete",
-                  "Robot finished following path ID %d",
-                  lastRecvdPathID);
-    if( _plannerActive ) {
+    
+    if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath &&
+       currPathSegment < 0 &&
+       _plannerActive) {
+      
+      PRINT_CH_INFO("Planner", "PathComponent.UpdateRobotData.ComputingNewPlan",
+                    "Actively replanning and finished following path ID %d",
+                    _lastRecvdPathID);
+      
       // we are actively replanning, but ran out of our old path. Now we are waiting to compute a new plan
       SetDriveToPoseStatus(ERobotDriveToPoseStatus::ComputingPath);
     }
-    else {
-      // we finished the path, all good!
-      OnPathComplete();
-    }
-  }
-
-  // update state if we are following a path now
-  if( _driveToPoseStatus == ERobotDriveToPoseStatus::WaitingToBeginPath &&
-      robotReceivedLastPath &&
-      robotIsFollowingAPath ) {
-    SetDriveToPoseStatus(ERobotDriveToPoseStatus::FollowingPath);
   }
 
   if( _driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath ) {

@@ -775,8 +775,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update cliff sensor component
   _cliffSensorComponent->UpdateRobotData(msg);
 
-  // update path following variables
-  _pathComponent->UpdateRobotData(msg.currPathSegment, msg.lastPathID);
+  // update current path segment in the path component
+  _pathComponent->UpdateCurrentPathSegment(msg.currPathSegment);
     
   // Update IMU data
   _robotAccel = msg.accel;
@@ -3109,7 +3109,6 @@ RobotState Robot::GetDefaultRobotState()
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          5.f, //float batteryVoltage,
                          kDefaultStatus, //uint32_t status,
-                         0, //uint16_t lastPathID,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          0, //uint16_t distanceSensor_mm
                          -1); //int8_t currPathSegment
