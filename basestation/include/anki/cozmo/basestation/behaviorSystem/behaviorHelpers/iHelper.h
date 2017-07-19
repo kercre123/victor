@@ -119,11 +119,6 @@ protected:
   
   void DelegateAfterUpdate(const DelegateProperties& properties){ _delegateAfterUpdate = properties;}
   
-  // Convenience accessor to the behaviorHelperComponent's motion profile ref
-  // returns true if a profile is set, false otherwise
-  bool GetPathMotionProfile(Robot& robot, PathMotionProfile& profile);
-  
-  
   // Use the set behavior's start acting to perform an action
   template <typename T>
   bool StartActing(IActionRunner* action, void(T::*callback)(ActionResult,Robot&));

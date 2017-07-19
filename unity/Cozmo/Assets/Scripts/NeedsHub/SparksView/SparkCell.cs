@@ -23,6 +23,9 @@ namespace Cozmo.Needs.Sparks.UI {
     private GameObject _SparkCostContainer;
 
     [SerializeField]
+    private CozmoImage _SparkMicIcon;
+
+    [SerializeField]
     private SparksDetailModal _SparksDetailModalPrefab;
 
     private UnlockableInfo _UnlockInfo;
@@ -48,6 +51,8 @@ namespace Cozmo.Needs.Sparks.UI {
                                        unlockInfo.RequestTrickCostAmount,
                                        _SparkCountText,
                                        UIColorPalette.GeneralSparkTintColor);
+
+      _SparkMicIcon.gameObject.SetActive(unlockInfo.CanVoiceActivate);
     }
 
     private void OnDestroy() {

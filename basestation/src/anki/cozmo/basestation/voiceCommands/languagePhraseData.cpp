@@ -11,6 +11,8 @@
 **/
 
 #include "anki/cozmo/basestation/voiceCommands/languagePhraseData.h"
+
+#include "anki/cozmo/basestation/voiceCommands/contextConfig.h"
 #include "anki/cozmo/basestation/voiceCommands/phraseData.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
@@ -38,6 +40,12 @@ namespace {
   const std::string& kParamBKey = "paramB";
   const std::string& kParamCKey = "paramC";
   const std::string& kMinRecogScoreKey = "minRecogScore";
+  
+  const std::string& kContextConfigListKey = "contextConfigList";
+  const std::string& kContextTypeKey = "contextType";
+  const std::string& kSearchBeamKey = "searchBeam";
+  const std::string& kSearchNOTAKey = "searchNOTA";
+  const std::string& kRecogMinDurationKey = "recogMinDuration";
 }
 
 bool LanguagePhraseData::Init(const Json::Value& dataObject)
@@ -96,6 +104,27 @@ bool LanguagePhraseData::Init(const Json::Value& dataObject)
       }
       
       _languageFilenamesAltMap[countryType] = std::move(altFilenames);
+    }
+  }
+  
+  // Load any context configs
+  {
+    if (dataObject.isMember(kContextConfigListKey))
+    {
+      if (!dataObject[kContextConfigListKey].isArray())
+      {
+        PRINT_NAMED_ERROR("LanguagePhraseData.Init.JsonData",
+                          "Context config list is not a list\n%s",
+                          Json::StyledWriter().write(dataObject).c_str());
+        return false;
+      }
+      
+      const Json::Value& configListObject = dataObject[kContextConfigListKey];
+      for (int i=0; i < configListObject.size(); ++i)
+      {
+        const Json::Value& curItem = configListObject[i];
+        AddContextConfig(curItem);
+      }
     }
   }
   
@@ -168,7 +197,7 @@ bool LanguagePhraseData::AddPhraseCommandMap(const Json::Value& dataObject)
   
   const std::string& commandKey = dataObject[kPhraseCommandsMapCommandKey].asString();
   VoiceCommandType commandType = VoiceCommandTypeFromString(commandKey.c_str());
-  if (VoiceCommandType::Count == commandType)
+  if (VoiceCommandType::Invalid == commandType)
   {
     PRINT_NAMED_ERROR("LanguagePhraseData.AddPhraseCommandMap.JsonData",
                       "Phrase command map's command was not found\n%s",
@@ -207,6 +236,56 @@ bool LanguagePhraseData::AddPhraseCommandMap(const Json::Value& dataObject)
   // There might be multiple phrases that match the command type
   _commandToPhraseDataMap[commandType].push_back(newPhraseData);
   
+  return true;
+}
+
+bool LanguagePhraseData::AddContextConfig(const Json::Value& dataObject)
+{
+  if (!dataObject.isObject())
+  {
+    PRINT_NAMED_ERROR("LanguagePhraseData.AddContextConfig.JsonData",
+                      "Context config list item is not an object?\n%s",
+                      Json::StyledWriter().write(dataObject).c_str());
+    return false;
+  }
+  
+  if (!dataObject.isMember(kContextTypeKey) || !dataObject[kContextTypeKey].isString())
+  {
+    PRINT_NAMED_ERROR("LanguagePhraseData.AddContextConfig.JsonData",
+                      "Context config list does not contain context type\n%s",
+                      Json::StyledWriter().write(dataObject).c_str());
+    return false;
+  }
+  
+  const std::string& contextTypeString = dataObject[kContextTypeKey].asString();
+  VoiceCommandListenContext contextType = VoiceCommandListenContextFromString(contextTypeString.c_str());
+  if (VoiceCommandListenContext::Invalid == contextType)
+  {
+    PRINT_NAMED_ERROR("LanguagePhraseData.AddContextConfig.JsonData",
+                      "Context config list's context type was not found\n%s",
+                      Json::StyledWriter().write(dataObject).c_str());
+    return false;
+  }
+  
+  // Now that we have the minimum data set up the container object
+  auto newContextConfigData = ContextConfigSharedPtr(new ContextConfig);
+  
+  // Get params, if they've been set
+  float tmpFloatParam = 0;
+  if (JsonTools::GetValueOptional(dataObject, kSearchBeamKey, tmpFloatParam))
+  {
+    newContextConfigData->SetSearchBeam(tmpFloatParam);
+  }
+  if (JsonTools::GetValueOptional(dataObject, kSearchNOTAKey, tmpFloatParam))
+  {
+    newContextConfigData->SetSearchNOTA(tmpFloatParam);
+  }
+  if (JsonTools::GetValueOptional(dataObject, kRecogMinDurationKey, tmpFloatParam))
+  {
+    newContextConfigData->SetRecogMinDuration(tmpFloatParam);
+  }
+  
+  _contextConfigMap[contextType] = newContextConfigData;
   return true;
 }
 

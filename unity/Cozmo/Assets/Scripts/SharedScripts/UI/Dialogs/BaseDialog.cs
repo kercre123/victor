@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using DG.Tweening;
-using Anki.UI;
 
 namespace Cozmo {
   namespace UI {
@@ -93,13 +92,23 @@ namespace Cozmo {
       }
 
       protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
+        if (!ConstructOpenAnimationBasedOnSettings(ref openAnimation)) {
+          ConstructDefaultFadeOpenAnimation(openAnimation);
+        }
+      }
+
+      protected bool ConstructOpenAnimationBasedOnSettings(ref Sequence openAnimation) {
+        bool animationCreated = false;
         UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
         if (_MoveTweenSettings.targets.Length > 0) {
           settings.ConstructOpenMoveTween(ref openAnimation, _MoveTweenSettings);
+          animationCreated = true;
         }
         if (_FadeTweenSettings.targets.Length > 0) {
           settings.ConstructOpenFadeTween(ref openAnimation, _FadeTweenSettings);
+          animationCreated = true;
         }
+        return animationCreated;
       }
 
       protected void ConstructDefaultFadeOpenAnimation(Sequence openAnimation) {
@@ -110,13 +119,23 @@ namespace Cozmo {
       }
 
       protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
+        if (!ConstructCloseAnimationBasedOnSettings(ref closeAnimation)) {
+          ConstructDefaultFadeCloseAnimation(closeAnimation);
+        }
+      }
+
+      protected bool ConstructCloseAnimationBasedOnSettings(ref Sequence closeAnimation) {
+        bool animationCreated = false;
         UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
         if (_MoveTweenSettings.targets.Length > 0) {
           settings.ConstructCloseMoveTween(ref closeAnimation, _MoveTweenSettings);
+          animationCreated = true;
         }
         if (_FadeTweenSettings.targets.Length > 0) {
           settings.ConstructCloseFadeTween(ref closeAnimation, _FadeTweenSettings);
+          animationCreated = true;
         }
+        return animationCreated;
       }
 
       protected void ConstructDefaultFadeCloseAnimation(Sequence closeAnimation) {
@@ -126,7 +145,7 @@ namespace Cozmo {
         closeAnimation.Join(settings.CreateFadeOutTween(_AlphaController));
       }
 
-      private void CreateAlphaControllerIfNull() {
+      protected void CreateAlphaControllerIfNull() {
         if (_AlphaController == null) {
           _AlphaController = gameObject.GetComponent<CanvasGroup>();
           if (_AlphaController == null) {

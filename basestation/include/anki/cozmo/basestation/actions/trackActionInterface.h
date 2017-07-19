@@ -14,6 +14,7 @@
 #define __Anki_Cozmo_Basestation_TrackActionInterface_H__
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/animations/animation.h"
 
@@ -70,6 +71,7 @@ public:
   void StopTrackingWhenOtherActionCompleted( u32 otherActionTag );
   
   // Set min/max body pan and head tilt speeds directly
+  // NOTE: motion profile doesn't effect these speeds!  
   void SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec);
   void SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec);
   

@@ -373,4 +373,32 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     unexpectedMovement: false,
     vc: true
   );
+
+  // Reactions disabled when connected to a simulated robot because their sensors don't handle the trigger properly
+  public static Anki.Cozmo.AllTriggersConsidered kSimulatedRobotTriggers = new Anki.Cozmo.AllTriggersConsidered(
+    cliffDetected: false,
+    cubeMoved: false,
+    doubleTapDetected: false,
+    facePositionUpdated: false,
+    fistBump: false,
+    frustration: false,
+    hiccup: false,
+    motorCalibration: false,
+    noPreDockPoses: false,
+    objectPositionUpdated: false,
+    placedOnCharger: false,
+    petInitialDetection: false,
+    robotPickedUp: false,
+    robotPlacedOnSlope: false,
+    returnedToTreads: false,
+    robotOnBack: false,
+    robotOnFace: false,
+    robotOnSide: false,
+    robotShaken: true,
+    sparked: false,
+    unexpectedMovement: false,
+    vc: false
+  );
+
+
 }

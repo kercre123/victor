@@ -72,7 +72,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kFeedingActivityAffectedArra
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kFeedingActivityAffectedArray),
@@ -101,7 +101,7 @@ constexpr ReactionTriggerHelpers::FullReactionArray kSevereFeedingDisables = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
+  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kSevereFeedingDisables),

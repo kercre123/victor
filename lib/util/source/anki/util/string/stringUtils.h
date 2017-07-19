@@ -17,6 +17,9 @@
 #include <string>
 #include <vector>
 
+#define ANKI_STRINGIFY_HELPER(x) #x
+#define ANKI_STRINGIFY(x) ANKI_STRINGIFY_HELPER(x)
+
 namespace Anki {
 namespace Util {
   
@@ -75,6 +78,14 @@ std::string UrlEncodeString(const std::string& str);
 // Simple way to handle comma-delimited strings
 std::string StringJoin(const std::vector<std::string>& strings, char delim=',');
 std::vector<std::string> StringSplit(const std::string& string, char delim=',');
+  
+void StringReplace( std::string& toChange, const std::string& oldStr, const std::string& newStr );
+
+// @return posix Epoch time in seconds (time since Jan 1, 1970, midnight UTC) based on
+// the specified date string in ISO8601 format: `YYYY-MM-DDTHH:MM:SSZ`.
+// If the date format is not valid, returns UINT32_MAX (distant future).
+uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString);
+
   
 } // namespace Util
 } // namespace Anki

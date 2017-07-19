@@ -243,17 +243,8 @@ void RollBlockHelper::StartRollingAction(Robot& robot)
   rollAction->SetNoNameAnimationTrigger(_params.noNameAnimationTrigger);
   rollAction->SetMaxTurnTowardsFaceAngle(_params.maxTurnToFaceAngle);
   
-  {
-    // set path motion profile if applicable
-    PathMotionProfile mp;
-    if(GetPathMotionProfile(robot, mp)){
-      rollAction->SetMotionProfile(mp);
-    }
-  }
-  
-  
 
-  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [&robot] (ActionResult result){
+  StartActingWithResponseAnim(rollAction, &RollBlockHelper::RespondToRollingResult, [] (ActionResult result){
     switch(result){
       case ActionResult::SUCCESS:
       {

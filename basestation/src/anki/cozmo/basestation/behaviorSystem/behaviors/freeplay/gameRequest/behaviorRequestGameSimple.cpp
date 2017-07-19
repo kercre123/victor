@@ -184,6 +184,9 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
+  // use the driving motion profile by default
+  SmartSetMotionProfile(_driveToPlaceProfile);
+
   SmartPushIdleAnimation(robot, AnimationTrigger::Count);
 
   if( GetNumBlocks(robot) == 0 ) {
@@ -349,11 +352,23 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
   
   ObjectID targetBlockID = GetRobotsBlockID(robot);
 
+  // use the pickup motion profile for pickup, clearing the driving one first
+  SmartClearMotionProfile();
+  SmartSetMotionProfile(_driveToPickupProfile);
+
   auto onPickupSuccess = [this](Robot& robot){
+    // restore the driving motion profile
+    SmartClearMotionProfile();
+    SmartSetMotionProfile(_driveToPlaceProfile);
+    
     TransitionToDrivingToFace(robot);
   };
   
   auto onPickupFailure = [this](Robot& robot){
+    // restore the driving motion profile
+    SmartClearMotionProfile();
+    SmartSetMotionProfile(_driveToPlaceProfile);
+
     // couldn't pick up this block. If we have another, try that. Otherwise, fail
     if( SwitchRobotsBlock(robot) ) {
       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGamePickupFail),
@@ -366,9 +381,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
     }
   };
   
-  
   auto& helperComp = robot.GetAIComponent().GetBehaviorHelperComponent();
-  helperComp.SetMotionProfile(_driveToPickupProfile);
   
   auto& factory = helperComp.GetBehaviorHelperFactory();
   PickupBlockParamaters params;
@@ -412,7 +425,6 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                                                       false,
                                                       _driveToPlacePoseThreshold_mm,
                                                       _driveToPlacePoseThreshold_rads);
-    action->SetMotionProfile(_driveToPlaceProfile);
     StartActing(action,
                 [this, &robot](ActionResult result) {
                   if ( result == ActionResult::SUCCESS ) {

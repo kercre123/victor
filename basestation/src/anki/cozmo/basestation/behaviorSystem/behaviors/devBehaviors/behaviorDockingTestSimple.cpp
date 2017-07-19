@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "clad/types/dockingSignals.h"
+#include "clad/types/pathMotionProfile.h"
 #include "util/console/consoleInterface.h"
 #include <ctime>
 
@@ -118,9 +119,6 @@ namespace Anki {
     , _logger(nullptr, robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
     {
       
-      _motionProfile = PathMotionProfile();
-      _motionProfile.isCustom = true;
-      
       SubscribeToTags({{
         EngineToGameTag::RobotCompletedAction,
         EngineToGameTag::RobotObservedObject,        
@@ -149,6 +147,11 @@ namespace Anki {
       
       robot.GetBehaviorManager().DisableReactionsWithLock(kBehaviorTestName,
                                                          ReactionTriggerHelpers::kAffectAllArray);
+
+      // force the default speeds
+      PathMotionProfile motionProfile;
+      motionProfile.isCustom = true;
+      SmartSetMotionProfile(motionProfile);
       
       _currentState = State::Init;
       _numFails = 0;
@@ -298,7 +301,6 @@ namespace Anki {
             
             
             DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::ROLLING);
-            driveAction->SetMotionProfile(_motionProfile);
             StartActing(robot, driveAction,
                         [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                           if(result == ActionResult::SUCCESS)
@@ -517,7 +519,6 @@ namespace Anki {
                                                                          0,
                                                                          true,
                                                                           _initialPreActionPoseAngle_rad);
-              driveAction->SetMotionProfile(_motionProfile);
               StartActing(robot, driveAction,
                           [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                             if(result == ActionResult::SUCCESS)
@@ -565,7 +566,6 @@ namespace Anki {
           PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot,
                                                                                         _cubePlacementPose,
                                                                                         true);
-          action->SetMotionProfile(_motionProfile);
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
@@ -690,13 +690,11 @@ namespace Anki {
             PlaceObjectOnGroundAtPoseAction* placeAction = new PlaceObjectOnGroundAtPoseAction(robot,
                                                                                                _cubePlacementPose,
                                                                                                true);
-            placeAction->SetMotionProfile(_motionProfile);
             action->AddAction(placeAction);
           }
           
           const bool kDriveWithDown = true;
           DriveToPoseAction* driveAction = new DriveToPoseAction(robot, p, kDriveWithDown);
-          driveAction->SetMotionProfile(_motionProfile);
           action->AddAction(driveAction);
           
           StartActing(robot, action,

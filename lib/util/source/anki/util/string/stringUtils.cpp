@@ -19,8 +19,9 @@
 #include <sstream>
 #include <algorithm>
 #include <string>
-#include <util/random/randomGenerator.h>
-#include <util/UUID/UUID.h>
+#include "util/math/numericCast.h"
+#include "util/random/randomGenerator.h"
+#include "util/UUID/UUID.h"
 
 
 namespace Anki {
@@ -399,6 +400,34 @@ std::vector<std::string> StringSplit(const std::string& string, char delim)
   }
   
   return result;
+}
+
+void StringReplace( std::string& toChange, const std::string& oldStr, const std::string& newStr )
+{
+  std::string::size_type n = 0;
+  while( ( n = toChange.find( oldStr, n ) ) != std::string::npos )
+  {
+    toChange.replace( n, oldStr.size(), newStr );
+    n += newStr.size();
+  }
+}
+
+uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString)
+{
+  if (dateString.empty()) {
+    return 0;
+  }
+
+  struct tm ctime;
+  memset(&ctime, 0, sizeof(ctime));
+  char* result = strptime(dateString.c_str(), "%Y-%m-%dT%T", &ctime);
+
+  if (nullptr == result) {
+    return UINT32_MAX;
+  }
+
+  time_t epochSec = timegm(&ctime);
+  return Anki::Util::numeric_cast<uint32_t>(epochSec);
 }
 
 } // namespace Util

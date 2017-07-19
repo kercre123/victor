@@ -73,6 +73,7 @@ enum int_32 NeedsActionId
   GatherCubes,
   GuardDogLose,
   GuardDogWin,
+  GuardDogNoInteraction,
   HiccupsEndBad,
   HiccupsEndGood,
   IndividualHiccup,
@@ -96,6 +97,8 @@ enum int_32 NeedsActionId
   Workout,
   Workout_Sparked,
   SeeFace,
+  PlacedOnSide,
+  BoredOnSide,
 
   Count
 }

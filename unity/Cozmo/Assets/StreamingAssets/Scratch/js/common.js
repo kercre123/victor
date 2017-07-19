@@ -115,18 +115,22 @@
         }
 
         window.resolvePromiseWaitForSaveProject = null;
-        window.saveProjectCompleted = function () {
+        window.saveProjectCompleted = function (unityIsWaitingForCallback) {
             // If we have a Promise to resolve, resolve it
             if (window.resolvePromiseWaitForSaveProject) {
                 window.resolvePromiseWaitForSaveProject();
                 window.resolvePromiseWaitForSaveProject = null;
+            }
+
+            if (unityIsWaitingForCallback) {
+                window.Unity.call('{"requestId": "-1", "command": "cozmoSaveOnQuitCompleted"}');
             }
         }
 
         window.promiseWaitForSaveProject = function () {
             return new Promise(function (resolve) {
                 window.resolvePromiseWaitForSaveProject = resolve;
-                window.saveCozmoUserProject();
+                window.saveCozmoUserProject(false);
             });
         };
 

@@ -342,13 +342,12 @@ MonoBehaviour:
   _DimBackground: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
-  _PlayIdle: 1
   _LoopedAnim:
     _EnumValueAsString: OnboardingPreBirth
-    _EnumValue: 299
+    _EnumValue: 307
   _CustomIdle:
     _EnumValueAsString: OnboardingPreBirth
-    _EnumValue: 299
+    _EnumValue: 307
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 0
   _OverrideTickerKey: 
@@ -356,14 +355,16 @@ MonoBehaviour:
   _EnableWhiteListOnly: 1
   _WhiteListedActions: []
   _ForceNeedValuesOnStart:
-  - -1
-  - -1
-  - -1
+  - 0.7
+  - 0.7
+  - 0.7
   _ForceNeedValuesOnEnd:
   - -1
   - -1
   - -1
-  _ForceNeedValuesOnEventId: 45
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 45
   _ForceNeedValuesOnEvent:
   - -1
   - -1

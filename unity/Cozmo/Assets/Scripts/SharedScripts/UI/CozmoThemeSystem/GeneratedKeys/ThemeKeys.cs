@@ -34,6 +34,7 @@ public static class ThemeKeys {
       public const string kCheckboxCheckmark = "Checkbox_Checkmark";
       public const string kCheckboxEmpty = "Checkbox_Empty";
       public const string kCheckboxX = "Checkbox_X";
+      public const string kCozmoButtonArrowPrevious = "CozmoButton_Arrow_Previous";
       public const string kCozmoButtonBackBackground = "CozmoButton_Back_Background";
       public const string kCozmoButtonCalibrateBackground = "CozmoButton_Calibrate_Background";
       public const string kCozmoButtonCloseBackground = "CozmoButton_Close_Background";
@@ -42,6 +43,7 @@ public static class ThemeKeys {
       public const string kCozmoButtonPrimaryBlueBackground = "CozmoButton_Primary_BlueBackground";
       public const string kCozmoButtonPrimaryGoldBackground = "CozmoButton_Primary_GoldBackground";
       public const string kCozmoButtonPrimaryGreyBackground = "CozmoButton_Primary_GreyBackground";
+      public const string kCozmoButtonPrimaryMask = "CozmoButton_Primary_Mask";
       public const string kCozmoButtonPrimaryRedBackground = "CozmoButton_Primary_RedBackground";
       public const string kCozmoButtonRepairArrowBackground = "CozmoButton_RepairArrow_Background";
       public const string kCozmoButtonRepairPartBackground = "CozmoButton_RepairPart_Background";

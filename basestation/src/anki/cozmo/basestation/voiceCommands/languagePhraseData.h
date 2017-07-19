@@ -33,6 +33,9 @@ namespace VoiceCommand {
 class PhraseData;
 using PhraseDataSharedPtr = std::shared_ptr<PhraseData>;
 
+class ContextConfig;
+using ContextConfigSharedPtr = std::shared_ptr<ContextConfig>;
+
 // Simple struct for returning filename data for a language
 struct LanguageFilenames
 {
@@ -57,17 +60,22 @@ public:
   const LanguageType& GetLanguageType() const { return _languageType; }
   
   const LanguageFilenames& GetLanguageFilenames(CountryType countryType) const;
+  const std::map<VoiceCommandListenContext, ContextConfigSharedPtr>& GetContextConfigs() const { return _contextConfigMap; }
   
 private:
   // A couple maps for holding the data of the phrase and associated command
-  std::map<std::string, PhraseDataSharedPtr>                     _phraseToDataMap;
-  std::map<VoiceCommandType, std::vector<PhraseDataSharedPtr>>   _commandToPhraseDataMap;
+  std::map<std::string, PhraseDataSharedPtr>                    _phraseToDataMap;
+  std::map<VoiceCommandType, std::vector<PhraseDataSharedPtr>>  _commandToPhraseDataMap;
   
-  LanguageType                                            _languageType = LanguageType::en;
-  LanguageFilenames                                       _languageFilenames{};
-  std::map<CountryType, LanguageFilenames>                _languageFilenamesAltMap;
+  LanguageType                                                  _languageType = LanguageType::en;
+  LanguageFilenames                                             _languageFilenames{};
+  std::map<CountryType, LanguageFilenames>                      _languageFilenamesAltMap;
+  
+  std::map<VoiceCommandListenContext, ContextConfigSharedPtr>   _contextConfigMap;
   
   static bool LoadLanguageFilenames(const Json::Value& dataObject, LanguageFilenames& out_data);
+  
+  bool AddContextConfig(const Json::Value& dataObject);
 };
 
 

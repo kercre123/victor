@@ -2,6 +2,7 @@
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using DG.Tweening;
+using Cozmo.UI;
 
 public struct TouchInfo {
   public TouchInfo(Vector2 position, float time) {
@@ -35,7 +36,10 @@ public class SwipeSlides : MonoBehaviour {
   private GameObject _SwipeContainerMask;
   private Tweener _SwipeTween;
 
+  private RectTransform _RectTransform;
+
   private void Start() {
+    _RectTransform = GetComponent<RectTransform>();
 
     //_ThresholdSpeed = GetComponent<RectTransform>().rect.width * 0.5f;
 
@@ -70,7 +74,12 @@ public class SwipeSlides : MonoBehaviour {
       _SwipeTween = null;
     }
     _Transitioning = true;
-    _SwipeTween = _SwipeContainer.DOLocalMove(_StartingPosition - Vector3.right * GetComponent<RectTransform>().rect.width * index, 0.25f).OnComplete(() => TransitionDone());
+
+    Vector3 unitsToMove = _StartingPosition - Vector3.right * _RectTransform.rect.width * index;
+    _SwipeTween = _SwipeContainer.DOLocalMove(unitsToMove,
+                                              UIDefaultTransitionSettings.Instance.SwipeDurationSeconds)
+                                 .SetEase(UIDefaultTransitionSettings.Instance.SwipeSlideEase)
+                                 .OnComplete(() => TransitionDone());
   }
 
   private void TransitionDone() {

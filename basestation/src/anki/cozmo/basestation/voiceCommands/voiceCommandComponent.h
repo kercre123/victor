@@ -59,10 +59,10 @@ public:
   void Update();
   
   bool KeyPhraseWasHeard() const { return _pendingHeardCommand == VoiceCommandType::HeyCozmo; }
-  bool AnyCommandPending() const { return _pendingHeardCommand != VoiceCommandType::Count; }
+  bool AnyCommandPending() const { return _pendingHeardCommand != VoiceCommandType::Invalid; }
   VoiceCommandType GetPendingCommand() const { return _pendingHeardCommand; }
   
-  void ClearHeardCommand() { _pendingHeardCommand = VoiceCommandType::Count; }
+  void ClearHeardCommand() { _pendingHeardCommand = VoiceCommandType::Invalid; }
   
   void ForceListenContext(VoiceCommandListenContext listenContext);
   void DoForceHeardPhrase(VoiceCommandType commandType);
@@ -84,7 +84,7 @@ private:
   float                                                 _commandLightTimeRemaining_s = -1.f;
   VoiceCommandListenContext                             _listenContext = VoiceCommandListenContext::TriggerPhrase;
   VoiceCommandListenContext                             _lastListenContext = VoiceCommandListenContext::TriggerPhrase;
-  VoiceCommandType                                      _pendingHeardCommand = VoiceCommandType::Count;
+  VoiceCommandType                                      _pendingHeardCommand = VoiceCommandType::Invalid;
   bool                                                  _initialized = false;
   bool                                                  _commandRecogEnabled = false;
   bool                                                  _recordPermissionBeingRequested = false;

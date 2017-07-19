@@ -69,7 +69,7 @@ private:
     VoiceCommand::VoiceCommandType GetCommandType() const { return _currentResponseType;}
 
     // Setup the response queue for the specified VoiceCommandType which was received
-    void SetNewResponseData(ChooseNextBehaviorQueue&& responseQue,
+    void SetNewResponseData(ChooseNextBehaviorQueue&& responseQueue,
                             VoiceCommand::VoiceCommandType commandType);
     // Reset VC data and notify the VoiceCommandComponent that the response to
     // this voice command has finished
@@ -85,7 +85,7 @@ private:
   private:
     ChooseNextBehaviorQueue        _respondToVCQueue;
     IBehaviorPtr                   _currentResponseBehavior;
-    VoiceCommand::VoiceCommandType _currentResponseType = VoiceCommand::VoiceCommandType::Count;
+    VoiceCommand::VoiceCommandType _currentResponseType = VoiceCommand::VoiceCommandType::Invalid;
     const CozmoContext*            _context;
     // Returns true if ResponseData has not previously returned a behavior to run
     // but will return one this tick
@@ -139,14 +139,14 @@ private:
   
   // Checks if the voice command should be refused due to severe needs states
   // Returns true if the outputBehavior has been set to the refuse behavior due to our needs state
-  bool CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQue) const;
+  bool CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQueue) const;
   
   // Setups up the refuse behavior to play the animTrigger
   // Returns true if the outputBehavior has been set to the refuse behavior
-  bool CheckAndSetupRefuseBehavior(Robot& robot, BehaviorID whichRefuse, ChooseNextBehaviorQueue& responseQue) const;
+  bool CheckAndSetupRefuseBehavior(Robot& robot, BehaviorID whichRefuse, ChooseNextBehaviorQueue& responseQueue) const;
   
   // Handles what response to do for the "How are you doing" command based on Cozmo's current needs
-  void HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQue);
+  void HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQueue);
   
   // Sends the event indicating we're beginning running a behavior in response to command, and stores the task to
   // do once we're done responding to the command

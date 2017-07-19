@@ -47,7 +47,11 @@ public:
   
   virtual double    GetMinAsDouble()  const = 0;
   virtual double    GetMaxAsDouble()  const = 0;
-  
+  virtual int64_t   GetMinAsInt64()   const = 0;
+  virtual int64_t   GetMaxAsInt64()   const = 0;
+  virtual uint64_t  GetMinAsUInt64()  const = 0;
+  virtual uint64_t  GetMaxAsUInt64()  const = 0;
+
   virtual void ToggleValue() = 0;
   virtual void ResetToDefault() = 0;
   virtual bool IsDefaultValue() const = 0;
@@ -100,7 +104,11 @@ public:
   
   virtual double    GetMinAsDouble()  const override { return numeric_cast_clamped<double>(_minValue);  }
   virtual double    GetMaxAsDouble()  const override { return numeric_cast_clamped<double>(_maxValue);  }
-  
+  virtual int64_t   GetMinAsInt64()  const override { return numeric_cast_clamped<T>(_minValue);  }
+  virtual int64_t   GetMaxAsInt64()  const override { return numeric_cast_clamped<T>(_maxValue);  }
+  virtual uint64_t  GetMinAsUInt64()  const override { return numeric_cast_clamped<T>(_minValue);  }
+  virtual uint64_t  GetMaxAsUInt64()  const override { return numeric_cast_clamped<T>(_maxValue);  }
+
   virtual void ToggleValue() override { _value = !((bool)_value); }
   virtual void ResetToDefault() override { _value = _defaultValue; }
   virtual bool IsDefaultValue() const override { return (_value == _defaultValue); }

@@ -17,6 +17,7 @@
 #include "anki/planning/shared/goalDefs.h"
 #include "anki/planning/shared/path.h"
 #include "util/helpers/noncopyable.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <memory>
 
@@ -27,6 +28,7 @@ class Pose3d;
 namespace Cozmo {
 
 class CozmoContext;
+class IActionRunner;
 class IPathPlanner;
 class PathDolerOuter;
 class Robot;
@@ -75,11 +77,26 @@ public:
   // speed changes, so the user (or some other system) will have control of the speed along the "rails" of the
   // path. It's up to the robot / planner to pick which pose it wants to go to. The optional selectedPoseIndex
   // shared_ptr, if specified, will be updated when planning is complete to specify which of the target poses
-  // the planner selected. 
+  // the planner selected. The speed along the path will be determined by the CustomPathMotionProfile held in
+  // this component, or will get set by the SpeedChooser if this component hasn't been set to use a custom
+  // profile
   Result StartDrivingToPose(const std::vector<Pose3d>& poses,
-                            const PathMotionProfile& motionProfile,                              
                             std::shared_ptr<Planning::GoalID> selectedPoseIndex = {},
                             bool useManualSpeed = false);
+
+  // set or clear the custom motion profile that all motion should follow. If cleared, then defaults will be
+  // used, or the speed chooser will be used if enabled
+  void SetCustomMotionProfile(const PathMotionProfile& motionProfile);
+  void ClearCustomMotionProfile();
+
+  // Set a motion profile and have it cleared automatically when the action finishes. Note that this will
+  // clear when the action is _destroyed_.
+  void SetCustomMotionProfileForAction(const PathMotionProfile& motionProfile, IActionRunner* action);
+
+  // check / get the custom motion profile. Note that there is always _some_ motion profile that paths follow,
+  // but these functions refer to the _custom_ profile which, for example, might get set by a behavior
+  bool HasCustomMotionProfile() const;
+  const PathMotionProfile& GetCustomMotionProfile() const;
   
   // This function checks the planning / path following status of the robot. See the enum definition for
   // details
@@ -189,11 +206,15 @@ private:
   u16                      _lastRecvdPathID              = 0;
   bool                     _usingManualPathSpeed         = false;
   bool                     _plannerActive                = false;
-
+  bool                     _hasCustomMotionProfile       = false;
+  
   std::unique_ptr<PathMotionProfile> _pathMotionProfile;
   std::unique_ptr<PlanParameters>    _currPlanParams;
   
   Robot& _robot;
+  
+  Signal::SmartHandle _pathEventHandle;
+  
 };
 
 }

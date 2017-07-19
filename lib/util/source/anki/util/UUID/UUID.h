@@ -63,6 +63,14 @@ void UUIDCopy(UUIDBytesRef destination, const UUIDBytesRef source);
  */
 const UUIDBytesRef UUIDEmpty();
 
+/** Validates that a string represents a UUID
+ *
+ * @param uuidStr input string of the form "%08x-%04x-%04x-%04x-%012x" + '\0'
+ *
+ * @return 1 if uuidStr represents a UUID, 0 if not
+ */
+int IsValidUUIDString(const char* uuidStr);
+
 #define UUIDClear(uuidBytesRef) UUIDCopy((uuidBytesRef), UUIDEmpty())
 
 #ifdef __cplusplus

@@ -83,6 +83,8 @@ class IFeedingListener;
 enum class CubeAnimationTrigger;
 struct BehaviorStateLightInfo;
 
+struct PathMotionProfile;
+
 namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
@@ -393,6 +395,12 @@ protected:
   void SmartDisableReactionWithLock(const std::string& lockID, const ReactionTrigger& trigger);
 #endif
 
+  // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
+  // use the specified motion profile for all motions. Note that this will result in an error if the behavior
+  // tries to manually set a speed or acceleration on an action. This may be called automatically based on
+  // behavior json data here at the IBehavior level
+  void SmartSetMotionProfile(const PathMotionProfile& motionProfile);
+  void SmartClearMotionProfile();
   
   // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
   // being interrupted and leaving the track locked
@@ -523,6 +531,8 @@ private:
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
+
+  bool _hasSetMotionProfile = false;
   
   bool _requireObjectTapped = false;
   

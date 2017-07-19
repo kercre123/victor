@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/components/pathComponent.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/faceAndApproachPlanner.h"
@@ -21,6 +22,7 @@
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -91,6 +93,63 @@ PathComponent::PathComponent(Robot& robot, const RobotID_t robotID, const CozmoC
   else {
     PRINT_NAMED_WARNING("Robot.PathComponent.NoContext", "No cozmo context, won't be fully functional");
   }
+  
+  
+  auto eventLambda = [this](const AnkiEvent<RobotInterface::RobotToEngine>& event)
+  {
+    RobotInterface::PathFollowingEvent payload = event.GetData().Get_pathFollowingEvent();
+    
+    PRINT_CH_DEBUG("Planner", "PathComponent.ReceivedPathEvent", "ID:%d Event:%s",
+                   payload.pathID, EnumToString(payload.eventType));
+    
+    switch(payload.eventType)
+    {
+      case PathEventType::PATH_STARTED:
+      {
+        // In general, we should be coming from "Waiting to Begin" when we receive Path Started.
+        // We could be "Following" already if path/segment ID in RobotState already transitioned us.
+        // We could also be "Ready" if we received a Path Interrupted message already this tick.
+        ANKI_VERIFY(ERobotDriveToPoseStatus::WaitingToBeginPath == _driveToPoseStatus ||
+                    ERobotDriveToPoseStatus::FollowingPath == _driveToPoseStatus ||
+                    ERobotDriveToPoseStatus::Ready == _driveToPoseStatus,
+                    "PathComponent.PathEvent.UnexpectedStatus",
+                    "Expecting to be WaitingToBeginPath or FollowingPath, not %s",
+                    ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+    
+        ANKI_VERIFY(payload.pathID == _lastSentPathID,
+                    "PathComponent.PathEvent.StartingUnexpectedPathID",
+                    "Last sent ID:%d, starting ID:%d",
+                    _lastSentPathID, payload.pathID);
+        
+        // Note that this does nothing if we're already FollowingPath
+        SetDriveToPoseStatus(ERobotDriveToPoseStatus::FollowingPath);
+        break;
+      }
+        
+      case PathEventType::PATH_COMPLETED:
+        // Verify we are completing the last path we sent. Can't do this for "interrupted" because
+        // the last path we sent may be interrupting the pathID in the interruption event message.
+        ANKI_VERIFY(payload.pathID == _lastSentPathID,
+                    "PathComponent.PathEvent.CompletingUnexpectedPathID",
+                    "Last sent ID:%d, completing ID:%d",
+                    _lastSentPathID, payload.pathID);
+        
+        // NOTE: Intentional fallthrough!
+        
+      case PathEventType::PATH_INTERRUPTED:
+      {
+        // Note that OnPathComplete is safe to call if the path is already complete (e.g. thanks to
+        // RobotState message updates)
+        // TODO: differentiate these two events?
+        OnPathComplete();
+        break;
+      }
+    }
+  };
+  
+  _pathEventHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
+                                                                RobotInterface::RobotToEngineTag::pathFollowingEvent,
+                                                                eventLambda);
 }
 
 PathComponent::~PathComponent()
@@ -349,7 +408,7 @@ void PathComponent::HandlePlanComplete()
   Planning::Path newPath;
 
   const Pose3d& driveCenterPose = _robot.GetDriveCenterPose();
-      
+  
   _selectedPathPlanner->GetCompletePath(driveCenterPose,
                                         newPath,
                                         selectedPoseIdx,
@@ -505,8 +564,51 @@ void PathComponent::SelectPlanner()
   }
 }
 
+void PathComponent::SetCustomMotionProfile(const PathMotionProfile& motionProfile)
+{
+  if( HasCustomMotionProfile() ) {
+    PRINT_NAMED_WARNING("PathComponent.SetMotionProfile.Conflict",
+                        "Trying to set custom motion profile, but one is already set! Overriding");
+  }
+
+  // warning for is custom
+  if( !motionProfile.isCustom ) {
+    PRINT_NAMED_WARNING("PathComponent.SetCustomMotionProfile.NotCustom",
+                        "Motion profile passed in didn't have it's isCustom flag set. This may cause inconsistencies");
+  }
+  
+  *_pathMotionProfile = motionProfile;
+  _hasCustomMotionProfile = true;
+}
+
+void PathComponent::SetCustomMotionProfileForAction(const PathMotionProfile& motionProfile, IActionRunner* action)
+{
+  SetCustomMotionProfile(motionProfile);
+
+  DEV_ASSERT(action != nullptr, "PathComponent.SetCustomMotionProfileForAction.NullAction");
+  action->ClearMotionProfileOnCompletion();
+}
+
+void PathComponent::ClearCustomMotionProfile()
+{
+  _hasCustomMotionProfile = false;
+  // the actual motion profile will get updated in StartDrivingToPose
+}
+
+bool PathComponent::HasCustomMotionProfile() const
+{
+  return _hasCustomMotionProfile;
+}
+
+const PathMotionProfile& PathComponent::GetCustomMotionProfile() const
+{
+  ANKI_VERIFY(_hasCustomMotionProfile, "PathComponent.GetCustomMotionProfile.NoCustomProfile",
+              "Trying to get the custom profile, but none is set. This is a bug");
+  return *_pathMotionProfile;
+}
+
+
 Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
-                                         const PathMotionProfile& motionProfile,
                                          std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr,
                                          bool useManualSpeed)
 {
@@ -533,7 +635,6 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
 
   _usingManualPathSpeed = useManualSpeed;
   _plannerSelectedPoseIndex = selectedPoseIndexPtr;
-  *_pathMotionProfile = motionProfile;
 
   const Pose3d& driveCenterPose(_robot.GetDriveCenterPose());  
 
@@ -581,6 +682,10 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
     // otherwise we are computing. Note that some planners finish immediately, in which case the status will
     // be updated on the next Update tick
     SetDriveToPoseStatus(ERobotDriveToPoseStatus::ComputingPath);
+  }
+
+  if( !_hasCustomMotionProfile ) {
+    *_pathMotionProfile = _speedChooser->GetPathMotionProfile(poses);
   }
 
   return RESULT_OK;
@@ -767,6 +872,7 @@ Result PathComponent::ExecutePath(const Planning::Path& path, const bool useManu
 
 void PathComponent::ExecuteTestPath(const PathMotionProfile& motionProfile)
 {
+  // NOTE: no need to use the custom motion profile here, we just manually pass it in to the test path
   Planning::Path p;
   _longPathPlanner->GetTestPath(_robot.GetPose(), p, &motionProfile);
   ExecutePath(p, false);

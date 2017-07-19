@@ -44,7 +44,7 @@ public class BehaviorDisplay : MonoBehaviour {
 
   private bool _IsDisconnected;
 
-  private void Start() {
+  private void Awake() {
     _BehaviorLabel.text = "";
     _BehaviorDefaultColor = UIColorPalette.FreeplayBehaviorDefaultColor;
     _BehaviorRewardColor = UIColorPalette.FreeplayBehaviorRewardColor;
@@ -111,10 +111,10 @@ public class BehaviorDisplay : MonoBehaviour {
   }
 
   private void SetConnectedIcon(bool connected) {
-    if (_ConnectedIcon.activeSelf != connected) {
+    if (_ConnectedIcon != null && _ConnectedIcon.activeSelf != connected) {
       _ConnectedIcon.SetActive(connected);
     }
-    if (_DisconnectedIcon.activeSelf != !connected) {
+    if (_DisconnectedIcon != null && _DisconnectedIcon.activeSelf != !connected) {
       _DisconnectedIcon.SetActive(!connected);
     }
   }

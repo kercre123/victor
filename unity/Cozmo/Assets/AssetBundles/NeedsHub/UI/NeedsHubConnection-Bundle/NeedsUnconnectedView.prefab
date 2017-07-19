@@ -971,6 +971,18 @@ MonoBehaviour:
         useCustom: 0
         duration_sec: 0
         easing: 0
+    - target: {fileID: 224033652139770872}
+      originOffset: {x: 0, y: 250}
+      openSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0.4
+        easing: 0
+      closeSetting:
+        startTime_sec: 0
+        useCustom: 0
+        duration_sec: 0
+        easing: 0
   _FadeTweenSettings:
     staggerType: 0
     uniformStagger_sec: 0

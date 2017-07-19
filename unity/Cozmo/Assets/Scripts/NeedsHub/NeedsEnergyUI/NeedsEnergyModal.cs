@@ -32,6 +32,12 @@ namespace Cozmo.Energy.UI {
     [SerializeField]
     private float _InactivityTimeOut = 300f; //in seconds
 
+    [SerializeField]
+    private CozmoButton _CubeHelpButton;
+
+    [SerializeField]
+    private GameObject _CubeHelpGroup;
+
     #endregion
 
     #region NON-SERIALIZED FIELDS
@@ -47,6 +53,8 @@ namespace Cozmo.Energy.UI {
     //when this timer reaches zero, the modal will close
     //refreshes to _InactivityTimeOut on any touch or feeding
     private float _InactivityTimer = float.MaxValue;
+
+    private BaseModal _CubeHelpModal;
 
     #endregion
 
@@ -84,6 +92,8 @@ namespace Cozmo.Energy.UI {
         _DoneCozmoButton.Initialize(HandleUserClose, "done_button", DASEventDialogName);
       }
 
+      _CubeHelpButton.Initialize(HandleCubeHelpButtonTapped, "cube_help_feed_button", DASEventDialogName);
+
       _InactivityTimer = _InactivityTimeOut;
 
       //animate our display energy to the engine energy
@@ -91,10 +101,18 @@ namespace Cozmo.Energy.UI {
 
       RefreshForCurrentBracket(nsm);
 
-      if (_OptionalCloseDialogCozmoButton != null &&
-          OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro)) {
+      bool isFeedCritical = NeedsStateManager.Instance.GetCurrentDisplayValue(NeedId.Energy).Bracket == NeedBracketId.Critical;
+      bool isInFeedOnboarding = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.FeedIntro);
+
+      if (_OptionalCloseDialogCozmoButton != null && isInFeedOnboarding) {
         _OptionalCloseDialogCozmoButton.gameObject.SetActive(false);
       }
+
+      // if no cubes are connected help them get around it.
+      if ((robot != null && robot.LightCubes.Count == 0) && (isFeedCritical || isInFeedOnboarding)) {
+        _CubeHelpGroup.SetActive(true);
+      }
+
     }
 
     protected override void RaiseDialogOpenAnimationFinished() {
@@ -122,6 +140,10 @@ namespace Cozmo.Energy.UI {
 
       if (_LastNeedBracket != NeedBracketId.Count) {
         AnimateElements(fullElements: _LastNeedBracket == NeedBracketId.Full, hide: true);
+      }
+
+      if (_CubeHelpModal != null) {
+        _CubeHelpModal.CloseDialog();
       }
 
       NeedsStateManager.Instance.ResumeAllNeeds();
@@ -156,6 +178,11 @@ namespace Cozmo.Energy.UI {
 
       if (actionId == NeedsActionId.Feed) {
         _InactivityTimer = _InactivityTimeOut;
+
+        _CubeHelpGroup.SetActive(false);
+        if (_CubeHelpModal != null) {
+          _CubeHelpModal.CloseDialog();
+        }
       }
     }
 
@@ -198,6 +225,12 @@ namespace Cozmo.Energy.UI {
     #endregion
 
     #region MISC HELPER METHODS
+
+    private void HandleCubeHelpButtonTapped() {
+      UIManager.OpenModal(AlertModalLoader.Instance.CubeHelpModalPrefab, new ModalPriorityData(), (newModal) => {
+        _CubeHelpModal = newModal;
+      });
+    }
 
     private void RefreshForCurrentBracket(NeedsStateManager nsm) {
       NeedBracketId newNeedBracket = nsm.PopLatestEngineValue(NeedId.Energy).Bracket;

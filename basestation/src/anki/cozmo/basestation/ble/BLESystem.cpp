@@ -64,7 +64,7 @@ void BLESystem::OnVehicleDiscovered(const UUIDBytes& vehicleId)
 
 void BLESystem::OnVehicleDisappeared(const UUIDBytes& vehicleId)
 {
-  Util::Dispatch::Async(_queue, [vehicleId, this] {
+  Util::Dispatch::Async(_queue, [vehicleId] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleDisappeared", "ID: %s", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)));
   });
 }
@@ -145,7 +145,7 @@ void BLESystem::OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector
 
 void BLESystem::OnVehicleProximityChanged(const UUIDBytes& vehicleId, int rssi, bool isClose)
 {
-  Util::Dispatch::Async(_queue, [vehicleId, rssi, this] {
+  Util::Dispatch::Async(_queue, [vehicleId, rssi] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleProximityChanged", "ID: %s RSSI: %d", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)), rssi);
   });
 }

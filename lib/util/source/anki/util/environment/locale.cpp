@@ -8,8 +8,8 @@
 #include "locale.h"
 #include "util/string/stringUtils.h"
 #include "util/helpers/ankiDefines.h"
-#if defined(ANKI_PLATFORM_IOS)
-#include "util/environment/locale_ios.h"
+#if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_OSX)
+#include "util/environment/locale_iososx.h"
 #elif defined(ANKI_PLATFORM_ANDROID)
 #include "util/environment/locale_android.h"
 #else
@@ -933,7 +933,7 @@ Locale::Language Locale::LanguageFromString(const std::string& languageString)
   return kDefaultLanguage;
 }
 
-const Locale Locale::kDefaultLocale = Locale::Locale(kDefaultLanguage, kDefaultCountry);
+const Locale Locale::kDefaultLocale = Locale(kDefaultLanguage, kDefaultCountry);
 
 Locale Locale::LocaleFromString(const std::string& localeString)
 {
@@ -951,7 +951,7 @@ Locale Locale::LocaleFromString(const std::string& localeString)
 // this method will use native adapters to return the current device locale
 Locale Locale::GetNativeLocale()
 {
-#if defined(ANKI_PLATFORM_IOS)
+#if defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_OSX)
   return GetCurrentLocaleIOS();
 #elif defined(ANKI_PLATFORM_ANDROID)
   return GetCurrentLocaleAndroid();

@@ -282,7 +282,12 @@ namespace Anki {
           UnityAudioClient client = UnityAudioClient.Instance;
           client.PostSwitchState(AudioMetaData.SwitchState.SwitchGroupType.Sparked, (AudioMetaData.SwitchState.GenericSwitch)sparked, AudioMetaData.GameObjectType.Default);
         }
-     
+
+        static public void SetFreeplayMoodMusicState(AudioMetaData.SwitchState.Freeplay_Mood freeplayMood) {
+          UnityAudioClient client = UnityAudioClient.Instance;
+          client.PostSwitchState(AudioMetaData.SwitchState.SwitchGroupType.Freeplay_Mood, (AudioMetaData.SwitchState.GenericSwitch)freeplayMood, AudioMetaData.GameObjectType.Default);
+        }
+
       }
     }
   }

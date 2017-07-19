@@ -469,7 +469,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange(Robot& robot)
   
   if(ShouldStreamline())
   {
-    action->AddAction(new MoveHeadToAngleAction(robot, kAbsHeadDown_rad));
+    action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::VC_LookDownForLaser));
   }
   
   // Once we've gottena a couple of images, switch to looking for a laser dot

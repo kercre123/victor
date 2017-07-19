@@ -314,11 +314,10 @@ bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& out
   outObjectList.clear();
   
   {
-    Robot& robotRef = _robot; // can't capture member of this for lambda, need scoped variable
     // ask for all cubes we know about inside the beacon
     BlockWorldFilter filter;
     filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    filter.AddFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
+    filter.AddFilterFcn([this, &outObjectList, beacon](const ObservableObject* blockPtr)
     {
       if(!_robot.GetCarryingComponent().IsCarryingObject(blockPtr->GetID()) )
       {

@@ -7,8 +7,8 @@
  *
  *******************************************************************************************************************************/
 
-#include <util/console/consoleSystemAPI.h>
-#include <util/console/consoleSystem.h>
+#include "util/console/consoleSystemAPI.h"
+#include "util/console/consoleSystem.h"
 
 //============================================================================================================================
 // Console Variable C-Interface

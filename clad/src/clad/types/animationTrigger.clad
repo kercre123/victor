@@ -491,6 +491,7 @@ enum int_32 AnimationTrigger
   VC_Alrighty,
   VC_HowAreYouDoing_AllGood,
   VC_Listening,
+  VC_LookDownForLaser,
   VC_LookDownNoLaser,
   VC_NoFollowupCommand_NoFace,
   VC_NoFollowupCommand_WithFace,

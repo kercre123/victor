@@ -75,8 +75,6 @@ namespace Anki {
                       const Pose3d& objectPoseGoalsGeneratedFrom,
                       const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
-      
-      void SetMotionProfile(const PathMotionProfile& motionProfile);
 
     protected:
       
@@ -91,10 +89,7 @@ namespace Anki {
       
       std::vector<Pose3d> _goalPoses;
       std::shared_ptr<Planning::GoalID> _selectedGoalIndex;
-      
-      PathMotionProfile _pathMotionProfile;
-      bool _hasMotionProfile = false;
-      
+            
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
@@ -147,9 +142,7 @@ namespace Anki {
       // Whether or not to verify the final pose, once the path is complete,
       // according to the latest know preAction pose for the specified object.
       void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
-      
-      void SetMotionProfile(const PathMotionProfile& motionProfile);
-      
+            
       using GetPossiblePosesFunc = std::function<ActionResult(ActionableObject* object,
                                                               std::vector<Pose3d>& possiblePoses,
                                                               bool& alreadyInPosition)>;
@@ -194,10 +187,7 @@ namespace Anki {
       Radians                    _approachAngle_rad;
 
       bool                       _doPositionCheckOnPathCompletion = true;
-      
-      PathMotionProfile          _pathMotionProfile;
-      bool                       _hasMotionProfile = false;
-            
+                  
     private:
       GetPossiblePosesFunc _getPossiblePosesFunc;
       bool _lightsSet = false;
@@ -259,8 +249,6 @@ namespace Anki {
 
     public:
       virtual ~IDriveToInteractWithObject();
-      
-      void SetMotionProfile(const PathMotionProfile& motionProfile);
       
       // Forces both of the turnTowards subActions to force complete (basically not run)
       void DontTurnTowardsFace();

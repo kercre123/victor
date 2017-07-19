@@ -10,6 +10,8 @@
 #include "velocityProfileGenerator.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "messages.h"
 
 
@@ -50,6 +52,10 @@ namespace Anki
 
         bool pointTurnStarted_ = false;
 
+        // Whether or not the current path was specified internally or came from an
+        // external source (via "execute path" message)
+        bool currentPathIsExternal_ = false;
+        
         // ID of the current path that is being followed
         // or the last path that was followed if not currently path following
         u16 lastPathID_ = 0;
@@ -80,16 +86,27 @@ namespace Anki
       {
         ClearPath();
         lastPathID_ = 0;
+        currentPathIsExternal_ = false;
         return RESULT_OK;
       }
 
 
       // Deletes current path
-      void ClearPath(void)
+      void ClearPath(bool didCompletePath)
       {
-        if (currPathSegment_ >= 0) {
+        if (IsTraversingPath())
+        {
           SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
           SpeedController::SetDefaultAccelerationAndDeceleration();
+        }
+        
+        if(!didCompletePath && currentPathIsExternal_)
+        {
+          // Send a path interruption event iff we were following an externally-specified path when cleared
+          RobotInterface::PathFollowingEvent pathEventMsg;
+          pathEventMsg.pathID = lastPathID_;
+          pathEventMsg.eventType = PATH_INTERRUPTED;
+          RobotInterface::SendMessage(pathEventMsg);
         }
         
         path_.Clear();
@@ -201,9 +218,18 @@ namespace Anki
 
       bool StartPathTraversal(u16 path_id, bool manualSpeedControl)
       {
+        // If we were already following an externally-specified path, send an interruption event.
+        RobotInterface::PathFollowingEvent pathEventMsg;
+        if(IsTraversingPath() && currentPathIsExternal_)
+        {
+          pathEventMsg.pathID = lastPathID_;
+          pathEventMsg.eventType = PATH_INTERRUPTED;
+          RobotInterface::SendMessage(pathEventMsg);
+        }
+        
         // Set first path segment
         if (path_.GetNumSegments() > 0) {
-
+          
 #if(DEBUG_PATH_FOLLOWER)
           path_.PrintPath();
 #endif
@@ -240,11 +266,20 @@ namespace Anki
 
           //Robot::SetOperationMode(Robot::FOLLOW_PATH);
           SteeringController::SetPathFollowMode();
+         
         }
-
-        // Set id of path
-        if (path_id != 0) {
+      
+        // Is newly-specified path from an external source?
+        currentPathIsExternal_ = (path_id != 0);
+        
+        if(currentPathIsExternal_)
+        {
+          // update the lastPathID and send an event that we're starting a new externally-specified path
           lastPathID_ = path_id;
+          
+          pathEventMsg.pathID = lastPathID_;
+          pathEventMsg.eventType = PATH_STARTED;
+          RobotInterface::SendMessage(pathEventMsg);
         }
 
         return TRUE;
@@ -394,7 +429,18 @@ namespace Anki
       // Post-path completion cleanup
       void PathComplete()
       {
-        ClearPath();
+        // Pass in "true" to signify that we _did_ complete the path (so don't send an Interruption event)
+        ClearPath(true);
+        
+        // Send a path completion event iff this is an externally-specified path
+        if(currentPathIsExternal_)
+        {
+          RobotInterface::PathFollowingEvent pathEventMsg;
+          pathEventMsg.pathID = lastPathID_;
+          pathEventMsg.eventType = PATH_COMPLETED;
+          RobotInterface::SendMessage(pathEventMsg);
+        }
+        
         AnkiEvent( 349, "PathFollower.PathComplete", 305, "", 0);
       }
 

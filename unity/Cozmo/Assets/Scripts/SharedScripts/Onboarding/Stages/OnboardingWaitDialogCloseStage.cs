@@ -11,6 +11,9 @@ namespace Onboarding {
     public override void OnDestroy() {
       base.OnDestroy();
       BaseModal.BaseModalClosed -= HandleModalClosed;
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.AudioMetaData.GameState.Music.Freeplay);
+      Anki.Cozmo.Audio.GameAudioClient.SetFreeplayMoodMusicState(Anki.AudioMetaData.SwitchState.Freeplay_Mood.Neutral);
     }
 
     private void HandleModalClosed(BaseModal modal) {

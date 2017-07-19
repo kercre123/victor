@@ -39,7 +39,7 @@
       if (window.getNodes().length <= 0) {
         // No other blocks are on the workspace so put green flag back on workspace by itself.
         var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlEnd;
-        window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+        window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
       }
       else {
         if (!window.isGreenFlagOnWorkspace()) {
@@ -48,7 +48,7 @@
           var xmlText = Blockly.Xml.domToText(xml);
           var xmlTextWithGreenFlag = xmlStart + greenFlagXML + xmlText.substring(xmlStart.length, xmlText.length);
 
-          window.openCozmoProject(null, null, xmlTextWithGreenFlag, false);
+          window.openCozmoProject(window.cozmoProjectUUID, window.cozmoProjectName, xmlTextWithGreenFlag, window.isCozmoSampleProject);
         }
       }
     }
@@ -93,9 +93,9 @@
     /* Save all scripts currently on the workspace into a Cozmo Code Lab user project in the Unity user profile.
      * Call this method to save both new and existing projects.
      */
-    window.saveCozmoUserProject = function() {
+    window.saveCozmoUserProject = function(unityIsWaitingForCallback) {
         if (window.isSampleProject) {
-            window.saveProjectCompleted();
+            window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
 
@@ -108,13 +108,13 @@
         
         if (window.cozmoProjectUUID != '' && window.previouslySavedProjectXML == xmlText) {
             // No changes to save
-            window.saveProjectCompleted();
+            window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
 
         // If it's a new project, only save the project if the user has added blocks.
         if (window.cozmoProjectUUID == '' &&  !window.hasUserAddedBlocks()) {
-            window.saveProjectCompleted();
+            window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
         }
 
@@ -179,7 +179,7 @@
             var timeInterval_ms = 3000;
             window.saveProjectTimerId = setInterval(saveProjectTimer, timeInterval_ms);
             function saveProjectTimer() {
-                window.saveCozmoUserProject();
+                window.saveCozmoUserProject(false);
             }
         }
     }

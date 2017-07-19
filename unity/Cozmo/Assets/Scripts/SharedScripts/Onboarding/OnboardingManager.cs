@@ -13,6 +13,11 @@ public class OnboardingManager : MonoBehaviour {
 
   public static OnboardingManager Instance { get; private set; }
   private NeedsHubView _NeedsHubView;
+  public NeedsHubView NeedsView {
+    get {
+      return _NeedsHubView;
+    }
+  }
 
   public enum OnboardingPhases : int {
     InitialSetup,
@@ -42,6 +47,7 @@ public class OnboardingManager : MonoBehaviour {
   public Action<OnboardingPhases> OnOnboardingPhaseStarted;
   public Action<OnboardingPhases> OnOnboardingPhaseCompleted;
   public Action<string> OnOverrideTickerString;
+  public Action<string> OnOnboardingAnimEvent;
 
   public bool FirstTime { get; set; }
 
@@ -169,8 +175,9 @@ public class OnboardingManager : MonoBehaviour {
 
   public void InitInitalOnboarding(NeedsHubView needsHubView) {
     _NeedsHubView = needsHubView;
-    _OnboardingTransform = _NeedsHubView.transform.parent.transform;
-
+    if (_OnboardingUIInstance != null) {
+      _OnboardingTransform = _OnboardingUIInstance.transform.parent.transform;
+    }
     if (IsOnboardingRequired(OnboardingPhases.GameRequests)) {
       // Only request quicktap if nothing has been requested before.
       UnlockId[] firstRequest = { UnlockId.QuickTapGame };
@@ -183,6 +190,9 @@ public class OnboardingManager : MonoBehaviour {
 
     if (IsOnboardingRequired(OnboardingPhases.InitialSetup)) {
       StartPhase(OnboardingPhases.InitialSetup);
+    }
+    else if (IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
+      StartPhase(OnboardingPhases.NurtureIntro);
     }
     _NeedsHubView.DialogOpenAnimationFinished += HandleNeedsViewOpenAnimationCompleted;
   }
@@ -307,11 +317,6 @@ public class OnboardingManager : MonoBehaviour {
       StartPhase(OnboardingPhases.MeetCozmo);
     }
 
-    if (!IsOnboardingRequired(OnboardingPhases.InitialSetup) && !IsOnboardingRequired(OnboardingPhases.MeetCozmo) &&
-        IsOnboardingRequired(OnboardingPhases.NurtureIntro)) {
-      StartPhase(OnboardingPhases.NurtureIntro);
-    }
-
     if (!IsOnboardingRequired(OnboardingPhases.NurtureIntro) && IsOnboardingRequired(OnboardingPhases.FeedIntro)) {
       StartPhase(OnboardingPhases.FeedIntro);
     }
@@ -349,6 +354,9 @@ public class OnboardingManager : MonoBehaviour {
         if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
           GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject);
           _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
+          if (_OnboardingUIInstance != null) {
+            _OnboardingTransform = _OnboardingUIInstance.transform.parent.transform;
+          }
           if (VerifyCanStartPhase()) {
             SetSpecificStage(0);
           }
@@ -620,9 +628,9 @@ public class OnboardingManager : MonoBehaviour {
       anyDimmed |= UpdateButtonState(_NeedsHubView.RepairButton, showButtonRepair);
       anyDimmed |= UpdateButtonState(_NeedsHubView.FeedButton, showButtonFeed);
       anyDimmed |= UpdateButtonState(_NeedsHubView.PlayButton, showButtonPlay);
-      const string kNormalBGSkinName = "NavHub_Container_BG_Normal";
-      const string kDimmedBGSkinName = "NavHub_Container_BG_Dimmed";
-      _NeedsHubView.NavBackgroundImage.LinkedComponentId = anyDimmed ? kDimmedBGSkinName : kNormalBGSkinName;
+      _NeedsHubView.NavBackgroundImage.LinkedComponentId = anyDimmed ?
+                                                          ThemeKeys.Cozmo.Image.kNavHubContainerBGDimmed :
+                                                          ThemeKeys.Cozmo.Image.kNavHubButtonNormal;
       _NeedsHubView.NavBackgroundImage.UpdateSkinnableElements();
       if (_NeedsHubView.MetersWidget != null) {
         _NeedsHubView.MetersWidget.DimNeedMeters(dimmedMeters);

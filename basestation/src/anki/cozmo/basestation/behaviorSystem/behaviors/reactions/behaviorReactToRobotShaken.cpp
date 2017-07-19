@@ -76,7 +76,10 @@ Result BehaviorReactToRobotShaken::InitInternal(Robot& robot)
   SmartDisableReactionsWithLock(GetIDStr(), kAffectTriggersRobotShakenArray);
   
   // Clear severe needs expression since eyes are being re-set
-  robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+  if(robot.GetAIComponent().GetWhiteboard().HasSevereNeedExpression())
+  {
+    robot.GetAIComponent().GetWhiteboard().ClearSevereNeedExpression();
+  }
   
   // Reset variables:
   _maxShakingAccelMag = 0.f;

@@ -67,6 +67,14 @@ namespace Cozmo {
       private Ease _MoveCloseEase;
       public Ease MoveCloseEase { get { return _MoveCloseEase; } }
 
+      [SerializeField]
+      private float _SwipeDuration_sec;
+      public float SwipeDurationSeconds { get { return _SwipeDuration_sec; } }
+
+      [SerializeField]
+      private Ease _SwipeSlideEase;
+      public Ease SwipeSlideEase { get { return _SwipeSlideEase; } }
+
       #endregion
 
       #region Fade Transition Methods 

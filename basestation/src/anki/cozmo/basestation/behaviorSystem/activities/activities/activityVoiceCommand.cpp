@@ -57,12 +57,12 @@ static const int kMaxChooseBehaviorLoop = 1000;
 } // namespace
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehaviorQueue&& responseQue,
+void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehaviorQueue&& responseQueue,
                                                               VoiceCommand::VoiceCommandType commandType)
 {
   // Ensure data's not being overwritten improperly
   ANKI_VERIFY(_respondToVCQueue.empty() &&
-              (_currentResponseType == VoiceCommand::VoiceCommandType::Count) &&
+              (_currentResponseType == VoiceCommand::VoiceCommandType::Invalid) &&
               _currentResponseBehavior == nullptr,
               "VCResponseData.SetNewResponseData.OverwritingData",
               "Attempting to overwrite response data with remaining que length %zu and type %s",
@@ -70,12 +70,12 @@ void ActivityVoiceCommand::VCResponseData::SetNewResponseData(ChooseNextBehavior
               VoiceCommand::VoiceCommandTypeToString(_currentResponseType));
   
   _currentResponseBehavior.reset();
-  _respondToVCQueue = std::move(responseQue);
+  _respondToVCQueue = std::move(responseQueue);
   _currentResponseType = commandType;
 }
   
 void ActivityVoiceCommand::VCResponseData::ClearResponseData(){
-  if(_currentResponseType != VoiceCommand::VoiceCommandType::Count){
+  if(_currentResponseType != VoiceCommand::VoiceCommandType::Invalid){
     using namespace ::Anki::Cozmo::VoiceCommand;
     auto* voiceCommandComponent = _context->GetVoiceCommandComponent();
     voiceCommandComponent->BroadcastVoiceEvent(RespondingToCommandEnd(_currentResponseType));
@@ -83,7 +83,7 @@ void ActivityVoiceCommand::VCResponseData::ClearResponseData(){
   
   _respondToVCQueue = {};
   _currentResponseBehavior.reset();
-  _currentResponseType = VoiceCommand::VoiceCommandType::Count;
+  _currentResponseType = VoiceCommand::VoiceCommandType::Invalid;
 
 }
   
@@ -416,7 +416,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
             
             IBehaviorPtr ptrCopy = iter->second;
             responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-            responseQueue.push([this, &robot, ptrCopy, &currentCommand](const IBehaviorPtr currentBehavior){
+            responseQueue.push([this, &robot, ptrCopy, currentCommand](const IBehaviorPtr currentBehavior){
               RemoveSparksForCommand(robot, currentCommand);
               return ptrCopy;
             });
@@ -433,7 +433,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       case VoiceCommandType::DoATrick:
       {
         responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-        responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+        responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
           RemoveSparksForCommand(robot, currentCommand);
           robot.GetAIComponent().GetDoATrickSelector().RequestATrick(robot);
           return nullptr;
@@ -505,7 +505,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         if(_fistBumpBehavior->IsRunnable(preReqRobot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
             RemoveSparksForCommand(robot, currentCommand);
             const bool isSoftSpark = false;
             robot.GetBehaviorManager().SetRequestedSpark(UnlockId::FistBump, isSoftSpark);
@@ -525,7 +525,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
         if(_peekABooBehavior->IsRunnable(preReqRobot))
         {
           responseQueue.push([this](const IBehaviorPtr currentBehavior){ return _alrightyBehavior;});
-          responseQueue.push([this, &robot, &currentCommand](const IBehaviorPtr currentBehavior){
+          responseQueue.push([this, &robot, currentCommand](const IBehaviorPtr currentBehavior){
             RemoveSparksForCommand(robot, currentCommand);
             const bool isSoftSpark = false;
             robot.GetBehaviorManager().SetRequestedSpark(UnlockId::PeekABoo, isSoftSpark);
@@ -584,7 +584,7 @@ Result ActivityVoiceCommand::Update(Robot& robot)
       case VoiceCommandType::NoThankYou:
       case VoiceCommandType::Continue:
       case VoiceCommandType::HeyCozmo:
-      case VoiceCommandType::Count:
+      case VoiceCommandType::Invalid:
       {
         ANKI_VERIFY(false,
                     "ActivityVoiceCommand.ChooseNextBehaviorInternal.VCNotHandled",
@@ -673,7 +673,7 @@ bool ActivityVoiceCommand::ShouldActivityRespondToCommand(VoiceCommand::VoiceCom
     }
       // These commands will never be handled by this chooser:
     case VoiceCommandType::HeyCozmo:
-    case VoiceCommandType::Count:
+    case VoiceCommandType::Invalid:
     {
       // We're intentionally not handling these types in ActivityVoiceCommand
       return false;
@@ -705,7 +705,7 @@ bool ActivityVoiceCommand::ShouldCheckNeeds(VoiceCommand::VoiceCommandType comma
     case VoiceCommandType::NoThankYou:
     case VoiceCommandType::HowAreYouDoing:
     case VoiceCommandType::YesPlease:
-    case VoiceCommandType::Count:
+    case VoiceCommandType::Invalid:
     {
       return false;
     }
@@ -732,18 +732,18 @@ void ActivityVoiceCommand::RemoveSparksForCommand(Robot& robot, VoiceCommandType
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQue) const
+bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehaviorQueue& responseQueue) const
 {
   Anki::Cozmo::NeedsState& curNeedsState = robot.GetContext()->GetNeedsManager()->GetCurNeedsStateMutable();
   if(curNeedsState.IsNeedAtBracket(NeedId::Repair, NeedBracketId::Critical))
   {
     BehaviorID whichRefuse = BehaviorID::VC_Refuse_Repair;
-    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQue);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQueue);
   }
   else if(curNeedsState.IsNeedAtBracket(NeedId::Energy, NeedBracketId::Critical))
   {
     BehaviorID whichRefuse = BehaviorID::VC_Refuse_Energy;
-    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQue);
+    return CheckAndSetupRefuseBehavior(robot, whichRefuse, responseQueue);
   }
   
   return false;
@@ -754,7 +754,7 @@ bool ActivityVoiceCommand::CheckRefusalDueToNeeds(Robot& robot, ChooseNextBehavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
                                                        BehaviorID whichRefuse,
-                                                       ChooseNextBehaviorQueue& responseQue) const
+                                                       ChooseNextBehaviorQueue& responseQueue) const
 {
   IBehaviorPtr refuseBehavior = robot.GetBehaviorManager().FindBehaviorByID(whichRefuse);
   DEV_ASSERT(refuseBehavior != nullptr &&
@@ -764,7 +764,7 @@ bool ActivityVoiceCommand::CheckAndSetupRefuseBehavior(Robot& robot,
   BehaviorPreReqRobot preReqRobot(robot);
   if(refuseBehavior->IsRunnable(preReqRobot))
   {
-    responseQue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
+    responseQueue.push([refuseBehavior](const IBehaviorPtr currentBehavior){ return refuseBehavior;});
     return true;
   }
   return false;
@@ -782,7 +782,7 @@ void ActivityVoiceCommand::BeginRespondingToCommand(const CozmoContext* context,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQue)
+void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextBehaviorQueue& responseQueue)
 {
   // Maps a need and bracket to a behavior and animations
   static const std::map<std::pair<NeedId, NeedBracketId>,
@@ -857,7 +857,7 @@ void ActivityVoiceCommand::HandleHowAreYouDoingCommand(Robot& robot, ChooseNextB
   BehaviorPreReqAnimSequence preReq(robot, howAreYouDoingAnims);
   if(howAreYouDoingBehavior->IsRunnable(preReq))
   {
-    responseQue.push([&howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
+    responseQueue.push([howAreYouDoingBehavior](const IBehaviorPtr currentBehavior){ return howAreYouDoingBehavior;});
   }
   else
   {

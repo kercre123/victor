@@ -534,15 +534,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6976bc10b9224444ba94056fca10ca6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DimBackground: 1
+  _DimBackground: 0
   _ActiveMenuContent: 1
   _ReactionsEnabled: 0
   _LoopedAnim:
     _EnumValueAsString: Count
-    _EnumValue: 491
+    _EnumValue: 503
   _CustomIdle:
     _EnumValueAsString: Count
-    _EnumValue: 491
+    _EnumValue: 503
   _FreeplayEnabledOnExit: 0
   _DASPhaseID: 2
   _OverrideTickerKey: onboarding.needs.ticker
@@ -557,7 +557,9 @@ MonoBehaviour:
   - -1
   - -1
   - -1
-  _ForceNeedValuesOnEventId: 45
+  _ForceNeedValuesOnEventId:
+    _EnumValueAsString: Count
+    _EnumValue: 45
   _ForceNeedValuesOnEvent:
   - -1
   - -1
@@ -569,6 +571,8 @@ MonoBehaviour:
   _ButtonStatePlay: 1
   _ContinueButtonInstance: {fileID: 114714938985716508}
   _TextFieldInstance: {fileID: 114275558067176076}
+  _NurtureIntroAnimController: {fileID: 9100000, guid: 12e65db59221744c48cc0f4e24984011,
+    type: 2}
 --- !u!222 &222072021745757376
 CanvasRenderer:
   m_ObjectHideFlags: 1

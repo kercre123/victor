@@ -44,6 +44,8 @@ public class AndroidPermissionBlocker : MonoBehaviour {
       _Button.Text = _StartupManager.GetBootString(LocalizationKeys.kBootSettings);
     }
     _Button.Initialize(action, "button", "android_permission_blocker");
+    //despite the call to removeAllListeners, there is no need for a repairListeners call.
+    //repairListeners is only necessary for CozmoButton.
   }
 
   private bool CanAskForPermission() {

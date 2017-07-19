@@ -32,6 +32,7 @@ public class AndroidGetPermissions : AndroidConnectionFlowStage {
   private void InitStage(string instructionsLocalizationKey, UnityEngine.Events.UnityAction buttonCallback) {
     _ExecuteButton.onClick.RemoveAllListeners();
     _ExecuteButton.Initialize(buttonCallback, "ok_button", "android_get_permissions");
+    _ExecuteButton.RepairListener();
     _Instructions.text = Localization.Get(instructionsLocalizationKey);
   }
 

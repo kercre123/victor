@@ -24,11 +24,7 @@ namespace Cozmo.UI {
         }
       }
     }
-
-    [Serializable]
-    public new class ButtonClickedEvent : UnityEvent {
-    }
-
+      
     [Serializable]
     public class ButtonDownEvent : UnityEvent {
     }
@@ -36,9 +32,7 @@ namespace Cozmo.UI {
     [Serializable]
     public class ButtonUpEvent : UnityEvent {
     }
-
-    private ButtonClickedEvent _OnClick = new ButtonClickedEvent();
-
+      
     private ButtonDownEvent _OnPress = new ButtonDownEvent();
 
     private ButtonUpEvent _OnRelease = new ButtonUpEvent();
@@ -90,12 +84,7 @@ namespace Cozmo.UI {
         }
       }
     }
-
-    public new ButtonClickedEvent onClick {
-      get { return _OnClick; }
-      set { _OnClick = value; }
-    }
-
+      
     public ButtonDownEvent onPress {
       get { return _OnPress; }
       set { _OnPress = value; }
@@ -162,12 +151,10 @@ namespace Cozmo.UI {
       get {
         return _OverrideButtonImageArray;
       }
-
       set {
         _OverrideButtonImageArray = value;
       }
     }
-
 
     [SerializeField]
     private AnkiAnimateGlint _GlintAnimator;
@@ -238,12 +225,16 @@ namespace Cozmo.UI {
         DAS.Warn("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
       }
       onClick.AddListener(HandleOnPress);
-
       _DelayedInitialUpdateVisuals = StartCoroutine(DelayedUpdateVisuals());
     }
 
+    //to be called after any use of removeAllListeners to add back the onCLick listener
+    public void RepairListener() {
+      base.onClick.AddListener(HandleOnPress);
+    }
+
     // Delay potentially setting the button background to disabled by a frame so that
-    // the skinning system has a chance to act first. 
+    // the skinning system has a chance to act first.
     private IEnumerator DelayedUpdateVisuals() {
       yield return 0;
       UpdateVisuals();
@@ -252,7 +243,6 @@ namespace Cozmo.UI {
     protected override void OnDestroy() {
       base.OnDestroy();
       onClick.RemoveListener(HandleOnPress);
-
       if (_DelayedInitialUpdateVisuals != null) {
         StopCoroutine(_DelayedInitialUpdateVisuals);
       }
@@ -264,16 +254,24 @@ namespace Cozmo.UI {
       }
       _DASEventButtonName = dasEventButtonName;
       _DASEventViewController = dasEventViewController;
+      Anki.Core.UI.Automation.AutomationIdComponent automationIdComponent = 
+            gameObject.GetComponent<Anki.Core.UI.Automation.AutomationIdComponent>();
+      if (automationIdComponent == null) {
+        automationIdComponent = gameObject.AddComponent<Anki.Core.UI.Automation.AutomationIdComponent>();
+      }
 
       if (string.IsNullOrEmpty(_DASEventButtonName)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.",
           this.gameObject.name));
+        automationIdComponent.Id = this.gameObject.name;
+      }
+      else {
+        automationIdComponent.Id = _DASEventButtonName;
       }
       if (string.IsNullOrEmpty(_DASEventViewController)) {
         DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.",
           this.gameObject.name));
       }
-
       UpdateVisuals();
       _Initialized = true;
     }
@@ -308,9 +306,7 @@ namespace Cozmo.UI {
       if (DisableInteraction()) {
         return;
       }
-
       StartCoroutine(DelayedResetButton());
-      _OnClick.Invoke();
     }
 
     private System.Collections.IEnumerator DelayedResetButton() {
@@ -322,12 +318,9 @@ namespace Cozmo.UI {
       if (DisableInteraction()) {
         return;
       }
-
       SetUpTextOffset();
-
       // Set to pressed visual state
       ShowPressedState();
-
       _OnPress.Invoke();
     }
 
@@ -343,7 +336,6 @@ namespace Cozmo.UI {
       if (DisableInteraction()) {
         return;
       }
-
       // Reset to normal visual state
       UpdateVisuals();
       _OnRelease.Invoke();
@@ -356,17 +348,19 @@ namespace Cozmo.UI {
       }
 
       DAS.Event("ui.button", DASEventButtonName, new Dictionary<string, string> { { "$data", DASEventViewController } });
-
+      base.OnPointerClick(eventData);
       Tap();
     }
 
     public override void OnPointerDown(PointerEventData eventData) {
       DAS.Debug("AnkiButton.OnPointerDown", string.Format("{0} Pressed - View: {1}", DASEventButtonName, DASEventViewController));
+      base.OnPointerDown(eventData);
       Press();
     }
 
     public override void OnPointerUp(PointerEventData eventData) {
       DAS.Debug("AnkiButton.OnPointerUp", string.Format("{0} Released - View: {1}", DASEventButtonName, DASEventViewController));
+      base.OnPointerUp(eventData);
       Release();
     }
 
@@ -383,7 +377,6 @@ namespace Cozmo.UI {
           ShowDisabledState();
         }
       }
-
     }
 
     protected virtual void ShowEnabledState() {
@@ -409,11 +402,9 @@ namespace Cozmo.UI {
             }
           }
         }
-
         ResetTextPosition(TextEnabledColor);
         ShowGlint(_AlwaysShowGlintWhenEnabled);
       }
-
     }
 
     protected virtual void ShowPressedState() {
@@ -451,7 +442,6 @@ namespace Cozmo.UI {
                       + graphic.enabledSprite + ". Have you initialized this button?");
           }
         }
-
         ResetTextPosition(TextDisabledColor);
       }
       ShowGlint(false);
@@ -491,7 +481,6 @@ namespace Cozmo.UI {
       if (linkedComponentObj != null && linkedComponentObj.SkinButtonImageArray && !OverrideButtonImageArray) {
         SkinButtonImageArray(linkedComponentObj);
       }
-
       if (linkedComponentObj != null && linkedComponentObj.SkinButtonTransition && !OverrideSkinTransition) {
         TextEnabledColor = linkedComponentObj.ButtonTransition.ColorBlock.normalColor;
         TextPressedColor = linkedComponentObj.ButtonTransition.ColorBlock.pressedColor;
@@ -526,7 +515,7 @@ namespace Cozmo.UI {
     [Serializable]
     public class AnkiButtonImage {
       public CozmoImage targetImage;
-
+      
       // we will just grab it from targetImage;
       [NonSerialized]
       public Sprite enabledSprite;

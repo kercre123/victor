@@ -128,7 +128,7 @@ bool CommandPhraseData::AddContextData(const Json::Value& dataObject)
   
   std::string contextTypeStr = dataObject[kContextDataTypeKey].asString();
   VoiceCommandListenContext context = VoiceCommandListenContextFromString(contextTypeStr.c_str());
-  if (VoiceCommandListenContext::Count == context)
+  if (VoiceCommandListenContext::Invalid == context)
   {
     PRINT_NAMED_ERROR("CommandPhraseData.AddContextData.JsonData",
                       "Context data item's context type was not found.\n%s",
@@ -190,7 +190,7 @@ bool CommandPhraseData::AddContextData(const Json::Value& dataObject)
     }
     
     VoiceCommandType command = VoiceCommandTypeFromString(curItem.asString().c_str());
-    if (VoiceCommandType::Count == command)
+    if (VoiceCommandType::Invalid == command)
     {
       PRINT_NAMED_ERROR("CommandPhraseData.AddContextData.JsonData",
                         "Context data item's command list item was not found.\n%s",
@@ -277,6 +277,50 @@ const LanguageFilenames& CommandPhraseData::GetLanguageFilenames(LanguageType la
   }
   
   return iter->second->GetLanguageFilenames(countryType);
+}
+
+ConstLanguagePhraseDataSharedPtr CommandPhraseData::GetLanguagePhraseData(LanguageType languageType) const
+{
+  const auto& iter = _languagePhraseDataMap.find(languageType);
+  if (iter != _languagePhraseDataMap.end())
+  {
+    return iter->second;
+  }
+  
+  return LanguagePhraseDataSharedPtr{};
+}
+
+RecognitionSetupData CommandPhraseData::GetRecognitionSetupData(LanguageType languageType, VoiceCommandListenContext context) const
+{
+  RecognitionSetupData setupData;
+  
+  // Get the basic context data
+  const auto& contextDataMap = GetContextData();
+  const auto& contextIter = contextDataMap.find(context);
+  if (contextIter != contextDataMap.end())
+  {
+    setupData._isPhraseSpotted = contextIter->second._isPhraseSpotted;
+    setupData._allowsFollowup = contextIter->second._allowsFollowup;
+  }
+  
+  // Get any context configuration data for this context for this language
+  const auto& languageData = GetLanguagePhraseData(languageType);
+  if (nullptr != languageData)
+  {
+    if (contextIter != contextDataMap.end())
+    {
+      setupData._phraseList = languageData->GetPhraseDataList(contextIter->second._commandsSet);
+    }
+    
+    const auto& contextConfigMap = languageData->GetContextConfigs();
+    const auto& findIter = contextConfigMap.find(context);
+    if (findIter != contextConfigMap.end())
+    {
+      setupData._contextConfig = findIter->second;
+    }
+  }
+  
+  return setupData;
 }
 
 } // namespace VoiceCommand

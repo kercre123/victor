@@ -25,6 +25,7 @@ namespace Json
 
 namespace Anki {
 namespace Cozmo {
+namespace VoiceCommand {
   
 using CommandCounts = std::map<VoiceCommand::VoiceCommandType, uint32_t>;
 using FileToDataMap = std::map<std::string, CommandCounts>;
@@ -42,6 +43,7 @@ private:
   bool AddFileCommandData(const Json::Value& dataObject);
 };
   
+} // namespace VoiceCommand
 } // namespace Cozmo
 } // namespace Anki
 

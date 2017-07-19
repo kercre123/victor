@@ -78,8 +78,6 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLegacy _LoadingDeviceIdLabel;
 
-  private JSONObject _BootStrings = null;
-
   private string _ExtractionErrorMessage;
 
   private bool _IsDebugBuild = false;
@@ -537,30 +535,8 @@ public class StartupManager : MonoBehaviour {
   }
 
   public string GetBootString(string key, params object[] args) {
-    string stringOut = "";
-    if (_BootStrings == null) {
-      // Copied over from a build process.
-      string loadFromPath = "bootstrap/LocalizedStrings/" + Localization.GetStringsLocale() + "/BootStrings";
-      loadFromPath = loadFromPath.ToLower();
-      // unity is making everything lower case in resources it seems.
-      // http://stackoverflow.com/questions/6502712/isnt-android-file-exists-case-sensitive
-      TextAsset jsonfile = Resources.Load<TextAsset>(loadFromPath);
-      if (jsonfile != null) {
-        _BootStrings = JSONObject.Create(jsonfile.text);
-      }
-      else {
-        DAS.Error("bootstrings.load.fail", loadFromPath);
-      }
-    }
-    if (_BootStrings != null) {
-      JSONObject wrapper = _BootStrings.GetField(key);
-      if (wrapper != null) {
-        if (wrapper.GetField(ref stringOut, "translation")) {
-          stringOut = string.Format(stringOut, args);
-        }
-      }
-    }
-    return stringOut;
+    string unformatedStr = Anki.Cozmo.Generated.LocBootStrings.GetBootString(key, Localization.GetLanguage());
+    return string.Format(unformatedStr, args);
   }
 
   private IEnumerator ExtractResourceFiles(Action<float> progressUpdater) {

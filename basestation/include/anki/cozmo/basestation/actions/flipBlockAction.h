@@ -79,6 +79,8 @@ protected:
 private:
   ObjectID _objectID;
   CompoundActionSequential _compoundAction;
+  // Note: any custom motion profile from the path component will be ignored for this speed, since it is
+  // hand-tuned to work with this action
   const f32 kDrivingSpeed_mmps = 150;
   const f32 kDrivingDist_mm = 20;
   const f32 kInitialLiftHeight_mm = 45;

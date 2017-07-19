@@ -43,6 +43,7 @@
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
+#include "anki/cozmo/basestation/components/pathComponent.h"
 
 
 namespace Anki {
@@ -523,6 +524,11 @@ void IBehavior::Stop()
     SmartRemoveIdleAnimation(_robot);
   }
   
+  // clear the path component motion profile if it was set by the behavior
+  if( _hasSetMotionProfile ) {
+    SmartClearMotionProfile();
+  }
+
   // Unlock any tracks which the behavior hasn't had a chance to unlock
   for(const auto& entry: _lockingNameToTracksMap){
     _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
@@ -912,7 +918,29 @@ void IBehavior::SmartDisableReactionWithLock(const std::string& lockID, const Re
   _smartLockIDs.insert(lockID);
 }
 #endif
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartSetMotionProfile(const PathMotionProfile& motionProfile)
+{
+  ANKI_VERIFY(!_hasSetMotionProfile,
+              "IBehavior.SmartSetMotionProfile.AlreadySet",
+              "a profile was already set and not cleared");
   
+  _robot.GetPathComponent().SetCustomMotionProfile(motionProfile);
+  _hasSetMotionProfile = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::SmartClearMotionProfile()
+{
+  ANKI_VERIFY(_hasSetMotionProfile,
+              "IBehavior.SmartClearMotionProfile.NotSet",
+              "a profile was not set, so can't be cleared");
+
+  _robot.GetPathComponent().ClearCustomMotionProfile();
+  _hasSetMotionProfile = false;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)
 {

@@ -218,6 +218,8 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void QuitConnectionFlow() {
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
+
     if (ConnectionFlowQuit != null) {
       ConnectionFlowQuit();
     }
@@ -241,6 +243,7 @@ public class ConnectionFlowController : MonoBehaviour {
   }
 
   private void InitConnectionFlow() {
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(true);
     if (StartAndroidFlowIfApplicable()) {
       return;
     }
@@ -567,6 +570,8 @@ public class ConnectionFlowController : MonoBehaviour {
 
   private void FinishConnectionFlow() {
     DestroyBackgroundModal();
+
+    Cozmo.Needs.NeedsStateManager.Instance.SetFullPause(false);
 
     // explicitly enable wake up behaviors that are off in engine by default.
     if (RobotEngineManager.Instance.CurrentRobot != null) {

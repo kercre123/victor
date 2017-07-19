@@ -39,6 +39,8 @@ class ITickTimeProvider;
 class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
+  
+const uint8_t DASMaxSvalLength = 128;
 
 std::string HexDump(const void *value, const size_t len, char delimiter);
 
@@ -131,6 +133,15 @@ void sLogFlush();
 //
 void sDebugBreak();
 
+// Anki::Util::sDebugBreakOnError()
+// Calls sDebugBreak() in error situations if the configuration
+// allows it. This is a separate function rather than a macro
+// so that its behavior isn't affected by different configurations
+// at different levels of the project (i.e. DriveEngine has a
+// different setting than the OverDrive app or something like that)
+//
+void sDebugBreakOnError();
+
 //
 // Anki::Util::sAbort()
 // Dump core (if possible) and terminate process.
@@ -152,7 +163,7 @@ void sAbort();
   ::Anki::Util::sErrorF(name, {}, format, ##__VA_ARGS__); \
   ::Anki::Util::_errG=true; \
   if (::Anki::Util::_errBreakOnError) { \
-    ::Anki::Util::sDebugBreak(); \
+    ::Anki::Util::sDebugBreakOnError(); \
   } \
 } while(0)
 
