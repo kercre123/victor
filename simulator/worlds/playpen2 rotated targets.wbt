@@ -56,7 +56,7 @@ Transform {
         CalibrationMarkerStructure {
           translation 0 -0.044 0.066
           numCubes 6
-          listOfMarkers "\"symbols/stopWithHand.png\", \"customSDK/SDK_3Circles.png\", \"symbols/stopWithHand.png\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"customSDK/SDK_3Hexagons.png\", \"symbols/arrow.png\",\"symbols/stopWithhand.png\","
+          listOfMarkers "\"symbols/stopWithHand.png\", \"customSDK/SDK_3Circles.png\", \"symbols/stopWithHand.png\", \"customSDK/SDK_5Circles.png\", \"customSDK/SDK_2Diamonds.png\", \"customSDK/SDK_3Diamonds.png\", \"customSDK/SDK_4Diamonds.png\", \"customSDK/SDK_5Diamonds.png\", \"customSDK/SDK_2Hexagons.png\", \"symbols/stopWithHand.png\", \"symbols/arrow.png\",\"symbols/stopWithhand.png\","
         }
         CalibrationMarkerStructure {
           translation 0 -0.088 0.11
@@ -66,7 +66,7 @@ Transform {
         CalibrationMarkerStructure {
           translation 0 -0.132 0.154
           numCubes 8
-          listOfMarkers "\"symbols/stopWithHand.png\", \"customSDK/SDK_2Triangles.png\", \"symbols/stopWithHand.png\", \"lightCubes/lightCubeJ_bottom.png\", \"symbols/stopWithHand.png\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"symbols/stopWithHand.png\", \"lightCubes/lightCubeJ_back.png\", \"symbols/stopWithHand.png\",\"customSDK/SDK_4Circles.png\",\"symbols/stopWithHand.png\","
+          listOfMarkers "\"symbols/stopWithHand.png\", \"customSDK/SDK_2Triangles.png\", \"symbols/stopWithHand.png\", \"lightCubes/lightCubeJ_bottom.png\", \"symbols/stopWithHand.png\", \"lightCubes/lightCubeI_top.png\", \"lightCubes/lightCubeI_back.png\", \"lightCubes/lightCubeI_bottom.png\", \"lightCubes/lightCubeI_front.png\", \"lightCubes/lightCubeI_left.png\", \"lightCubes/lightCubeI_right.png\", \"customSDK/SDK_3Hexagons.png\", \"lightCubes/lightCubeJ_back.png\", \"symbols/stopWithHand.png\",\"customSDK/SDK_4Circles.png\",\"symbols/stopWithHand.png\","
         }
         CalibrationMarkerStructure {
           listOfMarkers "\"symbols/stopWithHand.png\", \"lightCubes/lightCubeJ_left.png\", \"lightCubes/lightCubeJ_right.png\", \"lightCubes/lightCubeJ_top.png\", \"lightCubes/lightCubeK_back.png\", \"lightCubes/lightCubeK_bottom.png\", \"lightCubes/lightCubeK_front.png\", \"lightCubes/lightCubeK_left.png\", \"lightCubes/lightCubeK_right.png\", \"symbols/stopWithHand.png\","
