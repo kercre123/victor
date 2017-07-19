@@ -1156,7 +1156,10 @@ void NeedsManager::HandleMessage(const ExternalInterface::SetNeedsPauseStates& m
   {
     SendNeedsStateToGame();
 
-    UpdateStarsState();
+    if (_robot != nullptr)
+    {
+      UpdateStarsState();
+    }
 
     DetectBracketChangeForDas();
   }
@@ -2037,14 +2040,20 @@ void NeedsManager::DebugFillNeedMeters()
 
   _needsState.DebugFillNeedMeters();
   SendNeedsStateToGame();
-  UpdateStarsState();
+  if (_robot != nullptr)
+  {
+    UpdateStarsState();
+  }
 }
 
 void NeedsManager::DebugGiveStar()
 {
-  PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
-  DebugCompleteDay();
-  UpdateStarsState(true);
+  if (_robot != nullptr)
+  {
+    PRINT_CH_INFO(kLogChannelName, "NeedsManager.DebugGiveStar","");
+    DebugCompleteDay();
+    UpdateStarsState(true);
+  }
 }
 
 void NeedsManager::DebugCompleteDay()
@@ -2172,7 +2181,12 @@ void NeedsManager::DebugSetNeedLevel(const NeedId needId, const float level)
 
   SendNeedsStateToGame();
 
-  UpdateStarsState();
+  // Don't award daily stars when no robot connected, because that could lead
+  // to unlocks which have to be stored on the robot
+  if (_robot != nullptr)
+  {
+    UpdateStarsState();
+  }
 
   DetectBracketChangeForDas();
 

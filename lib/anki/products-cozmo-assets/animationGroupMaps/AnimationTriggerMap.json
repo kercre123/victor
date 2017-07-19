@@ -1470,6 +1470,14 @@
       "AnimName": "ag_repair_severe_reacttostop"
     },
     {
+      "CladEvent": "RepairFailMild",
+      "AnimName": "ag_repair_mild_fix_fail_01"
+    },
+    {
+      "CladEvent": "RepairFailSevere",
+      "AnimName": "ag_repair_severe_fix_fail_01"
+    },
+    {
       "CladEvent": "RepairFixMildGetIn",
       "AnimName": "ag_repair_fix_getin_01"
     },
