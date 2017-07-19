@@ -5,6 +5,11 @@
     window.cozmoProjectUUID = null;
     window.previouslySavedProjectXML = null;
     window.saveProjectTimerId = null;
+    window.resolvePromiseWaitForSaveProject = null;
+
+    // Prevent saveCozmoUserProject from being called more than once for a project, which can
+    // cause more than one project to be created if Unity UUID has not yet been created.
+    window.isSavingProject = false;
 
     function $t(str) {
         return str;
@@ -90,10 +95,37 @@
         return nodes;
     }
 
+    window.saveProjectCompleted = function (unityIsWaitingForCallback) {
+        window.isSavingProject = false;
+
+        // If we have a Promise to resolve, resolve it
+        if (window.resolvePromiseWaitForSaveProject) {
+            window.resolvePromiseWaitForSaveProject();
+            window.resolvePromiseWaitForSaveProject = null;
+        }
+
+        if (unityIsWaitingForCallback) {
+            window.Unity.call('{"requestId": "-1", "command": "cozmoSaveOnQuitCompleted"}');
+        }
+    }
+
+    window.promiseWaitForSaveProject = function () {
+        return new Promise(function (resolve) {
+            window.resolvePromiseWaitForSaveProject = resolve;
+            window.saveCozmoUserProject(false);
+        });
+    };
+
     /* Save all scripts currently on the workspace into a Cozmo Code Lab user project in the Unity user profile.
      * Call this method to save both new and existing projects.
      */
     window.saveCozmoUserProject = function(unityIsWaitingForCallback) {
+        if (window.isSavingProject) {
+            return;
+        }
+
+        window.isSavingProject = true;
+
         if (window.isSampleProject) {
             window.saveProjectCompleted(unityIsWaitingForCallback);
             return;
