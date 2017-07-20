@@ -1,23 +1,5 @@
 [
   {
-    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-enus-1497480517403.m4a"
-  },
-  {
-    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-enus-1497479941171.m4a"
-  },
-  {
-    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-enus-1497479509187.m4a"
-  },
-  {
-    "sampleFilename": "lee@abki.com-Office-XT1575-1meters-m-31-enus-1497478629165.m4a"
-  },
-  {
-    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-enus-1497477654445.m4a"
-  },
-  {
-    "sampleFilename": "lee@anki.com-LivingRoom-iPhone6Splus-1meter-m-31-enus-1496379112898.m4a"
-  },
-  {
     "sampleFilename": "lee@anki.com-Office-iPhone6Splus-1meter-m-31-ja-1497472366811.m4a",
     "commandCountList": [
       {
@@ -49,6 +31,69 @@
     "commandCountList": [
       {
         "command": "YesPlease",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-f-31-ja-1500503744577.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-ja-1500503717833.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-f-31-ja-1500503690050.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-ja-1500503700467.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-m-31-ja-1500503707905.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-f-31-ja-1500503656327.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
+        "commandCount": 1
+      }
+    ]
+  },
+  {
+    "sampleFilename": "lee@anki.com-Office-XT1575-1meters-f-31-ja-1500503664546.m4a",
+    "commandCountList": [
+      {
+        "command": "HeyCozmo",
         "commandCount": 1
       }
     ]

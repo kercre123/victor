@@ -227,10 +227,10 @@
       "ltsFilename" : "lts_ja_6.7.12.raw",
       "phraseCommandsMap": [
         {
-          "phrase": "Nē kozmo",
+          "phrase": "ねぇ kozmo",
           "commandType": "HeyCozmo",
-          "paramA": -900,
-          "paramB": 600
+          "paramA": -1349,
+          "paramB": 947
         },
         {
           "phrase": "Odotte",
@@ -261,8 +261,8 @@
         {
           "phrase": "Iyada",
           "commandType": "NoThankYou",
-          "paramA": -952,
-          "paramB": 696
+          "paramA": -936,
+          "paramB": 774
         },
         {
           "phrase": "Inai inai ba",
@@ -271,8 +271,8 @@
         {
           "phrase": "Onegai",
           "commandType": "YesPlease",
-          "paramA": -877,
-          "paramB": 791
+          "paramA": -936,
+          "paramB": 765
         },
         {
           "phrase": "Nerujikan dayo",
