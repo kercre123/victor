@@ -25,6 +25,10 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace CubeAccelListeners {
+class MovementListener;
+}
 
 class BehaviorFeedingEat : public IBehavior
 {
@@ -55,17 +59,23 @@ private:
   };
   
   mutable ObjectID _targetID;
-  std::vector<IFeedingListener*> _feedingListeners;
   float _timeCubeIsSuccessfullyDrained_sec;
   bool  _hasRegisteredActionComplete;
 
   State _currentState;
+  
+  // Listeners which should be notified when Cozmo starts eating
+  std::vector<IFeedingListener*> _feedingListeners;
+  // Listen for the cube being pulled away from Cozmo
+  std::shared_ptr<CubeAccelListeners::MovementListener> _cubeMovementListener; // CubeAccelComponent listener
+
   
   void TransitionToDrivingToFood(Robot& robot);
   void TransitionToEating(Robot& robot);
   void TransitionToReactingToInterruption(Robot& robot);
 
   
+  void CubeMovementHandler(Robot& robot, const float movementScore);
   AnimationTrigger CheckNeedsStateAndCalculateAnimation(Robot& robot);
   void SetState_internal(State state, const std::string& stateName);
   

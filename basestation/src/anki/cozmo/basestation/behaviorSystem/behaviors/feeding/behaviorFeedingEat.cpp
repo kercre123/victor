@@ -22,6 +22,8 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorListenerInterfaces/iFeedingListener.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorPreReqs/behaviorPreReqAcknowledgeObject.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/components/cubeAccelComponent.h"
+#include "anki/cozmo/basestation/components/cubeAccelComponentListeners.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/needsSystem/needsManager.h"
@@ -44,6 +46,13 @@ namespace{
   
 CONSOLE_VAR(f32, kDistanceFromMarker_mm, "Behavior.FeedingEat",  45.0f);
   
+// Constants for the CubeAccelComponent MovementListener:
+const float kHighPassFiltCoef = 1.f;
+const float kMaxMovementScoreToAdd = 10.f;
+const float kMovementScoreDecay = 3.f;
+const float kFeedingMovementScoreMax = 50.f;
+const float kCubeMovedTooFastInterrupt = 25.f;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Disable reactions that interrupt Cozmo's eating animation when he lifts himself
 // up on top of cube
@@ -113,6 +122,22 @@ Result BehaviorFeedingEat::InitInternal(Robot& robot)
   
   _timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
   _hasRegisteredActionComplete = false;
+
+  // generic lambda closure for cube accel listeners
+  auto movementDetectedCallback = [this, &robot] (const float movementScore) {
+    CubeMovementHandler(robot, movementScore);
+  };
+  
+  auto listener = std::make_shared<CubeAccelListeners::MovementListener>(kHighPassFiltCoef,
+                                                                         kMaxMovementScoreToAdd,
+                                                                         kMovementScoreDecay,
+                                                                         kFeedingMovementScoreMax, // max allowed movement score
+                                                                         movementDetectedCallback);
+  robot.GetCubeAccelComponent().AddListener(_targetID, listener);
+  DEV_ASSERT(_cubeMovementListener == nullptr,
+             "BehaviorFeedingEat.InitInternal.PreviousListenerAlreadySetup");
+  // keep a pointer to this listener around so that we can remove it later:
+  _cubeMovementListener = listener;
   
   TransitionToDrivingToFood(robot);
   return Result::RESULT_OK;
@@ -151,6 +176,9 @@ void BehaviorFeedingEat::StopInternal(Robot& robot)
 {
   robot.GetRobotMessageHandler()->SendMessage(robot.GetID(),
     RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
+  
+  robot.GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
+  _cubeMovementListener.reset();
 }
 
 
@@ -246,6 +274,17 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption(Robot& robot)
   }
   StartActing(new TriggerLiftSafeAnimationAction(robot, trigger));
   
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFeedingEat::CubeMovementHandler(Robot& robot, const float movementScore)
+{
+  if((_currentState != State::ReactingToInterruption) &&
+     (movementScore > kCubeMovedTooFastInterrupt)){
+    StopActing(false);
+    TransitionToReactingToInterruption(robot);
+  }
 }
 
 
